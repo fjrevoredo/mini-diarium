@@ -2,11 +2,13 @@ import { createEffect, onCleanup, onMount } from 'solid-js';
 import { Editor } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
+import EditorToolbar from './EditorToolbar';
 
 interface DiaryEditorProps {
   content: string;
   onUpdate?: (content: string) => void;
   placeholder?: string;
+  onEditorReady?: (editor: Editor) => void;
 }
 
 export default function DiaryEditor(props: DiaryEditorProps) {
@@ -42,6 +44,11 @@ export default function DiaryEditor(props: DiaryEditorProps) {
         props.onUpdate?.(markdown);
       },
     });
+
+    // Notify parent that editor is ready
+    if (editor) {
+      props.onEditorReady?.(editor);
+    }
   });
 
   // Update editor content when prop changes
@@ -56,8 +63,11 @@ export default function DiaryEditor(props: DiaryEditorProps) {
   });
 
   return (
-    <div class="rounded-lg border border-gray-200 bg-white p-4">
-      <div ref={editorElement} />
+    <div class="rounded-lg border border-gray-200 bg-white overflow-hidden">
+      <EditorToolbar editor={editor} />
+      <div class="p-4">
+        <div ref={editorElement} />
+      </div>
     </div>
   );
 }
