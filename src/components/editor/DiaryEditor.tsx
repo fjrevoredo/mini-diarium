@@ -1,4 +1,4 @@
-import { createEffect, onCleanup, onMount } from 'solid-js';
+import { createEffect, onCleanup, onMount, createSignal } from 'solid-js';
 import { Editor } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
@@ -14,13 +14,13 @@ interface DiaryEditorProps {
 export default function DiaryEditor(props: DiaryEditorProps) {
   // eslint-disable-next-line no-unassigned-vars
   let editorElement!: HTMLDivElement;
-  let editor: Editor | null = null;
+  const [editor, setEditor] = createSignal<Editor | null>(null);
 
   onMount(() => {
     if (!editorElement) return;
 
     // Initialize TipTap editor
-    editor = new Editor({
+    const editorInstance = new Editor({
       element: editorElement,
       extensions: [
         StarterKit.configure({
@@ -45,39 +45,30 @@ export default function DiaryEditor(props: DiaryEditorProps) {
       },
     });
 
+    setEditor(editorInstance);
+
     // Notify parent that editor is ready
-    if (editor) {
-      props.onEditorReady?.(editor);
-    }
+    props.onEditorReady?.(editorInstance);
   });
 
   // Update editor content when prop changes
   createEffect(() => {
-    if (editor && props.content !== editor.getText()) {
-      editor.commands.setContent(props.content);
+    const editorInstance = editor();
+    if (editorInstance && props.content !== editorInstance.getText()) {
+      editorInstance.commands.setContent(props.content);
     }
   });
 
   onCleanup(() => {
-    editor?.destroy();
+    editor()?.destroy();
   });
 
   return (
     <div class="rounded-lg border border-gray-200 bg-white overflow-hidden">
-      <EditorToolbar editor={editor} />
+      <EditorToolbar editor={editor()} />
       <div class="p-4">
         <div ref={editorElement} />
       </div>
     </div>
   );
-}
-
-// Helper function to get markdown from editor
-export function getMarkdown(editor: Editor | null): string {
-  return editor?.getText() || '';
-}
-
-// Helper function to set markdown in editor
-export function setMarkdown(editor: Editor | null, markdown: string): void {
-  editor?.commands.setContent(markdown);
 }

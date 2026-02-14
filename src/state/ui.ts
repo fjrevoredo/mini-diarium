@@ -8,4 +8,14 @@ const [selectedDate, setSelectedDate] = createSignal<string>(
 // Sidebar collapsed state (for mobile)
 const [isSidebarCollapsed, setIsSidebarCollapsed] = createSignal(false);
 
-export { selectedDate, setSelectedDate, isSidebarCollapsed, setIsSidebarCollapsed };
+// Go To Date overlay state
+const [isGoToDateOpen, setIsGoToDateOpen] = createSignal(false);
+
+export {
+  selectedDate,
+  setSelectedDate,
+  isSidebarCollapsed,
+  setIsSidebarCollapsed,
+  isGoToDateOpen,
+  setIsGoToDateOpen,
+};

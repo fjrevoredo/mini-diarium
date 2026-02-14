@@ -1,6 +1,7 @@
 pub mod commands;
 pub mod crypto;
 pub mod db;
+pub mod menu;
 
 use commands::auth::DiaryState;
 use std::path::PathBuf;
@@ -31,6 +32,9 @@ pub fn run() {
             // Set up state
             app.manage(DiaryState::new(db_path));
 
+            // Build and set application menu
+            menu::build_menu(&app.handle())?;
+
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -47,6 +51,11 @@ pub fn run() {
             commands::entries::delete_entry_if_empty,
             commands::entries::get_all_entry_dates,
             commands::search::search_entries,
+            commands::navigation::navigate_previous_day,
+            commands::navigation::navigate_next_day,
+            commands::navigation::navigate_to_today,
+            commands::navigation::navigate_previous_month,
+            commands::navigation::navigate_next_month,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

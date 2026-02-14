@@ -33,3 +33,21 @@ export function isValidDate(dateStr: string): boolean {
 export function getCurrentTimestamp(): string {
   return new Date().toISOString();
 }
+
+/**
+ * Add days to a date string (YYYY-MM-DD)
+ */
+export function addDays(dateStr: string, days: number): string {
+  const date = new Date(dateStr + 'T00:00:00');
+  date.setDate(date.getDate() + days);
+  return date.toISOString().split('T')[0];
+}
+
+/**
+ * Add months to a date string (YYYY-MM-DD)
+ */
+export function addMonths(dateStr: string, months: number): string {
+  const date = new Date(dateStr + 'T00:00:00');
+  date.setMonth(date.getMonth() + months);
+  return date.toISOString().split('T')[0];
+}

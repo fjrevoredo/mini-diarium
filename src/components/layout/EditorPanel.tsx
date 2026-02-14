@@ -1,6 +1,7 @@
 import { createSignal, createEffect, onCleanup, onMount } from 'solid-js';
 import TitleEditor from '../editor/TitleEditor';
 import DiaryEditor from '../editor/DiaryEditor';
+import WordCount from '../editor/WordCount';
 import { selectedDate } from '../../state/ui';
 import { saveEntry, getEntry, deleteEntryIfEmpty, getAllEntryDates } from '../../lib/tauri';
 import { debounce } from '../../lib/debounce';
@@ -51,6 +52,7 @@ export default function EditorPanel() {
         // Refresh entry dates after deletion
         const dates = await getAllEntryDates();
         setEntryDates(dates);
+        setWordCount(0);
       } catch (error) {
         console.error('Failed to delete empty entry:', error);
       }
@@ -61,9 +63,16 @@ export default function EditorPanel() {
     try {
       setIsSaving(true);
       await saveEntry(date, currentTitle, currentContent);
+
       // Refresh entry dates after save
       const dates = await getAllEntryDates();
       setEntryDates(dates);
+
+      // Update word count from persisted data
+      const savedEntry = await getEntry(date);
+      if (savedEntry) {
+        setWordCount(savedEntry.word_count);
+      }
     } catch (error) {
       console.error('Failed to save entry:', error);
     } finally {
@@ -76,11 +85,7 @@ export default function EditorPanel() {
 
   const handleContentUpdate = (newContent: string) => {
     setContent(newContent);
-    // Simple word count
-    const words = newContent.trim().split(/\s+/).filter(Boolean);
-    setWordCount(words.length);
-
-    // Trigger debounced save
+    // Trigger debounced save (word count will update after save completes)
     debouncedSave();
   };
 
@@ -133,7 +138,7 @@ export default function EditorPanel() {
       {/* Footer with word count and save status */}
       <div class="border-t border-gray-200 bg-gray-50 px-6 py-2">
         <div class="flex items-center justify-between">
-          <p class="text-sm text-gray-600">{wordCount()} words</p>
+          <WordCount count={wordCount()} />
           {isSaving() && <p class="text-sm text-gray-500">Saving...</p>}
         </div>
       </div>

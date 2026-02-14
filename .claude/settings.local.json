@@ -16,7 +16,8 @@
       "Bash(cargo build:*)",
       "Bash(find:*)",
       "Bash(ls:*)",
-      "Bash(Select-String -Pattern \"test result:\")"
+      "Bash(Select-String -Pattern \"test result:\")",
+      "Bash(bun tauri build:*)"
     ]
   }
 }

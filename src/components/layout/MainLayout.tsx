@@ -1,10 +1,105 @@
-import { createSignal } from 'solid-js';
+import { createSignal, onMount, onCleanup } from 'solid-js';
+import { listen, UnlistenFn } from '@tauri-apps/api/event';
 import Header from './Header';
 import Sidebar from './Sidebar';
 import EditorPanel from './EditorPanel';
+import GoToDateOverlay from '../overlays/GoToDateOverlay';
+import { selectedDate, setSelectedDate, setIsGoToDateOpen } from '../../state/ui';
+import { setupNavigationShortcuts } from '../../lib/shortcuts';
+import {
+  navigatePreviousDay,
+  navigateNextDay,
+  navigateToToday,
+  navigatePreviousMonth,
+  navigateNextMonth,
+} from '../../lib/tauri';
 
 export default function MainLayout() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = createSignal(true);
+
+  // Store cleanup functions at component level
+  let cleanupShortcuts: (() => void) | undefined;
+  const unlisteners: UnlistenFn[] = [];
+
+  // Setup keyboard shortcuts and menu listeners
+  onMount(async () => {
+    // Setup keyboard shortcuts
+    cleanupShortcuts = setupNavigationShortcuts(selectedDate, setSelectedDate);
+
+    // Setup menu event listeners
+    // Previous Day menu item
+    unlisteners.push(
+      await listen('menu-navigate-previous-day', async () => {
+        try {
+          const newDate = await navigatePreviousDay(selectedDate());
+          setSelectedDate(newDate);
+        } catch (error) {
+          console.error('Failed to navigate to previous day:', error);
+        }
+      }),
+    );
+
+    // Next Day menu item
+    unlisteners.push(
+      await listen('menu-navigate-next-day', async () => {
+        try {
+          const newDate = await navigateNextDay(selectedDate());
+          setSelectedDate(newDate);
+        } catch (error) {
+          console.error('Failed to navigate to next day:', error);
+        }
+      }),
+    );
+
+    // Go to Today menu item
+    unlisteners.push(
+      await listen('menu-navigate-to-today', async () => {
+        try {
+          const newDate = await navigateToToday();
+          setSelectedDate(newDate);
+        } catch (error) {
+          console.error('Failed to navigate to today:', error);
+        }
+      }),
+    );
+
+    // Go to Date menu item
+    unlisteners.push(
+      await listen('menu-go-to-date', () => {
+        setIsGoToDateOpen(true);
+      }),
+    );
+
+    // Previous Month menu item
+    unlisteners.push(
+      await listen('menu-navigate-previous-month', async () => {
+        try {
+          const newDate = await navigatePreviousMonth(selectedDate());
+          setSelectedDate(newDate);
+        } catch (error) {
+          console.error('Failed to navigate to previous month:', error);
+        }
+      }),
+    );
+
+    // Next Month menu item
+    unlisteners.push(
+      await listen('menu-navigate-next-month', async () => {
+        try {
+          const newDate = await navigateNextMonth(selectedDate());
+          setSelectedDate(newDate);
+        } catch (error) {
+          console.error('Failed to navigate to next month:', error);
+        }
+      }),
+    );
+  });
+
+  // Cleanup on component unmount
+  onCleanup(() => {
+    cleanupShortcuts?.();
+    unlisteners.forEach((unlisten) => unlisten());
+  });
 
   return (
     <div class="flex h-screen overflow-hidden bg-gray-50">
@@ -21,6 +116,9 @@ export default function MainLayout() {
           <EditorPanel />
         </main>
       </div>
+
+      {/* Overlays */}
+      <GoToDateOverlay />
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { Show } from 'solid-js';
+import { Show, createSignal, createEffect, onCleanup } from 'solid-js';
 import type { Editor } from '@tiptap/core';
 
 interface EditorToolbarProps {
@@ -6,6 +6,39 @@ interface EditorToolbarProps {
 }
 
 export default function EditorToolbar(props: EditorToolbarProps) {
+  // Reactive signals for active states
+  const [isBoldActive, setIsBoldActive] = createSignal(false);
+  const [isItalicActive, setIsItalicActive] = createSignal(false);
+  const [isBulletListActive, setIsBulletListActive] = createSignal(false);
+  const [isOrderedListActive, setIsOrderedListActive] = createSignal(false);
+
+  // Update active states when editor changes
+  createEffect(() => {
+    const editor = props.editor;
+    if (!editor) return;
+
+    // Update active states based on current editor state
+    const updateActiveStates = () => {
+      setIsBoldActive(editor.isActive('bold'));
+      setIsItalicActive(editor.isActive('italic'));
+      setIsBulletListActive(editor.isActive('bulletList'));
+      setIsOrderedListActive(editor.isActive('orderedList'));
+    };
+
+    // Initial update
+    updateActiveStates();
+
+    // Listen to editor updates for active state changes
+    editor.on('selectionUpdate', updateActiveStates);
+    editor.on('transaction', updateActiveStates);
+
+    // Cleanup listeners
+    onCleanup(() => {
+      editor.off('selectionUpdate', updateActiveStates);
+      editor.off('transaction', updateActiveStates);
+    });
+  });
+
   const toggleBold = () => {
     props.editor?.chain().focus().toggleBold().run();
   };
@@ -21,11 +54,6 @@ export default function EditorToolbar(props: EditorToolbarProps) {
   const toggleOrderedList = () => {
     props.editor?.chain().focus().toggleOrderedList().run();
   };
-
-  const isBoldActive = () => props.editor?.isActive('bold') ?? false;
-  const isItalicActive = () => props.editor?.isActive('italic') ?? false;
-  const isBulletListActive = () => props.editor?.isActive('bulletList') ?? false;
-  const isOrderedListActive = () => props.editor?.isActive('orderedList') ?? false;
 
   return (
     <Show when={props.editor}>
