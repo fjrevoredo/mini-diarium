@@ -1,8 +1,9 @@
-import { defineConfig, presetUno, presetIcons } from 'unocss';
+import { defineConfig, presetUno, presetIcons, presetTypography } from 'unocss';
 
 export default defineConfig({
   presets: [
     presetUno(),
+    presetTypography(),
     presetIcons({
       scale: 1.2,
       extraProperties: {

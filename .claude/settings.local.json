@@ -11,7 +11,11 @@
       "Bash(bun run lint:*)",
       "Bash(bun run:*)",
       "Bash(cargo fmt:*)",
-      "Bash(cargo clippy:*)"
+      "Bash(cargo clippy:*)",
+      "Bash(cargo test:*)",
+      "Bash(cargo build:*)",
+      "Bash(find:*)",
+      "Bash(ls:*)"
     ]
   }
 }

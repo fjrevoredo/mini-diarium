@@ -28,4 +28,5 @@ zeroize = { version = "1.8", features = ["derive"] }
 rusqlite = { version = "0.32", features = ["bundled"] }
 rand = "0.8"
 hex = "0.4"
+chrono = "0.4"
 
