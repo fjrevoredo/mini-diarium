@@ -4,6 +4,7 @@ import { searchEntries } from '../../lib/tauri';
 import { debounce } from '../../lib/debounce';
 
 export default function SearchBar() {
+  // eslint-disable-next-line no-unassigned-vars
   let inputRef: HTMLInputElement | undefined;
 
   // Debounced search function

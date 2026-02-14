@@ -99,7 +99,6 @@ pub fn get_all_entry_dates(state: State<DiaryState>) -> Result<Vec<String>, Stri
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::commands::auth::DiaryState;
     use crate::db::schema::create_database;
     use std::fs;
     use std::path::PathBuf;

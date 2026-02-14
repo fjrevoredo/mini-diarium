@@ -44,8 +44,10 @@ export default function SearchResults() {
                     </div>
                     <div class="mt-1 text-xs text-gray-500">{formatDate(result.date)}</div>
                     <Show when={result.snippet}>
+                      {/* Safe: snippet comes from our own FTS5 backend with controlled <mark> tags */}
                       <div
                         class="mt-2 text-sm text-gray-600"
+                        // eslint-disable-next-line solid/no-innerhtml
                         innerHTML={result.snippet}
                       />
                     </Show>
