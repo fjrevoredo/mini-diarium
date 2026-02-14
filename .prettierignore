@@ -1,0 +1,6 @@
+dist
+target
+src-tauri/target
+node_modules
+bun.lockb
+package-lock.json

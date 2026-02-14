@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(rustc:*)",
+      "Bash(export:*)",
+      "Bash(cargo --version:*)",
+      "Bash(bun install:*)",
+      "Bash(cargo check:*)",
+      "Bash(bun add:*)",
+      "Bash(bun run format:*)",
+      "Bash(bun run lint:*)",
+      "Bash(bun run:*)",
+      "Bash(cargo fmt:*)",
+      "Bash(cargo clippy:*)"
+    ]
+  }
+}
