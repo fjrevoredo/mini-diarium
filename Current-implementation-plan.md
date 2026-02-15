@@ -30,6 +30,39 @@
 
 This section documents differences between the original plan and the actual implementation. These are **intentional deviations** where the implementation works correctly but differs in approach or scope from what was originally specified.
 
+### 📋 Mini Diary JSON Format Documentation (Task 34-36)
+
+**Actual Mini Diary 3.3.0 Export Format:**
+```json
+{
+  "metadata": {
+    "application": "Mini Diary",
+    "version": "3.3.0",
+    "dateUpdated": "Sun Feb 15 2026 15:15:23 GMT+0100"
+  },
+  "entries": {
+    "2026-02-15": {
+      "dateUpdated": "Sun Feb 15 2026 14:08:04 GMT+0100",
+      "title": "Entry Title",
+      "text": "Entry content..."
+    }
+  }
+}
+```
+
+**Key Patterns:**
+- `entries` is an **Object/Map** (not array) - date as key
+- Date format: `YYYY-MM-DD` (validated during import)
+- Timestamps: Human-readable format (parsed to ISO 8601)
+- Word count: Auto-calculated during import (not stored in export)
+- `date_created`: Set to import time (not stored in export)
+
+**Implementation Notes:**
+- Parser uses `HashMap<String, Entry>` for entries
+- Invalid date formats are skipped with warning (not error)
+- FTS index rebuild uses `'delete-all'` command (FTS5 requirement)
+- Comprehensive logging added for debugging
+
 ### ✅ Fully Resolved Deviations (Fixed 2026-02-15)
 
 1. **Task 2 - Lint Errors** - FIXED
@@ -913,8 +946,10 @@ These deviations represent different implementation approaches that are function
    * UI: Format dropdown, file picker (Tauri dialog), progress/success/error states
    * Menu: "Import..." menu item with Cmd/Ctrl+Shift+I shortcut
    * Dependencies: Added @tauri-apps/plugin-dialog (frontend + Rust)
+   * Capabilities: Added dialog:default permission to capabilities/default.json
    * Tests: 4 Rust unit tests for import logic
    * TypeScript compilation: Verified - no errors
+   * **VERIFIED WORKING** with actual Mini Diary 3.3.0 export files
 
 🎯 **NEXT UP: Task 37** - Day One JSON Import
    * Parse Day One export format

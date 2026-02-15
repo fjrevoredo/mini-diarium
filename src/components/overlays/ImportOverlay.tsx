@@ -1,5 +1,6 @@
 import { createSignal, Show } from 'solid-js';
 import { Dialog } from '@kobalte/core/dialog';
+import { open as openDialog } from '@tauri-apps/plugin-dialog';
 import { importMiniDiaryJson, type ImportResult } from '../../lib/tauri';
 import { X, FileUp, CheckCircle, AlertCircle } from 'lucide-solid';
 
@@ -36,9 +37,6 @@ export default function ImportOverlay(props: ImportOverlayProps) {
 
   const handleSelectFile = async () => {
     try {
-      // Import Tauri dialog
-      const { open: openDialog } = await import('@tauri-apps/plugin-dialog');
-
       const selected = await openDialog({
         multiple: false,
         filters: [
@@ -71,13 +69,17 @@ export default function ImportOverlay(props: ImportOverlayProps) {
     setResult(null);
 
     try {
+      console.log('[Import] Starting import from file:', file);
       const importResult = await importMiniDiaryJson(file);
+      console.log('[Import] Success:', importResult);
       setResult(importResult);
 
       // Notify parent to refresh data
       props.onImportComplete?.();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Import failed');
+      console.error('[Import] Failed:', err);
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      setError(errorMessage || 'Import failed');
     } finally {
       setImporting(false);
     }

@@ -25,24 +25,53 @@ pub fn import_minidiary_json(
     file_path: String,
     state: State<DiaryState>,
 ) -> Result<ImportResult, String> {
+    eprintln!("[Import] Starting import from file: {}", file_path);
+
     let db_state = state.db.lock().unwrap();
     let db = db_state
         .as_ref()
-        .ok_or("Diary must be unlocked to import entries")?;
+        .ok_or_else(|| {
+            let err = "Diary must be unlocked to import entries";
+            eprintln!("[Import] Error: {}", err);
+            err.to_string()
+        })?;
 
     // Read file
+    eprintln!("[Import] Reading file...");
     let json_content = std::fs::read_to_string(&file_path)
-        .map_err(|e| format!("Failed to read file: {}", e))?;
+        .map_err(|e| {
+            let err = format!("Failed to read file: {}", e);
+            eprintln!("[Import] Error: {}", err);
+            err
+        })?;
 
     // Parse JSON
-    let entries = minidiary::parse_minidiary_json(&json_content)?;
+    eprintln!("[Import] Parsing JSON...");
+    let entries = minidiary::parse_minidiary_json(&json_content)
+        .map_err(|e| {
+            eprintln!("[Import] Parse error: {}", e);
+            e
+        })?;
+    eprintln!("[Import] Parsed {} entries", entries.len());
 
     // Import entries with merge handling
-    let result = import_entries(db, entries)?;
+    eprintln!("[Import] Importing entries...");
+    let result = import_entries(db, entries)
+        .map_err(|e| {
+            eprintln!("[Import] Import error: {}", e);
+            e
+        })?;
 
     // Rebuild FTS index after import
-    rebuild_fts_index(db)?;
+    eprintln!("[Import] Rebuilding FTS index...");
+    rebuild_fts_index(db)
+        .map_err(|e| {
+            eprintln!("[Import] FTS rebuild error: {}", e);
+            e
+        })?;
 
+    eprintln!("[Import] Success: {} imported, {} merged",
+        result.entries_imported, result.entries_merged);
     Ok(result)
 }
 
@@ -55,7 +84,7 @@ fn import_entries(
 ) -> Result<ImportResult, String> {
     let mut entries_imported = 0;
     let mut entries_merged = 0;
-    let mut entries_skipped = 0;
+    let entries_skipped = 0;
 
     for entry in entries {
         // Check if entry already exists
@@ -84,13 +113,19 @@ fn import_entries(
 ///
 /// This is necessary after bulk imports to ensure search works correctly
 fn rebuild_fts_index(db: &DatabaseConnection) -> Result<(), String> {
-    // Clear existing FTS data
+    eprintln!("[FTS] Clearing existing FTS index...");
+
+    // Use FTS5 'delete-all' command to clear the index
+    // This is the correct way to clear an FTS5 virtual table
     db.conn()
-        .execute("DELETE FROM entries_fts", [])
+        .execute("INSERT INTO entries_fts(entries_fts) VALUES('delete-all')", [])
         .map_err(|e| format!("Failed to clear FTS index: {}", e))?;
 
+    eprintln!("[FTS] Getting all entry dates...");
     // Get all entries
     let dates = queries::get_all_entry_dates(db)?;
+    let total_entries = dates.len();
+    eprintln!("[FTS] Found {} entries to index", total_entries);
 
     // Rebuild index for each entry
     for date in dates {
@@ -103,9 +138,9 @@ fn rebuild_fts_index(db: &DatabaseConnection) -> Result<(), String> {
                     [&date],
                     |row| row.get(0),
                 )
-                .map_err(|e| format!("Failed to get rowid: {}", e))?;
+                .map_err(|e| format!("Failed to get rowid for {}: {}", date, e))?;
 
-            // Insert into FTS index
+            // Insert into FTS index using the proper FTS5 format
             db.conn()
                 .execute(
                     "INSERT INTO entries_fts (rowid, date, title, text) VALUES (?1, ?2, ?3, ?4)",
@@ -115,6 +150,7 @@ fn rebuild_fts_index(db: &DatabaseConnection) -> Result<(), String> {
         }
     }
 
+    eprintln!("[FTS] Successfully rebuilt FTS index for {} entries", total_entries);
     Ok(())
 }
 
