@@ -66,9 +66,7 @@ export default function GoToDateOverlay() {
             class="w-full max-w-md rounded-lg bg-white p-6 shadow-lg data-[expanded]:animate-in data-[closed]:animate-out data-[closed]:fade-out-0 data-[expanded]:fade-in-0 data-[closed]:zoom-out-95 data-[expanded]:zoom-in-95"
             onKeyDown={handleKeyDown}
           >
-            <Dialog.Title class="text-lg font-semibold text-gray-900 mb-4">
-              Go to Date
-            </Dialog.Title>
+            <Dialog.Title class="text-lg font-semibold text-gray-900 mb-4">Go to Date</Dialog.Title>
 
             <Dialog.Description class="text-sm text-gray-600 mb-4">
               Jump to a specific date in your journal.

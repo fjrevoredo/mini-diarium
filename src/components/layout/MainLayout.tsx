@@ -165,10 +165,7 @@ export default function MainLayout() {
         isOpen={isPreferencesOpen()}
         onClose={() => setIsPreferencesOpen(false)}
       />
-      <StatsOverlay
-        isOpen={isStatsOpen()}
-        onClose={() => setIsStatsOpen(false)}
-      />
+      <StatsOverlay isOpen={isStatsOpen()} onClose={() => setIsStatsOpen(false)} />
       <ImportOverlay
         isOpen={isImportOpen()}
         onClose={() => setIsImportOpen(false)}

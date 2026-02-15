@@ -34,7 +34,10 @@
       "Bash(\"C:\\\\Users\\\\Francisco\\\\.bun\\\\bin\\\\bun.exe\" tauri dev)",
       "Bash(\"C:\\\\Users\\\\Francisco\\\\.bun\\\\bin\\\\bun.exe\" run typecheck)",
       "Bash(\"C:\\\\Users\\\\Francisco\\\\.bun\\\\bin\\\\bun.exe\" run type-check)",
-      "Bash(\"C:\\\\Users\\\\Francisco\\\\.bun\\\\bin\\\\bun.exe\" add @tauri-apps/plugin-dialog)"
+      "Bash(\"C:\\\\Users\\\\Francisco\\\\.bun\\\\bin\\\\bun.exe\" add @tauri-apps/plugin-dialog)",
+      "Bash(\"C:\\\\Users\\\\Francisco\\\\.bun\\\\bin\\\\bun.exe\" run format)",
+      "Bash(\"C:\\\\Users\\\\Francisco\\\\.bun\\\\bin\\\\bun.exe\" run format:check)",
+      "Bash(\"C:\\\\Users\\\\Francisco\\\\.bun\\\\bin\\\\bun.exe\" x prettier --write \"D:\\\\Repos\\\\mini-diarium\\\\src\\\\styles\\\\critical-auth.css\")"
     ]
   }
 }

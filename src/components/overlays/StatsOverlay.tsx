@@ -71,9 +71,7 @@ export default function StatsOverlay(props: StatsOverlayProps) {
             onKeyDown={handleKeyDown}
           >
             <div class="flex items-center justify-between mb-4">
-              <Dialog.Title class="text-lg font-semibold text-gray-900">
-                Statistics
-              </Dialog.Title>
+              <Dialog.Title class="text-lg font-semibold text-gray-900">Statistics</Dialog.Title>
               <Dialog.CloseButton
                 class="rounded-md p-1 hover:bg-gray-100 transition-colors"
                 aria-label="Close"
@@ -120,7 +118,8 @@ export default function StatsOverlay(props: StatsOverlayProps) {
                 <div class="flex items-center justify-between border-b border-gray-200 pb-3">
                   <span class="text-sm font-medium text-gray-700">Best Streak</span>
                   <span class="text-lg font-semibold text-gray-900">
-                    {formatNumber(stats()!.best_streak)} {stats()!.best_streak === 1 ? 'day' : 'days'}
+                    {formatNumber(stats()!.best_streak)}{' '}
+                    {stats()!.best_streak === 1 ? 'day' : 'days'}
                   </span>
                 </div>
 
@@ -128,7 +127,8 @@ export default function StatsOverlay(props: StatsOverlayProps) {
                 <div class="flex items-center justify-between border-b border-gray-200 pb-3">
                   <span class="text-sm font-medium text-gray-700">Current Streak</span>
                   <span class="text-lg font-semibold text-gray-900">
-                    {formatNumber(stats()!.current_streak)} {stats()!.current_streak === 1 ? 'day' : 'days'}
+                    {formatNumber(stats()!.current_streak)}{' '}
+                    {stats()!.current_streak === 1 ? 'day' : 'days'}
                   </span>
                 </div>
 
