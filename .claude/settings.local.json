@@ -29,7 +29,11 @@
       "Bash(C:/Users/Francisco/.bun/bin/bun run type-check)",
       "Bash(C:/Users/Francisco/.bun/bin/bun add lucide-solid)",
       "Bash(C:/Users/Francisco/.bun/bin/bun add @js-temporal/polyfill)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(bun tauri dev:*)",
+      "Bash(\"C:\\\\Users\\\\Francisco\\\\.bun\\\\bin\\\\bun.exe\" tauri dev)",
+      "Bash(\"C:\\\\Users\\\\Francisco\\\\.bun\\\\bin\\\\bun.exe\" run typecheck)",
+      "Bash(\"C:\\\\Users\\\\Francisco\\\\.bun\\\\bin\\\\bun.exe\" run type-check)"
     ]
   }
 }

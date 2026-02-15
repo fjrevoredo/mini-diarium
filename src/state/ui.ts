@@ -14,6 +14,9 @@ const [isGoToDateOpen, setIsGoToDateOpen] = createSignal(false);
 // Preferences overlay state
 const [isPreferencesOpen, setIsPreferencesOpen] = createSignal(false);
 
+// Statistics overlay state
+const [isStatsOpen, setIsStatsOpen] = createSignal(false);
+
 export {
   selectedDate,
   setSelectedDate,
@@ -23,4 +26,6 @@ export {
   setIsGoToDateOpen,
   isPreferencesOpen,
   setIsPreferencesOpen,
+  isStatsOpen,
+  setIsStatsOpen,
 };

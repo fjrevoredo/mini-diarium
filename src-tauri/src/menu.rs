@@ -35,6 +35,11 @@ pub fn build_menu(app: &AppHandle<Wry>) -> tauri::Result<()> {
         .accelerator("CmdOrCtrl+,")
         .build(app)?;
 
+    // Build Statistics menu item
+    let statistics = MenuItemBuilder::with_id("statistics", "Statistics...")
+        .accelerator("CmdOrCtrl+I")
+        .build(app)?;
+
     // Build the Navigation submenu
     let navigation_menu = SubmenuBuilder::new(app, "Navigation")
         .item(&navigate_prev_day)
@@ -50,6 +55,7 @@ pub fn build_menu(app: &AppHandle<Wry>) -> tauri::Result<()> {
     // Build the main menu
     let menu = MenuBuilder::new(app)
         .item(&navigation_menu)
+        .item(&statistics)
         .item(&preferences)
         .build()?;
 
@@ -84,6 +90,9 @@ pub fn build_menu(app: &AppHandle<Wry>) -> tauri::Result<()> {
             }
             "preferences" => {
                 let _ = app.emit("menu-preferences", ());
+            }
+            "statistics" => {
+                let _ = app.emit("menu-statistics", ());
             }
             _ => {}
         }

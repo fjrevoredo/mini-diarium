@@ -1,8 +1,11 @@
 /* @refresh reload */
 import { render } from 'solid-js/web';
-import 'virtual:uno.css';
+// Import critical CSS first for instant auth screen styling
+import './styles/critical-auth.css';
 import './index.css';
 import './styles/editor.css';
+// UnoCSS loads after critical CSS
+import 'virtual:uno.css';
 import App from './App';
 
 const root = document.getElementById('root') as HTMLElement;

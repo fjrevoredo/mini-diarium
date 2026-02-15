@@ -5,12 +5,15 @@ import Sidebar from './Sidebar';
 import EditorPanel from './EditorPanel';
 import GoToDateOverlay from '../overlays/GoToDateOverlay';
 import PreferencesOverlay from '../overlays/PreferencesOverlay';
+import StatsOverlay from '../overlays/StatsOverlay';
 import {
   selectedDate,
   setSelectedDate,
   setIsGoToDateOpen,
   isPreferencesOpen,
   setIsPreferencesOpen,
+  isStatsOpen,
+  setIsStatsOpen,
 } from '../../state/ui';
 import { setupNavigationShortcuts } from '../../lib/shortcuts';
 import {
@@ -89,6 +92,13 @@ export default function MainLayout() {
       }),
     );
 
+    // Statistics menu item
+    unlisteners.push(
+      await listen('menu-statistics', () => {
+        setIsStatsOpen(true);
+      }),
+    );
+
     // Previous Month menu item
     unlisteners.push(
       await listen('menu-navigate-previous-month', async () => {
@@ -144,6 +154,10 @@ export default function MainLayout() {
       <PreferencesOverlay
         isOpen={isPreferencesOpen()}
         onClose={() => setIsPreferencesOpen(false)}
+      />
+      <StatsOverlay
+        isOpen={isStatsOpen()}
+        onClose={() => setIsStatsOpen(false)}
       />
     </div>
   );

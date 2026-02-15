@@ -3,21 +3,26 @@
 ---
 ## IMPLEMENTATION STATUS (Updated: 2026-02-15)
 
-**Progress: 32/47 Tasks Complete (68%)**
+**Progress: 33/47 Tasks Complete (70%)**
 
 - ✅ **Phase 1: Foundation & Core Infrastructure** (Tasks 1-28) - **COMPLETE**
-- ⏳ **Phase 2: Search, Navigation & Preferences** (Tasks 29-33) - **PARTIAL (4/5 complete)**
+- ✅ **Phase 2: Search, Navigation & Preferences** (Tasks 29-33) - **COMPLETE**
 - ⏳ **Phase 3: Import, Export, Theming** (Tasks 34-44) - **NOT STARTED**
 - ⏳ **Phase 4: Backup & Advanced Features** (Tasks 45-46) - **NOT STARTED**
 - ⏳ **Phase 5: Internationalization** (Task 47) - **NOT STARTED**
 
 **Most Recent Completions:**
-- Task 29: Future Date Restriction Preference (preferences system + validation)
 - Task 30: First Day of Week Preference (PreferencesOverlay + calendar rotation)
 - Task 31: Hide Titles Preference (conditional TitleEditor rendering)
-- Task 32: Spellcheck Preference (browser spellcheck toggle)
+- Task 32: Spellcheck Preference (browser spellcheck toggle + reactive updates)
+- Task 33: Statistics Overlay (backend stats calculation + Kobalte dialog with metrics)
+- **Performance Optimization Sprint:**
+  - Fixed FOUC (Flash of Unstyled Content) with critical CSS
+  - Added loading spinner with proper positioning
+  - Optimized bundle splitting and CSS loading
+  - Created critical-auth.css for instant auth screen styling
 
-**Next Up:** Task 33 - Statistics Overlay
+**Next Up:** Task 34 - Import Functionality (Phase 3 begins)
 
 ---
 
@@ -876,13 +881,23 @@ These deviations represent different implementation approaches that are function
     * Applied spellcheck attribute to DiaryEditor (TipTap editorProps)
     * Browser spellcheck now toggleable via preferences
 
-🎯 **NEXT UP: Task 33** - Statistics Overlay
-   - Implement backend statistics command (Rust)
-   - Build statistics overlay UI (Kobalte Dialog)
-   - Display metrics: total entries, entries/week, streaks, words, etc.
+✅ **TASK 33 COMPLETE** - Statistics Overlay
+   * Backend: Created `src-tauri/src/commands/stats.rs` with comprehensive statistics calculation
+   * Metrics: Total entries, entries/week, best streak, current streak, total words, avg words/entry
+   * Streak calculation: Handles consecutive days with proper date arithmetic
+   * Frontend: Created `src/components/overlays/StatsOverlay.tsx` (Kobalte Dialog)
+   * Formatting: Locale-aware number separators, max 1 decimal place for averages
+   * Menu integration: Added "Statistics..." menu item with Cmd/Ctrl+I shortcut
+   * State management: Added isStatsOpen/setIsStatsOpen to ui.ts
+   * Tests: Comprehensive Rust unit tests for streak logic and statistics calculation
+   * TypeScript compilation: Verified - no errors
 
- 📋 **REMAINING: Tasks 33-47** (15 tasks across 4 phases)
-   - Phase 2 remaining: Statistics (Task 33)
+🎯 **NEXT UP: Task 34** - Import Functionality (Phase 3 begins)
+   - Support importing plain text/markdown diary entries
+   - Date detection from filenames or content
+   - Batch import with progress indication
+
+ 📋 **REMAINING: Tasks 34-47** (14 tasks across 3 phases)
    - Phase 3: Import/Export/Theming (Tasks 34-44)
    - Phase 4: Backup & Advanced (Tasks 45-46)
    - Phase 5: Internationalization (Task 47)

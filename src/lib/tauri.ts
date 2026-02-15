@@ -90,3 +90,17 @@ export async function navigatePreviousMonth(currentDate: string): Promise<string
 export async function navigateNextMonth(currentDate: string): Promise<string> {
   return await invoke('navigate_next_month', { current_date: currentDate });
 }
+
+// Statistics commands
+export interface Statistics {
+  total_entries: number;
+  entries_per_week: number;
+  best_streak: number;
+  current_streak: number;
+  total_words: number;
+  avg_words_per_entry: number;
+}
+
+export async function getStatistics(): Promise<Statistics> {
+  return await invoke('get_statistics');
+}
