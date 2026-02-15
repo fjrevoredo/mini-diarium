@@ -1,6 +1,7 @@
 pub mod commands;
 pub mod crypto;
 pub mod db;
+pub mod import;
 pub mod menu;
 
 use commands::auth::DiaryState;
