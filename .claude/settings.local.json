@@ -17,7 +17,12 @@
       "Bash(find:*)",
       "Bash(ls:*)",
       "Bash(Select-String -Pattern \"test result:\")",
-      "Bash(bun tauri build:*)"
+      "Bash(bun tauri build:*)",
+      "Bash(npx tsc:*)",
+      "Bash(timeout 30 bun tauri dev:*)",
+      "Bash(node_modules/typescript/bin/tsc:*)",
+      "Bash(node_modules/.bin/vite build:*)",
+      "Bash(timeout 45 bun tauri dev:*)"
     ]
   }
 }

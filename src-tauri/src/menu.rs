@@ -1,6 +1,6 @@
 use tauri::{
     menu::{MenuBuilder, MenuItemBuilder, SubmenuBuilder},
-    AppHandle, Manager, Runtime, Wry,
+    AppHandle, Emitter, Manager, Wry,
 };
 
 /// Build and set up the application menu

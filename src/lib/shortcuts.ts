@@ -7,6 +7,8 @@ import {
   navigateNextMonth,
 } from './tauri';
 import { setIsGoToDateOpen } from '../state/ui';
+import { preferences } from '../state/preferences';
+import { getTodayString } from './dates';
 
 /**
  * Detect if we're on macOS
@@ -59,7 +61,10 @@ export function setupNavigationShortcuts(
       e.preventDefault();
       try {
         const newDate = await navigateNextDay(selectedDate());
-        setSelectedDate(newDate);
+        // Clamp to today if future entries are not allowed
+        const today = getTodayString();
+        const finalDate = !preferences().allowFutureEntries && newDate > today ? today : newDate;
+        setSelectedDate(finalDate);
       } catch (error) {
         console.error('Failed to navigate to next day:', error);
       }
@@ -94,7 +99,10 @@ export function setupNavigationShortcuts(
       e.preventDefault();
       try {
         const newDate = await navigateNextMonth(selectedDate());
-        setSelectedDate(newDate);
+        // Clamp to today if future entries are not allowed
+        const today = getTodayString();
+        const finalDate = !preferences().allowFutureEntries && newDate > today ? today : newDate;
+        setSelectedDate(finalDate);
       } catch (error) {
         console.error('Failed to navigate to next month:', error);
       }

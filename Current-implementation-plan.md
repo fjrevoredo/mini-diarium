@@ -3,21 +3,21 @@
 ---
 ## IMPLEMENTATION STATUS (Updated: 2026-02-15)
 
-**Progress: 28/47 Tasks Complete (60%)**
+**Progress: 29/47 Tasks Complete (62%)**
 
 - ✅ **Phase 1: Foundation & Core Infrastructure** (Tasks 1-28) - **COMPLETE**
-- ⏳ **Phase 2: Search, Navigation & Preferences** (Tasks 29-33) - **NOT STARTED**
+- ⏳ **Phase 2: Search, Navigation & Preferences** (Tasks 29-33) - **PARTIAL (1/5 complete)**
 - ⏳ **Phase 3: Import, Export, Theming** (Tasks 34-44) - **NOT STARTED**
 - ⏳ **Phase 4: Backup & Advanced Features** (Tasks 45-46) - **NOT STARTED**
 - ⏳ **Phase 5: Internationalization** (Task 47) - **NOT STARTED**
 
 **Most Recent Completions:**
-- Task 25: Word Count Display
 - Task 26: Calendar Navigation (verified existing)
 - Task 27: Date Navigation Shortcuts (keyboard + menu)
 - Task 28: Go To Date Overlay (Kobalte dialog)
+- Task 29: Future Date Restriction Preference (preferences system + validation)
 
-**Next Up:** Task 29 - Future Date Restriction Preference
+**Next Up:** Task 30 - First Day of Week Preference
 
 ---
 
@@ -59,67 +59,67 @@
    - Run bun create tauri-app with SolidJS template                                                         
    - Configure project: name "mini-diarium", identifier "com.minidiarium.app"                               
    - Verify: bun tauri dev opens window with "Hello from Tauri + SolidJS"                                   
- 2. Configure development tooling                                                                           
-   - Install: ESLint + eslint-plugin-solid, Prettier, TypeScript strict mode                                
-   - Set up: Rust clippy and rustfmt, UnoCSS + Vite plugin                                                  
-   - Add scripts: lint, format, type-check                                                                  
-   - Verify: bun run lint && bun run format:check && bun run type-check                                     
- 3. Create project folder structure                                                                         
+ ✅ 2. Configure development tooling
+   - Install: ESLint + eslint-plugin-solid, Prettier, TypeScript strict mode
+   - Set up: Rust clippy and rustfmt, UnoCSS + Vite plugin
+   - Add scripts: lint, format, type-check
+   - Verify: bun run lint && bun run format:check && bun run type-check
+ ✅ 3. Create project folder structure                                                                         
    - Frontend: src/{components/{auth,layout,editor,calendar,search,overlays,ui}, state, lib, styles, types} 
    - Backend: src-tauri/src/{commands,crypto,db,import,export,backup,i18n}                                  
                                                                                                             
- Rust Backend - Crypto & Database (Increments 1.4-1.7)                                                      
-                                                                                                            
- 4. Implement Argon2id password hashing                                                                     
-   - File: src-tauri/src/crypto/password.rs                                                                 
-   - Functions: hash_password(), generate_salt(), verify_password()                                         
-   - Params: m=64MB, t=3, p=4                                                                               
-   - Test: cargo test --lib crypto::password (100% coverage)                                                
- 5. Implement AES-256-GCM encryption                                                                        
-   - File: src-tauri/src/crypto/cipher.rs                                                                   
-   - Functions: encrypt(), decrypt() with random nonces                                                     
-   - Use: aes-gcm crate, zeroize for key clearing                                                           
-   - Test: cargo test --lib crypto::cipher (roundtrip, wrong key, tampering)                                
- 6. Create SQLite database schema                                                                           
-   - File: src-tauri/src/db/schema.rs                                                                       
-   - Tables: entries, entries_fts (FTS5), metadata, schema_version                                          
-   - Triggers: Auto-sync FTS index on INSERT/UPDATE/DELETE                                                  
-   - Functions: create_database(), open_database()                                                          
-   - Test: cargo test --lib db:: (create, open, wrong password)                                             
- 7. Implement entry CRUD operations                                                                         
+ Rust Backend - Crypto & Database (Tasks 4-7)
+
+ ✅ 4. Implement Argon2id password hashing
+   - File: src-tauri/src/crypto/password.rs
+   - Functions: hash_password(), generate_salt(), verify_password()
+   - Params: m=64MB, t=3, p=4
+   - Test: cargo test --lib crypto::password (100% coverage)
+ ✅ 5. Implement AES-256-GCM encryption
+   - File: src-tauri/src/crypto/cipher.rs
+   - Functions: encrypt(), decrypt() with random nonces
+   - Use: aes-gcm crate, zeroize for key clearing
+   - Test: cargo test --lib crypto::cipher (roundtrip, wrong key, tampering)
+ ✅ 6. Create SQLite database schema
+   - File: src-tauri/src/db/schema.rs
+   - Tables: entries, entries_fts (FTS5), metadata, schema_version
+   - Triggers: Auto-sync FTS index on INSERT/UPDATE/DELETE
+   - Functions: create_database(), open_database()
+   - Test: cargo test --lib db:: (create, open, wrong password)
+ ✅ 7. Implement entry CRUD operations                                                                         
    - File: src-tauri/src/db/queries.rs                                                                      
    - Functions: insert_entry(), get_entry(), update_entry(), delete_entry(), get_all_entry_dates()          
    - Test: Rust unit tests for all CRUD operations                                                          
                                                                                                             
- Tauri Commands (Increments 1.8-1.9)                                                                        
-                                                                                                            
- 8. Implement authentication commands                                                                       
-   - File: src-tauri/src/commands/auth.rs                                                                   
-   - Commands: create_diary(), unlock_diary(), lock_diary(), change_password(), reset_diary()               
-   - Use Tauri managed state for database connection                                                        
-   - Register in main.rs                                                                                    
-   - Test: Integration tests with Tauri test helpers                                                        
- 9. Implement entry CRUD commands                                                                           
+ Tauri Commands (Tasks 8-9)
+
+ ✅ 8. Implement authentication commands
+   - File: src-tauri/src/commands/auth.rs
+   - Commands: create_diary(), unlock_diary(), lock_diary(), change_password(), reset_diary()
+   - Use Tauri managed state for database connection
+   - Register in main.rs
+   - Test: Integration tests with Tauri test helpers
+ ✅ 9. Implement entry CRUD commands                                                                           
    - File: src-tauri/src/commands/entries.rs                                                                
    - Commands: save_entry(), get_entry(), delete_entry_if_empty(), get_all_entry_dates()                    
    - Auto-update date_updated timestamp                                                                     
    - Test: Integration tests                                                                                
                                                                                                             
- Frontend - Authentication & Layout (Increments 1.10-1.12)                                                  
-                                                                                                            
- 10. Build Password Creation screen                                                                         
-   - File: src/components/auth/PasswordCreation.tsx                                                         
-   - Form: Two password inputs (Password, Repeat Password)                                                  
-   - Validation: Passwords must match                                                                       
-   - State: src/state/auth.ts with signals                                                                  
-   - IPC: src/lib/tauri.ts with typed wrappers                                                              
-   - Test: Solid Testing Library component tests                                                            
- 11. Build Password Prompt screen                                                                           
-   - File: src/components/auth/PasswordPrompt.tsx                                                           
-   - Form: Single password input                                                                            
-   - On success: Load entry dates, transition to diary view                                                 
-   - Test: Wrong password shows error, correct password transitions                                         
- 12. Build two-panel layout                                                                                 
+ Frontend - Authentication & Layout (Tasks 10-12)
+
+ ✅ 10. Build Password Creation screen
+   - File: src/components/auth/PasswordCreation.tsx
+   - Form: Two password inputs (Password, Repeat Password)
+   - Validation: Passwords must match
+   - State: src/state/auth.ts with signals
+   - IPC: src/lib/tauri.ts with typed wrappers
+   - Test: Solid Testing Library component tests
+ ✅ 11. Build Password Prompt screen
+   - File: src/components/auth/PasswordPrompt.tsx
+   - Form: Single password input
+   - On success: Load entry dates, transition to diary view
+   - Test: Wrong password shows error, correct password transitions
+ ✅ 12. Build two-panel layout                                                                                 
    - Files: src/components/layout/{Sidebar,EditorPanel,Header}.tsx                                          
    - Layout: src/App.tsx with conditional rendering:                                                        
        - No diary → PasswordCreation                                                                        
@@ -127,43 +127,43 @@
      - Unlocked → Sidebar + EditorPanel                                                                     
    - Style: UnoCSS grid/flex, responsive (sidebar collapses on mobile)                                      
                                                                                                             
- Editor & Calendar (Increments 1.13-1.19)                                                                   
-                                                                                                            
- 13. Set up TipTap editor with Markdown                                                                     
-   - File: src/components/editor/DiaryEditor.tsx                                                            
-   - Extensions: StarterKit, Markdown                                                                       
-   - Controlled component with SolidJS signals                                                              
-   - Methods: getMarkdown(), setMarkdown()                                                                  
-   - Test: Component tests for Markdown roundtrip                                                           
- 14. Implement title editor                                                                                 
-   - File: src/components/editor/TitleEditor.tsx                                                            
-   - Plain text only (no formatting)                                                                        
-   - Enter key → move focus to body editor                                                                  
-   - Integrate into EditorPanel above DiaryEditor                                                           
- 15. Implement auto-save with debouncing                                                                    
-   - State: src/state/entries.ts                                                                            
-   - Utility: src/lib/debounce.ts                                                                           
-   - Debounce: 500ms after typing stops                                                                     
-   - Also save: On blur, on window unload                                                                   
-   - Test: Mock timer, verify save called after 500ms                                                       
- 16. Build basic calendar widget                                                                            
-   - File: src/components/calendar/Calendar.tsx                                                             
-   - Use: @kobalte/core Calendar component                                                                  
-   - Highlight: Currently selected date                                                                     
-   - On click: Update selectedDate in src/state/ui.ts                                                       
-   - Dates: src/lib/dates.ts with Temporal utilities                                                        
-   - Test: Clicking day selects date                                                                        
- 17. Highlight calendar days with entries                                                                   
-   - On unlock: Fetch all entry dates via get_all_entry_dates()                                             
-   - Store: src/state/entries.ts                                                                            
-   - Style: .has-entry class for days with entries (dot/bold/background)                                    
-   - Test: Create entries, verify calendar highlights                                                       
- 18. Integrate calendar with editor                                                                         
-   - On day click: Update selectedDate, load entry (or clear if empty)                                      
-   - On save: Update entry dates list                                                                       
-   - Header: Display selected date (formatted: "Tuesday, January 1, 2019")                                  
-   - Test: Navigate dates, verify entry loads/clears                                                        
- 19. Implement empty entry auto-deletion                                                                    
+ Editor & Calendar (Tasks 13-19)
+
+ ✅ 13. Set up TipTap editor with Markdown
+   - File: src/components/editor/DiaryEditor.tsx
+   - Extensions: StarterKit, Markdown
+   - Controlled component with SolidJS signals
+   - Methods: getMarkdown(), setMarkdown()
+   - Test: Component tests for Markdown roundtrip
+ ✅ 14. Implement title editor
+   - File: src/components/editor/TitleEditor.tsx
+   - Plain text only (no formatting)
+   - Enter key → move focus to body editor
+   - Integrate into EditorPanel above DiaryEditor
+ ✅ 15. Implement auto-save with debouncing
+   - State: src/state/entries.ts
+   - Utility: src/lib/debounce.ts
+   - Debounce: 500ms after typing stops
+   - Also save: On blur, on window unload
+   - Test: Mock timer, verify save called after 500ms
+ ✅ 16. Build basic calendar widget
+   - File: src/components/calendar/Calendar.tsx
+   - Use: @kobalte/core Calendar component
+   - Highlight: Currently selected date
+   - On click: Update selectedDate in src/state/ui.ts
+   - Dates: src/lib/dates.ts with Temporal utilities
+   - Test: Clicking day selects date
+ ✅ 17. Highlight calendar days with entries
+   - On unlock: Fetch all entry dates via get_all_entry_dates()
+   - Store: src/state/entries.ts
+   - Style: .has-entry class for days with entries (dot/bold/background)
+   - Test: Create entries, verify calendar highlights
+ ✅ 18. Integrate calendar with editor
+   - On day click: Update selectedDate, load entry (or clear if empty)
+   - On save: Update entry dates list
+   - Header: Display selected date (formatted: "Tuesday, January 1, 2019")
+   - Test: Navigate dates, verify entry loads/clears
+ ✅ 19. Implement empty entry auto-deletion                                                                    
    - On save: If title and text are empty, call delete_entry_if_empty()                                     
    - Update: Entry dates list, remove calendar highlight                                                    
    - Test: Clear entry content, verify deletion                                                             
@@ -172,67 +172,67 @@
  entries with rich text, navigate dates via a calendar, and have entries auto-saved.                        
                                                                                                             
  ---                                                                                                        
- Phase 2: Core Features (14 increments)                                                                     
-                                                                                                            
- Goal: Full-text search, formatting toolbar, statistics, date navigation, preferences.                      
-                                                                                                            
- Search (Increments 2.1-2.4)                                                                                
-                                                                                                            
- 20. Implement SQLite FTS5 search                                                                           
+ Phase 2: Core Features (14 tasks) - ⏳ PARTIAL (8/14 complete)
+
+ Goal: Full-text search, formatting toolbar, statistics, date navigation, preferences.
+
+ Search (Tasks 20-22)
+
+ ✅ 20. Implement SQLite FTS5 search                                                                           
    - File: src-tauri/src/commands/search.rs                                                                 
    - Command: search_entries(query) -> Vec<SearchResult>                                                    
    - Query: SELECT date, title FROM entries_fts WHERE entries_fts MATCH ?                                   
    - Sort: By relevance (rank)                                                                              
    - Test: Rust unit tests (title match, text match, prefix)                                                
- 21. Build search bar UI                                                                                    
-   - File: src/components/search/SearchBar.tsx                                                              
-   - Debounce: 500ms (immediate on clear)                                                                   
-   - Store: src/state/search.ts                                                                             
-   - Clear button: X icon to reset                                                                          
-   - Test: Debounce verification                                                                            
- 22. Build search results list                                                                              
-   - File: src/components/search/SearchResults.tsx                                                          
-   - Display: Date + title (or "No title" faded/italic)                                                     
-   - On click: Navigate to date                                                                             
-   - Empty state: "No results" banner                                                                       
-   - Sort: Newest first                                                                                     
-   - Test: Display, navigation, empty state                                                                 
- 23. Implement "Go To Today" button                                                                         
-   - Location: Sidebar next to search                                                                       
-   - On click: Set selectedDate to today                                                                    
-   - Disabled: If today already selected                                                                    
-   - Icon: Lucide CalendarToday                                                                             
-                                                                                                            
- Editor Enhancements (Increments 2.5-2.6)                                                                   
-                                                                                                            
- 24. Build editor toolbar                                                                                   
-   - File: src/components/editor/EditorToolbar.tsx                                                          
-   - Buttons: Bold (Ctrl/Cmd+B), Italic (Ctrl/Cmd+I), Unordered List, Ordered List                          
-   - Active state: Highlight when formatting applied                                                        
-   - Icons: Lucide                                                                                          
-   - Test: Toggle formatting, verify active state                                                           
- 25. Implement word count display                                                                           
+ ✅ 21. Build search bar UI
+   - File: src/components/search/SearchBar.tsx
+   - Debounce: 500ms (immediate on clear)
+   - Store: src/state/search.ts
+   - Clear button: X icon to reset
+   - Test: Debounce verification
+ ✅ 22. Build search results list
+   - File: src/components/search/SearchResults.tsx
+   - Display: Date + title (or "No title" faded/italic)
+   - On click: Navigate to date
+   - Empty state: "No results" banner
+   - Sort: Newest first
+   - Test: Display, navigation, empty state
+ ✅ 23. Implement "Go To Today" button
+   - Location: Sidebar next to search
+   - On click: Set selectedDate to today
+   - Disabled: If today already selected
+   - Icon: Lucide CalendarToday
+
+ Editor Enhancements (Tasks 24-25)
+
+ ✅ 24. Build editor toolbar
+   - File: src/components/editor/EditorToolbar.tsx
+   - Buttons: Bold (Ctrl/Cmd+B), Italic (Ctrl/Cmd+I), Unordered List, Ordered List
+   - Active state: Highlight when formatting applied
+   - Icons: Lucide
+   - Test: Toggle formatting, verify active state
+ ✅ 25. Implement word count display                                                                           
    - File: src/components/editor/WordCount.tsx                                                              
    - Count: From persisted data (not live editor)                                                           
    - Update: After auto-save completes                                                                      
    - Display: "X words"                                                                                     
    - Test: Mock entry, verify display                                                                       
                                                                                                             
- Calendar & Navigation (Increments 2.7-2.9)                                                                 
-                                                                                                            
- 26. Implement calendar navigation                                                                          
-   - File: src/components/calendar/CalendarNav.tsx                                                          
-   - Buttons: Previous/next month                                                                           
-   - Header: "January 2024"                                                                                 
-   - Date math: Temporal API                                                                                
-   - Test: Navigate months                                                                                  
- 27. Implement date navigation shortcuts                                                                    
-   - Create Tauri application menu                                                                          
+ Calendar & Navigation (Tasks 26-28)
+
+ ✅ 26. Implement calendar navigation
+   - File: src/components/calendar/CalendarNav.tsx
+   - Buttons: Previous/next month
+   - Header: "January 2024"
+   - Date math: Temporal API
+   - Test: Navigate months
+ ✅ 27. Implement date navigation shortcuts
+   - Create Tauri application menu
    - Items: Previous Day (Left), Next Day (Right), Go To Today (Ctrl/Cmd+T), Previous Month (Ctrl/Cmd+Left),
- Next Month (Ctrl/Cmd+Right)                                                                                
-   - Platform: macOS app menu, Windows/Linux File menu                                                      
-   - Test: Manual keyboard shortcuts                                                                        
- 28. Build "Go To Date" overlay                                                                             
+ Next Month (Ctrl/Cmd+Right)
+   - Platform: macOS app menu, Windows/Linux File menu
+   - Test: Manual keyboard shortcuts
+ ✅ 28. Build "Go To Date" overlay                                                                             
    - File: src/components/overlays/GoToDateOverlay.tsx                                                      
    - Use: Kobalte Dialog (accessible modal)                                                                 
    - Input: <input type="date">                                                                             
@@ -240,9 +240,9 @@
    - On submit: Navigate and close                                                                          
    - State: src/state/ui.ts for overlay management                                                          
                                                                                                             
- Preferences (Increments 2.10-2.13)                                                                         
-                                                                                                            
- 29. Implement future date restriction                                                                      
+ Preferences (Tasks 29-32)
+
+ ✅ 29. Implement future date restriction                                                                      
    - Preference: allowFutureEntries: boolean (default: false)                                               
    - Disable: Future days in calendar when false                                                            
    - Clamp: "Next Day" navigation to today if disabled                                                      
@@ -737,12 +737,27 @@
  - .agents/skills/tauri-v2/ (Tauri v2 development references)                                               
  - .agents/skills/solidjs/ (SolidJS development references)                                                 
                                                                                                             
- ---                                                                                                        
- Next Steps                                                                                                 
-                                                                                                            
- 1. Start with Increment 1.1: Initialize Tauri + SolidJS project                                            
- 2. Follow incremental order: Each step builds on previous                                                  
- 3. Test continuously: Verify each increment before proceeding                                              
- 4. Defer E2E: Save Playwright tests for Phase 5 (per user request)                                         
-                                                                                                            
- Ready to begin implementation!  
+ ---
+ Current Status & Next Steps
+
+ ✅ **COMPLETED: Tasks 1-29** (62% complete)
+   - Phase 1: Foundation & Core Infrastructure (Tasks 1-28) - COMPLETE
+   - Task 29: Future Date Restriction Preference - COMPLETE
+     * Preferences system with localStorage persistence
+     * Calendar disables future dates when preference is false
+     * Navigation clamps to today when restricted
+     * Fixed timezone bugs in date handling
+
+ 🎯 **NEXT UP: Task 30** - First Day of Week Preference
+   - Add firstDayOfWeek preference (0-6 or null for system default)
+   - Create initial PreferencesOverlay.tsx component
+   - Add dropdown for Sunday-Saturday selection
+   - Update Calendar to start weeks on preferred day
+
+ 📋 **REMAINING: Tasks 30-47** (18 tasks across 4 phases)
+   - Phase 2 remaining: Preferences & Statistics (Tasks 30-33)
+   - Phase 3: Import/Export/Theming (Tasks 34-44)
+   - Phase 4: Backup & Advanced (Tasks 45-46)
+   - Phase 5: Internationalization (Task 47)
+
+ ✨ **Ready to continue implementation!**  

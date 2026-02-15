@@ -13,6 +13,8 @@ import {
   navigatePreviousMonth,
   navigateNextMonth,
 } from '../../lib/tauri';
+import { preferences } from '../../state/preferences';
+import { getTodayString } from '../../lib/dates';
 
 export default function MainLayout() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = createSignal(true);
@@ -44,7 +46,10 @@ export default function MainLayout() {
       await listen('menu-navigate-next-day', async () => {
         try {
           const newDate = await navigateNextDay(selectedDate());
-          setSelectedDate(newDate);
+          // Clamp to today if future entries are not allowed
+          const today = getTodayString();
+          const finalDate = !preferences().allowFutureEntries && newDate > today ? today : newDate;
+          setSelectedDate(finalDate);
         } catch (error) {
           console.error('Failed to navigate to next day:', error);
         }
@@ -87,7 +92,10 @@ export default function MainLayout() {
       await listen('menu-navigate-next-month', async () => {
         try {
           const newDate = await navigateNextMonth(selectedDate());
-          setSelectedDate(newDate);
+          // Clamp to today if future entries are not allowed
+          const today = getTodayString();
+          const finalDate = !preferences().allowFutureEntries && newDate > today ? today : newDate;
+          setSelectedDate(finalDate);
         } catch (error) {
           console.error('Failed to navigate to next month:', error);
         }

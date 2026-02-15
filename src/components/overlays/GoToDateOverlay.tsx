@@ -1,7 +1,8 @@
-import { createSignal, Show } from 'solid-js';
+import { createSignal } from 'solid-js';
 import { Dialog } from '@kobalte/core/dialog';
 import { isGoToDateOpen, setIsGoToDateOpen, selectedDate, setSelectedDate } from '../../state/ui';
 import { getTodayString, isValidDate } from '../../lib/dates';
+import { preferences } from '../../state/preferences';
 
 export default function GoToDateOverlay() {
   const [dateInput, setDateInput] = createSignal(selectedDate());
@@ -28,12 +29,13 @@ export default function GoToDateOverlay() {
       return true;
     }
 
-    // Future date check (will be controlled by preference in Task 29)
-    // For now, allow all dates
-    // const today = getTodayString();
-    // if (input > today) {
-    //   return true;
-    // }
+    // Future date check (controlled by preference)
+    if (!preferences().allowFutureEntries) {
+      const today = getTodayString();
+      if (input > today) {
+        return true;
+      }
+    }
 
     return false;
   };

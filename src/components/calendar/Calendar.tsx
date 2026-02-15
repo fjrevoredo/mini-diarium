@@ -1,6 +1,8 @@
 import { createSignal, For, createMemo } from 'solid-js';
 import { selectedDate, setSelectedDate } from '../../state/ui';
 import { entryDates } from '../../state/entries';
+import { preferences } from '../../state/preferences';
+import { getTodayString } from '../../lib/dates';
 
 interface CalendarDay {
   date: string; // YYYY-MM-DD
@@ -9,6 +11,8 @@ interface CalendarDay {
   isToday: boolean;
   isSelected: boolean;
   hasEntry: boolean;
+  isFuture: boolean;
+  isDisabled: boolean;
 }
 
 export default function Calendar() {
@@ -30,14 +34,19 @@ export default function Calendar() {
 
     // Get entry dates for checking
     const dates = entryDates();
+    const today = getTodayString();
+    const allowFuture = preferences().allowFutureEntries;
 
     // Days from previous month to show
     const prevMonthDays: CalendarDay[] = [];
     const prevMonthLastDay = new Date(year, monthIndex, 0).getDate();
     for (let i = firstDayOfWeek - 1; i >= 0; i--) {
       const day = prevMonthLastDay - i;
-      const date = new Date(year, monthIndex - 1, day);
-      const dateStr = date.toISOString().split('T')[0];
+      const prevMonth = monthIndex - 1;
+      const prevYear = prevMonth < 0 ? year - 1 : year;
+      const actualMonth = prevMonth < 0 ? 11 : prevMonth;
+      const dateStr = `${prevYear}-${String(actualMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      const isFuture = dateStr > today;
       prevMonthDays.push({
         date: dateStr,
         day,
@@ -45,17 +54,18 @@ export default function Calendar() {
         isToday: false,
         isSelected: false,
         hasEntry: dates.includes(dateStr),
+        isFuture,
+        isDisabled: !allowFuture && isFuture,
       });
     }
 
     // Days of current month
     const currentMonthDays: CalendarDay[] = [];
-    const today = new Date().toISOString().split('T')[0];
     const selected = selectedDate();
 
     for (let day = 1; day <= lastDay.getDate(); day++) {
-      const date = new Date(year, monthIndex, day);
-      const dateStr = date.toISOString().split('T')[0];
+      const dateStr = `${year}-${String(monthIndex + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      const isFuture = dateStr > today;
       currentMonthDays.push({
         date: dateStr,
         day,
@@ -63,6 +73,8 @@ export default function Calendar() {
         isToday: dateStr === today,
         isSelected: dateStr === selected,
         hasEntry: dates.includes(dateStr),
+        isFuture,
+        isDisabled: !allowFuture && isFuture,
       });
     }
 
@@ -71,8 +83,11 @@ export default function Calendar() {
     const remainingDays = 42 - totalDays; // 6 weeks * 7 days
     const nextMonthDays: CalendarDay[] = [];
     for (let day = 1; day <= remainingDays; day++) {
-      const date = new Date(year, monthIndex + 1, day);
-      const dateStr = date.toISOString().split('T')[0];
+      const nextMonth = monthIndex + 1;
+      const nextYear = nextMonth > 11 ? year + 1 : year;
+      const actualMonth = nextMonth > 11 ? 0 : nextMonth;
+      const dateStr = `${nextYear}-${String(actualMonth + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+      const isFuture = dateStr > today;
       nextMonthDays.push({
         date: dateStr,
         day,
@@ -80,6 +95,8 @@ export default function Calendar() {
         isToday: false,
         isSelected: false,
         hasEntry: dates.includes(dateStr),
+        isFuture,
+        isDisabled: !allowFuture && isFuture,
       });
     }
 
@@ -102,6 +119,10 @@ export default function Calendar() {
   };
 
   const handleDayClick = (day: CalendarDay) => {
+    // Don't allow clicking disabled days (future dates when preference is off)
+    if (day.isDisabled) {
+      return;
+    }
     if (day.isCurrentMonth) {
       setSelectedDate(day.date);
     }
@@ -157,10 +178,11 @@ export default function Calendar() {
                 relative h-8 w-8 rounded text-sm flex flex-col items-center justify-center
                 ${day.isCurrentMonth ? 'text-gray-900' : 'text-gray-400'}
                 ${day.isToday ? 'font-bold' : ''}
-                ${day.isSelected ? 'bg-blue-600 text-white hover:bg-blue-700' : 'hover:bg-gray-100'}
-                ${!day.isCurrentMonth ? 'cursor-default' : 'cursor-pointer'}
+                ${day.isSelected ? 'bg-blue-600 text-white hover:bg-blue-700' : !day.isDisabled ? 'hover:bg-gray-100' : ''}
+                ${!day.isCurrentMonth || day.isDisabled ? 'cursor-default' : 'cursor-pointer'}
+                ${day.isDisabled ? 'opacity-40 cursor-not-allowed' : ''}
               `}
-              disabled={!day.isCurrentMonth}
+              disabled={!day.isCurrentMonth || day.isDisabled}
             >
               <span>{day.day}</span>
               {day.hasEntry && (
