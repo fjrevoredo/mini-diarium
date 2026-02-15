@@ -5,11 +5,132 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#000000" />
     <link rel="icon" type="image/svg+xml" href="/src/assets/logo.svg" />
-    <title>Tauri + Solid + Typescript App</title>
+    <title>Mini Diarium</title>
+
+    <!-- Critical CSS to prevent FOUC and style loading screen -->
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      html, body {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
+      }
+
+      body {
+        background-color: #f9fafb;
+      }
+
+      #root {
+        width: 100%;
+        height: 100%;
+        position: relative;
+      }
+
+      /* Loading screen - covers entire viewport */
+      #app-loading {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: #f9fafb;
+        z-index: 9999;
+      }
+
+      .loading-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
+      }
+
+      .loading-spinner {
+        width: 40px;
+        height: 40px;
+        border: 3px solid #e5e7eb;
+        border-top-color: #3b82f6;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+
+      .loading-text {
+        color: #6b7280;
+        font-size: 14px;
+      }
+
+      @keyframes spin {
+        to { transform: rotate(360deg); }
+      }
+
+      /* Initially hide root content */
+      #root {
+        opacity: 0;
+        transition: opacity 0.3s ease-in;
+      }
+
+      #root.loaded {
+        opacity: 1;
+      }
+
+      /* Base form styles to prevent FOUC */
+      input, button {
+        font-family: inherit;
+        font-size: 14px;
+      }
+
+      input {
+        outline: none;
+        border: 1px solid #d1d5db;
+        padding: 8px 12px;
+        border-radius: 6px;
+      }
+
+      input:focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+      }
+
+      button {
+        cursor: pointer;
+        padding: 8px 16px;
+        border-radius: 6px;
+        border: none;
+        background-color: #3b82f6;
+        color: white;
+        font-weight: 500;
+      }
+
+      button:hover {
+        background-color: #2563eb;
+      }
+
+      button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+    </style>
   </head>
 
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>
+
+    <!-- Loading screen -->
+    <div id="app-loading">
+      <div class="loading-content">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Loading Mini Diarium...</div>
+      </div>
+    </div>
+
     <div id="root"></div>
 
     <script src="/src/index.tsx" type="module"></script>

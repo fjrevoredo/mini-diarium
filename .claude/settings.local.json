@@ -28,7 +28,8 @@
       "Bash(C:/Users/Francisco/.bun/bin/bun pm ls)",
       "Bash(C:/Users/Francisco/.bun/bin/bun run type-check)",
       "Bash(C:/Users/Francisco/.bun/bin/bun add lucide-solid)",
-      "Bash(C:/Users/Francisco/.bun/bin/bun add @js-temporal/polyfill)"
+      "Bash(C:/Users/Francisco/.bun/bin/bun add @js-temporal/polyfill)",
+      "Bash(grep:*)"
     ]
   }
 }

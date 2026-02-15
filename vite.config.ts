@@ -7,7 +7,30 @@ const host = process.env.TAURI_DEV_HOST;
 
 // https://vite.dev/config/
 export default defineConfig(async () => ({
-  plugins: [UnoCSS(), solid()],
+  plugins: [solid(), UnoCSS()],
+
+  // Build optimizations
+  build: {
+    target: 'esnext',
+    minify: 'esbuild',
+    cssMinify: true,
+    cssCodeSplit: false, // Inline all CSS in one file for faster loading
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Separate vendor chunks for better caching
+          'vendor-solid': ['solid-js'],
+          'vendor-tiptap': ['@tiptap/core', '@tiptap/starter-kit', '@tiptap/extension-placeholder'],
+          'vendor-ui': ['@kobalte/core'],
+        },
+      },
+    },
+  },
+
+  // Optimize dependencies
+  optimizeDeps: {
+    include: ['solid-js', '@tiptap/core', '@kobalte/core/dialog', 'lucide-solid'],
+  },
 
   // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`
   //
