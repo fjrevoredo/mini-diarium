@@ -1,4 +1,5 @@
 import { createSignal, For, createMemo } from 'solid-js';
+import { ChevronLeft, ChevronRight } from 'lucide-solid';
 import { selectedDate, setSelectedDate } from '../../state/ui';
 import { entryDates } from '../../state/entries';
 import { preferences } from '../../state/preferences';
@@ -43,7 +44,7 @@ export default function Calendar() {
 
     // Calculate how many days from previous month to show
     // We need to show days until we reach the preferred first day of week
-    let daysFromPrevMonth = (firstDayOfMonth - preferredFirstDay + 7) % 7;
+    const daysFromPrevMonth = (firstDayOfMonth - preferredFirstDay + 7) % 7;
 
     // Days from previous month to show
     const prevMonthDays: CalendarDay[] = [];
@@ -154,25 +155,11 @@ export default function Calendar() {
           class="rounded p-2 hover:bg-gray-100"
           aria-label="Previous month"
         >
-          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M15 19l-7-7 7-7"
-            />
-          </svg>
+          <ChevronLeft size={20} />
         </button>
         <h3 class="text-sm font-semibold text-gray-900">{monthName()}</h3>
         <button onClick={nextMonth} class="rounded p-2 hover:bg-gray-100" aria-label="Next month">
-          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M9 5l7 7-7 7"
-            />
-          </svg>
+          <ChevronRight size={20} />
         </button>
       </div>
 

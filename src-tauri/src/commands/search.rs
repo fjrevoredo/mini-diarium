@@ -24,13 +24,13 @@ pub fn search_entries(
     let conn = db_conn.conn();
 
     // Query the FTS5 virtual table
-    // Using MATCH for full-text search with ranking
+    // Using MATCH for full-text search, ordered by date (newest first)
     let mut stmt = conn
         .prepare(
             "SELECT date, title, snippet(entries_fts, 2, '<mark>', '</mark>', '...', 64) as snippet
              FROM entries_fts
              WHERE entries_fts MATCH ?1
-             ORDER BY rank",
+             ORDER BY date DESC",
         )
         .map_err(|e| format!("Failed to prepare search query: {}", e))?;
 

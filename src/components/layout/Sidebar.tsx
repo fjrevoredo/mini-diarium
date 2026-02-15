@@ -1,8 +1,10 @@
 import { Show } from 'solid-js';
+import { X, Calendar as CalendarIcon } from 'lucide-solid';
 import Calendar from '../calendar/Calendar';
 import SearchBar from '../search/SearchBar';
 import SearchResults from '../search/SearchResults';
-import { setSelectedDate } from '../../state/ui';
+import { selectedDate, setSelectedDate } from '../../state/ui';
+import { getTodayString } from '../../lib/dates';
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -34,14 +36,7 @@ export default function Sidebar(props: SidebarProps) {
                   class="rounded p-2 hover:bg-gray-100 lg:hidden"
                   aria-label="Close menu"
                 >
-                  <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      stroke-width="2"
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
+                  <X size={24} />
                 </button>
               </Show>
             </div>
@@ -50,25 +45,27 @@ export default function Sidebar(props: SidebarProps) {
           {/* Sidebar Content */}
           <div class="flex-1 overflow-y-auto p-4">
             <div class="space-y-4">
-              {/* Search */}
-              <div>
-                <SearchBar />
+              {/* Search with Go to Today button */}
+              <div class="space-y-2">
+                <div class="flex gap-2">
+                  <div class="flex-1">
+                    <SearchBar />
+                  </div>
+                  <button
+                    onClick={() => setSelectedDate(getTodayString())}
+                    disabled={selectedDate() === getTodayString()}
+                    class="flex items-center gap-1 rounded-md bg-gray-100 px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-gray-100"
+                    aria-label="Go to Today"
+                    title="Go to Today"
+                  >
+                    <CalendarIcon size={16} />
+                  </button>
+                </div>
                 <SearchResults />
               </div>
 
               {/* Calendar */}
               <Calendar />
-
-              {/* Go to today button */}
-              <button
-                onClick={() => {
-                  const today = new Date().toISOString().split('T')[0];
-                  setSelectedDate(today);
-                }}
-                class="w-full rounded-md bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200"
-              >
-                Go to Today
-              </button>
             </div>
           </div>
         </div>

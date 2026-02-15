@@ -9,6 +9,7 @@ interface DiaryEditorProps {
   onUpdate?: (content: string) => void;
   placeholder?: string;
   onEditorReady?: (editor: Editor) => void;
+  spellCheck?: boolean;
 }
 
 export default function DiaryEditor(props: DiaryEditorProps) {
@@ -37,11 +38,12 @@ export default function DiaryEditor(props: DiaryEditorProps) {
         attributes: {
           class:
             'prose prose-sm sm:prose lg:prose-lg xl:prose-xl focus:outline-none min-h-[200px] max-w-none',
+          spellcheck: String(props.spellCheck ?? true),
         },
       },
       onUpdate: ({ editor }) => {
-        const markdown = editor.getText();
-        props.onUpdate?.(markdown);
+        const html = editor.getHTML();
+        props.onUpdate?.(html);
       },
     });
 
@@ -54,8 +56,18 @@ export default function DiaryEditor(props: DiaryEditorProps) {
   // Update editor content when prop changes
   createEffect(() => {
     const editorInstance = editor();
-    if (editorInstance && props.content !== editorInstance.getText()) {
+    if (editorInstance && props.content !== editorInstance.getHTML()) {
       editorInstance.commands.setContent(props.content);
+    }
+  });
+
+  // Update spellcheck attribute when prop changes
+  createEffect(() => {
+    const editorInstance = editor();
+    const spellCheck = props.spellCheck ?? true;
+    if (editorInstance) {
+      const editorElement = editorInstance.view.dom;
+      editorElement.setAttribute('spellcheck', String(spellCheck));
     }
   });
 

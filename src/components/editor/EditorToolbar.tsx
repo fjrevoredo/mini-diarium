@@ -1,5 +1,6 @@
 import { Show, createSignal, createEffect, onCleanup } from 'solid-js';
 import type { Editor } from '@tiptap/core';
+import { Bold, Italic, List, ListOrdered } from 'lucide-solid';
 
 interface EditorToolbarProps {
   editor: Editor | null;
@@ -69,20 +70,7 @@ export default function EditorToolbar(props: EditorToolbarProps) {
           title="Bold (Ctrl/Cmd+B)"
           aria-label="Bold"
         >
-          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M6 4h8a4 4 0 014 4 4 4 0 01-4 4H6z"
-            />
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M6 12h9a4 4 0 014 4 4 4 0 01-4 4H6z"
-            />
-          </svg>
+          <Bold size={20} />
         </button>
 
         {/* Italic Button */}
@@ -96,11 +84,7 @@ export default function EditorToolbar(props: EditorToolbarProps) {
           title="Italic (Ctrl/Cmd+I)"
           aria-label="Italic"
         >
-          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <line x1="19" y1="4" x2="10" y2="4" stroke-linecap="round" stroke-width="2" />
-            <line x1="14" y1="20" x2="5" y2="20" stroke-linecap="round" stroke-width="2" />
-            <line x1="15" y1="4" x2="9" y2="20" stroke-linecap="round" stroke-width="2" />
-          </svg>
+          <Italic size={20} />
         </button>
 
         {/* Divider */}
@@ -117,14 +101,7 @@ export default function EditorToolbar(props: EditorToolbarProps) {
           title="Bullet List"
           aria-label="Bullet List"
         >
-          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <line x1="9" y1="6" x2="20" y2="6" stroke-linecap="round" stroke-width="2" />
-            <line x1="9" y1="12" x2="20" y2="12" stroke-linecap="round" stroke-width="2" />
-            <line x1="9" y1="18" x2="20" y2="18" stroke-linecap="round" stroke-width="2" />
-            <circle cx="5" cy="6" r="1" fill="currentColor" />
-            <circle cx="5" cy="12" r="1" fill="currentColor" />
-            <circle cx="5" cy="18" r="1" fill="currentColor" />
-          </svg>
+          <List size={20} />
         </button>
 
         {/* Ordered List Button */}
@@ -138,14 +115,7 @@ export default function EditorToolbar(props: EditorToolbarProps) {
           title="Numbered List"
           aria-label="Numbered List"
         >
-          <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <line x1="12" y1="6" x2="21" y2="6" stroke-linecap="round" stroke-width="2" />
-            <line x1="12" y1="12" x2="21" y2="12" stroke-linecap="round" stroke-width="2" />
-            <line x1="12" y1="18" x2="21" y2="18" stroke-linecap="round" stroke-width="2" />
-            <path d="M3 5v2m0 0v2m0-2h2" stroke-linecap="round" stroke-width="1.5" />
-            <path d="M3 11v2m0 0v2m0-2h2" stroke-linecap="round" stroke-width="1.5" />
-            <path d="M3 17v2m0 0v2m0-2h2" stroke-linecap="round" stroke-width="1.5" />
-          </svg>
+          <ListOrdered size={20} />
         </button>
       </div>
     </Show>

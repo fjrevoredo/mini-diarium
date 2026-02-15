@@ -1,4 +1,5 @@
 import { createEffect, onCleanup } from 'solid-js';
+import { X } from 'lucide-solid';
 import { searchQuery, setSearchQuery, setSearchResults, setIsSearching } from '../../state/search';
 import { searchEntries } from '../../lib/tauri';
 import { debounce } from '../../lib/debounce';
@@ -73,14 +74,7 @@ export default function SearchBar() {
             class="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
             aria-label="Clear search"
           >
-            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
+            <X size={16} />
           </button>
         )}
       </div>

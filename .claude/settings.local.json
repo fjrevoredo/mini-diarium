@@ -23,7 +23,12 @@
       "Bash(node_modules/typescript/bin/tsc:*)",
       "Bash(node_modules/.bin/vite build:*)",
       "Bash(timeout 45 bun tauri dev:*)",
-      "Bash(C:/Users/Francisco/.bun/bin/bun run tauri dev)"
+      "Bash(C:/Users/Francisco/.bun/bin/bun run tauri dev)",
+      "Bash(C:/Users/Francisco/.bun/bin/bun run lint:*)",
+      "Bash(C:/Users/Francisco/.bun/bin/bun pm ls)",
+      "Bash(C:/Users/Francisco/.bun/bin/bun run type-check)",
+      "Bash(C:/Users/Francisco/.bun/bin/bun add lucide-solid)",
+      "Bash(C:/Users/Francisco/.bun/bin/bun add @js-temporal/polyfill)"
     ]
   }
 }

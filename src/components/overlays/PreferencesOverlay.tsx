@@ -1,4 +1,4 @@
-import { createSignal } from 'solid-js';
+import { createSignal, For } from 'solid-js';
 import { Dialog } from '@kobalte/core/dialog';
 import { preferences, setPreferences } from '../../state/preferences';
 
@@ -27,6 +27,9 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
     preferences().firstDayOfWeek === null ? 'null' : String(preferences().firstDayOfWeek),
   );
   const [localHideTitles, setLocalHideTitles] = createSignal(preferences().hideTitles);
+  const [localEnableSpellcheck, setLocalEnableSpellcheck] = createSignal(
+    preferences().enableSpellcheck,
+  );
 
   // Reset local state when dialog opens
   const handleOpenChange = (open: boolean) => {
@@ -36,6 +39,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
         preferences().firstDayOfWeek === null ? 'null' : String(preferences().firstDayOfWeek),
       );
       setLocalHideTitles(preferences().hideTitles);
+      setLocalEnableSpellcheck(preferences().enableSpellcheck);
     }
     if (!open) {
       props.onClose();
@@ -48,6 +52,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
       allowFutureEntries: localAllowFutureEntries(),
       firstDayOfWeek: localFirstDayOfWeek() === 'null' ? null : Number(localFirstDayOfWeek()),
       hideTitles: localHideTitles(),
+      enableSpellcheck: localEnableSpellcheck(),
     });
     props.onClose();
   };
@@ -91,9 +96,9 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                     onChange={(e) => setLocalFirstDayOfWeek(e.currentTarget.value)}
                     class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
-                    {FIRST_DAY_OPTIONS.map((option) => (
-                      <option value={option.value}>{option.label}</option>
-                    ))}
+                    <For each={FIRST_DAY_OPTIONS}>
+                      {(option) => <option value={option.value}>{option.label}</option>}
+                    </For>
                   </select>
                 </div>
 
@@ -120,20 +125,39 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                 <h3 class="text-sm font-medium text-gray-900 mb-3">Editor</h3>
 
                 {/* Hide Titles */}
+                <div class="mb-4">
+                  <div class="flex items-center">
+                    <input
+                      type="checkbox"
+                      id="hide-titles"
+                      checked={localHideTitles()}
+                      onChange={(e) => setLocalHideTitles(e.currentTarget.checked)}
+                      class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <label for="hide-titles" class="ml-2 text-sm text-gray-700">
+                      Hide entry titles
+                    </label>
+                  </div>
+                  <p class="mt-1 ml-6 text-xs text-gray-500">
+                    When enabled, the title editor will be hidden. Title data is still saved.
+                  </p>
+                </div>
+
+                {/* Enable Spellcheck */}
                 <div class="flex items-center">
                   <input
                     type="checkbox"
-                    id="hide-titles"
-                    checked={localHideTitles()}
-                    onChange={(e) => setLocalHideTitles(e.currentTarget.checked)}
+                    id="enable-spellcheck"
+                    checked={localEnableSpellcheck()}
+                    onChange={(e) => setLocalEnableSpellcheck(e.currentTarget.checked)}
                     class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                   />
-                  <label for="hide-titles" class="ml-2 text-sm text-gray-700">
-                    Hide entry titles
+                  <label for="enable-spellcheck" class="ml-2 text-sm text-gray-700">
+                    Enable spellcheck
                   </label>
                 </div>
                 <p class="mt-1 ml-6 text-xs text-gray-500">
-                  When enabled, the title editor will be hidden. Title data is still saved.
+                  When enabled, browser spellcheck will highlight misspelled words.
                 </p>
               </div>
             </div>

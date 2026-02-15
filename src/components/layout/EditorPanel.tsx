@@ -1,4 +1,5 @@
 import { createSignal, createEffect, onCleanup, onMount, Show } from 'solid-js';
+import { Editor } from '@tiptap/core';
 import TitleEditor from '../editor/TitleEditor';
 import DiaryEditor from '../editor/DiaryEditor';
 import WordCount from '../editor/WordCount';
@@ -13,6 +14,7 @@ export default function EditorPanel() {
   const [content, setContent] = createSignal('');
   const [wordCount, setWordCount] = createSignal(0);
   const [isLoadingEntry, setIsLoadingEntry] = createSignal(false);
+  const [editorInstance, setEditorInstance] = createSignal<Editor | null>(null);
 
   // Load entry when selected date changes
   createEffect(async () => {
@@ -97,8 +99,11 @@ export default function EditorPanel() {
   };
 
   const handleTitleEnter = () => {
-    // Focus will automatically move to editor
-    console.log('Title entered, focus should move to editor');
+    // Focus the editor when Enter is pressed in title
+    const editor = editorInstance();
+    if (editor) {
+      editor.commands.focus('end');
+    }
   };
 
   // Save on window unload
@@ -127,12 +132,15 @@ export default function EditorPanel() {
                 onInput={handleTitleInput}
                 onEnter={handleTitleEnter}
                 placeholder={isLoadingEntry() ? 'Loading...' : 'Title (optional)'}
+                spellCheck={preferences().enableSpellcheck}
               />
             </Show>
             <DiaryEditor
               content={content()}
               onUpdate={handleContentUpdate}
               placeholder={isLoadingEntry() ? 'Loading...' : "What's on your mind today?"}
+              onEditorReady={setEditorInstance}
+              spellCheck={preferences().enableSpellcheck}
             />
           </div>
         </div>
