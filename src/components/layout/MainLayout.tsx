@@ -4,7 +4,14 @@ import Header from './Header';
 import Sidebar from './Sidebar';
 import EditorPanel from './EditorPanel';
 import GoToDateOverlay from '../overlays/GoToDateOverlay';
-import { selectedDate, setSelectedDate, setIsGoToDateOpen } from '../../state/ui';
+import PreferencesOverlay from '../overlays/PreferencesOverlay';
+import {
+  selectedDate,
+  setSelectedDate,
+  setIsGoToDateOpen,
+  isPreferencesOpen,
+  setIsPreferencesOpen,
+} from '../../state/ui';
 import { setupNavigationShortcuts } from '../../lib/shortcuts';
 import {
   navigatePreviousDay,
@@ -75,6 +82,13 @@ export default function MainLayout() {
       }),
     );
 
+    // Preferences menu item
+    unlisteners.push(
+      await listen('menu-preferences', () => {
+        setIsPreferencesOpen(true);
+      }),
+    );
+
     // Previous Month menu item
     unlisteners.push(
       await listen('menu-navigate-previous-month', async () => {
@@ -127,6 +141,10 @@ export default function MainLayout() {
 
       {/* Overlays */}
       <GoToDateOverlay />
+      <PreferencesOverlay
+        isOpen={isPreferencesOpen()}
+        onClose={() => setIsPreferencesOpen(false)}
+      />
     </div>
   );
 }

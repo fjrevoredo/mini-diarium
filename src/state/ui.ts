@@ -11,6 +11,9 @@ const [isSidebarCollapsed, setIsSidebarCollapsed] = createSignal(false);
 // Go To Date overlay state
 const [isGoToDateOpen, setIsGoToDateOpen] = createSignal(false);
 
+// Preferences overlay state
+const [isPreferencesOpen, setIsPreferencesOpen] = createSignal(false);
+
 export {
   selectedDate,
   setSelectedDate,
@@ -18,4 +21,6 @@ export {
   setIsSidebarCollapsed,
   isGoToDateOpen,
   setIsGoToDateOpen,
+  isPreferencesOpen,
+  setIsPreferencesOpen,
 };

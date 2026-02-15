@@ -22,7 +22,8 @@
       "Bash(timeout 30 bun tauri dev:*)",
       "Bash(node_modules/typescript/bin/tsc:*)",
       "Bash(node_modules/.bin/vite build:*)",
-      "Bash(timeout 45 bun tauri dev:*)"
+      "Bash(timeout 45 bun tauri dev:*)",
+      "Bash(C:/Users/Francisco/.bun/bin/bun run tauri dev)"
     ]
   }
 }

@@ -3,21 +3,21 @@
 ---
 ## IMPLEMENTATION STATUS (Updated: 2026-02-15)
 
-**Progress: 29/47 Tasks Complete (62%)**
+**Progress: 31/47 Tasks Complete (66%)**
 
 - ✅ **Phase 1: Foundation & Core Infrastructure** (Tasks 1-28) - **COMPLETE**
-- ⏳ **Phase 2: Search, Navigation & Preferences** (Tasks 29-33) - **PARTIAL (1/5 complete)**
+- ⏳ **Phase 2: Search, Navigation & Preferences** (Tasks 29-33) - **PARTIAL (3/5 complete)**
 - ⏳ **Phase 3: Import, Export, Theming** (Tasks 34-44) - **NOT STARTED**
 - ⏳ **Phase 4: Backup & Advanced Features** (Tasks 45-46) - **NOT STARTED**
 - ⏳ **Phase 5: Internationalization** (Task 47) - **NOT STARTED**
 
 **Most Recent Completions:**
-- Task 26: Calendar Navigation (verified existing)
-- Task 27: Date Navigation Shortcuts (keyboard + menu)
 - Task 28: Go To Date Overlay (Kobalte dialog)
 - Task 29: Future Date Restriction Preference (preferences system + validation)
+- Task 30: First Day of Week Preference (PreferencesOverlay + calendar rotation)
+- Task 31: Hide Titles Preference (conditional TitleEditor rendering)
 
-**Next Up:** Task 30 - First Day of Week Preference
+**Next Up:** Task 32 - Spellcheck Preference
 
 ---
 
@@ -247,16 +247,16 @@
    - Disable: Future days in calendar when false                                                            
    - Clamp: "Next Day" navigation to today if disabled                                                      
    - Test: Toggle preference, verify behavior                                                               
- 30. Implement first day of week preference                                                                 
-   - Preference: firstDayOfWeek: 0-6 | null (null = system locale)                                          
-   - File: src/components/overlays/PreferencesOverlay.tsx (initial version)                                 
-   - Dropdown: Sunday-Saturday, System Default                                                              
-   - Apply: Calendar rendering                                                                              
+ ✅ 30. Implement first day of week preference
+   - Preference: firstDayOfWeek: 0-6 | null (null = system locale)
+   - File: src/components/overlays/PreferencesOverlay.tsx (initial version)
+   - Dropdown: Sunday-Saturday, System Default
+   - Apply: Calendar rendering
    - Test: Change preference, verify calendar updates                                                       
- 31. Implement hide titles preference                                                                       
-   - Preference: hideTitles: boolean (default: false)                                                       
-   - When enabled: Hide TitleEditor component                                                               
-   - Entries: Still store title data                                                                        
+✅ 31. Implement hide titles preference
+   - Preference: hideTitles: boolean (default: false)
+   - When enabled: Hide TitleEditor component
+   - Entries: Still store title data
    - Test: Toggle, verify visibility                                                                        
  32. Implement spellcheck preference                                                                        
    - Preference: enableSpellcheck: boolean (default: true)                                                  
@@ -740,22 +740,32 @@
  ---
  Current Status & Next Steps
 
- ✅ **COMPLETED: Tasks 1-29** (62% complete)
+ ✅ **COMPLETED: Tasks 1-31** (66% complete)
    - Phase 1: Foundation & Core Infrastructure (Tasks 1-28) - COMPLETE
    - Task 29: Future Date Restriction Preference - COMPLETE
      * Preferences system with localStorage persistence
      * Calendar disables future dates when preference is false
      * Navigation clamps to today when restricted
      * Fixed timezone bugs in date handling
+   - Task 30: First Day of Week Preference - COMPLETE
+     * PreferencesOverlay component with Ctrl/Cmd+, shortcut
+     * firstDayOfWeek dropdown (Sunday-Saturday, System Default)
+     * Calendar rotates week headers and day grid
+     * Both preferences now configurable via UI
 
- 🎯 **NEXT UP: Task 30** - First Day of Week Preference
-   - Add firstDayOfWeek preference (0-6 or null for system default)
-   - Create initial PreferencesOverlay.tsx component
-   - Add dropdown for Sunday-Saturday selection
-   - Update Calendar to start weeks on preferred day
+   - Task 31: Hide Titles Preference - COMPLETE
+    * Added hideTitles checkbox to PreferencesOverlay
+    * Conditionally render TitleEditor with Show component
+    * Title data still saved even when editor is hidden
+    * Preference persists via localStorage
 
- 📋 **REMAINING: Tasks 30-47** (18 tasks across 4 phases)
-   - Phase 2 remaining: Preferences & Statistics (Tasks 30-33)
+🎯 **NEXT UP: Task 32** - Spellcheck Preference
+   - Add enableSpellcheck preference to PreferencesOverlay
+   - Apply spellCheck HTML attribute to TitleEditor and DiaryEditor
+   - Toggle browser spellcheck on/off
+
+ 📋 **REMAINING: Tasks 32-47** (16 tasks across 4 phases)
+   - Phase 2 remaining: Preferences & Statistics (Tasks 32-33)
    - Phase 3: Import/Export/Theming (Tasks 34-44)
    - Phase 4: Backup & Advanced (Tasks 45-46)
    - Phase 5: Internationalization (Task 47)

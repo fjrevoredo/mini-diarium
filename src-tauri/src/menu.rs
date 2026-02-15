@@ -30,6 +30,11 @@ pub fn build_menu(app: &AppHandle<Wry>) -> tauri::Result<()> {
         .accelerator("CmdOrCtrl+Shift+Right")
         .build(app)?;
 
+    // Build Preferences menu item
+    let preferences = MenuItemBuilder::with_id("preferences", "Preferences...")
+        .accelerator("CmdOrCtrl+,")
+        .build(app)?;
+
     // Build the Navigation submenu
     let navigation_menu = SubmenuBuilder::new(app, "Navigation")
         .item(&navigate_prev_day)
@@ -45,6 +50,7 @@ pub fn build_menu(app: &AppHandle<Wry>) -> tauri::Result<()> {
     // Build the main menu
     let menu = MenuBuilder::new(app)
         .item(&navigation_menu)
+        .item(&preferences)
         .build()?;
 
     // Set the menu on all windows
@@ -75,6 +81,9 @@ pub fn build_menu(app: &AppHandle<Wry>) -> tauri::Result<()> {
             }
             "navigate_next_month" => {
                 let _ = app.emit("menu-navigate-next-month", ());
+            }
+            "preferences" => {
+                let _ = app.emit("menu-preferences", ());
             }
             _ => {}
         }

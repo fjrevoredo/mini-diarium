@@ -1,4 +1,4 @@
-import { createSignal, createEffect, onCleanup, onMount } from 'solid-js';
+import { createSignal, createEffect, onCleanup, onMount, Show } from 'solid-js';
 import TitleEditor from '../editor/TitleEditor';
 import DiaryEditor from '../editor/DiaryEditor';
 import WordCount from '../editor/WordCount';
@@ -6,6 +6,7 @@ import { selectedDate } from '../../state/ui';
 import { saveEntry, getEntry, deleteEntryIfEmpty, getAllEntryDates } from '../../lib/tauri';
 import { debounce } from '../../lib/debounce';
 import { isSaving, setIsSaving, setEntryDates } from '../../state/entries';
+import { preferences } from '../../state/preferences';
 
 export default function EditorPanel() {
   const [title, setTitle] = createSignal('');
@@ -120,12 +121,14 @@ export default function EditorPanel() {
       <div class="flex-1 overflow-y-auto p-6">
         <div class="mx-auto max-w-3xl">
           <div class="space-y-4">
-            <TitleEditor
-              value={title()}
-              onInput={handleTitleInput}
-              onEnter={handleTitleEnter}
-              placeholder={isLoadingEntry() ? 'Loading...' : 'Title (optional)'}
-            />
+            <Show when={!preferences().hideTitles}>
+              <TitleEditor
+                value={title()}
+                onInput={handleTitleInput}
+                onEnter={handleTitleEnter}
+                placeholder={isLoadingEntry() ? 'Loading...' : 'Title (optional)'}
+              />
+            </Show>
             <DiaryEditor
               content={content()}
               onUpdate={handleContentUpdate}

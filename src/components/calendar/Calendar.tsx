@@ -30,17 +30,25 @@ export default function Calendar() {
     const lastDay = new Date(year, monthIndex + 1, 0);
 
     // Get day of week for first day (0 = Sunday, 1 = Monday, etc.)
-    const firstDayOfWeek = firstDay.getDay();
+    const firstDayOfMonth = firstDay.getDay();
 
     // Get entry dates for checking
     const dates = entryDates();
     const today = getTodayString();
     const allowFuture = preferences().allowFutureEntries;
 
+    // Get preferred first day of week (0 = Sunday, 1 = Monday, etc.)
+    // null means use system default (Sunday in US locale)
+    const preferredFirstDay = preferences().firstDayOfWeek ?? 0;
+
+    // Calculate how many days from previous month to show
+    // We need to show days until we reach the preferred first day of week
+    let daysFromPrevMonth = (firstDayOfMonth - preferredFirstDay + 7) % 7;
+
     // Days from previous month to show
     const prevMonthDays: CalendarDay[] = [];
     const prevMonthLastDay = new Date(year, monthIndex, 0).getDate();
-    for (let i = firstDayOfWeek - 1; i >= 0; i--) {
+    for (let i = daysFromPrevMonth - 1; i >= 0; i--) {
       const day = prevMonthLastDay - i;
       const prevMonth = monthIndex - 1;
       const prevYear = prevMonth < 0 ? year - 1 : year;
@@ -128,7 +136,14 @@ export default function Calendar() {
     }
   };
 
-  const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  // Week day headers, rotated based on preference
+  const weekDays = createMemo(() => {
+    const allDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const preferredFirstDay = preferences().firstDayOfWeek ?? 0;
+
+    // Rotate array to start on preferred day
+    return [...allDays.slice(preferredFirstDay), ...allDays.slice(0, preferredFirstDay)];
+  });
 
   return (
     <div class="rounded-lg bg-white p-4 shadow-sm">
@@ -163,7 +178,7 @@ export default function Calendar() {
 
       {/* Week day headers */}
       <div class="mb-2 grid grid-cols-7 gap-1">
-        <For each={weekDays}>
+        <For each={weekDays()}>
           {(day) => <div class="text-center text-xs font-medium text-gray-500">{day}</div>}
         </For>
       </div>
