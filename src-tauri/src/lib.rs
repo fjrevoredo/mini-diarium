@@ -61,6 +61,8 @@ pub fn run() {
             commands::stats::get_statistics,
             commands::import::import_minidiary_json,
             commands::import::import_dayone_json,
+            commands::import::import_dayone_txt,
+            commands::import::import_jrnl_json,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

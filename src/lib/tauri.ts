@@ -119,3 +119,11 @@ export async function importMiniDiaryJson(filePath: string): Promise<ImportResul
 export async function importDayOneJson(filePath: string): Promise<ImportResult> {
   return await invoke('import_dayone_json', { filePath });
 }
+
+export async function importDayOneTxt(filePath: string): Promise<ImportResult> {
+  return await invoke('import_dayone_txt', { filePath });
+}
+
+export async function importJrnlJson(filePath: string): Promise<ImportResult> {
+  return await invoke('import_jrnl_json', { filePath });
+}

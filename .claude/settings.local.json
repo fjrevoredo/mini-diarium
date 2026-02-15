@@ -41,7 +41,8 @@
       "Bash(\"C:\\\\Users\\\\Francisco\\\\.bun\\\\bin\\\\bun.exe\" run test:run)",
       "Bash(\"C:\\\\Users\\\\Francisco\\\\.bun\\\\bin\\\\bun.exe\" add -d @testing-library/user-event)",
       "Bash(cmd.exe /c \"bun run type-check\")",
-      "Bash(bun test:run:*)"
+      "Bash(bun test:run:*)",
+      "WebSearch"
     ]
   }
 }

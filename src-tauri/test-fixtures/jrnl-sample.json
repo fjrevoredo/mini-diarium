@@ -1,0 +1,32 @@
+{
+  "tags": {
+    "@work": 2,
+    "@personal": 1
+  },
+  "entries": [
+    {
+      "title": "First Day",
+      "body": "Started using jrnl today. It's pretty neat for quick journaling.",
+      "date": "2024-01-15",
+      "time": "09:30",
+      "tags": ["@personal"],
+      "starred": false
+    },
+    {
+      "title": "Project Meeting",
+      "body": "Had a productive meeting about the new project. We discussed timelines and deliverables.",
+      "date": "2024-01-16",
+      "time": "14:00",
+      "tags": ["@work"],
+      "starred": true
+    },
+    {
+      "title": "Weekend Plans",
+      "body": "Thinking about going hiking this weekend if the weather holds up.",
+      "date": "2024-01-17",
+      "time": "18:45",
+      "tags": ["@personal"],
+      "starred": false
+    }
+  ]
+}

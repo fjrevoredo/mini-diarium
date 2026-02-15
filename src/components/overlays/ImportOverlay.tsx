@@ -1,7 +1,7 @@
 import { createSignal, Show } from 'solid-js';
 import { Dialog } from '@kobalte/core/dialog';
 import { open as openDialog } from '@tauri-apps/plugin-dialog';
-import { importMiniDiaryJson, importDayOneJson, type ImportResult } from '../../lib/tauri';
+import { importMiniDiaryJson, importDayOneJson, importDayOneTxt, importJrnlJson, type ImportResult } from '../../lib/tauri';
 import { X, FileUp, CheckCircle, AlertCircle } from 'lucide-solid';
 
 interface ImportOverlayProps {
@@ -10,7 +10,7 @@ interface ImportOverlayProps {
   onImportComplete?: () => void;
 }
 
-type ImportFormat = 'minidiary-json' | 'dayone-json';
+type ImportFormat = 'minidiary-json' | 'dayone-json' | 'dayone-txt' | 'jrnl-json';
 
 export default function ImportOverlay(props: ImportOverlayProps) {
   const [selectedFormat, setSelectedFormat] = createSignal<ImportFormat>('minidiary-json');
@@ -79,6 +79,10 @@ export default function ImportOverlay(props: ImportOverlayProps) {
         importResult = await importMiniDiaryJson(file);
       } else if (format === 'dayone-json') {
         importResult = await importDayOneJson(file);
+      } else if (format === 'dayone-txt') {
+        importResult = await importDayOneTxt(file);
+      } else if (format === 'jrnl-json') {
+        importResult = await importJrnlJson(file);
       } else {
         throw new Error(`Unsupported import format: ${format}`);
       }
@@ -147,6 +151,8 @@ export default function ImportOverlay(props: ImportOverlayProps) {
               >
                 <option value="minidiary-json">Mini Diary JSON</option>
                 <option value="dayone-json">Day One JSON</option>
+                <option value="dayone-txt">Day One TXT</option>
+                <option value="jrnl-json">jrnl JSON</option>
               </select>
             </div>
 
