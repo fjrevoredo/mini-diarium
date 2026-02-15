@@ -17,6 +17,9 @@ const [isPreferencesOpen, setIsPreferencesOpen] = createSignal(false);
 // Statistics overlay state
 const [isStatsOpen, setIsStatsOpen] = createSignal(false);
 
+// Import overlay state
+const [isImportOpen, setIsImportOpen] = createSignal(false);
+
 export {
   selectedDate,
   setSelectedDate,
@@ -28,4 +31,6 @@ export {
   setIsPreferencesOpen,
   isStatsOpen,
   setIsStatsOpen,
+  isImportOpen,
+  setIsImportOpen,
 };

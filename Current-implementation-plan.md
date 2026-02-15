@@ -3,26 +3,26 @@
 ---
 ## IMPLEMENTATION STATUS (Updated: 2026-02-15)
 
-**Progress: 33/47 Tasks Complete (70%)**
+**Progress: 36/47 Tasks Complete (77%)**
 
 - ✅ **Phase 1: Foundation & Core Infrastructure** (Tasks 1-28) - **COMPLETE**
 - ✅ **Phase 2: Search, Navigation & Preferences** (Tasks 29-33) - **COMPLETE**
-- ⏳ **Phase 3: Import, Export, Theming** (Tasks 34-44) - **NOT STARTED**
+- ⏳ **Phase 3: Import, Export, Theming** (Tasks 34-44) - **PARTIAL (3/11 complete)**
 - ⏳ **Phase 4: Backup & Advanced Features** (Tasks 45-46) - **NOT STARTED**
 - ⏳ **Phase 5: Internationalization** (Task 47) - **NOT STARTED**
 
 **Most Recent Completions:**
-- Task 30: First Day of Week Preference (PreferencesOverlay + calendar rotation)
-- Task 31: Hide Titles Preference (conditional TitleEditor rendering)
-- Task 32: Spellcheck Preference (browser spellcheck toggle + reactive updates)
 - Task 33: Statistics Overlay (backend stats calculation + Kobalte dialog with metrics)
+- Task 34: Parse Mini Diary JSON (parser with version checking + 8 unit tests)
+- Task 35: Entry Merging (smart merge logic + 13 unit tests)
+- Task 36: Import UI (ImportOverlay + Tauri dialog + FTS rebuild)
 - **Performance Optimization Sprint:**
   - Fixed FOUC (Flash of Unstyled Content) with critical CSS
   - Added loading spinner with proper positioning
   - Optimized bundle splitting and CSS loading
   - Created critical-auth.css for instant auth screen styling
 
-**Next Up:** Task 34 - Import Functionality (Phase 3 begins)
+**Next Up:** Task 37 - Day One JSON Import
 
 ---
 
@@ -892,13 +892,37 @@ These deviations represent different implementation approaches that are function
    * Tests: Comprehensive Rust unit tests for streak logic and statistics calculation
    * TypeScript compilation: Verified - no errors
 
-🎯 **NEXT UP: Task 34** - Import Functionality (Phase 3 begins)
-   - Support importing plain text/markdown diary entries
-   - Date detection from filenames or content
-   - Batch import with progress indication
+✅ **TASK 34 COMPLETE** - Parse Mini Diary JSON
+   * File: `src-tauri/src/import/minidiary.rs` (220 lines)
+   * Schema: MiniDiaryJson, Metadata, Entry structs with serde
+   * Parser: parse_minidiary_json() with version validation
+   * Features: Date format validation, auto word count, auto timestamps
+   * Tests: 8 comprehensive unit tests covering all edge cases
 
- 📋 **REMAINING: Tasks 34-47** (14 tasks across 3 phases)
-   - Phase 3: Import/Export/Theming (Tasks 34-44)
+✅ **TASK 35 COMPLETE** - Entry Merging
+   * File: `src-tauri/src/import/merge.rs` (247 lines)
+   * Strategy: Titles concatenated with " | ", texts with "\n\n––––––––––\n\n"
+   * Deduplication: Identical titles/texts not duplicated
+   * Timestamps: Keeps earliest date_created, updates date_updated
+   * Tests: 13 comprehensive unit tests including edge cases
+
+✅ **TASK 36 COMPLETE** - Import UI for Mini Diary JSON
+   * Backend: `src-tauri/src/commands/import.rs` with import_minidiary_json command
+   * Features: Merge handling, FTS index rebuild, import statistics
+   * Frontend: `src/components/overlays/ImportOverlay.tsx` (Kobalte Dialog)
+   * UI: Format dropdown, file picker (Tauri dialog), progress/success/error states
+   * Menu: "Import..." menu item with Cmd/Ctrl+Shift+I shortcut
+   * Dependencies: Added @tauri-apps/plugin-dialog (frontend + Rust)
+   * Tests: 4 Rust unit tests for import logic
+   * TypeScript compilation: Verified - no errors
+
+🎯 **NEXT UP: Task 37** - Day One JSON Import
+   * Parse Day One export format
+   * Timezone conversion handling
+   * Add to import dropdown
+
+ 📋 **REMAINING: Tasks 37-47** (11 tasks across 3 phases)
+   - Phase 3: Import/Export/Theming (Tasks 37-44) - 8 remaining
    - Phase 4: Backup & Advanced (Tasks 45-46)
    - Phase 5: Internationalization (Task 47)
 

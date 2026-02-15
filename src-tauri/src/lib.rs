@@ -18,6 +18,7 @@ fn greet(name: &str) -> String {
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
             // Get app data directory and create diary path
             let app_dir = app
@@ -58,6 +59,7 @@ pub fn run() {
             commands::navigation::navigate_previous_month,
             commands::navigation::navigate_next_month,
             commands::stats::get_statistics,
+            commands::import::import_minidiary_json,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

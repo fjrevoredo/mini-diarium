@@ -104,3 +104,14 @@ export interface Statistics {
 export async function getStatistics(): Promise<Statistics> {
   return await invoke('get_statistics');
 }
+
+// Import commands
+export interface ImportResult {
+  entries_imported: number;
+  entries_merged: number;
+  entries_skipped: number;
+}
+
+export async function importMiniDiaryJson(filePath: string): Promise<ImportResult> {
+  return await invoke('import_minidiary_json', { filePath });
+}

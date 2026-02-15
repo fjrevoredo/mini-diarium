@@ -6,6 +6,7 @@ import EditorPanel from './EditorPanel';
 import GoToDateOverlay from '../overlays/GoToDateOverlay';
 import PreferencesOverlay from '../overlays/PreferencesOverlay';
 import StatsOverlay from '../overlays/StatsOverlay';
+import ImportOverlay from '../overlays/ImportOverlay';
 import {
   selectedDate,
   setSelectedDate,
@@ -14,6 +15,8 @@ import {
   setIsPreferencesOpen,
   isStatsOpen,
   setIsStatsOpen,
+  isImportOpen,
+  setIsImportOpen,
 } from '../../state/ui';
 import { setupNavigationShortcuts } from '../../lib/shortcuts';
 import {
@@ -99,6 +102,13 @@ export default function MainLayout() {
       }),
     );
 
+    // Import menu item
+    unlisteners.push(
+      await listen('menu-import', () => {
+        setIsImportOpen(true);
+      }),
+    );
+
     // Previous Month menu item
     unlisteners.push(
       await listen('menu-navigate-previous-month', async () => {
@@ -158,6 +168,14 @@ export default function MainLayout() {
       <StatsOverlay
         isOpen={isStatsOpen()}
         onClose={() => setIsStatsOpen(false)}
+      />
+      <ImportOverlay
+        isOpen={isImportOpen()}
+        onClose={() => setIsImportOpen(false)}
+        onImportComplete={() => {
+          // Sidebar will auto-refresh calendar dates via its own effect
+          // Just notify user visually that import succeeded (already in overlay)
+        }}
       />
     </div>
   );

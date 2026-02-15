@@ -33,7 +33,8 @@
       "Bash(bun tauri dev:*)",
       "Bash(\"C:\\\\Users\\\\Francisco\\\\.bun\\\\bin\\\\bun.exe\" tauri dev)",
       "Bash(\"C:\\\\Users\\\\Francisco\\\\.bun\\\\bin\\\\bun.exe\" run typecheck)",
-      "Bash(\"C:\\\\Users\\\\Francisco\\\\.bun\\\\bin\\\\bun.exe\" run type-check)"
+      "Bash(\"C:\\\\Users\\\\Francisco\\\\.bun\\\\bin\\\\bun.exe\" run type-check)",
+      "Bash(\"C:\\\\Users\\\\Francisco\\\\.bun\\\\bin\\\\bun.exe\" add @tauri-apps/plugin-dialog)"
     ]
   }
 }
