@@ -37,7 +37,11 @@
       "Bash(\"C:\\\\Users\\\\Francisco\\\\.bun\\\\bin\\\\bun.exe\" add @tauri-apps/plugin-dialog)",
       "Bash(\"C:\\\\Users\\\\Francisco\\\\.bun\\\\bin\\\\bun.exe\" run format)",
       "Bash(\"C:\\\\Users\\\\Francisco\\\\.bun\\\\bin\\\\bun.exe\" run format:check)",
-      "Bash(\"C:\\\\Users\\\\Francisco\\\\.bun\\\\bin\\\\bun.exe\" x prettier --write \"D:\\\\Repos\\\\mini-diarium\\\\src\\\\styles\\\\critical-auth.css\")"
+      "Bash(\"C:\\\\Users\\\\Francisco\\\\.bun\\\\bin\\\\bun.exe\" x prettier --write \"D:\\\\Repos\\\\mini-diarium\\\\src\\\\styles\\\\critical-auth.css\")",
+      "Bash(\"C:\\\\Users\\\\Francisco\\\\.bun\\\\bin\\\\bun.exe\" run test:run)",
+      "Bash(\"C:\\\\Users\\\\Francisco\\\\.bun\\\\bin\\\\bun.exe\" add -d @testing-library/user-event)",
+      "Bash(cmd.exe /c \"bun run type-check\")",
+      "Bash(bun test:run:*)"
     ]
   }
 }

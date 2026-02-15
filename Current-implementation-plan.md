@@ -3,11 +3,11 @@
 ---
 ## IMPLEMENTATION STATUS (Updated: 2026-02-15)
 
-**Progress: 36/47 Tasks Complete (77%)**
+**Progress: 37/47 Tasks Complete (79%)**
 
 - ✅ **Phase 1: Foundation & Core Infrastructure** (Tasks 1-28) - **COMPLETE**
 - ✅ **Phase 2: Search, Navigation & Preferences** (Tasks 29-33) - **COMPLETE**
-- ⏳ **Phase 3: Import, Export, Theming** (Tasks 34-44) - **PARTIAL (3/11 complete)**
+- ⏳ **Phase 3: Import, Export, Theming** (Tasks 34-44) - **PARTIAL (4/11 complete)**
 - ⏳ **Phase 4: Backup & Advanced Features** (Tasks 45-46) - **NOT STARTED**
 - ⏳ **Phase 5: Internationalization** (Task 47) - **NOT STARTED**
 
@@ -16,13 +16,13 @@
 - Task 34: Parse Mini Diary JSON (parser with version checking + 8 unit tests)
 - Task 35: Entry Merging (smart merge logic + 13 unit tests)
 - Task 36: Import UI (ImportOverlay + Tauri dialog + FTS rebuild)
-- **Performance Optimization Sprint:**
-  - Fixed FOUC (Flash of Unstyled Content) with critical CSS
-  - Added loading spinner with proper positioning
-  - Optimized bundle splitting and CSS loading
-  - Created critical-auth.css for instant auth screen styling
+- Task 37: Day One JSON Import (parser with timezone handling + 14 unit tests)
+- **Testing Infrastructure:**
+  - Complete Vitest + SolidJS Testing Library setup
+  - 19 passing proof-of-concept tests (dates utilities, WordCount, TitleEditor)
+  - Ready for test-driven development in remaining tasks
 
-**Next Up:** Task 37 - Day One JSON Import
+**Next Up:** Task 38 - jrnl JSON Import
 
 ---
 
@@ -451,13 +451,13 @@ These deviations represent different implementation approaches that are function
    - Show: Progress/error, rebuild FTS index after import                                                   
    - Test: Integration test                                                                                 
                                                                                                             
- Import - Other Formats (Increments 3.4-3.6)                                                                
-                                                                                                            
- 37. Implement Day One JSON import                                                                          
-   - File: src-tauri/src/import/dayone.rs                                                                   
-   - Parse: creationDate → date, split text on \n\n for title/body                                          
-   - Handle: Timezone conversion                                                                            
-   - Add: To import command and UI                                                                          
+ Import - Other Formats (Increments 3.4-3.6)
+
+✅ 37. Implement Day One JSON import
+   - File: src-tauri/src/import/dayone.rs
+   - Parse: creationDate → date, split text on \n\n for title/body
+   - Handle: Timezone conversion
+   - Add: To import command and UI
    - Test: Rust unit tests with fixture                                                                     
  38. Implement jrnl JSON import                                                                             
    - File: src-tauri/src/import/jrnl.rs                                                                     
@@ -951,9 +951,32 @@ These deviations represent different implementation approaches that are function
    * TypeScript compilation: Verified - no errors
    * **VERIFIED WORKING** with actual Mini Diary 3.3.0 export files
 
-🎯 **NEXT UP: Task 37** - Day One JSON Import
-   * Parse Day One export format
-   * Timezone conversion handling
+✅ **TASK 37 COMPLETE** - Day One JSON Import
+   * File: `src-tauri/src/import/dayone.rs` (280 lines)
+   * Schema: DayOneJson, DayOneEntry structs matching Day One export format
+   * Parser: parse_dayone_json() with ISO 8601 timestamp parsing
+   * Features:
+     - Timezone conversion (ISO 8601 → UTC → YYYY-MM-DD)
+     - Smart title extraction (paragraph break → line break → 100 chars)
+     - Auto word count calculation
+     - Auto timestamp generation
+   * Command: import_dayone_json in `src-tauri/src/commands/import.rs`
+   * Frontend: Added "Day One JSON" to ImportOverlay dropdown
+   * Tauri wrapper: importDayOneJson in `src/lib/tauri.ts`
+   * Tests: 14 comprehensive Rust unit tests covering:
+     - Basic parsing with paragraph breaks
+     - Timezone handling (UTC, offset, milliseconds)
+     - Multiple entries
+     - Title extraction strategies
+     - Edge cases (empty, invalid dates, malformed JSON)
+   * Frontend tests: 4 integration tests in `src/lib/import.test.ts`
+   * Total test count: 23 tests (19 from infrastructure setup + 4 new)
+   * Compilation: Verified - no errors after fixing import paths
+   * **VERIFIED WORKING** - User confirmed successful compilation and functionality
+
+🎯 **NEXT UP: Task 38** - jrnl JSON Import
+   * Parse jrnl export format
+   * Direct field mapping (simpler than Day One)
    * Add to import dropdown
 
  📋 **REMAINING: Tasks 37-47** (11 tasks across 3 phases)

@@ -115,3 +115,7 @@ export interface ImportResult {
 export async function importMiniDiaryJson(filePath: string): Promise<ImportResult> {
   return await invoke('import_minidiary_json', { filePath });
 }
+
+export async function importDayOneJson(filePath: string): Promise<ImportResult> {
+  return await invoke('import_dayone_json', { filePath });
+}

@@ -1,7 +1,7 @@
 use crate::commands::auth::DiaryState;
 use crate::db::queries;
 use crate::db::schema::DatabaseConnection;
-use crate::import::{merge, minidiary};
+use crate::import::{dayone, merge, minidiary};
 use tauri::State;
 
 /// Import result containing the number of entries imported
@@ -48,6 +48,69 @@ pub fn import_minidiary_json(
     // Parse JSON
     eprintln!("[Import] Parsing JSON...");
     let entries = minidiary::parse_minidiary_json(&json_content)
+        .map_err(|e| {
+            eprintln!("[Import] Parse error: {}", e);
+            e
+        })?;
+    eprintln!("[Import] Parsed {} entries", entries.len());
+
+    // Import entries with merge handling
+    eprintln!("[Import] Importing entries...");
+    let result = import_entries(db, entries)
+        .map_err(|e| {
+            eprintln!("[Import] Import error: {}", e);
+            e
+        })?;
+
+    // Rebuild FTS index after import
+    eprintln!("[Import] Rebuilding FTS index...");
+    rebuild_fts_index(db)
+        .map_err(|e| {
+            eprintln!("[Import] FTS rebuild error: {}", e);
+            e
+        })?;
+
+    eprintln!("[Import] Success: {} imported, {} merged",
+        result.entries_imported, result.entries_merged);
+    Ok(result)
+}
+
+/// Imports Day One JSON format
+///
+/// # Arguments
+/// * `file_path` - Path to the JSON file to import
+/// * `state` - Application state containing the database connection
+///
+/// # Returns
+/// ImportResult with counts of imported, merged, and skipped entries
+#[tauri::command]
+pub fn import_dayone_json(
+    file_path: String,
+    state: State<DiaryState>,
+) -> Result<ImportResult, String> {
+    eprintln!("[Import] Starting Day One import from file: {}", file_path);
+
+    let db_state = state.db.lock().unwrap();
+    let db = db_state
+        .as_ref()
+        .ok_or_else(|| {
+            let err = "Diary must be unlocked to import entries";
+            eprintln!("[Import] Error: {}", err);
+            err.to_string()
+        })?;
+
+    // Read file
+    eprintln!("[Import] Reading file...");
+    let json_content = std::fs::read_to_string(&file_path)
+        .map_err(|e| {
+            let err = format!("Failed to read file: {}", e);
+            eprintln!("[Import] Error: {}", err);
+            err
+        })?;
+
+    // Parse JSON
+    eprintln!("[Import] Parsing Day One JSON...");
+    let entries = dayone::parse_dayone_json(&json_content)
         .map_err(|e| {
             eprintln!("[Import] Parse error: {}", e);
             e
