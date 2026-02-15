@@ -20,6 +20,9 @@ const [isStatsOpen, setIsStatsOpen] = createSignal(false);
 // Import overlay state
 const [isImportOpen, setIsImportOpen] = createSignal(false);
 
+// Export overlay state
+const [isExportOpen, setIsExportOpen] = createSignal(false);
+
 export {
   selectedDate,
   setSelectedDate,
@@ -33,4 +36,6 @@ export {
   setIsStatsOpen,
   isImportOpen,
   setIsImportOpen,
+  isExportOpen,
+  setIsExportOpen,
 };

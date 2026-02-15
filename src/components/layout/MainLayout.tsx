@@ -7,6 +7,7 @@ import GoToDateOverlay from '../overlays/GoToDateOverlay';
 import PreferencesOverlay from '../overlays/PreferencesOverlay';
 import StatsOverlay from '../overlays/StatsOverlay';
 import ImportOverlay from '../overlays/ImportOverlay';
+import ExportOverlay from '../overlays/ExportOverlay';
 import {
   selectedDate,
   setSelectedDate,
@@ -17,6 +18,8 @@ import {
   setIsStatsOpen,
   isImportOpen,
   setIsImportOpen,
+  isExportOpen,
+  setIsExportOpen,
 } from '../../state/ui';
 import { setupNavigationShortcuts } from '../../lib/shortcuts';
 import {
@@ -109,6 +112,13 @@ export default function MainLayout() {
       }),
     );
 
+    // Export menu item
+    unlisteners.push(
+      await listen('menu-export', () => {
+        setIsExportOpen(true);
+      }),
+    );
+
     // Previous Month menu item
     unlisteners.push(
       await listen('menu-navigate-previous-month', async () => {
@@ -174,6 +184,7 @@ export default function MainLayout() {
           // Just notify user visually that import succeeded (already in overlay)
         }}
       />
+      <ExportOverlay isOpen={isExportOpen()} onClose={() => setIsExportOpen(false)} />
     </div>
   );
 }

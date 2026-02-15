@@ -1,6 +1,7 @@
 pub mod commands;
 pub mod crypto;
 pub mod db;
+pub mod export;
 pub mod import;
 pub mod menu;
 
@@ -63,6 +64,7 @@ pub fn run() {
             commands::import::import_dayone_json,
             commands::import::import_dayone_txt,
             commands::import::import_jrnl_json,
+            commands::export::export_json,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

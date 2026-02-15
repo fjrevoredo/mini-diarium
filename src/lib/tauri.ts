@@ -127,3 +127,13 @@ export async function importDayOneTxt(filePath: string): Promise<ImportResult> {
 export async function importJrnlJson(filePath: string): Promise<ImportResult> {
   return await invoke('import_jrnl_json', { filePath });
 }
+
+// Export commands
+export interface ExportResult {
+  entries_exported: number;
+  file_path: string;
+}
+
+export async function exportJson(filePath: string): Promise<ExportResult> {
+  return await invoke('export_json', { filePath });
+}

@@ -3,27 +3,26 @@
 ---
 ## IMPLEMENTATION STATUS (Updated: 2026-02-15)
 
-**Progress: 39/47 Tasks Complete (83%)**
+**Progress: 40/47 Tasks Complete (85%)**
 
 - ✅ **Phase 1: Foundation & Core Infrastructure** (Tasks 1-28) - **COMPLETE**
 - ✅ **Phase 2: Search, Navigation & Preferences** (Tasks 29-33) - **COMPLETE**
-- ⏳ **Phase 3: Import, Export, Theming** (Tasks 34-44) - **PARTIAL (6/11 complete)**
+- ⏳ **Phase 3: Import, Export, Theming** (Tasks 34-44) - **PARTIAL (7/11 complete)**
 - ⏳ **Phase 4: Backup & Advanced Features** (Tasks 45-46) - **NOT STARTED**
 - ⏳ **Phase 5: Internationalization** (Task 47) - **NOT STARTED**
 
 **Most Recent Completions:**
-- Task 35: Entry Merging (smart merge logic + 13 unit tests)
-- Task 36: Import UI (ImportOverlay + Tauri dialog + FTS rebuild)
 - Task 37: Day One JSON Import (parser with timezone handling + 14 unit tests)
 - Task 38: jrnl JSON Import (parser with calendar-accurate validation + 12 unit tests + fixture test)
 - Task 39: Day One TXT Import (tab-delimited parser + date parsing + 16 unit tests)
+- Task 40: JSON Export (Mini Diary-compatible format + round-trip tests + ExportOverlay UI)
 - **Testing Infrastructure:**
   - Complete Vitest + SolidJS Testing Library setup
   - 23 passing frontend tests (dates utilities, WordCount, TitleEditor, imports)
-  - 127 passing backend tests (crypto, db, commands, imports)
+  - 133 passing backend tests (crypto, db, commands, imports, export)
   - Ready for test-driven development in remaining tasks
 
-**Next Up:** Task 40 - JSON Export
+**Next Up:** Task 41 - Markdown Export
 
 ---
 
@@ -1031,13 +1030,21 @@ These deviations represent different implementation approaches that are function
    * Compilation: ✅ Verified - all 16 tests passing
    * **Grade: A+ (98/100)** - Flawless implementation, production-ready
 
-🎯 **NEXT UP: Task 40** - JSON Export
-   * Implement JSON export functionality
-   * Pretty-printed JSON format
-   * Save dialog integration
+✅ **TASK 40 COMPLETE** - JSON Export
+   * Backend: `src-tauri/src/export/json.rs` - Pure export function (export_entries_to_json)
+   * Format: Mini Diary-compatible JSON with metadata block + entries map
+   * Command: `src-tauri/src/commands/export.rs` - export_json Tauri command
+   * Frontend: `src/components/overlays/ExportOverlay.tsx` (Kobalte Dialog)
+   * UI: Format dropdown (extensible), save dialog, progress/success/error states
+   * Menu: "Export..." menu item with Cmd/Ctrl+Shift+E shortcut
+   * State: isExportOpen/setIsExportOpen in ui.ts
+   * Tests: 6 Rust unit tests including round-trip (export → re-import)
+   * Compilation: ✅ Verified - all tests passing
 
- 📋 **REMAINING: Tasks 40-47** (8 tasks across 3 phases)
-   - Phase 3: Import/Export/Theming (Tasks 40-44) - 5 remaining
+🎯 **NEXT UP: Task 41** - Markdown Export
+
+ 📋 **REMAINING: Tasks 41-47** (7 tasks across 3 phases)
+   - Phase 3: Import/Export/Theming (Tasks 41-44) - 4 remaining
    - Phase 4: Backup & Advanced (Tasks 45-46)
    - Phase 5: Internationalization (Task 47)
 

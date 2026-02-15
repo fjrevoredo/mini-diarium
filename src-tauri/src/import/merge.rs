@@ -90,7 +90,7 @@ mod tests {
         assert_eq!(merged.date, "2024-01-01");
         assert_eq!(merged.title, "Morning Entry | Evening Entry");
         assert_eq!(merged.text, "Had breakfast.\n\n––––––––––\n\nHad dinner.");
-        assert_eq!(merged.word_count, 4); // "Had breakfast Had dinner" = 4 words
+        assert_eq!(merged.word_count, 5); // "Had breakfast." + separator + "Had dinner." = 5 words
     }
 
     #[test]
@@ -187,8 +187,8 @@ mod tests {
 
         let merged = merge_entries(existing, imported);
 
-        // "One two three" + separator + "Four five" = 5 words total
-        assert_eq!(merged.word_count, 5);
+        // "One two three." + separator "––––––––––" + "Four five." = 6 words total
+        assert_eq!(merged.word_count, 6);
     }
 
     #[test]

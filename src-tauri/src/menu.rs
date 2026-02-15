@@ -45,6 +45,11 @@ pub fn build_menu(app: &AppHandle<Wry>) -> tauri::Result<()> {
         .accelerator("CmdOrCtrl+Shift+I")
         .build(app)?;
 
+    // Build Export menu item
+    let export_entries = MenuItemBuilder::with_id("export", "Export...")
+        .accelerator("CmdOrCtrl+Shift+E")
+        .build(app)?;
+
     // Build the Navigation submenu
     let navigation_menu = SubmenuBuilder::new(app, "Navigation")
         .item(&navigate_prev_day)
@@ -62,6 +67,7 @@ pub fn build_menu(app: &AppHandle<Wry>) -> tauri::Result<()> {
         .item(&navigation_menu)
         .item(&statistics)
         .item(&import_entries)
+        .item(&export_entries)
         .item(&preferences)
         .build()?;
 
@@ -102,6 +108,9 @@ pub fn build_menu(app: &AppHandle<Wry>) -> tauri::Result<()> {
             }
             "import" => {
                 let _ = app.emit("menu-import", ());
+            }
+            "export" => {
+                let _ = app.emit("menu-export", ());
             }
             _ => {}
         }

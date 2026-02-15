@@ -437,16 +437,24 @@ mod tests {
         )
         .unwrap();
 
-        // Clear FTS manually (simulating corruption)
-        db.conn().execute("DELETE FROM entries_fts", []).unwrap();
+        // Clear FTS manually using the proper FTS5 delete-all command
+        // (Regular DELETE doesn't work on content-synced FTS5 tables)
+        db.conn()
+            .execute("INSERT INTO entries_fts(entries_fts) VALUES('delete-all')", [])
+            .unwrap();
 
         // Rebuild index
         rebuild_fts_index(&db).unwrap();
 
-        // Verify FTS works
+        // Verify FTS works by searching for content we know exists
+        // (Can't use SELECT COUNT(*) on content-synced FTS5 tables directly)
         let count: i32 = db
             .conn()
-            .query_row("SELECT COUNT(*) FROM entries_fts", [], |row| row.get(0))
+            .query_row(
+                "SELECT COUNT(*) FROM entries_fts WHERE entries_fts MATCH ?1",
+                ["Content"],
+                |row| row.get(0),
+            )
             .unwrap();
 
         assert_eq!(count, 1);

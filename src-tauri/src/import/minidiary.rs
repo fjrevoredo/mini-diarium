@@ -103,10 +103,11 @@ fn parse_timestamp(timestamp: &str) -> Option<String> {
     None
 }
 
-/// Validates date format (YYYY-MM-DD)
+/// Validates date format (YYYY-MM-DD) with strict 4-digit year
 fn is_valid_date_format(date: &str) -> bool {
     use chrono::NaiveDate;
-    NaiveDate::parse_from_str(date, "%Y-%m-%d").is_ok()
+    // Require exactly YYYY-MM-DD (10 chars) to reject 2-digit years
+    date.len() == 10 && NaiveDate::parse_from_str(date, "%Y-%m-%d").is_ok()
 }
 
 #[cfg(test)]
