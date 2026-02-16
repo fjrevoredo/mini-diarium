@@ -1,0 +1,170 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  create-release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    outputs:
+      upload_url: ${{ steps.create_release.outputs.upload_url }}
+      version: ${{ steps.get_version.outputs.version }}
+    steps:
+      - name: Get version from tag
+        id: get_version
+        run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Create Draft Release
+        id: create_release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ github.ref }}
+          release_name: Mini Diarium v${{ steps.get_version.outputs.version }}
+          draft: true
+          prerelease: false
+          body: |
+            ## Mini Diarium v${{ steps.get_version.outputs.version }}
+
+            ### Installation
+
+            Download the appropriate file for your platform:
+
+            - **Windows**: `Mini-Diarium-${{ steps.get_version.outputs.version }}-windows.msi` or `.exe`
+            - **macOS**: `Mini-Diarium-${{ steps.get_version.outputs.version }}-macos.dmg`
+            - **Linux**: `Mini-Diarium-${{ steps.get_version.outputs.version }}-linux.AppImage` or `.deb`
+
+            ### Security Notes
+
+            **Windows**: SmartScreen may show a warning on first launch. Click "More info" then "Run anyway".
+            **macOS**: Gatekeeper may block the app. Right-click and select "Open" to bypass.
+            **Linux**: Verify SHA256 checksums against `checksums-*.txt` before installation.
+
+            ### What's Changed
+
+            <!-- Add release notes here before publishing -->
+
+            ---
+
+            Full changelog: https://github.com/fjrevoredo/mini-diarium/compare/...v${{ steps.get_version.outputs.version }}
+
+  build-release:
+    name: Build Release (${{ matrix.platform }})
+    needs: create-release
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            platform: linux
+            arch: x86_64
+          - os: macos-latest
+            platform: macos
+            arch: universal
+          - os: windows-latest
+            platform: windows
+            arch: x86_64
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            src-tauri/target/
+          key: ${{ runner.os }}-cargo-release-${{ hashFiles('src-tauri/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-cargo-release-
+            ${{ runner.os }}-cargo-
+
+      - name: Install Linux system dependencies
+        if: matrix.platform == 'linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+
+      - name: Install frontend dependencies
+        run: bun install
+
+      - name: Build Tauri app
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Prepare release artifacts (Linux)
+        if: matrix.platform == 'linux'
+        run: |
+          mkdir -p release-artifacts
+          VERSION="${{ needs.create-release.outputs.version }}"
+
+          # Find and rename artifacts
+          find src-tauri/target/release/bundle -name "*.AppImage" -exec cp {} release-artifacts/Mini-Diarium-${VERSION}-linux.AppImage \;
+          find src-tauri/target/release/bundle -name "*.deb" -exec cp {} release-artifacts/Mini-Diarium-${VERSION}-linux.deb \;
+
+          # Generate checksums
+          cd release-artifacts
+          sha256sum * > checksums-linux.txt
+          cat checksums-linux.txt
+
+      - name: Prepare release artifacts (macOS)
+        if: matrix.platform == 'macos'
+        run: |
+          mkdir -p release-artifacts
+          VERSION="${{ needs.create-release.outputs.version }}"
+
+          # Find and rename artifacts
+          find src-tauri/target/release/bundle -name "*.dmg" -exec cp {} release-artifacts/Mini-Diarium-${VERSION}-macos.dmg \;
+
+          # Generate checksums
+          cd release-artifacts
+          shasum -a 256 * > checksums-macos.txt
+          cat checksums-macos.txt
+
+      - name: Prepare release artifacts (Windows)
+        if: matrix.platform == 'windows'
+        shell: bash
+        run: |
+          mkdir -p release-artifacts
+          VERSION="${{ needs.create-release.outputs.version }}"
+
+          # Find and rename artifacts
+          find src-tauri/target/release/bundle -name "*.msi" -exec cp {} release-artifacts/Mini-Diarium-${VERSION}-windows.msi \;
+          find src-tauri/target/release/bundle/nsis -name "*.exe" -exec cp {} release-artifacts/Mini-Diarium-${VERSION}-windows.exe \; || true
+
+          # Generate checksums
+          cd release-artifacts
+          sha256sum * > checksums-windows.txt
+          cat checksums-windows.txt
+
+      - name: Upload release artifacts
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: v${{ needs.create-release.outputs.version }}
+          draft: true
+          files: release-artifacts/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

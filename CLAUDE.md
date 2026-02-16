@@ -10,6 +10,10 @@
 
 ## Architecture
 
+For a comprehensive visual overview, see the [architecture diagram](docs/architecture.svg) (regenerate with `d2 docs/architecture.d2 docs/architecture.svg`).
+
+Quick reference (ASCII art):
+
 ```
 ┌─────────────────────────────────────────────────────────────────┐
 │                     PRESENTATION LAYER                          │

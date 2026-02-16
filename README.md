@@ -1,5 +1,10 @@
 # Mini Diarium
 
+[![CI Status](https://github.com/fjrevoredo/mini-diarium/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/fjrevoredo/mini-diarium/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](https://github.com/fjrevoredo/mini-diarium/releases)
+[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)](https://github.com/fjrevoredo/mini-diarium#installation)
+
 An encrypted, local-first desktop journaling app.
 
 Mini Diarium keeps your journal private. Every entry is encrypted with AES-256-GCM before it touches disk, the app never connects to the internet, and your data never leaves your machine. Built with Tauri, SolidJS, and Rust.
@@ -23,6 +28,29 @@ Mini Diarium is a spiritual successor to [Mini Diary](https://github.com/samuelm
 - **Cross-platform**: Windows, macOS, and Linux
 - **Zero network access**: no telemetry, no analytics, no update checks
 
+## Architecture
+
+Mini Diarium uses a layered architecture with clear separation of concerns:
+
+![Architecture Diagram](docs/architecture.svg)
+
+The application is structured into 6 layers:
+
+1. **Presentation Layer** (SolidJS): Auth screens, calendar, editor, search, and overlay components
+2. **State Layer**: Reactive signals for auth, entries, search, UI state, and preferences
+3. **IPC Layer**: Tauri invoke/listen bridge between frontend and backend
+4. **Backend Commands**: 26 Rust commands handling auth, CRUD, search, navigation, stats, import/export
+5. **Business Logic**: Core modules for crypto (AES-256-GCM + Argon2id), database operations, import/export, and backups
+6. **Data Store**: SQLite with encrypted entries table and plaintext FTS5 index
+
+**Key Pattern**: All entry writes perform a **dual write**—updating both the encrypted `entries` table and the plaintext `entries_fts` search index. This ensures search stays synchronized with diary content.
+
+For implementation details, see [CLAUDE.md](CLAUDE.md). To regenerate the diagram:
+
+```bash
+d2 docs/architecture.d2 docs/architecture.svg
+```
+
 ## Installation
 
 Download the latest release for your platform:
@@ -32,6 +60,25 @@ Download the latest release for your platform:
 | Windows  | `.msi` or `.exe` (NSIS installer, no admin required) |
 | macOS    | `.dmg` |
 | Linux    | `.AppImage` or `.deb` |
+
+### Installation Notes
+
+**Windows**
+
+On first launch, Windows SmartScreen may show a warning ("Windows protected your PC"). This is expected for unsigned applications. Click "More info" then "Run anyway" to proceed. Mini Diarium is open source and builds are reproducible from source.
+
+**macOS**
+
+macOS Gatekeeper may block the app on first launch. Right-click the app icon and select "Open" to bypass the warning. Once opened, subsequent launches work normally.
+
+**Linux**
+
+No code signing is required. For security, verify the SHA256 checksum against `checksums-linux.txt` from the release before installation:
+
+```bash
+sha256sum Mini-Diarium-*.AppImage
+# Compare with checksums-linux.txt
+```
 
 ## Quick Start
 
