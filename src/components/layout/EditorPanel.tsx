@@ -1,5 +1,6 @@
 import { createSignal, createEffect, onCleanup, onMount, Show } from 'solid-js';
 import { Editor } from '@tiptap/core';
+import { createLogger } from '../../lib/logger';
 import TitleEditor from '../editor/TitleEditor';
 import DiaryEditor from '../editor/DiaryEditor';
 import WordCount from '../editor/WordCount';
@@ -8,6 +9,8 @@ import { saveEntry, getEntry, deleteEntryIfEmpty, getAllEntryDates } from '../..
 import { debounce } from '../../lib/debounce';
 import { isSaving, setIsSaving, setEntryDates } from '../../state/entries';
 import { preferences } from '../../state/preferences';
+
+const log = createLogger('Editor');
 
 export default function EditorPanel() {
   const [title, setTitle] = createSignal('');
@@ -35,7 +38,7 @@ export default function EditorPanel() {
         setWordCount(0);
       }
     } catch (error) {
-      console.error('Failed to load entry:', error);
+      log.error('Failed to load entry:', error);
     } finally {
       setIsLoadingEntry(false);
     }
@@ -57,7 +60,7 @@ export default function EditorPanel() {
         setEntryDates(dates);
         setWordCount(0);
       } catch (error) {
-        console.error('Failed to delete empty entry:', error);
+        log.error('Failed to delete empty entry:', error);
       }
       return;
     }
@@ -77,7 +80,7 @@ export default function EditorPanel() {
         setWordCount(savedEntry.word_count);
       }
     } catch (error) {
-      console.error('Failed to save entry:', error);
+      log.error('Failed to save entry:', error);
     } finally {
       setIsSaving(false);
     }

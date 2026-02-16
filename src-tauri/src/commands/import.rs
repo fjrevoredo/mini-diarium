@@ -2,6 +2,7 @@ use crate::commands::auth::DiaryState;
 use crate::db::queries;
 use crate::db::schema::DatabaseConnection;
 use crate::import::{dayone, dayone_txt, jrnl, merge, minidiary};
+use log::{debug, error, info};
 use tauri::State;
 
 /// Import result containing the number of entries imported
@@ -25,47 +26,47 @@ pub fn import_minidiary_json(
     file_path: String,
     state: State<DiaryState>,
 ) -> Result<ImportResult, String> {
-    eprintln!("[Import] Starting import from file: {}", file_path);
+    info!("Starting Mini Diary import from file: {}", file_path);
 
     let db_state = state.db.lock().unwrap();
     let db = db_state.as_ref().ok_or_else(|| {
         let err = "Diary must be unlocked to import entries";
-        eprintln!("[Import] Error: {}", err);
+        error!("{}", err);
         err.to_string()
     })?;
 
     // Read file
-    eprintln!("[Import] Reading file...");
+    debug!("Reading file...");
     let json_content = std::fs::read_to_string(&file_path).map_err(|e| {
         let err = format!("Failed to read file: {}", e);
-        eprintln!("[Import] Error: {}", err);
+        error!("{}", err);
         err
     })?;
 
     // Parse JSON
-    eprintln!("[Import] Parsing JSON...");
+    debug!("Parsing Mini Diary JSON...");
     let entries = minidiary::parse_minidiary_json(&json_content).map_err(|e| {
-        eprintln!("[Import] Parse error: {}", e);
+        error!("Parse error: {}", e);
         e
     })?;
-    eprintln!("[Import] Parsed {} entries", entries.len());
+    debug!("Parsed {} entries", entries.len());
 
     // Import entries with merge handling
-    eprintln!("[Import] Importing entries...");
+    debug!("Importing entries...");
     let result = import_entries(db, entries).map_err(|e| {
-        eprintln!("[Import] Import error: {}", e);
+        error!("Import error: {}", e);
         e
     })?;
 
     // Rebuild FTS index after import
-    eprintln!("[Import] Rebuilding FTS index...");
+    debug!("Rebuilding FTS index...");
     rebuild_fts_index(db).map_err(|e| {
-        eprintln!("[Import] FTS rebuild error: {}", e);
+        error!("FTS rebuild error: {}", e);
         e
     })?;
 
-    eprintln!(
-        "[Import] Success: {} imported, {} merged",
+    info!(
+        "Mini Diary import complete: {} imported, {} merged",
         result.entries_imported, result.entries_merged
     );
     Ok(result)
@@ -84,47 +85,47 @@ pub fn import_dayone_json(
     file_path: String,
     state: State<DiaryState>,
 ) -> Result<ImportResult, String> {
-    eprintln!("[Import] Starting Day One import from file: {}", file_path);
+    info!("Starting Day One JSON import from file: {}", file_path);
 
     let db_state = state.db.lock().unwrap();
     let db = db_state.as_ref().ok_or_else(|| {
         let err = "Diary must be unlocked to import entries";
-        eprintln!("[Import] Error: {}", err);
+        error!("{}", err);
         err.to_string()
     })?;
 
     // Read file
-    eprintln!("[Import] Reading file...");
+    debug!("Reading file...");
     let json_content = std::fs::read_to_string(&file_path).map_err(|e| {
         let err = format!("Failed to read file: {}", e);
-        eprintln!("[Import] Error: {}", err);
+        error!("{}", err);
         err
     })?;
 
     // Parse JSON
-    eprintln!("[Import] Parsing Day One JSON...");
+    debug!("Parsing Day One JSON...");
     let entries = dayone::parse_dayone_json(&json_content).map_err(|e| {
-        eprintln!("[Import] Parse error: {}", e);
+        error!("Parse error: {}", e);
         e
     })?;
-    eprintln!("[Import] Parsed {} entries", entries.len());
+    debug!("Parsed {} entries", entries.len());
 
     // Import entries with merge handling
-    eprintln!("[Import] Importing entries...");
+    debug!("Importing entries...");
     let result = import_entries(db, entries).map_err(|e| {
-        eprintln!("[Import] Import error: {}", e);
+        error!("Import error: {}", e);
         e
     })?;
 
     // Rebuild FTS index after import
-    eprintln!("[Import] Rebuilding FTS index...");
+    debug!("Rebuilding FTS index...");
     rebuild_fts_index(db).map_err(|e| {
-        eprintln!("[Import] FTS rebuild error: {}", e);
+        error!("FTS rebuild error: {}", e);
         e
     })?;
 
-    eprintln!(
-        "[Import] Success: {} imported, {} merged",
+    info!(
+        "Day One JSON import complete: {} imported, {} merged",
         result.entries_imported, result.entries_merged
     );
     Ok(result)
@@ -143,47 +144,47 @@ pub fn import_jrnl_json(
     file_path: String,
     state: State<DiaryState>,
 ) -> Result<ImportResult, String> {
-    eprintln!("[Import] Starting jrnl import from file: {}", file_path);
+    info!("Starting jrnl import from file: {}", file_path);
 
     let db_state = state.db.lock().unwrap();
     let db = db_state.as_ref().ok_or_else(|| {
         let err = "Diary must be unlocked to import entries";
-        eprintln!("[Import] Error: {}", err);
+        error!("{}", err);
         err.to_string()
     })?;
 
     // Read file
-    eprintln!("[Import] Reading file...");
+    debug!("Reading file...");
     let json_content = std::fs::read_to_string(&file_path).map_err(|e| {
         let err = format!("Failed to read file: {}", e);
-        eprintln!("[Import] Error: {}", err);
+        error!("{}", err);
         err
     })?;
 
     // Parse JSON
-    eprintln!("[Import] Parsing jrnl JSON...");
+    debug!("Parsing jrnl JSON...");
     let entries = jrnl::parse_jrnl_json(&json_content).map_err(|e| {
-        eprintln!("[Import] Parse error: {}", e);
+        error!("Parse error: {}", e);
         e
     })?;
-    eprintln!("[Import] Parsed {} entries", entries.len());
+    debug!("Parsed {} entries", entries.len());
 
     // Import entries with merge handling
-    eprintln!("[Import] Importing entries...");
+    debug!("Importing entries...");
     let result = import_entries(db, entries).map_err(|e| {
-        eprintln!("[Import] Import error: {}", e);
+        error!("Import error: {}", e);
         e
     })?;
 
     // Rebuild FTS index after import
-    eprintln!("[Import] Rebuilding FTS index...");
+    debug!("Rebuilding FTS index...");
     rebuild_fts_index(db).map_err(|e| {
-        eprintln!("[Import] FTS rebuild error: {}", e);
+        error!("FTS rebuild error: {}", e);
         e
     })?;
 
-    eprintln!(
-        "[Import] Success: {} imported, {} merged",
+    info!(
+        "jrnl import complete: {} imported, {} merged",
         result.entries_imported, result.entries_merged
     );
     Ok(result)
@@ -202,50 +203,47 @@ pub fn import_dayone_txt(
     file_path: String,
     state: State<DiaryState>,
 ) -> Result<ImportResult, String> {
-    eprintln!(
-        "[Import] Starting Day One TXT import from file: {}",
-        file_path
-    );
+    info!("Starting Day One TXT import from file: {}", file_path);
 
     let db_state = state.db.lock().unwrap();
     let db = db_state.as_ref().ok_or_else(|| {
         let err = "Diary must be unlocked to import entries";
-        eprintln!("[Import] Error: {}", err);
+        error!("{}", err);
         err.to_string()
     })?;
 
     // Read file
-    eprintln!("[Import] Reading file...");
+    debug!("Reading file...");
     let txt_content = std::fs::read_to_string(&file_path).map_err(|e| {
         let err = format!("Failed to read file: {}", e);
-        eprintln!("[Import] Error: {}", err);
+        error!("{}", err);
         err
     })?;
 
     // Parse TXT
-    eprintln!("[Import] Parsing Day One TXT...");
+    debug!("Parsing Day One TXT...");
     let entries = dayone_txt::parse_dayone_txt(&txt_content).map_err(|e| {
-        eprintln!("[Import] Parse error: {}", e);
+        error!("Parse error: {}", e);
         e
     })?;
-    eprintln!("[Import] Parsed {} entries", entries.len());
+    debug!("Parsed {} entries", entries.len());
 
     // Import entries with merge handling
-    eprintln!("[Import] Importing entries...");
+    debug!("Importing entries...");
     let result = import_entries(db, entries).map_err(|e| {
-        eprintln!("[Import] Import error: {}", e);
+        error!("Import error: {}", e);
         e
     })?;
 
     // Rebuild FTS index after import
-    eprintln!("[Import] Rebuilding FTS index...");
+    debug!("Rebuilding FTS index...");
     rebuild_fts_index(db).map_err(|e| {
-        eprintln!("[Import] FTS rebuild error: {}", e);
+        error!("FTS rebuild error: {}", e);
         e
     })?;
 
-    eprintln!(
-        "[Import] Success: {} imported, {} merged",
+    info!(
+        "Day One TXT import complete: {} imported, {} merged",
         result.entries_imported, result.entries_merged
     );
     Ok(result)
@@ -289,18 +287,18 @@ fn import_entries(
 ///
 /// This is necessary after bulk imports to ensure search works correctly
 fn rebuild_fts_index(db: &DatabaseConnection) -> Result<(), String> {
-    eprintln!("[FTS] Clearing existing FTS index...");
+    debug!("Clearing existing FTS index...");
 
     // Clear the FTS table (regular DELETE since this is a standalone FTS table)
     db.conn()
         .execute("DELETE FROM entries_fts", [])
         .map_err(|e| format!("Failed to clear FTS index: {}", e))?;
 
-    eprintln!("[FTS] Getting all entry dates...");
+    debug!("Getting all entry dates...");
     // Get all entries
     let dates = queries::get_all_entry_dates(db)?;
     let total_entries = dates.len();
-    eprintln!("[FTS] Found {} entries to index", total_entries);
+    debug!("Found {} entries to index", total_entries);
 
     // Rebuild index for each entry
     for date in dates {
@@ -315,8 +313,8 @@ fn rebuild_fts_index(db: &DatabaseConnection) -> Result<(), String> {
         }
     }
 
-    eprintln!(
-        "[FTS] Successfully rebuilt FTS index for {} entries",
+    debug!(
+        "Successfully rebuilt FTS index for {} entries",
         total_entries
     );
     Ok(())

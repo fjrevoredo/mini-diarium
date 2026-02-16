@@ -130,6 +130,10 @@ Artifacts will be in `src-tauri/target/release/bundle/`.
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for setup instructions, development workflow, and conventions.
 
+## Releasing
+
+For maintainers: See [RELEASING.md](RELEASING.md) for step-by-step release instructions.
+
 ## License
 
 [MIT](LICENSE)

@@ -1,5 +1,6 @@
 use crate::commands::auth::DiaryState;
 use crate::db::queries::{self, DiaryEntry};
+use log::debug;
 use tauri::State;
 
 /// Saves a diary entry (insert or update)
@@ -33,6 +34,7 @@ pub fn save_entry(
         entry.word_count = word_count;
         entry.date_updated = now;
         queries::update_entry(db, &entry)?;
+        debug!("Updated entry for {}", date);
     } else {
         // Create new entry
         let entry = DiaryEntry {
@@ -44,6 +46,7 @@ pub fn save_entry(
             date_updated: now,
         };
         queries::insert_entry(db, &entry)?;
+        debug!("Created entry for {}", date);
     }
 
     Ok(())
@@ -77,6 +80,7 @@ pub fn delete_entry_if_empty(
 
     // Only delete if both title and text are empty/whitespace
     if title.trim().is_empty() && text.trim().is_empty() {
+        debug!("Deleting empty entry for {}", date);
         queries::delete_entry(db, &date)
     } else {
         Ok(false)
