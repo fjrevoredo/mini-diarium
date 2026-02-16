@@ -137,3 +137,7 @@ export interface ExportResult {
 export async function exportJson(filePath: string): Promise<ExportResult> {
   return await invoke('export_json', { filePath });
 }
+
+export async function exportMarkdown(filePath: string): Promise<ExportResult> {
+  return await invoke('export_markdown', { filePath });
+}

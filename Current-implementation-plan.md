@@ -3,11 +3,11 @@
 ---
 ## IMPLEMENTATION STATUS (Updated: 2026-02-15)
 
-**Progress: 40/47 Tasks Complete (85%)**
+**Progress: 41/47 Tasks Complete (87%)**
 
 - ✅ **Phase 1: Foundation & Core Infrastructure** (Tasks 1-28) - **COMPLETE**
 - ✅ **Phase 2: Search, Navigation & Preferences** (Tasks 29-33) - **COMPLETE**
-- ⏳ **Phase 3: Import, Export, Theming** (Tasks 34-44) - **PARTIAL (7/11 complete)**
+- ⏳ **Phase 3: Import, Export, Theming** (Tasks 34-44) - **PARTIAL (8/11 complete)**
 - ⏳ **Phase 4: Backup & Advanced Features** (Tasks 45-46) - **NOT STARTED**
 - ⏳ **Phase 5: Internationalization** (Task 47) - **NOT STARTED**
 
@@ -16,13 +16,14 @@
 - Task 38: jrnl JSON Import (parser with calendar-accurate validation + 12 unit tests + fixture test)
 - Task 39: Day One TXT Import (tab-delimited parser + date parsing + 16 unit tests)
 - Task 40: JSON Export (Mini Diary-compatible format + round-trip tests + ExportOverlay UI)
+- Task 41: Markdown Export (HTML-to-Markdown conversion + 12 unit tests + ExportOverlay option)
 - **Testing Infrastructure:**
   - Complete Vitest + SolidJS Testing Library setup
   - 23 passing frontend tests (dates utilities, WordCount, TitleEditor, imports)
-  - 133 passing backend tests (crypto, db, commands, imports, export)
+  - 145 passing backend tests (crypto, db, commands, imports, export)
   - Ready for test-driven development in remaining tasks
 
-**Next Up:** Task 41 - Markdown Export
+**Next Up:** Task 42 - PDF Export
 
 ---
 
@@ -1041,10 +1042,20 @@ These deviations represent different implementation approaches that are function
    * Tests: 6 Rust unit tests including round-trip (export → re-import)
    * Compilation: ✅ Verified - all tests passing
 
-🎯 **NEXT UP: Task 41** - Markdown Export
+✅ **TASK 41 COMPLETE** - Markdown Export
+   * Backend: `src-tauri/src/export/markdown.rs` - HTML-to-Markdown conversion + export function
+   * HTML conversion: Handles `<p>`, `<strong>`, `<em>`, `<ul>/<li>`, `<br>`, `<h1>`-`<h6>`, entities
+   * Format: `# Mini Diarium` header, `## YYYY-MM-DD` per entry, `**Title**`, converted text
+   * Command: `export_markdown` in `src-tauri/src/commands/export.rs`
+   * Frontend: Added "Markdown" option to ExportOverlay dropdown with `.md` file filter
+   * Tauri wrapper: `exportMarkdown()` in `src/lib/tauri.ts`
+   * Tests: 12 Rust unit tests (5 export structure + 7 HTML-to-Markdown conversion)
+   * Compilation: ✅ Verified - all tests passing
 
- 📋 **REMAINING: Tasks 41-47** (7 tasks across 3 phases)
-   - Phase 3: Import/Export/Theming (Tasks 41-44) - 4 remaining
+🎯 **NEXT UP: Task 42** - PDF Export
+
+ 📋 **REMAINING: Tasks 42-47** (6 tasks across 3 phases)
+   - Phase 3: Import/Export/Theming (Tasks 42-44) - 3 remaining
    - Phase 4: Backup & Advanced (Tasks 45-46)
    - Phase 5: Internationalization (Task 47)
 

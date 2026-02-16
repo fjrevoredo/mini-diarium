@@ -65,6 +65,7 @@ pub fn run() {
             commands::import::import_dayone_txt,
             commands::import::import_jrnl_json,
             commands::export::export_json,
+            commands::export::export_markdown,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

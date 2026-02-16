@@ -1,7 +1,7 @@
 import { createSignal, Show } from 'solid-js';
 import { Dialog } from '@kobalte/core/dialog';
 import { save as saveDialog } from '@tauri-apps/plugin-dialog';
-import { exportJson, type ExportResult } from '../../lib/tauri';
+import { exportJson, exportMarkdown, type ExportResult } from '../../lib/tauri';
 import { X, FileDown, CheckCircle, AlertCircle } from 'lucide-solid';
 
 interface ExportOverlayProps {
@@ -9,7 +9,7 @@ interface ExportOverlayProps {
   onClose: () => void;
 }
 
-type ExportFormat = 'json';
+type ExportFormat = 'json' | 'markdown';
 
 export default function ExportOverlay(props: ExportOverlayProps) {
   const [selectedFormat, setSelectedFormat] = createSignal<ExportFormat>('json');
@@ -37,13 +37,21 @@ export default function ExportOverlay(props: ExportOverlayProps) {
     setResult(null);
 
     try {
+      const format = selectedFormat();
+      const isMarkdown = format === 'markdown';
+      const defaultPath = isMarkdown
+        ? 'mini-diarium-export.md'
+        : 'mini-diarium-export.json';
+      const filterName = isMarkdown ? 'Markdown' : 'JSON';
+      const filterExt = isMarkdown ? ['md'] : ['json'];
+
       // Open save dialog
       const filePath = await saveDialog({
-        defaultPath: 'mini-diarium-export.json',
+        defaultPath,
         filters: [
           {
-            name: 'JSON',
-            extensions: ['json'],
+            name: filterName,
+            extensions: filterExt,
           },
         ],
       });
@@ -56,11 +64,12 @@ export default function ExportOverlay(props: ExportOverlayProps) {
 
       console.log('[Export] Starting export to file:', filePath);
 
-      const format = selectedFormat();
       let exportResult: ExportResult;
 
       if (format === 'json') {
         exportResult = await exportJson(filePath);
+      } else if (format === 'markdown') {
+        exportResult = await exportMarkdown(filePath);
       } else {
         throw new Error(`Unsupported export format: ${format}`);
       }
@@ -124,6 +133,7 @@ export default function ExportOverlay(props: ExportOverlayProps) {
                 class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
               >
                 <option value="json">Mini Diary JSON</option>
+                <option value="markdown">Markdown</option>
               </select>
             </div>
 

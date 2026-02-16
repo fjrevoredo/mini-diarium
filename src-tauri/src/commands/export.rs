@@ -1,6 +1,7 @@
 use crate::commands::auth::DiaryState;
-use crate::db::queries;
-use crate::export::json;
+use crate::db::queries::{self, DiaryEntry};
+use crate::db::schema::DatabaseConnection;
+use crate::export::{json, markdown};
 use tauri::State;
 
 /// Export result containing the number of entries exported
@@ -10,20 +11,25 @@ pub struct ExportResult {
     pub file_path: String,
 }
 
+/// Fetches and decrypts all diary entries from the database
+fn fetch_all_entries(db: &DatabaseConnection) -> Result<Vec<DiaryEntry>, String> {
+    let dates = queries::get_all_entry_dates(db)?;
+    let mut entries = Vec::with_capacity(dates.len());
+    for date in &dates {
+        if let Some(entry) = queries::get_entry(db, date)? {
+            entries.push(entry);
+        }
+    }
+    Ok(entries)
+}
+
 /// Exports all diary entries to a JSON file in Mini Diary-compatible format
-///
-/// # Arguments
-/// * `file_path` - Path where the JSON file will be written
-/// * `state` - Application state containing the database connection
-///
-/// # Returns
-/// ExportResult with count of exported entries and the file path
 #[tauri::command]
 pub fn export_json(
     file_path: String,
     state: State<DiaryState>,
 ) -> Result<ExportResult, String> {
-    eprintln!("[Export] Starting export to file: {}", file_path);
+    eprintln!("[Export] Starting JSON export to file: {}", file_path);
 
     let db_state = state.db.lock().unwrap();
     let db = db_state.as_ref().ok_or_else(|| {
@@ -32,41 +38,53 @@ pub fn export_json(
         err.to_string()
     })?;
 
-    // Get all entry dates
-    eprintln!("[Export] Getting all entry dates...");
-    let dates = queries::get_all_entry_dates(db)?;
-    eprintln!("[Export] Found {} entries to export", dates.len());
-
-    // Fetch and decrypt all entries
-    let mut entries = Vec::with_capacity(dates.len());
-    for date in &dates {
-        if let Some(entry) = queries::get_entry(db, date)? {
-            entries.push(entry);
-        }
-    }
-
+    let entries = fetch_all_entries(db)?;
     let entries_exported = entries.len();
-
-    // Convert to JSON
     eprintln!("[Export] Serializing {} entries to JSON...", entries_exported);
+
     let json_string = json::export_entries_to_json(entries)?;
 
-    // Write to file
-    eprintln!("[Export] Writing to file...");
     std::fs::write(&file_path, &json_string).map_err(|e| {
         let err = format!("Failed to write file: {}", e);
         eprintln!("[Export] Error: {}", err);
         err
     })?;
 
-    eprintln!(
-        "[Export] Success: {} entries exported to {}",
-        entries_exported, file_path
-    );
-    Ok(ExportResult {
-        entries_exported,
-        file_path,
-    })
+    eprintln!("[Export] Success: {} entries exported to {}", entries_exported, file_path);
+    Ok(ExportResult { entries_exported, file_path })
+}
+
+/// Exports all diary entries to a Markdown file
+///
+/// HTML content from TipTap is converted to Markdown syntax.
+#[tauri::command]
+pub fn export_markdown(
+    file_path: String,
+    state: State<DiaryState>,
+) -> Result<ExportResult, String> {
+    eprintln!("[Export] Starting Markdown export to file: {}", file_path);
+
+    let db_state = state.db.lock().unwrap();
+    let db = db_state.as_ref().ok_or_else(|| {
+        let err = "Diary must be unlocked to export entries";
+        eprintln!("[Export] Error: {}", err);
+        err.to_string()
+    })?;
+
+    let entries = fetch_all_entries(db)?;
+    let entries_exported = entries.len();
+    eprintln!("[Export] Converting {} entries to Markdown...", entries_exported);
+
+    let md_string = markdown::export_entries_to_markdown(entries);
+
+    std::fs::write(&file_path, &md_string).map_err(|e| {
+        let err = format!("Failed to write file: {}", e);
+        eprintln!("[Export] Error: {}", err);
+        err
+    })?;
+
+    eprintln!("[Export] Success: {} entries exported to {}", entries_exported, file_path);
+    Ok(ExportResult { entries_exported, file_path })
 }
 
 #[cfg(test)]
