@@ -1,5 +1,6 @@
 use crate::db::queries::DiaryEntry;
 use chrono::{Datelike, Utc};
+use log::warn;
 use serde::Deserialize;
 
 /// Root structure of a jrnl JSON export
@@ -61,8 +62,8 @@ pub fn parse_jrnl_json(json: &str) -> Result<Vec<DiaryEntry>, String> {
     for entry in jrnl_data.entries {
         // Validate date format (YYYY-MM-DD)
         if !is_valid_date_format(&entry.date) {
-            eprintln!(
-                "Warning: Skipping jrnl entry with invalid date format: {}",
+            warn!(
+                "Skipping jrnl entry with invalid date format: {}",
                 entry.date
             );
             continue;

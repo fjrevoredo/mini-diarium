@@ -139,22 +139,12 @@ mod tests {
             |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?, row.get(3)?)),
         );
 
-        match result {
-            Ok((rowid, date, title, text)) => {
-                println!("FTS rowid: {}", rowid);
-                println!("FTS date: {}", date);
-                println!("FTS title: '{}'", title);
-                println!("FTS text: '{}'", text);
+        let (rowid, date, title, text) = result.expect("Failed to query FTS table");
 
-                // These should NOT be empty!
-                assert_eq!(date, "2024-01-01");
-                assert_eq!(title, "My First Entry", "Title should be populated in FTS");
-                assert!(text.contains("flowers"), "Text should be populated in FTS");
-            }
-            Err(e) => {
-                panic!("Failed to query FTS table: {}", e);
-            }
-        }
+        assert!(rowid > 0, "FTS rowid should be positive");
+        assert_eq!(date, "2024-01-01");
+        assert_eq!(title, "My First Entry", "Title should be populated in FTS");
+        assert!(text.contains("flowers"), "Text should be populated in FTS");
 
         cleanup_db(&db_path);
     }

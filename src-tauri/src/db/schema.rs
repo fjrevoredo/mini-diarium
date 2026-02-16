@@ -1,4 +1,5 @@
 use crate::crypto::{cipher, password};
+use log::{debug, error, info, warn};
 use rusqlite::Connection;
 use std::path::Path;
 
@@ -229,8 +230,8 @@ fn run_migrations(
         return Ok(());
     }
 
-    eprintln!(
-        "[Migration] Upgrading database from version {} to {}",
+    info!(
+        "Upgrading database from version {} to {}",
         current_version, SCHEMA_VERSION
     );
 
@@ -240,10 +241,7 @@ fn run_migrations(
     }
 
     // Update schema version (inside the last migration's transaction)
-    eprintln!(
-        "[Migration] Successfully upgraded to version {}",
-        SCHEMA_VERSION
-    );
+    info!("Successfully upgraded to version {}", SCHEMA_VERSION);
     Ok(())
 }
 
@@ -258,13 +256,13 @@ fn migrate_v1_to_v2(
     db_path: &Path,
     backups_dir: &Path,
 ) -> Result<(), String> {
-    eprintln!("[Migration v1→v2] Starting safe migration");
+    info!("Migration v1→v2: starting safe migration");
 
     // STEP 1: Create backup before making any changes
-    eprintln!("[Migration v1→v2] Creating backup before migration...");
+    debug!("Migration v1→v2: creating backup before migration...");
     let backup_path = crate::backup::create_backup(db_path, backups_dir)
         .map_err(|e| format!("Failed to create pre-migration backup: {}", e))?;
-    eprintln!("[Migration v1→v2] Backup created at: {:?}", backup_path);
+    info!("Migration v1→v2: backup created at: {:?}", backup_path);
 
     // STEP 2: Begin transaction for atomic migration
     let conn = db.conn();
@@ -273,7 +271,7 @@ fn migrate_v1_to_v2(
 
     // STEP 3: Perform migration (wrapped in closure for error handling)
     let migration_result = (|| -> Result<(), String> {
-        eprintln!("[Migration v1→v2] Fixing FTS table schema");
+        debug!("Migration v1→v2: fixing FTS table schema");
 
         // Drop old FTS table and its triggers
         conn.execute_batch(
@@ -299,7 +297,7 @@ fn migrate_v1_to_v2(
         .map_err(|e| format!("Failed to create new FTS table: {}", e))?;
 
         // Rebuild FTS index from existing entries
-        eprintln!("[Migration v1→v2] Rebuilding FTS index");
+        debug!("Migration v1→v2: rebuilding FTS index");
 
         // Get all entry dates
         let mut stmt = conn
@@ -313,8 +311,8 @@ fn migrate_v1_to_v2(
             .map_err(|e| format!("Failed to collect dates: {}", e))?;
 
         let total_entries = dates.len();
-        eprintln!(
-            "[Migration v1→v2] Rebuilding FTS for {} entries",
+        debug!(
+            "Migration v1→v2: rebuilding FTS for {} entries",
             total_entries
         );
 
@@ -353,7 +351,7 @@ fn migrate_v1_to_v2(
 
                 // Progress reporting for large migrations
                 if (i + 1) % 100 == 0 || (i + 1) == total_entries {
-                    eprintln!("[Migration v1→v2] Progress: {}/{}", i + 1, total_entries);
+                    debug!("Migration v1→v2: progress {}/{}", i + 1, total_entries);
                 }
             }
         }
@@ -376,22 +374,22 @@ fn migrate_v1_to_v2(
         Ok(()) => {
             conn.execute_batch("COMMIT")
                 .map_err(|e| format!("Failed to commit migration transaction: {}", e))?;
-            eprintln!(
-                "[Migration v1→v2] Successfully migrated (backup: {:?})",
+            info!(
+                "Migration v1→v2: successfully migrated (backup: {:?})",
                 backup_path
             );
             Ok(())
         }
         Err(e) => {
-            eprintln!(
-                "[Migration v1→v2] Migration failed, attempting rollback: {}",
+            error!(
+                "Migration v1→v2: migration failed, attempting rollback: {}",
                 e
             );
 
             match conn.execute_batch("ROLLBACK") {
                 Ok(_) => {
                     // Normal error path: rollback succeeded, database is unchanged
-                    eprintln!("[Migration v1→v2] Rollback successful - database unchanged");
+                    warn!("Migration v1→v2: rollback successful - database unchanged");
                     Err(format!(
                         "Migration v1→v2 failed (database unchanged, backup available at {:?}): {}\n\
                          \n\
@@ -403,7 +401,7 @@ fn migrate_v1_to_v2(
                 }
                 Err(rollback_err) => {
                     // Critical error path: both migration AND rollback failed
-                    eprintln!("[Migration v1→v2] CRITICAL: Rollback failed!");
+                    error!("Migration v1→v2: CRITICAL - rollback failed!");
                     Err(format!(
                         "CRITICAL: Migration v1→v2 failed AND rollback failed. Database may be in an inconsistent state.\n\
                          \n\
@@ -607,10 +605,7 @@ mod tests {
         create_database(&db_path, password.clone()).unwrap();
 
         let result = open_database(&db_path, password, &backups_dir);
-        if let Err(e) = &result {
-            eprintln!("Error opening database: {}", e);
-        }
-        assert!(result.is_ok());
+        assert!(result.is_ok(), "Error opening database: {:?}", result.err());
 
         cleanup_db(&db_path);
         cleanup_backups_dir(&backups_dir);

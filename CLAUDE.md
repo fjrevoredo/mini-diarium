@@ -385,3 +385,16 @@ bun run tauri build      # Full app bundle
 2. Add `pub mod FORMAT;` to `src-tauri/src/import/mod.rs`
 3. Add command in `commands/import.rs` (follow existing pattern: parse → `import_entries()` → `rebuild_fts_index()`)
 4. Register command, add frontend wrapper in `tauri.ts`, add UI option in `ImportOverlay.tsx`
+
+### Creating a Release
+
+See [RELEASING.md](RELEASING.md) for complete step-by-step instructions.
+
+**Quick summary:**
+1. Create release branch: `git checkout -b release-X.Y.Z`
+2. Bump version: `./bump-version.sh X.Y.Z` (updates all version files)
+3. Commit and push branch: `git add ... && git commit -m "chore: bump version to X.Y.Z" && git push origin release-X.Y.Z`
+4. Create PR to merge release branch → master
+5. After PR merged, tag on master: `git checkout master && git pull && git tag -a vX.Y.Z -m "Release vX.Y.Z" && git push origin vX.Y.Z`
+6. Wait for GitHub Actions to build and create draft release
+7. Publish the draft release on GitHub

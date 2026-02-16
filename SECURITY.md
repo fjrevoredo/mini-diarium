@@ -1,5 +1,7 @@
 # Security Policy
 
+> **Note**: Mini Diarium is a hobby project maintained in my spare time. While I take security seriously, I can't provide enterprise-level guarantees or rapid response times. Use this software at your own risk.
+
 ## Supported Versions
 
 | Version | Supported |
@@ -8,12 +10,14 @@
 
 ## Reporting Vulnerabilities
 
-If you discover a security vulnerability, **please do not open a public issue**. Instead, report it privately to the project maintainer via email.
+If you discover a security vulnerability, **please do not open a public issue**. Instead, report it privately via:
+- Email (check GitHub profile for contact)
+- GitHub Security Advisories (https://github.com/fjrevoredo/mini-diarium/security/advisories/new)
 
-**Expected response timeline:**
-- Acknowledgment within 48 hours
-- Assessment and fix plan within 7 days for critical issues
-- Patch release as soon as a fix is verified
+**What to expect:**
+This is a hobby project maintained in my spare time. I'll do my best to respond and fix security issues promptly, but I can't guarantee specific timelines. Critical vulnerabilities affecting user data will be prioritized. For non-critical issues, fixes may take longer depending on complexity and my availability.
+
+If you don't hear back within a couple weeks, feel free to send a follow-up reminder.
 
 ## Security Model
 

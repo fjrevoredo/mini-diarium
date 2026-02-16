@@ -1,4 +1,5 @@
 import { Accessor, Setter } from 'solid-js';
+import { createLogger } from './logger';
 import {
   navigatePreviousDay,
   navigateNextDay,
@@ -9,6 +10,8 @@ import {
 import { setIsGoToDateOpen } from '../state/ui';
 import { preferences } from '../state/preferences';
 import { getTodayString } from './dates';
+
+const log = createLogger('Shortcuts');
 
 /**
  * Detect if we're on macOS
@@ -53,7 +56,7 @@ export function setupNavigationShortcuts(
         const newDate = await navigatePreviousDay(selectedDate());
         setSelectedDate(newDate);
       } catch (error) {
-        console.error('Failed to navigate to previous day:', error);
+        log.error('Failed to navigate to previous day:', error);
       }
     }
     // Ctrl/Cmd + Right: Next Day
@@ -66,7 +69,7 @@ export function setupNavigationShortcuts(
         const finalDate = !preferences().allowFutureEntries && newDate > today ? today : newDate;
         setSelectedDate(finalDate);
       } catch (error) {
-        console.error('Failed to navigate to next day:', error);
+        log.error('Failed to navigate to next day:', error);
       }
     }
     // Ctrl/Cmd + T: Go to Today
@@ -76,7 +79,7 @@ export function setupNavigationShortcuts(
         const newDate = await navigateToToday();
         setSelectedDate(newDate);
       } catch (error) {
-        console.error('Failed to navigate to today:', error);
+        log.error('Failed to navigate to today:', error);
       }
     }
     // Ctrl/Cmd + G: Open Go to Date overlay
@@ -91,7 +94,7 @@ export function setupNavigationShortcuts(
         const newDate = await navigatePreviousMonth(selectedDate());
         setSelectedDate(newDate);
       } catch (error) {
-        console.error('Failed to navigate to previous month:', error);
+        log.error('Failed to navigate to previous month:', error);
       }
     }
     // Ctrl/Cmd + Shift + Right: Next Month
@@ -104,7 +107,7 @@ export function setupNavigationShortcuts(
         const finalDate = !preferences().allowFutureEntries && newDate > today ? today : newDate;
         setSelectedDate(finalDate);
       } catch (error) {
-        console.error('Failed to navigate to next month:', error);
+        log.error('Failed to navigate to next month:', error);
       }
     }
   };
