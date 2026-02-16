@@ -26,3 +26,19 @@ Thumbs.db
 
 # Coverage
 coverage/
+
+# Test artifacts
+*.db
+*.db-shm
+*.db-wal
+test_*.db
+
+# Backup files
+*.backup
+*.bak
+.backup/
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
