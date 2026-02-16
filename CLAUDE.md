@@ -10,7 +10,15 @@
 
 ## Architecture
 
-For a comprehensive visual overview, see the [architecture diagram](docs/architecture.svg) (regenerate with `d2 docs/architecture.d2 docs/architecture.svg`).
+**Visual diagrams**:
+- [Simple overview](docs/architecture-simple.svg) - High-level 6-layer view (for README)
+- [Full diagram](docs/architecture-full.svg) - Detailed components and data flows
+
+**Regenerate diagrams**:
+```bash
+d2 docs/architecture-simple.d2 docs/architecture-simple.svg
+d2 docs/architecture-full.d2 docs/architecture-full.svg
+```
 
 Quick reference (ASCII art):
 

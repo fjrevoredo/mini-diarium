@@ -32,7 +32,7 @@ Mini Diarium is a spiritual successor to [Mini Diary](https://github.com/samuelm
 
 Mini Diarium uses a layered architecture with clear separation of concerns:
 
-![Architecture Diagram](docs/architecture.svg)
+![Architecture Overview](docs/architecture-simple.svg)
 
 The application is structured into 6 layers:
 
@@ -45,11 +45,9 @@ The application is structured into 6 layers:
 
 **Key Pattern**: All entry writes perform a **dual write**—updating both the encrypted `entries` table and the plaintext `entries_fts` search index. This ensures search stays synchronized with diary content.
 
-For implementation details, see [CLAUDE.md](CLAUDE.md). To regenerate the diagram:
+For a detailed architecture diagram showing all components and data flows, see [docs/architecture-full.svg](docs/architecture-full.svg).
 
-```bash
-d2 docs/architecture.d2 docs/architecture.svg
-```
+For implementation details, see [CLAUDE.md](CLAUDE.md).
 
 ## Installation
 

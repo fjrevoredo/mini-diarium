@@ -46,3 +46,10 @@ test_*.db
 *.tmp
 *.temp
 .cache/
+
+# Internal development documentation
+*-PLAN.md
+*-STATUS.md
+*-AUDIT.md
+*-VERIFICATION*.md
+Current-implementation-plan.md
