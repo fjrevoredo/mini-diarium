@@ -51,8 +51,8 @@ pub fn unlock_diary(password: String, state: State<DiaryState>) -> Result<(), St
         return Err("No diary found. Please create one first.".to_string());
     }
 
-    // Open the database
-    let db_conn = open_database(&db_path, password)?;
+    // Open the database (migrations run automatically if needed)
+    let db_conn = open_database(&db_path, password, &backups_dir)?;
 
     // Store in state
     let mut db_state = state.db.lock().unwrap();
@@ -114,9 +114,10 @@ pub fn change_password(
     state: State<DiaryState>,
 ) -> Result<(), String> {
     let db_path = state.db_path.lock().unwrap().clone();
+    let backups_dir = state.backups_dir.lock().unwrap().clone();
 
     // Verify old password by opening database
-    let _db = open_database(&db_path, old_password)?;
+    let _db = open_database(&db_path, old_password, &backups_dir)?;
 
     // Export all entries
     let entries = {
@@ -202,6 +203,7 @@ mod tests {
     #[test]
     fn test_create_and_open_database() {
         let db_path = temp_db_path("basic");
+        let backups_dir = PathBuf::from("test_backups_basic");
         cleanup_db(&db_path);
 
         // Create database
@@ -210,24 +212,27 @@ mod tests {
         drop(db1);
 
         // Open database with correct password
-        let db2 = open_database(&db_path, "password".to_string()).unwrap();
+        let db2 = open_database(&db_path, "password".to_string(), &backups_dir).unwrap();
         drop(db2);
 
         cleanup_db(&db_path);
+        let _ = fs::remove_dir_all(&backups_dir);
     }
 
     #[test]
     fn test_open_with_wrong_password() {
         let db_path = temp_db_path("wrong_pw");
+        let backups_dir = PathBuf::from("test_backups_wrong_pw");
         cleanup_db(&db_path);
 
         create_database(&db_path, "correct".to_string()).unwrap();
 
-        let result = open_database(&db_path, "wrong".to_string());
+        let result = open_database(&db_path, "wrong".to_string(), &backups_dir);
         assert!(result.is_err());
         assert!(result.unwrap_err().contains("Incorrect password"));
 
         cleanup_db(&db_path);
+        let _ = fs::remove_dir_all(&backups_dir);
     }
 
     #[test]
@@ -263,6 +268,7 @@ mod tests {
     #[test]
     fn test_password_change_workflow() {
         let db_path = temp_db_path("pw_change");
+        let backups_dir = PathBuf::from("test_backups_pw_change");
         cleanup_db(&db_path);
 
         // Create database
@@ -281,7 +287,7 @@ mod tests {
         drop(db);
 
         // Simulate password change: export, delete, recreate
-        let db_old = open_database(&db_path, "old_password".to_string()).unwrap();
+        let db_old = open_database(&db_path, "old_password".to_string(), &backups_dir).unwrap();
         let entries: Vec<_> = {
             let dates = crate::db::queries::get_all_entry_dates(&db_old).unwrap();
             dates
@@ -303,7 +309,7 @@ mod tests {
         drop(db_new);
 
         // Verify new password works
-        let db_verify = open_database(&db_path, "new_password".to_string()).unwrap();
+        let db_verify = open_database(&db_path, "new_password".to_string(), &backups_dir).unwrap();
         let retrieved = crate::db::queries::get_entry(&db_verify, "2024-01-01")
             .unwrap()
             .unwrap();
@@ -311,6 +317,7 @@ mod tests {
 
         cleanup_db(&db_path);
         let _ = fs::remove_file(backup_path);
+        let _ = fs::remove_dir_all(&backups_dir);
     }
 
     #[test]

@@ -45,7 +45,8 @@
       "WebSearch",
       "Bash(bun test)",
       "Bash(bun test:*)",
-      "Bash(npx vitest:*)"
+      "Bash(npx vitest:*)",
+      "Bash(cargo clean:*)"
     ]
   }
 }
