@@ -69,6 +69,31 @@ jobs:
         working-directory: src-tauri
         run: cargo fmt --check
 
+      - name: Install D2
+        run: |
+          curl -fsSL https://d2lang.com/install.sh | sh -s --
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Verify architecture diagram is up-to-date
+        run: |
+          # Regenerate SVG from D2 source
+          ~/.local/bin/d2 docs/architecture.d2 docs/architecture-check.svg
+
+          # Compare with committed SVG (ignoring metadata/timestamps)
+          if ! diff -q docs/architecture.svg docs/architecture-check.svg > /dev/null 2>&1; then
+            echo "❌ Architecture diagram is out of sync!"
+            echo "The committed SVG doesn't match the D2 source."
+            echo ""
+            echo "To fix, run locally:"
+            echo "  d2 docs/architecture.d2 docs/architecture.svg"
+            echo "  git add docs/architecture.svg"
+            echo "  git commit -m 'docs: regenerate architecture diagram'"
+            exit 1
+          fi
+
+          echo "✅ Architecture diagram is up-to-date"
+          rm docs/architecture-check.svg
+
   test:
     name: Test
     runs-on: ubuntu-latest
