@@ -7,6 +7,8 @@ vi.mock('@tauri-apps/api/core', () => ({
   invoke: vi.fn(),
 }));
 
+const mockInvoke = vi.mocked(invoke);
+
 describe('Import functions', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -20,7 +22,7 @@ describe('Import functions', () => {
         entries_skipped: 0,
       };
 
-      (invoke as any).mockResolvedValueOnce(mockResult);
+      mockInvoke.mockResolvedValueOnce(mockResult);
 
       const result = await importMiniDiaryJson('/path/to/file.json');
 
@@ -31,7 +33,7 @@ describe('Import functions', () => {
     });
 
     it('should propagate errors from Tauri command', async () => {
-      (invoke as any).mockRejectedValueOnce(new Error('Parse error'));
+      mockInvoke.mockRejectedValueOnce(new Error('Parse error'));
 
       await expect(importMiniDiaryJson('/path/to/file.json')).rejects.toThrow('Parse error');
     });
@@ -45,7 +47,7 @@ describe('Import functions', () => {
         entries_skipped: 0,
       };
 
-      (invoke as any).mockResolvedValueOnce(mockResult);
+      mockInvoke.mockResolvedValueOnce(mockResult);
 
       const result = await importDayOneJson('/path/to/dayone.json');
 
@@ -56,7 +58,7 @@ describe('Import functions', () => {
     });
 
     it('should propagate errors from Tauri command', async () => {
-      (invoke as any).mockRejectedValueOnce(new Error('Invalid Day One format'));
+      mockInvoke.mockRejectedValueOnce(new Error('Invalid Day One format'));
 
       await expect(importDayOneJson('/path/to/file.json')).rejects.toThrow(
         'Invalid Day One format',
