@@ -1,4 +1,5 @@
 use chrono::Local;
+use log::debug;
 use std::fs;
 use std::path::{Path, PathBuf};
 
@@ -19,6 +20,7 @@ pub fn create_backup(diary_path: &Path, backups_dir: &Path) -> Result<PathBuf, S
     // Copy diary file to backup location
     fs::copy(diary_path, &backup_path).map_err(|e| format!("Failed to create backup: {}", e))?;
 
+    debug!("Backup created: {:?}", backup_path);
     Ok(backup_path)
 }
 
@@ -59,6 +61,7 @@ pub fn rotate_backups(backups_dir: &Path) -> Result<(), String> {
         fs::remove_file(backup_file).map_err(|e| format!("Failed to delete old backup: {}", e))?;
     }
 
+    debug!("Rotated backups: deleted {} old backups", to_delete);
     Ok(())
 }
 

@@ -1,4 +1,5 @@
 use crate::db::schema::{create_database, open_database, DatabaseConnection};
+use log::{info, warn};
 use std::path::PathBuf;
 use std::sync::Mutex;
 use tauri::State;
@@ -37,6 +38,7 @@ pub fn create_diary(password: String, state: State<DiaryState>) -> Result<(), St
     let mut db_state = state.db.lock().unwrap();
     *db_state = Some(db_conn);
 
+    info!("Diary created");
     Ok(())
 }
 
@@ -58,10 +60,12 @@ pub fn unlock_diary(password: String, state: State<DiaryState>) -> Result<(), St
     let mut db_state = state.db.lock().unwrap();
     *db_state = Some(db_conn);
 
+    info!("Diary unlocked");
+
     // Create backup after successful unlock
     // Failures in backup should not prevent unlocking, so we just log errors
     if let Err(e) = crate::backup::backup_and_rotate(&db_path, &backups_dir) {
-        eprintln!("Warning: Failed to create backup: {}", e);
+        warn!("Failed to create backup: {}", e);
     }
 
     Ok(())
@@ -79,6 +83,7 @@ pub fn lock_diary(state: State<DiaryState>) -> Result<(), String> {
     // Clear the database connection
     *db_state = None;
 
+    info!("Diary locked");
     Ok(())
 }
 
@@ -162,6 +167,7 @@ pub fn change_password(
     // Remove backup if successful
     let _ = std::fs::remove_file(&backup_path);
 
+    info!("Password changed successfully");
     Ok(())
 }
 
@@ -181,6 +187,7 @@ pub fn reset_diary(state: State<DiaryState>) -> Result<(), String> {
     // Delete the database file
     std::fs::remove_file(&db_path).map_err(|e| format!("Failed to delete diary: {}", e))?;
 
+    info!("Diary reset");
     Ok(())
 }
 
