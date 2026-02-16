@@ -42,6 +42,7 @@ Run the version bump script:
 ```
 
 This automatically updates:
+- `package.json`
 - `src-tauri/tauri.conf.json`
 - `src-tauri/Cargo.toml`
 - `src-tauri/Cargo.lock`
@@ -50,7 +51,7 @@ This automatically updates:
 
 ```bash
 # Commit version bump
-git add src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock
+git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock
 git commit -m "chore: bump version to 0.1.1"
 
 # Push branch
@@ -168,7 +169,7 @@ git checkout master && git pull && git checkout -b release-X.Y.Z
 ./bump-version.sh X.Y.Z
 
 # 3. Commit and push branch
-git add src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock
+git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock
 git commit -m "chore: bump version to X.Y.Z"
 git push origin release-X.Y.Z
 
@@ -191,7 +192,7 @@ git checkout master; git pull; git checkout -b release-X.Y.Z
 .\bump-version.ps1 X.Y.Z
 
 # 3. Commit and push branch
-git add src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock
+git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock
 git commit -m "chore: bump version to X.Y.Z"
 git push origin release-X.Y.Z
 

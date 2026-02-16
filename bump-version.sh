@@ -27,17 +27,22 @@ fi
 echo -e "${YELLOW}📦 Bumping version to ${NEW_VERSION}...${NC}"
 echo
 
-# 1. Update tauri.conf.json
+# 1. Update package.json
+echo "Updating package.json..."
+sed -i.bak "s/\"version\": \"[0-9]*\.[0-9]*\.[0-9]*\"/\"version\": \"${NEW_VERSION}\"/" package.json
+rm package.json.bak
+
+# 2. Update tauri.conf.json
 echo "Updating src-tauri/tauri.conf.json..."
 sed -i.bak "s/\"version\": \"[0-9]*\.[0-9]*\.[0-9]*\"/\"version\": \"${NEW_VERSION}\"/" src-tauri/tauri.conf.json
 rm src-tauri/tauri.conf.json.bak
 
-# 2. Update Cargo.toml
+# 3. Update Cargo.toml
 echo "Updating src-tauri/Cargo.toml..."
 sed -i.bak "s/^version = \"[0-9]*\.[0-9]*\.[0-9]*\"/version = \"${NEW_VERSION}\"/" src-tauri/Cargo.toml
 rm src-tauri/Cargo.toml.bak
 
-# 3. Update Cargo.lock
+# 4. Update Cargo.lock
 echo "Updating src-tauri/Cargo.lock..."
 cd src-tauri
 cargo build --quiet 2>/dev/null || cargo check --quiet
@@ -49,7 +54,7 @@ echo
 
 # Show what changed
 echo "Changes:"
-git diff src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock | head -30
+git diff package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock | head -30
 
 # Get current branch
 CURRENT_BRANCH=$(git branch --show-current)
@@ -57,7 +62,7 @@ CURRENT_BRANCH=$(git branch --show-current)
 echo
 echo -e "${YELLOW}Next steps:${NC}"
 echo "1. Review the changes above"
-echo "2. Commit: ${GREEN}git add src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock && git commit -m \"chore: bump version to ${NEW_VERSION}\"${NC}"
+echo "2. Commit: ${GREEN}git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock && git commit -m \"chore: bump version to ${NEW_VERSION}\"${NC}"
 echo "3. Push branch: ${GREEN}git push origin ${CURRENT_BRANCH}${NC}"
 echo "4. Create PR to merge ${CURRENT_BRANCH} → master"
 echo "5. After PR is merged, checkout master and create tag:"
