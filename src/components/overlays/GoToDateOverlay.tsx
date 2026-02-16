@@ -60,21 +60,22 @@ export default function GoToDateOverlay() {
   return (
     <Dialog open={isGoToDateOpen()} onOpenChange={handleOpenChange}>
       <Dialog.Portal>
-        <Dialog.Overlay class="fixed inset-0 z-50 bg-black/50 data-[expanded]:animate-in data-[closed]:animate-out data-[closed]:fade-out-0 data-[expanded]:fade-in-0" />
+        <Dialog.Overlay class="fixed inset-0 z-50" style={{ "background-color": "var(--overlay-bg)" }} />
         <div class="fixed inset-0 z-50 flex items-center justify-center">
           <Dialog.Content
-            class="w-full max-w-md rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 p-6 shadow-lg data-[expanded]:animate-in data-[closed]:animate-out data-[closed]:fade-out-0 data-[expanded]:fade-in-0 data-[closed]:zoom-out-95 data-[expanded]:zoom-in-95"
+            class="w-full max-w-md rounded-lg bg-primary p-6 data-[expanded]:animate-in data-[closed]:animate-out data-[closed]:fade-out-0 data-[expanded]:fade-in-0 data-[closed]:zoom-out-95 data-[expanded]:zoom-in-95"
+            style={{ "box-shadow": "var(--shadow-lg)" }}
             onKeyDown={handleKeyDown}
           >
-            <Dialog.Title class="text-lg font-semibold text-gray-900 mb-4">Go to Date</Dialog.Title>
+            <Dialog.Title class="text-lg font-semibold text-primary mb-4">Go to Date</Dialog.Title>
 
-            <Dialog.Description class="text-sm text-gray-600 mb-4">
+            <Dialog.Description class="text-sm text-secondary mb-4">
               Jump to a specific date in your journal.
             </Dialog.Description>
 
             <form onSubmit={handleSubmit} class="space-y-4">
               <div>
-                <label for="date-input" class="block text-sm font-medium text-gray-700 mb-2">
+                <label for="date-input" class="block text-sm font-medium text-secondary mb-2">
                   Select Date
                 </label>
                 <input
@@ -82,7 +83,7 @@ export default function GoToDateOverlay() {
                   type="date"
                   value={dateInput()}
                   onInput={(e) => setDateInput(e.currentTarget.value)}
-                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  class="w-full px-3 py-2 border border-primary bg-primary text-primary rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   autofocus
                 />
               </div>
@@ -91,7 +92,7 @@ export default function GoToDateOverlay() {
                 <button
                   type="button"
                   onClick={() => setIsGoToDateOpen(false)}
-                  class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                  class="px-4 py-2 text-sm font-medium text-secondary bg-primary border border-primary rounded-md hover:bg-hover focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                 >
                   Cancel
                 </button>
@@ -105,7 +106,7 @@ export default function GoToDateOverlay() {
               </div>
             </form>
 
-            <Dialog.CloseButton class="absolute top-4 right-4 inline-flex items-center justify-center rounded-md p-1 text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500">
+            <Dialog.CloseButton class="absolute top-4 right-4 inline-flex items-center justify-center rounded-md p-1 text-tertiary hover:text-secondary hover:bg-hover focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500">
               <span class="sr-only">Close</span>
               <svg
                 class="h-5 w-5"

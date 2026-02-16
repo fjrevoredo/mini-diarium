@@ -147,10 +147,10 @@ export default function EditorPanel() {
       </div>
 
       {/* Footer with word count and save status */}
-      <div class="border-t border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 px-6 py-2">
+      <div class="border-t border-primary bg-tertiary px-6 py-2">
         <div class="flex items-center justify-between">
           <WordCount count={wordCount()} />
-          {isSaving() && <p class="text-sm text-gray-500">Saving...</p>}
+          {isSaving() && <p class="text-sm text-tertiary">Saving...</p>}
         </div>
       </div>
     </div>

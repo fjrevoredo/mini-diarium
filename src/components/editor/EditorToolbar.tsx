@@ -58,14 +58,14 @@ export default function EditorToolbar(props: EditorToolbarProps) {
 
   return (
     <Show when={props.editor}>
-      <div class="flex items-center gap-1 border-b border-gray-200 bg-gray-50 px-3 py-2">
+      <div class="flex items-center gap-1 border-b border-primary bg-tertiary px-3 py-2">
         {/* Bold Button */}
         <button
           onClick={toggleBold}
           class={`rounded p-2 transition-colors ${
             isBoldActive()
               ? 'bg-blue-100 text-blue-700'
-              : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+              : 'text-secondary hover:bg-tertiary hover:text-primary'
           }`}
           title="Bold (Ctrl/Cmd+B)"
           aria-label="Bold"
@@ -79,7 +79,7 @@ export default function EditorToolbar(props: EditorToolbarProps) {
           class={`rounded p-2 transition-colors ${
             isItalicActive()
               ? 'bg-blue-100 text-blue-700'
-              : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+              : 'text-secondary hover:bg-tertiary hover:text-primary'
           }`}
           title="Italic (Ctrl/Cmd+I)"
           aria-label="Italic"
@@ -88,7 +88,7 @@ export default function EditorToolbar(props: EditorToolbarProps) {
         </button>
 
         {/* Divider */}
-        <div class="mx-1 h-6 w-px bg-gray-300" />
+        <div class="mx-1 h-6 w-px bg-primary border-primary" />
 
         {/* Bullet List Button */}
         <button
@@ -96,7 +96,7 @@ export default function EditorToolbar(props: EditorToolbarProps) {
           class={`rounded p-2 transition-colors ${
             isBulletListActive()
               ? 'bg-blue-100 text-blue-700'
-              : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+              : 'text-secondary hover:bg-tertiary hover:text-primary'
           }`}
           title="Bullet List"
           aria-label="Bullet List"
@@ -110,7 +110,7 @@ export default function EditorToolbar(props: EditorToolbarProps) {
           class={`rounded p-2 transition-colors ${
             isOrderedListActive()
               ? 'bg-blue-100 text-blue-700'
-              : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+              : 'text-secondary hover:bg-tertiary hover:text-primary'
           }`}
           title="Numbered List"
           aria-label="Numbered List"

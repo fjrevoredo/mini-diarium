@@ -114,32 +114,33 @@ export default function ImportOverlay(props: ImportOverlayProps) {
   return (
     <Dialog open={props.isOpen} onOpenChange={handleOpenChange}>
       <Dialog.Portal>
-        <Dialog.Overlay class="fixed inset-0 z-50 bg-black/50 data-[expanded]:animate-in data-[closed]:animate-out data-[closed]:fade-out-0 data-[expanded]:fade-in-0" />
+        <Dialog.Overlay class="fixed inset-0 z-50" style={{ "background-color": "var(--overlay-bg)" }} />
         <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
           <Dialog.Content
-            class="w-full max-w-md rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 p-6 shadow-lg data-[expanded]:animate-in data-[closed]:animate-out data-[closed]:fade-out-0 data-[expanded]:fade-in-0 data-[closed]:zoom-out-95 data-[expanded]:zoom-in-95"
+            class="w-full max-w-md rounded-lg bg-primary p-6 data-[expanded]:animate-in data-[closed]:animate-out data-[closed]:fade-out-0 data-[expanded]:fade-in-0 data-[closed]:zoom-out-95 data-[expanded]:zoom-in-95"
+            style={{ "box-shadow": "var(--shadow-lg)" }}
             onKeyDown={handleKeyDown}
           >
             <div class="flex items-center justify-between mb-4">
-              <Dialog.Title class="text-lg font-semibold text-gray-900">
+              <Dialog.Title class="text-lg font-semibold text-primary">
                 Import Entries
               </Dialog.Title>
               <Dialog.CloseButton
-                class="rounded-md p-1 hover:bg-gray-100 transition-colors"
+                class="rounded-md p-1 hover:bg-hover transition-colors"
                 aria-label="Close"
                 disabled={importing()}
               >
-                <X size={20} class="text-gray-500" />
+                <X size={20} class="text-tertiary" />
               </Dialog.CloseButton>
             </div>
 
-            <Dialog.Description class="text-sm text-gray-600 mb-6">
+            <Dialog.Description class="text-sm text-secondary mb-6">
               Import diary entries from a JSON file
             </Dialog.Description>
 
             {/* Format Selection */}
             <div class="mb-4">
-              <label for="format" class="block text-sm font-medium text-gray-700 mb-2">
+              <label for="format" class="block text-sm font-medium text-secondary mb-2">
                 Format
               </label>
               <select
@@ -147,7 +148,7 @@ export default function ImportOverlay(props: ImportOverlayProps) {
                 value={selectedFormat()}
                 onChange={(e) => setSelectedFormat(e.currentTarget.value as ImportFormat)}
                 disabled={importing()}
-                class="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                class="w-full rounded-md border border-primary px-3 py-2 text-sm text-primary bg-primary focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-tertiary disabled:cursor-not-allowed"
               >
                 <option value="minidiary-json">Mini Diary JSON</option>
                 <option value="dayone-json">Day One JSON</option>
@@ -158,15 +159,15 @@ export default function ImportOverlay(props: ImportOverlayProps) {
 
             {/* File Selection */}
             <div class="mb-6">
-              <label class="block text-sm font-medium text-gray-700 mb-2">File</label>
+              <label class="block text-sm font-medium text-secondary mb-2">File</label>
               <div class="flex gap-2">
-                <div class="flex-1 px-3 py-2 border border-gray-300 rounded-md bg-gray-50 text-sm text-gray-700 truncate">
+                <div class="flex-1 px-3 py-2 border border-primary rounded-md bg-tertiary text-sm text-secondary truncate">
                   {selectedFile() ? getFileName(selectedFile()) : 'No file selected'}
                 </div>
                 <button
                   onClick={handleSelectFile}
                   disabled={importing()}
-                  class="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                  class="px-4 py-2 bg-tertiary text-secondary rounded-md hover:bg-hover transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Browse
                 </button>
@@ -175,23 +176,23 @@ export default function ImportOverlay(props: ImportOverlayProps) {
 
             {/* Error Display */}
             <Show when={error()}>
-              <div class="mb-4 bg-red-50 border border-red-200 rounded-md p-4 flex items-start gap-2">
-                <AlertCircle size={20} class="text-red-600 flex-shrink-0 mt-0.5" />
+              <div class="mb-4 bg-error border border-error rounded-md p-4 flex items-start gap-2">
+                <AlertCircle size={20} class="text-error flex-shrink-0 mt-0.5" />
                 <div class="flex-1">
-                  <p class="text-sm font-medium text-red-800">Import Failed</p>
-                  <p class="text-sm text-red-700 mt-1">{error()}</p>
+                  <p class="text-sm font-medium text-error">Import Failed</p>
+                  <p class="text-sm text-error mt-1">{error()}</p>
                 </div>
               </div>
             </Show>
 
             {/* Success Display */}
             <Show when={result() && !error()}>
-              <div class="mb-4 bg-green-50 border border-green-200 rounded-md p-4">
+              <div class="mb-4 bg-success border border-success rounded-md p-4">
                 <div class="flex items-start gap-2 mb-3">
-                  <CheckCircle size={20} class="text-green-600 flex-shrink-0 mt-0.5" />
-                  <p class="text-sm font-medium text-green-800">Import Successful!</p>
+                  <CheckCircle size={20} class="text-success flex-shrink-0 mt-0.5" />
+                  <p class="text-sm font-medium text-success">Import Successful!</p>
                 </div>
-                <div class="space-y-2 text-sm text-green-700">
+                <div class="space-y-2 text-sm text-success">
                   <div class="flex justify-between">
                     <span>Entries imported:</span>
                     <span class="font-semibold">{formatCount(result()!.entries_imported)}</span>
@@ -214,7 +215,7 @@ export default function ImportOverlay(props: ImportOverlayProps) {
             <Show when={importing()}>
               <div class="mb-4 flex items-center justify-center py-4">
                 <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                <span class="ml-3 text-sm text-gray-600">Importing...</span>
+                <span class="ml-3 text-sm text-secondary">Importing...</span>
               </div>
             </Show>
 
@@ -223,7 +224,7 @@ export default function ImportOverlay(props: ImportOverlayProps) {
               <button
                 onClick={() => props.onClose()}
                 disabled={importing()}
-                class="px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                class="px-4 py-2 text-sm font-medium text-secondary hover:bg-hover rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {result() ? 'Close' : 'Cancel'}
               </button>

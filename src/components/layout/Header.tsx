@@ -20,19 +20,19 @@ export default function Header(props: HeaderProps) {
   };
 
   return (
-    <header class="border-b border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 px-4 py-3">
+    <header class="border-b border-primary bg-primary px-4 py-3">
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-3">
           <Show when={props.showMenu}>
             <button
               onClick={props.onMenuClick}
-              class="rounded p-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100 lg:hidden"
+              class="rounded p-2 hover:bg-hover text-primary lg:hidden"
               aria-label="Toggle menu"
             >
               <Menu size={24} />
             </button>
           </Show>
-          <h1 class="text-lg font-semibold text-gray-900 dark:text-gray-100">{formattedDate()}</h1>
+          <h1 class="text-lg font-semibold text-primary">{formattedDate()}</h1>
         </div>
       </div>
     </header>

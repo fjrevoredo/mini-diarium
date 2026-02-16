@@ -1,278 +1,94 @@
 # Mini Diarium
 
-> A modern, encrypted, local-first desktop journaling application
+An encrypted, local-first desktop journaling app.
 
-Mini Diarium is a spiritual successor to the original Mini Diary, reimagined with modern technologies while maintaining privacy and simplicity as core principles.
+Mini Diarium keeps your journal private. Every entry is encrypted with AES-256-GCM before it touches disk, the app never connects to the internet, and your data never leaves your machine. Built with Tauri, SolidJS, and Rust.
 
-## Features (Current Implementation)
+## Background
 
-✅ **Phase 1 Complete: Foundation & Core Infrastructure**
-- 🔐 **Encrypted Storage**: AES-256-GCM encryption with Argon2id password hashing (m=64MB, t=3, p=4)
-- 📝 **Rich Text Editor**: TipTap-based Markdown editor with auto-save (500ms debounce)
-- 📅 **Calendar Widget**: Month navigation with visual indicators for entries
-- 🔍 **Full-Text Search**: SQLite FTS5 with highlighted snippets
-- 💾 **Auto-Save**: Debounced saving with empty entry auto-deletion
-- 🎨 **Responsive UI**: Two-panel layout that adapts to mobile screens
+Mini Diarium is a spiritual successor to [Mini Diary](https://github.com/samuelmeuli/mini-diary) by Samuel Meuli. I loved the original tool. It was simple, private, and did exactly what a journal app should do. Unfortunately, it's been unmaintained for years and its dependencies have aged out. I initially tried forking it and modernizing the stack, but the Electron + React + MobX codebase made that impractical. So I started over from scratch, keeping the same core philosophy (encrypted, local-only, minimal) while rebuilding with Tauri 2, SolidJS, and Rust. The result is a lighter, faster app with stronger encryption and a few personal touches like import/export support and full-text search.
 
-**In Progress: Phase 2 - Core Features** (1/14 tasks complete)
+## Features
 
-## Technology Stack
+- **Encryption at rest**: AES-256-GCM with Argon2id key derivation
+- **Rich text editor**: bold, italic, headings, lists, blockquotes, code blocks, and links via TipTap
+- **Full-text search**: SQLite FTS5 with snippet highlighting across all entries
+- **Calendar navigation**: monthly calendar with entry indicators, jump to any date
+- **Import**: Mini Diary JSON and Day One JSON with merge conflict resolution
+- **Export**: JSON and Markdown formats
+- **Themes**: light and dark mode
+- **Automatic backups**: periodic database backups with rotation
+- **Statistics**: total entries, word counts, streaks, entries by weekday
+- **Preferences**: first day of week, future entries toggle, title visibility, spellcheck, password change
+- **Cross-platform**: Windows, macOS, and Linux
+- **Zero network access**: no telemetry, no analytics, no update checks
 
-**Frontend:**
-- [SolidJS](https://www.solidjs.com/) - Reactive UI framework
-- [TipTap](https://tiptap.dev/) - Rich text editor
-- [UnoCSS](https://unocss.dev/) - Atomic CSS engine
-- [Kobalte](https://kobalte.dev/) - Accessible UI components
-- TypeScript (strict mode)
+## Installation
 
-**Backend:**
-- [Tauri 2.x](https://v2.tauri.app/) - Desktop app framework
-- Rust - Backend logic
-- SQLite - Local database with FTS5
-- Argon2id - Password hashing
-- AES-256-GCM - Data encryption
+Download the latest release for your platform:
 
-## Prerequisites
+| Platform | Format |
+|----------|--------|
+| Windows  | `.msi` or `.exe` (NSIS installer, no admin required) |
+| macOS    | `.dmg` |
+| Linux    | `.AppImage` or `.deb` |
 
-Before running Mini Diarium, ensure you have the following installed:
+## Quick Start
 
-### Required
-- **Bun** (v1.1+) - JavaScript runtime and package manager
-  - Install: https://bun.sh/
-- **Rust** (v1.75+) - Programming language
-  - Install: https://rustup.rs/
-- **System dependencies** - Per Tauri's prerequisites:
-  - Windows: WebView2 (usually pre-installed on Windows 11)
-  - macOS: Xcode Command Line Tools
-  - Linux: See [Tauri Prerequisites](https://v2.tauri.app/start/prerequisites/)
+1. Launch Mini Diarium
+2. Create a password (this encrypts your diary; there is no recovery if forgotten)
+3. Write your first entry. It auto-saves as you type
+4. Navigate between days with `Ctrl+Left` / `Ctrl+Right` or click dates on the calendar
+5. Lock your diary when you're done
 
-### Recommended
-- **Visual Studio Code** with extensions:
-  - rust-analyzer
-  - Prettier
-  - ESLint
-  - Solid.js (solid-language-tools)
+## Keyboard Shortcuts
 
-## Getting Started
+| Action | Shortcut |
+|--------|----------|
+| Previous Day | `Ctrl+Left` |
+| Next Day | `Ctrl+Right` |
+| Go to Today | `Ctrl+T` |
+| Go to Date | `Ctrl+G` |
+| Previous Month | `Ctrl+Shift+Left` |
+| Next Month | `Ctrl+Shift+Right` |
+| Preferences | `Ctrl+,` |
+| Statistics | `Ctrl+I` |
+| Import | `Ctrl+Shift+I` |
+| Export | `Ctrl+Shift+E` |
 
-### 1. Clone the Repository
+On macOS, use `Cmd` instead of `Ctrl`.
+
+## Building from Source
+
+**Prerequisites:** Rust 1.75+, Bun 1.x, and [Tauri v2 system dependencies](https://v2.tauri.app/start/prerequisites/).
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/fjrevoredo/mini-diarium.git
 cd mini-diarium
-```
-
-### 2. Install Dependencies
-
-```bash
-# Install frontend dependencies
 bun install
+bun run tauri build
 ```
 
-Rust dependencies are managed by Cargo and will be installed automatically.
+Artifacts will be in `src-tauri/target/release/bundle/`.
 
-### 3. Run in Development Mode
+## Tech Stack
 
-```bash
-# Run the app in development mode (hot reload enabled)
-bun tauri dev
-```
-
-This will:
-1. Start the Vite development server (frontend)
-2. Build and launch the Tauri app (backend + window)
-3. Open the application window
-
-On first run, you'll be prompted to create a password for your encrypted diary.
-
-### 4. Build for Production
-
-```bash
-# Build the frontend
-bun run build
-
-# Build the Tauri app (creates installers)
-bun tauri build
-```
-
-Build artifacts will be in `src-tauri/target/release/`.
-
-## Development Commands
-
-### Frontend
-
-```bash
-# Start Vite dev server only
-bun run dev
-
-# Build frontend for production
-bun run build
-
-# Run ESLint
-bun run lint
-
-# Fix ESLint issues automatically
-bun run lint:fix
-
-# Format code with Prettier
-bun run format
-
-# Check formatting
-bun run format:check
-
-# Type-check TypeScript
-bun run type-check
-```
-
-### Backend (Rust)
-
-```bash
-cd src-tauri
-
-# Run Rust tests
-cargo test --lib
-
-# Run Clippy (linter)
-cargo clippy --lib -- -D warnings
-
-# Format Rust code
-cargo fmt
-
-# Build backend only
-cargo build --lib
-```
-
-### Full Stack
-
-```bash
-# Run app in development mode
-bun tauri dev
-
-# Build production app
-bun tauri build
-```
-
-## Project Structure
-
-```
-mini-diarium/
-├── src/                      # Frontend (SolidJS + TypeScript)
-│   ├── components/
-│   │   ├── auth/            # Password creation/prompt
-│   │   ├── calendar/        # Calendar widget
-│   │   ├── editor/          # TipTap rich text editor
-│   │   ├── layout/          # Layout components
-│   │   └── search/          # Search bar and results
-│   ├── state/               # Global state management (signals)
-│   ├── lib/                 # Utilities (Tauri IPC, dates, debounce)
-│   └── styles/              # Global styles and editor CSS
-├── src-tauri/                # Backend (Rust + Tauri)
-│   ├── src/
-│   │   ├── commands/        # Tauri IPC commands
-│   │   │   ├── auth.rs      # Authentication (create/unlock/lock)
-│   │   │   ├── entries.rs   # Entry CRUD operations
-│   │   │   └── search.rs    # FTS5 search
-│   │   ├── crypto/          # Encryption & password hashing
-│   │   │   ├── password.rs  # Argon2id hashing
-│   │   │   └── cipher.rs    # AES-256-GCM encryption
-│   │   └── db/              # Database layer
-│   │       ├── schema.rs    # SQLite schema + FTS5
-│   │       └── queries.rs   # Encrypted CRUD operations
-│   └── Cargo.toml           # Rust dependencies
-├── dist/                     # Built frontend (generated)
-└── package.json             # Node.js dependencies
-```
-
-## How It Works
-
-### First Launch
-1. App checks if a diary database exists
-2. If not, prompts for password creation
-3. Creates encrypted SQLite database with master password
-
-### Daily Use
-1. Unlock diary with password
-2. Select a date from the calendar
-3. Write your entry (auto-saves every 500ms)
-4. Search past entries with full-text search
-
-### Security
-- **Encryption**: All diary entries are encrypted at rest using AES-256-GCM
-- **Password**: Master password is hashed with Argon2id (64MB memory, 3 iterations, 4 parallelism)
-- **Local-First**: All data stored locally, never sent to servers
-- **Zero-Knowledge**: Application cannot access entries without the correct password
-
-## Testing
-
-**Backend Tests:**
-```bash
-cd src-tauri
-cargo test --lib
-```
-
-Currently: **46/46 tests passing** (100% pass rate)
-
-Coverage:
-- Password hashing: 10 tests
-- Encryption: 11 tests
-- Database: 15 tests
-- Commands: 10 tests
-
-**Frontend Tests:**
-Not yet implemented (planned for Phase 5: E2E Testing)
-
-## Database
-
-**Location:**
-- Windows: `%APPDATA%\com.minidiarium.app\diary.db`
-- macOS: `~/Library/Application Support/com.minidiarium.app/diary.db`
-- Linux: `~/.local/share/com.minidiarium.app/diary.db`
-
-**Schema:**
-- `entries` - Encrypted diary entries (title, text, metadata)
-- `entries_fts` - Full-text search index (FTS5)
-- `metadata` - Password hash and encryption metadata
-- `schema_version` - Database version tracking
-
-## Troubleshooting
-
-### "Diary is locked" error
-You need to unlock the diary first. The app should show a password prompt - enter your master password.
-
-### Search not finding entries
-Search uses SQLite FTS5 which requires exact word matches or prefix matching (e.g., "rust*" to find "rustacean"). Try simpler search terms.
-
-### Auto-save not working
-Auto-save triggers 500ms after you stop typing. Also saves on blur and window close. Check browser console for errors.
-
-### Build fails on Windows
-Ensure you have:
-- WebView2 runtime installed
-- Windows SDK (comes with Visual Studio Build Tools)
-- Rust toolchain with MSVC target
-
-## Development Status
-
-See [IMPLEMENTATION_PLAN.md](./IMPLEMENTATION_PLAN.md) for the complete roadmap.
-
-**Current Progress:** Phase 1 complete (19/19 tasks) + Task 20 from Phase 2
-
-**Next Steps:**
-- Task 21: Build search bar UI ✅ (Complete)
-- Task 22: Build search results list ✅ (Complete)
-- Task 23: Implement "Go To Today" button ✅ (Complete)
-- Task 24: Build editor toolbar (Bold, Italic, Lists)
-- Task 25: Implement word count display
-- ... and more (see plan)
+- [Tauri 2](https://v2.tauri.app/): desktop app framework (Rust backend, web frontend)
+- [SolidJS](https://www.solidjs.com/): reactive UI framework
+- [Rust](https://www.rust-lang.org/): backend logic, encryption, database
+- [SQLite](https://www.sqlite.org/): local database with FTS5 full-text search
+- [TipTap](https://tiptap.dev/): rich text editor
+- [UnoCSS](https://unocss.dev/): utility-first CSS
+- [Kobalte](https://kobalte.dev/): accessible UI primitives
 
 ## Contributing
 
-This project follows incremental development with each feature being functional and tested before proceeding. See [AGENTS.md](./AGENTS.md) for detailed development guidelines and project architecture.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for setup instructions, development workflow, and conventions.
 
 ## License
 
-MIT License - See [LICENSE](./LICENSE) for details
+[MIT](LICENSE)
 
-## Acknowledgments
+## Security
 
-Inspired by [Mini Diary](https://github.com/samuelmeuli/mini-diary) by Samuel Meuli.
+See [SECURITY.md](SECURITY.md) for the security model and how to report vulnerabilities.

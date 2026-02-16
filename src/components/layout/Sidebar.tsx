@@ -21,19 +21,19 @@ export default function Sidebar(props: SidebarProps) {
 
       {/* Sidebar */}
       <aside
-        class={`fixed inset-y-0 left-0 z-30 w-80 transform bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transition-transform duration-300 lg:relative lg:translate-x-0 ${
+        class={`fixed inset-y-0 left-0 z-30 w-80 transform bg-primary border-r border-primary transition-transform duration-300 lg:relative lg:translate-x-0 ${
           props.isCollapsed ? '-translate-x-full' : 'translate-x-0'
         }`}
       >
         <div class="flex h-full flex-col">
           {/* Sidebar Header */}
-          <div class="border-b border-gray-200 dark:border-gray-700 px-4 py-3">
+          <div class="border-b border-primary px-4 py-3">
             <div class="flex items-center justify-between">
-              <h2 class="text-xl font-bold text-gray-900 dark:text-gray-100">Mini Diarium</h2>
+              <h2 class="text-xl font-bold text-primary">Mini Diarium</h2>
               <Show when={!props.isCollapsed}>
                 <button
                   onClick={props.onClose}
-                  class="rounded p-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100 lg:hidden"
+                  class="rounded p-2 hover:bg-hover text-primary lg:hidden"
                   aria-label="Close menu"
                 >
                   <X size={24} />
@@ -54,7 +54,7 @@ export default function Sidebar(props: SidebarProps) {
                   <button
                     onClick={() => setSelectedDate(getTodayString())}
                     disabled={selectedDate() === getTodayString()}
-                    class="flex items-center gap-1 rounded-md bg-gray-100 dark:bg-gray-700 px-3 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-gray-100 dark:disabled:hover:bg-gray-700"
+                    class="flex items-center gap-1 rounded-md bg-tertiary px-3 py-2 text-sm font-medium text-secondary hover:bg-active disabled:opacity-50 disabled:cursor-not-allowed"
                     aria-label="Go to Today"
                     title="Go to Today"
                   >

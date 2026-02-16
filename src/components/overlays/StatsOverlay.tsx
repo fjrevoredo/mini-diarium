@@ -64,23 +64,24 @@ export default function StatsOverlay(props: StatsOverlayProps) {
   return (
     <Dialog open={props.isOpen} onOpenChange={handleOpenChange}>
       <Dialog.Portal>
-        <Dialog.Overlay class="fixed inset-0 z-50 bg-black/50 data-[expanded]:animate-in data-[closed]:animate-out data-[closed]:fade-out-0 data-[expanded]:fade-in-0" />
+        <Dialog.Overlay class="fixed inset-0 z-50" style={{ "background-color": "var(--overlay-bg)" }} />
         <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
           <Dialog.Content
-            class="w-full max-w-md rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 p-6 shadow-lg data-[expanded]:animate-in data-[closed]:animate-out data-[closed]:fade-out-0 data-[expanded]:fade-in-0 data-[closed]:zoom-out-95 data-[expanded]:zoom-in-95"
+            class="w-full max-w-md rounded-lg bg-primary p-6 data-[expanded]:animate-in data-[closed]:animate-out data-[closed]:fade-out-0 data-[expanded]:fade-in-0 data-[closed]:zoom-out-95 data-[expanded]:zoom-in-95"
+            style={{ "box-shadow": "var(--shadow-lg)" }}
             onKeyDown={handleKeyDown}
           >
             <div class="flex items-center justify-between mb-4">
-              <Dialog.Title class="text-lg font-semibold text-gray-900">Statistics</Dialog.Title>
+              <Dialog.Title class="text-lg font-semibold text-primary">Statistics</Dialog.Title>
               <Dialog.CloseButton
-                class="rounded-md p-1 hover:bg-gray-100 transition-colors"
+                class="rounded-md p-1 hover:bg-hover transition-colors"
                 aria-label="Close"
               >
-                <X size={20} class="text-gray-500" />
+                <X size={20} class="text-tertiary" />
               </Dialog.CloseButton>
             </div>
 
-            <Dialog.Description class="text-sm text-gray-600 mb-6">
+            <Dialog.Description class="text-sm text-secondary mb-6">
               Overview of your diary entries and writing habits
             </Dialog.Description>
 
@@ -91,59 +92,59 @@ export default function StatsOverlay(props: StatsOverlayProps) {
             </Show>
 
             <Show when={error()}>
-              <div class="bg-red-50 border border-red-200 rounded-md p-4 mb-4">
-                <p class="text-sm text-red-800">{error()}</p>
+              <div class="bg-error border border-error rounded-md p-4 mb-4">
+                <p class="text-sm text-error">{error()}</p>
               </div>
             </Show>
 
             <Show when={!loading() && !error() && stats()}>
               <div class="space-y-4">
                 {/* Total Entries */}
-                <div class="flex items-center justify-between border-b border-gray-200 pb-3">
-                  <span class="text-sm font-medium text-gray-700">Total Entries</span>
-                  <span class="text-lg font-semibold text-gray-900">
+                <div class="flex items-center justify-between border-b border-primary pb-3">
+                  <span class="text-sm font-medium text-secondary">Total Entries</span>
+                  <span class="text-lg font-semibold text-primary">
                     {formatNumber(stats()!.total_entries)}
                   </span>
                 </div>
 
                 {/* Entries per Week */}
-                <div class="flex items-center justify-between border-b border-gray-200 pb-3">
-                  <span class="text-sm font-medium text-gray-700">Entries per Week</span>
-                  <span class="text-lg font-semibold text-gray-900">
+                <div class="flex items-center justify-between border-b border-primary pb-3">
+                  <span class="text-sm font-medium text-secondary">Entries per Week</span>
+                  <span class="text-lg font-semibold text-primary">
                     {formatDecimal(stats()!.entries_per_week)}
                   </span>
                 </div>
 
                 {/* Best Streak */}
-                <div class="flex items-center justify-between border-b border-gray-200 pb-3">
-                  <span class="text-sm font-medium text-gray-700">Best Streak</span>
-                  <span class="text-lg font-semibold text-gray-900">
+                <div class="flex items-center justify-between border-b border-primary pb-3">
+                  <span class="text-sm font-medium text-secondary">Best Streak</span>
+                  <span class="text-lg font-semibold text-primary">
                     {formatNumber(stats()!.best_streak)}{' '}
                     {stats()!.best_streak === 1 ? 'day' : 'days'}
                   </span>
                 </div>
 
                 {/* Current Streak */}
-                <div class="flex items-center justify-between border-b border-gray-200 pb-3">
-                  <span class="text-sm font-medium text-gray-700">Current Streak</span>
-                  <span class="text-lg font-semibold text-gray-900">
+                <div class="flex items-center justify-between border-b border-primary pb-3">
+                  <span class="text-sm font-medium text-secondary">Current Streak</span>
+                  <span class="text-lg font-semibold text-primary">
                     {formatNumber(stats()!.current_streak)}{' '}
                     {stats()!.current_streak === 1 ? 'day' : 'days'}
                   </span>
                 </div>
 
                 {/* Total Words */}
-                <div class="flex items-center justify-between border-b border-gray-200 pb-3">
-                  <span class="text-sm font-medium text-gray-700">Total Words</span>
-                  <span class="text-lg font-semibold text-gray-900">
+                <div class="flex items-center justify-between border-b border-primary pb-3">
+                  <span class="text-sm font-medium text-secondary">Total Words</span>
+                  <span class="text-lg font-semibold text-primary">
                     {formatNumber(stats()!.total_words)}
                   </span>
                 </div>
 
                 {/* Average Words per Entry */}
                 <div class="flex items-center justify-between">
-                  <span class="text-sm font-medium text-gray-700">Avg. Words per Entry</span>
-                  <span class="text-lg font-semibold text-gray-900">
+                  <span class="text-sm font-medium text-secondary">Avg. Words per Entry</span>
+                  <span class="text-lg font-semibold text-primary">
                     {formatDecimal(stats()!.avg_words_per_entry)}
                   </span>
                 </div>
@@ -153,7 +154,7 @@ export default function StatsOverlay(props: StatsOverlayProps) {
             <div class="mt-6 flex justify-end">
               <button
                 onClick={() => props.onClose()}
-                class="rounded-md bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200 transition-colors"
+                class="rounded-md bg-tertiary px-4 py-2 text-sm font-medium text-secondary hover:bg-hover transition-colors"
               >
                 Close
               </button>

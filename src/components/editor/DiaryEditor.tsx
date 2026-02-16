@@ -76,7 +76,7 @@ export default function DiaryEditor(props: DiaryEditorProps) {
   });
 
   return (
-    <div class="rounded-lg border border-gray-200 bg-white overflow-hidden">
+    <div class="rounded-lg border border-primary bg-primary overflow-hidden">
       <EditorToolbar editor={editor()} />
       <div class="p-4">
         <div ref={editorElement} />

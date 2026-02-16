@@ -38,7 +38,7 @@ export default function TitleEditor(props: TitleEditorProps) {
       onKeyDown={handleKeyDown}
       placeholder={props.placeholder || 'Title'}
       spellcheck={props.spellCheck ?? true}
-      class="w-full border-0 bg-transparent px-0 text-2xl font-semibold text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-0"
+      class="w-full border-0 bg-transparent px-0 text-2xl font-semibold text-primary placeholder-tertiary focus:outline-none focus:ring-0"
     />
   );
 }
