@@ -1,4 +1,5 @@
 use crate::db::queries::DiaryEntry;
+use log::{debug, warn};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
@@ -45,11 +46,11 @@ pub fn parse_minidiary_json(json_str: &str) -> Result<Vec<DiaryEntry>, String> {
     let mini_diary: MiniDiaryJson =
         serde_json::from_str(json_str).map_err(|e| format!("Failed to parse JSON: {}", e))?;
 
-    eprintln!(
-        "[Parser] Parsed Mini Diary format version: {}",
+    debug!(
+        "Parsed Mini Diary format version: {}",
         mini_diary.metadata.version
     );
-    eprintln!("[Parser] Found {} entries", mini_diary.entries.len());
+    debug!("Found {} entries", mini_diary.entries.len());
 
     // Convert entries to DiaryEntry format
     let now = chrono::Utc::now().to_rfc3339();
@@ -58,7 +59,7 @@ pub fn parse_minidiary_json(json_str: &str) -> Result<Vec<DiaryEntry>, String> {
     for (date, entry) in mini_diary.entries {
         // Validate date format
         if !is_valid_date_format(&date) {
-            eprintln!("[Parser] Warning: Invalid date format '{}', skipping", date);
+            warn!("Invalid date format '{}', skipping", date);
             continue;
         }
 
@@ -79,10 +80,7 @@ pub fn parse_minidiary_json(json_str: &str) -> Result<Vec<DiaryEntry>, String> {
         });
     }
 
-    eprintln!(
-        "[Parser] Successfully parsed {} valid entries",
-        diary_entries.len()
-    );
+    debug!("Successfully parsed {} valid entries", diary_entries.len());
     Ok(diary_entries)
 }
 

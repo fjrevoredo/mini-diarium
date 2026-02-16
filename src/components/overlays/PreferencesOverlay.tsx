@@ -1,5 +1,6 @@
 import { createSignal, For, Show, onMount } from 'solid-js';
 import { Dialog } from '@kobalte/core/dialog';
+import { createLogger } from '../../lib/logger';
 import { preferences, setPreferences } from '../../state/preferences';
 import { getThemePreference, setTheme, type ThemePreference } from '../../lib/theme';
 import { authState } from '../../state/auth';
@@ -20,6 +21,8 @@ const FIRST_DAY_OPTIONS = [
   { value: '5', label: 'Friday' },
   { value: '6', label: 'Saturday' },
 ];
+
+const log = createLogger('Preferences');
 
 export default function PreferencesOverlay(props: PreferencesOverlayProps) {
   // Local state for form values
@@ -53,7 +56,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
       const path = await tauri.getDiaryPath();
       setDiaryPath(path);
     } catch (err) {
-      console.error('Failed to load diary path:', err);
+      log.error('Failed to load diary path:', err);
     }
   });
 
@@ -80,7 +83,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
         const path = await tauri.getDiaryPath();
         setDiaryPath(path);
       } catch (err) {
-        console.error('Failed to load diary path:', err);
+        log.error('Failed to load diary path:', err);
       }
     }
     if (!open) {

@@ -7,11 +7,15 @@ pub mod import;
 pub mod menu;
 
 use commands::auth::DiaryState;
+use log::info;
 use std::path::PathBuf;
 use tauri::Manager;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
+    env_logger::init();
+    info!("Mini Diarium starting");
+
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
