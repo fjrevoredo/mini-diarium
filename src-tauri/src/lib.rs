@@ -32,6 +32,8 @@ pub fn run() {
             app.manage(DiaryState::new(db_path, backups_dir));
 
             // Build and set application menu
+            // Note: This is called in setup, but Tauri ensures the main window exists
+            // by the time setup runs for tauri.conf.json-defined windows
             menu::build_menu(app.handle())?;
 
             Ok(())
