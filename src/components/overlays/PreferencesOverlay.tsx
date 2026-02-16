@@ -186,7 +186,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
               Customize your journaling experience.
             </Dialog.Description>
 
-            <div class="space-y-8 max-h-[60vh] overflow-y-auto pr-2">
+            <div class="space-y-8 max-h-[60vh] overflow-y-auto p-2">
               {/* Theme Section - Always shown */}
               <div>
                 <h3 class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-4">Appearance</h3>
