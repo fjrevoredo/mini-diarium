@@ -65,7 +65,7 @@ bun run test:run      # Vitest
 # Backend
 cd src-tauri
 cargo test            # Rust unit tests
-cargo clippy --lib --bins -- -D warnings
+cargo clippy --all-targets -- -D warnings
 cargo fmt --check
 ```
 

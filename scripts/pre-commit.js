@@ -126,7 +126,7 @@ async function main() {
   // 6. Rust Clippy
   if (existsSync(cargoPath)) {
     header('Rust Clippy');
-    const clippy = run('cargo clippy --lib --bins --quiet -- -D warnings', 'Running clippy', { cwd: cargoPath });
+    const clippy = run('cargo clippy --all-targets --quiet -- -D warnings', 'Running clippy', { cwd: cargoPath });
     if (clippy.success) {
       success('No clippy warnings');
       results.passed.push('Rust Clippy');
