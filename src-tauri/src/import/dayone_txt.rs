@@ -1,5 +1,6 @@
 use crate::db::queries::DiaryEntry;
 use chrono::{Datelike, NaiveDate, Utc};
+use log::warn;
 
 /// Parse Day One TXT export file
 ///
@@ -45,7 +46,7 @@ pub fn parse_dayone_txt(txt: &str) -> Result<Vec<DiaryEntry>, String> {
         // Split on first newline to separate date from content
         let lines: Vec<&str> = part.splitn(2, '\n').collect();
         if lines.len() < 2 {
-            eprintln!("Warning: Skipping Day One TXT entry - no content after date");
+            warn!("Skipping Day One TXT entry - no content after date");
             continue;
         }
 
