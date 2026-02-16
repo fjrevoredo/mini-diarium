@@ -22,7 +22,7 @@ impl DatabaseConnection {
 }
 
 /// Schema version for migrations
-const SCHEMA_VERSION: i32 = 1;
+const SCHEMA_VERSION: i32 = 2;
 
 /// Creates a new encrypted diary database
 ///
@@ -92,10 +92,15 @@ pub fn open_database<P: AsRef<Path>>(
     let encryption_key =
         cipher::Key::from_slice(&key_bytes).ok_or("Invalid key size")?;
 
-    Ok(DatabaseConnection {
+    let db_conn = DatabaseConnection {
         conn,
         encryption_key,
-    })
+    };
+
+    // Run migrations if needed
+    run_migrations(&db_conn)?;
+
+    Ok(db_conn)
 }
 
 /// Creates the database schema
@@ -124,40 +129,18 @@ fn create_schema(conn: &Connection) -> Result<(), String> {
         );
 
         -- Full-text search virtual table
+        -- Note: This is a standalone FTS5 table (not external content)
+        -- so it stores its own plaintext data for searching
         CREATE VIRTUAL TABLE IF NOT EXISTS entries_fts USING fts5(
             date UNINDEXED,
             title,
-            text,
-            content='entries',
-            content_rowid='rowid'
+            text
         );
-
-        -- Trigger to keep FTS index in sync on INSERT
-        CREATE TRIGGER IF NOT EXISTS entries_ai AFTER INSERT ON entries BEGIN
-            INSERT INTO entries_fts(rowid, date, title, text)
-            VALUES (new.rowid, new.date, '', '');
-        END;
-
-        -- Trigger to keep FTS index in sync on DELETE
-        CREATE TRIGGER IF NOT EXISTS entries_ad AFTER DELETE ON entries BEGIN
-            INSERT INTO entries_fts(entries_fts, rowid, date, title, text)
-            VALUES('delete', old.rowid, old.date, '', '');
-        END;
-
-        -- Trigger to keep FTS index in sync on UPDATE
-        CREATE TRIGGER IF NOT EXISTS entries_au AFTER UPDATE ON entries BEGIN
-            INSERT INTO entries_fts(entries_fts, rowid, date, title, text)
-            VALUES('delete', old.rowid, old.date, '', '');
-            INSERT INTO entries_fts(rowid, date, title, text)
-            VALUES (new.rowid, new.date, '', '');
-        END;
-
-        -- Insert schema version
-        INSERT OR REPLACE INTO schema_version (version) VALUES (?1);
         "#,
     )
     .map_err(|e| format!("Failed to create schema: {}", e))?;
 
+    // Insert schema version (must be separate because execute_batch doesn't support parameters)
     conn.execute(
         "INSERT OR REPLACE INTO schema_version (version) VALUES (?1)",
         [SCHEMA_VERSION],
@@ -230,6 +213,122 @@ fn derive_key_from_hash(password_hash: &str) -> Result<Vec<u8>, String> {
     Ok(hash_bytes[..32].to_vec())
 }
 
+/// Runs database migrations to upgrade schema
+fn run_migrations(db: &DatabaseConnection) -> Result<(), String> {
+    // Get current schema version
+    let current_version: i32 = db
+        .conn()
+        .query_row("SELECT version FROM schema_version", [], |row| row.get(0))
+        .unwrap_or(1); // Default to version 1 if not found
+
+    if current_version == SCHEMA_VERSION {
+        // Already at latest version
+        return Ok(());
+    }
+
+    eprintln!("[Migration] Upgrading database from version {} to {}", current_version, SCHEMA_VERSION);
+
+    // Run migrations in order
+    if current_version < 2 {
+        migrate_v1_to_v2(db)?;
+    }
+
+    // Update schema version
+    db.conn()
+        .execute(
+            "INSERT OR REPLACE INTO schema_version (version) VALUES (?1)",
+            [SCHEMA_VERSION],
+        )
+        .map_err(|e| format!("Failed to update schema version: {}", e))?;
+
+    eprintln!("[Migration] Successfully upgraded to version {}", SCHEMA_VERSION);
+    Ok(())
+}
+
+/// Migration from v1 to v2: Fix FTS table (external content → standalone)
+fn migrate_v1_to_v2(db: &DatabaseConnection) -> Result<(), String> {
+    eprintln!("[Migration v1→v2] Fixing FTS table schema");
+
+    // Drop old FTS table and its triggers
+    db.conn()
+        .execute_batch(
+            r#"
+            DROP TRIGGER IF EXISTS entries_ai;
+            DROP TRIGGER IF EXISTS entries_ad;
+            DROP TRIGGER IF EXISTS entries_au;
+            DROP TABLE IF EXISTS entries_fts;
+            "#,
+        )
+        .map_err(|e| format!("Failed to drop old FTS table: {}", e))?;
+
+    // Create new standalone FTS table
+    db.conn()
+        .execute_batch(
+            r#"
+            CREATE VIRTUAL TABLE entries_fts USING fts5(
+                date UNINDEXED,
+                title,
+                text
+            );
+            "#,
+        )
+        .map_err(|e| format!("Failed to create new FTS table: {}", e))?;
+
+    // Rebuild FTS index from existing entries
+    eprintln!("[Migration v1→v2] Rebuilding FTS index");
+
+    // Get all entry dates
+    let mut stmt = db
+        .conn()
+        .prepare("SELECT date FROM entries ORDER BY date ASC")
+        .map_err(|e| format!("Failed to prepare statement: {}", e))?;
+
+    let dates: Vec<String> = stmt
+        .query_map([], |row| row.get(0))
+        .map_err(|e| format!("Failed to query dates: {}", e))?
+        .collect::<Result<Vec<String>, _>>()
+        .map_err(|e| format!("Failed to collect dates: {}", e))?;
+
+    // For each entry, decrypt and add to FTS
+    for date in dates {
+        let result = db.conn().query_row(
+            "SELECT title_encrypted, text_encrypted FROM entries WHERE date = ?1",
+            [&date],
+            |row| {
+                let title_enc: Vec<u8> = row.get(0)?;
+                let text_enc: Vec<u8> = row.get(1)?;
+                Ok((title_enc, text_enc))
+            },
+        );
+
+        if let Ok((title_enc, text_enc)) = result {
+            // Decrypt title and text
+            use crate::crypto::cipher;
+
+            let title_bytes = cipher::decrypt(db.key(), &title_enc)
+                .map_err(|e| format!("Failed to decrypt title for {}: {}", date, e))?;
+            let text_bytes = cipher::decrypt(db.key(), &text_enc)
+                .map_err(|e| format!("Failed to decrypt text for {}: {}", date, e))?;
+
+            let title = String::from_utf8(title_bytes)
+                .map_err(|e| format!("Invalid UTF-8 in title for {}: {}", date, e))?;
+            let text = String::from_utf8(text_bytes)
+                .map_err(|e| format!("Invalid UTF-8 in text for {}: {}", date, e))?;
+
+            // Insert into FTS
+            db.conn()
+                .execute(
+                    "INSERT INTO entries_fts (date, title, text) VALUES (?1, ?2, ?3)",
+                    rusqlite::params![&date, &title, &text],
+                )
+                .map_err(|e| format!("Failed to rebuild FTS for {}: {}", date, e))?;
+        }
+    }
+
+    eprintln!("[Migration v1→v2] Successfully migrated FTS table");
+    Ok(())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -279,6 +378,9 @@ mod tests {
         create_database(&db_path, password.clone()).unwrap();
 
         let result = open_database(&db_path, password);
+        if let Err(e) = &result {
+            eprintln!("Error opening database: {}", e);
+        }
         assert!(result.is_ok());
 
         cleanup_db(&db_path);

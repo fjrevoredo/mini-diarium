@@ -304,10 +304,9 @@ fn import_entries(
 fn rebuild_fts_index(db: &DatabaseConnection) -> Result<(), String> {
     eprintln!("[FTS] Clearing existing FTS index...");
 
-    // Use FTS5 'delete-all' command to clear the index
-    // This is the correct way to clear an FTS5 virtual table
+    // Clear the FTS table (regular DELETE since this is a standalone FTS table)
     db.conn()
-        .execute("INSERT INTO entries_fts(entries_fts) VALUES('delete-all')", [])
+        .execute("DELETE FROM entries_fts", [])
         .map_err(|e| format!("Failed to clear FTS index: {}", e))?;
 
     eprintln!("[FTS] Getting all entry dates...");
@@ -319,21 +318,11 @@ fn rebuild_fts_index(db: &DatabaseConnection) -> Result<(), String> {
     // Rebuild index for each entry
     for date in dates {
         if let Some(entry) = queries::get_entry(db, &date)? {
-            // Get rowid for this entry
-            let rowid: i64 = db
-                .conn()
-                .query_row(
-                    "SELECT rowid FROM entries WHERE date = ?1",
-                    [&date],
-                    |row| row.get(0),
-                )
-                .map_err(|e| format!("Failed to get rowid for {}: {}", date, e))?;
-
-            // Insert into FTS index using the proper FTS5 format
+            // Insert into FTS index
             db.conn()
                 .execute(
-                    "INSERT INTO entries_fts (rowid, date, title, text) VALUES (?1, ?2, ?3, ?4)",
-                    rusqlite::params![rowid, &entry.date, &entry.title, &entry.text],
+                    "INSERT INTO entries_fts (date, title, text) VALUES (?1, ?2, ?3)",
+                    rusqlite::params![&entry.date, &entry.title, &entry.text],
                 )
                 .map_err(|e| format!("Failed to rebuild FTS for {}: {}", date, e))?;
         }
@@ -437,17 +426,15 @@ mod tests {
         )
         .unwrap();
 
-        // Clear FTS manually using the proper FTS5 delete-all command
-        // (Regular DELETE doesn't work on content-synced FTS5 tables)
+        // Clear FTS manually (regular DELETE for standalone FTS table)
         db.conn()
-            .execute("INSERT INTO entries_fts(entries_fts) VALUES('delete-all')", [])
+            .execute("DELETE FROM entries_fts", [])
             .unwrap();
 
         // Rebuild index
         rebuild_fts_index(&db).unwrap();
 
         // Verify FTS works by searching for content we know exists
-        // (Can't use SELECT COUNT(*) on content-synced FTS5 tables directly)
         let count: i32 = db
             .conn()
             .query_row(

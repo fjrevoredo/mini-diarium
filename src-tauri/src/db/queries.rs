@@ -158,10 +158,18 @@ pub fn update_entry(db: &DatabaseConnection, entry: &DiaryEntry) -> Result<(), S
 /// # Returns
 /// `Ok(true)` if deleted, `Ok(false)` if entry didn't exist
 pub fn delete_entry(db: &DatabaseConnection, date: &str) -> Result<bool, String> {
+    // Delete from entries table
     let rows_affected = db
         .conn()
         .execute("DELETE FROM entries WHERE date = ?1", params![date])
         .map_err(|e| format!("Failed to delete entry: {}", e))?;
+
+    if rows_affected > 0 {
+        // Also delete from FTS table
+        db.conn()
+            .execute("DELETE FROM entries_fts WHERE date = ?1", params![date])
+            .map_err(|e| format!("Failed to delete from FTS: {}", e))?;
+    }
 
     Ok(rows_affected > 0)
 }
@@ -191,38 +199,43 @@ pub fn get_all_entry_dates(db: &DatabaseConnection) -> Result<Vec<String>, Strin
 /// Updates the FTS index for a specific entry
 ///
 /// Note: This is called after insert/update to populate the FTS table with decrypted data
+/// Since the FTS table is standalone (not external content), we manage it manually
 fn update_fts_index(
     db: &DatabaseConnection,
     date: &str,
     title: &str,
     text: &str,
 ) -> Result<(), String> {
-    // The triggers handle deletion, but we need to manually update with decrypted content
-    // First, get the rowid for this entry
-    let rowid: i64 = db
+    // Check if an FTS entry already exists for this date
+    let exists: bool = db
         .conn()
         .query_row(
-            "SELECT rowid FROM entries WHERE date = ?1",
+            "SELECT COUNT(*) FROM entries_fts WHERE date = ?1",
             params![date],
-            |row| row.get(0),
+            |row| {
+                let count: i64 = row.get(0)?;
+                Ok(count > 0)
+            },
         )
-        .map_err(|e| format!("Failed to get rowid: {}", e))?;
+        .map_err(|e| format!("Failed to check FTS existence: {}", e))?;
 
-    // Delete existing FTS entry using the special 'delete' command
-    db.conn()
-        .execute(
-            "INSERT INTO entries_fts(entries_fts, rowid, date, title, text) VALUES('delete', ?1, ?2, '', '')",
-            params![rowid, date],
-        )
-        .map_err(|e| format!("Failed to delete from FTS: {}", e))?;
-
-    // Insert new FTS entry with decrypted data
-    db.conn()
-        .execute(
-            "INSERT INTO entries_fts (rowid, date, title, text) VALUES (?1, ?2, ?3, ?4)",
-            params![rowid, date, title, text],
-        )
-        .map_err(|e| format!("Failed to insert into FTS: {}", e))?;
+    if exists {
+        // Update existing FTS entry
+        db.conn()
+            .execute(
+                "UPDATE entries_fts SET title = ?1, text = ?2 WHERE date = ?3",
+                params![title, text, date],
+            )
+            .map_err(|e| format!("Failed to update FTS: {}", e))?;
+    } else {
+        // Insert new FTS entry
+        db.conn()
+            .execute(
+                "INSERT INTO entries_fts (date, title, text) VALUES (?1, ?2, ?3)",
+                params![date, title, text],
+            )
+            .map_err(|e| format!("Failed to insert into FTS: {}", e))?;
+    }
 
     Ok(())
 }
