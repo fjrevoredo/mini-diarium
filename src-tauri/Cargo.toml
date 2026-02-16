@@ -26,7 +26,7 @@ serde_json = "1"
 argon2 = { version = "0.5", features = ["std"] }
 aes-gcm = "0.10"
 zeroize = { version = "1.8", features = ["derive"] }
-rusqlite = { version = "0.32", features = ["bundled"] }
+rusqlite = { version = "0.38", features = ["bundled"] }
 rand = "0.8"
 hex = "0.4"
 chrono = "0.4"
