@@ -26,13 +26,13 @@ export default function Header(props: HeaderProps) {
           <Show when={props.showMenu}>
             <button
               onClick={props.onMenuClick}
-              class="rounded p-2 hover:bg-gray-100 lg:hidden"
+              class="rounded p-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100 lg:hidden"
               aria-label="Toggle menu"
             >
               <Menu size={24} />
             </button>
           </Show>
-          <h1 class="text-lg font-semibold text-gray-900">{formattedDate()}</h1>
+          <h1 class="text-lg font-semibold text-gray-900 dark:text-gray-100">{formattedDate()}</h1>
         </div>
       </div>
     </header>

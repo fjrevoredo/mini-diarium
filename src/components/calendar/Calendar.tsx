@@ -152,13 +152,13 @@ export default function Calendar() {
       <div class="mb-4 flex items-center justify-between">
         <button
           onClick={previousMonth}
-          class="rounded p-2 hover:bg-gray-100"
+          class="rounded p-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100"
           aria-label="Previous month"
         >
           <ChevronLeft size={20} />
         </button>
-        <h3 class="text-sm font-semibold text-gray-900">{monthName()}</h3>
-        <button onClick={nextMonth} class="rounded p-2 hover:bg-gray-100" aria-label="Next month">
+        <h3 class="text-sm font-semibold text-gray-900 dark:text-gray-100">{monthName()}</h3>
+        <button onClick={nextMonth} class="rounded p-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100" aria-label="Next month">
           <ChevronRight size={20} />
         </button>
       </div>
@@ -166,7 +166,7 @@ export default function Calendar() {
       {/* Week day headers */}
       <div class="mb-2 grid grid-cols-7 gap-1">
         <For each={weekDays()}>
-          {(day) => <div class="text-center text-xs font-medium text-gray-500">{day}</div>}
+          {(day) => <div class="text-center text-xs font-medium text-gray-500 dark:text-gray-400">{day}</div>}
         </For>
       </div>
 
@@ -178,9 +178,9 @@ export default function Calendar() {
               onClick={() => handleDayClick(day)}
               class={`
                 relative h-8 w-8 rounded text-sm flex flex-col items-center justify-center
-                ${day.isCurrentMonth ? 'text-gray-900' : 'text-gray-400'}
+                ${day.isCurrentMonth ? 'text-gray-900 dark:text-gray-100' : 'text-gray-400 dark:text-gray-500'}
                 ${day.isToday ? 'font-bold' : ''}
-                ${day.isSelected ? 'bg-blue-600 text-white hover:bg-blue-700' : !day.isDisabled ? 'hover:bg-gray-100' : ''}
+                ${day.isSelected ? 'bg-blue-600 text-white hover:bg-blue-700' : !day.isDisabled ? 'hover:bg-gray-100 dark:hover:bg-gray-700' : ''}
                 ${!day.isCurrentMonth || day.isDisabled ? 'cursor-default' : 'cursor-pointer'}
                 ${day.isDisabled ? 'opacity-40 cursor-not-allowed' : ''}
               `}
