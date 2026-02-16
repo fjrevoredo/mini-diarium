@@ -1,4 +1,7 @@
 import { createSignal } from 'solid-js';
+import { createLogger } from '../lib/logger';
+
+const log = createLogger('Preferences');
 
 export interface Preferences {
   allowFutureEntries: boolean;
@@ -23,7 +26,7 @@ function loadPreferences(): Preferences {
       return { ...DEFAULT_PREFERENCES, ...parsed };
     }
   } catch (error) {
-    console.error('Failed to load preferences:', error);
+    log.warn('Failed to load preferences:', error);
   }
   return DEFAULT_PREFERENCES;
 }
@@ -33,7 +36,7 @@ function savePreferences(prefs: Preferences) {
   try {
     localStorage.setItem('preferences', JSON.stringify(prefs));
   } catch (error) {
-    console.error('Failed to save preferences:', error);
+    log.warn('Failed to save preferences:', error);
   }
 }
 

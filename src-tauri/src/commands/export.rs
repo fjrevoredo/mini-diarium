@@ -2,6 +2,7 @@ use crate::commands::auth::DiaryState;
 use crate::db::queries::{self, DiaryEntry};
 use crate::db::schema::DatabaseConnection;
 use crate::export::{json, markdown};
+use log::{debug, error, info};
 use tauri::State;
 
 /// Export result containing the number of entries exported
@@ -26,32 +27,29 @@ fn fetch_all_entries(db: &DatabaseConnection) -> Result<Vec<DiaryEntry>, String>
 /// Exports all diary entries to a JSON file in Mini Diary-compatible format
 #[tauri::command]
 pub fn export_json(file_path: String, state: State<DiaryState>) -> Result<ExportResult, String> {
-    eprintln!("[Export] Starting JSON export to file: {}", file_path);
+    info!("Starting JSON export to file: {}", file_path);
 
     let db_state = state.db.lock().unwrap();
     let db = db_state.as_ref().ok_or_else(|| {
         let err = "Diary must be unlocked to export entries";
-        eprintln!("[Export] Error: {}", err);
+        error!("{}", err);
         err.to_string()
     })?;
 
     let entries = fetch_all_entries(db)?;
     let entries_exported = entries.len();
-    eprintln!(
-        "[Export] Serializing {} entries to JSON...",
-        entries_exported
-    );
+    debug!("Serializing {} entries to JSON...", entries_exported);
 
     let json_string = json::export_entries_to_json(entries)?;
 
     std::fs::write(&file_path, &json_string).map_err(|e| {
         let err = format!("Failed to write file: {}", e);
-        eprintln!("[Export] Error: {}", err);
+        error!("{}", err);
         err
     })?;
 
-    eprintln!(
-        "[Export] Success: {} entries exported to {}",
+    info!(
+        "JSON export complete: {} entries exported to {}",
         entries_exported, file_path
     );
     Ok(ExportResult {
@@ -68,32 +66,29 @@ pub fn export_markdown(
     file_path: String,
     state: State<DiaryState>,
 ) -> Result<ExportResult, String> {
-    eprintln!("[Export] Starting Markdown export to file: {}", file_path);
+    info!("Starting Markdown export to file: {}", file_path);
 
     let db_state = state.db.lock().unwrap();
     let db = db_state.as_ref().ok_or_else(|| {
         let err = "Diary must be unlocked to export entries";
-        eprintln!("[Export] Error: {}", err);
+        error!("{}", err);
         err.to_string()
     })?;
 
     let entries = fetch_all_entries(db)?;
     let entries_exported = entries.len();
-    eprintln!(
-        "[Export] Converting {} entries to Markdown...",
-        entries_exported
-    );
+    debug!("Converting {} entries to Markdown...", entries_exported);
 
     let md_string = markdown::export_entries_to_markdown(entries);
 
     std::fs::write(&file_path, &md_string).map_err(|e| {
         let err = format!("Failed to write file: {}", e);
-        eprintln!("[Export] Error: {}", err);
+        error!("{}", err);
         err
     })?;
 
-    eprintln!(
-        "[Export] Success: {} entries exported to {}",
+    info!(
+        "Markdown export complete: {} entries exported to {}",
         entries_exported, file_path
     );
     Ok(ExportResult {

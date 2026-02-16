@@ -1,5 +1,6 @@
 import { createSignal, onMount, onCleanup } from 'solid-js';
 import { listen, UnlistenFn } from '@tauri-apps/api/event';
+import { createLogger } from '../../lib/logger';
 import Header from './Header';
 import Sidebar from './Sidebar';
 import EditorPanel from './EditorPanel';
@@ -32,6 +33,8 @@ import {
 import { preferences } from '../../state/preferences';
 import { getTodayString } from '../../lib/dates';
 
+const log = createLogger('MainLayout');
+
 export default function MainLayout() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = createSignal(true);
 
@@ -52,7 +55,7 @@ export default function MainLayout() {
           const newDate = await navigatePreviousDay(selectedDate());
           setSelectedDate(newDate);
         } catch (error) {
-          console.error('Failed to navigate to previous day:', error);
+          log.error('Failed to navigate to previous day:', error);
         }
       }),
     );
@@ -67,7 +70,7 @@ export default function MainLayout() {
           const finalDate = !preferences().allowFutureEntries && newDate > today ? today : newDate;
           setSelectedDate(finalDate);
         } catch (error) {
-          console.error('Failed to navigate to next day:', error);
+          log.error('Failed to navigate to next day:', error);
         }
       }),
     );
@@ -79,7 +82,7 @@ export default function MainLayout() {
           const newDate = await navigateToToday();
           setSelectedDate(newDate);
         } catch (error) {
-          console.error('Failed to navigate to today:', error);
+          log.error('Failed to navigate to today:', error);
         }
       }),
     );
@@ -126,7 +129,7 @@ export default function MainLayout() {
           const newDate = await navigatePreviousMonth(selectedDate());
           setSelectedDate(newDate);
         } catch (error) {
-          console.error('Failed to navigate to previous month:', error);
+          log.error('Failed to navigate to previous month:', error);
         }
       }),
     );
@@ -141,7 +144,7 @@ export default function MainLayout() {
           const finalDate = !preferences().allowFutureEntries && newDate > today ? today : newDate;
           setSelectedDate(finalDate);
         } catch (error) {
-          console.error('Failed to navigate to next month:', error);
+          log.error('Failed to navigate to next month:', error);
         }
       }),
     );

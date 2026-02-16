@@ -1,4 +1,7 @@
 import { createSignal } from 'solid-js';
+import { createLogger } from './logger';
+
+const log = createLogger('Theme');
 
 export type ThemePreference = 'auto' | 'light' | 'dark';
 export type ResolvedTheme = 'light' | 'dark';
@@ -22,7 +25,7 @@ function loadThemePreference(): ThemePreference {
       return stored;
     }
   } catch (e) {
-    console.warn('Failed to load theme preference:', e);
+    log.warn('Failed to load theme preference:', e);
   }
   return DEFAULT_THEME;
 }
@@ -34,7 +37,7 @@ function saveThemePreference(preference: ThemePreference): void {
   try {
     localStorage.setItem(THEME_STORAGE_KEY, preference);
   } catch (e) {
-    console.warn('Failed to save theme preference:', e);
+    log.warn('Failed to save theme preference:', e);
   }
 }
 

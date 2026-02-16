@@ -1,6 +1,7 @@
 import { createSignal, Show } from 'solid-js';
 import { Dialog } from '@kobalte/core/dialog';
 import { save as saveDialog } from '@tauri-apps/plugin-dialog';
+import { createLogger } from '../../lib/logger';
 import { exportJson, exportMarkdown, type ExportResult } from '../../lib/tauri';
 import { X, FileDown, CheckCircle, AlertCircle } from 'lucide-solid';
 
@@ -10,6 +11,8 @@ interface ExportOverlayProps {
 }
 
 type ExportFormat = 'json' | 'markdown';
+
+const log = createLogger('Export');
 
 export default function ExportOverlay(props: ExportOverlayProps) {
   const [selectedFormat, setSelectedFormat] = createSignal<ExportFormat>('json');
@@ -72,7 +75,7 @@ export default function ExportOverlay(props: ExportOverlayProps) {
 
       setResult(exportResult);
     } catch (err) {
-      console.error('[Export] Failed:', err);
+      log.error('Export failed:', err);
       const errorMessage = err instanceof Error ? err.message : String(err);
       setError(errorMessage || 'Export failed');
     } finally {
