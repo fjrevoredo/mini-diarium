@@ -1,11 +1,16 @@
 import '@testing-library/jest-dom';
 import { cleanup } from '@solidjs/testing-library';
-import { afterEach } from 'vitest';
+import { afterEach, vi } from 'vitest';
 
 // Cleanup after each test
 afterEach(() => {
   cleanup();
 });
+
+// Ensure DOM globals are available
+if (typeof window === 'undefined') {
+  throw new Error('DOM environment not available - check vitest.config.ts');
+}
 
 // Mock Tauri API
 global.window = global.window || {};

@@ -21,6 +21,10 @@ export async function isDiaryUnlocked(): Promise<boolean> {
   return await invoke('is_diary_unlocked');
 }
 
+export async function getDiaryPath(): Promise<string> {
+  return await invoke('get_diary_path');
+}
+
 export async function changePassword(oldPassword: string, newPassword: string): Promise<void> {
   await invoke('change_password', { oldPassword, newPassword });
 }

@@ -266,7 +266,10 @@ Run: `cd src-tauri && cargo test`
 
 ### Frontend: 23 tests across 4 files
 
-Run: `bun run test:run` (single run) or `bun run test` (watch mode)
+**IMPORTANT**: Always use `bun run test:run` or `bun run test`, **NEVER** use `bun test` directly.
+- ✅ `bun run test:run` - Single run (uses vitest with jsdom support)
+- ✅ `bun run test` - Watch mode (uses vitest)
+- ❌ `bun test` - Bun's native test runner (does NOT support jsdom, will fail)
 
 | File | Tests |
 |------|-------|
@@ -284,11 +287,15 @@ Coverage: `bun run test:coverage`
 bun run dev              # Vite dev server (frontend only)
 bun run tauri dev        # Full Tauri dev (frontend + backend)
 
-# Testing
+# Testing (Backend)
 cd src-tauri && cargo test                     # All backend tests
 cd src-tauri && cargo test navigation          # Specific module
-bun run test:run                               # All frontend tests
+
+# Testing (Frontend) - IMPORTANT: Use 'bun run', NOT 'bun test'!
+bun run test:run                               # All frontend tests (vitest)
+bun run test                                   # Frontend tests in watch mode
 bun run test:run -- dates                      # Specific test file
+bun run test:coverage                          # Frontend coverage report
 
 # Code quality
 bun run lint             # ESLint
@@ -304,11 +311,13 @@ bun run tauri build      # Full app bundle
 
 ## Gotchas and Pitfalls
 
-1. **FTS rebuild after bulk import**: Import commands call `rebuild_fts_index()` which uses `'delete-all'` then re-indexes all entries. This is O(n) over all entries, not just imported ones.
+1. **CRITICAL - Frontend Testing**: ALWAYS use `bun run test:run` or `bun run test`, NEVER use `bun test` directly. Bun's native test runner does not support jsdom environment, causing all component tests to fail with "document is not defined". The package.json scripts are configured to use vitest which has proper DOM support.
 
-2. **Dual storage: encrypted entries + plaintext FTS**: Any operation that creates/updates/deletes entries must handle both the encrypted `entries` table and the plaintext `entries_fts` table.
+2. **FTS rebuild after bulk import**: Import commands call `rebuild_fts_index()` which uses `'delete-all'` then re-indexes all entries. This is O(n) over all entries, not just imported ones.
 
-3. **SolidJS test render wrapper**: Tests must use `render(() => <Component />)` with the arrow function. `render(<Component />)` will fail silently or error.
+3. **Dual storage: encrypted entries + plaintext FTS**: Any operation that creates/updates/deletes entries must handle both the encrypted `entries` table and the plaintext `entries_fts` table.
+
+4. **SolidJS test render wrapper**: Tests must use `render(() => <Component />)` with the arrow function. `render(<Component />)` will fail silently or error.
 
 4. **Date format is always `YYYY-MM-DD`**: The `T00:00:00` suffix is appended in `dates.ts` functions (`new Date(dateStr + 'T00:00:00')`) to avoid timezone-related date shifts.
 

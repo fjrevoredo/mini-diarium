@@ -7,13 +7,15 @@ use tauri::State;
 pub struct DiaryState {
     pub db: Mutex<Option<DatabaseConnection>>,
     pub db_path: Mutex<PathBuf>,
+    pub backups_dir: Mutex<PathBuf>,
 }
 
 impl DiaryState {
-    pub fn new(db_path: PathBuf) -> Self {
+    pub fn new(db_path: PathBuf, backups_dir: PathBuf) -> Self {
         Self {
             db: Mutex::new(None),
             db_path: Mutex::new(db_path),
+            backups_dir: Mutex::new(backups_dir),
         }
     }
 }
@@ -42,6 +44,7 @@ pub fn create_diary(password: String, state: State<DiaryState>) -> Result<(), St
 #[tauri::command]
 pub fn unlock_diary(password: String, state: State<DiaryState>) -> Result<(), String> {
     let db_path = state.db_path.lock().unwrap().clone();
+    let backups_dir = state.backups_dir.lock().unwrap().clone();
 
     // Check if database exists
     if !db_path.exists() {
@@ -54,6 +57,12 @@ pub fn unlock_diary(password: String, state: State<DiaryState>) -> Result<(), St
     // Store in state
     let mut db_state = state.db.lock().unwrap();
     *db_state = Some(db_conn);
+
+    // Create backup after successful unlock
+    // Failures in backup should not prevent unlocking, so we just log errors
+    if let Err(e) = crate::backup::backup_and_rotate(&db_path, &backups_dir) {
+        eprintln!("Warning: Failed to create backup: {}", e);
+    }
 
     Ok(())
 }
@@ -85,6 +94,16 @@ pub fn diary_exists(state: State<DiaryState>) -> Result<bool, String> {
 pub fn is_diary_unlocked(state: State<DiaryState>) -> Result<bool, String> {
     let db_state = state.db.lock().unwrap();
     Ok(db_state.is_some())
+}
+
+/// Gets the current diary file path
+#[tauri::command]
+pub fn get_diary_path(state: State<DiaryState>) -> Result<String, String> {
+    let db_path = state.db_path.lock().unwrap();
+    db_path
+        .to_str()
+        .map(|s| s.to_string())
+        .ok_or_else(|| "Invalid diary path".to_string())
 }
 
 /// Changes the diary password
@@ -214,9 +233,10 @@ mod tests {
     #[test]
     fn test_diary_state_create() {
         let db_path = temp_db_path("state_create");
+        let backups_dir = PathBuf::from("test_backups");
         cleanup_db(&db_path);
 
-        let state = DiaryState::new(db_path.clone());
+        let state = DiaryState::new(db_path.clone(), backups_dir);
 
         // Initially no connection
         {

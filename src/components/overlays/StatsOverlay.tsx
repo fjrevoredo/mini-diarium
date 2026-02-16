@@ -67,7 +67,11 @@ export default function StatsOverlay(props: StatsOverlayProps) {
         <Dialog.Overlay class="fixed inset-0 z-50 bg-black/50 data-[expanded]:animate-in data-[closed]:animate-out data-[closed]:fade-out-0 data-[expanded]:fade-in-0" />
         <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
           <Dialog.Content
-            class="w-full max-w-md rounded-lg bg-white p-6 shadow-lg data-[expanded]:animate-in data-[closed]:animate-out data-[closed]:fade-out-0 data-[expanded]:fade-in-0 data-[closed]:zoom-out-95 data-[expanded]:zoom-in-95"
+            class="w-full max-w-md rounded-lg p-6 shadow-lg data-[expanded]:animate-in data-[closed]:animate-out data-[closed]:fade-out-0 data-[expanded]:fade-in-0 data-[closed]:zoom-out-95 data-[expanded]:zoom-in-95"
+            style={{
+              'background-color': 'var(--modal-bg)',
+              color: 'var(--text-primary)',
+            }}
             onKeyDown={handleKeyDown}
           >
             <div class="flex items-center justify-between mb-4">

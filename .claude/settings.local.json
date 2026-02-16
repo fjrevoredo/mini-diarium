@@ -42,7 +42,10 @@
       "Bash(\"C:\\\\Users\\\\Francisco\\\\.bun\\\\bin\\\\bun.exe\" add -d @testing-library/user-event)",
       "Bash(cmd.exe /c \"bun run type-check\")",
       "Bash(bun test:run:*)",
-      "WebSearch"
+      "WebSearch",
+      "Bash(bun test)",
+      "Bash(bun test:*)",
+      "Bash(npx vitest:*)"
     ]
   }
 }

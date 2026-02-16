@@ -20,7 +20,7 @@ describe('Import functions', () => {
         entries_skipped: 0,
       };
 
-      vi.mocked(invoke).mockResolvedValueOnce(mockResult);
+      (invoke as any).mockResolvedValueOnce(mockResult);
 
       const result = await importMiniDiaryJson('/path/to/file.json');
 
@@ -31,7 +31,7 @@ describe('Import functions', () => {
     });
 
     it('should propagate errors from Tauri command', async () => {
-      vi.mocked(invoke).mockRejectedValueOnce(new Error('Parse error'));
+      (invoke as any).mockRejectedValueOnce(new Error('Parse error'));
 
       await expect(importMiniDiaryJson('/path/to/file.json')).rejects.toThrow('Parse error');
     });
@@ -45,7 +45,7 @@ describe('Import functions', () => {
         entries_skipped: 0,
       };
 
-      vi.mocked(invoke).mockResolvedValueOnce(mockResult);
+      (invoke as any).mockResolvedValueOnce(mockResult);
 
       const result = await importDayOneJson('/path/to/dayone.json');
 
@@ -56,7 +56,7 @@ describe('Import functions', () => {
     });
 
     it('should propagate errors from Tauri command', async () => {
-      vi.mocked(invoke).mockRejectedValueOnce(new Error('Invalid Day One format'));
+      (invoke as any).mockRejectedValueOnce(new Error('Invalid Day One format'));
 
       await expect(importDayOneJson('/path/to/file.json')).rejects.toThrow(
         'Invalid Day One format',

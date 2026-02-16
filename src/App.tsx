@@ -1,5 +1,6 @@
 import { Match, Switch, onMount } from 'solid-js';
 import { authState, initializeAuth } from './state/auth';
+import { initializeTheme } from './lib/theme';
 import PasswordCreation from './components/auth/PasswordCreation';
 import PasswordPrompt from './components/auth/PasswordPrompt';
 import MainLayout from './components/layout/MainLayout';
@@ -7,6 +8,7 @@ import MainLayout from './components/layout/MainLayout';
 function App() {
   onMount(() => {
     initializeAuth();
+    initializeTheme();
   });
 
   return (

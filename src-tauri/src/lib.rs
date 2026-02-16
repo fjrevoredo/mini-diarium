@@ -1,3 +1,4 @@
+pub mod backup;
 pub mod commands;
 pub mod crypto;
 pub mod db;
@@ -31,9 +32,10 @@ pub fn run() {
             std::fs::create_dir_all(&app_dir).ok();
 
             let db_path = app_dir.join("diary.db");
+            let backups_dir = app_dir.join("backups");
 
             // Set up state
-            app.manage(DiaryState::new(db_path));
+            app.manage(DiaryState::new(db_path, backups_dir));
 
             // Build and set application menu
             menu::build_menu(&app.handle())?;
@@ -47,6 +49,7 @@ pub fn run() {
             commands::auth::lock_diary,
             commands::auth::diary_exists,
             commands::auth::is_diary_unlocked,
+            commands::auth::get_diary_path,
             commands::auth::change_password,
             commands::auth::reset_diary,
             commands::entries::save_entry,
