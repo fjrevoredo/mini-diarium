@@ -62,8 +62,6 @@ export default function ExportOverlay(props: ExportOverlayProps) {
         return;
       }
 
-      console.log('[Export] Starting export to file:', filePath);
-
       let exportResult: ExportResult;
 
       if (format === 'json') {
@@ -74,7 +72,6 @@ export default function ExportOverlay(props: ExportOverlayProps) {
         throw new Error(`Unsupported export format: ${format}`);
       }
 
-      console.log('[Export] Success:', exportResult);
       setResult(exportResult);
     } catch (err) {
       console.error('[Export] Failed:', err);

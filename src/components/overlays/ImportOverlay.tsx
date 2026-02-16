@@ -69,8 +69,6 @@ export default function ImportOverlay(props: ImportOverlayProps) {
     setResult(null);
 
     try {
-      console.log('[Import] Starting import from file:', file);
-
       // Call appropriate import function based on selected format
       const format = selectedFormat();
       let importResult: ImportResult;
@@ -87,7 +85,6 @@ export default function ImportOverlay(props: ImportOverlayProps) {
         throw new Error(`Unsupported import format: ${format}`);
       }
 
-      console.log('[Import] Success:', importResult);
       setResult(importResult);
 
       // Notify parent to refresh data

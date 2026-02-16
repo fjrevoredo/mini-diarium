@@ -6,7 +6,7 @@
 
 **Platforms:** Windows 10/11, macOS 10.15+, Linux (Ubuntu 20.04+, Fedora, Arch).
 
-**Status:** See `Current-implementation-plan.md` for task-level progress (37/47 tasks complete).
+**Status:** See `Current-implementation-plan.md` for task-level progress (48/51 tasks complete).
 
 ## Architecture
 
@@ -103,14 +103,16 @@ src-tauri/src/
 ├── main.rs                            # Tauri bootstrap
 ├── lib.rs                             # Plugin init, state setup, command registration
 ├── menu.rs                            # App menu builder + event emitter
+├── backup.rs                          # Automatic backups on unlock + rotation (5 tests)
 ├── commands/
-│   ├── mod.rs                         # Re-exports: auth, entries, search, navigation, stats, import
+│   ├── mod.rs                         # Re-exports: auth, entries, search, navigation, stats, import, export
 │   ├── auth.rs                        # DiaryState, create/unlock/lock/reset/change_password (5 tests)
 │   ├── entries.rs                     # CRUD + delete-if-empty (4 tests)
 │   ├── search.rs                      # FTS5 search (1 test)
 │   ├── navigation.rs                  # Day/month navigation (5 tests)
 │   ├── stats.rs                       # Aggregated statistics (9 tests)
-│   └── import.rs                      # Import orchestration + FTS rebuild (4 tests)
+│   ├── import.rs                      # Import orchestration + FTS rebuild (4 tests)
+│   └── export.rs                      # JSON + Markdown export commands (2 tests)
 ├── crypto/
 │   ├── mod.rs                         # Re-exports
 │   ├── password.rs                    # Argon2id hashing + verification (10 tests)
@@ -119,25 +121,31 @@ src-tauri/src/
 │   ├── mod.rs                         # Re-exports
 │   ├── schema.rs                      # DB creation, migrations, password verification (6 tests)
 │   └── queries.rs                     # All SQL: CRUD, FTS, dates, word count (9 tests)
+├── export/
+│   ├── mod.rs                         # Re-exports
+│   ├── json.rs                        # Mini Diary-compatible JSON export
+│   └── markdown.rs                    # HTML-to-Markdown conversion + export
 └── import/
     ├── mod.rs                         # Re-exports + DiaryEntry conversion
     ├── minidiary.rs                   # Mini Diary JSON parser (8 tests)
     ├── dayone.rs                      # Day One JSON parser (14 tests)
+    ├── dayone_txt.rs                  # Day One TXT parser (16 tests)
+    ├── jrnl.rs                        # jrnl JSON parser (12 tests)
     └── merge.rs                       # Entry merge logic for date conflicts (13 tests)
 ```
 
 ## Command Registry
 
-All 21 registered Tauri commands (source: `lib.rs:42-64`). Rust names use `snake_case`; frontend wrappers in `src/lib/tauri.ts` use `camelCase`.
+All 26 registered Tauri commands (source: `lib.rs`). Rust names use `snake_case`; frontend wrappers in `src/lib/tauri.ts` use `camelCase`.
 
 | Module | Rust Command | Frontend Wrapper | Description |
 |--------|-------------|-----------------|-------------|
-| misc | `greet` | — | Dev test command |
 | auth | `create_diary` | `createDiary(password)` | Create new encrypted DB |
 | auth | `unlock_diary` | `unlockDiary(password)` | Decrypt and open DB |
 | auth | `lock_diary` | `lockDiary()` | Close DB connection |
 | auth | `diary_exists` | `diaryExists()` | Check if DB file exists |
 | auth | `is_diary_unlocked` | `isDiaryUnlocked()` | Check unlock state |
+| auth | `get_diary_path` | `getDiaryPath()` | Return diary file path |
 | auth | `change_password` | `changePassword(old, new)` | Re-encrypt with new password |
 | auth | `reset_diary` | `resetDiary()` | Delete and recreate DB |
 | entries | `save_entry` | `saveEntry(date, title, text)` | Upsert entry (encrypts + updates FTS) |
@@ -152,7 +160,11 @@ All 21 registered Tauri commands (source: `lib.rs:42-64`). Rust names use `snake
 | nav | `navigate_next_month` | `navigateNextMonth(currentDate)` | Same day, next month |
 | stats | `get_statistics` | `getStatistics()` | Aggregate stats (streaks, counts, words) |
 | import | `import_minidiary_json` | `importMiniDiaryJson(filePath)` | Parse + import Mini Diary format |
-| import | `import_dayone_json` | `importDayOneJson(filePath)` | Parse + import Day One format |
+| import | `import_dayone_json` | `importDayOneJson(filePath)` | Parse + import Day One JSON format |
+| import | `import_dayone_txt` | `importDayOneTxt(filePath)` | Parse + import Day One TXT format |
+| import | `import_jrnl_json` | `importJrnlJson(filePath)` | Parse + import jrnl JSON format |
+| export | `export_json` | `exportJson(filePath)` | Export all entries as JSON |
+| export | `export_markdown` | `exportMarkdown(filePath)` | Export all entries as Markdown |
 
 ## State Management
 
@@ -244,7 +256,7 @@ All menu event names are prefixed `menu-`. See `menu.rs:78-107` for the full lis
 
 ## Testing
 
-### Backend: 99 tests across 13 modules
+### Backend: 150 tests across 18 modules
 
 Run: `cd src-tauri && cargo test`
 
@@ -260,9 +272,15 @@ Run: `cd src-tauri && cargo test`
 | navigation | 5 | `commands/navigation.rs` |
 | stats | 9 | `commands/stats.rs` |
 | import-cmd | 4 | `commands/import.rs` |
+| export-cmd | 2 | `commands/export.rs` |
 | minidiary | 8 | `import/minidiary.rs` |
 | dayone | 14 | `import/dayone.rs` |
+| dayone_txt | 16 | `import/dayone_txt.rs` |
+| jrnl | 12 | `import/jrnl.rs` |
 | merge | 13 | `import/merge.rs` |
+| json-export | 6 | `export/json.rs` |
+| md-export | 12 | `export/markdown.rs` |
+| backup | 5 | `backup.rs` |
 
 ### Frontend: 23 tests across 4 files
 
