@@ -175,7 +175,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
         <Dialog.Overlay class="fixed inset-0 z-50 bg-black/50 data-[expanded]:animate-in data-[closed]:animate-out data-[closed]:fade-out-0 data-[expanded]:fade-in-0" />
         <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
           <Dialog.Content
-            class="w-full max-w-md rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 p-6 shadow-lg data-[expanded]:animate-in data-[closed]:animate-out data-[closed]:fade-out-0 data-[expanded]:fade-in-0 data-[closed]:zoom-out-95 data-[expanded]:zoom-in-95"
+            class="w-full max-w-3xl rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 p-8 shadow-lg data-[expanded]:animate-in data-[closed]:animate-out data-[closed]:fade-out-0 data-[expanded]:fade-in-0 data-[closed]:zoom-out-95 data-[expanded]:zoom-in-95"
             onKeyDown={handleKeyDown}
           >
             <Dialog.Title class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
@@ -186,10 +186,10 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
               Customize your journaling experience.
             </Dialog.Description>
 
-            <div class="space-y-6 max-h-[60vh] overflow-y-auto pr-2">
+            <div class="space-y-8 max-h-[60vh] overflow-y-auto pr-2">
               {/* Theme Section - Always shown */}
               <div>
-                <h3 class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">Appearance</h3>
+                <h3 class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-4">Appearance</h3>
 
                 {/* Theme Selector */}
                 <div>
@@ -203,7 +203,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                     <option value="light">Light</option>
                     <option value="dark">Dark</option>
                   </select>
-                  <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  <p class="mt-2 text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
                     Choose how the app should look. Auto follows your system theme.
                   </p>
                 </div>
@@ -212,10 +212,10 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
               {/* Calendar Section - Only shown when unlocked */}
               <Show when={isUnlocked()}>
                 <div>
-                  <h3 class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">Calendar</h3>
+                  <h3 class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-4">Calendar</h3>
 
                   {/* First Day of Week */}
-                  <div class="mb-4">
+                  <div class="mb-6">
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       First Day of Week
                     </label>
@@ -231,101 +231,107 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                   </div>
 
                   {/* Allow Future Entries */}
-                  <div class="flex items-center">
-                    <input
-                      type="checkbox"
-                      id="allow-future"
-                      checked={localAllowFutureEntries()}
-                      onChange={(e) => setLocalAllowFutureEntries(e.currentTarget.checked)}
-                      class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                    />
-                    <label for="allow-future" class="ml-2 text-sm text-gray-700">
-                      Allow future entries
-                    </label>
+                  <div class="space-y-2">
+                    <div class="flex items-center">
+                      <input
+                        type="checkbox"
+                        id="allow-future"
+                        checked={localAllowFutureEntries()}
+                        onChange={(e) => setLocalAllowFutureEntries(e.currentTarget.checked)}
+                        class="h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500"
+                      />
+                      <label for="allow-future" class="ml-3 text-sm text-gray-700 dark:text-gray-300">
+                        Allow future entries
+                      </label>
+                    </div>
+                    <p class="ml-7 text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+                      When disabled, you cannot create entries for future dates.
+                    </p>
                   </div>
-                  <p class="mt-1 ml-6 text-xs text-gray-500 dark:text-gray-400">
-                    When disabled, you cannot create entries for future dates.
-                  </p>
                 </div>
               </Show>
 
               {/* Editor Section - Only shown when unlocked */}
               <Show when={isUnlocked()}>
                 <div>
-                  <h3 class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">Editor</h3>
+                  <h3 class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-4">Editor</h3>
 
                   {/* Hide Titles */}
-                  <div class="mb-4">
+                  <div class="space-y-2 mb-6">
                     <div class="flex items-center">
                       <input
                         type="checkbox"
                         id="hide-titles"
                         checked={localHideTitles()}
                         onChange={(e) => setLocalHideTitles(e.currentTarget.checked)}
-                        class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        class="h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500"
                       />
-                      <label for="hide-titles" class="ml-2 text-sm text-gray-700">
+                      <label for="hide-titles" class="ml-3 text-sm text-gray-700 dark:text-gray-300">
                         Hide entry titles
                       </label>
                     </div>
-                    <p class="mt-1 ml-6 text-xs text-gray-500 dark:text-gray-400">
+                    <p class="ml-7 text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
                       When enabled, the title editor will be hidden. Title data is still saved.
                     </p>
                   </div>
 
                   {/* Enable Spellcheck */}
-                  <div class="flex items-center">
-                    <input
-                      type="checkbox"
-                      id="enable-spellcheck"
-                      checked={localEnableSpellcheck()}
-                      onChange={(e) => setLocalEnableSpellcheck(e.currentTarget.checked)}
-                      class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                    />
-                    <label for="enable-spellcheck" class="ml-2 text-sm text-gray-700">
-                      Enable spellcheck
-                    </label>
+                  <div class="space-y-2">
+                    <div class="flex items-center">
+                      <input
+                        type="checkbox"
+                        id="enable-spellcheck"
+                        checked={localEnableSpellcheck()}
+                        onChange={(e) => setLocalEnableSpellcheck(e.currentTarget.checked)}
+                        class="h-4 w-4 rounded border-gray-300 dark:border-gray-600 text-blue-600 focus:ring-blue-500"
+                      />
+                      <label for="enable-spellcheck" class="ml-3 text-sm text-gray-700 dark:text-gray-300">
+                        Enable spellcheck
+                      </label>
+                    </div>
+                    <p class="ml-7 text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+                      When enabled, browser spellcheck will highlight misspelled words.
+                    </p>
                   </div>
-                  <p class="mt-1 ml-6 text-xs text-gray-500 dark:text-gray-400">
-                    When enabled, browser spellcheck will highlight misspelled words.
-                  </p>
                 </div>
               </Show>
 
               {/* Diary File Section - Always shown */}
               <div>
-                <h3 class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">Diary File</h3>
+                <h3 class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-4">Diary File</h3>
 
                 {/* Current Path */}
-                <div class="mb-4">
+                <div class="mb-6">
                   <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Current Location
                   </label>
-                  <div class="px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-md text-sm text-gray-600 dark:text-gray-300 font-mono break-all">
+                  <div class="px-3 py-3 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-md text-sm text-gray-600 dark:text-gray-300 font-mono break-all">
                     {diaryPath() || 'Loading...'}
                   </div>
                 </div>
 
                 {/* Reset Diary Button */}
-                <button
-                  type="button"
-                  onClick={handleResetDiary}
-                  class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-                >
-                  Reset Diary
-                </button>
-                <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                  Warning: This will permanently delete all entries. This action cannot be undone.
-                </p>
+                <div class="space-y-2">
+                  <button
+                    type="button"
+                    onClick={handleResetDiary}
+                    class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                  >
+                    Reset Diary
+                  </button>
+                  <p class="text-xs text-gray-500 dark:text-gray-400 leading-relaxed">
+                    Warning: This will permanently delete all entries. This action cannot be undone.
+                  </p>
+                </div>
               </div>
 
               {/* Password Section - Only shown when unlocked */}
               <Show when={isUnlocked()}>
                 <div>
-                  <h3 class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">Password</h3>
+                  <h3 class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-4">Password</h3>
 
                   {/* Old Password */}
-                  <div class="mb-3">
+                  <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Current Password
                     </label>
@@ -339,7 +345,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                   </div>
 
                   {/* New Password */}
-                  <div class="mb-3">
+                  <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       New Password
                     </label>
@@ -353,7 +359,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                   </div>
 
                   {/* Confirm Password */}
-                  <div class="mb-3">
+                  <div class="mb-4">
                     <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Confirm New Password
                     </label>
@@ -368,12 +374,12 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
 
                   {/* Error/Success Messages */}
                   <Show when={passwordError()}>
-                    <div class="mb-3 p-2 bg-red-50 border border-red-200 rounded-md">
+                    <div class="mb-4 p-2 bg-red-50 border border-red-200 rounded-md">
                       <p class="text-sm text-red-600">{passwordError()}</p>
                     </div>
                   </Show>
                   <Show when={passwordSuccess()}>
-                    <div class="mb-3 p-2 bg-green-50 border border-green-200 rounded-md">
+                    <div class="mb-4 p-2 bg-green-50 border border-green-200 rounded-md">
                       <p class="text-sm text-green-600">Password changed successfully!</p>
                     </div>
                   </Show>

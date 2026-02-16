@@ -497,8 +497,7 @@ These deviations represent different implementation approaches that are function
    - Note: Complex, may defer to later                                                                      
    - Test: Manual testing                                                                                   
                                                                                                             
- Theming & Preferences (Increments 3.10-3.11)                                                               
-                                                                                                            
+ Theming & Preferences (Increments 3.10-3.11)                                                ![alt text](image.png)               
 ✅ 43. Implement theme system
    - File: src/lib/theme.ts
    - Preference: themePref: 'auto' | 'light' | 'dark' (default: 'auto')
