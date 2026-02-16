@@ -11,19 +11,19 @@ Mini Diarium keeps your journal private. Every entry is encrypted with AES-256-G
 
 ## Background
 
-Mini Diarium is a spiritual successor to [Mini Diary](https://github.com/samuelmeuli/mini-diary) by Samuel Meuli. I loved the original tool. It was simple, private, and did exactly what a journal app should do. Unfortunately, it's been unmaintained for years and its dependencies have aged out. I initially tried forking it and modernizing the stack, but the Electron + React + MobX codebase made that impractical. So I started over from scratch, keeping the same core philosophy (encrypted, local-only, minimal) while rebuilding with Tauri 2, SolidJS, and Rust. The result is a lighter, faster app with stronger encryption and a few personal touches like import/export support and full-text search.
+Mini Diarium is a spiritual successor to [Mini Diary](https://github.com/samuelmeuli/mini-diary) by Samuel Meuli. I loved the original tool. It was simple, private, and did exactly what a journal app should do. Unfortunately, it's been unmaintained for years and its dependencies have aged out. I initially thought about forking it and modernizing the stack, but turned out impractical. So I started over from scratch, keeping the same core philosophy (encrypted, local-only, minimal) while rebuilding completely with Tauri 2, SolidJS, and Rust. The result is a lighter, faster app with stronger encryption and a few personal touches.
 
 ## Features
 
 - **Encryption at rest**: AES-256-GCM with Argon2id key derivation
-- **Rich text editor**: bold, italic, headings, lists, blockquotes, code blocks, and links via TipTap
-- **Full-text search**: SQLite FTS5 with snippet highlighting across all entries
-- **Calendar navigation**: monthly calendar with entry indicators, jump to any date
+- **Rich text editor** 
+- **Full-text search**
+- **Calendar navigation**
 - **Import**: Mini Diary JSON and Day One JSON with merge conflict resolution
 - **Export**: JSON and Markdown formats
-- **Themes**: light and dark mode
+- **Themes**
 - **Automatic backups**: periodic database backups with rotation
-- **Statistics**: total entries, word counts, streaks, entries by weekday
+- **Statistics**
 - **Preferences**: first day of week, future entries toggle, title visibility, spellcheck, password change
 - **Cross-platform**: Windows, macOS, and Linux
 - **Zero network access**: no telemetry, no analytics, no update checks
@@ -36,28 +36,26 @@ Mini Diarium uses a layered architecture with clear separation of concerns:
 
 The application is structured into 6 layers:
 
-1. **Presentation Layer** (SolidJS): Auth screens, calendar, editor, search, and overlay components
-2. **State Layer**: Reactive signals for auth, entries, search, UI state, and preferences
-3. **IPC Layer**: Tauri invoke/listen bridge between frontend and backend
-4. **Backend Commands**: 26 Rust commands handling auth, CRUD, search, navigation, stats, import/export
-5. **Business Logic**: Core modules for crypto (AES-256-GCM + Argon2id), database operations, import/export, and backups
-6. **Data Store**: SQLite with encrypted entries table and plaintext FTS5 index
+1. **Presentation Layer**
+2. **State Layer**
+3. **IPC Layer**
+4. **Backend Commands**
+5. **Business Logic**
+6. **Data Store**
 
-**Key Pattern**: All entry writes perform a **dual write**—updating both the encrypted `entries` table and the plaintext `entries_fts` search index. This ensures search stays synchronized with diary content.
+**Key Pattern**: All entry writes perform a **dual write**—updating both the encrypted `entries` table and the plaintext `entries_fts` search index. This ensures search stays synchronized.
 
 For a detailed architecture diagram showing all components and data flows, see [docs/architecture-full.svg](docs/architecture-full.svg).
-
-For implementation details, see [CLAUDE.md](CLAUDE.md).
 
 ## Installation
 
 Download the latest release for your platform:
 
-| Platform | Format |
-|----------|--------|
+| Platform | Format                                               |
+| -------- | ---------------------------------------------------- |
 | Windows  | `.msi` or `.exe` (NSIS installer, no admin required) |
-| macOS    | `.dmg` |
-| Linux    | `.AppImage` or `.deb` |
+| macOS    | `.dmg`                                               |
+| Linux    | `.AppImage` or `.deb`                                |
 
 ### Installation Notes
 
@@ -88,18 +86,18 @@ sha256sum Mini-Diarium-*.AppImage
 
 ## Keyboard Shortcuts
 
-| Action | Shortcut |
-|--------|----------|
-| Previous Day | `Ctrl+Left` |
-| Next Day | `Ctrl+Right` |
-| Go to Today | `Ctrl+T` |
-| Go to Date | `Ctrl+G` |
-| Previous Month | `Ctrl+Shift+Left` |
-| Next Month | `Ctrl+Shift+Right` |
-| Preferences | `Ctrl+,` |
-| Statistics | `Ctrl+I` |
-| Import | `Ctrl+Shift+I` |
-| Export | `Ctrl+Shift+E` |
+| Action         | Shortcut           |
+| -------------- | ------------------ |
+| Previous Day   | `Ctrl+Left`        |
+| Next Day       | `Ctrl+Right`       |
+| Go to Today    | `Ctrl+T`           |
+| Go to Date     | `Ctrl+G`           |
+| Previous Month | `Ctrl+Shift+Left`  |
+| Next Month     | `Ctrl+Shift+Right` |
+| Preferences    | `Ctrl+,`           |
+| Statistics     | `Ctrl+I`           |
+| Import         | `Ctrl+Shift+I`     |
+| Export         | `Ctrl+Shift+E`     |
 
 On macOS, use `Cmd` instead of `Ctrl`.
 
@@ -134,10 +132,10 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for setup instructions, development workf
 
 For maintainers: See [RELEASING.md](RELEASING.md) for step-by-step release instructions.
 
-## License
-
-[MIT](LICENSE)
-
 ## Security
 
 See [SECURITY.md](SECURITY.md) for the security model and how to report vulnerabilities.
+
+## Credits
+
+Made with love by [Francisco J. Revoredo](https://github.com/fjrevoredo) (with a little help from Claude Code).
