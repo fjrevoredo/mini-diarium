@@ -3,6 +3,9 @@ import { X } from 'lucide-solid';
 import { searchQuery, setSearchQuery, setSearchResults, setIsSearching } from '../../state/search';
 import { searchEntries } from '../../lib/tauri';
 import { debounce } from '../../lib/debounce';
+import { createLogger } from '../../lib/logger';
+
+const log = createLogger('Search');
 
 export default function SearchBar() {
   // eslint-disable-next-line no-unassigned-vars
@@ -20,7 +23,7 @@ export default function SearchBar() {
       const results = await searchEntries(query);
       setSearchResults(results);
     } catch (error) {
-      console.error('Search failed:', error);
+      log.error('Search failed:', error);
       setSearchResults([]);
     } finally {
       setIsSearching(false);

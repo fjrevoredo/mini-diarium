@@ -1,6 +1,7 @@
 import { createSignal, Show } from 'solid-js';
 import { Dialog } from '@kobalte/core/dialog';
 import { open as openDialog } from '@tauri-apps/plugin-dialog';
+import { createLogger } from '../../lib/logger';
 import {
   importMiniDiaryJson,
   importDayOneJson,
@@ -17,6 +18,8 @@ interface ImportOverlayProps {
 }
 
 type ImportFormat = 'minidiary-json' | 'dayone-json' | 'dayone-txt' | 'jrnl-json';
+
+const log = createLogger('Import');
 
 export default function ImportOverlay(props: ImportOverlayProps) {
   const [selectedFormat, setSelectedFormat] = createSignal<ImportFormat>('minidiary-json');
@@ -96,7 +99,7 @@ export default function ImportOverlay(props: ImportOverlayProps) {
       // Notify parent to refresh data
       props.onImportComplete?.();
     } catch (err) {
-      console.error('[Import] Failed:', err);
+      log.error('Import failed:', err);
       const errorMessage = err instanceof Error ? err.message : String(err);
       setError(errorMessage || 'Import failed');
     } finally {

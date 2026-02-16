@@ -2,12 +2,50 @@
 
 This document tracks features and improvements deferred from the v0.1.0 release.
 
-**Status**: 12 open tasks across 4 categories
+**Status**: 13 open tasks across 5 categories
+- **Infrastructure**: 1 task (release workflow modernization)
 - **Features**: 7 tasks (PDF export, directory selection, i18n, menus, auto-lock, auto-update, legacy migration)
 - **Quality**: 2 tasks (accessibility audit, QA pass)
 - **Testing**: 3 tasks (E2E setup and tests)
 
 See [Current-implementation-plan.md](Current-implementation-plan.md) for full historical context of the 48 completed tasks.
+
+---
+
+## 🔧 Infrastructure & CI/CD
+
+### Task 61: Modernize Release Workflow
+**Priority**: Medium | **Complexity**: Low | **File**: `.github/workflows/release.yml`
+
+Improve release pipeline reliability and remove deprecated dependencies.
+
+**Current Issues**:
+- Using deprecated `actions/create-release@v1` (deprecated since 2021)
+- Two-step release process (create-release job + build-release jobs)
+- Silent failures in artifact finding (`find` commands)
+- No artifact verification before upload
+
+**Proposed Solution**:
+1. **Remove deprecated action**: Eliminate `create-release` job entirely
+2. **Simplify workflow**: Let `softprops/action-gh-release@v1` create the release automatically
+3. **Add artifact verification**: Check files exist before upload:
+   ```bash
+   # After preparing artifacts
+   ls -lh release-artifacts/
+   if [ $(ls release-artifacts/ | wc -l) -eq 0 ]; then
+     echo "❌ No artifacts found!"
+     exit 1
+   fi
+   ```
+4. **Explicit file paths**: Replace `find` with direct paths or add existence checks
+
+**Benefits**:
+- Single-job workflow (simpler to maintain)
+- Modern, supported actions only
+- Fail fast if artifacts are missing
+- Clearer error messages
+
+**Testing**: Test with a patch release (v0.1.1 or similar)
 
 ---
 
@@ -245,12 +283,14 @@ Automated end-to-end tests for critical user journeys.
 
 | Category | Open | Completed |
 |----------|------|-----------|
+| **Infrastructure** | 1 | 4 |
 | **Features** | 7 | 38 |
 | **Quality** | 2 | 5 |
 | **Testing** | 3 | 2 |
-| **Total** | **12** | **45** |
+| **Total** | **13** | **49** |
 
 **Next milestone candidates**:
+- **v0.1.1**: Task 61 (modernize release workflow)
 - **v0.2.0**: Tasks 46, 52 (accessibility + directory selection)
 - **v0.3.0**: Tasks 47-48 (internationalization)
 - **v0.4.0**: Tasks 49-51, 53 (platform features + legacy migration)
