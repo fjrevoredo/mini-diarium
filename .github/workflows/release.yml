@@ -5,6 +5,10 @@ on:
     tags:
       - 'v*.*.*'
 
+# Required for creating releases and uploading assets
+permissions:
+  contents: write
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
