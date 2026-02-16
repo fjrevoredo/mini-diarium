@@ -175,39 +175,35 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
         <Dialog.Overlay class="fixed inset-0 z-50 bg-black/50 data-[expanded]:animate-in data-[closed]:animate-out data-[closed]:fade-out-0 data-[expanded]:fade-in-0" />
         <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
           <Dialog.Content
-            class="w-full max-w-md rounded-lg p-6 shadow-lg data-[expanded]:animate-in data-[closed]:animate-out data-[closed]:fade-out-0 data-[expanded]:fade-in-0 data-[closed]:zoom-out-95 data-[expanded]:zoom-in-95"
-            style={{
-              'background-color': 'var(--modal-bg)',
-              color: 'var(--text-primary)',
-            }}
+            class="w-full max-w-md rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 p-6 shadow-lg data-[expanded]:animate-in data-[closed]:animate-out data-[closed]:fade-out-0 data-[expanded]:fade-in-0 data-[closed]:zoom-out-95 data-[expanded]:zoom-in-95"
             onKeyDown={handleKeyDown}
           >
-            <Dialog.Title class="text-lg font-semibold text-gray-900 mb-4">
+            <Dialog.Title class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
               Preferences
             </Dialog.Title>
 
-            <Dialog.Description class="text-sm text-gray-600 mb-6">
+            <Dialog.Description class="text-sm text-gray-600 dark:text-gray-400 mb-6">
               Customize your journaling experience.
             </Dialog.Description>
 
             <div class="space-y-6 max-h-[60vh] overflow-y-auto pr-2">
               {/* Theme Section - Always shown */}
               <div>
-                <h3 class="text-sm font-medium text-gray-900 mb-3">Appearance</h3>
+                <h3 class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">Appearance</h3>
 
                 {/* Theme Selector */}
                 <div>
-                  <label class="block text-sm font-medium text-gray-700 mb-2">Theme</label>
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Theme</label>
                   <select
                     value={localTheme()}
                     onChange={(e) => setLocalTheme(e.currentTarget.value as ThemePreference)}
-                    class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
                     <option value="auto">Auto (System Default)</option>
                     <option value="light">Light</option>
                     <option value="dark">Dark</option>
                   </select>
-                  <p class="mt-1 text-xs text-gray-500">
+                  <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">
                     Choose how the app should look. Auto follows your system theme.
                   </p>
                 </div>
@@ -216,17 +212,17 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
               {/* Calendar Section - Only shown when unlocked */}
               <Show when={isUnlocked()}>
                 <div>
-                  <h3 class="text-sm font-medium text-gray-900 mb-3">Calendar</h3>
+                  <h3 class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">Calendar</h3>
 
                   {/* First Day of Week */}
                   <div class="mb-4">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       First Day of Week
                     </label>
                     <select
                       value={localFirstDayOfWeek()}
                       onChange={(e) => setLocalFirstDayOfWeek(e.currentTarget.value)}
-                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     >
                       <For each={FIRST_DAY_OPTIONS}>
                         {(option) => <option value={option.value}>{option.label}</option>}
@@ -247,7 +243,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                       Allow future entries
                     </label>
                   </div>
-                  <p class="mt-1 ml-6 text-xs text-gray-500">
+                  <p class="mt-1 ml-6 text-xs text-gray-500 dark:text-gray-400">
                     When disabled, you cannot create entries for future dates.
                   </p>
                 </div>
@@ -256,7 +252,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
               {/* Editor Section - Only shown when unlocked */}
               <Show when={isUnlocked()}>
                 <div>
-                  <h3 class="text-sm font-medium text-gray-900 mb-3">Editor</h3>
+                  <h3 class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">Editor</h3>
 
                   {/* Hide Titles */}
                   <div class="mb-4">
@@ -272,7 +268,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                         Hide entry titles
                       </label>
                     </div>
-                    <p class="mt-1 ml-6 text-xs text-gray-500">
+                    <p class="mt-1 ml-6 text-xs text-gray-500 dark:text-gray-400">
                       When enabled, the title editor will be hidden. Title data is still saved.
                     </p>
                   </div>
@@ -290,7 +286,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                       Enable spellcheck
                     </label>
                   </div>
-                  <p class="mt-1 ml-6 text-xs text-gray-500">
+                  <p class="mt-1 ml-6 text-xs text-gray-500 dark:text-gray-400">
                     When enabled, browser spellcheck will highlight misspelled words.
                   </p>
                 </div>
@@ -298,14 +294,14 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
 
               {/* Diary File Section - Always shown */}
               <div>
-                <h3 class="text-sm font-medium text-gray-900 mb-3">Diary File</h3>
+                <h3 class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">Diary File</h3>
 
                 {/* Current Path */}
                 <div class="mb-4">
-                  <label class="block text-sm font-medium text-gray-700 mb-2">
+                  <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Current Location
                   </label>
-                  <div class="px-3 py-2 bg-gray-50 border border-gray-200 rounded-md text-sm text-gray-600 font-mono break-all">
+                  <div class="px-3 py-2 bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-md text-sm text-gray-600 dark:text-gray-300 font-mono break-all">
                     {diaryPath() || 'Loading...'}
                   </div>
                 </div>
@@ -318,7 +314,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                 >
                   Reset Diary
                 </button>
-                <p class="mt-2 text-xs text-gray-500">
+                <p class="mt-2 text-xs text-gray-500 dark:text-gray-400">
                   Warning: This will permanently delete all entries. This action cannot be undone.
                 </p>
               </div>
@@ -326,46 +322,46 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
               {/* Password Section - Only shown when unlocked */}
               <Show when={isUnlocked()}>
                 <div>
-                  <h3 class="text-sm font-medium text-gray-900 mb-3">Password</h3>
+                  <h3 class="text-sm font-medium text-gray-900 dark:text-gray-100 mb-3">Password</h3>
 
                   {/* Old Password */}
                   <div class="mb-3">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Current Password
                     </label>
                     <input
                       type="password"
                       value={oldPassword()}
                       onInput={(e) => setOldPassword(e.currentTarget.value)}
-                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       placeholder="Enter current password"
                     />
                   </div>
 
                   {/* New Password */}
                   <div class="mb-3">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       New Password
                     </label>
                     <input
                       type="password"
                       value={newPassword()}
                       onInput={(e) => setNewPassword(e.currentTarget.value)}
-                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       placeholder="Enter new password (min 6 characters)"
                     />
                   </div>
 
                   {/* Confirm Password */}
                   <div class="mb-3">
-                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                       Confirm New Password
                     </label>
                     <input
                       type="password"
                       value={confirmPassword()}
                       onInput={(e) => setConfirmPassword(e.currentTarget.value)}
-                      class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                      class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                       placeholder="Confirm new password"
                     />
                   </div>
@@ -399,7 +395,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
               <button
                 type="button"
                 onClick={() => props.onClose()}
-                class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                class="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
               >
                 Cancel
               </button>

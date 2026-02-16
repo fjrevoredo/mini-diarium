@@ -21,7 +21,7 @@ export default function Sidebar(props: SidebarProps) {
 
       {/* Sidebar */}
       <aside
-        class={`fixed inset-y-0 left-0 z-30 w-80 transform bg-white border-r border-gray-200 transition-transform duration-300 lg:relative lg:translate-x-0 ${
+        class={`fixed inset-y-0 left-0 z-30 w-80 transform bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 transition-transform duration-300 lg:relative lg:translate-x-0 ${
           props.isCollapsed ? '-translate-x-full' : 'translate-x-0'
         }`}
       >

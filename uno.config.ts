@@ -12,6 +12,9 @@ export default defineConfig({
     ],
   },
 
+  // Enable dark mode with class strategy
+  darkMode: 'class',
+
   presets: [
     presetUno(),
     presetTypography(),

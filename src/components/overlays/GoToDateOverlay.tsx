@@ -63,11 +63,7 @@ export default function GoToDateOverlay() {
         <Dialog.Overlay class="fixed inset-0 z-50 bg-black/50 data-[expanded]:animate-in data-[closed]:animate-out data-[closed]:fade-out-0 data-[expanded]:fade-in-0" />
         <div class="fixed inset-0 z-50 flex items-center justify-center">
           <Dialog.Content
-            class="w-full max-w-md rounded-lg p-6 shadow-lg data-[expanded]:animate-in data-[closed]:animate-out data-[closed]:fade-out-0 data-[expanded]:fade-in-0 data-[closed]:zoom-out-95 data-[expanded]:zoom-in-95"
-            style={{
-              'background-color': 'var(--modal-bg)',
-              color: 'var(--text-primary)',
-            }}
+            class="w-full max-w-md rounded-lg bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 p-6 shadow-lg data-[expanded]:animate-in data-[closed]:animate-out data-[closed]:fade-out-0 data-[expanded]:fade-in-0 data-[closed]:zoom-out-95 data-[expanded]:zoom-in-95"
             onKeyDown={handleKeyDown}
           >
             <Dialog.Title class="text-lg font-semibold text-gray-900 mb-4">Go to Date</Dialog.Title>

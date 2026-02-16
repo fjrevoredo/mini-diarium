@@ -69,12 +69,11 @@ function applyTheme(theme: ResolvedTheme): void {
 
   const html = document.documentElement;
 
+  // UnoCSS dark mode uses 'dark' class on html element
   if (theme === 'dark') {
-    html.classList.remove('theme-light');
-    html.classList.add('theme-dark');
+    html.classList.add('dark');
   } else {
-    html.classList.remove('theme-dark');
-    html.classList.add('theme-light');
+    html.classList.remove('dark');
   }
 
   // Also set data attribute for easier CSS targeting

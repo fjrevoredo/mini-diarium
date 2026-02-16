@@ -147,7 +147,7 @@ export default function Calendar() {
   });
 
   return (
-    <div class="rounded-lg bg-white p-4 shadow-sm">
+    <div class="rounded-lg bg-white dark:bg-gray-800 p-4 shadow-sm">
       {/* Calendar header */}
       <div class="mb-4 flex items-center justify-between">
         <button
