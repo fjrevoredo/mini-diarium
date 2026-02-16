@@ -13,8 +13,19 @@ if (typeof window === 'undefined') {
 }
 
 // Mock Tauri API
+interface TauriInternals {
+  invoke: () => Promise<void>;
+  convertFileSrc: (src: string) => string;
+}
+
+declare global {
+  interface Window {
+    __TAURI_INTERNALS__?: TauriInternals;
+  }
+}
+
 global.window = global.window || {};
-(global.window as any).__TAURI_INTERNALS__ = {
+global.window.__TAURI_INTERNALS__ = {
   invoke: () => Promise.resolve(),
   convertFileSrc: (src: string) => src,
 };

@@ -17,7 +17,9 @@
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:run": "vitest run",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "pre-commit": "node scripts/pre-commit.js",
+    "check": "node scripts/quick-check.js"
   },
   "license": "MIT",
   "dependencies": {

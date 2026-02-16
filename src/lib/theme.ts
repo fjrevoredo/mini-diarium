@@ -7,9 +7,7 @@ const THEME_STORAGE_KEY = 'theme-preference';
 const DEFAULT_THEME: ThemePreference = 'auto';
 
 // Signal for theme preference ('auto', 'light', or 'dark')
-const [themePreference, setThemePreference] = createSignal<ThemePreference>(
-  loadThemePreference()
-);
+const [themePreference, setThemePreference] = createSignal<ThemePreference>(loadThemePreference());
 
 // Signal for resolved/active theme ('light' or 'dark')
 const [activeTheme, setActiveTheme] = createSignal<ResolvedTheme>('light');

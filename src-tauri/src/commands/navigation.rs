@@ -1,4 +1,4 @@
-use chrono::{NaiveDate, Duration, Months};
+use chrono::{Duration, Months, NaiveDate};
 
 /// Navigate to the previous day
 #[tauri::command]
@@ -34,7 +34,8 @@ pub fn navigate_previous_month(current_date: String) -> Result<String, String> {
         .map_err(|e| format!("Invalid date format: {}", e))?;
 
     // Subtract one month
-    let previous = date.checked_sub_months(Months::new(1))
+    let previous = date
+        .checked_sub_months(Months::new(1))
         .ok_or_else(|| "Cannot navigate to previous month".to_string())?;
 
     Ok(previous.format("%Y-%m-%d").to_string())
@@ -47,7 +48,8 @@ pub fn navigate_next_month(current_date: String) -> Result<String, String> {
         .map_err(|e| format!("Invalid date format: {}", e))?;
 
     // Add one month
-    let next = date.checked_add_months(Months::new(1))
+    let next = date
+        .checked_add_months(Months::new(1))
         .ok_or_else(|| "Cannot navigate to next month".to_string())?;
 
     Ok(next.format("%Y-%m-%d").to_string())
@@ -59,26 +61,50 @@ mod tests {
 
     #[test]
     fn test_navigate_previous_day() {
-        assert_eq!(navigate_previous_day("2024-01-15".to_string()).unwrap(), "2024-01-14");
-        assert_eq!(navigate_previous_day("2024-01-01".to_string()).unwrap(), "2023-12-31");
+        assert_eq!(
+            navigate_previous_day("2024-01-15".to_string()).unwrap(),
+            "2024-01-14"
+        );
+        assert_eq!(
+            navigate_previous_day("2024-01-01".to_string()).unwrap(),
+            "2023-12-31"
+        );
     }
 
     #[test]
     fn test_navigate_next_day() {
-        assert_eq!(navigate_next_day("2024-01-15".to_string()).unwrap(), "2024-01-16");
-        assert_eq!(navigate_next_day("2024-12-31".to_string()).unwrap(), "2025-01-01");
+        assert_eq!(
+            navigate_next_day("2024-01-15".to_string()).unwrap(),
+            "2024-01-16"
+        );
+        assert_eq!(
+            navigate_next_day("2024-12-31".to_string()).unwrap(),
+            "2025-01-01"
+        );
     }
 
     #[test]
     fn test_navigate_previous_month() {
-        assert_eq!(navigate_previous_month("2024-02-15".to_string()).unwrap(), "2024-01-15");
-        assert_eq!(navigate_previous_month("2024-01-31".to_string()).unwrap(), "2023-12-31");
+        assert_eq!(
+            navigate_previous_month("2024-02-15".to_string()).unwrap(),
+            "2024-01-15"
+        );
+        assert_eq!(
+            navigate_previous_month("2024-01-31".to_string()).unwrap(),
+            "2023-12-31"
+        );
     }
 
     #[test]
     fn test_navigate_next_month() {
-        assert_eq!(navigate_next_month("2024-01-15".to_string()).unwrap(), "2024-02-15");
-        assert_eq!(navigate_next_month("2024-01-31".to_string()).unwrap(), "2024-02-29"); // Leap year
+        assert_eq!(
+            navigate_next_month("2024-01-15".to_string()).unwrap(),
+            "2024-02-15"
+        );
+        assert_eq!(
+            navigate_next_month("2024-01-31".to_string()).unwrap(),
+            "2024-02-29"
+        ); // Leap year
     }
 
     #[test]

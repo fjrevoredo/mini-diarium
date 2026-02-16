@@ -5,12 +5,12 @@ use rusqlite::params;
 /// Represents a diary entry
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct DiaryEntry {
-    pub date: String,          // ISO 8601 date (YYYY-MM-DD)
-    pub title: String,         // Plaintext title
-    pub text: String,          // Plaintext text
-    pub word_count: i32,       // Word count
-    pub date_created: String,  // ISO 8601 timestamp
-    pub date_updated: String,  // ISO 8601 timestamp
+    pub date: String,         // ISO 8601 date (YYYY-MM-DD)
+    pub title: String,        // Plaintext title
+    pub text: String,         // Plaintext text
+    pub word_count: i32,      // Word count
+    pub date_created: String, // ISO 8601 timestamp
+    pub date_updated: String, // ISO 8601 timestamp
 }
 
 /// Inserts a new entry into the database
@@ -288,7 +288,10 @@ mod tests {
         let retrieved_entry = retrieved.unwrap();
         assert_eq!(retrieved_entry.date, "2024-01-15");
         assert_eq!(retrieved_entry.title, "Test Title");
-        assert_eq!(retrieved_entry.text, "This is a test entry with some words.");
+        assert_eq!(
+            retrieved_entry.text,
+            "This is a test entry with some words."
+        );
         assert_eq!(retrieved_entry.word_count, 8);
 
         cleanup_db(&db_path);

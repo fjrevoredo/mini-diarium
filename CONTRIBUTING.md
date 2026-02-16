@@ -29,8 +29,32 @@ bun run tauri dev
 
 ## Check Suite
 
-All of these must pass before merging:
+Before committing, run the pre-commit script to verify everything passes:
 
+```bash
+# Recommended: Full check suite (runs all tests)
+bun run pre-commit
+
+# Or for quick feedback during development
+bun run check        # Fast (no tests, ~5-10 seconds)
+```
+
+These scripts check:
+- ✓ TypeScript type checking
+- ✓ ESLint (no errors)
+- ✓ Prettier formatting
+- ✓ Frontend tests (23 tests)
+- ✓ Backend tests (160 Rust tests)
+- ✓ Rust Clippy (warnings as errors)
+- ✓ Rust formatting
+
+**Quick fixes** if checks fail:
+```bash
+bun run lint:fix     # Auto-fix ESLint errors
+bun run format       # Auto-fix formatting
+```
+
+**Manual check commands** (if you prefer running individually):
 ```bash
 # Frontend
 bun run lint          # ESLint
@@ -44,6 +68,8 @@ cargo test            # Rust unit tests
 cargo clippy --all-targets -- -D warnings
 cargo fmt --check
 ```
+
+See `scripts/README.md` for details on the pre-commit scripts.
 
 ## Project Structure
 

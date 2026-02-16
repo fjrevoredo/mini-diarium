@@ -1,7 +1,13 @@
 import { createSignal, Show } from 'solid-js';
 import { Dialog } from '@kobalte/core/dialog';
 import { open as openDialog } from '@tauri-apps/plugin-dialog';
-import { importMiniDiaryJson, importDayOneJson, importDayOneTxt, importJrnlJson, type ImportResult } from '../../lib/tauri';
+import {
+  importMiniDiaryJson,
+  importDayOneJson,
+  importDayOneTxt,
+  importJrnlJson,
+  type ImportResult,
+} from '../../lib/tauri';
 import { X, FileUp, CheckCircle, AlertCircle } from 'lucide-solid';
 
 interface ImportOverlayProps {
@@ -111,17 +117,18 @@ export default function ImportOverlay(props: ImportOverlayProps) {
   return (
     <Dialog open={props.isOpen} onOpenChange={handleOpenChange}>
       <Dialog.Portal>
-        <Dialog.Overlay class="fixed inset-0 z-50" style={{ "background-color": "var(--overlay-bg)" }} />
+        <Dialog.Overlay
+          class="fixed inset-0 z-50"
+          style={{ 'background-color': 'var(--overlay-bg)' }}
+        />
         <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
           <Dialog.Content
             class="w-full max-w-md rounded-lg bg-primary p-6 data-[expanded]:animate-in data-[closed]:animate-out data-[closed]:fade-out-0 data-[expanded]:fade-in-0 data-[closed]:zoom-out-95 data-[expanded]:zoom-in-95"
-            style={{ "box-shadow": "var(--shadow-lg)" }}
+            style={{ 'box-shadow': 'var(--shadow-lg)' }}
             onKeyDown={handleKeyDown}
           >
             <div class="flex items-center justify-between mb-4">
-              <Dialog.Title class="text-lg font-semibold text-primary">
-                Import Entries
-              </Dialog.Title>
+              <Dialog.Title class="text-lg font-semibold text-primary">Import Entries</Dialog.Title>
               <Dialog.CloseButton
                 class="rounded-md p-1 hover:bg-hover transition-colors"
                 aria-label="Close"

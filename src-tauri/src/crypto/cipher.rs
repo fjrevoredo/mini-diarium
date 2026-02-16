@@ -203,7 +203,10 @@ mod tests {
         // Decryption with wrong key should fail
         let result = decrypt(&key2, &ciphertext);
         assert!(result.is_err());
-        assert!(matches!(result.unwrap_err(), CipherError::DecryptionFailed(_)));
+        assert!(matches!(
+            result.unwrap_err(),
+            CipherError::DecryptionFailed(_)
+        ));
     }
 
     #[test]
@@ -220,7 +223,10 @@ mod tests {
         // Decryption should fail due to authentication tag mismatch
         let result = decrypt(&key, &ciphertext);
         assert!(result.is_err());
-        assert!(matches!(result.unwrap_err(), CipherError::DecryptionFailed(_)));
+        assert!(matches!(
+            result.unwrap_err(),
+            CipherError::DecryptionFailed(_)
+        ));
     }
 
     #[test]
@@ -235,7 +241,10 @@ mod tests {
         // Decryption should fail
         let result = decrypt(&key, &ciphertext);
         assert!(result.is_err());
-        assert!(matches!(result.unwrap_err(), CipherError::DecryptionFailed(_)));
+        assert!(matches!(
+            result.unwrap_err(),
+            CipherError::DecryptionFailed(_)
+        ));
     }
 
     #[test]
@@ -245,7 +254,10 @@ mod tests {
 
         let result = decrypt(&key, &short_data);
         assert!(result.is_err());
-        assert!(matches!(result.unwrap_err(), CipherError::DecryptionFailed(_)));
+        assert!(matches!(
+            result.unwrap_err(),
+            CipherError::DecryptionFailed(_)
+        ));
     }
 
     #[test]

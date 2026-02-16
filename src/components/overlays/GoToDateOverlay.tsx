@@ -60,11 +60,14 @@ export default function GoToDateOverlay() {
   return (
     <Dialog open={isGoToDateOpen()} onOpenChange={handleOpenChange}>
       <Dialog.Portal>
-        <Dialog.Overlay class="fixed inset-0 z-50" style={{ "background-color": "var(--overlay-bg)" }} />
+        <Dialog.Overlay
+          class="fixed inset-0 z-50"
+          style={{ 'background-color': 'var(--overlay-bg)' }}
+        />
         <div class="fixed inset-0 z-50 flex items-center justify-center">
           <Dialog.Content
             class="w-full max-w-md rounded-lg bg-primary p-6 data-[expanded]:animate-in data-[closed]:animate-out data-[closed]:fade-out-0 data-[expanded]:fade-in-0 data-[closed]:zoom-out-95 data-[expanded]:zoom-in-95"
-            style={{ "box-shadow": "var(--shadow-lg)" }}
+            style={{ 'box-shadow': 'var(--shadow-lg)' }}
             onKeyDown={handleKeyDown}
           >
             <Dialog.Title class="text-lg font-semibold text-primary mb-4">Go to Date</Dialog.Title>

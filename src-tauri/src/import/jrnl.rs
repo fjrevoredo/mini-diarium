@@ -15,13 +15,13 @@ struct JrnlJson {
 struct JrnlEntry {
     title: String,
     body: String,
-    date: String,     // Format: "YYYY-MM-DD"
+    date: String, // Format: "YYYY-MM-DD"
     #[allow(dead_code)]
-    time: String,     // Format: "HH:MM" (not used, we only care about date)
+    time: String, // Format: "HH:MM" (not used, we only care about date)
     #[allow(dead_code)]
     tags: Vec<String>, // We don't import tags
     #[allow(dead_code)]
-    starred: bool,    // We don't import starred status
+    starred: bool, // We don't import starred status
 }
 
 /// Parse a jrnl JSON export file into a list of DiaryEntry objects.
@@ -343,14 +343,14 @@ mod tests {
         assert!(is_valid_date_format("2024-12-31")); // Last day of year
 
         // Valid dates - chrono accepts lenient formatting (single digits)
-        assert!(is_valid_date_format("2024-1-15"));  // Single digit month (chrono accepts this)
-        assert!(is_valid_date_format("2024-01-5"));  // Single digit day (chrono accepts this)
-        assert!(is_valid_date_format("2024-1-5"));   // Both single digit (chrono accepts this)
+        assert!(is_valid_date_format("2024-1-15")); // Single digit month (chrono accepts this)
+        assert!(is_valid_date_format("2024-01-5")); // Single digit day (chrono accepts this)
+        assert!(is_valid_date_format("2024-1-5")); // Both single digit (chrono accepts this)
 
         // Invalid dates - format issues
         assert!(!is_valid_date_format("2024/01/15")); // Wrong separator
-        assert!(!is_valid_date_format("24-01-15"));   // 2-digit year
-        assert!(!is_valid_date_format(""));           // Empty string
+        assert!(!is_valid_date_format("24-01-15")); // 2-digit year
+        assert!(!is_valid_date_format("")); // Empty string
         assert!(!is_valid_date_format("not-a-date")); // Garbage
 
         // Invalid dates - calendar accuracy (chrono validates these!)

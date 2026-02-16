@@ -42,10 +42,13 @@ pub struct Entry {
 /// A vector of DiaryEntry structs ready for database insertion
 pub fn parse_minidiary_json(json_str: &str) -> Result<Vec<DiaryEntry>, String> {
     // Parse JSON
-    let mini_diary: MiniDiaryJson = serde_json::from_str(json_str)
-        .map_err(|e| format!("Failed to parse JSON: {}", e))?;
+    let mini_diary: MiniDiaryJson =
+        serde_json::from_str(json_str).map_err(|e| format!("Failed to parse JSON: {}", e))?;
 
-    eprintln!("[Parser] Parsed Mini Diary format version: {}", mini_diary.metadata.version);
+    eprintln!(
+        "[Parser] Parsed Mini Diary format version: {}",
+        mini_diary.metadata.version
+    );
     eprintln!("[Parser] Found {} entries", mini_diary.entries.len());
 
     // Convert entries to DiaryEntry format
@@ -76,7 +79,10 @@ pub fn parse_minidiary_json(json_str: &str) -> Result<Vec<DiaryEntry>, String> {
         });
     }
 
-    eprintln!("[Parser] Successfully parsed {} valid entries", diary_entries.len());
+    eprintln!(
+        "[Parser] Successfully parsed {} valid entries",
+        diary_entries.len()
+    );
     Ok(diary_entries)
 }
 

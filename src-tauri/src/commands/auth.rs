@@ -142,8 +142,7 @@ pub fn change_password(
 
     // Backup old database
     let backup_path = db_path.with_extension("db.backup");
-    std::fs::copy(&db_path, &backup_path)
-        .map_err(|e| format!("Failed to create backup: {}", e))?;
+    std::fs::copy(&db_path, &backup_path).map_err(|e| format!("Failed to create backup: {}", e))?;
 
     // Delete old database
     std::fs::remove_file(&db_path).map_err(|e| format!("Failed to remove old database: {}", e))?;

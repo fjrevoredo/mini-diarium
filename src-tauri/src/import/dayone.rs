@@ -192,7 +192,10 @@ mod tests {
         let entry = &entries[0];
         assert_eq!(entry.date, "2024-01-15");
         assert_eq!(entry.title, "My Great Day");
-        assert_eq!(entry.text, "This was a wonderful day with lots of activities.");
+        assert_eq!(
+            entry.text,
+            "This was a wonderful day with lots of activities."
+        );
         assert_eq!(entry.word_count, 9);
         assert!(entry.date_created.starts_with("2024-01-15"));
     }

@@ -40,17 +40,15 @@ pub fn create_database<P: AsRef<Path>>(
     let salt = password::generate_salt();
 
     // Hash the password to create encryption key
-    let password_hash =
-        password::hash_password(password, &salt).map_err(|e| e.to_string())?;
+    let password_hash = password::hash_password(password, &salt).map_err(|e| e.to_string())?;
 
     // Derive 32-byte encryption key from password hash
     let key_bytes = derive_key_from_hash(&password_hash)?;
-    let encryption_key =
-        cipher::Key::from_slice(&key_bytes).ok_or("Invalid key size")?;
+    let encryption_key = cipher::Key::from_slice(&key_bytes).ok_or("Invalid key size")?;
 
     // Create database connection
-    let conn = Connection::open(&db_path)
-        .map_err(|e| format!("Failed to create database: {}", e))?;
+    let conn =
+        Connection::open(&db_path).map_err(|e| format!("Failed to create database: {}", e))?;
 
     // Create schema
     create_schema(&conn)?;
@@ -81,8 +79,8 @@ pub fn open_database<P1: AsRef<Path>, P2: AsRef<Path>>(
     let db_path_ref = db_path.as_ref();
 
     // Open database connection
-    let conn = Connection::open(db_path_ref)
-        .map_err(|e| format!("Failed to open database: {}", e))?;
+    let conn =
+        Connection::open(db_path_ref).map_err(|e| format!("Failed to open database: {}", e))?;
 
     // Retrieve stored password hash and salt
     let (stored_hash, _salt_str) = get_metadata(&conn)?;
@@ -93,8 +91,7 @@ pub fn open_database<P1: AsRef<Path>, P2: AsRef<Path>>(
 
     // Derive encryption key from password hash
     let key_bytes = derive_key_from_hash(&stored_hash)?;
-    let encryption_key =
-        cipher::Key::from_slice(&key_bytes).ok_or("Invalid key size")?;
+    let encryption_key = cipher::Key::from_slice(&key_bytes).ok_or("Invalid key size")?;
 
     let db_conn = DatabaseConnection {
         conn,
@@ -187,11 +184,9 @@ fn get_metadata(conn: &Connection) -> Result<(String, String), String> {
         .map_err(|e| format!("Failed to retrieve password hash: {}", e))?;
 
     let salt: String = conn
-        .query_row(
-            "SELECT value FROM metadata WHERE key = 'salt'",
-            [],
-            |row| row.get(0),
-        )
+        .query_row("SELECT value FROM metadata WHERE key = 'salt'", [], |row| {
+            row.get(0)
+        })
         .map_err(|e| format!("Failed to retrieve salt: {}", e))?;
 
     Ok((password_hash, salt))
@@ -234,7 +229,10 @@ fn run_migrations(
         return Ok(());
     }
 
-    eprintln!("[Migration] Upgrading database from version {} to {}", current_version, SCHEMA_VERSION);
+    eprintln!(
+        "[Migration] Upgrading database from version {} to {}",
+        current_version, SCHEMA_VERSION
+    );
 
     // Run migrations in order
     if current_version < 2 {
@@ -242,7 +240,10 @@ fn run_migrations(
     }
 
     // Update schema version (inside the last migration's transaction)
-    eprintln!("[Migration] Successfully upgraded to version {}", SCHEMA_VERSION);
+    eprintln!(
+        "[Migration] Successfully upgraded to version {}",
+        SCHEMA_VERSION
+    );
     Ok(())
 }
 
@@ -312,7 +313,10 @@ fn migrate_v1_to_v2(
             .map_err(|e| format!("Failed to collect dates: {}", e))?;
 
         let total_entries = dates.len();
-        eprintln!("[Migration v1→v2] Rebuilding FTS for {} entries", total_entries);
+        eprintln!(
+            "[Migration v1→v2] Rebuilding FTS for {} entries",
+            total_entries
+        );
 
         // For each entry, decrypt and add to FTS
         for (i, date) in dates.iter().enumerate() {
@@ -372,11 +376,17 @@ fn migrate_v1_to_v2(
         Ok(()) => {
             conn.execute_batch("COMMIT")
                 .map_err(|e| format!("Failed to commit migration transaction: {}", e))?;
-            eprintln!("[Migration v1→v2] Successfully migrated (backup: {:?})", backup_path);
+            eprintln!(
+                "[Migration v1→v2] Successfully migrated (backup: {:?})",
+                backup_path
+            );
             Ok(())
         }
         Err(e) => {
-            eprintln!("[Migration v1→v2] Migration failed, attempting rollback: {}", e);
+            eprintln!(
+                "[Migration v1→v2] Migration failed, attempting rollback: {}",
+                e
+            );
 
             match conn.execute_batch("ROLLBACK") {
                 Ok(_) => {
@@ -444,8 +454,8 @@ mod tests {
 
         // Generate password hash and key
         let salt = pwd::generate_salt();
-        let password_hash = pwd::hash_password(password.to_string(), &salt)
-            .map_err(|e| e.to_string())?;
+        let password_hash =
+            pwd::hash_password(password.to_string(), &salt).map_err(|e| e.to_string())?;
         let _key_bytes = derive_key_from_hash(&password_hash)?;
 
         // Create database
@@ -509,21 +519,24 @@ mod tests {
         _password: &str,
         date: &str,
         title: &str,
-        text: &str
+        text: &str,
     ) -> Result<(), String> {
         use crate::crypto::cipher;
 
-        let conn = Connection::open(db_path)
-            .map_err(|e| format!("Failed to open v1 database: {}", e))?;
+        let conn =
+            Connection::open(db_path).map_err(|e| format!("Failed to open v1 database: {}", e))?;
 
         // Get stored hash and derive key
         let password_hash: String = conn
-            .query_row("SELECT value FROM metadata WHERE key = 'password_hash'", [], |row| row.get(0))
+            .query_row(
+                "SELECT value FROM metadata WHERE key = 'password_hash'",
+                [],
+                |row| row.get(0),
+            )
             .map_err(|e| format!("Failed to get password hash: {}", e))?;
 
         let key_bytes = derive_key_from_hash(&password_hash)?;
-        let encryption_key = cipher::Key::from_slice(&key_bytes)
-            .ok_or("Invalid key size")?;
+        let encryption_key = cipher::Key::from_slice(&key_bytes).ok_or("Invalid key size")?;
 
         // Encrypt data
         let title_encrypted = cipher::encrypt(&encryption_key, title.as_bytes())
@@ -696,23 +709,51 @@ mod tests {
 
         // Create v1 database with entries
         create_v1_database(&db_path, password).expect("Failed to create v1 database");
-        add_v1_entry(&db_path, password, "2024-01-01", "First Entry", "This is the first test entry").unwrap();
-        add_v1_entry(&db_path, password, "2024-01-02", "Second Entry", "This is the second test entry").unwrap();
-        add_v1_entry(&db_path, password, "2024-01-03", "Third Entry", "This is searchable content").unwrap();
+        add_v1_entry(
+            &db_path,
+            password,
+            "2024-01-01",
+            "First Entry",
+            "This is the first test entry",
+        )
+        .unwrap();
+        add_v1_entry(
+            &db_path,
+            password,
+            "2024-01-02",
+            "Second Entry",
+            "This is the second test entry",
+        )
+        .unwrap();
+        add_v1_entry(
+            &db_path,
+            password,
+            "2024-01-03",
+            "Third Entry",
+            "This is searchable content",
+        )
+        .unwrap();
 
         // Verify v1 schema before migration
         {
             let conn = Connection::open(&db_path).unwrap();
-            let version: i32 = conn.query_row("SELECT version FROM schema_version", [], |row| row.get(0)).unwrap();
+            let version: i32 = conn
+                .query_row("SELECT version FROM schema_version", [], |row| row.get(0))
+                .unwrap();
             assert_eq!(version, 1, "Database should be at version 1");
 
             // Verify v1 uses external content FTS
-            let fts_schema: String = conn.query_row(
-                "SELECT sql FROM sqlite_master WHERE name='entries_fts'",
-                [],
-                |row| row.get(0)
-            ).unwrap();
-            assert!(fts_schema.contains("content='entries'"), "V1 should use external content FTS");
+            let fts_schema: String = conn
+                .query_row(
+                    "SELECT sql FROM sqlite_master WHERE name='entries_fts'",
+                    [],
+                    |row| row.get(0),
+                )
+                .unwrap();
+            assert!(
+                fts_schema.contains("content='entries'"),
+                "V1 should use external content FTS"
+            );
         }
 
         // Open database with new code (triggers migration)
@@ -720,42 +761,69 @@ mod tests {
             .expect("Migration should succeed");
 
         // Verify migration succeeded
-        let version: i32 = db.conn().query_row("SELECT version FROM schema_version", [], |row| row.get(0)).unwrap();
+        let version: i32 = db
+            .conn()
+            .query_row("SELECT version FROM schema_version", [], |row| row.get(0))
+            .unwrap();
         assert_eq!(version, 2, "Database should be upgraded to version 2");
 
         // Verify v1 triggers were removed
-        let trigger_count: i32 = db.conn().query_row(
-            "SELECT COUNT(*) FROM sqlite_master WHERE type='trigger'",
-            [],
-            |row| row.get(0)
-        ).unwrap();
-        assert_eq!(trigger_count, 0, "V2 should have no triggers (standalone FTS)");
+        let trigger_count: i32 = db
+            .conn()
+            .query_row(
+                "SELECT COUNT(*) FROM sqlite_master WHERE type='trigger'",
+                [],
+                |row| row.get(0),
+            )
+            .unwrap();
+        assert_eq!(
+            trigger_count, 0,
+            "V2 should have no triggers (standalone FTS)"
+        );
 
         // Verify FTS schema changed to standalone
-        let fts_schema: String = db.conn().query_row(
-            "SELECT sql FROM sqlite_master WHERE name='entries_fts'",
-            [],
-            |row| row.get(0)
-        ).unwrap();
-        assert!(!fts_schema.contains("content="), "V2 FTS should not use external content");
-        assert!(fts_schema.contains("date UNINDEXED"), "V2 FTS should have date UNINDEXED");
+        let fts_schema: String = db
+            .conn()
+            .query_row(
+                "SELECT sql FROM sqlite_master WHERE name='entries_fts'",
+                [],
+                |row| row.get(0),
+            )
+            .unwrap();
+        assert!(
+            !fts_schema.contains("content="),
+            "V2 FTS should not use external content"
+        );
+        assert!(
+            fts_schema.contains("date UNINDEXED"),
+            "V2 FTS should have date UNINDEXED"
+        );
 
         // Verify search works (FTS was rebuilt)
-        let search_result: i32 = db.conn().query_row(
-            "SELECT COUNT(*) FROM entries_fts WHERE text MATCH 'searchable'",
-            [],
-            |row| row.get(0)
-        ).unwrap();
-        assert_eq!(search_result, 1, "Search should find the entry with 'searchable'");
+        let search_result: i32 = db
+            .conn()
+            .query_row(
+                "SELECT COUNT(*) FROM entries_fts WHERE text MATCH 'searchable'",
+                [],
+                |row| row.get(0),
+            )
+            .unwrap();
+        assert_eq!(
+            search_result, 1,
+            "Search should find the entry with 'searchable'"
+        );
 
         // Verify all entries are decryptable
         use crate::crypto::cipher;
         for date in &["2024-01-01", "2024-01-02", "2024-01-03"] {
-            let (title_enc, text_enc): (Vec<u8>, Vec<u8>) = db.conn().query_row(
-                "SELECT title_encrypted, text_encrypted FROM entries WHERE date = ?1",
-                [date],
-                |row| Ok((row.get(0)?, row.get(1)?))
-            ).unwrap();
+            let (title_enc, text_enc): (Vec<u8>, Vec<u8>) = db
+                .conn()
+                .query_row(
+                    "SELECT title_encrypted, text_encrypted FROM entries WHERE date = ?1",
+                    [date],
+                    |row| Ok((row.get(0)?, row.get(1)?)),
+                )
+                .unwrap();
 
             let title = cipher::decrypt(db.key(), &title_enc).expect("Title should decrypt");
             let text = cipher::decrypt(db.key(), &text_enc).expect("Text should decrypt");
@@ -769,7 +837,11 @@ mod tests {
             .unwrap()
             .filter_map(|e| e.ok())
             .collect();
-        assert_eq!(backup_files.len(), 1, "Should have created exactly one backup");
+        assert_eq!(
+            backup_files.len(),
+            1,
+            "Should have created exactly one backup"
+        );
 
         cleanup_db(&db_path);
         cleanup_backups_dir(&backups_dir);
@@ -788,7 +860,14 @@ mod tests {
         create_v1_database(&db_path, password).unwrap();
 
         // Add valid entry
-        add_v1_entry(&db_path, password, "2024-01-01", "Valid Entry", "This entry is fine").unwrap();
+        add_v1_entry(
+            &db_path,
+            password,
+            "2024-01-01",
+            "Valid Entry",
+            "This entry is fine",
+        )
+        .unwrap();
 
         // Add corrupted entry (encrypted with wrong key)
         {
@@ -811,26 +890,48 @@ mod tests {
 
         // Attempt migration (should fail on decrypt)
         let result = open_database(&db_path, password.to_string(), &backups_dir);
-        assert!(result.is_err(), "Migration should fail due to decryption error");
+        assert!(
+            result.is_err(),
+            "Migration should fail due to decryption error"
+        );
 
         let error_msg = result.unwrap_err();
-        assert!(error_msg.contains("Migration v1→v2 failed"), "Error should mention migration failure");
-        assert!(error_msg.contains("database unchanged"), "Error should confirm database unchanged");
-        assert!(error_msg.contains("backup available"), "Error should mention backup");
+        assert!(
+            error_msg.contains("Migration v1→v2 failed"),
+            "Error should mention migration failure"
+        );
+        assert!(
+            error_msg.contains("database unchanged"),
+            "Error should confirm database unchanged"
+        );
+        assert!(
+            error_msg.contains("backup available"),
+            "Error should mention backup"
+        );
 
         // Verify database is still at version 1 (rollback worked)
         {
             let conn = Connection::open(&db_path).unwrap();
-            let version: i32 = conn.query_row("SELECT version FROM schema_version", [], |row| row.get(0)).unwrap();
-            assert_eq!(version, 1, "Database should still be at version 1 after rollback");
+            let version: i32 = conn
+                .query_row("SELECT version FROM schema_version", [], |row| row.get(0))
+                .unwrap();
+            assert_eq!(
+                version, 1,
+                "Database should still be at version 1 after rollback"
+            );
 
             // Verify v1 FTS schema still uses external content
-            let fts_schema: String = conn.query_row(
-                "SELECT sql FROM sqlite_master WHERE name='entries_fts'",
-                [],
-                |row| row.get(0)
-            ).unwrap();
-            assert!(fts_schema.contains("content='entries'"), "V1 FTS should still use external content after rollback");
+            let fts_schema: String = conn
+                .query_row(
+                    "SELECT sql FROM sqlite_master WHERE name='entries_fts'",
+                    [],
+                    |row| row.get(0),
+                )
+                .unwrap();
+            assert!(
+                fts_schema.contains("content='entries'"),
+                "V1 FTS should still use external content after rollback"
+            );
         }
 
         // Verify backup was created despite failure
@@ -838,7 +939,11 @@ mod tests {
             .unwrap()
             .filter_map(|e| e.ok())
             .collect();
-        assert_eq!(backup_files.len(), 1, "Backup should be created even if migration fails");
+        assert_eq!(
+            backup_files.len(),
+            1,
+            "Backup should be created even if migration fails"
+        );
 
         cleanup_db(&db_path);
         cleanup_backups_dir(&backups_dir);
@@ -855,7 +960,14 @@ mod tests {
 
         // Create v1 database with data
         create_v1_database(&db_path, password).unwrap();
-        add_v1_entry(&db_path, password, "2024-01-01", "Test Entry", "Test content").unwrap();
+        add_v1_entry(
+            &db_path,
+            password,
+            "2024-01-01",
+            "Test Entry",
+            "Test content",
+        )
+        .unwrap();
 
         // Get original file size
         let original_size = std::fs::metadata(&db_path).unwrap().len();
@@ -873,15 +985,22 @@ mod tests {
         // Verify backup is a complete copy
         let backup_path = backup_files.pop().unwrap().path();
         let backup_size = std::fs::metadata(&backup_path).unwrap().len();
-        assert_eq!(backup_size, original_size, "Backup should be exact copy of original");
+        assert_eq!(
+            backup_size, original_size,
+            "Backup should be exact copy of original"
+        );
 
         // Verify backup is a valid v1 database
         {
             let backup_conn = Connection::open(&backup_path).unwrap();
-            let version: i32 = backup_conn.query_row("SELECT version FROM schema_version", [], |row| row.get(0)).unwrap();
+            let version: i32 = backup_conn
+                .query_row("SELECT version FROM schema_version", [], |row| row.get(0))
+                .unwrap();
             assert_eq!(version, 1, "Backup should preserve v1 schema");
 
-            let entry_count: i32 = backup_conn.query_row("SELECT COUNT(*) FROM entries", [], |row| row.get(0)).unwrap();
+            let entry_count: i32 = backup_conn
+                .query_row("SELECT COUNT(*) FROM entries", [], |row| row.get(0))
+                .unwrap();
             assert_eq!(entry_count, 1, "Backup should contain all entries");
         }
 
@@ -913,10 +1032,16 @@ mod tests {
 
         // Verify no new backup was created
         let backup_count_after = std::fs::read_dir(&backups_dir).unwrap().count();
-        assert_eq!(backup_count_before, backup_count_after, "Should not create backup if already at v2");
+        assert_eq!(
+            backup_count_before, backup_count_after,
+            "Should not create backup if already at v2"
+        );
 
         // Verify still at v2
-        let version: i32 = _db2.conn().query_row("SELECT version FROM schema_version", [], |row| row.get(0)).unwrap();
+        let version: i32 = _db2
+            .conn()
+            .query_row("SELECT version FROM schema_version", [], |row| row.get(0))
+            .unwrap();
         assert_eq!(version, 2, "Should remain at version 2");
 
         cleanup_db(&db_path);
@@ -940,11 +1065,17 @@ mod tests {
             .expect("Empty database migration should succeed");
 
         // Verify migrated to v2
-        let version: i32 = db.conn().query_row("SELECT version FROM schema_version", [], |row| row.get(0)).unwrap();
+        let version: i32 = db
+            .conn()
+            .query_row("SELECT version FROM schema_version", [], |row| row.get(0))
+            .unwrap();
         assert_eq!(version, 2);
 
         // Verify FTS table exists (even though empty)
-        let fts_count: i32 = db.conn().query_row("SELECT COUNT(*) FROM entries_fts", [], |row| row.get(0)).unwrap();
+        let fts_count: i32 = db
+            .conn()
+            .query_row("SELECT COUNT(*) FROM entries_fts", [], |row| row.get(0))
+            .unwrap();
         assert_eq!(fts_count, 0, "FTS should be empty");
 
         cleanup_db(&db_path);

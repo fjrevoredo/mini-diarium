@@ -72,8 +72,8 @@ pub fn hash_password(mut password: String, salt: &SaltString) -> Result<String, 
 /// `Ok(())` if the password matches, `Err` otherwise
 pub fn verify_password(mut password: String, hash_string: &str) -> Result<(), PasswordError> {
     // Parse the stored hash
-    let parsed_hash = PasswordHash::new(hash_string)
-        .map_err(|e| PasswordError::InvalidHash(e.to_string()))?;
+    let parsed_hash =
+        PasswordHash::new(hash_string).map_err(|e| PasswordError::InvalidHash(e.to_string()))?;
 
     // Create Argon2 instance
     let argon2 = Argon2::default();

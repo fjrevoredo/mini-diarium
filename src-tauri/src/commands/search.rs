@@ -67,7 +67,10 @@ mod tests {
     }
 
     /// Helper function to perform FTS search directly on the database
-    fn search_fts(db: &crate::db::schema::DatabaseConnection, query: &str) -> Result<Vec<SearchResult>, String> {
+    fn search_fts(
+        db: &crate::db::schema::DatabaseConnection,
+        query: &str,
+    ) -> Result<Vec<SearchResult>, String> {
         let conn = db.conn();
 
         let mut stmt = conn
@@ -179,7 +182,10 @@ mod tests {
         assert_eq!(results.len(), 1, "Should find 1 entry with 'flowers'");
         assert_eq!(results[0].date, "2024-01-01");
         assert_eq!(results[0].title, "My First Entry");
-        assert!(results[0].snippet.contains("flowers"), "Snippet should contain 'flowers'");
+        assert!(
+            results[0].snippet.contains("flowers"),
+            "Snippet should contain 'flowers'"
+        );
 
         cleanup_db(&db_path);
     }

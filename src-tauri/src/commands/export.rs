@@ -25,10 +25,7 @@ fn fetch_all_entries(db: &DatabaseConnection) -> Result<Vec<DiaryEntry>, String>
 
 /// Exports all diary entries to a JSON file in Mini Diary-compatible format
 #[tauri::command]
-pub fn export_json(
-    file_path: String,
-    state: State<DiaryState>,
-) -> Result<ExportResult, String> {
+pub fn export_json(file_path: String, state: State<DiaryState>) -> Result<ExportResult, String> {
     eprintln!("[Export] Starting JSON export to file: {}", file_path);
 
     let db_state = state.db.lock().unwrap();
@@ -40,7 +37,10 @@ pub fn export_json(
 
     let entries = fetch_all_entries(db)?;
     let entries_exported = entries.len();
-    eprintln!("[Export] Serializing {} entries to JSON...", entries_exported);
+    eprintln!(
+        "[Export] Serializing {} entries to JSON...",
+        entries_exported
+    );
 
     let json_string = json::export_entries_to_json(entries)?;
 
@@ -50,8 +50,14 @@ pub fn export_json(
         err
     })?;
 
-    eprintln!("[Export] Success: {} entries exported to {}", entries_exported, file_path);
-    Ok(ExportResult { entries_exported, file_path })
+    eprintln!(
+        "[Export] Success: {} entries exported to {}",
+        entries_exported, file_path
+    );
+    Ok(ExportResult {
+        entries_exported,
+        file_path,
+    })
 }
 
 /// Exports all diary entries to a Markdown file
@@ -73,7 +79,10 @@ pub fn export_markdown(
 
     let entries = fetch_all_entries(db)?;
     let entries_exported = entries.len();
-    eprintln!("[Export] Converting {} entries to Markdown...", entries_exported);
+    eprintln!(
+        "[Export] Converting {} entries to Markdown...",
+        entries_exported
+    );
 
     let md_string = markdown::export_entries_to_markdown(entries);
 
@@ -83,8 +92,14 @@ pub fn export_markdown(
         err
     })?;
 
-    eprintln!("[Export] Success: {} entries exported to {}", entries_exported, file_path);
-    Ok(ExportResult { entries_exported, file_path })
+    eprintln!(
+        "[Export] Success: {} entries exported to {}",
+        entries_exported, file_path
+    );
+    Ok(ExportResult {
+        entries_exported,
+        file_path,
+    })
 }
 
 #[cfg(test)]

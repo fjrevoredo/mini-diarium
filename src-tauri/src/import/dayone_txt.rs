@@ -11,12 +11,12 @@ use chrono::{Datelike, NaiveDate, Utc};
 /// Entry content goes here.
 /// This is the first entry.
 ///
-/// 	Date:	15 January 2024
+///     Date:    15 January 2024
 ///
 /// Another entry content.
 /// Second entry here.
 ///
-/// 	Date:	16 January 2024
+///     Date:    16 January 2024
 /// ```
 ///
 /// # Arguments
@@ -45,9 +45,7 @@ pub fn parse_dayone_txt(txt: &str) -> Result<Vec<DiaryEntry>, String> {
         // Split on first newline to separate date from content
         let lines: Vec<&str> = part.splitn(2, '\n').collect();
         if lines.len() < 2 {
-            eprintln!(
-                "Warning: Skipping Day One TXT entry - no content after date"
-            );
+            eprintln!("Warning: Skipping Day One TXT entry - no content after date");
             continue;
         }
 
@@ -134,18 +132,12 @@ mod tests {
 
     #[test]
     fn test_parse_day_one_date() {
-        assert_eq!(
-            parse_day_one_date("15 January 2024").unwrap(),
-            "2024-01-15"
-        );
+        assert_eq!(parse_day_one_date("15 January 2024").unwrap(), "2024-01-15");
         assert_eq!(
             parse_day_one_date("31 December 2023").unwrap(),
             "2023-12-31"
         );
-        assert_eq!(
-            parse_day_one_date("01 March 2024").unwrap(),
-            "2024-03-01"
-        );
+        assert_eq!(parse_day_one_date("01 March 2024").unwrap(), "2024-03-01");
     }
 
     #[test]
@@ -159,14 +151,8 @@ mod tests {
     #[test]
     fn test_parse_day_one_date_abbreviated_month() {
         // Chrono's %B accepts both full and abbreviated month names
-        assert_eq!(
-            parse_day_one_date("15 Jan 2024").unwrap(),
-            "2024-01-15"
-        );
-        assert_eq!(
-            parse_day_one_date("31 Dec 2023").unwrap(),
-            "2023-12-31"
-        );
+        assert_eq!(parse_day_one_date("15 Jan 2024").unwrap(), "2024-01-15");
+        assert_eq!(parse_day_one_date("31 Dec 2023").unwrap(), "2023-12-31");
     }
 
     #[test]
@@ -214,7 +200,8 @@ mod tests {
 
     #[test]
     fn test_parse_dayone_txt_basic() {
-        let txt = "Entry before first date (ignored)\n\n\tDate:\t15 January 2024\n\nFirst entry content.";
+        let txt =
+            "Entry before first date (ignored)\n\n\tDate:\t15 January 2024\n\nFirst entry content.";
         let result = parse_dayone_txt(txt);
         assert!(result.is_ok());
 

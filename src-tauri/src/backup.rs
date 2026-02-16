@@ -17,8 +17,7 @@ pub fn create_backup(diary_path: &Path, backups_dir: &Path) -> Result<PathBuf, S
     let backup_path = backups_dir.join(&backup_filename);
 
     // Copy diary file to backup location
-    fs::copy(diary_path, &backup_path)
-        .map_err(|e| format!("Failed to create backup: {}", e))?;
+    fs::copy(diary_path, &backup_path).map_err(|e| format!("Failed to create backup: {}", e))?;
 
     Ok(backup_path)
 }
@@ -57,8 +56,7 @@ pub fn rotate_backups(backups_dir: &Path) -> Result<(), String> {
 
     // Delete the oldest backups
     for backup_file in backup_files.iter().take(to_delete) {
-        fs::remove_file(backup_file)
-            .map_err(|e| format!("Failed to delete old backup: {}", e))?;
+        fs::remove_file(backup_file).map_err(|e| format!("Failed to delete old backup: {}", e))?;
     }
 
     Ok(())
@@ -107,7 +105,12 @@ mod tests {
             .to_str()
             .unwrap()
             .starts_with("backup-"));
-        assert!(backup_path.file_name().unwrap().to_str().unwrap().ends_with(".txt"));
+        assert!(backup_path
+            .file_name()
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .ends_with(".txt"));
 
         // Verify content
         let backup_content = fs::read_to_string(&backup_path).unwrap();
@@ -173,20 +176,12 @@ mod tests {
         assert_eq!(files.len(), 50);
 
         // Verify the oldest files were deleted (backup-2024-01-01 through backup-2024-01-10)
-        assert!(!backups_dir
-            .join("backup-2024-01-01-12h00.txt")
-            .exists());
-        assert!(!backups_dir
-            .join("backup-2024-01-10-12h00.txt")
-            .exists());
+        assert!(!backups_dir.join("backup-2024-01-01-12h00.txt").exists());
+        assert!(!backups_dir.join("backup-2024-01-10-12h00.txt").exists());
 
         // Verify newer files still exist
-        assert!(backups_dir
-            .join("backup-2024-01-11-12h00.txt")
-            .exists());
-        assert!(backups_dir
-            .join("backup-2024-01-60-12h00.txt")
-            .exists());
+        assert!(backups_dir.join("backup-2024-01-11-12h00.txt").exists());
+        assert!(backups_dir.join("backup-2024-01-60-12h00.txt").exists());
 
         // Clean up
         let _ = fs::remove_dir_all(&backups_dir);
@@ -226,9 +221,7 @@ mod tests {
         assert_eq!(files.len(), 50);
 
         // Verify oldest was deleted
-        assert!(!backups_dir
-            .join("backup-2024-01-01-12h00.txt")
-            .exists());
+        assert!(!backups_dir.join("backup-2024-01-01-12h00.txt").exists());
 
         // Clean up
         let _ = fs::remove_file(&diary_path);

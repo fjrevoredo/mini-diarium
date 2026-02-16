@@ -111,8 +111,7 @@ mod tests {
         let json_string = export_entries_to_json(entries.clone()).unwrap();
 
         // Import back using the minidiary parser
-        let imported =
-            crate::import::minidiary::parse_minidiary_json(&json_string).unwrap();
+        let imported = crate::import::minidiary::parse_minidiary_json(&json_string).unwrap();
 
         assert_eq!(imported.len(), 2);
 

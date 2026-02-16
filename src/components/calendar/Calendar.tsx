@@ -158,7 +158,11 @@ export default function Calendar() {
           <ChevronLeft size={20} />
         </button>
         <h3 class="text-sm font-semibold text-primary">{monthName()}</h3>
-        <button onClick={nextMonth} class="rounded p-2 hover:bg-hover text-primary" aria-label="Next month">
+        <button
+          onClick={nextMonth}
+          class="rounded p-2 hover:bg-hover text-primary"
+          aria-label="Next month"
+        >
           <ChevronRight size={20} />
         </button>
       </div>

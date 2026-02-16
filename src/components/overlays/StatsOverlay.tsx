@@ -64,11 +64,14 @@ export default function StatsOverlay(props: StatsOverlayProps) {
   return (
     <Dialog open={props.isOpen} onOpenChange={handleOpenChange}>
       <Dialog.Portal>
-        <Dialog.Overlay class="fixed inset-0 z-50" style={{ "background-color": "var(--overlay-bg)" }} />
+        <Dialog.Overlay
+          class="fixed inset-0 z-50"
+          style={{ 'background-color': 'var(--overlay-bg)' }}
+        />
         <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
           <Dialog.Content
             class="w-full max-w-md rounded-lg bg-primary p-6 data-[expanded]:animate-in data-[closed]:animate-out data-[closed]:fade-out-0 data-[expanded]:fade-in-0 data-[closed]:zoom-out-95 data-[expanded]:zoom-in-95"
-            style={{ "box-shadow": "var(--shadow-lg)" }}
+            style={{ 'box-shadow': 'var(--shadow-lg)' }}
             onKeyDown={handleKeyDown}
           >
             <div class="flex items-center justify-between mb-4">

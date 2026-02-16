@@ -39,9 +39,7 @@ export default function ExportOverlay(props: ExportOverlayProps) {
     try {
       const format = selectedFormat();
       const isMarkdown = format === 'markdown';
-      const defaultPath = isMarkdown
-        ? 'mini-diarium-export.md'
-        : 'mini-diarium-export.json';
+      const defaultPath = isMarkdown ? 'mini-diarium-export.md' : 'mini-diarium-export.json';
       const filterName = isMarkdown ? 'Markdown' : 'JSON';
       const filterExt = isMarkdown ? ['md'] : ['json'];
 
@@ -94,17 +92,18 @@ export default function ExportOverlay(props: ExportOverlayProps) {
   return (
     <Dialog open={props.isOpen} onOpenChange={handleOpenChange}>
       <Dialog.Portal>
-        <Dialog.Overlay class="fixed inset-0 z-50" style={{ "background-color": "var(--overlay-bg)" }} />
+        <Dialog.Overlay
+          class="fixed inset-0 z-50"
+          style={{ 'background-color': 'var(--overlay-bg)' }}
+        />
         <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
           <Dialog.Content
             class="w-full max-w-md rounded-lg bg-primary p-6 data-[expanded]:animate-in data-[closed]:animate-out data-[closed]:fade-out-0 data-[expanded]:fade-in-0 data-[closed]:zoom-out-95 data-[expanded]:zoom-in-95"
-            style={{ "box-shadow": "var(--shadow-lg)" }}
+            style={{ 'box-shadow': 'var(--shadow-lg)' }}
             onKeyDown={handleKeyDown}
           >
             <div class="flex items-center justify-between mb-4">
-              <Dialog.Title class="text-lg font-semibold text-primary">
-                Export Entries
-              </Dialog.Title>
+              <Dialog.Title class="text-lg font-semibold text-primary">Export Entries</Dialog.Title>
               <Dialog.CloseButton
                 class="rounded-md p-1 hover:bg-hover transition-colors"
                 aria-label="Close"
@@ -160,7 +159,9 @@ export default function ExportOverlay(props: ExportOverlayProps) {
                   </div>
                   <div class="flex justify-between">
                     <span>Saved to:</span>
-                    <span class="font-semibold truncate ml-2">{getFileName(result()!.file_path)}</span>
+                    <span class="font-semibold truncate ml-2">
+                      {getFileName(result()!.file_path)}
+                    </span>
                   </div>
                 </div>
               </div>

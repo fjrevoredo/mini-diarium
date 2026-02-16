@@ -101,7 +101,10 @@ mod tests {
         let merged = merge_entries(existing, imported);
 
         assert_eq!(merged.title, "My Day"); // Not duplicated
-        assert_eq!(merged.text, "Morning events.\n\n––––––––––\n\nEvening events.");
+        assert_eq!(
+            merged.text,
+            "Morning events.\n\n––––––––––\n\nEvening events."
+        );
     }
 
     #[test]

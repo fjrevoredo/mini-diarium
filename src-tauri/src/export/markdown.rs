@@ -161,11 +161,7 @@ mod tests {
 
     #[test]
     fn test_export_single_entry_plaintext() {
-        let entries = vec![create_test_entry(
-            "2024-01-15",
-            "My Entry",
-            "Hello world",
-        )];
+        let entries = vec![create_test_entry("2024-01-15", "My Entry", "Hello world")];
 
         let result = export_entries_to_markdown(entries);
         assert!(result.contains("# Mini Diarium"));
