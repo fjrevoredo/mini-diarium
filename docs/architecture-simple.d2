@@ -1,0 +1,113 @@
+direction: down
+
+title: {
+  label: Mini Diarium Architecture
+  near: top-center
+  style: {
+    font-size: 28
+    bold: true
+  }
+}
+
+# Layer 1: Presentation (SolidJS Components)
+presentation: {
+  label: "PRESENTATION LAYER\n(SolidJS Components)\n\nAuth screens · Calendar · Editor · Search · Overlays"
+  style: {
+    fill: "#e3f2fd"
+    stroke: "#1976d2"
+    stroke-width: 3
+    font-size: 16
+  }
+}
+
+# Layer 2: State Management (Reactive Signals)
+state: {
+  label: "STATE LAYER\n(Reactive Signals)\n\nauth · entries · search · ui · preferences"
+  style: {
+    fill: "#f3e5f5"
+    stroke: "#7b1fa2"
+    stroke-width: 3
+    font-size: 16
+  }
+}
+
+# Layer 3: IPC (Tauri Bridge)
+ipc: {
+  label: "IPC LAYER\n(Tauri invoke/listen)\n\nTyped command wrappers · Menu event listeners"
+  style: {
+    fill: "#fff3e0"
+    stroke: "#f57c00"
+    stroke-width: 3
+    font-size: 16
+  }
+}
+
+# Layer 4: Backend Commands
+commands: {
+  label: "BACKEND COMMANDS\n(26 Rust Commands)\n\nauth · entries · search · navigation · stats · import · export"
+  style: {
+    fill: "#e8f5e9"
+    stroke: "#388e3c"
+    stroke-width: 3
+    font-size: 16
+  }
+}
+
+# Layer 5: Business Logic
+business: {
+  label: "BUSINESS LOGIC\n(Core Modules)\n\ncrypto · db · import · export · menu · backup"
+  style: {
+    fill: "#fce4ec"
+    stroke: "#c2185b"
+    stroke-width: 3
+    font-size: 16
+  }
+}
+
+# Layer 6: Data Store
+datastore: {
+  label: "DATA STORE\n(SQLite + AES-256-GCM)\n\nencrypted entries · plaintext FTS5 index"
+  shape: cylinder
+  style: {
+    fill: "#eceff1"
+    stroke: "#455a64"
+    stroke-width: 3
+    font-size: 16
+  }
+}
+
+# Simple flow arrows
+presentation -> state: "reactive\nsignals" {
+  style: {
+    stroke: "#1976d2"
+    stroke-width: 2
+  }
+}
+
+state -> ipc: "invoke()\nlisten()" {
+  style: {
+    stroke: "#7b1fa2"
+    stroke-width: 2
+  }
+}
+
+ipc -> commands: "Tauri IPC" {
+  style: {
+    stroke: "#f57c00"
+    stroke-width: 2
+  }
+}
+
+commands -> business: "business\nlogic calls" {
+  style: {
+    stroke: "#388e3c"
+    stroke-width: 2
+  }
+}
+
+business -> datastore: "SQL operations\nencrypt/decrypt" {
+  style: {
+    stroke: "#c2185b"
+    stroke-width: 2
+  }
+}

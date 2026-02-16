@@ -1,0 +1,210 @@
+/* Critical styles for auth screens - loaded synchronously to prevent FOUC */
+
+/* Layout */
+.flex {
+  display: flex;
+}
+.flex-col {
+  flex-direction: column;
+}
+.items-center {
+  align-items: center;
+}
+.justify-center {
+  justify-content: center;
+}
+.min-h-screen {
+  min-height: 100vh;
+}
+
+/* Container */
+.w-full {
+  width: 100%;
+}
+.max-w-md {
+  max-width: 28rem;
+}
+
+/* Spacing */
+.px-4 {
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+.px-8 {
+  padding-left: 2rem;
+  padding-right: 2rem;
+}
+.py-2 {
+  padding-top: 0.5rem;
+  padding-bottom: 0.5rem;
+}
+.py-3 {
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+}
+.py-10 {
+  padding-top: 2.5rem;
+  padding-bottom: 2.5rem;
+}
+.py-12 {
+  padding-top: 3rem;
+  padding-bottom: 3rem;
+}
+.p-3 {
+  padding: 0.75rem;
+}
+
+.mb-2 {
+  margin-bottom: 0.5rem;
+}
+.mb-4 {
+  margin-bottom: 1rem;
+}
+.mb-8 {
+  margin-bottom: 2rem;
+}
+.mt-4 {
+  margin-top: 1rem;
+}
+
+.space-y-6 > * + * {
+  margin-top: 1.5rem;
+}
+
+/* Background Colors */
+.bg-gray-50 {
+  background-color: #f9fafb;
+}
+.bg-gray-100 {
+  background-color: #f3f4f6;
+}
+.bg-gray-400 {
+  background-color: #9ca3af;
+}
+.bg-white {
+  background-color: #ffffff;
+}
+.bg-blue-600 {
+  background-color: #2563eb;
+}
+.bg-blue-700 {
+  background-color: #1d4ed8;
+}
+.bg-red-50 {
+  background-color: #fef2f2;
+}
+
+/* Text Colors */
+.text-gray-500 {
+  color: #6b7280;
+}
+.text-gray-600 {
+  color: #4b5563;
+}
+.text-gray-700 {
+  color: #374151;
+}
+.text-gray-900 {
+  color: #111827;
+}
+.text-white {
+  color: #ffffff;
+}
+.text-red-800 {
+  color: #991b1b;
+}
+
+/* Typography */
+.text-xs {
+  font-size: 0.75rem;
+  line-height: 1rem;
+}
+.text-sm {
+  font-size: 0.875rem;
+  line-height: 1.25rem;
+}
+.text-3xl {
+  font-size: 1.875rem;
+  line-height: 2.25rem;
+}
+
+.font-medium {
+  font-weight: 500;
+}
+.font-bold {
+  font-weight: 700;
+}
+
+.text-center {
+  text-align: center;
+}
+
+/* Borders */
+.border {
+  border-width: 1px;
+}
+.border-gray-300 {
+  border-color: #d1d5db;
+}
+.border-blue-500 {
+  border-color: #3b82f6;
+}
+
+.rounded-md {
+  border-radius: 0.375rem;
+}
+.rounded-lg {
+  border-radius: 0.5rem;
+}
+
+/* Shadow */
+.shadow-lg {
+  box-shadow:
+    0 10px 15px -3px rgb(0 0 0 / 0.1),
+    0 4px 6px -4px rgb(0 0 0 / 0.1);
+}
+
+/* Display */
+.block {
+  display: block;
+}
+
+/* Effects */
+.transition-colors {
+  transition-property: color, background-color, border-color;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+
+/* Focus States */
+.focus\:outline-none:focus {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+}
+.focus\:ring-2:focus {
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+}
+.focus\:ring-blue-500:focus {
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.5);
+}
+.focus\:ring-offset-2:focus {
+  box-shadow:
+    0 0 0 2px #fff,
+    0 0 0 4px rgba(59, 130, 246, 0.5);
+}
+.focus\:border-blue-500:focus {
+  border-color: #3b82f6;
+}
+
+/* Hover States */
+.hover\:bg-blue-700:hover {
+  background-color: #1d4ed8;
+}
+
+/* Disabled States */
+.disabled\:bg-gray-100:disabled {
+  background-color: #f3f4f6;
+}
+.disabled\:bg-gray-400:disabled {
+  background-color: #9ca3af;
+}

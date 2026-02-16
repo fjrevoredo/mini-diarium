@@ -1,0 +1,19 @@
+This text before the first date marker is ignored.
+
+	Date:	15 January 2024
+
+Morning Reflections
+
+Started the day with a beautiful sunrise. The sky was painted in shades of orange and pink. It reminded me to appreciate the small moments of beauty in everyday life.
+
+	Date:	16 January 2024
+
+Project Milestone
+
+We finally completed the first phase of the project today. The team worked incredibly hard, and it feels great to see our efforts paying off. Next week we'll start planning phase two.
+
+	Date:	29 February 2024
+
+Leap Year Entry
+
+This is a special entry for leap year day! It only comes around once every four years. Making the most of this extra day by spending time with family and friends.

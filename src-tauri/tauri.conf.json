@@ -1,0 +1,58 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Mini Diarium",
+  "version": "0.1.0",
+  "identifier": "com.minidiarium.app",
+  "build": {
+    "beforeDevCommand": "bun run dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "bun run build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "Mini Diarium",
+        "width": 800,
+        "height": 600,
+        "minWidth": 600,
+        "minHeight": 400
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["dmg", "app", "msi", "nsis", "appimage", "deb"],
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "copyright": "Copyright (c) 2026 Francisco J. Revoredo",
+    "category": "Productivity",
+    "shortDescription": "An encrypted, local-first desktop journaling app",
+    "longDescription": "Mini Diarium is a privacy-focused desktop journaling application. All diary entries are encrypted with AES-256-GCM at rest. Features include rich text editing, full-text search, calendar navigation, import/export, and automatic backups. No network access, no telemetry. Your journal stays on your device.",
+    "licenseFile": "../LICENSE",
+    "macOS": {
+      "minimumSystemVersion": "10.15"
+    },
+    "windows": {
+      "nsis": {
+        "installMode": "currentUser"
+      }
+    },
+    "linux": {
+      "deb": {
+        "depends": [
+          "libwebkit2gtk-4.1-0",
+          "libappindicator3-1"
+        ]
+      }
+    }
+  }
+}

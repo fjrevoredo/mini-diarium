@@ -1,0 +1,55 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+src-tauri/target/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Claude Code local settings
+.claude/*.local.json
+.claude/projects/
+
+# Logs
+*.log
+
+# Coverage
+coverage/
+
+# Test artifacts
+*.db
+*.db-shm
+*.db-wal
+test_*.db
+
+# Backup files
+*.backup
+*.bak
+.backup/
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# Internal development documentation
+*-PLAN.md
+*-STATUS.md
+*-AUDIT.md
+*-VERIFICATION*.md
+Current-implementation-plan.md
