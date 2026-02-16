@@ -2,6 +2,20 @@
 .ProseMirror {
   min-height: 200px;
   outline: none;
+  color: var(--text-primary);
+}
+
+/* Dark mode text colors */
+.dark .ProseMirror {
+  color: #e5e7eb;
+}
+
+.dark .ProseMirror h1,
+.dark .ProseMirror h2,
+.dark .ProseMirror h3,
+.dark .ProseMirror strong,
+.dark .ProseMirror b {
+  color: #f3f4f6;
 }
 
 .ProseMirror p.is-editor-empty:first-child::before {
@@ -77,8 +91,26 @@
   color: #6b7280;
 }
 
+.dark .ProseMirror blockquote {
+  border-left-color: #6b7280;
+  color: #9ca3af;
+}
+
 .ProseMirror hr {
   border: none;
   border-top: 2px solid #e5e7eb;
   margin: 2rem 0;
+}
+
+.dark .ProseMirror hr {
+  border-top-color: #4b5563;
+}
+
+.dark .ProseMirror code {
+  background-color: #374151;
+  color: #e5e7eb;
+}
+
+.dark .ProseMirror a {
+  color: #60a5fa;
 }
