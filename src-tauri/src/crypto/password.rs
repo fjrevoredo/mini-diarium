@@ -62,6 +62,22 @@ pub fn hash_password(mut password: String, salt: &SaltString) -> Result<String, 
     Ok(password_hash.to_string())
 }
 
+/// Derives a 32-byte encryption key from a PHC hash string (Argon2 output)
+///
+/// This is used to derive an AES-256 wrapping key from a stored password hash.
+pub fn derive_key_from_phc_hash(phc_hash: &str) -> Result<Vec<u8>, String> {
+    let parsed = PasswordHash::new(phc_hash)
+        .map_err(|e| format!("Failed to parse password hash: {}", e))?;
+    let hash_value = parsed
+        .hash
+        .ok_or_else(|| "No hash in password hash string".to_string())?;
+    let hash_bytes = hash_value.as_bytes().to_vec();
+    if hash_bytes.len() < 32 {
+        return Err("Hash too short for key derivation".to_string());
+    }
+    Ok(hash_bytes[..32].to_vec())
+}
+
 /// Verifies a password against a stored hash
 ///
 /// # Arguments

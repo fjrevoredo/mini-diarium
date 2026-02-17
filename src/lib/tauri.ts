@@ -33,6 +33,49 @@ export async function resetDiary(): Promise<void> {
   await invoke('reset_diary');
 }
 
+export async function unlockDiaryWithKeypair(keyPath: string): Promise<void> {
+  await invoke('unlock_diary_with_keypair', { keyPath });
+}
+
+// Auth method management
+export interface AuthMethodInfo {
+  id: number;
+  slot_type: string;
+  label: string;
+  public_key_hex: string | null;
+  created_at: string;
+  last_used: string | null;
+}
+
+export interface KeypairFiles {
+  public_key_hex: string;
+  private_key_hex: string;
+}
+
+export async function listAuthMethods(): Promise<AuthMethodInfo[]> {
+  return await invoke('list_auth_methods');
+}
+
+export async function generateKeypair(): Promise<KeypairFiles> {
+  return await invoke('generate_keypair');
+}
+
+export async function writeKeyFile(path: string, privateKeyHex: string): Promise<void> {
+  await invoke('write_key_file', { path, privateKeyHex });
+}
+
+export async function registerKeypair(
+  currentPassword: string,
+  publicKeyHex: string,
+  label: string,
+): Promise<void> {
+  await invoke('register_keypair', { currentPassword, publicKeyHex, label });
+}
+
+export async function removeAuthMethod(slotId: number, currentPassword: string): Promise<void> {
+  await invoke('remove_auth_method', { slotId, currentPassword });
+}
+
 // Entry commands
 export interface DiaryEntry {
   date: string;

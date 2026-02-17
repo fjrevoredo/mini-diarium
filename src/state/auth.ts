@@ -9,6 +9,7 @@ export type AuthState = 'checking' | 'no-diary' | 'locked' | 'unlocked';
 
 const [authState, setAuthState] = createSignal<AuthState>('checking');
 const [error, setError] = createSignal<string | null>(null);
+const [authMethods, setAuthMethods] = createSignal<tauri.AuthMethodInfo[]>([]);
 
 // Initialize auth state on app load
 export async function initializeAuth(): Promise<void> {
@@ -46,7 +47,7 @@ export async function createDiary(password: string): Promise<void> {
   }
 }
 
-// Unlock existing diary
+// Unlock existing diary with password
 export async function unlockDiary(password: string): Promise<void> {
   try {
     setError(null);
@@ -55,6 +56,23 @@ export async function unlockDiary(password: string): Promise<void> {
     log.info('Diary unlocked');
 
     // Fetch entry dates after unlocking diary
+    const dates = await tauri.getAllEntryDates();
+    setEntryDates(dates);
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    setError(message);
+    throw err;
+  }
+}
+
+// Unlock existing diary with keypair key file
+export async function unlockWithKeypair(keyPath: string): Promise<void> {
+  try {
+    setError(null);
+    await tauri.unlockDiaryWithKeypair(keyPath);
+    setAuthState('unlocked');
+    log.info('Diary unlocked with key file');
+
     const dates = await tauri.getAllEntryDates();
     setEntryDates(dates);
   } catch (err) {
@@ -78,4 +96,4 @@ export async function lockDiary(): Promise<void> {
   }
 }
 
-export { authState, error };
+export { authState, error, authMethods, setAuthMethods };

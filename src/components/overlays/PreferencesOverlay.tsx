@@ -48,15 +48,32 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
   const [passwordError, setPasswordError] = createSignal<string | null>(null);
   const [passwordSuccess, setPasswordSuccess] = createSignal(false);
 
+  // Auth methods state
+  const [authMethods, setAuthMethods] = createSignal<tauri.AuthMethodInfo[]>([]);
+  const [addKeypairPassword, setAddKeypairPassword] = createSignal('');
+  const [addKeypairLabel, setAddKeypairLabel] = createSignal('');
+  const [addKeypairError, setAddKeypairError] = createSignal<string | null>(null);
+  const [addKeypairSuccess, setAddKeypairSuccess] = createSignal(false);
+  const [removePassword, setRemovePassword] = createSignal('');
+  const [removeError, setRemoveError] = createSignal<string | null>(null);
+
   const isUnlocked = () => authState() === 'unlocked';
 
-  // Load diary path on mount
+  // Load diary path and auth methods on mount
   onMount(async () => {
     try {
       const path = await tauri.getDiaryPath();
       setDiaryPath(path);
     } catch (err) {
       log.error('Failed to load diary path:', err);
+    }
+    if (authState() === 'unlocked') {
+      try {
+        const methods = await tauri.listAuthMethods();
+        setAuthMethods(methods);
+      } catch (err) {
+        log.error('Failed to load auth methods:', err);
+      }
     }
   });
 
@@ -77,6 +94,23 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
       setConfirmPassword('');
       setPasswordError(null);
       setPasswordSuccess(false);
+
+      // Reload auth methods
+      if (authState() === 'unlocked') {
+        try {
+          const methods = await tauri.listAuthMethods();
+          setAuthMethods(methods);
+        } catch (err) {
+          log.error('Failed to reload auth methods:', err);
+        }
+      }
+      // Reset add keypair fields
+      setAddKeypairPassword('');
+      setAddKeypairLabel('');
+      setAddKeypairError(null);
+      setAddKeypairSuccess(false);
+      setRemovePassword('');
+      setRemoveError(null);
 
       // Reload diary path
       try {
@@ -144,6 +178,79 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       setPasswordError(message);
+    }
+  };
+
+  // Handle generating and registering a keypair
+  const handleGenerateAndRegisterKeypair = async () => {
+    setAddKeypairError(null);
+    setAddKeypairSuccess(false);
+
+    if (!addKeypairPassword()) {
+      setAddKeypairError('Current password is required');
+      return;
+    }
+    if (!addKeypairLabel()) {
+      setAddKeypairError('Label is required');
+      return;
+    }
+
+    try {
+      // Generate keypair
+      const kp = await tauri.generateKeypair();
+
+      // Prompt user to choose a save path
+      const { save } = await import('@tauri-apps/plugin-dialog');
+      const savePath = await save({
+        title: 'Save Private Key File',
+        defaultPath: `mini-diarium-${addKeypairLabel().replace(/\s+/g, '-')}.key`,
+        filters: [{ name: 'Key Files', extensions: ['key'] }],
+      });
+      if (!savePath) {
+        setAddKeypairError('Key file save cancelled');
+        return;
+      }
+
+      // Write private key to the chosen file (via Rust command)
+      await tauri.writeKeyFile(savePath, kp.private_key_hex);
+
+      // Register public key with the diary
+      await tauri.registerKeypair(addKeypairPassword(), kp.public_key_hex, addKeypairLabel());
+
+      // Reload auth methods
+      const methods = await tauri.listAuthMethods();
+      setAuthMethods(methods);
+
+      setAddKeypairSuccess(true);
+      setAddKeypairPassword('');
+      setAddKeypairLabel('');
+      setTimeout(() => setAddKeypairSuccess(false), 4000);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      setAddKeypairError(message);
+    }
+  };
+
+  // Handle removing an auth method
+  const handleRemoveAuthMethod = async (slotId: number) => {
+    setRemoveError(null);
+
+    if (!removePassword()) {
+      setRemoveError('Current password is required to remove an auth method');
+      return;
+    }
+
+    const confirmed = confirm('Are you sure you want to remove this authentication method?');
+    if (!confirmed) return;
+
+    try {
+      await tauri.removeAuthMethod(slotId, removePassword());
+      const methods = await tauri.listAuthMethods();
+      setAuthMethods(methods);
+      setRemovePassword('');
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      setRemoveError(message);
     }
   };
 
@@ -329,6 +436,115 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                   </p>
                 </div>
               </div>
+
+              {/* Auth Methods Section - Only shown when unlocked */}
+              <Show when={isUnlocked()}>
+                <div>
+                  <h3 class="text-sm font-medium text-primary mb-4">Authentication Methods</h3>
+                  <p class="text-xs text-tertiary mb-4 leading-relaxed">
+                    Registered methods that can unlock this diary. At least one must remain.
+                  </p>
+
+                  {/* Registered methods list */}
+                  <div class="space-y-2 mb-6">
+                    <For each={authMethods()}>
+                      {(method) => (
+                        <div class="flex items-center justify-between p-3 bg-tertiary border border-primary rounded-md">
+                          <div>
+                            <p class="text-sm font-medium text-primary">
+                              {method.label}
+                              <span class="ml-2 text-xs text-tertiary">
+                                ({method.slot_type === 'password' ? 'Password' : 'Key File'})
+                              </span>
+                            </p>
+                            <Show when={method.last_used}>
+                              <p class="text-xs text-tertiary">
+                                Last used: {method.last_used!.slice(0, 10)}
+                              </p>
+                            </Show>
+                          </div>
+                          <Show when={authMethods().length > 1}>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveAuthMethod(method.id)}
+                              class="text-xs text-red-500 hover:text-red-700 focus:outline-none"
+                            >
+                              Remove
+                            </button>
+                          </Show>
+                        </div>
+                      )}
+                    </For>
+                  </div>
+
+                  {/* Password for removal */}
+                  <Show when={authMethods().length > 1}>
+                    <div class="mb-4">
+                      <label class="block text-xs font-medium text-secondary mb-1">
+                        Current Password (required to remove)
+                      </label>
+                      <input
+                        type="password"
+                        value={removePassword()}
+                        onInput={(e) => setRemovePassword(e.currentTarget.value)}
+                        class="w-full px-3 py-2 border border-primary bg-primary text-primary rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Enter current password"
+                      />
+                    </div>
+                    <Show when={removeError()}>
+                      <p class="mb-4 text-sm text-error">{removeError()}</p>
+                    </Show>
+                  </Show>
+
+                  {/* Add Keypair section */}
+                  <div class="mt-4 pt-4 border-t border-primary">
+                    <h4 class="text-xs font-medium text-secondary mb-3">Add Key File Auth</h4>
+
+                    <div class="mb-3">
+                      <label class="block text-xs font-medium text-secondary mb-1">Label</label>
+                      <input
+                        type="text"
+                        value={addKeypairLabel()}
+                        onInput={(e) => setAddKeypairLabel(e.currentTarget.value)}
+                        class="w-full px-3 py-2 border border-primary bg-primary text-primary rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="e.g. My YubiKey"
+                      />
+                    </div>
+
+                    <div class="mb-3">
+                      <label class="block text-xs font-medium text-secondary mb-1">
+                        Current Password
+                      </label>
+                      <input
+                        type="password"
+                        value={addKeypairPassword()}
+                        onInput={(e) => setAddKeypairPassword(e.currentTarget.value)}
+                        class="w-full px-3 py-2 border border-primary bg-primary text-primary rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="Verify identity"
+                      />
+                    </div>
+
+                    <Show when={addKeypairError()}>
+                      <p class="mb-2 text-sm text-error">{addKeypairError()}</p>
+                    </Show>
+                    <Show when={addKeypairSuccess()}>
+                      <p class="mb-2 text-sm text-success">Key file registered successfully!</p>
+                    </Show>
+
+                    <button
+                      type="button"
+                      onClick={handleGenerateAndRegisterKeypair}
+                      class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      Generate &amp; Register Key File
+                    </button>
+                    <p class="mt-2 text-xs text-tertiary leading-relaxed">
+                      Generates a new keypair and saves the private key file locally. Register
+                      the public key with your diary so you can unlock without a password.
+                    </p>
+                  </div>
+                </div>
+              </Show>
 
               {/* Password Section - Only shown when unlocked */}
               <Show when={isUnlocked()}>
