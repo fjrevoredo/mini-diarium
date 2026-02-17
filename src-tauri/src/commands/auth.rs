@@ -201,6 +201,25 @@ pub fn reset_diary(state: State<DiaryState>) -> Result<(), String> {
 
 // ─── Auth method management commands ─────────────────────────────────────────
 
+/// Verifies the current password without performing any other operation.
+///
+/// Used by the frontend to validate credentials before starting multi-step
+/// operations (e.g. keypair registration) where early failure is preferable.
+#[tauri::command]
+pub fn verify_password(password: String, state: State<DiaryState>) -> Result<(), String> {
+    let db_state = state.db.lock().unwrap();
+    let db = db_state.as_ref().ok_or("Diary must be unlocked")?;
+
+    let (_, wrapped_key) = crate::db::queries::get_password_slot(db)?
+        .ok_or("No password auth method found")?;
+    let method = crate::auth::password::PasswordMethod::new(password);
+    let mut master_key_bytes = method
+        .unwrap_master_key(&wrapped_key)
+        .map_err(|_| "Incorrect password".to_string())?;
+    master_key_bytes.zeroize();
+    Ok(())
+}
+
 /// Lists all registered authentication methods (without sensitive key material).
 #[tauri::command]
 pub fn list_auth_methods(

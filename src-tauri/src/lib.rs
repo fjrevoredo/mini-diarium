@@ -56,6 +56,7 @@ pub fn run() {
             commands::auth::change_password,
             commands::auth::reset_diary,
             // Auth - method management
+            commands::auth::verify_password,
             commands::auth::list_auth_methods,
             commands::auth::generate_keypair,
             commands::auth::write_key_file,

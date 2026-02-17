@@ -196,10 +196,13 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
     }
 
     try {
-      // Generate keypair
+      // Step 1: Validate password before any file operations
+      await tauri.verifyPassword(addKeypairPassword());
+
+      // Step 2: Generate keypair (in-memory, no side effects yet)
       const kp = await tauri.generateKeypair();
 
-      // Prompt user to choose a save path
+      // Step 3: Prompt user to choose a save path
       const { save } = await import('@tauri-apps/plugin-dialog');
       const savePath = await save({
         title: 'Save Private Key File',
@@ -211,10 +214,10 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
         return;
       }
 
-      // Write private key to the chosen file (via Rust command)
+      // Step 4: Write private key to the chosen file (via Rust command)
       await tauri.writeKeyFile(savePath, kp.private_key_hex);
 
-      // Register public key with the diary
+      // Step 5: Register public key with the diary
       await tauri.registerKeypair(addKeypairPassword(), kp.public_key_hex, addKeypairLabel());
 
       // Reload auth methods

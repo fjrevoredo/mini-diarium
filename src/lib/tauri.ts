@@ -37,6 +37,10 @@ export async function unlockDiaryWithKeypair(keyPath: string): Promise<void> {
   await invoke('unlock_diary_with_keypair', { keyPath });
 }
 
+export async function verifyPassword(password: string): Promise<void> {
+  await invoke('verify_password', { password });
+}
+
 // Auth method management
 export interface AuthMethodInfo {
   id: number;
