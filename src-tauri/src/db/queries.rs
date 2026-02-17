@@ -295,7 +295,9 @@ pub fn insert_auth_slot(
 }
 
 /// Lists all auth slots (without `wrapped_key` for security).
-pub fn list_auth_slots(db: &DatabaseConnection) -> Result<Vec<crate::auth::AuthMethodInfo>, String> {
+pub fn list_auth_slots(
+    db: &DatabaseConnection,
+) -> Result<Vec<crate::auth::AuthMethodInfo>, String> {
     let mut stmt = db
         .conn()
         .prepare(
@@ -325,10 +327,7 @@ pub fn list_auth_slots(db: &DatabaseConnection) -> Result<Vec<crate::auth::AuthM
 /// Deletes an auth slot by id.
 pub fn delete_auth_slot(db: &DatabaseConnection, slot_id: i64) -> Result<(), String> {
     db.conn()
-        .execute(
-            "DELETE FROM auth_slots WHERE id = ?1",
-            params![slot_id],
-        )
+        .execute("DELETE FROM auth_slots WHERE id = ?1", params![slot_id])
         .map_err(|e| format!("Failed to delete auth slot: {}", e))?;
     Ok(())
 }
@@ -552,9 +551,15 @@ mod tests {
         let fake_pub_key = [7u8; 32];
         let fake_wrapped = [9u8; 60]; // arbitrary
         let now = "2024-01-01T00:00:00Z";
-        let slot_id =
-            insert_auth_slot(&db, "keypair", "My Key", Some(&fake_pub_key), &fake_wrapped, now)
-                .unwrap();
+        let slot_id = insert_auth_slot(
+            &db,
+            "keypair",
+            "My Key",
+            Some(&fake_pub_key),
+            &fake_wrapped,
+            now,
+        )
+        .unwrap();
         assert!(slot_id > 0);
 
         let count = count_auth_slots(&db).unwrap();

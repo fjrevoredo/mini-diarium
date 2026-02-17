@@ -1,4 +1,6 @@
-use crate::db::schema::{create_database, open_database, open_database_with_keypair, DatabaseConnection};
+use crate::db::schema::{
+    create_database, open_database, open_database_with_keypair, DatabaseConnection,
+};
 use log::{info, warn};
 use std::path::PathBuf;
 use std::sync::Mutex;
@@ -158,8 +160,8 @@ pub fn change_password(
         .ok_or("Diary must be unlocked to change password")?;
 
     // Find the password slot
-    let (slot_id, wrapped_key) = crate::db::queries::get_password_slot(db)?
-        .ok_or("No password auth method found")?;
+    let (slot_id, wrapped_key) =
+        crate::db::queries::get_password_slot(db)?.ok_or("No password auth method found")?;
 
     // Verify old password and recover master_key
     let old_method = crate::auth::password::PasswordMethod::new(old_password);
@@ -210,8 +212,8 @@ pub fn verify_password(password: String, state: State<DiaryState>) -> Result<(),
     let db_state = state.db.lock().unwrap();
     let db = db_state.as_ref().ok_or("Diary must be unlocked")?;
 
-    let (_, wrapped_key) = crate::db::queries::get_password_slot(db)?
-        .ok_or("No password auth method found")?;
+    let (_, wrapped_key) =
+        crate::db::queries::get_password_slot(db)?.ok_or("No password auth method found")?;
     let method = crate::auth::password::PasswordMethod::new(password);
     let mut master_key_bytes = method
         .unwrap_master_key(&wrapped_key)
@@ -246,8 +248,7 @@ pub fn generate_keypair() -> Result<crate::auth::KeypairFiles, String> {
 /// The file is written with restricted permissions where possible.
 #[tauri::command]
 pub fn write_key_file(path: String, private_key_hex: String) -> Result<(), String> {
-    std::fs::write(&path, &private_key_hex)
-        .map_err(|e| format!("Failed to write key file: {}", e))
+    std::fs::write(&path, &private_key_hex).map_err(|e| format!("Failed to write key file: {}", e))
 }
 
 /// Registers a new keypair auth method.
@@ -265,8 +266,8 @@ pub fn register_keypair(
     let db = db_state.as_ref().ok_or("Diary must be unlocked")?;
 
     // Verify identity via password and recover master_key
-    let (_, wrapped_key) = crate::db::queries::get_password_slot(db)?
-        .ok_or("No password auth method found")?;
+    let (_, wrapped_key) =
+        crate::db::queries::get_password_slot(db)?.ok_or("No password auth method found")?;
     let method = crate::auth::password::PasswordMethod::new(current_password);
     let mut master_key_bytes = method
         .unwrap_master_key(&wrapped_key)
@@ -295,7 +296,9 @@ pub fn register_keypair(
     }
 
     // Wrap master_key for this public key
-    let keypair_method = crate::auth::keypair::KeypairMethod { public_key: pub_key };
+    let keypair_method = crate::auth::keypair::KeypairMethod {
+        public_key: pub_key,
+    };
     let wrapped_for_keypair = keypair_method
         .wrap_master_key(&master_key_bytes)
         .map_err(|e| format!("Failed to wrap master key for keypair: {}", e))?;
@@ -330,8 +333,8 @@ pub fn remove_auth_method(
     let db = db_state.as_ref().ok_or("Diary must be unlocked")?;
 
     // Verify identity
-    let (_, wrapped_key) = crate::db::queries::get_password_slot(db)?
-        .ok_or("No password auth method found")?;
+    let (_, wrapped_key) =
+        crate::db::queries::get_password_slot(db)?.ok_or("No password auth method found")?;
     let method = crate::auth::password::PasswordMethod::new(current_password);
     let mut master_key_bytes = method
         .unwrap_master_key(&wrapped_key)
@@ -442,13 +445,10 @@ mod tests {
         crate::db::queries::insert_entry(&db, &entry).unwrap();
 
         // Change password using v3 re-wrapping (no re-encryption)
-        let (slot_id, wrapped_key) =
-            crate::db::queries::get_password_slot(&db).unwrap().unwrap();
-        let old_method =
-            crate::auth::password::PasswordMethod::new("old_password".to_string());
+        let (slot_id, wrapped_key) = crate::db::queries::get_password_slot(&db).unwrap().unwrap();
+        let old_method = crate::auth::password::PasswordMethod::new("old_password".to_string());
         let master_key = old_method.unwrap_master_key(&wrapped_key).unwrap();
-        let new_method =
-            crate::auth::password::PasswordMethod::new("new_password".to_string());
+        let new_method = crate::auth::password::PasswordMethod::new("new_password".to_string());
         let new_wrapped = new_method.wrap_master_key(&master_key).unwrap();
         crate::db::queries::update_auth_slot_wrapped_key(&db, slot_id, &new_wrapped).unwrap();
         drop(db);
@@ -498,13 +498,14 @@ mod tests {
         pub_key.copy_from_slice(&pub_bytes_vec);
 
         // Get master_key via password slot
-        let (_, wrapped_key) =
-            crate::db::queries::get_password_slot(&db).unwrap().unwrap();
+        let (_, wrapped_key) = crate::db::queries::get_password_slot(&db).unwrap().unwrap();
         let method = crate::auth::password::PasswordMethod::new("password".to_string());
         let master_key = method.unwrap_master_key(&wrapped_key).unwrap();
 
         // Wrap for keypair
-        let kp_method = crate::auth::keypair::KeypairMethod { public_key: pub_key };
+        let kp_method = crate::auth::keypair::KeypairMethod {
+            public_key: pub_key,
+        };
         let kp_wrapped = kp_method.wrap_master_key(&master_key).unwrap();
 
         let now = chrono::Utc::now().to_rfc3339();
@@ -597,6 +598,9 @@ mod tests {
             let _ = &slot.id;
         }
 
-        cleanup(&db_path, &PathBuf::from(format!("test_auth_cmd_backups_{}", "list_methods")));
+        cleanup(
+            &db_path,
+            &PathBuf::from(format!("test_auth_cmd_backups_{}", "list_methods")),
+        );
     }
 }

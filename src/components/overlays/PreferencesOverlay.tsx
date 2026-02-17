@@ -214,11 +214,12 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
         return;
       }
 
-      // Step 4: Write private key to the chosen file (via Rust command)
-      await tauri.writeKeyFile(savePath, kp.private_key_hex);
-
-      // Step 5: Register public key with the diary
+      // Step 4: Register public key with the diary (DB write first)
+      // Doing this before the file write means a failed registration never touches disk.
       await tauri.registerKeypair(addKeypairPassword(), kp.public_key_hex, addKeypairLabel());
+
+      // Step 5: Write private key to the chosen file (only after DB confirms registration)
+      await tauri.writeKeyFile(savePath, kp.private_key_hex);
 
       // Reload auth methods
       const methods = await tauri.listAuthMethods();
@@ -240,6 +241,15 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
 
     if (!removePassword()) {
       setRemoveError('Current password is required to remove an auth method');
+      return;
+    }
+
+    try {
+      // Validate password before showing the confirmation dialog
+      await tauri.verifyPassword(removePassword());
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      setRemoveError(message);
       return;
     }
 
@@ -542,8 +552,8 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                       Generate &amp; Register Key File
                     </button>
                     <p class="mt-2 text-xs text-tertiary leading-relaxed">
-                      Generates a new keypair and saves the private key file locally. Register
-                      the public key with your diary so you can unlock without a password.
+                      Generates a new keypair and saves the private key file locally. Register the
+                      public key with your diary so you can unlock without a password.
                     </p>
                   </div>
                 </div>

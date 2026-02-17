@@ -83,8 +83,8 @@ pub fn open_database<P1: AsRef<Path>, P2: AsRef<Path>>(
 ) -> Result<DatabaseConnection, String> {
     let db_path_ref = db_path.as_ref();
 
-    let conn = Connection::open(db_path_ref)
-        .map_err(|e| format!("Failed to open database: {}", e))?;
+    let conn =
+        Connection::open(db_path_ref).map_err(|e| format!("Failed to open database: {}", e))?;
 
     let current_version: i32 = conn
         .query_row("SELECT version FROM schema_version", [], |row| row.get(0))
@@ -130,19 +130,17 @@ pub fn open_database_with_keypair<P1: AsRef<Path>, P2: AsRef<Path>>(
 ) -> Result<DatabaseConnection, String> {
     let db_path_ref = db_path.as_ref();
 
-    let conn = Connection::open(db_path_ref)
-        .map_err(|e| format!("Failed to open database: {}", e))?;
+    let conn =
+        Connection::open(db_path_ref).map_err(|e| format!("Failed to open database: {}", e))?;
 
     let current_version: i32 = conn
         .query_row("SELECT version FROM schema_version", [], |row| row.get(0))
         .unwrap_or(1);
 
     if current_version < 3 {
-        return Err(
-            "Key file authentication requires a migrated diary (v3). \
+        return Err("Key file authentication requires a migrated diary (v3). \
              Please unlock with your password first to upgrade."
-                .to_string(),
-        );
+            .to_string());
     }
 
     // Derive the public key from the private key to find the matching slot
@@ -417,11 +415,8 @@ fn migrate_v1_to_v2(
         // Update schema version to 2
         conn.execute("DELETE FROM schema_version", [])
             .map_err(|e| format!("Failed to clear schema version: {}", e))?;
-        conn.execute(
-            "INSERT INTO schema_version (version) VALUES (2)",
-            [],
-        )
-        .map_err(|e| format!("Failed to update schema version: {}", e))?;
+        conn.execute("INSERT INTO schema_version (version) VALUES (2)", [])
+            .map_err(|e| format!("Failed to update schema version: {}", e))?;
 
         Ok(())
     })();
@@ -553,8 +548,7 @@ fn migrate_v2_to_v3_inner(
         result
     };
 
-    let master_key =
-        cipher::Key::from_slice(master_key_bytes).ok_or("Invalid master key size")?;
+    let master_key = cipher::Key::from_slice(master_key_bytes).ok_or("Invalid master key size")?;
     let total = dates.len();
 
     for (i, date) in dates.iter().enumerate() {
@@ -690,12 +684,7 @@ mod tests {
     }
 
     /// Adds an entry to a v1/v2 database using the password-derived key
-    fn add_legacy_entry(
-        db_path: &str,
-        date: &str,
-        title: &str,
-        text: &str,
-    ) -> Result<(), String> {
+    fn add_legacy_entry(db_path: &str, date: &str, title: &str, text: &str) -> Result<(), String> {
         use crate::crypto::cipher;
 
         let conn = Connection::open(db_path)
@@ -756,7 +745,11 @@ mod tests {
                 |row| row.get(0),
             )
             .unwrap();
-        assert!(table_count >= 4, "Expected at least 4 tables, got {}", table_count);
+        assert!(
+            table_count >= 4,
+            "Expected at least 4 tables, got {}",
+            table_count
+        );
 
         // auth_slots should have exactly one password slot
         let slot_count: i32 = db
@@ -872,7 +865,13 @@ mod tests {
         // Create v1 database with entries
         create_v1_database(&db_path, password).unwrap();
         add_legacy_entry(&db_path, "2024-01-01", "First Entry", "First entry content").unwrap();
-        add_legacy_entry(&db_path, "2024-01-02", "Second Entry", "Searchable content here").unwrap();
+        add_legacy_entry(
+            &db_path,
+            "2024-01-02",
+            "Second Entry",
+            "Searchable content here",
+        )
+        .unwrap();
         add_legacy_entry(&db_path, "2024-01-03", "Third Entry", "Third entry content").unwrap();
 
         // Open triggers v1→v2→v3 migration
@@ -1026,8 +1025,7 @@ mod tests {
             let conn = Connection::open(&db_path).unwrap();
             let wrong_key = cipher::Key::from_slice(&[0u8; 32]).unwrap();
             let corrupted_title = cipher::encrypt(&wrong_key, b"Corrupted").unwrap();
-            let corrupted_text =
-                cipher::encrypt(&wrong_key, b"This is corrupted data").unwrap();
+            let corrupted_text = cipher::encrypt(&wrong_key, b"This is corrupted data").unwrap();
             let now = chrono::Utc::now().to_rfc3339();
             conn.execute(
                 "INSERT INTO entries (date, title_encrypted, text_encrypted, word_count, date_created, date_updated)
@@ -1055,7 +1053,10 @@ mod tests {
         let version: i32 = conn
             .query_row("SELECT version FROM schema_version", [], |row| row.get(0))
             .unwrap();
-        assert_eq!(version, 1, "Database should be at v1 after failed migration");
+        assert_eq!(
+            version, 1,
+            "Database should be at v1 after failed migration"
+        );
 
         cleanup_db(&db_path);
         cleanup_backups_dir(&backups_dir);
@@ -1118,7 +1119,9 @@ mod tests {
         let master_key_bytes = method.unwrap_master_key(&wrapped_key).unwrap();
 
         // Wrap for keypair
-        let keypair_method = KeypairMethod { public_key: pub_key };
+        let keypair_method = KeypairMethod {
+            public_key: pub_key,
+        };
         let keypair_wrapped = keypair_method.wrap_master_key(&master_key_bytes).unwrap();
 
         let now = chrono::Utc::now().to_rfc3339();
@@ -1131,8 +1134,7 @@ mod tests {
         drop(db);
 
         // Now open with private key
-        let db2 =
-            open_database_with_keypair(&db_path, priv_key, &backups_dir).unwrap();
+        let db2 = open_database_with_keypair(&db_path, priv_key, &backups_dir).unwrap();
 
         let version: i32 = db2
             .conn()

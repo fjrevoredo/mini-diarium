@@ -45,7 +45,7 @@ export default function PasswordPrompt() {
         setKeyFilePath(selected);
         setError(null);
       }
-    } catch (err) {
+    } catch {
       setError('Failed to open file picker');
     }
   };
@@ -82,7 +82,10 @@ export default function PasswordPrompt() {
           <div class="mb-6 flex rounded-md border border-primary overflow-hidden">
             <button
               type="button"
-              onClick={() => { setMode('password'); setError(null); }}
+              onClick={() => {
+                setMode('password');
+                setError(null);
+              }}
               class={`flex-1 px-3 py-2 text-sm font-medium transition-colors ${
                 mode() === 'password'
                   ? 'bg-blue-600 text-white'
@@ -93,7 +96,10 @@ export default function PasswordPrompt() {
             </button>
             <button
               type="button"
-              onClick={() => { setMode('keyfile'); setError(null); }}
+              onClick={() => {
+                setMode('keyfile');
+                setError(null);
+              }}
               class={`flex-1 px-3 py-2 text-sm font-medium transition-colors ${
                 mode() === 'keyfile'
                   ? 'bg-blue-600 text-white'

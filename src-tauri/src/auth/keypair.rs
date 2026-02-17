@@ -41,8 +41,7 @@ impl KeypairMethod {
             .map_err(|e| format!("HKDF expand failed: {}", e))?;
 
         // Encrypt master_key with wrapping key
-        let wrap_key =
-            cipher::Key::from_slice(&wrapping_key).ok_or("Invalid wrapping key size")?;
+        let wrap_key = cipher::Key::from_slice(&wrapping_key).ok_or("Invalid wrapping key size")?;
         let encrypted = cipher::encrypt(&wrap_key, master_key)
             .map_err(|e| format!("Failed to encrypt master key: {}", e))?;
 
@@ -82,8 +81,7 @@ impl PrivateKeyMethod {
             .map_err(|e| format!("HKDF expand failed: {}", e))?;
 
         // Decrypt master_key
-        let wrap_key =
-            cipher::Key::from_slice(&wrapping_key).ok_or("Invalid wrapping key size")?;
+        let wrap_key = cipher::Key::from_slice(&wrapping_key).ok_or("Invalid wrapping key size")?;
         let encrypted_part = &wrapped[32..];
         let master_key = cipher::decrypt(&wrap_key, encrypted_part)
             .map_err(|_| "Failed to decrypt master key: wrong private key or corrupted data")?;
@@ -133,10 +131,14 @@ mod tests {
         let (priv_bytes, pub_bytes) = random_keypair();
         let master_key = random_master_key();
 
-        let method = KeypairMethod { public_key: pub_bytes };
+        let method = KeypairMethod {
+            public_key: pub_bytes,
+        };
         let wrapped = method.wrap_master_key(&master_key).unwrap();
 
-        let unwrap_method = PrivateKeyMethod { private_key: priv_bytes };
+        let unwrap_method = PrivateKeyMethod {
+            private_key: priv_bytes,
+        };
         let recovered = unwrap_method.unwrap_master_key(&wrapped).unwrap();
 
         assert_eq!(master_key, recovered);
@@ -148,10 +150,14 @@ mod tests {
         let (wrong_priv, _wrong_pub) = random_keypair();
         let master_key = random_master_key();
 
-        let method = KeypairMethod { public_key: pub_bytes };
+        let method = KeypairMethod {
+            public_key: pub_bytes,
+        };
         let wrapped = method.wrap_master_key(&master_key).unwrap();
 
-        let wrong_method = PrivateKeyMethod { private_key: wrong_priv };
+        let wrong_method = PrivateKeyMethod {
+            private_key: wrong_priv,
+        };
         let result = wrong_method.unwrap_master_key(&wrapped);
         assert!(result.is_err());
     }
@@ -161,11 +167,15 @@ mod tests {
         let (priv_bytes, pub_bytes) = random_keypair();
         let master_key = random_master_key();
 
-        let method = KeypairMethod { public_key: pub_bytes };
+        let method = KeypairMethod {
+            public_key: pub_bytes,
+        };
         let mut wrapped = method.wrap_master_key(&master_key).unwrap();
         *wrapped.last_mut().unwrap() ^= 0xFF;
 
-        let unwrap_method = PrivateKeyMethod { private_key: priv_bytes };
+        let unwrap_method = PrivateKeyMethod {
+            private_key: priv_bytes,
+        };
         let result = unwrap_method.unwrap_master_key(&wrapped);
         assert!(result.is_err());
     }
@@ -174,7 +184,9 @@ mod tests {
     fn test_different_ephemeral_keys_each_wrap() {
         let (_priv_bytes, pub_bytes) = random_keypair();
         let master_key = random_master_key();
-        let method = KeypairMethod { public_key: pub_bytes };
+        let method = KeypairMethod {
+            public_key: pub_bytes,
+        };
 
         let wrapped1 = method.wrap_master_key(&master_key).unwrap();
         let wrapped2 = method.wrap_master_key(&master_key).unwrap();
@@ -186,7 +198,9 @@ mod tests {
     #[test]
     fn test_too_short_blob_fails() {
         let (priv_bytes, _pub) = random_keypair();
-        let method = PrivateKeyMethod { private_key: priv_bytes };
+        let method = PrivateKeyMethod {
+            private_key: priv_bytes,
+        };
         let result = method.unwrap_master_key(&[0u8; 40]);
         assert!(result.is_err());
     }
