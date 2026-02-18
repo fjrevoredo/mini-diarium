@@ -9,6 +9,10 @@ An encrypted, local cross-platform journaling app
 
 Mini Diarium keeps your journal private. Every entry is encrypted with AES-256-GCM before it touches disk, the app never connects to the internet, and your data never leaves your machine. Built with Tauri, SolidJS, and Rust.
 
+<p align="center">
+  <img src="public/demo.gif" alt="Demo" width="768" />
+</p>
+
 ## Background
 
 Mini Diarium is a spiritual successor to [Mini Diary](https://github.com/samuelmeuli/mini-diary) by Samuel Meuli. I loved the original tool. It was simple, private, and did exactly what a journal app should do. Unfortunately, it's been unmaintained for years and its dependencies have aged out. I initially thought about forking it and modernizing the stack, but turned out impractical. So I started over from scratch, keeping the same core philosophy (encrypted, local-only, minimal) while rebuilding completely with Tauri 2, SolidJS, and Rust. The result is a lighter, faster app with stronger encryption and a few personal touches.
