@@ -394,6 +394,24 @@ bun run tauri build      # Full app bundle
 
 ## Common Task Checklists
 
+### Updating the App Logo / Icons
+
+The source logo lives at `public/logo-transparent.svg` (1024×1024, dark background). It is used in two places:
+
+**1. Frontend auth screens** — referenced as `/logo-transparent.svg` in:
+- `src/components/auth/PasswordPrompt.tsx`
+- `src/components/auth/PasswordCreation.tsx`
+
+Replace the file and the change takes effect immediately on the next build.
+
+**2. Tauri app icons** — all platform icon sizes in `src-tauri/icons/` are derived from the same SVG. Regenerate them with:
+```bash
+bun run tauri icon public/logo-transparent.svg
+```
+This overwrites every icon variant (ICO, ICNS, PNG at all sizes, Windows AppX, iOS, Android) in one command. Commit the updated `src-tauri/icons/` directory alongside any change to the source SVG.
+
+---
+
 ### Adding a New Tauri Command
 
 1. Write the function in the appropriate `src-tauri/src/commands/*.rs` file (or create a new module and add it to `commands/mod.rs`)
