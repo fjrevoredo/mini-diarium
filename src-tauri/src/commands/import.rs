@@ -5,6 +5,29 @@ use crate::import::{dayone, dayone_txt, jrnl, merge, minidiary};
 use log::{debug, error, info};
 use tauri::State;
 
+const MAX_IMPORT_FILE_SIZE: u64 = 100 * 1024 * 1024; // 100 MB
+
+fn read_import_file(file_path: &str) -> Result<String, String> {
+    let metadata = std::fs::metadata(file_path).map_err(|e| {
+        let err = format!("Cannot access file: {}", e);
+        error!("{}", err);
+        err
+    })?;
+    if metadata.len() > MAX_IMPORT_FILE_SIZE {
+        let err = format!(
+            "File is too large ({} MB). Maximum supported size is 100 MB.",
+            metadata.len() / 1_048_576
+        );
+        error!("{}", err);
+        return Err(err);
+    }
+    std::fs::read_to_string(file_path).map_err(|e| {
+        let err = format!("Failed to read file: {}", e);
+        error!("{}", err);
+        err
+    })
+}
+
 /// Import result containing the number of entries imported
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct ImportResult {
@@ -37,11 +60,7 @@ pub fn import_minidiary_json(
 
     // Read file
     debug!("Reading file...");
-    let json_content = std::fs::read_to_string(&file_path).map_err(|e| {
-        let err = format!("Failed to read file: {}", e);
-        error!("{}", err);
-        err
-    })?;
+    let json_content = read_import_file(&file_path)?;
 
     // Parse JSON
     debug!("Parsing Mini Diary JSON...");
@@ -96,11 +115,7 @@ pub fn import_dayone_json(
 
     // Read file
     debug!("Reading file...");
-    let json_content = std::fs::read_to_string(&file_path).map_err(|e| {
-        let err = format!("Failed to read file: {}", e);
-        error!("{}", err);
-        err
-    })?;
+    let json_content = read_import_file(&file_path)?;
 
     // Parse JSON
     debug!("Parsing Day One JSON...");
@@ -155,11 +170,7 @@ pub fn import_jrnl_json(
 
     // Read file
     debug!("Reading file...");
-    let json_content = std::fs::read_to_string(&file_path).map_err(|e| {
-        let err = format!("Failed to read file: {}", e);
-        error!("{}", err);
-        err
-    })?;
+    let json_content = read_import_file(&file_path)?;
 
     // Parse JSON
     debug!("Parsing jrnl JSON...");
@@ -214,11 +225,7 @@ pub fn import_dayone_txt(
 
     // Read file
     debug!("Reading file...");
-    let txt_content = std::fs::read_to_string(&file_path).map_err(|e| {
-        let err = format!("Failed to read file: {}", e);
-        error!("{}", err);
-        err
-    })?;
+    let txt_content = read_import_file(&file_path)?;
 
     // Parse TXT
     debug!("Parsing Day One TXT...");

@@ -5,6 +5,7 @@ import { preferences, setPreferences } from '../../state/preferences';
 import { getThemePreference, setTheme, type ThemePreference } from '../../lib/theme';
 import { authState } from '../../state/auth';
 import * as tauri from '../../lib/tauri';
+import { mapTauriError } from '../../lib/errors';
 
 interface PreferencesOverlayProps {
   isOpen: boolean;
@@ -163,8 +164,8 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
       return;
     }
 
-    if (newPassword().length < 6) {
-      setPasswordError('New password must be at least 6 characters');
+    if (newPassword().length < 8) {
+      setPasswordError('New password must be at least 8 characters');
       return;
     }
 
@@ -176,8 +177,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
       setConfirmPassword('');
       setTimeout(() => setPasswordSuccess(false), 3000);
     } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      setPasswordError(message);
+      setPasswordError(mapTauriError(err));
     }
   };
 
@@ -230,8 +230,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
       setAddKeypairLabel('');
       setTimeout(() => setAddKeypairSuccess(false), 4000);
     } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      setAddKeypairError(message);
+      setAddKeypairError(mapTauriError(err));
     }
   };
 
@@ -248,8 +247,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
       // Validate password before showing the confirmation dialog
       await tauri.verifyPassword(removePassword());
     } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      setRemoveError(message);
+      setRemoveError(mapTauriError(err));
       return;
     }
 
@@ -262,8 +260,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
       setAuthMethods(methods);
       setRemovePassword('');
     } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      setRemoveError(message);
+      setRemoveError(mapTauriError(err));
     }
   };
 
@@ -588,7 +585,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                       value={newPassword()}
                       onInput={(e) => setNewPassword(e.currentTarget.value)}
                       class="w-full px-3 py-2 border border-primary bg-primary text-primary rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                      placeholder="Enter new password (min 6 characters)"
+                      placeholder="Enter new password (min 8 characters)"
                     />
                   </div>
 

@@ -68,6 +68,8 @@ Press `Ctrl+G` to open the date picker and jump directly to any date.
 
 The search bar in the sidebar lets you search across all entries using full-text search. Results show matching snippets with highlighted keywords. Click a result to navigate to that entry.
 
+> **Note:** Search works by maintaining a plaintext index inside your diary file. If you need protection against someone who can access your `.db` file directly, keep your diary on an encrypted volume (BitLocker / FileVault / LUKS).
+
 ## Import
 
 Open the import dialog with `Ctrl+Shift+I`.

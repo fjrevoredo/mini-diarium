@@ -245,10 +245,29 @@ pub fn generate_keypair() -> Result<crate::auth::KeypairFiles, String> {
 /// Writes a hex-encoded private key to a file path chosen by the user.
 ///
 /// This is used after `generate_keypair` to persist the private key.
-/// The file is written with restricted permissions where possible.
+/// On Unix, the file is created with mode 0o600 (owner read/write only).
+/// On Windows, NTFS ACLs restrict the file to the current user by default.
 #[tauri::command]
 pub fn write_key_file(path: String, private_key_hex: String) -> Result<(), String> {
-    std::fs::write(&path, &private_key_hex).map_err(|e| format!("Failed to write key file: {}", e))
+    #[cfg(unix)]
+    {
+        use std::io::Write;
+        use std::os::unix::fs::OpenOptionsExt;
+        let mut file = std::fs::OpenOptions::new()
+            .write(true)
+            .create(true)
+            .truncate(true)
+            .mode(0o600)
+            .open(&path)
+            .map_err(|e| format!("Failed to write key file: {}", e))?;
+        file.write_all(private_key_hex.as_bytes())
+            .map_err(|e| format!("Failed to write key file: {}", e))
+    }
+    #[cfg(not(unix))]
+    {
+        std::fs::write(&path, &private_key_hex)
+            .map_err(|e| format!("Failed to write key file: {}", e))
+    }
 }
 
 /// Registers a new keypair auth method.

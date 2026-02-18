@@ -16,6 +16,8 @@ All diary entries are encrypted with AES-256-GCM before being written to a local
 
 The full-text search index stores entry content in plaintext within the same local database file to support search functionality.
 
+**Search index note:** To support full-text search, a plaintext copy of your diary entries is stored in the `entries_fts` table within the same database file. This means the database file contains both encrypted entry ciphertext and readable plaintext. If an attacker obtains the raw `.db` file and opens it with a SQLite tool, they can read your entries directly — without needing your password. For maximum security, store your diary file on an encrypted volume (BitLocker on Windows, FileVault on macOS, LUKS on Linux).
+
 User preferences (theme, first day of week, etc.) are stored in the Tauri WebView's localStorage. These contain no sensitive data.
 
 Automatic database backups are stored in a local directory alongside the main database file.

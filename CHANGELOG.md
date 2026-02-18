@@ -14,8 +14,21 @@ All notable changes to Mini Diarium are documented here. This project uses [Sema
 - **Lock button**: lock the diary instantly from the header toolbar without closing the app
 - **About dialog**: view app version, description, license, and a link to the GitHub repository via the Info button in the header
 
+### Security
+
+- Key file now written with mode 0o600 (owner read/write only) on Unix; Windows relies on NTFS ACLs (H1)
+- Import commands now reject files larger than 100 MB to prevent out-of-memory conditions (H2)
+- Content Security Policy enabled in webview (M2)
+
+### Fixed
+
+- Password change now enforces 8-character minimum, consistent with diary creation (M1)
+- Backup files now use `.db` extension instead of `.txt` (L1)
+
 ### Changed
 
+- Backend error messages mapped to user-friendly strings before display in the UI (M3)
+- Export overlay now warns that exported files are unencrypted plaintext (L4)
 - Database schema upgraded to v3: entries are now encrypted with a random master key, with each authentication method storing its own wrapped copy in a new `auth_slots` table (replaces the `password_hash` table)
 - `change_password` now re-wraps the master key in O(1) — no entry re-encryption required regardless of diary size
 - Existing v1 and v2 databases are automatically migrated to v3 on the first unlock

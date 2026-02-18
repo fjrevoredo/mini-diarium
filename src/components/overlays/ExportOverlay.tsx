@@ -3,6 +3,7 @@ import { Dialog } from '@kobalte/core/dialog';
 import { save as saveDialog } from '@tauri-apps/plugin-dialog';
 import { createLogger } from '../../lib/logger';
 import { exportJson, exportMarkdown, type ExportResult } from '../../lib/tauri';
+import { mapTauriError } from '../../lib/errors';
 import { X, FileDown, CheckCircle, AlertCircle } from 'lucide-solid';
 
 interface ExportOverlayProps {
@@ -76,8 +77,7 @@ export default function ExportOverlay(props: ExportOverlayProps) {
       setResult(exportResult);
     } catch (err) {
       log.error('Export failed:', err);
-      const errorMessage = err instanceof Error ? err.message : String(err);
-      setError(errorMessage || 'Export failed');
+      setError(mapTauriError(err) || 'Export failed');
     } finally {
       setExporting(false);
     }
@@ -119,6 +119,14 @@ export default function ExportOverlay(props: ExportOverlayProps) {
             <Dialog.Description class="text-sm text-secondary mb-6">
               Export all diary entries to a file
             </Dialog.Description>
+
+            {/* Security Warning */}
+            <div class="mb-4 rounded-md bg-amber-50 border border-amber-200 p-3 dark:bg-amber-900/20 dark:border-amber-800">
+              <p class="text-sm text-amber-800 dark:text-amber-200">
+                Exported files contain your diary entries as plain text. Store them in a secure
+                location.
+              </p>
+            </div>
 
             {/* Format Selection */}
             <div class="mb-6">

@@ -2,6 +2,7 @@ import { createSignal } from 'solid-js';
 import * as tauri from '../lib/tauri';
 import { setEntryDates } from './entries';
 import { createLogger } from '../lib/logger';
+import { mapTauriError } from '../lib/errors';
 
 const log = createLogger('Auth');
 
@@ -41,9 +42,9 @@ export async function createDiary(password: string): Promise<void> {
     const dates = await tauri.getAllEntryDates();
     setEntryDates(dates);
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
+    const message = mapTauriError(err);
     setError(message);
-    throw err;
+    throw new Error(message);
   }
 }
 
@@ -59,9 +60,9 @@ export async function unlockDiary(password: string): Promise<void> {
     const dates = await tauri.getAllEntryDates();
     setEntryDates(dates);
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
+    const message = mapTauriError(err);
     setError(message);
-    throw err;
+    throw new Error(message);
   }
 }
 
@@ -76,9 +77,9 @@ export async function unlockWithKeypair(keyPath: string): Promise<void> {
     const dates = await tauri.getAllEntryDates();
     setEntryDates(dates);
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
+    const message = mapTauriError(err);
     setError(message);
-    throw err;
+    throw new Error(message);
   }
 }
 
@@ -90,9 +91,9 @@ export async function lockDiary(): Promise<void> {
     setAuthState('locked');
     log.info('Diary locked');
   } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
+    const message = mapTauriError(err);
     setError(message);
-    throw err;
+    throw new Error(message);
   }
 }
 
