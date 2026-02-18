@@ -11,15 +11,14 @@
 ## Architecture
 
 **Visual diagrams**:
-- [Simple overview](docs/architecture-simple.svg) - High-level 6-layer view (for README)
-- [Full diagram](docs/architecture-full.svg) - Detailed components and data flows
+- [Simple overview](docs/diagrams/architecture-simple.mmd) - Context diagram (for README, Mermaid format)
+- [Full diagram](docs/diagrams/architecture-full.svg) - Detailed components and data flows (D2 format)
 
 **Regenerate diagrams**:
 ```bash
 bun run diagrams
-# or individually:
-# d2 docs/architecture-simple.d2 docs/architecture-simple.svg
-# d2 docs/architecture-full.d2 docs/architecture-full.svg
+# Renders docs/diagrams/architecture-simple.mmd → docs/diagrams/architecture-simple.svg (via mmdc)
+# Renders docs/diagrams/architecture-full.d2    → docs/diagrams/architecture-full.svg    (via d2)
 ```
 
 Quick reference (ASCII art):

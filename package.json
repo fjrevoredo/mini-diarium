@@ -20,7 +20,7 @@
     "test:coverage": "vitest run --coverage",
     "pre-commit": "node scripts/pre-commit.js",
     "check": "node scripts/quick-check.js",
-    "diagrams": "d2 docs/architecture-simple.d2 docs/architecture-simple.svg && d2 docs/architecture-full.d2 docs/architecture-full.svg"
+    "diagrams": "mmdc -i docs/diagrams/architecture-simple.mmd -o docs/diagrams/architecture-simple.svg && d2 docs/diagrams/architecture-full.d2 docs/diagrams/architecture-full.svg"
   },
   "license": "MIT",
   "dependencies": {
@@ -38,6 +38,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@mermaid-js/mermaid-cli": "^11.12.0",
     "@solidjs/testing-library": "^0.8.10",
     "@tauri-apps/cli": "^2",
     "@testing-library/jest-dom": "^6.9.1",
