@@ -58,7 +58,14 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
   const [removePassword, setRemovePassword] = createSignal('');
   const [removeError, setRemoveError] = createSignal<string | null>(null);
 
+  // Add password state (shown when no password slot exists)
+  const [addPasswordNew, setAddPasswordNew] = createSignal('');
+  const [addPasswordConfirm, setAddPasswordConfirm] = createSignal('');
+  const [addPasswordError, setAddPasswordError] = createSignal<string | null>(null);
+  const [addPasswordSuccess, setAddPasswordSuccess] = createSignal(false);
+
   const isUnlocked = () => authState() === 'unlocked';
+  const hasPasswordSlot = () => authMethods().some((m) => m.slot_type === 'password');
 
   // Load diary path and auth methods on mount
   onMount(async () => {
@@ -112,6 +119,10 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
       setAddKeypairSuccess(false);
       setRemovePassword('');
       setRemoveError(null);
+      setAddPasswordNew('');
+      setAddPasswordConfirm('');
+      setAddPasswordError(null);
+      setAddPasswordSuccess(false);
 
       // Reload diary path
       try {
@@ -234,6 +245,37 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
     }
   };
 
+  // Handle adding a password when none exists
+  const handleAddPassword = async () => {
+    setAddPasswordError(null);
+    setAddPasswordSuccess(false);
+
+    if (!addPasswordNew() || !addPasswordConfirm()) {
+      setAddPasswordError('Both fields are required');
+      return;
+    }
+    if (addPasswordNew() !== addPasswordConfirm()) {
+      setAddPasswordError('Passwords do not match');
+      return;
+    }
+    if (addPasswordNew().length < 8) {
+      setAddPasswordError('Password must be at least 8 characters');
+      return;
+    }
+
+    try {
+      await tauri.registerPassword(addPasswordNew());
+      const methods = await tauri.listAuthMethods();
+      setAuthMethods(methods);
+      setAddPasswordNew('');
+      setAddPasswordConfirm('');
+      setAddPasswordSuccess(true);
+      setTimeout(() => setAddPasswordSuccess(false), 3000);
+    } catch (err) {
+      setAddPasswordError(mapTauriError(err));
+    }
+  };
+
   // Handle removing an auth method
   const handleRemoveAuthMethod = async (slotId: number) => {
     setRemoveError(null);
@@ -251,7 +293,11 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
       return;
     }
 
-    const confirmed = confirm('Are you sure you want to remove this authentication method?');
+    const { confirm: dialogConfirm } = await import('@tauri-apps/plugin-dialog');
+    const confirmed = await dialogConfirm(
+      'Are you sure you want to remove this authentication method?',
+      { title: 'Remove Authentication Method', kind: 'warning' },
+    );
     if (!confirmed) return;
 
     try {
@@ -266,15 +312,18 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
 
   // Handle diary reset
   const handleResetDiary = async () => {
-    const confirmed = confirm(
+    const { confirm: dialogConfirm } = await import('@tauri-apps/plugin-dialog');
+    const confirmed = await dialogConfirm(
       'Are you sure you want to reset your diary? This will permanently delete all entries and cannot be undone.',
+      { title: 'Reset Diary', kind: 'warning' },
     );
 
     if (!confirmed) return;
 
     // Double confirmation
-    const doubleConfirmed = confirm(
+    const doubleConfirmed = await dialogConfirm(
       'This is your last chance. Are you absolutely sure you want to delete all your diary entries?',
+      { title: 'Reset Diary — Final Warning', kind: 'warning' },
     );
 
     if (!doubleConfirmed) return;
@@ -504,6 +553,57 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                     <Show when={removeError()}>
                       <p class="mb-4 text-sm text-error">{removeError()}</p>
                     </Show>
+                  </Show>
+
+                  {/* Add Password section — shown only when no password slot exists */}
+                  <Show when={!hasPasswordSlot()}>
+                    <div class="mt-4 pt-4 border-t border-primary">
+                      <h4 class="text-xs font-medium text-secondary mb-3">Add Password Auth</h4>
+                      <p class="text-xs text-tertiary mb-3 leading-relaxed">
+                        No password method is registered. Add one so you can unlock with a password.
+                      </p>
+
+                      <div class="mb-3">
+                        <label class="block text-xs font-medium text-secondary mb-1">
+                          New Password
+                        </label>
+                        <input
+                          type="password"
+                          value={addPasswordNew()}
+                          onInput={(e) => setAddPasswordNew(e.currentTarget.value)}
+                          class="w-full px-3 py-2 border border-primary bg-primary text-primary rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="Min. 8 characters"
+                        />
+                      </div>
+
+                      <div class="mb-3">
+                        <label class="block text-xs font-medium text-secondary mb-1">
+                          Confirm Password
+                        </label>
+                        <input
+                          type="password"
+                          value={addPasswordConfirm()}
+                          onInput={(e) => setAddPasswordConfirm(e.currentTarget.value)}
+                          class="w-full px-3 py-2 border border-primary bg-primary text-primary rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          placeholder="Repeat password"
+                        />
+                      </div>
+
+                      <Show when={addPasswordError()}>
+                        <p class="mb-2 text-sm text-error">{addPasswordError()}</p>
+                      </Show>
+                      <Show when={addPasswordSuccess()}>
+                        <p class="mb-2 text-sm text-success">Password registered successfully!</p>
+                      </Show>
+
+                      <button
+                        type="button"
+                        onClick={handleAddPassword}
+                        class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        Add Password
+                      </button>
+                    </div>
                   </Show>
 
                   {/* Add Keypair section */}

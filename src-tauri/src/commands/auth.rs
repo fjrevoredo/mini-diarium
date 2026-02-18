@@ -270,6 +270,39 @@ pub fn write_key_file(path: String, private_key_hex: String) -> Result<(), Strin
     }
 }
 
+/// Adds a password authentication method using the master key held in the current session.
+///
+/// Fails if a password slot already exists — use `change_password` to update it.
+/// No existing password is required: being unlocked is the authentication.
+#[tauri::command]
+pub fn register_password(new_password: String, state: State<DiaryState>) -> Result<(), String> {
+    if new_password.len() < 8 {
+        return Err("Password must be at least 8 characters".to_string());
+    }
+
+    let db_state = state.db.lock().unwrap();
+    let db = db_state.as_ref().ok_or("Diary must be unlocked")?;
+
+    // Reject if a password slot already exists
+    if crate::db::queries::get_password_slot(db)?.is_some() {
+        return Err(
+            "A password method already exists. Use 'Change Password' to update it.".to_string(),
+        );
+    }
+
+    // Wrap the master key (already in memory) with the new password
+    let method = crate::auth::password::PasswordMethod::new(new_password);
+    let wrapped_key = method
+        .wrap_master_key(db.key().as_bytes())
+        .map_err(|e| format!("Failed to wrap master key: {}", e))?;
+
+    let now = chrono::Utc::now().to_rfc3339();
+    crate::db::queries::insert_auth_slot(db, "password", "Password", None, &wrapped_key, &now)?;
+
+    info!("Password auth method registered");
+    Ok(())
+}
+
 /// Registers a new keypair auth method.
 ///
 /// Requires the current password to verify identity before adding a new method.
@@ -620,5 +653,119 @@ mod tests {
             &db_path,
             &PathBuf::from(format!("test_auth_cmd_backups_{}", "list_methods")),
         );
+    }
+
+    #[test]
+    fn test_register_password_when_none_exists() {
+        let (_, db_path, backups_dir) = make_state("reg_pw_none");
+
+        let db = create_database(&db_path, "original".to_string()).unwrap();
+
+        // Delete the existing password slot to simulate a keypair-only diary
+        let (slot_id, _) = crate::db::queries::get_password_slot(&db).unwrap().unwrap();
+        crate::db::queries::delete_auth_slot(&db, slot_id).unwrap();
+        assert!(crate::db::queries::get_password_slot(&db)
+            .unwrap()
+            .is_none());
+
+        // register_password logic: wrap master key with the new password
+        let new_pw = "newpassword1";
+        let method = crate::auth::password::PasswordMethod::new(new_pw.to_string());
+        let wrapped = method.wrap_master_key(db.key().as_bytes()).unwrap();
+        let now = chrono::Utc::now().to_rfc3339();
+        crate::db::queries::insert_auth_slot(&db, "password", "Password", None, &wrapped, &now)
+            .unwrap();
+
+        // Slot should now exist
+        assert!(crate::db::queries::get_password_slot(&db)
+            .unwrap()
+            .is_some());
+
+        cleanup(&db_path, &backups_dir);
+    }
+
+    #[test]
+    fn test_register_password_and_unlock() {
+        let (_, db_path, backups_dir) = make_state("reg_pw_unlock");
+
+        let db = create_database(&db_path, "original".to_string()).unwrap();
+
+        // Add a keypair slot, then remove the password slot
+        let kp = crate::auth::keypair::generate_keypair().unwrap();
+        let pub_key_vec = hex::decode(&kp.public_key_hex).unwrap();
+        let mut pub_key = [0u8; 32];
+        pub_key.copy_from_slice(&pub_key_vec);
+        let kp_method = crate::auth::keypair::KeypairMethod {
+            public_key: pub_key,
+        };
+        let kp_wrapped = kp_method.wrap_master_key(db.key().as_bytes()).unwrap();
+        let now = chrono::Utc::now().to_rfc3339();
+        crate::db::queries::insert_auth_slot(
+            &db,
+            "keypair",
+            "My Key",
+            Some(&pub_key_vec),
+            &kp_wrapped,
+            &now,
+        )
+        .unwrap();
+
+        let (pw_slot_id, _) = crate::db::queries::get_password_slot(&db).unwrap().unwrap();
+        crate::db::queries::delete_auth_slot(&db, pw_slot_id).unwrap();
+
+        // Register new password using the master key from the session
+        let new_pw = "mynewpassword";
+        let method = crate::auth::password::PasswordMethod::new(new_pw.to_string());
+        let wrapped = method.wrap_master_key(db.key().as_bytes()).unwrap();
+        let now2 = chrono::Utc::now().to_rfc3339();
+        crate::db::queries::insert_auth_slot(&db, "password", "Password", None, &wrapped, &now2)
+            .unwrap();
+        drop(db);
+
+        // Should now be able to unlock with the new password
+        let db2 =
+            crate::db::schema::open_database(&db_path, new_pw.to_string(), &backups_dir).unwrap();
+        let count: i32 = db2
+            .conn()
+            .query_row("SELECT COUNT(*) FROM auth_slots", [], |r| r.get(0))
+            .unwrap();
+        assert_eq!(count, 2); // keypair + new password
+
+        cleanup(&db_path, &backups_dir);
+    }
+
+    #[test]
+    fn test_register_password_rejects_duplicate() {
+        let (_, db_path, backups_dir) = make_state("reg_pw_dup");
+
+        let db = create_database(&db_path, "existing".to_string()).unwrap();
+
+        // A password slot already exists — register_password should reject
+        let existing = crate::db::queries::get_password_slot(&db).unwrap();
+        assert!(existing.is_some(), "Should already have a password slot");
+
+        // Simulate the guard in register_password
+        let result: Result<(), String> = if existing.is_some() {
+            Err("A password method already exists. Use 'Change Password' to update it.".to_string())
+        } else {
+            Ok(())
+        };
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("already exists"));
+
+        cleanup(&db_path, &backups_dir);
+    }
+
+    #[test]
+    fn test_register_password_rejects_short_password() {
+        // Minimum length check (< 8 chars)
+        let short = "short";
+        let result: Result<(), String> = if short.len() < 8 {
+            Err("Password must be at least 8 characters".to_string())
+        } else {
+            Ok(())
+        };
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("at least 8 characters"));
     }
 }

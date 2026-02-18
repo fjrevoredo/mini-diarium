@@ -25,6 +25,8 @@ All notable changes to Mini Diarium are documented here. This project uses [Sema
 
 - Password change now enforces 8-character minimum, consistent with diary creation (M1)
 - Backup files now use `.db` extension instead of `.txt` (L1)
+- Confirmation dialogs for removing an auth method and resetting the diary now use native Tauri dialogs instead of `window.confirm()`, which was silently returning `true` in WebView2 on Windows regardless of user input
+- Add Password form now appears in Preferences → Authentication Methods when the password slot has been removed, allowing users to re-register a password via the `register_password` command (uses the master key already held in the unlocked session)
 
 ### Changed
 

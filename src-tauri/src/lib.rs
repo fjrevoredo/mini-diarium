@@ -60,6 +60,7 @@ pub fn run() {
             commands::auth::list_auth_methods,
             commands::auth::generate_keypair,
             commands::auth::write_key_file,
+            commands::auth::register_password,
             commands::auth::register_keypair,
             commands::auth::remove_auth_method,
             // Entries

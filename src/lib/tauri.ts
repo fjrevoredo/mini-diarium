@@ -76,6 +76,10 @@ export async function registerKeypair(
   await invoke('register_keypair', { currentPassword, publicKeyHex, label });
 }
 
+export async function registerPassword(newPassword: string): Promise<void> {
+  await invoke('register_password', { newPassword });
+}
+
 export async function removeAuthMethod(slotId: number, currentPassword: string): Promise<void> {
   await invoke('remove_auth_method', { slotId, currentPassword });
 }
