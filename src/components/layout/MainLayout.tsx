@@ -9,6 +9,7 @@ import PreferencesOverlay from '../overlays/PreferencesOverlay';
 import StatsOverlay from '../overlays/StatsOverlay';
 import ImportOverlay from '../overlays/ImportOverlay';
 import ExportOverlay from '../overlays/ExportOverlay';
+import AboutOverlay from '../overlays/AboutOverlay';
 import {
   selectedDate,
   setSelectedDate,
@@ -21,6 +22,8 @@ import {
   setIsImportOpen,
   isExportOpen,
   setIsExportOpen,
+  isAboutOpen,
+  setIsAboutOpen,
 } from '../../state/ui';
 import { setupNavigationShortcuts } from '../../lib/shortcuts';
 import {
@@ -188,6 +191,7 @@ export default function MainLayout() {
         }}
       />
       <ExportOverlay isOpen={isExportOpen()} onClose={() => setIsExportOpen(false)} />
+      <AboutOverlay isOpen={isAboutOpen()} onClose={() => setIsAboutOpen(false)} />
     </div>
   );
 }

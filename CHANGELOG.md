@@ -11,6 +11,8 @@ All notable changes to Mini Diarium are documented here. This project uses [Sema
 - **Key file generation**: generate a new X25519 keypair and save the private key to a `.key` file directly from Preferences
 - **Auth Methods section in Preferences**: view all registered unlock methods, add a new key file, or remove existing ones (the last remaining method is always protected)
 - `verify_password` command for side-effect-free password validation, used internally before multi-step operations
+- **Lock button**: lock the diary instantly from the header toolbar without closing the app
+- **About dialog**: view app version, description, license, and a link to the GitHub repository via the Info button in the header
 
 ### Changed
 

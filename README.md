@@ -2,10 +2,10 @@
 
 [![CI Status](https://github.com/fjrevoredo/mini-diarium/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/fjrevoredo/mini-diarium/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](https://github.com/fjrevoredo/mini-diarium/releases)
+[![Version](https://img.shields.io/badge/version-0.2.0-blue.svg)](https://github.com/fjrevoredo/mini-diarium/releases)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)](https://github.com/fjrevoredo/mini-diarium#installation)
 
-An encrypted, local-first desktop journaling app.
+An encrypted, local cross-platform journaling app
 
 Mini Diarium keeps your journal private. Every entry is encrypted with AES-256-GCM before it touches disk, the app never connects to the internet, and your data never leaves your machine. Built with Tauri, SolidJS, and Rust.
 
@@ -15,8 +15,9 @@ Mini Diarium is a spiritual successor to [Mini Diary](https://github.com/samuelm
 
 ## Features
 
-- **Encryption at rest**: AES-256-GCM with a random master key; unlock via password or key file
-- **Rich text editor** 
+- **Key file authentication**: unlock your diary with an X25519 private key file instead of (or alongside) your password — like SSH keys for your journal. Register multiple key files; manage all auth methods from Preferences. See [Key File Authentication](#key-file-authentication) for details.
+- **AES-256-GCM encryption**: all entries are encrypted with a random master key. Each auth method holds its own wrapped copy of that key, so adding or removing a method is O(1) — no re-encryption of your entries ever.
+- **Rich text editor**
 - **Full-text search**
 - **Calendar navigation**
 - **Import**: Mini Diary JSON and Day One JSON with merge conflict resolution
@@ -25,7 +26,6 @@ Mini Diarium is a spiritual successor to [Mini Diary](https://github.com/samuelm
 - **Automatic backups**: periodic database backups with rotation
 - **Statistics**
 - **Preferences**: first day of week, future entries toggle, title visibility, spellcheck, password change, authentication method management
-- **Multiple unlock methods**: password or X25519 key file; register additional key files in Preferences
 - **Cross-platform**: Windows, macOS, and Linux
 - **Zero network access**: no telemetry, no analytics, no update checks
 
@@ -84,6 +84,44 @@ sha256sum Mini-Diarium-*.AppImage
 3. Write your first entry. It auto-saves as you type
 4. Navigate between days with `Ctrl+Left` / `Ctrl+Right` or click dates on the calendar
 5. Lock your diary when you're done
+
+## Key File Authentication
+
+Most journal apps only offer a password. Mini Diarium also lets you unlock with an **X25519 private key file** — a small `.key` file that acts like an SSH key for your diary. You can use a key file instead of your password, or register both and use whichever is convenient.
+
+### Why use a key file?
+
+| Scenario | How a key file helps |
+|----------|----------------------|
+| **Physical second factor** | Keep the `.key` file on a USB drive. The diary can only be unlocked when the drive is plugged in — no app, no phone, no OTP codes. |
+| **Password manager integration** | Store the `.key` file as a secure attachment. Unlock without memorizing a passphrase at all. |
+| **Multiple machines** | Register one key file per machine. Revoke access to a single machine by removing that slot without touching your password or re-encrypting any entries. |
+| **Shared account, separate keys** | Register several key files under different labels. Each is independent — removing one doesn't affect the others. |
+
+### How it works
+
+Each auth method stores its own encrypted copy of a random **master key** that encrypts all diary entries. For key files, this wrapping uses **X25519 ECIES**:
+
+1. A 256-bit master key is generated once when you create the diary and never changes.
+2. You generate an X25519 keypair in Preferences. The app saves the **private key** to a `.key` file (64-character hex string) and retains only the **public key**.
+3. The public key is used to wrap the master key: an ephemeral DH key exchange produces a one-time secret, HKDF-SHA256 derives a wrapping key from it, and AES-256-GCM encrypts the master key. The resulting blob is stored in the `auth_slots` table alongside your password slot.
+4. To unlock, Mini Diarium reads the `.key` file, performs the same ECDH derivation in reverse, and unwraps the master key — your password is never required.
+
+The private key never enters the database. The public key stored in the database cannot unlock the diary. A wrong or tampered key file is rejected by AES-GCM authentication.
+
+### Setting up a key file
+
+1. Open **Preferences → Authentication Methods**
+2. Click **Generate Key File**
+3. Save the `.key` file somewhere only you control — a USB drive, a password manager's secure notes, or an encrypted folder
+4. Enter your current password to authorize the registration
+5. Give the slot a label (e.g. "USB drive" or "laptop")
+
+From that point you can unlock via **File → Open Key File** on the login screen, or by passing the key file path. To remove a key file, open Preferences → Authentication Methods and delete its slot (the last remaining method is always protected from deletion).
+
+> **Backup your key file.** Like an SSH private key, it cannot be regenerated. If you lose both your password slot and all key files, there is no recovery path.
+
+---
 
 ## Keyboard Shortcuts
 

@@ -1,6 +1,7 @@
-import { Show } from 'solid-js';
-import { Menu } from 'lucide-solid';
-import { selectedDate } from '../../state/ui';
+import { createSignal, Show } from 'solid-js';
+import { Menu, Lock, Info } from 'lucide-solid';
+import { selectedDate, setIsAboutOpen } from '../../state/ui';
+import { lockDiary } from '../../state/auth';
 
 interface HeaderProps {
   onMenuClick?: () => void;
@@ -8,6 +9,8 @@ interface HeaderProps {
 }
 
 export default function Header(props: HeaderProps) {
+  const [isLocking, setIsLocking] = createSignal(false);
+
   // Format date: "Tuesday, January 1, 2019"
   const formattedDate = () => {
     const date = new Date(selectedDate() + 'T00:00:00');
@@ -19,9 +22,20 @@ export default function Header(props: HeaderProps) {
     });
   };
 
+  const handleLock = async () => {
+    if (isLocking()) return;
+    setIsLocking(true);
+    try {
+      await lockDiary();
+    } finally {
+      setIsLocking(false);
+    }
+  };
+
   return (
     <header class="border-b border-primary bg-primary px-4 py-3">
       <div class="flex items-center justify-between">
+        {/* Left: hamburger + date */}
         <div class="flex items-center gap-3">
           <Show when={props.showMenu}>
             <button
@@ -33,6 +47,25 @@ export default function Header(props: HeaderProps) {
             </button>
           </Show>
           <h1 class="text-lg font-semibold text-primary">{formattedDate()}</h1>
+        </div>
+
+        {/* Right: About + Lock */}
+        <div class="flex items-center gap-1">
+          <button
+            onClick={() => setIsAboutOpen(true)}
+            class="rounded p-2 hover:bg-hover text-tertiary transition-colors"
+            aria-label="About"
+          >
+            <Info size={20} />
+          </button>
+          <button
+            onClick={() => handleLock()}
+            disabled={isLocking()}
+            class="rounded p-2 hover:bg-hover text-tertiary transition-colors disabled:opacity-50"
+            aria-label="Lock diary"
+          >
+            <Lock size={20} />
+          </button>
         </div>
       </div>
     </header>
