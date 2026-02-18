@@ -19,7 +19,7 @@ presentation: {
   }
 
   auth: {
-    label: "Auth\nPasswordCreation\nPasswordPrompt"
+    label: "Auth\nPasswordCreation\nPasswordPrompt\n(Password + Key File)"
     style.fill: "#bbdefb"
   }
 
@@ -39,7 +39,7 @@ presentation: {
   }
 
   overlays: {
-    label: "Overlays\nGoToDate\nPreferences\nStats\nImport"
+    label: "Overlays\nGoToDate\nPreferences (+ Auth Methods)\nStats\nImport"
     style.fill: "#bbdefb"
   }
 }
@@ -54,7 +54,7 @@ state: {
   }
 
   auth_state: {
-    label: "auth.ts\nauthState\nerror\ninitialize/create/unlock/lock"
+    label: "auth.ts\nauthState · authMethods\nerror\ninitialize/create/unlock/lock\nunlockWithKeypair"
     style.fill: "#e1bee7"
   }
 
@@ -89,7 +89,7 @@ ipc: {
   }
 
   tauri_wrappers: {
-    label: "lib/tauri.ts\n26 typed invoke() wrappers\nauth · entries · search\nnav · stats · import · export"
+    label: "lib/tauri.ts\n33 typed invoke() wrappers\nauth · entries · search\nnav · stats · import · export"
     style.fill: "#ffe0b2"
   }
 
@@ -109,7 +109,7 @@ commands: {
   }
 
   auth_cmd: {
-    label: "auth.rs\ncreate/unlock/lock\nreset/change_password\ndiary_exists/is_unlocked"
+    label: "auth.rs\ncreate/unlock/lock · reset\nchange_password · verify_password\nunlock_with_keypair\nlist/register/remove auth methods\ngenerate_keypair · write_key_file"
     style.fill: "#c8e6c9"
   }
 
@@ -182,6 +182,11 @@ business: {
     label: "backup.rs\nAuto backup on unlock\n5-backup rotation"
     style.fill: "#f8bbd0"
   }
+
+  auth_module: {
+    label: "auth/\npassword.rs (Argon2id wrap)\nkeypair.rs (X25519 ECIES)\nWrapped master key model"
+    style.fill: "#f8bbd0"
+  }
 }
 
 # Layer 6: Data Store
@@ -204,7 +209,7 @@ datastore: {
   }
 
   tables: {
-    label: "Tables:\n• entries (encrypted text)\n• entries_fts (plaintext FTS5)\n• password_hash (Argon2id)\n• metadata (version)"
+    label: "Tables:\n• entries (encrypted text)\n• entries_fts (plaintext FTS5)\n• auth_slots (wrapped master key per method)\n• metadata (version, legacy)"
     style.fill: "#b0bec5"
   }
 }
@@ -253,6 +258,7 @@ ipc.tauri_wrappers -> commands.export_cmd: "Tauri IPC"
 commands.auth_cmd -> business.crypto: "password hash/verify"
 commands.auth_cmd -> business.db: "create/open DB"
 commands.auth_cmd -> business.backup: "backup on unlock"
+commands.auth_cmd -> business.auth_module: "keypair wrap/unwrap"
 
 commands.entries_cmd -> business.crypto: "encrypt/decrypt"
 commands.entries_cmd -> business.db: "queries (dual write)"

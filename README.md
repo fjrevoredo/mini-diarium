@@ -15,7 +15,7 @@ Mini Diarium is a spiritual successor to [Mini Diary](https://github.com/samuelm
 
 ## Features
 
-- **Encryption at rest**: AES-256-GCM with Argon2id key derivation
+- **Encryption at rest**: AES-256-GCM with a random master key; unlock via password or key file
 - **Rich text editor** 
 - **Full-text search**
 - **Calendar navigation**
@@ -24,7 +24,8 @@ Mini Diarium is a spiritual successor to [Mini Diary](https://github.com/samuelm
 - **Themes**
 - **Automatic backups**: periodic database backups with rotation
 - **Statistics**
-- **Preferences**: first day of week, future entries toggle, title visibility, spellcheck, password change
+- **Preferences**: first day of week, future entries toggle, title visibility, spellcheck, password change, authentication method management
+- **Multiple unlock methods**: password or X25519 key file; register additional key files in Preferences
 - **Cross-platform**: Windows, macOS, and Linux
 - **Zero network access**: no telemetry, no analytics, no update checks
 
@@ -119,6 +120,7 @@ Artifacts will be in `src-tauri/target/release/bundle/`.
 - [Tauri 2](https://v2.tauri.app/): desktop app framework (Rust backend, web frontend)
 - [SolidJS](https://www.solidjs.com/): reactive UI framework
 - [Rust](https://www.rust-lang.org/): backend logic, encryption, database
+  - `x25519-dalek`, `hkdf`, `sha2`: X25519 ECIES key wrapping for key file authentication
 - [SQLite](https://www.sqlite.org/): local database with FTS5 full-text search
 - [TipTap](https://tiptap.dev/): rich text editor
 - [UnoCSS](https://unocss.dev/): utility-first CSS

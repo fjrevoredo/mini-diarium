@@ -553,8 +553,7 @@ mod tests {
 
         // Simulate remove_auth_method logic
         if count <= 1 {
-            // This should return an error
-            assert!(true, "Correctly blocked removal of last method");
+            // Correctly blocked removal of last method — nothing to do
         } else {
             crate::db::queries::delete_auth_slot(&db, slot_id).unwrap();
         }

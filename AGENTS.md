@@ -6,9 +6,21 @@
 
 **Platforms:** Windows 10/11, macOS 10.15+, Linux (Ubuntu 20.04+, Fedora, Arch).
 
-**Status:** See `Current-implementation-plan.md` for task-level progress (48/51 tasks complete).
+**Status:** See `Current-implementation-plan.md` for task-level progress (55/58 tasks complete).
 
 ## Architecture
+
+**Visual diagrams**:
+- [Simple overview](docs/architecture-simple.svg) - High-level 6-layer view (for README)
+- [Full diagram](docs/architecture-full.svg) - Detailed components and data flows
+
+**Regenerate diagrams**:
+```bash
+d2 docs/architecture-simple.d2 docs/architecture-simple.svg
+d2 docs/architecture-full.d2 docs/architecture-full.svg
+```
+
+Quick reference (ASCII art):
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
@@ -52,7 +64,7 @@ src/
 ├── components/
 │   ├── auth/
 │   │   ├── PasswordCreation.tsx       # New diary setup
-│   │   └── PasswordPrompt.tsx         # Unlock screen
+│   │   └── PasswordPrompt.tsx         # Password + Key File unlock modes
 │   ├── calendar/
 │   │   └── Calendar.tsx               # Monthly calendar with entry indicators
 │   ├── editor/
@@ -66,17 +78,18 @@ src/
 │   │   ├── MainLayout.tsx             # App shell (sidebar + editor)
 │   │   ├── Header.tsx                 # Top bar
 │   │   ├── Sidebar.tsx                # Calendar + search panel
-│   │   └── EditorPanel.tsx            # Editor container
+│   │   ├── EditorPanel.tsx            # Editor container
+│   │   └── MainLayout-event-listeners.test.tsx  # 4 tests
 │   ├── overlays/
 │   │   ├── GoToDateOverlay.tsx        # Date picker dialog
-│   │   ├── PreferencesOverlay.tsx     # Settings dialog
+│   │   ├── PreferencesOverlay.tsx     # Settings dialog (includes Auth Methods section)
 │   │   ├── StatsOverlay.tsx           # Statistics display
 │   │   └── ImportOverlay.tsx          # Import format selector + file picker
 │   └── search/
 │       ├── SearchBar.tsx              # FTS search input
 │       └── SearchResults.tsx          # Search result list
 ├── state/
-│   ├── auth.ts                        # AuthState signal + initializeAuth/create/unlock/lock
+│   ├── auth.ts                        # AuthState signal + authMethods + initializeAuth/create/unlock/lock/unlockWithKeypair
 │   ├── entries.ts                     # currentEntry, entryDates, isLoading, isSaving
 │   ├── search.ts                      # searchQuery, searchResults, isSearching
 │   ├── ui.ts                          # selectedDate, overlay open states, sidebar state
@@ -87,7 +100,8 @@ src/
 │   ├── debounce.ts                    # Generic debounce utility
 │   ├── shortcuts.ts                   # Keyboard shortcut + menu event listeners
 │   ├── dates.test.ts                  # 10 tests
-│   └── import.test.ts                 # 4 tests
+│   ├── import.test.ts                 # 4 tests
+│   └── tauri-params.test.ts           # 4 tests
 ├── test/
 │   └── setup.ts                       # Vitest setup: Tauri API mocks, cleanup
 ├── styles/
@@ -104,9 +118,13 @@ src-tauri/src/
 ├── lib.rs                             # Plugin init, state setup, command registration
 ├── menu.rs                            # App menu builder + event emitter
 ├── backup.rs                          # Automatic backups on unlock + rotation (5 tests)
+├── auth/
+│   ├── mod.rs                             # AuthMethodInfo, KeypairFiles structs; re-exports
+│   ├── password.rs                        # PasswordMethod: Argon2id wrap/unwrap (5 tests)
+│   └── keypair.rs                         # KeypairMethod: X25519 ECIES wrap/unwrap (6 tests)
 ├── commands/
 │   ├── mod.rs                         # Re-exports: auth, entries, search, navigation, stats, import, export
-│   ├── auth.rs                        # DiaryState, create/unlock/lock/reset/change_password (5 tests)
+│   ├── auth.rs                        # DiaryState, create/unlock/lock/reset/change_password (6 tests)
 │   ├── entries.rs                     # CRUD + delete-if-empty (4 tests)
 │   ├── search.rs                      # FTS5 search (1 test)
 │   ├── navigation.rs                  # Day/month navigation (5 tests)
@@ -136,7 +154,7 @@ src-tauri/src/
 
 ## Command Registry
 
-All 26 registered Tauri commands (source: `lib.rs`). Rust names use `snake_case`; frontend wrappers in `src/lib/tauri.ts` use `camelCase`.
+All 33 registered Tauri commands (source: `lib.rs`). Rust names use `snake_case`; frontend wrappers in `src/lib/tauri.ts` use `camelCase`.
 
 | Module | Rust Command | Frontend Wrapper | Description |
 |--------|-------------|-----------------|-------------|
@@ -148,6 +166,13 @@ All 26 registered Tauri commands (source: `lib.rs`). Rust names use `snake_case`
 | auth | `get_diary_path` | `getDiaryPath()` | Return diary file path |
 | auth | `change_password` | `changePassword(old, new)` | Re-encrypt with new password |
 | auth | `reset_diary` | `resetDiary()` | Delete and recreate DB |
+| auth | `verify_password` | `verifyPassword(password)` | Validate password without side effects |
+| auth | `unlock_diary_with_keypair` | `unlockDiaryWithKeypair(keyPath)` | Open DB via private key file |
+| auth | `list_auth_methods` | `listAuthMethods()` | List all registered auth slots |
+| auth | `generate_keypair` | `generateKeypair()` | Generate X25519 keypair, return hex |
+| auth | `write_key_file` | `writeKeyFile(path, privateKeyHex)` | Write private key hex to file |
+| auth | `register_keypair` | `registerKeypair(password, pubKeyHex, label)` | Add keypair auth slot |
+| auth | `remove_auth_method` | `removeAuthMethod(slotId, password)` | Remove auth slot (guards last) |
 | entries | `save_entry` | `saveEntry(date, title, text)` | Upsert entry (encrypts + updates FTS) |
 | entries | `get_entry` | `getEntry(date)` | Fetch + decrypt single entry |
 | entries | `delete_entry_if_empty` | `deleteEntryIfEmpty(date, title, text)` | Remove entry if content is empty |
@@ -172,7 +197,7 @@ Five signal-based state modules in `src/state/`:
 
 | Module | Signals | Key Functions |
 |--------|---------|---------------|
-| `auth.ts` | `authState: AuthState`, `error` | `initializeAuth()`, `createDiary()`, `unlockDiary()`, `lockDiary()` |
+| `auth.ts` | `authState: AuthState`, `error`, `authMethods: AuthMethodInfo[]` | `initializeAuth()`, `createDiary()`, `unlockDiary()`, `lockDiary()`, `unlockWithKeypair()` |
 | `entries.ts` | `currentEntry`, `entryDates`, `isLoading`, `isSaving` | Setters exported directly |
 | `search.ts` | `searchQuery`, `searchResults`, `isSearching` | Setters exported directly |
 | `ui.ts` | `selectedDate`, `isSidebarCollapsed`, `isGoToDateOpen`, `isPreferencesOpen`, `isStatsOpen`, `isImportOpen` | Setters exported directly |
@@ -256,17 +281,19 @@ All menu event names are prefixed `menu-`. See `menu.rs:78-107` for the full lis
 
 ## Testing
 
-### Backend: 150 tests across 18 modules
+### Backend: 176 tests across 20 modules
 
 Run: `cd src-tauri && cargo test`
 
 | Module | Tests | File |
 |--------|-------|------|
+| auth/password | 5 | `auth/password.rs` |
+| auth/keypair | 6 | `auth/keypair.rs` |
 | password | 10 | `crypto/password.rs` |
 | cipher | 11 | `crypto/cipher.rs` |
-| schema | 6 | `db/schema.rs` |
-| queries | 9 | `db/queries.rs` |
-| auth | 5 | `commands/auth.rs` |
+| schema | 11 | `db/schema.rs` |
+| queries | 12 | `db/queries.rs` |
+| auth | 6 | `commands/auth.rs` |
 | entries | 4 | `commands/entries.rs` |
 | search | 1 | `commands/search.rs` |
 | navigation | 5 | `commands/navigation.rs` |
@@ -282,19 +309,18 @@ Run: `cd src-tauri && cargo test`
 | md-export | 12 | `export/markdown.rs` |
 | backup | 5 | `backup.rs` |
 
-### Frontend: 23 tests across 4 files
+### Frontend: 31 tests across 6 files
 
-**IMPORTANT**: Always use `bun run test:run` or `bun run test`, **NEVER** use `bun test` directly.
-- ✅ `bun run test:run` - Single run (uses vitest with jsdom support)
-- ✅ `bun run test` - Watch mode (uses vitest)
-- ❌ `bun test` - Bun's native test runner (does NOT support jsdom, will fail)
+Run: `bun run test:run` (single run) or `bun run test` (watch mode)
 
 | File | Tests |
 |------|-------|
 | `src/lib/dates.test.ts` | 10 |
 | `src/lib/import.test.ts` | 4 |
+| `src/lib/tauri-params.test.ts` | 4 |
 | `src/components/editor/TitleEditor.test.tsx` | 6 |
 | `src/components/editor/WordCount.test.tsx` | 3 |
+| `src/components/layout/MainLayout-event-listeners.test.tsx` | 4 |
 
 Coverage: `bun run test:coverage`
 
@@ -305,15 +331,11 @@ Coverage: `bun run test:coverage`
 bun run dev              # Vite dev server (frontend only)
 bun run tauri dev        # Full Tauri dev (frontend + backend)
 
-# Testing (Backend)
+# Testing
 cd src-tauri && cargo test                     # All backend tests
 cd src-tauri && cargo test navigation          # Specific module
-
-# Testing (Frontend) - IMPORTANT: Use 'bun run', NOT 'bun test'!
-bun run test:run                               # All frontend tests (vitest)
-bun run test                                   # Frontend tests in watch mode
+bun run test:run                               # All frontend tests
 bun run test:run -- dates                      # Specific test file
-bun run test:coverage                          # Frontend coverage report
 
 # Code quality
 bun run lint             # ESLint
@@ -329,13 +351,11 @@ bun run tauri build      # Full app bundle
 
 ## Gotchas and Pitfalls
 
-1. **CRITICAL - Frontend Testing**: ALWAYS use `bun run test:run` or `bun run test`, NEVER use `bun test` directly. Bun's native test runner does not support jsdom environment, causing all component tests to fail with "document is not defined". The package.json scripts are configured to use vitest which has proper DOM support.
+1. **FTS rebuild after bulk import**: Import commands call `rebuild_fts_index()` which uses `'delete-all'` then re-indexes all entries. This is O(n) over all entries, not just imported ones.
 
-2. **FTS rebuild after bulk import**: Import commands call `rebuild_fts_index()` which uses `'delete-all'` then re-indexes all entries. This is O(n) over all entries, not just imported ones.
+2. **Dual storage: encrypted entries + plaintext FTS**: Any operation that creates/updates/deletes entries must handle both the encrypted `entries` table and the plaintext `entries_fts` table.
 
-3. **Dual storage: encrypted entries + plaintext FTS**: Any operation that creates/updates/deletes entries must handle both the encrypted `entries` table and the plaintext `entries_fts` table.
-
-4. **SolidJS test render wrapper**: Tests must use `render(() => <Component />)` with the arrow function. `render(<Component />)` will fail silently or error.
+3. **SolidJS test render wrapper**: Tests must use `render(() => <Component />)` with the arrow function. `render(<Component />)` will fail silently or error.
 
 4. **Date format is always `YYYY-MM-DD`**: The `T00:00:00` suffix is appended in `dates.ts` functions (`new Date(dateStr + 'T00:00:00')`) to avoid timezone-related date shifts.
 
@@ -349,12 +369,14 @@ bun run tauri build      # Full app bundle
 
 9. **Import parser contract**: Parsers in `import/*.rs` return `Vec<DiaryEntry>`. All DB interaction, merge logic, and FTS rebuild happen in `commands/import.rs`, not in the parsers.
 
+10. **Auth slots (v3 schema):** Each auth method stores its own wrapped copy of the master key in `auth_slots`. `remove_auth_method` refuses to delete the last slot (minimum one required). `change_password` re-wraps the master key in O(1) — no entry re-encryption needed. `verify_password` exists as a side-effect-free check used before multi-step operations.
+
 ## Security Rules
 
 - **Never** log, print, or serialize passwords or encryption keys
 - **Never** store plaintext diary content outside the FTS index (which is inside the encrypted DB file)
 - **Never** send data over the network — no analytics, no telemetry, no update checks
-- Password verification: Argon2id hash stored in `password_hash` table; key derived for AES-256-GCM
+- Auth: A random master key is wrapped per auth slot in `auth_slots` (schema v3). Password slots use Argon2id + AES-256-GCM wrapping; keypair slots use X25519 ECIES. The master key is never stored in plaintext.
 - The `DiaryState` holds `Mutex<Option<DatabaseConnection>>` — `None` when locked, `Some` when unlocked
 - All commands that access entries must check `db_state.as_ref().ok_or("Diary not unlocked")?`
 
@@ -382,3 +404,16 @@ bun run tauri build      # Full app bundle
 2. Add `pub mod FORMAT;` to `src-tauri/src/import/mod.rs`
 3. Add command in `commands/import.rs` (follow existing pattern: parse → `import_entries()` → `rebuild_fts_index()`)
 4. Register command, add frontend wrapper in `tauri.ts`, add UI option in `ImportOverlay.tsx`
+
+### Creating a Release
+
+See [RELEASING.md](RELEASING.md) for complete step-by-step instructions.
+
+**Quick summary:**
+1. Create release branch: `git checkout -b release-X.Y.Z`
+2. Bump version: `./bump-version.sh X.Y.Z` (updates all version files)
+3. Commit and push branch: `git add ... && git commit -m "chore: bump version to X.Y.Z" && git push origin release-X.Y.Z`
+4. Create PR to merge release branch → master
+5. After PR merged, tag on master: `git checkout master && git pull && git tag -a vX.Y.Z -m "Release vX.Y.Z" && git push origin vX.Y.Z`
+6. Wait for GitHub Actions to build and create draft release
+7. Publish the draft release on GitHub

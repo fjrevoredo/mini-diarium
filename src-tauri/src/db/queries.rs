@@ -570,7 +570,7 @@ mod tests {
         assert_eq!(keypair_slot.label, "My Key");
         assert_eq!(
             keypair_slot.public_key_hex,
-            Some(hex::encode(&fake_pub_key))
+            Some(hex::encode(fake_pub_key))
         );
 
         // Update last_used
