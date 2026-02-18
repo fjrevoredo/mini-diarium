@@ -1,4 +1,4 @@
-import { createSignal, onMount, onCleanup } from 'solid-js';
+import { onMount, onCleanup } from 'solid-js';
 import { listen, UnlistenFn } from '@tauri-apps/api/event';
 import { createLogger } from '../../lib/logger';
 import Header from './Header';
@@ -13,6 +13,8 @@ import AboutOverlay from '../overlays/AboutOverlay';
 import {
   selectedDate,
   setSelectedDate,
+  isSidebarCollapsed,
+  setIsSidebarCollapsed,
   setIsGoToDateOpen,
   isPreferencesOpen,
   setIsPreferencesOpen,
@@ -39,8 +41,6 @@ import { getTodayString } from '../../lib/dates';
 const log = createLogger('MainLayout');
 
 export default function MainLayout() {
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = createSignal(true);
-
   // Store cleanup functions at component level
   let cleanupShortcuts: (() => void) | undefined;
   const unlisteners: UnlistenFn[] = [];

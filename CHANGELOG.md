@@ -30,6 +30,7 @@ All notable changes to Mini Diarium are documented here. This project uses [Sema
 
 ### Changed
 
+- Clicking a day in the calendar sidebar now automatically collapses the sidebar so the selected entry is immediately visible
 - Backend error messages mapped to user-friendly strings before display in the UI (M3)
 - Export overlay now warns that exported files are unencrypted plaintext (L4)
 - Database schema upgraded to v3: entries are now encrypted with a random master key, with each authentication method storing its own wrapped copy in a new `auth_slots` table (replaces the `password_hash` table)
