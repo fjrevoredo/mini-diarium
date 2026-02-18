@@ -25,9 +25,9 @@ impl DatabaseConnection {
 }
 
 /// Current schema version
-const SCHEMA_VERSION: i32 = 3;
+const SCHEMA_VERSION: i32 = 4;
 
-/// Creates a new encrypted diary database (schema v3)
+/// Creates a new encrypted diary database (schema v4)
 ///
 /// Generates a random master key, wraps it with the password, and stores the
 /// wrapped key in `auth_slots`. Entries are encrypted with the master key.
@@ -45,7 +45,7 @@ pub fn create_database<P: AsRef<Path>>(
     let conn =
         Connection::open(&db_path).map_err(|e| format!("Failed to create database: {}", e))?;
 
-    // Create schema (v3 includes auth_slots table)
+    // Create schema (v4 includes auth_slots table, no FTS)
     create_schema(&conn)?;
 
     // Wrap master_key with password and insert password slot
@@ -75,7 +75,8 @@ pub fn create_database<P: AsRef<Path>>(
 /// Handles schema migrations automatically:
 /// - v1 → v2: FTS table restructure (no re-encryption)
 /// - v2 → v3: Introduce wrapped master key (re-encrypts all entries)
-/// - v3: Read master key from auth_slots password slot
+/// - v3 → v4: Drop plaintext FTS table (security fix)
+/// - v4: Read master key from auth_slots password slot
 pub fn open_database<P1: AsRef<Path>, P2: AsRef<Path>>(
     db_path: P1,
     password: String,
@@ -92,7 +93,9 @@ pub fn open_database<P1: AsRef<Path>, P2: AsRef<Path>>(
 
     if current_version >= 3 {
         // v3+ path: unwrap master key from auth_slots
-        return open_v3_with_password(conn, password, backups_dir.as_ref());
+        let db = open_v3_with_password(conn, password, backups_dir.as_ref())?;
+        migrate_v3_to_v4(&db)?;
+        return Ok(db);
     }
 
     // v1/v2 path: verify password via legacy metadata table
@@ -115,6 +118,9 @@ pub fn open_database<P1: AsRef<Path>, P2: AsRef<Path>>(
 
     // Run v2 → v3 migration (introduce wrapped master key)
     db_conn = migrate_v2_to_v3(db_conn, db_path_ref, backups_dir.as_ref(), password)?;
+
+    // Run v3 → v4 migration (drop plaintext FTS table)
+    migrate_v3_to_v4(&db_conn)?;
 
     Ok(db_conn)
 }
@@ -186,10 +192,12 @@ pub fn open_database_with_keypair<P1: AsRef<Path>, P2: AsRef<Path>>(
 
     let _ = backups_dir; // caller handles backup
 
-    Ok(DatabaseConnection {
+    let db = DatabaseConnection {
         conn,
         encryption_key,
-    })
+    };
+    migrate_v3_to_v4(&db)?;
+    Ok(db)
 }
 
 // ─── Private helpers ────────────────────────────────────────────────────────
@@ -264,12 +272,8 @@ fn create_schema(conn: &Connection) -> Result<(), String> {
             date_updated TEXT NOT NULL
         );
 
-        -- Full-text search virtual table (standalone, plaintext for search)
-        CREATE VIRTUAL TABLE IF NOT EXISTS entries_fts USING fts5(
-            date UNINDEXED,
-            title,
-            text
-        );
+        -- Search index: not implemented. A future search module should create its index here.
+        -- Interface contract: see commands/search.rs for SearchResult and the search_entries command.
 
         -- Authentication slots (password, keypair, etc.)
         CREATE TABLE IF NOT EXISTS auth_slots (
@@ -341,8 +345,9 @@ fn migrate_v1_to_v2(
         .map_err(|e| format!("Failed to begin migration transaction: {}", e))?;
 
     let migration_result = (|| -> Result<(), String> {
-        debug!("Migration v1→v2: fixing FTS table schema");
+        debug!("Migration v1→v2: removing v1 FTS triggers and external-content table");
 
+        // Drop v1 external-content FTS triggers and table (v1 artifacts only)
         conn.execute_batch(
             r#"
             DROP TRIGGER IF EXISTS entries_ai;
@@ -352,65 +357,6 @@ fn migrate_v1_to_v2(
             "#,
         )
         .map_err(|e| format!("Failed to drop old FTS table: {}", e))?;
-
-        conn.execute_batch(
-            r#"
-            CREATE VIRTUAL TABLE entries_fts USING fts5(
-                date UNINDEXED,
-                title,
-                text
-            );
-            "#,
-        )
-        .map_err(|e| format!("Failed to create new FTS table: {}", e))?;
-
-        // Rebuild FTS from decrypted entries
-        let mut stmt = conn
-            .prepare("SELECT date FROM entries ORDER BY date ASC")
-            .map_err(|e| format!("Failed to prepare statement: {}", e))?;
-
-        let dates: Vec<String> = stmt
-            .query_map([], |row| row.get(0))
-            .map_err(|e| format!("Failed to query dates: {}", e))?
-            .collect::<Result<Vec<String>, _>>()
-            .map_err(|e| format!("Failed to collect dates: {}", e))?;
-
-        let total = dates.len();
-        debug!("Migration v1→v2: rebuilding FTS for {} entries", total);
-
-        for (i, date) in dates.iter().enumerate() {
-            let result = conn.query_row(
-                "SELECT title_encrypted, text_encrypted FROM entries WHERE date = ?1",
-                [&date],
-                |row| {
-                    let title_enc: Vec<u8> = row.get(0)?;
-                    let text_enc: Vec<u8> = row.get(1)?;
-                    Ok((title_enc, text_enc))
-                },
-            );
-
-            if let Ok((title_enc, text_enc)) = result {
-                let title_bytes = cipher::decrypt(db.key(), &title_enc)
-                    .map_err(|e| format!("Failed to decrypt title for {}: {}", date, e))?;
-                let text_bytes = cipher::decrypt(db.key(), &text_enc)
-                    .map_err(|e| format!("Failed to decrypt text for {}: {}", date, e))?;
-
-                let title = String::from_utf8(title_bytes)
-                    .map_err(|e| format!("Invalid UTF-8 in title for {}: {}", date, e))?;
-                let text = String::from_utf8(text_bytes)
-                    .map_err(|e| format!("Invalid UTF-8 in text for {}: {}", date, e))?;
-
-                conn.execute(
-                    "INSERT INTO entries_fts (date, title, text) VALUES (?1, ?2, ?3)",
-                    rusqlite::params![&date, &title, &text],
-                )
-                .map_err(|e| format!("Failed to rebuild FTS for {}: {}", date, e))?;
-
-                if (i + 1) % 100 == 0 || (i + 1) == total {
-                    debug!("Migration v1→v2: progress {}/{}", i + 1, total);
-                }
-            }
-        }
 
         // Update schema version to 2
         conn.execute("DELETE FROM schema_version", [])
@@ -602,6 +548,31 @@ fn migrate_v2_to_v3_inner(
     conn.execute("INSERT INTO schema_version (version) VALUES (3)", [])
         .map_err(|e| format!("Failed to update schema version: {}", e))?;
 
+    Ok(())
+}
+
+// ─── Migration: v3 → v4 ─────────────────────────────────────────────────────
+
+/// Migration v3 → v4: Drop the plaintext FTS table.
+///
+/// `entries_fts` stored diary content in plaintext, exposing it to anyone with
+/// raw file access. This migration drops the table, purging the leaked data.
+/// `DROP TABLE IF EXISTS` makes the migration idempotent.
+fn migrate_v3_to_v4(db: &DatabaseConnection) -> Result<(), String> {
+    let version: i32 = db
+        .conn()
+        .query_row("SELECT version FROM schema_version", [], |row| row.get(0))
+        .unwrap_or(3);
+
+    if version < 4 {
+        db.conn()
+            .execute("DROP TABLE IF EXISTS entries_fts", [])
+            .map_err(|e| format!("Migration v3→v4 failed: {}", e))?;
+        db.conn()
+            .execute("UPDATE schema_version SET version = 4", [])
+            .map_err(|e| format!("Failed to update schema version: {}", e))?;
+        info!("Migrated database from v3 to v4 (removed plaintext FTS table)");
+    }
     Ok(())
 }
 
@@ -808,27 +779,7 @@ mod tests {
             .unwrap();
 
         assert_eq!(version, SCHEMA_VERSION);
-        assert_eq!(SCHEMA_VERSION, 3);
-
-        cleanup_db(&db_path);
-    }
-
-    #[test]
-    fn test_fts_table_exists() {
-        let db_path = temp_db_path("fts");
-        cleanup_db(&db_path);
-
-        let db = create_database(&db_path, "test".to_string()).unwrap();
-
-        let fts_count: i32 = db
-            .conn()
-            .query_row(
-                "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='entries_fts'",
-                [],
-                |row| row.get(0),
-            )
-            .unwrap();
-        assert_eq!(fts_count, 1);
+        assert_eq!(SCHEMA_VERSION, 4);
 
         cleanup_db(&db_path);
     }
@@ -883,7 +834,7 @@ mod tests {
             .conn()
             .query_row("SELECT version FROM schema_version", [], |row| row.get(0))
             .unwrap();
-        assert_eq!(version, 3, "Should be at version 3 after migration");
+        assert_eq!(version, 4, "Should be at version 4 after migration");
 
         // Verify auth_slots has a password slot
         let slot_count: i32 = db
@@ -913,17 +864,6 @@ mod tests {
             assert!(!text.is_empty());
         }
 
-        // Verify search still works
-        let search_count: i32 = db
-            .conn()
-            .query_row(
-                "SELECT COUNT(*) FROM entries_fts WHERE text MATCH 'Searchable'",
-                [],
-                |row| row.get(0),
-            )
-            .unwrap();
-        assert_eq!(search_count, 1);
-
         cleanup_db(&db_path);
         cleanup_backups_dir(&backups_dir);
     }
@@ -952,7 +892,7 @@ mod tests {
             .conn()
             .query_row("SELECT version FROM schema_version", [], |row| row.get(0))
             .unwrap();
-        assert_eq!(version, 3);
+        assert_eq!(version, 4);
 
         // Verify entry is still accessible
         let entry = crate::db::queries::get_entry(&db, "2024-06-01").unwrap();
@@ -981,7 +921,7 @@ mod tests {
             .conn()
             .query_row("SELECT version FROM schema_version", [], |row| row.get(0))
             .unwrap();
-        assert_eq!(version1, 3);
+        assert_eq!(version1, 4);
         drop(db1);
 
         let backup_count_before = std::fs::read_dir(&backups_dir)
@@ -994,14 +934,14 @@ mod tests {
             .conn()
             .query_row("SELECT version FROM schema_version", [], |row| row.get(0))
             .unwrap();
-        assert_eq!(version2, 3);
+        assert_eq!(version2, 4);
 
         let backup_count_after = std::fs::read_dir(&backups_dir)
             .map(|d| d.count())
             .unwrap_or(0);
         assert_eq!(
             backup_count_before, backup_count_after,
-            "No new backup should be created for v3→v3"
+            "No new backup should be created for v4→v4"
         );
 
         cleanup_db(&db_path);
@@ -1048,14 +988,15 @@ mod tests {
             error_msg
         );
 
-        // Database should still be at v1 (v1→v2 rolled back)
+        // v1→v2 migration now succeeds (just drops old FTS artifacts, no decrypt step).
+        // v2→v3 fails on the corrupted entry and rolls back to v2.
         let conn = Connection::open(&db_path).unwrap();
         let version: i32 = conn
             .query_row("SELECT version FROM schema_version", [], |row| row.get(0))
             .unwrap();
         assert_eq!(
-            version, 1,
-            "Database should be at v1 after failed migration"
+            version, 2,
+            "Database should be at v2 after v1→v2 success and v2→v3 rollback"
         );
 
         cleanup_db(&db_path);
@@ -1140,7 +1081,7 @@ mod tests {
             .conn()
             .query_row("SELECT version FROM schema_version", [], |row| row.get(0))
             .unwrap();
-        assert_eq!(version, 3);
+        assert_eq!(version, 4);
 
         cleanup_db(&db_path);
         cleanup_backups_dir(&backups_dir);

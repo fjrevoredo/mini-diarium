@@ -42,8 +42,7 @@ pub fn insert_entry(db: &DatabaseConnection, entry: &DiaryEntry) -> Result<(), S
         )
         .map_err(|e| format!("Failed to insert entry: {}", e))?;
 
-    // Update FTS index with decrypted data
-    update_fts_index(db, &entry.date, &entry.title, &entry.text)?;
+    // Search index hook: call search module's index_entry() here when implemented.
 
     Ok(())
 }
@@ -143,8 +142,7 @@ pub fn update_entry(db: &DatabaseConnection, entry: &DiaryEntry) -> Result<(), S
         return Err(format!("No entry found for date: {}", entry.date));
     }
 
-    // Update FTS index with decrypted data
-    update_fts_index(db, &entry.date, &entry.title, &entry.text)?;
+    // Search index hook: call search module's index_entry() here when implemented.
 
     Ok(())
 }
@@ -164,12 +162,7 @@ pub fn delete_entry(db: &DatabaseConnection, date: &str) -> Result<bool, String>
         .execute("DELETE FROM entries WHERE date = ?1", params![date])
         .map_err(|e| format!("Failed to delete entry: {}", e))?;
 
-    if rows_affected > 0 {
-        // Also delete from FTS table
-        db.conn()
-            .execute("DELETE FROM entries_fts WHERE date = ?1", params![date])
-            .map_err(|e| format!("Failed to delete from FTS: {}", e))?;
-    }
+    // Search index hook: call search module's remove_entry() here when implemented.
 
     Ok(rows_affected > 0)
 }
@@ -194,50 +187,6 @@ pub fn get_all_entry_dates(db: &DatabaseConnection) -> Result<Vec<String>, Strin
         .map_err(|e| format!("Failed to collect dates: {}", e))?;
 
     Ok(dates)
-}
-
-/// Updates the FTS index for a specific entry
-///
-/// Note: This is called after insert/update to populate the FTS table with decrypted data
-/// Since the FTS table is standalone (not external content), we manage it manually
-fn update_fts_index(
-    db: &DatabaseConnection,
-    date: &str,
-    title: &str,
-    text: &str,
-) -> Result<(), String> {
-    // Check if an FTS entry already exists for this date
-    let exists: bool = db
-        .conn()
-        .query_row(
-            "SELECT COUNT(*) FROM entries_fts WHERE date = ?1",
-            params![date],
-            |row| {
-                let count: i64 = row.get(0)?;
-                Ok(count > 0)
-            },
-        )
-        .map_err(|e| format!("Failed to check FTS existence: {}", e))?;
-
-    if exists {
-        // Update existing FTS entry
-        db.conn()
-            .execute(
-                "UPDATE entries_fts SET title = ?1, text = ?2 WHERE date = ?3",
-                params![title, text, date],
-            )
-            .map_err(|e| format!("Failed to update FTS: {}", e))?;
-    } else {
-        // Insert new FTS entry
-        db.conn()
-            .execute(
-                "INSERT INTO entries_fts (date, title, text) VALUES (?1, ?2, ?3)",
-                params![date, title, text],
-            )
-            .map_err(|e| format!("Failed to insert into FTS: {}", e))?;
-    }
-
-    Ok(())
 }
 
 /// Counts words in text (simple whitespace-based count)

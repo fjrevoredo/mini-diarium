@@ -44,7 +44,7 @@ export async function createDiary(password: string): Promise<void> {
   } catch (err) {
     const message = mapTauriError(err);
     setError(message);
-    throw new Error(message);
+    throw new Error(message, { cause: err });
   }
 }
 
@@ -62,7 +62,7 @@ export async function unlockDiary(password: string): Promise<void> {
   } catch (err) {
     const message = mapTauriError(err);
     setError(message);
-    throw new Error(message);
+    throw new Error(message, { cause: err });
   }
 }
 
@@ -79,7 +79,7 @@ export async function unlockWithKeypair(keyPath: string): Promise<void> {
   } catch (err) {
     const message = mapTauriError(err);
     setError(message);
-    throw new Error(message);
+    throw new Error(message, { cause: err });
   }
 }
 
@@ -93,7 +93,7 @@ export async function lockDiary(): Promise<void> {
   } catch (err) {
     const message = mapTauriError(err);
     setError(message);
-    throw new Error(message);
+    throw new Error(message, { cause: err });
   }
 }
 

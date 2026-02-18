@@ -16,6 +16,7 @@ All notable changes to Mini Diarium are documented here. This project uses [Sema
 
 ### Security
 
+- Remove plaintext FTS search index (`entries_fts` table); existing databases are migrated to schema v4 which drops the table on first unlock. Search is disabled until a secure implementation is available.
 - Key file now written with mode 0o600 (owner read/write only) on Unix; Windows relies on NTFS ACLs (H1)
 - Import commands now reject files larger than 100 MB to prevent out-of-memory conditions (H2)
 - Content Security Policy enabled in webview (M2)
@@ -31,7 +32,7 @@ All notable changes to Mini Diarium are documented here. This project uses [Sema
 - Export overlay now warns that exported files are unencrypted plaintext (L4)
 - Database schema upgraded to v3: entries are now encrypted with a random master key, with each authentication method storing its own wrapped copy in a new `auth_slots` table (replaces the `password_hash` table)
 - `change_password` now re-wraps the master key in O(1) — no entry re-encryption required regardless of diary size
-- Existing v1 and v2 databases are automatically migrated to v3 on the first unlock
+- Existing v1 and v2 databases are automatically migrated to v3 then v4 on the first unlock
 - App icon and logo updated across all platforms (Windows ICO, macOS ICNS, Linux PNG, Windows AppX, iOS, Android); logo also shown on the unlock and diary creation screens
 
 ## [0.1.0] — 2026-02-16

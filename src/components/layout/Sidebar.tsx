@@ -1,8 +1,6 @@
 import { Show } from 'solid-js';
 import { X, Calendar as CalendarIcon } from 'lucide-solid';
 import Calendar from '../calendar/Calendar';
-import SearchBar from '../search/SearchBar';
-import SearchResults from '../search/SearchResults';
 import { selectedDate, setSelectedDate } from '../../state/ui';
 import { getTodayString } from '../../lib/dates';
 
@@ -45,23 +43,17 @@ export default function Sidebar(props: SidebarProps) {
           {/* Sidebar Content */}
           <div class="flex-1 overflow-y-auto p-4">
             <div class="space-y-4">
-              {/* Search with Go to Today button */}
-              <div class="space-y-2">
-                <div class="flex gap-2">
-                  <div class="flex-1">
-                    <SearchBar />
-                  </div>
-                  <button
-                    onClick={() => setSelectedDate(getTodayString())}
-                    disabled={selectedDate() === getTodayString()}
-                    class="flex items-center gap-1 rounded-md bg-tertiary px-3 py-2 text-sm font-medium text-secondary hover:bg-active disabled:opacity-50 disabled:cursor-not-allowed"
-                    aria-label="Go to Today"
-                    title="Go to Today"
-                  >
-                    <CalendarIcon size={16} />
-                  </button>
-                </div>
-                <SearchResults />
+              {/* Go to Today button */}
+              <div class="flex justify-end">
+                <button
+                  onClick={() => setSelectedDate(getTodayString())}
+                  disabled={selectedDate() === getTodayString()}
+                  class="flex items-center gap-1 rounded-md bg-tertiary px-3 py-2 text-sm font-medium text-secondary hover:bg-active disabled:opacity-50 disabled:cursor-not-allowed"
+                  aria-label="Go to Today"
+                  title="Go to Today"
+                >
+                  <CalendarIcon size={16} />
+                </button>
               </div>
 
               {/* Calendar */}

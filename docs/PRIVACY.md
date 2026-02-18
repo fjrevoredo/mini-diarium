@@ -14,9 +14,7 @@ None. The app makes zero network requests. There is no telemetry, no analytics, 
 
 All diary entries are encrypted with AES-256-GCM before being written to a local SQLite database on your machine. A random 256-bit master key is generated when the diary is created and never stored in plaintext. Each authentication method stores its own encrypted copy of the master key in the `auth_slots` table: password slots use Argon2id + AES-256-GCM wrapping; key file slots use X25519 ECIES.
 
-The full-text search index stores entry content in plaintext within the same local database file to support search functionality.
-
-**Search index note:** To support full-text search, a plaintext copy of your diary entries is stored in the `entries_fts` table within the same database file. This means the database file contains both encrypted entry ciphertext and readable plaintext. If an attacker obtains the raw `.db` file and opens it with a SQLite tool, they can read your entries directly — without needing your password. For maximum security, store your diary file on an encrypted volume (BitLocker on Windows, FileVault on macOS, LUKS on Linux).
+Full-text search is not yet available in this version. No plaintext copy of your entries is stored outside the encrypted entries table.
 
 User preferences (theme, first day of week, etc.) are stored in the Tauri WebView's localStorage. These contain no sensitive data.
 
