@@ -2,6 +2,22 @@
 
 All notable changes to Mini Diarium are documented here. This project uses [Semantic Versioning](https://semver.org/).
 
+## [0.2.0] — 2026-02-18
+
+### Added
+
+- **Key file authentication**: unlock your diary with an X25519 private key file instead of (or in addition to) your password
+- **Multiple unlock methods**: register more than one key file alongside your password; all are listed and manageable in Preferences → Authentication Methods
+- **Key file generation**: generate a new X25519 keypair and save the private key to a `.key` file directly from Preferences
+- **Auth Methods section in Preferences**: view all registered unlock methods, add a new key file, or remove existing ones (the last remaining method is always protected)
+- `verify_password` command for side-effect-free password validation, used internally before multi-step operations
+
+### Changed
+
+- Database schema upgraded to v3: entries are now encrypted with a random master key, with each authentication method storing its own wrapped copy in a new `auth_slots` table (replaces the `password_hash` table)
+- `change_password` now re-wraps the master key in O(1) — no entry re-encryption required regardless of diary size
+- Existing v1 and v2 databases are automatically migrated to v3 on the first unlock
+
 ## [0.1.0] — 2026-02-16
 
 ### Added

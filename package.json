@@ -1,6 +1,6 @@
 {
   "name": "mini-diarium",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "A modern, encrypted, local-first desktop journaling application",
   "type": "module",
   "scripts": {
@@ -19,7 +19,8 @@
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
     "pre-commit": "node scripts/pre-commit.js",
-    "check": "node scripts/quick-check.js"
+    "check": "node scripts/quick-check.js",
+    "diagrams": "d2 docs/architecture-simple.d2 docs/architecture-simple.svg && d2 docs/architecture-full.d2 docs/architecture-full.svg"
   },
   "license": "MIT",
   "dependencies": {

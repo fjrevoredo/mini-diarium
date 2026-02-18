@@ -16,8 +16,10 @@
 
 **Regenerate diagrams**:
 ```bash
-d2 docs/architecture-simple.d2 docs/architecture-simple.svg
-d2 docs/architecture-full.d2 docs/architecture-full.svg
+bun run diagrams
+# or individually:
+# d2 docs/architecture-simple.d2 docs/architecture-simple.svg
+# d2 docs/architecture-full.d2 docs/architecture-full.svg
 ```
 
 Quick reference (ASCII art):

@@ -568,10 +568,7 @@ mod tests {
         let slots = list_auth_slots(&db).unwrap();
         let keypair_slot = slots.iter().find(|s| s.slot_type == "keypair").unwrap();
         assert_eq!(keypair_slot.label, "My Key");
-        assert_eq!(
-            keypair_slot.public_key_hex,
-            Some(hex::encode(fake_pub_key))
-        );
+        assert_eq!(keypair_slot.public_key_hex, Some(hex::encode(fake_pub_key)));
 
         // Update last_used
         update_slot_last_used(&db, slot_id).unwrap();
