@@ -12,11 +12,10 @@ All notable changes to Mini Diarium are documented here. This project uses [Sema
 ### Fixed
 
 - Website: Proofreading, fixed corrupted Linux platform icon SVG path, added `width`/`height` to demo GIF to prevent layout shift
-
-### Fixed
-
 - macOS "damaged and can't be opened" error: added ad-hoc code signing (`signingIdentity: "-"`) and updated installation instructions to use `xattr -cr` workaround
 - macOS release builds now correctly produce a universal binary (arm64 + x86_64) by passing `--target universal-apple-darwin` to the build step
+- The entries_skipped field was declared but never used, it was added a condition in the for loop to skip and count entries that have no meaningful content rather than inserting empty records. by @Yujonpradhananga
+
 
 ## [0.2.0] — 2026-02-18
 
