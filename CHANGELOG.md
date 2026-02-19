@@ -4,6 +4,10 @@ All notable changes to Mini Diarium are documented here. This project uses [Sema
 
 ## [0.2.1] — 2026-02-19
 
+### Added
+
+- Public website at [mini-diarium.com](https://mini-diarium.com) (`website/` subfolder, served via nginx on Docker / Coolify)
+
 ### Fixed
 
 - macOS "damaged and can't be opened" error: added ad-hoc code signing (`signingIdentity: "-"`) and updated installation instructions to use `xattr -cr` workaround
