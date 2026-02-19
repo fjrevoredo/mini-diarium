@@ -4,12 +4,13 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Version](https://img.shields.io/badge/version-0.2.1-blue.svg)](https://github.com/fjrevoredo/mini-diarium/releases)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)](https://github.com/fjrevoredo/mini-diarium#installation)
+[![Follow on X](https://img.shields.io/badge/Follow-%40MiniDiarium-000000?logo=x)](https://x.com/MiniDiarium)
 
 **Website:** [mini-diarium.com](https://mini-diarium.com)
 
-An encrypted, local cross-platform journaling app
+An encrypted, local, cross-platform journaling app
 
-Mini Diarium keeps your journal private. Every entry is encrypted with AES-256-GCM before it touches disk, the app never connects to the internet, and your data never leaves your machine. Built with Tauri, SolidJS, and Rust.
+Mini Diarium keeps your journal private. Every entry is encrypted with AES-256-GCM, the app never connects to the internet, and your data never leaves your machine. Built with Tauri, SolidJS, and Rust.
 
 <p align="center">
   <img src="public/demo.gif" alt="Demo" width="768" />
