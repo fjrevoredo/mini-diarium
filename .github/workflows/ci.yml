@@ -76,13 +76,20 @@ jobs:
 
       - name: Verify diagrams are up-to-date
         run: |
+          # Work around Chromium sandbox restrictions on GitHub Ubuntu runners
+          cat > /tmp/puppeteer-config.json << 'EOF'
+          {
+            "args": ["--no-sandbox", "--disable-setuid-sandbox"]
+          }
+          EOF
+
           # Regenerate Mermaid diagrams
-          bunx mmdc -i docs/diagrams/unlock.mmd -o docs/diagrams/unlock-check.svg
-          bunx mmdc -i docs/diagrams/unlock-dark.mmd -o docs/diagrams/unlock-dark-check.svg --backgroundColor transparent
-          bunx mmdc -i docs/diagrams/save-entry.mmd -o docs/diagrams/save-entry-check.svg
-          bunx mmdc -i docs/diagrams/save-entry-dark.mmd -o docs/diagrams/save-entry-dark-check.svg --backgroundColor transparent
-          bunx mmdc -i docs/diagrams/context.mmd -o docs/diagrams/context-check.svg
-          bunx mmdc -i docs/diagrams/context-dark.mmd -o docs/diagrams/context-dark-check.svg --backgroundColor transparent
+          bunx mmdc -p /tmp/puppeteer-config.json -i docs/diagrams/unlock.mmd -o docs/diagrams/unlock-check.svg
+          bunx mmdc -p /tmp/puppeteer-config.json -i docs/diagrams/unlock-dark.mmd -o docs/diagrams/unlock-dark-check.svg --backgroundColor transparent
+          bunx mmdc -p /tmp/puppeteer-config.json -i docs/diagrams/save-entry.mmd -o docs/diagrams/save-entry-check.svg
+          bunx mmdc -p /tmp/puppeteer-config.json -i docs/diagrams/save-entry-dark.mmd -o docs/diagrams/save-entry-dark-check.svg --backgroundColor transparent
+          bunx mmdc -p /tmp/puppeteer-config.json -i docs/diagrams/context.mmd -o docs/diagrams/context-check.svg
+          bunx mmdc -p /tmp/puppeteer-config.json -i docs/diagrams/context-dark.mmd -o docs/diagrams/context-dark-check.svg --backgroundColor transparent
 
           # Regenerate D2 diagrams
           ~/.local/bin/d2 docs/diagrams/architecture-dark.d2 docs/diagrams/architecture-dark-check.svg
@@ -107,6 +114,7 @@ jobs:
 
           echo "✅ All diagrams are up-to-date"
           rm docs/diagrams/*-check.svg
+          rm /tmp/puppeteer-config.json
 
   test:
     name: Test
