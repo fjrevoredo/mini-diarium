@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Mini Diarium: an encrypted, local-first desktop journal. AES-256-GCM encryption, no cloud, no tracking, no nonsense. Your entries stay on your device." />
+  <meta name="theme-color" content="#0e0e0e" />
+  <meta name="author" content="Francisco J. Revoredo" />
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://mini-diarium.com/" />
+  <meta property="og:title" content="Mini Diarium: Your journal. Your device. Your keys." />
+  <meta property="og:description" content="An encrypted, local-first desktop journal for Windows, macOS, and Linux. No cloud, no tracking, no subscriptions." />
+  <meta property="og:image" content="https://mini-diarium.com/assets/demo.gif" />
+  <meta property="og:image:type" content="image/gif" />
+  <meta property="og:image:alt" content="Mini Diarium app demo showing calendar navigation and encrypted journal entries" />
+
+  <!-- Twitter / X -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Mini Diarium: Your journal. Your device. Your keys." />
+  <meta name="twitter:description" content="An encrypted, local-first desktop journal. AES-256-GCM. No cloud, no tracking." />
+  <meta name="twitter:image" content="https://mini-diarium.com/assets/demo.gif" />
+
+  <title>Mini Diarium: Your journal. Your device. Your keys.</title>
+  <link rel="canonical" href="https://mini-diarium.com/" />
+  <link rel="icon" href="assets/logo.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="css/style.css" />
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "Mini Diarium",
+    "description": "An encrypted, local-first desktop journal for Windows, macOS, and Linux. AES-256-GCM encryption, no cloud, no telemetry.",
+    "url": "https://mini-diarium.com",
+    "applicationCategory": "UtilitiesApplication",
+    "operatingSystem": "Windows, macOS, Linux",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    },
+    "author": {
+      "@type": "Person",
+      "name": "Francisco J. Revoredo",
+      "url": "https://fjrevoredo.com"
+    },
+    "license": "https://opensource.org/licenses/MIT",
+    "codeRepository": "https://github.com/fjrevoredo/mini-diarium"
+  }
+  </script>
+</head>
+<body>
+
+<!-- ========== NAV ========== -->
+<nav class="nav" aria-label="Main navigation">
+  <div class="container nav-inner">
+    <a class="nav-brand" href="#">
+      <img src="assets/logo.svg" alt="Mini Diarium logo" class="nav-logo" width="28" height="28" />
+      Mini Diarium
+    </a>
+
+    <ul class="nav-links" id="nav-links" role="list">
+      <li><a href="#features">Features</a></li>
+      <li><a href="#security">Security</a></li>
+      <li><a href="#platforms">Download</a></li>
+      <li><a href="#about">About</a></li>
+      <li>
+        <a class="nav-github" href="https://github.com/fjrevoredo/mini-diarium" target="_blank" rel="noopener noreferrer" aria-label="View on GitHub">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M12 .3a12 12 0 0 0-3.8 23.38c.6.12.83-.26.83-.57L9 21.07c-3.34.72-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.08-.74.09-.73.09-.73 1.2.09 1.83 1.24 1.83 1.24 1.07 1.83 2.81 1.3 3.5 1 .1-.78.42-1.31.76-1.61-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.14-.3-.54-1.52.1-3.18 0 0 1-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.28-1.55 3.29-1.23 3.29-1.23.64 1.66.24 2.88.12 3.18a4.65 4.65 0 0 1 1.23 3.22c0 4.61-2.8 5.63-5.48 5.92.43.37.81 1.1.81 2.22l-.01 3.29c0 .31.2.69.82.57A12 12 0 0 0 12 .3z"/>
+          </svg>
+          Star on GitHub
+        </a>
+      </li>
+    </ul>
+
+    <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="nav-links">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+        <line x1="3" y1="6" x2="21" y2="6" />
+        <line x1="3" y1="12" x2="21" y2="12" />
+        <line x1="3" y1="18" x2="21" y2="18" />
+      </svg>
+    </button>
+  </div>
+</nav>
+
+<main>
+
+<!-- ========== HERO ========== -->
+<section class="hero" id="home">
+  <div class="container">
+    <div class="hero-version">
+      Current release &nbsp;<span>v<span class="app-version">0.2.1</span></span>
+    </div>
+    <p class="hero-eyebrow">Privacy-first journaling</p>
+    <h1>Your journal.<br><em>Your device.</em> Your keys.</h1>
+    <p class="hero-sub">
+      Mini Diarium is an encrypted desktop journal that never touches the cloud.
+      AES-256-GCM encryption, offline-only, no accounts, no telemetry. Just your words.
+    </p>
+
+    <div class="hero-actions">
+      <a class="btn btn-primary" href="https://github.com/fjrevoredo/mini-diarium/releases" target="_blank" rel="noopener noreferrer">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        Download for Windows
+      </a>
+      <a class="btn btn-secondary" href="https://github.com/fjrevoredo/mini-diarium/releases" target="_blank" rel="noopener noreferrer">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        macOS &amp; Linux
+      </a>
+      <a class="btn btn-secondary" href="https://github.com/fjrevoredo/mini-diarium" target="_blank" rel="noopener noreferrer">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M12 .3a12 12 0 0 0-3.8 23.38c.6.12.83-.26.83-.57L9 21.07c-3.34.72-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.08-.74.09-.73.09-.73 1.2.09 1.83 1.24 1.83 1.24 1.07 1.83 2.81 1.3 3.5 1 .1-.78.42-1.31.76-1.61-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.14-.3-.54-1.52.1-3.18 0 0 1-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.28-1.55 3.29-1.23 3.29-1.23.64 1.66.24 2.88.12 3.18a4.65 4.65 0 0 1 1.23 3.22c0 4.61-2.8 5.63-5.48 5.92.43.37.81 1.1.81 2.22l-.01 3.29c0 .31.2.69.82.57A12 12 0 0 0 12 .3z"/>
+        </svg>
+        View Source
+      </a>
+    </div>
+    <p class="hero-source">Free &amp; open source · MIT License · No account required</p>
+  </div>
+</section>
+
+<!-- ========== DEMO ========== -->
+<section class="demo" id="demo">
+  <div class="container">
+    <div class="demo-window" role="img" aria-label="Mini Diarium app screenshot">
+      <div class="demo-titlebar" aria-hidden="true">
+        <div class="demo-dot demo-dot-close"></div>
+        <div class="demo-dot demo-dot-min"></div>
+        <div class="demo-dot demo-dot-max"></div>
+        <div class="demo-title">Mini Diarium</div>
+      </div>
+      <img src="assets/demo.gif" alt="Mini Diarium in action: calendar navigation, rich text editor, and encrypted entry saving" class="demo-gif" loading="lazy" width="900" height="562" />
+    </div>
+  </div>
+</section>
+
+<!-- ========== STORY ========== -->
+<section class="story" id="story">
+  <div class="container">
+    <div class="story-grid">
+      <div class="story-col">
+        <p class="section-label">The backstory</p>
+        <h2 class="section-title">A successor to<br>Mini Diary</h2>
+        <p>
+          Mini Diarium is a spiritual successor to
+          <a href="https://github.com/samuelmeuli/mini-diary" target="_blank" rel="noopener noreferrer">Mini Diary</a>
+          by Samuel Meuli, a beautifully simple app that did exactly what a journal should do.
+          Over the years its dependencies aged out and the project went unmaintained.
+          A fork turned out to be impractical, so Mini Diarium was built from scratch,
+          keeping the same philosophy while rebuilding the entire stack with Tauri 2, SolidJS, and Rust.
+        </p>
+        <p>
+          The result is lighter, faster, and more secure, with stronger encryption,
+          key file authentication, richer import support, and a codebase built to last.
+          It's the journal app I always wanted to use.
+        </p>
+      </div>
+      <div class="story-col">
+        <p class="section-label">What makes it different</p>
+        <h2 class="section-title">Encryption-first,<br>not encryption-bolted-on</h2>
+        <p>
+          Most apps encrypt at the app level while leaving the door open at the infrastructure level:
+          iCloud, Google Drive, or a sync service owns your data and can read it.
+          Mini Diarium encrypts every entry with a random master key using AES-256-GCM
+          <em>before it ever touches disk</em>. There is no cloud, no sync service, and no server to compromise.
+        </p>
+        <p>
+          You can also unlock your diary with a private key file, the same concept as SSH keys,
+          instead of (or alongside) a password.
+          Keep the file on a USB drive, in a password manager, or on a separate machine.
+          Each auth method holds its own wrapped copy of the master key; adding or removing
+          one never requires re-encrypting your entries.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== FEATURES ========== -->
+<section class="features" id="features">
+  <div class="container">
+    <div class="features-header">
+      <p class="section-label">What's inside</p>
+      <h2 class="section-title">Built for privacy.<br>Designed for daily use.</h2>
+      <p class="section-body">Every feature decision starts with the same question: does this need the network? The answer is always no.</p>
+    </div>
+
+    <div class="features-grid">
+
+      <!-- Row 1 -->
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+        </div>
+        <h3>Your entries are yours forever</h3>
+        <p>Every entry is encrypted with AES-256-GCM before it touches disk. Plaintext never exists on your storage. The encryption key never leaves your machine.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>
+          </svg>
+        </div>
+        <h3>Unlock like you SSH</h3>
+        <p>Register an X25519 private key file as a second unlock method. Keep it on a USB drive, in your password manager, or anywhere you control. No app, no OTP, no phone required.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="2" y1="12" x2="22" y2="12"/>
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+            <line x1="12" y1="2" x2="12" y2="2" stroke-dasharray="2 0"/>
+          </svg>
+        </div>
+        <h3>Truly offline</h3>
+        <p>No network calls. No telemetry. No update pings. Mini Diarium has no HTTP client, so it literally cannot phone home. Your writing habit is yours alone.</p>
+      </div>
+
+      <!-- Row 2 -->
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 20h9"/>
+            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+          </svg>
+        </div>
+        <h3>Rich text, your way</h3>
+        <p>Bold, italic, headings, lists. TipTap-powered rich text editor with full keyboard support, spellcheck, and auto-save. Write without thinking about saving.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+            <line x1="16" y1="2" x2="16" y2="6"/>
+            <line x1="8" y1="2" x2="8" y2="6"/>
+            <line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
+        </div>
+        <h3>Calendar navigation</h3>
+        <p>Jump to any day with a click, or use keyboard shortcuts to step forward and back. The calendar highlights every day that has an entry at a glance.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="8 17 12 21 16 17"/>
+            <line x1="12" y1="12" x2="12" y2="21"/>
+            <path d="M20.88 18.09A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.29"/>
+          </svg>
+        </div>
+        <h3>Import from anywhere</h3>
+        <p>Migrate from Mini Diary (JSON), Day One (JSON &amp; TXT), and jrnl (JSON) with smart merge conflict resolution. Bring your history, keep it encrypted.</p>
+      </div>
+
+      <!-- Row 3 -->
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="16 17 21 12 16 7"/>
+            <path d="M21 12H9"/>
+            <path d="M9 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h4"/>
+          </svg>
+        </div>
+        <h3>Export your data</h3>
+        <p>Export everything as JSON or Markdown any time. Your data is never locked in. Use it in other apps, back it up yourself, or just have peace of mind.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+        </div>
+        <h3>Automatic backups</h3>
+        <p>Mini Diarium creates a backup of your encrypted database every time you unlock, keeping the last 5 automatically. Your entries are safe even if things go wrong.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <line x1="18" y1="20" x2="18" y2="10"/>
+            <line x1="12" y1="20" x2="12" y2="4"/>
+            <line x1="6" y1="20" x2="6" y2="14"/>
+          </svg>
+        </div>
+        <h3>Writing statistics</h3>
+        <p>See your word count, writing streaks, most active days, and total entries, all calculated locally, all encrypted at rest. Track your habit without sharing it.</p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ========== SECURITY ========== -->
+<section class="security" id="security">
+  <div class="container">
+    <div class="security-inner">
+      <div class="security-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
+      </div>
+      <div class="security-content">
+        <p class="section-label">Under the hood</p>
+        <h2 class="section-title">We don't trust us with your data.</h2>
+        <p>
+          A random 256-bit master key is generated when you create the diary and never changes.
+          Every entry is encrypted with AES-256-GCM using that key before it is written to SQLite.
+          The master key itself is never stored in plaintext: each authentication method (password or key file)
+          holds its own <em>wrapped</em> copy: password slots use Argon2id key derivation + AES-GCM wrapping;
+          key file slots use X25519 ECIES (ephemeral DH + HKDF-SHA256 + AES-GCM).
+        </p>
+        <p>
+          Adding a new auth method is O(1): only the wrapped key is re-created, not your entries.
+          The same is true for changing your password.
+          The app has no HTTP client, no analytics package, and no telemetry.
+          It cannot send your data anywhere, even if it wanted to.
+        </p>
+        <p>
+          <a href="https://github.com/fjrevoredo/mini-diarium/blob/master/SECURITY.md" target="_blank" rel="noopener noreferrer">Read the full security model →</a>
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== PLATFORMS ========== -->
+<section class="platforms" id="platforms">
+  <div class="container">
+    <div style="text-align:center; max-width: 520px; margin: 0 auto;">
+      <p class="section-label">Available on</p>
+      <h2 class="section-title">Download Mini Diarium</h2>
+      <p class="section-body" style="margin: 0 auto;">
+        All releases are built via GitHub Actions and published with SHA-256 checksums.
+        <a href="https://github.com/fjrevoredo/mini-diarium/releases" target="_blank" rel="noopener noreferrer">View all releases →</a>
+      </p>
+    </div>
+
+    <div class="platforms-grid">
+
+      <div class="platform-card">
+        <svg class="platform-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M0 3.449L9.75 2.1v9.451H0m10.949-9.602L24 0v11.4H10.949M0 12.6h9.75v9.451L0 20.699M10.949 12.6H24V24l-12.9-1.801"/>
+        </svg>
+        <h3>Windows</h3>
+        <p>
+          Download the <code>.msi</code> or <code>.exe</code> NSIS installer, no admin rights required.
+          Windows SmartScreen may show a warning on first launch. Click "More info" then "Run anyway."
+          Mini Diarium is open source and builds are reproducible from source.
+        </p>
+      </div>
+
+      <div class="platform-card">
+        <svg class="platform-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm0 2c5.523 0 10 4.477 10 10s-4.477 10-10 10S2 17.523 2 12 6.477 2 12 2zm0 3a7 7 0 1 0 0 14A7 7 0 0 0 12 5zm0 1a6 6 0 1 1 0 12A6 6 0 0 1 12 6z"/>
+        </svg>
+        <h3>macOS</h3>
+        <p>
+          Download the <code>.dmg</code> and drag to Applications.
+          Gatekeeper may block it on first launch. Run once in Terminal:<br />
+          <code>xattr -cr "/Applications/Mini Diarium.app"</code><br />
+          then launch normally. One-time step, no risk.
+        </p>
+      </div>
+
+      <div class="platform-card">
+        <svg class="platform-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <polyline points="4 17 10 11 4 5"/>
+          <line x1="12" y1="19" x2="20" y2="19"/>
+        </svg>
+        <h3>Linux</h3>
+        <p>
+          Download the <code>.AppImage</code> or <code>.deb</code> package.
+          Verify the SHA-256 checksum against <code>checksums-linux.txt</code> from the release before installing.
+          No code signing; transparency is the guarantee.
+        </p>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ========== SOCIAL ========== -->
+<section class="social" id="social">
+  <div class="container">
+    <p class="section-label">Follow the project</p>
+    <h2 class="section-title">Stay in the loop</h2>
+    <p class="section-body">
+      Mini Diarium is open source. Watch the repo for releases, star it to show support,
+      or follow along on social media.
+    </p>
+
+    <div class="social-badges">
+      <a class="badge-btn" href="https://github.com/fjrevoredo/mini-diarium" target="_blank" rel="noopener noreferrer" aria-label="Star on GitHub">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M12 .3a12 12 0 0 0-3.8 23.38c.6.12.83-.26.83-.57L9 21.07c-3.34.72-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.08-.74.09-.73.09-.73 1.2.09 1.83 1.24 1.83 1.24 1.07 1.83 2.81 1.3 3.5 1 .1-.78.42-1.31.76-1.61-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.14-.3-.54-1.52.1-3.18 0 0 1-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.28-1.55 3.29-1.23 3.29-1.23.64 1.66.24 2.88.12 3.18a4.65 4.65 0 0 1 1.23 3.22c0 4.61-2.8 5.63-5.48 5.92.43.37.81 1.1.81 2.22l-.01 3.29c0 .31.2.69.82.57A12 12 0 0 0 12 .3z"/>
+        </svg>
+        Star on GitHub
+      </a>
+
+      <a class="badge-btn" href="https://x.com/MiniDiarium" target="_blank" rel="noopener noreferrer" aria-label="Follow @MiniDiarium on X (Twitter)">
+        <!-- X / Twitter icon -->
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+        </svg>
+        Follow on X
+      </a>
+
+      <a class="badge-btn" href="#" aria-label="Product Hunt, coming soon">
+        <!-- Product Hunt icon -->
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M13.604 8.4h-3.405V12h3.405a1.8 1.8 0 0 0 0-3.6zM12 0C5.372 0 0 5.372 0 12s5.372 12 12 12 12-5.372 12-12S18.628 0 12 0zm1.604 14.4h-3.405V18H7.8V6h5.804a4.2 4.2 0 0 1 0 8.4z"/>
+        </svg>
+        Product Hunt
+        <span style="font-size:0.7em; opacity:0.5; margin-left:0.2rem;">(soon)</span>
+      </a>
+    </div>
+
+    <p class="badge-note">Product Hunt profile coming soon.</p>
+  </div>
+</section>
+
+<!-- ========== ABOUT ========== -->
+<section class="about" id="about">
+  <div class="container">
+    <p class="section-label">The author</p>
+    <h2 class="section-title" style="margin-bottom: 1.75rem;">Made with love</h2>
+
+    <div class="author-card">
+      <div class="author-avatar" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+          <circle cx="12" cy="7" r="4"/>
+        </svg>
+      </div>
+      <div class="author-info">
+        <h3>Francisco J. Revoredo</h3>
+        <p>
+          Software Engineer based in Linz, Austria. Passionate about privacy, security, and building tools that empower users. When not coding, you can find me gaming, reading, or exploring new ideas.
+        </p>
+        <div class="author-links">
+          <a class="author-link" href="https://github.com/fjrevoredo" target="_blank" rel="noopener noreferrer" aria-label="GitHub profile">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M12 .3a12 12 0 0 0-3.8 23.38c.6.12.83-.26.83-.57L9 21.07c-3.34.72-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.08-.74.09-.73.09-.73 1.2.09 1.83 1.24 1.83 1.24 1.07 1.83 2.81 1.3 3.5 1 .1-.78.42-1.31.76-1.61-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.14-.3-.54-1.52.1-3.18 0 0 1-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.28-1.55 3.29-1.23 3.29-1.23.64 1.66.24 2.88.12 3.18a4.65 4.65 0 0 1 1.23 3.22c0 4.61-2.8 5.63-5.48 5.92.43.37.81 1.1.81 2.22l-.01 3.29c0 .31.2.69.82.57A12 12 0 0 0 12 .3z"/>
+            </svg>
+            GitHub
+          </a>
+          <a class="author-link" href="https://www.linkedin.com/in/francisco-j-revoredo-69874b109/" target="_blank" rel="noopener noreferrer" aria-label="LinkedIn">
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-2-2 2 2 0 0 0-2 2v7h-4v-7a6 6 0 0 1 6-6zM2 9h4v12H2z"/>
+              <circle cx="4" cy="4" r="2"/>
+            </svg>
+            LinkedIn
+          </a>
+          <a class="author-link" href="https://fjrevoredo.com/" target="_blank" rel="noopener noreferrer" aria-label="Personal website">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="2" y1="12" x2="22" y2="12"/>
+              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+            </svg>
+            Website
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<!-- ========== FOOTER ========== -->
+<footer class="footer">
+  <div class="container">
+    <div class="footer-inner">
+      <div class="footer-left">
+        <img src="assets/logo.svg" alt="" class="footer-logo" width="20" height="20" aria-hidden="true" />
+        <span>Mini Diarium</span>
+        <span class="footer-sep">·</span>
+        <span>v<span class="app-version">0.2.1</span></span>
+        <span class="footer-sep">·</span>
+        <span>MIT License</span>
+      </div>
+      <div class="footer-right">
+        <a href="https://github.com/fjrevoredo/mini-diarium" target="_blank" rel="noopener noreferrer">GitHub</a>
+        <a href="https://github.com/fjrevoredo/mini-diarium/blob/master/SECURITY.md" target="_blank" rel="noopener noreferrer">Security</a>
+        <a href="https://github.com/fjrevoredo/mini-diarium/blob/master/CHANGELOG.md" target="_blank" rel="noopener noreferrer">Changelog</a>
+        <span style="color: var(--text-muted);">mini-diarium.com</span>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script src="js/main.js"></script>
+</body>
+</html>

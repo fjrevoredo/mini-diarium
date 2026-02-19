@@ -56,6 +56,27 @@ Quick reference (ASCII art):
 
 ## File Structure
 
+### Website (`website/`)
+
+Static marketing site for [mini-diarium.com](https://mini-diarium.com). Plain HTML + CSS + JS, no build step. Deployed via Docker / Coolify (compose file path: `website/docker-compose.yml`).
+
+```
+website/
+├── index.html            # Single-page site (all content)
+├── css/style.css         # All styles (CSS variables, grid, clamp())
+├── js/main.js            # Mobile nav toggle + smooth scroll (~30 lines)
+├── assets/
+│   ├── logo.svg          # Copy of public/logo-transparent.svg
+│   └── demo.gif          # Copy of public/demo.gif
+├── nginx.conf            # Gzip, cache headers, security headers
+├── Dockerfile            # FROM nginx:alpine
+└── docker-compose.yml    # Single service, port 80
+```
+
+**Version sync:** `bump-version.sh` updates `<span class="app-version">X.Y.Z</span>` in `index.html` (step 5). Always commit `website/index.html` alongside the other version files.
+
+**Coolify deploy:** In Coolify, set the compose file path to `website/docker-compose.yml`. The build context is the `website/` subfolder.
+
 ### Frontend (`src/`)
 
 ```
@@ -467,8 +488,8 @@ See [RELEASING.md](RELEASING.md) for complete step-by-step instructions.
 
 **Quick summary:**
 1. Create release branch: `git checkout -b release-X.Y.Z`
-2. Bump version: `./bump-version.sh X.Y.Z` (updates all version files)
-3. Commit and push branch: `git add ... && git commit -m "chore: bump version to X.Y.Z" && git push origin release-X.Y.Z`
+2. Bump version: `./bump-version.sh X.Y.Z` (updates `package.json`, `tauri.conf.json`, `Cargo.toml`, `Cargo.lock`, and `website/index.html`)
+3. Commit and push branch: `git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock website/index.html && git commit -m "chore: bump version to X.Y.Z" && git push origin release-X.Y.Z`
 4. Create PR to merge release branch → master
 5. After PR merged, tag on master: `git checkout master && git pull && git tag -a vX.Y.Z -m "Release vX.Y.Z" && git push origin vX.Y.Z`
 6. Wait for GitHub Actions to build and create draft release

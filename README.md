@@ -2,12 +2,15 @@
 
 [![CI Status](https://github.com/fjrevoredo/mini-diarium/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/fjrevoredo/mini-diarium/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-0.2.0-blue.svg)](https://github.com/fjrevoredo/mini-diarium/releases)
+[![Version](https://img.shields.io/badge/version-0.2.1-blue.svg)](https://github.com/fjrevoredo/mini-diarium/releases)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)](https://github.com/fjrevoredo/mini-diarium#installation)
+[![Follow on X](https://img.shields.io/badge/Follow-%40MiniDiarium-000000?logo=x)](https://x.com/MiniDiarium)
 
-An encrypted, local cross-platform journaling app
+**Website:** [mini-diarium.com](https://mini-diarium.com)
 
-Mini Diarium keeps your journal private. Every entry is encrypted with AES-256-GCM before it touches disk, the app never connects to the internet, and your data never leaves your machine. Built with Tauri, SolidJS, and Rust.
+An encrypted, local, cross-platform journaling app
+
+Mini Diarium keeps your journal private. Every entry is encrypted with AES-256-GCM, the app never connects to the internet, and your data never leaves your machine. Built with Tauri, SolidJS, and Rust.
 
 <p align="center">
   <img src="public/demo.gif" alt="Demo" width="768" />
@@ -131,7 +134,15 @@ On first launch, Windows SmartScreen may show a warning ("Windows protected your
 
 **macOS**
 
-macOS Gatekeeper may block the app on first launch. Right-click the app icon and select "Open" to bypass the warning. Once opened, subsequent launches work normally.
+macOS Gatekeeper may block the app on first launch with **"damaged and can't be opened"**. This happens because the app is open-source and not commercially code-signed.
+
+Run this command in Terminal after dragging the app to Applications:
+
+```bash
+xattr -cr "/Applications/Mini Diarium.app"
+```
+
+Then launch the app normally. This is a one-time step.
 
 **Linux**
 

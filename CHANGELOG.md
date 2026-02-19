@@ -2,6 +2,21 @@
 
 All notable changes to Mini Diarium are documented here. This project uses [Semantic Versioning](https://semver.org/).
 
+## [0.2.1] — 2026-02-19
+
+### Added
+
+- Public website at [mini-diarium.com](https://mini-diarium.com) (`website/` subfolder, served via nginx on Docker)
+- Website SEO: canonical URL, author meta, JSON-LD `SoftwareApplication` structured data, `og:image` switched to GIF, `twitter:card` upgraded to `summary_large_image`, `<main>` landmark, `id="demo"` anchor, `robots.txt`, `sitemap.xml`
+
+### Fixed
+
+- Website: Proofreading, fixed corrupted Linux platform icon SVG path, added `width`/`height` to demo GIF to prevent layout shift
+- macOS "damaged and can't be opened" error: added ad-hoc code signing (`signingIdentity: "-"`) and updated installation instructions to use `xattr -cr` workaround
+- macOS release builds now correctly produce a universal binary (arm64 + x86_64) by passing `--target universal-apple-darwin` to the build step
+- The entries_skipped field was declared but never used, it was added a condition in the for loop to skip and count entries that have no meaningful content rather than inserting empty records. by @Yujonpradhananga
+
+
 ## [0.2.0] — 2026-02-18
 
 ### Added
