@@ -23,10 +23,10 @@ Mini Diarium is a spiritual successor to [Mini Diary](https://github.com/samuelm
 - **AES-256-GCM encryption**: all entries are encrypted with a random master key. Each auth method holds its own wrapped copy of that key, so adding or removing a method is O(1), with no re-encryption of your entries.
 - **Rich text editor**
 - **Calendar navigation**
-- **Import**: Mini Diary JSON and Day One JSON with merge conflict resolution
+- **Import**: Mini Diary JSON, Day One JSON/TXT, and jrnl JSON with merge conflict resolution
 - **Export**: JSON and Markdown formats
 - **Themes**
-- **Automatic backups**: periodic database backups with rotation
+- **Automatic backups**: backup on unlock with rotation
 - **Statistics**
 - **Preferences**: first day of week, future entries toggle, title visibility, spellcheck, password change, authentication method management
 - **Cross-platform**: Windows, macOS, and Linux
@@ -46,7 +46,7 @@ Mini Diarium uses a wrapped master key design.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/diagrams/unlock-dark.svg">
-  <img alt="Unlock Flow Diagram" src="docs/diagrams/unlock-light.svg">
+  <img alt="Unlock Flow Diagram" src="docs/diagrams/unlock.svg">
 </picture>
 
 ### Password Unlock
@@ -70,7 +70,7 @@ Everything runs locally on the user's machine.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/diagrams/context-dark.svg">
-  <img alt="System Context Diagram" src="docs/diagrams/context-light.svg">
+  <img alt="System Context Diagram" src="docs/diagrams/context.svg">
 </picture>
 
 ### Properties
@@ -95,7 +95,7 @@ When saving an entry:
     <source media="(prefers-color-scheme: dark)" srcset="docs/diagrams/save-entry-dark.svg">
     <img 
       alt="Save Entry Flow Diagram" 
-      src="docs/diagrams/save-entry-light.svg"
+      src="docs/diagrams/save-entry.svg"
       width="600"
     >
   </picture>
@@ -110,7 +110,7 @@ Mini Diarium follows a layered structure.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/diagrams/architecture-dark.svg">
-  <img alt="Layered Architecture Diagram" src="docs/diagrams/architecture-light.svg">
+  <img alt="Layered Architecture Diagram" src="docs/diagrams/architecture-dark.svg">
 </picture>
 
 ## Installation
@@ -182,7 +182,7 @@ The private key never enters the database. The public key stored in the database
 4. Enter your current password to authorize the registration
 5. Give the slot a label (e.g. "USB drive" or "laptop")
 
-From that point you can unlock via **File → Open Key File** on the login screen, or by passing the key file path. To remove a key file, open Preferences → Authentication Methods and delete its slot (the last remaining method is always protected from deletion).
+From that point you can unlock from the login screen by switching to **Key File** mode and selecting your `.key` file. To remove a key file, open Preferences → Authentication Methods and delete its slot (the last remaining method is always protected from deletion).
 
 > **Backup your key file.** Like an SSH private key, it cannot be regenerated. If you lose both your password slot and all key files, there is no recovery path.
 
@@ -224,7 +224,7 @@ Artifacts will be in `src-tauri/target/release/bundle/`.
 - [SolidJS](https://www.solidjs.com/): reactive UI framework
 - [Rust](https://www.rust-lang.org/): backend logic, encryption, database
   - `x25519-dalek`, `hkdf`, `sha2`: X25519 ECIES key wrapping for key file authentication
-- [SQLite](https://www.sqlite.org/): local database with FTS5 full-text search
+- [SQLite](https://www.sqlite.org/): local encrypted database storage
 - [TipTap](https://tiptap.dev/): rich text editor
 - [UnoCSS](https://unocss.dev/): utility-first CSS
 - [Kobalte](https://kobalte.dev/): accessible UI primitives
@@ -238,7 +238,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for setup instructions, development workf
 
 ## Releasing
 
-For maintainers: See [RELEASING.md](RELEASING.md) for step-by-step release instructions.
+For maintainers: See [docs/RELEASING.md](docs/RELEASING.md) for step-by-step release instructions.
 
 ## Security
 

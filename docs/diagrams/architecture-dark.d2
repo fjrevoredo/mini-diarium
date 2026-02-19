@@ -4,7 +4,6 @@ presentation: {
   label: "Presentation Layer\n(Tauri + SolidJS)"
   style.fill: "#1E293B"
   style.stroke: "#38BDF8"
-  style.color: "#E2E8F0"
 
   router: "Router\n(route guards)"
   auth: "Auth Context\n(lock / unlock)"
@@ -14,7 +13,6 @@ presentation: {
 state: {
   label: "State Layer\n(Zustand)"
   style.fill: "#312E81"
-  style.color: "#E2E8F0"
 
   auth_state: "Auth State"
   entry_state: "Entry State"
@@ -23,7 +21,6 @@ state: {
 ipc: {
   label: "IPC Layer"
   style.fill: "#064E3B"
-  style.color: "#E2E8F0"
 
   invoke: "invoke()"
 }
@@ -31,9 +28,8 @@ ipc: {
 backend: {
   label: "Rust Backend"
   style.fill: "#292524"
-  style.color: "#E2E8F0"
 
-  commands: "Commands\n(save, load, search)"
+  commands: "Commands\n(save, load, import, export, stats)"
   crypto: "Crypto Service\n(AES-256-GCM)"
   auth_service: "Auth Service\n(wrap / unwrap master key)"
 }
@@ -41,10 +37,8 @@ backend: {
 data: {
   label: "Data Layer\n(SQLite)"
   style.fill: "#111827"
-  style.color: "#E2E8F0"
 
   entries: "entries\n(encrypted)"
-  fts: "entries_fts\n(plaintext index)"
   slots: "auth_slots\n(wrapped keys)"
 }
 
@@ -57,7 +51,6 @@ state.auth_state -> ipc.invoke
 ipc.invoke -> backend.commands
 
 backend.commands -> backend.crypto
-backend.commands -> data.fts
 
 backend.crypto -> data.entries
 backend.auth_service -> data.slots

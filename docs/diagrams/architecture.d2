@@ -28,7 +28,7 @@ backend: {
   label: "Rust Backend"
   style.fill: "#fff3e0"
 
-  commands: "Commands\n(save, load, search)"
+  commands: "Commands\n(save, load, import, export, stats)"
   crypto: "Crypto Service\n(AES-256-GCM)"
   auth_service: "Auth Service\n(wrap / unwrap master key)"
 }
@@ -38,7 +38,6 @@ data: {
   style.fill: "#f5f5f5"
 
   entries: "entries\n(encrypted)"
-  fts: "entries_fts\n(plaintext index)"
   slots: "auth_slots\n(wrapped keys)"
 }
 
@@ -51,7 +50,6 @@ state.auth_state -> ipc.invoke
 ipc.invoke -> backend.commands
 
 backend.commands -> backend.crypto
-backend.commands -> data.fts
 
 backend.crypto -> data.entries
 backend.auth_service -> data.slots
