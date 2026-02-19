@@ -20,7 +20,7 @@
     "test:coverage": "vitest run --coverage",
     "pre-commit": "node scripts/pre-commit.js",
     "check": "node scripts/quick-check.js",
-    "diagrams": "mmdc -i docs/diagrams/architecture-simple.mmd -o docs/diagrams/architecture-simple.svg && d2 docs/diagrams/architecture-full.d2 docs/diagrams/architecture-full.svg"
+    "diagrams": "mmdc -i docs/diagrams/unlock.mmd -o docs/diagrams/unlock.svg && mmdc -i docs/diagrams/unlock-dark.mmd -o docs/diagrams/unlock-dark.svg --backgroundColor transparent && mmdc -i docs/diagrams/save-entry.mmd -o docs/diagrams/save-entry.svg && mmdc -i docs/diagrams/save-entry-dark.mmd -o docs/diagrams/save-entry-dark.svg --backgroundColor transparent && mmdc -i docs/diagrams/context.mmd -o docs/diagrams/context.svg && mmdc -i docs/diagrams/context-dark.mmd -o docs/diagrams/context-dark.svg --backgroundColor transparent && d2 docs/diagrams/architecture.d2 docs/diagrams/architecture-dark.svg && d2 docs/diagrams/architecture.d2 docs/diagrams/architecture-dark.svg"
   },
   "license": "MIT",
   "dependencies": {

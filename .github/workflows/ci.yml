@@ -74,28 +74,39 @@ jobs:
           curl -fsSL https://d2lang.com/install.sh | sh -s --
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
-      - name: Verify architecture diagrams are up-to-date
+      - name: Verify diagrams are up-to-date
         run: |
-          # Regenerate both SVGs from D2 sources
-          ~/.local/bin/d2 docs/architecture-simple.d2 docs/architecture-simple-check.svg
-          ~/.local/bin/d2 docs/architecture-full.d2 docs/architecture-full-check.svg
+          # Regenerate Mermaid diagrams
+          bunx mmdc -i docs/diagrams/unlock.mmd -o docs/diagrams/unlock-check.svg
+          bunx mmdc -i docs/diagrams/unlock-dark.mmd -o docs/diagrams/unlock-dark-check.svg --backgroundColor transparent
+          bunx mmdc -i docs/diagrams/save-entry.mmd -o docs/diagrams/save-entry-check.svg
+          bunx mmdc -i docs/diagrams/save-entry-dark.mmd -o docs/diagrams/save-entry-dark-check.svg --backgroundColor transparent
+          bunx mmdc -i docs/diagrams/context.mmd -o docs/diagrams/context-check.svg
+          bunx mmdc -i docs/diagrams/context-dark.mmd -o docs/diagrams/context-dark-check.svg --backgroundColor transparent
 
-          # Check simple diagram
-          if ! diff -q docs/architecture-simple.svg docs/architecture-simple-check.svg > /dev/null 2>&1; then
-            echo "❌ Simple architecture diagram is out of sync!"
-            echo "Run: d2 docs/architecture-simple.d2 docs/architecture-simple.svg"
-            exit 1
-          fi
+          # Regenerate D2 diagrams
+          ~/.local/bin/d2 docs/diagrams/architecture-dark.d2 docs/diagrams/architecture-dark-check.svg
 
-          # Check full diagram
-          if ! diff -q docs/architecture-full.svg docs/architecture-full-check.svg > /dev/null 2>&1; then
-            echo "❌ Full architecture diagram is out of sync!"
-            echo "Run: d2 docs/architecture-full.d2 docs/architecture-full.svg"
-            exit 1
-          fi
+          # Compare generated diagrams against committed SVGs
+          for pair in \
+            "docs/diagrams/unlock.svg docs/diagrams/unlock-check.svg" \
+            "docs/diagrams/unlock-dark.svg docs/diagrams/unlock-dark-check.svg" \
+            "docs/diagrams/save-entry.svg docs/diagrams/save-entry-check.svg" \
+            "docs/diagrams/save-entry-dark.svg docs/diagrams/save-entry-dark-check.svg" \
+            "docs/diagrams/context.svg docs/diagrams/context-check.svg" \
+            "docs/diagrams/context-dark.svg docs/diagrams/context-dark-check.svg" \
+            "docs/diagrams/architecture-dark.svg docs/diagrams/architecture-dark-check.svg"
+          do
+            set -- $pair
+            if ! diff -q "$1" "$2" > /dev/null 2>&1; then
+              echo "❌ Diagram is out of sync: $1"
+              echo "Run: bun run diagrams"
+              exit 1
+            fi
+          done
 
-          echo "✅ Both architecture diagrams are up-to-date"
-          rm docs/architecture-*-check.svg
+          echo "✅ All diagrams are up-to-date"
+          rm docs/diagrams/*-check.svg
 
   test:
     name: Test

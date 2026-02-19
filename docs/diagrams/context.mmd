@@ -1,0 +1,30 @@
+%%{init: {"theme":"base","themeVariables":{
+  "fontFamily":"Inter, system-ui, sans-serif",
+  "primaryColor":"#E3F2FD",
+  "primaryTextColor":"#0F172A",
+  "primaryBorderColor":"#90CAF9",
+  "lineColor":"#90A4AE",
+  "background":"#FFFFFF"
+}}}%%
+flowchart LR
+
+  classDef actor fill:#F3E5F5,stroke:#7B1FA2,stroke-width:2px,color:#0F172A;
+  classDef app fill:#E3F2FD,stroke:#1565C0,stroke-width:2px,color:#0F172A;
+  classDef data fill:#FFF3E0,stroke:#E65100,stroke-width:2px,color:#0F172A;
+  classDef disabled fill:#ECEFF1,stroke:#90A4AE,stroke-width:2px,color:#475569,stroke-dasharray: 6 4;
+
+  U["<b>You</b><br/>Diarist"]
+  UI["<b>Mini Diarium</b><br/>SolidJS UI"]
+  BE["<b>Rust Backend</b><br/>Crypto + Commands"]
+  DB["<b>Local SQLite</b><br/>Encrypted entries<br/>FTS index"]
+  NET["<b>Internet</b><br/>Never accessed"]
+
+  U -->|Unlock, write, search| UI
+  UI -->|invoke| BE
+  BE -->|read, write| DB
+  BE -.->|no network calls| NET
+
+  class U actor;
+  class UI,BE app;
+  class DB data;
+  class NET disabled;

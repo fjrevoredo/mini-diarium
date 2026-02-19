@@ -1,0 +1,27 @@
+%%{init: {"theme":"base","themeVariables":{
+  "fontFamily":"Inter, system-ui, sans-serif",
+  "primaryColor":"#1E293B",
+  "primaryTextColor":"#E2E8F0",
+  "primaryBorderColor":"#334155",
+  "lineColor":"#64748B",
+  "background":"#0F172A"
+}}}%%
+flowchart TB
+
+  classDef ui fill:#1E293B,stroke:#38BDF8,stroke-width:2px,color:#E2E8F0;
+  classDef backend fill:#064E3B,stroke:#10B981,stroke-width:2px,color:#E2E8F0;
+  classDef data fill:#292524,stroke:#F97316,stroke-width:2px,color:#E2E8F0;
+
+  EDITOR["TipTap Editor"]
+  STATE["State Layer"]
+  IPC["IPC invoke()"]
+  CMD["Backend Command<br/>save_entry"]
+  ENC["Encrypt with AES-256-GCM<br/>(master key)"]
+  DB1["SQLite: entries<br/>(encrypted)"]
+
+  EDITOR --> STATE --> IPC --> CMD --> ENC
+  ENC --> DB1
+
+  class EDITOR,STATE ui;
+  class IPC,CMD,ENC backend;
+  class DB1 data;

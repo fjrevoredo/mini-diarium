@@ -22,7 +22,6 @@ Mini Diarium is a spiritual successor to [Mini Diary](https://github.com/samuelm
 - **Key file authentication**: unlock your diary with an X25519 private key file instead of (or alongside) your password — like SSH keys for your journal. Register multiple key files; manage all auth methods from Preferences. See [Key File Authentication](#key-file-authentication) for details.
 - **AES-256-GCM encryption**: all entries are encrypted with a random master key. Each auth method holds its own wrapped copy of that key, so adding or removing a method is O(1) — no re-encryption of your entries ever.
 - **Rich text editor**
-- **Full-text search**
 - **Calendar navigation**
 - **Import**: Mini Diary JSON and Day One JSON with merge conflict resolution
 - **Export**: JSON and Markdown formats
@@ -33,24 +32,86 @@ Mini Diarium is a spiritual successor to [Mini Diary](https://github.com/samuelm
 - **Cross-platform**: Windows, macOS, and Linux
 - **Zero network access**: no telemetry, no analytics, no update checks
 
-## Architecture
+# Architecture
 
-Mini Diarium uses a layered architecture with clear separation of concerns:
+# Unlock Model
 
-![Architecture Overview](docs/diagrams/architecture-simple.svg)
+Mini Diarium uses a wrapped master key design.
 
-The application is structured into 6 layers:
+- A random master key encrypts all entries using AES-256-GCM
+- Authentication methods wrap the master key
+- Unlocking unwraps the master key into memory for the session
 
-1. **Presentation Layer**
-2. **State Layer**
-3. **IPC Layer**
-4. **Backend Commands**
-5. **Business Logic**
-6. **Data Store**
+## Unlock Flow
 
-**Key Pattern**: All entry writes perform a **dual write**—updating both the encrypted `entries` table and the plaintext `entries_fts` search index. This ensures search stays synchronized.
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/diagrams/unlock-dark.svg">
+  <img alt="Unlock Flow Diagram" src="docs/diagrams/unlock-light.svg">
+</picture>
 
-For a detailed architecture diagram showing all components and data flows, see [docs/diagrams/architecture-full.svg](docs/diagrams/architecture-full.svg).
+### Password Unlock
+
+- Argon2 key derivation
+- AES-GCM unwrap of master key
+
+### Key File Unlock
+
+- X25519 key pair
+- ECDH followed by HKDF
+- AES-GCM unwrap of master key
+
+The master key is never stored in plaintext.
+
+---
+
+## System Context
+
+Everything runs locally on the user's machine.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/diagrams/context-dark.svg">
+  <img alt="System Context Diagram" src="docs/diagrams/context-light.svg">
+</picture>
+
+### Properties
+
+- The UI communicates with the Rust backend via Tauri `invoke()`
+- The backend reads and writes to local SQLite
+- No HTTP clients
+- No background sync
+- No telemetry
+
+---
+
+# Saving an Entry
+
+When saving an entry:
+
+1. The content is encrypted using the master key.
+2. The encrypted content is stored in the `entries` table.
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/diagrams/save-entry-dark.svg">
+    <img 
+      alt="Save Entry Flow Diagram" 
+      src="docs/diagrams/save-entry-light.svg"
+      width="600"
+    >
+  </picture>
+</p>
+
+
+---
+
+# Layered Architecture
+
+Mini Diarium follows a layered structure.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/diagrams/architecture-dark.svg">
+  <img alt="Layered Architecture Diagram" src="docs/diagrams/architecture-light.svg">
+</picture>
 
 ## Installation
 
@@ -167,6 +228,9 @@ Artifacts will be in `src-tauri/target/release/bundle/`.
 - [TipTap](https://tiptap.dev/): rich text editor
 - [UnoCSS](https://unocss.dev/): utility-first CSS
 - [Kobalte](https://kobalte.dev/): accessible UI primitives
+
+## Known Issues
+- Most keyboard shortcuts are broken
 
 ## Contributing
 

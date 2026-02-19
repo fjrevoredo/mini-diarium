@@ -1,0 +1,33 @@
+%%{init: {"theme":"base","themeVariables":{
+  "fontFamily":"Inter, system-ui, sans-serif",
+  "primaryColor":"#E3F2FD",
+  "primaryTextColor":"#0F172A",
+  "primaryBorderColor":"#90CAF9",
+  "lineColor":"#90A4AE"
+},
+"sequence":{"rightAngles":true}}}%%
+sequenceDiagram
+
+  participant U as User
+  participant UI as Mini Diarium UI
+  participant BE as Rust Backend
+  participant DB as SQLite (auth_slots)
+  participant KF as Key File (.key)
+
+  U->>UI: Choose unlock method
+
+  alt Password
+      UI->>BE: Submit password
+      BE->>DB: Load wrapped master key (password slot)
+      DB-->>BE: Encrypted master key
+      BE->>BE: Derive wrapping key (Argon2)<br/>AES-GCM unwrap
+  else Key File
+      UI->>BE: Select key file
+      BE->>KF: Read X25519 private key
+      KF-->>BE: Private key
+      BE->>DB: Load wrapped master key (key slot)
+      DB-->>BE: Encrypted master key
+      BE->>BE: ECDH -> HKDF -> AES-GCM unwrap
+  end
+
+  BE-->>UI: Master key loaded (session unlocked)
