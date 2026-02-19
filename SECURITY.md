@@ -6,7 +6,7 @@
 
 | Version | Supported |
 |---------|-----------|
-| 0.1.x   | Yes       |
+| 0.2.x   | Yes       |
 
 ## Reporting Vulnerabilities
 
@@ -30,6 +30,5 @@ Mini Diarium is designed as a privacy-first, offline-only journaling app.
 
 ## Known Limitations
 
-- **FTS index**: The full-text search index (`entries_fts`) stores plaintext entry content inside the SQLite database file to enable search. The database file itself is local-only.
 - **Memory during unlock**: While the diary is unlocked, decrypted content exists in process memory. Locking the diary drops the database connection and clears the state.
-- **No password recovery**: if you forget your password, there is no way to recover your entries. This is by design.
+- **No password recovery**: if you forget your password, there is no way to recover your entries. This is by design. Please set up an alternative sign-in mechanism like public key.
