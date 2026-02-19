@@ -19,8 +19,8 @@ Mini Diarium is a spiritual successor to [Mini Diary](https://github.com/samuelm
 
 ## Features
 
-- **Key file authentication**: unlock your diary with an X25519 private key file instead of (or alongside) your password — like SSH keys for your journal. Register multiple key files; manage all auth methods from Preferences. See [Key File Authentication](#key-file-authentication) for details.
-- **AES-256-GCM encryption**: all entries are encrypted with a random master key. Each auth method holds its own wrapped copy of that key, so adding or removing a method is O(1) — no re-encryption of your entries ever.
+- **Key file authentication**: unlock your diary with an X25519 private key file instead of (or alongside) your password, like SSH keys for your journal. Register multiple key files; manage all auth methods from Preferences. See [Key File Authentication](#key-file-authentication) for details.
+- **AES-256-GCM encryption**: all entries are encrypted with a random master key. Each auth method holds its own wrapped copy of that key, so adding or removing a method is O(1), with no re-encryption of your entries.
 - **Rich text editor**
 - **Calendar navigation**
 - **Import**: Mini Diary JSON and Day One JSON with merge conflict resolution
@@ -152,16 +152,16 @@ sha256sum Mini-Diarium-*.AppImage
 
 ## Key File Authentication
 
-Most journal apps only offer a password. Mini Diarium also lets you unlock with an **X25519 private key file** — a small `.key` file that acts like an SSH key for your diary. You can use a key file instead of your password, or register both and use whichever is convenient.
+Most journal apps only offer a password. Mini Diarium also lets you unlock with an **X25519 private key file**, a small `.key` file that acts like an SSH key for your diary. You can use a key file instead of your password, or register both and use whichever is convenient.
 
 ### Why use a key file?
 
 | Scenario | How a key file helps |
 |----------|----------------------|
-| **Physical second factor** | Keep the `.key` file on a USB drive. The diary can only be unlocked when the drive is plugged in — no app, no phone, no OTP codes. |
+| **Physical second factor** | Keep the `.key` file on a USB drive. The diary can only be unlocked when the drive is plugged in, with no app, no phone, and no OTP codes. |
 | **Password manager integration** | Store the `.key` file as a secure attachment. Unlock without memorizing a passphrase at all. |
 | **Multiple machines** | Register one key file per machine. Revoke access to a single machine by removing that slot without touching your password or re-encrypting any entries. |
-| **Shared account, separate keys** | Register several key files under different labels. Each is independent — removing one doesn't affect the others. |
+| **Shared account, separate keys** | Register several key files under different labels. Each is independent, and removing one doesn't affect the others. |
 
 ### How it works
 
@@ -170,7 +170,7 @@ Each auth method stores its own encrypted copy of a random **master key** that e
 1. A 256-bit master key is generated once when you create the diary and never changes.
 2. You generate an X25519 keypair in Preferences. The app saves the **private key** to a `.key` file (64-character hex string) and retains only the **public key**.
 3. The public key is used to wrap the master key: an ephemeral DH key exchange produces a one-time secret, HKDF-SHA256 derives a wrapping key from it, and AES-256-GCM encrypts the master key. The resulting blob is stored in the `auth_slots` table alongside your password slot.
-4. To unlock, Mini Diarium reads the `.key` file, performs the same ECDH derivation in reverse, and unwraps the master key — your password is never required.
+4. To unlock, Mini Diarium reads the `.key` file, performs the same ECDH derivation in reverse, and unwraps the master key; your password is never required.
 
 The private key never enters the database. The public key stored in the database cannot unlock the diary. A wrong or tampered key file is rejected by AES-GCM authentication.
 
@@ -178,7 +178,7 @@ The private key never enters the database. The public key stored in the database
 
 1. Open **Preferences → Authentication Methods**
 2. Click **Generate Key File**
-3. Save the `.key` file somewhere only you control — a USB drive, a password manager's secure notes, or an encrypted folder
+3. Save the `.key` file somewhere only you control, such as a USB drive, a password manager's secure notes, or an encrypted folder
 4. Enter your current password to authorize the registration
 5. Give the slot a label (e.g. "USB drive" or "laptop")
 
