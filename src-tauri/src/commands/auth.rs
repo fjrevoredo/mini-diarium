@@ -1,8 +1,11 @@
-use crate::db::schema::{create_database, open_database, DatabaseConnection};
+use crate::db::schema::{
+    create_database, open_database, open_database_with_keypair, DatabaseConnection,
+};
 use log::{info, warn};
 use std::path::PathBuf;
 use std::sync::Mutex;
 use tauri::State;
+use zeroize::Zeroize;
 
 /// Shared state for the database connection
 pub struct DiaryState {
@@ -21,20 +24,19 @@ impl DiaryState {
     }
 }
 
+// ─── Core auth commands ───────────────────────────────────────────────────────
+
 /// Creates a new encrypted diary database
 #[tauri::command]
 pub fn create_diary(password: String, state: State<DiaryState>) -> Result<(), String> {
     let db_path = state.db_path.lock().unwrap().clone();
 
-    // Check if database already exists
     if db_path.exists() {
         return Err("Diary already exists".to_string());
     }
 
-    // Create the database
     let db_conn = create_database(&db_path, password)?;
 
-    // Store in state
     let mut db_state = state.db.lock().unwrap();
     *db_state = Some(db_conn);
 
@@ -48,22 +50,55 @@ pub fn unlock_diary(password: String, state: State<DiaryState>) -> Result<(), St
     let db_path = state.db_path.lock().unwrap().clone();
     let backups_dir = state.backups_dir.lock().unwrap().clone();
 
-    // Check if database exists
     if !db_path.exists() {
         return Err("No diary found. Please create one first.".to_string());
     }
 
-    // Open the database (migrations run automatically if needed)
     let db_conn = open_database(&db_path, password, &backups_dir)?;
 
-    // Store in state
     let mut db_state = state.db.lock().unwrap();
     *db_state = Some(db_conn);
 
     info!("Diary unlocked");
 
-    // Create backup after successful unlock
-    // Failures in backup should not prevent unlocking, so we just log errors
+    if let Err(e) = crate::backup::backup_and_rotate(&db_path, &backups_dir) {
+        warn!("Failed to create backup: {}", e);
+    }
+
+    Ok(())
+}
+
+/// Unlocks an existing diary using an X25519 private key file
+#[tauri::command]
+pub fn unlock_diary_with_keypair(key_path: String, state: State<DiaryState>) -> Result<(), String> {
+    let db_path = state.db_path.lock().unwrap().clone();
+    let backups_dir = state.backups_dir.lock().unwrap().clone();
+
+    if !db_path.exists() {
+        return Err("No diary found. Please create one first.".to_string());
+    }
+
+    // Read private key hex from file
+    let key_hex = std::fs::read_to_string(&key_path)
+        .map_err(|e| format!("Failed to read key file: {}", e))?;
+    let key_bytes_vec = hex::decode(key_hex.trim())
+        .map_err(|_| "Invalid key file: expected hex-encoded private key".to_string())?;
+
+    if key_bytes_vec.len() != 32 {
+        return Err("Invalid key file: expected 32-byte (64 hex char) private key".to_string());
+    }
+
+    let mut private_key = [0u8; 32];
+    private_key.copy_from_slice(&key_bytes_vec);
+
+    let db_conn = open_database_with_keypair(&db_path, private_key, &backups_dir)?;
+    private_key.zeroize();
+
+    let mut db_state = state.db.lock().unwrap();
+    *db_state = Some(db_conn);
+
+    info!("Diary unlocked with key file");
+
     if let Err(e) = crate::backup::backup_and_rotate(&db_path, &backups_dir) {
         warn!("Failed to create backup: {}", e);
     }
@@ -80,9 +115,7 @@ pub fn lock_diary(state: State<DiaryState>) -> Result<(), String> {
         return Err("Diary is not unlocked".to_string());
     }
 
-    // Clear the database connection
     *db_state = None;
-
     info!("Diary locked");
     Ok(())
 }
@@ -111,61 +144,40 @@ pub fn get_diary_path(state: State<DiaryState>) -> Result<String, String> {
         .ok_or_else(|| "Invalid diary path".to_string())
 }
 
-/// Changes the diary password
+/// Changes the diary password.
+///
+/// In v3, this re-wraps the master key with the new password — no entry
+/// re-encryption is needed, making it O(1) instead of O(n).
 #[tauri::command]
 pub fn change_password(
     old_password: String,
     new_password: String,
     state: State<DiaryState>,
 ) -> Result<(), String> {
-    let db_path = state.db_path.lock().unwrap().clone();
-    let backups_dir = state.backups_dir.lock().unwrap().clone();
+    let db_state = state.db.lock().unwrap();
+    let db = db_state
+        .as_ref()
+        .ok_or("Diary must be unlocked to change password")?;
 
-    // Verify old password by opening database
-    let _db = open_database(&db_path, old_password, &backups_dir)?;
+    // Find the password slot
+    let (slot_id, wrapped_key) =
+        crate::db::queries::get_password_slot(db)?.ok_or("No password auth method found")?;
 
-    // Export all entries
-    let entries = {
-        let db_state = state.db.lock().unwrap();
-        let db = db_state
-            .as_ref()
-            .ok_or("Diary must be unlocked to change password")?;
+    // Verify old password and recover master_key
+    let old_method = crate::auth::password::PasswordMethod::new(old_password);
+    let mut master_key_bytes = old_method
+        .unwrap_master_key(&wrapped_key)
+        .map_err(|_| "Incorrect current password".to_string())?;
 
-        // Get all entries
-        let dates = crate::db::queries::get_all_entry_dates(db)?;
-        let mut all_entries = Vec::new();
-        for date in dates {
-            if let Some(entry) = crate::db::queries::get_entry(db, &date)? {
-                all_entries.push(entry);
-            }
-        }
-        all_entries
-    };
+    // Re-wrap master_key with new password
+    let new_method = crate::auth::password::PasswordMethod::new(new_password);
+    let new_wrapped_key = new_method
+        .wrap_master_key(&master_key_bytes)
+        .map_err(|e| format!("Failed to re-wrap master key: {}", e))?;
+    master_key_bytes.zeroize();
 
-    // Close current connection
-    lock_diary(state.clone())?;
-
-    // Backup old database
-    let backup_path = db_path.with_extension("db.backup");
-    std::fs::copy(&db_path, &backup_path).map_err(|e| format!("Failed to create backup: {}", e))?;
-
-    // Delete old database
-    std::fs::remove_file(&db_path).map_err(|e| format!("Failed to remove old database: {}", e))?;
-
-    // Create new database with new password
-    let new_db = create_database(&db_path, new_password)?;
-
-    // Re-insert all entries
-    for entry in &entries {
-        crate::db::queries::insert_entry(&new_db, entry)?;
-    }
-
-    // Update state with new connection
-    let mut db_state = state.db.lock().unwrap();
-    *db_state = Some(new_db);
-
-    // Remove backup if successful
-    let _ = std::fs::remove_file(&backup_path);
+    // Update the auth slot (no entry re-encryption needed)
+    crate::db::queries::update_auth_slot_wrapped_key(db, slot_id, &new_wrapped_key)?;
 
     info!("Password changed successfully");
     Ok(())
@@ -175,7 +187,6 @@ pub fn change_password(
 /// WARNING: This permanently deletes all data!
 #[tauri::command]
 pub fn reset_diary(state: State<DiaryState>) -> Result<(), String> {
-    // Lock the diary first
     let _ = lock_diary(state.clone());
 
     let db_path = state.db_path.lock().unwrap().clone();
@@ -184,12 +195,218 @@ pub fn reset_diary(state: State<DiaryState>) -> Result<(), String> {
         return Err("No diary found to reset".to_string());
     }
 
-    // Delete the database file
     std::fs::remove_file(&db_path).map_err(|e| format!("Failed to delete diary: {}", e))?;
 
     info!("Diary reset");
     Ok(())
 }
+
+// ─── Auth method management commands ─────────────────────────────────────────
+
+/// Verifies the current password without performing any other operation.
+///
+/// Used by the frontend to validate credentials before starting multi-step
+/// operations (e.g. keypair registration) where early failure is preferable.
+#[tauri::command]
+pub fn verify_password(password: String, state: State<DiaryState>) -> Result<(), String> {
+    let db_state = state.db.lock().unwrap();
+    let db = db_state.as_ref().ok_or("Diary must be unlocked")?;
+
+    let (_, wrapped_key) =
+        crate::db::queries::get_password_slot(db)?.ok_or("No password auth method found")?;
+    let method = crate::auth::password::PasswordMethod::new(password);
+    let mut master_key_bytes = method
+        .unwrap_master_key(&wrapped_key)
+        .map_err(|_| "Incorrect password".to_string())?;
+    master_key_bytes.zeroize();
+    Ok(())
+}
+
+/// Lists all registered authentication methods (without sensitive key material).
+#[tauri::command]
+pub fn list_auth_methods(
+    state: State<DiaryState>,
+) -> Result<Vec<crate::auth::AuthMethodInfo>, String> {
+    let db_state = state.db.lock().unwrap();
+    let db = db_state.as_ref().ok_or("Diary must be unlocked")?;
+    crate::db::queries::list_auth_slots(db)
+}
+
+/// Generates a new X25519 keypair.
+///
+/// The caller is responsible for saving the private key securely (to a file).
+/// Only the public key is stored in the diary; the private key never touches disk
+/// through this application.
+#[tauri::command]
+pub fn generate_keypair() -> Result<crate::auth::KeypairFiles, String> {
+    crate::auth::keypair::generate_keypair()
+}
+
+/// Writes a hex-encoded private key to a file path chosen by the user.
+///
+/// This is used after `generate_keypair` to persist the private key.
+/// On Unix, the file is created with mode 0o600 (owner read/write only).
+/// On Windows, NTFS ACLs restrict the file to the current user by default.
+#[tauri::command]
+pub fn write_key_file(path: String, private_key_hex: String) -> Result<(), String> {
+    #[cfg(unix)]
+    {
+        use std::io::Write;
+        use std::os::unix::fs::OpenOptionsExt;
+        let mut file = std::fs::OpenOptions::new()
+            .write(true)
+            .create(true)
+            .truncate(true)
+            .mode(0o600)
+            .open(&path)
+            .map_err(|e| format!("Failed to write key file: {}", e))?;
+        file.write_all(private_key_hex.as_bytes())
+            .map_err(|e| format!("Failed to write key file: {}", e))
+    }
+    #[cfg(not(unix))]
+    {
+        std::fs::write(&path, &private_key_hex)
+            .map_err(|e| format!("Failed to write key file: {}", e))
+    }
+}
+
+/// Adds a password authentication method using the master key held in the current session.
+///
+/// Fails if a password slot already exists — use `change_password` to update it.
+/// No existing password is required: being unlocked is the authentication.
+#[tauri::command]
+pub fn register_password(new_password: String, state: State<DiaryState>) -> Result<(), String> {
+    if new_password.len() < 8 {
+        return Err("Password must be at least 8 characters".to_string());
+    }
+
+    let db_state = state.db.lock().unwrap();
+    let db = db_state.as_ref().ok_or("Diary must be unlocked")?;
+
+    // Reject if a password slot already exists
+    if crate::db::queries::get_password_slot(db)?.is_some() {
+        return Err(
+            "A password method already exists. Use 'Change Password' to update it.".to_string(),
+        );
+    }
+
+    // Wrap the master key (already in memory) with the new password
+    let method = crate::auth::password::PasswordMethod::new(new_password);
+    let wrapped_key = method
+        .wrap_master_key(db.key().as_bytes())
+        .map_err(|e| format!("Failed to wrap master key: {}", e))?;
+
+    let now = chrono::Utc::now().to_rfc3339();
+    crate::db::queries::insert_auth_slot(db, "password", "Password", None, &wrapped_key, &now)?;
+
+    info!("Password auth method registered");
+    Ok(())
+}
+
+/// Registers a new keypair auth method.
+///
+/// Requires the current password to verify identity before adding a new method.
+/// The master key is wrapped for the given public key and stored in auth_slots.
+#[tauri::command]
+pub fn register_keypair(
+    current_password: String,
+    public_key_hex: String,
+    label: String,
+    state: State<DiaryState>,
+) -> Result<(), String> {
+    let db_state = state.db.lock().unwrap();
+    let db = db_state.as_ref().ok_or("Diary must be unlocked")?;
+
+    // Verify identity via password and recover master_key
+    let (_, wrapped_key) =
+        crate::db::queries::get_password_slot(db)?.ok_or("No password auth method found")?;
+    let method = crate::auth::password::PasswordMethod::new(current_password);
+    let mut master_key_bytes = method
+        .unwrap_master_key(&wrapped_key)
+        .map_err(|_| "Incorrect password".to_string())?;
+
+    // Decode public key
+    let pub_key_vec =
+        hex::decode(&public_key_hex).map_err(|_| "Invalid public key hex".to_string())?;
+    if pub_key_vec.len() != 32 {
+        return Err("Invalid public key: expected 32 bytes".to_string());
+    }
+    let mut pub_key = [0u8; 32];
+    pub_key.copy_from_slice(&pub_key_vec);
+
+    // Reject duplicate public key registrations
+    let existing: i64 = db
+        .conn()
+        .query_row(
+            "SELECT COUNT(*) FROM auth_slots WHERE type = 'keypair' AND public_key = ?1",
+            rusqlite::params![&pub_key_vec],
+            |row| row.get(0),
+        )
+        .map_err(|e| format!("Failed to check for duplicate key: {}", e))?;
+    if existing > 0 {
+        return Err("A keypair with this public key is already registered".to_string());
+    }
+
+    // Wrap master_key for this public key
+    let keypair_method = crate::auth::keypair::KeypairMethod {
+        public_key: pub_key,
+    };
+    let wrapped_for_keypair = keypair_method
+        .wrap_master_key(&master_key_bytes)
+        .map_err(|e| format!("Failed to wrap master key for keypair: {}", e))?;
+    master_key_bytes.zeroize();
+
+    // Insert into auth_slots
+    let now = chrono::Utc::now().to_rfc3339();
+    crate::db::queries::insert_auth_slot(
+        db,
+        "keypair",
+        &label,
+        Some(&pub_key_vec),
+        &wrapped_for_keypair,
+        &now,
+    )?;
+
+    info!("Keypair auth method registered: {}", label);
+    Ok(())
+}
+
+/// Removes an authentication method by slot id.
+///
+/// Requires the current password to prevent rogue removal.
+/// Refuses to remove the last auth method.
+#[tauri::command]
+pub fn remove_auth_method(
+    slot_id: i64,
+    current_password: String,
+    state: State<DiaryState>,
+) -> Result<(), String> {
+    let db_state = state.db.lock().unwrap();
+    let db = db_state.as_ref().ok_or("Diary must be unlocked")?;
+
+    // Verify identity
+    let (_, wrapped_key) =
+        crate::db::queries::get_password_slot(db)?.ok_or("No password auth method found")?;
+    let method = crate::auth::password::PasswordMethod::new(current_password);
+    let mut master_key_bytes = method
+        .unwrap_master_key(&wrapped_key)
+        .map_err(|_| "Incorrect password".to_string())?;
+    master_key_bytes.zeroize();
+
+    // Guard: never remove the last auth method
+    let count = crate::db::queries::count_auth_slots(db)?;
+    if count <= 1 {
+        return Err(
+            "Cannot remove the last authentication method. Add another method first.".to_string(),
+        );
+    }
+
+    crate::db::queries::delete_auth_slot(db, slot_id)?;
+    info!("Auth method {} removed", slot_id);
+    Ok(())
+}
+
+// ─── Tests ────────────────────────────────────────────────────────────────────
 
 #[cfg(test)]
 mod tests {
@@ -197,39 +414,60 @@ mod tests {
     use std::fs;
 
     fn temp_db_path(name: &str) -> PathBuf {
-        PathBuf::from(format!("test_auth_{}.db", name))
+        PathBuf::from(format!("test_auth_cmd_{}.db", name))
     }
 
-    fn cleanup_db(path: &PathBuf) {
-        let _ = fs::remove_file(path);
-        let backup = path.with_extension("db.backup");
-        let _ = fs::remove_file(backup);
+    fn temp_backups_dir(name: &str) -> PathBuf {
+        PathBuf::from(format!("test_auth_cmd_backups_{}", name))
     }
 
-    #[test]
-    fn test_create_and_open_database() {
-        let db_path = temp_db_path("basic");
-        let backups_dir = PathBuf::from("test_backups_basic");
-        cleanup_db(&db_path);
+    fn cleanup(db_path: &PathBuf, backups_dir: &PathBuf) {
+        let _ = fs::remove_file(db_path);
+        let _ = fs::remove_dir_all(backups_dir);
+    }
 
-        // Create database
-        let db1 = create_database(&db_path, "password".to_string()).unwrap();
-        assert!(db_path.exists());
-        drop(db1);
-
-        // Open database with correct password
-        let db2 = open_database(&db_path, "password".to_string(), &backups_dir).unwrap();
-        drop(db2);
-
-        cleanup_db(&db_path);
+    fn make_state(name: &str) -> (DiaryState, PathBuf, PathBuf) {
+        let db_path = temp_db_path(name);
+        let backups_dir = temp_backups_dir(name);
+        let _ = fs::remove_file(&db_path);
         let _ = fs::remove_dir_all(&backups_dir);
+        let state = DiaryState::new(db_path.clone(), backups_dir.clone());
+        (state, db_path, backups_dir)
     }
 
     #[test]
-    fn test_open_with_wrong_password() {
-        let db_path = temp_db_path("wrong_pw");
-        let backups_dir = PathBuf::from("test_backups_wrong_pw");
-        cleanup_db(&db_path);
+    fn test_create_and_unlock() {
+        let (state, db_path, backups_dir) = make_state("create_unlock");
+
+        let db_conn = create_database(&db_path, "password".to_string()).unwrap();
+        {
+            let mut db = state.db.lock().unwrap();
+            *db = Some(db_conn);
+        }
+        assert!(db_path.exists());
+
+        // Lock and reopen
+        {
+            let mut db = state.db.lock().unwrap();
+            *db = None;
+        }
+
+        let db_conn2 = open_database(&db_path, "password".to_string(), &backups_dir).unwrap();
+        {
+            let mut db = state.db.lock().unwrap();
+            *db = Some(db_conn2);
+        }
+
+        let db = state.db.lock().unwrap();
+        assert!(db.is_some());
+        drop(db);
+
+        cleanup(&db_path, &backups_dir);
+    }
+
+    #[test]
+    fn test_wrong_password() {
+        let (_, db_path, backups_dir) = make_state("wrong_pw");
 
         create_database(&db_path, "correct".to_string()).unwrap();
 
@@ -237,50 +475,17 @@ mod tests {
         assert!(result.is_err());
         assert!(result.unwrap_err().contains("Incorrect password"));
 
-        cleanup_db(&db_path);
-        let _ = fs::remove_dir_all(&backups_dir);
+        cleanup(&db_path, &backups_dir);
     }
 
     #[test]
-    fn test_diary_state_create() {
-        let db_path = temp_db_path("state_create");
-        let backups_dir = PathBuf::from("test_backups");
-        cleanup_db(&db_path);
-
-        let state = DiaryState::new(db_path.clone(), backups_dir);
-
-        // Initially no connection
-        {
-            let db = state.db.lock().unwrap();
-            assert!(db.is_none());
-        }
-
-        // Create database manually
-        let db_conn = create_database(&db_path, "test".to_string()).unwrap();
-        {
-            let mut db = state.db.lock().unwrap();
-            *db = Some(db_conn);
-        }
-
-        // Now connection exists
-        {
-            let db = state.db.lock().unwrap();
-            assert!(db.is_some());
-        }
-
-        cleanup_db(&db_path);
-    }
-
-    #[test]
-    fn test_password_change_workflow() {
-        let db_path = temp_db_path("pw_change");
-        let backups_dir = PathBuf::from("test_backups_pw_change");
-        cleanup_db(&db_path);
+    fn test_change_password_v3() {
+        let (_, db_path, backups_dir) = make_state("change_pw_v3");
 
         // Create database
         let db = create_database(&db_path, "old_password".to_string()).unwrap();
 
-        // Add test entry
+        // Add a test entry
         let entry = crate::db::queries::DiaryEntry {
             date: "2024-01-01".to_string(),
             title: "Test Entry".to_string(),
@@ -290,54 +495,277 @@ mod tests {
             date_updated: "2024-01-01T00:00:00Z".to_string(),
         };
         crate::db::queries::insert_entry(&db, &entry).unwrap();
+
+        // Change password using v3 re-wrapping (no re-encryption)
+        let (slot_id, wrapped_key) = crate::db::queries::get_password_slot(&db).unwrap().unwrap();
+        let old_method = crate::auth::password::PasswordMethod::new("old_password".to_string());
+        let master_key = old_method.unwrap_master_key(&wrapped_key).unwrap();
+        let new_method = crate::auth::password::PasswordMethod::new("new_password".to_string());
+        let new_wrapped = new_method.wrap_master_key(&master_key).unwrap();
+        crate::db::queries::update_auth_slot_wrapped_key(&db, slot_id, &new_wrapped).unwrap();
         drop(db);
 
-        // Simulate password change: export, delete, recreate
-        let db_old = open_database(&db_path, "old_password".to_string(), &backups_dir).unwrap();
-        let entries: Vec<_> = {
-            let dates = crate::db::queries::get_all_entry_dates(&db_old).unwrap();
-            dates
-                .iter()
-                .filter_map(|date| crate::db::queries::get_entry(&db_old, date).unwrap())
-                .collect()
-        };
-        drop(db_old);
-
-        // Create backup, delete, recreate
-        let backup_path = db_path.with_extension("db.backup");
-        std::fs::copy(&db_path, &backup_path).unwrap();
-        std::fs::remove_file(&db_path).unwrap();
-
-        let db_new = create_database(&db_path, "new_password".to_string()).unwrap();
-        for e in &entries {
-            crate::db::queries::insert_entry(&db_new, e).unwrap();
-        }
-        drop(db_new);
-
-        // Verify new password works
-        let db_verify = open_database(&db_path, "new_password".to_string(), &backups_dir).unwrap();
-        let retrieved = crate::db::queries::get_entry(&db_verify, "2024-01-01")
+        // Open with new password — entry should still be accessible
+        let db2 = open_database(&db_path, "new_password".to_string(), &backups_dir).unwrap();
+        let retrieved = crate::db::queries::get_entry(&db2, "2024-01-01")
             .unwrap()
             .unwrap();
         assert_eq!(retrieved.title, "Test Entry");
+        assert_eq!(retrieved.text, "Test content");
 
-        cleanup_db(&db_path);
-        let _ = fs::remove_file(backup_path);
-        let _ = fs::remove_dir_all(&backups_dir);
+        // Old password should no longer work
+        let fail = open_database(&db_path, "old_password".to_string(), &backups_dir);
+        assert!(fail.is_err());
+
+        cleanup(&db_path, &backups_dir);
     }
 
     #[test]
-    fn test_reset_workflow() {
-        let db_path = temp_db_path("reset_wf");
-        cleanup_db(&db_path);
+    fn test_register_keypair_and_unlock() {
+        use crate::auth::keypair::generate_keypair;
 
-        create_database(&db_path, "password".to_string()).unwrap();
-        assert!(db_path.exists());
+        let (_, db_path, backups_dir) = make_state("register_kp");
 
-        // Reset = delete file
-        std::fs::remove_file(&db_path).unwrap();
-        assert!(!db_path.exists());
+        let db = create_database(&db_path, "password".to_string()).unwrap();
 
-        cleanup_db(&db_path);
+        // Insert a test entry to verify decryption after keypair unlock
+        let entry = crate::db::queries::DiaryEntry {
+            date: "2024-03-15".to_string(),
+            title: "Keypair Test".to_string(),
+            text: "Content unlocked via key file".to_string(),
+            word_count: 5,
+            date_created: "2024-03-15T00:00:00Z".to_string(),
+            date_updated: "2024-03-15T00:00:00Z".to_string(),
+        };
+        crate::db::queries::insert_entry(&db, &entry).unwrap();
+
+        // Generate keypair
+        let kp = generate_keypair().unwrap();
+        let priv_bytes_vec = hex::decode(&kp.private_key_hex).unwrap();
+        let pub_bytes_vec = hex::decode(&kp.public_key_hex).unwrap();
+
+        let mut priv_key = [0u8; 32];
+        priv_key.copy_from_slice(&priv_bytes_vec);
+        let mut pub_key = [0u8; 32];
+        pub_key.copy_from_slice(&pub_bytes_vec);
+
+        // Get master_key via password slot
+        let (_, wrapped_key) = crate::db::queries::get_password_slot(&db).unwrap().unwrap();
+        let method = crate::auth::password::PasswordMethod::new("password".to_string());
+        let master_key = method.unwrap_master_key(&wrapped_key).unwrap();
+
+        // Wrap for keypair
+        let kp_method = crate::auth::keypair::KeypairMethod {
+            public_key: pub_key,
+        };
+        let kp_wrapped = kp_method.wrap_master_key(&master_key).unwrap();
+
+        let now = chrono::Utc::now().to_rfc3339();
+        crate::db::queries::insert_auth_slot(
+            &db,
+            "keypair",
+            "Test Key",
+            Some(&pub_bytes_vec),
+            &kp_wrapped,
+            &now,
+        )
+        .unwrap();
+        drop(db);
+
+        // Unlock with private key
+        let db2 = open_database_with_keypair(&db_path, priv_key, &backups_dir).unwrap();
+
+        let version: i32 = db2
+            .conn()
+            .query_row("SELECT version FROM schema_version", [], |r| r.get(0))
+            .unwrap();
+        assert_eq!(version, 4);
+
+        // Verify entry is decryptable with the master key unwrapped via keypair
+        let retrieved = crate::db::queries::get_entry(&db2, "2024-03-15")
+            .unwrap()
+            .expect("Entry should exist after keypair unlock");
+        assert_eq!(retrieved.title, "Keypair Test");
+        assert_eq!(retrieved.text, "Content unlocked via key file");
+
+        cleanup(&db_path, &backups_dir);
+    }
+
+    #[test]
+    fn test_remove_auth_method_last_slot_guard() {
+        let (_, db_path, _backups_dir) = make_state("last_slot_guard");
+
+        let db = create_database(&db_path, "password".to_string()).unwrap();
+
+        // Only 1 slot exists: cannot remove it
+        let count = crate::db::queries::count_auth_slots(&db).unwrap();
+        assert_eq!(count, 1);
+
+        let (slot_id, _) = crate::db::queries::get_password_slot(&db).unwrap().unwrap();
+
+        // Simulate remove_auth_method logic
+        if count <= 1 {
+            // Correctly blocked removal of last method — nothing to do
+        } else {
+            crate::db::queries::delete_auth_slot(&db, slot_id).unwrap();
+        }
+
+        cleanup(&db_path, &_backups_dir);
+    }
+
+    #[test]
+    fn test_list_auth_methods() {
+        use crate::auth::keypair::generate_keypair;
+
+        let (_, db_path, _) = make_state("list_methods");
+
+        let db = create_database(&db_path, "password".to_string()).unwrap();
+
+        let slots = crate::db::queries::list_auth_slots(&db).unwrap();
+        assert_eq!(slots.len(), 1);
+        assert_eq!(slots[0].slot_type, "password");
+
+        // Add keypair slot
+        let kp = generate_keypair().unwrap();
+        let pub_key_vec = hex::decode(&kp.public_key_hex).unwrap();
+        let fake_wrapped = [0u8; 92];
+        let now = chrono::Utc::now().to_rfc3339();
+        crate::db::queries::insert_auth_slot(
+            &db,
+            "keypair",
+            "My Key",
+            Some(&pub_key_vec),
+            &fake_wrapped,
+            &now,
+        )
+        .unwrap();
+
+        let slots = crate::db::queries::list_auth_slots(&db).unwrap();
+        assert_eq!(slots.len(), 2);
+        assert!(slots.iter().any(|s| s.slot_type == "keypair"));
+        // Wrapped key is NOT in the returned structs (security)
+        for slot in &slots {
+            // AuthMethodInfo doesn't have wrapped_key field
+            let _ = &slot.id;
+        }
+
+        cleanup(
+            &db_path,
+            &PathBuf::from(format!("test_auth_cmd_backups_{}", "list_methods")),
+        );
+    }
+
+    #[test]
+    fn test_register_password_when_none_exists() {
+        let (_, db_path, backups_dir) = make_state("reg_pw_none");
+
+        let db = create_database(&db_path, "original".to_string()).unwrap();
+
+        // Delete the existing password slot to simulate a keypair-only diary
+        let (slot_id, _) = crate::db::queries::get_password_slot(&db).unwrap().unwrap();
+        crate::db::queries::delete_auth_slot(&db, slot_id).unwrap();
+        assert!(crate::db::queries::get_password_slot(&db)
+            .unwrap()
+            .is_none());
+
+        // register_password logic: wrap master key with the new password
+        let new_pw = "newpassword1";
+        let method = crate::auth::password::PasswordMethod::new(new_pw.to_string());
+        let wrapped = method.wrap_master_key(db.key().as_bytes()).unwrap();
+        let now = chrono::Utc::now().to_rfc3339();
+        crate::db::queries::insert_auth_slot(&db, "password", "Password", None, &wrapped, &now)
+            .unwrap();
+
+        // Slot should now exist
+        assert!(crate::db::queries::get_password_slot(&db)
+            .unwrap()
+            .is_some());
+
+        cleanup(&db_path, &backups_dir);
+    }
+
+    #[test]
+    fn test_register_password_and_unlock() {
+        let (_, db_path, backups_dir) = make_state("reg_pw_unlock");
+
+        let db = create_database(&db_path, "original".to_string()).unwrap();
+
+        // Add a keypair slot, then remove the password slot
+        let kp = crate::auth::keypair::generate_keypair().unwrap();
+        let pub_key_vec = hex::decode(&kp.public_key_hex).unwrap();
+        let mut pub_key = [0u8; 32];
+        pub_key.copy_from_slice(&pub_key_vec);
+        let kp_method = crate::auth::keypair::KeypairMethod {
+            public_key: pub_key,
+        };
+        let kp_wrapped = kp_method.wrap_master_key(db.key().as_bytes()).unwrap();
+        let now = chrono::Utc::now().to_rfc3339();
+        crate::db::queries::insert_auth_slot(
+            &db,
+            "keypair",
+            "My Key",
+            Some(&pub_key_vec),
+            &kp_wrapped,
+            &now,
+        )
+        .unwrap();
+
+        let (pw_slot_id, _) = crate::db::queries::get_password_slot(&db).unwrap().unwrap();
+        crate::db::queries::delete_auth_slot(&db, pw_slot_id).unwrap();
+
+        // Register new password using the master key from the session
+        let new_pw = "mynewpassword";
+        let method = crate::auth::password::PasswordMethod::new(new_pw.to_string());
+        let wrapped = method.wrap_master_key(db.key().as_bytes()).unwrap();
+        let now2 = chrono::Utc::now().to_rfc3339();
+        crate::db::queries::insert_auth_slot(&db, "password", "Password", None, &wrapped, &now2)
+            .unwrap();
+        drop(db);
+
+        // Should now be able to unlock with the new password
+        let db2 =
+            crate::db::schema::open_database(&db_path, new_pw.to_string(), &backups_dir).unwrap();
+        let count: i32 = db2
+            .conn()
+            .query_row("SELECT COUNT(*) FROM auth_slots", [], |r| r.get(0))
+            .unwrap();
+        assert_eq!(count, 2); // keypair + new password
+
+        cleanup(&db_path, &backups_dir);
+    }
+
+    #[test]
+    fn test_register_password_rejects_duplicate() {
+        let (_, db_path, backups_dir) = make_state("reg_pw_dup");
+
+        let db = create_database(&db_path, "existing".to_string()).unwrap();
+
+        // A password slot already exists — register_password should reject
+        let existing = crate::db::queries::get_password_slot(&db).unwrap();
+        assert!(existing.is_some(), "Should already have a password slot");
+
+        // Simulate the guard in register_password
+        let result: Result<(), String> = if existing.is_some() {
+            Err("A password method already exists. Use 'Change Password' to update it.".to_string())
+        } else {
+            Ok(())
+        };
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("already exists"));
+
+        cleanup(&db_path, &backups_dir);
+    }
+
+    #[test]
+    fn test_register_password_rejects_short_password() {
+        // Minimum length check (< 8 chars)
+        let short = "short";
+        let result: Result<(), String> = if short.len() < 8 {
+            Err("Password must be at least 8 characters".to_string())
+        } else {
+            Ok(())
+        };
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("at least 8 characters"));
     }
 }

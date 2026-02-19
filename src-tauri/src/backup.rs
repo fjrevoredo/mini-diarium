@@ -14,7 +14,7 @@ pub fn create_backup(diary_path: &Path, backups_dir: &Path) -> Result<PathBuf, S
 
     // Generate backup filename with current timestamp
     let timestamp = Local::now().format("%Y-%m-%d-%Hh%M");
-    let backup_filename = format!("backup-{}.txt", timestamp);
+    let backup_filename = format!("backup-{}.db", timestamp);
     let backup_path = backups_dir.join(&backup_filename);
 
     // Copy diary file to backup location
@@ -40,7 +40,7 @@ pub fn rotate_backups(backups_dir: &Path) -> Result<(), String> {
                 && path
                     .file_name()
                     .and_then(|name| name.to_str())
-                    .map(|name| name.starts_with("backup-") && name.ends_with(".txt"))
+                    .map(|name| name.starts_with("backup-") && name.ends_with(".db"))
                     .unwrap_or(false)
         })
         .collect();
@@ -113,7 +113,7 @@ mod tests {
             .unwrap()
             .to_str()
             .unwrap()
-            .ends_with(".txt"));
+            .ends_with(".db"));
 
         // Verify content
         let backup_content = fs::read_to_string(&backup_path).unwrap();
@@ -135,7 +135,7 @@ mod tests {
 
         // Create 30 backup files (under limit)
         for i in 0..30 {
-            let filename = format!("backup-2024-01-{:02}-12h00.txt", i + 1);
+            let filename = format!("backup-2024-01-{:02}-12h00.db", i + 1);
             create_test_file(&backups_dir.join(filename), "test").unwrap();
         }
 
@@ -164,7 +164,7 @@ mod tests {
 
         // Create 60 backup files (over limit of 50)
         for i in 0..60 {
-            let filename = format!("backup-2024-01-{:02}-12h00.txt", i + 1);
+            let filename = format!("backup-2024-01-{:02}-12h00.db", i + 1);
             create_test_file(&backups_dir.join(filename), "test").unwrap();
         }
 
@@ -179,12 +179,12 @@ mod tests {
         assert_eq!(files.len(), 50);
 
         // Verify the oldest files were deleted (backup-2024-01-01 through backup-2024-01-10)
-        assert!(!backups_dir.join("backup-2024-01-01-12h00.txt").exists());
-        assert!(!backups_dir.join("backup-2024-01-10-12h00.txt").exists());
+        assert!(!backups_dir.join("backup-2024-01-01-12h00.db").exists());
+        assert!(!backups_dir.join("backup-2024-01-10-12h00.db").exists());
 
         // Verify newer files still exist
-        assert!(backups_dir.join("backup-2024-01-11-12h00.txt").exists());
-        assert!(backups_dir.join("backup-2024-01-60-12h00.txt").exists());
+        assert!(backups_dir.join("backup-2024-01-11-12h00.db").exists());
+        assert!(backups_dir.join("backup-2024-01-60-12h00.db").exists());
 
         // Clean up
         let _ = fs::remove_dir_all(&backups_dir);
@@ -206,7 +206,7 @@ mod tests {
         // Create 50 existing backups
         fs::create_dir_all(&backups_dir).unwrap();
         for i in 0..50 {
-            let filename = format!("backup-2024-01-{:02}-12h00.txt", i + 1);
+            let filename = format!("backup-2024-01-{:02}-12h00.db", i + 1);
             create_test_file(&backups_dir.join(filename), "old").unwrap();
         }
 
@@ -224,7 +224,7 @@ mod tests {
         assert_eq!(files.len(), 50);
 
         // Verify oldest was deleted
-        assert!(!backups_dir.join("backup-2024-01-01-12h00.txt").exists());
+        assert!(!backups_dir.join("backup-2024-01-01-12h00.db").exists());
 
         // Clean up
         let _ = fs::remove_file(&diary_path);
@@ -242,7 +242,7 @@ mod tests {
 
         // Create backup files
         for i in 0..55 {
-            let filename = format!("backup-2024-01-{:02}-12h00.txt", i + 1);
+            let filename = format!("backup-2024-01-{:02}-12h00.db", i + 1);
             create_test_file(&backups_dir.join(filename), "test").unwrap();
         }
 

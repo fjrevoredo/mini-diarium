@@ -1,6 +1,6 @@
 import { createSignal, For, createMemo } from 'solid-js';
 import { ChevronLeft, ChevronRight } from 'lucide-solid';
-import { selectedDate, setSelectedDate } from '../../state/ui';
+import { selectedDate, setSelectedDate, setIsSidebarCollapsed } from '../../state/ui';
 import { entryDates } from '../../state/entries';
 import { preferences } from '../../state/preferences';
 import { getTodayString } from '../../lib/dates';
@@ -134,6 +134,7 @@ export default function Calendar() {
     }
     if (day.isCurrentMonth) {
       setSelectedDate(day.date);
+      setIsSidebarCollapsed(true);
     }
   };
 

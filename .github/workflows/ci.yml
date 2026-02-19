@@ -74,28 +74,46 @@ jobs:
           curl -fsSL https://d2lang.com/install.sh | sh -s --
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
-      - name: Verify architecture diagrams are up-to-date
+      - name: Verify diagrams are up-to-date
         run: |
-          # Regenerate both SVGs from D2 sources
-          ~/.local/bin/d2 docs/architecture-simple.d2 docs/architecture-simple-check.svg
-          ~/.local/bin/d2 docs/architecture-full.d2 docs/architecture-full-check.svg
+          # Work around Chromium sandbox restrictions on GitHub Ubuntu runners
+          cat > /tmp/puppeteer-config.json << 'EOF'
+          {
+            "args": ["--no-sandbox", "--disable-setuid-sandbox"]
+          }
+          EOF
 
-          # Check simple diagram
-          if ! diff -q docs/architecture-simple.svg docs/architecture-simple-check.svg > /dev/null 2>&1; then
-            echo "❌ Simple architecture diagram is out of sync!"
-            echo "Run: d2 docs/architecture-simple.d2 docs/architecture-simple.svg"
-            exit 1
-          fi
+          # Regenerate Mermaid diagrams
+          bun x mmdc -p /tmp/puppeteer-config.json -i docs/diagrams/unlock.mmd -o docs/diagrams/unlock-check.svg
+          bun x mmdc -p /tmp/puppeteer-config.json -i docs/diagrams/unlock-dark.mmd -o docs/diagrams/unlock-dark-check.svg --backgroundColor transparent
+          bun x mmdc -p /tmp/puppeteer-config.json -i docs/diagrams/save-entry.mmd -o docs/diagrams/save-entry-check.svg
+          bun x mmdc -p /tmp/puppeteer-config.json -i docs/diagrams/save-entry-dark.mmd -o docs/diagrams/save-entry-dark-check.svg --backgroundColor transparent
+          bun x mmdc -p /tmp/puppeteer-config.json -i docs/diagrams/context.mmd -o docs/diagrams/context-check.svg
+          bun x mmdc -p /tmp/puppeteer-config.json -i docs/diagrams/context-dark.mmd -o docs/diagrams/context-dark-check.svg --backgroundColor transparent
 
-          # Check full diagram
-          if ! diff -q docs/architecture-full.svg docs/architecture-full-check.svg > /dev/null 2>&1; then
-            echo "❌ Full architecture diagram is out of sync!"
-            echo "Run: d2 docs/architecture-full.d2 docs/architecture-full.svg"
-            exit 1
-          fi
+          # Regenerate D2 diagrams
+          ~/.local/bin/d2 docs/diagrams/architecture-dark.d2 docs/diagrams/architecture-dark-check.svg
 
-          echo "✅ Both architecture diagrams are up-to-date"
-          rm docs/architecture-*-check.svg
+          # Verify expected SVGs exist
+          for file in \
+            docs/diagrams/unlock.svg \
+            docs/diagrams/unlock-dark.svg \
+            docs/diagrams/save-entry.svg \
+            docs/diagrams/save-entry-dark.svg \
+            docs/diagrams/context.svg \
+            docs/diagrams/context-dark.svg \
+            docs/diagrams/architecture-dark.svg
+          do
+            if [ ! -f "$file" ]; then
+              echo "❌ Diagram missing: $file"
+              echo "Run: bun run diagrams"
+              exit 1
+            fi
+          done
+
+          echo "✅ All diagrams exist"
+          rm docs/diagrams/*-check.svg
+          rm /tmp/puppeteer-config.json
 
   test:
     name: Test

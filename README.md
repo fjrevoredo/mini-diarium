@@ -2,12 +2,16 @@
 
 [![CI Status](https://github.com/fjrevoredo/mini-diarium/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/fjrevoredo/mini-diarium/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-0.1.0-blue.svg)](https://github.com/fjrevoredo/mini-diarium/releases)
+[![Version](https://img.shields.io/badge/version-0.2.0-blue.svg)](https://github.com/fjrevoredo/mini-diarium/releases)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)](https://github.com/fjrevoredo/mini-diarium#installation)
 
-An encrypted, local-first desktop journaling app.
+An encrypted, local cross-platform journaling app
 
 Mini Diarium keeps your journal private. Every entry is encrypted with AES-256-GCM before it touches disk, the app never connects to the internet, and your data never leaves your machine. Built with Tauri, SolidJS, and Rust.
+
+<p align="center">
+  <img src="public/demo.gif" alt="Demo" width="768" />
+</p>
 
 ## Background
 
@@ -15,37 +19,99 @@ Mini Diarium is a spiritual successor to [Mini Diary](https://github.com/samuelm
 
 ## Features
 
-- **Encryption at rest**: AES-256-GCM with Argon2id key derivation
-- **Rich text editor** 
-- **Full-text search**
+- **Key file authentication**: unlock your diary with an X25519 private key file instead of (or alongside) your password, like SSH keys for your journal. Register multiple key files; manage all auth methods from Preferences. See [Key File Authentication](#key-file-authentication) for details.
+- **AES-256-GCM encryption**: all entries are encrypted with a random master key. Each auth method holds its own wrapped copy of that key, so adding or removing a method is O(1), with no re-encryption of your entries.
+- **Rich text editor**
 - **Calendar navigation**
-- **Import**: Mini Diary JSON and Day One JSON with merge conflict resolution
+- **Import**: Mini Diary JSON, Day One JSON/TXT, and jrnl JSON with merge conflict resolution
 - **Export**: JSON and Markdown formats
 - **Themes**
-- **Automatic backups**: periodic database backups with rotation
+- **Automatic backups**: backup on unlock with rotation
 - **Statistics**
-- **Preferences**: first day of week, future entries toggle, title visibility, spellcheck, password change
+- **Preferences**: first day of week, future entries toggle, title visibility, spellcheck, password change, authentication method management
 - **Cross-platform**: Windows, macOS, and Linux
 - **Zero network access**: no telemetry, no analytics, no update checks
 
-## Architecture
+# Architecture
 
-Mini Diarium uses a layered architecture with clear separation of concerns:
+# Unlock Model
 
-![Architecture Overview](docs/architecture-simple.svg)
+Mini Diarium uses a wrapped master key design.
 
-The application is structured into 6 layers:
+- A random master key encrypts all entries using AES-256-GCM
+- Authentication methods wrap the master key
+- Unlocking unwraps the master key into memory for the session
 
-1. **Presentation Layer**
-2. **State Layer**
-3. **IPC Layer**
-4. **Backend Commands**
-5. **Business Logic**
-6. **Data Store**
+## Unlock Flow
 
-**Key Pattern**: All entry writes perform a **dual write**—updating both the encrypted `entries` table and the plaintext `entries_fts` search index. This ensures search stays synchronized.
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/diagrams/unlock-dark.svg">
+  <img alt="Unlock Flow Diagram" src="docs/diagrams/unlock.svg">
+</picture>
 
-For a detailed architecture diagram showing all components and data flows, see [docs/architecture-full.svg](docs/architecture-full.svg).
+### Password Unlock
+
+- Argon2 key derivation
+- AES-GCM unwrap of master key
+
+### Key File Unlock
+
+- X25519 key pair
+- ECDH followed by HKDF
+- AES-GCM unwrap of master key
+
+The master key is never stored in plaintext.
+
+---
+
+## System Context
+
+Everything runs locally on the user's machine.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/diagrams/context-dark.svg">
+  <img alt="System Context Diagram" src="docs/diagrams/context.svg">
+</picture>
+
+### Properties
+
+- The UI communicates with the Rust backend via Tauri `invoke()`
+- The backend reads and writes to local SQLite
+- No HTTP clients
+- No background sync
+- No telemetry
+
+---
+
+# Saving an Entry
+
+When saving an entry:
+
+1. The content is encrypted using the master key.
+2. The encrypted content is stored in the `entries` table.
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/diagrams/save-entry-dark.svg">
+    <img 
+      alt="Save Entry Flow Diagram" 
+      src="docs/diagrams/save-entry.svg"
+      width="600"
+    >
+  </picture>
+</p>
+
+
+---
+
+# Layered Architecture
+
+Mini Diarium follows a layered structure.
+
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/diagrams/architecture-dark.svg">
+  <img alt="Layered Architecture Diagram" src="docs/diagrams/architecture-dark.svg">
+</picture>
 
 ## Installation
 
@@ -84,6 +150,44 @@ sha256sum Mini-Diarium-*.AppImage
 4. Navigate between days with `Ctrl+Left` / `Ctrl+Right` or click dates on the calendar
 5. Lock your diary when you're done
 
+## Key File Authentication
+
+Most journal apps only offer a password. Mini Diarium also lets you unlock with an **X25519 private key file**, a small `.key` file that acts like an SSH key for your diary. You can use a key file instead of your password, or register both and use whichever is convenient.
+
+### Why use a key file?
+
+| Scenario | How a key file helps |
+|----------|----------------------|
+| **Physical second factor** | Keep the `.key` file on a USB drive. The diary can only be unlocked when the drive is plugged in, with no app, no phone, and no OTP codes. |
+| **Password manager integration** | Store the `.key` file as a secure attachment. Unlock without memorizing a passphrase at all. |
+| **Multiple machines** | Register one key file per machine. Revoke access to a single machine by removing that slot without touching your password or re-encrypting any entries. |
+| **Shared account, separate keys** | Register several key files under different labels. Each is independent, and removing one doesn't affect the others. |
+
+### How it works
+
+Each auth method stores its own encrypted copy of a random **master key** that encrypts all diary entries. For key files, this wrapping uses **X25519 ECIES**:
+
+1. A 256-bit master key is generated once when you create the diary and never changes.
+2. You generate an X25519 keypair in Preferences. The app saves the **private key** to a `.key` file (64-character hex string) and retains only the **public key**.
+3. The public key is used to wrap the master key: an ephemeral DH key exchange produces a one-time secret, HKDF-SHA256 derives a wrapping key from it, and AES-256-GCM encrypts the master key. The resulting blob is stored in the `auth_slots` table alongside your password slot.
+4. To unlock, Mini Diarium reads the `.key` file, performs the same ECDH derivation in reverse, and unwraps the master key; your password is never required.
+
+The private key never enters the database. The public key stored in the database cannot unlock the diary. A wrong or tampered key file is rejected by AES-GCM authentication.
+
+### Setting up a key file
+
+1. Open **Preferences → Authentication Methods**
+2. Click **Generate Key File**
+3. Save the `.key` file somewhere only you control, such as a USB drive, a password manager's secure notes, or an encrypted folder
+4. Enter your current password to authorize the registration
+5. Give the slot a label (e.g. "USB drive" or "laptop")
+
+From that point you can unlock from the login screen by switching to **Key File** mode and selecting your `.key` file. To remove a key file, open Preferences → Authentication Methods and delete its slot (the last remaining method is always protected from deletion).
+
+> **Backup your key file.** Like an SSH private key, it cannot be regenerated. If you lose both your password slot and all key files, there is no recovery path.
+
+---
+
 ## Keyboard Shortcuts
 
 | Action         | Shortcut           |
@@ -119,10 +223,14 @@ Artifacts will be in `src-tauri/target/release/bundle/`.
 - [Tauri 2](https://v2.tauri.app/): desktop app framework (Rust backend, web frontend)
 - [SolidJS](https://www.solidjs.com/): reactive UI framework
 - [Rust](https://www.rust-lang.org/): backend logic, encryption, database
-- [SQLite](https://www.sqlite.org/): local database with FTS5 full-text search
+  - `x25519-dalek`, `hkdf`, `sha2`: X25519 ECIES key wrapping for key file authentication
+- [SQLite](https://www.sqlite.org/): local encrypted database storage
 - [TipTap](https://tiptap.dev/): rich text editor
 - [UnoCSS](https://unocss.dev/): utility-first CSS
 - [Kobalte](https://kobalte.dev/): accessible UI primitives
+
+## Known Issues
+- Most keyboard shortcuts are broken
 
 ## Contributing
 
@@ -130,7 +238,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for setup instructions, development workf
 
 ## Releasing
 
-For maintainers: See [RELEASING.md](RELEASING.md) for step-by-step release instructions.
+For maintainers: See [docs/RELEASING.md](docs/RELEASING.md) for step-by-step release instructions.
 
 ## Security
 

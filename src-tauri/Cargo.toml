@@ -1,6 +1,6 @@
 [package]
 name = "mini-diarium"
-version = "0.1.2"
+version = "0.2.0"
 description = "A modern, encrypted, local-first desktop journaling application"
 authors = ["you"]
 edition = "2021"
@@ -29,6 +29,9 @@ zeroize = { version = "1.8", features = ["derive"] }
 rusqlite = { version = "0.38", features = ["bundled"] }
 rand = "0.8"
 hex = "0.4"
+x25519-dalek = { version = "2", features = ["static_secrets"] }
+hkdf = "0.12"
+sha2 = "0.10"
 chrono = "0.4"
 log = "0.4"
 env_logger = "0.11"

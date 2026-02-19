@@ -1,0 +1,55 @@
+direction: right
+
+presentation: {
+  label: "Presentation Layer\n(Tauri + SolidJS)"
+  style.fill: "#e3f2fd"
+
+  router: "Router\n(route guards)"
+  auth: "Auth Context\n(lock / unlock)"
+  editor: "Editor\n(TipTap)"
+}
+
+state: {
+  label: "State Layer\n(Zustand)"
+  style.fill: "#f3e5f5"
+
+  auth_state: "Auth State"
+  entry_state: "Entry State"
+}
+
+ipc: {
+  label: "IPC Layer"
+  style.fill: "#e8f5e9"
+
+  invoke: "invoke()"
+}
+
+backend: {
+  label: "Rust Backend"
+  style.fill: "#fff3e0"
+
+  commands: "Commands\n(save, load, import, export, stats)"
+  crypto: "Crypto Service\n(AES-256-GCM)"
+  auth_service: "Auth Service\n(wrap / unwrap master key)"
+}
+
+data: {
+  label: "Data Layer\n(SQLite)"
+  style.fill: "#f5f5f5"
+
+  entries: "entries\n(encrypted)"
+  slots: "auth_slots\n(wrapped keys)"
+}
+
+presentation.editor -> state.entry_state
+presentation.auth -> state.auth_state
+
+state.entry_state -> ipc.invoke
+state.auth_state -> ipc.invoke
+
+ipc.invoke -> backend.commands
+
+backend.commands -> backend.crypto
+
+backend.crypto -> data.entries
+backend.auth_service -> data.slots

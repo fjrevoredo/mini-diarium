@@ -1,6 +1,6 @@
 {
   "name": "mini-diarium",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "description": "A modern, encrypted, local-first desktop journaling application",
   "type": "module",
   "scripts": {
@@ -19,7 +19,8 @@
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
     "pre-commit": "node scripts/pre-commit.js",
-    "check": "node scripts/quick-check.js"
+    "check": "node scripts/quick-check.js",
+    "diagrams": "mmdc -i docs/diagrams/unlock.mmd -o docs/diagrams/unlock.svg && mmdc -i docs/diagrams/unlock-dark.mmd -o docs/diagrams/unlock-dark.svg --backgroundColor transparent && mmdc -i docs/diagrams/save-entry.mmd -o docs/diagrams/save-entry.svg && mmdc -i docs/diagrams/save-entry-dark.mmd -o docs/diagrams/save-entry-dark.svg --backgroundColor transparent && mmdc -i docs/diagrams/context.mmd -o docs/diagrams/context.svg && mmdc -i docs/diagrams/context-dark.mmd -o docs/diagrams/context-dark.svg --backgroundColor transparent && d2 docs/diagrams/architecture-dark.d2 docs/diagrams/architecture-dark.svg"
   },
   "license": "MIT",
   "dependencies": {
@@ -37,6 +38,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
+    "@mermaid-js/mermaid-cli": "^11.12.0",
     "@solidjs/testing-library": "^0.8.10",
     "@tauri-apps/cli": "^2",
     "@testing-library/jest-dom": "^6.9.1",

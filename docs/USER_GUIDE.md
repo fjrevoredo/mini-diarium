@@ -12,6 +12,8 @@ When you open Mini Diarium for the first time, you'll be asked to create a passw
 
 Your diary is encrypted whenever it's locked. When you launch the app, enter your password to unlock it. The diary locks when you close the app.
 
+As an alternative to your password, you can register a key file in Preferences → Authentication Methods. Once registered, use the "Key File" tab on the unlock screen and select your `.key` file to unlock without typing your password.
+
 ## Writing Entries
 
 ### The Editor
@@ -64,7 +66,7 @@ Press `Ctrl+G` to open the date picker and jump directly to any date.
 
 ## Searching
 
-The search bar in the sidebar lets you search across all entries using full-text search. Results show matching snippets with highlighted keywords. Click a result to navigate to that entry.
+Full-text search is not available in this version. It will be added in a future release.
 
 ## Import
 
@@ -96,6 +98,8 @@ Open with `Ctrl+,`:
 | Hide titles | Remove the title field for a minimal look |
 | Spellcheck | Toggle browser spellcheck in the editor |
 | Change password | Re-encrypt your diary with a new password |
+| Authentication Methods | View registered unlock methods; add a new key file or remove existing ones |
+| At least one method must remain | removing the last is blocked |
 | Reset diary | Delete all data and start fresh (irreversible) |
 
 ## Statistics
@@ -120,7 +124,7 @@ Database location by OS:
 ## FAQ
 
 **I forgot my password. Can I recover my entries?**
-No. Entries are encrypted with a key derived from your password. Without the password, decryption is not possible. This is by design.
+No — unless you registered a key file as an authentication method. If you have a key file, you can still unlock using it. If you have neither your password nor your key file, your entries cannot be recovered. This is by design.
 
 **Where is my data stored?**
 Locally on your machine in an SQLite database. See Backups above for the path.

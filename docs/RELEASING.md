@@ -10,6 +10,11 @@ Before starting the release process:
 
 - [ ] All planned features/fixes are merged to `master`
 - [ ] All tests passing (`cargo test` and `bun run test:run`)
+- [ ] Run `cargo audit` — no known vulnerabilities in Rust dependencies
+  ```bash
+  cargo install cargo-audit  # one-time install
+  cargo audit
+  ```
 - [ ] CI/CD pipeline passing on master
 - [ ] No known P0/P1 bugs
 - [ ] CHANGELOG.md updated with release notes

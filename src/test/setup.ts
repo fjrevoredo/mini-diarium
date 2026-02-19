@@ -45,5 +45,5 @@ vi.mock('@tauri-apps/plugin-dialog', () => ({
 }));
 
 vi.mock('@tauri-apps/plugin-opener', () => ({
-  open: vi.fn(() => Promise.resolve()),
+  openUrl: vi.fn(() => Promise.resolve()),
 }));

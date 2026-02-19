@@ -1,4 +1,4 @@
-import { createSignal, onMount, onCleanup } from 'solid-js';
+import { onMount, onCleanup } from 'solid-js';
 import { listen, UnlistenFn } from '@tauri-apps/api/event';
 import { createLogger } from '../../lib/logger';
 import Header from './Header';
@@ -9,9 +9,12 @@ import PreferencesOverlay from '../overlays/PreferencesOverlay';
 import StatsOverlay from '../overlays/StatsOverlay';
 import ImportOverlay from '../overlays/ImportOverlay';
 import ExportOverlay from '../overlays/ExportOverlay';
+import AboutOverlay from '../overlays/AboutOverlay';
 import {
   selectedDate,
   setSelectedDate,
+  isSidebarCollapsed,
+  setIsSidebarCollapsed,
   setIsGoToDateOpen,
   isPreferencesOpen,
   setIsPreferencesOpen,
@@ -21,6 +24,8 @@ import {
   setIsImportOpen,
   isExportOpen,
   setIsExportOpen,
+  isAboutOpen,
+  setIsAboutOpen,
 } from '../../state/ui';
 import { setupNavigationShortcuts } from '../../lib/shortcuts';
 import {
@@ -36,8 +41,6 @@ import { getTodayString } from '../../lib/dates';
 const log = createLogger('MainLayout');
 
 export default function MainLayout() {
-  const [isSidebarCollapsed, setIsSidebarCollapsed] = createSignal(true);
-
   // Store cleanup functions at component level
   let cleanupShortcuts: (() => void) | undefined;
   const unlisteners: UnlistenFn[] = [];
@@ -188,6 +191,7 @@ export default function MainLayout() {
         }}
       />
       <ExportOverlay isOpen={isExportOpen()} onClose={() => setIsExportOpen(false)} />
+      <AboutOverlay isOpen={isAboutOpen()} onClose={() => setIsAboutOpen(false)} />
     </div>
   );
 }

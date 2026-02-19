@@ -5,6 +5,29 @@ use crate::import::{dayone, dayone_txt, jrnl, merge, minidiary};
 use log::{debug, error, info};
 use tauri::State;
 
+const MAX_IMPORT_FILE_SIZE: u64 = 100 * 1024 * 1024; // 100 MB
+
+fn read_import_file(file_path: &str) -> Result<String, String> {
+    let metadata = std::fs::metadata(file_path).map_err(|e| {
+        let err = format!("Cannot access file: {}", e);
+        error!("{}", err);
+        err
+    })?;
+    if metadata.len() > MAX_IMPORT_FILE_SIZE {
+        let err = format!(
+            "File is too large ({} MB). Maximum supported size is 100 MB.",
+            metadata.len() / 1_048_576
+        );
+        error!("{}", err);
+        return Err(err);
+    }
+    std::fs::read_to_string(file_path).map_err(|e| {
+        let err = format!("Failed to read file: {}", e);
+        error!("{}", err);
+        err
+    })
+}
+
 /// Import result containing the number of entries imported
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct ImportResult {
@@ -37,11 +60,7 @@ pub fn import_minidiary_json(
 
     // Read file
     debug!("Reading file...");
-    let json_content = std::fs::read_to_string(&file_path).map_err(|e| {
-        let err = format!("Failed to read file: {}", e);
-        error!("{}", err);
-        err
-    })?;
+    let json_content = read_import_file(&file_path)?;
 
     // Parse JSON
     debug!("Parsing Mini Diary JSON...");
@@ -58,12 +77,7 @@ pub fn import_minidiary_json(
         e
     })?;
 
-    // Rebuild FTS index after import
-    debug!("Rebuilding FTS index...");
-    rebuild_fts_index(db).map_err(|e| {
-        error!("FTS rebuild error: {}", e);
-        e
-    })?;
+    // Search index hook: call search module's bulk_reindex() here when implemented.
 
     info!(
         "Mini Diary import complete: {} imported, {} merged",
@@ -96,11 +110,7 @@ pub fn import_dayone_json(
 
     // Read file
     debug!("Reading file...");
-    let json_content = std::fs::read_to_string(&file_path).map_err(|e| {
-        let err = format!("Failed to read file: {}", e);
-        error!("{}", err);
-        err
-    })?;
+    let json_content = read_import_file(&file_path)?;
 
     // Parse JSON
     debug!("Parsing Day One JSON...");
@@ -117,12 +127,7 @@ pub fn import_dayone_json(
         e
     })?;
 
-    // Rebuild FTS index after import
-    debug!("Rebuilding FTS index...");
-    rebuild_fts_index(db).map_err(|e| {
-        error!("FTS rebuild error: {}", e);
-        e
-    })?;
+    // Search index hook: call search module's bulk_reindex() here when implemented.
 
     info!(
         "Day One JSON import complete: {} imported, {} merged",
@@ -155,11 +160,7 @@ pub fn import_jrnl_json(
 
     // Read file
     debug!("Reading file...");
-    let json_content = std::fs::read_to_string(&file_path).map_err(|e| {
-        let err = format!("Failed to read file: {}", e);
-        error!("{}", err);
-        err
-    })?;
+    let json_content = read_import_file(&file_path)?;
 
     // Parse JSON
     debug!("Parsing jrnl JSON...");
@@ -176,12 +177,7 @@ pub fn import_jrnl_json(
         e
     })?;
 
-    // Rebuild FTS index after import
-    debug!("Rebuilding FTS index...");
-    rebuild_fts_index(db).map_err(|e| {
-        error!("FTS rebuild error: {}", e);
-        e
-    })?;
+    // Search index hook: call search module's bulk_reindex() here when implemented.
 
     info!(
         "jrnl import complete: {} imported, {} merged",
@@ -214,11 +210,7 @@ pub fn import_dayone_txt(
 
     // Read file
     debug!("Reading file...");
-    let txt_content = std::fs::read_to_string(&file_path).map_err(|e| {
-        let err = format!("Failed to read file: {}", e);
-        error!("{}", err);
-        err
-    })?;
+    let txt_content = read_import_file(&file_path)?;
 
     // Parse TXT
     debug!("Parsing Day One TXT...");
@@ -235,12 +227,7 @@ pub fn import_dayone_txt(
         e
     })?;
 
-    // Rebuild FTS index after import
-    debug!("Rebuilding FTS index...");
-    rebuild_fts_index(db).map_err(|e| {
-        error!("FTS rebuild error: {}", e);
-        e
-    })?;
+    // Search index hook: call search module's bulk_reindex() here when implemented.
 
     info!(
         "Day One TXT import complete: {} imported, {} merged",
@@ -281,43 +268,6 @@ fn import_entries(
         entries_merged,
         entries_skipped,
     })
-}
-
-/// Rebuilds the full-text search index
-///
-/// This is necessary after bulk imports to ensure search works correctly
-fn rebuild_fts_index(db: &DatabaseConnection) -> Result<(), String> {
-    debug!("Clearing existing FTS index...");
-
-    // Clear the FTS table (regular DELETE since this is a standalone FTS table)
-    db.conn()
-        .execute("DELETE FROM entries_fts", [])
-        .map_err(|e| format!("Failed to clear FTS index: {}", e))?;
-
-    debug!("Getting all entry dates...");
-    // Get all entries
-    let dates = queries::get_all_entry_dates(db)?;
-    let total_entries = dates.len();
-    debug!("Found {} entries to index", total_entries);
-
-    // Rebuild index for each entry
-    for date in dates {
-        if let Some(entry) = queries::get_entry(db, &date)? {
-            // Insert into FTS index
-            db.conn()
-                .execute(
-                    "INSERT INTO entries_fts (date, title, text) VALUES (?1, ?2, ?3)",
-                    rusqlite::params![&entry.date, &entry.title, &entry.text],
-                )
-                .map_err(|e| format!("Failed to rebuild FTS for {}: {}", date, e))?;
-        }
-    }
-
-    debug!(
-        "Successfully rebuilt FTS index for {} entries",
-        total_entries
-    );
-    Ok(())
 }
 
 #[cfg(test)]
@@ -395,42 +345,6 @@ mod tests {
             .unwrap();
         assert!(merged.title.contains("Morning"));
         assert!(merged.title.contains("Evening"));
-
-        cleanup_db(&db_path);
-    }
-
-    #[test]
-    fn test_rebuild_fts_index() {
-        let db_path = temp_db_path("fts_rebuild");
-        cleanup_db(&db_path);
-
-        let password = "test".to_string();
-        let db = create_database(&db_path, password).unwrap();
-
-        // Insert entries
-        crate::db::queries::insert_entry(
-            &db,
-            &create_test_entry("2024-01-01", "Test", "Content here"),
-        )
-        .unwrap();
-
-        // Clear FTS manually (regular DELETE for standalone FTS table)
-        db.conn().execute("DELETE FROM entries_fts", []).unwrap();
-
-        // Rebuild index
-        rebuild_fts_index(&db).unwrap();
-
-        // Verify FTS works by searching for content we know exists
-        let count: i32 = db
-            .conn()
-            .query_row(
-                "SELECT COUNT(*) FROM entries_fts WHERE entries_fts MATCH ?1",
-                ["Content"],
-                |row| row.get(0),
-            )
-            .unwrap();
-
-        assert_eq!(count, 1);
 
         cleanup_db(&db_path);
     }

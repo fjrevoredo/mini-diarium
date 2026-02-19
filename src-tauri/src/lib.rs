@@ -1,3 +1,4 @@
+pub mod auth;
 pub mod backup;
 pub mod commands;
 pub mod crypto;
@@ -39,36 +40,50 @@ pub fn run() {
             app.manage(DiaryState::new(db_path, backups_dir));
 
             // Build and set application menu
-            // Note: This is called in setup, but Tauri ensures the main window exists
-            // by the time setup runs for tauri.conf.json-defined windows
             menu::build_menu(app.handle())?;
 
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
+            // Auth - core
             commands::auth::create_diary,
             commands::auth::unlock_diary,
+            commands::auth::unlock_diary_with_keypair,
             commands::auth::lock_diary,
             commands::auth::diary_exists,
             commands::auth::is_diary_unlocked,
             commands::auth::get_diary_path,
             commands::auth::change_password,
             commands::auth::reset_diary,
+            // Auth - method management
+            commands::auth::verify_password,
+            commands::auth::list_auth_methods,
+            commands::auth::generate_keypair,
+            commands::auth::write_key_file,
+            commands::auth::register_password,
+            commands::auth::register_keypair,
+            commands::auth::remove_auth_method,
+            // Entries
             commands::entries::save_entry,
             commands::entries::get_entry,
             commands::entries::delete_entry_if_empty,
             commands::entries::get_all_entry_dates,
+            // Search
             commands::search::search_entries,
+            // Navigation
             commands::navigation::navigate_previous_day,
             commands::navigation::navigate_next_day,
             commands::navigation::navigate_to_today,
             commands::navigation::navigate_previous_month,
             commands::navigation::navigate_next_month,
+            // Stats
             commands::stats::get_statistics,
+            // Import
             commands::import::import_minidiary_json,
             commands::import::import_dayone_json,
             commands::import::import_dayone_txt,
             commands::import::import_jrnl_json,
+            // Export
             commands::export::export_json,
             commands::export::export_markdown,
         ])
