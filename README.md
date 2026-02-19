@@ -131,7 +131,15 @@ On first launch, Windows SmartScreen may show a warning ("Windows protected your
 
 **macOS**
 
-macOS Gatekeeper may block the app on first launch. Right-click the app icon and select "Open" to bypass the warning. Once opened, subsequent launches work normally.
+macOS Gatekeeper may block the app on first launch with **"damaged and can't be opened"**. This happens because the app is open-source and not commercially code-signed.
+
+Run this command in Terminal after dragging the app to Applications:
+
+```bash
+xattr -cr "/Applications/Mini Diarium.app"
+```
+
+Then launch the app normally. This is a one-time step.
 
 **Linux**
 

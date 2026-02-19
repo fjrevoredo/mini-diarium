@@ -49,7 +49,7 @@ jobs:
             ### Security Notes
 
             **Windows**: SmartScreen may show a warning on first launch. Click "More info" then "Run anyway".
-            **macOS**: Gatekeeper may block the app. Right-click and select "Open" to bypass.
+            **macOS**: Gatekeeper may show "damaged and can't be opened." Run `xattr -cr "/Applications/Mini Diarium.app"` in Terminal, then launch normally.
             **Linux**: Verify SHA256 checksums against `checksums-*.txt` before installation.
 
             ### What's Changed
@@ -111,6 +111,10 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
 
+      - name: Install macOS Rust targets (universal binary)
+        if: matrix.platform == 'macos'
+        run: rustup target add aarch64-apple-darwin x86_64-apple-darwin
+
       - name: Install frontend dependencies
         run: bun install
 
@@ -118,6 +122,8 @@ jobs:
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          args: ${{ matrix.platform == 'macos' && '--target universal-apple-darwin' || '' }}
 
       - name: Prepare release artifacts (Linux)
         if: matrix.platform == 'linux'
@@ -140,8 +146,8 @@ jobs:
           mkdir -p release-artifacts
           VERSION="${{ needs.create-release.outputs.version }}"
 
-          # Find and rename artifacts
-          find src-tauri/target/release/bundle -name "*.dmg" -exec cp {} release-artifacts/Mini-Diarium-${VERSION}-macos.dmg \;
+          # Find and rename artifacts (universal builds output to target/universal-apple-darwin/release/bundle/)
+          find src-tauri/target/universal-apple-darwin/release/bundle -name "*.dmg" -exec cp {} release-artifacts/Mini-Diarium-${VERSION}-macos.dmg \;
 
           # Generate checksums
           cd release-artifacts
