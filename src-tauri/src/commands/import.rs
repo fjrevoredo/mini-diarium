@@ -245,9 +245,14 @@ fn import_entries(
 ) -> Result<ImportResult, String> {
     let mut entries_imported = 0;
     let mut entries_merged = 0;
-    let entries_skipped = 0;
+    let mut entries_skipped = 0;
 
     for entry in entries {
+        // Skip entries with no meaningful content
+        if entry.title.trim().is_empty() && entry.text.trim().is_empty() {
+            entries_skipped += 1;
+            continue;
+        }
         // Check if entry already exists
         let existing = queries::get_entry(db, &entry.date)?;
 
