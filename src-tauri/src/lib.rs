@@ -45,7 +45,8 @@ pub fn run() {
             app.manage(DiaryState::new(db_path, backups_dir, app_dir));
 
             // Build and set application menu
-            menu::build_menu(app.handle())?;
+            let lockable = menu::build_menu(app.handle())?;
+            app.manage(lockable);
 
             Ok(())
         })

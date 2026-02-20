@@ -6,6 +6,10 @@ All notable changes to Mini Diarium are documented here. This project uses [Sema
 
 ### Added
 
+- **macOS menu bar**: proper App menu (About, Preferences, Services, Hide, Quit), Edit menu (Undo/Redo, Cut/Copy/Paste/Select All for standard keyboard shortcuts), and Window menu (Minimize, Zoom, Close). Cmd+Q, Cmd+H, Cmd+M, and clipboard shortcuts now work correctly on macOS.
+- **Lock-state menu enforcement**: Navigation and Diary menu items are disabled while the diary is locked and automatically re-enable on unlock, preventing spurious menu actions on the lock screen. File/Help items (Preferences, About, Quit) remain available at all times.
+- **About from menu**: Help › About (Windows/Linux) and Mini Diarium › About (macOS) now open the About overlay.
+
 - **Custom diary location**: choose where your diary file is stored (Preferences → Diary File → Change Location). The file is moved to the selected folder and the choice persists across restarts, enabling cloud sync via Dropbox, OneDrive, or any folder-based sync tool. The diary is automatically locked during the move; the app reloads so you can re-authenticate from the new location.
 
 ## [0.2.1] — 2026-02-19

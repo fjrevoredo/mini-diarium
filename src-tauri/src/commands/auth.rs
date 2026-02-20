@@ -4,7 +4,7 @@ use crate::db::schema::{
 use log::{info, warn};
 use std::path::PathBuf;
 use std::sync::Mutex;
-use tauri::State;
+use tauri::{AppHandle, State, Wry};
 use zeroize::Zeroize;
 
 /// Shared state for the database connection
@@ -32,7 +32,11 @@ impl DiaryState {
 
 /// Creates a new encrypted diary database
 #[tauri::command]
-pub fn create_diary(password: String, state: State<DiaryState>) -> Result<(), String> {
+pub fn create_diary(
+    password: String,
+    state: State<DiaryState>,
+    app: AppHandle<Wry>,
+) -> Result<(), String> {
     let db_path = state.db_path.lock().unwrap().clone();
 
     if db_path.exists() {
@@ -45,12 +49,17 @@ pub fn create_diary(password: String, state: State<DiaryState>) -> Result<(), St
     *db_state = Some(db_conn);
 
     info!("Diary created");
+    crate::menu::update_menu_lock_state(&app, false);
     Ok(())
 }
 
 /// Unlocks (opens) an existing diary with a password
 #[tauri::command]
-pub fn unlock_diary(password: String, state: State<DiaryState>) -> Result<(), String> {
+pub fn unlock_diary(
+    password: String,
+    state: State<DiaryState>,
+    app: AppHandle<Wry>,
+) -> Result<(), String> {
     let db_path = state.db_path.lock().unwrap().clone();
     let backups_dir = state.backups_dir.lock().unwrap().clone();
 
@@ -69,12 +78,17 @@ pub fn unlock_diary(password: String, state: State<DiaryState>) -> Result<(), St
         warn!("Failed to create backup: {}", e);
     }
 
+    crate::menu::update_menu_lock_state(&app, false);
     Ok(())
 }
 
 /// Unlocks an existing diary using an X25519 private key file
 #[tauri::command]
-pub fn unlock_diary_with_keypair(key_path: String, state: State<DiaryState>) -> Result<(), String> {
+pub fn unlock_diary_with_keypair(
+    key_path: String,
+    state: State<DiaryState>,
+    app: AppHandle<Wry>,
+) -> Result<(), String> {
     let db_path = state.db_path.lock().unwrap().clone();
     let backups_dir = state.backups_dir.lock().unwrap().clone();
 
@@ -107,12 +121,13 @@ pub fn unlock_diary_with_keypair(key_path: String, state: State<DiaryState>) -> 
         warn!("Failed to create backup: {}", e);
     }
 
+    crate::menu::update_menu_lock_state(&app, false);
     Ok(())
 }
 
 /// Locks the diary (closes the database connection)
 #[tauri::command]
-pub fn lock_diary(state: State<DiaryState>) -> Result<(), String> {
+pub fn lock_diary(state: State<DiaryState>, app: AppHandle<Wry>) -> Result<(), String> {
     let mut db_state = state.db.lock().unwrap();
 
     if db_state.is_none() {
@@ -121,6 +136,7 @@ pub fn lock_diary(state: State<DiaryState>) -> Result<(), String> {
 
     *db_state = None;
     info!("Diary locked");
+    crate::menu::update_menu_lock_state(&app, true);
     Ok(())
 }
 
@@ -190,8 +206,8 @@ pub fn change_password(
 /// Resets the diary (deletes the database file)
 /// WARNING: This permanently deletes all data!
 #[tauri::command]
-pub fn reset_diary(state: State<DiaryState>) -> Result<(), String> {
-    let _ = lock_diary(state.clone());
+pub fn reset_diary(state: State<DiaryState>, app: AppHandle<Wry>) -> Result<(), String> {
+    let _ = lock_diary(state.clone(), app.clone());
 
     let db_path = state.db_path.lock().unwrap().clone();
 
@@ -202,6 +218,7 @@ pub fn reset_diary(state: State<DiaryState>) -> Result<(), String> {
     std::fs::remove_file(&db_path).map_err(|e| format!("Failed to delete diary: {}", e))?;
 
     info!("Diary reset");
+    crate::menu::update_menu_lock_state(&app, true);
     Ok(())
 }
 
@@ -473,11 +490,16 @@ fn change_diary_directory_inner(
 /// If both the current directory and the new directory already contain a
 /// `diary.db`, the command refuses to proceed to avoid data loss.
 #[tauri::command]
-pub fn change_diary_directory(new_dir: String, state: State<DiaryState>) -> Result<(), String> {
+pub fn change_diary_directory(
+    new_dir: String,
+    state: State<DiaryState>,
+    app: AppHandle<Wry>,
+) -> Result<(), String> {
     // Auto-lock: close the DB connection before moving the file.
     // Safe on all platforms — SQLite holds a file lock while open.
     *state.db.lock().unwrap() = None;
     info!("Diary auto-locked for directory change");
+    crate::menu::update_menu_lock_state(&app, true);
 
     let current_db_path = state.db_path.lock().unwrap().clone();
     let result = change_diary_directory_inner(
