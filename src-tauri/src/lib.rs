@@ -1,6 +1,7 @@
 pub mod auth;
 pub mod backup;
 pub mod commands;
+pub mod config;
 pub mod crypto;
 pub mod db;
 pub mod export;
@@ -33,11 +34,15 @@ pub fn run() {
             // Create directory if it doesn't exist
             std::fs::create_dir_all(&app_dir).ok();
 
-            let db_path = app_dir.join("diary.db");
-            let backups_dir = app_dir.join("backups");
+            let diary_dir = crate::config::load_diary_dir(&app_dir)
+                .filter(|p| p.is_dir()) // fall back if saved dir was deleted
+                .unwrap_or_else(|| app_dir.clone());
+
+            let db_path = diary_dir.join("diary.db");
+            let backups_dir = diary_dir.join("backups");
 
             // Set up state
-            app.manage(DiaryState::new(db_path, backups_dir));
+            app.manage(DiaryState::new(db_path, backups_dir, app_dir));
 
             // Build and set application menu
             menu::build_menu(app.handle())?;
@@ -53,6 +58,7 @@ pub fn run() {
             commands::auth::diary_exists,
             commands::auth::is_diary_unlocked,
             commands::auth::get_diary_path,
+            commands::auth::change_diary_directory,
             commands::auth::change_password,
             commands::auth::reset_diary,
             // Auth - method management

@@ -7,7 +7,7 @@ Open tasks and planned improvements. For full context and implementation notes o
 ## High Priority
 
 - [ ] **Fix keyboard shortcuts** — most shortcuts are currently broken; audit and restore all bindings in `shortcuts.ts` and `menu.rs`
-- [ ] **Diary directory selection** — let users choose where their diary file lives; add `change_diary_directory` command and wire it into Preferences
+- [x] **Diary directory selection** — let users choose where their diary file lives; add `change_diary_directory` command and wire it into Preferences
 - [ ] **Accessibility audit** — ARIA labels, focus trapping in overlays, keyboard calendar navigation, color contrast, screen reader testing (NVDA / VoiceOver)
 - [ ] **Final QA pass** — comprehensive manual test run on Windows, macOS, and Linux before each release
 
@@ -15,6 +15,7 @@ Open tasks and planned improvements. For full context and implementation notes o
 
 ## Medium Priority
 
+- [ ] **CI diagram diffing** — the "Verify diagrams are up-to-date" step in `ci.yml` regenerates `*-check.svg` files but only checks that the committed SVGs exist, then deletes the check files without comparing them; stale or wrong diagrams pass CI undetected. Fix: diff each `-check.svg` against its committed counterpart (e.g. `diff` or pixel-compare) and fail if they differ
 - [ ] **Modernize release workflow** — replace deprecated `actions/create-release@v1` with `softprops/action-gh-release`, add artifact verification
 - [ ] **Platform-specific menus** — macOS App menu (About, Preferences, Quit), Windows/Linux File menu; disable items when diary is locked
 - [ ] **Auto-lock on screen lock** — listen for OS screen-lock event and call `lock_diary()` automatically
