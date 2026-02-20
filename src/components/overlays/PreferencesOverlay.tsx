@@ -348,7 +348,11 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
   const handleChangeDiaryDirectory = async () => {
     setChangeDirError(null);
     const { open: openDirDialog } = await import('@tauri-apps/plugin-dialog');
-    const selected = await openDirDialog({ directory: true, multiple: false, title: 'Choose Diary Directory' });
+    const selected = await openDirDialog({
+      directory: true,
+      multiple: false,
+      title: 'Choose Diary Directory',
+    });
     if (!selected || typeof selected !== 'string') return;
     setIsChangingDir(true);
     try {

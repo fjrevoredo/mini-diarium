@@ -441,11 +441,9 @@ fn change_diary_directory_inner(
     // Handle file presence matrix
     match (current_db_path.exists(), new_db_path.exists()) {
         (true, true) => {
-            return Err(
-                "A diary file already exists at the chosen location. \
+            return Err("A diary file already exists at the chosen location. \
                  Move or remove it first, then try again."
-                    .to_string(),
-            );
+                .to_string());
         }
         (true, false) => {
             std::fs::copy(&current_db_path, &new_db_path)
@@ -910,7 +908,10 @@ mod tests {
         );
         assert!(result.is_ok(), "Expected Ok, got: {:?}", result);
         assert!(!src_db.exists(), "Source file should be removed");
-        assert!(dst_abs.join("diary.db").exists(), "Destination file should exist");
+        assert!(
+            dst_abs.join("diary.db").exists(),
+            "Destination file should exist"
+        );
 
         let _ = fs::remove_dir_all(&src_dir);
         let _ = fs::remove_dir_all(&dst_dir);
@@ -1007,7 +1008,10 @@ mod tests {
             &backups_mutex,
             &cfg_dir,
         );
-        assert!(result.is_ok(), "Locked state (None db) should allow directory change");
+        assert!(
+            result.is_ok(),
+            "Locked state (None db) should allow directory change"
+        );
 
         let _ = fs::remove_dir_all(&dst_dir);
         let _ = fs::remove_dir_all(&cfg_dir);
