@@ -123,6 +123,7 @@ export default function PasswordPrompt() {
                 <input
                   id="password"
                   type="password"
+                  data-testid="password-unlock-input"
                   value={password()}
                   onInput={(e) => setPassword(e.currentTarget.value)}
                   disabled={isUnlocking()}
@@ -141,6 +142,7 @@ export default function PasswordPrompt() {
 
               <button
                 type="submit"
+                data-testid="unlock-diary-button"
                 disabled={isUnlocking()}
                 class="w-full rounded-md bg-blue-600 px-4 py-3 font-medium text-white transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >

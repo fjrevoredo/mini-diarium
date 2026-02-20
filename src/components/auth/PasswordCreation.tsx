@@ -62,6 +62,7 @@ export default function PasswordCreation() {
               <input
                 id="password"
                 type="password"
+                data-testid="password-create-input"
                 value={password()}
                 onInput={(e) => setPassword(e.currentTarget.value)}
                 disabled={isCreating()}
@@ -78,6 +79,7 @@ export default function PasswordCreation() {
               <input
                 id="repeat-password"
                 type="password"
+                data-testid="password-repeat-input"
                 value={repeatPassword()}
                 onInput={(e) => setRepeatPassword(e.currentTarget.value)}
                 disabled={isCreating()}
@@ -95,6 +97,7 @@ export default function PasswordCreation() {
 
             <button
               type="submit"
+              data-testid="create-diary-button"
               disabled={isCreating()}
               class="w-full rounded-md bg-blue-600 px-4 py-3 font-medium text-white transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >

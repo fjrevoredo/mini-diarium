@@ -180,6 +180,7 @@ export default function Calendar() {
         <For each={calendarDays()}>
           {(day) => (
             <button
+              data-testid={`calendar-day-${day.date}`}
               onClick={() => handleDayClick(day)}
               class={`
                 relative h-8 w-8 rounded text-sm flex flex-col items-center justify-center

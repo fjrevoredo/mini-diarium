@@ -61,6 +61,7 @@ export default function Header(props: HeaderProps) {
           <button
             onClick={() => handleLock()}
             disabled={isLocking()}
+            data-testid="lock-diary-button"
             class="rounded p-2 hover:bg-hover text-tertiary transition-colors disabled:opacity-50"
             aria-label="Lock diary"
           >

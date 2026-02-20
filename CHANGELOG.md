@@ -10,7 +10,10 @@ All notable changes to Mini Diarium are documented here. This project uses [Sema
 - **Lock-state menu enforcement**: Navigation and Diary menu items are disabled while the diary is locked and automatically re-enable on unlock, preventing spurious menu actions on the lock screen. File/Help items (Preferences, About, Quit) remain available at all times.
 - **About from menu**: Help › About (Windows/Linux) and Mini Diarium › About (macOS) now open the About overlay.
 
+- **E2E test suite**: end-to-end tests using WebdriverIO + tauri-driver that exercise the full app stack (real binary, real SQLite). The core workflow test covers diary creation, writing an entry, locking, and verifying persistence after unlock. Run locally with `bun run test:e2e`; runs automatically in CI on Ubuntu after the build step.
+
 - **Custom diary location**: choose where your diary file is stored (Preferences → Diary File → Change Location). The file is moved to the selected folder and the choice persists across restarts, enabling cloud sync via Dropbox, OneDrive, or any folder-based sync tool. The diary is automatically locked during the move; the app reloads so you can re-authenticate from the new location.
+- **Website contact obfuscation**: footer email link now renders via `data-*` attributes plus inline script so the address is reconstructed in the browser and not present in the raw HTML.
 
 ## [0.2.1] — 2026-02-19
 

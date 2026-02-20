@@ -132,6 +132,26 @@ src/
 └── index.css
 ```
 
+### E2E (`e2e/`)
+
+End-to-end tests using WebdriverIO + tauri-driver. These run against the real compiled binary with a real SQLite database in a temp directory.
+
+```
+e2e/
+├── specs/
+│   └── diary-workflow.spec.ts  # Core workflow: create → write → lock → unlock → verify
+└── tsconfig.json               # Separate TS config (node + webdriverio/async globals)
+wdio.conf.ts                    # WebdriverIO config (root level)
+```
+
+**Prerequisites to run locally:**
+```bash
+cargo install tauri-driver   # once
+bun run test:e2e:local       # builds binary + runs suite (use --skip-build on repeat runs)
+```
+
+**Test isolation:** Each run creates a fresh OS temp directory and passes it to the app via `MINI_DIARIUM_DATA_DIR`. The app reads this env var in `lib.rs` and uses it as the diary directory instead of `app_data_dir`.
+
 ### Backend (`src-tauri/src/`)
 
 ```
@@ -346,6 +366,27 @@ Run: `bun run test:run` (single run) or `bun run test` (watch mode)
 
 Coverage: `bun run test:coverage`
 
+### E2E: 1 spec (real binary, real SQLite)
+
+Run: `bun run test:e2e` (requires release binary + `tauri-driver` installed)
+
+| File | Description |
+|------|-------------|
+| `e2e/specs/diary-workflow.spec.ts` | Create diary → write entry → lock → unlock → verify persistence |
+
+**data-testid attributes** used by E2E tests (do not remove):
+
+| Component | Element | data-testid |
+|-----------|---------|-------------|
+| `PasswordCreation.tsx` | Password input | `password-create-input` |
+| `PasswordCreation.tsx` | Confirm password input | `password-repeat-input` |
+| `PasswordCreation.tsx` | Create button | `create-diary-button` |
+| `PasswordPrompt.tsx` | Password input | `password-unlock-input` |
+| `PasswordPrompt.tsx` | Unlock submit button | `unlock-diary-button` |
+| `Header.tsx` | Lock button | `lock-diary-button` |
+| `TitleEditor.tsx` | Title input | `title-input` |
+| `Calendar.tsx` | Each day button | `calendar-day-YYYY-MM-DD` |
+
 ## Verification Commands
 
 ```bash
@@ -358,6 +399,9 @@ cd src-tauri && cargo test                     # All backend tests
 cd src-tauri && cargo test navigation          # Specific module
 bun run test:run                               # All frontend tests
 bun run test:run -- dates                      # Specific test file
+bun run test:e2e:local                         # E2E tests: build binary + run suite
+bun run test:e2e:local -- --skip-build         # E2E tests: skip build, run suite only
+bun run test:e2e                               # Run suite only (binary must already exist)
 
 # Code quality
 bun run lint             # ESLint
@@ -392,6 +436,8 @@ bun run tauri build      # Full app bundle
 9. **Import parser contract**: Parsers in `import/*.rs` return `Vec<DiaryEntry>`. All DB interaction and merge logic happen in `commands/import.rs`, not in the parsers.
 
 10. **Auth slots (v3 schema):** Each auth method stores its own wrapped copy of the master key in `auth_slots`. `remove_auth_method` refuses to delete the last slot (minimum one required). `change_password` re-wraps the master key in O(1) — no entry re-encryption needed. `verify_password` exists as a side-effect-free check used before multi-step operations.
+
+11. **E2E test isolation via `MINI_DIARIUM_DATA_DIR`:** When this env var is set, `lib.rs` uses it as the diary directory instead of `app_data_dir`. This is intentional for E2E test isolation — do not remove it. It has no effect on production builds where the var is unset.
 
 ## Security Rules
 

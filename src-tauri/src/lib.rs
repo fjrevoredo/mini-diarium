@@ -34,9 +34,13 @@ pub fn run() {
             // Create directory if it doesn't exist
             std::fs::create_dir_all(&app_dir).ok();
 
-            let diary_dir = crate::config::load_diary_dir(&app_dir)
-                .filter(|p| p.is_dir()) // fall back if saved dir was deleted
-                .unwrap_or_else(|| app_dir.clone());
+            let diary_dir = if let Ok(test_dir) = std::env::var("MINI_DIARIUM_DATA_DIR") {
+                PathBuf::from(test_dir)
+            } else {
+                crate::config::load_diary_dir(&app_dir)
+                    .filter(|p| p.is_dir()) // fall back if saved dir was deleted
+                    .unwrap_or_else(|| app_dir.clone())
+            };
 
             let db_path = diary_dir.join("diary.db");
             let backups_dir = diary_dir.join("backups");
