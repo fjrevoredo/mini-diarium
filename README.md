@@ -8,7 +8,7 @@
 
 **Website:** [mini-diarium.com](https://mini-diarium.com)
 
-An encrypted, local, cross-platform journaling app
+A local-first journal with serious encryption. Free, open source, and never touches the internet.
 
 Mini Diarium keeps your journal private. Every entry is encrypted with AES-256-GCM, the app never connects to the internet, and your data never leaves your machine. Built with Tauri, SolidJS, and Rust.
 
