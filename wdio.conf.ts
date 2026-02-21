@@ -127,10 +127,12 @@ export const config: Options.Testrunner = {
   capabilities: [
     {
       // Windows uses WebView2 (Edge-based) → msedgedriver expects 'edge'.
-      // Linux uses WebKitGTK → webkit2gtk-driver (WebKitWebDriver) does not
-      // recognise 'edge'. An empty string satisfies WebKitWebDriver's
-      // capability matching and lets tauri-driver inject the application.
-      browserName: process.platform === 'win32' ? 'edge' : '',
+      // Linux uses WebKitGTK → WebKitWebDriver (webkit2gtk-driver) does not
+      // recognise 'edge', and an empty string '' is also rejected (treated as
+      // a non-matching value, not as "omit"). Spreading nothing omits the key
+      // from the JSON entirely, which satisfies WebKitWebDriver's W3C
+      // capability matching ("no browserName constraint" == match any).
+      ...(process.platform === 'win32' ? { browserName: 'edge' } : {}),
       // Disable WebDriver BiDi — wdio v9 enables it by default but it conflicts
       // with Tauri's custom tauri://localhost URI scheme. Classic WebDriver
       // protocol is what tauri-driver was designed for.

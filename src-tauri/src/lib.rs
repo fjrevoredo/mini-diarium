@@ -7,9 +7,10 @@ pub mod db;
 pub mod export;
 pub mod import;
 pub mod menu;
+pub mod screen_lock;
 
 use commands::auth::DiaryState;
-use log::info;
+use log::{info, warn};
 use std::path::{Path, PathBuf};
 use tauri::Manager;
 
@@ -78,6 +79,10 @@ pub fn run() {
             // Build and set application menu
             let lockable = menu::build_menu(app.handle())?;
             app.manage(lockable);
+
+            if let Err(error) = screen_lock::init(app.handle()) {
+                warn!("Screen-lock listener initialization failed: {}", error);
+            }
 
             Ok(())
         })

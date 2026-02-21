@@ -4,7 +4,7 @@ use crate::db::schema::{
 use log::{info, warn};
 use std::path::PathBuf;
 use std::sync::Mutex;
-use tauri::{AppHandle, State, Wry};
+use tauri::{AppHandle, Emitter, State, Wry};
 use zeroize::Zeroize;
 
 /// Shared state for the database connection
@@ -126,17 +126,62 @@ pub fn unlock_diary_with_keypair(
 }
 
 /// Locks the diary (closes the database connection)
-#[tauri::command]
-pub fn lock_diary(state: State<DiaryState>, app: AppHandle<Wry>) -> Result<(), String> {
-    let mut db_state = state.db.lock().unwrap();
+fn lock_diary_inner(state: &DiaryState) -> Result<bool, String> {
+    let mut db_state = state
+        .db
+        .lock()
+        .map_err(|_| "Failed to access diary state".to_string())?;
 
     if db_state.is_none() {
-        return Err("Diary is not unlocked".to_string());
+        return Ok(false);
     }
 
     *db_state = None;
+    Ok(true)
+}
+
+#[derive(Clone, serde::Serialize)]
+struct DiaryLockedEventPayload {
+    reason: String,
+}
+
+fn emit_diary_locked(app: &AppHandle<Wry>, reason: &str) {
+    if let Err(error) = app.emit(
+        "diary-locked",
+        DiaryLockedEventPayload {
+            reason: reason.to_string(),
+        },
+    ) {
+        warn!("Failed to emit diary-locked event: {}", error);
+    }
+}
+
+pub(crate) fn auto_lock_diary_if_unlocked(
+    state: State<DiaryState>,
+    app: AppHandle<Wry>,
+    reason: &str,
+) -> Result<bool, String> {
+    let did_lock = lock_diary_inner(&state)?;
+
+    if did_lock {
+        info!("Diary auto-locked ({})", reason);
+        crate::menu::update_menu_lock_state(&app, true);
+        emit_diary_locked(&app, reason);
+    }
+
+    Ok(did_lock)
+}
+
+/// Locks the diary (closes the database connection)
+#[tauri::command]
+pub fn lock_diary(state: State<DiaryState>, app: AppHandle<Wry>) -> Result<(), String> {
+    if !lock_diary_inner(&state)? {
+        return Err("Diary is not unlocked".to_string());
+    }
+
     info!("Diary locked");
     crate::menu::update_menu_lock_state(&app, true);
+    emit_diary_locked(&app, "manual");
     Ok(())
 }
 
@@ -497,9 +542,9 @@ pub fn change_diary_directory(
 ) -> Result<(), String> {
     // Auto-lock: close the DB connection before moving the file.
     // Safe on all platforms — SQLite holds a file lock while open.
-    *state.db.lock().unwrap() = None;
-    info!("Diary auto-locked for directory change");
-    crate::menu::update_menu_lock_state(&app, true);
+    if auto_lock_diary_if_unlocked(state.clone(), app.clone(), "directory change")? {
+        info!("Diary auto-locked for directory change");
+    }
 
     let current_db_path = state.db_path.lock().unwrap().clone();
     let result = change_diary_directory_inner(
@@ -570,6 +615,32 @@ mod tests {
         let db = state.db.lock().unwrap();
         assert!(db.is_some());
         drop(db);
+
+        cleanup(&db_path, &backups_dir);
+    }
+
+    #[test]
+    fn test_lock_diary_inner_locks_when_unlocked() {
+        let (state, db_path, backups_dir) = make_state("lock_inner_unlocked");
+        let db_conn = create_database(&db_path, "password".to_string()).unwrap();
+        {
+            let mut db = state.db.lock().unwrap();
+            *db = Some(db_conn);
+        }
+
+        let did_lock = lock_diary_inner(&state).unwrap();
+        assert!(did_lock);
+        assert!(state.db.lock().unwrap().is_none());
+
+        cleanup(&db_path, &backups_dir);
+    }
+
+    #[test]
+    fn test_lock_diary_inner_noop_when_already_locked() {
+        let (state, db_path, backups_dir) = make_state("lock_inner_locked");
+
+        let did_lock = lock_diary_inner(&state).unwrap();
+        assert!(!did_lock);
 
         cleanup(&db_path, &backups_dir);
     }

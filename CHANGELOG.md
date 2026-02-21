@@ -9,15 +9,17 @@ All notable changes to Mini Diarium are documented here. This project uses [Sema
 - **macOS menu bar**: proper App menu (About, Preferences, Services, Hide, Quit), Edit menu (Undo/Redo, Cut/Copy/Paste/Select All for standard keyboard shortcuts), and Window menu (Minimize, Zoom, Close). Cmd+Q, Cmd+H, Cmd+M, and clipboard shortcuts now work correctly on macOS.
 - **Lock-state menu enforcement**: Navigation and Diary menu items are disabled while the diary is locked and automatically re-enable on unlock, preventing spurious menu actions on the lock screen. File/Help items (Preferences, About, Quit) remain available at all times.
 - **About from menu**: Help › About (Windows/Linux) and Mini Diarium › About (macOS) now open the About overlay.
+- **Auto-lock on Windows session lock/suspend**: the app now listens for native Windows session/power events and auto-locks the diary when the session is locked/logged off or the system is suspending.
 
 - **E2E test suite**: end-to-end tests using WebdriverIO + tauri-driver that exercise the full app stack (real binary, real SQLite). The core workflow test covers diary creation, writing an entry, locking, and verifying persistence after unlock. Run locally with `bun run test:e2e`; runs automatically in CI on Ubuntu after the build step.
 
 ### Fixed
 
-- E2E CI failure on Linux: `browserName` capability is now `'edge'` on Windows only and `''` on Linux, matching what WebKitWebDriver (webkit2gtk-driver) expects. Previously the unconditional `'edge'` value caused a "Failed to match capabilities" WebDriver error on every Linux run.
+- E2E CI failure on Linux: `browserName: 'edge'` is now set only on Windows (required by msedgedriver/WebView2) and omitted entirely on Linux. WebKitWebDriver (webkit2gtk-driver) rejects both `'edge'` and an empty string `''`; omitting the key means no browser-name constraint is imposed, which satisfies WebKitWebDriver's W3C capability matching.
 - E2E spec (`e2e/specs/diary-workflow.spec.ts`) is now excluded from the Vitest unit test run, preventing a `ReferenceError: browser is not defined` failure when running `bun run test:run`.
 - macOS CI build failure with Tauri `2.10.x`: updated predefined menu item calls to the current API (`services/hide/hide_others/show_all` now pass `None` label argument, and Window menu `zoom` was replaced with `maximize`).
 - Bundle identifier warning on macOS: changed app identifier from `com.minidiarium.app` to `com.minidiarium`, and added startup compatibility fallback so existing installs using the legacy `com.minidiarium.app` app-data directory continue to load their existing diary/config.
+- **Auto-lock UI desync after OS lock**: backend lock operations now emit a `diary-locked` event so the frontend immediately transitions to the lock screen instead of remaining in an unusable unlocked layout.
 
 - **Custom diary location**: choose where your diary file is stored (Preferences → Diary File → Change Location). The file is moved to the selected folder and the choice persists across restarts, enabling cloud sync via Dropbox, OneDrive, or any folder-based sync tool. The diary is automatically locked during the move; the app reloads so you can re-authenticate from the new location.
 - **Website contact obfuscation**: footer email link now renders via `data-*` attributes plus inline script so the address is reconstructed in the browser and not present in the raw HTML.
