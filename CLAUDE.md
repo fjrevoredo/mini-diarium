@@ -340,7 +340,7 @@ Run: `cd src-tauri && cargo test`
 | cipher | 11 | `crypto/cipher.rs` |
 | schema | 11 | `db/schema.rs` |
 | queries | 12 | `db/queries.rs` |
-| auth | 6 | `commands/auth.rs` |
+| auth | 17 | `commands/auth/` |
 | entries | 4 | `commands/entries.rs` |
 | search | 1 | `commands/search.rs` |
 | navigation | 5 | `commands/navigation.rs` |
@@ -377,7 +377,7 @@ Run: `bun run test:e2e` (requires release binary + `tauri-driver` installed)
 
 | File | Description |
 |------|-------------|
-| `e2e/specs/diary-workflow.spec.ts` | Create diary → write entry → lock → unlock → verify persistence |
+| `e2e/specs/diary-workflow.spec.ts` | 2 tests: (1) create diary → write entry → lock → unlock → verify persistence; (2) multi-date calendar navigation → write second entry → lock/unlock → verify both entries persist |
 
 **data-testid attributes** used by E2E tests (do not remove):
 

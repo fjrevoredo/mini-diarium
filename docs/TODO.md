@@ -14,7 +14,7 @@ Open tasks and planned improvements. For full context and implementation notes o
 
 ## Medium Priority
 
-- [ ] **CI diagram diffing** — the "Verify diagrams are up-to-date" step in `ci.yml` regenerates `*-check.svg` files but only checks that the committed SVGs exist, then deletes the check files without comparing them; stale or wrong diagrams pass CI undetected. Fix: diff each `-check.svg` against its committed counterpart (e.g. `diff` or pixel-compare) and fail if they differ
+- [x] **CI diagram diffing** — the "Verify diagrams are up-to-date" step in `ci.yml` now compares each regenerated `*-check.svg` file against its committed counterpart and fails CI with an actionable message when any diagram is stale or mismatched
 - [ ] **Modernize release workflow** — replace deprecated `actions/create-release@v1` with `softprops/action-gh-release`, add artifact verification
 - [x] **Platform-specific menus** — macOS App menu (About, Preferences, Quit), Windows/Linux File menu; disable items when diary is locked
 - [ ] **Auto-lock on screen lock (macOS parity)** — Windows implementation is done; add macOS native screen-lock hook so behavior matches across desktop platforms

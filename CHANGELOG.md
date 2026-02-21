@@ -8,6 +8,8 @@ All notable changes to Mini Diarium are documented here. This project uses [Sema
 
 ### Fixed
 
+- **CI diagram verification now detects stale outputs**: the "Verify diagrams are up-to-date" workflow step now compares each regenerated `*-check.svg` file with its committed SVG counterpart and fails with a clear remediation message when any diagram differs.
+
 ### Changed
 
 
