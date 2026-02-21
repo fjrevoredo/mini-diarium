@@ -2297,6 +2297,7 @@ dependencies = [
  "tauri-build",
  "tauri-plugin-dialog",
  "tauri-plugin-opener",
+ "tempfile",
  "windows-sys 0.61.2",
  "x25519-dalek",
  "zeroize",

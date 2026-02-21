@@ -196,7 +196,7 @@ src-tauri/src/
 
 ## Command Registry
 
-All 33 registered Tauri commands (source: `lib.rs`). Rust names use `snake_case`; frontend wrappers in `src/lib/tauri.ts` use `camelCase`.
+All 34 registered Tauri commands (source: `lib.rs`). Rust names use `snake_case`; frontend wrappers in `src/lib/tauri.ts` use `camelCase`.
 
 | Module | Rust Command | Frontend Wrapper | Description |
 |--------|-------------|-----------------|-------------|
@@ -213,6 +213,7 @@ All 33 registered Tauri commands (source: `lib.rs`). Rust names use `snake_case`
 | auth | `list_auth_methods` | `listAuthMethods()` | List all registered auth slots |
 | auth | `generate_keypair` | `generateKeypair()` | Generate X25519 keypair, return hex |
 | auth | `write_key_file` | `writeKeyFile(path, privateKeyHex)` | Write private key hex to file |
+| auth | `register_password` | `registerPassword(newPassword)` | Register a password auth slot (requires diary unlocked) |
 | auth | `register_keypair` | `registerKeypair(password, pubKeyHex, label)` | Add keypair auth slot |
 | auth | `remove_auth_method` | `removeAuthMethod(slotId, password)` | Remove auth slot (guards last) |
 | entries | `save_entry` | `saveEntry(date, title, text)` | Upsert entry (encrypts) |

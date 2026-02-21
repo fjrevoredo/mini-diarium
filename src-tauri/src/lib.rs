@@ -48,10 +48,16 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
             // Get app data directory and create diary path
-            let system_app_dir = app
-                .path()
-                .app_data_dir()
-                .unwrap_or_else(|_| PathBuf::from("."));
+            let system_app_dir = match app.path().app_data_dir() {
+                Ok(dir) => dir,
+                Err(e) => {
+                    warn!(
+                        "Could not determine app data directory ({}), using CWD as fallback",
+                        e
+                    );
+                    PathBuf::from(".")
+                }
+            };
 
             let app_dir = resolve_app_data_dir(system_app_dir.clone());
             if app_dir != system_app_dir {
@@ -60,7 +66,13 @@ pub fn run() {
                     app_dir.display()
                 );
             }
-            std::fs::create_dir_all(&app_dir).ok();
+            if let Err(e) = std::fs::create_dir_all(&app_dir) {
+                warn!(
+                    "Failed to create app directory '{}': {}",
+                    app_dir.display(),
+                    e
+                );
+            }
 
             let diary_dir = if let Ok(test_dir) = std::env::var("MINI_DIARIUM_DATA_DIR") {
                 PathBuf::from(test_dir)

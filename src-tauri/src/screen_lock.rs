@@ -14,6 +14,13 @@ mod imp {
     };
 
     const SCREEN_LOCK_SUBCLASS_ID: usize = 0x4D444C4B; // "MDLK"
+
+    /// Stores the `AppHandle` for use inside the Win32 subclass callback.
+    ///
+    /// `OnceLock` guarantees single-init: `init()` calls `set()` once at startup
+    /// and subsequent calls are no-ops.  `AppHandle<Wry>` is `Send + Sync`, so
+    /// accessing it from the message-pump thread (which calls the subclass proc)
+    /// is safe.
     static APP_HANDLE: OnceLock<AppHandle<Wry>> = OnceLock::new();
 
     pub fn init(app: &AppHandle<Wry>) -> Result<(), String> {
@@ -27,6 +34,17 @@ mod imp {
             .map_err(|e| format!("Failed to obtain native window handle: {}", e))?;
         let hwnd_raw = hwnd.0 as HWND;
 
+        // SAFETY: `hwnd_raw` is the HWND obtained from Tauri's `WebviewWindow::hwnd()`,
+        // which is valid and owned by the application for its entire lifetime.
+        // `WTSRegisterSessionNotification` requires a valid top-level window handle;
+        // `NOTIFY_FOR_THIS_SESSION` restricts events to the current logon session.
+        // The matching `WTSUnRegisterSessionNotification` is called in the
+        // `WM_NCDESTROY` handler, satisfying the session-notification contract.
+        //
+        // `SetWindowSubclass` installs `screen_lock_subclass_proc` with a unique
+        // subclass ID (`SCREEN_LOCK_SUBCLASS_ID`) so it does not clash with other
+        // subclasses.  The subclass proc signature matches `SUBCLASSPROC` exactly.
+        // `RemoveWindowSubclass` is called on `WM_NCDESTROY` to clean up.
         unsafe {
             if WTSRegisterSessionNotification(hwnd_raw, NOTIFY_FOR_THIS_SESSION) == 0 {
                 return Err(format!(
@@ -65,6 +83,15 @@ mod imp {
         }
     }
 
+    // SAFETY: This function is registered as a `SUBCLASSPROC` callback via
+    // `SetWindowSubclass`.  Windows invokes it on the message-pump thread that
+    // owns the window, so there is no data race on `hwnd`.
+    // `APP_HANDLE` is a `OnceLock<AppHandle<Wry>>`; `AppHandle` is `Send + Sync`,
+    // so reading it here is safe even though the callback runs on a Win32 thread.
+    // On `WM_NCDESTROY` we call `WTSUnRegisterSessionNotification` and
+    // `RemoveWindowSubclass` before the window is destroyed, preventing dangling
+    // references.  `DefSubclassProc` is always called last to maintain the
+    // subclass chain invariant.
     unsafe extern "system" fn screen_lock_subclass_proc(
         hwnd: HWND,
         umsg: u32,

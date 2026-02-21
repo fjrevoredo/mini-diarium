@@ -1,4 +1,5 @@
 use crate::crypto::{cipher, password};
+use crate::db::queries;
 use log::{debug, error, info, warn};
 use rand::RngCore;
 use rusqlite::Connection;
@@ -174,21 +175,16 @@ pub fn open_database_with_keypair<P1: AsRef<Path>, P2: AsRef<Path>>(
     let unwrap_method = crate::auth::keypair::PrivateKeyMethod {
         private_key: private_key_bytes,
     };
-    let mut master_key_bytes = unwrap_method
+    let master_key_bytes = unwrap_method
         .unwrap_master_key(&wrapped_key)
         .map_err(|e| format!("Failed to unlock with key file: {}", e))?;
 
     let encryption_key =
         cipher::Key::from_slice(&master_key_bytes).ok_or("Invalid master key size")?;
-    master_key_bytes.zeroize();
+    // master_key_bytes zeroed automatically on drop (SecretBytes)
 
     // Update last_used
-    let now = chrono::Utc::now().to_rfc3339();
-    conn.execute(
-        "UPDATE auth_slots SET last_used = ?1 WHERE id = ?2",
-        rusqlite::params![&now, slot_id],
-    )
-    .map_err(|e| format!("Failed to update last_used: {}", e))?;
+    queries::update_slot_last_used(&conn, slot_id)?;
 
     let _ = backups_dir; // caller handles backup
 
@@ -225,21 +221,16 @@ fn open_v3_with_password(
 
     // Unwrap master key
     let method = crate::auth::password::PasswordMethod::new(password);
-    let mut master_key_bytes = method
+    let master_key_bytes = method
         .unwrap_master_key(&wrapped_key)
         .map_err(|_| "Incorrect password".to_string())?;
 
     let encryption_key =
         cipher::Key::from_slice(&master_key_bytes).ok_or("Invalid master key size")?;
-    master_key_bytes.zeroize();
+    // master_key_bytes zeroed automatically on drop (SecretBytes)
 
     // Update last_used
-    let now = chrono::Utc::now().to_rfc3339();
-    conn.execute(
-        "UPDATE auth_slots SET last_used = ?1 WHERE id = ?2",
-        rusqlite::params![&now, slot_id],
-    )
-    .map_err(|e| format!("Failed to update last_used: {}", e))?;
+    queries::update_slot_last_used(&conn, slot_id)?;
 
     Ok(DatabaseConnection {
         conn,
@@ -566,11 +557,13 @@ fn migrate_v3_to_v4(db: &DatabaseConnection) -> Result<(), String> {
 
     if version < 4 {
         db.conn()
-            .execute("DROP TABLE IF EXISTS entries_fts", [])
+            .execute_batch(
+                "BEGIN IMMEDIATE;
+                 DROP TABLE IF EXISTS entries_fts;
+                 UPDATE schema_version SET version = 4;
+                 COMMIT;",
+            )
             .map_err(|e| format!("Migration v3→v4 failed: {}", e))?;
-        db.conn()
-            .execute("UPDATE schema_version SET version = 4", [])
-            .map_err(|e| format!("Failed to update schema version: {}", e))?;
         info!("Migrated database from v3 to v4 (removed plaintext FTS table)");
     }
     Ok(())
@@ -584,16 +577,8 @@ mod tests {
     use std::fs;
     use std::path::PathBuf;
 
-    fn temp_db_path(name: &str) -> String {
-        format!("test_schema_{}.db", name)
-    }
-
     fn temp_backups_dir(name: &str) -> PathBuf {
         PathBuf::from(format!("test_schema_backups_{}", name))
-    }
-
-    fn cleanup_db(path: &str) {
-        let _ = fs::remove_file(path);
     }
 
     fn cleanup_backups_dir(dir: &PathBuf) {
@@ -699,10 +684,11 @@ mod tests {
 
     #[test]
     fn test_create_database() {
-        let db_path = temp_db_path("create");
-        cleanup_db(&db_path);
-
-        let result = create_database(&db_path, "test_password_123".to_string());
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let result = create_database(
+            tmp.path().to_str().unwrap(),
+            "test_password_123".to_string(),
+        );
         assert!(result.is_ok(), "Error: {:?}", result.err());
 
         let db = result.unwrap();
@@ -728,50 +714,46 @@ mod tests {
             .query_row("SELECT COUNT(*) FROM auth_slots", [], |row| row.get(0))
             .unwrap();
         assert_eq!(slot_count, 1);
-
-        cleanup_db(&db_path);
     }
 
     #[test]
     fn test_open_database_correct_password() {
-        let db_path = temp_db_path("open_correct");
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
         let backups_dir = temp_backups_dir("open_correct");
-        cleanup_db(&db_path);
         cleanup_backups_dir(&backups_dir);
 
         let password = "secure_password_456".to_string();
-        create_database(&db_path, password.clone()).unwrap();
+        create_database(tmp.path().to_str().unwrap(), password.clone()).unwrap();
 
-        let result = open_database(&db_path, password, &backups_dir);
+        let result = open_database(tmp.path().to_str().unwrap(), password, &backups_dir);
         assert!(result.is_ok(), "Error opening database: {:?}", result.err());
 
-        cleanup_db(&db_path);
         cleanup_backups_dir(&backups_dir);
     }
 
     #[test]
     fn test_open_database_wrong_password() {
-        let db_path = temp_db_path("open_wrong");
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
         let backups_dir = temp_backups_dir("open_wrong");
-        cleanup_db(&db_path);
         cleanup_backups_dir(&backups_dir);
 
-        create_database(&db_path, "correct_password".to_string()).unwrap();
+        create_database(tmp.path().to_str().unwrap(), "correct_password".to_string()).unwrap();
 
-        let result = open_database(&db_path, "wrong_password".to_string(), &backups_dir);
+        let result = open_database(
+            tmp.path().to_str().unwrap(),
+            "wrong_password".to_string(),
+            &backups_dir,
+        );
         assert!(result.is_err());
         assert_eq!(result.unwrap_err(), "Incorrect password");
 
-        cleanup_db(&db_path);
         cleanup_backups_dir(&backups_dir);
     }
 
     #[test]
     fn test_schema_version() {
-        let db_path = temp_db_path("schema_version");
-        cleanup_db(&db_path);
-
-        let db = create_database(&db_path, "test".to_string()).unwrap();
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
 
         let version: i32 = db
             .conn()
@@ -780,16 +762,12 @@ mod tests {
 
         assert_eq!(version, SCHEMA_VERSION);
         assert_eq!(SCHEMA_VERSION, 4);
-
-        cleanup_db(&db_path);
     }
 
     #[test]
     fn test_auth_slots_table_exists() {
-        let db_path = temp_db_path("auth_slots_exist");
-        cleanup_db(&db_path);
-
-        let db = create_database(&db_path, "test".to_string()).unwrap();
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
 
         let count: i32 = db
             .conn()
@@ -800,15 +778,13 @@ mod tests {
             )
             .unwrap();
         assert_eq!(count, 1);
-
-        cleanup_db(&db_path);
     }
 
     #[test]
     fn test_migration_v1_to_v3_success() {
-        let db_path = temp_db_path("migration_v1_v3");
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db_path = tmp.path().to_str().unwrap().to_string();
         let backups_dir = temp_backups_dir("migration_v1_v3");
-        cleanup_db(&db_path);
         cleanup_backups_dir(&backups_dir);
 
         let password = "test_migration_password";
@@ -864,15 +840,14 @@ mod tests {
             assert!(!text.is_empty());
         }
 
-        cleanup_db(&db_path);
         cleanup_backups_dir(&backups_dir);
     }
 
     #[test]
     fn test_migration_v2_to_v3_with_entries() {
-        let db_path = temp_db_path("migration_v2_v3");
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db_path = tmp.path().to_str().unwrap().to_string();
         let backups_dir = temp_backups_dir("migration_v2_v3");
-        cleanup_db(&db_path);
         cleanup_backups_dir(&backups_dir);
 
         // Create v2 database using old create_database (we simulate via v1→v2 path)
@@ -901,15 +876,14 @@ mod tests {
         assert_eq!(e.title, "June Entry");
         assert_eq!(e.text, "June content");
 
-        cleanup_db(&db_path);
         cleanup_backups_dir(&backups_dir);
     }
 
     #[test]
     fn test_open_v3_is_idempotent() {
-        let db_path = temp_db_path("v3_idempotent");
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db_path = tmp.path().to_str().unwrap().to_string();
         let backups_dir = temp_backups_dir("v3_idempotent");
-        cleanup_db(&db_path);
         cleanup_backups_dir(&backups_dir);
 
         let password = "test_password";
@@ -944,15 +918,14 @@ mod tests {
             "No new backup should be created for v4→v4"
         );
 
-        cleanup_db(&db_path);
         cleanup_backups_dir(&backups_dir);
     }
 
     #[test]
     fn test_migration_v1_to_v3_rollback_on_decrypt_error() {
-        let db_path = temp_db_path("migration_rollback");
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db_path = tmp.path().to_str().unwrap().to_string();
         let backups_dir = temp_backups_dir("migration_rollback");
-        cleanup_db(&db_path);
         cleanup_backups_dir(&backups_dir);
 
         let password = "test_password";
@@ -999,15 +972,14 @@ mod tests {
             "Database should be at v2 after v1→v2 success and v2→v3 rollback"
         );
 
-        cleanup_db(&db_path);
         cleanup_backups_dir(&backups_dir);
     }
 
     #[test]
     fn test_migration_creates_backup() {
-        let db_path = temp_db_path("migration_backup");
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db_path = tmp.path().to_str().unwrap().to_string();
         let backups_dir = temp_backups_dir("migration_backup");
-        cleanup_db(&db_path);
         cleanup_backups_dir(&backups_dir);
 
         let password = "test_password";
@@ -1020,7 +992,6 @@ mod tests {
         let backup_count = std::fs::read_dir(&backups_dir).unwrap().count();
         assert!(backup_count >= 1, "At least one backup should be created");
 
-        cleanup_db(&db_path);
         cleanup_backups_dir(&backups_dir);
     }
 
@@ -1028,9 +999,9 @@ mod tests {
     fn test_open_with_keypair() {
         use crate::auth::keypair::{generate_keypair, KeypairMethod};
 
-        let db_path = temp_db_path("keypair_open");
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db_path = tmp.path().to_str().unwrap().to_string();
         let backups_dir = temp_backups_dir("keypair_open");
-        cleanup_db(&db_path);
         cleanup_backups_dir(&backups_dir);
 
         let password = "test_password";
@@ -1083,7 +1054,6 @@ mod tests {
             .unwrap();
         assert_eq!(version, 4);
 
-        cleanup_db(&db_path);
         cleanup_backups_dir(&backups_dir);
     }
 }

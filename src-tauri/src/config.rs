@@ -13,7 +13,10 @@ struct AppConfig {
 pub fn load_diary_dir(app_data_dir: &Path) -> Option<PathBuf> {
     let content = std::fs::read_to_string(app_data_dir.join(CONFIG_FILE)).ok()?;
     let config: AppConfig = serde_json::from_str(&content).ok()?;
-    config.diary_dir.map(PathBuf::from)
+    config
+        .diary_dir
+        .map(PathBuf::from)
+        .filter(|p| p.is_absolute())
 }
 
 /// Persists the chosen diary directory to `{app_data_dir}/config.json`.
@@ -75,7 +78,8 @@ mod tests {
     #[test]
     fn test_save_and_load_roundtrip() {
         let dir = temp_dir("roundtrip");
-        let diary_dir = PathBuf::from("/some/path/to/diary");
+        // Use a path derived from temp_dir() so it is absolute on all platforms.
+        let diary_dir = std::env::temp_dir().join("mini-diarium-test-diary");
         save_diary_dir(&dir, &diary_dir).unwrap();
         let loaded = load_diary_dir(&dir).expect("Should load saved dir");
         assert_eq!(loaded, diary_dir);
@@ -94,12 +98,26 @@ mod tests {
     #[test]
     fn test_save_overwrites_existing_diary_dir() {
         let dir = temp_dir("overwrite");
-        let first = PathBuf::from("/first/path");
-        let second = PathBuf::from("/second/path");
+        let base = std::env::temp_dir();
+        let first = base.join("mini-diarium-first");
+        let second = base.join("mini-diarium-second");
         save_diary_dir(&dir, &first).unwrap();
         save_diary_dir(&dir, &second).unwrap();
         let loaded = load_diary_dir(&dir).expect("Should load updated dir");
         assert_eq!(loaded, second);
+        cleanup(&dir);
+    }
+
+    #[test]
+    fn test_load_relative_path_rejected() {
+        let dir = temp_dir("relative_path");
+        fs::write(
+            dir.join(CONFIG_FILE),
+            r#"{"diary_dir": "../../etc/passwd"}"#,
+        )
+        .unwrap();
+        let result = load_diary_dir(&dir);
+        assert!(result.is_none(), "relative path should be rejected");
         cleanup(&dir);
     }
 }

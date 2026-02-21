@@ -30,7 +30,7 @@ pub fn export_entries_to_json(entries: Vec<DiaryEntry>) -> Result<String, String
     let export = json!({
         "metadata": {
             "application": "Mini Diarium",
-            "version": "0.1.0",
+            "version": env!("CARGO_PKG_VERSION"),
             "dateUpdated": now,
         },
         "entries": Value::Object(entries_map),
@@ -60,7 +60,7 @@ mod tests {
         let parsed: Value = serde_json::from_str(&result).unwrap();
 
         assert_eq!(parsed["metadata"]["application"], "Mini Diarium");
-        assert_eq!(parsed["metadata"]["version"], "0.1.0");
+        assert!(parsed["metadata"]["version"].is_string());
         assert!(parsed["metadata"]["dateUpdated"].is_string());
         assert_eq!(parsed["entries"].as_object().unwrap().len(), 0);
     }

@@ -1,5 +1,6 @@
+use crate::auth::SecretBytes;
 use crate::crypto::{cipher, password as pwd};
-use zeroize::Zeroize;
+use zeroize::{Zeroize, ZeroizeOnDrop};
 
 /// Auth method that wraps/unwraps the master key using a password (Argon2id + AES-256-GCM).
 ///
@@ -7,6 +8,7 @@ use zeroize::Zeroize;
 ///   [phc_hash_len: u32 LE (4 bytes)][phc_hash: phc_hash_len bytes][nonce: 12 bytes][ciphertext][tag: 16 bytes]
 ///
 /// The PHC hash is embedded so that `unwrap_master_key` only needs the blob and the password.
+#[derive(ZeroizeOnDrop)]
 pub struct PasswordMethod {
     pub password: String,
 }
@@ -50,7 +52,7 @@ impl PasswordMethod {
     /// Unwraps the master key from a `wrapped_key` blob using the password.
     ///
     /// Returns `Err("Incorrect password")` if the password is wrong.
-    pub fn unwrap_master_key(&self, wrapped: &[u8]) -> Result<Vec<u8>, String> {
+    pub fn unwrap_master_key(&self, wrapped: &[u8]) -> Result<SecretBytes, String> {
         if wrapped.len() < 4 {
             return Err("Invalid wrapped key: too short".to_string());
         }
@@ -82,12 +84,11 @@ impl PasswordMethod {
             cipher::Key::from_slice(&wrapping_key_bytes).ok_or("Invalid wrapping key size")?;
 
         // Decrypt master_key
-        let master_key = cipher::decrypt(&wrap_key, encrypted_master)
-            .map_err(|_| "Incorrect password".to_string())?;
+        let master_key = cipher::decrypt(&wrap_key, encrypted_master);
+        wrapping_key_bytes.zeroize(); // always runs
+        let master_key = master_key.map_err(|_| "Incorrect password".to_string())?;
 
-        wrapping_key_bytes.zeroize();
-
-        Ok(master_key)
+        Ok(SecretBytes(master_key))
     }
 }
 

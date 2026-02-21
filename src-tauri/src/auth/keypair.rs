@@ -1,8 +1,9 @@
+use crate::auth::SecretBytes;
 use crate::crypto::cipher;
 use hkdf::Hkdf;
 use sha2::Sha256;
 use x25519_dalek::{EphemeralSecret, PublicKey, StaticSecret};
-use zeroize::Zeroize;
+use zeroize::{Zeroize, ZeroizeOnDrop};
 
 const HKDF_INFO: &[u8] = b"mini-diarium-v1";
 
@@ -16,6 +17,7 @@ pub struct KeypairMethod {
 }
 
 /// Unwraps the master key using an X25519 private key.
+#[derive(Zeroize, ZeroizeOnDrop)]
 pub struct PrivateKeyMethod {
     pub private_key: [u8; 32],
 }
@@ -42,10 +44,9 @@ impl KeypairMethod {
 
         // Encrypt master_key with wrapping key
         let wrap_key = cipher::Key::from_slice(&wrapping_key).ok_or("Invalid wrapping key size")?;
-        let encrypted = cipher::encrypt(&wrap_key, master_key)
-            .map_err(|e| format!("Failed to encrypt master key: {}", e))?;
-
-        wrapping_key.zeroize();
+        let encrypted = cipher::encrypt(&wrap_key, master_key);
+        wrapping_key.zeroize(); // always runs
+        let encrypted = encrypted.map_err(|e| format!("Failed to encrypt master key: {}", e))?;
 
         // Build blob: [eph_pub(32)][encrypted_master_key]
         // encrypted already contains [nonce(12)][ciphertext][tag(16)]
@@ -59,7 +60,7 @@ impl KeypairMethod {
 
 impl PrivateKeyMethod {
     /// Unwraps the master key from a `wrapped_key` blob using this private key.
-    pub fn unwrap_master_key(&self, wrapped: &[u8]) -> Result<Vec<u8>, String> {
+    pub fn unwrap_master_key(&self, wrapped: &[u8]) -> Result<SecretBytes, String> {
         // Minimum size: eph_pub(32) + nonce(12) + tag(16) = 60 bytes
         if wrapped.len() < 60 {
             return Err("Invalid wrapped key: too short".to_string());
@@ -83,12 +84,11 @@ impl PrivateKeyMethod {
         // Decrypt master_key
         let wrap_key = cipher::Key::from_slice(&wrapping_key).ok_or("Invalid wrapping key size")?;
         let encrypted_part = &wrapped[32..];
-        let master_key = cipher::decrypt(&wrap_key, encrypted_part)
-            .map_err(|_| "Failed to decrypt master key: wrong private key or corrupted data")?;
-
-        wrapping_key.zeroize();
-
-        Ok(master_key)
+        let decrypted = cipher::decrypt(&wrap_key, encrypted_part);
+        wrapping_key.zeroize(); // always runs before any return
+        decrypted.map(SecretBytes).map_err(|_| {
+            "Failed to decrypt master key: wrong private key or corrupted data".to_string()
+        })
     }
 }
 

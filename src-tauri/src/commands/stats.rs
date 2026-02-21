@@ -16,7 +16,10 @@ pub struct Statistics {
 /// Gets diary statistics
 #[tauri::command]
 pub fn get_statistics(state: State<DiaryState>) -> Result<Statistics, String> {
-    let db_state = state.db.lock().unwrap();
+    let db_state = state
+        .db
+        .lock()
+        .map_err(|_| "State lock poisoned".to_string())?;
     let db = db_state
         .as_ref()
         .ok_or("Diary must be unlocked to view statistics")?;
@@ -67,7 +70,8 @@ fn calculate_statistics(db: &DatabaseConnection) -> Result<Statistics, String> {
     // Calculate streaks
     let dates: Vec<String> = entries.iter().map(|(date, _)| date.clone()).collect();
     let best_streak = calculate_best_streak(&dates)?;
-    let current_streak = calculate_current_streak(&dates)?;
+    let current_streak =
+        calculate_current_streak(&dates, &chrono::Local::now().format("%Y-%m-%d").to_string())?;
 
     Ok(Statistics {
         total_entries,
@@ -108,17 +112,14 @@ fn calculate_best_streak(dates: &[String]) -> Result<i32, String> {
 }
 
 /// Calculates the current streak (consecutive days from today backwards)
-fn calculate_current_streak(dates: &[String]) -> Result<i32, String> {
+fn calculate_current_streak(dates: &[String], today: &str) -> Result<i32, String> {
     if dates.is_empty() {
         return Ok(0);
     }
 
-    // Get today's date in YYYY-MM-DD format
-    let today = chrono::Local::now().format("%Y-%m-%d").to_string();
-
     // Check if there's an entry for today or yesterday
     let last_date = &dates[dates.len() - 1];
-    let days_from_today = days_between(last_date, &today)?;
+    let days_from_today = days_between(last_date, today)?;
 
     // If last entry is more than 1 day ago, streak is broken
     if days_from_today > 1 {
@@ -162,15 +163,6 @@ mod tests {
     use super::*;
     use crate::db::queries::{insert_entry, DiaryEntry};
     use crate::db::schema::create_database;
-    use std::fs;
-
-    fn temp_db_path(name: &str) -> String {
-        format!("test_stats_{}.db", name)
-    }
-
-    fn cleanup_db(path: &str) {
-        let _ = fs::remove_file(path);
-    }
 
     fn create_test_entry(date: &str, word_count: i32) -> DiaryEntry {
         let now = chrono::Utc::now().to_rfc3339();
@@ -231,16 +223,47 @@ mod tests {
 
     #[test]
     fn test_current_streak_empty() {
-        assert_eq!(calculate_current_streak(&[]).unwrap(), 0);
+        assert_eq!(calculate_current_streak(&[], "2024-06-15").unwrap(), 0);
+    }
+
+    #[test]
+    fn test_current_streak_single_today() {
+        assert_eq!(
+            calculate_current_streak(&["2024-06-15".to_string()], "2024-06-15").unwrap(),
+            1
+        );
+    }
+
+    #[test]
+    fn test_current_streak_yesterday_counts() {
+        assert_eq!(
+            calculate_current_streak(&["2024-06-14".to_string()], "2024-06-15").unwrap(),
+            1
+        );
+    }
+
+    #[test]
+    fn test_current_streak_two_days_ago_broken() {
+        assert_eq!(
+            calculate_current_streak(&["2024-06-13".to_string()], "2024-06-15").unwrap(),
+            0
+        );
+    }
+
+    #[test]
+    fn test_current_streak_consecutive_three() {
+        let dates = vec![
+            "2024-06-13".to_string(),
+            "2024-06-14".to_string(),
+            "2024-06-15".to_string(),
+        ];
+        assert_eq!(calculate_current_streak(&dates, "2024-06-15").unwrap(), 3);
     }
 
     #[test]
     fn test_statistics_calculation() {
-        let db_path = temp_db_path("stats");
-        cleanup_db(&db_path);
-
-        let password = "test".to_string();
-        let db = create_database(&db_path, password).unwrap();
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
 
         // Insert test entries
         insert_entry(&db, &create_test_entry("2024-01-01", 100)).unwrap();
@@ -254,17 +277,12 @@ mod tests {
         assert_eq!(stats.total_words, 500);
         assert_eq!(stats.avg_words_per_entry, 125.0);
         assert_eq!(stats.best_streak, 3);
-
-        cleanup_db(&db_path);
     }
 
     #[test]
     fn test_statistics_empty_database() {
-        let db_path = temp_db_path("empty");
-        cleanup_db(&db_path);
-
-        let password = "test".to_string();
-        let db = create_database(&db_path, password).unwrap();
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
 
         let stats = calculate_statistics(&db).unwrap();
 
@@ -274,17 +292,12 @@ mod tests {
         assert_eq!(stats.entries_per_week, 0.0);
         assert_eq!(stats.best_streak, 0);
         assert_eq!(stats.current_streak, 0);
-
-        cleanup_db(&db_path);
     }
 
     #[test]
     fn test_entries_per_week() {
-        let db_path = temp_db_path("per_week");
-        cleanup_db(&db_path);
-
-        let password = "test".to_string();
-        let db = create_database(&db_path, password).unwrap();
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
 
         // 3 entries over 14 days (2 weeks) = 1.5 entries/week
         insert_entry(&db, &create_test_entry("2024-01-01", 100)).unwrap();
@@ -295,7 +308,5 @@ mod tests {
 
         assert_eq!(stats.total_entries, 3);
         assert!((stats.entries_per_week - 1.5).abs() < 0.01);
-
-        cleanup_db(&db_path);
     }
 }

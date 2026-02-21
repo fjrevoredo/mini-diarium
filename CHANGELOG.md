@@ -13,8 +13,23 @@ All notable changes to Mini Diarium are documented here. This project uses [Sema
 
 - **E2E test suite**: end-to-end tests using WebdriverIO + tauri-driver that exercise the full app stack (real binary, real SQLite). The core workflow test covers diary creation, writing an entry, locking, and verifying persistence after unlock. Run locally with `bun run test:e2e`; runs automatically in CI on Ubuntu after the build step.
 
+### Security
+
+- **Key material zeroized on all exit paths**: wrapping keys derived during `wrap_master_key` and `unwrap_master_key` are now explicitly zeroed before returning on both the success path and every error path (wrong password, wrong key file, decryption failure). Previously the wrapping key bytes could remain in memory whenever an incorrect credential was entered.
+- **Auth structs zeroize on drop**: `PasswordMethod` and `PrivateKeyMethod` now implement `ZeroizeOnDrop`; memory is reliably overwritten when the struct is dropped, regardless of call site.
+- **Keypair unlock buffer zeroized**: the intermediate `Vec<u8>` holding private key bytes decoded from the key file during `unlock_diary_with_keypair` is now explicitly zeroized immediately after copying into the stack array.
+- **`SecretBytes` newtype for decrypted master key**: `unwrap_master_key` now returns `SecretBytes` (a `ZeroizeOnDrop` wrapper) instead of a bare `Vec<u8>`, enforcing automatic cleanup of master key material regardless of whether the caller remembers to call `.zeroize()`.
+- **Mutex poisoning handled gracefully**: all Tauri command handlers now propagate a `"State lock poisoned"` error instead of panicking via `.unwrap()` if a thread panics while holding the diary state lock. Previously a single panicking thread could permanently crash the app for the user.
+- **Diary directory config rejects relative paths**: `config.json` entries with relative paths (e.g. `../../etc/passwd`) are now silently rejected; only absolute paths are accepted.
+- **`migrate_v3_to_v4` is now atomic**: the two-statement migration that drops the plaintext FTS table and bumps the schema version is now wrapped in a single `BEGIN IMMEDIATE`/`COMMIT` transaction, consistent with other migrations.
+
 ### Fixed
 
+- **Ordered lists in Markdown export**: entries containing numbered lists (`<ol>`) now export as `1. First`, `2. Second`, etc. instead of being silently converted to unordered bullet lists.
+- **Word counts inflated by HTML markup**: word counts for entries written in the rich-text editor were inflated because HTML tags (`<p>`, `<strong>`, `<em>`, etc.) were counted as word tokens. `count_words` now strips tags before counting. Existing stored word counts are not retroactively corrected, but new writes and updates are accurate.
+- **Export JSON version always showed `0.1.0`**: the `metadata.version` field in JSON exports now reflects the actual app version instead of the hardcoded string `"0.1.0"`.
+- **Startup directory errors are now logged**: failure to determine the system app-data directory or to create the app directory now emits a warning to the log instead of silently falling back or ignoring the error.
+- **Export no longer does N+1 queries**: JSON and Markdown export previously fetched entry dates and then queried each entry individually. All entries are now fetched and decrypted in a single SQL query.
 - E2E CI failure on Linux: `browserName: 'edge'` is now set only on Windows (required by msedgedriver/WebView2) and omitted entirely on Linux. WebKitWebDriver (webkit2gtk-driver) rejects both `'edge'` and an empty string `''`; omitting the key means no browser-name constraint is imposed, which satisfies WebKitWebDriver's W3C capability matching.
 - E2E spec (`e2e/specs/diary-workflow.spec.ts`) is now excluded from the Vitest unit test run, preventing a `ReferenceError: browser is not defined` failure when running `bun run test:run`.
 - macOS CI build failure with Tauri `2.10.x`: updated predefined menu item calls to the current API (`services/hide/hide_others/show_all` now pass `None` label argument, and Window menu `zoom` was replaced with `maximize`).

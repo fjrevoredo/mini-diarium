@@ -87,12 +87,10 @@ fn html_to_markdown(html: &str) -> String {
     result = result.replace("<ul>", "\n");
     result = result.replace("</ul>", "\n");
 
-    // Handle ordered lists - we need to number them
-    // Simple approach: convert to bullet list (numbering would need state tracking)
-    result = result.replace("<ol>", "\n");
-    result = result.replace("</ol>", "\n");
+    // Handle ordered lists with proper numbering (must be before <li> replacement)
+    result = number_ordered_lists(&result);
 
-    // Handle list items
+    // Handle list items (for unordered lists only — ordered list items already processed)
     result = result.replace("<li>", "- ");
     result = result.replace("</li>", "\n");
 
@@ -118,6 +116,42 @@ fn html_to_markdown(html: &str) -> String {
 
     // Trim trailing whitespace
     result.trim().to_string()
+}
+
+/// Converts `<ol>...</ol>` regions to numbered markdown list items.
+///
+/// Each `<li>content</li>` within an ordered list becomes `\n{n}. content`
+/// where n is a per-list counter starting at 1.  Unordered `<ul>` items are
+/// left for the existing `<li>` → `- ` replacement to handle.
+fn number_ordered_lists(input: &str) -> String {
+    let mut result = String::new();
+    let mut remaining = input;
+
+    while let Some(ol_start) = remaining.find("<ol>") {
+        result.push_str(&remaining[..ol_start]);
+        remaining = &remaining[ol_start + 4..]; // skip "<ol>"
+
+        if let Some(ol_end) = remaining.find("</ol>") {
+            let ol_content = &remaining[..ol_end];
+            remaining = &remaining[ol_end + 5..]; // skip "</ol>"
+
+            let mut counter = 1;
+            let mut ol_remaining = ol_content;
+            while let Some(li_start) = ol_remaining.find("<li>") {
+                result.push_str(&ol_remaining[..li_start]);
+                ol_remaining = &ol_remaining[li_start + 4..];
+                if let Some(li_end) = ol_remaining.find("</li>") {
+                    let li_content = &ol_remaining[..li_end];
+                    ol_remaining = &ol_remaining[li_end + 5..];
+                    result.push_str(&format!("\n{}. {}", counter, li_content));
+                    counter += 1;
+                }
+            }
+            result.push_str(ol_remaining);
+        }
+    }
+    result.push_str(remaining);
+    result
 }
 
 /// Strips any remaining HTML tags from the string
@@ -249,5 +283,26 @@ mod tests {
         let html = "<p>Line one<br>Line two</p>";
         let result = html_to_markdown(html);
         assert_eq!(result, "Line one\nLine two");
+    }
+
+    #[test]
+    fn test_html_to_markdown_ordered_list() {
+        let html = "<ol><li>First</li><li>Second</li><li>Third</li></ol>";
+        let result = html_to_markdown(html);
+        assert!(
+            result.contains("1. First"),
+            "expected '1. First' in: {}",
+            result
+        );
+        assert!(
+            result.contains("2. Second"),
+            "expected '2. Second' in: {}",
+            result
+        );
+        assert!(
+            result.contains("3. Third"),
+            "expected '3. Third' in: {}",
+            result
+        );
     }
 }
