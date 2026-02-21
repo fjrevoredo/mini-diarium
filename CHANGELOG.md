@@ -15,6 +15,8 @@ All notable changes to Mini Diarium are documented here. This project uses [Sema
 ### Fixed
 
 - E2E spec (`e2e/specs/diary-workflow.spec.ts`) is now excluded from the Vitest unit test run, preventing a `ReferenceError: browser is not defined` failure when running `bun run test:run`.
+- macOS CI build failure with Tauri `2.10.x`: updated predefined menu item calls to the current API (`services/hide/hide_others/show_all` now pass `None` label argument, and Window menu `zoom` was replaced with `maximize`).
+- Bundle identifier warning on macOS: changed app identifier from `com.minidiarium.app` to `com.minidiarium`, and added startup compatibility fallback so existing installs using the legacy `com.minidiarium.app` app-data directory continue to load their existing diary/config.
 
 - **Custom diary location**: choose where your diary file is stored (Preferences → Diary File → Change Location). The file is moved to the selected folder and the choice persists across restarts, enabling cloud sync via Dropbox, OneDrive, or any folder-based sync tool. The diary is automatically locked during the move; the app reloads so you can re-authenticate from the new location.
 - **Website contact obfuscation**: footer email link now renders via `data-*` attributes plus inline script so the address is reconstructed in the browser and not present in the raw HTML.

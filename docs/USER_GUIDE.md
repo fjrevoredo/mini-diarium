@@ -117,9 +117,9 @@ Mini Diarium automatically backs up your database periodically, with older backu
 
 Database location by OS:
 
-- **Windows**: `%APPDATA%\com.minidiarium.app\`
-- **macOS**: `~/Library/Application Support/com.minidiarium.app/`
-- **Linux**: `~/.local/share/com.minidiarium.app/`
+- **Windows**: `%APPDATA%\com.minidiarium\` (legacy installs may use `%APPDATA%\com.minidiarium.app\`)
+- **macOS**: `~/Library/Application Support/com.minidiarium/` (legacy installs may use `~/Library/Application Support/com.minidiarium.app/`)
+- **Linux**: `~/.local/share/com.minidiarium/` (legacy installs may use `~/.local/share/com.minidiarium.app/`)
 
 ## FAQ
 

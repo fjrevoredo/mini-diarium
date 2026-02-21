@@ -10,8 +10,29 @@ pub mod menu;
 
 use commands::auth::DiaryState;
 use log::info;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use tauri::Manager;
+
+const LEGACY_APP_IDENTIFIER_DIR: &str = "com.minidiarium.app";
+
+fn has_legacy_app_state(dir: &Path) -> bool {
+    dir.join("config.json").is_file() || dir.join("diary.db").is_file()
+}
+
+fn resolve_app_data_dir(app_dir: PathBuf) -> PathBuf {
+    if has_legacy_app_state(&app_dir) {
+        return app_dir;
+    }
+
+    if let Some(parent) = app_dir.parent() {
+        let legacy_dir = parent.join(LEGACY_APP_IDENTIFIER_DIR);
+        if has_legacy_app_state(&legacy_dir) {
+            return legacy_dir;
+        }
+    }
+
+    app_dir
+}
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -26,12 +47,18 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
             // Get app data directory and create diary path
-            let app_dir = app
+            let system_app_dir = app
                 .path()
                 .app_data_dir()
                 .unwrap_or_else(|_| PathBuf::from("."));
 
-            // Create directory if it doesn't exist
+            let app_dir = resolve_app_data_dir(system_app_dir.clone());
+            if app_dir != system_app_dir {
+                info!(
+                    "Using legacy app data directory for compatibility: {}",
+                    app_dir.display()
+                );
+            }
             std::fs::create_dir_all(&app_dir).ok();
 
             let diary_dir = if let Ok(test_dir) = std::env::var("MINI_DIARIUM_DATA_DIR") {

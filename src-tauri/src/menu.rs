@@ -100,11 +100,11 @@ pub fn build_menu(app: &AppHandle<Wry>) -> tauri::Result<LockableMenuItems> {
             .separator()
             .item(&preferences)
             .separator()
-            .item(&PredefinedMenuItem::services(app)?)
+            .item(&PredefinedMenuItem::services(app, None)?)
             .separator()
-            .item(&PredefinedMenuItem::hide(app)?)
-            .item(&PredefinedMenuItem::hide_others(app)?)
-            .item(&PredefinedMenuItem::show_all(app)?)
+            .item(&PredefinedMenuItem::hide(app, None)?)
+            .item(&PredefinedMenuItem::hide_others(app, None)?)
+            .item(&PredefinedMenuItem::show_all(app, None)?)
             .separator()
             .item(&PredefinedMenuItem::quit(app, None)?)
             .build()?;
@@ -120,7 +120,7 @@ pub fn build_menu(app: &AppHandle<Wry>) -> tauri::Result<LockableMenuItems> {
             .build()?;
         let window_menu = SubmenuBuilder::new(app, "Window")
             .item(&PredefinedMenuItem::minimize(app, None)?)
-            .item(&PredefinedMenuItem::zoom(app, None)?)
+            .item(&PredefinedMenuItem::maximize(app, None)?)
             .separator()
             .item(&PredefinedMenuItem::close_window(app, None)?)
             .build()?;
