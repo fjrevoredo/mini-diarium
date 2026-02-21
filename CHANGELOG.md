@@ -6,7 +6,7 @@ All notable changes to Mini Diarium are documented here. This project uses [Sema
 
 ### Added
 
-- **macOS menu bar**: proper App menu (About, Preferences, Services, Hide, Quit), Edit menu (Undo/Redo, Cut/Copy/Paste/Select All for standard keyboard shortcuts), and Window menu (Minimize, Zoom, Close). Cmd+Q, Cmd+H, Cmd+M, and clipboard shortcuts now work correctly on macOS.
+- **macOS menu bar**: proper App menu (About, Preferences, Services, Hide, Quit), Edit menu (Undo/Redo, Cut/Copy/Paste/Select All for standard keyboard shortcuts), and Window menu (Minimize, Zoom, Close). The custom menu is now installed app-wide via Tauri `AppHandle::set_menu` (instead of `window.set_menu`, which is unsupported on macOS), so menu actions and shortcuts work correctly on macOS.
 - **Lock-state menu enforcement**: Navigation and Diary menu items are disabled while the diary is locked and automatically re-enable on unlock, preventing spurious menu actions on the lock screen. File/Help items (Preferences, About, Quit) remain available at all times.
 - **About from menu**: Help › About (Windows/Linux) and Mini Diarium › About (macOS) now open the About overlay.
 - **Auto-lock on Windows session lock/suspend**: the app now listens for native Windows session/power events and auto-locks the diary when the session is locked/logged off or the system is suspending.

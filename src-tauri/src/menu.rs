@@ -149,10 +149,10 @@ pub fn build_menu(app: &AppHandle<Wry>) -> tauri::Result<LockableMenuItems> {
             .build()?
     };
 
-    // Set the menu on all windows
-    for window in app.webview_windows().values() {
-        window.set_menu(menu.clone())?;
-    }
+    // Set an app-wide menu.
+    // On macOS, window-specific menus are unsupported and must be set via AppHandle.
+    // On Windows/Linux, this also applies the menu to windows that use the app-wide menu.
+    app.set_menu(menu.clone())?;
 
     // Set up menu event handler
     app.on_menu_event(move |app, event| {
