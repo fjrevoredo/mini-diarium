@@ -277,7 +277,12 @@ jobs:
             librsvg2-dev
 
       - name: Install tauri-driver
-        run: cargo install tauri-driver
+        run: |
+          if ! command -v tauri-driver >/dev/null 2>&1; then
+            cargo install tauri-driver
+          else
+            echo "tauri-driver already installed; skipping install"
+          fi
 
       - name: Download Linux binary
         uses: actions/download-artifact@v6
