@@ -2,6 +2,15 @@
 
 All notable changes to Mini Diarium are documented here. This project uses [Semantic Versioning](https://semver.org/).
 
+## [0.4.0] — Unrealesed
+
+### Added
+
+### Fixed
+
+### Changed
+
+
 ## [0.3.0] — 2026-02-21
 
 ### Added
@@ -10,7 +19,6 @@ All notable changes to Mini Diarium are documented here. This project uses [Sema
 - **Lock-state menu enforcement**: Navigation and Diary menu items are disabled while the diary is locked and automatically re-enable on unlock, preventing spurious menu actions on the lock screen. File/Help items (Preferences, About, Quit) remain available at all times.
 - **About from menu**: Help › About (Windows/Linux) and Mini Diarium › About (macOS) now open the About overlay.
 - **Auto-lock on Windows session lock/suspend**: the app now listens for native Windows session/power events and auto-locks the diary when the session is locked/logged off or the system is suspending.
-
 - **E2E test suite**: end-to-end tests using WebdriverIO + tauri-driver that exercise the full app stack (real binary, real SQLite). The core workflow test covers diary creation, writing an entry, locking, and verifying persistence after unlock. Run locally with `bun run test:e2e`; runs automatically in CI on Ubuntu after the build step.
 
 ### Security
@@ -43,6 +51,8 @@ All notable changes to Mini Diarium are documented here. This project uses [Sema
 
 - **Documentation diagrams synced with codebase**: refreshed architecture/context diagrams to match the current SolidJS signal state model, command/backend layout, and security posture (no plaintext search index); updated stale `AGENTS.md`/`CLAUDE.md` diagram references and regeneration instructions; added light-theme `architecture.svg` generation and CI existence checks alongside `architecture-dark.svg`.
 
+
+
 ## [0.2.1] — 2026-02-19
 
 ### Added
@@ -56,6 +66,7 @@ All notable changes to Mini Diarium are documented here. This project uses [Sema
 - macOS "damaged and can't be opened" error: added ad-hoc code signing (`signingIdentity: "-"`) and updated installation instructions to use `xattr -cr` workaround
 - macOS release builds now correctly produce a universal binary (arm64 + x86_64) by passing `--target universal-apple-darwin` to the build step
 - The entries_skipped field was declared but never used, it was added a condition in the for loop to skip and count entries that have no meaningful content rather than inserting empty records. by @Yujonpradhananga
+
 
 
 ## [0.2.0] — 2026-02-18
@@ -93,6 +104,8 @@ All notable changes to Mini Diarium are documented here. This project uses [Sema
 - `change_password` now re-wraps the master key in O(1) — no entry re-encryption required regardless of diary size
 - Existing v1 and v2 databases are automatically migrated to v3 then v4 on the first unlock
 - App icon and logo updated across all platforms (Windows ICO, macOS ICNS, Linux PNG, Windows AppX, iOS, Android); logo also shown on the unlock and diary creation screens
+
+
 
 ## [0.1.0] — 2026-02-16
 
