@@ -125,6 +125,13 @@ export default function MainLayout() {
       }),
     );
 
+    // About menu item
+    unlisteners.push(
+      await listen('menu-about', () => {
+        setIsAboutOpen(true);
+      }),
+    );
+
     // Previous Month menu item
     unlisteners.push(
       await listen('menu-navigate-previous-month', async () => {

@@ -1,56 +1,66 @@
 direction: right
 
 presentation: {
-  label: "Presentation Layer\n(Tauri + SolidJS)"
+  label: "Presentation Layer\n(SolidJS Components)"
   style.fill: "#1E293B"
   style.stroke: "#38BDF8"
 
-  router: "Router\n(route guards)"
-  auth: "Auth Context\n(lock / unlock)"
-  editor: "Editor\n(TipTap)"
+  app: "App.tsx\n(Switch / Match by authState)"
+  auth_ui: "Auth Screens\n(PasswordCreation / PasswordPrompt)"
+  editor_ui: "MainLayout\n(Calendar + Editor + Overlays)"
 }
 
 state: {
-  label: "State Layer\n(Zustand)"
+  label: "State Layer\n(Solid Signals)"
   style.fill: "#312E81"
 
-  auth_state: "Auth State"
-  entry_state: "Entry State"
+  auth_state: "auth.ts"
+  entry_state: "entries.ts"
+  search_state: "search.ts\n(interface kept; not rendered)"
+  ui_state: "ui.ts"
+  pref_state: "preferences.ts"
 }
 
 ipc: {
   label: "IPC Layer"
   style.fill: "#064E3B"
 
-  invoke: "invoke()"
+  invoke: "invoke() / listen()"
 }
 
 backend: {
   label: "Rust Backend"
   style.fill: "#292524"
 
-  commands: "Commands\n(save, load, import, export, stats)"
-  crypto: "Crypto Service\n(AES-256-GCM)"
-  auth_service: "Auth Service\n(wrap / unwrap master key)"
+  commands: "Commands\n(auth, entries, search(stub), navigation,\nstats, import, export)"
+  services: "Services\ncrypto/ db/ import/ export/\nbackup.rs menu.rs"
 }
 
 data: {
-  label: "Data Layer\n(SQLite)"
+  label: "Data Layer"
   style.fill: "#111827"
 
-  entries: "entries\n(encrypted)"
-  slots: "auth_slots\n(wrapped keys)"
+  diary_db: "SQLite diary.db\nentries (encrypted)\nauth_slots (wrapped master keys)"
+  backups: "Local backups/"
+  prefs: "Browser localStorage\n(non-sensitive preferences)"
 }
 
-presentation.editor -> state.entry_state
-presentation.auth -> state.auth_state
+presentation.app -> presentation.auth_ui
+presentation.app -> presentation.editor_ui
+presentation.auth_ui -> state.auth_state
+presentation.editor_ui -> state.entry_state
+presentation.editor_ui -> state.search_state
+presentation.editor_ui -> state.ui_state
+presentation.editor_ui -> state.pref_state
 
-state.entry_state -> ipc.invoke
 state.auth_state -> ipc.invoke
+state.entry_state -> ipc.invoke
+state.search_state -> ipc.invoke
+state.ui_state -> ipc.invoke
 
 ipc.invoke -> backend.commands
 
-backend.commands -> backend.crypto
-
-backend.crypto -> data.entries
-backend.auth_service -> data.slots
+backend.commands -> backend.services
+backend.services -> data.diary_db
+backend.services -> data.backups
+state.pref_state -> data.prefs

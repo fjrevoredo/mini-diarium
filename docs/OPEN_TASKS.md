@@ -2,10 +2,10 @@
 
 This document tracks features and improvements deferred from the v0.1.0 release.
 
-**Status**: 13 open tasks across 5 categories
-- **Infrastructure**: 1 task (release workflow modernization)
-- **Features**: 7 tasks (PDF export, directory selection, i18n, menus, auto-lock, auto-update, legacy migration)
-- **Quality**: 2 tasks (accessibility audit, QA pass)
+**Status**: 18 open tasks across 5 categories
+- **Infrastructure**: 2 tasks (release workflow modernization, CI diagram diffing)
+- **Features**: 9 tasks (PDF export, directory selection, i18n, menus, auto-lock, auto-update, legacy migration, extension system, first-launch existing diary picker)
+- **Quality**: 4 tasks (accessibility audit, QA pass, keyboard shortcuts audit, backup behavior documentation)
 - **Testing**: 3 tasks (E2E setup and tests)
 
 See [Current-implementation-plan.md](Current-implementation-plan.md) for full historical context of the 48 completed tasks.
@@ -49,6 +49,31 @@ Improve release pipeline reliability and remove deprecated dependencies.
 
 ---
 
+### Task 62: CI Diagram Diff Verification
+**Priority**: Medium | **Complexity**: Low | **Files**: `.github/workflows/ci.yml`, `docs/diagrams/*`
+
+Ensure generated architecture diagrams are actually compared against committed outputs.
+
+**Current Issues**:
+- Workflow generates `*-check.svg` files but does not compare content with committed SVGs
+- Stale diagrams can pass CI as long as expected filenames exist
+
+**Requirements**:
+- Regenerate all tracked diagrams during CI (`unlock*.svg`, `save-entry*.svg`, `context*.svg`, `architecture*.svg`)
+- Diff generated files against committed files and fail on mismatch
+- Keep CI output actionable (show which file differs and how to regenerate locally)
+
+**Proposed Solution**:
+1. Generate check outputs with deterministic filenames
+2. Compare with committed files (`git diff --exit-code` or explicit `diff`)
+3. Print a clear remediation message (`bun run diagrams` + commit)
+
+**Testing**:
+- Intentionally modify one diagram source and verify CI fails
+- Regenerate and verify CI passes
+
+---
+
 ## 🎯 High Priority (v0.2.0 Candidates)
 
 ### Task 46: Diary Directory Selection
@@ -84,6 +109,30 @@ Ensure the app is usable by everyone.
 - Visible focus indicators
 
 **Testing**: Automated with axe-core, manual screen reader testing
+
+---
+
+### Task 63: Keyboard Shortcuts Audit & Recovery
+**Priority**: High | **Complexity**: Medium | **Files**: `src/lib/shortcuts.ts`, `src-tauri/src/menu.rs`, `src/components/layout/MainLayout.tsx`
+
+Audit and restore all expected keyboard shortcuts and menu-triggered navigation actions.
+
+**Requirements**:
+- Verify all documented bindings work on Windows/macOS/Linux
+- Ensure menu accelerators and frontend handlers stay in sync
+- Ensure shortcuts are ignored when typing in inputs/editable regions
+- Confirm lock-state behavior (disabled while locked, enabled while unlocked)
+
+**Verification Matrix**:
+1. Previous/next day (`CmdOrCtrl+Left` / `CmdOrCtrl+Right`)
+2. Previous/next month (`CmdOrCtrl+Shift+Left` / `CmdOrCtrl+Shift+Right`)
+3. Go to today (`CmdOrCtrl+T`)
+4. Go to date (`CmdOrCtrl+G`)
+5. Menu-item click emits and frontend handler behavior
+
+**Testing**:
+- Add/expand unit tests around shortcut detection and guard conditions
+- Manual cross-platform verification in packaged app builds
 
 ---
 
@@ -145,6 +194,29 @@ Export diary as PDF (A4 page size).
 
 ---
 
+### Task 66: Extension System Architecture
+**Priority**: Low | **Complexity**: High | **Files**: Architecture docs + new extension host modules (TBD)
+
+Design an extension/plugin API for third-party integrations (importers, exporters, themes, utilities).
+
+**Requirements**:
+- Define extension lifecycle (discover, load, validate, disable, uninstall)
+- Define permissions/sandbox model consistent with privacy-first constraints (no implicit network)
+- Define stable extension API surface (commands/events/data contracts)
+- Decide packaging and versioning strategy
+- Define trust and signing model (or explicitly document unsigned-only local extensions)
+
+**Out of scope (initial spike)**:
+- Shipping a public extension marketplace
+- Remote extension download inside the app
+
+**Deliverables**:
+- Technical design doc with threat model
+- Minimal proof-of-concept extension host
+- At least one sample extension (e.g. additional export target)
+
+---
+
 ## 🖥️ Platform Features (v0.4.0)
 
 ### Task 49: Platform-Specific Menus
@@ -174,8 +246,13 @@ Native menu behavior for each platform.
 
 Automatically lock diary when user locks their screen.
 
+**Current state**:
+- Windows implementation is complete (session lock/logoff + suspend)
+- Frontend lock-screen sync is implemented via backend lock event emission
+- macOS hook is still pending
+
 **Requirements**:
-- Listen for OS screen lock event (macOS, Windows)
+- Listen for OS screen lock event on macOS (Windows already implemented)
 - On lock: Call `lock_diary()`, clear DB connection
 - Handle: Sleep, screen saver, manual lock
 
@@ -214,6 +291,52 @@ Import from encrypted Mini Diary v1.x files.
 **Testing**: Rust unit tests with Mini Diary encrypted fixture
 
 **Note**: Current implementation only supports unencrypted Mini Diary JSON exports
+
+---
+
+## 🚪 Onboarding & Documentation
+
+### Task 64: First-Launch "Open Existing Diary" Flow
+**Priority**: Medium | **Complexity**: Medium | **Files**: `src/components/auth/PasswordCreation.tsx`, `src/state/auth.ts`, `src/lib/tauri.ts`, `src-tauri/src/commands/auth.rs`
+
+When no diary is found, let users choose an existing `diary.db` from another directory instead of only showing "create new diary".
+
+**Use case**:
+- Users who sync `diary.db` via Dropbox/OneDrive/iCloud/Network folder
+- Fresh install on a second machine where the diary already exists elsewhere
+
+**Requirements**:
+- Add a clear "Open Existing Diary..." action to the no-diary screen
+- Allow selecting an existing `diary.db` file (or directory containing it)
+- Validate selection and set app diary location accordingly (without copying)
+- Transition to locked state and show the unlock prompt for that diary
+- Keep "Create New Diary" as the default primary path
+
+**Testing**:
+- Manual: clean install -> choose external existing DB -> unlock -> entries load
+- Reject invalid selections (wrong file name, unreadable path, missing file)
+
+---
+
+### Task 65: Backup Behavior Documentation for Custom Diary Locations
+**Priority**: Medium | **Complexity**: Low | **Files**: `README.md`, `docs/`, `CHANGELOG.md` (if behavior changes)
+
+Document how automatic backups behave with custom diary locations and current database/auth architecture.
+
+**What to explain**:
+- Backup trigger timing (on unlock) and retention policy (rotation)
+- Backup storage path with default vs custom diary directories
+- Relationship to auth slots/master-key wrapping (schema v3) and encrypted entries
+- Expected behavior when moving diary location
+- Restore expectations and caveats
+
+**Deliverables**:
+- User-facing explanation section in README/docs
+- Short troubleshooting checklist (e.g., "where are my backups?")
+- Confirm wording matches actual implementation in `src-tauri/src/backup.rs` and `src-tauri/src/commands/auth.rs`
+
+**Testing**:
+- Doc accuracy check by walking through actual code paths and manual verification
 
 ---
 
@@ -283,15 +406,15 @@ Automated end-to-end tests for critical user journeys.
 
 | Category | Open | Completed |
 |----------|------|-----------|
-| **Infrastructure** | 1 | 4 |
-| **Features** | 7 | 38 |
-| **Quality** | 2 | 5 |
+| **Infrastructure** | 2 | 4 |
+| **Features** | 9 | 38 |
+| **Quality** | 4 | 5 |
 | **Testing** | 3 | 2 |
-| **Total** | **13** | **49** |
+| **Total** | **18** | **49** |
 
 **Next milestone candidates**:
-- **v0.1.1**: Task 61 (modernize release workflow)
-- **v0.2.0**: Tasks 46, 52 (accessibility + directory selection)
-- **v0.3.0**: Tasks 47-48 (internationalization)
-- **v0.4.0**: Tasks 49-51, 53 (platform features + legacy migration)
+- **v0.1.1**: Tasks 61-62 (release workflow + CI diagram verification)
+- **v0.2.0**: Tasks 52, 63 (accessibility + keyboard shortcuts)
+- **v0.3.0**: Tasks 47-48, 64-65 (i18n + onboarding/docs improvements)
+- **v0.4.0**: Tasks 50-51, 53, 66 (platform features + legacy migration + extension architecture)
 - **v1.0.0**: Tasks 58-60 (comprehensive QA + E2E tests)

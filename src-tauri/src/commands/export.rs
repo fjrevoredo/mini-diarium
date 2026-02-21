@@ -14,14 +14,7 @@ pub struct ExportResult {
 
 /// Fetches and decrypts all diary entries from the database
 fn fetch_all_entries(db: &DatabaseConnection) -> Result<Vec<DiaryEntry>, String> {
-    let dates = queries::get_all_entry_dates(db)?;
-    let mut entries = Vec::with_capacity(dates.len());
-    for date in &dates {
-        if let Some(entry) = queries::get_entry(db, date)? {
-            entries.push(entry);
-        }
-    }
-    Ok(entries)
+    queries::get_all_entries(db)
 }
 
 /// Exports all diary entries to a JSON file in Mini Diary-compatible format
@@ -29,7 +22,10 @@ fn fetch_all_entries(db: &DatabaseConnection) -> Result<Vec<DiaryEntry>, String>
 pub fn export_json(file_path: String, state: State<DiaryState>) -> Result<ExportResult, String> {
     info!("Starting JSON export to file: {}", file_path);
 
-    let db_state = state.db.lock().unwrap();
+    let db_state = state
+        .db
+        .lock()
+        .map_err(|_| "State lock poisoned".to_string())?;
     let db = db_state.as_ref().ok_or_else(|| {
         let err = "Diary must be unlocked to export entries";
         error!("{}", err);
@@ -68,7 +64,10 @@ pub fn export_markdown(
 ) -> Result<ExportResult, String> {
     info!("Starting Markdown export to file: {}", file_path);
 
-    let db_state = state.db.lock().unwrap();
+    let db_state = state
+        .db
+        .lock()
+        .map_err(|_| "State lock poisoned".to_string())?;
     let db = db_state.as_ref().ok_or_else(|| {
         let err = "Diary must be unlocked to export entries";
         error!("{}", err);
@@ -103,11 +102,7 @@ mod tests {
     use crate::db::schema::create_database;
     use std::fs;
 
-    fn temp_db_path(name: &str) -> String {
-        format!("test_export_{}.db", name)
-    }
-
-    fn cleanup(paths: &[&str]) {
+    fn cleanup_files(paths: &[&str]) {
         for path in paths {
             let _ = fs::remove_file(path);
         }
@@ -127,11 +122,11 @@ mod tests {
 
     #[test]
     fn test_export_json_writes_file() {
-        let db_path = temp_db_path("writes_file");
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
         let export_path = "test_export_output.json";
-        cleanup(&[&db_path, export_path]);
+        cleanup_files(&[export_path]);
 
-        let db = create_database(&db_path, "test".to_string()).unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
 
         // Insert entries
         crate::db::queries::insert_entry(
@@ -165,16 +160,16 @@ mod tests {
         assert_eq!(parsed["entries"]["2024-01-01"]["title"], "Entry 1");
         assert_eq!(parsed["entries"]["2024-01-02"]["title"], "Entry 2");
 
-        cleanup(&[&db_path, export_path]);
+        cleanup_files(&[export_path]);
     }
 
     #[test]
     fn test_export_empty_diary() {
-        let db_path = temp_db_path("empty");
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
         let export_path = "test_export_empty_output.json";
-        cleanup(&[&db_path, export_path]);
+        cleanup_files(&[export_path]);
 
-        let db = create_database(&db_path, "test".to_string()).unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
 
         // Export empty diary
         let dates = crate::db::queries::get_all_entry_dates(&db).unwrap();
@@ -189,6 +184,6 @@ mod tests {
 
         assert_eq!(parsed["entries"].as_object().unwrap().len(), 0);
 
-        cleanup(&[&db_path, export_path]);
+        cleanup_files(&[export_path]);
     }
 }

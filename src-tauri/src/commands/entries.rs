@@ -13,7 +13,10 @@ pub fn save_entry(
     text: String,
     state: State<DiaryState>,
 ) -> Result<(), String> {
-    let db_state = state.db.lock().unwrap();
+    let db_state = state
+        .db
+        .lock()
+        .map_err(|_| "State lock poisoned".to_string())?;
     let db = db_state
         .as_ref()
         .ok_or("Diary must be unlocked to save entries")?;
@@ -55,7 +58,10 @@ pub fn save_entry(
 /// Gets a diary entry for a specific date
 #[tauri::command]
 pub fn get_entry(date: String, state: State<DiaryState>) -> Result<Option<DiaryEntry>, String> {
-    let db_state = state.db.lock().unwrap();
+    let db_state = state
+        .db
+        .lock()
+        .map_err(|_| "State lock poisoned".to_string())?;
     let db = db_state
         .as_ref()
         .ok_or("Diary must be unlocked to read entries")?;
@@ -73,7 +79,10 @@ pub fn delete_entry_if_empty(
     text: String,
     state: State<DiaryState>,
 ) -> Result<bool, String> {
-    let db_state = state.db.lock().unwrap();
+    let db_state = state
+        .db
+        .lock()
+        .map_err(|_| "State lock poisoned".to_string())?;
     let db = db_state
         .as_ref()
         .ok_or("Diary must be unlocked to delete entries")?;
@@ -92,7 +101,10 @@ pub fn delete_entry_if_empty(
 /// Returns a sorted list of dates in YYYY-MM-DD format
 #[tauri::command]
 pub fn get_all_entry_dates(state: State<DiaryState>) -> Result<Vec<String>, String> {
-    let db_state = state.db.lock().unwrap();
+    let db_state = state
+        .db
+        .lock()
+        .map_err(|_| "State lock poisoned".to_string())?;
     let db = db_state
         .as_ref()
         .ok_or("Diary must be unlocked to read entry dates")?;
@@ -104,26 +116,14 @@ pub fn get_all_entry_dates(state: State<DiaryState>) -> Result<Vec<String>, Stri
 mod tests {
     use super::*;
     use crate::db::schema::create_database;
-    use std::fs;
-    use std::path::PathBuf;
-
-    fn temp_db_path(name: &str) -> PathBuf {
-        PathBuf::from(format!("test_entries_cmd_{}.db", name))
-    }
-
-    fn cleanup_db(path: &PathBuf) {
-        let _ = fs::remove_file(path);
-    }
 
     // Note: Command-level tests would require Tauri test infrastructure
     // The workflow tests below verify the underlying logic
 
     #[test]
     fn test_save_entry_workflow() {
-        let db_path = temp_db_path("workflow");
-        cleanup_db(&db_path);
-
-        let db = create_database(&db_path, "test".to_string()).unwrap();
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
 
         // Test inserting an entry directly
         let entry = DiaryEntry {
@@ -141,16 +141,12 @@ mod tests {
         let retrieved = queries::get_entry(&db, "2024-01-01").unwrap();
         assert!(retrieved.is_some());
         assert_eq!(retrieved.unwrap().title, "Test");
-
-        cleanup_db(&db_path);
     }
 
     #[test]
     fn test_delete_if_empty_workflow() {
-        let db_path = temp_db_path("delete_empty");
-        cleanup_db(&db_path);
-
-        let db = create_database(&db_path, "test".to_string()).unwrap();
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
 
         // Insert entry
         let entry = DiaryEntry {
@@ -170,16 +166,12 @@ mod tests {
         // Verify deletion
         let retrieved = queries::get_entry(&db, "2024-02-01").unwrap();
         assert!(retrieved.is_none());
-
-        cleanup_db(&db_path);
     }
 
     #[test]
     fn test_get_all_dates_workflow() {
-        let db_path = temp_db_path("all_dates");
-        cleanup_db(&db_path);
-
-        let db = create_database(&db_path, "test".to_string()).unwrap();
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
 
         // Insert multiple entries
         for date in &["2024-01-01", "2024-01-15", "2024-02-01"] {
@@ -198,8 +190,6 @@ mod tests {
         assert_eq!(dates.len(), 3);
         assert_eq!(dates[0], "2024-01-01");
         assert_eq!(dates[2], "2024-02-01");
-
-        cleanup_db(&db_path);
     }
 
     #[test]

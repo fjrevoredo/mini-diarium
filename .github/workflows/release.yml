@@ -118,12 +118,23 @@ jobs:
       - name: Install frontend dependencies
         run: bun install
 
+      - name: Configure macOS DMG bundling for headless CI
+        if: matrix.platform == 'macos'
+        run: |
+          echo "JENKINS_URL=${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" >> "$GITHUB_ENV"
+
       - name: Build Tauri app
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           args: ${{ matrix.platform == 'macos' && '--target universal-apple-darwin' || '' }}
+
+      - name: Debug macOS DMG bundling failure
+        if: failure() && matrix.platform == 'macos'
+        run: |
+          echo "Dumping generated bundle_dmg.sh scripts (if any):"
+          find src-tauri/target -name "bundle_dmg.sh" -print -exec sed -n '1,260p' {} \;
 
       - name: Prepare release artifacts (Linux)
         if: matrix.platform == 'linux'

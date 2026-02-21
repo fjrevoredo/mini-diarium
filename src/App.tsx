@@ -1,14 +1,31 @@
-import { Match, Switch, onMount } from 'solid-js';
-import { authState, initializeAuth } from './state/auth';
+import { Match, Switch, onCleanup, onMount } from 'solid-js';
+import { authState, initializeAuth, setupAuthEventListeners } from './state/auth';
 import { initializeTheme } from './lib/theme';
+import { createLogger } from './lib/logger';
 import PasswordCreation from './components/auth/PasswordCreation';
 import PasswordPrompt from './components/auth/PasswordPrompt';
 import MainLayout from './components/layout/MainLayout';
+
+const log = createLogger('App');
 
 function App() {
   onMount(() => {
     initializeAuth();
     initializeTheme();
+
+    let cleanupAuthListeners: (() => void) | undefined;
+    void setupAuthEventListeners()
+      .then((cleanup) => {
+        cleanupAuthListeners = cleanup;
+      })
+      .catch((error) => {
+        // Listener setup failure should not block app startup.
+        log.error('Failed to setup auth event listeners:', error);
+      });
+
+    onCleanup(() => {
+      cleanupAuthListeners?.();
+    });
   });
 
   return (

@@ -47,6 +47,14 @@ test_*.db
 *.temp
 .cache/
 
+# E2E test artifacts
+.drivers/
+.wdio/
+allure-results/
+allure-report/
+e2e/screenshots/
+e2e/*.log
+
 # Internal development documentation
 *-PLAN.md
 *-STATUS.md

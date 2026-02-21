@@ -51,7 +51,10 @@ pub fn import_minidiary_json(
 ) -> Result<ImportResult, String> {
     info!("Starting Mini Diary import from file: {}", file_path);
 
-    let db_state = state.db.lock().unwrap();
+    let db_state = state
+        .db
+        .lock()
+        .map_err(|_| "State lock poisoned".to_string())?;
     let db = db_state.as_ref().ok_or_else(|| {
         let err = "Diary must be unlocked to import entries";
         error!("{}", err);
@@ -101,7 +104,10 @@ pub fn import_dayone_json(
 ) -> Result<ImportResult, String> {
     info!("Starting Day One JSON import from file: {}", file_path);
 
-    let db_state = state.db.lock().unwrap();
+    let db_state = state
+        .db
+        .lock()
+        .map_err(|_| "State lock poisoned".to_string())?;
     let db = db_state.as_ref().ok_or_else(|| {
         let err = "Diary must be unlocked to import entries";
         error!("{}", err);
@@ -151,7 +157,10 @@ pub fn import_jrnl_json(
 ) -> Result<ImportResult, String> {
     info!("Starting jrnl import from file: {}", file_path);
 
-    let db_state = state.db.lock().unwrap();
+    let db_state = state
+        .db
+        .lock()
+        .map_err(|_| "State lock poisoned".to_string())?;
     let db = db_state.as_ref().ok_or_else(|| {
         let err = "Diary must be unlocked to import entries";
         error!("{}", err);
@@ -201,7 +210,10 @@ pub fn import_dayone_txt(
 ) -> Result<ImportResult, String> {
     info!("Starting Day One TXT import from file: {}", file_path);
 
-    let db_state = state.db.lock().unwrap();
+    let db_state = state
+        .db
+        .lock()
+        .map_err(|_| "State lock poisoned".to_string())?;
     let db = db_state.as_ref().ok_or_else(|| {
         let err = "Diary must be unlocked to import entries";
         error!("{}", err);
@@ -280,15 +292,6 @@ mod tests {
     use super::*;
     use crate::db::queries::DiaryEntry;
     use crate::db::schema::create_database;
-    use std::fs;
-
-    fn temp_db_path(name: &str) -> String {
-        format!("test_import_{}.db", name)
-    }
-
-    fn cleanup_db(path: &str) {
-        let _ = fs::remove_file(path);
-    }
 
     fn create_test_entry(date: &str, title: &str, text: &str) -> DiaryEntry {
         let now = chrono::Utc::now().to_rfc3339();
@@ -304,11 +307,8 @@ mod tests {
 
     #[test]
     fn test_import_new_entries() {
-        let db_path = temp_db_path("new_entries");
-        cleanup_db(&db_path);
-
-        let password = "test".to_string();
-        let db = create_database(&db_path, password).unwrap();
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
 
         let entries = vec![
             create_test_entry("2024-01-01", "Entry 1", "Text 1"),
@@ -320,17 +320,12 @@ mod tests {
         assert_eq!(result.entries_imported, 2);
         assert_eq!(result.entries_merged, 0);
         assert_eq!(result.entries_skipped, 0);
-
-        cleanup_db(&db_path);
     }
 
     #[test]
     fn test_import_with_merge() {
-        let db_path = temp_db_path("merge");
-        cleanup_db(&db_path);
-
-        let password = "test".to_string();
-        let db = create_database(&db_path, password).unwrap();
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
 
         // Insert existing entry
         let existing = create_test_entry("2024-01-01", "Morning", "Had breakfast");
@@ -350,24 +345,17 @@ mod tests {
             .unwrap();
         assert!(merged.title.contains("Morning"));
         assert!(merged.title.contains("Evening"));
-
-        cleanup_db(&db_path);
     }
 
     #[test]
     fn test_import_empty_list() {
-        let db_path = temp_db_path("empty");
-        cleanup_db(&db_path);
-
-        let password = "test".to_string();
-        let db = create_database(&db_path, password).unwrap();
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
 
         let result = import_entries(&db, vec![]).unwrap();
 
         assert_eq!(result.entries_imported, 0);
         assert_eq!(result.entries_merged, 0);
         assert_eq!(result.entries_skipped, 0);
-
-        cleanup_db(&db_path);
     }
 }

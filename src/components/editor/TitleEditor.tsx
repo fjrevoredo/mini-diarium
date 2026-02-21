@@ -33,6 +33,7 @@ export default function TitleEditor(props: TitleEditorProps) {
     <input
       ref={inputRef}
       type="text"
+      data-testid="title-input"
       value={props.value}
       onInput={handleInput}
       onKeyDown={handleKeyDown}

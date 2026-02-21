@@ -501,12 +501,25 @@
         <a href="https://github.com/fjrevoredo/mini-diarium" target="_blank" rel="noopener noreferrer">GitHub</a>
         <a href="https://github.com/fjrevoredo/mini-diarium/blob/master/SECURITY.md" target="_blank" rel="noopener noreferrer">Security</a>
         <a href="https://github.com/fjrevoredo/mini-diarium/blob/master/CHANGELOG.md" target="_blank" rel="noopener noreferrer">Changelog</a>
+        <a id="contact-email" data-user="minidiarium" data-domain="gmail.com" aria-label="Email Mini Diarium">Email</a>
         <span style="color: var(--text-muted);">mini-diarium.com</span>
       </div>
     </div>
   </div>
 </footer>
 
+<script>
+  ;(() => {
+    const el = document.getElementById('contact-email')
+    if (!el) return
+    const user = el.dataset.user
+    const domain = el.dataset.domain
+    if (!user || !domain) return
+    const email = `${user}@${domain}`
+    el.href = `mailto:${email}`
+    el.textContent = email
+  })()
+</script>
 <script src="js/main.js"></script>
 </body>
 </html>

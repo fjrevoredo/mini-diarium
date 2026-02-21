@@ -1,16 +1,39 @@
 pub mod auth;
 pub mod backup;
 pub mod commands;
+pub mod config;
 pub mod crypto;
 pub mod db;
 pub mod export;
 pub mod import;
 pub mod menu;
+pub mod screen_lock;
 
 use commands::auth::DiaryState;
-use log::info;
-use std::path::PathBuf;
+use log::{info, warn};
+use std::path::{Path, PathBuf};
 use tauri::Manager;
+
+const LEGACY_APP_IDENTIFIER_DIR: &str = "com.minidiarium.app";
+
+fn has_legacy_app_state(dir: &Path) -> bool {
+    dir.join("config.json").is_file() || dir.join("diary.db").is_file()
+}
+
+fn resolve_app_data_dir(app_dir: PathBuf) -> PathBuf {
+    if has_legacy_app_state(&app_dir) {
+        return app_dir;
+    }
+
+    if let Some(parent) = app_dir.parent() {
+        let legacy_dir = parent.join(LEGACY_APP_IDENTIFIER_DIR);
+        if has_legacy_app_state(&legacy_dir) {
+            return legacy_dir;
+        }
+    }
+
+    app_dir
+}
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -25,22 +48,53 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
             // Get app data directory and create diary path
-            let app_dir = app
-                .path()
-                .app_data_dir()
-                .unwrap_or_else(|_| PathBuf::from("."));
+            let system_app_dir = match app.path().app_data_dir() {
+                Ok(dir) => dir,
+                Err(e) => {
+                    warn!(
+                        "Could not determine app data directory ({}), using CWD as fallback",
+                        e
+                    );
+                    PathBuf::from(".")
+                }
+            };
 
-            // Create directory if it doesn't exist
-            std::fs::create_dir_all(&app_dir).ok();
+            let app_dir = resolve_app_data_dir(system_app_dir.clone());
+            if app_dir != system_app_dir {
+                info!(
+                    "Using legacy app data directory for compatibility: {}",
+                    app_dir.display()
+                );
+            }
+            if let Err(e) = std::fs::create_dir_all(&app_dir) {
+                warn!(
+                    "Failed to create app directory '{}': {}",
+                    app_dir.display(),
+                    e
+                );
+            }
 
-            let db_path = app_dir.join("diary.db");
-            let backups_dir = app_dir.join("backups");
+            let diary_dir = if let Ok(test_dir) = std::env::var("MINI_DIARIUM_DATA_DIR") {
+                PathBuf::from(test_dir)
+            } else {
+                crate::config::load_diary_dir(&app_dir)
+                    .filter(|p| p.is_dir()) // fall back if saved dir was deleted
+                    .unwrap_or_else(|| app_dir.clone())
+            };
+
+            let db_path = diary_dir.join("diary.db");
+            let backups_dir = diary_dir.join("backups");
 
             // Set up state
-            app.manage(DiaryState::new(db_path, backups_dir));
+            app.manage(DiaryState::new(db_path, backups_dir, app_dir));
 
             // Build and set application menu
-            menu::build_menu(app.handle())?;
+            let lockable = menu::build_menu(app.handle())?;
+            app.manage(lockable);
+
+            if let Err(error) = screen_lock::init(app.handle()) {
+                warn!("Screen-lock listener initialization failed: {}", error);
+            }
 
             Ok(())
         })
@@ -53,6 +107,7 @@ pub fn run() {
             commands::auth::diary_exists,
             commands::auth::is_diary_unlocked,
             commands::auth::get_diary_path,
+            commands::auth::change_diary_directory,
             commands::auth::change_password,
             commands::auth::reset_diary,
             // Auth - method management

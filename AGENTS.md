@@ -1,6 +1,6 @@
 # AGENTS.md — Mini Diarium
 
-**Mini Diarium** is an encrypted, local-first desktop journaling app (SolidJS + Rust/Tauri v2 + SQLite). All diary entries are AES-256-GCM encrypted at rest; plaintext never touches disk except via the FTS index.
+**Mini Diarium** is an encrypted, local-first desktop journaling app (SolidJS + Rust/Tauri v2 + SQLite). All diary entries are AES-256-GCM encrypted at rest; plaintext never touches disk.
 
 **Core principles:** privacy-first (no network), incremental dev, clean architecture, TypeScript strict + Rust type safety.
 
@@ -11,13 +11,17 @@
 ## Architecture
 
 **Visual diagrams**:
-- [Simple overview](docs/architecture-simple.svg) - High-level 6-layer view (for README)
-- [Full diagram](docs/architecture-full.svg) - Detailed components and data flows
+- [System context](docs/diagrams/context.mmd) - High-level local-only data flow (Mermaid)
+- [Unlock flow](docs/diagrams/unlock.mmd) - Password/key-file master-key unwrap sequence (Mermaid)
+- [Save-entry flow](docs/diagrams/save-entry.mmd) - Editor to encrypted SQLite write path (Mermaid)
+- [Layered architecture](docs/diagrams/architecture.svg) - Presentation/state/backend/data layers (D2)
 
 **Regenerate diagrams**:
 ```bash
-d2 docs/architecture-simple.d2 docs/architecture-simple.svg
-d2 docs/architecture-full.d2 docs/architecture-full.svg
+bun run diagrams
+# Renders docs/diagrams/{unlock,unlock-dark,save-entry,save-entry-dark,context,context-dark}.mmd → *.svg (via mmdc)
+# Renders docs/diagrams/architecture.d2      → docs/diagrams/architecture.svg      (via d2)
+# Renders docs/diagrams/architecture-dark.d2 → docs/diagrams/architecture-dark.svg (via d2)
 ```
 
 Quick reference (ASCII art):
@@ -49,11 +53,32 @@ Quick reference (ASCII art):
 ```
 
 **Key relationships:**
-- Entries are stored encrypted in SQLite; FTS index (`entries_fts`) stores plaintext for search. Any operation that writes entries must update both.
+- Entries are stored encrypted in SQLite. Full-text search is not currently implemented; `entries_fts` has been removed (schema v4). See `commands/search.rs` for the stub and interface contract.
 - Menu events flow: Rust `app.emit("menu-*")` → frontend `listen()` in `shortcuts.ts` or overlay components.
 - Preferences use `localStorage` (not Tauri store plugin).
 
 ## File Structure
+
+### Website (`website/`)
+
+Static marketing site for [mini-diarium.com](https://mini-diarium.com). Plain HTML + CSS + JS, no build step. Deployed via Docker / Coolify (compose file path: `website/docker-compose.yml`).
+
+```
+website/
+├── index.html            # Single-page site (all content)
+├── css/style.css         # All styles (CSS variables, grid, clamp())
+├── js/main.js            # Mobile nav toggle + smooth scroll (~30 lines)
+├── assets/
+│   ├── logo.svg          # Copy of public/logo-transparent.svg
+│   └── demo.gif          # Copy of public/demo.gif
+├── nginx.conf            # Gzip, cache headers, security headers
+├── Dockerfile            # FROM nginx:alpine
+└── docker-compose.yml    # Single service, port 80
+```
+
+**Version sync:** `bump-version.sh` updates `<span class="app-version">X.Y.Z</span>` in `index.html` (step 5). Always commit `website/index.html` alongside the other version files.
+
+**Coolify deploy:** In Coolify, set the compose file path to `website/docker-compose.yml`. The build context is the `website/` subfolder.
 
 ### Frontend (`src/`)
 
@@ -77,7 +102,7 @@ src/
 │   ├── layout/
 │   │   ├── MainLayout.tsx             # App shell (sidebar + editor)
 │   │   ├── Header.tsx                 # Top bar
-│   │   ├── Sidebar.tsx                # Calendar + search panel
+│   │   ├── Sidebar.tsx                # Calendar panel (search removed; see "Implementing Search")
 │   │   ├── EditorPanel.tsx            # Editor container
 │   │   └── MainLayout-event-listeners.test.tsx  # 4 tests
 │   ├── overlays/
@@ -86,7 +111,7 @@ src/
 │   │   ├── StatsOverlay.tsx           # Statistics display
 │   │   └── ImportOverlay.tsx          # Import format selector + file picker
 │   └── search/
-│       ├── SearchBar.tsx              # FTS search input
+│       ├── SearchBar.tsx              # Search input (not rendered; reserved for future secure search)
 │       └── SearchResults.tsx          # Search result list
 ├── state/
 │   ├── auth.ts                        # AuthState signal + authMethods + initializeAuth/create/unlock/lock/unlockWithKeypair
@@ -110,6 +135,26 @@ src/
 └── index.css
 ```
 
+### E2E (`e2e/`)
+
+End-to-end tests using WebdriverIO + tauri-driver. These run against the real compiled binary with a real SQLite database in a temp directory.
+
+```
+e2e/
+├── specs/
+│   └── diary-workflow.spec.ts  # Core workflow: create → write → lock → unlock → verify
+└── tsconfig.json               # Separate TS config (node + webdriverio/async globals)
+wdio.conf.ts                    # WebdriverIO config (root level)
+```
+
+**Prerequisites to run locally:**
+```bash
+cargo install tauri-driver   # once
+bun run test:e2e:local       # builds binary + runs suite (use --skip-build on repeat runs)
+```
+
+**Test isolation:** Each run creates a fresh OS temp directory and passes it to the app via `MINI_DIARIUM_DATA_DIR`. The app reads this env var in `lib.rs` and uses it as the diary directory instead of `app_data_dir`.
+
 ### Backend (`src-tauri/src/`)
 
 ```
@@ -126,10 +171,10 @@ src-tauri/src/
 │   ├── mod.rs                         # Re-exports: auth, entries, search, navigation, stats, import, export
 │   ├── auth.rs                        # DiaryState, create/unlock/lock/reset/change_password (6 tests)
 │   ├── entries.rs                     # CRUD + delete-if-empty (4 tests)
-│   ├── search.rs                      # FTS5 search (1 test)
+│   ├── search.rs                      # Search stub — returns empty results (1 test)
 │   ├── navigation.rs                  # Day/month navigation (5 tests)
 │   ├── stats.rs                       # Aggregated statistics (9 tests)
-│   ├── import.rs                      # Import orchestration + FTS rebuild (4 tests)
+│   ├── import.rs                      # Import orchestration (3 tests)
 │   └── export.rs                      # JSON + Markdown export commands (2 tests)
 ├── crypto/
 │   ├── mod.rs                         # Re-exports
@@ -138,7 +183,7 @@ src-tauri/src/
 ├── db/
 │   ├── mod.rs                         # Re-exports
 │   ├── schema.rs                      # DB creation, migrations, password verification (6 tests)
-│   └── queries.rs                     # All SQL: CRUD, FTS, dates, word count (9 tests)
+│   └── queries.rs                     # All SQL: CRUD, dates, word count (9 tests)
 ├── export/
 │   ├── mod.rs                         # Re-exports
 │   ├── json.rs                        # Mini Diary-compatible JSON export
@@ -154,7 +199,7 @@ src-tauri/src/
 
 ## Command Registry
 
-All 33 registered Tauri commands (source: `lib.rs`). Rust names use `snake_case`; frontend wrappers in `src/lib/tauri.ts` use `camelCase`.
+All 34 registered Tauri commands (source: `lib.rs`). Rust names use `snake_case`; frontend wrappers in `src/lib/tauri.ts` use `camelCase`.
 
 | Module | Rust Command | Frontend Wrapper | Description |
 |--------|-------------|-----------------|-------------|
@@ -164,6 +209,7 @@ All 33 registered Tauri commands (source: `lib.rs`). Rust names use `snake_case`
 | auth | `diary_exists` | `diaryExists()` | Check if DB file exists |
 | auth | `is_diary_unlocked` | `isDiaryUnlocked()` | Check unlock state |
 | auth | `get_diary_path` | `getDiaryPath()` | Return diary file path |
+| auth | `change_diary_directory` | `changeDiaryDirectory(newDir)` | Change diary directory (locked state only) |
 | auth | `change_password` | `changePassword(old, new)` | Re-encrypt with new password |
 | auth | `reset_diary` | `resetDiary()` | Delete and recreate DB |
 | auth | `verify_password` | `verifyPassword(password)` | Validate password without side effects |
@@ -171,13 +217,14 @@ All 33 registered Tauri commands (source: `lib.rs`). Rust names use `snake_case`
 | auth | `list_auth_methods` | `listAuthMethods()` | List all registered auth slots |
 | auth | `generate_keypair` | `generateKeypair()` | Generate X25519 keypair, return hex |
 | auth | `write_key_file` | `writeKeyFile(path, privateKeyHex)` | Write private key hex to file |
-| auth | `register_keypair` | `registerKeypair(password, pubKeyHex, label)` | Add keypair auth slot |
-| auth | `remove_auth_method` | `removeAuthMethod(slotId, password)` | Remove auth slot (guards last) |
-| entries | `save_entry` | `saveEntry(date, title, text)` | Upsert entry (encrypts + updates FTS) |
+| auth | `register_password` | `registerPassword(newPassword)` | Register a password auth slot (requires diary unlocked) |
+| auth | `register_keypair` | `registerKeypair(currentPassword, publicKeyHex, label)` | Add keypair auth slot |
+| auth | `remove_auth_method` | `removeAuthMethod(slotId, currentPassword)` | Remove auth slot (guards last) |
+| entries | `save_entry` | `saveEntry(date, title, text)` | Upsert entry (encrypts) |
 | entries | `get_entry` | `getEntry(date)` | Fetch + decrypt single entry |
 | entries | `delete_entry_if_empty` | `deleteEntryIfEmpty(date, title, text)` | Remove entry if content is empty |
 | entries | `get_all_entry_dates` | `getAllEntryDates()` | List all dates with entries |
-| search | `search_entries` | `searchEntries(query)` | FTS5 search, returns snippets |
+| search | `search_entries` | `searchEntries(query)` | Stub — always returns `[]`; interface preserved for future secure search |
 | nav | `navigate_previous_day` | `navigatePreviousDay(currentDate)` | Previous day with entry |
 | nav | `navigate_next_day` | `navigateNextDay(currentDate)` | Next day with entry |
 | nav | `navigate_to_today` | `navigateToToday()` | Today's date string |
@@ -265,7 +312,7 @@ Note the arrow wrapper `() => <Component />` — required for SolidJS test rende
 
 To add a new import format:
 1. Create `src-tauri/src/import/FORMAT.rs` — parser returning `Vec<DiaryEntry>`
-2. Add command in `src-tauri/src/commands/import.rs` — orchestrate parse → merge → FTS rebuild
+2. Add command in `src-tauri/src/commands/import.rs` — orchestrate parse → merge (see "Search index hook" comment for where to add reindex)
 3. Register command in `commands/mod.rs` and `lib.rs` `generate_handler![]`
 4. Add frontend wrapper in `src/lib/tauri.ts` and UI option in `ImportOverlay.tsx`
 
@@ -281,7 +328,7 @@ All menu event names are prefixed `menu-`. See `menu.rs:78-107` for the full lis
 
 ## Testing
 
-### Backend: 176 tests across 20 modules
+### Backend: 169 tests across 20 modules
 
 Run: `cd src-tauri && cargo test`
 
@@ -324,6 +371,27 @@ Run: `bun run test:run` (single run) or `bun run test` (watch mode)
 
 Coverage: `bun run test:coverage`
 
+### E2E: 1 spec (real binary, real SQLite)
+
+Run: `bun run test:e2e` (requires release binary + `tauri-driver` installed)
+
+| File | Description |
+|------|-------------|
+| `e2e/specs/diary-workflow.spec.ts` | Create diary → write entry → lock → unlock → verify persistence |
+
+**data-testid attributes** used by E2E tests (do not remove):
+
+| Component | Element | data-testid |
+|-----------|---------|-------------|
+| `PasswordCreation.tsx` | Password input | `password-create-input` |
+| `PasswordCreation.tsx` | Confirm password input | `password-repeat-input` |
+| `PasswordCreation.tsx` | Create button | `create-diary-button` |
+| `PasswordPrompt.tsx` | Password input | `password-unlock-input` |
+| `PasswordPrompt.tsx` | Unlock submit button | `unlock-diary-button` |
+| `Header.tsx` | Lock button | `lock-diary-button` |
+| `TitleEditor.tsx` | Title input | `title-input` |
+| `Calendar.tsx` | Each day button | `calendar-day-YYYY-MM-DD` |
+
 ## Verification Commands
 
 ```bash
@@ -336,6 +404,9 @@ cd src-tauri && cargo test                     # All backend tests
 cd src-tauri && cargo test navigation          # Specific module
 bun run test:run                               # All frontend tests
 bun run test:run -- dates                      # Specific test file
+bun run test:e2e:local                         # E2E tests: build binary + run suite
+bun run test:e2e:local -- --skip-build         # E2E tests: skip build, run suite only
+bun run test:e2e                               # Run suite only (binary must already exist)
 
 # Code quality
 bun run lint             # ESLint
@@ -351,9 +422,9 @@ bun run tauri build      # Full app bundle
 
 ## Gotchas and Pitfalls
 
-1. **FTS rebuild after bulk import**: Import commands call `rebuild_fts_index()` which uses `'delete-all'` then re-indexes all entries. This is O(n) over all entries, not just imported ones.
+1. **No FTS table (schema v4)**: `entries_fts` was removed for security (it stored plaintext). `insert_entry`, `update_entry`, `delete_entry`, and all import commands have `// Search index hook:` comments marking where a future search module should be plugged in.
 
-2. **Dual storage: encrypted entries + plaintext FTS**: Any operation that creates/updates/deletes entries must handle both the encrypted `entries` table and the plaintext `entries_fts` table.
+2. **Search interface preserved**: `SearchResult`, `search_entries` (Rust), `searchEntries` (TS), `SearchBar.tsx`, `SearchResults.tsx`, and `src/state/search.ts` are all kept intact as the interface contract for future secure search — do not remove them.
 
 3. **SolidJS test render wrapper**: Tests must use `render(() => <Component />)` with the arrow function. `render(<Component />)` will fail silently or error.
 
@@ -367,14 +438,16 @@ bun run tauri build      # Full app bundle
 
 8. **TipTap stores HTML**: The editor content is stored as HTML strings, not Markdown. This is intentional — the `text` field in `DiaryEntry` is HTML.
 
-9. **Import parser contract**: Parsers in `import/*.rs` return `Vec<DiaryEntry>`. All DB interaction, merge logic, and FTS rebuild happen in `commands/import.rs`, not in the parsers.
+9. **Import parser contract**: Parsers in `import/*.rs` return `Vec<DiaryEntry>`. All DB interaction and merge logic happen in `commands/import.rs`, not in the parsers.
 
 10. **Auth slots (v3 schema):** Each auth method stores its own wrapped copy of the master key in `auth_slots`. `remove_auth_method` refuses to delete the last slot (minimum one required). `change_password` re-wraps the master key in O(1) — no entry re-encryption needed. `verify_password` exists as a side-effect-free check used before multi-step operations.
+
+11. **E2E test isolation via `MINI_DIARIUM_DATA_DIR`:** When this env var is set, `lib.rs` uses it as the diary directory instead of `app_data_dir`. This is intentional for E2E test isolation — do not remove it. It has no effect on production builds where the var is unset.
 
 ## Security Rules
 
 - **Never** log, print, or serialize passwords or encryption keys
-- **Never** store plaintext diary content outside the FTS index (which is inside the encrypted DB file)
+- **Never** store plaintext diary content in any unencrypted form on disk
 - **Never** send data over the network — no analytics, no telemetry, no update checks
 - Auth: A random master key is wrapped per auth slot in `auth_slots` (schema v3). Password slots use Argon2id + AES-256-GCM wrapping; keypair slots use X25519 ECIES. The master key is never stored in plaintext.
 - The `DiaryState` holds `Mutex<Option<DatabaseConnection>>` — `None` when locked, `Some` when unlocked
@@ -384,13 +457,30 @@ bun run tauri build      # Full app bundle
 
 - **Low frontend test coverage**: Only 4 test files (editor + lib). Auth screens, Calendar, Sidebar, all overlays, and MainLayout lack tests.
 - **No Tauri integration tests**: All backend tests use direct DB connections, not the Tauri command layer.
-- **Import FTS rebuild is O(n)**: Rebuilds full index on every import, regardless of import size.
 - **No error boundary components**: Unhandled errors in components crash the app.
-- **Search FTS5 coverage gap**: Only 1 test for search; edge cases (special characters, empty queries) untested.
+- **Search not implemented**: `search_entries` is a stub returning `[]`. A secure search backend needs to be designed and implemented.
 - **SolidJS reactivity warnings**: ~5 non-critical warnings in dev mode from signal access patterns.
 - See `Current-implementation-plan.md` for remaining planned features (tasks 38-47).
 
 ## Common Task Checklists
+
+### Updating the App Logo / Icons
+
+The source logo lives at `public/logo-transparent.svg` (1024×1024, dark background). It is used in two places:
+
+**1. Frontend auth screens** — referenced as `/logo-transparent.svg` in:
+- `src/components/auth/PasswordPrompt.tsx`
+- `src/components/auth/PasswordCreation.tsx`
+
+Replace the file and the change takes effect immediately on the next build.
+
+**2. Tauri app icons** — all platform icon sizes in `src-tauri/icons/` are derived from the same SVG. Regenerate them with:
+```bash
+bun run tauri icon public/logo-transparent.svg
+```
+This overwrites every icon variant (ICO, ICNS, PNG at all sizes, Windows AppX, iOS, Android) in one command. Commit the updated `src-tauri/icons/` directory alongside any change to the source SVG.
+
+---
 
 ### Adding a New Tauri Command
 
@@ -402,8 +492,46 @@ bun run tauri build      # Full app bundle
 
 1. Create `src-tauri/src/import/FORMAT.rs` with a `parse_FORMAT(json: &str) -> Result<Vec<DiaryEntry>, String>` function
 2. Add `pub mod FORMAT;` to `src-tauri/src/import/mod.rs`
-3. Add command in `commands/import.rs` (follow existing pattern: parse → `import_entries()` → `rebuild_fts_index()`)
+3. Add command in `commands/import.rs` (follow existing pattern: parse → `import_entries()`; add search reindex call at the `// Search index hook:` comment when a search module exists)
 4. Register command, add frontend wrapper in `tauri.ts`, add UI option in `ImportOverlay.tsx`
+
+### Implementing Search
+
+Full-text search was removed in schema v4 (v0.2.0) because the SQLite FTS5 table stored
+diary content in plaintext, defeating the AES-256-GCM encryption. The backend stub and the
+complete frontend/backend interface are preserved so search can be re-added without mass
+refactoring.
+
+**What is already in place (do not remove):**
+
+| Layer | File | What it provides |
+|-------|------|-----------------|
+| Rust command | `src-tauri/src/commands/search.rs` | `SearchResult` struct + `search_entries` command (stub returning `[]`) |
+| Frontend wrapper | `src/lib/tauri.ts` | `SearchResult` interface + `searchEntries(query)` async function |
+| Frontend state | `src/state/search.ts` | `searchQuery`, `searchResults`, `isSearching` signals |
+| Frontend components | `src/components/search/SearchBar.tsx` | Search input component (not rendered) |
+| | `src/components/search/SearchResults.tsx` | Results list component (not rendered) |
+
+**Hook points in the backend (search for `// Search index hook:`):**
+
+- `db/queries.rs` — `insert_entry()`, `update_entry()`, `delete_entry()` — index/remove individual entries
+- `commands/import.rs` — all four import commands — bulk reindex after import
+
+**Design constraints for any future implementation:**
+
+1. **No plaintext on disk** — the index must be encrypted or derived in a way that does not expose entry content to raw file access. Options to evaluate: encrypted FTS (e.g. SQLCipher), client-side trigram index stored encrypted alongside entries, or an in-memory index rebuilt at unlock time.
+2. **Schema migration required** — bump `SCHEMA_VERSION` in `db/schema.rs` and add a migration step.
+3. **UI placement is undecided** — `SearchBar` and `SearchResults` exist but where they appear (sidebar, overlay, command palette, etc.) should be designed fresh. Wire them into `Sidebar.tsx` or a new component; do not assume the old sidebar layout.
+4. **State is ready** — `src/state/search.ts` signals can be used as-is or extended.
+
+**Steps to implement:**
+
+1. Design and build the secure index in `src-tauri/src/db/` (new file, e.g. `search_index.rs`)
+2. Replace the stub body in `commands/search.rs` — keep the `SearchResult` struct and command signature
+3. Call index write/delete at the `// Search index hook:` sites in `queries.rs` and `import.rs`
+4. Bump `SCHEMA_VERSION`, add migration in `db/schema.rs`
+5. Decide on UI placement; render `SearchBar` + `SearchResults` (or new components) in the chosen location
+6. Update `CLAUDE.md` and `CHANGELOG.md`
 
 ### Creating a Release
 
@@ -411,8 +539,8 @@ See [RELEASING.md](RELEASING.md) for complete step-by-step instructions.
 
 **Quick summary:**
 1. Create release branch: `git checkout -b release-X.Y.Z`
-2. Bump version: `./bump-version.sh X.Y.Z` (updates all version files)
-3. Commit and push branch: `git add ... && git commit -m "chore: bump version to X.Y.Z" && git push origin release-X.Y.Z`
+2. Bump version: `./bump-version.sh X.Y.Z` (updates `package.json`, `tauri.conf.json`, `Cargo.toml`, `Cargo.lock`, and `website/index.html`)
+3. Commit and push branch: `git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock website/index.html && git commit -m "chore: bump version to X.Y.Z" && git push origin release-X.Y.Z`
 4. Create PR to merge release branch → master
 5. After PR merged, tag on master: `git checkout master && git pull && git tag -a vX.Y.Z -m "Release vX.Y.Z" && git push origin vX.Y.Z`
 6. Wait for GitHub Actions to build and create draft release

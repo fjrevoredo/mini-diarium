@@ -189,9 +189,80 @@ pub fn get_all_entry_dates(db: &DatabaseConnection) -> Result<Vec<String>, Strin
     Ok(dates)
 }
 
-/// Counts words in text (simple whitespace-based count)
+/// Retrieves and decrypts all diary entries in a single query (avoids N+1)
+///
+/// # Arguments
+/// * `db` - Database connection with encryption key
+///
+/// # Returns
+/// A vector of all diary entries sorted chronologically
+pub fn get_all_entries(db: &DatabaseConnection) -> Result<Vec<DiaryEntry>, String> {
+    let mut stmt = db
+        .conn()
+        .prepare(
+            "SELECT date, title_encrypted, text_encrypted, word_count, date_created, date_updated \
+             FROM entries ORDER BY date ASC",
+        )
+        .map_err(|e| format!("Failed to prepare query: {}", e))?;
+
+    let entries = stmt
+        .query_map([], |row| {
+            Ok((
+                row.get::<_, String>(0)?,
+                row.get::<_, Vec<u8>>(1)?,
+                row.get::<_, Vec<u8>>(2)?,
+                row.get::<_, i32>(3)?,
+                row.get::<_, String>(4)?,
+                row.get::<_, String>(5)?,
+            ))
+        })
+        .map_err(|e| format!("Failed to query entries: {}", e))?
+        .filter_map(|r| r.ok())
+        .map(
+            |(date, title_enc, text_enc, word_count, date_created, date_updated)| {
+                let title = cipher::decrypt(db.key(), &title_enc)
+                    .map(|b| String::from_utf8(b).unwrap_or_default())
+                    .unwrap_or_default();
+                let text = cipher::decrypt(db.key(), &text_enc)
+                    .map(|b| String::from_utf8(b).unwrap_or_default())
+                    .unwrap_or_default();
+                DiaryEntry {
+                    date,
+                    title,
+                    text,
+                    word_count,
+                    date_created,
+                    date_updated,
+                }
+            },
+        )
+        .collect();
+
+    Ok(entries)
+}
+
+/// Strips HTML tags from `input`, replacing each closing `>` with a space so
+/// that adjacent words separated only by a tag are not concatenated.
+fn strip_html_tags(input: &str) -> String {
+    let mut out = String::with_capacity(input.len());
+    let mut in_tag = false;
+    for ch in input.chars() {
+        match ch {
+            '<' => in_tag = true,
+            '>' => {
+                in_tag = false;
+                out.push(' ');
+            }
+            _ if !in_tag => out.push(ch),
+            _ => {}
+        }
+    }
+    out
+}
+
+/// Counts words in text, stripping HTML tags first.
 pub fn count_words(text: &str) -> i32 {
-    text.split_whitespace().count() as i32
+    strip_html_tags(text).split_whitespace().count() as i32
 }
 
 // ─── Auth slot queries ────────────────────────────────────────────────────────
@@ -289,14 +360,13 @@ pub fn count_auth_slots(db: &DatabaseConnection) -> Result<i64, String> {
 }
 
 /// Updates the `last_used` timestamp for a slot.
-pub fn update_slot_last_used(db: &DatabaseConnection, slot_id: i64) -> Result<(), String> {
+pub fn update_slot_last_used(conn: &rusqlite::Connection, slot_id: i64) -> Result<(), String> {
     let now = chrono::Utc::now().to_rfc3339();
-    db.conn()
-        .execute(
-            "UPDATE auth_slots SET last_used = ?1 WHERE id = ?2",
-            params![&now, slot_id],
-        )
-        .map_err(|e| format!("Failed to update last_used: {}", e))?;
+    conn.execute(
+        "UPDATE auth_slots SET last_used = ?1 WHERE id = ?2",
+        params![&now, slot_id],
+    )
+    .map_err(|e| format!("Failed to update last_used: {}", e))?;
     Ok(())
 }
 
@@ -304,15 +374,6 @@ pub fn update_slot_last_used(db: &DatabaseConnection, slot_id: i64) -> Result<()
 mod tests {
     use super::*;
     use crate::db::schema::create_database;
-    use std::fs;
-
-    fn temp_db_path(name: &str) -> String {
-        format!("test_queries_{}.db", name)
-    }
-
-    fn cleanup_db(path: &str) {
-        let _ = fs::remove_file(path);
-    }
 
     fn create_test_entry(date: &str) -> DiaryEntry {
         let now = "2024-01-01T12:00:00Z".to_string();
@@ -328,11 +389,8 @@ mod tests {
 
     #[test]
     fn test_insert_and_get_entry() {
-        let db_path = temp_db_path("insert_get");
-        cleanup_db(&db_path);
-
-        let password = "test".to_string();
-        let db = create_database(&db_path, password).unwrap();
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
 
         let entry = create_test_entry("2024-01-15");
         insert_entry(&db, &entry).unwrap();
@@ -348,31 +406,21 @@ mod tests {
             "This is a test entry with some words."
         );
         assert_eq!(retrieved_entry.word_count, 8);
-
-        cleanup_db(&db_path);
     }
 
     #[test]
     fn test_get_nonexistent_entry() {
-        let db_path = temp_db_path("get_none");
-        cleanup_db(&db_path);
-
-        let password = "test".to_string();
-        let db = create_database(&db_path, password).unwrap();
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
 
         let result = get_entry(&db, "2024-12-31").unwrap();
         assert!(result.is_none());
-
-        cleanup_db(&db_path);
     }
 
     #[test]
     fn test_update_entry() {
-        let db_path = temp_db_path("update");
-        cleanup_db(&db_path);
-
-        let password = "test".to_string();
-        let db = create_database(&db_path, password).unwrap();
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
 
         // Insert initial entry
         let mut entry = create_test_entry("2024-02-10");
@@ -390,34 +438,24 @@ mod tests {
         assert_eq!(retrieved.title, "Updated Title");
         assert_eq!(retrieved.text, "Updated text content.");
         assert_eq!(retrieved.word_count, 3);
-
-        cleanup_db(&db_path);
     }
 
     #[test]
     fn test_update_nonexistent_entry() {
-        let db_path = temp_db_path("update_none");
-        cleanup_db(&db_path);
-
-        let password = "test".to_string();
-        let db = create_database(&db_path, password).unwrap();
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
 
         let entry = create_test_entry("2024-03-20");
         let result = update_entry(&db, &entry);
 
         assert!(result.is_err());
         assert!(result.unwrap_err().contains("No entry found"));
-
-        cleanup_db(&db_path);
     }
 
     #[test]
     fn test_delete_entry() {
-        let db_path = temp_db_path("delete");
-        cleanup_db(&db_path);
-
-        let password = "test".to_string();
-        let db = create_database(&db_path, password).unwrap();
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
 
         // Insert and delete
         let entry = create_test_entry("2024-04-01");
@@ -429,31 +467,21 @@ mod tests {
         // Verify deletion
         let result = get_entry(&db, "2024-04-01").unwrap();
         assert!(result.is_none());
-
-        cleanup_db(&db_path);
     }
 
     #[test]
     fn test_delete_nonexistent_entry() {
-        let db_path = temp_db_path("delete_none");
-        cleanup_db(&db_path);
-
-        let password = "test".to_string();
-        let db = create_database(&db_path, password).unwrap();
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
 
         let deleted = delete_entry(&db, "2024-05-15").unwrap();
         assert!(!deleted);
-
-        cleanup_db(&db_path);
     }
 
     #[test]
     fn test_get_all_entry_dates() {
-        let db_path = temp_db_path("all_dates");
-        cleanup_db(&db_path);
-
-        let password = "test".to_string();
-        let db = create_database(&db_path, password).unwrap();
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
 
         // Insert multiple entries
         insert_entry(&db, &create_test_entry("2024-01-10")).unwrap();
@@ -465,8 +493,6 @@ mod tests {
         assert_eq!(dates[0], "2024-01-05");
         assert_eq!(dates[1], "2024-01-10");
         assert_eq!(dates[2], "2024-01-20");
-
-        cleanup_db(&db_path);
     }
 
     #[test]
@@ -479,11 +505,17 @@ mod tests {
     }
 
     #[test]
-    fn test_auth_slots_crud() {
-        let db_path = temp_db_path("auth_slots");
-        cleanup_db(&db_path);
+    fn test_count_words_strips_html() {
+        assert_eq!(count_words("<p>Hello world</p>"), 2);
+        assert_eq!(count_words("<p>One <strong>two</strong> three</p>"), 3);
+        assert_eq!(count_words("<p></p>"), 0);
+        assert_eq!(count_words("plain text"), 2);
+    }
 
-        let db = create_database(&db_path, "test".to_string()).unwrap();
+    #[test]
+    fn test_auth_slots_crud() {
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
 
         // Initially one password slot from create_database
         let count = count_auth_slots(&db).unwrap();
@@ -520,7 +552,7 @@ mod tests {
         assert_eq!(keypair_slot.public_key_hex, Some(hex::encode(fake_pub_key)));
 
         // Update last_used
-        update_slot_last_used(&db, slot_id).unwrap();
+        update_slot_last_used(db.conn(), slot_id).unwrap();
         let slots = list_auth_slots(&db).unwrap();
         let updated = slots.iter().find(|s| s.id == slot_id).unwrap();
         assert!(updated.last_used.is_some());
@@ -529,16 +561,12 @@ mod tests {
         delete_auth_slot(&db, slot_id).unwrap();
         let count = count_auth_slots(&db).unwrap();
         assert_eq!(count, 1);
-
-        cleanup_db(&db_path);
     }
 
     #[test]
     fn test_get_password_slot() {
-        let db_path = temp_db_path("pw_slot");
-        cleanup_db(&db_path);
-
-        let db = create_database(&db_path, "test".to_string()).unwrap();
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
 
         let result = get_password_slot(&db).unwrap();
         assert!(result.is_some());
@@ -550,16 +578,46 @@ mod tests {
         let method = crate::auth::password::PasswordMethod::new("test".to_string());
         let master_key = method.unwrap_master_key(&wrapped_key).unwrap();
         assert_eq!(master_key.len(), 32);
+    }
 
-        cleanup_db(&db_path);
+    #[test]
+    fn test_get_all_entries_returns_all_decrypted() {
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "pw".to_string()).unwrap();
+        insert_entry(
+            &db,
+            &DiaryEntry {
+                date: "2024-01-01".into(),
+                title: "A".into(),
+                text: "<p>Hello</p>".into(),
+                word_count: 1,
+                date_created: "2024-01-01T00:00:00Z".into(),
+                date_updated: "2024-01-01T00:00:00Z".into(),
+            },
+        )
+        .unwrap();
+        insert_entry(
+            &db,
+            &DiaryEntry {
+                date: "2024-01-02".into(),
+                title: "B".into(),
+                text: "<p>World</p>".into(),
+                word_count: 1,
+                date_created: "2024-01-02T00:00:00Z".into(),
+                date_updated: "2024-01-02T00:00:00Z".into(),
+            },
+        )
+        .unwrap();
+        let entries = get_all_entries(&db).unwrap();
+        assert_eq!(entries.len(), 2);
+        assert_eq!(entries[0].date, "2024-01-01");
+        assert_eq!(entries[0].title, "A");
     }
 
     #[test]
     fn test_update_auth_slot_wrapped_key() {
-        let db_path = temp_db_path("update_slot");
-        cleanup_db(&db_path);
-
-        let db = create_database(&db_path, "old_password".to_string()).unwrap();
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "old_password".to_string()).unwrap();
 
         let (slot_id, old_wrapped) = get_password_slot(&db).unwrap().unwrap();
 
@@ -580,17 +638,12 @@ mod tests {
         // Old password should no longer work
         let fail = old_method.unwrap_master_key(&stored_wrapped);
         assert!(fail.is_err());
-
-        cleanup_db(&db_path);
     }
 
     #[test]
     fn test_entry_encryption() {
-        let db_path = temp_db_path("encryption");
-        cleanup_db(&db_path);
-
-        let password = "test".to_string();
-        let db = create_database(&db_path, password).unwrap();
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
 
         // Insert entry
         let entry = create_test_entry("2024-06-01");
@@ -611,7 +664,5 @@ mod tests {
         let text_enc_str = String::from_utf8_lossy(&text_enc);
         assert!(!title_enc_str.contains("Test Title"));
         assert!(!text_enc_str.contains("test entry"));
-
-        cleanup_db(&db_path);
     }
 }

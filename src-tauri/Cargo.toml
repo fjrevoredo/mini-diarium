@@ -1,6 +1,6 @@
 [package]
 name = "mini-diarium"
-version = "0.2.1"
+version = "0.3.0"
 description = "A modern, encrypted, local-first desktop journaling application"
 authors = ["you"]
 edition = "2021"
@@ -18,7 +18,7 @@ crate-type = ["staticlib", "cdylib", "rlib"]
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
-tauri = { version = "2", features = [] }
+tauri = { version = "2", features = ["devtools"] }
 tauri-plugin-opener = "2"
 tauri-plugin-dialog = "2"
 serde = { version = "1", features = ["derive"] }
@@ -35,4 +35,15 @@ sha2 = "0.10"
 chrono = "0.4"
 log = "0.4"
 env_logger = "0.11"
+
+[dev-dependencies]
+tempfile = "3"
+
+[target.'cfg(target_os = "windows")'.dependencies]
+windows-sys = { version = "0.61", features = [
+  "Win32_Foundation",
+  "Win32_System_RemoteDesktop",
+  "Win32_UI_Shell",
+  "Win32_UI_WindowsAndMessaging",
+] }
 

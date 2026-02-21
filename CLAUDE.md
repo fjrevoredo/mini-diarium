@@ -11,14 +11,17 @@
 ## Architecture
 
 **Visual diagrams**:
-- [Simple overview](docs/diagrams/architecture-simple.mmd) - Context diagram (for README, Mermaid format)
-- [Full diagram](docs/diagrams/architecture-full.svg) - Detailed components and data flows (D2 format)
+- [System context](docs/diagrams/context.mmd) - High-level local-only data flow (Mermaid)
+- [Unlock flow](docs/diagrams/unlock.mmd) - Password/key-file master-key unwrap sequence (Mermaid)
+- [Save-entry flow](docs/diagrams/save-entry.mmd) - Editor to encrypted SQLite write path (Mermaid)
+- [Layered architecture](docs/diagrams/architecture.svg) - Presentation/state/backend/data layers (D2)
 
 **Regenerate diagrams**:
 ```bash
 bun run diagrams
-# Renders docs/diagrams/architecture-simple.mmd → docs/diagrams/architecture-simple.svg (via mmdc)
-# Renders docs/diagrams/architecture-full.d2    → docs/diagrams/architecture-full.svg    (via d2)
+# Renders docs/diagrams/{unlock,unlock-dark,save-entry,save-entry-dark,context,context-dark}.mmd → *.svg (via mmdc)
+# Renders docs/diagrams/architecture.d2      → docs/diagrams/architecture.svg      (via d2)
+# Renders docs/diagrams/architecture-dark.d2 → docs/diagrams/architecture-dark.svg (via d2)
 ```
 
 Quick reference (ASCII art):
@@ -132,6 +135,26 @@ src/
 └── index.css
 ```
 
+### E2E (`e2e/`)
+
+End-to-end tests using WebdriverIO + tauri-driver. These run against the real compiled binary with a real SQLite database in a temp directory.
+
+```
+e2e/
+├── specs/
+│   └── diary-workflow.spec.ts  # Core workflow: create → write → lock → unlock → verify
+└── tsconfig.json               # Separate TS config (node + webdriverio/async globals)
+wdio.conf.ts                    # WebdriverIO config (root level)
+```
+
+**Prerequisites to run locally:**
+```bash
+cargo install tauri-driver   # once
+bun run test:e2e:local       # builds binary + runs suite (use --skip-build on repeat runs)
+```
+
+**Test isolation:** Each run creates a fresh OS temp directory and passes it to the app via `MINI_DIARIUM_DATA_DIR`. The app reads this env var in `lib.rs` and uses it as the diary directory instead of `app_data_dir`.
+
 ### Backend (`src-tauri/src/`)
 
 ```
@@ -176,7 +199,7 @@ src-tauri/src/
 
 ## Command Registry
 
-All 33 registered Tauri commands (source: `lib.rs`). Rust names use `snake_case`; frontend wrappers in `src/lib/tauri.ts` use `camelCase`.
+All 34 registered Tauri commands (source: `lib.rs`). Rust names use `snake_case`; frontend wrappers in `src/lib/tauri.ts` use `camelCase`.
 
 | Module | Rust Command | Frontend Wrapper | Description |
 |--------|-------------|-----------------|-------------|
@@ -186,6 +209,7 @@ All 33 registered Tauri commands (source: `lib.rs`). Rust names use `snake_case`
 | auth | `diary_exists` | `diaryExists()` | Check if DB file exists |
 | auth | `is_diary_unlocked` | `isDiaryUnlocked()` | Check unlock state |
 | auth | `get_diary_path` | `getDiaryPath()` | Return diary file path |
+| auth | `change_diary_directory` | `changeDiaryDirectory(newDir)` | Change diary directory (locked state only) |
 | auth | `change_password` | `changePassword(old, new)` | Re-encrypt with new password |
 | auth | `reset_diary` | `resetDiary()` | Delete and recreate DB |
 | auth | `verify_password` | `verifyPassword(password)` | Validate password without side effects |
@@ -193,8 +217,9 @@ All 33 registered Tauri commands (source: `lib.rs`). Rust names use `snake_case`
 | auth | `list_auth_methods` | `listAuthMethods()` | List all registered auth slots |
 | auth | `generate_keypair` | `generateKeypair()` | Generate X25519 keypair, return hex |
 | auth | `write_key_file` | `writeKeyFile(path, privateKeyHex)` | Write private key hex to file |
-| auth | `register_keypair` | `registerKeypair(password, pubKeyHex, label)` | Add keypair auth slot |
-| auth | `remove_auth_method` | `removeAuthMethod(slotId, password)` | Remove auth slot (guards last) |
+| auth | `register_password` | `registerPassword(newPassword)` | Register a password auth slot (requires diary unlocked) |
+| auth | `register_keypair` | `registerKeypair(currentPassword, publicKeyHex, label)` | Add keypair auth slot |
+| auth | `remove_auth_method` | `removeAuthMethod(slotId, currentPassword)` | Remove auth slot (guards last) |
 | entries | `save_entry` | `saveEntry(date, title, text)` | Upsert entry (encrypts) |
 | entries | `get_entry` | `getEntry(date)` | Fetch + decrypt single entry |
 | entries | `delete_entry_if_empty` | `deleteEntryIfEmpty(date, title, text)` | Remove entry if content is empty |
@@ -346,6 +371,27 @@ Run: `bun run test:run` (single run) or `bun run test` (watch mode)
 
 Coverage: `bun run test:coverage`
 
+### E2E: 1 spec (real binary, real SQLite)
+
+Run: `bun run test:e2e` (requires release binary + `tauri-driver` installed)
+
+| File | Description |
+|------|-------------|
+| `e2e/specs/diary-workflow.spec.ts` | Create diary → write entry → lock → unlock → verify persistence |
+
+**data-testid attributes** used by E2E tests (do not remove):
+
+| Component | Element | data-testid |
+|-----------|---------|-------------|
+| `PasswordCreation.tsx` | Password input | `password-create-input` |
+| `PasswordCreation.tsx` | Confirm password input | `password-repeat-input` |
+| `PasswordCreation.tsx` | Create button | `create-diary-button` |
+| `PasswordPrompt.tsx` | Password input | `password-unlock-input` |
+| `PasswordPrompt.tsx` | Unlock submit button | `unlock-diary-button` |
+| `Header.tsx` | Lock button | `lock-diary-button` |
+| `TitleEditor.tsx` | Title input | `title-input` |
+| `Calendar.tsx` | Each day button | `calendar-day-YYYY-MM-DD` |
+
 ## Verification Commands
 
 ```bash
@@ -358,6 +404,9 @@ cd src-tauri && cargo test                     # All backend tests
 cd src-tauri && cargo test navigation          # Specific module
 bun run test:run                               # All frontend tests
 bun run test:run -- dates                      # Specific test file
+bun run test:e2e:local                         # E2E tests: build binary + run suite
+bun run test:e2e:local -- --skip-build         # E2E tests: skip build, run suite only
+bun run test:e2e                               # Run suite only (binary must already exist)
 
 # Code quality
 bun run lint             # ESLint
@@ -392,6 +441,8 @@ bun run tauri build      # Full app bundle
 9. **Import parser contract**: Parsers in `import/*.rs` return `Vec<DiaryEntry>`. All DB interaction and merge logic happen in `commands/import.rs`, not in the parsers.
 
 10. **Auth slots (v3 schema):** Each auth method stores its own wrapped copy of the master key in `auth_slots`. `remove_auth_method` refuses to delete the last slot (minimum one required). `change_password` re-wraps the master key in O(1) — no entry re-encryption needed. `verify_password` exists as a side-effect-free check used before multi-step operations.
+
+11. **E2E test isolation via `MINI_DIARIUM_DATA_DIR`:** When this env var is set, `lib.rs` uses it as the diary directory instead of `app_data_dir`. This is intentional for E2E test isolation — do not remove it. It has no effect on production builds where the var is unset.
 
 ## Security Rules
 

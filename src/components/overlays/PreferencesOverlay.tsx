@@ -41,6 +41,8 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
 
   // Diary file state
   const [diaryPath, setDiaryPath] = createSignal<string>('');
+  const [changeDirError, setChangeDirError] = createSignal<string | null>(null);
+  const [isChangingDir, setIsChangingDir] = createSignal(false);
 
   // Password change state
   const [oldPassword, setOldPassword] = createSignal('');
@@ -131,6 +133,10 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
       } catch (err) {
         log.error('Failed to load diary path:', err);
       }
+
+      // Reset change-dir state
+      setChangeDirError(null);
+      setIsChangingDir(false);
     }
     if (!open) {
       props.onClose();
@@ -338,6 +344,27 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
     }
   };
 
+  // Handle changing the diary storage directory
+  const handleChangeDiaryDirectory = async () => {
+    setChangeDirError(null);
+    const { open: openDirDialog } = await import('@tauri-apps/plugin-dialog');
+    const selected = await openDirDialog({
+      directory: true,
+      multiple: false,
+      title: 'Choose Diary Directory',
+    });
+    if (!selected || typeof selected !== 'string') return;
+    setIsChangingDir(true);
+    try {
+      await tauri.changeDiaryDirectory(selected);
+      window.location.reload();
+    } catch (err) {
+      setChangeDirError(mapTauriError(err));
+    } finally {
+      setIsChangingDir(false);
+    }
+  };
+
   return (
     <Dialog open={props.isOpen} onOpenChange={handleOpenChange}>
       <Dialog.Portal>
@@ -479,6 +506,25 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                   <div class="px-3 py-3 bg-tertiary border border-primary rounded-md text-sm text-secondary font-mono break-all">
                     {diaryPath() || 'Loading...'}
                   </div>
+                </div>
+
+                {/* Change Location */}
+                <div class="mb-6 space-y-2">
+                  <button
+                    type="button"
+                    onClick={handleChangeDiaryDirectory}
+                    disabled={isChangingDir()}
+                    class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isChangingDir() ? 'Moving...' : 'Change Location'}
+                  </button>
+                  <Show when={changeDirError()}>
+                    <p class="text-sm text-error">{changeDirError()}</p>
+                  </Show>
+                  <p class="text-xs text-tertiary">
+                    Moves your diary file to a new folder. The diary will be locked — you'll need to
+                    unlock it again from the new location.
+                  </p>
                 </div>
 
                 {/* Reset Diary Button */}

@@ -1,0 +1,42 @@
+# TODO
+
+Open tasks and planned improvements. For full context and implementation notes on the original tasks, see [OPEN_TASKS.md](OPEN_TASKS.md).
+
+---
+
+## High Priority
+
+- [ ] **Fix keyboard shortcuts** — most shortcuts are currently broken; audit and restore all bindings in `shortcuts.ts` and `menu.rs`
+- [x] **Diary directory selection** — let users choose where their diary file lives; add `change_diary_directory` command and wire it into Preferences
+- [ ] **Accessibility audit** — ARIA labels, focus trapping in overlays, keyboard calendar navigation, color contrast, screen reader testing (NVDA / VoiceOver)
+- [ ] **Final QA pass** — comprehensive manual test run on Windows, macOS, and Linux before each release
+
+---
+
+## Medium Priority
+
+- [ ] **CI diagram diffing** — the "Verify diagrams are up-to-date" step in `ci.yml` regenerates `*-check.svg` files but only checks that the committed SVGs exist, then deletes the check files without comparing them; stale or wrong diagrams pass CI undetected. Fix: diff each `-check.svg` against its committed counterpart (e.g. `diff` or pixel-compare) and fail if they differ
+- [ ] **Modernize release workflow** — replace deprecated `actions/create-release@v1` with `softprops/action-gh-release`, add artifact verification
+- [x] **Platform-specific menus** — macOS App menu (About, Preferences, Quit), Windows/Linux File menu; disable items when diary is locked
+- [ ] **Auto-lock on screen lock (macOS parity)** — Windows implementation is done; add macOS native screen-lock hook so behavior matches across desktop platforms
+- [ ] **Auto-update system** — in-app update notifications via `@tauri-apps/plugin-updater`
+- [ ] **i18n framework** — detect OS locale, set up translation files (`en.json`, `es.json`), add `t()` helper
+- [ ] **Translate all UI text** — replace hardcoded strings with translation keys (~145 keys); depends on i18n framework above
+- [ ] **E2E test setup** — configure Playwright for Tauri, add fixtures and helpers under `tests/e2e/`
+- [ ] **E2E tests for critical workflows** — first-time setup, unlock/lock, import/export, preferences, theme switching (8 scenarios); depends on E2E setup above
+- [ ] **First-launch existing diary picker** — when no diary is found, offer “Open Existing Diary...” to select an existing `diary.db` location (cloud-synced folders, external locations) instead of only showing “create new diary”
+- [ ] **Backup behavior docs** — explain backup trigger/rotation/path behavior and how it works with custom diary locations and moved/externally stored `diary.db` files
+- [ ] **Split `commands/auth.rs` into sub-modules** — the file is ~1100 lines covering core auth, auth-method management, and directory management; split into `auth_core.rs`, `auth_methods.rs`, `auth_directory.rs` without changing any public API. Pure refactor.
+- [ ] **`screen_lock.rs` unit tests** — the Windows session-lock hook is untested because it calls Win32 APIs directly; extract `trigger_auto_lock` and test it with a mock `DiaryState`; requires Win32 API mocking strategy.
+
+---
+
+## Low Priority / Future
+
+- [ ] **PDF export** — convert diary entries to PDF (A4); likely via Tauri webview printing
+- [ ] **Extension system** — plugin/extension API allowing third-party integrations (import formats, export targets, themes); architecture TBD
+- [ ] **Release build profile** — add `[profile.release]` to `Cargo.toml` with `opt-level = 3` and `lto = true` for smaller, faster distribution binaries
+- [ ] **Downgrade import path logging** — `commands/import.rs` logs the import file path at `info!` level, leaking the full filesystem path in dev logs; downgrade to `debug!`
+- [ ] **Document `backup.rs` assumptions** — add comments explaining: (1) `fs::copy` on an open SQLite file is safe with the default journal mode but would produce inconsistent backups if WAL mode were ever adopted (prefer `sqlite3_backup_init` in that case); (2) backup filenames use ISO-8601-like format so lexicographic sort equals chronological sort
+- [ ] **`DiaryEntry` clone efficiency** — `DiaryEntry` derives `Clone` and is heap-copied for each entry during import; pass references where possible to reduce allocations when importing thousands of entries
+- [ ] **Document keypair hex in JS heap** — `generate_keypair` returns `KeypairFiles` with `private_key_hex` as plain JSON so the frontend can write it to a file; add a comment on the struct noting this is an accepted design tradeoff and that the private key briefly exists in the JS heap
