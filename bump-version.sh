@@ -53,13 +53,18 @@ echo "Updating website/index.html..."
 sed -i.bak 's|<span class="app-version">[0-9]*\.[0-9]*\.[0-9]*</span>|<span class="app-version">'"${NEW_VERSION}"'</span>|g' website/index.html
 rm website/index.html.bak
 
+# 6. Update README version badge
+echo "Updating README.md version badge..."
+sed -i.bak "s|version-[0-9]*\.[0-9]*\.[0-9]*-|version-${NEW_VERSION}-|g" README.md
+rm README.md.bak
+
 echo
 echo -e "${GREEN}✅ Version updated in all files${NC}"
 echo
 
 # Show what changed
 echo "Changes:"
-git diff package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock website/index.html | head -40
+git diff package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock website/index.html README.md | head -40
 
 # Get current branch
 CURRENT_BRANCH=$(git branch --show-current)
@@ -67,7 +72,7 @@ CURRENT_BRANCH=$(git branch --show-current)
 echo
 echo -e "${YELLOW}Next steps:${NC}"
 echo "1. Review the changes above"
-echo "2. Commit: ${GREEN}git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock website/index.html && git commit -m \"chore: bump version to ${NEW_VERSION}\"${NC}"
+echo "2. Commit: ${GREEN}git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock website/index.html README.md && git commit -m \"chore: bump version to ${NEW_VERSION}\"${NC}"
 echo "3. Push branch: ${GREEN}git push origin ${CURRENT_BRANCH}${NC}"
 echo "4. Create PR to merge ${CURRENT_BRANCH} → master"
 echo "5. After PR is merged, checkout master and create tag:"
