@@ -11,14 +11,17 @@
 ## Architecture
 
 **Visual diagrams**:
-- [Simple overview](docs/diagrams/architecture-simple.mmd) - Context diagram (for README, Mermaid format)
-- [Full diagram](docs/diagrams/architecture-full.svg) - Detailed components and data flows (D2 format)
+- [System context](docs/diagrams/context.mmd) - High-level local-only data flow (Mermaid)
+- [Unlock flow](docs/diagrams/unlock.mmd) - Password/key-file master-key unwrap sequence (Mermaid)
+- [Save-entry flow](docs/diagrams/save-entry.mmd) - Editor to encrypted SQLite write path (Mermaid)
+- [Layered architecture](docs/diagrams/architecture.svg) - Presentation/state/backend/data layers (D2)
 
 **Regenerate diagrams**:
 ```bash
 bun run diagrams
-# Renders docs/diagrams/architecture-simple.mmd → docs/diagrams/architecture-simple.svg (via mmdc)
-# Renders docs/diagrams/architecture-full.d2    → docs/diagrams/architecture-full.svg    (via d2)
+# Renders docs/diagrams/{unlock,unlock-dark,save-entry,save-entry-dark,context,context-dark}.mmd → *.svg (via mmdc)
+# Renders docs/diagrams/architecture.d2      → docs/diagrams/architecture.svg      (via d2)
+# Renders docs/diagrams/architecture-dark.d2 → docs/diagrams/architecture-dark.svg (via d2)
 ```
 
 Quick reference (ASCII art):
@@ -206,6 +209,7 @@ All 34 registered Tauri commands (source: `lib.rs`). Rust names use `snake_case`
 | auth | `diary_exists` | `diaryExists()` | Check if DB file exists |
 | auth | `is_diary_unlocked` | `isDiaryUnlocked()` | Check unlock state |
 | auth | `get_diary_path` | `getDiaryPath()` | Return diary file path |
+| auth | `change_diary_directory` | `changeDiaryDirectory(newDir)` | Change diary directory (locked state only) |
 | auth | `change_password` | `changePassword(old, new)` | Re-encrypt with new password |
 | auth | `reset_diary` | `resetDiary()` | Delete and recreate DB |
 | auth | `verify_password` | `verifyPassword(password)` | Validate password without side effects |
@@ -214,8 +218,8 @@ All 34 registered Tauri commands (source: `lib.rs`). Rust names use `snake_case`
 | auth | `generate_keypair` | `generateKeypair()` | Generate X25519 keypair, return hex |
 | auth | `write_key_file` | `writeKeyFile(path, privateKeyHex)` | Write private key hex to file |
 | auth | `register_password` | `registerPassword(newPassword)` | Register a password auth slot (requires diary unlocked) |
-| auth | `register_keypair` | `registerKeypair(password, pubKeyHex, label)` | Add keypair auth slot |
-| auth | `remove_auth_method` | `removeAuthMethod(slotId, password)` | Remove auth slot (guards last) |
+| auth | `register_keypair` | `registerKeypair(currentPassword, publicKeyHex, label)` | Add keypair auth slot |
+| auth | `remove_auth_method` | `removeAuthMethod(slotId, currentPassword)` | Remove auth slot (guards last) |
 | entries | `save_entry` | `saveEntry(date, title, text)` | Upsert entry (encrypts) |
 | entries | `get_entry` | `getEntry(date)` | Fetch + decrypt single entry |
 | entries | `delete_entry_if_empty` | `deleteEntryIfEmpty(date, title, text)` | Remove entry if content is empty |

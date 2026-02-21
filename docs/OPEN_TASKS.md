@@ -59,7 +59,7 @@ Ensure generated architecture diagrams are actually compared against committed o
 - Stale diagrams can pass CI as long as expected filenames exist
 
 **Requirements**:
-- Regenerate both diagrams during CI (`architecture-simple.svg`, `architecture-full.svg`)
+- Regenerate all tracked diagrams during CI (`unlock*.svg`, `save-entry*.svg`, `context*.svg`, `architecture*.svg`)
 - Diff generated files against committed files and fail on mismatch
 - Keep CI output actionable (show which file differs and how to regenerate locally)
 

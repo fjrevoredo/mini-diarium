@@ -17,10 +17,10 @@ flowchart LR
   U["<b>You</b><br/>Diarist"]
   UI["<b>Mini Diarium</b><br/>SolidJS UI"]
   BE["<b>Rust Backend</b><br/>Crypto + Commands"]
-  DB["<b>Local SQLite</b><br/>Encrypted entries<br/>FTS index"]
+  DB["<b>Local SQLite</b><br/>Encrypted entries + wrapped keys<br/>No plaintext search index"]
   NET["<b>Internet</b><br/>Never accessed"]
 
-  U -->|Unlock, write, search| UI
+  U -->|Unlock, write, navigate| UI
   UI -->|invoke| BE
   BE -->|read, write| DB
   BE -.->|no network calls| NET

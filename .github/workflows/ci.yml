@@ -95,6 +95,7 @@ jobs:
           bun x mmdc -p /tmp/puppeteer-config.json -i docs/diagrams/context-dark.mmd -o docs/diagrams/context-dark-check.svg --backgroundColor transparent
 
           # Regenerate D2 diagrams
+          ~/.local/bin/d2 docs/diagrams/architecture.d2 docs/diagrams/architecture-check.svg
           ~/.local/bin/d2 docs/diagrams/architecture-dark.d2 docs/diagrams/architecture-dark-check.svg
 
           # Verify expected SVGs exist
@@ -105,6 +106,7 @@ jobs:
             docs/diagrams/save-entry-dark.svg \
             docs/diagrams/context.svg \
             docs/diagrams/context-dark.svg \
+            docs/diagrams/architecture.svg \
             docs/diagrams/architecture-dark.svg
           do
             if [ ! -f "$file" ]; then

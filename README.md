@@ -113,7 +113,7 @@ Mini Diarium follows a layered structure.
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="docs/diagrams/architecture-dark.svg">
-  <img alt="Layered Architecture Diagram" src="docs/diagrams/architecture-dark.svg">
+  <img alt="Layered Architecture Diagram" src="docs/diagrams/architecture.svg">
 </picture>
 
 ## Installation
