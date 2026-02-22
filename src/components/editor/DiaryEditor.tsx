@@ -37,7 +37,7 @@ export default function DiaryEditor(props: DiaryEditorProps) {
       editorProps: {
         attributes: {
           class:
-            'prose prose-sm sm:prose lg:prose-lg xl:prose-xl focus:outline-none min-h-[200px] max-w-none',
+            'diary-editor-content prose prose-sm sm:prose lg:prose-lg xl:prose-xl focus:outline-none max-w-none',
           spellcheck: String(props.spellCheck ?? true),
         },
       },

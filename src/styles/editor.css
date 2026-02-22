@@ -5,6 +5,18 @@
   color: var(--text-primary);
 }
 
+@media (min-width: 1280px) {
+  .ProseMirror.diary-editor-content {
+    min-height: clamp(320px, 52vh, 680px);
+  }
+}
+
+@media (min-width: 1536px), (min-height: 1000px) {
+  .ProseMirror.diary-editor-content {
+    min-height: clamp(420px, 64vh, 860px);
+  }
+}
+
 /* Dark mode text colors */
 .dark .ProseMirror {
   color: #e5e7eb;

@@ -12,12 +12,19 @@ pub fn create_backup(diary_path: &Path, backups_dir: &Path) -> Result<PathBuf, S
     fs::create_dir_all(backups_dir)
         .map_err(|e| format!("Failed to create backups directory: {}", e))?;
 
-    // Generate backup filename with current timestamp
+    // Generate backup filename with current timestamp.
+    // The format is ISO-8601-like (YYYY-MM-DD-HHhMM) so that lexicographic
+    // sort order equals chronological order — rotate_backups() relies on this.
     let timestamp = Local::now().format("%Y-%m-%d-%Hh%M");
     let backup_filename = format!("backup-{}.db", timestamp);
     let backup_path = backups_dir.join(&backup_filename);
 
-    // Copy diary file to backup location
+    // Copy diary file to backup location.
+    // fs::copy on an open SQLite file is safe under the default journal mode
+    // (DELETE) because SQLite holds a shared lock only during reads/writes and
+    // the copy captures a consistent page image.  If WAL mode were ever
+    // adopted this approach could produce an inconsistent backup; prefer
+    // sqlite3_backup_init / the Online Backup API in that case.
     fs::copy(diary_path, &backup_path).map_err(|e| format!("Failed to create backup: {}", e))?;
 
     debug!("Backup created: {:?}", backup_path);

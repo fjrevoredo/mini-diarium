@@ -113,13 +113,37 @@ Open with `Ctrl+I`:
 
 ## Backups
 
-Mini Diarium automatically backs up your database periodically, with older backups rotated out.
+### When backups are created
 
-Database location by OS:
+A backup is created automatically each time you successfully unlock your diary, whether by password or key file. If the unlock fails (wrong password, missing key file), no backup is taken.
 
-- **Windows**: `%APPDATA%\com.minidiarium\` (legacy installs may use `%APPDATA%\com.minidiarium.app\`)
-- **macOS**: `~/Library/Application Support/com.minidiarium/` (legacy installs may use `~/Library/Application Support/com.minidiarium.app/`)
-- **Linux**: `~/.local/share/com.minidiarium/` (legacy installs may use `~/.local/share/com.minidiarium.app/`)
+### Backup location
+
+Backups are stored in a `backups/` subfolder **inside the same directory as your `diary.db`**. The default diary directory by OS:
+
+- **Windows**: `%APPDATA%\com.minidiarium\` (legacy: `%APPDATA%\com.minidiarium.app\`)
+- **macOS**: `~/Library/Application Support/com.minidiarium/` (legacy: `~/Library/Application Support/com.minidiarium.app/`)
+- **Linux**: `~/.local/share/com.minidiarium/` (legacy: `~/.local/share/com.minidiarium.app/`)
+
+If you have changed your diary location (see *Preferences → Storage Location*), backups are created in `{your chosen directory}/backups/` instead.
+
+### Backup filenames
+
+Each backup is named `backup-YYYY-MM-DD-HHhMM.db` (for example, `backup-2024-01-15-14h30.db`). The timestamp reflects local time at the moment of unlock.
+
+### Rotation
+
+Mini Diarium keeps the **50 most recent backups**. When a new backup would push the count above 50, the oldest backups are deleted automatically. Only files matching the `backup-*.db` naming pattern are counted; any other files you place in the `backups/` folder are left untouched.
+
+### Custom diary locations
+
+When you move your diary to a different folder via Preferences, `diary.db` is physically moved to the new location and all future backups will go into `{new location}/backups/`.
+
+**Existing backups in the old `backups/` folder are not moved.** If you want to keep your backup history, copy the old `backups/` folder to the new diary directory before or after the move.
+
+### Cloud-synced and external locations
+
+If you place your diary directory inside a cloud-synced folder (Dropbox, OneDrive, iCloud Drive, etc.), both `diary.db` and the `backups/` subfolder will be included in the sync, giving you off-site backup on top of local rotation. Keep in mind that Mini Diarium does not coordinate concurrent access — **do not open the same diary from two devices at the same time**.
 
 ## FAQ
 

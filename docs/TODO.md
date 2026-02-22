@@ -23,7 +23,7 @@ Open tasks and planned improvements. For full context and implementation notes o
 - [ ] **Translate all UI text** — replace hardcoded strings with translation keys (~145 keys); depends on i18n framework above
 - [ ] **E2E tests for critical workflows** — first-time setup, unlock/lock, import/export, preferences, theme switching (8 scenarios); depends on E2E setup above
 - [ ] **First-launch existing diary picker** — when no diary is found, offer “Open Existing Diary...” to select an existing `diary.db` location (cloud-synced folders, external locations) instead of only showing “create new diary”
-- [ ] **Backup behavior docs** — explain backup trigger/rotation/path behavior and how it works with custom diary locations and moved/externally stored `diary.db` files
+- [x] **Backup behavior docs** — explain backup trigger/rotation/path behavior and how it works with custom diary locations and moved/externally stored `diary.db` files
 - [x] **Split `commands/auth.rs` into sub-modules** — the file is ~1100 lines covering core auth, auth-method management, and directory management; split into `auth_core.rs`, `auth_methods.rs`, `auth_directory.rs` without changing any public API. Pure refactor.
 - [ ] **`screen_lock.rs` unit tests** — the Windows session-lock hook is untested because it calls Win32 APIs directly; extract `trigger_auto_lock` and test it with a mock `DiaryState`; requires Win32 API mocking strategy.
 
@@ -34,7 +34,7 @@ Open tasks and planned improvements. For full context and implementation notes o
 - [ ] **PDF export** — convert diary entries to PDF (A4); likely via Tauri webview printing
 - [ ] **Release build profile** — add `[profile.release]` to `Cargo.toml` with `opt-level = 3` and `lto = true` for smaller, faster distribution binaries
 - [ ] **Downgrade import path logging** — `commands/import.rs` logs the import file path at `info!` level, leaking the full filesystem path in dev logs; downgrade to `debug!`
-- [ ] **Document `backup.rs` assumptions** — add comments explaining: (1) `fs::copy` on an open SQLite file is safe with the default journal mode but would produce inconsistent backups if WAL mode were ever adopted (prefer `sqlite3_backup_init` in that case); (2) backup filenames use ISO-8601-like format so lexicographic sort equals chronological sort
+- [x] **Document `backup.rs` assumptions** — add comments explaining: (1) `fs::copy` on an open SQLite file is safe with the default journal mode but would produce inconsistent backups if WAL mode were ever adopted (prefer `sqlite3_backup_init` in that case); (2) backup filenames use ISO-8601-like format so lexicographic sort equals chronological sort
 - [ ] **`DiaryEntry` clone efficiency** — `DiaryEntry` derives `Clone` and is heap-copied for each entry during import; pass references where possible to reduce allocations when importing thousands of entries
 - [ ] **Document keypair hex in JS heap** — `generate_keypair` returns `KeypairFiles` with `private_key_hex` as plain JSON so the frontend can write it to a file; add a comment on the struct noting this is an accepted design tradeoff and that the private key briefly exists in the JS heap
 - [ ] **Accessibility audit** — ARIA labels, focus trapping in overlays, keyboard calendar navigation, color contrast, screen reader testing (NVDA / VoiceOver)

@@ -241,7 +241,7 @@ Artifacts will be in `src-tauri/target/release/bundle/`.
 - [Kobalte](https://kobalte.dev/): accessible UI primitives
 
 ## Known Issues
-- Most keyboard shortcuts are broken
+- Concurrent access to the journal is not supported
 
 ## Contributing
 

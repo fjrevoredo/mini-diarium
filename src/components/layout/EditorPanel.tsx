@@ -127,7 +127,7 @@ export default function EditorPanel() {
   return (
     <div class="flex h-full flex-col">
       <div class="flex-1 overflow-y-auto p-6">
-        <div class="mx-auto max-w-3xl">
+        <div class="mx-auto w-full max-w-3xl xl:max-w-5xl 2xl:max-w-6xl">
           <div class="space-y-4">
             <Show when={!preferences().hideTitles}>
               <TitleEditor
