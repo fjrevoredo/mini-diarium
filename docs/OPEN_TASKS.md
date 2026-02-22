@@ -114,7 +114,7 @@ Ensure the app is usable by everyone.
 ---
 
 ### Task 63: Keyboard Shortcuts Audit & Recovery
-**Priority**: High | **Complexity**: Medium | **Files**: `src/lib/shortcuts.ts`, `src-tauri/src/menu.rs`, `src/components/layout/MainLayout.tsx`
+**Priority**: High | **Complexity**: Medium | **Files**: `src-tauri/src/menu.rs`, `src/components/layout/MainLayout.tsx`
 
 Audit and restore all expected keyboard shortcuts and menu-triggered navigation actions.
 
@@ -125,8 +125,8 @@ Audit and restore all expected keyboard shortcuts and menu-triggered navigation 
 - Confirm lock-state behavior (disabled while locked, enabled while unlocked)
 
 **Verification Matrix**:
-1. Previous/next day (`CmdOrCtrl+Left` / `CmdOrCtrl+Right`)
-2. Previous/next month (`CmdOrCtrl+Shift+Left` / `CmdOrCtrl+Shift+Right`)
+1. Previous/next day (`CmdOrCtrl+[` / `CmdOrCtrl+]`)
+2. Previous/next month (`CmdOrCtrl+Shift+[` / `CmdOrCtrl+Shift+]`)
 3. Go to today (`CmdOrCtrl+T`)
 4. Go to date (`CmdOrCtrl+G`)
 5. Menu-item click emits and frontend handler behavior

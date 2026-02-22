@@ -158,7 +158,7 @@ sha256sum Mini-Diarium-*.AppImage
 1. Launch Mini Diarium
 2. Create a password (this encrypts your diary; there is no recovery if forgotten)
 3. Write your first entry. It auto-saves as you type
-4. Navigate between days with `Ctrl+Left` / `Ctrl+Right` or click dates on the calendar
+4. Navigate between days with `Ctrl+[` / `Ctrl+]` or click dates on the calendar
 5. Lock your diary when you're done
 
 ## Key File Authentication
@@ -203,16 +203,15 @@ From that point you can unlock from the login screen by switching to **Key File*
 
 | Action         | Shortcut           |
 | -------------- | ------------------ |
-| Previous Day   | `Ctrl+Left`        |
-| Next Day       | `Ctrl+Right`       |
+| Previous Day   | `Ctrl+[`           |
+| Next Day       | `Ctrl+]`           |
 | Go to Today    | `Ctrl+T`           |
 | Go to Date     | `Ctrl+G`           |
-| Previous Month | `Ctrl+Shift+Left`  |
-| Next Month     | `Ctrl+Shift+Right` |
+| Previous Month | `Ctrl+Shift+[`     |
+| Next Month     | `Ctrl+Shift+]`     |
 | Preferences    | `Ctrl+,`           |
-| Statistics     | `Ctrl+I`           |
-| Import         | `Ctrl+Shift+I`     |
-| Export         | `Ctrl+Shift+E`     |
+
+Statistics, Import, and Export are available via the Diary menu (no default keyboard accelerators).
 
 On macOS, use `Cmd` instead of `Ctrl`.
 

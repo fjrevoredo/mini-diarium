@@ -438,13 +438,15 @@ Five overlay states: `none`, `go-to-date`, `import`, `preferences`, `statistics`
 
 #### FR-MENU-3: Keyboard Shortcuts
 Specific accelerators defined in the menu:
-- **Lock Diary**: `CmdOrCtrl+L`
 - **Go To Today**: `CmdOrCtrl+T`
-- **Go To Date**: `CmdOrCtrl+Shift+T`
-- **Previous Day**: `Left` arrow key
-- **Next Day**: `Right` arrow key
-- **Previous Month**: `CmdOrCtrl+Left`
-- **Next Month**: `CmdOrCtrl+Right`
+- **Go To Date**: `CmdOrCtrl+G`
+- **Previous Day**: `CmdOrCtrl+[`
+- **Next Day**: `CmdOrCtrl+]`
+- **Previous Month**: `CmdOrCtrl+Shift+[`
+- **Next Month**: `CmdOrCtrl+Shift+]`
+- **Preferences**: `CmdOrCtrl+,`
+
+There are no default accelerators for Statistics, Import, or Export.
 
 ---
 

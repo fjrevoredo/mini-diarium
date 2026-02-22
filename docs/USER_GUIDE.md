@@ -51,12 +51,12 @@ The sidebar shows a monthly calendar. Days with entries are marked with a dot in
 
 | Action | Shortcut |
 |--------|----------|
-| Previous day with an entry | `Ctrl+Left` |
-| Next day with an entry | `Ctrl+Right` |
+| Previous day with an entry | `Ctrl+[` |
+| Next day with an entry | `Ctrl+]` |
 | Go to today | `Ctrl+T` |
 | Go to a specific date | `Ctrl+G` |
-| Previous month | `Ctrl+Shift+Left` |
-| Next month | `Ctrl+Shift+Right` |
+| Previous month | `Ctrl+Shift+[` |
+| Next month | `Ctrl+Shift+]` |
 
 On macOS, use `Cmd` instead of `Ctrl`.
 
@@ -70,7 +70,7 @@ Full-text search is not available in this version. It will be added in a future 
 
 ## Import
 
-Open the import dialog with `Ctrl+Shift+I`.
+Open the import dialog from **Diary → Import...** in the app menu.
 
 **Supported formats:**
 
@@ -81,7 +81,7 @@ When importing, Mini Diarium merges entries with your existing diary. If an impo
 
 ## Export
 
-Export your diary with `Ctrl+Shift+E`:
+Open the export dialog from **Diary → Export...** in the app menu:
 
 - **JSON**: machine-readable, can be re-imported into Mini Diarium
 - **Markdown**: one file per entry, organized by date
@@ -104,7 +104,7 @@ Open with `Ctrl+,`:
 
 ## Statistics
 
-Open with `Ctrl+I`:
+Open from **Diary → Statistics...** in the app menu:
 
 - **Total entries** and **total words**
 - **Average words per entry**
@@ -160,4 +160,4 @@ Never. No network requests, no analytics, no telemetry, no automatic updates.
 Not directly. Mini Diarium is local-only by design. You could manually copy the database file, but simultaneous access from multiple devices is not supported.
 
 **I used Mini Diary before. Can I migrate?**
-Yes. Export from Mini Diary as JSON, then import in Mini Diarium with `Ctrl+Shift+I` using the Mini Diary JSON format.
+Yes. Export from Mini Diary as JSON, then import in Mini Diarium from **Diary → Import...** using the Mini Diary JSON format.
