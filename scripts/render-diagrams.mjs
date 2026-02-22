@@ -65,7 +65,7 @@ const explicitPuppeteerConfig = getArgValue("--puppeteer-config", "").trim();
 let generatedPuppeteerDir = "";
 let puppeteerConfigPath = explicitPuppeteerConfig || process.env.MMDC_PUPPETEER_CONFIG || "";
 
-if (!puppeteerConfigPath && process.env.CI === "true" && process.platform === "linux") {
+if (!puppeteerConfigPath) {
   generatedPuppeteerDir = mkdtempSync(path.join(tmpdir(), "mini-diarium-mmdc-"));
   puppeteerConfigPath = path.join(generatedPuppeteerDir, "puppeteer-config.json");
 

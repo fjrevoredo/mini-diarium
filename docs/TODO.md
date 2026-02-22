@@ -8,6 +8,7 @@ Open tasks and planned improvements. For full context and implementation notes o
 
 - [x] **Fix keyboard shortcuts** — bracket-key accelerators replace arrow-key combos; removed duplicate frontend listener layer that caused double-firing; eliminated editor/DevTools conflicts
 - [x] **Diary directory selection** — let users choose where their diary file lives; add `change_diary_directory` command and wire it into Preferences
+- [ ] **Multiple journals with login-time switching** — allow configuring multiple journals and selecting which one to unlock at login; keep all existing functionality working without regressions and implement it with minimal UI changes (no major redesign)
 - [ ] **Extension system** — plugin/extension API allowing third-party integrations (import formats, export targets, themes); architecture TBD
 
 ---
