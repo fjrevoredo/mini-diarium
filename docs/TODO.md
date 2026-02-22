@@ -6,7 +6,7 @@ Open tasks and planned improvements. For full context and implementation notes o
 
 ## High Priority
 
-- [ ] **Fix keyboard shortcuts** — most shortcuts are currently broken; audit and restore all bindings in `shortcuts.ts` and `menu.rs`
+- [x] **Fix keyboard shortcuts** — bracket-key accelerators replace arrow-key combos; removed duplicate frontend listener layer that caused double-firing; eliminated editor/DevTools conflicts
 - [x] **Diary directory selection** — let users choose where their diary file lives; add `change_diary_directory` command and wire it into Preferences
 - [ ] **Extension system** — plugin/extension API allowing third-party integrations (import formats, export targets, themes); architecture TBD
 
@@ -21,11 +21,10 @@ Open tasks and planned improvements. For full context and implementation notes o
 - [ ] **Auto-update system** — in-app update notifications via `@tauri-apps/plugin-updater`
 - [ ] **i18n framework** — detect OS locale, set up translation files (`en.json`, `es.json`), add `t()` helper
 - [ ] **Translate all UI text** — replace hardcoded strings with translation keys (~145 keys); depends on i18n framework above
-- [ ] **E2E test setup** — configure Playwright for Tauri, add fixtures and helpers under `tests/e2e/`
 - [ ] **E2E tests for critical workflows** — first-time setup, unlock/lock, import/export, preferences, theme switching (8 scenarios); depends on E2E setup above
 - [ ] **First-launch existing diary picker** — when no diary is found, offer “Open Existing Diary...” to select an existing `diary.db` location (cloud-synced folders, external locations) instead of only showing “create new diary”
 - [ ] **Backup behavior docs** — explain backup trigger/rotation/path behavior and how it works with custom diary locations and moved/externally stored `diary.db` files
-- [ ] **Split `commands/auth.rs` into sub-modules** — the file is ~1100 lines covering core auth, auth-method management, and directory management; split into `auth_core.rs`, `auth_methods.rs`, `auth_directory.rs` without changing any public API. Pure refactor.
+- [x] **Split `commands/auth.rs` into sub-modules** — the file is ~1100 lines covering core auth, auth-method management, and directory management; split into `auth_core.rs`, `auth_methods.rs`, `auth_directory.rs` without changing any public API. Pure refactor.
 - [ ] **`screen_lock.rs` unit tests** — the Windows session-lock hook is untested because it calls Win32 APIs directly; extract `trigger_auto_lock` and test it with a mock `DiaryState`; requires Win32 API mocking strategy.
 
 ---
@@ -39,3 +38,4 @@ Open tasks and planned improvements. For full context and implementation notes o
 - [ ] **`DiaryEntry` clone efficiency** — `DiaryEntry` derives `Clone` and is heap-copied for each entry during import; pass references where possible to reduce allocations when importing thousands of entries
 - [ ] **Document keypair hex in JS heap** — `generate_keypair` returns `KeypairFiles` with `private_key_hex` as plain JSON so the frontend can write it to a file; add a comment on the struct noting this is an accepted design tradeoff and that the private key briefly exists in the JS heap
 - [ ] **Accessibility audit** — ARIA labels, focus trapping in overlays, keyboard calendar navigation, color contrast, screen reader testing (NVDA / VoiceOver)
+- [ ] **Mobile version** — Tauri v2 supports iOS and Android targets; evaluate porting the app to mobile: adapt the SolidJS UI for touch (larger tap targets, bottom navigation, swipe gestures for day navigation), handle mobile file-system sandboxing for the diary DB location, and assess whether the Argon2id parameters need tuning for mobile CPU/memory constraints

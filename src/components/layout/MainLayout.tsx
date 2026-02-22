@@ -27,7 +27,6 @@ import {
   isAboutOpen,
   setIsAboutOpen,
 } from '../../state/ui';
-import { setupNavigationShortcuts } from '../../lib/shortcuts';
 import {
   navigatePreviousDay,
   navigateNextDay,
@@ -42,15 +41,10 @@ const log = createLogger('MainLayout');
 
 export default function MainLayout() {
   // Store cleanup functions at component level
-  let cleanupShortcuts: (() => void) | undefined;
   const unlisteners: UnlistenFn[] = [];
 
-  // Setup keyboard shortcuts and menu listeners
+  // Setup menu event listeners
   onMount(async () => {
-    // Setup keyboard shortcuts
-    cleanupShortcuts = setupNavigationShortcuts(selectedDate, setSelectedDate);
-
-    // Setup menu event listeners
     // Previous Day menu item
     unlisteners.push(
       await listen('menu-navigate-previous-day', async () => {
@@ -162,7 +156,6 @@ export default function MainLayout() {
 
   // Cleanup on component unmount
   onCleanup(() => {
-    cleanupShortcuts?.();
     unlisteners.forEach((unlisten) => unlisten());
   });
 

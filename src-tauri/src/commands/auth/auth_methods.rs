@@ -1,6 +1,5 @@
 use log::info;
 use tauri::State;
-use zeroize::Zeroize;
 
 use super::DiaryState;
 

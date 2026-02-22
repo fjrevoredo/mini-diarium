@@ -8,15 +8,33 @@ use tauri::{
 pub struct LockableMenuItems(pub Vec<tauri::menu::MenuItem<Wry>>);
 
 /// Build and set up the application menu
+///
+/// # Active keyboard shortcuts (single canonical reference)
+///
+/// All shortcuts are OS-level menu accelerators — they fire before the webview/editor
+/// sees the keystroke, so they never conflict with TipTap bindings.
+///
+/// | Action            | Shortcut                | Notes                              |
+/// |-------------------|-------------------------|------------------------------------|
+/// | Previous Day      | CmdOrCtrl+[             | Bracket keys: no editor conflict   |
+/// | Next Day          | CmdOrCtrl+]             |                                    |
+/// | Previous Month    | CmdOrCtrl+Shift+[       |                                    |
+/// | Next Month        | CmdOrCtrl+Shift+]       |                                    |
+/// | Go to Today       | CmdOrCtrl+T             | Safe as OS-level accelerator       |
+/// | Go to Date…       | CmdOrCtrl+G             |                                    |
+/// | Preferences…      | CmdOrCtrl+,             | Universal standard                 |
+/// | Statistics…       | (none)                  | Removed: was TipTap italic conflict|
+/// | Import…           | (none)                  | Removed: was DevTools conflict     |
+/// | Export…           | (none)                  | Removed: rare operation            |
 pub fn build_menu(app: &AppHandle<Wry>) -> tauri::Result<LockableMenuItems> {
     // Lockable — start disabled, enabled on unlock
     let navigate_prev_day = MenuItemBuilder::with_id("navigate_prev_day", "Previous Day")
-        .accelerator("CmdOrCtrl+Left")
+        .accelerator("CmdOrCtrl+[")
         .enabled(false)
         .build(app)?;
 
     let navigate_next_day = MenuItemBuilder::with_id("navigate_next_day", "Next Day")
-        .accelerator("CmdOrCtrl+Right")
+        .accelerator("CmdOrCtrl+]")
         .enabled(false)
         .build(app)?;
 
@@ -31,27 +49,24 @@ pub fn build_menu(app: &AppHandle<Wry>) -> tauri::Result<LockableMenuItems> {
         .build(app)?;
 
     let navigate_prev_month = MenuItemBuilder::with_id("navigate_prev_month", "Previous Month")
-        .accelerator("CmdOrCtrl+Shift+Left")
+        .accelerator("CmdOrCtrl+Shift+[")
         .enabled(false)
         .build(app)?;
 
     let navigate_next_month = MenuItemBuilder::with_id("navigate_next_month", "Next Month")
-        .accelerator("CmdOrCtrl+Shift+Right")
+        .accelerator("CmdOrCtrl+Shift+]")
         .enabled(false)
         .build(app)?;
 
     let statistics = MenuItemBuilder::with_id("statistics", "Statistics...")
-        .accelerator("CmdOrCtrl+I")
         .enabled(false)
         .build(app)?;
 
     let import_item = MenuItemBuilder::with_id("import", "Import...")
-        .accelerator("CmdOrCtrl+Shift+I")
         .enabled(false)
         .build(app)?;
 
     let export_item = MenuItemBuilder::with_id("export", "Export...")
-        .accelerator("CmdOrCtrl+Shift+E")
         .enabled(false)
         .build(app)?;
 

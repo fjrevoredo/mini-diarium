@@ -246,9 +246,7 @@ pub fn reset_diary(state: State<DiaryState>, app: AppHandle<Wry>) -> Result<(), 
 #[cfg(test)]
 mod tests {
     use super::super::test_helpers::*;
-    use super::*;
     use crate::db::schema::{create_database, open_database};
-    use std::fs;
 
     #[test]
     fn test_create_and_unlock() {
