@@ -7,6 +7,7 @@ pub mod db;
 pub mod export;
 pub mod import;
 pub mod menu;
+pub mod plugin;
 pub mod screen_lock;
 
 use commands::auth::DiaryState;
@@ -88,6 +89,13 @@ pub fn run() {
             // Set up state
             app.manage(DiaryState::new(db_path, backups_dir, app_dir));
 
+            // Initialize plugin registry
+            let plugins_dir = diary_dir.join("plugins");
+            let mut registry = plugin::registry::PluginRegistry::new();
+            plugin::builtins::register_all(&mut registry);
+            plugin::rhai_loader::load_plugins(&plugins_dir, &mut registry);
+            app.manage(std::sync::Mutex::new(registry));
+
             // Build and set application menu
             let lockable = menu::build_menu(app.handle())?;
             app.manage(lockable);
@@ -141,6 +149,11 @@ pub fn run() {
             // Export
             commands::export::export_json,
             commands::export::export_markdown,
+            // Plugins
+            commands::plugin::list_import_plugins,
+            commands::plugin::list_export_plugins,
+            commands::plugin::run_import_plugin,
+            commands::plugin::run_export_plugin,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

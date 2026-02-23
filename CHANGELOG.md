@@ -2,9 +2,11 @@
 
 All notable changes to Mini Diarium are documented here. This project uses [Semantic Versioning](https://semver.org/).
 
-## [0.4.0] — Unrealesed
+## [0.4.0] — Unreleased
 
 ### Added
+
+- **Extension system for import/export formats**: built-in formats (Mini Diary JSON, Day One JSON, Day One TXT, jrnl JSON, JSON export, Markdown export) are now served through a unified plugin registry. Users can add custom import/export formats by dropping `.rhai` scripts into a `plugins/` folder inside their diary directory. Rhai scripts run in a secure sandbox (no file system, no network, operation limits enforced). A `README.md` with templates and API docs is auto-generated in the `plugins/` folder on first launch.
 
 ### Fixed
 
@@ -15,6 +17,7 @@ All notable changes to Mini Diarium are documented here. This project uses [Sema
 
 ### Changed
 
+- **PHILOSOPHY.md restructured and expanded**: split into Part I (what and why for each principle) and Part II (how each principle is implemented in the codebase). Added concrete extension/plugin system description, E2E test stack guidance, rationale for the no-password-recovery rule, OS integration and Rhai scripting as justified complexity examples, a typo fix ("rich-text support"), a clarification distinguishing local Rhai plugins from plugin marketplaces, a version/date header, and a new "Honest threat documentation" non-negotiable. README now links to PHILOSOPHY.md under a dedicated Philosophy section.
 
 ## [0.3.0] — 2026-02-21
 

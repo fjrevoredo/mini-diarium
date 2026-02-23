@@ -168,14 +168,15 @@ src-tauri/src/
 │   ├── password.rs                        # PasswordMethod: Argon2id wrap/unwrap (5 tests)
 │   └── keypair.rs                         # KeypairMethod: X25519 ECIES wrap/unwrap (6 tests)
 ├── commands/
-│   ├── mod.rs                         # Re-exports: auth, entries, search, navigation, stats, import, export
+│   ├── mod.rs                         # Re-exports: auth, entries, search, navigation, stats, import, export, plugin
 │   ├── auth.rs                        # DiaryState, create/unlock/lock/reset/change_password (6 tests)
 │   ├── entries.rs                     # CRUD + delete-if-empty (4 tests)
 │   ├── search.rs                      # Search stub — returns empty results (1 test)
 │   ├── navigation.rs                  # Day/month navigation (5 tests)
 │   ├── stats.rs                       # Aggregated statistics (9 tests)
 │   ├── import.rs                      # Import orchestration (3 tests)
-│   └── export.rs                      # JSON + Markdown export commands (2 tests)
+│   ├── export.rs                      # JSON + Markdown export commands (2 tests)
+│   └── plugin.rs                      # Plugin list/run commands (4 tests)
 ├── crypto/
 │   ├── mod.rs                         # Re-exports
 │   ├── password.rs                    # Argon2id hashing + verification (10 tests)
@@ -188,6 +189,11 @@ src-tauri/src/
 │   ├── mod.rs                         # Re-exports
 │   ├── json.rs                        # Mini Diary-compatible JSON export
 │   └── markdown.rs                    # HTML-to-Markdown conversion + export
+├── plugin/
+│   ├── mod.rs                         # ImportPlugin/ExportPlugin traits, PluginInfo struct
+│   ├── builtins.rs                    # 6 unit structs wrapping built-in parsers/exporters (3 tests)
+│   ├── registry.rs                    # PluginRegistry: register/find/list (5 tests)
+│   └── rhai_loader.rs                 # Rhai engine, script discovery, sandbox, wrappers (9 tests)
 └── import/
     ├── mod.rs                         # Re-exports + DiaryEntry conversion
     ├── minidiary.rs                   # Mini Diary JSON parser (8 tests)
@@ -199,7 +205,7 @@ src-tauri/src/
 
 ## Command Registry
 
-All 34 registered Tauri commands (source: `lib.rs`). Rust names use `snake_case`; frontend wrappers in `src/lib/tauri.ts` use `camelCase`.
+All 38 registered Tauri commands (source: `lib.rs`). Rust names use `snake_case`; frontend wrappers in `src/lib/tauri.ts` use `camelCase`.
 
 | Module | Rust Command | Frontend Wrapper | Description |
 |--------|-------------|-----------------|-------------|
@@ -237,6 +243,10 @@ All 34 registered Tauri commands (source: `lib.rs`). Rust names use `snake_case`
 | import | `import_jrnl_json` | `importJrnlJson(filePath)` | Parse + import jrnl JSON format |
 | export | `export_json` | `exportJson(filePath)` | Export all entries as JSON |
 | export | `export_markdown` | `exportMarkdown(filePath)` | Export all entries as Markdown |
+| plugin | `list_import_plugins` | `listImportPlugins()` | List all import plugins (built-in + Rhai) |
+| plugin | `list_export_plugins` | `listExportPlugins()` | List all export plugins (built-in + Rhai) |
+| plugin | `run_import_plugin` | `runImportPlugin(pluginId, filePath)` | Run import via plugin registry |
+| plugin | `run_export_plugin` | `runExportPlugin(pluginId, filePath)` | Run export via plugin registry |
 
 ## State Management
 
@@ -308,13 +318,16 @@ it('renders correctly', () => {
 
 Note the arrow wrapper `() => <Component />` — required for SolidJS test rendering.
 
-### Import Parser Pattern
+### Import Parser Pattern (Built-in)
 
-To add a new import format:
+To add a new **built-in** import format (compiled Rust):
 1. Create `src-tauri/src/import/FORMAT.rs` — parser returning `Vec<DiaryEntry>`
 2. Add command in `src-tauri/src/commands/import.rs` — orchestrate parse → merge (see "Search index hook" comment for where to add reindex)
 3. Register command in `commands/mod.rs` and `lib.rs` `generate_handler![]`
 4. Add frontend wrapper in `src/lib/tauri.ts` and UI option in `ImportOverlay.tsx`
+5. Add a builtin wrapper struct in `plugin/builtins.rs` implementing `ImportPlugin`, and register it in `register_all()`
+
+For **user-scriptable** formats, users drop a `.rhai` file in `{diary_dir}/plugins/`. See `plugin/rhai_loader.rs` for the Rhai script contract and `docs/USER_GUIDE.md` for the end-user documentation.
 
 ### Menu Event Pattern
 
@@ -328,7 +341,7 @@ All menu event names are prefixed `menu-`. See `menu.rs:78-107` for the full lis
 
 ## Testing
 
-### Backend: 169 tests across 20 modules
+### Backend: 214 tests across 24 modules
 
 Run: `cd src-tauri && cargo test`
 
@@ -347,6 +360,7 @@ Run: `cd src-tauri && cargo test`
 | stats | 9 | `commands/stats.rs` |
 | import-cmd | 4 | `commands/import.rs` |
 | export-cmd | 2 | `commands/export.rs` |
+| plugin-cmd | 4 | `commands/plugin.rs` |
 | minidiary | 8 | `import/minidiary.rs` |
 | dayone | 14 | `import/dayone.rs` |
 | dayone_txt | 16 | `import/dayone_txt.rs` |
@@ -355,6 +369,9 @@ Run: `cd src-tauri && cargo test`
 | json-export | 6 | `export/json.rs` |
 | md-export | 12 | `export/markdown.rs` |
 | backup | 5 | `backup.rs` |
+| plugin/builtins | 3 | `plugin/builtins.rs` |
+| plugin/registry | 5 | `plugin/registry.rs` |
+| plugin/rhai_loader | 9 | `plugin/rhai_loader.rs` |
 
 ### Frontend: 31 tests across 6 files
 
@@ -444,6 +461,14 @@ bun run tauri build      # Full app bundle
 
 11. **E2E test isolation via `MINI_DIARIUM_DATA_DIR`:** When this env var is set, `lib.rs` uses it as the diary directory instead of `app_data_dir`. This is intentional for E2E test isolation — do not remove it. It has no effect on production builds where the var is unset.
 
+12. **Plugin registry is initialized once at startup** in `lib.rs` `.setup()`. It reads `{diary_dir}/plugins/` for `.rhai` scripts. The registry is stored as `State<Mutex<PluginRegistry>>`. If the user changes the diary directory, plugins are not reloaded until app restart (consistent with existing behavior).
+
+13. **Rhai's `export` keyword is reserved**: Export plugin scripts must use `fn format_entries(entries)` instead of `fn export(entries)`. The `RhaiExportPlugin` wrapper calls `"format_entries"` internally.
+
+14. **Rhai AST requires `unsafe impl Send + Sync`**: The `rhai::AST` type does not implement `Send + Sync` in the current version. The `unsafe` impls on `RhaiImportPlugin` and `RhaiExportPlugin` are required and justified: AST is immutable after compilation, and Engine is created fresh per invocation.
+
+15. **Old import/export commands are preserved**: The original `import_minidiary_json`, `import_dayone_json`, etc. commands remain registered for backward compatibility. The Import/Export overlays now use the plugin system (`runImportPlugin`/`runExportPlugin`) but the legacy commands still work.
+
 ## Security Rules
 
 - **Never** log, print, or serialize passwords or encryption keys
@@ -488,12 +513,19 @@ This overwrites every icon variant (ICO, ICNS, PNG at all sizes, Windows AppX, i
 2. Register in `lib.rs` `generate_handler![]` macro
 3. Add typed wrapper in `src/lib/tauri.ts`
 
-### Adding a New Import Format
+### Adding a New Import/Export Format
 
-1. Create `src-tauri/src/import/FORMAT.rs` with a `parse_FORMAT(json: &str) -> Result<Vec<DiaryEntry>, String>` function
+**Option A: Built-in (compiled Rust)**
+
+1. Create `src-tauri/src/import/FORMAT.rs` with a `parse_FORMAT(content: &str) -> Result<Vec<DiaryEntry>, String>` function
 2. Add `pub mod FORMAT;` to `src-tauri/src/import/mod.rs`
 3. Add command in `commands/import.rs` (follow existing pattern: parse → `import_entries()`; add search reindex call at the `// Search index hook:` comment when a search module exists)
-4. Register command, add frontend wrapper in `tauri.ts`, add UI option in `ImportOverlay.tsx`
+4. Register command, add frontend wrapper in `tauri.ts` (legacy commands are preserved for backward compatibility)
+5. Add a builtin wrapper struct in `plugin/builtins.rs` implementing `ImportPlugin` (or `ExportPlugin`), register in `register_all()`
+
+**Option B: User-scriptable (Rhai)**
+
+Users drop a `.rhai` file in `{diary_dir}/plugins/`. The file must have a `// @name`, `// @type`, and optionally `// @extensions` comment header. Import scripts define `fn parse(content)` returning an array of entry maps; export scripts define `fn format_entries(entries)` returning a string. See `docs/USER_GUIDE.md` for templates and `plugin/rhai_loader.rs` for the runtime.
 
 ### Implementing Search
 

@@ -242,6 +242,10 @@ Artifacts will be in `src-tauri/target/release/bundle/`.
 ## Known Issues
 - Concurrent access to the journal is not supported
 
+## Philosophy
+
+Mini Diarium is built around six guiding principles: a small and extensible core, boring security, a testing pyramid, easy data portability, focused scope, and simplicity. See [PHILOSOPHY.md](PHILOSOPHY.md) for the full rationale and how each principle translates to concrete decisions in the codebase.
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for setup instructions, development workflow, and conventions.

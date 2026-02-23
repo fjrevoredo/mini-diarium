@@ -13,7 +13,7 @@ pub struct ExportResult {
 }
 
 /// Fetches and decrypts all diary entries from the database
-fn fetch_all_entries(db: &DatabaseConnection) -> Result<Vec<DiaryEntry>, String> {
+pub(crate) fn fetch_all_entries(db: &DatabaseConnection) -> Result<Vec<DiaryEntry>, String> {
     queries::get_all_entries(db)
 }
 

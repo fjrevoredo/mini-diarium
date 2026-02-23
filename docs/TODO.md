@@ -23,6 +23,7 @@ Open tasks and planned improvements. For full context and implementation notes o
 - [ ] **i18n framework** — detect OS locale, set up translation files (`en.json`, `es.json`), add `t()` helper
 - [ ] **Translate all UI text** — replace hardcoded strings with translation keys (~145 keys); depends on i18n framework above
 - [ ] **E2E tests for critical workflows** — first-time setup, unlock/lock, import/export, preferences, theme switching (8 scenarios); depends on E2E setup above
+- [ ] **Frontend test coverage** — auth screens (`PasswordPrompt.tsx`, `PasswordCreation.tsx`), Calendar, and all overlays (GoToDateOverlay, PreferencesOverlay, StatsOverlay, ImportOverlay, ExportOverlay) have zero test coverage; add Vitest + @solidjs/testing-library tests for each; use existing pattern from `TitleEditor.test.tsx` and `WordCount.test.tsx`
 - [ ] **First-launch existing diary picker** — when no diary is found, offer “Open Existing Diary...” to select an existing `diary.db` location (cloud-synced folders, external locations) instead of only showing “create new diary”
 - [x] **Backup behavior docs** — explain backup trigger/rotation/path behavior and how it works with custom diary locations and moved/externally stored `diary.db` files
 - [x] **Split `commands/auth.rs` into sub-modules** — the file is ~1100 lines covering core auth, auth-method management, and directory management; split into `auth_core.rs`, `auth_methods.rs`, `auth_directory.rs` without changing any public API. Pure refactor.
