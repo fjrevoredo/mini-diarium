@@ -36,11 +36,11 @@
     "@tiptap/extension-placeholder": "^3.19.0",
     "@tiptap/pm": "^3.19.0",
     "@tiptap/starter-kit": "^3.19.0",
-    "lucide-solid": "^0.564.0",
+    "lucide-solid": "^0.575.0",
     "solid-js": "^1.9.11"
   },
   "devDependencies": {
-    "@types/node": "^22",
+    "@types/node": "^25",
     "@wdio/cli": "^9",
     "@wdio/local-runner": "^9",
     "@wdio/mocha-framework": "^9",
