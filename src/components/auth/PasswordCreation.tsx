@@ -61,14 +61,14 @@ export default function PasswordCreation() {
   };
 
   return (
-    <div class="flex min-h-screen items-center justify-center bg-tertiary px-4 py-12">
-      <div class="w-full max-w-md">
-        <div class="rounded-lg bg-primary px-8 py-10 shadow-lg">
-          <div class="mb-4 flex justify-center">
+    <div class="flex flex-col min-h-screen items-center bg-tertiary px-4 py-6">
+      <div class="my-auto w-full max-w-md">
+        <div class="rounded-lg bg-primary px-8 py-8 shadow-lg">
+          <div class="mb-3 flex justify-center">
             <img src="/logo-transparent.svg" alt="Mini Diarium" class="h-16 w-16 rounded-xl" />
           </div>
           <h1 class="mb-2 text-center text-3xl font-bold text-primary">Welcome to Mini Diarium</h1>
-          <p class="mb-8 text-center text-sm text-secondary">
+          <p class="mb-5 text-center text-sm text-secondary">
             Create a password to secure your diary
           </p>
 
