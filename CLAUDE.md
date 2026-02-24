@@ -164,6 +164,7 @@ src-tauri/src/
 ├── main.rs                            # Tauri bootstrap
 ├── lib.rs                             # Plugin init, state setup, command registration
 ├── menu.rs                            # App menu builder + event emitter
+├── config.rs                          # Journal + diary directory config persistence (11 tests)
 ├── backup.rs                          # Automatic backups on unlock + rotation (5 tests)
 ├── auth/
 │   ├── mod.rs                             # AuthMethodInfo, KeypairFiles structs; re-exports
@@ -171,7 +172,12 @@ src-tauri/src/
 │   └── keypair.rs                         # KeypairMethod: X25519 ECIES wrap/unwrap (6 tests)
 ├── commands/
 │   ├── mod.rs                         # Re-exports: auth, entries, search, navigation, stats, import, export, plugin
-│   ├── auth.rs                        # DiaryState, create/unlock/lock/reset/change_password + journal management (6+6 tests)
+│   ├── auth/
+│   │   ├── mod.rs                     # DiaryState struct; re-exports, auto_lock_diary_if_unlocked
+│   │   ├── auth_core.rs               # create/unlock/lock/reset/change_password (5 tests)
+│   │   ├── auth_directory.rs          # change_diary_directory with file move + sync to config (5 tests)
+│   │   ├── auth_journals.rs           # list/add/remove/rename/switch journals, auto-lock guards (6 tests)
+│   │   └── auth_methods.rs            # Password & keypair registration, unlock_with_keypair (7 tests)
 │   ├── entries.rs                     # CRUD + delete-if-empty (4 tests)
 │   ├── search.rs                      # Search stub — returns empty results (1 test)
 │   ├── navigation.rs                  # Day/month navigation (5 tests)
@@ -350,7 +356,7 @@ All menu event names are prefixed `menu-`. See `menu.rs:78-107` for the full lis
 
 ## Testing
 
-### Backend: 225 tests across 26 modules
+### Backend: 225 tests across 29 modules
 
 Run: `cd src-tauri && cargo test`
 
@@ -362,12 +368,15 @@ Run: `cd src-tauri && cargo test`
 | cipher | 11 | `crypto/cipher.rs` |
 | schema | 11 | `db/schema.rs` |
 | queries | 12 | `db/queries.rs` |
-| auth | 17 | `commands/auth/` |
+| auth-core | 5 | `commands/auth/auth_core.rs` |
+| auth-directory | 5 | `commands/auth/auth_directory.rs` |
+| auth-journals | 6 | `commands/auth/auth_journals.rs` |
+| auth-methods | 7 | `commands/auth/auth_methods.rs` |
 | entries | 4 | `commands/entries.rs` |
 | search | 1 | `commands/search.rs` |
 | navigation | 5 | `commands/navigation.rs` |
 | stats | 9 | `commands/stats.rs` |
-| import-cmd | 4 | `commands/import.rs` |
+| import-cmd | 3 | `commands/import.rs` |
 | export-cmd | 2 | `commands/export.rs` |
 | plugin-cmd | 4 | `commands/plugin.rs` |
 | minidiary | 8 | `import/minidiary.rs` |
@@ -382,7 +391,6 @@ Run: `cd src-tauri && cargo test`
 | plugin/registry | 5 | `plugin/registry.rs` |
 | plugin/rhai_loader | 9 | `plugin/rhai_loader.rs` |
 | config | 11 | `config.rs` |
-| auth-journals | 6 | `commands/auth/auth_journals.rs` |
 
 ### Frontend: 31 tests across 6 files
 
