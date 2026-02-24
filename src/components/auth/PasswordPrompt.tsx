@@ -1,5 +1,5 @@
 import { createSignal, For, Show } from 'solid-js';
-import { unlockDiary, unlockWithKeypair, initializeAuth } from '../../state/auth';
+import { unlockDiary, unlockWithKeypair, refreshAuthState } from '../../state/auth';
 import { journals, activeJournalId, isSwitching, switchJournal } from '../../state/journals';
 import { open } from '@tauri-apps/plugin-dialog';
 
@@ -90,7 +90,7 @@ export default function PasswordPrompt() {
                 value={activeJournalId() ?? ''}
                 onChange={async (e) => {
                   await switchJournal(e.currentTarget.value);
-                  await initializeAuth();
+                  await refreshAuthState();
                 }}
                 disabled={isSwitching() || isUnlocking()}
                 class="w-full rounded-md border border-primary px-4 py-2 bg-primary text-primary focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"

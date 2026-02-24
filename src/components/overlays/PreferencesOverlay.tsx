@@ -3,7 +3,7 @@ import { Dialog } from '@kobalte/core/dialog';
 import { createLogger } from '../../lib/logger';
 import { preferences, setPreferences } from '../../state/preferences';
 import { getThemePreference, setTheme, type ThemePreference } from '../../lib/theme';
-import { authState, initializeAuth } from '../../state/auth';
+import { authState, refreshAuthState } from '../../state/auth';
 import {
   journals,
   activeJournalId,
@@ -388,9 +388,9 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
     if (!confirmed) return;
     try {
       await removeJournal(id);
-      // If we removed the active journal, re-initialize auth for the new active journal
+      // If we removed the active journal, refresh auth for the new backend diary path
       if (activeJournalId() !== id) return;
-      await initializeAuth();
+      await refreshAuthState();
     } catch (err) {
       setJournalError(mapTauriError(err));
     }
@@ -420,7 +420,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
   const handleSwitchAndClose = async (id: string) => {
     try {
       await switchJournal(id);
-      await initializeAuth();
+      await refreshAuthState();
       props.onClose();
     } catch (err) {
       setJournalError(mapTauriError(err));

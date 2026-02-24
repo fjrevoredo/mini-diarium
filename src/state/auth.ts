@@ -5,6 +5,7 @@ import { setEntryDates } from './entries';
 import { createLogger } from '../lib/logger';
 import { mapTauriError } from '../lib/errors';
 import { loadJournals } from './journals';
+import { resetSessionState } from './session';
 
 const log = createLogger('Auth');
 
@@ -18,24 +19,63 @@ interface DiaryLockedEventPayload {
   reason?: string;
 }
 
-// Initialize auth state on app load
-export async function initializeAuth(): Promise<void> {
-  try {
-    await loadJournals();
+export function resetAuthTransientState(): void {
+  setError(null);
+  setAuthMethods([]);
+}
 
+function resetForLockedSession(): void {
+  resetSessionState();
+  resetAuthTransientState();
+  setAuthState('locked');
+}
+
+function prepareUnlockedSession(): void {
+  resetSessionState();
+  resetAuthTransientState();
+  setAuthState('unlocked');
+}
+
+// Refresh auth state using the current backend diary path without reloading journal metadata.
+export async function refreshAuthState(): Promise<void> {
+  try {
     const exists = await tauri.diaryExists();
     if (!exists) {
+      resetSessionState();
+      resetAuthTransientState();
       setAuthState('no-diary');
       return;
     }
 
     const unlocked = await tauri.isDiaryUnlocked();
-    setAuthState(unlocked ? 'unlocked' : 'locked');
+    if (unlocked) {
+      setAuthState('unlocked');
+    } else {
+      resetForLockedSession();
+    }
   } catch (err) {
-    log.error('Failed to initialize auth:', err);
+    log.error('Failed to refresh auth state:', err);
+    resetSessionState();
+    setAuthMethods([]);
     setError('Failed to check diary status');
     setAuthState('no-diary');
   }
+}
+
+// Initialize auth + journals on app load.
+export async function initializeAuth(): Promise<void> {
+  try {
+    await loadJournals();
+  } catch (err) {
+    log.error('Failed to load journals:', err);
+    resetSessionState();
+    setAuthMethods([]);
+    setError('Failed to check diary status');
+    setAuthState('no-diary');
+    return;
+  }
+
+  await refreshAuthState();
 }
 
 // Create new diary
@@ -43,7 +83,7 @@ export async function createDiary(password: string): Promise<void> {
   try {
     setError(null);
     await tauri.createDiary(password);
-    setAuthState('unlocked');
+    prepareUnlockedSession();
     log.info('Diary created');
 
     // Fetch entry dates after creating diary
@@ -61,7 +101,7 @@ export async function unlockDiary(password: string): Promise<void> {
   try {
     setError(null);
     await tauri.unlockDiary(password);
-    setAuthState('unlocked');
+    prepareUnlockedSession();
     log.info('Diary unlocked');
 
     // Fetch entry dates after unlocking diary
@@ -79,7 +119,7 @@ export async function unlockWithKeypair(keyPath: string): Promise<void> {
   try {
     setError(null);
     await tauri.unlockDiaryWithKeypair(keyPath);
-    setAuthState('unlocked');
+    prepareUnlockedSession();
     log.info('Diary unlocked with key file');
 
     const dates = await tauri.getAllEntryDates();
@@ -96,7 +136,7 @@ export async function lockDiary(): Promise<void> {
   try {
     setError(null);
     await tauri.lockDiary();
-    setAuthState('locked');
+    resetForLockedSession();
     log.info('Diary locked');
   } catch (err) {
     const message = mapTauriError(err);
@@ -111,8 +151,7 @@ export async function setupAuthEventListeners(): Promise<() => void> {
     'diary-locked',
     (event) => {
       const reason = event.payload?.reason ?? 'unknown';
-      setAuthState('locked');
-      setError(null);
+      resetForLockedSession();
       log.info(`Diary locked by backend event (${reason})`);
     },
   );

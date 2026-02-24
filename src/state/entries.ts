@@ -13,6 +13,13 @@ const [isLoading, setIsLoading] = createSignal(false);
 // Save state
 const [isSaving, setIsSaving] = createSignal(false);
 
+export function resetEntriesState(): void {
+  setCurrentEntry(null);
+  setEntryDates([]);
+  setIsLoading(false);
+  setIsSaving(false);
+}
+
 export {
   currentEntry,
   setCurrentEntry,
