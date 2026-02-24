@@ -50,11 +50,17 @@ export default function EditorPanel() {
     const currentContent = content();
     const date = selectedDate();
 
-    // Check if entry is empty
-    if (!currentTitle.trim() && !currentContent.trim()) {
-      // Delete empty entry
+    // Check if entry is empty — use TipTap's isEmpty to correctly handle <p></p>
+    const editor = editorInstance();
+    const isContentEmpty =
+      editor && !editor.isDestroyed
+        ? editor.isEmpty || editor.getText().trim() === ''
+        : !currentContent.trim();
+
+    if (!currentTitle.trim() && isContentEmpty) {
+      // Delete empty entry — pass '' so the backend check (text.trim().is_empty()) also passes
       try {
-        await deleteEntryIfEmpty(date, currentTitle, currentContent);
+        await deleteEntryIfEmpty(date, currentTitle, '');
         // Refresh entry dates after deletion
         const dates = await getAllEntryDates();
         setEntryDates(dates);
