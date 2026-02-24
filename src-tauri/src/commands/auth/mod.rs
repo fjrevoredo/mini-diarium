@@ -73,10 +73,12 @@ pub(crate) fn auto_lock_diary_if_unlocked(
 
 mod auth_core;
 mod auth_directory;
+mod auth_journals;
 mod auth_methods;
 
 pub use auth_core::*;
 pub use auth_directory::*;
+pub use auth_journals::*;
 pub use auth_methods::*;
 
 #[cfg(test)]

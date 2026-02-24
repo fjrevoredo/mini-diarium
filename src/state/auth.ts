@@ -4,6 +4,7 @@ import * as tauri from '../lib/tauri';
 import { setEntryDates } from './entries';
 import { createLogger } from '../lib/logger';
 import { mapTauriError } from '../lib/errors';
+import { loadJournals } from './journals';
 
 const log = createLogger('Auth');
 
@@ -20,6 +21,8 @@ interface DiaryLockedEventPayload {
 // Initialize auth state on app load
 export async function initializeAuth(): Promise<void> {
   try {
+    await loadJournals();
+
     const exists = await tauri.diaryExists();
     if (!exists) {
       setAuthState('no-diary');

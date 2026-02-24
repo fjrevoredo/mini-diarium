@@ -3,7 +3,16 @@ import { Dialog } from '@kobalte/core/dialog';
 import { createLogger } from '../../lib/logger';
 import { preferences, setPreferences } from '../../state/preferences';
 import { getThemePreference, setTheme, type ThemePreference } from '../../lib/theme';
-import { authState } from '../../state/auth';
+import { authState, initializeAuth } from '../../state/auth';
+import {
+  journals,
+  activeJournalId,
+  loadJournals,
+  addJournal,
+  removeJournal,
+  renameJournal,
+  switchJournal,
+} from '../../state/journals';
 import * as tauri from '../../lib/tauri';
 import { mapTauriError } from '../../lib/errors';
 
@@ -65,6 +74,14 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
   const [addPasswordConfirm, setAddPasswordConfirm] = createSignal('');
   const [addPasswordError, setAddPasswordError] = createSignal<string | null>(null);
   const [addPasswordSuccess, setAddPasswordSuccess] = createSignal(false);
+
+  // Journal management state
+  const [renamingJournalId, setRenamingJournalId] = createSignal<string | null>(null);
+  const [renameValue, setRenameValue] = createSignal('');
+  const [journalError, setJournalError] = createSignal<string | null>(null);
+  const [addJournalName, setAddJournalName] = createSignal('');
+  const [addJournalPath, setAddJournalPath] = createSignal('');
+  const [isAddingJournal, setIsAddingJournal] = createSignal(false);
 
   const isUnlocked = () => authState() === 'unlocked';
   const hasPasswordSlot = () => authMethods().some((m) => m.slot_type === 'password');
@@ -137,6 +154,15 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
       // Reset change-dir state
       setChangeDirError(null);
       setIsChangingDir(false);
+
+      // Reset journal state
+      setRenamingJournalId(null);
+      setRenameValue('');
+      setJournalError(null);
+      setAddJournalName('');
+      setAddJournalPath('');
+      setIsAddingJournal(false);
+      await loadJournals();
     }
     if (!open) {
       props.onClose();
@@ -313,6 +339,91 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
       setRemovePassword('');
     } catch (err) {
       setRemoveError(mapTauriError(err));
+    }
+  };
+
+  // Handle adding a new journal
+  const handleAddJournal = async () => {
+    setJournalError(null);
+    const { open: openDirDialog } = await import('@tauri-apps/plugin-dialog');
+    const selected = await openDirDialog({
+      directory: true,
+      multiple: false,
+      title: 'Choose Journal Directory',
+    });
+    if (!selected || typeof selected !== 'string') return;
+    setAddJournalPath(selected);
+    setIsAddingJournal(true);
+  };
+
+  const handleConfirmAddJournal = async () => {
+    setJournalError(null);
+    const name = addJournalName().trim();
+    const path = addJournalPath();
+    if (!name) {
+      setJournalError('Journal name is required');
+      return;
+    }
+    if (!path) {
+      setJournalError('Directory is required');
+      return;
+    }
+    try {
+      await addJournal(name, path);
+      setAddJournalName('');
+      setAddJournalPath('');
+      setIsAddingJournal(false);
+    } catch (err) {
+      setJournalError(mapTauriError(err));
+    }
+  };
+
+  const handleRemoveJournal = async (id: string) => {
+    setJournalError(null);
+    const { confirm: dialogConfirm } = await import('@tauri-apps/plugin-dialog');
+    const confirmed = await dialogConfirm(
+      'Are you sure you want to remove this journal from the list? The diary file will not be deleted.',
+      { title: 'Remove Journal', kind: 'warning' },
+    );
+    if (!confirmed) return;
+    try {
+      await removeJournal(id);
+      // If we removed the active journal, re-initialize auth for the new active journal
+      if (activeJournalId() !== id) return;
+      await initializeAuth();
+    } catch (err) {
+      setJournalError(mapTauriError(err));
+    }
+  };
+
+  const handleStartRename = (id: string, currentName: string) => {
+    setRenamingJournalId(id);
+    setRenameValue(currentName);
+  };
+
+  const handleFinishRename = async () => {
+    const id = renamingJournalId();
+    if (!id) return;
+    const name = renameValue().trim();
+    if (!name) {
+      setRenamingJournalId(null);
+      return;
+    }
+    try {
+      await renameJournal(id, name);
+    } catch (err) {
+      setJournalError(mapTauriError(err));
+    }
+    setRenamingJournalId(null);
+  };
+
+  const handleSwitchAndClose = async (id: string) => {
+    try {
+      await switchJournal(id);
+      await initializeAuth();
+      props.onClose();
+    } catch (err) {
+      setJournalError(mapTauriError(err));
     }
   };
 
@@ -493,6 +604,143 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                   </div>
                 </div>
               </Show>
+
+              {/* Journals Section - Always shown */}
+              <div>
+                <h3 class="text-sm font-medium text-primary mb-4">Journals</h3>
+                <p class="text-xs text-tertiary mb-4 leading-relaxed">
+                  Manage multiple journals. Each journal is a separate encrypted diary file.
+                </p>
+
+                {/* Journal list */}
+                <div class="space-y-2 mb-4">
+                  <For each={journals()}>
+                    {(journal) => (
+                      <div class="flex items-center justify-between p-3 bg-tertiary border border-primary rounded-md">
+                        <div class="flex-1 min-w-0">
+                          <Show
+                            when={renamingJournalId() === journal.id}
+                            fallback={
+                              <p
+                                class="text-sm font-medium text-primary cursor-pointer"
+                                onClick={() => handleStartRename(journal.id, journal.name)}
+                                title="Click to rename"
+                              >
+                                {journal.name}
+                                <Show when={activeJournalId() === journal.id}>
+                                  <span class="ml-2 inline-block px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200">
+                                    Active
+                                  </span>
+                                </Show>
+                              </p>
+                            }
+                          >
+                            <input
+                              type="text"
+                              value={renameValue()}
+                              onInput={(e) => setRenameValue(e.currentTarget.value)}
+                              onBlur={() => handleFinishRename()}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') handleFinishRename();
+                                if (e.key === 'Escape') setRenamingJournalId(null);
+                              }}
+                              autofocus
+                              class="w-full px-2 py-1 text-sm border border-primary bg-primary text-primary rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            />
+                          </Show>
+                          <p
+                            class="text-xs text-tertiary font-mono truncate mt-1"
+                            title={journal.path}
+                          >
+                            {journal.path}
+                          </p>
+                        </div>
+                        <div class="flex items-center gap-2 ml-3 shrink-0">
+                          <Show when={activeJournalId() !== journal.id}>
+                            <button
+                              type="button"
+                              onClick={() => handleSwitchAndClose(journal.id)}
+                              class="text-xs text-blue-600 hover:text-blue-800 focus:outline-none"
+                            >
+                              Switch
+                            </button>
+                          </Show>
+                          <Show when={journals().length > 1}>
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveJournal(journal.id)}
+                              class="text-xs text-red-500 hover:text-red-700 focus:outline-none"
+                            >
+                              Remove
+                            </button>
+                          </Show>
+                        </div>
+                      </div>
+                    )}
+                  </For>
+                </div>
+
+                {/* Add journal */}
+                <Show
+                  when={isAddingJournal()}
+                  fallback={
+                    <button
+                      type="button"
+                      onClick={handleAddJournal}
+                      class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                    >
+                      Add Journal
+                    </button>
+                  }
+                >
+                  <div class="p-3 bg-tertiary border border-primary rounded-md space-y-3">
+                    <div>
+                      <label class="block text-xs font-medium text-secondary mb-1">
+                        Journal Name
+                      </label>
+                      <input
+                        type="text"
+                        value={addJournalName()}
+                        onInput={(e) => setAddJournalName(e.currentTarget.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') handleConfirmAddJournal();
+                        }}
+                        autofocus
+                        class="w-full px-3 py-2 border border-primary bg-primary text-primary rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        placeholder="e.g. Work Journal"
+                      />
+                    </div>
+                    <div>
+                      <label class="block text-xs font-medium text-secondary mb-1">Directory</label>
+                      <p class="text-xs text-tertiary font-mono break-all">{addJournalPath()}</p>
+                    </div>
+                    <div class="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={handleConfirmAddJournal}
+                        class="px-3 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        Add
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setIsAddingJournal(false);
+                          setAddJournalName('');
+                          setAddJournalPath('');
+                        }}
+                        class="px-3 py-1.5 text-sm font-medium text-secondary bg-primary border border-primary rounded-md hover:bg-hover focus:outline-none"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                </Show>
+
+                <Show when={journalError()}>
+                  <p class="mt-2 text-sm text-error">{journalError()}</p>
+                </Show>
+              </div>
 
               {/* Diary File Section - Always shown */}
               <div>

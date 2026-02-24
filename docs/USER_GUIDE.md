@@ -14,6 +14,18 @@ Your diary is encrypted whenever it's locked. When you launch the app, enter you
 
 As an alternative to your password, you can register a key file in Preferences → Authentication Methods. Once registered, use the "Key File" tab on the unlock screen and select your `.key` file to unlock without typing your password.
 
+### Multiple Journals
+
+You can maintain separate journals for different purposes (personal, work, travel, etc.). Each journal is an independent encrypted diary file in its own folder.
+
+**Adding a journal:** Open Preferences → Journals → Add Journal. Choose a directory and give it a name. The folder may be empty (you'll create the diary on first use) or already contain an existing `diary.db`.
+
+**Switching journals:** When you have more than one journal, a dropdown selector appears on the unlock screen. Select the journal you want and enter its password. You can also switch from Preferences → Journals → Switch.
+
+**Removing a journal:** Remove a journal entry from Preferences. This only removes it from the list — the diary file on disk is not deleted. You cannot remove your last remaining journal.
+
+If you only have one journal, the selector is hidden and the experience is identical to before.
+
 ## Writing Entries
 
 ### The Editor
@@ -176,6 +188,7 @@ Open with `Ctrl+,`:
 | Allow future entries | Write entries for dates that haven't happened yet |
 | Hide titles | Remove the title field for a minimal look |
 | Spellcheck | Toggle browser spellcheck in the editor |
+| Journals | Add, rename, remove, or switch between multiple journals |
 | Change password | Re-encrypt your diary with a new password |
 | Authentication Methods | View registered unlock methods; add a new key file or remove existing ones |
 | At least one method must remain | removing the last is blocked |

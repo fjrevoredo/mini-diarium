@@ -76,11 +76,26 @@ pub fn run() {
             }
 
             let diary_dir = if let Ok(test_dir) = std::env::var("MINI_DIARIUM_DATA_DIR") {
+                // E2E test isolation — bypass journal config entirely
                 PathBuf::from(test_dir)
             } else {
-                crate::config::load_diary_dir(&app_dir)
-                    .filter(|p| p.is_dir()) // fall back if saved dir was deleted
-                    .unwrap_or_else(|| app_dir.clone())
+                let journals = crate::config::load_journals(&app_dir);
+                if !journals.is_empty() {
+                    // Use active journal, or first journal as fallback
+                    let active_id = crate::config::load_active_journal_id(&app_dir);
+                    let active =
+                        active_id.and_then(|id| journals.iter().find(|j| j.id == id).cloned());
+                    let journal = active.or_else(|| journals.first().cloned());
+                    journal
+                        .map(|j| PathBuf::from(&j.path))
+                        .filter(|p| p.is_dir())
+                        .unwrap_or_else(|| app_dir.clone())
+                } else {
+                    // Fresh install or legacy without migration trigger
+                    crate::config::load_diary_dir(&app_dir)
+                        .filter(|p| p.is_dir())
+                        .unwrap_or_else(|| app_dir.clone())
+                }
             };
 
             let db_path = diary_dir.join("diary.db");
@@ -118,6 +133,13 @@ pub fn run() {
             commands::auth::change_diary_directory,
             commands::auth::change_password,
             commands::auth::reset_diary,
+            // Auth - journals
+            commands::auth::list_journals,
+            commands::auth::get_active_journal_id,
+            commands::auth::add_journal,
+            commands::auth::remove_journal,
+            commands::auth::rename_journal,
+            commands::auth::switch_journal,
             // Auth - method management
             commands::auth::verify_password,
             commands::auth::list_auth_methods,

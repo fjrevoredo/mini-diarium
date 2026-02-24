@@ -88,6 +88,37 @@ export async function removeAuthMethod(slotId: number, currentPassword: string):
   await invoke('remove_auth_method', { slotId, currentPassword });
 }
 
+// Journal commands
+export interface JournalConfig {
+  id: string;
+  name: string;
+  path: string;
+}
+
+export async function listJournals(): Promise<JournalConfig[]> {
+  return await invoke('list_journals');
+}
+
+export async function getActiveJournalId(): Promise<string | null> {
+  return await invoke('get_active_journal_id');
+}
+
+export async function addJournal(name: string, path: string): Promise<JournalConfig> {
+  return await invoke('add_journal', { name, path });
+}
+
+export async function removeJournal(id: string): Promise<void> {
+  await invoke('remove_journal', { id });
+}
+
+export async function renameJournal(id: string, name: string): Promise<void> {
+  await invoke('rename_journal', { id, name });
+}
+
+export async function switchJournal(id: string): Promise<void> {
+  await invoke('switch_journal', { id });
+}
+
 // Entry commands
 export interface DiaryEntry {
   date: string;

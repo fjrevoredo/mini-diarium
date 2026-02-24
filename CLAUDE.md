@@ -56,6 +56,7 @@ Quick reference (ASCII art):
 - Entries are stored encrypted in SQLite. Full-text search is not currently implemented; `entries_fts` has been removed (schema v4). See `commands/search.rs` for the stub and interface contract.
 - Menu events flow: Rust `app.emit("menu-*")` → frontend `listen()` in `shortcuts.ts` or overlay components.
 - Preferences use `localStorage` (not Tauri store plugin).
+- Multiple journals are tracked in `{app_data_dir}/config.json` via `JournalConfig` entries. Each journal maps to a directory containing its own `diary.db`. `DiaryState` holds a single connection; switching journals updates `db_path`/`backups_dir` and auto-locks. Legacy single-diary configs are auto-migrated on first `load_journals()` call.
 
 ## File Structure
 
@@ -116,6 +117,7 @@ src/
 ├── state/
 │   ├── auth.ts                        # AuthState signal + authMethods + initializeAuth/create/unlock/lock/unlockWithKeypair
 │   ├── entries.ts                     # currentEntry, entryDates, isLoading, isSaving
+│   ├── journals.ts                    # journals, activeJournalId, isSwitching + loadJournals/switchJournal/addJournal/removeJournal/renameJournal
 │   ├── search.ts                      # searchQuery, searchResults, isSearching
 │   ├── ui.ts                          # selectedDate, overlay open states, sidebar state
 │   └── preferences.ts                 # Preferences interface, localStorage persistence
@@ -169,7 +171,7 @@ src-tauri/src/
 │   └── keypair.rs                         # KeypairMethod: X25519 ECIES wrap/unwrap (6 tests)
 ├── commands/
 │   ├── mod.rs                         # Re-exports: auth, entries, search, navigation, stats, import, export, plugin
-│   ├── auth.rs                        # DiaryState, create/unlock/lock/reset/change_password (6 tests)
+│   ├── auth.rs                        # DiaryState, create/unlock/lock/reset/change_password + journal management (6+6 tests)
 │   ├── entries.rs                     # CRUD + delete-if-empty (4 tests)
 │   ├── search.rs                      # Search stub — returns empty results (1 test)
 │   ├── navigation.rs                  # Day/month navigation (5 tests)
@@ -205,7 +207,7 @@ src-tauri/src/
 
 ## Command Registry
 
-All 38 registered Tauri commands (source: `lib.rs`). Rust names use `snake_case`; frontend wrappers in `src/lib/tauri.ts` use `camelCase`.
+All 44 registered Tauri commands (source: `lib.rs`). Rust names use `snake_case`; frontend wrappers in `src/lib/tauri.ts` use `camelCase`.
 
 | Module | Rust Command | Frontend Wrapper | Description |
 |--------|-------------|-----------------|-------------|
@@ -226,6 +228,12 @@ All 38 registered Tauri commands (source: `lib.rs`). Rust names use `snake_case`
 | auth | `register_password` | `registerPassword(newPassword)` | Register a password auth slot (requires diary unlocked) |
 | auth | `register_keypair` | `registerKeypair(currentPassword, publicKeyHex, label)` | Add keypair auth slot |
 | auth | `remove_auth_method` | `removeAuthMethod(slotId, currentPassword)` | Remove auth slot (guards last) |
+| auth | `list_journals` | `listJournals()` | List configured journals from config.json |
+| auth | `get_active_journal_id` | `getActiveJournalId()` | Get active journal ID |
+| auth | `add_journal` | `addJournal(name, path)` | Add a new journal entry to config |
+| auth | `remove_journal` | `removeJournal(id)` | Remove journal (guards last); auto-locks if active |
+| auth | `rename_journal` | `renameJournal(id, name)` | Rename a journal |
+| auth | `switch_journal` | `switchJournal(id)` | Auto-lock, switch db_path/backups_dir, persist active |
 | entries | `save_entry` | `saveEntry(date, title, text)` | Upsert entry (encrypts) |
 | entries | `get_entry` | `getEntry(date)` | Fetch + decrypt single entry |
 | entries | `delete_entry_if_empty` | `deleteEntryIfEmpty(date, title, text)` | Remove entry if content is empty |
@@ -250,12 +258,13 @@ All 38 registered Tauri commands (source: `lib.rs`). Rust names use `snake_case`
 
 ## State Management
 
-Five signal-based state modules in `src/state/`:
+Six signal-based state modules in `src/state/`:
 
 | Module | Signals | Key Functions |
 |--------|---------|---------------|
 | `auth.ts` | `authState: AuthState`, `error`, `authMethods: AuthMethodInfo[]` | `initializeAuth()`, `createDiary()`, `unlockDiary()`, `lockDiary()`, `unlockWithKeypair()` |
 | `entries.ts` | `currentEntry`, `entryDates`, `isLoading`, `isSaving` | Setters exported directly |
+| `journals.ts` | `journals: JournalConfig[]`, `activeJournalId`, `isSwitching` | `loadJournals()`, `switchJournal()`, `addJournal()`, `removeJournal()`, `renameJournal()` |
 | `search.ts` | `searchQuery`, `searchResults`, `isSearching` | Setters exported directly |
 | `ui.ts` | `selectedDate`, `isSidebarCollapsed`, `isGoToDateOpen`, `isPreferencesOpen`, `isStatsOpen`, `isImportOpen` | Setters exported directly |
 | `preferences.ts` | `preferences: Preferences` | `setPreferences(Partial<Preferences>)`, `resetPreferences()` |
@@ -341,7 +350,7 @@ All menu event names are prefixed `menu-`. See `menu.rs:78-107` for the full lis
 
 ## Testing
 
-### Backend: 214 tests across 24 modules
+### Backend: 225 tests across 26 modules
 
 Run: `cd src-tauri && cargo test`
 
@@ -372,6 +381,8 @@ Run: `cd src-tauri && cargo test`
 | plugin/builtins | 3 | `plugin/builtins.rs` |
 | plugin/registry | 5 | `plugin/registry.rs` |
 | plugin/rhai_loader | 9 | `plugin/rhai_loader.rs` |
+| config | 11 | `config.rs` |
+| auth-journals | 6 | `commands/auth/auth_journals.rs` |
 
 ### Frontend: 31 tests across 6 files
 

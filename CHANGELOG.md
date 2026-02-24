@@ -7,6 +7,7 @@ All notable changes to Mini Diarium are documented here. This project uses [Sema
 ### Added
 
 - **Extension system for import/export formats**: built-in formats (Mini Diary JSON, Day One JSON, Day One TXT, jrnl JSON, JSON export, Markdown export) are now served through a unified plugin registry. Users can add custom import/export formats by dropping `.rhai` scripts into a `plugins/` folder inside their diary directory. Rhai scripts run in a secure sandbox (no file system, no network, operation limits enforced). A `README.md` with templates and API docs is auto-generated in the `plugins/` folder on first launch.
+- **Multiple journals**: configure and switch between multiple journals (e.g. personal, work, travel) from the login screen. A dropdown selector appears on the password/key-file unlock screen when more than one journal is configured. Journals are managed in Preferences (add, rename, remove, switch). Each journal is an independent encrypted `diary.db` in its own directory. Existing single-diary setups are automatically migrated — no action required. The "Change Location" feature in Preferences stays in sync with the active journal's config.
 
 ### Fixed
 

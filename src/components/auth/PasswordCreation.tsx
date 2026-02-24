@@ -1,5 +1,13 @@
-import { createSignal, Show } from 'solid-js';
-import { createDiary } from '../../state/auth';
+import { createSignal, For, Show } from 'solid-js';
+import { createDiary, initializeAuth } from '../../state/auth';
+import {
+  journals,
+  activeJournalId,
+  isSwitching,
+  switchJournal,
+  addJournal,
+} from '../../state/journals';
+import * as tauri from '../../lib/tauri';
 
 export default function PasswordCreation() {
   const [password, setPassword] = createSignal('');
@@ -33,7 +41,17 @@ export default function PasswordCreation() {
     try {
       setIsCreating(true);
       await createDiary(pwd);
-      // Success - auth state will update automatically
+
+      // Auto-register journal if this is a first-time user (no journals configured yet)
+      if (journals().length === 0) {
+        try {
+          const path = await tauri.getDiaryPath();
+          const dir = path.replace(/[/\\]diary\.db$/, '');
+          await addJournal('My Journal', dir);
+        } catch {
+          // Non-fatal: journal registration failed but diary was created successfully
+        }
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       setError(message);
@@ -53,6 +71,24 @@ export default function PasswordCreation() {
           <p class="mb-8 text-center text-sm text-secondary">
             Create a password to secure your diary
           </p>
+
+          {/* Journal selector — only shown when multiple journals exist */}
+          <Show when={journals().length > 1}>
+            <div class="mb-4">
+              <label class="mb-2 block text-sm font-medium text-secondary">Journal</label>
+              <select
+                value={activeJournalId() ?? ''}
+                onChange={async (e) => {
+                  await switchJournal(e.currentTarget.value);
+                  await initializeAuth();
+                }}
+                disabled={isSwitching() || isCreating()}
+                class="w-full rounded-md border border-primary px-4 py-2 bg-primary text-primary focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <For each={journals()}>{(j) => <option value={j.id}>{j.name}</option>}</For>
+              </select>
+            </div>
+          </Show>
 
           <form onSubmit={handleSubmit} class="space-y-6">
             <div>

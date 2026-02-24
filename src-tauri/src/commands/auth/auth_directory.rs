@@ -86,17 +86,31 @@ pub fn change_diary_directory(
         .lock()
         .map_err(|_| "State lock poisoned".to_string())?
         .clone();
-    let result = change_diary_directory_inner(
+    change_diary_directory_inner(
         PathBuf::from(&new_dir),
         current_db_path,
         &state.db_path,
         &state.backups_dir,
         &state.app_data_dir,
-    );
-    if result.is_ok() {
-        info!("Diary directory changed to: {}", new_dir);
+    )?;
+
+    // Sync journal config: update the active journal's path to match
+    let journals = crate::config::load_journals(&state.app_data_dir);
+    if let Some(active_id) = crate::config::load_active_journal_id(&state.app_data_dir) {
+        let updated: Vec<_> = journals
+            .into_iter()
+            .map(|mut j| {
+                if j.id == active_id {
+                    j.path = new_dir.clone();
+                }
+                j
+            })
+            .collect();
+        let _ = crate::config::save_journals(&state.app_data_dir, &updated, &active_id);
     }
-    result
+
+    info!("Diary directory changed to: {}", new_dir);
+    Ok(())
 }
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
