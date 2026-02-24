@@ -13,19 +13,30 @@ import { preferences } from '../../state/preferences';
 const log = createLogger('Editor');
 
 export default function EditorPanel() {
+  interface SavePayload {
+    date: string;
+    title: string;
+    content: string;
+    isContentEmpty: boolean;
+  }
+
   const [title, setTitle] = createSignal('');
   const [content, setContent] = createSignal('');
   const [wordCount, setWordCount] = createSignal(0);
   const [isLoadingEntry, setIsLoadingEntry] = createSignal(false);
   const [editorInstance, setEditorInstance] = createSignal<Editor | null>(null);
+  let isDisposed = false;
+  let loadRequestId = 0;
+  let saveRequestId = 0;
 
   // Load entry when selected date changes
-  createEffect(async () => {
-    const date = selectedDate();
+  const loadEntryForDate = async (date: string) => {
+    const requestId = ++loadRequestId;
     setIsLoadingEntry(true);
 
     try {
       const entry = await getEntry(date);
+      if (isDisposed || requestId !== loadRequestId) return;
       if (entry) {
         setTitle(entry.title);
         setContent(entry.text);
@@ -40,23 +51,52 @@ export default function EditorPanel() {
     } catch (error) {
       log.error('Failed to load entry:', error);
     } finally {
-      setIsLoadingEntry(false);
+      if (!isDisposed && requestId === loadRequestId) {
+        setIsLoadingEntry(false);
+      }
     }
+  };
+
+  createEffect(() => {
+    void loadEntryForDate(selectedDate());
   });
 
-  // Save entry function
-  const saveCurrentEntry = async () => {
-    const currentTitle = title();
-    const currentContent = content();
-    const date = selectedDate();
+  const createSavePayload = (
+    nextTitle = title(),
+    nextContent = content(),
+    nextDate = selectedDate(),
+  ): SavePayload => {
+    // Use TipTap emptiness when available to handle cases like <p></p>.
+    const editor = editorInstance();
+    const isContentEmpty =
+      editor && !editor.isDestroyed
+        ? editor.isEmpty || editor.getText().trim() === ''
+        : !nextContent.trim();
 
-    // Check if entry is empty
-    if (!currentTitle.trim() && !currentContent.trim()) {
-      // Delete empty entry
+    return {
+      date: nextDate,
+      title: nextTitle,
+      content: nextContent,
+      isContentEmpty,
+    };
+  };
+
+  // Save entry function
+  const saveCurrentEntry = async (payload: SavePayload) => {
+    if (isDisposed) return;
+    const requestId = ++saveRequestId;
+    const date = payload.date;
+    const currentTitle = payload.title;
+    const currentContent = payload.content;
+
+    if (!currentTitle.trim() && payload.isContentEmpty) {
+      // Delete empty entry — pass '' so the backend check (text.trim().is_empty()) also passes
       try {
-        await deleteEntryIfEmpty(date, currentTitle, currentContent);
+        await deleteEntryIfEmpty(date, currentTitle, '');
+        if (isDisposed || requestId !== saveRequestId) return;
         // Refresh entry dates after deletion
         const dates = await getAllEntryDates();
+        if (isDisposed || requestId !== saveRequestId) return;
         setEntryDates(dates);
         setWordCount(0);
       } catch (error) {
@@ -69,36 +109,43 @@ export default function EditorPanel() {
     try {
       setIsSaving(true);
       await saveEntry(date, currentTitle, currentContent);
+      if (isDisposed || requestId !== saveRequestId) return;
 
       // Refresh entry dates after save
       const dates = await getAllEntryDates();
+      if (isDisposed || requestId !== saveRequestId) return;
       setEntryDates(dates);
 
       // Update word count from persisted data
       const savedEntry = await getEntry(date);
+      if (isDisposed || requestId !== saveRequestId) return;
       if (savedEntry) {
         setWordCount(savedEntry.word_count);
       }
     } catch (error) {
       log.error('Failed to save entry:', error);
     } finally {
-      setIsSaving(false);
+      if (!isDisposed && requestId === saveRequestId) {
+        setIsSaving(false);
+      }
     }
   };
 
   // Debounced save (500ms after typing stops)
-  const debouncedSave = debounce(saveCurrentEntry, 500);
+  const debouncedSave = debounce((payload: SavePayload) => {
+    void saveCurrentEntry(payload);
+  }, 500);
 
   const handleContentUpdate = (newContent: string) => {
     setContent(newContent);
     // Trigger debounced save (word count will update after save completes)
-    debouncedSave();
+    debouncedSave(createSavePayload(title(), newContent, selectedDate()));
   };
 
   const handleTitleInput = (newTitle: string) => {
     setTitle(newTitle);
     // Trigger debounced save
-    debouncedSave();
+    debouncedSave(createSavePayload(newTitle, content(), selectedDate()));
   };
 
   const handleTitleEnter = () => {
@@ -112,22 +159,24 @@ export default function EditorPanel() {
   // Save on window unload
   onMount(() => {
     const handleBeforeUnload = () => {
-      saveCurrentEntry();
+      void saveCurrentEntry(createSavePayload());
     };
 
     window.addEventListener('beforeunload', handleBeforeUnload);
 
     onCleanup(() => {
+      isDisposed = true;
+      loadRequestId += 1;
+      saveRequestId += 1;
+      debouncedSave.cancel();
       window.removeEventListener('beforeunload', handleBeforeUnload);
-      // Save on component cleanup
-      saveCurrentEntry();
     });
   });
 
   return (
     <div class="flex h-full flex-col">
       <div class="flex-1 overflow-y-auto p-6">
-        <div class="mx-auto max-w-3xl">
+        <div class="mx-auto w-full max-w-3xl xl:max-w-5xl 2xl:max-w-6xl">
           <div class="space-y-4">
             <Show when={!preferences().hideTitles}>
               <TitleEditor

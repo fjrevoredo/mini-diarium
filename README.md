@@ -2,7 +2,7 @@
 
 [![CI Status](https://github.com/fjrevoredo/mini-diarium/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/fjrevoredo/mini-diarium/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-0.3.0-blue.svg)](https://github.com/fjrevoredo/mini-diarium/releases)
+[![Version](https://img.shields.io/badge/version-0.4.0-blue.svg)](https://github.com/fjrevoredo/mini-diarium/releases)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)](https://github.com/fjrevoredo/mini-diarium#installation)
 [![Follow on X](https://img.shields.io/badge/Follow-%40MiniDiarium-000000?logo=x)](https://x.com/MiniDiarium)
 
@@ -158,7 +158,7 @@ sha256sum Mini-Diarium-*.AppImage
 1. Launch Mini Diarium
 2. Create a password (this encrypts your diary; there is no recovery if forgotten)
 3. Write your first entry. It auto-saves as you type
-4. Navigate between days with `Ctrl+Left` / `Ctrl+Right` or click dates on the calendar
+4. Navigate between days with `Ctrl+[` / `Ctrl+]` or click dates on the calendar
 5. Lock your diary when you're done
 
 ## Key File Authentication
@@ -203,16 +203,15 @@ From that point you can unlock from the login screen by switching to **Key File*
 
 | Action         | Shortcut           |
 | -------------- | ------------------ |
-| Previous Day   | `Ctrl+Left`        |
-| Next Day       | `Ctrl+Right`       |
+| Previous Day   | `Ctrl+[`           |
+| Next Day       | `Ctrl+]`           |
 | Go to Today    | `Ctrl+T`           |
 | Go to Date     | `Ctrl+G`           |
-| Previous Month | `Ctrl+Shift+Left`  |
-| Next Month     | `Ctrl+Shift+Right` |
+| Previous Month | `Ctrl+Shift+[`     |
+| Next Month     | `Ctrl+Shift+]`     |
 | Preferences    | `Ctrl+,`           |
-| Statistics     | `Ctrl+I`           |
-| Import         | `Ctrl+Shift+I`     |
-| Export         | `Ctrl+Shift+E`     |
+
+Statistics, Import, and Export are available via the Diary menu (no default keyboard accelerators).
 
 On macOS, use `Cmd` instead of `Ctrl`.
 
@@ -241,7 +240,11 @@ Artifacts will be in `src-tauri/target/release/bundle/`.
 - [Kobalte](https://kobalte.dev/): accessible UI primitives
 
 ## Known Issues
-- Most keyboard shortcuts are broken
+- Concurrent access to the journal is not supported
+
+## Philosophy
+
+Mini Diarium is built around six guiding principles: a small and extensible core, boring security, a testing pyramid, easy data portability, focused scope, and simplicity. See [PHILOSOPHY.md](PHILOSOPHY.md) for the full rationale and how each principle translates to concrete decisions in the codebase.
 
 ## Contributing
 

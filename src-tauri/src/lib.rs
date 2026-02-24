@@ -7,6 +7,7 @@ pub mod db;
 pub mod export;
 pub mod import;
 pub mod menu;
+pub mod plugin;
 pub mod screen_lock;
 
 use commands::auth::DiaryState;
@@ -75,11 +76,26 @@ pub fn run() {
             }
 
             let diary_dir = if let Ok(test_dir) = std::env::var("MINI_DIARIUM_DATA_DIR") {
+                // E2E test isolation — bypass journal config entirely
                 PathBuf::from(test_dir)
             } else {
-                crate::config::load_diary_dir(&app_dir)
-                    .filter(|p| p.is_dir()) // fall back if saved dir was deleted
-                    .unwrap_or_else(|| app_dir.clone())
+                let journals = crate::config::load_journals(&app_dir);
+                if !journals.is_empty() {
+                    // Use active journal, or first journal as fallback
+                    let active_id = crate::config::load_active_journal_id(&app_dir);
+                    let active =
+                        active_id.and_then(|id| journals.iter().find(|j| j.id == id).cloned());
+                    let journal = active.or_else(|| journals.first().cloned());
+                    journal
+                        .map(|j| PathBuf::from(&j.path))
+                        .filter(|p| p.is_dir())
+                        .unwrap_or_else(|| app_dir.clone())
+                } else {
+                    // Fresh install or legacy without migration trigger
+                    crate::config::load_diary_dir(&app_dir)
+                        .filter(|p| p.is_dir())
+                        .unwrap_or_else(|| app_dir.clone())
+                }
             };
 
             let db_path = diary_dir.join("diary.db");
@@ -87,6 +103,13 @@ pub fn run() {
 
             // Set up state
             app.manage(DiaryState::new(db_path, backups_dir, app_dir));
+
+            // Initialize plugin registry
+            let plugins_dir = diary_dir.join("plugins");
+            let mut registry = plugin::registry::PluginRegistry::new();
+            plugin::builtins::register_all(&mut registry);
+            plugin::rhai_loader::load_plugins(&plugins_dir, &mut registry);
+            app.manage(std::sync::Mutex::new(registry));
 
             // Build and set application menu
             let lockable = menu::build_menu(app.handle())?;
@@ -110,6 +133,13 @@ pub fn run() {
             commands::auth::change_diary_directory,
             commands::auth::change_password,
             commands::auth::reset_diary,
+            // Auth - journals
+            commands::auth::list_journals,
+            commands::auth::get_active_journal_id,
+            commands::auth::add_journal,
+            commands::auth::remove_journal,
+            commands::auth::rename_journal,
+            commands::auth::switch_journal,
             // Auth - method management
             commands::auth::verify_password,
             commands::auth::list_auth_methods,
@@ -141,6 +171,11 @@ pub fn run() {
             // Export
             commands::export::export_json,
             commands::export::export_markdown,
+            // Plugins
+            commands::plugin::list_import_plugins,
+            commands::plugin::list_export_plugins,
+            commands::plugin::run_import_plugin,
+            commands::plugin::run_export_plugin,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

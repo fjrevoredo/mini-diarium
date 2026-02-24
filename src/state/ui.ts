@@ -1,9 +1,8 @@
 import { createSignal } from 'solid-js';
+import { getTodayString } from '../lib/dates';
 
 // Selected date (YYYY-MM-DD format)
-const [selectedDate, setSelectedDate] = createSignal<string>(
-  new Date().toISOString().split('T')[0],
-);
+const [selectedDate, setSelectedDate] = createSignal<string>(getTodayString());
 
 // Sidebar collapsed state (for mobile)
 const [isSidebarCollapsed, setIsSidebarCollapsed] = createSignal(false);
@@ -25,6 +24,17 @@ const [isExportOpen, setIsExportOpen] = createSignal(false);
 
 // About overlay state
 const [isAboutOpen, setIsAboutOpen] = createSignal(false);
+
+export function resetUiState(): void {
+  setSelectedDate(getTodayString());
+  setIsSidebarCollapsed(false);
+  setIsGoToDateOpen(false);
+  setIsPreferencesOpen(false);
+  setIsStatsOpen(false);
+  setIsImportOpen(false);
+  setIsExportOpen(false);
+  setIsAboutOpen(false);
+}
 
 export {
   selectedDate,

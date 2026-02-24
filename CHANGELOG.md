@@ -2,6 +2,28 @@
 
 All notable changes to Mini Diarium are documented here. This project uses [Semantic Versioning](https://semver.org/).
 
+## [0.4.0] — Unreleased
+
+### Added
+
+- **Extension system for import/export formats**: built-in formats (Mini Diary JSON, Day One JSON, Day One TXT, jrnl JSON, JSON export, Markdown export) are now served through a unified plugin registry. Users can add custom import/export formats by dropping `.rhai` scripts into a `plugins/` folder inside their diary directory. Rhai scripts run in a secure sandbox (no file system, no network, operation limits enforced). A `README.md` with templates and API docs is auto-generated in the `plugins/` folder on first launch.
+- **Multiple journals**: configure and switch between multiple journals (e.g. personal, work, travel) from the login screen. A dropdown selector appears on the password/key-file unlock screen when more than one journal is configured. Journals are managed in Preferences (add, rename, remove, switch). Each journal is an independent encrypted `diary.db` in its own directory. Existing single-diary setups are automatically migrated — no action required. The "Change Location" feature in Preferences stays in sync with the active journal's config.
+
+### Fixed
+
+- **Navigating to an empty date no longer creates a spurious calendar dot**: clicking into the editor on a date with no entry (without typing anything, or typing only whitespace) previously wrote an empty entry to the database because TipTap normalises an empty document to `<p></p>`, which bypassed the `!content.trim()` check. The save logic now uses TipTap's `editor.isEmpty || editor.getText().trim() === ''` to correctly identify empty and whitespace-only content, and passes `''` to the backend deletion guard so it also passes. Fixes #22.
+- **Keyboard shortcuts overhauled**: bracket-key accelerators (`CmdOrCtrl+[`/`]` for previous/next day, `CmdOrCtrl+Shift+[`/`]` for previous/next month) replace the old arrow-key combos that conflicted with OS and TipTap text-navigation bindings. Removed the duplicate frontend `keydown` listener (`shortcuts.ts`) that caused every shortcut to fire twice. Removed accelerators from Statistics, Import, and Export that conflicted with TipTap italic (`Ctrl+I`) and Chromium DevTools (`Ctrl+Shift+I`). All shortcut definitions now live exclusively in `menu.rs` as OS-level menu accelerators.
+- **CI diagram verification now detects stale outputs**: the "Verify diagrams are up-to-date" workflow step now compares each regenerated `*-check.svg` file with its committed SVG counterpart and fails with a clear remediation message when any diagram differs.
+- **Flaky diagram CI diffs resolved**: diagram rendering/checking is now centralized in `scripts/render-diagrams.mjs` and `scripts/verify-diagrams.mjs`; Mermaid always renders with a consistent Puppeteer config in both local and CI runs; CI uses `bun run diagrams:check` (project-locked Mermaid CLI instead of `bun x mmdc`), workflow Bun installs now use `--frozen-lockfile`, Bun is pinned to `1.2`, and D2 is pinned/validated at `v0.7.1` to prevent toolchain drift.
+- **Editor now scales better on large/fullscreen windows**: the main writing column keeps the existing compact behavior on smaller screens, but expands its max width on larger displays and increases the editor's default writing area height on tall viewports to reduce unused space below the editor.
+- **Session state is now fully reset on lock/logout boundaries**: locking the diary (manual lock button or backend-emitted `diary-locked` event from OS/session auto-lock flows) now clears transient frontend state so selected date, in-memory entry/search state, and open overlays do not leak across sessions or journal switches. Unlock now starts from a fresh `today` baseline; E2E coverage was updated accordingly.
+- **Journal selection on auth screens no longer reverts to the previous journal**: switching journals from the locked/no-diary screen now updates auth status without reloading journal metadata in the same step, preventing the dropdown from briefly changing and then snapping back to the old journal.
+- **Auth screens no longer clip content when multiple journals are configured**: the journal selector dropdown added in 0.4.0 pushed the unlock/create-diary cards past the 600 px window height, causing the top of the card to be clipped with no way to scroll. The layout now uses a column-flex + `my-auto` pattern so the card centres when space is available and the page scrolls naturally when it is not. Outer vertical padding was reduced (`py-12` → `py-6`), card internal padding tightened (`py-10` → `py-8`), logo and subtitle margins trimmed, and the default window height increased from 600 px to 660 px so both screens fit without scrolling in the multi-journal case.
+
+### Changed
+
+- **PHILOSOPHY.md restructured and expanded**: split into Part I (what and why for each principle) and Part II (how each principle is implemented in the codebase). Added concrete extension/plugin system description, E2E test stack guidance, rationale for the no-password-recovery rule, OS integration and Rhai scripting as justified complexity examples, a typo fix ("rich-text support"), a clarification distinguishing local Rhai plugins from plugin marketplaces, a version/date header, and a new "Honest threat documentation" non-negotiable. README now links to PHILOSOPHY.md under a dedicated Philosophy section.
+
 ## [0.3.0] — 2026-02-21
 
 ### Added
@@ -10,7 +32,6 @@ All notable changes to Mini Diarium are documented here. This project uses [Sema
 - **Lock-state menu enforcement**: Navigation and Diary menu items are disabled while the diary is locked and automatically re-enable on unlock, preventing spurious menu actions on the lock screen. File/Help items (Preferences, About, Quit) remain available at all times.
 - **About from menu**: Help › About (Windows/Linux) and Mini Diarium › About (macOS) now open the About overlay.
 - **Auto-lock on Windows session lock/suspend**: the app now listens for native Windows session/power events and auto-locks the diary when the session is locked/logged off or the system is suspending.
-
 - **E2E test suite**: end-to-end tests using WebdriverIO + tauri-driver that exercise the full app stack (real binary, real SQLite). The core workflow test covers diary creation, writing an entry, locking, and verifying persistence after unlock. Run locally with `bun run test:e2e`; runs automatically in CI on Ubuntu after the build step.
 
 ### Security
@@ -43,6 +64,8 @@ All notable changes to Mini Diarium are documented here. This project uses [Sema
 
 - **Documentation diagrams synced with codebase**: refreshed architecture/context diagrams to match the current SolidJS signal state model, command/backend layout, and security posture (no plaintext search index); updated stale `AGENTS.md`/`CLAUDE.md` diagram references and regeneration instructions; added light-theme `architecture.svg` generation and CI existence checks alongside `architecture-dark.svg`.
 
+
+
 ## [0.2.1] — 2026-02-19
 
 ### Added
@@ -56,6 +79,7 @@ All notable changes to Mini Diarium are documented here. This project uses [Sema
 - macOS "damaged and can't be opened" error: added ad-hoc code signing (`signingIdentity: "-"`) and updated installation instructions to use `xattr -cr` workaround
 - macOS release builds now correctly produce a universal binary (arm64 + x86_64) by passing `--target universal-apple-darwin` to the build step
 - The entries_skipped field was declared but never used, it was added a condition in the for loop to skip and count entries that have no meaningful content rather than inserting empty records. by @Yujonpradhananga
+
 
 
 ## [0.2.0] — 2026-02-18
@@ -93,6 +117,8 @@ All notable changes to Mini Diarium are documented here. This project uses [Sema
 - `change_password` now re-wraps the master key in O(1) — no entry re-encryption required regardless of diary size
 - Existing v1 and v2 databases are automatically migrated to v3 then v4 on the first unlock
 - App icon and logo updated across all platforms (Windows ICO, macOS ICNS, Linux PNG, Windows AppX, iOS, Android); logo also shown on the unlock and diary creation screens
+
+
 
 ## [0.1.0] — 2026-02-16
 

@@ -88,6 +88,37 @@ export async function removeAuthMethod(slotId: number, currentPassword: string):
   await invoke('remove_auth_method', { slotId, currentPassword });
 }
 
+// Journal commands
+export interface JournalConfig {
+  id: string;
+  name: string;
+  path: string;
+}
+
+export async function listJournals(): Promise<JournalConfig[]> {
+  return await invoke('list_journals');
+}
+
+export async function getActiveJournalId(): Promise<string | null> {
+  return await invoke('get_active_journal_id');
+}
+
+export async function addJournal(name: string, path: string): Promise<JournalConfig> {
+  return await invoke('add_journal', { name, path });
+}
+
+export async function removeJournal(id: string): Promise<void> {
+  await invoke('remove_journal', { id });
+}
+
+export async function renameJournal(id: string, name: string): Promise<void> {
+  await invoke('rename_journal', { id, name });
+}
+
+export async function switchJournal(id: string): Promise<void> {
+  await invoke('switch_journal', { id });
+}
+
 // Entry commands
 export interface DiaryEntry {
   date: string;
@@ -199,4 +230,28 @@ export async function exportJson(filePath: string): Promise<ExportResult> {
 
 export async function exportMarkdown(filePath: string): Promise<ExportResult> {
   return await invoke('export_markdown', { filePath });
+}
+
+// Plugin commands
+export interface PluginInfo {
+  id: string;
+  name: string;
+  file_extensions: string[];
+  builtin: boolean;
+}
+
+export async function listImportPlugins(): Promise<PluginInfo[]> {
+  return await invoke('list_import_plugins');
+}
+
+export async function listExportPlugins(): Promise<PluginInfo[]> {
+  return await invoke('list_export_plugins');
+}
+
+export async function runImportPlugin(pluginId: string, filePath: string): Promise<ImportResult> {
+  return await invoke('run_import_plugin', { pluginId, filePath });
+}
+
+export async function runExportPlugin(pluginId: string, filePath: string): Promise<ExportResult> {
+  return await invoke('run_export_plugin', { pluginId, filePath });
 }

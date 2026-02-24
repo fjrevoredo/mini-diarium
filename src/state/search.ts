@@ -10,6 +10,12 @@ const [searchResults, setSearchResults] = createSignal<SearchResult[]>([]);
 // Loading state
 const [isSearching, setIsSearching] = createSignal(false);
 
+export function resetSearchState(): void {
+  setSearchQuery('');
+  setSearchResults([]);
+  setIsSearching(false);
+}
+
 export {
   searchQuery,
   setSearchQuery,

@@ -14,6 +14,18 @@ Your diary is encrypted whenever it's locked. When you launch the app, enter you
 
 As an alternative to your password, you can register a key file in Preferences → Authentication Methods. Once registered, use the "Key File" tab on the unlock screen and select your `.key` file to unlock without typing your password.
 
+### Multiple Journals
+
+You can maintain separate journals for different purposes (personal, work, travel, etc.). Each journal is an independent encrypted diary file in its own folder.
+
+**Adding a journal:** Open Preferences → Journals → Add Journal. Choose a directory and give it a name. The folder may be empty (you'll create the diary on first use) or already contain an existing `diary.db`.
+
+**Switching journals:** When you have more than one journal, a dropdown selector appears on the unlock screen. Select the journal you want and enter its password. You can also switch from Preferences → Journals → Switch.
+
+**Removing a journal:** Remove a journal entry from Preferences. This only removes it from the list — the diary file on disk is not deleted. You cannot remove your last remaining journal.
+
+If you only have one journal, the selector is hidden and the experience is identical to before.
+
 ## Writing Entries
 
 ### The Editor
@@ -51,12 +63,12 @@ The sidebar shows a monthly calendar. Days with entries are marked with a dot in
 
 | Action | Shortcut |
 |--------|----------|
-| Previous day with an entry | `Ctrl+Left` |
-| Next day with an entry | `Ctrl+Right` |
+| Previous day with an entry | `Ctrl+[` |
+| Next day with an entry | `Ctrl+]` |
 | Go to today | `Ctrl+T` |
 | Go to a specific date | `Ctrl+G` |
-| Previous month | `Ctrl+Shift+Left` |
-| Next month | `Ctrl+Shift+Right` |
+| Previous month | `Ctrl+Shift+[` |
+| Next month | `Ctrl+Shift+]` |
 
 On macOS, use `Cmd` instead of `Ctrl`.
 
@@ -70,21 +82,100 @@ Full-text search is not available in this version. It will be added in a future 
 
 ## Import
 
-Open the import dialog with `Ctrl+Shift+I`.
+Open the import dialog from **Diary → Import...** in the app menu.
 
-**Supported formats:**
+**Built-in formats:**
 
 - **Mini Diary JSON**: the native export format from Mini Diary
 - **Day One JSON**: use the JSON export option in Day One
+- **Day One TXT**: the plain-text export from Day One
+- **jrnl JSON**: the JSON export from jrnl
 
 When importing, Mini Diarium merges entries with your existing diary. If an imported entry falls on a date that already has content, the merge logic combines them rather than overwriting.
 
 ## Export
 
-Export your diary with `Ctrl+Shift+E`:
+Open the export dialog from **Diary → Export...** in the app menu:
 
-- **JSON**: machine-readable, can be re-imported into Mini Diarium
-- **Markdown**: one file per entry, organized by date
+- **Mini Diary JSON**: machine-readable, can be re-imported into Mini Diarium
+- **Markdown**: human-readable, one section per entry organized by date
+
+## Custom Import/Export Plugins
+
+You can add custom import and export formats by writing Rhai scripts and placing them in the `plugins/` folder inside your diary directory.
+
+### Where is the plugins folder?
+
+The `plugins/` folder is created automatically next to your `diary.db` file:
+
+- **Windows**: `%APPDATA%\com.minidiarium\plugins\`
+- **macOS**: `~/Library/Application Support/com.minidiarium/plugins/`
+- **Linux**: `~/.local/share/com.minidiarium/plugins/`
+
+If you have changed your diary location, the plugins folder is `{your chosen directory}/plugins/`.
+
+A `README.md` file with templates and API documentation is auto-generated in the plugins folder on first launch.
+
+### Writing a plugin
+
+Each plugin is a single `.rhai` file with a metadata comment header and one entry-point function.
+
+**Import plugin example** (`plugins/my-format.rhai`):
+
+```rhai
+// @name: My Custom Format
+// @type: import
+// @extensions: json
+
+fn parse(content) {
+    let data = parse_json(content);
+    let entries = [];
+    for item in data {
+        entries += #{
+            date: item.date,       // must be YYYY-MM-DD
+            title: item.title,
+            text: item.body,       // should be HTML
+        };
+    }
+    entries
+}
+```
+
+**Export plugin example** (`plugins/plain-text.rhai`):
+
+```rhai
+// @name: Plain Text
+// @type: export
+// @extensions: txt
+
+fn format_entries(entries) {
+    let output = "";
+    for entry in entries {
+        output += entry.date + " - " + entry.title + "\n";
+        output += html_to_markdown(entry.text) + "\n\n";
+    }
+    output
+}
+```
+
+### Available helper functions
+
+| Function | Description |
+|----------|-------------|
+| `parse_json(string)` | Parse a JSON string into a map or array |
+| `count_words(string)` | Count words in a string |
+| `now_rfc3339()` | Current timestamp in RFC 3339 format |
+| `html_to_markdown(string)` | Convert HTML to Markdown |
+
+### Rules and limitations
+
+- Import scripts must define `fn parse(content)` returning an array of entry maps
+- Export scripts must define `fn format_entries(entries)` returning a string (`export` is a reserved word in Rhai)
+- The `date` field must be in `YYYY-MM-DD` format
+- The `text` field should contain HTML (the editor uses TipTap)
+- Scripts run in a sandbox: no file system access, no network access
+- Scripts are limited to 1,000,000 operations to prevent infinite loops
+- Plugins appear in the Import/Export overlay dropdowns alongside built-in formats
 
 ## Preferences
 
@@ -97,6 +188,7 @@ Open with `Ctrl+,`:
 | Allow future entries | Write entries for dates that haven't happened yet |
 | Hide titles | Remove the title field for a minimal look |
 | Spellcheck | Toggle browser spellcheck in the editor |
+| Journals | Add, rename, remove, or switch between multiple journals |
 | Change password | Re-encrypt your diary with a new password |
 | Authentication Methods | View registered unlock methods; add a new key file or remove existing ones |
 | At least one method must remain | removing the last is blocked |
@@ -104,7 +196,7 @@ Open with `Ctrl+,`:
 
 ## Statistics
 
-Open with `Ctrl+I`:
+Open from **Diary → Statistics...** in the app menu:
 
 - **Total entries** and **total words**
 - **Average words per entry**
@@ -113,13 +205,37 @@ Open with `Ctrl+I`:
 
 ## Backups
 
-Mini Diarium automatically backs up your database periodically, with older backups rotated out.
+### When backups are created
 
-Database location by OS:
+A backup is created automatically each time you successfully unlock your diary, whether by password or key file. If the unlock fails (wrong password, missing key file), no backup is taken.
 
-- **Windows**: `%APPDATA%\com.minidiarium\` (legacy installs may use `%APPDATA%\com.minidiarium.app\`)
-- **macOS**: `~/Library/Application Support/com.minidiarium/` (legacy installs may use `~/Library/Application Support/com.minidiarium.app/`)
-- **Linux**: `~/.local/share/com.minidiarium/` (legacy installs may use `~/.local/share/com.minidiarium.app/`)
+### Backup location
+
+Backups are stored in a `backups/` subfolder **inside the same directory as your `diary.db`**. The default diary directory by OS:
+
+- **Windows**: `%APPDATA%\com.minidiarium\` (legacy: `%APPDATA%\com.minidiarium.app\`)
+- **macOS**: `~/Library/Application Support/com.minidiarium/` (legacy: `~/Library/Application Support/com.minidiarium.app/`)
+- **Linux**: `~/.local/share/com.minidiarium/` (legacy: `~/.local/share/com.minidiarium.app/`)
+
+If you have changed your diary location (see *Preferences → Storage Location*), backups are created in `{your chosen directory}/backups/` instead.
+
+### Backup filenames
+
+Each backup is named `backup-YYYY-MM-DD-HHhMM.db` (for example, `backup-2024-01-15-14h30.db`). The timestamp reflects local time at the moment of unlock.
+
+### Rotation
+
+Mini Diarium keeps the **50 most recent backups**. When a new backup would push the count above 50, the oldest backups are deleted automatically. Only files matching the `backup-*.db` naming pattern are counted; any other files you place in the `backups/` folder are left untouched.
+
+### Custom diary locations
+
+When you move your diary to a different folder via Preferences, `diary.db` is physically moved to the new location and all future backups will go into `{new location}/backups/`.
+
+**Existing backups in the old `backups/` folder are not moved.** If you want to keep your backup history, copy the old `backups/` folder to the new diary directory before or after the move.
+
+### Cloud-synced and external locations
+
+If you place your diary directory inside a cloud-synced folder (Dropbox, OneDrive, iCloud Drive, etc.), both `diary.db` and the `backups/` subfolder will be included in the sync, giving you off-site backup on top of local rotation. Keep in mind that Mini Diarium does not coordinate concurrent access — **do not open the same diary from two devices at the same time**.
 
 ## FAQ
 
@@ -136,4 +252,4 @@ Never. No network requests, no analytics, no telemetry, no automatic updates.
 Not directly. Mini Diarium is local-only by design. You could manually copy the database file, but simultaneous access from multiple devices is not supported.
 
 **I used Mini Diary before. Can I migrate?**
-Yes. Export from Mini Diary as JSON, then import in Mini Diarium with `Ctrl+Shift+I` using the Mini Diary JSON format.
+Yes. Export from Mini Diary as JSON, then import in Mini Diarium from **Diary → Import...** using the Mini Diary JSON format.

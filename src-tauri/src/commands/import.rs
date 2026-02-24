@@ -7,7 +7,7 @@ use tauri::State;
 
 const MAX_IMPORT_FILE_SIZE: u64 = 100 * 1024 * 1024; // 100 MB
 
-fn read_import_file(file_path: &str) -> Result<String, String> {
+pub(crate) fn read_import_file(file_path: &str) -> Result<String, String> {
     let metadata = std::fs::metadata(file_path).map_err(|e| {
         let err = format!("Cannot access file: {}", e);
         error!("{}", err);
@@ -251,7 +251,7 @@ pub fn import_dayone_txt(
 /// Imports a list of entries into the database
 ///
 /// Handles merging when entries with the same date already exist
-fn import_entries(
+pub(crate) fn import_entries(
     db: &DatabaseConnection,
     entries: Vec<queries::DiaryEntry>,
 ) -> Result<ImportResult, String> {

@@ -2,8 +2,8 @@
 
 This document tracks features and improvements deferred from the v0.1.0 release.
 
-**Status**: 18 open tasks across 5 categories
-- **Infrastructure**: 2 tasks (release workflow modernization, CI diagram diffing)
+**Status**: 17 open tasks across 5 categories
+- **Infrastructure**: 1 task (release workflow modernization)
 - **Features**: 9 tasks (PDF export, directory selection, i18n, menus, auto-lock, auto-update, legacy migration, extension system, first-launch existing diary picker)
 - **Quality**: 4 tasks (accessibility audit, QA pass, keyboard shortcuts audit, backup behavior documentation)
 - **Testing**: 3 tasks (E2E setup and tests)
@@ -49,14 +49,15 @@ Improve release pipeline reliability and remove deprecated dependencies.
 
 ---
 
-### Task 62: CI Diagram Diff Verification
+### Task 62: CI Diagram Diff Verification ✅ Completed (2026-02-21)
 **Priority**: Medium | **Complexity**: Low | **Files**: `.github/workflows/ci.yml`, `docs/diagrams/*`
 
 Ensure generated architecture diagrams are actually compared against committed outputs.
 
-**Current Issues**:
-- Workflow generates `*-check.svg` files but does not compare content with committed SVGs
-- Stale diagrams can pass CI as long as expected filenames exist
+**Outcome**:
+- Workflow now compares each regenerated `*-check.svg` file against its committed SVG counterpart
+- CI fails with actionable output when any diagram is stale or mismatched
+- Cleanup of temporary `*-check.svg` files is guaranteed via shell trap
 
 **Requirements**:
 - Regenerate all tracked diagrams during CI (`unlock*.svg`, `save-entry*.svg`, `context*.svg`, `architecture*.svg`)
@@ -113,7 +114,7 @@ Ensure the app is usable by everyone.
 ---
 
 ### Task 63: Keyboard Shortcuts Audit & Recovery
-**Priority**: High | **Complexity**: Medium | **Files**: `src/lib/shortcuts.ts`, `src-tauri/src/menu.rs`, `src/components/layout/MainLayout.tsx`
+**Priority**: High | **Complexity**: Medium | **Files**: `src-tauri/src/menu.rs`, `src/components/layout/MainLayout.tsx`
 
 Audit and restore all expected keyboard shortcuts and menu-triggered navigation actions.
 
@@ -124,8 +125,8 @@ Audit and restore all expected keyboard shortcuts and menu-triggered navigation 
 - Confirm lock-state behavior (disabled while locked, enabled while unlocked)
 
 **Verification Matrix**:
-1. Previous/next day (`CmdOrCtrl+Left` / `CmdOrCtrl+Right`)
-2. Previous/next month (`CmdOrCtrl+Shift+Left` / `CmdOrCtrl+Shift+Right`)
+1. Previous/next day (`CmdOrCtrl+[` / `CmdOrCtrl+]`)
+2. Previous/next month (`CmdOrCtrl+Shift+[` / `CmdOrCtrl+Shift+]`)
 3. Go to today (`CmdOrCtrl+T`)
 4. Go to date (`CmdOrCtrl+G`)
 5. Menu-item click emits and frontend handler behavior
@@ -406,14 +407,14 @@ Automated end-to-end tests for critical user journeys.
 
 | Category | Open | Completed |
 |----------|------|-----------|
-| **Infrastructure** | 2 | 4 |
+| **Infrastructure** | 1 | 5 |
 | **Features** | 9 | 38 |
 | **Quality** | 4 | 5 |
 | **Testing** | 3 | 2 |
-| **Total** | **18** | **49** |
+| **Total** | **17** | **50** |
 
 **Next milestone candidates**:
-- **v0.1.1**: Tasks 61-62 (release workflow + CI diagram verification)
+- **v0.1.1**: Task 61 (release workflow modernization)
 - **v0.2.0**: Tasks 52, 63 (accessibility + keyboard shortcuts)
 - **v0.3.0**: Tasks 47-48, 64-65 (i18n + onboarding/docs improvements)
 - **v0.4.0**: Tasks 50-51, 53, 66 (platform features + legacy migration + extension architecture)

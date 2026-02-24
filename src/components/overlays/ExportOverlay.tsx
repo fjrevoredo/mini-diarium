@@ -1,8 +1,13 @@
-import { createSignal, Show } from 'solid-js';
+import { createSignal, onMount, Show, For } from 'solid-js';
 import { Dialog } from '@kobalte/core/dialog';
 import { save as saveDialog } from '@tauri-apps/plugin-dialog';
 import { createLogger } from '../../lib/logger';
-import { exportJson, exportMarkdown, type ExportResult } from '../../lib/tauri';
+import {
+  listExportPlugins,
+  runExportPlugin,
+  type PluginInfo,
+  type ExportResult,
+} from '../../lib/tauri';
 import { mapTauriError } from '../../lib/errors';
 import { X, FileDown, CheckCircle, AlertCircle } from 'lucide-solid';
 
@@ -11,15 +16,28 @@ interface ExportOverlayProps {
   onClose: () => void;
 }
 
-type ExportFormat = 'json' | 'markdown';
-
 const log = createLogger('Export');
 
 export default function ExportOverlay(props: ExportOverlayProps) {
-  const [selectedFormat, setSelectedFormat] = createSignal<ExportFormat>('json');
+  const [plugins, setPlugins] = createSignal<PluginInfo[]>([]);
+  const [selectedPluginId, setSelectedPluginId] = createSignal<string>('');
   const [exporting, setExporting] = createSignal(false);
   const [error, setError] = createSignal<string | null>(null);
   const [result, setResult] = createSignal<ExportResult | null>(null);
+
+  onMount(async () => {
+    try {
+      const list = await listExportPlugins();
+      setPlugins(list);
+      if (list.length > 0) {
+        setSelectedPluginId(list[0].id);
+      }
+    } catch (err) {
+      log.error('Failed to load export plugins:', err);
+    }
+  });
+
+  const selectedPlugin = () => plugins().find((p) => p.id === selectedPluginId());
 
   const handleOpenChange = (open: boolean) => {
     if (!open) {
@@ -36,44 +54,33 @@ export default function ExportOverlay(props: ExportOverlayProps) {
   };
 
   const handleExport = async () => {
+    const plugin = selectedPlugin();
+    if (!plugin) return;
+
     setExporting(true);
     setError(null);
     setResult(null);
 
     try {
-      const format = selectedFormat();
-      const isMarkdown = format === 'markdown';
-      const defaultPath = isMarkdown ? 'mini-diarium-export.md' : 'mini-diarium-export.json';
-      const filterName = isMarkdown ? 'Markdown' : 'JSON';
-      const filterExt = isMarkdown ? ['md'] : ['json'];
+      const ext = plugin.file_extensions[0] ?? 'txt';
+      const defaultPath = `mini-diarium-export.${ext}`;
 
-      // Open save dialog
       const filePath = await saveDialog({
         defaultPath,
         filters: [
           {
-            name: filterName,
-            extensions: filterExt,
+            name: plugin.name,
+            extensions: plugin.file_extensions,
           },
         ],
       });
 
       if (!filePath) {
-        // User cancelled the dialog
         setExporting(false);
         return;
       }
 
-      let exportResult: ExportResult;
-
-      if (format === 'json') {
-        exportResult = await exportJson(filePath);
-      } else if (format === 'markdown') {
-        exportResult = await exportMarkdown(filePath);
-      } else {
-        throw new Error(`Unsupported export format: ${format}`);
-      }
-
+      const exportResult = await runExportPlugin(plugin.id, filePath);
       setResult(exportResult);
     } catch (err) {
       log.error('Export failed:', err);
@@ -135,13 +142,18 @@ export default function ExportOverlay(props: ExportOverlayProps) {
               </label>
               <select
                 id="export-format"
-                value={selectedFormat()}
-                onChange={(e) => setSelectedFormat(e.currentTarget.value as ExportFormat)}
+                value={selectedPluginId()}
+                onChange={(e) => {
+                  setSelectedPluginId(e.currentTarget.value);
+                  setError(null);
+                  setResult(null);
+                }}
                 disabled={exporting()}
                 class="w-full rounded-md border border-primary px-3 py-2 text-sm text-primary bg-primary focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-tertiary disabled:cursor-not-allowed"
               >
-                <option value="json">Mini Diary JSON</option>
-                <option value="markdown">Markdown</option>
+                <For each={plugins()}>
+                  {(plugin) => <option value={plugin.id}>{plugin.name}</option>}
+                </For>
               </select>
             </div>
 

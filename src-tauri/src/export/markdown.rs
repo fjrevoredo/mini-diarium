@@ -49,7 +49,7 @@ pub fn export_entries_to_markdown(entries: Vec<DiaryEntry>) -> String {
 /// - `<ol>/<li>` → numbered lists
 /// - `<h1>`-`<h6>` → markdown headings (### to avoid clash with entry headings)
 /// - Other tags → stripped
-fn html_to_markdown(html: &str) -> String {
+pub fn html_to_markdown(html: &str) -> String {
     if html.is_empty() {
         return String::new();
     }

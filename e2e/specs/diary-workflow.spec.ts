@@ -14,11 +14,14 @@ const TEST_PASSWORD = 'e2e-test-password-123';
 const TEST_TITLE = 'E2E Test Entry';
 const TEST_BODY = 'This entry was written by the E2E test suite.';
 
-// Fixed day within the month the calendar opens on. Day 15 exists in every
-// month, is never a future date, and is computed once (at module load) so the
-// value cannot drift if a test run crosses midnight.
+// Compute dates once (at module load) so values cannot drift if a test run
+// crosses midnight.
 const now = new Date();
-const TEST_DATE = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-15`;
+const year = now.getFullYear();
+const month = String(now.getMonth() + 1).padStart(2, '0');
+const TODAY_DATE = `${year}-${month}-${String(now.getDate()).padStart(2, '0')}`;
+const testDay = String(Math.min(now.getDate(), 15)).padStart(2, '0');
+const TEST_DATE = `${year}-${month}-${testDay}`;
 
 describe('Core diary workflow', () => {
   it('creates diary, writes an entry, locks, and verifies persistence after unlock', async () => {
@@ -64,8 +67,18 @@ describe('Core diary workflow', () => {
     await $('[data-testid="password-unlock-input"]').setValue(TEST_PASSWORD);
     await $('[data-testid="unlock-diary-button"]').click();
 
-    // 9. selectedDate persists through lock/unlock (module-level signal), so EditorPanel
-    //    auto-reloads the entry for TEST_DATE on mount — no calendar click needed.
+    // 9. Verify a fresh session baseline: unlock should select today.
+    const todayButton = await $(`[data-testid="calendar-day-${TODAY_DATE}"]`);
+    await todayButton.waitForDisplayed({ timeout: 10000 });
+    const todayButtonClass = await todayButton.getAttribute('class');
+    expect(todayButtonClass).toContain('bg-blue-600');
+
+    // 10. Navigate back to the saved date and verify persistence.
+    if (TEST_DATE !== TODAY_DATE) {
+      await $(`[data-testid="calendar-day-${TEST_DATE}"]`).waitForClickable({ timeout: 10000 });
+      await $(`[data-testid="calendar-day-${TEST_DATE}"]`).click();
+    }
+
     await $('[data-testid="title-input"]').waitForDisplayed({ timeout: 10000 });
     expect(await $('[data-testid="title-input"]').getValue()).toBe(TEST_TITLE);
   });

@@ -1,12 +1,11 @@
-import { createSignal, Show } from 'solid-js';
+import { createSignal, onMount, Show, For } from 'solid-js';
 import { Dialog } from '@kobalte/core/dialog';
 import { open as openDialog } from '@tauri-apps/plugin-dialog';
 import { createLogger } from '../../lib/logger';
 import {
-  importMiniDiaryJson,
-  importDayOneJson,
-  importDayOneTxt,
-  importJrnlJson,
+  listImportPlugins,
+  runImportPlugin,
+  type PluginInfo,
   type ImportResult,
 } from '../../lib/tauri';
 import { X, FileUp, CheckCircle, AlertCircle } from 'lucide-solid';
@@ -17,20 +16,32 @@ interface ImportOverlayProps {
   onImportComplete?: () => void;
 }
 
-type ImportFormat = 'minidiary-json' | 'dayone-json' | 'dayone-txt' | 'jrnl-json';
-
 const log = createLogger('Import');
 
 export default function ImportOverlay(props: ImportOverlayProps) {
-  const [selectedFormat, setSelectedFormat] = createSignal<ImportFormat>('minidiary-json');
+  const [plugins, setPlugins] = createSignal<PluginInfo[]>([]);
+  const [selectedPluginId, setSelectedPluginId] = createSignal<string>('');
   const [selectedFile, setSelectedFile] = createSignal<string | null>(null);
   const [importing, setImporting] = createSignal(false);
   const [error, setError] = createSignal<string | null>(null);
   const [result, setResult] = createSignal<ImportResult | null>(null);
 
+  onMount(async () => {
+    try {
+      const list = await listImportPlugins();
+      setPlugins(list);
+      if (list.length > 0) {
+        setSelectedPluginId(list[0].id);
+      }
+    } catch (err) {
+      log.error('Failed to load import plugins:', err);
+    }
+  });
+
+  const selectedPlugin = () => plugins().find((p) => p.id === selectedPluginId());
+
   const handleOpenChange = (open: boolean) => {
     if (!open) {
-      // Reset state when closing
       setSelectedFile(null);
       setError(null);
       setResult(null);
@@ -46,12 +57,14 @@ export default function ImportOverlay(props: ImportOverlayProps) {
 
   const handleSelectFile = async () => {
     try {
+      const plugin = selectedPlugin();
+      const extensions = plugin?.file_extensions ?? ['json'];
       const selected = await openDialog({
         multiple: false,
         filters: [
           {
-            name: 'JSON',
-            extensions: ['json'],
+            name: plugin?.name ?? 'File',
+            extensions,
           },
         ],
       });
@@ -68,8 +81,13 @@ export default function ImportOverlay(props: ImportOverlayProps) {
 
   const handleImport = async () => {
     const file = selectedFile();
+    const pluginId = selectedPluginId();
     if (!file) {
       setError('Please select a file first');
+      return;
+    }
+    if (!pluginId) {
+      setError('Please select an import format');
       return;
     }
 
@@ -78,25 +96,8 @@ export default function ImportOverlay(props: ImportOverlayProps) {
     setResult(null);
 
     try {
-      // Call appropriate import function based on selected format
-      const format = selectedFormat();
-      let importResult: ImportResult;
-
-      if (format === 'minidiary-json') {
-        importResult = await importMiniDiaryJson(file);
-      } else if (format === 'dayone-json') {
-        importResult = await importDayOneJson(file);
-      } else if (format === 'dayone-txt') {
-        importResult = await importDayOneTxt(file);
-      } else if (format === 'jrnl-json') {
-        importResult = await importJrnlJson(file);
-      } else {
-        throw new Error(`Unsupported import format: ${format}`);
-      }
-
+      const importResult = await runImportPlugin(pluginId, file);
       setResult(importResult);
-
-      // Notify parent to refresh data
       props.onImportComplete?.();
     } catch (err) {
       log.error('Import failed:', err);
@@ -142,7 +143,7 @@ export default function ImportOverlay(props: ImportOverlayProps) {
             </div>
 
             <Dialog.Description class="text-sm text-secondary mb-6">
-              Import diary entries from a JSON file
+              Import diary entries from a file
             </Dialog.Description>
 
             {/* Format Selection */}
@@ -152,15 +153,19 @@ export default function ImportOverlay(props: ImportOverlayProps) {
               </label>
               <select
                 id="format"
-                value={selectedFormat()}
-                onChange={(e) => setSelectedFormat(e.currentTarget.value as ImportFormat)}
+                value={selectedPluginId()}
+                onChange={(e) => {
+                  setSelectedPluginId(e.currentTarget.value);
+                  setSelectedFile(null);
+                  setError(null);
+                  setResult(null);
+                }}
                 disabled={importing()}
                 class="w-full rounded-md border border-primary px-3 py-2 text-sm text-primary bg-primary focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-tertiary disabled:cursor-not-allowed"
               >
-                <option value="minidiary-json">Mini Diary JSON</option>
-                <option value="dayone-json">Day One JSON</option>
-                <option value="dayone-txt">Day One TXT</option>
-                <option value="jrnl-json">jrnl JSON</option>
+                <For each={plugins()}>
+                  {(plugin) => <option value={plugin.id}>{plugin.name}</option>}
+                </For>
               </select>
             </div>
 

@@ -1,5 +1,13 @@
-import { createSignal, Show } from 'solid-js';
-import { createDiary } from '../../state/auth';
+import { createSignal, For, Show } from 'solid-js';
+import { createDiary, refreshAuthState } from '../../state/auth';
+import {
+  journals,
+  activeJournalId,
+  isSwitching,
+  switchJournal,
+  addJournal,
+} from '../../state/journals';
+import * as tauri from '../../lib/tauri';
 
 export default function PasswordCreation() {
   const [password, setPassword] = createSignal('');
@@ -33,7 +41,17 @@ export default function PasswordCreation() {
     try {
       setIsCreating(true);
       await createDiary(pwd);
-      // Success - auth state will update automatically
+
+      // Auto-register journal if this is a first-time user (no journals configured yet)
+      if (journals().length === 0) {
+        try {
+          const path = await tauri.getDiaryPath();
+          const dir = path.replace(/[/\\]diary\.db$/, '');
+          await addJournal('My Journal', dir);
+        } catch {
+          // Non-fatal: journal registration failed but diary was created successfully
+        }
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       setError(message);
@@ -43,16 +61,34 @@ export default function PasswordCreation() {
   };
 
   return (
-    <div class="flex min-h-screen items-center justify-center bg-tertiary px-4 py-12">
-      <div class="w-full max-w-md">
-        <div class="rounded-lg bg-primary px-8 py-10 shadow-lg">
-          <div class="mb-4 flex justify-center">
+    <div class="flex flex-col min-h-screen items-center bg-tertiary px-4 py-6">
+      <div class="my-auto w-full max-w-md">
+        <div class="rounded-lg bg-primary px-8 py-8 shadow-lg">
+          <div class="mb-3 flex justify-center">
             <img src="/logo-transparent.svg" alt="Mini Diarium" class="h-16 w-16 rounded-xl" />
           </div>
           <h1 class="mb-2 text-center text-3xl font-bold text-primary">Welcome to Mini Diarium</h1>
-          <p class="mb-8 text-center text-sm text-secondary">
+          <p class="mb-5 text-center text-sm text-secondary">
             Create a password to secure your diary
           </p>
+
+          {/* Journal selector — only shown when multiple journals exist */}
+          <Show when={journals().length > 1}>
+            <div class="mb-4">
+              <label class="mb-2 block text-sm font-medium text-secondary">Journal</label>
+              <select
+                value={activeJournalId() ?? ''}
+                onChange={async (e) => {
+                  await switchJournal(e.currentTarget.value);
+                  await refreshAuthState();
+                }}
+                disabled={isSwitching() || isCreating()}
+                class="w-full rounded-md border border-primary px-4 py-2 bg-primary text-primary focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <For each={journals()}>{(j) => <option value={j.id}>{j.name}</option>}</For>
+              </select>
+            </div>
+          </Show>
 
           <form onSubmit={handleSubmit} class="space-y-6">
             <div>

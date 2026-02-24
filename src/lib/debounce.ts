@@ -6,15 +6,18 @@
  * @param wait The number of milliseconds to delay
  * @returns The debounced function
  */
+export type Debounced<T extends (...args: unknown[]) => unknown> = ((
+  ...args: Parameters<T>
+) => void) & {
+  cancel: () => void;
+};
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function debounce<T extends (...args: any[]) => any>(
-  func: T,
-  wait: number,
-): (...args: Parameters<T>) => void {
+export function debounce<T extends (...args: any[]) => any>(func: T, wait: number): Debounced<T> {
   let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  return function (this: any, ...args: Parameters<T>) {
+  const debounced = function (this: any, ...args: Parameters<T>) {
     if (timeoutId !== null) {
       clearTimeout(timeoutId);
     }
@@ -23,14 +26,29 @@ export function debounce<T extends (...args: any[]) => any>(
       func.apply(this, args);
       timeoutId = null;
     }, wait);
+  } as Debounced<T>;
+
+  debounced.cancel = () => {
+    if (timeoutId !== null) {
+      clearTimeout(timeoutId);
+      timeoutId = null;
+    }
   };
+
+  return debounced;
 }
 
 /**
  * Cancels a debounced function
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function cancelDebounce(debouncedFn: any): void {
+export function cancelDebounce(
+  debouncedFn:
+    | {
+        cancel?: () => void;
+      }
+    | null
+    | undefined,
+): void {
   if (debouncedFn && debouncedFn.cancel) {
     debouncedFn.cancel();
   }

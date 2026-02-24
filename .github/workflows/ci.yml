@@ -22,7 +22,7 @@ jobs:
 
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          bun-version: 1.2
 
       - uses: dtolnay/rust-toolchain@stable
         with:
@@ -53,7 +53,7 @@ jobs:
           sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
 
       - name: Install frontend dependencies
-        run: bun install
+        run: bun install --frozen-lockfile
 
       - name: ESLint
         run: bun run lint
@@ -74,51 +74,14 @@ jobs:
 
       - name: Install D2
         run: |
-          curl -fsSL https://d2lang.com/install.sh | sh -s --
+          set -euo pipefail
+          curl -fsSL https://d2lang.com/install.sh | sh -s -- --version v0.7.1 || D2_VERSION=v0.7.1 curl -fsSL https://d2lang.com/install.sh | sh -s --
+          ~/.local/bin/d2 --version
+          ~/.local/bin/d2 --version | grep -Eq '0\.7\.1'
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
       - name: Verify diagrams are up-to-date
-        run: |
-          # Work around Chromium sandbox restrictions on GitHub Ubuntu runners
-          cat > /tmp/puppeteer-config.json << 'EOF'
-          {
-            "args": ["--no-sandbox", "--disable-setuid-sandbox"]
-          }
-          EOF
-
-          # Regenerate Mermaid diagrams
-          bun x mmdc -p /tmp/puppeteer-config.json -i docs/diagrams/unlock.mmd -o docs/diagrams/unlock-check.svg
-          bun x mmdc -p /tmp/puppeteer-config.json -i docs/diagrams/unlock-dark.mmd -o docs/diagrams/unlock-dark-check.svg --backgroundColor transparent
-          bun x mmdc -p /tmp/puppeteer-config.json -i docs/diagrams/save-entry.mmd -o docs/diagrams/save-entry-check.svg
-          bun x mmdc -p /tmp/puppeteer-config.json -i docs/diagrams/save-entry-dark.mmd -o docs/diagrams/save-entry-dark-check.svg --backgroundColor transparent
-          bun x mmdc -p /tmp/puppeteer-config.json -i docs/diagrams/context.mmd -o docs/diagrams/context-check.svg
-          bun x mmdc -p /tmp/puppeteer-config.json -i docs/diagrams/context-dark.mmd -o docs/diagrams/context-dark-check.svg --backgroundColor transparent
-
-          # Regenerate D2 diagrams
-          ~/.local/bin/d2 docs/diagrams/architecture.d2 docs/diagrams/architecture-check.svg
-          ~/.local/bin/d2 docs/diagrams/architecture-dark.d2 docs/diagrams/architecture-dark-check.svg
-
-          # Verify expected SVGs exist
-          for file in \
-            docs/diagrams/unlock.svg \
-            docs/diagrams/unlock-dark.svg \
-            docs/diagrams/save-entry.svg \
-            docs/diagrams/save-entry-dark.svg \
-            docs/diagrams/context.svg \
-            docs/diagrams/context-dark.svg \
-            docs/diagrams/architecture.svg \
-            docs/diagrams/architecture-dark.svg
-          do
-            if [ ! -f "$file" ]; then
-              echo "❌ Diagram missing: $file"
-              echo "Run: bun run diagrams"
-              exit 1
-            fi
-          done
-
-          echo "✅ All diagrams exist"
-          rm docs/diagrams/*-check.svg
-          rm /tmp/puppeteer-config.json
+        run: bun run diagrams:check
 
   test:
     name: Test
@@ -128,7 +91,7 @@ jobs:
 
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          bun-version: 1.2
 
       - uses: dtolnay/rust-toolchain@stable
 
@@ -157,7 +120,7 @@ jobs:
           sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
 
       - name: Install frontend dependencies
-        run: bun install
+        run: bun install --frozen-lockfile
 
       - name: Frontend tests
         run: bun run test:run
@@ -179,7 +142,7 @@ jobs:
 
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          bun-version: 1.2
 
       - uses: actions/setup-node@v6
         with:
@@ -206,7 +169,7 @@ jobs:
           sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
 
       - name: Install frontend dependencies
-        run: bun install
+        run: bun install --frozen-lockfile
 
       - name: Configure macOS DMG bundling for headless CI
         if: runner.os == 'macOS'
@@ -253,7 +216,7 @@ jobs:
 
       - uses: oven-sh/setup-bun@v2
         with:
-          bun-version: latest
+          bun-version: 1.2
 
       - uses: dtolnay/rust-toolchain@stable
 
@@ -296,7 +259,7 @@ jobs:
         run: chmod +x src-tauri/target/release/mini-diarium
 
       - name: Install JS dependencies
-        run: bun install
+        run: bun install --frozen-lockfile
 
       - name: Run E2E tests (with virtual display)
         run: xvfb-run --auto-servernum bun run test:e2e
