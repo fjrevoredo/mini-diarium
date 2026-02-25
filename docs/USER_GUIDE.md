@@ -104,6 +104,8 @@ Open the export dialog from **Diary → Export...** in the app menu:
 
 You can add custom import and export formats by writing Rhai scripts and placing them in the `plugins/` folder inside your diary directory.
 
+An official example script is included in the repository at `docs/user-plugins/plain-text-timeline.rhai`.
+
 ### Where is the plugins folder?
 
 The `plugins/` folder is created automatically next to your `diary.db` file:

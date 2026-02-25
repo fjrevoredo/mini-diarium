@@ -5,65 +5,9 @@ use log::{info, warn};
 use rhai::{Array, Dynamic, Engine, Map, Scope, AST};
 use std::path::Path;
 
-const PLUGINS_README: &str = r#"# Mini Diarium Plugins
-
-Place `.rhai` script files in this directory to add custom import/export formats.
-
-## Import Plugin Template
-
-```rhai
-// @name: My Format
-// @type: import
-// @extensions: json
-
-fn parse(content) {
-    let data = parse_json(content);
-    let entries = [];
-    for item in data {
-        entries += #{
-            date: "2024-01-01",
-            title: "Entry title",
-            text: "<p>HTML content</p>",
-        };
-    }
-    entries
-}
-```
-
-## Export Plugin Template
-
-```rhai
-// @name: My Export Format
-// @type: export
-// @extensions: txt
-
-fn format_entries(entries) {
-    let output = "";
-    for entry in entries {
-        output += entry.date + " - " + entry.title + "\n";
-        output += entry.text + "\n\n";
-    }
-    output
-}
-```
-
-Note: Export scripts use `format_entries` (not `export`) because `export` is a reserved keyword in Rhai.
-
-## Available Functions
-
-- `parse_json(string)` — Parse JSON string into a map/array
-- `count_words(string)` — Count words in a string
-- `now_rfc3339()` — Current timestamp in RFC 3339 format
-- `html_to_markdown(string)` — Convert HTML to Markdown (useful for exports)
-
-## Rules
-
-- Scripts run in a sandbox: no file system access, no network
-- The `date` field must be in YYYY-MM-DD format
-- The `text` field should contain HTML (the editor uses TipTap)
-- Import scripts must define `fn parse(content)` returning an array of entries
-- Export scripts must define `fn format_entries(entries)` returning a string
-"#;
+// Keep plugin docs in one place: the generated `{diary_dir}/plugins/README.md`
+// is a direct copy of this repository guide.
+const PLUGINS_README: &str = include_str!("../../../docs/user-plugins/USER_PLUGIN_GUIDE.md");
 
 /// Metadata parsed from the comment header of a .rhai script.
 struct ScriptMeta {
@@ -355,6 +299,30 @@ pub fn load_plugins(plugins_dir: &Path, registry: &mut PluginRegistry) {
 mod tests {
     use super::*;
 
+    const PLAIN_TEXT_TIMELINE_FIXTURE: &str =
+        include_str!("../../../docs/user-plugins/plain-text-timeline.rhai");
+
+    fn sample_entries() -> Vec<DiaryEntry> {
+        vec![
+            DiaryEntry {
+                date: "2024-01-01".into(),
+                title: "".into(),
+                text: "<p>First body</p>".into(),
+                word_count: 2,
+                date_created: "2024-01-01T00:00:00Z".into(),
+                date_updated: "2024-01-01T00:00:00Z".into(),
+            },
+            DiaryEntry {
+                date: "2024-01-02".into(),
+                title: "Second".into(),
+                text: "<p>Second body</p>".into(),
+                word_count: 2,
+                date_created: "2024-01-02T00:00:00Z".into(),
+                date_updated: "2024-01-02T00:00:00Z".into(),
+            },
+        ]
+    }
+
     #[test]
     fn test_parse_metadata_complete() {
         let source =
@@ -527,5 +495,48 @@ fn parse(content) {
 
         // README.md should be created
         assert!(dir.path().join("README.md").exists());
+    }
+
+    #[test]
+    fn test_load_export_plugin_fixture_from_dir() {
+        let dir = tempfile::tempdir().unwrap();
+        std::fs::write(
+            dir.path().join("plain-text-timeline.rhai"),
+            PLAIN_TEXT_TIMELINE_FIXTURE,
+        )
+        .unwrap();
+
+        let mut registry = PluginRegistry::new();
+        load_plugins(dir.path(), &mut registry);
+
+        let exporters = registry.list_exporters();
+        assert_eq!(exporters.len(), 1);
+        assert_eq!(exporters[0].id, "rhai:plain-text-timeline");
+        assert_eq!(exporters[0].name, "Plain Text Timeline");
+        assert_eq!(exporters[0].file_extensions, vec!["txt"]);
+        assert!(!exporters[0].builtin);
+    }
+
+    #[test]
+    fn test_rhai_export_plugin_fixture_output() {
+        let dir = tempfile::tempdir().unwrap();
+        std::fs::write(
+            dir.path().join("plain-text-timeline.rhai"),
+            PLAIN_TEXT_TIMELINE_FIXTURE,
+        )
+        .unwrap();
+
+        let mut registry = PluginRegistry::new();
+        load_plugins(dir.path(), &mut registry);
+
+        let plugin = registry.find_exporter("rhai:plain-text-timeline").unwrap();
+        let output = plugin.export(sample_entries()).unwrap();
+        let expected = format!(
+            "2024-01-01 | (untitled)\n{}\n---\n2024-01-02 | Second\n{}",
+            crate::export::markdown::html_to_markdown("<p>First body</p>"),
+            crate::export::markdown::html_to_markdown("<p>Second body</p>")
+        );
+
+        assert_eq!(output, expected);
     }
 }

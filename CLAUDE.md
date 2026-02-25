@@ -201,7 +201,7 @@ src-tauri/src/
 │   ├── mod.rs                         # ImportPlugin/ExportPlugin traits, PluginInfo struct
 │   ├── builtins.rs                    # 6 unit structs wrapping built-in parsers/exporters (3 tests)
 │   ├── registry.rs                    # PluginRegistry: register/find/list (5 tests)
-│   └── rhai_loader.rs                 # Rhai engine, script discovery, sandbox, wrappers (9 tests)
+│   └── rhai_loader.rs                 # Rhai engine, script discovery, sandbox, wrappers (11 tests)
 └── import/
     ├── mod.rs                         # Re-exports + DiaryEntry conversion
     ├── minidiary.rs                   # Mini Diary JSON parser (8 tests)
@@ -356,7 +356,7 @@ All menu event names are prefixed `menu-`. See `menu.rs:78-107` for the full lis
 
 ## Testing
 
-### Backend: 225 tests across 29 modules
+### Backend: 195 tests across 29 modules
 
 Run: `cd src-tauri && cargo test`
 
@@ -389,7 +389,7 @@ Run: `cd src-tauri && cargo test`
 | backup | 5 | `backup.rs` |
 | plugin/builtins | 3 | `plugin/builtins.rs` |
 | plugin/registry | 5 | `plugin/registry.rs` |
-| plugin/rhai_loader | 9 | `plugin/rhai_loader.rs` |
+| plugin/rhai_loader | 11 | `plugin/rhai_loader.rs` |
 | config | 11 | `config.rs` |
 
 ### Frontend: 31 tests across 6 files

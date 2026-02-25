@@ -255,9 +255,15 @@ Artifacts will be in `src-tauri/target/release/bundle/`.
 ## Known Issues
 - Concurrent access to the journal is not supported
 
+## Extending Mini Diarium
+
+You can add local import/export extensions using Rhai scripts in your diary `plugins/` folder.
+See [docs/user-plugins/USER_PLUGIN_GUIDE.md](docs/user-plugins/USER_PLUGIN_GUIDE.md) for requirements, best practices, and a complete example plugin.
+
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for setup instructions, development workflow, and conventions.
+For maintainers adding official plugins, see [docs/BUILTIN_PLUGIN_GUIDE.md](docs/BUILTIN_PLUGIN_GUIDE.md).
 
 ## Releasing
 

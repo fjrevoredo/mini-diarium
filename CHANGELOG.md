@@ -8,6 +8,11 @@ All notable changes to Mini Diarium are documented here. This project uses [Sema
 
 - **Sidebar starts collapsed on launch and unlock** (#24): the app now opens directly to today's entry without the calendar panel obscuring the editor. The sidebar can still be toggled via the menu button. After locking and unlocking, the view resets to today's entry with the sidebar closed.
 - **Window size and position are remembered between sessions** (#26): the app restores the window dimensions and position from the previous session. First launch still uses the default 800×660 px. Powered by `tauri-plugin-window-state`.
+- **Official user-plugin example and guides**: added `docs/user-plugins/plain-text-timeline.rhai` as a reference Rhai export plugin, plus dedicated built-in/user plugin guides for requirements, testing, and best practices.
+
+### Changed
+
+- **Plugin documentation structure simplified**: user plugin documentation and canonical example now live together in `docs/user-plugins/` for discoverability; README now links to this area from a dedicated **Extending Mini Diarium** section.
 
 ## [0.4.0] - 25-02-2026
 
