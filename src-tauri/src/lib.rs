@@ -36,6 +36,10 @@ fn resolve_app_data_dir(app_dir: PathBuf) -> PathBuf {
     app_dir
 }
 
+fn is_e2e_mode() -> bool {
+    matches!(std::env::var("MINI_DIARIUM_E2E").as_deref(), Ok("1"))
+}
+
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
     env_logger::Builder::from_env(
@@ -44,9 +48,18 @@ pub fn run() {
     .init();
     info!("Mini Diarium starting");
 
-    tauri::Builder::default()
+    let is_e2e = is_e2e_mode();
+    let mut builder = tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
-        .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_dialog::init());
+
+    if is_e2e {
+        info!("E2E mode detected (MINI_DIARIUM_E2E=1): window-state persistence disabled");
+    } else {
+        builder = builder.plugin(tauri_plugin_window_state::Builder::default().build());
+    }
+
+    builder
         .setup(|app| {
             // Get app data directory and create diary path
             let system_app_dir = match app.path().app_data_dir() {

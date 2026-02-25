@@ -2,7 +2,7 @@
 
 [![CI Status](https://github.com/fjrevoredo/mini-diarium/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/fjrevoredo/mini-diarium/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-0.4.0-blue.svg)](https://github.com/fjrevoredo/mini-diarium/releases)
+[![Version](https://img.shields.io/badge/version-0.4.1-blue.svg)](https://github.com/fjrevoredo/mini-diarium/releases)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)](https://github.com/fjrevoredo/mini-diarium#installation)
 [![Follow on X](https://img.shields.io/badge/Follow-%40MiniDiarium-000000?logo=x)](https://x.com/MiniDiarium)
 
@@ -19,6 +19,19 @@ Mini Diarium keeps your journal private. Every entry is encrypted with AES-256-G
 ## Background
 
 Mini Diarium is a spiritual successor to [Mini Diary](https://github.com/samuelmeuli/mini-diary) by Samuel Meuli. I loved the original tool. It was simple, private, and did exactly what a journal app should do. Unfortunately, it's been unmaintained for years and its dependencies have aged out. I initially thought about forking it and modernizing the stack, but turned out impractical. So I started over from scratch, keeping the same core philosophy (encrypted, local-only, minimal) while rebuilding completely with Tauri 2, SolidJS, and Rust. The result is a lighter, faster app with stronger encryption and a few personal touches.
+
+## Philosophy First
+
+Mini Diarium is intentionally opinionated. The philosophy is not a side note, it is the product:
+
+- **Small, extensible core**: keep core responsibilities tight (encrypt, store, authenticate) and push extras to extension points
+- **Boring security**: use established algorithms and audited libraries, never custom crypto
+- **Local-only by design**: no cloud sync, no telemetry, no analytics, no hidden network behavior
+- **Easy in, easy out**: import from common formats and export in open formats to avoid lock-in
+- **Focused scope**: private journaling over feature sprawl
+- **Simplicity over cleverness**: fewer moving parts, smaller attack surface, easier maintenance
+
+Read the full principles and how these translates to the architecture in [PHILOSOPHY.md](PHILOSOPHY.md).
 
 ## Features
 
@@ -242,13 +255,15 @@ Artifacts will be in `src-tauri/target/release/bundle/`.
 ## Known Issues
 - Concurrent access to the journal is not supported
 
-## Philosophy
+## Extending Mini Diarium
 
-Mini Diarium is built around six guiding principles: a small and extensible core, boring security, a testing pyramid, easy data portability, focused scope, and simplicity. See [PHILOSOPHY.md](PHILOSOPHY.md) for the full rationale and how each principle translates to concrete decisions in the codebase.
+You can add local import/export extensions using Rhai scripts in your diary `plugins/` folder.
+See [docs/user-plugins/USER_PLUGIN_GUIDE.md](docs/user-plugins/USER_PLUGIN_GUIDE.md) for requirements, best practices, and a complete example plugin.
 
 ## Contributing
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for setup instructions, development workflow, and conventions.
+For maintainers adding official plugins, see [docs/BUILTIN_PLUGIN_GUIDE.md](docs/BUILTIN_PLUGIN_GUIDE.md).
 
 ## Releasing
 

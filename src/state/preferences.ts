@@ -3,11 +3,14 @@ import { createLogger } from '../lib/logger';
 
 const log = createLogger('Preferences');
 
+export type EscAction = 'none' | 'quit';
+
 export interface Preferences {
   allowFutureEntries: boolean;
   firstDayOfWeek: number | null; // 0-6 (Sunday-Saturday) or null for system default
   hideTitles: boolean;
   enableSpellcheck: boolean;
+  escAction: EscAction;
 }
 
 const DEFAULT_PREFERENCES: Preferences = {
@@ -15,6 +18,7 @@ const DEFAULT_PREFERENCES: Preferences = {
   firstDayOfWeek: null, // System default
   hideTitles: false,
   enableSpellcheck: true,
+  escAction: 'none',
 };
 
 // Load preferences from localStorage

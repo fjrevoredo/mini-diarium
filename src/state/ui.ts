@@ -4,8 +4,8 @@ import { getTodayString } from '../lib/dates';
 // Selected date (YYYY-MM-DD format)
 const [selectedDate, setSelectedDate] = createSignal<string>(getTodayString());
 
-// Sidebar collapsed state (for mobile)
-const [isSidebarCollapsed, setIsSidebarCollapsed] = createSignal(false);
+// Sidebar collapsed state — starts collapsed so the editor is visible immediately on launch/unlock
+const [isSidebarCollapsed, setIsSidebarCollapsed] = createSignal(true);
 
 // Go To Date overlay state
 const [isGoToDateOpen, setIsGoToDateOpen] = createSignal(false);
@@ -27,7 +27,7 @@ const [isAboutOpen, setIsAboutOpen] = createSignal(false);
 
 export function resetUiState(): void {
   setSelectedDate(getTodayString());
-  setIsSidebarCollapsed(false);
+  setIsSidebarCollapsed(true);
   setIsGoToDateOpen(false);
   setIsPreferencesOpen(false);
   setIsStatsOpen(false);
