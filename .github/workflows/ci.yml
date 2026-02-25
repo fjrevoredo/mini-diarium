@@ -261,5 +261,10 @@ jobs:
       - name: Install JS dependencies
         run: bun install --frozen-lockfile
 
-      - name: Run E2E tests (with virtual display)
+      - name: Run E2E tests (clean mode)
         run: xvfb-run --auto-servernum bun run test:e2e
+
+      - name: Run E2E tests (stateful mode)
+        env:
+          E2E_STATEFUL_ROOT: ${{ github.workspace }}/.e2e-stateful-ci
+        run: xvfb-run --auto-servernum bun run test:e2e:stateful

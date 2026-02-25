@@ -137,7 +137,7 @@ src/
 
 ### E2E (`e2e/`)
 
-End-to-end tests using WebdriverIO + tauri-driver. These run against the real compiled binary with a real SQLite database in a temp directory.
+End-to-end tests using WebdriverIO + tauri-driver. These run against the real compiled binary with a real SQLite database (temp directory in clean mode).
 
 ```
 e2e/
@@ -153,7 +153,9 @@ cargo install tauri-driver   # once
 bun run test:e2e:local       # builds binary + runs suite (use --skip-build on repeat runs)
 ```
 
-**Test isolation:** Each run creates a fresh OS temp directory and passes it to the app via `MINI_DIARIUM_DATA_DIR`. The app reads this env var in `lib.rs` and uses it as the diary directory instead of `app_data_dir`.
+**Test isolation modes:**
+- Default `bun run test:e2e` runs in **clean-room mode** (`E2E_MODE=clean`): fresh temp diary directory (`MINI_DIARIUM_DATA_DIR`), explicit E2E app mode (`MINI_DIARIUM_E2E=1`), deterministic viewport (`800x660`), and on Windows a fresh WebView2 profile (`webviewOptions.userDataFolder`).
+- Optional `bun run test:e2e:stateful` runs in **stateful mode** (`E2E_MODE=stateful`) and reuses a repo-local persistent root (`.e2e-stateful/`, configurable via `E2E_STATEFUL_ROOT`) for persistence-focused checks.
 
 ### Backend (`src-tauri/src/`)
 
@@ -407,6 +409,7 @@ bun run test:run -- dates                      # Specific test file
 bun run test:e2e:local                         # E2E tests: build binary + run suite
 bun run test:e2e:local -- --skip-build         # E2E tests: skip build, run suite only
 bun run test:e2e                               # Run suite only (binary must already exist)
+bun run test:e2e:stateful                      # Stateful E2E mode (persistence-oriented lane)
 
 # Code quality
 bun run lint             # ESLint
@@ -442,7 +445,7 @@ bun run tauri build      # Full app bundle
 
 10. **Auth slots (v3 schema):** Each auth method stores its own wrapped copy of the master key in `auth_slots`. `remove_auth_method` refuses to delete the last slot (minimum one required). `change_password` re-wraps the master key in O(1) — no entry re-encryption needed. `verify_password` exists as a side-effect-free check used before multi-step operations.
 
-11. **E2E test isolation via `MINI_DIARIUM_DATA_DIR`:** When this env var is set, `lib.rs` uses it as the diary directory instead of `app_data_dir`. This is intentional for E2E test isolation — do not remove it. It has no effect on production builds where the var is unset.
+11. **E2E mode contracts:** Default E2E uses clean-room mode (`E2E_MODE=clean`) and sets both `MINI_DIARIUM_DATA_DIR` (fresh temp diary path) and `MINI_DIARIUM_E2E=1` (backend disables `tauri-plugin-window-state` so host window geometry does not leak into tests). Stateful lane (`bun run test:e2e:stateful`) uses a repo-local persistent root (`.e2e-stateful/`, optionally overridden by `E2E_STATEFUL_ROOT`) for persistence-specific checks.
 
 ## Security Rules
 

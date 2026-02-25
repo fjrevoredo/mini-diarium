@@ -5,12 +5,27 @@ import {
   existsSync,
   readdirSync,
   mkdirSync,
+  rmSync,
 } from 'node:fs';
 import { spawn, spawnSync, type ChildProcess } from 'node:child_process';
 import type { Options } from '@wdio/types';
 
-// temp dir for isolated diary state — each run gets a fresh empty directory
-const testDataDir = mkdtempSync(join(tmpdir(), 'mini-diarium-e2e-'));
+type E2eMode = 'clean' | 'stateful';
+const e2eMode: E2eMode = process.env['E2E_MODE'] === 'stateful' ? 'stateful' : 'clean';
+const isCleanMode = e2eMode === 'clean';
+const statefulRoot = process.env['E2E_STATEFUL_ROOT'] ?? join(process.cwd(), '.e2e-stateful');
+
+// temp dirs for clean-room E2E isolation
+const testDataDir = isCleanMode ? mkdtempSync(join(tmpdir(), 'mini-diarium-e2e-data-')) : null;
+const testWebviewDir =
+  isCleanMode && process.platform === 'win32'
+    ? mkdtempSync(join(tmpdir(), 'mini-diarium-e2e-webview-'))
+    : null;
+const statefulDataDir = !isCleanMode ? join(statefulRoot, 'data') : null;
+const statefulWebviewDir =
+  !isCleanMode && process.platform === 'win32' ? join(statefulRoot, 'webview') : null;
+const diaryDataDir = isCleanMode ? testDataDir : statefulDataDir;
+const webviewUserDataDir = isCleanMode ? testWebviewDir : statefulWebviewDir;
 
 // tauri-driver process handle
 let tauriDriver: ChildProcess;
@@ -120,6 +135,15 @@ function nativeDriverArgs(): string[] {
   return ['--native-driver', driverPath];
 }
 
+function removeTempDir(path: string | null): void {
+  if (!path) return;
+  try {
+    rmSync(path, { recursive: true, force: true });
+  } catch (error) {
+    console.warn(`[wdio] Failed to remove temp dir ${path}:`, error);
+  }
+}
+
 export const config: Options.Testrunner = {
   specs: ['./e2e/specs/**/*.spec.ts'],
   maxInstances: 1,
@@ -140,6 +164,13 @@ export const config: Options.Testrunner = {
       // @ts-expect-error — tauri:options is not in the standard WebDriver types
       'tauri:options': {
         application: appBinary,
+        ...(process.platform === 'win32' && webviewUserDataDir
+          ? {
+              webviewOptions: {
+                userDataFolder: webviewUserDataDir,
+              },
+            }
+          : {}),
       },
     },
   ],
@@ -163,16 +194,43 @@ export const config: Options.Testrunner = {
     timeout: 60000,
   },
 
+  before: async () => {
+    if (!isCleanMode) return;
+
+    // Force deterministic viewport so responsive breakpoints do not depend on host state.
+    await browser.setWindowSize(800, 660);
+    const size = await browser.getWindowSize();
+    if (size.width !== 800 || size.height !== 660) {
+      await browser.pause(250);
+      await browser.setWindowSize(800, 660);
+    }
+  },
+
   // onPrepare runs in the main process before any workers start.
   // This is the correct place to spawn tauri-driver so it is listening
   // on port 4444 before wdio workers attempt to create a WebDriver session.
   onPrepare: async () => {
     // Strip TAURI_DEV so it doesn't leak into the app binary at runtime
     const { TAURI_DEV: _drop, ...cleanEnv } = process.env;
+    console.log(`[wdio] E2E mode: ${e2eMode}`);
+    if (statefulDataDir) {
+      mkdirSync(statefulDataDir, { recursive: true });
+    }
+    if (statefulWebviewDir) {
+      mkdirSync(statefulWebviewDir, { recursive: true });
+    }
 
     tauriDriver = spawn('tauri-driver', nativeDriverArgs(), {
       stdio: 'inherit',
-      env: { ...cleanEnv, MINI_DIARIUM_DATA_DIR: testDataDir },
+      env: {
+        ...cleanEnv,
+        ...(diaryDataDir
+          ? {
+              MINI_DIARIUM_DATA_DIR: diaryDataDir,
+            }
+          : {}),
+        MINI_DIARIUM_E2E: isCleanMode ? '1' : '0',
+      },
     });
     // Give tauri-driver time to bind to port 4444 before workers connect
     await new Promise<void>((resolve) => setTimeout(resolve, 3000));
@@ -181,5 +239,7 @@ export const config: Options.Testrunner = {
   // onComplete runs in the main process after all workers have finished.
   onComplete: () => {
     tauriDriver?.kill();
+    removeTempDir(testDataDir);
+    removeTempDir(testWebviewDir);
   },
 };
