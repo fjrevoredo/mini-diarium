@@ -118,7 +118,7 @@ describe('auth session boundary reset', () => {
 
     expect(authState()).toBe('locked');
     expect(selectedDate()).toBe(getTodayString());
-    expect(isSidebarCollapsed()).toBe(false);
+    expect(isSidebarCollapsed()).toBe(true);
     expect(isGoToDateOpen()).toBe(false);
     expect(isPreferencesOpen()).toBe(false);
     expect(isStatsOpen()).toBe(false);

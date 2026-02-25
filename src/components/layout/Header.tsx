@@ -40,6 +40,7 @@ export default function Header(props: HeaderProps) {
           <Show when={props.showMenu}>
             <button
               onClick={props.onMenuClick}
+              data-testid="toggle-sidebar-button"
               class="rounded p-2 hover:bg-hover text-primary lg:hidden"
               aria-label="Toggle menu"
             >

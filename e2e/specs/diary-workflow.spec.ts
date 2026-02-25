@@ -41,7 +41,9 @@ describe('Core diary workflow', () => {
     await $('[data-testid="create-diary-button"]').click();
 
     // 2. Diary created and unlocked → MainLayout is now visible
-    //    Wait for the auth overlay to finish transitioning out, then click the target date
+    //    Sidebar starts collapsed; open it to access the calendar, then click the target date
+    await $('[data-testid="toggle-sidebar-button"]').waitForClickable({ timeout: 10000 });
+    await $('[data-testid="toggle-sidebar-button"]').click();
     await $(`[data-testid="calendar-day-${TEST_DATE}"]`).waitForClickable({ timeout: 10000 });
     await $(`[data-testid="calendar-day-${TEST_DATE}"]`).click();
 
@@ -68,6 +70,9 @@ describe('Core diary workflow', () => {
     await $('[data-testid="unlock-diary-button"]').click();
 
     // 9. Verify a fresh session baseline: unlock should select today.
+    //    Sidebar starts collapsed after unlock; open it to access the calendar.
+    await $('[data-testid="toggle-sidebar-button"]').waitForClickable({ timeout: 10000 });
+    await $('[data-testid="toggle-sidebar-button"]').click();
     const todayButton = await $(`[data-testid="calendar-day-${TODAY_DATE}"]`);
     await todayButton.waitForDisplayed({ timeout: 10000 });
     const todayButtonClass = await todayButton.getAttribute('class');

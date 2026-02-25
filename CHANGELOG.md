@@ -2,7 +2,14 @@
 
 All notable changes to Mini Diarium are documented here. This project uses [Semantic Versioning](https://semver.org/).
 
-## [0.4.0] — Unreleased
+## [0.4.1] — Unreleased
+
+### Added
+
+- **Sidebar starts collapsed on launch and unlock** (#24): the app now opens directly to today's entry without the calendar panel obscuring the editor. The sidebar can still be toggled via the menu button. After locking and unlocking, the view resets to today's entry with the sidebar closed.
+- **Window size and position are remembered between sessions** (#26): the app restores the window dimensions and position from the previous session. First launch still uses the default 800×660 px. Powered by `tauri-plugin-window-state`.
+
+## [0.4.0] - 25-02-2026
 
 ### Added
 
@@ -23,6 +30,7 @@ All notable changes to Mini Diarium are documented here. This project uses [Sema
 ### Changed
 
 - **PHILOSOPHY.md restructured and expanded**: split into Part I (what and why for each principle) and Part II (how each principle is implemented in the codebase). Added concrete extension/plugin system description, E2E test stack guidance, rationale for the no-password-recovery rule, OS integration and Rhai scripting as justified complexity examples, a typo fix ("rich-text support"), a clarification distinguishing local Rhai plugins from plugin marketplaces, a version/date header, and a new "Honest threat documentation" non-negotiable. README now links to PHILOSOPHY.md under a dedicated Philosophy section.
+
 
 ## [0.3.0] — 2026-02-21
 

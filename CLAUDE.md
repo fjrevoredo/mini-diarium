@@ -424,6 +424,7 @@ Run: `bun run test:e2e` (requires release binary + `tauri-driver` installed)
 | `PasswordCreation.tsx` | Create button | `create-diary-button` |
 | `PasswordPrompt.tsx` | Password input | `password-unlock-input` |
 | `PasswordPrompt.tsx` | Unlock submit button | `unlock-diary-button` |
+| `Header.tsx` | Sidebar toggle (hamburger) | `toggle-sidebar-button` |
 | `Header.tsx` | Lock button | `lock-diary-button` |
 | `TitleEditor.tsx` | Title input | `title-input` |
 | `Calendar.tsx` | Each day button | `calendar-day-YYYY-MM-DD` |
@@ -487,6 +488,8 @@ bun run tauri build      # Full app bundle
 14. **Rhai AST requires `unsafe impl Send + Sync`**: The `rhai::AST` type does not implement `Send + Sync` in the current version. The `unsafe` impls on `RhaiImportPlugin` and `RhaiExportPlugin` are required and justified: AST is immutable after compilation, and Engine is created fresh per invocation.
 
 15. **Old import/export commands are preserved**: The original `import_minidiary_json`, `import_dayone_json`, etc. commands remain registered for backward compatibility. The Import/Export overlays now use the plugin system (`runImportPlugin`/`runExportPlugin`) but the legacy commands still work.
+
+16. **E2E tests run at 800×660 px — always below the `lg` breakpoint (1024 px)**: The sidebar uses `lg:relative lg:translate-x-0`, so on the E2E window size it is always in mobile/overlay mode. Any change to `isSidebarCollapsed` default or `resetUiState()` affects whether calendar day elements are reachable in E2E tests. **Planning rule**: when changing the default value of any UI visibility signal (`isSidebarCollapsed`, overlay open states, etc.), explicitly audit `e2e/specs/` for interactions that depend on the affected element being visible and update the test accordingly.
 
 ## Security Rules
 
