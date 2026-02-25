@@ -1,5 +1,6 @@
 import { onMount, onCleanup } from 'solid-js';
 import { listen, UnlistenFn } from '@tauri-apps/api/event';
+import { getCurrentWindow } from '@tauri-apps/api/window';
 import { createLogger } from '../../lib/logger';
 import Header from './Header';
 import Sidebar from './Sidebar';
@@ -15,6 +16,7 @@ import {
   setSelectedDate,
   isSidebarCollapsed,
   setIsSidebarCollapsed,
+  isGoToDateOpen,
   setIsGoToDateOpen,
   isPreferencesOpen,
   setIsPreferencesOpen,
@@ -43,8 +45,28 @@ export default function MainLayout() {
   // Store cleanup functions at component level
   const unlisteners: UnlistenFn[] = [];
 
+  const handleGlobalEsc = (e: KeyboardEvent) => {
+    if (e.key !== 'Escape') return;
+    // Never fire when any dialog is open — they handle their own Escape
+    if (
+      isGoToDateOpen() ||
+      isPreferencesOpen() ||
+      isStatsOpen() ||
+      isImportOpen() ||
+      isExportOpen() ||
+      isAboutOpen()
+    )
+      return;
+    if (preferences().escAction === 'quit') {
+      getCurrentWindow()
+        .close()
+        .catch((err) => log.error('Failed to close window:', err));
+    }
+  };
+
   // Setup menu event listeners
   onMount(async () => {
+    document.addEventListener('keydown', handleGlobalEsc);
     // Previous Day menu item
     unlisteners.push(
       await listen('menu-navigate-previous-day', async () => {
@@ -157,6 +179,7 @@ export default function MainLayout() {
   // Cleanup on component unmount
   onCleanup(() => {
     unlisteners.forEach((unlisten) => unlisten());
+    document.removeEventListener('keydown', handleGlobalEsc);
   });
 
   return (
