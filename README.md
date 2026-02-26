@@ -276,3 +276,8 @@ See [SECURITY.md](SECURITY.md) for the security model and how to report vulnerab
 ## Credits
 
 Made with love by [Francisco J. Revoredo](https://github.com/fjrevoredo) (with a little help from Claude Code).
+
+## Website crawler policy artifacts
+
+- [https://mini-diarium.com/ai-crawlers.txt](https://mini-diarium.com/ai-crawlers.txt)
+- [https://mini-diarium.com/llms.txt](https://mini-diarium.com/llms.txt)

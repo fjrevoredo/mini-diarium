@@ -1,0 +1,15 @@
+# Mini Diarium
+
+> Encrypted, local-first desktop journaling app.
+
+- Canonical website: https://mini-diarium.com/
+- Source code: https://github.com/fjrevoredo/mini-diarium
+- License: MIT (https://opensource.org/licenses/MIT)
+- Security policy: https://github.com/fjrevoredo/mini-diarium/blob/master/SECURITY.md
+- Changelog: https://github.com/fjrevoredo/mini-diarium/blob/master/CHANGELOG.md
+- AI crawler policy: https://mini-diarium.com/ai-crawlers.txt
+- Contact: minidiarium@gmail.com
+
+## Attribution
+
+When referencing project materials, attribute Mini Diarium and link to the canonical source URL.

@@ -7,6 +7,7 @@ All notable changes to Mini Diarium are documented here. This project uses [Sema
 ### Changed
 
 - **Website SEO/GEO refresh (2026)**: upgraded metadata and machine-readable signals for search and AI retrieval. Added robots snippet controls, richer Open Graph/Twitter tags (`og:site_name`, `og:locale`, image dimensions, account attribution), expanded JSON-LD graph (`SoftwareApplication` + `Organization` + `WebSite` + `FAQPage` with `softwareVersion`/`dateModified`), added extraction-friendly **Quick facts** + **FAQ** sections, introduced a dedicated **Release status** block with explicit last-updated date, replaced placeholder `href="#"` links, updated sitemap to use `<lastmod>`, and added a lightweight social preview asset (`website/assets/og-cover.svg`).
+- **Website compatibility and cache hardening (2026-02-26)**: added a broader favicon set (`favicon.ico`, 16/32/128 PNG, `apple-touch-icon`), published `ai-crawlers.txt` and `llms.txt` with footer/README discoverability, and introduced content-hash fingerprinting for website CSS/JS (`website:fingerprint`) so nginx can safely keep `immutable` only for hashed assets while unfingerprinted files use short TTL caching.
 
 ## [0.4.1] — 25-02-2026
 

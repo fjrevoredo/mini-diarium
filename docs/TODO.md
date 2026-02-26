@@ -29,10 +29,10 @@ Open tasks and planned improvements. For full context and implementation notes o
 - [ ] **Website SEO/GEO follow-up backlog** — remaining implementation items from the 2026 website SEO/GEO pass
   - [ ] **Optimize demo media** — replace the 4.7 MB `website/assets/demo.gif` with a lightweight preview strategy (e.g. poster image + optional MP4/WebM playback) to reduce transfer size and improve performance signals
   - [ ] **Canonical host redirect** — enforce one canonical host (`mini-diarium.com` vs `www`) with explicit 301 behavior in deployment/edge config and keep `<link rel="canonical">` aligned
-  - [ ] **Favicon compatibility set** — add and ship fallback assets/links (`favicon.ico`, PNG sizes, `apple-touch-icon`) for broader SERP/browser compatibility
-  - [ ] **AI crawler policy artifacts** — publish `ai-crawlers.txt` (policy/attribution guidance) and optionally `llms.txt`, then link them from the website footer/docs
+  - [x] **Favicon compatibility set** (2026-02-26) — shipped fallback assets/links (`favicon.ico`, PNG sizes, `apple-touch-icon`) for broader SERP/browser compatibility
+  - [x] **AI crawler policy artifacts** (2026-02-26) — published `ai-crawlers.txt` + `llms.txt` and linked them from website footer/docs
   - [ ] **Email no-JS fallback** — make the contact email actionable without JavaScript (server-rendered `mailto:`), keeping optional obfuscation/enhancement on top
-  - [ ] **Cache strategy hardening** — either fingerprint static asset filenames and keep `immutable`, or remove `immutable` for unfingerprinted assets to avoid stale SEO/GEO content on clients
+  - [x] **Cache strategy hardening** (2026-02-26) — fingerprinted CSS/JS asset filenames and limited `immutable` caching to hashed files
   - [ ] **Release freshness ops** — document and automate post-release discovery flow (Search Console URL inspection/request indexing and optional IndexNow ping) for high-cadence releases
 - [x] **Backup behavior docs** (2026-02-21) — explain backup trigger/rotation/path behavior and how it works with custom diary locations and moved/externally stored `diary.db` files
 - [x] **Split `commands/auth.rs` into sub-modules** (2026-02-25) — the file is ~1100 lines covering core auth, auth-method management, and directory management; split into `auth_core.rs`, `auth_methods.rs`, `auth_directory.rs` without changing any public API. Pure refactor; completed as of v0.4.0 (files exist in `src-tauri/src/commands/auth/`)
