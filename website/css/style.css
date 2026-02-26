@@ -262,6 +262,17 @@ section {
   color: var(--text-muted);
 }
 
+.hero-sourceforge {
+  display: inline-block;
+  margin: 0.1rem auto 1rem;
+}
+
+.hero-sourceforge img {
+  display: block;
+  width: min(276px, 100%);
+  height: auto;
+}
+
 .hero-source a {
   color: var(--text-muted);
   text-decoration: underline;
