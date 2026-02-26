@@ -4,8 +4,9 @@ All notable changes to Mini Diarium are documented here. This project uses [Sema
 
 ## [0.4.2] — Unreleased
 
+### Changed
 
-
+- **Website SEO/GEO refresh (2026)**: upgraded metadata and machine-readable signals for search and AI retrieval. Added robots snippet controls, richer Open Graph/Twitter tags (`og:site_name`, `og:locale`, image dimensions, account attribution), expanded JSON-LD graph (`SoftwareApplication` + `Organization` + `WebSite` + `FAQPage` with `softwareVersion`/`dateModified`), added extraction-friendly **Quick facts** + **FAQ** sections, introduced a dedicated **Release status** block with explicit last-updated date, replaced placeholder `href="#"` links, updated sitemap to use `<lastmod>`, and added a lightweight social preview asset (`website/assets/og-cover.svg`).
 
 ## [0.4.1] — 25-02-2026
 

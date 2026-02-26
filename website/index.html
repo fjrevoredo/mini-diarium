@@ -4,23 +4,30 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="Mini Diarium: an encrypted, local-first desktop journal. AES-256-GCM encryption, no cloud, no tracking, no nonsense. Your entries stay on your device." />
+  <meta name="robots" content="index,follow,max-snippet:-1,max-image-preview:large,max-video-preview:-1" />
   <meta name="theme-color" content="#0e0e0e" />
   <meta name="author" content="Francisco J. Revoredo" />
 
   <!-- Open Graph -->
   <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Mini Diarium" />
+  <meta property="og:locale" content="en_US" />
   <meta property="og:url" content="https://mini-diarium.com/" />
   <meta property="og:title" content="Mini Diarium: Your journal. Your device. Your keys." />
   <meta property="og:description" content="An encrypted, local-first desktop journal for Windows, macOS, and Linux. No cloud, no tracking, no subscriptions." />
-  <meta property="og:image" content="https://mini-diarium.com/assets/demo.gif" />
-  <meta property="og:image:type" content="image/gif" />
-  <meta property="og:image:alt" content="Mini Diarium app demo showing calendar navigation and encrypted journal entries" />
+  <meta property="og:image" content="https://mini-diarium.com/assets/og-cover.svg" />
+  <meta property="og:image:type" content="image/svg+xml" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="Mini Diarium - encrypted local-first desktop journal" />
 
   <!-- Twitter / X -->
   <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:site" content="@MiniDiarium" />
+  <meta name="twitter:creator" content="@MiniDiarium" />
   <meta name="twitter:title" content="Mini Diarium: Your journal. Your device. Your keys." />
   <meta name="twitter:description" content="An encrypted, local-first desktop journal. AES-256-GCM. No cloud, no tracking." />
-  <meta name="twitter:image" content="https://mini-diarium.com/assets/demo.gif" />
+  <meta name="twitter:image" content="https://mini-diarium.com/assets/og-cover.svg" />
 
   <title>Mini Diarium: Your journal. Your device. Your keys.</title>
   <link rel="canonical" href="https://mini-diarium.com/" />
@@ -30,24 +37,103 @@
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
-    "@type": "SoftwareApplication",
-    "name": "Mini Diarium",
-    "description": "An encrypted, local-first desktop journal for Windows, macOS, and Linux. AES-256-GCM encryption, no cloud, no telemetry.",
-    "url": "https://mini-diarium.com",
-    "applicationCategory": "UtilitiesApplication",
-    "operatingSystem": "Windows, macOS, Linux",
-    "offers": {
-      "@type": "Offer",
-      "price": "0",
-      "priceCurrency": "USD"
-    },
-    "author": {
-      "@type": "Person",
-      "name": "Francisco J. Revoredo",
-      "url": "https://fjrevoredo.com"
-    },
-    "license": "https://opensource.org/licenses/MIT",
-    "codeRepository": "https://github.com/fjrevoredo/mini-diarium"
+    "@graph": [
+      {
+        "@type": "SoftwareApplication",
+        "@id": "https://mini-diarium.com/#software",
+        "name": "Mini Diarium",
+        "description": "An encrypted, local-first desktop journal for Windows, macOS, and Linux. AES-256-GCM encryption, no cloud, no telemetry.",
+        "url": "https://mini-diarium.com",
+        "applicationCategory": "UtilitiesApplication",
+        "operatingSystem": "Windows, macOS, Linux",
+        "softwareVersion": "0.4.1",
+        "downloadUrl": "https://github.com/fjrevoredo/mini-diarium/releases",
+        "installUrl": "https://github.com/fjrevoredo/mini-diarium/releases",
+        "dateModified": "2026-02-26",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        },
+        "author": {
+          "@type": "Person",
+          "name": "Francisco J. Revoredo",
+          "url": "https://fjrevoredo.com"
+        },
+        "publisher": {
+          "@id": "https://mini-diarium.com/#organization"
+        },
+        "license": "https://opensource.org/licenses/MIT",
+        "codeRepository": "https://github.com/fjrevoredo/mini-diarium"
+      },
+      {
+        "@type": "Organization",
+        "@id": "https://mini-diarium.com/#organization",
+        "name": "Mini Diarium",
+        "url": "https://mini-diarium.com",
+        "sameAs": [
+          "https://github.com/fjrevoredo/mini-diarium",
+          "https://x.com/MiniDiarium"
+        ]
+      },
+      {
+        "@type": "WebSite",
+        "@id": "https://mini-diarium.com/#website",
+        "url": "https://mini-diarium.com/",
+        "name": "Mini Diarium",
+        "inLanguage": "en-US",
+        "publisher": {
+          "@id": "https://mini-diarium.com/#organization"
+        },
+        "dateModified": "2026-02-26"
+      },
+      {
+        "@type": "FAQPage",
+        "@id": "https://mini-diarium.com/#faq",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "Does Mini Diarium work fully offline?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. Mini Diarium does not make network requests and does not send your entries to cloud servers."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "How are diary entries encrypted?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Entries are encrypted with AES-256-GCM before being written to the local SQLite database."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Which operating systems are supported?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Mini Diarium supports Windows, macOS, and Linux."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can I import existing journals?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. You can import from Mini Diary JSON, Day One JSON and TXT, and jrnl JSON."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Can I export my data anytime?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Yes. You can export all entries as JSON or Markdown at any time."
+            }
+          }
+        ]
+      }
+    ]
   }
   </script>
 </head>
@@ -56,7 +142,7 @@
 <!-- ========== NAV ========== -->
 <nav class="nav" aria-label="Main navigation">
   <div class="container nav-inner">
-    <a class="nav-brand" href="#">
+    <a class="nav-brand" href="#home">
       <img src="assets/logo.svg" alt="Mini Diarium logo" class="nav-logo" width="28" height="28" />
       Mini Diarium
     </a>
@@ -64,6 +150,7 @@
     <ul class="nav-links" id="nav-links" role="list">
       <li><a href="#features">Features</a></li>
       <li><a href="#security">Security</a></li>
+      <li><a href="#facts">FAQ</a></li>
       <li><a href="#platforms">Download</a></li>
       <li><a href="#about">About</a></li>
       <li>
@@ -92,7 +179,7 @@
 <section class="hero" id="home">
   <div class="container">
     <div class="hero-version">
-      Current release &nbsp;<span>v<span class="app-version">0.4.1</span></span>
+      <span>Daily releases</span> published on GitHub
     </div>
     <p class="hero-eyebrow">Privacy-first journaling</p>
     <h1>Your journal.<br><em>Your device.</em> Your keys.</h1>
@@ -139,7 +226,7 @@
         <div class="demo-dot demo-dot-max"></div>
         <div class="demo-title">Mini Diarium</div>
       </div>
-      <img src="assets/demo.gif" alt="Mini Diarium in action: calendar navigation, rich text editor, and encrypted entry saving" class="demo-gif" loading="lazy" width="900" height="562" />
+      <img src="assets/demo.gif" alt="Mini Diarium in action: calendar navigation, rich text editor, and encrypted entry saving" class="demo-gif" loading="lazy" decoding="async" fetchpriority="low" width="900" height="562" />
     </div>
   </div>
 </section>
@@ -341,6 +428,70 @@
   </div>
 </section>
 
+<!-- ========== FACTS + FAQ ========== -->
+<section class="facts" id="facts">
+  <div class="container">
+    <div class="facts-header">
+      <p class="section-label">At a glance</p>
+      <h2 class="section-title">Quick facts</h2>
+      <p class="section-body">Short answers for humans and machines: what Mini Diarium is, how it protects data, and what platforms it supports.</p>
+    </div>
+
+    <div class="facts-grid">
+      <div class="fact-card">
+        <p class="fact-label">Offline-only</p>
+        <p class="fact-value">Yes. No network calls, no telemetry.</p>
+      </div>
+      <div class="fact-card">
+        <p class="fact-label">Encryption</p>
+        <p class="fact-value">AES-256-GCM for entries at rest.</p>
+      </div>
+      <div class="fact-card">
+        <p class="fact-label">Storage</p>
+        <p class="fact-value">Local encrypted SQLite on your device.</p>
+      </div>
+      <div class="fact-card">
+        <p class="fact-label">Platforms</p>
+        <p class="fact-value">Windows, macOS, Linux.</p>
+      </div>
+      <div class="fact-card">
+        <p class="fact-label">License</p>
+        <p class="fact-value">MIT, source available on GitHub.</p>
+      </div>
+      <div class="fact-card">
+        <p class="fact-label">Import/Export</p>
+        <p class="fact-value">Import Mini Diary/Day One/jrnl. Export JSON/Markdown.</p>
+      </div>
+    </div>
+
+    <div class="faq-list" id="faq">
+      <p class="section-label">Common questions</p>
+      <h3 class="faq-title">FAQ</h3>
+
+      <details class="faq-item">
+        <summary>Does Mini Diarium work fully offline?</summary>
+        <p>Yes. The app does not send entries to cloud services and does not include telemetry. See the <a href="https://github.com/fjrevoredo/mini-diarium/blob/master/PRIVACY.md" target="_blank" rel="noopener noreferrer">privacy policy</a>.</p>
+      </details>
+      <details class="faq-item">
+        <summary>How are entries encrypted?</summary>
+        <p>Each entry is encrypted with AES-256-GCM before it is written to disk. See the <a href="https://github.com/fjrevoredo/mini-diarium/blob/master/SECURITY.md" target="_blank" rel="noopener noreferrer">security model</a> for details.</p>
+      </details>
+      <details class="faq-item">
+        <summary>Which systems are supported?</summary>
+        <p>Mini Diarium supports Windows, macOS, and Linux builds published from the GitHub releases page.</p>
+      </details>
+      <details class="faq-item">
+        <summary>Can I import old journal data?</summary>
+        <p>Yes. Supported imports are Mini Diary JSON, Day One JSON/TXT, and jrnl JSON.</p>
+      </details>
+      <details class="faq-item">
+        <summary>Can I export everything any time?</summary>
+        <p>Yes. Exports are available in JSON and Markdown so your data is never locked in.</p>
+      </details>
+    </div>
+  </div>
+</section>
+
 <!-- ========== PLATFORMS ========== -->
 <section class="platforms" id="platforms">
   <div class="container">
@@ -397,6 +548,16 @@
   </div>
 </section>
 
+<!-- ========== RELEASE STATUS ========== -->
+<section class="release-status" id="release-status">
+  <div class="container release-status-inner">
+    <p class="section-label">Release freshness</p>
+    <h2 class="section-title">Release status</h2>
+    <p class="section-body">Current stable release: <strong>v<span class="app-version">0.4.1</span></strong>. Last updated: <time datetime="2026-02-26">February 26, 2026</time>.</p>
+    <p class="section-body">For the newest installers and checksums, use the <a href="https://github.com/fjrevoredo/mini-diarium/releases" target="_blank" rel="noopener noreferrer">GitHub releases page</a>.</p>
+  </div>
+</section>
+
 <!-- ========== SOCIAL ========== -->
 <section class="social" id="social">
   <div class="container">
@@ -423,14 +584,14 @@
         Follow on X
       </a>
 
-      <a class="badge-btn" href="#" aria-label="Product Hunt, coming soon">
+      <span class="badge-btn badge-btn-disabled" aria-label="Product Hunt, coming soon">
         <!-- Product Hunt icon -->
         <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
           <path d="M13.604 8.4h-3.405V12h3.405a1.8 1.8 0 0 0 0-3.6zM12 0C5.372 0 0 5.372 0 12s5.372 12 12 12 12-5.372 12-12S18.628 0 12 0zm1.604 14.4h-3.405V18H7.8V6h5.804a4.2 4.2 0 0 1 0 8.4z"/>
         </svg>
         Product Hunt
         <span style="font-size:0.7em; opacity:0.5; margin-left:0.2rem;">(soon)</span>
-      </a>
+      </span>
     </div>
 
     <p class="badge-note">Product Hunt profile coming soon.</p>
@@ -493,7 +654,7 @@
         <img src="assets/logo.svg" alt="" class="footer-logo" width="20" height="20" aria-hidden="true" />
         <span>Mini Diarium</span>
         <span class="footer-sep">·</span>
-        <span>v<span class="app-version">0.4.1</span></span>
+        <span>Offline-first</span>
         <span class="footer-sep">·</span>
         <span>MIT License</span>
       </div>

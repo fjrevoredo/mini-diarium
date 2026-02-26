@@ -502,6 +502,117 @@ section {
   margin-bottom: 0;
 }
 
+/* ===== Facts + FAQ ===== */
+.facts {
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.facts-header {
+  text-align: center;
+  margin-bottom: clamp(1.75rem, 4vw, 2.75rem);
+}
+
+.facts-header .section-body {
+  margin: 0 auto;
+}
+
+.facts-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-bottom: clamp(2rem, 5vw, 3rem);
+}
+
+.fact-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1rem 1.1rem;
+}
+
+.fact-label {
+  color: var(--accent);
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 700;
+  margin-bottom: 0.4rem;
+}
+
+.fact-value {
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  line-height: 1.6;
+}
+
+.faq-list {
+  max-width: 760px;
+  margin: 0 auto;
+}
+
+.faq-title {
+  font-size: 1.25rem;
+  margin-bottom: 1rem;
+}
+
+.faq-item {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 0.9rem 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.faq-item:last-child {
+  margin-bottom: 0;
+}
+
+.faq-item summary {
+  cursor: pointer;
+  font-weight: 700;
+  color: var(--text);
+  list-style: none;
+}
+
+.faq-item summary::-webkit-details-marker {
+  display: none;
+}
+
+.faq-item p {
+  color: var(--text-muted);
+  font-size: 0.88rem;
+  line-height: 1.7;
+  margin-top: 0.7rem;
+}
+
+/* ===== Release Status ===== */
+.release-status {
+  border-top: 1px solid var(--border);
+}
+
+.release-status-inner {
+  max-width: 760px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.release-status .section-body {
+  margin: 0 auto 0.9rem;
+}
+
+.release-status .section-body:last-child {
+  margin-bottom: 0;
+}
+
+.release-status strong {
+  color: var(--accent);
+}
+
+.release-status time {
+  color: var(--text);
+}
+
 /* ===== Platforms ===== */
 .platforms {
   border-top: 1px solid var(--border);
@@ -597,6 +708,17 @@ section {
   border-color: var(--accent);
   color: var(--accent);
   background: var(--bg);
+}
+
+.badge-btn-disabled {
+  cursor: default;
+  opacity: 0.7;
+}
+
+.badge-btn-disabled:hover {
+  border-color: var(--border);
+  color: var(--text);
+  background: var(--bg-raised);
 }
 
 .badge-btn svg {
@@ -780,6 +902,10 @@ section {
   }
 
   .features-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .facts-grid {
     grid-template-columns: 1fr;
   }
 
