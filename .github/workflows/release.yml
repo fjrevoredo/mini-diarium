@@ -127,8 +127,10 @@ jobs:
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
         with:
-          args: ${{ matrix.platform == 'macos' && '--target universal-apple-darwin' || '' }}
+          args: --config tauri.release.conf.json ${{ matrix.platform == 'macos' && '--target universal-apple-darwin' || '' }}
 
       - name: Debug macOS DMG bundling failure
         if: failure() && matrix.platform == 'macos'
@@ -143,8 +145,11 @@ jobs:
           VERSION="${{ needs.create-release.outputs.version }}"
 
           # Find and rename artifacts
-          find src-tauri/target/release/bundle -name "*.AppImage" -exec cp {} release-artifacts/Mini-Diarium-${VERSION}-linux.AppImage \;
+          find src-tauri/target/release/bundle -name "*.AppImage" -not -name "*.sig" -exec cp {} release-artifacts/Mini-Diarium-${VERSION}-linux.AppImage \;
           find src-tauri/target/release/bundle -name "*.deb" -exec cp {} release-artifacts/Mini-Diarium-${VERSION}-linux.deb \;
+
+          # Copy updater signature files
+          find src-tauri/target/release/bundle -name "*.AppImage.sig" -exec cp {} release-artifacts/Mini-Diarium-${VERSION}-linux.AppImage.sig \; || true
 
           # Generate checksums
           cd release-artifacts
@@ -160,6 +165,10 @@ jobs:
           # Find and rename artifacts (universal builds output to target/universal-apple-darwin/release/bundle/)
           find src-tauri/target/universal-apple-darwin/release/bundle -name "*.dmg" -exec cp {} release-artifacts/Mini-Diarium-${VERSION}-macos.dmg \;
 
+          # Copy updater artifacts (.app.tar.gz + .sig)
+          find src-tauri/target/universal-apple-darwin/release/bundle/macos -name "*.app.tar.gz" -exec cp {} release-artifacts/Mini-Diarium-${VERSION}-macos.app.tar.gz \; || true
+          find src-tauri/target/universal-apple-darwin/release/bundle/macos -name "*.app.tar.gz.sig" -exec cp {} release-artifacts/Mini-Diarium-${VERSION}-macos.app.tar.gz.sig \; || true
+
           # Generate checksums
           cd release-artifacts
           shasum -a 256 * > checksums-macos.txt
@@ -174,7 +183,10 @@ jobs:
 
           # Find and rename artifacts
           find src-tauri/target/release/bundle -name "*.msi" -exec cp {} release-artifacts/Mini-Diarium-${VERSION}-windows.msi \;
-          find src-tauri/target/release/bundle/nsis -name "*.exe" -exec cp {} release-artifacts/Mini-Diarium-${VERSION}-windows.exe \; || true
+          find src-tauri/target/release/bundle/nsis -name "*.exe" -not -name "*.sig" -exec cp {} release-artifacts/Mini-Diarium-${VERSION}-windows.exe \; || true
+
+          # Copy updater signature files
+          find src-tauri/target/release/bundle/nsis -name "*.exe.sig" -exec cp {} release-artifacts/Mini-Diarium-${VERSION}-windows.exe.sig \; || true
 
           # Generate checksums
           cd release-artifacts
@@ -189,3 +201,73 @@ jobs:
           files: release-artifacts/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  generate-update-manifest:
+    name: Generate Update Manifest
+    needs: [create-release, build-release]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Generate latest.json and upload to release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          VERSION: ${{ needs.create-release.outputs.version }}
+          TAG: v${{ needs.create-release.outputs.version }}
+          REPO: ${{ github.repository }}
+        run: |
+          BASE_URL="https://github.com/${REPO}/releases/download/${TAG}"
+
+          # Download all .sig files from the draft release via gh CLI
+          # (curl with browser URLs does not work for draft releases; gh uses the API)
+          mkdir -p sigs
+          gh release download "${TAG}" --pattern "*.sig" --dir sigs/ 2>/dev/null || true
+
+          LINUX_SIG=$(cat "sigs/Mini-Diarium-${VERSION}-linux.AppImage.sig" 2>/dev/null || echo "")
+          MACOS_SIG=$(cat "sigs/Mini-Diarium-${VERSION}-macos.app.tar.gz.sig" 2>/dev/null || echo "")
+          WIN_SIG=$(cat "sigs/Mini-Diarium-${VERSION}-windows.exe.sig" 2>/dev/null || echo "")
+
+          PUB_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+
+          # Build platform entries only for those with signatures
+          PLATFORMS_JSON=""
+          if [ -n "$LINUX_SIG" ]; then
+            PLATFORMS_JSON="${PLATFORMS_JSON}
+              \"linux-x86_64\": {
+                \"signature\": \"${LINUX_SIG}\",
+                \"url\": \"${BASE_URL}/Mini-Diarium-${VERSION}-linux.AppImage\"
+              },"
+          fi
+          if [ -n "$MACOS_SIG" ]; then
+            PLATFORMS_JSON="${PLATFORMS_JSON}
+              \"darwin-universal\": {
+                \"signature\": \"${MACOS_SIG}\",
+                \"url\": \"${BASE_URL}/Mini-Diarium-${VERSION}-macos.app.tar.gz\"
+              },"
+          fi
+          if [ -n "$WIN_SIG" ]; then
+            PLATFORMS_JSON="${PLATFORMS_JSON}
+              \"windows-x86_64\": {
+                \"signature\": \"${WIN_SIG}\",
+                \"url\": \"${BASE_URL}/Mini-Diarium-${VERSION}-windows.exe\"
+              },"
+          fi
+
+          # Remove trailing comma from last platform entry
+          PLATFORMS_JSON="${PLATFORMS_JSON%,}"
+
+          cat > latest.json <<EOF
+          {
+            "version": "${VERSION}",
+            "notes": "See https://github.com/${REPO}/releases/tag/${TAG} for full release notes.",
+            "pub_date": "${PUB_DATE}",
+            "platforms": {${PLATFORMS_JSON}
+            }
+          }
+          EOF
+
+          echo "Generated latest.json:"
+          cat latest.json
+
+          # Upload latest.json to the release
+          gh release upload "${TAG}" latest.json --clobber

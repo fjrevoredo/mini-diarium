@@ -20,7 +20,7 @@ Open tasks and planned improvements. For full context and implementation notes o
 - [x] **Modernize release workflow** (2026-02-21) — replace deprecated `actions/create-release@v1` with `softprops/action-gh-release@v2`; done in `.github/workflows/release.yml`
 - [x] **Platform-specific menus** (2026-02-21) — macOS App menu (About, Preferences, Quit), Windows/Linux File menu; disable items when diary is locked
 - [ ] **Auto-lock on screen lock (macOS parity)** — Windows implementation is done; add macOS native screen-lock hook so behavior matches across desktop platforms
-- [ ] **Auto-update system** — in-app update notifications via `@tauri-apps/plugin-updater`
+- [x] **Auto-update system** (2026-02-26) — in-app update notifications via `@tauri-apps/plugin-updater`; manual-only (user-triggered from Help menu); no background checks; overlay shows version, release notes, download progress, restart prompt
 - [ ] **i18n framework** — detect OS locale, set up translation files (`en.json`, `es.json`), add `t()` helper
 - [ ] **Translate all UI text** — replace hardcoded strings with translation keys (~145 keys); depends on i18n framework above
 - [ ] **E2E tests for critical workflows** — expand beyond the single current test (`diary-workflow.spec.ts` with 1 test); add scenarios for: first-time setup, import/export, preferences, theme switching, auth methods (keypair), menu events, auto-lock, and backup verification (7 additional tests needed; E2E setup completed v0.3.0)
@@ -31,7 +31,6 @@ Open tasks and planned improvements. For full context and implementation notes o
   - [ ] **Canonical host redirect** — enforce one canonical host (`mini-diarium.com` vs `www`) with explicit 301 behavior in deployment/edge config and keep `<link rel="canonical">` aligned
   - [x] **Favicon compatibility set** (2026-02-26) — shipped fallback assets/links (`favicon.ico`, PNG sizes, `apple-touch-icon`) for broader SERP/browser compatibility
   - [x] **AI crawler policy artifacts** (2026-02-26) — published `ai-crawlers.txt` + `llms.txt` and linked them from website footer/docs
-  - [ ] **Email no-JS fallback** — make the contact email actionable without JavaScript (server-rendered `mailto:`), keeping optional obfuscation/enhancement on top
   - [x] **Cache strategy hardening** (2026-02-26) — fingerprinted CSS/JS asset filenames and limited `immutable` caching to hashed files
   - [ ] **Release freshness ops** — document and automate post-release discovery flow (Search Console URL inspection/request indexing and optional IndexNow ping) for high-cadence releases
 - [x] **Backup behavior docs** (2026-02-21) — explain backup trigger/rotation/path behavior and how it works with custom diary locations and moved/externally stored `diary.db` files

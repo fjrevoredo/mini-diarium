@@ -2,7 +2,7 @@
 
 **Mini Diarium** is an encrypted, local-first desktop journaling app (SolidJS + Rust/Tauri v2 + SQLite). All diary entries are AES-256-GCM encrypted at rest; plaintext never touches disk.
 
-**Core principles:** privacy-first (no network), incremental dev, clean architecture, TypeScript strict + Rust type safety.
+**Core principles:** privacy-first (no telemetry, no automatic network calls), incremental dev, clean architecture, TypeScript strict + Rust type safety.
 
 **Platforms:** Windows 10/11, macOS 10.15+, Linux (Ubuntu 20.04+, Fedora, Arch).
 
@@ -110,7 +110,10 @@ src/
 │   │   ├── GoToDateOverlay.tsx        # Date picker dialog
 │   │   ├── PreferencesOverlay.tsx     # Settings dialog (includes Auth Methods section)
 │   │   ├── StatsOverlay.tsx           # Statistics display
-│   │   └── ImportOverlay.tsx          # Import format selector + file picker
+│   │   ├── ImportOverlay.tsx          # Import format selector + file picker
+│   │   ├── ExportOverlay.tsx          # Export format selector + file picker
+│   │   ├── AboutOverlay.tsx           # App info, version, license, GitHub link
+│   │   └── UpdateOverlay.tsx          # Manual update check + download progress
 │   └── search/
 │       ├── SearchBar.tsx              # Search input (not rendered; reserved for future secure search)
 │       └── SearchResults.tsx          # Search result list
@@ -274,7 +277,7 @@ Six signal-based state modules in `src/state/`:
 | `entries.ts` | `currentEntry`, `entryDates`, `isLoading`, `isSaving` | Setters exported directly |
 | `journals.ts` | `journals: JournalConfig[]`, `activeJournalId`, `isSwitching` | `loadJournals()`, `switchJournal()`, `addJournal()`, `removeJournal()`, `renameJournal()` |
 | `search.ts` | `searchQuery`, `searchResults`, `isSearching` | Setters exported directly |
-| `ui.ts` | `selectedDate`, `isSidebarCollapsed`, `isGoToDateOpen`, `isPreferencesOpen`, `isStatsOpen`, `isImportOpen` | Setters exported directly |
+| `ui.ts` | `selectedDate`, `isSidebarCollapsed`, `isGoToDateOpen`, `isPreferencesOpen`, `isStatsOpen`, `isImportOpen`, `isExportOpen`, `isAboutOpen`, `isUpdatesOpen` | Setters exported directly; `resetUiState()` resets all |
 | `preferences.ts` | `preferences: Preferences` | `setPreferences(Partial<Preferences>)`, `resetPreferences()` |
 
 `Preferences` fields: `allowFutureEntries` (bool), `firstDayOfWeek` (number|null), `hideTitles` (bool), `enableSpellcheck` (bool). Stored in `localStorage`.
@@ -354,11 +357,11 @@ menu.rs: app.emit("menu-navigate-previous-day", ())
 shortcuts.ts: listen("menu-navigate-previous-day", handler)
 ```
 
-All menu event names are prefixed `menu-`. See `menu.rs:78-107` for the full list.
+All menu event names are prefixed `menu-`. See `menu.rs` (`build_menu` function) for the full list.
 
 ## Testing
 
-### Backend: 195 tests across 29 modules
+### Backend: 227 tests across 29 modules
 
 Run: `cd src-tauri && cargo test`
 
@@ -394,7 +397,7 @@ Run: `cd src-tauri && cargo test`
 | plugin/rhai_loader | 11 | `plugin/rhai_loader.rs` |
 | config | 11 | `config.rs` |
 
-### Frontend: 31 tests across 6 files
+### Frontend: 47 tests across 8 files
 
 Run: `bun run test:run` (single run) or `bun run test` (watch mode)
 
@@ -406,6 +409,8 @@ Run: `bun run test:run` (single run) or `bun run test` (watch mode)
 | `src/components/editor/TitleEditor.test.tsx` | 6 |
 | `src/components/editor/WordCount.test.tsx` | 3 |
 | `src/components/layout/MainLayout-event-listeners.test.tsx` | 4 |
+| `src/components/layout/EditorPanel-save-logic.test.ts` | 12 |
+| `src/state/auth-session-boundary.test.ts` | 4 |
 
 Coverage: `bun run test:coverage`
 
@@ -498,7 +503,7 @@ bun run tauri build      # Full app bundle
 
 - **Never** log, print, or serialize passwords or encryption keys
 - **Never** store plaintext diary content in any unencrypted form on disk
-- **Never** send data over the network — no analytics, no telemetry, no update checks
+- **Never** send data over the network automatically — no analytics, no telemetry, no background reporting. The only permitted outbound call is the manual "Check for Updates" action initiated by the user, which contacts GitHub Releases and transmits no diary data.
 - Auth: A random master key is wrapped per auth slot in `auth_slots` (schema v3). Password slots use Argon2id + AES-256-GCM wrapping; keypair slots use X25519 ECIES. The master key is never stored in plaintext.
 - The `DiaryState` holds `Mutex<Option<DatabaseConnection>>` — `None` when locked, `Some` when unlocked
 - All commands that access entries must check `db_state.as_ref().ok_or("Diary not unlocked")?`

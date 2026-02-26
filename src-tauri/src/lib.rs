@@ -51,7 +51,8 @@ pub fn run() {
     let is_e2e = is_e2e_mode();
     let mut builder = tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
-        .plugin(tauri_plugin_dialog::init());
+        .plugin(tauri_plugin_dialog::init())
+        .plugin(tauri_plugin_updater::Builder::new().build());
 
     if is_e2e {
         info!("E2E mode detected (MINI_DIARIUM_E2E=1): window-state persistence disabled");

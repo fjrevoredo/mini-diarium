@@ -4,6 +4,10 @@ All notable changes to Mini Diarium are documented here. This project uses [Sema
 
 ## [0.4.2] — Unreleased
 
+### Added
+
+- **Check for Updates** (manual): a new "Check for Updates..." menu item (Help menu on Windows/Linux; App menu on macOS) opens an overlay that contacts GitHub Releases on demand and shows whether a newer version is available. If an update is found, the overlay displays the release version, release notes, a progress bar during download, and a "Restart to apply" message when complete. No automatic background checks — the app never contacts the network without user action. Powered by `tauri-plugin-updater`.
+
 ### Changed
 
 - **Website SEO/GEO refresh (2026)**: upgraded metadata and machine-readable signals for search and AI retrieval. Added robots snippet controls, richer Open Graph/Twitter tags (`og:site_name`, `og:locale`, image dimensions, account attribution), expanded JSON-LD graph (`SoftwareApplication` + `Organization` + `WebSite` + `FAQPage` with `softwareVersion`/`dateModified`), added extraction-friendly **Quick facts** + **FAQ** sections, introduced a dedicated **Release status** block with explicit last-updated date, replaced placeholder `href="#"` links, updated sitemap to use `<lastmod>`, and added a lightweight social preview asset (`website/assets/og-cover.svg`).

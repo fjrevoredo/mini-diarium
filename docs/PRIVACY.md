@@ -8,7 +8,9 @@ None. Mini Diarium collects no data of any kind.
 
 ## Network Access
 
-None. The app makes zero network requests. There is no telemetry, no analytics, no crash reporting, and no update checking. The app works fully offline and contains no HTTP client code.
+Mini Diarium makes **no automatic network requests**. There is no telemetry, no analytics, no crash reporting, and no background update polling.
+
+The only outbound connection the app can make is the **manual "Check for Updates…"** action (available from the Help / App menu). This is entirely user-initiated: it contacts GitHub Releases (`github.com`) to retrieve a version manifest, transmits no diary data or personal information, and is never triggered automatically. If you never click "Check for Updates…", the app never contacts the network.
 
 ## Data Storage
 

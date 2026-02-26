@@ -23,6 +23,14 @@
       "csp": "default-src 'self' data:; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:"
     }
   },
+  "plugins": {
+    "updater": {
+      "pubkey": "PLACEHOLDER_PUBLIC_KEY",
+      "endpoints": [
+        "https://github.com/fjrevoredo/mini-diarium/releases/latest/download/latest.json"
+      ]
+    }
+  },
   "bundle": {
     "active": true,
     "targets": ["dmg", "app", "msi", "nsis", "appimage", "deb"],
@@ -36,7 +44,7 @@
     "copyright": "Copyright (c) 2026 Francisco J. Revoredo",
     "category": "Productivity",
     "shortDescription": "An encrypted, local-first desktop journaling app",
-    "longDescription": "Mini Diarium is a privacy-focused desktop journaling application. All diary entries are encrypted with AES-256-GCM at rest. Features include rich text editing, full-text search, calendar navigation, import/export, and automatic backups. No network access, no telemetry. Your journal stays on your device.",
+    "longDescription": "Mini Diarium is a privacy-focused desktop journaling application. All diary entries are encrypted with AES-256-GCM at rest. Features include rich text editing, calendar navigation, import/export, automatic backups, and optional in-app update checks. No telemetry, no automatic network calls. Your journal stays on your device.",
     "licenseFile": "../LICENSE",
     "macOS": {
       "minimumSystemVersion": "10.15",
