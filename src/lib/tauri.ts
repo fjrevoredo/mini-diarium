@@ -17,6 +17,10 @@ export async function diaryExists(): Promise<boolean> {
   return await invoke('diary_exists');
 }
 
+export async function checkDiaryPath(dir: string): Promise<boolean> {
+  return invoke<boolean>('check_diary_path', { dir });
+}
+
 export async function isDiaryUnlocked(): Promise<boolean> {
   return await invoke('is_diary_unlocked');
 }

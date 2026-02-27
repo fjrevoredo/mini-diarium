@@ -142,6 +142,7 @@ pub fn run() {
             commands::auth::unlock_diary_with_keypair,
             commands::auth::lock_diary,
             commands::auth::diary_exists,
+            commands::auth::check_diary_path,
             commands::auth::is_diary_unlocked,
             commands::auth::get_diary_path,
             commands::auth::change_diary_directory,

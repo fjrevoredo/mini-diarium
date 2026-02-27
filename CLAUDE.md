@@ -218,7 +218,7 @@ src-tauri/src/
 
 ## Command Registry
 
-All 44 registered Tauri commands (source: `lib.rs`). Rust names use `snake_case`; frontend wrappers in `src/lib/tauri.ts` use `camelCase`.
+All 45 registered Tauri commands (source: `lib.rs`). Rust names use `snake_case`; frontend wrappers in `src/lib/tauri.ts` use `camelCase`.
 
 | Module | Rust Command | Frontend Wrapper | Description |
 |--------|-------------|-----------------|-------------|
@@ -226,6 +226,7 @@ All 44 registered Tauri commands (source: `lib.rs`). Rust names use `snake_case`
 | auth | `unlock_diary` | `unlockDiary(password)` | Decrypt and open DB |
 | auth | `lock_diary` | `lockDiary()` | Close DB connection |
 | auth | `diary_exists` | `diaryExists()` | Check if DB file exists |
+| auth | `check_diary_path` | `checkDiaryPath(dir)` | Stateless check: true if `{dir}/diary.db` exists |
 | auth | `is_diary_unlocked` | `isDiaryUnlocked()` | Check unlock state |
 | auth | `get_diary_path` | `getDiaryPath()` | Return diary file path |
 | auth | `change_diary_directory` | `changeDiaryDirectory(newDir)` | Change diary directory (locked state only) |
@@ -361,7 +362,7 @@ All menu event names are prefixed `menu-`. See `menu.rs` (`build_menu` function)
 
 ## Testing
 
-### Backend: 227 tests across 29 modules
+### Backend: 228 tests across 29 modules
 
 Run: `cd src-tauri && cargo test`
 
@@ -373,7 +374,7 @@ Run: `cd src-tauri && cargo test`
 | cipher | 11 | `crypto/cipher.rs` |
 | schema | 11 | `db/schema.rs` |
 | queries | 12 | `db/queries.rs` |
-| auth-core | 5 | `commands/auth/auth_core.rs` |
+| auth-core | 6 | `commands/auth/auth_core.rs` |
 | auth-directory | 5 | `commands/auth/auth_directory.rs` |
 | auth-journals | 6 | `commands/auth/auth_journals.rs` |
 | auth-methods | 7 | `commands/auth/auth_methods.rs` |

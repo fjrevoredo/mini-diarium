@@ -14,6 +14,8 @@ export default function PasswordCreation() {
   const [repeatPassword, setRepeatPassword] = createSignal('');
   const [error, setError] = createSignal<string | null>(null);
   const [isCreating, setIsCreating] = createSignal(false);
+  const [isOpeningExisting, setIsOpeningExisting] = createSignal(false);
+  const [openError, setOpenError] = createSignal<string | null>(null);
 
   const handleSubmit = async (e: Event) => {
     e.preventDefault();
@@ -57,6 +59,43 @@ export default function PasswordCreation() {
       setError(message);
     } finally {
       setIsCreating(false);
+    }
+  };
+
+  const handleOpenExisting = async () => {
+    setOpenError(null);
+    setIsOpeningExisting(true);
+    try {
+      const { open: openDirDialog } = await import('@tauri-apps/plugin-dialog');
+      const selected = await openDirDialog({
+        directory: true,
+        multiple: false,
+        title: 'Select Diary Folder',
+      });
+      if (!selected || typeof selected !== 'string') return;
+
+      const found = await tauri.checkDiaryPath(selected);
+      if (!found) {
+        setOpenError(
+          'No diary found in the selected folder. Make sure the folder contains a diary.db file.',
+        );
+        return;
+      }
+
+      const folderName =
+        selected
+          .replace(/[/\\]+$/, '')
+          .split(/[/\\]/)
+          .pop() || 'My Journal';
+
+      const journal = await addJournal(folderName, selected);
+      await switchJournal(journal.id);
+      await refreshAuthState();
+    } catch (err) {
+      const message = err instanceof Error ? err.message : String(err);
+      setOpenError(message);
+    } finally {
+      setIsOpeningExisting(false);
     }
   };
 
@@ -144,6 +183,22 @@ export default function PasswordCreation() {
               <p class="text-xs text-tertiary">
                 Your diary will be encrypted and stored locally on your device.
               </p>
+            </div>
+
+            <div class="mt-4 border-t border-primary pt-4">
+              <Show when={openError()}>
+                <div class="mb-3 rounded-md bg-error p-3">
+                  <p class="text-sm text-error">{openError()}</p>
+                </div>
+              </Show>
+              <button
+                type="button"
+                onClick={() => handleOpenExisting()}
+                disabled={isCreating() || isOpeningExisting()}
+                class="w-full rounded-md border border-primary px-4 py-3 font-medium text-secondary transition-colors hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isOpeningExisting() ? 'Opening...' : 'Open Existing Diary...'}
+              </button>
             </div>
           </form>
         </div>

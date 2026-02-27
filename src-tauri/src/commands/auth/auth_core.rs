@@ -143,6 +143,14 @@ pub fn lock_diary(state: State<DiaryState>, app: AppHandle<Wry>) -> Result<(), S
     Ok(())
 }
 
+/// Stateless check — returns true if `{dir}/diary.db` exists on disk.
+/// Used by the frontend to validate a picked folder before adding it as a journal.
+#[tauri::command]
+pub fn check_diary_path(dir: String) -> Result<bool, String> {
+    let path = std::path::PathBuf::from(&dir);
+    Ok(path.join("diary.db").exists())
+}
+
 /// Checks if a diary file exists
 #[tauri::command]
 pub fn diary_exists(state: State<DiaryState>) -> Result<bool, String> {
@@ -247,6 +255,16 @@ pub fn reset_diary(state: State<DiaryState>, app: AppHandle<Wry>) -> Result<(), 
 mod tests {
     use super::super::test_helpers::*;
     use crate::db::schema::{create_database, open_database};
+
+    #[test]
+    fn test_check_diary_path() {
+        let tmp = std::env::temp_dir();
+        // Temp dir exists but has no diary.db -- expect false
+        assert_eq!(
+            super::check_diary_path(tmp.to_str().unwrap().to_string()).unwrap(),
+            false
+        );
+    }
 
     #[test]
     fn test_create_and_unlock() {

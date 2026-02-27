@@ -6,6 +6,7 @@ All notable changes to Mini Diarium are documented here. This project uses [Sema
 
 ### Added
 
+- **Open Existing Diary from first-launch screen**: users who already have a `diary.db` in a cloud-synced or custom folder (Dropbox, OneDrive, iCloud Drive, etc.) can now open it directly from the "Welcome to Mini Diarium" screen via an **Open Existing Diary...** button. Clicking it opens a folder picker; if a valid `diary.db` is found, the folder is registered as a journal and the app transitions directly to the unlock screen. An inline error is shown if no diary is found in the picked folder. Previously, users had to create a dummy diary first and then reconfigure via Preferences > Journals.
 - **Check for Updates** (manual): a new "Check for Updates..." menu item (Help menu on Windows/Linux; App menu on macOS) opens an overlay that contacts GitHub Releases on demand and shows whether a newer version is available. If an update is found, the overlay displays the release version, release notes, a progress bar during download, and a "Restart to apply" message when complete. No automatic background checks — the app never contacts the network without user action. Powered by `tauri-plugin-updater`.
 
 ### Changed
