@@ -260,9 +260,7 @@ mod tests {
     fn test_check_diary_path() {
         let tmp = std::env::temp_dir();
         // Temp dir exists but has no diary.db -- expect false
-        assert!(
-            !super::check_diary_path(tmp.to_str().unwrap().to_string()).unwrap()
-        );
+        assert!(!super::check_diary_path(tmp.to_str().unwrap().to_string()).unwrap());
     }
 
     #[test]
