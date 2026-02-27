@@ -74,13 +74,20 @@ pub fn run() {
                 }
             };
 
-            let app_dir = resolve_app_data_dir(system_app_dir.clone());
-            if app_dir != system_app_dir {
-                info!(
-                    "Using legacy app data directory for compatibility: {}",
-                    app_dir.display()
-                );
-            }
+            // Allow E2E tests to override the app data dir (config.json location) independently.
+            let app_dir = if let Ok(e2e_app_dir) = std::env::var("MINI_DIARIUM_APP_DIR") {
+                info!("Using E2E app dir override: {}", e2e_app_dir);
+                PathBuf::from(e2e_app_dir)
+            } else {
+                let resolved = resolve_app_data_dir(system_app_dir.clone());
+                if resolved != system_app_dir {
+                    info!(
+                        "Using legacy app data directory for compatibility: {}",
+                        resolved.display()
+                    );
+                }
+                resolved
+            };
             if let Err(e) = std::fs::create_dir_all(&app_dir) {
                 warn!(
                     "Failed to create app directory '{}': {}",

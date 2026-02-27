@@ -1,21 +1,11 @@
-import { createSignal, For, Show } from 'solid-js';
-import { createDiary, refreshAuthState } from '../../state/auth';
-import {
-  journals,
-  activeJournalId,
-  isSwitching,
-  switchJournal,
-  addJournal,
-} from '../../state/journals';
-import * as tauri from '../../lib/tauri';
+import { createSignal, Show } from 'solid-js';
+import { createDiary, goToJournalPicker } from '../../state/auth';
 
 export default function PasswordCreation() {
   const [password, setPassword] = createSignal('');
   const [repeatPassword, setRepeatPassword] = createSignal('');
   const [error, setError] = createSignal<string | null>(null);
   const [isCreating, setIsCreating] = createSignal(false);
-  const [isOpeningExisting, setIsOpeningExisting] = createSignal(false);
-  const [openError, setOpenError] = createSignal<string | null>(null);
 
   const handleSubmit = async (e: Event) => {
     e.preventDefault();
@@ -43,59 +33,11 @@ export default function PasswordCreation() {
     try {
       setIsCreating(true);
       await createDiary(pwd);
-
-      // Auto-register journal if this is a first-time user (no journals configured yet)
-      if (journals().length === 0) {
-        try {
-          const path = await tauri.getDiaryPath();
-          const dir = path.replace(/[/\\]diary\.db$/, '');
-          await addJournal('My Journal', dir);
-        } catch {
-          // Non-fatal: journal registration failed but diary was created successfully
-        }
-      }
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       setError(message);
     } finally {
       setIsCreating(false);
-    }
-  };
-
-  const handleOpenExisting = async () => {
-    setOpenError(null);
-    setIsOpeningExisting(true);
-    try {
-      const { open: openDirDialog } = await import('@tauri-apps/plugin-dialog');
-      const selected = await openDirDialog({
-        directory: true,
-        multiple: false,
-        title: 'Select Diary Folder',
-      });
-      if (!selected || typeof selected !== 'string') return;
-
-      const found = await tauri.checkDiaryPath(selected);
-      if (!found) {
-        setOpenError(
-          'No diary found in the selected folder. Make sure the folder contains a diary.db file.',
-        );
-        return;
-      }
-
-      const folderName =
-        selected
-          .replace(/[/\\]+$/, '')
-          .split(/[/\\]/)
-          .pop() || 'My Journal';
-
-      const journal = await addJournal(folderName, selected);
-      await switchJournal(journal.id);
-      await refreshAuthState();
-    } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      setOpenError(message);
-    } finally {
-      setIsOpeningExisting(false);
     }
   };
 
@@ -110,24 +52,6 @@ export default function PasswordCreation() {
           <p class="mb-5 text-center text-sm text-secondary">
             Create a password to secure your diary
           </p>
-
-          {/* Journal selector — only shown when multiple journals exist */}
-          <Show when={journals().length > 1}>
-            <div class="mb-4">
-              <label class="mb-2 block text-sm font-medium text-secondary">Journal</label>
-              <select
-                value={activeJournalId() ?? ''}
-                onChange={async (e) => {
-                  await switchJournal(e.currentTarget.value);
-                  await refreshAuthState();
-                }}
-                disabled={isSwitching() || isCreating()}
-                class="w-full rounded-md border border-primary px-4 py-2 bg-primary text-primary focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <For each={journals()}>{(j) => <option value={j.id}>{j.name}</option>}</For>
-              </select>
-            </div>
-          </Show>
 
           <form onSubmit={handleSubmit} class="space-y-6">
             <div>
@@ -185,19 +109,13 @@ export default function PasswordCreation() {
               </p>
             </div>
 
-            <div class="mt-4 border-t border-primary pt-4">
-              <Show when={openError()}>
-                <div class="mb-3 rounded-md bg-error p-3">
-                  <p class="text-sm text-error">{openError()}</p>
-                </div>
-              </Show>
+            <div class="mt-2 text-center">
               <button
                 type="button"
-                onClick={() => handleOpenExisting()}
-                disabled={isCreating() || isOpeningExisting()}
-                class="w-full rounded-md border border-primary px-4 py-3 font-medium text-secondary transition-colors hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={() => goToJournalPicker()}
+                class="text-sm text-tertiary hover:text-secondary underline focus:outline-none"
               >
-                {isOpeningExisting() ? 'Opening...' : 'Open Existing Diary...'}
+                ← Back to Journals
               </button>
             </div>
           </form>

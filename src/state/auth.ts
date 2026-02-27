@@ -9,7 +9,7 @@ import { resetSessionState } from './session';
 
 const log = createLogger('Auth');
 
-export type AuthState = 'checking' | 'no-diary' | 'locked' | 'unlocked';
+export type AuthState = 'checking' | 'journal-select' | 'no-diary' | 'locked' | 'unlocked';
 
 const [authState, setAuthState] = createSignal<AuthState>('checking');
 const [error, setError] = createSignal<string | null>(null);
@@ -58,24 +58,25 @@ export async function refreshAuthState(): Promise<void> {
     resetSessionState();
     setAuthMethods([]);
     setError('Failed to check diary status');
-    setAuthState('no-diary');
+    setAuthState('journal-select');
   }
 }
 
-// Initialize auth + journals on app load.
+// Initialize auth + journals on app load — always lands on journal-select.
 export async function initializeAuth(): Promise<void> {
   try {
     await loadJournals();
   } catch (err) {
     log.error('Failed to load journals:', err);
-    resetSessionState();
-    setAuthMethods([]);
-    setError('Failed to check diary status');
-    setAuthState('no-diary');
-    return;
+    setError('Failed to load journal list');
   }
+  setAuthState('journal-select');
+}
 
-  await refreshAuthState();
+// Navigate back to the journal picker (e.g. from PasswordPrompt or PasswordCreation).
+export function goToJournalPicker(): void {
+  resetAuthTransientState();
+  setAuthState('journal-select');
 }
 
 // Create new diary

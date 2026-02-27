@@ -6,7 +6,14 @@ All notable changes to Mini Diarium are documented here. This project uses [Sema
 
 ### Added
 
-- **Open Existing Diary from first-launch screen**: users who already have a `diary.db` in a cloud-synced or custom folder (Dropbox, OneDrive, iCloud Drive, etc.) can now open it directly from the "Welcome to Mini Diarium" screen via an **Open Existing Diary...** button. Clicking it opens a folder picker; if a valid `diary.db` is found, the folder is registered as a journal and the app transitions directly to the unlock screen. An inline error is shown if no diary is found in the picked folder. Previously, users had to create a dummy diary first and then reconfigure via Preferences > Journals.
+- **Journal Picker as the outermost app layer**: the app now opens to a **Journal Picker** screen before any diary authentication. The picker lists all configured journals and lets you open, rename, or remove any of them without authenticating first. You can also create a new diary (picks a folder, names it, then goes to password creation) or open an existing `diary.db` from any folder — both flows that were previously fragmented across the first-launch screen and Preferences > Journals. On a shared device, each person can select their own diary without having to step through someone else's lock screen.
+- **"← Back to Journals" link** on both `PasswordCreation` and `PasswordPrompt` screens, letting users navigate back to the journal picker without locking or restarting the app.
+- **Removing the last journal is now allowed**: the backend no longer blocks removal of the sole remaining journal; the picker simply shows the empty state with the two Add buttons so the user can configure a new one.
+
+### Changed
+
+- **Journal management moved to the Journal Picker**: the **Journals** tab has been removed from Preferences. All journal operations (add, rename, remove, open) are available on the pre-auth picker screen. Auth methods, password changes, and data settings remain in their respective Preferences tabs unchanged.
+- **Auth flow**: `initializeAuth()` now always routes to `'journal-select'` on startup (instead of probing the diary path immediately); `refreshAuthState()` is called only after the user selects a journal. This eliminates the single-user assumption baked into the previous startup sequence.
 - **Check for Updates** (manual): a new "Check for Updates..." menu item (Help menu on Windows/Linux; App menu on macOS) opens an overlay that contacts GitHub Releases on demand and shows whether a newer version is available. If an update is found, the overlay displays the release version, release notes, a progress bar during download, and a "Restart to apply" message when complete. No automatic background checks — the app never contacts the network without user action. Powered by `tauri-plugin-updater`.
 
 ### Changed

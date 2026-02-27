@@ -89,6 +89,8 @@ src/
 ├── App.tsx                            # Auth routing (Switch/Match on authState)
 ├── components/
 │   ├── auth/
+│   │   ├── JournalPicker.tsx          # Pre-auth journal selection + management (outermost layer)
+│   │   ├── JournalPicker.test.tsx     # 4 tests
 │   │   ├── PasswordCreation.tsx       # New diary setup
 │   │   └── PasswordPrompt.tsx         # Password + Key File unlock modes
 │   ├── calendar/
@@ -274,7 +276,7 @@ Six signal-based state modules in `src/state/`:
 
 | Module | Signals | Key Functions |
 |--------|---------|---------------|
-| `auth.ts` | `authState: AuthState`, `error`, `authMethods: AuthMethodInfo[]` | `initializeAuth()`, `createDiary()`, `unlockDiary()`, `lockDiary()`, `unlockWithKeypair()` |
+| `auth.ts` | `authState: AuthState`, `error`, `authMethods: AuthMethodInfo[]` | `initializeAuth()`, `createDiary()`, `unlockDiary()`, `lockDiary()`, `unlockWithKeypair()`, `goToJournalPicker()` |
 | `entries.ts` | `currentEntry`, `entryDates`, `isLoading`, `isSaving` | Setters exported directly |
 | `journals.ts` | `journals: JournalConfig[]`, `activeJournalId`, `isSwitching` | `loadJournals()`, `switchJournal()`, `addJournal()`, `removeJournal()`, `renameJournal()` |
 | `search.ts` | `searchQuery`, `searchResults`, `isSearching` | Setters exported directly |
@@ -398,7 +400,7 @@ Run: `cd src-tauri && cargo test`
 | plugin/rhai_loader | 11 | `plugin/rhai_loader.rs` |
 | config | 11 | `config.rs` |
 
-### Frontend: 47 tests across 8 files
+### Frontend: 51 tests across 9 files
 
 Run: `bun run test:run` (single run) or `bun run test` (watch mode)
 
@@ -407,6 +409,7 @@ Run: `bun run test:run` (single run) or `bun run test` (watch mode)
 | `src/lib/dates.test.ts` | 10 |
 | `src/lib/import.test.ts` | 4 |
 | `src/lib/tauri-params.test.ts` | 4 |
+| `src/components/auth/JournalPicker.test.tsx` | 4 |
 | `src/components/editor/TitleEditor.test.tsx` | 6 |
 | `src/components/editor/WordCount.test.tsx` | 3 |
 | `src/components/layout/MainLayout-event-listeners.test.tsx` | 4 |
