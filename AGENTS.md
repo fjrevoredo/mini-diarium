@@ -12,9 +12,9 @@
 
 **Visual diagrams**:
 - [System context](docs/diagrams/context.mmd) - High-level local-only data flow (Mermaid)
-- [Unlock flow](docs/diagrams/unlock.mmd) - Password/key-file master-key unwrap sequence (Mermaid)
-- [Save-entry flow](docs/diagrams/save-entry.mmd) - Editor to encrypted SQLite write path (Mermaid)
-- [Layered architecture](docs/diagrams/architecture.svg) - Presentation/state/backend/data layers (D2)
+- [Unlock flow](docs/diagrams/unlock.mmd) - Password/key-file unlock flow through DB open, backup rotation, and unlocked session (Mermaid)
+- [Save-entry flow](docs/diagrams/save-entry.mmd) - Multi-entry editor persistence flow with create/save/delete and date refresh (Mermaid)
+- [Layered architecture](docs/diagrams/architecture.svg) - Presentation/state/backend/data layers including journals, config, and plugins (D2)
 
 **Regenerate diagrams**:
 ```bash
@@ -28,11 +28,11 @@ Quick reference (ASCII art):
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                     PRESENTATION LAYER                          │
-│                    (SolidJS Components)                          │
-│  ┌────────┐ ┌──────────┐ ┌────────┐ ┌────────┐ ┌───────────┐  │
-│  │  Auth  │ │ Calendar │ │ Editor │ │ Search │ │  Overlays  │  │
-│  └────────┘ └──────────┘ └────────┘ └────────┘ └───────────┘  │
+│                     PRESENTATION LAYER                         │
+│                    (SolidJS Components)                       │
+│  ┌──────────┐ ┌────────┐ ┌────────────┐ ┌────────┐ ┌──────────┐ │
+│  │ Journals │ │  Auth  │ │ MainLayout │ │ Search │ │ Overlays │ │
+│  └──────────┘ └────────┘ └────────────┘ └────────┘ └──────────┘ │
 └────────────────────────────┬────────────────────────────────────┘
                              │ Reactive Signals
 ┌────────────────────────────┴────────────────────────────────────┐
@@ -46,10 +46,10 @@ Quick reference (ASCII art):
 │ Biz: crypto/ · db/ · import/ · export/ · plugin/ · menu.rs · config.rs│
 └────────────────────────────┬────────────────────────────────────┘
                              │
-                      ┌──────┴──────┐
-                      │  SQLite DB  │
-                      │ (encrypted) │
-                      └─────────────┘
+           ┌──────────┬──────────────┬─────────────┬──────────────┐
+           │ diary.db │ config.json  │ backups/    │ plugins/     │
+           │ encrypted│ journals     │ rotated     │ Rhai scripts │
+           └──────────┴──────────────┴─────────────┴──────────────┘
 ```
 
 **Key relationships:**
