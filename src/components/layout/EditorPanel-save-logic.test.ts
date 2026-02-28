@@ -145,9 +145,7 @@ function shouldCreateOnContentUpdate(
   isCreatingEntry: boolean,
 ): boolean {
   if (pendingEntryId !== null) return false;
-  const isEmpty = editor
-    ? editor.isEmpty || editor.getText().trim() === ''
-    : content.trim() === '';
+  const isEmpty = editor ? editor.isEmpty || editor.getText().trim() === '' : content.trim() === '';
   return !isEmpty && !isCreatingEntry;
 }
 
