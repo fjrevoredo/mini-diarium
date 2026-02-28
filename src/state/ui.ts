@@ -25,9 +25,6 @@ const [isExportOpen, setIsExportOpen] = createSignal(false);
 // About overlay state
 const [isAboutOpen, setIsAboutOpen] = createSignal(false);
 
-// Updates overlay state
-const [isUpdatesOpen, setIsUpdatesOpen] = createSignal(false);
-
 export function resetUiState(): void {
   setSelectedDate(getTodayString());
   setIsSidebarCollapsed(true);
@@ -37,7 +34,6 @@ export function resetUiState(): void {
   setIsImportOpen(false);
   setIsExportOpen(false);
   setIsAboutOpen(false);
-  setIsUpdatesOpen(false);
 }
 
 export {
@@ -57,6 +53,4 @@ export {
   setIsExportOpen,
   isAboutOpen,
   setIsAboutOpen,
-  isUpdatesOpen,
-  setIsUpdatesOpen,
 };

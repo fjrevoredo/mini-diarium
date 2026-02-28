@@ -8,7 +8,6 @@
     "core:window:allow-close",
     "opener:default",
     "dialog:default",
-    "window-state:default",
-    "updater:default"
+    "window-state:default"
   ]
 }

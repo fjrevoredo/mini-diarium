@@ -11,7 +11,6 @@ import StatsOverlay from '../overlays/StatsOverlay';
 import ImportOverlay from '../overlays/ImportOverlay';
 import ExportOverlay from '../overlays/ExportOverlay';
 import AboutOverlay from '../overlays/AboutOverlay';
-import UpdateOverlay from '../overlays/UpdateOverlay';
 import {
   selectedDate,
   setSelectedDate,
@@ -29,8 +28,6 @@ import {
   setIsExportOpen,
   isAboutOpen,
   setIsAboutOpen,
-  isUpdatesOpen,
-  setIsUpdatesOpen,
 } from '../../state/ui';
 import {
   navigatePreviousDay,
@@ -57,8 +54,7 @@ export default function MainLayout() {
       isStatsOpen() ||
       isImportOpen() ||
       isExportOpen() ||
-      isAboutOpen() ||
-      isUpdatesOpen()
+      isAboutOpen()
     )
       return;
     if (preferences().escAction === 'quit') {
@@ -152,13 +148,6 @@ export default function MainLayout() {
       }),
     );
 
-    // Check for Updates menu item
-    unlisteners.push(
-      await listen('menu-check-updates', () => {
-        setIsUpdatesOpen(true);
-      }),
-    );
-
     // Previous Month menu item
     unlisteners.push(
       await listen('menu-navigate-previous-month', async () => {
@@ -226,7 +215,6 @@ export default function MainLayout() {
       />
       <ExportOverlay isOpen={isExportOpen()} onClose={() => setIsExportOpen(false)} />
       <AboutOverlay isOpen={isAboutOpen()} onClose={() => setIsAboutOpen(false)} />
-      <UpdateOverlay isOpen={isUpdatesOpen()} onClose={() => setIsUpdatesOpen(false)} />
     </div>
   );
 }

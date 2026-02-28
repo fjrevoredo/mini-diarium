@@ -10,7 +10,6 @@ Before starting the release process:
 
 - [ ] All planned features/fixes are merged to `master`
 - [ ] All tests passing (`cargo test` and `bun run test:run`)
-- [ ] GitHub repo secrets set: `TAURI_SIGNING_PRIVATE_KEY` and `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` (one-time setup — see below)
 - [ ] Run `cargo audit` — no known vulnerabilities in Rust dependencies
   ```bash
   cargo install cargo-audit  # one-time install
@@ -92,10 +91,9 @@ git push origin v0.1.1
 1. Go to: https://github.com/fjrevoredo/mini-diarium/actions
 2. Wait for "Release" workflow to complete (~15-20 minutes)
 3. Workflow will:
-   - Build for Linux, macOS, Windows (with signed update artifacts)
-   - Create draft release with all installers + `.sig` files
+   - Build for Linux, macOS, Windows
+   - Create draft release with all artifacts
    - Upload checksums for each platform
-   - Generate and upload `latest.json` (in-app updater manifest)
 
 ### Step 7: Complete the Draft Release
 
@@ -221,33 +219,11 @@ The following happens automatically when you push a tag:
 
 ✅ Build for all platforms (Linux x64, macOS universal, Windows x64)
 ✅ Generate installers (.AppImage, .deb, .dmg, .msi, .exe)
-✅ Generate signed update artifacts (.AppImage.sig, .app.tar.gz + .sig, .exe.sig)
 ✅ Calculate SHA256 checksums for all artifacts
 ✅ Create draft GitHub release with all files
 ✅ Upload artifacts to release
-✅ Generate and upload `latest.json` (in-app updater manifest for "Check for Updates…")
 
 You only need to:
 1. Bump version
 2. Push tag
 3. Publish the draft release
-
----
-
-## One-Time Setup: Updater Signing Keys
-
-The in-app updater (`tauri-plugin-updater`) requires a signing keypair. This is a one-time setup:
-
-```bash
-# Generate keypair (run locally, once)
-bunx tauri signer generate -w ~/.tauri/mini-diarium.key
-# Prints: public key (goes in tauri.conf.json) + writes private key to ~/.tauri/mini-diarium.key
-```
-
-Then:
-1. Paste the printed **public key** into `src-tauri/tauri.conf.json` → `plugins.updater.pubkey`
-2. Add to GitHub repo secrets:
-   - `TAURI_SIGNING_PRIVATE_KEY` — contents of `~/.tauri/mini-diarium.key`
-   - `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` — the passphrase used during generation (empty string if none)
-
-Without these secrets, the CI build will fail when it tries to sign the update artifacts.

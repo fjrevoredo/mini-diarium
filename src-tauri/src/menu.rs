@@ -77,9 +77,6 @@ pub fn build_menu(app: &AppHandle<Wry>) -> tauri::Result<LockableMenuItems> {
 
     let about = MenuItemBuilder::with_id("about", "About Mini Diarium").build(app)?;
 
-    let check_updates =
-        MenuItemBuilder::with_id("check_updates", "Check for Updates...").build(app)?;
-
     let lockable = vec![
         navigate_prev_day.clone(),
         navigate_next_day.clone(),
@@ -115,7 +112,6 @@ pub fn build_menu(app: &AppHandle<Wry>) -> tauri::Result<LockableMenuItems> {
     let menu = {
         let app_menu = SubmenuBuilder::new(app, "Mini Diarium")
             .item(&about)
-            .item(&check_updates)
             .separator()
             .item(&preferences)
             .separator()
@@ -159,10 +155,7 @@ pub fn build_menu(app: &AppHandle<Wry>) -> tauri::Result<LockableMenuItems> {
             .separator()
             .item(&PredefinedMenuItem::quit(app, None)?)
             .build()?;
-        let help_menu = SubmenuBuilder::new(app, "Help")
-            .item(&about)
-            .item(&check_updates)
-            .build()?;
+        let help_menu = SubmenuBuilder::new(app, "Help").item(&about).build()?;
         MenuBuilder::new(app)
             .item(&file_menu)
             .item(&navigation_menu)
@@ -214,9 +207,6 @@ pub fn build_menu(app: &AppHandle<Wry>) -> tauri::Result<LockableMenuItems> {
             }
             "about" => {
                 let _ = app.emit("menu-about", ());
-            }
-            "check_updates" => {
-                let _ = app.emit("menu-check-updates", ());
             }
             _ => {}
         }
