@@ -4,33 +4,60 @@ import { EntryNavBar } from './EntryNavBar';
 
 const noop = () => {};
 
-describe('EntryNavBar visibility', () => {
-  it('is hidden when total is 0', () => {
+describe('EntryNavBar — + button always visible', () => {
+  it('shows + button when total is 0 (empty day)', () => {
+    const { container } = render(() => (
+      <EntryNavBar total={0} index={0} onPrev={noop} onNext={noop} onAdd={noop} />
+    ));
+    expect(container.querySelector('[aria-label="Add entry"]')).not.toBeNull();
+  });
+
+  it('shows + button when total is 1 (single entry)', () => {
+    const { container } = render(() => (
+      <EntryNavBar total={1} index={0} onPrev={noop} onNext={noop} onAdd={noop} />
+    ));
+    expect(container.querySelector('[aria-label="Add entry"]')).not.toBeNull();
+  });
+
+  it('shows + button when total is 2', () => {
+    const { container } = render(() => (
+      <EntryNavBar total={2} index={0} onPrev={noop} onNext={noop} onAdd={noop} />
+    ));
+    expect(container.querySelector('[aria-label="Add entry"]')).not.toBeNull();
+  });
+});
+
+describe('EntryNavBar — navigation hidden below 2 entries', () => {
+  it('hides prev/next arrows when total is 0', () => {
     const { container } = render(() => (
       <EntryNavBar total={0} index={0} onPrev={noop} onNext={noop} onAdd={noop} />
     ));
     expect(container.querySelector('[aria-label="Previous entry"]')).toBeNull();
+    expect(container.querySelector('[aria-label="Next entry"]')).toBeNull();
   });
 
-  it('is hidden when total is 1 (single entry — no navigation needed)', () => {
+  it('hides prev/next arrows when total is 1', () => {
     const { container } = render(() => (
       <EntryNavBar total={1} index={0} onPrev={noop} onNext={noop} onAdd={noop} />
     ));
     expect(container.querySelector('[aria-label="Previous entry"]')).toBeNull();
+    expect(container.querySelector('[aria-label="Next entry"]')).toBeNull();
   });
 
-  it('is visible when total is 2', () => {
+  it('shows prev/next arrows when total is 2', () => {
     const { container } = render(() => (
       <EntryNavBar total={2} index={0} onPrev={noop} onNext={noop} onAdd={noop} />
     ));
     expect(container.querySelector('[aria-label="Previous entry"]')).not.toBeNull();
+    expect(container.querySelector('[aria-label="Next entry"]')).not.toBeNull();
   });
 
-  it('is visible when total is 3', () => {
+  it('shows prev/next arrows when total is 3', () => {
     const { container } = render(() => (
       <EntryNavBar total={3} index={1} onPrev={noop} onNext={noop} onAdd={noop} />
     ));
     expect(container.querySelector('[aria-label="Previous entry"]')).not.toBeNull();
+    expect(container.querySelector('[aria-label="Next entry"]')).not.toBeNull();
   });
 });
 
