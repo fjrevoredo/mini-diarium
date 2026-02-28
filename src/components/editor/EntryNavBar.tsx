@@ -10,7 +10,7 @@ interface EntryNavBarProps {
 
 export function EntryNavBar(props: EntryNavBarProps) {
   return (
-    <Show when={props.total > 0}>
+    <Show when={props.total >= 2}>
       <div class="flex items-center justify-between px-4 py-1 border-b border-neutral-200 dark:border-neutral-700 text-sm">
         <div class="flex items-center gap-2">
           <button

@@ -2,7 +2,7 @@
 
 All notable changes to Mini Diarium are documented here. This project uses [Semantic Versioning](https://semver.org/).
 
-## [0.5.0] — Unreleased
+## [0.4.3] — Unreleased
 
 ### Added
 
@@ -20,7 +20,7 @@ All notable changes to Mini Diarium are documented here. This project uses [Sema
 
 - **Streak calculation now counts distinct days**: with multiple entries per date, the statistics streak algorithm now deduplicates dates before computing streaks, ensuring one active day is counted once regardless of how many entries it contains.
 
-## [0.4.2] — Unreleased
+## [0.4.2] — 28-02-2026
 
 ### Added
 
