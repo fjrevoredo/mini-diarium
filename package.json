@@ -1,6 +1,6 @@
 {
   "name": "mini-diarium",
-  "version": "0.4.2",
+  "version": "0.4.3",
   "description": "A modern, encrypted, local-first desktop journaling application",
   "type": "module",
   "scripts": {
