@@ -53,7 +53,7 @@ Quick reference (ASCII art):
 ```
 
 **Key relationships:**
-- Entries are stored encrypted in SQLite. Full-text search is not currently implemented; `entries_fts` has been removed (schema v4). See `commands/search.rs` for the stub and interface contract.
+- Entries are stored encrypted in SQLite. Each entry has a unique integer `id` (PRIMARY KEY AUTOINCREMENT) and can have a unique date. Multiple entries per date are supported (schema v5). Full-text search is not currently implemented; `entries_fts` has been removed (schema v4). See `commands/search.rs` for the stub and interface contract.
 - Menu events flow: Rust `app.emit("menu-*")` → frontend `listen()` in `shortcuts.ts` or overlay components.
 - Preferences use `localStorage` (not Tauri store plugin).
 - Multiple journals are tracked in `{app_data_dir}/config.json` via `JournalConfig` entries. Each journal maps to a directory containing its own `diary.db`. `DiaryState` holds a single connection; switching journals updates `db_path`/`backups_dir` and auto-locks. Legacy single-diary configs are auto-migrated on first `load_journals()` call.
@@ -100,8 +100,10 @@ src/
 │   │   ├── EditorToolbar.tsx          # Formatting toolbar
 │   │   ├── TitleEditor.tsx            # Entry title input
 │   │   ├── WordCount.tsx              # Live word count display
+│   │   ├── EntryNavBar.tsx            # Per-day entry counter/navigator (hidden when ≤1 entry)
 │   │   ├── TitleEditor.test.tsx       # 6 tests
-│   │   └── WordCount.test.tsx         # 3 tests
+│   │   ├── WordCount.test.tsx         # 3 tests
+│   │   └── EntryNavBar.test.tsx       # 11 tests
 │   ├── layout/
 │   │   ├── MainLayout.tsx             # App shell (sidebar + editor)
 │   │   ├── Header.tsx                 # Top bar
@@ -213,8 +215,7 @@ src-tauri/src/
     ├── minidiary.rs                   # Mini Diary JSON parser (8 tests)
     ├── dayone.rs                      # Day One JSON parser (14 tests)
     ├── dayone_txt.rs                  # Day One TXT parser (16 tests)
-    ├── jrnl.rs                        # jrnl JSON parser (12 tests)
-    └── merge.rs                       # Entry merge logic for date conflicts (13 tests)
+    └── jrnl.rs                        # jrnl JSON parser (12 tests)
 ```
 
 ## Command Registry
@@ -247,9 +248,10 @@ All 45 registered Tauri commands (source: `lib.rs`). Rust names use `snake_case`
 | auth | `remove_journal` | `removeJournal(id)` | Remove journal (guards last); auto-locks if active |
 | auth | `rename_journal` | `renameJournal(id, name)` | Rename a journal |
 | auth | `switch_journal` | `switchJournal(id)` | Auto-lock, switch db_path/backups_dir, persist active |
-| entries | `save_entry` | `saveEntry(date, title, text)` | Upsert entry (encrypts) |
-| entries | `get_entry` | `getEntry(date)` | Fetch + decrypt single entry |
-| entries | `delete_entry_if_empty` | `deleteEntryIfEmpty(date, title, text)` | Remove entry if content is empty |
+| entries | `create_entry` | `createEntry(date)` | Create blank entry, returns DiaryEntry with assigned id |
+| entries | `save_entry` | `saveEntry(id, title, text)` | Update entry by id (encrypts) |
+| entries | `get_entries_for_date` | `getEntriesForDate(date)` | Fetch all entries for a date (newest-first) |
+| entries | `delete_entry_if_empty` | `deleteEntryIfEmpty(id, title, text)` | Remove entry by id if content is empty |
 | entries | `get_all_entry_dates` | `getAllEntryDates()` | List all dates with entries |
 | search | `search_entries` | `searchEntries(query)` | Stub — always returns `[]`; interface preserved for future secure search |
 | nav | `navigate_previous_day` | `navigatePreviousDay(currentDate)` | Previous day with entry |
@@ -363,7 +365,7 @@ All menu event names are prefixed `menu-`. See `menu.rs:78-107` for the full lis
 
 ## Testing
 
-### Backend: 228 tests across 29 modules
+### Backend: 222 tests across 28 modules
 
 Run: `cd src-tauri && cargo test`
 
@@ -374,12 +376,12 @@ Run: `cd src-tauri && cargo test`
 | password | 10 | `crypto/password.rs` |
 | cipher | 11 | `crypto/cipher.rs` |
 | schema | 11 | `db/schema.rs` |
-| queries | 12 | `db/queries.rs` |
+| queries | 17 | `db/queries.rs` |
 | auth-core | 6 | `commands/auth/auth_core.rs` |
 | auth-directory | 5 | `commands/auth/auth_directory.rs` |
 | auth-journals | 6 | `commands/auth/auth_journals.rs` |
 | auth-methods | 7 | `commands/auth/auth_methods.rs` |
-| entries | 4 | `commands/entries.rs` |
+| entries | 6 | `commands/entries.rs` |
 | search | 1 | `commands/search.rs` |
 | navigation | 5 | `commands/navigation.rs` |
 | stats | 9 | `commands/stats.rs` |
@@ -390,7 +392,6 @@ Run: `cd src-tauri && cargo test`
 | dayone | 14 | `import/dayone.rs` |
 | dayone_txt | 16 | `import/dayone_txt.rs` |
 | jrnl | 12 | `import/jrnl.rs` |
-| merge | 13 | `import/merge.rs` |
 | json-export | 6 | `export/json.rs` |
 | md-export | 12 | `export/markdown.rs` |
 | backup | 5 | `backup.rs` |
@@ -399,7 +400,7 @@ Run: `cd src-tauri && cargo test`
 | plugin/rhai_loader | 11 | `plugin/rhai_loader.rs` |
 | config | 11 | `config.rs` |
 
-### Frontend: 51 tests across 9 files
+### Frontend: 80 tests across 10 files
 
 Run: `bun run test:run` (single run) or `bun run test` (watch mode)
 
@@ -411,8 +412,9 @@ Run: `bun run test:run` (single run) or `bun run test` (watch mode)
 | `src/components/auth/JournalPicker.test.tsx` | 4 |
 | `src/components/editor/TitleEditor.test.tsx` | 6 |
 | `src/components/editor/WordCount.test.tsx` | 3 |
+| `src/components/editor/EntryNavBar.test.tsx` | 11 |
 | `src/components/layout/MainLayout-event-listeners.test.tsx` | 4 |
-| `src/components/layout/EditorPanel-save-logic.test.ts` | 12 |
+| `src/components/layout/EditorPanel-save-logic.test.ts` | 23 |
 | `src/state/auth-session-boundary.test.ts` | 4 |
 
 Coverage: `bun run test:coverage`
@@ -470,7 +472,7 @@ bun run tauri build      # Full app bundle
 
 ## Gotchas and Pitfalls
 
-1. **No FTS table (schema v4)**: `entries_fts` was removed for security (it stored plaintext). `insert_entry`, `update_entry`, `delete_entry`, and all import commands have `// Search index hook:` comments marking where a future search module should be plugged in.
+1. **No FTS table (schema v5)**: `entries_fts` was removed for security (it stored plaintext). The `entries` table now uses `id INTEGER PRIMARY KEY AUTOINCREMENT` for multi-entry-per-date support. `insert_entry`, `update_entry`, `delete_entry`, and all import commands have `// Search index hook:` comments marking where a future search module should be plugged in.
 
 2. **Search interface preserved**: `SearchResult`, `search_entries` (Rust), `searchEntries` (TS), `SearchBar.tsx`, `SearchResults.tsx`, and `src/state/search.ts` are all kept intact as the interface contract for future secure search — do not remove them.
 
@@ -486,7 +488,7 @@ bun run tauri build      # Full app bundle
 
 8. **TipTap stores HTML**: The editor content is stored as HTML strings, not Markdown. This is intentional — the `text` field in `DiaryEntry` is HTML.
 
-9. **Import parser contract**: Parsers in `import/*.rs` return `Vec<DiaryEntry>`. All DB interaction and merge logic happen in `commands/import.rs`, not in the parsers.
+9. **Import behavior (no merge)**: Parsers in `import/*.rs` return `Vec<DiaryEntry>`. Imports always create new entries; there is no date-conflict merging. Re-importing the same file creates duplicate entries. The `merge.rs` module was removed in v0.5.0.
 
 10. **Auth slots (v3 schema):** Each auth method stores its own wrapped copy of the master key in `auth_slots`. `remove_auth_method` refuses to delete the last slot (minimum one required). `change_password` re-wraps the master key in O(1) — no entry re-encryption needed. `verify_password` exists as a side-effect-free check used before multi-step operations.
 
@@ -501,6 +503,8 @@ bun run tauri build      # Full app bundle
 15. **Old import/export commands are preserved**: The original `import_minidiary_json`, `import_dayone_json`, etc. commands remain registered for backward compatibility. The Import/Export overlays now use the plugin system (`runImportPlugin`/`runExportPlugin`) but the legacy commands still work.
 
 16. **Default E2E clean mode runs at 800×660 px — below the `lg` breakpoint (1024 px)**: The sidebar uses `lg:relative lg:translate-x-0`, so in default clean E2E mode it is always in mobile/overlay behavior. Any change to `isSidebarCollapsed` default or `resetUiState()` affects whether calendar day elements are reachable in E2E tests. **Planning rule**: when changing the default value of any UI visibility signal (`isSidebarCollapsed`, overlay open states, etc.), explicitly audit `e2e/specs/` for interactions that depend on the affected element being visible and update the test accordingly.
+
+17. **JSON export format (breaking change in v0.5.0)**: JSON export now outputs an array under the `"entries"` key with each entry including its `id` field, instead of a date-keyed object. Example: `{ "entries": [{ "id": 1, "date": "2024-01-15", "title": "...", "text": "...", "word_count": 0, "date_created": "...", "date_updated": "..." }] }`.
 
 ## Security Rules
 
