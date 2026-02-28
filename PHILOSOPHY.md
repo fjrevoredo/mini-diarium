@@ -35,7 +35,7 @@ We use **battle-tested, industry-standard security practices**. No custom crypto
 - X25519 ECDH for key-file authentication
 - Established, audited libraries only
 - Memory zeroization on all exit paths (both success and error branches)
-- No automatic network access, no remote sync, no cloud features (the only permitted outbound call is the user-triggered manual update check via "Check for Updates…")
+- No network access, no remote sync, no cloud features
 
 **Security decisions prioritize:**
 1. Known-good solutions over novel approaches
@@ -157,7 +157,7 @@ If any principle is violated without strong justification, the proposal should b
 
 Some principles are absolute:
 
-- **No automatic network access.** Mini Diarium will never make background network calls, send telemetry, or connect to the internet without explicit user action. The sole exception is the manual "Check for Updates…" action, which is user-initiated, transmits no diary data, and contacts only GitHub Releases.
+- **No network access.** Mini Diarium will never connect to the internet.
 - **No custom cryptography.** Use standard algorithms and established libraries only.
 - **No password recovery.** Password recovery requires either storing the master key in recoverable form (weakening the encryption guarantee) or trusting a third-party service (violating the no-network principle). Neither is acceptable. If you lose all credentials, your data is inaccessible; this is the correct security outcome. To mitigate accidental lockout, register a second authentication method as a backup.
 - **No vendor lock-in.** Users must be able to export and migrate their data freely at any time.
@@ -217,7 +217,7 @@ Both `ImportOverlay.tsx` and `ExportOverlay.tsx` are wired to the plugin registr
 2. Explicit `.zeroize()` calls on password strings in `crypto/password.rs` on both the success path (line 60) and the error path (line 103)
 3. `SecretBytes` implements `Debug` as `SecretBytes([REDACTED; N])`, preventing key material from leaking into logs
 
-**Network access policy**: `tauri-plugin-updater` (added v0.4.2) introduces an HTTP client dependency into the binary. It is only invoked when the user explicitly selects "Check for Updates…" from the menu. No background tasks, timers, or lifecycle hooks trigger network calls. There is no telemetry, no analytics, and no automatic update polling. The plugin downloads only from the GitHub Releases endpoint configured in `tauri.conf.json` and transmits zero diary data.
+**No-network enforcement**: verified at the dependency level. `src-tauri/Cargo.toml` contains no `reqwest`, `hyper`, `socket2`, `ureq`, or equivalent crate. The constraint cannot be accidentally violated without a visible `Cargo.toml` change.
 
 ---
 
@@ -227,8 +227,8 @@ Both `ImportOverlay.tsx` and `ExportOverlay.tsx` are wired to the plugin registr
 
 | Layer | Count | How to run |
 |---|---|---|
-| Backend unit + integration | 227 tests across 29 modules | `cd src-tauri && cargo test` |
-| Frontend unit | 47 tests across 8 files | `bun run test:run` |
+| Backend unit + integration | 193 tests across 20 modules | `cd src-tauri && cargo test` |
+| Frontend unit | 31 tests across 6 files | `bun run test:run` |
 | E2E | 2 tests | `bun run test:e2e:local` |
 
 **E2E stack**: WebdriverIO v9 + tauri-driver (official Tauri bridge) against the real compiled binary. Config: `wdio.conf.ts` (root). Specs: `e2e/specs/`. Test isolation: each run creates a fresh OS temp directory passed to the app via `MINI_DIARIUM_DATA_DIR`; `lib.rs` uses this as the diary path when set, with no effect on production builds. Run the full suite (build + run): `bun run test:e2e:local`. Run suite only (binary already built): `bun run test:e2e`.
@@ -258,7 +258,7 @@ Both `ImportOverlay.tsx` and `ExportOverlay.tsx` are wired to the plugin registr
 
 ### Principle 5: Scope Enforcement
 
-The components across `src/components/` cover: auth (2), calendar (1), editor (4), layout (5), overlays (7: GoToDate, Preferences, Stats, Import, Export, About, Updates), search (2). Nothing outside journaling scope exists. All features added from v0.1.0 through v0.4.2 pass the six Decision Framework questions.
+The 20 components across `src/components/` cover: auth (2), calendar (1), editor (4), layout (5), overlays (5 + ExportOverlay), search (2). Nothing outside journaling scope exists. All features added from v0.1.0 through v0.4.0 pass the six Decision Framework questions.
 
 The "no plugin marketplaces" rule means no distribution, discovery, or hosting of plugins. Local Rhai scripts in `<diary_dir>/plugins/` are supported because they are user-controlled, offline, and scope-neutral.
 
@@ -268,5 +268,5 @@ The "no plugin marketplaces" rule means no distribution, discovery, or hosting o
 
 - **State**: 5 signal modules (`src/state/`), averaging 3 signals each. No Redux, Zustand, derived-state middleware, or selector layers.
 - **Database**: direct `rusqlite` queries in `src-tauri/src/db/queries.rs`. No ORM, no query builder, no migration framework beyond the inline schema version check.
-- **Dependencies**: 18 direct runtime crates in `src-tauri/Cargo.toml` for a cryptographic desktop app (intentionally lean; `tauri-plugin-updater` was added in v0.4.2 for the manual update check feature).
+- **Dependencies**: 17 direct runtime crates in `src-tauri/Cargo.toml` for a cryptographic desktop app (intentionally lean).
 - **Justified complexity examples**: `src-tauri/src/screen_lock.rs` uses platform-specific Win32 event hooks (Windows) and equivalent macOS hooks for session-lock detection; this is necessary for auto-lock, not gold-plating. The Rhai scripting engine (`src-tauri/src/plugin/rhai_loader.rs`) adds binary size but is the only way to deliver user-scriptable extensions without requiring a recompile.

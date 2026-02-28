@@ -54,6 +54,7 @@ allure-results/
 allure-report/
 e2e/screenshots/
 e2e/*.log
+.e2e-stateful/
 
 # Internal development documentation
 *-PLAN.md

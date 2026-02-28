@@ -235,8 +235,20 @@ export const config: Options.Testrunner = {
         }),
       );
     }
-    if (!isCleanMode && statefulAppDir) {
+    if (!isCleanMode && statefulAppDir && statefulDataDir) {
       mkdirSync(statefulAppDir, { recursive: true });
+      // Seed config.json on first run only — leave it intact on subsequent runs so
+      // diary content persists across test executions (the point of stateful mode).
+      const statefulConfigPath = join(statefulAppDir, 'config.json');
+      if (!existsSync(statefulConfigPath)) {
+        writeFileSync(
+          statefulConfigPath,
+          JSON.stringify({
+            journals: [{ id: 'e2e-stateful', name: 'E2E Stateful Journal', path: statefulDataDir }],
+            active_journal_id: 'e2e-stateful',
+          }),
+        );
+      }
     }
 
     tauriDriver = spawn('tauri-driver', nativeDriverArgs(), {
