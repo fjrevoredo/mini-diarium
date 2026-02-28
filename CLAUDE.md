@@ -89,6 +89,8 @@ src/
 ├── App.tsx                            # Auth routing (Switch/Match on authState)
 ├── components/
 │   ├── auth/
+│   │   ├── JournalPicker.tsx          # Pre-auth journal selection + management (outermost layer)
+│   │   ├── JournalPicker.test.tsx     # 4 tests
 │   │   ├── PasswordCreation.tsx       # New diary setup
 │   │   └── PasswordPrompt.tsx         # Password + Key File unlock modes
 │   ├── calendar/
@@ -110,7 +112,9 @@ src/
 │   │   ├── GoToDateOverlay.tsx        # Date picker dialog
 │   │   ├── PreferencesOverlay.tsx     # Settings dialog (includes Auth Methods section)
 │   │   ├── StatsOverlay.tsx           # Statistics display
-│   │   └── ImportOverlay.tsx          # Import format selector + file picker
+│   │   ├── ImportOverlay.tsx          # Import format selector + file picker
+│   │   ├── ExportOverlay.tsx          # Export format selector + file picker
+│   │   └── AboutOverlay.tsx           # App info, version, license, GitHub link
 │   └── search/
 │       ├── SearchBar.tsx              # Search input (not rendered; reserved for future secure search)
 │       └── SearchResults.tsx          # Search result list
@@ -215,7 +219,7 @@ src-tauri/src/
 
 ## Command Registry
 
-All 44 registered Tauri commands (source: `lib.rs`). Rust names use `snake_case`; frontend wrappers in `src/lib/tauri.ts` use `camelCase`.
+All 45 registered Tauri commands (source: `lib.rs`). Rust names use `snake_case`; frontend wrappers in `src/lib/tauri.ts` use `camelCase`.
 
 | Module | Rust Command | Frontend Wrapper | Description |
 |--------|-------------|-----------------|-------------|
@@ -223,6 +227,7 @@ All 44 registered Tauri commands (source: `lib.rs`). Rust names use `snake_case`
 | auth | `unlock_diary` | `unlockDiary(password)` | Decrypt and open DB |
 | auth | `lock_diary` | `lockDiary()` | Close DB connection |
 | auth | `diary_exists` | `diaryExists()` | Check if DB file exists |
+| auth | `check_diary_path` | `checkDiaryPath(dir)` | Stateless check: true if `{dir}/diary.db` exists |
 | auth | `is_diary_unlocked` | `isDiaryUnlocked()` | Check unlock state |
 | auth | `get_diary_path` | `getDiaryPath()` | Return diary file path |
 | auth | `change_diary_directory` | `changeDiaryDirectory(newDir)` | Change diary directory (locked state only) |
@@ -270,11 +275,11 @@ Six signal-based state modules in `src/state/`:
 
 | Module | Signals | Key Functions |
 |--------|---------|---------------|
-| `auth.ts` | `authState: AuthState`, `error`, `authMethods: AuthMethodInfo[]` | `initializeAuth()`, `createDiary()`, `unlockDiary()`, `lockDiary()`, `unlockWithKeypair()` |
+| `auth.ts` | `authState: AuthState`, `error`, `authMethods: AuthMethodInfo[]` | `initializeAuth()`, `createDiary()`, `unlockDiary()`, `lockDiary()`, `unlockWithKeypair()`, `goToJournalPicker()` |
 | `entries.ts` | `currentEntry`, `entryDates`, `isLoading`, `isSaving` | Setters exported directly |
 | `journals.ts` | `journals: JournalConfig[]`, `activeJournalId`, `isSwitching` | `loadJournals()`, `switchJournal()`, `addJournal()`, `removeJournal()`, `renameJournal()` |
 | `search.ts` | `searchQuery`, `searchResults`, `isSearching` | Setters exported directly |
-| `ui.ts` | `selectedDate`, `isSidebarCollapsed`, `isGoToDateOpen`, `isPreferencesOpen`, `isStatsOpen`, `isImportOpen` | Setters exported directly |
+| `ui.ts` | `selectedDate`, `isSidebarCollapsed`, `isGoToDateOpen`, `isPreferencesOpen`, `isStatsOpen`, `isImportOpen`, `isExportOpen`, `isAboutOpen` | Setters exported directly; `resetUiState()` resets all |
 | `preferences.ts` | `preferences: Preferences` | `setPreferences(Partial<Preferences>)`, `resetPreferences()` |
 
 `Preferences` fields: `allowFutureEntries` (bool), `firstDayOfWeek` (number|null), `hideTitles` (bool), `enableSpellcheck` (bool). Stored in `localStorage`.
@@ -358,7 +363,7 @@ All menu event names are prefixed `menu-`. See `menu.rs:78-107` for the full lis
 
 ## Testing
 
-### Backend: 195 tests across 29 modules
+### Backend: 228 tests across 29 modules
 
 Run: `cd src-tauri && cargo test`
 
@@ -370,7 +375,7 @@ Run: `cd src-tauri && cargo test`
 | cipher | 11 | `crypto/cipher.rs` |
 | schema | 11 | `db/schema.rs` |
 | queries | 12 | `db/queries.rs` |
-| auth-core | 5 | `commands/auth/auth_core.rs` |
+| auth-core | 6 | `commands/auth/auth_core.rs` |
 | auth-directory | 5 | `commands/auth/auth_directory.rs` |
 | auth-journals | 6 | `commands/auth/auth_journals.rs` |
 | auth-methods | 7 | `commands/auth/auth_methods.rs` |
@@ -394,7 +399,7 @@ Run: `cd src-tauri && cargo test`
 | plugin/rhai_loader | 11 | `plugin/rhai_loader.rs` |
 | config | 11 | `config.rs` |
 
-### Frontend: 31 tests across 6 files
+### Frontend: 51 tests across 9 files
 
 Run: `bun run test:run` (single run) or `bun run test` (watch mode)
 
@@ -403,9 +408,12 @@ Run: `bun run test:run` (single run) or `bun run test` (watch mode)
 | `src/lib/dates.test.ts` | 10 |
 | `src/lib/import.test.ts` | 4 |
 | `src/lib/tauri-params.test.ts` | 4 |
+| `src/components/auth/JournalPicker.test.tsx` | 4 |
 | `src/components/editor/TitleEditor.test.tsx` | 6 |
 | `src/components/editor/WordCount.test.tsx` | 3 |
 | `src/components/layout/MainLayout-event-listeners.test.tsx` | 4 |
+| `src/components/layout/EditorPanel-save-logic.test.ts` | 12 |
+| `src/state/auth-session-boundary.test.ts` | 4 |
 
 Coverage: `bun run test:coverage`
 

@@ -2,6 +2,22 @@
 
 All notable changes to Mini Diarium are documented here. This project uses [Semantic Versioning](https://semver.org/).
 
+## [0.4.2] — Unreleased
+
+### Added
+
+- **Journal Picker as the outermost app layer**: the app now opens to a **Journal Picker** screen before any diary authentication. The picker lists all configured journals and lets you open, rename, or remove any of them without authenticating first. You can also create a new diary (picks a folder, names it, then goes to password creation) or open an existing `diary.db` from any folder — both flows that were previously fragmented across the first-launch screen and Preferences > Journals. On a shared device, each person can select their own diary without having to step through someone else's lock screen.
+- **"← Back to Journals" link** on both `PasswordCreation` and `PasswordPrompt` screens, letting users navigate back to the journal picker without locking or restarting the app.
+- **Removing the last journal is now allowed**: the backend no longer blocks removal of the sole remaining journal; the picker simply shows the empty state with the two Add buttons so the user can configure a new one.
+
+### Changed
+
+- **Journal management moved to the Journal Picker**: the **Journals** tab has been removed from Preferences. All journal operations (add, rename, remove, open) are available on the pre-auth picker screen. Auth methods, password changes, and data settings remain in their respective Preferences tabs unchanged.
+- **Auth flow**: `initializeAuth()` now always routes to `'journal-select'` on startup (instead of probing the diary path immediately); `refreshAuthState()` is called only after the user selects a journal. This eliminates the single-user assumption baked into the previous startup sequence.
+- **Release build profile**: added `[profile.release]` with `opt-level = 3` and `lto = true` to `Cargo.toml` for smaller, faster distribution binaries.
+- **Website SEO/GEO refresh (2026)**: upgraded metadata and machine-readable signals for search and AI retrieval. Added robots snippet controls, richer Open Graph/Twitter tags (`og:site_name`, `og:locale`, image dimensions, account attribution), expanded JSON-LD graph (`SoftwareApplication` + `Organization` + `WebSite` + `FAQPage` with `softwareVersion`/`dateModified`), added extraction-friendly **Quick facts** + **FAQ** sections, introduced a dedicated **Release status** block with explicit last-updated date, replaced placeholder `href="#"` links, updated sitemap to use `<lastmod>`, and added a lightweight social preview asset (`website/assets/og-cover.svg`).
+- **Website compatibility and cache hardening (2026-02-26)**: added a broader favicon set (`favicon.ico`, 16/32/128 PNG, `apple-touch-icon`), published `ai-crawlers.txt` and `llms.txt` with footer/README discoverability, and introduced content-hash fingerprinting for website CSS/JS (`website:fingerprint`) so nginx can safely keep `immutable` only for hashed assets while unfingerprinted files use short TTL caching.
+
 ## [0.4.1] — 25-02-2026
 
 ### Added
@@ -16,6 +32,7 @@ All notable changes to Mini Diarium are documented here. This project uses [Sema
 
 - **Plugin documentation structure simplified**: user plugin documentation and canonical example now live together in `docs/user-plugins/` for discoverability; README now links to this area from a dedicated **Extending Mini Diarium** section.
 - **E2E test isolation hardened**: `bun run test:e2e` now runs in deterministic clean-room mode (isolated diary data, isolated WebView profile on Windows, fixed 800×660 viewport, and backend window-state persistence disabled via `MINI_DIARIUM_E2E=1`), with `bun run test:e2e:stateful` available for persistence-focused checks in a repo-local state directory.
+
 
 ## [0.4.0] - 25-02-2026
 

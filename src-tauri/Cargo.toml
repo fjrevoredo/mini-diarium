@@ -1,6 +1,6 @@
 [package]
 name = "mini-diarium"
-version = "0.4.1"
+version = "0.4.2"
 description = "A modern, encrypted, local-first desktop journaling application"
 authors = ["you"]
 edition = "2021"
@@ -37,6 +37,10 @@ chrono = "0.4"
 rhai = { version = "1", features = ["serde"] }
 log = "0.4"
 env_logger = "0.11"
+
+[profile.release]
+opt-level = 3
+lto = true
 
 [dev-dependencies]
 tempfile = "3"

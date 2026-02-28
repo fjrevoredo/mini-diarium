@@ -48,7 +48,10 @@ fn add_journal_inner(
     };
     journals.push(journal.clone());
 
-    let active_id = config::load_active_journal_id(app_data_dir).unwrap_or_else(|| id.clone());
+    // Use existing active_id if set and non-empty; otherwise promote the new journal.
+    let active_id = config::load_active_journal_id(app_data_dir)
+        .filter(|s| !s.is_empty())
+        .unwrap_or_else(|| id.clone());
     config::save_journals(app_data_dir, &journals, &active_id)?;
 
     info!("Journal added: {} ({})", journal.name, id);
@@ -66,9 +69,6 @@ pub fn add_journal(
 
 fn remove_journal_inner(id: String, state: &DiaryState) -> Result<(), String> {
     let mut journals = config::load_journals(&state.app_data_dir);
-    if journals.len() <= 1 {
-        return Err("Cannot remove the only journal".to_string());
-    }
 
     let idx = journals
         .iter()
@@ -78,30 +78,28 @@ fn remove_journal_inner(id: String, state: &DiaryState) -> Result<(), String> {
     let active_id = config::load_active_journal_id(&state.app_data_dir);
     let removing_active = active_id.as_deref() == Some(&id);
 
+    journals.remove(idx);
+
     if removing_active {
-        // Find another journal to switch to
-        let other = journals
-            .iter()
-            .find(|j| j.id != id)
-            .ok_or("No other journal available")?;
-        let other_path = PathBuf::from(&other.path);
-        let other_id = other.id.clone();
-
-        // Update DiaryState paths
-        *state
-            .db_path
-            .lock()
-            .map_err(|_| "State lock poisoned".to_string())? = other_path.join("diary.db");
-        *state
-            .backups_dir
-            .lock()
-            .map_err(|_| "State lock poisoned".to_string())? = other_path.join("backups");
-
-        journals.remove(idx);
-        config::save_journals(&state.app_data_dir, &journals, &other_id)?;
+        if let Some(other) = journals.first() {
+            // Switch to the next available journal
+            let other_path = PathBuf::from(&other.path);
+            let other_id = other.id.clone();
+            *state
+                .db_path
+                .lock()
+                .map_err(|_| "State lock poisoned".to_string())? = other_path.join("diary.db");
+            *state
+                .backups_dir
+                .lock()
+                .map_err(|_| "State lock poisoned".to_string())? = other_path.join("backups");
+            config::save_journals(&state.app_data_dir, &journals, &other_id)?;
+        } else {
+            // No journals left — save with empty active id; frontend will show empty picker
+            config::save_journals(&state.app_data_dir, &journals, "")?;
+        }
     } else {
         let current_active = active_id.unwrap_or_default();
-        journals.remove(idx);
         config::save_journals(&state.app_data_dir, &journals, &current_active)?;
     }
 
@@ -334,7 +332,7 @@ mod tests {
     }
 
     #[test]
-    fn test_remove_only_journal_fails() {
+    fn test_remove_only_journal_succeeds_leaving_empty_list() {
         let dir = std::env::temp_dir().join("journal_rm_only");
         fs::create_dir_all(&dir).unwrap();
 
@@ -349,10 +347,13 @@ mod tests {
 
         let journals = config::load_journals(&app_dir);
         let result = remove_journal_inner(journals[0].id.clone(), &state);
-        assert!(result.is_err());
-        assert!(result
-            .unwrap_err()
-            .contains("Cannot remove the only journal"));
+        assert!(result.is_ok(), "Removing last journal should succeed");
+
+        let remaining = config::load_journals(&app_dir);
+        assert!(
+            remaining.is_empty(),
+            "Journal list should be empty after removing last"
+        );
 
         let _ = fs::remove_dir_all(&dir);
         cleanup(&app_dir);

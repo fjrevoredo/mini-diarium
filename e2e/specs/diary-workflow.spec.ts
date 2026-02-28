@@ -31,8 +31,13 @@ describe('Core diary workflow', () => {
     // Give WebView2 time to render the UI
     await browser.pause(5000);
 
-    // 1. App starts at PasswordCreation screen (fresh temp dir = no diary yet)
-    await $('[data-testid="password-create-input"]').waitForDisplayed({ timeout: 15000 });
+    // 1. App starts at JournalPicker screen — one pre-configured journal from config.json
+    const openBtn = await $('[data-testid="journal-open-button"]');
+    await openBtn.waitForDisplayed({ timeout: 15000 });
+    await openBtn.click();
+
+    // 2. JournalPicker transitions to PasswordCreation (fresh temp dir = no diary yet)
+    await $('[data-testid="password-create-input"]').waitForDisplayed({ timeout: 10000 });
     await $('[data-testid="password-create-input"]').setValue(TEST_PASSWORD);
 
     // Confirm-password field
@@ -40,37 +45,37 @@ describe('Core diary workflow', () => {
 
     await $('[data-testid="create-diary-button"]').click();
 
-    // 2. Diary created and unlocked → MainLayout is now visible
+    // 3. Diary created and unlocked → MainLayout is now visible
     //    Sidebar starts collapsed; open it to access the calendar, then click the target date
     await $('[data-testid="toggle-sidebar-button"]').waitForClickable({ timeout: 10000 });
     await $('[data-testid="toggle-sidebar-button"]').click();
     await $(`[data-testid="calendar-day-${TEST_DATE}"]`).waitForClickable({ timeout: 10000 });
     await $(`[data-testid="calendar-day-${TEST_DATE}"]`).click();
 
-    // 3. Write the entry title
+    // 4. Write the entry title
     await $('[data-testid="title-input"]').waitForDisplayed({ timeout: 5000 });
     await $('[data-testid="title-input"]').setValue(TEST_TITLE);
 
-    // 4. Write the entry body in the TipTap ProseMirror contenteditable div
+    // 5. Write the entry body in the TipTap ProseMirror contenteditable div
     const editor = await $('.ProseMirror');
     await editor.click();
     await browser.keys(TEST_BODY);
 
-    // 5. Wait for autosave to flush (debounce is ~1.5 s)
+    // 6. Wait for autosave to flush (debounce is ~1.5 s)
     await browser.pause(2500);
 
-    // 6. Lock the diary
+    // 7. Lock the diary
     await $('[data-testid="lock-diary-button"]').click();
 
-    // 7. Verify we are now on the unlock screen
+    // 8. Verify we are now on the unlock screen
     await $('[data-testid="password-unlock-input"]').waitForDisplayed({ timeout: 5000 });
 
-    // 8. Unlock again to verify the entry was persisted
+    // 9. Unlock again to verify the entry was persisted
     await $('[data-testid="password-unlock-input"]').setValue(TEST_PASSWORD);
     await $('[data-testid="unlock-diary-button"]').click();
 
-    // 9. Verify a fresh session baseline: unlock should select today.
-    //    Sidebar starts collapsed after unlock; open it to access the calendar.
+    // 10. Verify a fresh session baseline: unlock should select today.
+    //     Sidebar starts collapsed after unlock; open it to access the calendar.
     await $('[data-testid="toggle-sidebar-button"]').waitForClickable({ timeout: 10000 });
     await $('[data-testid="toggle-sidebar-button"]').click();
     const todayButton = await $(`[data-testid="calendar-day-${TODAY_DATE}"]`);
@@ -78,7 +83,7 @@ describe('Core diary workflow', () => {
     const todayButtonClass = await todayButton.getAttribute('class');
     expect(todayButtonClass).toContain('bg-blue-600');
 
-    // 10. Navigate back to the saved date and verify persistence.
+    // 11. Navigate back to the saved date and verify persistence.
     if (TEST_DATE !== TODAY_DATE) {
       await $(`[data-testid="calendar-day-${TEST_DATE}"]`).waitForClickable({ timeout: 10000 });
       await $(`[data-testid="calendar-day-${TEST_DATE}"]`).click();

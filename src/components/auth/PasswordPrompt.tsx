@@ -1,6 +1,5 @@
-import { createSignal, For, Show } from 'solid-js';
-import { unlockDiary, unlockWithKeypair, refreshAuthState } from '../../state/auth';
-import { journals, activeJournalId, isSwitching, switchJournal } from '../../state/journals';
+import { createSignal, Show } from 'solid-js';
+import { unlockDiary, unlockWithKeypair, goToJournalPicker } from '../../state/auth';
 import { open } from '@tauri-apps/plugin-dialog';
 
 type UnlockMode = 'password' | 'keyfile';
@@ -80,25 +79,18 @@ export default function PasswordPrompt() {
             <img src="/logo-transparent.svg" alt="Mini Diarium" class="h-16 w-16 rounded-xl" />
           </div>
           <h1 class="mb-2 text-center text-3xl font-bold text-primary">Mini Diarium</h1>
-          <p class="mb-4 text-center text-sm text-secondary">Unlock your diary</p>
+          <p class="mb-2 text-center text-sm text-secondary">Unlock your diary</p>
 
-          {/* Journal selector — only shown when multiple journals exist */}
-          <Show when={journals().length > 1}>
-            <div class="mb-4">
-              <label class="mb-2 block text-sm font-medium text-secondary">Journal</label>
-              <select
-                value={activeJournalId() ?? ''}
-                onChange={async (e) => {
-                  await switchJournal(e.currentTarget.value);
-                  await refreshAuthState();
-                }}
-                disabled={isSwitching() || isUnlocking()}
-                class="w-full rounded-md border border-primary px-4 py-2 bg-primary text-primary focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              >
-                <For each={journals()}>{(j) => <option value={j.id}>{j.name}</option>}</For>
-              </select>
-            </div>
-          </Show>
+          <div class="mb-4 text-center">
+            <button
+              type="button"
+              onClick={() => goToJournalPicker()}
+              disabled={isUnlocking()}
+              class="text-sm text-tertiary hover:text-secondary underline focus:outline-none disabled:opacity-50"
+            >
+              ← Back to Journals
+            </button>
+          </div>
 
           {/* Mode toggle */}
           <div class="mb-6 flex rounded-md border border-primary overflow-hidden">

@@ -6,6 +6,7 @@ import {
   readdirSync,
   mkdirSync,
   rmSync,
+  writeFileSync,
 } from 'node:fs';
 import { spawn, spawnSync, type ChildProcess } from 'node:child_process';
 import type { Options } from '@wdio/types';
@@ -17,14 +18,17 @@ const statefulRoot = process.env['E2E_STATEFUL_ROOT'] ?? join(process.cwd(), '.e
 
 // temp dirs for clean-room E2E isolation
 const testDataDir = isCleanMode ? mkdtempSync(join(tmpdir(), 'mini-diarium-e2e-data-')) : null;
+const testAppDir = isCleanMode ? mkdtempSync(join(tmpdir(), 'mini-diarium-e2e-app-')) : null;
 const testWebviewDir =
   isCleanMode && process.platform === 'win32'
     ? mkdtempSync(join(tmpdir(), 'mini-diarium-e2e-webview-'))
     : null;
 const statefulDataDir = !isCleanMode ? join(statefulRoot, 'data') : null;
+const statefulAppDir = !isCleanMode ? join(statefulRoot, 'app') : null;
 const statefulWebviewDir =
   !isCleanMode && process.platform === 'win32' ? join(statefulRoot, 'webview') : null;
 const diaryDataDir = isCleanMode ? testDataDir : statefulDataDir;
+const appConfigDir = isCleanMode ? testAppDir : statefulAppDir;
 const webviewUserDataDir = isCleanMode ? testWebviewDir : statefulWebviewDir;
 
 // tauri-driver process handle
@@ -220,6 +224,33 @@ export const config: Options.Testrunner = {
       mkdirSync(statefulWebviewDir, { recursive: true });
     }
 
+    // Pre-create isolated config.json so the JournalPicker has exactly 1 journal configured
+    // and does not read the developer's real config.json during E2E runs.
+    if (isCleanMode && appConfigDir && diaryDataDir) {
+      writeFileSync(
+        join(appConfigDir, 'config.json'),
+        JSON.stringify({
+          journals: [{ id: 'e2e', name: 'E2E Journal', path: diaryDataDir }],
+          active_journal_id: 'e2e',
+        }),
+      );
+    }
+    if (!isCleanMode && statefulAppDir && statefulDataDir) {
+      mkdirSync(statefulAppDir, { recursive: true });
+      // Seed config.json on first run only — leave it intact on subsequent runs so
+      // diary content persists across test executions (the point of stateful mode).
+      const statefulConfigPath = join(statefulAppDir, 'config.json');
+      if (!existsSync(statefulConfigPath)) {
+        writeFileSync(
+          statefulConfigPath,
+          JSON.stringify({
+            journals: [{ id: 'e2e-stateful', name: 'E2E Stateful Journal', path: statefulDataDir }],
+            active_journal_id: 'e2e-stateful',
+          }),
+        );
+      }
+    }
+
     tauriDriver = spawn('tauri-driver', nativeDriverArgs(), {
       stdio: 'inherit',
       env: {
@@ -227,6 +258,11 @@ export const config: Options.Testrunner = {
         ...(diaryDataDir
           ? {
               MINI_DIARIUM_DATA_DIR: diaryDataDir,
+            }
+          : {}),
+        ...(appConfigDir
+          ? {
+              MINI_DIARIUM_APP_DIR: appConfigDir,
             }
           : {}),
         MINI_DIARIUM_E2E: isCleanMode ? '1' : '0',
@@ -240,6 +276,7 @@ export const config: Options.Testrunner = {
   onComplete: () => {
     tauriDriver?.kill();
     removeTempDir(testDataDir);
+    removeTempDir(testAppDir);
     removeTempDir(testWebviewDir);
   },
 };

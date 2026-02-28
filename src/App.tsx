@@ -2,6 +2,7 @@ import { Match, Switch, onCleanup, onMount } from 'solid-js';
 import { authState, initializeAuth, setupAuthEventListeners } from './state/auth';
 import { initializeTheme } from './lib/theme';
 import { createLogger } from './lib/logger';
+import JournalPicker from './components/auth/JournalPicker';
 import PasswordCreation from './components/auth/PasswordCreation';
 import PasswordPrompt from './components/auth/PasswordPrompt';
 import MainLayout from './components/layout/MainLayout';
@@ -37,6 +38,10 @@ function App() {
             <p class="text-gray-600">Loading...</p>
           </div>
         </div>
+      </Match>
+
+      <Match when={authState() === 'journal-select'}>
+        <JournalPicker />
       </Match>
 
       <Match when={authState() === 'no-diary'}>
