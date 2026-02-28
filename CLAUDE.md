@@ -1,4 +1,4 @@
-# AGENTS.md — Mini Diarium
+# CLAUDE.md — Mini Diarium
 
 **Mini Diarium** is an encrypted, local-first desktop journaling app (SolidJS + Rust/Tauri v2 + SQLite). All diary entries are AES-256-GCM encrypted at rest; plaintext never touches disk.
 
@@ -6,7 +6,7 @@
 
 **Platforms:** Windows 10/11, macOS 10.15+, Linux (Ubuntu 20.04+, Fedora, Arch).
 
-**Status:** See `Current-implementation-plan.md` for task-level progress (55/58 tasks complete).
+**Status:** See `docs/OPEN_TASKS.md` for structured roadmap items and `docs/TODO.md` for the working backlog.
 
 ## Architecture
 
@@ -37,13 +37,13 @@ Quick reference (ASCII art):
                              │ Reactive Signals
 ┌────────────────────────────┴────────────────────────────────────┐
 │                       STATE LAYER                               │
-│    auth.ts · entries.ts · search.ts · ui.ts · preferences.ts    │
+│ auth.ts · entries.ts · journals.ts · search.ts · ui.ts · preferences.ts │
 └────────────────────────────┬────────────────────────────────────┘
                              │ invoke() / listen()
 ┌────────────────────────────┴────────────────────────────────────┐
 │                      BACKEND (Rust)                             │
-│  Commands: auth · entries · search · navigation · stats · import│
-│  Business: crypto/ · db/ · import/ · menu.rs                    │
+│ Cmds: auth · entries · search · nav · stats · import/export · plugin │
+│ Biz: crypto/ · db/ · import/ · export/ · plugin/ · menu.rs · config.rs│
 └────────────────────────────┬────────────────────────────────────┘
                              │
                       ┌──────┴──────┐
@@ -351,7 +351,7 @@ To add a new **built-in** import format (compiled Rust):
 4. Add frontend wrapper in `src/lib/tauri.ts` and UI option in `ImportOverlay.tsx`
 5. Add a builtin wrapper struct in `plugin/builtins.rs` implementing `ImportPlugin`, and register it in `register_all()`
 
-For **user-scriptable** formats, users drop a `.rhai` file in `{diary_dir}/plugins/`. See `plugin/rhai_loader.rs` for the Rhai script contract and `docs/USER_GUIDE.md` for the end-user documentation.
+For **user-scriptable** formats, users drop a `.rhai` file in `{diary_dir}/plugins/`. See `plugin/rhai_loader.rs` for the Rhai script contract and `docs/user-plugins/USER_PLUGIN_GUIDE.md` for the end-user plugin guide and templates.
 
 ### Menu Event Pattern
 
@@ -517,12 +517,12 @@ bun run tauri build      # Full app bundle
 
 ## Known Issues / Technical Debt
 
-- **Low frontend test coverage**: Only 4 test files (editor + lib). Auth screens, Calendar, Sidebar, all overlays, and MainLayout lack tests.
+- **Frontend test coverage is still incomplete**: coverage has improved substantially, but `PasswordPrompt.tsx`, `PasswordCreation.tsx`, `Calendar.tsx`, `Sidebar.tsx`, most overlays, and broader editor workflows still lack direct tests.
 - **No Tauri integration tests**: All backend tests use direct DB connections, not the Tauri command layer.
 - **No error boundary components**: Unhandled errors in components crash the app.
 - **Search not implemented**: `search_entries` is a stub returning `[]`. A secure search backend needs to be designed and implemented.
 - **SolidJS reactivity warnings**: ~5 non-critical warnings in dev mode from signal access patterns.
-- See `Current-implementation-plan.md` for remaining planned features (tasks 38-47).
+- See `docs/OPEN_TASKS.md` and `docs/TODO.md` for remaining planned work.
 
 ## Common Task Checklists
 
@@ -562,7 +562,7 @@ This overwrites every icon variant (ICO, ICNS, PNG at all sizes, Windows AppX, i
 
 **Option B: User-scriptable (Rhai)**
 
-Users drop a `.rhai` file in `{diary_dir}/plugins/`. The file must have a `// @name`, `// @type`, and optionally `// @extensions` comment header. Import scripts define `fn parse(content)` returning an array of entry maps; export scripts define `fn format_entries(entries)` returning a string. See `docs/USER_GUIDE.md` for templates and `plugin/rhai_loader.rs` for the runtime.
+Users drop a `.rhai` file in `{diary_dir}/plugins/`. The file must have a `// @name`, `// @type`, and optionally `// @extensions` comment header. Import scripts define `fn parse(content)` returning an array of entry maps; export scripts define `fn format_entries(entries)` returning a string. See `docs/user-plugins/USER_PLUGIN_GUIDE.md` for templates and `plugin/rhai_loader.rs` for the runtime.
 
 ### Implementing Search
 

@@ -22,7 +22,7 @@ sequenceDiagram
   participant U as User
   participant UI as Mini Diarium UI
   participant BE as Rust Backend
-  participant DB as SQLite auth_slots
+  participant DB as SQLite diary.db (auth_slots)
   participant KF as Key File key
 
   U->>UI: Choose unlock method
@@ -41,4 +41,7 @@ sequenceDiagram
       BE->>BE: ECDH then HKDF then AES-GCM unwrap
   end
 
-  BE-->>UI: Master key loaded (session unlocked)
+  BE->>BE: Open database connection
+  BE->>BE: backup_and_rotate()
+  BE->>BE: Update menu lock state
+  BE-->>UI: Session unlocked
