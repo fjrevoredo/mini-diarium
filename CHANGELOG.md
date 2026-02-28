@@ -2,6 +2,24 @@
 
 All notable changes to Mini Diarium are documented here. This project uses [Semantic Versioning](https://semver.org/).
 
+## [0.5.0] — Unreleased
+
+### Added
+
+- **Multiple entries per day**: each diary day can now hold any number of independent entries. A `←` / `→` navigation bar appears above the editor when a day has more than one entry, showing the current position (e.g. `2 / 3`). A `+` button on the right side of the bar creates a new blank entry for the same date. Single-entry days look and behave exactly as before — the navigation bar is hidden.
+- **Entry identity**: each entry now carries a stable `INTEGER PRIMARY KEY AUTOINCREMENT` id. Saves, deletes, and exports all reference entries by id rather than by date.
+
+### Changed
+
+- **Database schema bumped to v5**: the `entries` table gains an `id INTEGER PRIMARY KEY AUTOINCREMENT` column; the old `date TEXT PRIMARY KEY` unique constraint is replaced by a non-unique `idx_entries_date` index. Existing databases are migrated automatically on first launch (entries are preserved in date-creation order).
+- **Import no longer merges same-date entries**: previously, importing a file with entries that matched an existing date would merge the content. Imports now always create a new entry, consistent with the multiple-entries-per-day model. The `entries_merged` field has been removed from the import result.
+- **JSON export format changed to an array**: the exported JSON file now contains an `"entries"` array (each object includes an `"id"` field) instead of a date-keyed object. This format can represent multiple entries per day correctly. The `"metadata"` wrapper (`application`, `version`, `exportedAt`) is unchanged.
+- **Markdown export groups multiple entries per day**: when a day has more than one entry, each entry appears as a `### Entry N` sub-heading (or `### {title}` if the entry has a title) under the day's `## YYYY-MM-DD` heading.
+
+### Fixed
+
+- **Streak calculation now counts distinct days**: with multiple entries per date, the statistics streak algorithm now deduplicates dates before computing streaks, ensuring one active day is counted once regardless of how many entries it contains.
+
 ## [0.4.2] — Unreleased
 
 ### Added

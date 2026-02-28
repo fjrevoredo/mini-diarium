@@ -1,10 +1,17 @@
 use crate::db::queries::DiaryEntry;
-use serde_json::{json, Map, Value};
+use serde_json::{json, Value};
 
-/// Exports diary entries to Mini Diary-compatible JSON format
+/// Exports diary entries to an array-based JSON format with id field
 ///
-/// The output format matches the Mini Diary JSON schema, enabling round-trip
-/// compatibility: export from Mini Diarium -> import into Mini Diary or re-import back.
+/// The output format is an array of entries, each with an `id` field:
+/// ```json
+/// {
+///   "metadata": { "exportedAt": "...", "version": "..." },
+///   "entries": [
+///     { "id": 42, "date": "2024-01-15", "title": "...", "text": "...", "dateUpdated": "..." }
+///   ]
+/// }
+/// ```
 ///
 /// # Arguments
 /// * `entries` - Vector of diary entries to export
@@ -14,26 +21,27 @@ use serde_json::{json, Map, Value};
 pub fn export_entries_to_json(entries: Vec<DiaryEntry>) -> Result<String, String> {
     let now = chrono::Utc::now().to_rfc3339();
 
-    // Build entries map: date -> { dateUpdated, title, text }
-    let mut entries_map = Map::new();
-    for entry in &entries {
-        entries_map.insert(
-            entry.date.clone(),
+    // Build entries array
+    let entries_array: Vec<Value> = entries
+        .iter()
+        .map(|entry| {
             json!({
-                "dateUpdated": entry.date_updated,
+                "id": entry.id,
+                "date": entry.date,
                 "title": entry.title,
                 "text": entry.text,
-            }),
-        );
-    }
+                "dateUpdated": entry.date_updated,
+            })
+        })
+        .collect();
 
     let export = json!({
         "metadata": {
             "application": "Mini Diarium",
             "version": env!("CARGO_PKG_VERSION"),
-            "dateUpdated": now,
+            "exportedAt": now,
         },
-        "entries": Value::Object(entries_map),
+        "entries": entries_array,
     });
 
     serde_json::to_string_pretty(&export).map_err(|e| format!("Failed to serialize JSON: {}", e))
@@ -43,8 +51,9 @@ pub fn export_entries_to_json(entries: Vec<DiaryEntry>) -> Result<String, String
 mod tests {
     use super::*;
 
-    fn create_test_entry(date: &str, title: &str, text: &str) -> DiaryEntry {
+    fn create_test_entry(id: i64, date: &str, title: &str, text: &str) -> DiaryEntry {
         DiaryEntry {
+            id,
             date: date.to_string(),
             title: title.to_string(),
             text: text.to_string(),
@@ -61,13 +70,16 @@ mod tests {
 
         assert_eq!(parsed["metadata"]["application"], "Mini Diarium");
         assert!(parsed["metadata"]["version"].is_string());
-        assert!(parsed["metadata"]["dateUpdated"].is_string());
-        assert_eq!(parsed["entries"].as_object().unwrap().len(), 0);
+        assert!(parsed["metadata"]["exportedAt"].is_string());
+        // entries should be an empty array
+        let entries = parsed["entries"].as_array().unwrap();
+        assert_eq!(entries.len(), 0);
     }
 
     #[test]
     fn test_export_single_entry() {
         let entries = vec![create_test_entry(
+            42,
             "2024-01-15",
             "My Entry",
             "Entry content here",
@@ -76,7 +88,11 @@ mod tests {
         let result = export_entries_to_json(entries).unwrap();
         let parsed: Value = serde_json::from_str(&result).unwrap();
 
-        let entry = &parsed["entries"]["2024-01-15"];
+        let entries_arr = parsed["entries"].as_array().unwrap();
+        assert_eq!(entries_arr.len(), 1);
+        let entry = &entries_arr[0];
+        assert_eq!(entry["id"], 42);
+        assert_eq!(entry["date"], "2024-01-15");
         assert_eq!(entry["title"], "My Entry");
         assert_eq!(entry["text"], "Entry content here");
         assert_eq!(entry["dateUpdated"], "2024-01-01T12:00:00Z");
@@ -85,43 +101,67 @@ mod tests {
     #[test]
     fn test_export_multiple_entries() {
         let entries = vec![
-            create_test_entry("2024-01-01", "First", "Content one"),
-            create_test_entry("2024-01-02", "Second", "Content two"),
-            create_test_entry("2024-01-03", "Third", "Content three"),
+            create_test_entry(1, "2024-01-01", "First", "Content one"),
+            create_test_entry(2, "2024-01-02", "Second", "Content two"),
+            create_test_entry(3, "2024-01-03", "Third", "Content three"),
         ];
 
         let result = export_entries_to_json(entries).unwrap();
         let parsed: Value = serde_json::from_str(&result).unwrap();
 
-        let entries_obj = parsed["entries"].as_object().unwrap();
-        assert_eq!(entries_obj.len(), 3);
-        assert_eq!(parsed["entries"]["2024-01-01"]["title"], "First");
-        assert_eq!(parsed["entries"]["2024-01-02"]["title"], "Second");
-        assert_eq!(parsed["entries"]["2024-01-03"]["title"], "Third");
+        let entries_arr = parsed["entries"].as_array().unwrap();
+        assert_eq!(entries_arr.len(), 3);
+        assert_eq!(entries_arr[0]["title"], "First");
+        assert_eq!(entries_arr[1]["title"], "Second");
+        assert_eq!(entries_arr[2]["title"], "Third");
     }
 
     #[test]
-    fn test_round_trip_export_import() {
+    fn test_export_multiple_entries_same_date() {
         let entries = vec![
-            create_test_entry("2024-01-15", "Test Entry", "Some content here"),
-            create_test_entry("2024-02-20", "Another Entry", "More content"),
+            create_test_entry(1, "2024-01-01", "Morning", "Had breakfast"),
+            create_test_entry(2, "2024-01-01", "Evening", "Had dinner"),
         ];
 
-        // Export
-        let json_string = export_entries_to_json(entries.clone()).unwrap();
+        let result = export_entries_to_json(entries).unwrap();
+        let parsed: Value = serde_json::from_str(&result).unwrap();
 
-        // Import back using the minidiary parser
-        let imported = crate::import::minidiary::parse_minidiary_json(&json_string).unwrap();
+        let entries_arr = parsed["entries"].as_array().unwrap();
+        assert_eq!(entries_arr.len(), 2);
+        assert_eq!(entries_arr[0]["date"], "2024-01-01");
+        assert_eq!(entries_arr[1]["date"], "2024-01-01");
+        assert_eq!(entries_arr[0]["id"], 1);
+        assert_eq!(entries_arr[1]["id"], 2);
+    }
 
-        assert_eq!(imported.len(), 2);
+    #[test]
+    fn test_export_entries_is_array_not_object() {
+        let entries = vec![create_test_entry(1, "2024-01-15", "Test", "Content")];
+        let result = export_entries_to_json(entries).unwrap();
+        let parsed: Value = serde_json::from_str(&result).unwrap();
 
-        // Check both entries are present (order not guaranteed with HashMap)
-        let entry1 = imported.iter().find(|e| e.date == "2024-01-15").unwrap();
-        assert_eq!(entry1.title, "Test Entry");
-        assert_eq!(entry1.text, "Some content here");
+        // entries must be an array, not an object
+        assert!(
+            parsed["entries"].is_array(),
+            "entries should be a JSON array"
+        );
+    }
 
-        let entry2 = imported.iter().find(|e| e.date == "2024-02-20").unwrap();
-        assert_eq!(entry2.title, "Another Entry");
-        assert_eq!(entry2.text, "More content");
+    #[test]
+    fn test_export_entries_have_id_field() {
+        let entries = vec![create_test_entry(
+            99,
+            "2024-01-15",
+            "Test Entry",
+            "Some content here",
+        )];
+
+        let json_string = export_entries_to_json(entries).unwrap();
+        let parsed: Value = serde_json::from_str(&json_string).unwrap();
+
+        let entries_arr = parsed["entries"].as_array().unwrap();
+        assert_eq!(entries_arr.len(), 1);
+        assert_eq!(entries_arr[0]["id"], 99);
+        assert_eq!(entries_arr[0]["title"], "Test Entry");
     }
 }

@@ -4,8 +4,16 @@ import { createLogger } from '../../lib/logger';
 import TitleEditor from '../editor/TitleEditor';
 import DiaryEditor from '../editor/DiaryEditor';
 import WordCount from '../editor/WordCount';
+import { EntryNavBar } from '../editor/EntryNavBar';
 import { selectedDate } from '../../state/ui';
-import { saveEntry, getEntry, deleteEntryIfEmpty, getAllEntryDates } from '../../lib/tauri';
+import {
+  createEntry,
+  saveEntry,
+  getEntriesForDate,
+  deleteEntryIfEmpty,
+  getAllEntryDates,
+} from '../../lib/tauri';
+import type { DiaryEntry } from '../../lib/tauri';
 import { debounce } from '../../lib/debounce';
 import { isSaving, setIsSaving, setEntryDates } from '../../state/entries';
 import { preferences } from '../../state/preferences';
@@ -13,88 +21,40 @@ import { preferences } from '../../state/preferences';
 const log = createLogger('Editor');
 
 export default function EditorPanel() {
-  interface SavePayload {
-    date: string;
-    title: string;
-    content: string;
-    isContentEmpty: boolean;
-  }
-
   const [title, setTitle] = createSignal('');
   const [content, setContent] = createSignal('');
   const [wordCount, setWordCount] = createSignal(0);
   const [isLoadingEntry, setIsLoadingEntry] = createSignal(false);
   const [editorInstance, setEditorInstance] = createSignal<Editor | null>(null);
+
+  // Multi-entry state
+  const [dayEntries, setDayEntries] = createSignal<DiaryEntry[]>([]);
+  const [currentIndex, setCurrentIndex] = createSignal(0);
+  const [pendingEntryId, setPendingEntryId] = createSignal<number | null>(null);
+
   let isDisposed = false;
   let loadRequestId = 0;
   let saveRequestId = 0;
 
-  // Load entry when selected date changes
-  const loadEntryForDate = async (date: string) => {
-    const requestId = ++loadRequestId;
-    setIsLoadingEntry(true);
-
-    try {
-      const entry = await getEntry(date);
-      if (isDisposed || requestId !== loadRequestId) return;
-      if (entry) {
-        setTitle(entry.title);
-        setContent(entry.text);
-        const words = entry.text.trim().split(/\s+/).filter(Boolean);
-        setWordCount(words.length);
-      } else {
-        // New entry for this date
-        setTitle('');
-        setContent('');
-        setWordCount(0);
-      }
-    } catch (error) {
-      log.error('Failed to load entry:', error);
-    } finally {
-      if (!isDisposed && requestId === loadRequestId) {
-        setIsLoadingEntry(false);
-      }
-    }
-  };
-
-  createEffect(() => {
-    void loadEntryForDate(selectedDate());
-  });
-
-  const createSavePayload = (
-    nextTitle = title(),
-    nextContent = content(),
-    nextDate = selectedDate(),
-  ): SavePayload => {
-    // Use TipTap emptiness when available to handle cases like <p></p>.
+  const isContentEmpty = () => {
     const editor = editorInstance();
-    const isContentEmpty =
-      editor && !editor.isDestroyed
-        ? editor.isEmpty || editor.getText().trim() === ''
-        : !nextContent.trim();
-
-    return {
-      date: nextDate,
-      title: nextTitle,
-      content: nextContent,
-      isContentEmpty,
-    };
+    if (editor && !editor.isDestroyed) {
+      return editor.isEmpty || editor.getText().trim() === '';
+    }
+    return !content().trim();
   };
 
-  // Save entry function
-  const saveCurrentEntry = async (payload: SavePayload) => {
+  // Save the current entry by id (or create if no id yet on first keystroke)
+  const saveCurrentById = async (entryId: number, currentTitle: string, currentContent: string) => {
     if (isDisposed) return;
     const requestId = ++saveRequestId;
-    const date = payload.date;
-    const currentTitle = payload.title;
-    const currentContent = payload.content;
 
-    if (!currentTitle.trim() && payload.isContentEmpty) {
-      // Delete empty entry — pass '' so the backend check (text.trim().is_empty()) also passes
+    const shouldDelete =
+      currentTitle.trim() === '' && (isContentEmpty() || currentContent.trim() === '');
+    if (shouldDelete) {
       try {
-        await deleteEntryIfEmpty(date, currentTitle, '');
+        await deleteEntryIfEmpty(entryId, currentTitle, '');
         if (isDisposed || requestId !== saveRequestId) return;
-        // Refresh entry dates after deletion
         const dates = await getAllEntryDates();
         if (isDisposed || requestId !== saveRequestId) return;
         setEntryDates(dates);
@@ -105,23 +65,14 @@ export default function EditorPanel() {
       return;
     }
 
-    // Save entry
     try {
       setIsSaving(true);
-      await saveEntry(date, currentTitle, currentContent);
+      await saveEntry(entryId, currentTitle, currentContent);
       if (isDisposed || requestId !== saveRequestId) return;
 
-      // Refresh entry dates after save
       const dates = await getAllEntryDates();
       if (isDisposed || requestId !== saveRequestId) return;
       setEntryDates(dates);
-
-      // Update word count from persisted data
-      const savedEntry = await getEntry(date);
-      if (isDisposed || requestId !== saveRequestId) return;
-      if (savedEntry) {
-        setWordCount(savedEntry.word_count);
-      }
     } catch (error) {
       log.error('Failed to save entry:', error);
     } finally {
@@ -131,25 +82,172 @@ export default function EditorPanel() {
     }
   };
 
-  // Debounced save (500ms after typing stops)
-  const debouncedSave = debounce((payload: SavePayload) => {
-    void saveCurrentEntry(payload);
+  // Debounced save
+  const debouncedSave = debounce((entryId: number, t: string, c: string) => {
+    void saveCurrentById(entryId, t, c);
   }, 500);
+
+  // Load entries for a date
+  const loadEntriesForDate = async (date: string) => {
+    const requestId = ++loadRequestId;
+    setIsLoadingEntry(true);
+
+    try {
+      const entries = await getEntriesForDate(date);
+      if (isDisposed || requestId !== loadRequestId) return;
+
+      setDayEntries(entries);
+
+      if (entries.length > 0) {
+        setCurrentIndex(0);
+        const entry = entries[0];
+        setPendingEntryId(entry.id);
+        setTitle(entry.title);
+        setContent(entry.text);
+        const words = entry.text.trim().split(/\s+/).filter(Boolean);
+        setWordCount(words.length);
+      } else {
+        setCurrentIndex(0);
+        setPendingEntryId(null);
+        setTitle('');
+        setContent('');
+        setWordCount(0);
+      }
+    } catch (error) {
+      log.error('Failed to load entries:', error);
+    } finally {
+      if (!isDisposed && requestId === loadRequestId) {
+        setIsLoadingEntry(false);
+      }
+    }
+  };
+
+  // Navigate to an entry within the current day
+  const navigateToEntry = async (newIndex: number) => {
+    // Save current first
+    const currentId = pendingEntryId();
+    if (currentId !== null) {
+      debouncedSave.cancel();
+      await saveCurrentById(currentId, title(), content());
+    }
+
+    const entries = dayEntries();
+    if (newIndex < 0 || newIndex >= entries.length) return;
+
+    // Refresh entries list from backend
+    try {
+      const refreshed = await getEntriesForDate(selectedDate());
+      if (isDisposed) return;
+      setDayEntries(refreshed);
+
+      // Filter to entries that still exist
+      const validIndex = Math.min(newIndex, refreshed.length - 1);
+      if (validIndex < 0) {
+        setCurrentIndex(0);
+        setPendingEntryId(null);
+        setTitle('');
+        setContent('');
+        setWordCount(0);
+        return;
+      }
+
+      setCurrentIndex(validIndex);
+      const entry = refreshed[validIndex];
+      setPendingEntryId(entry.id);
+      setTitle(entry.title);
+      setContent(entry.text);
+      const words = entry.text.trim().split(/\s+/).filter(Boolean);
+      setWordCount(words.length);
+    } catch (error) {
+      log.error('Failed to navigate to entry:', error);
+    }
+  };
+
+  // Add a new entry for the current date
+  const addEntry = async () => {
+    // Save current first
+    const currentId = pendingEntryId();
+    if (currentId !== null) {
+      debouncedSave.cancel();
+      await saveCurrentById(currentId, title(), content());
+    }
+
+    try {
+      const newEntry = await createEntry(selectedDate());
+      if (isDisposed) return;
+
+      // Refresh entries for the date
+      const refreshed = await getEntriesForDate(selectedDate());
+      if (isDisposed) return;
+
+      setDayEntries(refreshed);
+      // New entry is newest-first, so it should be at index 0
+      const idx = refreshed.findIndex((e) => e.id === newEntry.id);
+      const newIndex = idx >= 0 ? idx : 0;
+      setCurrentIndex(newIndex);
+      setPendingEntryId(newEntry.id);
+      setTitle('');
+      setContent('');
+      setWordCount(0);
+
+      // Refresh dates
+      const dates = await getAllEntryDates();
+      if (!isDisposed) setEntryDates(dates);
+    } catch (error) {
+      log.error('Failed to add entry:', error);
+    }
+  };
+
+  createEffect(() => {
+    void loadEntriesForDate(selectedDate());
+  });
 
   const handleContentUpdate = (newContent: string) => {
     setContent(newContent);
-    // Trigger debounced save (word count will update after save completes)
-    debouncedSave(createSavePayload(title(), newContent, selectedDate()));
+    const id = pendingEntryId();
+    if (id !== null) {
+      debouncedSave(id, title(), newContent);
+    } else {
+      // First keystroke on empty day — create entry then save
+      void (async () => {
+        try {
+          const newEntry = await createEntry(selectedDate());
+          if (isDisposed) return;
+          setPendingEntryId(newEntry.id);
+          const refreshed = await getEntriesForDate(selectedDate());
+          if (!isDisposed) setDayEntries(refreshed);
+          // Now save the content
+          debouncedSave(newEntry.id, title(), newContent);
+        } catch (error) {
+          log.error('Failed to create entry on first keystroke:', error);
+        }
+      })();
+    }
   };
 
   const handleTitleInput = (newTitle: string) => {
     setTitle(newTitle);
-    // Trigger debounced save
-    debouncedSave(createSavePayload(newTitle, content(), selectedDate()));
+    const id = pendingEntryId();
+    if (id !== null) {
+      debouncedSave(id, newTitle, content());
+    } else {
+      // First keystroke in title on empty day — create entry then save
+      void (async () => {
+        try {
+          const newEntry = await createEntry(selectedDate());
+          if (isDisposed) return;
+          setPendingEntryId(newEntry.id);
+          const refreshed = await getEntriesForDate(selectedDate());
+          if (!isDisposed) setDayEntries(refreshed);
+          debouncedSave(newEntry.id, newTitle, content());
+        } catch (error) {
+          log.error('Failed to create entry on title keystroke:', error);
+        }
+      })();
+    }
   };
 
   const handleTitleEnter = () => {
-    // Focus the editor when Enter is pressed in title
     const editor = editorInstance();
     if (editor) {
       editor.commands.focus('end');
@@ -159,7 +257,10 @@ export default function EditorPanel() {
   // Save on window unload
   onMount(() => {
     const handleBeforeUnload = () => {
-      void saveCurrentEntry(createSavePayload());
+      const id = pendingEntryId();
+      if (id !== null) {
+        void saveCurrentById(id, title(), content());
+      }
     };
 
     window.addEventListener('beforeunload', handleBeforeUnload);
@@ -175,6 +276,13 @@ export default function EditorPanel() {
 
   return (
     <div class="flex h-full flex-col">
+      <EntryNavBar
+        total={dayEntries().length}
+        index={currentIndex()}
+        onPrev={() => void navigateToEntry(currentIndex() - 1)}
+        onNext={() => void navigateToEntry(currentIndex() + 1)}
+        onAdd={() => void addEntry()}
+      />
       <div class="flex-1 overflow-y-auto p-6">
         <div class="mx-auto w-full max-w-3xl xl:max-w-5xl 2xl:max-w-6xl">
           <div class="space-y-4">

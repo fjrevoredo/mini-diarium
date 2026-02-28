@@ -209,10 +209,6 @@ export default function ImportOverlay(props: ImportOverlayProps) {
                     <span>Entries imported:</span>
                     <span class="font-semibold">{formatCount(result()!.entries_imported)}</span>
                   </div>
-                  <div class="flex justify-between">
-                    <span>Entries merged:</span>
-                    <span class="font-semibold">{formatCount(result()!.entries_merged)}</span>
-                  </div>
                   <Show when={result()!.entries_skipped > 0}>
                     <div class="flex justify-between">
                       <span>Entries skipped:</span>

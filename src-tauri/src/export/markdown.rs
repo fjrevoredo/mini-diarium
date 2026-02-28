@@ -2,16 +2,27 @@ use crate::db::queries::DiaryEntry;
 
 /// Exports diary entries to a Markdown-formatted string
 ///
-/// Format:
+/// Entries are grouped by date. If a date has multiple entries, each entry
+/// gets a `### Title` (or `### Entry N` if title is empty) sub-heading.
+///
+/// Format (single entry per day):
 /// ```markdown
 /// # Mini Diarium
 ///
 /// ## 2024-01-15
 /// **My Title**
 /// Entry content here...
+/// ```
 ///
-/// ## 2024-01-16
-/// **Another Title**
+/// Format (multiple entries per day):
+/// ```markdown
+/// # Mini Diarium
+///
+/// ## 2024-01-15
+/// ### Morning Entry
+/// Content...
+///
+/// ### Entry 2
 /// More content...
 /// ```
 ///
@@ -19,17 +30,45 @@ use crate::db::queries::DiaryEntry;
 pub fn export_entries_to_markdown(entries: Vec<DiaryEntry>) -> String {
     let mut output = String::from("# Mini Diarium\n");
 
+    // Group entries by date preserving order (entries should be ordered date ASC, id ASC)
+    // First, collect entries grouped by date to know how many per date
+    let mut date_groups: Vec<(&str, Vec<&DiaryEntry>)> = Vec::new();
     for entry in &entries {
-        output.push_str(&format!("\n## {}\n", entry.date));
-
-        if !entry.title.is_empty() {
-            output.push_str(&format!("**{}**\n", entry.title));
+        if let Some((last_date, group)) = date_groups.last_mut() {
+            if *last_date == entry.date.as_str() {
+                group.push(entry);
+                continue;
+            }
         }
+        date_groups.push((entry.date.as_str(), vec![entry]));
+    }
 
-        let text = html_to_markdown(&entry.text);
-        if !text.is_empty() {
-            output.push_str(&text);
-            if !text.ends_with('\n') {
+    for (date, group) in &date_groups {
+        output.push_str(&format!("\n## {}\n", date));
+        let multi = group.len() > 1;
+
+        for (i, entry) in group.iter().enumerate() {
+            if multi {
+                // Use title as sub-heading, or "Entry N" if title is empty
+                let heading = if entry.title.is_empty() {
+                    format!("Entry {}", i + 1)
+                } else {
+                    entry.title.clone()
+                };
+                output.push_str(&format!("### {}\n", heading));
+            } else if !entry.title.is_empty() {
+                output.push_str(&format!("**{}**\n", entry.title));
+            }
+
+            let text = html_to_markdown(&entry.text);
+            if !text.is_empty() {
+                output.push_str(&text);
+                if !text.ends_with('\n') {
+                    output.push('\n');
+                }
+            }
+
+            if multi && i + 1 < group.len() {
                 output.push('\n');
             }
         }
@@ -178,6 +217,7 @@ mod tests {
 
     fn create_test_entry(date: &str, title: &str, text: &str) -> DiaryEntry {
         DiaryEntry {
+            id: 1,
             date: date.to_string(),
             title: title.to_string(),
             text: text.to_string(),

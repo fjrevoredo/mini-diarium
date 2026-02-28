@@ -1,7 +1,7 @@
 use crate::commands::auth::DiaryState;
 use crate::db::queries;
 use crate::db::schema::DatabaseConnection;
-use crate::import::{dayone, dayone_txt, jrnl, merge, minidiary};
+use crate::import::{dayone, dayone_txt, jrnl, minidiary};
 use log::{debug, error, info};
 use tauri::State;
 
@@ -32,7 +32,6 @@ pub(crate) fn read_import_file(file_path: &str) -> Result<String, String> {
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct ImportResult {
     pub entries_imported: usize,
-    pub entries_merged: usize,
     pub entries_skipped: usize,
 }
 
@@ -43,7 +42,7 @@ pub struct ImportResult {
 /// * `state` - Application state containing the database connection
 ///
 /// # Returns
-/// ImportResult with counts of imported, merged, and skipped entries
+/// ImportResult with counts of imported and skipped entries
 #[tauri::command]
 pub fn import_minidiary_json(
     file_path: String,
@@ -73,7 +72,7 @@ pub fn import_minidiary_json(
     })?;
     debug!("Parsed {} entries", entries.len());
 
-    // Import entries with merge handling
+    // Import entries (each entry always creates a new row)
     debug!("Importing entries...");
     let result = import_entries(db, entries).map_err(|e| {
         error!("Import error: {}", e);
@@ -83,8 +82,8 @@ pub fn import_minidiary_json(
     // Search index hook: call search module's bulk_reindex() here when implemented.
 
     info!(
-        "Mini Diary import complete: {} imported, {} merged",
-        result.entries_imported, result.entries_merged
+        "Mini Diary import complete: {} imported",
+        result.entries_imported
     );
     Ok(result)
 }
@@ -96,7 +95,7 @@ pub fn import_minidiary_json(
 /// * `state` - Application state containing the database connection
 ///
 /// # Returns
-/// ImportResult with counts of imported, merged, and skipped entries
+/// ImportResult with counts of imported and skipped entries
 #[tauri::command]
 pub fn import_dayone_json(
     file_path: String,
@@ -126,7 +125,7 @@ pub fn import_dayone_json(
     })?;
     debug!("Parsed {} entries", entries.len());
 
-    // Import entries with merge handling
+    // Import entries
     debug!("Importing entries...");
     let result = import_entries(db, entries).map_err(|e| {
         error!("Import error: {}", e);
@@ -136,8 +135,8 @@ pub fn import_dayone_json(
     // Search index hook: call search module's bulk_reindex() here when implemented.
 
     info!(
-        "Day One JSON import complete: {} imported, {} merged",
-        result.entries_imported, result.entries_merged
+        "Day One JSON import complete: {} imported",
+        result.entries_imported
     );
     Ok(result)
 }
@@ -149,7 +148,7 @@ pub fn import_dayone_json(
 /// * `state` - Application state containing the database connection
 ///
 /// # Returns
-/// ImportResult with counts of imported, merged, and skipped entries
+/// ImportResult with counts of imported and skipped entries
 #[tauri::command]
 pub fn import_jrnl_json(
     file_path: String,
@@ -179,7 +178,7 @@ pub fn import_jrnl_json(
     })?;
     debug!("Parsed {} entries", entries.len());
 
-    // Import entries with merge handling
+    // Import entries
     debug!("Importing entries...");
     let result = import_entries(db, entries).map_err(|e| {
         error!("Import error: {}", e);
@@ -188,10 +187,7 @@ pub fn import_jrnl_json(
 
     // Search index hook: call search module's bulk_reindex() here when implemented.
 
-    info!(
-        "jrnl import complete: {} imported, {} merged",
-        result.entries_imported, result.entries_merged
-    );
+    info!("jrnl import complete: {} imported", result.entries_imported);
     Ok(result)
 }
 
@@ -202,7 +198,7 @@ pub fn import_jrnl_json(
 /// * `state` - Application state containing the database connection
 ///
 /// # Returns
-/// ImportResult with counts of imported, merged, and skipped entries
+/// ImportResult with counts of imported and skipped entries
 #[tauri::command]
 pub fn import_dayone_txt(
     file_path: String,
@@ -232,7 +228,7 @@ pub fn import_dayone_txt(
     })?;
     debug!("Parsed {} entries", entries.len());
 
-    // Import entries with merge handling
+    // Import entries
     debug!("Importing entries...");
     let result = import_entries(db, entries).map_err(|e| {
         error!("Import error: {}", e);
@@ -242,21 +238,20 @@ pub fn import_dayone_txt(
     // Search index hook: call search module's bulk_reindex() here when implemented.
 
     info!(
-        "Day One TXT import complete: {} imported, {} merged",
-        result.entries_imported, result.entries_merged
+        "Day One TXT import complete: {} imported",
+        result.entries_imported
     );
     Ok(result)
 }
 
 /// Imports a list of entries into the database
 ///
-/// Handles merging when entries with the same date already exist
+/// Each entry always creates a new row (AUTOINCREMENT id). No merge logic.
 pub(crate) fn import_entries(
     db: &DatabaseConnection,
     entries: Vec<queries::DiaryEntry>,
 ) -> Result<ImportResult, String> {
     let mut entries_imported = 0;
-    let mut entries_merged = 0;
     let mut entries_skipped = 0;
 
     for entry in entries {
@@ -265,24 +260,13 @@ pub(crate) fn import_entries(
             entries_skipped += 1;
             continue;
         }
-        // Check if entry already exists
-        let existing = queries::get_entry(db, &entry.date)?;
-
-        if let Some(existing_entry) = existing {
-            // Entry exists - merge it
-            let merged = merge::merge_entries(existing_entry, entry);
-            queries::update_entry(db, &merged)?;
-            entries_merged += 1;
-        } else {
-            // New entry - insert it
-            queries::insert_entry(db, &entry)?;
-            entries_imported += 1;
-        }
+        // Always insert a new row — AUTOINCREMENT assigns the id
+        queries::insert_entry(db, &entry)?;
+        entries_imported += 1;
     }
 
     Ok(ImportResult {
         entries_imported,
-        entries_merged,
         entries_skipped,
     })
 }
@@ -296,6 +280,7 @@ mod tests {
     fn create_test_entry(date: &str, title: &str, text: &str) -> DiaryEntry {
         let now = chrono::Utc::now().to_rfc3339();
         DiaryEntry {
+            id: 0,
             date: date.to_string(),
             title: title.to_string(),
             text: text.to_string(),
@@ -318,12 +303,11 @@ mod tests {
         let result = import_entries(&db, entries).unwrap();
 
         assert_eq!(result.entries_imported, 2);
-        assert_eq!(result.entries_merged, 0);
         assert_eq!(result.entries_skipped, 0);
     }
 
     #[test]
-    fn test_import_with_merge() {
+    fn test_import_same_date_creates_duplicates() {
         let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
         let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
 
@@ -331,20 +315,17 @@ mod tests {
         let existing = create_test_entry("2024-01-01", "Morning", "Had breakfast");
         crate::db::queries::insert_entry(&db, &existing).unwrap();
 
-        // Import entry with same date
+        // Import entry with same date — should create a second entry (no merge)
         let entries = vec![create_test_entry("2024-01-01", "Evening", "Had dinner")];
 
         let result = import_entries(&db, entries).unwrap();
 
-        assert_eq!(result.entries_imported, 0);
-        assert_eq!(result.entries_merged, 1);
+        assert_eq!(result.entries_imported, 1);
+        assert_eq!(result.entries_skipped, 0);
 
-        // Verify merge happened
-        let merged = crate::db::queries::get_entry(&db, "2024-01-01")
-            .unwrap()
-            .unwrap();
-        assert!(merged.title.contains("Morning"));
-        assert!(merged.title.contains("Evening"));
+        // Both entries should exist on the same date
+        let all = crate::db::queries::get_entries_by_date(&db, "2024-01-01").unwrap();
+        assert_eq!(all.len(), 2);
     }
 
     #[test]
@@ -355,7 +336,6 @@ mod tests {
         let result = import_entries(&db, vec![]).unwrap();
 
         assert_eq!(result.entries_imported, 0);
-        assert_eq!(result.entries_merged, 0);
         assert_eq!(result.entries_skipped, 0);
     }
 }

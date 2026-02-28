@@ -73,6 +73,7 @@ pub fn parse_jrnl_json(json: &str) -> Result<Vec<DiaryEntry>, String> {
         let word_count = entry.body.split_whitespace().count() as i32;
 
         diary_entries.push(DiaryEntry {
+            id: 0,
             date: entry.date,
             title: entry.title,
             text: entry.body,

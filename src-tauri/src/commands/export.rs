@@ -111,6 +111,7 @@ mod tests {
     fn create_test_entry(date: &str, title: &str, text: &str) -> DiaryEntry {
         let now = chrono::Utc::now().to_rfc3339();
         DiaryEntry {
+            id: 1,
             date: date.to_string(),
             title: title.to_string(),
             text: text.to_string(),
@@ -141,13 +142,7 @@ mod tests {
         .unwrap();
 
         // Export using the pure function (can't use Tauri State in unit tests)
-        let dates = crate::db::queries::get_all_entry_dates(&db).unwrap();
-        let mut entries = Vec::new();
-        for date in &dates {
-            if let Some(entry) = crate::db::queries::get_entry(&db, date).unwrap() {
-                entries.push(entry);
-            }
-        }
+        let entries = crate::db::queries::get_all_entries(&db).unwrap();
 
         let json_string = crate::export::json::export_entries_to_json(entries).unwrap();
         fs::write(export_path, &json_string).unwrap();
@@ -156,9 +151,15 @@ mod tests {
         let content = fs::read_to_string(export_path).unwrap();
         let parsed: serde_json::Value = serde_json::from_str(&content).unwrap();
 
-        assert_eq!(parsed["entries"].as_object().unwrap().len(), 2);
-        assert_eq!(parsed["entries"]["2024-01-01"]["title"], "Entry 1");
-        assert_eq!(parsed["entries"]["2024-01-02"]["title"], "Entry 2");
+        // entries is now an array
+        let entries_arr = parsed["entries"].as_array().unwrap();
+        assert_eq!(entries_arr.len(), 2);
+        let titles: Vec<&str> = entries_arr
+            .iter()
+            .map(|e| e["title"].as_str().unwrap())
+            .collect();
+        assert!(titles.contains(&"Entry 1"));
+        assert!(titles.contains(&"Entry 2"));
 
         cleanup_files(&[export_path]);
     }
@@ -172,17 +173,16 @@ mod tests {
         let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
 
         // Export empty diary
-        let dates = crate::db::queries::get_all_entry_dates(&db).unwrap();
-        assert_eq!(dates.len(), 0);
+        let entries = crate::db::queries::get_all_entries(&db).unwrap();
+        assert_eq!(entries.len(), 0);
 
-        let entries = Vec::new();
         let json_string = crate::export::json::export_entries_to_json(entries).unwrap();
         fs::write(export_path, &json_string).unwrap();
 
         let content = fs::read_to_string(export_path).unwrap();
         let parsed: serde_json::Value = serde_json::from_str(&content).unwrap();
 
-        assert_eq!(parsed["entries"].as_object().unwrap().len(), 0);
+        assert_eq!(parsed["entries"].as_array().unwrap().len(), 0);
 
         cleanup_files(&[export_path]);
     }

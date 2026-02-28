@@ -18,7 +18,6 @@ describe('Import functions', () => {
     it('should call the correct Tauri command', async () => {
       const mockResult: ImportResult = {
         entries_imported: 5,
-        entries_merged: 2,
         entries_skipped: 0,
       };
 
@@ -43,7 +42,6 @@ describe('Import functions', () => {
     it('should call the correct Tauri command', async () => {
       const mockResult: ImportResult = {
         entries_imported: 10,
-        entries_merged: 1,
         entries_skipped: 0,
       };
 

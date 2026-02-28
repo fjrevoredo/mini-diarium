@@ -29,10 +29,10 @@ pub fn get_statistics(state: State<DiaryState>) -> Result<Statistics, String> {
 
 /// Calculates statistics from the database
 fn calculate_statistics(db: &DatabaseConnection) -> Result<Statistics, String> {
-    // Get all entry dates and word counts
+    // Get all entry dates and word counts (ordered by date ASC, id ASC for multi-entry days)
     let mut stmt = db
         .conn()
-        .prepare("SELECT date, word_count FROM entries ORDER BY date ASC")
+        .prepare("SELECT date, word_count FROM entries ORDER BY date ASC, id ASC")
         .map_err(|e| format!("Failed to prepare statement: {}", e))?;
 
     let entries: Vec<(String, i32)> = stmt
@@ -41,7 +41,7 @@ fn calculate_statistics(db: &DatabaseConnection) -> Result<Statistics, String> {
         .collect::<Result<Vec<_>, _>>()
         .map_err(|e| format!("Failed to collect entries: {}", e))?;
 
-    // Total entries
+    // Total entries (each row counts)
     let total_entries = entries.len() as i32;
 
     // Total words
@@ -54,21 +54,24 @@ fn calculate_statistics(db: &DatabaseConnection) -> Result<Statistics, String> {
         0.0
     };
 
-    // Entries per week
-    let entries_per_week = if entries.len() >= 2 {
-        let first_date = &entries[0].0;
-        let last_date = &entries[entries.len() - 1].0;
+    // Build deduplicated dates for streak/week calculations (one date per distinct day)
+    let mut dates: Vec<String> = entries.iter().map(|(date, _)| date.clone()).collect();
+    dates.dedup(); // already sorted ASC, dedup removes consecutive duplicates
+
+    // Entries per week (based on distinct days spanned)
+    let entries_per_week = if dates.len() >= 2 {
+        let first_date = &dates[0];
+        let last_date = &dates[dates.len() - 1];
 
         let days_span = days_between(first_date, last_date)?;
         let weeks_span = (days_span as f64 / 7.0).max(1.0); // At least 1 week
 
         total_entries as f64 / weeks_span
     } else {
-        total_entries as f64 // Less than 2 entries, just return count
+        total_entries as f64 // Less than 2 distinct days, just return count
     };
 
-    // Calculate streaks
-    let dates: Vec<String> = entries.iter().map(|(date, _)| date.clone()).collect();
+    // Calculate streaks using deduplicated dates
     let best_streak = calculate_best_streak(&dates)?;
     let current_streak =
         calculate_current_streak(&dates, &chrono::Local::now().format("%Y-%m-%d").to_string())?;
@@ -167,6 +170,7 @@ mod tests {
     fn create_test_entry(date: &str, word_count: i32) -> DiaryEntry {
         let now = chrono::Utc::now().to_rfc3339();
         DiaryEntry {
+            id: 0,
             date: date.to_string(),
             title: "Test".to_string(),
             text: format!("{} words", "word ".repeat(word_count as usize)),

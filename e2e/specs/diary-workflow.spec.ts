@@ -36,14 +36,28 @@ describe('Core diary workflow', () => {
     await openBtn.waitForDisplayed({ timeout: 15000 });
     await openBtn.click();
 
-    // 2. JournalPicker transitions to PasswordCreation (fresh temp dir = no diary yet)
-    await $('[data-testid="password-create-input"]').waitForDisplayed({ timeout: 10000 });
-    await $('[data-testid="password-create-input"]').setValue(TEST_PASSWORD);
+    // 2. JournalPicker transitions to either:
+    //    - PasswordCreation (no diary yet — clean mode always, stateful first run)
+    //    - PasswordPrompt   (diary exists — stateful mode on second+ run)
+    const authScreen = await browser.waitUntil(
+      async () => {
+        const create = await $('[data-testid="password-create-input"]').isDisplayed().catch(() => false);
+        const unlock = await $('[data-testid="password-unlock-input"]').isDisplayed().catch(() => false);
+        if (create) return 'create' as const;
+        if (unlock) return 'unlock' as const;
+        return false;
+      },
+      { timeout: 10000, timeoutMsg: 'Neither password-create-input nor password-unlock-input appeared' },
+    );
 
-    // Confirm-password field
-    await $('[data-testid="password-repeat-input"]').setValue(TEST_PASSWORD);
-
-    await $('[data-testid="create-diary-button"]').click();
+    if (authScreen === 'create') {
+      await $('[data-testid="password-create-input"]').setValue(TEST_PASSWORD);
+      await $('[data-testid="password-repeat-input"]').setValue(TEST_PASSWORD);
+      await $('[data-testid="create-diary-button"]').click();
+    } else {
+      await $('[data-testid="password-unlock-input"]').setValue(TEST_PASSWORD);
+      await $('[data-testid="unlock-diary-button"]').click();
+    }
 
     // 3. Diary created and unlocked → MainLayout is now visible
     //    Sidebar starts collapsed; open it to access the calendar, then click the target date

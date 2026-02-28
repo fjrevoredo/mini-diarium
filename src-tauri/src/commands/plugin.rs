@@ -79,8 +79,8 @@ pub fn run_import_plugin(
     // Search index hook: call search module's bulk_reindex() here when implemented.
 
     info!(
-        "Plugin import complete: {} imported, {} merged",
-        result.entries_imported, result.entries_merged
+        "Plugin import complete: {} imported, {} skipped",
+        result.entries_imported, result.entries_skipped
     );
     Ok(result)
 }
@@ -190,6 +190,7 @@ mod tests {
 
         let plugin = registry.find_exporter("builtin:json").unwrap();
         let entries = vec![DiaryEntry {
+            id: 1,
             date: "2024-01-01".into(),
             title: "Test".into(),
             text: "Hello".into(),

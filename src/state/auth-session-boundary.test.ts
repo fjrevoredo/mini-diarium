@@ -68,6 +68,7 @@ function primeTransientState(): void {
   setIsExportOpen(true);
   setIsAboutOpen(true);
   setCurrentEntry({
+    id: 1,
     date: '2024-01-15',
     title: 'Title',
     text: '<p>Body</p>',
