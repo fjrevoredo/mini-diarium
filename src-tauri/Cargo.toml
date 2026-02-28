@@ -39,6 +39,10 @@ rhai = { version = "1", features = ["serde"] }
 log = "0.4"
 env_logger = "0.11"
 
+[profile.release]
+opt-level = 3
+lto = true
+
 [dev-dependencies]
 tempfile = "3"
 

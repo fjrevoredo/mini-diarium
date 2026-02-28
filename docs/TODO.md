@@ -42,7 +42,7 @@ Open tasks and planned improvements. For full context and implementation notes o
 ## Low Priority / Future
 
 - [ ] **PDF export** — convert diary entries to PDF (A4); likely via Tauri webview printing
-- [ ] **Release build profile** — add `[profile.release]` to `Cargo.toml` with `opt-level = 3` and `lto = true` for smaller, faster distribution binaries
+- [x] **Release build profile** (2026-02-28) — add `[profile.release]` to `Cargo.toml` with `opt-level = 3` and `lto = true` for smaller, faster distribution binaries
 - [ ] **Downgrade import path logging** — `commands/import.rs` logs the import file path at `info!` level (line 52 and other locations), leaking the full filesystem path in dev logs; downgrade all path logs to `debug!` level for all import functions
 - [x] **Document `backup.rs` assumptions** (2026-02-21) — add comments explaining: (1) `fs::copy` on an open SQLite file is safe with the default journal mode but would produce inconsistent backups if WAL mode were ever adopted (prefer `sqlite3_backup_init` in that case); (2) backup filenames use ISO-8601-like format so lexicographic sort equals chronological sort
 - [ ] **`DiaryEntry` clone efficiency** — `DiaryEntry` in `db/queries.rs` derives `Clone` and is heap-copied for each entry during import (see `import/merge.rs` usage); pass references where possible to reduce allocations when importing thousands of entries; audit call sites in merge logic
