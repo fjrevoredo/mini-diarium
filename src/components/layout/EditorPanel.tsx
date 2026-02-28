@@ -35,6 +35,7 @@ export default function EditorPanel() {
   let isDisposed = false;
   let loadRequestId = 0;
   let saveRequestId = 0;
+  let isCreatingEntry = false; // prevents concurrent createEntry calls
 
   const isContentEmpty = () => {
     const editor = editorInstance();
@@ -55,6 +56,9 @@ export default function EditorPanel() {
       try {
         await deleteEntryIfEmpty(entryId, currentTitle, '');
         if (isDisposed || requestId !== saveRequestId) return;
+        // Reset so the next real keystroke creates a fresh entry
+        setPendingEntryId(null);
+        setDayEntries((prev) => prev.filter((e) => e.id !== entryId));
         const dates = await getAllEntryDates();
         if (isDisposed || requestId !== saveRequestId) return;
         setEntryDates(dates);
@@ -208,7 +212,15 @@ export default function EditorPanel() {
     if (id !== null) {
       debouncedSave(id, title(), newContent);
     } else {
-      // First keystroke on empty day — create entry then save
+      // Skip creation on programmatic updates (loading an empty day fires onUpdate with empty content)
+      const editor = editorInstance();
+      const isEmpty = editor
+        ? editor.isEmpty || editor.getText().trim() === ''
+        : newContent.trim() === '';
+      if (isEmpty || isCreatingEntry) return;
+
+      // First real keystroke on empty day — create entry then save
+      isCreatingEntry = true;
       void (async () => {
         try {
           const newEntry = await createEntry(selectedDate());
@@ -216,10 +228,12 @@ export default function EditorPanel() {
           setPendingEntryId(newEntry.id);
           const refreshed = await getEntriesForDate(selectedDate());
           if (!isDisposed) setDayEntries(refreshed);
-          // Now save the content
-          debouncedSave(newEntry.id, title(), newContent);
+          // Use current signal values — user may have typed more while awaiting
+          debouncedSave(newEntry.id, title(), content());
         } catch (error) {
           log.error('Failed to create entry on first keystroke:', error);
+        } finally {
+          isCreatingEntry = false;
         }
       })();
     }
@@ -231,7 +245,11 @@ export default function EditorPanel() {
     if (id !== null) {
       debouncedSave(id, newTitle, content());
     } else {
-      // First keystroke in title on empty day — create entry then save
+      // Skip creation on empty title (e.g. programmatic clear)
+      if (newTitle.trim() === '' || isCreatingEntry) return;
+
+      // First real title keystroke on empty day — create entry then save
+      isCreatingEntry = true;
       void (async () => {
         try {
           const newEntry = await createEntry(selectedDate());
@@ -239,9 +257,11 @@ export default function EditorPanel() {
           setPendingEntryId(newEntry.id);
           const refreshed = await getEntriesForDate(selectedDate());
           if (!isDisposed) setDayEntries(refreshed);
-          debouncedSave(newEntry.id, newTitle, content());
+          debouncedSave(newEntry.id, title(), content());
         } catch (error) {
           log.error('Failed to create entry on title keystroke:', error);
+        } finally {
+          isCreatingEntry = false;
         }
       })();
     }
