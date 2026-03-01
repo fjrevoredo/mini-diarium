@@ -1,4 +1,5 @@
 import { createSignal, createEffect, For, Show, Switch, Match, onMount } from 'solid-js';
+import { save, confirm as dialogConfirm, open as openDirDialog } from '@tauri-apps/plugin-dialog';
 import { Dialog } from '@kobalte/core/dialog';
 import { createLogger } from '../../lib/logger';
 import { preferences, setPreferences, type EscAction } from '../../state/preferences';
@@ -246,7 +247,6 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
       const kp = await tauri.generateKeypair();
 
       // Step 3: Prompt user to choose a save path
-      const { save } = await import('@tauri-apps/plugin-dialog');
       const savePath = await save({
         title: 'Save Private Key File',
         defaultPath: `mini-diarium-${addKeypairLabel().replace(/\s+/g, '-')}.key`,
@@ -325,7 +325,6 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
       return;
     }
 
-    const { confirm: dialogConfirm } = await import('@tauri-apps/plugin-dialog');
     const confirmed = await dialogConfirm(
       'Are you sure you want to remove this authentication method?',
       { title: 'Remove Authentication Method', kind: 'warning' },
@@ -344,7 +343,6 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
 
   // Handle diary reset
   const handleResetDiary = async () => {
-    const { confirm: dialogConfirm } = await import('@tauri-apps/plugin-dialog');
     const confirmed = await dialogConfirm(
       'Are you sure you want to reset your diary? This will permanently delete all entries and cannot be undone.',
       { title: 'Reset Diary', kind: 'warning' },
@@ -373,7 +371,6 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
   // Handle changing the diary storage directory
   const handleChangeDiaryDirectory = async () => {
     setChangeDirError(null);
-    const { open: openDirDialog } = await import('@tauri-apps/plugin-dialog');
     const selected = await openDirDialog({
       directory: true,
       multiple: false,

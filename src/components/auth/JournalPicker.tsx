@@ -1,4 +1,5 @@
 import { createSignal, For, Show } from 'solid-js';
+import { confirm, open as openDirDialog } from '@tauri-apps/plugin-dialog';
 import {
   journals,
   activeJournalId,
@@ -36,7 +37,6 @@ export default function JournalPicker() {
   };
 
   const handleRemove = async (id: string) => {
-    const { confirm } = await import('@tauri-apps/plugin-dialog');
     const ok = await confirm(
       'Remove this journal from the list? The diary file will not be deleted.',
       { title: 'Remove Journal', kind: 'warning' },
@@ -73,7 +73,6 @@ export default function JournalPicker() {
 
   const handleBrowseCreate = async () => {
     setLocalError(null);
-    const { open: openDirDialog } = await import('@tauri-apps/plugin-dialog');
     const selected = await openDirDialog({
       directory: true,
       multiple: false,
@@ -116,7 +115,6 @@ export default function JournalPicker() {
 
   const handleBrowseOpen = async () => {
     setLocalError(null);
-    const { open: openDirDialog } = await import('@tauri-apps/plugin-dialog');
     const selected = await openDirDialog({
       directory: true,
       multiple: false,
