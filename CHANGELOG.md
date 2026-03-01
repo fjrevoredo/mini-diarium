@@ -2,7 +2,28 @@
 
 All notable changes to Mini Diarium are documented here. This project uses [Semantic Versioning](https://semver.org/).
 
-## [0.4.2] — Unreleased
+## [0.4.3] — Unreleased
+
+### Added
+
+- **Expanded rich text toolbar**: heading selector (Normal / H1 / H2 / H3), Underline, Strikethrough, Blockquote, Inline Code, and Horizontal Rule buttons added to the editor toolbar. Markdown export now correctly converts strikethrough (`~~`), blockquotes (`>`), inline code (`` ` ``), and fenced code blocks (` ``` `).
+- **Configurable auto-lock timeout**: a new **Auto-Lock** section in Preferences → Security lets you enable automatic locking after a period of inactivity. When enabled, any mouse movement, key press, click, touch, or scroll resets the idle timer; the diary locks automatically once the timeout (1–999 seconds, default 300) expires with no activity. The setting is stored in `localStorage` and takes effect immediately without restarting.
+- **Auto-lock on macOS screen lock**: the diary now auto-locks when the display sleeps, the system enters sleep, or the user explicitly locks the screen (Cmd+Ctrl+Q / Apple menu → Lock Screen) on macOS. Uses `NSWorkspaceScreensDidSleepNotification`, `NSWorkspaceWillSleepNotification`, and `com.apple.screenIsLocked` via `NSDistributedNotificationCenter`.
+- **Multiple entries per day**: each diary day can now hold any number of independent entries. A `←` / `→` navigation bar appears above the editor when a day has more than one entry, showing the current position (e.g. `2 / 3`). A `+` button on the right side of the bar creates a new blank entry for the same date. Single-entry days look and behave exactly as before — the navigation bar is hidden.
+- **Entry identity**: each entry now carries a stable `INTEGER PRIMARY KEY AUTOINCREMENT` id. Saves, deletes, and exports all reference entries by id rather than by date.
+
+### Changed
+
+- **Database schema bumped to v5**: the `entries` table gains an `id INTEGER PRIMARY KEY AUTOINCREMENT` column; the old `date TEXT PRIMARY KEY` unique constraint is replaced by a non-unique `idx_entries_date` index. Existing databases are migrated automatically on first launch (entries are preserved in date-creation order).
+- **Import no longer merges same-date entries**: previously, importing a file with entries that matched an existing date would merge the content. Imports now always create a new entry, consistent with the multiple-entries-per-day model. The `entries_merged` field has been removed from the import result.
+- **JSON export format changed to an array**: the exported JSON file now contains an `"entries"` array (each object includes an `"id"` field) instead of a date-keyed object. This format can represent multiple entries per day correctly. The `"metadata"` wrapper (`application`, `version`, `exportedAt`) is unchanged.
+- **Markdown export groups multiple entries per day**: when a day has more than one entry, each entry appears as a `### Entry N` sub-heading (or `### {title}` if the entry has a title) under the day's `## YYYY-MM-DD` heading.
+
+### Fixed
+
+- **Streak calculation now counts distinct days**: with multiple entries per date, the statistics streak algorithm now deduplicates dates before computing streaks, ensuring one active day is counted once regardless of how many entries it contains.
+
+## [0.4.2] — 28-02-2026
 
 ### Added
 

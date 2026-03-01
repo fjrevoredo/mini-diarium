@@ -170,8 +170,9 @@ pub fn run() {
             commands::auth::register_keypair,
             commands::auth::remove_auth_method,
             // Entries
+            commands::entries::create_entry,
             commands::entries::save_entry,
-            commands::entries::get_entry,
+            commands::entries::get_entries_for_date,
             commands::entries::delete_entry_if_empty,
             commands::entries::get_all_entry_dates,
             // Search

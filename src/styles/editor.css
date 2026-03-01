@@ -126,3 +126,12 @@
 .dark .ProseMirror a {
   color: #60a5fa;
 }
+
+/* Explicit underline — WebKit/Blink can strip text-decoration inside contenteditable */
+.ProseMirror u {
+  text-decoration: underline;
+}
+
+.dark .ProseMirror u {
+  text-decoration: underline;
+}

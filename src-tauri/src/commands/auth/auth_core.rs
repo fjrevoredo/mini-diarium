@@ -341,6 +341,7 @@ mod tests {
 
         // Add a test entry
         let entry = crate::db::queries::DiaryEntry {
+            id: 0,
             date: "2024-01-01".to_string(),
             title: "Test Entry".to_string(),
             text: "Test content".to_string(),
@@ -361,9 +362,9 @@ mod tests {
 
         // Open with new password — entry should still be accessible
         let db2 = open_database(&db_path, "new_password".to_string(), &backups_dir).unwrap();
-        let retrieved = crate::db::queries::get_entry(&db2, "2024-01-01")
-            .unwrap()
-            .unwrap();
+        let entries = crate::db::queries::get_entries_by_date(&db2, "2024-01-01").unwrap();
+        assert_eq!(entries.len(), 1);
+        let retrieved = &entries[0];
         assert_eq!(retrieved.title, "Test Entry");
         assert_eq!(retrieved.text, "Test content");
 

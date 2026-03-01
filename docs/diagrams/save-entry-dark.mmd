@@ -11,17 +11,30 @@ flowchart TB
   classDef ui fill:#1E293B,stroke:#38BDF8,stroke-width:2px,color:#E2E8F0;
   classDef backend fill:#064E3B,stroke:#10B981,stroke-width:2px,color:#E2E8F0;
   classDef data fill:#292524,stroke:#F97316,stroke-width:2px,color:#E2E8F0;
+  classDef decision fill:#3F3F1A,stroke:#FACC15,stroke-width:2px,color:#E2E8F0;
 
-  EDITOR["TipTap Editor"]
-  STATE["State Layer"]
-  IPC["IPC invoke()"]
-  CMD["Backend Command<br/>save_entry"]
-  ENC["Encrypt with AES-256-GCM<br/>(master key)"]
-  DB1["SQLite: entries<br/>(encrypted)"]
+  DATE["Selected date"]
+  LOAD["get_entries_for_date(date)"]
+  STATE["EditorPanel local state<br/>(dayEntries, currentIndex,<br/>pendingEntryId, title, content)"]
+  EDITOR["TipTap + Title Editor"]
+  CHECK{"Has active<br/>entry id?"}
+  CREATE["create_entry(date)"]
+  SAVE["save_entry(id, title, text)"]
+  EMPTY{"Title + content<br/>blank?"}
+  DELETE["delete_entry_if_empty(id, title, text)"]
+  DATES["get_all_entry_dates()<br/>refresh calendar indicators"]
+  ENC["DB query layer encrypts title/text<br/>AES-256-GCM with master key"]
+  DB1["SQLite entries<br/>(id-based, multiple entries per date)"]
 
-  EDITOR --> STATE --> IPC --> CMD --> ENC
-  ENC --> DB1
+  DATE --> LOAD --> STATE --> EDITOR --> CHECK
+  CHECK -- Yes --> SAVE
+  CHECK -- No --> CREATE --> LOAD
+  SAVE --> EMPTY
+  EMPTY -- No --> ENC --> DB1 --> DATES
+  EMPTY -- Yes --> DELETE --> DATES
+  CREATE --> DATES
 
-  class EDITOR,STATE ui;
-  class IPC,CMD,ENC backend;
+  class DATE,LOAD,STATE,EDITOR,DATES ui;
+  class CREATE,SAVE,DELETE,ENC backend;
   class DB1 data;
+  class CHECK,EMPTY decision;

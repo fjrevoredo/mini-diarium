@@ -125,6 +125,7 @@ export async function switchJournal(id: string): Promise<void> {
 
 // Entry commands
 export interface DiaryEntry {
+  id: number;
   date: string;
   title: string;
   text: string;
@@ -133,20 +134,24 @@ export interface DiaryEntry {
   date_updated: string;
 }
 
-export async function saveEntry(date: string, title: string, text: string): Promise<void> {
-  await invoke('save_entry', { date, title, text });
+export async function createEntry(date: string): Promise<DiaryEntry> {
+  return await invoke('create_entry', { date });
 }
 
-export async function getEntry(date: string): Promise<DiaryEntry | null> {
-  return await invoke('get_entry', { date });
+export async function saveEntry(id: number, title: string, text: string): Promise<void> {
+  await invoke('save_entry', { id, title, text });
+}
+
+export async function getEntriesForDate(date: string): Promise<DiaryEntry[]> {
+  return await invoke('get_entries_for_date', { date });
 }
 
 export async function deleteEntryIfEmpty(
-  date: string,
+  id: number,
   title: string,
   text: string,
 ): Promise<boolean> {
-  return await invoke('delete_entry_if_empty', { date, title, text });
+  return await invoke('delete_entry_if_empty', { id, title, text });
 }
 
 export async function getAllEntryDates(): Promise<string[]> {
@@ -202,7 +207,6 @@ export async function getStatistics(): Promise<Statistics> {
 // Import commands
 export interface ImportResult {
   entries_imported: number;
-  entries_merged: number;
   entries_skipped: number;
 }
 

@@ -1,3 +1,4 @@
+// ─── Windows ─────────────────────────────────────────────────────────────────
 #[cfg(target_os = "windows")]
 mod imp {
     use log::{info, warn};
@@ -125,10 +126,102 @@ mod imp {
     }
 }
 
+// ─── macOS ───────────────────────────────────────────────────────────────────
+#[cfg(target_os = "macos")]
+mod imp {
+    use block2::RcBlock;
+    use log::{info, warn};
+    use objc2_app_kit::NSWorkspace;
+    use objc2_foundation::{
+        NSDistributedNotificationCenter, NSNotification, NSOperationQueue, NSString,
+    };
+    use std::ptr::NonNull;
+    use std::sync::OnceLock;
+    use tauri::{AppHandle, Manager, Wry};
+
+    static APP_HANDLE: OnceLock<AppHandle<Wry>> = OnceLock::new();
+
+    pub fn init(app: &AppHandle<Wry>) -> Result<(), String> {
+        let _ = APP_HANDLE.set(app.clone());
+
+        // SAFETY: Tauri's setup closure runs on the main thread on macOS.
+        // NSWorkspace and NSNotificationCenter require main-thread access.
+        // The RcBlock closures capture only `reason` (&'static str) and read
+        // APP_HANDLE (OnceLock<AppHandle<Wry>>, Send + Sync); no mutable state.
+        // std::mem::forget is called on the same thread that creates the token,
+        // so no Send bound is required on Retained<NSObject>.
+        // NSNotificationCenter holds a weak reference to the observer; forgetting
+        // the Retained token prevents its retain-count from dropping to zero,
+        // keeping the subscription alive for the app's lifetime.
+        unsafe {
+            let workspace = NSWorkspace::sharedWorkspace();
+            let nc = workspace.notificationCenter();
+            let main_queue = NSOperationQueue::mainQueue();
+
+            let events: &[(&str, &'static str)] = &[
+                ("NSWorkspaceScreensDidSleepNotification", "screen sleep"),
+                ("NSWorkspaceWillSleepNotification", "system sleep"),
+            ];
+
+            for &(name, reason) in events {
+                let ns_name = NSString::from_str(name);
+                let block: RcBlock<dyn Fn(NonNull<NSNotification>)> =
+                    RcBlock::new(move |_notif: NonNull<NSNotification>| {
+                        trigger_auto_lock(reason);
+                    });
+                let observer = nc.addObserverForName_object_queue_usingBlock(
+                    Some(&*ns_name),
+                    None,
+                    Some(&main_queue),
+                    &*block,
+                );
+                std::mem::forget(observer);
+            }
+
+            // Explicit screen lock: Cmd+Ctrl+Q, Apple menu → Lock Screen, hot corner.
+            // This does NOT fire sleep notifications; it requires NSDistributedNotificationCenter.
+            // NSDistributedNotificationCenter::defaultCenter() is safe to call from the
+            // main thread. The subscription follows the same forget-observer pattern
+            // used for the workspace subscriptions above.
+            let dnc = NSDistributedNotificationCenter::defaultCenter();
+            let lock_name = NSString::from_str("com.apple.screenIsLocked");
+            let block: RcBlock<dyn Fn(NonNull<NSNotification>)> =
+                RcBlock::new(move |_notif: NonNull<NSNotification>| {
+                    trigger_auto_lock("screen lock");
+                });
+            let observer = dnc.addObserverForName_object_queue_usingBlock(
+                Some(&*lock_name),
+                None,
+                Some(&main_queue),
+                &*block,
+            );
+            std::mem::forget(observer);
+        }
+
+        info!("Screen-lock listener initialized (macOS)");
+        Ok(())
+    }
+
+    fn trigger_auto_lock(reason: &str) {
+        if let Some(app) = APP_HANDLE.get() {
+            let state = app.state::<crate::commands::auth::DiaryState>();
+            match crate::commands::auth::auto_lock_diary_if_unlocked(state, app.clone(), reason) {
+                Ok(true) => info!("Diary auto-locked due to {}", reason),
+                Ok(false) => {}
+                Err(error) => warn!("Failed to auto-lock diary ({}): {}", reason, error),
+            }
+        }
+    }
+}
+
+// ─── Platform re-exports ─────────────────────────────────────────────────────
 #[cfg(target_os = "windows")]
 pub use imp::init;
 
-#[cfg(not(target_os = "windows"))]
+#[cfg(target_os = "macos")]
+pub use imp::init;
+
+#[cfg(not(any(target_os = "windows", target_os = "macos")))]
 pub fn init(_app: &tauri::AppHandle<tauri::Wry>) -> Result<(), String> {
     Ok(())
 }

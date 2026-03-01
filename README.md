@@ -2,7 +2,7 @@
 
 [![CI Status](https://github.com/fjrevoredo/mini-diarium/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/fjrevoredo/mini-diarium/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-0.4.2-blue.svg)](https://github.com/fjrevoredo/mini-diarium/releases)
+[![Version](https://img.shields.io/badge/version-0.4.3-blue.svg)](https://github.com/fjrevoredo/mini-diarium/releases)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)](https://github.com/fjrevoredo/mini-diarium#installation)
 [![Follow on X](https://img.shields.io/badge/Follow-%40MiniDiarium-000000?logo=x)](https://x.com/MiniDiarium)
 
@@ -18,7 +18,7 @@ Mini Diarium keeps your journal private. Every entry is encrypted with AES-256-G
 
 ## Background
 
-Mini Diarium is a spiritual successor to [Mini Diary](https://github.com/samuelmeuli/mini-diary) by Samuel Meuli. I loved the original tool. It was simple, private, and did exactly what a journal app should do. Unfortunately, it's been unmaintained for years and its dependencies have aged out. I initially thought about forking it and modernizing the stack, but turned out impractical. So I started over from scratch, keeping the same core philosophy (encrypted, local-only, minimal) while rebuilding completely with Tauri 2, SolidJS, and Rust. The result is a lighter, faster app with stronger encryption and a few personal touches.
+Mini Diarium is a spiritual successor to [Mini Diary](https://github.com/samuelmeuli/mini-diary) by Samuel Meuli. I loved the original tool. It was simple, private, and did exactly what a journal app should do. Unfortunately, it's been unmaintained for years and its dependencies have aged out. I initially thought about forking it and modernizing the stack, but turned out impractical. So I started over from scratch, keeping the same core philosophy (encrypted, local-only, focused) while rebuilding completely with Tauri 2, SolidJS, and Rust. The result is a lighter, faster app with stronger encryption and a few personal touches.
 
 ## Philosophy First
 
@@ -38,9 +38,10 @@ Read the full principles and how these translates to the architecture in [PHILOS
 - **Key file authentication**: unlock your diary with an X25519 private key file instead of (or alongside) your password, like SSH keys for your journal. Register multiple key files; manage all auth methods from Preferences. See [Key File Authentication](#key-file-authentication) for details.
 - **AES-256-GCM encryption**: all entries are encrypted with a random master key. Each auth method holds its own wrapped copy of that key, so adding or removing a method is O(1), with no re-encryption of your entries.
 - **Rich text editor**
+- **Multiple entries per day**: keep separate entries for the same date without merging them together
 - **Calendar navigation**
-- **Import**: Mini Diary JSON, Day One JSON/TXT, and jrnl JSON with merge conflict resolution
-- **Export**: JSON and Markdown formats
+- **Import**: Mini Diary JSON, Day One JSON/TXT, and jrnl JSON with additive imports that preserve separate same-date entries
+- **Export**: JSON for structural fidelity and Markdown for human-readable best-effort export
 - **Themes**
 - **Automatic backups**: backup on unlock with rotation
 - **Statistics**

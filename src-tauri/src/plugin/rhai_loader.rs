@@ -108,6 +108,7 @@ fn convert_to_entries(arr: Array) -> Result<Vec<DiaryEntry>, String> {
             .unwrap_or_default();
 
         entries.push(DiaryEntry {
+            id: 0,
             word_count: crate::db::queries::count_words(&text),
             date_created: now.clone(),
             date_updated: now.clone(),
@@ -305,6 +306,7 @@ mod tests {
     fn sample_entries() -> Vec<DiaryEntry> {
         vec![
             DiaryEntry {
+                id: 1,
                 date: "2024-01-01".into(),
                 title: "".into(),
                 text: "<p>First body</p>".into(),
@@ -313,6 +315,7 @@ mod tests {
                 date_updated: "2024-01-01T00:00:00Z".into(),
             },
             DiaryEntry {
+                id: 2,
                 date: "2024-01-02".into(),
                 title: "Second".into(),
                 text: "<p>Second body</p>".into(),
@@ -425,6 +428,7 @@ fn format_entries(entries) {
         };
 
         let entries = vec![DiaryEntry {
+            id: 1,
             date: "2024-06-15".into(),
             title: "My Day".into(),
             text: "<p>content</p>".into(),

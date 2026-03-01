@@ -8,7 +8,7 @@ This document tracks features and improvements deferred from the v0.1.0 release.
 - **Quality**: 4 tasks (accessibility audit, QA pass, keyboard shortcuts audit, backup behavior documentation)
 - **Testing**: 3 tasks (E2E setup and tests)
 
-See [Current-implementation-plan.md](Current-implementation-plan.md) for full historical context of the 48 completed tasks.
+See [docs/TODO.md](TODO.md) for the active working backlog and `CHANGELOG.md` for completed shipped work.
 
 ---
 

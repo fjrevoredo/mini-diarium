@@ -1,4 +1,5 @@
 import { createSignal, createEffect, For, Show, Switch, Match, onMount } from 'solid-js';
+import { save, confirm as dialogConfirm, open as openDirDialog } from '@tauri-apps/plugin-dialog';
 import { Dialog } from '@kobalte/core/dialog';
 import { createLogger } from '../../lib/logger';
 import { preferences, setPreferences, type EscAction } from '../../state/preferences';
@@ -44,6 +45,12 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
     preferences().enableSpellcheck,
   );
   const [localEscAction, setLocalEscAction] = createSignal<EscAction>(preferences().escAction);
+  const [localAutoLockEnabled, setLocalAutoLockEnabled] = createSignal(
+    preferences().autoLockEnabled,
+  );
+  const [localAutoLockTimeout, setLocalAutoLockTimeout] = createSignal(
+    String(preferences().autoLockTimeout),
+  );
 
   // Diary file state
   const [diaryPath, setDiaryPath] = createSignal<string>('');
@@ -112,6 +119,8 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
       setLocalHideTitles(preferences().hideTitles);
       setLocalEnableSpellcheck(preferences().enableSpellcheck);
       setLocalEscAction(preferences().escAction);
+      setLocalAutoLockEnabled(preferences().autoLockEnabled);
+      setLocalAutoLockTimeout(String(preferences().autoLockTimeout));
 
       // Reset password fields
       setOldPassword('');
@@ -170,6 +179,8 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
       hideTitles: localHideTitles(),
       enableSpellcheck: localEnableSpellcheck(),
       escAction: localEscAction(),
+      autoLockEnabled: localAutoLockEnabled(),
+      autoLockTimeout: Math.min(999, Math.max(1, parseInt(localAutoLockTimeout(), 10) || 300)),
     });
     props.onClose();
   };
@@ -236,7 +247,6 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
       const kp = await tauri.generateKeypair();
 
       // Step 3: Prompt user to choose a save path
-      const { save } = await import('@tauri-apps/plugin-dialog');
       const savePath = await save({
         title: 'Save Private Key File',
         defaultPath: `mini-diarium-${addKeypairLabel().replace(/\s+/g, '-')}.key`,
@@ -315,7 +325,6 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
       return;
     }
 
-    const { confirm: dialogConfirm } = await import('@tauri-apps/plugin-dialog');
     const confirmed = await dialogConfirm(
       'Are you sure you want to remove this authentication method?',
       { title: 'Remove Authentication Method', kind: 'warning' },
@@ -334,7 +343,6 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
 
   // Handle diary reset
   const handleResetDiary = async () => {
-    const { confirm: dialogConfirm } = await import('@tauri-apps/plugin-dialog');
     const confirmed = await dialogConfirm(
       'Are you sure you want to reset your diary? This will permanently delete all entries and cannot be undone.',
       { title: 'Reset Diary', kind: 'warning' },
@@ -363,7 +371,6 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
   // Handle changing the diary storage directory
   const handleChangeDiaryDirectory = async () => {
     setChangeDirError(null);
-    const { open: openDirDialog } = await import('@tauri-apps/plugin-dialog');
     const selected = await openDirDialog({
       directory: true,
       multiple: false,
@@ -811,6 +818,46 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                         >
                           Change Password
                         </button>
+                      </div>
+
+                      {/* Auto-Lock */}
+                      <div>
+                        <h3 class="text-sm font-medium text-primary mb-3">Auto-Lock</h3>
+                        <div class="space-y-3">
+                          <label class="flex items-center gap-3">
+                            <input
+                              type="checkbox"
+                              checked={localAutoLockEnabled()}
+                              onChange={(e) => setLocalAutoLockEnabled(e.currentTarget.checked)}
+                              class="h-4 w-4 rounded border-primary text-blue-600 focus:ring-blue-500"
+                            />
+                            <span class="text-sm text-primary">Lock after inactivity</span>
+                          </label>
+                          <Show when={localAutoLockEnabled()}>
+                            <div class="flex items-center gap-2 pl-7">
+                              <label class="text-sm text-secondary whitespace-nowrap">
+                                Timeout (seconds)
+                              </label>
+                              <input
+                                type="number"
+                                min="1"
+                                max="999"
+                                step="1"
+                                value={localAutoLockTimeout()}
+                                onInput={(e) => setLocalAutoLockTimeout(e.currentTarget.value)}
+                                onBlur={(e) => {
+                                  const v = Math.min(
+                                    999,
+                                    Math.max(1, parseInt(e.currentTarget.value, 10) || 300),
+                                  );
+                                  setLocalAutoLockTimeout(String(v));
+                                }}
+                                class="w-20 px-2 py-1 text-sm border border-primary rounded-md bg-primary text-primary focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              />
+                              <span class="text-xs text-tertiary">(1–999)</span>
+                            </div>
+                          </Show>
+                        </div>
                       </div>
                     </div>
                   </Match>

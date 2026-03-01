@@ -63,6 +63,7 @@ pub fn parse_dayone_txt(txt: &str) -> Result<Vec<DiaryEntry>, String> {
         let word_count = text.split_whitespace().count() as i32;
 
         entries.push(DiaryEntry {
+            id: 0,
             date,
             title,
             text,

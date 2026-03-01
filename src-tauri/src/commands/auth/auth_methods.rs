@@ -240,6 +240,7 @@ mod tests {
 
         // Insert a test entry to verify decryption after keypair unlock
         let entry = crate::db::queries::DiaryEntry {
+            id: 0,
             date: "2024-03-15".to_string(),
             title: "Keypair Test".to_string(),
             text: "Content unlocked via key file".to_string(),
@@ -289,12 +290,12 @@ mod tests {
             .conn()
             .query_row("SELECT version FROM schema_version", [], |r| r.get(0))
             .unwrap();
-        assert_eq!(version, 4);
+        assert_eq!(version, 5);
 
         // Verify entry is decryptable with the master key unwrapped via keypair
-        let retrieved = crate::db::queries::get_entry(&db2, "2024-03-15")
-            .unwrap()
-            .expect("Entry should exist after keypair unlock");
+        let entries = crate::db::queries::get_entries_by_date(&db2, "2024-03-15").unwrap();
+        assert_eq!(entries.len(), 1, "Entry should exist after keypair unlock");
+        let retrieved = &entries[0];
         assert_eq!(retrieved.title, "Keypair Test");
         assert_eq!(retrieved.text, "Content unlocked via key file");
 

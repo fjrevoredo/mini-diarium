@@ -2,18 +2,22 @@
 
 Open tasks and planned improvements. For full context and implementation notes on the original tasks, see [OPEN_TASKS.md](OPEN_TASKS.md).
 
+TODO entry format:
+- `- [ ] **Task title** — concise description with scope, constraints, and any key implementation notes`
+- Put items under the appropriate priority section
+- Use indented checkbox items only for true sub-tasks or explicit dependencies
+
 ---
-
 ## High Priority
-
-
 
 ---
 
 ## Medium Priority
 
 - [ ] **Restore CI diagram content-diff check** — the byte-comparison check in `scripts/verify-diagrams.mjs` was reverted to existence-only because mmdc/d2 produce slightly different SVG bytes depending on version (local vs CI runners differ). The proper fix is to pin identical tool versions in both CI and local dev (e.g. lock `@mermaid-js/mermaid-cli` in `devDependencies` and `d2` via a specific release download in CI), then re-add the byte comparison. Until then, `diagrams:check` only verifies that all 8 `.svg` files are present.
-- [ ] **Auto-lock on screen lock (macOS parity)** — Windows implementation is done; add macOS native screen-lock hook so behavior matches across desktop platforms
+- [x] **Auto-lock on screen lock (macOS parity)** — Windows implementation is done; add macOS native screen-lock hook so behavior matches across desktop platforms
+- [x] **Configurable auto-lock timeout** (2026-03-01) — add a new Preferences setting to enable auto-lock and set the idle timeout in seconds; enforce a valid range of `1` to `999` seconds and lock the diary automatically when the threshold is reached
+- [x] **Expanded rich text editor support** (2026-02-28) — extend the built-in editor with more complete rich text capabilities beyond the current formatting set; define the supported feature set, keep the UX consistent with local-first editing, and ensure stored HTML remains compatible with import/export flows
 - [ ] **i18n framework** — detect OS locale, set up translation files (`en.json`, `es.json`), add `t()` helper
   - [ ] **Translate all UI text** — replace hardcoded strings with translation keys (~145 keys); depends on i18n framework above
 - [ ] **Frontend test coverage** — auth screens (`PasswordPrompt.tsx`, `PasswordCreation.tsx`), Calendar, and all overlays (GoToDateOverlay, PreferencesOverlay, StatsOverlay, ImportOverlay, ExportOverlay) have zero test coverage; add Vitest + @solidjs/testing-library tests for each; use existing pattern from `TitleEditor.test.tsx` and `WordCount.test.tsx`
@@ -24,10 +28,12 @@ Open tasks and planned improvements. For full context and implementation notes o
 ## Low Priority / Future
 
 - [ ] **PDF export** — convert diary entries to PDF (A4); likely via Tauri webview printing
+- [ ] **Text input extension point** — create a plugin/extension interface for alternative entry methods so official and user plugins can provide text input flows such as dictation, LLM-assisted drafting, and other future capture modes; define capability boundaries, permission model, and how plugins hand content into the editor without weakening the app’s privacy guarantees
+- [ ] **Statistics extension point** — add a plugin/extension interface for journal statistics so official and user plugins can calculate custom metrics and surface them in the statistics UI; define the data contract, execution/sandbox constraints, and how custom statistics are registered and rendered without weakening the app’s privacy-first local-only model
 - [ ] **Downgrade import path logging** — `commands/import.rs` logs the import file path at `info!` level (line 52 and other locations), leaking the full filesystem path in dev logs; downgrade all path logs to `debug!` level for all import functions
-- [ ] **`DiaryEntry` clone efficiency** — `DiaryEntry` in `db/queries.rs` derives `Clone` and is heap-copied for each entry during import (see `import/merge.rs` usage); pass references where possible to reduce allocations when importing thousands of entries; audit call sites in merge logic
+- [ ] **`DiaryEntry` clone efficiency** — `DiaryEntry` in `db/queries.rs` derives `Clone` and can be heap-copied across import/export flows; pass references where possible to reduce allocations when processing thousands of entries; audit current command and export call sites
 - [ ] **Document keypair hex in JS heap** — `generate_keypair` returns `KeypairFiles` with `private_key_hex` as plain JSON so the frontend can write it to a file; add a comment on the struct in `auth/mod.rs` or `auth/keypair.rs` noting this is an accepted design tradeoff and that the private key briefly exists in the JS heap before the file is written
-- [ ] **Accessibility audit** — Only 5 ARIA labels exist (Calendar nav buttons, EditorToolbar buttons); missing ARIA on: overlays, form inputs, dialogs, focus trapping, keyboard calendar navigation; add color contrast testing, screen reader testing (NVDA / VoiceOver)
+- [ ] **Accessibility audit** — only 5 ARIA labels exist (Calendar nav buttons, EditorToolbar buttons); missing ARIA on overlays, form inputs, dialogs, focus trapping, and keyboard calendar navigation; add color contrast testing and screen reader testing (NVDA / VoiceOver)
 - [ ] **Mobile version** — Tauri v2 supports iOS and Android targets; evaluate porting the app to mobile: adapt the SolidJS UI for touch (larger tap targets, bottom navigation, swipe gestures for day navigation), handle mobile file-system sandboxing for the diary DB location, and assess whether the Argon2id parameters need tuning for mobile CPU/memory constraints
 - [ ] **Website SEO/GEO follow-up backlog** — remaining implementation items from the 2026 website SEO/GEO pass
   - [ ] **Optimize demo media** — replace the 4.7 MB `website/assets/demo.gif` with a lightweight preview strategy (e.g. poster image + optional MP4/WebM playback) to reduce transfer size and improve performance signals

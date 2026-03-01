@@ -71,6 +71,7 @@ pub fn parse_minidiary_json(json_str: &str) -> Result<Vec<DiaryEntry>, String> {
         let date_updated = parse_timestamp(&entry.date_updated).unwrap_or_else(|| now.clone());
 
         diary_entries.push(DiaryEntry {
+            id: 0,
             date: date.clone(),
             title: entry.title,
             text: entry.text,

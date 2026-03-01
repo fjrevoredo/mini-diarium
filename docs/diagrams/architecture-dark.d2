@@ -6,7 +6,8 @@ presentation: {
   style.stroke: "#38BDF8"
 
   app: "App.tsx\n(Switch / Match by authState)"
-  auth_ui: "Auth Screens\n(PasswordCreation / PasswordPrompt)"
+  journal_ui: "JournalPicker\n(select/manage journals)"
+  auth_ui: "Unlock + Setup Screens\n(PasswordCreation / PasswordPrompt)"
   editor_ui: "MainLayout\n(Calendar + Editor + Overlays)"
 }
 
@@ -16,6 +17,7 @@ state: {
 
   auth_state: "auth.ts"
   entry_state: "entries.ts"
+  journal_state: "journals.ts"
   search_state: "search.ts\n(interface kept; not rendered)"
   ui_state: "ui.ts"
   pref_state: "preferences.ts"
@@ -32,8 +34,8 @@ backend: {
   label: "Rust Backend"
   style.fill: "#292524"
 
-  commands: "Commands\n(auth, entries, search(stub), navigation,\nstats, import, export)"
-  services: "Services\ncrypto/ db/ import/ export/\nbackup.rs menu.rs"
+  commands: "Commands\n(auth, entries, search(stub), navigation,\nstats, import, export, plugin)"
+  services: "Services\ncrypto/ db/ import/ export/ plugin/\nconfig.rs backup.rs menu.rs"
 }
 
 data: {
@@ -42,11 +44,15 @@ data: {
 
   diary_db: "SQLite diary.db\nentries (encrypted)\nauth_slots (wrapped master keys)"
   backups: "Local backups/"
+  journal_config: "config.json\njournal list + active journal"
+  plugins_dir: "plugins/\nRhai user plugins"
   prefs: "Browser localStorage\n(non-sensitive preferences)"
 }
 
+presentation.app -> presentation.journal_ui
 presentation.app -> presentation.auth_ui
 presentation.app -> presentation.editor_ui
+presentation.journal_ui -> state.journal_state
 presentation.auth_ui -> state.auth_state
 presentation.editor_ui -> state.entry_state
 presentation.editor_ui -> state.search_state
@@ -55,6 +61,7 @@ presentation.editor_ui -> state.pref_state
 
 state.auth_state -> ipc.invoke
 state.entry_state -> ipc.invoke
+state.journal_state -> ipc.invoke
 state.search_state -> ipc.invoke
 state.ui_state -> ipc.invoke
 
@@ -63,4 +70,6 @@ ipc.invoke -> backend.commands
 backend.commands -> backend.services
 backend.services -> data.diary_db
 backend.services -> data.backups
+backend.services -> data.journal_config
+backend.services -> data.plugins_dir
 state.pref_state -> data.prefs

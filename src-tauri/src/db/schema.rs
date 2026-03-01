@@ -26,9 +26,9 @@ impl DatabaseConnection {
 }
 
 /// Current schema version
-const SCHEMA_VERSION: i32 = 4;
+const SCHEMA_VERSION: i32 = 5;
 
-/// Creates a new encrypted diary database (schema v4)
+/// Creates a new encrypted diary database (schema v5)
 ///
 /// Generates a random master key, wraps it with the password, and stores the
 /// wrapped key in `auth_slots`. Entries are encrypted with the master key.
@@ -77,7 +77,8 @@ pub fn create_database<P: AsRef<Path>>(
 /// - v1 → v2: FTS table restructure (no re-encryption)
 /// - v2 → v3: Introduce wrapped master key (re-encrypts all entries)
 /// - v3 → v4: Drop plaintext FTS table (security fix)
-/// - v4: Read master key from auth_slots password slot
+/// - v4 → v5: Add AUTOINCREMENT id to entries table (multiple entries per day)
+/// - v5: Read master key from auth_slots password slot
 pub fn open_database<P1: AsRef<Path>, P2: AsRef<Path>>(
     db_path: P1,
     password: String,
@@ -96,6 +97,7 @@ pub fn open_database<P1: AsRef<Path>, P2: AsRef<Path>>(
         // v3+ path: unwrap master key from auth_slots
         let db = open_v3_with_password(conn, password, backups_dir.as_ref())?;
         migrate_v3_to_v4(&db)?;
+        migrate_v4_to_v5(&db)?;
         return Ok(db);
     }
 
@@ -122,6 +124,9 @@ pub fn open_database<P1: AsRef<Path>, P2: AsRef<Path>>(
 
     // Run v3 → v4 migration (drop plaintext FTS table)
     migrate_v3_to_v4(&db_conn)?;
+
+    // Run v4 → v5 migration (add AUTOINCREMENT id to entries)
+    migrate_v4_to_v5(&db_conn)?;
 
     Ok(db_conn)
 }
@@ -193,6 +198,7 @@ pub fn open_database_with_keypair<P1: AsRef<Path>, P2: AsRef<Path>>(
         encryption_key,
     };
     migrate_v3_to_v4(&db)?;
+    migrate_v4_to_v5(&db)?;
     Ok(db)
 }
 
@@ -238,7 +244,7 @@ fn open_v3_with_password(
     })
 }
 
-/// Creates the database schema (v3)
+/// Creates the database schema (v5)
 fn create_schema(conn: &Connection) -> Result<(), String> {
     conn.execute_batch(
         r#"
@@ -253,15 +259,17 @@ fn create_schema(conn: &Connection) -> Result<(), String> {
             value TEXT NOT NULL
         );
 
-        -- Entries table (encrypted data)
+        -- Entries table (encrypted data, multiple entries per day supported via AUTOINCREMENT id)
         CREATE TABLE IF NOT EXISTS entries (
-            date TEXT PRIMARY KEY,
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            date TEXT NOT NULL,
             title_encrypted BLOB,
             text_encrypted BLOB,
             word_count INTEGER DEFAULT 0,
             date_created TEXT NOT NULL,
             date_updated TEXT NOT NULL
         );
+        CREATE INDEX IF NOT EXISTS idx_entries_date ON entries(date);
 
         -- Search index: not implemented. A future search module should create its index here.
         -- Interface contract: see commands/search.rs for SearchResult and the search_entries command.
@@ -569,6 +577,50 @@ fn migrate_v3_to_v4(db: &DatabaseConnection) -> Result<(), String> {
     Ok(())
 }
 
+// ─── Migration: v4 → v5 ─────────────────────────────────────────────────────
+
+/// Migration v4 → v5: Add AUTOINCREMENT id to entries table.
+///
+/// The old `entries` table used `date TEXT PRIMARY KEY` (one entry per day).
+/// The new table uses `id INTEGER PRIMARY KEY AUTOINCREMENT` with an index on
+/// `date`, allowing multiple entries per day.
+///
+/// Existing entries are migrated preserving their content, ordered by
+/// `date_created ASC` so the oldest entry on each date gets the lowest id.
+fn migrate_v4_to_v5(db: &DatabaseConnection) -> Result<(), String> {
+    let version: i32 = db
+        .conn()
+        .query_row("SELECT version FROM schema_version", [], |row| row.get(0))
+        .unwrap_or(4);
+
+    if version < 5 {
+        db.conn()
+            .execute_batch(
+                "BEGIN IMMEDIATE;
+                 CREATE TABLE entries_new (
+                     id INTEGER PRIMARY KEY AUTOINCREMENT,
+                     date TEXT NOT NULL,
+                     title_encrypted BLOB,
+                     text_encrypted BLOB,
+                     word_count INTEGER DEFAULT 0,
+                     date_created TEXT NOT NULL,
+                     date_updated TEXT NOT NULL
+                 );
+                 INSERT INTO entries_new (date, title_encrypted, text_encrypted, word_count, date_created, date_updated)
+                     SELECT date, title_encrypted, text_encrypted, word_count, date_created, date_updated
+                     FROM entries ORDER BY date_created ASC;
+                 DROP TABLE entries;
+                 ALTER TABLE entries_new RENAME TO entries;
+                 CREATE INDEX idx_entries_date ON entries(date);
+                 UPDATE schema_version SET version = 5;
+                 COMMIT;",
+            )
+            .map_err(|e| format!("Migration v4→v5 failed: {}", e))?;
+        info!("Migrated database from v4 to v5 (added AUTOINCREMENT id to entries)");
+    }
+    Ok(())
+}
+
 // ─── Tests ──────────────────────────────────────────────────────────────────
 
 #[cfg(test)]
@@ -761,7 +813,7 @@ mod tests {
             .unwrap();
 
         assert_eq!(version, SCHEMA_VERSION);
-        assert_eq!(SCHEMA_VERSION, 4);
+        assert_eq!(SCHEMA_VERSION, 5);
     }
 
     #[test]
@@ -810,7 +862,7 @@ mod tests {
             .conn()
             .query_row("SELECT version FROM schema_version", [], |row| row.get(0))
             .unwrap();
-        assert_eq!(version, 4, "Should be at version 4 after migration");
+        assert_eq!(version, 5, "Should be at version 5 after migration");
 
         // Verify auth_slots has a password slot
         let slot_count: i32 = db
@@ -867,12 +919,12 @@ mod tests {
             .conn()
             .query_row("SELECT version FROM schema_version", [], |row| row.get(0))
             .unwrap();
-        assert_eq!(version, 4);
+        assert_eq!(version, 5);
 
         // Verify entry is still accessible
-        let entry = crate::db::queries::get_entry(&db, "2024-06-01").unwrap();
-        assert!(entry.is_some());
-        let e = entry.unwrap();
+        let entries = crate::db::queries::get_entries_by_date(&db, "2024-06-01").unwrap();
+        assert_eq!(entries.len(), 1);
+        let e = &entries[0];
         assert_eq!(e.title, "June Entry");
         assert_eq!(e.text, "June content");
 
@@ -895,7 +947,7 @@ mod tests {
             .conn()
             .query_row("SELECT version FROM schema_version", [], |row| row.get(0))
             .unwrap();
-        assert_eq!(version1, 4);
+        assert_eq!(version1, 5);
         drop(db1);
 
         let backup_count_before = std::fs::read_dir(&backups_dir)
@@ -908,14 +960,14 @@ mod tests {
             .conn()
             .query_row("SELECT version FROM schema_version", [], |row| row.get(0))
             .unwrap();
-        assert_eq!(version2, 4);
+        assert_eq!(version2, 5);
 
         let backup_count_after = std::fs::read_dir(&backups_dir)
             .map(|d| d.count())
             .unwrap_or(0);
         assert_eq!(
             backup_count_before, backup_count_after,
-            "No new backup should be created for v4→v4"
+            "No new backup should be created for v5→v5"
         );
 
         cleanup_backups_dir(&backups_dir);
@@ -1052,7 +1104,7 @@ mod tests {
             .conn()
             .query_row("SELECT version FROM schema_version", [], |row| row.get(0))
             .unwrap();
-        assert_eq!(version, 4);
+        assert_eq!(version, 5);
 
         cleanup_backups_dir(&backups_dir);
     }

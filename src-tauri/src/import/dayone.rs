@@ -79,6 +79,7 @@ pub fn parse_dayone_json(json_str: &str) -> Result<Vec<DiaryEntry>, String> {
         let timestamp = parse_iso8601_to_timestamp(&entry.creation_date)?;
 
         entries.push(DiaryEntry {
+            id: 0,
             date,
             title,
             text,

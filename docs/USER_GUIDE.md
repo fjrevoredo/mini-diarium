@@ -4,27 +4,31 @@
 
 ### First Launch
 
-When you open Mini Diarium for the first time, you'll be asked to create a password. This password encrypts your entire diary using AES-256-GCM encryption.
+When you open Mini Diarium, the app starts at the **Journal Picker**. From there you can create a new diary or open an existing `diary.db`.
+
+If you create a new diary, you'll be asked to create a password. This password encrypts your entire diary using AES-256-GCM encryption.
 
 **There is no password recovery.** If you forget your password, your entries cannot be recovered. Choose something memorable and keep it safe.
 
 ### Locking and Unlocking
 
-Your diary is encrypted whenever it's locked. When you launch the app, enter your password to unlock it. The diary locks when you close the app.
+Your diary is encrypted whenever it's locked. After selecting a journal, enter your password to unlock it. The diary locks when you close the app, and you can also lock it manually from the header.
 
 As an alternative to your password, you can register a key file in Preferences → Authentication Methods. Once registered, use the "Key File" tab on the unlock screen and select your `.key` file to unlock without typing your password.
+
+You can also enable **idle auto-lock** in Preferences → Security → Auto-Lock. When enabled, Mini Diarium locks automatically after the configured period of inactivity.
 
 ### Multiple Journals
 
 You can maintain separate journals for different purposes (personal, work, travel, etc.). Each journal is an independent encrypted diary file in its own folder.
 
-**Adding a journal:** Open Preferences → Journals → Add Journal. Choose a directory and give it a name. The folder may be empty (you'll create the diary on first use) or already contain an existing `diary.db`.
+**Adding a journal:** Use the Journal Picker's add actions. You can create a new diary in a chosen folder or add an existing `diary.db`.
 
-**Switching journals:** When you have more than one journal, a dropdown selector appears on the unlock screen. Select the journal you want and enter its password. You can also switch from Preferences → Journals → Switch.
+**Switching journals:** Open the Journal Picker, choose the journal you want, and then unlock it. On a shared device, this lets each person select their own diary before any authentication prompt appears.
 
-**Removing a journal:** Remove a journal entry from Preferences. This only removes it from the list — the diary file on disk is not deleted. You cannot remove your last remaining journal.
+**Removing a journal:** Remove a journal entry from the Journal Picker. This only removes it from the configured list; the diary files on disk are not deleted. Removing the last configured journal is allowed and leaves the picker in an empty state.
 
-If you only have one journal, the selector is hidden and the experience is identical to before.
+If you only have one journal, the Journal Picker simply shows that single journal as the only choice.
 
 ## Writing Entries
 
@@ -36,7 +40,9 @@ Mini Diarium uses a rich text editor with support for:
 - Headings (levels 1-3)
 - Bullet lists and numbered lists
 - Blockquotes
-- Code blocks
+- Inline code and code blocks
+- Strikethrough and underline
+- Horizontal rules
 - Links
 
 The toolbar above the editor provides buttons for each formatting option. Standard keyboard shortcuts also work (Ctrl+B for bold, Ctrl+I for italic, etc.).
@@ -44,6 +50,15 @@ The toolbar above the editor provides buttons for each formatting option. Standa
 ### Titles
 
 Each entry can have an optional title. If you prefer a cleaner look, hide titles in Preferences.
+
+### Multiple Entries Per Day
+
+Each date can contain multiple separate entries.
+
+- When a date has more than one entry, an entry navigation bar appears above the editor.
+- Use `←` and `→` to move between entries for the selected date.
+- Use `+` to create a new blank entry on that same date.
+- If a day has only one entry, the navigation bar stays hidden.
 
 ### Auto-Save
 
@@ -57,7 +72,7 @@ A live word count is displayed below the editor.
 
 ### Calendar
 
-The sidebar shows a monthly calendar. Days with entries are marked with a dot indicator. Click any date to jump to that day's entry.
+The sidebar shows a monthly calendar. Days with entries are marked with a dot indicator. Click any date to jump to that day's entries.
 
 ### Keyboard Navigation
 
@@ -91,14 +106,16 @@ Open the import dialog from **Diary → Import...** in the app menu.
 - **Day One TXT**: the plain-text export from Day One
 - **jrnl JSON**: the JSON export from jrnl
 
-When importing, Mini Diarium merges entries with your existing diary. If an imported entry falls on a date that already has content, the merge logic combines them rather than overwriting.
+Imports are additive. If an imported entry falls on a date that already has entries, Mini Diarium creates another entry for that date instead of merging content heuristically.
 
 ## Export
 
 Open the export dialog from **Diary → Export...** in the app menu:
 
 - **Mini Diary JSON**: machine-readable, can be re-imported into Mini Diarium
-- **Markdown**: human-readable, one section per entry organized by date
+- **Markdown**: human-readable, grouped by date; if a day has multiple entries, each appears under its own sub-heading
+
+JSON is the structural export format and preserves entry IDs. Markdown is a readable, best-effort conversion of the stored HTML editor content.
 
 ## Custom Import/Export Plugins
 
@@ -190,7 +207,7 @@ Open with `Ctrl+,`:
 | Allow future entries | Write entries for dates that haven't happened yet |
 | Hide titles | Remove the title field for a minimal look |
 | Spellcheck | Toggle browser spellcheck in the editor |
-| Journals | Add, rename, remove, or switch between multiple journals |
+| Auto-Lock | Lock automatically after a configurable idle timeout |
 | Change password | Re-encrypt your diary with a new password |
 | Authentication Methods | View registered unlock methods; add a new key file or remove existing ones |
 | At least one method must remain | removing the last is blocked |

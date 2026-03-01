@@ -1,6 +1,6 @@
 [package]
 name = "mini-diarium"
-version = "0.4.2"
+version = "0.4.3"
 description = "A modern, encrypted, local-first desktop journaling application"
 authors = ["you"]
 edition = "2021"
@@ -53,3 +53,13 @@ windows-sys = { version = "0.61", features = [
   "Win32_UI_WindowsAndMessaging",
 ] }
 
+[target.'cfg(target_os = "macos")'.dependencies]
+objc2-app-kit = { version = "0.2", features = ["NSWorkspace"] }
+objc2-foundation = { version = "0.2", features = [
+  "NSDistributedNotificationCenter",
+  "NSNotification",
+  "NSOperation",
+  "NSString",
+  "block2",
+] }
+block2 = "0.5"
