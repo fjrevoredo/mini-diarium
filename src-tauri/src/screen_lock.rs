@@ -135,7 +135,7 @@ mod imp {
     use objc2_foundation::{NSNotification, NSOperationQueue, NSString};
     use std::ptr::NonNull;
     use std::sync::OnceLock;
-    use tauri::{AppHandle, Wry};
+    use tauri::{AppHandle, Manager, Wry};
 
     static APP_HANDLE: OnceLock<AppHandle<Wry>> = OnceLock::new();
 

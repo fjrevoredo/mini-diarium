@@ -16,7 +16,7 @@ TODO entry format:
 
 - [ ] **Restore CI diagram content-diff check** — the byte-comparison check in `scripts/verify-diagrams.mjs` was reverted to existence-only because mmdc/d2 produce slightly different SVG bytes depending on version (local vs CI runners differ). The proper fix is to pin identical tool versions in both CI and local dev (e.g. lock `@mermaid-js/mermaid-cli` in `devDependencies` and `d2` via a specific release download in CI), then re-add the byte comparison. Until then, `diagrams:check` only verifies that all 8 `.svg` files are present.
 - [x] **Auto-lock on screen lock (macOS parity)** — Windows implementation is done; add macOS native screen-lock hook so behavior matches across desktop platforms
-- [ ] **Configurable auto-lock timeout** — add a new Preferences setting to enable auto-lock and set the idle timeout in seconds; enforce a valid range of `1` to `999` seconds and lock the diary automatically when the threshold is reached
+- [x] **Configurable auto-lock timeout** (2026-03-01) — add a new Preferences setting to enable auto-lock and set the idle timeout in seconds; enforce a valid range of `1` to `999` seconds and lock the diary automatically when the threshold is reached
 - [x] **Expanded rich text editor support** (2026-02-28) — extend the built-in editor with more complete rich text capabilities beyond the current formatting set; define the supported feature set, keep the UX consistent with local-first editing, and ensure stored HTML remains compatible with import/export flows
 - [ ] **i18n framework** — detect OS locale, set up translation files (`en.json`, `es.json`), add `t()` helper
   - [ ] **Translate all UI text** — replace hardcoded strings with translation keys (~145 keys); depends on i18n framework above
