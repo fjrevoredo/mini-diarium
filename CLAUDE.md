@@ -365,7 +365,7 @@ All menu event names are prefixed `menu-`. See `menu.rs:78-107` for the full lis
 
 ## Testing
 
-### Backend: 222 tests across 28 modules
+### Backend: 229 tests across 28 modules
 
 Run: `cd src-tauri && cargo test`
 
@@ -393,7 +393,7 @@ Run: `cd src-tauri && cargo test`
 | dayone_txt | 16 | `import/dayone_txt.rs` |
 | jrnl | 12 | `import/jrnl.rs` |
 | json-export | 6 | `export/json.rs` |
-| md-export | 12 | `export/markdown.rs` |
+| md-export | 20 | `export/markdown.rs` |
 | backup | 5 | `backup.rs` |
 | plugin/builtins | 3 | `plugin/builtins.rs` |
 | plugin/registry | 5 | `plugin/registry.rs` |

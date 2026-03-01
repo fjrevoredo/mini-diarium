@@ -1,0 +1,4 @@
+interface:
+  display_name: "Diagram Maintainer"
+  short_description: "Maintain Mermaid and D2 doc diagrams"
+  default_prompt: "Use $diagram-maintainer to update, regenerate, and review the repo diagram set."

@@ -2,6 +2,7 @@ import { createEffect, onCleanup, onMount, createSignal } from 'solid-js';
 import { Editor } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
+import Underline from '@tiptap/extension-underline';
 import EditorToolbar from './EditorToolbar';
 
 interface DiaryEditorProps {
@@ -32,6 +33,7 @@ export default function DiaryEditor(props: DiaryEditorProps) {
         Placeholder.configure({
           placeholder: props.placeholder || 'Start writing...',
         }),
+        Underline,
       ],
       content: props.content,
       editorProps: {

@@ -6,6 +6,7 @@ All notable changes to Mini Diarium are documented here. This project uses [Sema
 
 ### Added
 
+- **Expanded rich text toolbar**: heading selector (Normal / H1 / H2 / H3), Underline, Strikethrough, Blockquote, Inline Code, and Horizontal Rule buttons added to the editor toolbar. Markdown export now correctly converts strikethrough (`~~`), blockquotes (`>`), inline code (`` ` ``), and fenced code blocks (` ``` `).
 - **Auto-lock on macOS screen lock**: the diary now auto-locks when the display sleeps or the system enters sleep on macOS, matching the existing Windows behavior. Uses `NSWorkspaceScreensDidSleepNotification` and `NSWorkspaceWillSleepNotification` via AppKit.
 - **Multiple entries per day**: each diary day can now hold any number of independent entries. A `←` / `→` navigation bar appears above the editor when a day has more than one entry, showing the current position (e.g. `2 / 3`). A `+` button on the right side of the bar creates a new blank entry for the same date. Single-entry days look and behave exactly as before — the navigation bar is hidden.
 - **Entry identity**: each entry now carries a stable `INTEGER PRIMARY KEY AUTOINCREMENT` id. Saves, deletes, and exports all reference entries by id rather than by date.

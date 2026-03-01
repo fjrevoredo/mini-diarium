@@ -84,9 +84,15 @@ pub fn export_entries_to_markdown(entries: Vec<DiaryEntry>) -> String {
 /// - `<br>` → line breaks
 /// - `<strong>`/`<b>` → **bold**
 /// - `<em>`/`<i>` → *italic*
+/// - `<s>`/`<del>`/`<strike>` → ~~strikethrough~~
+/// - `<pre><code>...</code></pre>` → fenced code block
+/// - `<code>` → `inline code`
+/// - `<blockquote>` → `> ` prefixed lines
+/// - `<hr>` → `---`
 /// - `<ul>/<li>` → bullet lists
 /// - `<ol>/<li>` → numbered lists
 /// - `<h1>`-`<h6>` → markdown headings (### to avoid clash with entry headings)
+/// - `<u>` → text preserved, tags stripped (no native Markdown underline)
 /// - Other tags → stripped
 pub fn html_to_markdown(html: &str) -> String {
     if html.is_empty() {
@@ -95,52 +101,74 @@ pub fn html_to_markdown(html: &str) -> String {
 
     let mut result = html.to_string();
 
-    // Handle line breaks before block elements are processed
+    // 1. Handle line breaks before block elements are processed
     result = result.replace("<br>", "\n");
     result = result.replace("<br/>", "\n");
     result = result.replace("<br />", "\n");
 
-    // Handle headings (offset by 2 to avoid clashing with # and ## used for doc/entry)
+    // 2. Handle headings (offset by 2 to avoid clashing with # and ## used for doc/entry)
     for level in 1..=6 {
         let hashes = "#".repeat((level + 2).min(6));
         let open = format!("<h{}>", level);
         let close = format!("</h{}>", level);
-        // Replace each occurrence
         result = result.replace(&open, &format!("\n{} ", hashes));
         result = result.replace(&close, "\n");
     }
 
-    // Handle bold
+    // 3. Handle bold
     result = result.replace("<strong>", "**");
     result = result.replace("</strong>", "**");
     result = result.replace("<b>", "**");
     result = result.replace("</b>", "**");
 
-    // Handle italic
+    // 4. Handle italic
     result = result.replace("<em>", "*");
     result = result.replace("</em>", "*");
     result = result.replace("<i>", "*");
     result = result.replace("</i>", "*");
 
-    // Handle unordered lists
+    // 5. Handle strikethrough
+    result = result.replace("<s>", "~~");
+    result = result.replace("</s>", "~~");
+    result = result.replace("<del>", "~~");
+    result = result.replace("</del>", "~~");
+    result = result.replace("<strike>", "~~");
+    result = result.replace("</strike>", "~~");
+
+    // 6. Handle fenced code blocks (<pre>...<code>...</code>...</pre>) — must run before inline code
+    result = process_code_blocks(&result);
+
+    // 7. Handle inline code
+    result = result.replace("<code>", "`");
+    result = result.replace("</code>", "`");
+
+    // 8. Handle blockquotes — must run before <p> replacement
+    result = process_blockquotes(&result);
+
+    // 9. Handle horizontal rules
+    result = result.replace("<hr>", "\n---\n");
+    result = result.replace("<hr/>", "\n---\n");
+    result = result.replace("<hr />", "\n---\n");
+
+    // 10. Handle ordered lists with proper numbering (must be before <li> replacement)
+    result = number_ordered_lists(&result);
+
+    // 11. Handle unordered lists
     result = result.replace("<ul>", "\n");
     result = result.replace("</ul>", "\n");
 
-    // Handle ordered lists with proper numbering (must be before <li> replacement)
-    result = number_ordered_lists(&result);
-
-    // Handle list items (for unordered lists only — ordered list items already processed)
+    // 12. Handle list items (for unordered lists only — ordered list items already processed)
     result = result.replace("<li>", "- ");
     result = result.replace("</li>", "\n");
 
-    // Handle paragraphs
+    // 13. Handle paragraphs
     result = result.replace("<p>", "");
     result = result.replace("</p>", "\n\n");
 
-    // Strip any remaining HTML tags
+    // 14. Strip any remaining HTML tags (handles <u>, <a>, etc.)
     result = strip_remaining_tags(&result);
 
-    // Decode common HTML entities
+    // 15. Decode common HTML entities
     result = result.replace("&amp;", "&");
     result = result.replace("&lt;", "<");
     result = result.replace("&gt;", ">");
@@ -148,12 +176,12 @@ pub fn html_to_markdown(html: &str) -> String {
     result = result.replace("&#39;", "'");
     result = result.replace("&nbsp;", " ");
 
-    // Clean up excessive blank lines (3+ newlines → 2)
+    // 16. Clean up excessive blank lines (3+ newlines → 2)
     while result.contains("\n\n\n") {
         result = result.replace("\n\n\n", "\n\n");
     }
 
-    // Trim trailing whitespace
+    // 17. Trim trailing whitespace
     result.trim().to_string()
 }
 
@@ -193,7 +221,74 @@ fn number_ordered_lists(input: &str) -> String {
     result
 }
 
-/// Strips any remaining HTML tags from the string
+/// Converts `<pre>...<code>...</code>...</pre>` regions to fenced Markdown code blocks.
+///
+/// Must be called before the inline `<code>` → backtick replacement so that the
+/// `<code>` tags inside `<pre>` are consumed here and not turned into inline code.
+fn process_code_blocks(input: &str) -> String {
+    let mut result = String::new();
+    let mut remaining = input;
+
+    while let Some(pre_start) = remaining.find("<pre>") {
+        result.push_str(&remaining[..pre_start]);
+        remaining = &remaining[pre_start + 5..]; // skip "<pre>"
+
+        if let Some(pre_end) = remaining.find("</pre>") {
+            let inner = &remaining[..pre_end];
+            remaining = &remaining[pre_end + 6..]; // skip "</pre>"
+
+            // Strip inner <code ...> / </code> tags to get the raw text
+            let code_content = strip_remaining_tags(inner);
+            result.push_str("\n```\n");
+            result.push_str(&code_content);
+            if !code_content.ends_with('\n') {
+                result.push('\n');
+            }
+            result.push_str("```\n");
+        }
+    }
+    result.push_str(remaining);
+    result
+}
+
+/// Converts `<blockquote>...<p>...</p>...</blockquote>` regions to `> ` prefixed Markdown lines.
+///
+/// Must be called after inline formats (bold, italic, etc.) are applied but before the
+/// `<p>` → newline replacement so the paragraphs inside the blockquote are handled here.
+fn process_blockquotes(input: &str) -> String {
+    let mut result = String::new();
+    let mut remaining = input;
+
+    while let Some(bq_start) = remaining.find("<blockquote>") {
+        result.push_str(&remaining[..bq_start]);
+        remaining = &remaining[bq_start + 12..]; // skip "<blockquote>"
+
+        if let Some(bq_end) = remaining.find("</blockquote>") {
+            let inner = &remaining[..bq_end];
+            remaining = &remaining[bq_end + 13..]; // skip "</blockquote>"
+
+            result.push('\n');
+            // Split on </p> to get individual paragraph segments
+            for segment in inner.split("</p>") {
+                // Strip <p> and any remaining tags, then trim
+                let text = strip_remaining_tags(&segment.replace("<p>", ""));
+                let trimmed = text.trim();
+                if !trimmed.is_empty() {
+                    result.push_str("> ");
+                    result.push_str(trimmed);
+                    result.push('\n');
+                }
+            }
+        }
+    }
+    result.push_str(remaining);
+    result
+}
+
+/// Strips any remaining HTML tags from the string.
+///
+/// A `>` character that is NOT closing an open `<` tag (e.g. the Markdown
+/// blockquote prefix `> `) is preserved so blockquote lines are not mangled.
 fn strip_remaining_tags(input: &str) -> String {
     let mut result = String::with_capacity(input.len());
     let mut in_tag = false;
@@ -202,6 +297,10 @@ fn strip_remaining_tags(input: &str) -> String {
         if ch == '<' {
             in_tag = true;
         } else if ch == '>' {
+            if !in_tag {
+                // Standalone `>` (e.g. Markdown blockquote marker) — keep it
+                result.push(ch);
+            }
             in_tag = false;
         } else if !in_tag {
             result.push(ch);
@@ -344,5 +443,82 @@ mod tests {
             "expected '3. Third' in: {}",
             result
         );
+    }
+
+    #[test]
+    fn test_html_to_markdown_strikethrough() {
+        let html = "<p>This is <s>struck</s> text</p>";
+        let result = html_to_markdown(html);
+        assert_eq!(result, "This is ~~struck~~ text");
+    }
+
+    #[test]
+    fn test_html_to_markdown_del_tag() {
+        let html = "<p><del>deleted</del></p>";
+        let result = html_to_markdown(html);
+        assert_eq!(result, "~~deleted~~");
+    }
+
+    #[test]
+    fn test_html_to_markdown_blockquote() {
+        let html = "<blockquote><p>A wise quote</p></blockquote>";
+        let result = html_to_markdown(html);
+        assert!(
+            result.contains("> A wise quote"),
+            "expected '> A wise quote' in: {}",
+            result
+        );
+    }
+
+    #[test]
+    fn test_html_to_markdown_blockquote_multiline() {
+        let html = "<blockquote><p>First line</p><p>Second line</p></blockquote>";
+        let result = html_to_markdown(html);
+        assert!(
+            result.contains("> First line"),
+            "expected '> First line' in: {}",
+            result
+        );
+        assert!(
+            result.contains("> Second line"),
+            "expected '> Second line' in: {}",
+            result
+        );
+    }
+
+    #[test]
+    fn test_html_to_markdown_inline_code() {
+        let html = "<p>Use <code>println!()</code> to print</p>";
+        let result = html_to_markdown(html);
+        assert_eq!(result, "Use `println!()` to print");
+    }
+
+    #[test]
+    fn test_html_to_markdown_code_block() {
+        let html = "<pre><code>fn foo() {}</code></pre>";
+        let result = html_to_markdown(html);
+        assert!(
+            result.contains("```"),
+            "expected fenced code block in: {}",
+            result
+        );
+        assert!(
+            result.contains("fn foo() {}"),
+            "expected code content in: {}",
+            result
+        );
+    }
+
+    #[test]
+    fn test_html_to_markdown_hr() {
+        let html = "<p>Before</p><hr><p>After</p>";
+        let result = html_to_markdown(html);
+        assert!(result.contains("---"), "expected '---' in: {}", result);
+        assert!(
+            result.contains("Before"),
+            "expected 'Before' in: {}",
+            result
+        );
+        assert!(result.contains("After"), "expected 'After' in: {}", result);
     }
 }
