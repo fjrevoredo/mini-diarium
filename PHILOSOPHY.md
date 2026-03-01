@@ -67,7 +67,7 @@ Users should feel safe adopting Mini Diarium, knowing they can leave whenever th
 
 **Import:**
 - Support common journal formats from other tools
-- Handle merge conflicts gracefully when importing
+- Preserve imported entries faithfully; do not merge same-date entries implicitly
 - Make onboarding frictionless: no account creation, no server setup
 
 **Export:**
@@ -75,6 +75,8 @@ Users should feel safe adopting Mini Diarium, knowing they can leave whenever th
 - Provide an extension point for custom exporters
 - Allow users to script their own export pipelines
 - Never lock features behind proprietary formats
+
+JSON is the structural export path. Markdown is a human-readable, best-effort conversion of stored HTML.
 
 **No lock-in:**
 - Data stays in a documented, open schema
@@ -223,12 +225,12 @@ Both `ImportOverlay.tsx` and `ExportOverlay.tsx` are wired to the plugin registr
 
 ### Principle 3: Test Infrastructure
 
-**Current coverage** (as of v0.4.0):
+**Current coverage** (as of v0.4.3):
 
 | Layer | Count | How to run |
 |---|---|---|
-| Backend unit + integration | 193 tests across 20 modules | `cd src-tauri && cargo test` |
-| Frontend unit | 31 tests across 6 files | `bun run test:run` |
+| Backend unit + integration | 222 tests across 28 modules | `cd src-tauri && cargo test` |
+| Frontend unit | 80 tests across 10 files | `bun run test:run` |
 | E2E | 2 tests | `bun run test:e2e:local` |
 
 **E2E stack**: WebdriverIO v9 + tauri-driver (official Tauri bridge) against the real compiled binary. Config: `wdio.conf.ts` (root). Specs: `e2e/specs/`. Test isolation: each run creates a fresh OS temp directory passed to the app via `MINI_DIARIUM_DATA_DIR`; `lib.rs` uses this as the diary path when set, with no effect on production builds. Run the full suite (build + run): `bun run test:e2e:local`. Run suite only (binary already built): `bun run test:e2e`.
@@ -244,21 +246,22 @@ Both `ImportOverlay.tsx` and `ExportOverlay.tsx` are wired to the plugin registr
 - Day One JSON (`dayone.rs`), 14 tests
 - Day One TXT (`dayone_txt.rs`), 16 tests
 - jrnl JSON (`jrnl.rs`), 12 tests
-- Merge conflict resolution (`merge.rs`), 13 tests
+
+Imports preserve source entries as separate records. If imported data lands on a date that already has entries, Mini Diarium creates additional entries for that date rather than merging content heuristically.
 
 **Export formats** (each in `src-tauri/src/export/`):
-- JSON: Mini Diary-compatible structure, 6 tests
-- Markdown: HTML-to-Markdown conversion, 12 tests
+- JSON: structured export with entry IDs, 6 tests
+- Markdown: HTML-to-Markdown conversion for readable export, 12 tests
 
 **Adding a new format** follows the Import Parser Pattern in `CLAUDE.md`: one `*.rs` parser module, one command in `commands/import.rs`, register in `lib.rs`, add wrapper in `src/lib/tauri.ts`. The UI (`ImportOverlay.tsx`) picks it up automatically via `listImportPlugins`; no UI change needed.
 
-**Schema**: documented inline in `src-tauri/src/db/schema.rs` with full migration history. Current version: v4. AES-256-GCM with standard key derivation; decryptable with any standard crypto toolkit given the password.
+**Schema**: documented inline in `src-tauri/src/db/schema.rs` with full migration history. Current version: v5. Entries use stable integer IDs and support multiple entries per day. AES-256-GCM with standard key derivation; decryptable with any standard crypto toolkit given the password.
 
 ---
 
 ### Principle 5: Scope Enforcement
 
-The 20 components across `src/components/` cover: auth (2), calendar (1), editor (4), layout (5), overlays (5 + ExportOverlay), search (2). Nothing outside journaling scope exists. All features added from v0.1.0 through v0.4.0 pass the six Decision Framework questions.
+The current component set across `src/components/` covers auth, calendar, editor, layout, overlays, and the preserved search interface. Nothing outside journaling scope exists. Features shipped through v0.4.3, including multiple journals, multiple entries per day, richer editing, and local plugin-based import/export, still pass the six Decision Framework questions.
 
 The "no plugin marketplaces" rule means no distribution, discovery, or hosting of plugins. Local Rhai scripts in `<diary_dir>/plugins/` are supported because they are user-controlled, offline, and scope-neutral.
 
@@ -266,7 +269,7 @@ The "no plugin marketplaces" rule means no distribution, discovery, or hosting o
 
 ### Principle 6: Simplicity in Practice
 
-- **State**: 5 signal modules (`src/state/`), averaging 3 signals each. No Redux, Zustand, derived-state middleware, or selector layers.
+- **State**: 6 signal modules (`src/state/`). No Redux, Zustand, derived-state middleware, or selector layers.
 - **Database**: direct `rusqlite` queries in `src-tauri/src/db/queries.rs`. No ORM, no query builder, no migration framework beyond the inline schema version check.
-- **Dependencies**: 17 direct runtime crates in `src-tauri/Cargo.toml` for a cryptographic desktop app (intentionally lean).
+- **Dependencies**: the runtime dependency set in `src-tauri/Cargo.toml` is intentionally lean for a cryptographic desktop app.
 - **Justified complexity examples**: `src-tauri/src/screen_lock.rs` uses platform-specific Win32 event hooks (Windows) and equivalent macOS hooks for session-lock detection; this is necessary for auto-lock, not gold-plating. The Rhai scripting engine (`src-tauri/src/plugin/rhai_loader.rs`) adds binary size but is the only way to deliver user-scriptable extensions without requiring a recompile.

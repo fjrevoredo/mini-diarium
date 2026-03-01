@@ -132,7 +132,9 @@ mod imp {
     use block2::RcBlock;
     use log::{info, warn};
     use objc2_app_kit::NSWorkspace;
-    use objc2_foundation::{NSNotification, NSOperationQueue, NSString};
+    use objc2_foundation::{
+        NSDistributedNotificationCenter, NSNotification, NSOperationQueue, NSString,
+    };
     use std::ptr::NonNull;
     use std::sync::OnceLock;
     use tauri::{AppHandle, Manager, Wry};
@@ -175,6 +177,25 @@ mod imp {
                 );
                 std::mem::forget(observer);
             }
+
+            // Explicit screen lock: Cmd+Ctrl+Q, Apple menu → Lock Screen, hot corner.
+            // This does NOT fire sleep notifications; it requires NSDistributedNotificationCenter.
+            // NSDistributedNotificationCenter::defaultCenter() is safe to call from the
+            // main thread. The subscription follows the same forget-observer pattern
+            // used for the workspace subscriptions above.
+            let dnc = NSDistributedNotificationCenter::defaultCenter();
+            let lock_name = NSString::from_str("com.apple.screenIsLocked");
+            let block: RcBlock<dyn Fn(NonNull<NSNotification>)> =
+                RcBlock::new(move |_notif: NonNull<NSNotification>| {
+                    trigger_auto_lock("screen lock");
+                });
+            let observer = dnc.addObserverForName_object_queue_usingBlock(
+                Some(&*lock_name),
+                None,
+                Some(&main_queue),
+                &*block,
+            );
+            std::mem::forget(observer);
         }
 
         info!("Screen-lock listener initialized (macOS)");

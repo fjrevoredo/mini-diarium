@@ -1,6 +1,8 @@
 # Mini Diary — Comprehensive Requirements Document
 
-> This document captures every functional and non-functional requirement of the Mini Diary desktop journaling application (v3.3.0), derived from a line-by-line analysis of the source code. It serves as the authoritative specification for building **mini-diarium**, a modern spiritual successor.
+> This document captures the historical functional and non-functional requirements of the upstream Mini Diary desktop journaling application (v3.3.0), derived from a line-by-line analysis of that source code.
+>
+> It is a baseline reference, not a description of Mini Diarium's current behavior. For the current product, use `README.md`, `PHILOSOPHY.md`, `docs/USER_GUIDE.md`, and the codebase itself as the source of truth.
 
 ---
 
@@ -853,7 +855,7 @@ interface ImportState {
 - **In-memory password**: The hashed password is stored in Redux state (JavaScript heap), which could theoretically be extracted from a memory dump.
 
 ### 10.2 Data Limitations
-- **One entry per day**: Cannot create multiple entries for the same date. Multiple entries imported for the same date are merged.
+- **Upstream Mini Diary limitation**: one entry per day. Mini Diarium diverges here and supports multiple entries per date; imports do not merge same-date entries.
 - **No attachments**: No support for images, files, or media.
 - **No tags or categories**: Entries have no metadata beyond title, text, and dateUpdated.
 - **Date range**: Limited to 1900-01-01 through 2099-12-31.
@@ -864,8 +866,8 @@ interface ImportState {
 - **No lazy loading**: All entries are loaded into memory at once on decryption.
 
 ### 10.4 Editor Limitations
-- **Draft.js**: The project is no longer maintained (archived). The `markdown-draft-js` conversion has known limitations with complex Markdown.
-- **Limited formatting**: Only bold, italic, and lists. No headings, links, images, code blocks, or other Markdown features in the toolbar (though they can be typed manually).
+- **Upstream Mini Diary editor stack**: Draft.js is no longer maintained (archived). Mini Diarium does not use Draft.js.
+- **Upstream Mini Diary formatting limits**: Mini Diarium diverges here and supports headings, links, blockquotes, inline code, code blocks, strikethrough, underline, and horizontal rules in its current editor.
 
 ### 10.5 Other Limitations
 - **No cloud sync**: Purely local storage.
