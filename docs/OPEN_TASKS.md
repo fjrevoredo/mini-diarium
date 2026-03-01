@@ -2,11 +2,10 @@
 
 This document tracks features and improvements deferred from the v0.1.0 release.
 
-**Status**: 17 open tasks across 5 categories
+**Status**: 12 open tasks across 3 categories
 - **Infrastructure**: 1 task (release workflow modernization)
-- **Features**: 9 tasks (PDF export, directory selection, i18n, menus, auto-lock, auto-update, legacy migration, extension system, first-launch existing diary picker)
-- **Quality**: 4 tasks (accessibility audit, QA pass, keyboard shortcuts audit, backup behavior documentation)
-- **Testing**: 3 tasks (E2E setup and tests)
+- **Features**: 8 tasks (PDF export, i18n framework, i18n translations, menus, auto-update, legacy migration, extension system, text input extension point)
+- **Quality**: 3 tasks (accessibility audit, QA pass, backup behavior documentation)
 
 See [docs/TODO.md](TODO.md) for the active working backlog and `CHANGELOG.md` for completed shipped work.
 
@@ -52,46 +51,16 @@ Improve release pipeline reliability and remove deprecated dependencies.
 ### Task 62: CI Diagram Diff Verification ✅ Completed (2026-02-21)
 **Priority**: Medium | **Complexity**: Low | **Files**: `.github/workflows/ci.yml`, `docs/diagrams/*`
 
-Ensure generated architecture diagrams are actually compared against committed outputs.
-
-**Outcome**:
-- Workflow now compares each regenerated `*-check.svg` file against its committed SVG counterpart
-- CI fails with actionable output when any diagram is stale or mismatched
-- Cleanup of temporary `*-check.svg` files is guaranteed via shell trap
-
-**Requirements**:
-- Regenerate all tracked diagrams during CI (`unlock*.svg`, `save-entry*.svg`, `context*.svg`, `architecture*.svg`)
-- Diff generated files against committed files and fail on mismatch
-- Keep CI output actionable (show which file differs and how to regenerate locally)
-
-**Proposed Solution**:
-1. Generate check outputs with deterministic filenames
-2. Compare with committed files (`git diff --exit-code` or explicit `diff`)
-3. Print a clear remediation message (`bun run diagrams` + commit)
-
-**Testing**:
-- Intentionally modify one diagram source and verify CI fails
-- Regenerate and verify CI passes
+**Outcome**: CI now regenerates all diagram SVGs, diffs each against the committed file, and fails with a clear remediation message (`bun run diagrams`) when any output is stale. Temporary check files are cleaned up via shell trap.
 
 ---
 
 ## 🎯 High Priority (v0.2.0 Candidates)
 
-### Task 46: Diary Directory Selection
-**Priority**: High | **Complexity**: Medium | **File**: `src-tauri/src/commands/auth.rs`
+### Task 46: Diary Directory Selection ✅ Completed (2026-02-21)
+**Priority**: High | **Complexity**: Medium
 
-Allow users to change where their diary file is stored.
-
-**Requirements**:
-- Command: `change_diary_directory(new_path) -> Result<()>`
-- When unlocked: Move file to new directory
-- When locked: Update preference only
-- Validation: Check no existing file at destination
-- UI: Add to PreferencesOverlay (already has display, needs implementation)
-
-**Dependencies**: Backup system (Task 45) ✅ Complete
-
-**Testing**: Integration tests for file move, preference persistence
+**Outcome**: Shipped in v0.3.0. Users can change the diary location from Preferences → Data → Change Location. The file is moved atomically; the diary is auto-locked during the move. Implementation in `src-tauri/src/commands/auth/auth_directory.rs` (5 tests). Syncs to `config.json`.
 
 ---
 
@@ -113,27 +82,10 @@ Ensure the app is usable by everyone.
 
 ---
 
-### Task 63: Keyboard Shortcuts Audit & Recovery
-**Priority**: High | **Complexity**: Medium | **Files**: `src-tauri/src/menu.rs`, `src/components/layout/MainLayout.tsx`
+### Task 63: Keyboard Shortcuts Audit & Recovery ✅ Completed (2026-02-25)
+**Priority**: High | **Complexity**: Medium
 
-Audit and restore all expected keyboard shortcuts and menu-triggered navigation actions.
-
-**Requirements**:
-- Verify all documented bindings work on Windows/macOS/Linux
-- Ensure menu accelerators and frontend handlers stay in sync
-- Ensure shortcuts are ignored when typing in inputs/editable regions
-- Confirm lock-state behavior (disabled while locked, enabled while unlocked)
-
-**Verification Matrix**:
-1. Previous/next day (`CmdOrCtrl+[` / `CmdOrCtrl+]`)
-2. Previous/next month (`CmdOrCtrl+Shift+[` / `CmdOrCtrl+Shift+]`)
-3. Go to today (`CmdOrCtrl+T`)
-4. Go to date (`CmdOrCtrl+G`)
-5. Menu-item click emits and frontend handler behavior
-
-**Testing**:
-- Add/expand unit tests around shortcut detection and guard conditions
-- Manual cross-platform verification in packaged app builds
+**Outcome**: Shipped in v0.4.0. Bracket-key accelerators (`CmdOrCtrl+[`/`]`, `CmdOrCtrl+Shift+[`/`]`) replaced conflicting arrow-key combos. Duplicate frontend listener removed. All shortcut definitions consolidated in `menu.rs` as OS-level accelerators. Lock-state enforcement (Navigation/Diary items disable while locked) shipped in v0.3.0.
 
 ---
 
@@ -181,7 +133,7 @@ Replace hardcoded strings with translation keys.
 Export diary as PDF (A4 page size).
 
 **Requirements**:
-- Convert: Markdown → HTML → PDF
+- Convert: HTML → PDF (entries are stored as HTML via TipTap)
 - Library options: chromiumoxide or Tauri webview printing
 - Command: `export_pdf()` in `src-tauri/src/commands/export.rs`
 - UI: Add to ExportOverlay dropdown
@@ -192,6 +144,28 @@ Export diary as PDF (A4 page size).
 **Testing**: Manual only (PDF generation hard to test automatically)
 
 **Rationale for deferral**: Complex implementation, low user priority for v0.1.0
+
+---
+
+### Task 67: Text Input Extension Point
+**Priority**: Medium | **Complexity**: High | **Files**: TBD (see `docs/text-input-extension-design.md`)
+
+Allow users to augment text entry with pluggable text-generation sources: LLM endpoints (Ollama, OpenAI-compatible APIs), dictation (Web Speech API), and custom Rhai scripts.
+
+**Design**: Fully documented in [`docs/text-input-extension-design.md`](text-input-extension-design.md). Two-tier architecture: Tier 1 (Rhai scripts via existing plugin system, `@type: text-input`), Tier 2 (frontend JS built-ins for LLM endpoint + dictation).
+
+**Deferred because**: Too large for current release; design work preserved for future implementation.
+
+**Privacy constraints**: All network calls are opt-in and user-configured; no implicit telemetry; LLM endpoint URL/key stored only in `localStorage` preferences.
+
+**Key requirements**:
+- Rhai tier: `fn generate(prompt)` / `fn generate(prompt, context)` → string; opt-in `@permissions: read-context`
+- Built-in LLM tier: OpenAI-compatible HTTP POST to user-specified URL; supports Ollama and cloud APIs
+- Built-in dictation tier: Web Speech API (no network)
+- UI: Toolbar button in EditorToolbar → TextInputOverlay; Preferences section for LLM config
+- 2 new Tauri commands: `list_text_input_plugins`, `run_text_input_plugin`
+
+**Testing**: Rhai unit tests; frontend overlay tests; LLM tier mock tests; dictation manual-only
 
 ---
 
@@ -242,22 +216,10 @@ Native menu behavior for each platform.
 
 ---
 
-### Task 50: Auto-Lock on Screen Lock
-**Priority**: Medium | **Complexity**: Low | **Files**: Screen lock listener
+### Task 50: Auto-Lock on Screen Lock ✅ Completed (2026-03-01)
+**Priority**: Medium | **Complexity**: Low
 
-Automatically lock diary when user locks their screen.
-
-**Current state**:
-- Windows implementation is complete (session lock/logoff + suspend)
-- Frontend lock-screen sync is implemented via backend lock event emission
-- macOS hook is still pending
-
-**Requirements**:
-- Listen for OS screen lock event on macOS (Windows already implemented)
-- On lock: Call `lock_diary()`, clear DB connection
-- Handle: Sleep, screen saver, manual lock
-
-**Testing**: Manual (lock screen, verify diary locked on unlock)
+**Outcome**: Windows (session lock/logoff/suspend) shipped v0.3.0; macOS (display sleep, system sleep, `Cmd+Ctrl+Q` screen lock via `NSWorkspaceScreensDidSleepNotification` + `com.apple.screenIsLocked`) shipped v0.4.3. Both platforms emit `diary-locked` event so the frontend immediately transitions to the lock screen.
 
 ---
 
@@ -297,30 +259,15 @@ Import from encrypted Mini Diary v1.x files.
 
 ## 🚪 Onboarding & Documentation
 
-### Task 64: First-Launch "Open Existing Diary" Flow
-**Priority**: Medium | **Complexity**: Medium | **Files**: `src/components/auth/PasswordCreation.tsx`, `src/state/auth.ts`, `src/lib/tauri.ts`, `src-tauri/src/commands/auth.rs`
+### Task 64: First-Launch "Open Existing Diary" Flow ✅ Completed (2026-02-28)
+**Priority**: Medium | **Complexity**: Medium
 
-When no diary is found, let users choose an existing `diary.db` from another directory instead of only showing "create new diary".
-
-**Use case**:
-- Users who sync `diary.db` via Dropbox/OneDrive/iCloud/Network folder
-- Fresh install on a second machine where the diary already exists elsewhere
-
-**Requirements**:
-- Add a clear "Open Existing Diary..." action to the no-diary screen
-- Allow selecting an existing `diary.db` file (or directory containing it)
-- Validate selection and set app diary location accordingly (without copying)
-- Transition to locked state and show the unlock prompt for that diary
-- Keep "Create New Diary" as the default primary path
-
-**Testing**:
-- Manual: clean install -> choose external existing DB -> unlock -> entries load
-- Reject invalid selections (wrong file name, unreadable path, missing file)
+**Outcome**: Shipped in v0.4.2 via the Journal Picker. The pre-auth picker lets users open an existing `diary.db` from any folder directly (no copy, no workarounds), alongside creating a new diary. Both flows that were previously fragmented are now unified in `src/components/auth/JournalPicker.tsx`.
 
 ---
 
 ### Task 65: Backup Behavior Documentation for Custom Diary Locations
-**Priority**: Medium | **Complexity**: Low | **Files**: `README.md`, `docs/`, `CHANGELOG.md` (if behavior changes)
+**Priority**: Medium | **Complexity**: Low | **Files**: `README.md`, `docs/`
 
 Document how automatic backups behave with custom diary locations and current database/auth architecture.
 
@@ -334,7 +281,7 @@ Document how automatic backups behave with custom diary locations and current da
 **Deliverables**:
 - User-facing explanation section in README/docs
 - Short troubleshooting checklist (e.g., "where are my backups?")
-- Confirm wording matches actual implementation in `src-tauri/src/backup.rs` and `src-tauri/src/commands/auth.rs`
+- Confirm wording matches actual implementation in `src-tauri/src/backup.rs` and `src-tauri/src/commands/auth/`
 
 **Testing**:
 - Doc accuracy check by walking through actual code paths and manual verification
@@ -351,55 +298,34 @@ Comprehensive manual testing before each release.
 **Test workflows**:
 1. First-time setup (create password, create entry)
 2. Daily journaling (navigate, edit, auto-save)
-3. Search entries (FTS5 search)
-4. Import/export (all supported formats)
+3. Multiple entries per day (create, navigate with `←`/`→` bar, delete)
+4. Import/export (all supported formats via plugin system)
 5. Statistics overlay
-6. Preferences (all settings)
-7. Password change
+6. Preferences (all tabs and settings)
+7. Password change; key file auth
 8. Theme switching (light/dark/auto)
+9. Lock/unlock + auto-lock (idle timeout; macOS/Windows screen lock)
+10. Journal switching (multiple journals)
 
 **Success criteria**:
 - No P0/P1 bugs
-- Performance targets met (see IMPLEMENTATION_PLAN.md section 5.2)
 - Installer size < 20 MB
 
 **Testing**: Manual QA checklist on 3 platforms
 
 ---
 
-### Task 59: Set up Playwright for E2E Testing
-**Priority**: Medium | **Complexity**: Medium | **Files**: `playwright.config.ts`, `tests/e2e/`
+### Task 59: E2E Infrastructure (WebdriverIO + tauri-driver) ✅ Completed (2026-02-21)
+**Priority**: Medium | **Complexity**: Medium
 
-E2E testing infrastructure with Playwright.
-
-**Setup**:
-- Install: `bun add -d @playwright/test`
-- Config: `playwright.config.ts` for Tauri app
-- Fixtures: `tests/e2e/fixtures/` (test data)
-- Helpers: `tests/e2e/helpers/` (common operations)
-
-**Verify**: `bun playwright test` runs successfully
+**Outcome**: Shipped in v0.3.0 using WebdriverIO + tauri-driver (not Playwright as originally planned). Config at `wdio.conf.ts`; specs at `e2e/specs/`. Clean-room (`E2E_MODE=clean`) and stateful (`E2E_MODE=stateful`) lanes; deterministic 800×660 px viewport; isolated diary and WebView profile. CI runs on Ubuntu via `webkit2gtk-driver`.
 
 ---
 
-### Task 60: Write E2E Tests for Critical Workflows
-**Priority**: Medium | **Complexity**: High | **Files**: `tests/e2e/*.spec.ts`
+### Task 60: E2E Tests for Critical Workflows ✅ Completed (2026-02-21)
+**Priority**: Medium | **Complexity**: High
 
-Automated end-to-end tests for critical user journeys.
-
-**Test scenarios** (8 total):
-1. First-time setup (create password, create entry)
-2. Unlock diary, navigate dates, edit entry
-3. Search entries across multiple days
-4. Import Mini Diary JSON
-5. Export to JSON and Markdown
-6. Change preferences (theme, calendar, etc.)
-7. Lock/unlock diary workflow
-8. Theme switching (light/dark/auto)
-
-**Dependencies**: Task 59 (Playwright setup) must be complete first
-
-**Verify**: All tests pass on all platforms (macOS, Windows, Linux)
+**Outcome**: Core workflows implemented in `e2e/specs/diary-workflow.spec.ts`: (1) create diary → write entry → lock → unlock → verify persistence; (2) multi-date calendar navigation → write second entry → lock/unlock → verify both entries persist. Test isolation hardened in v0.4.1.
 
 ---
 
@@ -408,14 +334,15 @@ Automated end-to-end tests for critical user journeys.
 | Category | Open | Completed |
 |----------|------|-----------|
 | **Infrastructure** | 1 | 5 |
-| **Features** | 9 | 38 |
-| **Quality** | 4 | 5 |
-| **Testing** | 3 | 2 |
-| **Total** | **17** | **50** |
+| **Features** | 8 | 41 |
+| **Quality** | 3 | 6 |
+| **Testing** | 0 | 4 |
+| **Total** | **12** | **56** |
 
 **Next milestone candidates**:
 - **v0.1.1**: Task 61 (release workflow modernization)
-- **v0.2.0**: Tasks 52, 63 (accessibility + keyboard shortcuts)
-- **v0.3.0**: Tasks 47-48, 64-65 (i18n + onboarding/docs improvements)
-- **v0.4.0**: Tasks 50-51, 53, 66 (platform features + legacy migration + extension architecture)
-- **v1.0.0**: Tasks 58-60 (comprehensive QA + E2E tests)
+- **v0.2.0**: Task 52 (accessibility audit)
+- **v0.3.0**: Tasks 47–48, 65 (i18n + backup documentation)
+- **v0.4.x**: Tasks 49, 51, 53, 66 (menus, auto-update, legacy migration, extension architecture)
+- **Future**: Task 67 (text input extension point)
+- **v1.0.0**: Task 58 (comprehensive QA pass)
