@@ -3,6 +3,7 @@
   min-height: 200px;
   outline: none;
   color: var(--text-primary);
+  font-size: var(--editor-font-size, 16px);
 }
 
 @media (min-width: 1280px) {
@@ -48,15 +49,15 @@
 }
 
 .ProseMirror h1 {
-  font-size: 2rem;
+  font-size: 2em;
 }
 
 .ProseMirror h2 {
-  font-size: 1.5rem;
+  font-size: 1.5em;
 }
 
 .ProseMirror h3 {
-  font-size: 1.25rem;
+  font-size: 1.25em;
 }
 
 .ProseMirror p {

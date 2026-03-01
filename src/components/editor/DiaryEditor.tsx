@@ -4,6 +4,7 @@ import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import Underline from '@tiptap/extension-underline';
 import EditorToolbar from './EditorToolbar';
+import { preferences } from '../../state/preferences';
 
 interface DiaryEditorProps {
   content: string;
@@ -78,7 +79,10 @@ export default function DiaryEditor(props: DiaryEditorProps) {
   });
 
   return (
-    <div class="rounded-lg border border-primary bg-primary overflow-hidden">
+    <div
+      class="rounded-lg border border-primary bg-primary overflow-hidden"
+      style={{ '--editor-font-size': `${preferences().editorFontSize}px` }}
+    >
       <EditorToolbar editor={editor()} />
       <div class="p-4">
         <div ref={editorElement} />

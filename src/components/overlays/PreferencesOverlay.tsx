@@ -54,6 +54,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
   const [localAdvancedToolbar, setLocalAdvancedToolbar] = createSignal(
     preferences().advancedToolbar,
   );
+  const [localEditorFontSize, setLocalEditorFontSize] = createSignal(preferences().editorFontSize);
 
   // Diary file state
   const [diaryPath, setDiaryPath] = createSignal<string>('');
@@ -125,6 +126,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
       setLocalAutoLockEnabled(preferences().autoLockEnabled);
       setLocalAutoLockTimeout(String(preferences().autoLockTimeout));
       setLocalAdvancedToolbar(preferences().advancedToolbar);
+      setLocalEditorFontSize(preferences().editorFontSize);
 
       // Reset password fields
       setOldPassword('');
@@ -186,6 +188,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
       autoLockEnabled: localAutoLockEnabled(),
       autoLockTimeout: Math.min(999, Math.max(1, parseInt(localAutoLockTimeout(), 10) || 300)),
       advancedToolbar: localAdvancedToolbar(),
+      editorFontSize: Math.min(24, Math.max(12, Number(localEditorFontSize()))),
     });
     props.onClose();
   };
@@ -606,6 +609,30 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                           When enabled, the toolbar shows additional controls: headings, underline,
                           strikethrough, blockquote, inline code, and horizontal rule.
                         </p>
+                      </div>
+
+                      {/* Editor Font Size */}
+                      <div>
+                        <div class="flex items-center justify-between mb-2">
+                          <label for="editor-font-size" class="text-sm font-medium text-secondary">
+                            Editor font size
+                          </label>
+                          <span class="text-sm text-tertiary">{localEditorFontSize()} px</span>
+                        </div>
+                        <input
+                          type="range"
+                          id="editor-font-size"
+                          min="12"
+                          max="24"
+                          step="1"
+                          value={localEditorFontSize()}
+                          onInput={(e) => setLocalEditorFontSize(Number(e.currentTarget.value))}
+                          class="w-full accent-blue-500"
+                        />
+                        <div class="flex justify-between mt-1">
+                          <span class="text-xs text-tertiary">12 px</span>
+                          <span class="text-xs text-tertiary">24 px</span>
+                        </div>
                       </div>
                     </div>
                   </Match>

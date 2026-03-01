@@ -14,6 +14,7 @@ export interface Preferences {
   autoLockEnabled: boolean;
   autoLockTimeout: number; // seconds, 1–999
   advancedToolbar: boolean;
+  editorFontSize: number; // px, 12–24
 }
 
 const DEFAULT_PREFERENCES: Preferences = {
@@ -25,6 +26,7 @@ const DEFAULT_PREFERENCES: Preferences = {
   autoLockEnabled: false,
   autoLockTimeout: 300,
   advancedToolbar: false,
+  editorFontSize: 16,
 };
 
 // Load preferences from localStorage
