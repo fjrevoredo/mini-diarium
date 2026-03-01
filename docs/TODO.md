@@ -14,6 +14,7 @@ TODO entry format:
 
 ## Medium Priority
 
+- [ ] **Configurable editor font size** (#30) — add a font-size preference (Preferences → Writing) so users can increase or decrease the editor text size; store in `localStorage` alongside existing preferences; apply via a CSS custom property on the editor container so no re-render is needed; define a sensible range (e.g. 12–24 px) and a default that matches the current size
 - [ ] **Restore CI diagram content-diff check** — the byte-comparison check in `scripts/verify-diagrams.mjs` was reverted to existence-only because mmdc/d2 produce slightly different SVG bytes depending on version (local vs CI runners differ). The proper fix is to pin identical tool versions in both CI and local dev (e.g. lock `@mermaid-js/mermaid-cli` in `devDependencies` and `d2` via a specific release download in CI), then re-add the byte comparison. Until then, `diagrams:check` only verifies that all 8 `.svg` files are present.
 - [x] **Auto-lock on screen lock (macOS parity)** — Windows implementation is done; add macOS native screen-lock hook so behavior matches across desktop platforms
 - [x] **Configurable auto-lock timeout** (2026-03-01) — add a new Preferences setting to enable auto-lock and set the idle timeout in seconds; enforce a valid range of `1` to `999` seconds and lock the diary automatically when the threshold is reached
