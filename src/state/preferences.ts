@@ -13,6 +13,7 @@ export interface Preferences {
   escAction: EscAction;
   autoLockEnabled: boolean;
   autoLockTimeout: number; // seconds, 1–999
+  advancedToolbar: boolean;
 }
 
 const DEFAULT_PREFERENCES: Preferences = {
@@ -23,6 +24,7 @@ const DEFAULT_PREFERENCES: Preferences = {
   escAction: 'none',
   autoLockEnabled: false,
   autoLockTimeout: 300,
+  advancedToolbar: false,
 };
 
 // Load preferences from localStorage

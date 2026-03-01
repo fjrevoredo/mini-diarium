@@ -1,5 +1,6 @@
 import { Show, createSignal, createEffect, onCleanup } from 'solid-js';
 import type { Editor } from '@tiptap/core';
+import { preferences } from '../../state/preferences';
 import {
   Bold,
   Italic,
@@ -73,34 +74,34 @@ export default function EditorToolbar(props: EditorToolbarProps) {
   return (
     <Show when={props.editor}>
       <div class="flex flex-wrap items-center gap-1 border-b border-primary bg-tertiary px-3 py-2">
-        {/* Heading selector */}
-        <select
-          aria-label="Text style"
-          value={String(activeHeadingLevel())}
-          onChange={(e) => {
-            const lvl = parseInt(e.target.value);
-            if (lvl === 0) {
-              props.editor?.chain().focus().setParagraph().run();
-            } else {
-              props.editor
-                ?.chain()
-                .focus()
-                .toggleHeading({ level: lvl as 1 | 2 | 3 })
-                .run();
-            }
-          }}
-          class="h-8 rounded border border-primary bg-primary px-2 text-sm text-primary transition-colors hover:bg-tertiary focus:outline-none focus:ring-2 focus:ring-blue-500"
-        >
-          <option value="0">Normal</option>
-          <option value="1">Heading 1</option>
-          <option value="2">Heading 2</option>
-          <option value="3">Heading 3</option>
-        </select>
+        {/* Heading selector + trailing divider — advanced only */}
+        <Show when={preferences().advancedToolbar}>
+          <select
+            aria-label="Text style"
+            value={String(activeHeadingLevel())}
+            onChange={(e) => {
+              const lvl = parseInt(e.target.value);
+              if (lvl === 0) {
+                props.editor?.chain().focus().setParagraph().run();
+              } else {
+                props.editor
+                  ?.chain()
+                  .focus()
+                  .toggleHeading({ level: lvl as 1 | 2 | 3 })
+                  .run();
+              }
+            }}
+            class="h-8 rounded border border-primary bg-primary px-2 text-sm text-primary transition-colors hover:bg-tertiary focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="0">Normal</option>
+            <option value="1">Heading 1</option>
+            <option value="2">Heading 2</option>
+            <option value="3">Heading 3</option>
+          </select>
+          <div class="mx-1 h-6 w-px bg-primary" />
+        </Show>
 
-        {/* Divider */}
-        <div class="mx-1 h-6 w-px bg-primary" />
-
-        {/* Bold */}
+        {/* Bold — always */}
         <button
           onClick={() => props.editor?.chain().focus().toggleBold().run()}
           class={btnClass(isBoldActive())}
@@ -110,7 +111,7 @@ export default function EditorToolbar(props: EditorToolbarProps) {
           <Bold size={18} />
         </button>
 
-        {/* Italic */}
+        {/* Italic — always */}
         <button
           onClick={() => props.editor?.chain().focus().toggleItalic().run()}
           class={btnClass(isItalicActive())}
@@ -120,53 +121,51 @@ export default function EditorToolbar(props: EditorToolbarProps) {
           <Italic size={18} />
         </button>
 
-        {/* Underline */}
-        <button
-          onClick={() => props.editor?.chain().focus().toggleUnderline().run()}
-          class={btnClass(isUnderlineActive())}
-          title="Underline (Ctrl/Cmd+U)"
-          aria-label="Underline (Ctrl/Cmd+U)"
-        >
-          <Underline size={18} />
-        </button>
+        {/* Underline + Strikethrough — advanced only */}
+        <Show when={preferences().advancedToolbar}>
+          <button
+            onClick={() => props.editor?.chain().focus().toggleUnderline().run()}
+            class={btnClass(isUnderlineActive())}
+            title="Underline (Ctrl/Cmd+U)"
+            aria-label="Underline (Ctrl/Cmd+U)"
+          >
+            <Underline size={18} />
+          </button>
+          <button
+            onClick={() => props.editor?.chain().focus().toggleStrike().run()}
+            class={btnClass(isStrikeActive())}
+            title="Strikethrough (Ctrl/Cmd+Shift+S)"
+            aria-label="Strikethrough (Ctrl/Cmd+Shift+S)"
+          >
+            <Strikethrough size={18} />
+          </button>
+        </Show>
 
-        {/* Strikethrough */}
-        <button
-          onClick={() => props.editor?.chain().focus().toggleStrike().run()}
-          class={btnClass(isStrikeActive())}
-          title="Strikethrough (Ctrl/Cmd+Shift+S)"
-          aria-label="Strikethrough (Ctrl/Cmd+Shift+S)"
-        >
-          <Strikethrough size={18} />
-        </button>
-
-        {/* Divider */}
+        {/* Divider — always, between text-formatting group and list group */}
         <div class="mx-1 h-6 w-px bg-primary" />
 
-        {/* Blockquote */}
-        <button
-          onClick={() => props.editor?.chain().focus().toggleBlockquote().run()}
-          class={btnClass(isBlockquoteActive())}
-          title="Blockquote (Ctrl/Cmd+Shift+B)"
-          aria-label="Blockquote (Ctrl/Cmd+Shift+B)"
-        >
-          <Quote size={18} />
-        </button>
+        {/* Blockquote, Inline Code + trailing divider — advanced only */}
+        <Show when={preferences().advancedToolbar}>
+          <button
+            onClick={() => props.editor?.chain().focus().toggleBlockquote().run()}
+            class={btnClass(isBlockquoteActive())}
+            title="Blockquote (Ctrl/Cmd+Shift+B)"
+            aria-label="Blockquote (Ctrl/Cmd+Shift+B)"
+          >
+            <Quote size={18} />
+          </button>
+          <button
+            onClick={() => props.editor?.chain().focus().toggleCode().run()}
+            class={btnClass(isCodeActive())}
+            title="Inline Code (Ctrl/Cmd+E)"
+            aria-label="Inline Code (Ctrl/Cmd+E)"
+          >
+            <Code size={18} />
+          </button>
+          <div class="mx-1 h-6 w-px bg-primary" />
+        </Show>
 
-        {/* Inline Code */}
-        <button
-          onClick={() => props.editor?.chain().focus().toggleCode().run()}
-          class={btnClass(isCodeActive())}
-          title="Inline Code (Ctrl/Cmd+E)"
-          aria-label="Inline Code (Ctrl/Cmd+E)"
-        >
-          <Code size={18} />
-        </button>
-
-        {/* Divider */}
-        <div class="mx-1 h-6 w-px bg-primary" />
-
-        {/* Bullet List */}
+        {/* Bullet List — always */}
         <button
           onClick={() => props.editor?.chain().focus().toggleBulletList().run()}
           class={btnClass(isBulletListActive())}
@@ -176,7 +175,7 @@ export default function EditorToolbar(props: EditorToolbarProps) {
           <List size={18} />
         </button>
 
-        {/* Ordered List */}
+        {/* Ordered List — always */}
         <button
           onClick={() => props.editor?.chain().focus().toggleOrderedList().run()}
           class={btnClass(isOrderedListActive())}
@@ -186,18 +185,18 @@ export default function EditorToolbar(props: EditorToolbarProps) {
           <ListOrdered size={18} />
         </button>
 
-        {/* Divider */}
-        <div class="mx-1 h-6 w-px bg-primary" />
-
-        {/* Horizontal Rule */}
-        <button
-          onClick={() => props.editor?.chain().focus().setHorizontalRule().run()}
-          class={btnBase}
-          title="Insert horizontal rule"
-          aria-label="Insert horizontal rule"
-        >
-          <Minus size={18} />
-        </button>
+        {/* Leading divider + Horizontal Rule — advanced only */}
+        <Show when={preferences().advancedToolbar}>
+          <div class="mx-1 h-6 w-px bg-primary" />
+          <button
+            onClick={() => props.editor?.chain().focus().setHorizontalRule().run()}
+            class={btnBase}
+            title="Insert horizontal rule"
+            aria-label="Insert horizontal rule"
+          >
+            <Minus size={18} />
+          </button>
+        </Show>
       </div>
     </Show>
   );

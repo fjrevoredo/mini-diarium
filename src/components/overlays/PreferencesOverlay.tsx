@@ -51,6 +51,9 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
   const [localAutoLockTimeout, setLocalAutoLockTimeout] = createSignal(
     String(preferences().autoLockTimeout),
   );
+  const [localAdvancedToolbar, setLocalAdvancedToolbar] = createSignal(
+    preferences().advancedToolbar,
+  );
 
   // Diary file state
   const [diaryPath, setDiaryPath] = createSignal<string>('');
@@ -121,6 +124,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
       setLocalEscAction(preferences().escAction);
       setLocalAutoLockEnabled(preferences().autoLockEnabled);
       setLocalAutoLockTimeout(String(preferences().autoLockTimeout));
+      setLocalAdvancedToolbar(preferences().advancedToolbar);
 
       // Reset password fields
       setOldPassword('');
@@ -181,6 +185,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
       escAction: localEscAction(),
       autoLockEnabled: localAutoLockEnabled(),
       autoLockTimeout: Math.min(999, Math.max(1, parseInt(localAutoLockTimeout(), 10) || 300)),
+      advancedToolbar: localAdvancedToolbar(),
     });
     props.onClose();
   };
@@ -580,6 +585,26 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                         </div>
                         <p class="ml-7 text-xs text-tertiary leading-relaxed">
                           When enabled, browser spellcheck will highlight misspelled words.
+                        </p>
+                      </div>
+
+                      {/* Show Advanced Toolbar */}
+                      <div class="space-y-2">
+                        <div class="flex items-center">
+                          <input
+                            type="checkbox"
+                            id="advanced-toolbar"
+                            checked={localAdvancedToolbar()}
+                            onChange={(e) => setLocalAdvancedToolbar(e.currentTarget.checked)}
+                            class="h-4 w-4 rounded border-primary text-blue-600 focus:ring-blue-500"
+                          />
+                          <label for="advanced-toolbar" class="ml-3 text-sm text-secondary">
+                            Show advanced formatting toolbar
+                          </label>
+                        </div>
+                        <p class="ml-7 text-xs text-tertiary leading-relaxed">
+                          When enabled, the toolbar shows additional controls: headings, underline,
+                          strikethrough, blockquote, inline code, and horizontal rule.
                         </p>
                       </div>
                     </div>
