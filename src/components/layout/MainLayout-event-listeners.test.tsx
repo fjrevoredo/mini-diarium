@@ -25,7 +25,9 @@ describe('MainLayout Event Listener Pattern', () => {
     // User changes the date
     setSelectedDate('2024-01-20');
 
-    // Menu event fires
+    // Menu event fires. Deliberate test code: eventHandler reads a signal outside a tracked
+    // scope to verify it captures the current value at call time, not at signal-creation time.
+    // eslint-disable-next-line solid/reactivity
     await eventHandler();
 
     // The handler should get the CURRENT date, not the initial one

@@ -14,7 +14,7 @@ export function EntryNavBar(props: EntryNavBarProps) {
       <Show when={props.total >= 2}>
         <div class="flex items-center gap-2">
           <button
-            onClick={props.onPrev}
+            onClick={() => props.onPrev()}
             disabled={props.index === 0}
             class="px-2 py-0.5 rounded disabled:opacity-30 hover:bg-neutral-100 dark:hover:bg-neutral-700"
             aria-label="Previous entry"
@@ -25,7 +25,7 @@ export function EntryNavBar(props: EntryNavBarProps) {
             {props.index + 1} / {props.total}
           </span>
           <button
-            onClick={props.onNext}
+            onClick={() => props.onNext()}
             disabled={props.index === props.total - 1}
             class="px-2 py-0.5 rounded disabled:opacity-30 hover:bg-neutral-100 dark:hover:bg-neutral-700"
             aria-label="Next entry"
@@ -35,7 +35,7 @@ export function EntryNavBar(props: EntryNavBarProps) {
         </div>
       </Show>
       <button
-        onClick={props.onAdd}
+        onClick={() => props.onAdd()}
         class="px-2 py-0.5 rounded hover:bg-neutral-100 dark:hover:bg-neutral-700 text-neutral-500 ml-auto"
         aria-label="Add entry"
       >

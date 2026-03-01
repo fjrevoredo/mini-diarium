@@ -14,7 +14,10 @@ export default function Sidebar(props: SidebarProps) {
     <>
       {/* Mobile overlay */}
       <Show when={!props.isCollapsed}>
-        <div class="fixed inset-0 z-20 bg-black bg-opacity-50 lg:hidden" onClick={props.onClose} />
+        <div
+          class="fixed inset-0 z-20 bg-black bg-opacity-50 lg:hidden"
+          onClick={() => props.onClose?.()}
+        />
       </Show>
 
       {/* Sidebar */}
@@ -30,7 +33,7 @@ export default function Sidebar(props: SidebarProps) {
               <h2 class="text-xl font-bold text-primary">Mini Diarium</h2>
               <Show when={!props.isCollapsed}>
                 <button
-                  onClick={props.onClose}
+                  onClick={() => props.onClose?.()}
                   class="rounded p-2 hover:bg-hover text-primary lg:hidden"
                   aria-label="Close menu"
                 >

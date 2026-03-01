@@ -86,7 +86,10 @@ export default function EditorPanel() {
     }
   };
 
-  // Debounced save
+  // Debounced save. Reactive reads (isContentEmpty) must happen at debounce-fire time (500 ms
+  // later), not at call-site time — pre-reading the value would capture stale emptiness state
+  // before the user has finished typing.
+  // eslint-disable-next-line solid/reactivity
   const debouncedSave = debounce((entryId: number, t: string, c: string) => {
     void saveCurrentById(entryId, t, c);
   }, 500);
