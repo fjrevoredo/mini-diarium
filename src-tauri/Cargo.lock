@@ -2332,7 +2332,7 @@ version = "0.4.3"
 dependencies = [
  "aes-gcm",
  "argon2",
- "block2 0.5.1",
+ "block2 0.6.2",
  "chrono",
  "env_logger",
  "hex",
