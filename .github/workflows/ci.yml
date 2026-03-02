@@ -188,7 +188,7 @@ jobs:
           find src-tauri/target -name "bundle_dmg.sh" -print -exec sed -n '1,260p' {} \;
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: mini-diarium-${{ matrix.os }}
           path: |
@@ -202,7 +202,7 @@ jobs:
 
       - name: Upload Linux binary for E2E tests
         if: runner.os == 'Linux'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: mini-diarium-linux-binary
           path: src-tauri/target/release/mini-diarium
