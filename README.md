@@ -2,7 +2,7 @@
 
 [![CI Status](https://github.com/fjrevoredo/mini-diarium/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/fjrevoredo/mini-diarium/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-0.4.3-blue.svg)](https://github.com/fjrevoredo/mini-diarium/releases)
+[![Version](https://img.shields.io/badge/version-0.4.4-blue.svg)](https://github.com/fjrevoredo/mini-diarium/releases)
 [![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)](https://github.com/fjrevoredo/mini-diarium#installation)
 [![Follow on X](https://img.shields.io/badge/Follow-%40MiniDiarium-000000?logo=x)](https://x.com/MiniDiarium)
 
@@ -32,6 +32,10 @@ Mini Diarium is intentionally opinionated. The philosophy is not a side note, it
 - **Simplicity over cleverness**: fewer moving parts, smaller attack surface, easier maintenance
 
 Read the full principles and how these translates to the architecture in [PHILOSOPHY.md](PHILOSOPHY.md).
+
+## AI as a Tool, Not a Substitute
+
+Mini Diarium uses AI tools willingly and without apology, but always as leverage for human engineers, never as a replacement for them. This is **NOT** a vibe-coded app: every meaningful change still has to pass through deliberate design, careful implementation, proper testing, sound engineering practice, and direct feedback from both developers and users. We do not believe serious software can be reduced to "no-code magic" or delegated to prompts without judgment, especially when privacy, security, and long-term maintainability matter. Good tools should be used; responsibility, authorship, and final judgment remain human.
 
 ## Features
 

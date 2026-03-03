@@ -856,7 +856,7 @@ interface ImportState {
 
 ### 10.2 Data Limitations
 - **Upstream Mini Diary limitation**: one entry per day. Mini Diarium diverges here and supports multiple entries per date; imports do not merge same-date entries.
-- **No attachments**: No support for images, files, or media.
+- **Basic embedded images**: Images can be inserted into entries via drag-and-drop, clipboard paste, or the advanced toolbar button. Images are stored as base64 data URIs inside the encrypted entry text; they are never stored in plaintext on disk. Binary file attachments, video, and audio are not supported.
 - **No tags or categories**: Entries have no metadata beyond title, text, and dateUpdated.
 - **Date range**: Limited to 1900-01-01 through 2099-12-31.
 

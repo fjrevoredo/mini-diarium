@@ -263,3 +263,8 @@ export async function runImportPlugin(pluginId: string, filePath: string): Promi
 export async function runExportPlugin(pluginId: string, filePath: string): Promise<ExportResult> {
   return await invoke('run_export_plugin', { pluginId, filePath });
 }
+
+// File utility commands
+export async function readFileBytes(path: string): Promise<number[]> {
+  return await invoke('read_file_bytes', { path });
+}

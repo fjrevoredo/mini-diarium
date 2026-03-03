@@ -5,6 +5,13 @@
   color: var(--text-primary);
 }
 
+/* Use higher specificity (.ProseMirror.diary-editor-content) so the user-controlled
+   CSS variable wins over UnoCSS Typography size-variant classes (prose-sm, lg:prose-lg,
+   xl:prose-xl) which share only a single-class selector and are injected after this file. */
+.ProseMirror.diary-editor-content {
+  font-size: var(--editor-font-size, 16px);
+}
+
 @media (min-width: 1280px) {
   .ProseMirror.diary-editor-content {
     min-height: clamp(320px, 52vh, 680px);
@@ -48,15 +55,15 @@
 }
 
 .ProseMirror h1 {
-  font-size: 2rem;
+  font-size: 2em;
 }
 
 .ProseMirror h2 {
-  font-size: 1.5rem;
+  font-size: 1.5em;
 }
 
 .ProseMirror h3 {
-  font-size: 1.25rem;
+  font-size: 1.25em;
 }
 
 .ProseMirror p {
@@ -134,4 +141,32 @@
 
 .dark .ProseMirror u {
   text-decoration: underline;
+}
+
+/* Embedded images */
+.ProseMirror img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.375rem;
+  margin: 0.5rem 0;
+  display: block;
+}
+
+.ProseMirror img.ProseMirror-selectednode {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+.dark .ProseMirror img.ProseMirror-selectednode {
+  outline-color: #60a5fa;
+}
+
+/* Highlight mark — color only, no background */
+.ProseMirror mark {
+  background-color: transparent;
+  color: #b45309; /* amber-700 */
+}
+
+.dark .ProseMirror mark {
+  color: #fbbf24; /* amber-400 */
 }
