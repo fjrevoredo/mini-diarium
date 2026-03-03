@@ -510,6 +510,20 @@ mod tests {
     }
 
     #[test]
+    fn test_html_to_markdown_highlight_stripped() {
+        let html = "<p>This is <mark>highlighted</mark> text.</p>";
+        let result = html_to_markdown(html);
+        assert_eq!(result, "This is highlighted text.");
+    }
+
+    #[test]
+    fn test_html_to_markdown_highlight_with_bold() {
+        let html = "<p><mark><strong>bold highlight</strong></mark></p>";
+        let result = html_to_markdown(html);
+        assert_eq!(result, "**bold highlight**");
+    }
+
+    #[test]
     fn test_html_to_markdown_hr() {
         let html = "<p>Before</p><hr><p>After</p>";
         let result = html_to_markdown(html);

@@ -6,6 +6,7 @@ import {
   Italic,
   Underline,
   Strikethrough,
+  Highlighter,
   List,
   ListOrdered,
   Quote,
@@ -29,6 +30,7 @@ export default function EditorToolbar(props: EditorToolbarProps) {
   const [isOrderedListActive, setIsOrderedListActive] = createSignal(false);
   const [isBlockquoteActive, setIsBlockquoteActive] = createSignal(false);
   const [isCodeActive, setIsCodeActive] = createSignal(false);
+  const [isHighlightActive, setIsHighlightActive] = createSignal(false);
   const [activeHeadingLevel, setActiveHeadingLevel] = createSignal(0);
 
   // Update active states when editor changes
@@ -45,6 +47,7 @@ export default function EditorToolbar(props: EditorToolbarProps) {
       setIsOrderedListActive(editor.isActive('orderedList'));
       setIsBlockquoteActive(editor.isActive('blockquote'));
       setIsCodeActive(editor.isActive('code'));
+      setIsHighlightActive(editor.isActive('highlight'));
       setActiveHeadingLevel(
         editor.isActive('heading', { level: 1 })
           ? 1
@@ -156,6 +159,14 @@ export default function EditorToolbar(props: EditorToolbarProps) {
             aria-label="Strikethrough (Ctrl/Cmd+Shift+S)"
           >
             <Strikethrough size={18} />
+          </button>
+          <button
+            onClick={() => props.editor?.chain().focus().toggleHighlight().run()}
+            class={btnClass(isHighlightActive())}
+            title="Highlight (Ctrl/Cmd+Shift+H)"
+            aria-label="Highlight (Ctrl/Cmd+Shift+H)"
+          >
+            <Highlighter size={18} />
           </button>
         </Show>
 

@@ -6,6 +6,7 @@ All notable changes to Mini Diarium are documented here. This project uses [Sema
 
 ### Added
 
+- **Text highlight formatting** in the advanced editor toolbar (`Ctrl/Cmd+Shift+H`). Highlighted text is rendered with a yellow background (theme-safe in light and dark mode). HTML `<mark>` tags are preserved in storage and JSON export; Markdown export strips the tags and keeps the text. (#41)
 - **Embedded images in the editor**: images can now be inserted into diary entries via drag-and-drop, clipboard paste (Ctrl/Cmd+V), or the new "Insert image" button in the advanced toolbar. Images are resized client-side (max 1200 × 1200 px, JPEG 85% quality) before embedding as base64 data URIs in the encrypted entry HTML. Plaintext never touches disk. Note: JSON/Markdown exports will include the full base64 strings and may be large for entries with many images. (#40)
 - **Configurable editor font size** (12–24 px) in Preferences → Writing (#30)
 

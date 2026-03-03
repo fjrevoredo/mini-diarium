@@ -3,6 +3,7 @@ import { Editor } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import Underline from '@tiptap/extension-underline';
+import Highlight from '@tiptap/extension-highlight';
 import { Image as TiptapImage } from '@tiptap/extension-image';
 import { listen, UnlistenFn } from '@tauri-apps/api/event';
 import EditorToolbar from './EditorToolbar';
@@ -106,6 +107,7 @@ export default function DiaryEditor(props: DiaryEditorProps) {
           placeholder: props.placeholder || 'Start writing...',
         }),
         Underline,
+        Highlight,
         TiptapImage.configure({ allowBase64: true, inline: false }),
       ],
       content: props.content,

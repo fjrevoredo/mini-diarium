@@ -154,3 +154,13 @@
 .dark .ProseMirror img.ProseMirror-selectednode {
   outline-color: #60a5fa;
 }
+
+/* Highlight mark — color only, no background */
+.ProseMirror mark {
+  background-color: transparent;
+  color: #b45309; /* amber-700 */
+}
+
+.dark .ProseMirror mark {
+  color: #fbbf24; /* amber-400 */
+}
