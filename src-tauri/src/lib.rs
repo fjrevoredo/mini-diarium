@@ -185,6 +185,8 @@ pub fn run() {
             commands::navigation::navigate_next_month,
             // Stats
             commands::stats::get_statistics,
+            // Files (image embedding support)
+            commands::files::read_file_bytes,
             // Import
             commands::import::import_minidiary_json,
             commands::import::import_dayone_json,

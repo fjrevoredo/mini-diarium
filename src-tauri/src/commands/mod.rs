@@ -1,6 +1,7 @@
 pub mod auth;
 pub mod entries;
 pub mod export;
+pub mod files;
 pub mod import;
 pub mod navigation;
 pub mod plugin;
