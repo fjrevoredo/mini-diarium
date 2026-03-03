@@ -3,6 +3,12 @@
   min-height: 200px;
   outline: none;
   color: var(--text-primary);
+}
+
+/* Use higher specificity (.ProseMirror.diary-editor-content) so the user-controlled
+   CSS variable wins over UnoCSS Typography size-variant classes (prose-sm, lg:prose-lg,
+   xl:prose-xl) which share only a single-class selector and are injected after this file. */
+.ProseMirror.diary-editor-content {
   font-size: var(--editor-font-size, 16px);
 }
 
