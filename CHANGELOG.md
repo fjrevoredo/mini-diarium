@@ -2,6 +2,14 @@
 
 All notable changes to Mini Diarium are documented here. This project uses [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Changed
+
+- Bump `lucide-solid` 0.575.0 → 0.576.0
+- Bump `objc2-app-kit` 0.2 → 0.3, `objc2-foundation` 0.2 → 0.3, `block2` 0.5 → 0.6 (macOS only)
+
+
 ## [0.4.3] — 01-03-2026
 
 ### Added
