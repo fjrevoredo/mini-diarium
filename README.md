@@ -33,6 +33,10 @@ Mini Diarium is intentionally opinionated. The philosophy is not a side note, it
 
 Read the full principles and how these translates to the architecture in [PHILOSOPHY.md](PHILOSOPHY.md).
 
+## AI as a Tool, Not a Substitute
+
+Mini Diarium uses AI tools willingly and without apology, but always as leverage for human engineers, never as a replacement for them. This is **NOT** a vibe-coded app: every meaningful change still has to pass through deliberate design, careful implementation, proper testing, sound engineering practice, and direct feedback from both developers and users. We do not believe serious software can be reduced to "no-code magic" or delegated to prompts without judgment, especially when privacy, security, and long-term maintainability matter. Good tools should be used; responsibility, authorship, and final judgment remain human.
+
 ## Features
 
 - **Key file authentication**: unlock your diary with an X25519 private key file instead of (or alongside) your password, like SSH keys for your journal. Register multiple key files; manage all auth methods from Preferences. See [Key File Authentication](#key-file-authentication) for details.

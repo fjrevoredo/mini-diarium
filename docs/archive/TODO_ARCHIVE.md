@@ -4,9 +4,10 @@ Archived completed items moved out of [TODO.md](../TODO.md). This keeps the acti
 
 ## Completed
 
-### Medium Priority
-
 - [x] **Expanded rich text editor support** (2026-02-28) — extend the built-in editor with more complete rich text capabilities beyond the current formatting set; define the supported feature set, keep the UX consistent with local-first editing, and ensure stored HTML remains compatible with import/export flows
 - [x] **Configurable auto-lock timeout** (2026-03-01) — add a new Preferences setting to enable auto-lock and set the idle timeout in seconds; enforce a valid range of `1` to `999` seconds and lock the diary automatically when the threshold is reached
 - [x] **Hide advanced rich-text controls behind a setting** (2026-03-01) — add a preference to keep the default editor toolbar minimal and reveal the extra formatting controls (for example underline, strikethrough, blockquote, inline code, horizontal rule, and heading picker) only when the user opts in; define the default state, make sure the setting only affects toolbar visibility and not rendering of existing content, and keep import/export behavior unchanged
 - [x] **Auto-lock on screen lock (macOS parity)** — Windows implementation is done; add macOS native screen-lock hook so behavior matches across desktop platforms
+- [x] **Basic embedded images in the editor** (2026-03-03) (#40) — support inserting and rendering inline images in diary entries, starting with the drag-and-drop flow that currently shows an OS-level “copy” affordance on macOS but does nothing in the editor; align PHILOSOPHY/docs wording and the UI capability so “basic embedded images” is either truly supported or not implied
+- [x] **Text highlight formatting** (#41) — add a highlight/marker formatting option in the editor to improve scanability; start with a single theme-safe color and place it in the advanced formatting toolbar if shipped, then verify how it should round-trip through stored HTML plus Markdown/JSON export paths
+- [x] **Configurable editor font size** (2026-03-01) (#30) — add a font-size preference (Preferences → Writing) so users can increase or decrease the editor text size; store in `localStorage` alongside existing preferences; apply via a CSS custom property on the editor container so no re-render is needed; define a sensible range (e.g. 12–24 px) and a default that matches the current size

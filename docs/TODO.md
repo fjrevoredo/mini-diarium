@@ -7,21 +7,21 @@ TODO entry format:
 - Put items under the appropriate priority section
 - Use indented checkbox items only for true sub-tasks or explicit dependencies
 
+
 ---
 ## High Priority
+
 
 ---
 
 ## Medium Priority
 
-- [x] **Basic embedded images in the editor** (2026-03-03) (#40) — support inserting and rendering inline images in diary entries, starting with the drag-and-drop flow that currently shows an OS-level “copy” affordance on macOS but does nothing in the editor; align PHILOSOPHY/docs wording and the UI capability so “basic embedded images” is either truly supported or not implied
-- [x] **Text highlight formatting** (#41) — add a highlight/marker formatting option in the editor to improve scanability; start with a single theme-safe color and place it in the advanced formatting toolbar if shipped, then verify how it should round-trip through stored HTML plus Markdown/JSON export paths
-- [x] **Configurable editor font size** (2026-03-01) (#30) — add a font-size preference (Preferences → Writing) so users can increase or decrease the editor text size; store in `localStorage` alongside existing preferences; apply via a CSS custom property on the editor container so no re-render is needed; define a sensible range (e.g. 12–24 px) and a default that matches the current size
 - [ ] **Restore CI diagram content-diff check** — the byte-comparison check in `scripts/verify-diagrams.mjs` was reverted to existence-only because mmdc/d2 produce slightly different SVG bytes depending on version (local vs CI runners differ). The proper fix is to pin identical tool versions in both CI and local dev (e.g. lock `@mermaid-js/mermaid-cli` in `devDependencies` and `d2` via a specific release download in CI), then re-add the byte comparison. Until then, `diagrams:check` only verifies that all 8 `.svg` files are present.
 - [ ] **i18n framework** — detect OS locale, set up translation files (`en.json`, `es.json`), add `t()` helper
   - [ ] **Translate all UI text** — replace hardcoded strings with translation keys (~145 keys); depends on i18n framework above
 - [ ] **Frontend test coverage** — auth screens (`PasswordPrompt.tsx`, `PasswordCreation.tsx`), Calendar, and all overlays (GoToDateOverlay, PreferencesOverlay, StatsOverlay, ImportOverlay, ExportOverlay) have zero test coverage; add Vitest + @solidjs/testing-library tests for each; use existing pattern from `TitleEditor.test.tsx` and `WordCount.test.tsx`
 - [ ] **`screen_lock.rs` unit tests** — the Windows session-lock hook is untested because it calls Win32 APIs directly; extract `trigger_auto_lock` and test it with a mock `DiaryState`; requires Win32 API mocking strategy.
+
 
 ---
 
