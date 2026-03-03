@@ -11,10 +11,12 @@ import {
   Quote,
   Code,
   Minus,
+  ImagePlus,
 } from 'lucide-solid';
 
 interface EditorToolbarProps {
   editor: Editor | null;
+  onInsertImage?: (file: File) => void;
 }
 
 export default function EditorToolbar(props: EditorToolbarProps) {
@@ -71,9 +73,25 @@ export default function EditorToolbar(props: EditorToolbarProps) {
 
   const btnClass = (active: boolean) => (active ? btnActive : btnBase);
 
+  // eslint-disable-next-line no-unassigned-vars -- SolidJS assigns via ref={fileInputRef}; ESLint can't see the JSX assignment
+  let fileInputRef!: HTMLInputElement;
+
   return (
     <Show when={props.editor}>
       <div class="flex flex-wrap items-center gap-1 border-b border-primary bg-tertiary px-3 py-2">
+        {/* Hidden file input for image insertion — always rendered so ref is valid */}
+        <input
+          type="file"
+          accept="image/*"
+          class="hidden"
+          ref={fileInputRef}
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) props.onInsertImage?.(file);
+            e.target.value = '';
+          }}
+        />
+
         {/* Heading selector + trailing divider — advanced only */}
         <Show when={preferences().advancedToolbar}>
           <select
@@ -195,6 +213,18 @@ export default function EditorToolbar(props: EditorToolbarProps) {
             aria-label="Insert horizontal rule"
           >
             <Minus size={18} />
+          </button>
+        </Show>
+
+        {/* Insert Image — advanced only */}
+        <Show when={preferences().advancedToolbar}>
+          <button
+            onClick={() => fileInputRef.click()}
+            class={btnBase}
+            title="Insert image"
+            aria-label="Insert image"
+          >
+            <ImagePlus size={18} />
           </button>
         </Show>
       </div>

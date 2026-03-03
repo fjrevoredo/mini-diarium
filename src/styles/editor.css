@@ -136,3 +136,21 @@
 .dark .ProseMirror u {
   text-decoration: underline;
 }
+
+/* Embedded images */
+.ProseMirror img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.375rem;
+  margin: 0.5rem 0;
+  display: block;
+}
+
+.ProseMirror img.ProseMirror-selectednode {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+.dark .ProseMirror img.ProseMirror-selectednode {
+  outline-color: #60a5fa;
+}
