@@ -1,0 +1,60 @@
+name: Update Homebrew Cask
+
+on:
+  release:
+    types: [released]
+
+jobs:
+  update-cask:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout app repo
+        uses: actions/checkout@v4
+
+      - name: Determine version and asset
+        id: info
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          echo "version=$TAG" >> "$GITHUB_OUTPUT"
+
+          ASSET_NAME="Mini-Diarium-${TAG}-macos.dmg"
+          echo "asset_name=$ASSET_NAME" >> "$GITHUB_OUTPUT"
+
+      - name: Download macOS DMG from release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION="${{ steps.info.outputs.version }}"
+          ASSET_NAME="${{ steps.info.outputs.asset_name }}"
+
+          gh release download "$VERSION" --pattern "$ASSET_NAME" --repo "fjrevoredo/mini-diarium"
+
+      - name: Compute SHA256
+        id: sha
+        run: |
+          ASSET_NAME="${{ steps.info.outputs.asset_name }}"
+          SHA256=$(shasum -a 256 "$ASSET_NAME" | awk '{print $1}')
+          echo "sha256=$SHA256" >> "$GITHUB_OUTPUT"
+
+      - name: Clone Homebrew tap and update cask
+        env:
+          GH_PAT: ${{ secrets.GH_PAT }}
+        run: |
+          git clone "https://$GH_PAT@github.com/fjrevoredo/homebrew-mini-diarium.git"
+          cd homebrew-mini-diarium
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          VERSION="${{ steps.info.outputs.version }}"
+          SHA256="${{ steps.sha.outputs.sha256 }}"
+          FILE="Casks/mini-diarium.rb"
+
+          sed -i.bak "s/^  version \".*\"/  version \"$VERSION\"/" "$FILE"
+          sed -i.bak "s/^  sha256 \".*\"/  sha256 \"$SHA256\"/" "$FILE"
+
+          rm "$FILE.bak"
+
+          git add "$FILE"
+          git commit -m "mini-diarium ${VERSION}"
+          git push
