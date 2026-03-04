@@ -18,20 +18,27 @@ jobs:
       - name: Determine version and asset
         id: info
         run: |
+          # GITHUB_REF_NAME is the full tag, e.g. v0.4.4
           TAG="${GITHUB_REF_NAME}"
-          echo "version=$TAG" >> "$GITHUB_OUTPUT"
 
-          ASSET_NAME="Mini-Diarium-${TAG}-macos.dmg"
+          # Strip leading 'v' for the version string and asset name
+          VERSION="${TAG#v}"
+
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+          ASSET_NAME="Mini-Diarium-${VERSION}-macos.dmg"
           echo "asset_name=$ASSET_NAME" >> "$GITHUB_OUTPUT"
 
       - name: Download macOS DMG from release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          VERSION="${{ steps.info.outputs.version }}"
+          TAG="${{ steps.info.outputs.tag }}"
           ASSET_NAME="${{ steps.info.outputs.asset_name }}"
 
-          gh release download "$VERSION" --pattern "$ASSET_NAME" --repo "fjrevoredo/mini-diarium"
+          # Use the full tag (with v) for gh release download
+          gh release download "$TAG" --pattern "$ASSET_NAME" --repo "fjrevoredo/mini-diarium"
 
       - name: Compute SHA256
         id: sha
@@ -53,6 +60,7 @@ jobs:
           SHA256="${{ steps.sha.outputs.sha256 }}"
           FILE="Casks/mini-diarium.rb"
 
+          # 2-space indent matches the cask file formatting
           sed -i.bak "s/^  version \".*\"/  version \"$VERSION\"/" "$FILE"
           sed -i.bak "s/^  sha256 \".*\"/  sha256 \"$SHA256\"/" "$FILE"
 
