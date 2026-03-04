@@ -1,5 +1,8 @@
 name: Update Homebrew Cask
 
+permissions:
+  contents: read
+
 on:
   release:
     types: [released]
