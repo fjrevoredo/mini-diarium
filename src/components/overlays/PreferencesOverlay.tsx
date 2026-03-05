@@ -399,7 +399,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
   // Tab button class helper
   const tabClass = (tab: Tab) =>
     activeTab() === tab
-      ? 'w-full text-left px-3 py-2 text-sm font-medium rounded-md bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200'
+      ? 'w-full text-left px-3 py-2 text-sm font-medium rounded-md bg-active text-primary'
       : 'w-full text-left px-3 py-2 text-sm font-medium rounded-md text-secondary hover:bg-hover hover:text-primary';
 
   return (

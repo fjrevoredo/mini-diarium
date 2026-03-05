@@ -139,6 +139,12 @@ pub fn run() {
                 warn!("Screen-lock listener initialization failed: {}", error);
             }
 
+            // Show the window after setup is complete (window-state plugin has restored
+            // position by now), avoiding a flash at the default position on startup.
+            if let Some(win) = app.get_webview_window("main") {
+                let _ = win.show();
+            }
+
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![

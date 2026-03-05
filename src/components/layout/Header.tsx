@@ -33,42 +33,40 @@ export default function Header(props: HeaderProps) {
   };
 
   return (
-    <header class="border-b border-primary bg-primary px-4 py-3">
-      <div class="flex items-center justify-between">
-        {/* Left: hamburger + date */}
-        <div class="flex items-center gap-3">
-          <Show when={props.showMenu}>
-            <button
-              onClick={() => props.onMenuClick?.()}
-              data-testid="toggle-sidebar-button"
-              class="rounded p-2 hover:bg-hover text-primary lg:hidden"
-              aria-label="Toggle menu"
-            >
-              <Menu size={24} />
-            </button>
-          </Show>
-          <h1 class="text-lg font-semibold text-primary">{formattedDate()}</h1>
-        </div>
+    <header class="flex h-16 items-center justify-between border-b border-primary bg-primary px-4">
+      {/* Left: hamburger + date */}
+      <div class="flex items-center gap-3">
+        <Show when={props.showMenu}>
+          <button
+            onClick={() => props.onMenuClick?.()}
+            data-testid="toggle-sidebar-button"
+            class="rounded p-2 hover:bg-hover text-primary lg:hidden"
+            aria-label="Toggle menu"
+          >
+            <Menu size={24} />
+          </button>
+        </Show>
+        <h1 class="text-lg font-semibold text-primary">{formattedDate()}</h1>
+      </div>
 
-        {/* Right: About + Lock */}
-        <div class="flex items-center gap-1">
-          <button
-            onClick={() => setIsAboutOpen(true)}
-            class="rounded p-2 hover:bg-hover text-tertiary transition-colors"
-            aria-label="About"
-          >
-            <Info size={20} />
-          </button>
-          <button
-            onClick={() => handleLock()}
-            disabled={isLocking()}
-            data-testid="lock-diary-button"
-            class="rounded p-2 hover:bg-hover text-tertiary transition-colors disabled:opacity-50"
-            aria-label="Lock diary"
-          >
-            <Lock size={20} />
-          </button>
-        </div>
+      {/* Right: About + Lock */}
+      <div class="flex items-center gap-1">
+        <button
+          onClick={() => setIsAboutOpen(true)}
+          class="rounded p-2 hover:bg-hover text-tertiary transition-colors"
+          aria-label="About"
+        >
+          <Info size={20} />
+        </button>
+        <button
+          onClick={() => handleLock()}
+          disabled={isLocking()}
+          data-testid="lock-diary-button"
+          class="rounded p-2 hover:bg-hover text-tertiary transition-colors disabled:opacity-50"
+          aria-label="Lock diary"
+        >
+          <Lock size={20} />
+        </button>
       </div>
     </header>
   );

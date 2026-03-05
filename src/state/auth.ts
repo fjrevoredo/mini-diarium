@@ -4,7 +4,7 @@ import * as tauri from '../lib/tauri';
 import { setEntryDates } from './entries';
 import { createLogger } from '../lib/logger';
 import { mapTauriError } from '../lib/errors';
-import { loadJournals } from './journals';
+import { activeJournalId, loadJournals } from './journals';
 import { resetSessionState } from './session';
 
 const log = createLogger('Auth');
@@ -62,7 +62,7 @@ export async function refreshAuthState(): Promise<void> {
   }
 }
 
-// Initialize auth + journals on app load — always lands on journal-select.
+// Initialize auth + journals on app load — auto-selects last journal if available.
 export async function initializeAuth(): Promise<void> {
   try {
     await loadJournals();
@@ -70,7 +70,11 @@ export async function initializeAuth(): Promise<void> {
     log.error('Failed to load journals:', err);
     setError('Failed to load journal list');
   }
-  setAuthState('journal-select');
+  if (activeJournalId() !== null) {
+    await refreshAuthState();
+  } else {
+    setAuthState('journal-select');
+  }
 }
 
 // Navigate back to the journal picker (e.g. from PasswordPrompt or PasswordCreation).

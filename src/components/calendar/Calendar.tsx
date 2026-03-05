@@ -1,4 +1,4 @@
-import { createSignal, For, createMemo } from 'solid-js';
+import { createSignal, createEffect, For, createMemo } from 'solid-js';
 import { ChevronLeft, ChevronRight } from 'lucide-solid';
 import { selectedDate, setSelectedDate, setIsSidebarCollapsed } from '../../state/ui';
 import { entryDates } from '../../state/entries';
@@ -127,15 +127,19 @@ export default function Calendar() {
     setCurrentMonth(new Date(currentMonth().getFullYear(), currentMonth().getMonth() + 1));
   };
 
+  // Sync calendar month when selectedDate changes (e.g. "go to today", go-to-date overlay)
+  createEffect(() => {
+    const d = new Date(selectedDate() + 'T00:00:00');
+    const cm = currentMonth();
+    if (d.getFullYear() !== cm.getFullYear() || d.getMonth() !== cm.getMonth()) {
+      setCurrentMonth(d);
+    }
+  });
+
   const handleDayClick = (day: CalendarDay) => {
-    // Don't allow clicking disabled days (future dates when preference is off)
-    if (day.isDisabled) {
-      return;
-    }
-    if (day.isCurrentMonth) {
-      setSelectedDate(day.date);
-      setIsSidebarCollapsed(true);
-    }
+    if (day.isDisabled) return;
+    setSelectedDate(day.date);
+    setIsSidebarCollapsed(true);
   };
 
   // Week day headers, rotated based on preference
@@ -187,10 +191,9 @@ export default function Calendar() {
                 ${day.isCurrentMonth ? 'text-primary' : 'text-muted'}
                 ${day.isToday ? 'font-bold' : ''}
                 ${day.isSelected ? 'bg-blue-600 text-white hover:bg-blue-700' : !day.isDisabled ? 'hover:bg-hover' : ''}
-                ${!day.isCurrentMonth || day.isDisabled ? 'cursor-default' : 'cursor-pointer'}
-                ${day.isDisabled ? 'opacity-40 cursor-not-allowed' : ''}
+                ${day.isDisabled ? 'cursor-not-allowed opacity-40' : 'cursor-pointer'}
               `}
-              disabled={!day.isCurrentMonth || day.isDisabled}
+              disabled={day.isDisabled}
             >
               <span>{day.day}</span>
               {day.hasEntry && (

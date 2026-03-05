@@ -31,12 +31,10 @@ describe('Core diary workflow', () => {
     // Give WebView2 time to render the UI
     await browser.pause(5000);
 
-    // 1. App starts at JournalPicker screen — one pre-configured journal from config.json
-    const openBtn = await $('[data-testid="journal-open-button"]');
-    await openBtn.waitForDisplayed({ timeout: 15000 });
-    await openBtn.click();
+    // 1. App auto-selects the pre-configured journal from config.json
+    //    and transitions directly to the auth screen.
 
-    // 2. JournalPicker transitions to either:
+    // 2. Auth screen is either:
     //    - PasswordCreation (no diary yet — clean mode always, stateful first run)
     //    - PasswordPrompt   (diary exists — stateful mode on second+ run)
     const authScreen = await browser.waitUntil(

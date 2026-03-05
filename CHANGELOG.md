@@ -2,6 +2,27 @@
 
 All notable changes to Mini Diarium are documented here. This project uses [Semantic Versioning](https://semver.org/).
 
+## [0.4.5] — Unreleased
+
+### Added
+
+### Changed
+
+- **Auto-select last-used journal on startup**: the app now skips the Journal Picker when a previously used journal is known (`active_journal_id` set in config). `initializeAuth()` calls `refreshAuthState()` directly and transitions to the password prompt (or unlocked state if already unlocked). The Journal Picker is shown only on a fresh install or when no active journal is configured. (#43)
+
+### Fixed
+
+- **Window position flash on startup**: the main window no longer flashes at the default position before jumping to the saved position. The window is now created hidden (`"visible": false` in `tauri.conf.json`) and shown explicitly after `tauri-plugin-window-state` has restored the saved bounds. (#43)
+- **"+" add-entry button**: the button to create an additional entry for the same day now correctly guards against concurrent calls using a reactive signal. The button is disabled while creation is in flight, preventing duplicate entries from rapid clicks. Errors are no longer silently swallowed. (#43)
+- **"Go to today" calendar button**: clicking the calendar icon in the sidebar now correctly navigates the calendar month view. A `createEffect` in `Calendar.tsx` watches `selectedDate` and syncs `currentMonth` whenever the selected date falls outside the currently displayed month — fixing all month-navigation cases including "go to today", go-to-date overlay, and day/month menu navigation. (#43)
+- **Clicking adjacent-month days in calendar**: days from the previous or next month shown in the calendar grid are now clickable. The `isCurrentMonth` guard has been removed from `handleDayClick` and the `disabled` attribute; only future dates (when the preference is off) remain disabled. (#43)
+- **Sidebar header border alignment**: the sidebar title bar and the main header bar now share the same rendered height (64 px). Previously the sidebar's text-only header was 12 px shorter than the main header whose icon buttons set the height, causing the bottom borders to visually misalign. (#43)
+- **"Go to today" button alignment**: the button in the sidebar was right-aligned (`justify-end`) while the calendar below it is left-aligned. Changed to `justify-start` so the button aligns with the calendar's left edge. (#43)
+- **Settings tab active state on light theme**: the active tab in Preferences used hardcoded Tailwind classes (`bg-blue-100 text-blue-700`) that could render with low contrast. Replaced with CSS-variable classes (`bg-active text-primary`) that correctly follow the current theme in both light and dark mode. (#43)
+- **Editor placeholder showing "Loading…"**: TipTap's placeholder extension showed "Loading…" whenever the editor was empty during an async entry load, which could flicker on fast navigations. Placeholders are now always static ("Title (optional)" / "What's on your mind today?"). (#43)
+
+
+
 ## [0.4.4] — 03-03-2026
 
 ### Added

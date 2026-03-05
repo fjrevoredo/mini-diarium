@@ -21,6 +21,7 @@ vi.mock('@tauri-apps/api/event', () => ({
 
 vi.mock('./journals', () => ({
   loadJournals: mocks.loadJournals,
+  activeJournalId: () => null,
 }));
 
 vi.mock('../lib/tauri', () => mocks.tauri);

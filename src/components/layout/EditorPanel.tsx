@@ -24,7 +24,7 @@ export default function EditorPanel() {
   const [title, setTitle] = createSignal('');
   const [content, setContent] = createSignal('');
   const [wordCount, setWordCount] = createSignal(0);
-  const [isLoadingEntry, setIsLoadingEntry] = createSignal(false);
+  const [_isLoadingEntry, setIsLoadingEntry] = createSignal(false);
   const [editorInstance, setEditorInstance] = createSignal<Editor | null>(null);
 
   // Multi-entry state
@@ -35,7 +35,7 @@ export default function EditorPanel() {
   let isDisposed = false;
   let loadRequestId = 0;
   let saveRequestId = 0;
-  let isCreatingEntry = false; // prevents concurrent createEntry calls
+  const [isCreatingEntry, setIsCreatingEntry] = createSignal(false);
 
   const isContentEmpty = () => {
     const editor = editorInstance();
@@ -172,14 +172,17 @@ export default function EditorPanel() {
 
   // Add a new entry for the current date
   const addEntry = async () => {
-    // Save current first
-    const currentId = pendingEntryId();
-    if (currentId !== null) {
-      debouncedSave.cancel();
-      await saveCurrentById(currentId, title(), content());
-    }
+    if (isCreatingEntry()) return;
+    setIsCreatingEntry(true);
 
     try {
+      // Save current first
+      const currentId = pendingEntryId();
+      if (currentId !== null) {
+        debouncedSave.cancel();
+        await saveCurrentById(currentId, title(), content());
+      }
+
       const newEntry = await createEntry(selectedDate());
       if (isDisposed) return;
 
@@ -202,6 +205,8 @@ export default function EditorPanel() {
       if (!isDisposed) setEntryDates(dates);
     } catch (error) {
       log.error('Failed to add entry:', error);
+    } finally {
+      setIsCreatingEntry(false);
     }
   };
 
@@ -220,10 +225,10 @@ export default function EditorPanel() {
       const isEmpty = editor
         ? editor.isEmpty || editor.getText().trim() === ''
         : newContent.trim() === '';
-      if (isEmpty || isCreatingEntry) return;
+      if (isEmpty || isCreatingEntry()) return;
 
       // First real keystroke on empty day — create entry then save
-      isCreatingEntry = true;
+      setIsCreatingEntry(true);
       void (async () => {
         try {
           const newEntry = await createEntry(selectedDate());
@@ -236,7 +241,7 @@ export default function EditorPanel() {
         } catch (error) {
           log.error('Failed to create entry on first keystroke:', error);
         } finally {
-          isCreatingEntry = false;
+          setIsCreatingEntry(false);
         }
       })();
     }
@@ -249,10 +254,10 @@ export default function EditorPanel() {
       debouncedSave(id, newTitle, content());
     } else {
       // Skip creation on empty title (e.g. programmatic clear)
-      if (newTitle.trim() === '' || isCreatingEntry) return;
+      if (newTitle.trim() === '' || isCreatingEntry()) return;
 
       // First real title keystroke on empty day — create entry then save
-      isCreatingEntry = true;
+      setIsCreatingEntry(true);
       void (async () => {
         try {
           const newEntry = await createEntry(selectedDate());
@@ -264,7 +269,7 @@ export default function EditorPanel() {
         } catch (error) {
           log.error('Failed to create entry on title keystroke:', error);
         } finally {
-          isCreatingEntry = false;
+          setIsCreatingEntry(false);
         }
       })();
     }
@@ -305,6 +310,7 @@ export default function EditorPanel() {
         onPrev={() => void navigateToEntry(currentIndex() - 1)}
         onNext={() => void navigateToEntry(currentIndex() + 1)}
         onAdd={() => void addEntry()}
+        addDisabled={isCreatingEntry()}
       />
       <div class="flex-1 overflow-y-auto p-6">
         <div class="mx-auto w-full max-w-3xl xl:max-w-5xl 2xl:max-w-6xl">
@@ -314,14 +320,14 @@ export default function EditorPanel() {
                 value={title()}
                 onInput={handleTitleInput}
                 onEnter={handleTitleEnter}
-                placeholder={isLoadingEntry() ? 'Loading...' : 'Title (optional)'}
+                placeholder="Title (optional)"
                 spellCheck={preferences().enableSpellcheck}
               />
             </Show>
             <DiaryEditor
               content={content()}
               onUpdate={handleContentUpdate}
-              placeholder={isLoadingEntry() ? 'Loading...' : "What's on your mind today?"}
+              placeholder="What's on your mind today?"
               onEditorReady={setEditorInstance}
               spellCheck={preferences().enableSpellcheck}
             />
