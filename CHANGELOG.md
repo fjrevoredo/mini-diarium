@@ -13,6 +13,7 @@ All notable changes to Mini Diarium are documented here. This project uses [Sema
 
 - **Unified user-facing terminology to "Journal"**: all UI text, error messages, and documentation now consistently use "Journal" instead of the mixed "diary"/"journal" wording; internal Tauri command names and filesystem identifiers (`diary.db`) are preserved for compatibility (issue #46)
 - **Auto-select last-used journal on startup**: the app now skips the Journal Picker when a previously used journal is known (`active_journal_id` set in config). `initializeAuth()` calls `refreshAuthState()` directly and transitions to the password prompt (or unlocked state if already unlocked). The Journal Picker is shown only on a fresh install or when no active journal is configured. (#43)
+- **Reduced password minimum length to 1 character:** the 8-character minimum has been removed. Passwords must be non-empty; a visual strength indicator now guides users with feedback on weak/medium/strong passwords. Very weak passwords show an additional warning banner with recommendations. This aligns with the cryptographic reality that Argon2id protects any password length, while giving users control over their security tradeoffs. (#43)
 
 ### Fixed
 

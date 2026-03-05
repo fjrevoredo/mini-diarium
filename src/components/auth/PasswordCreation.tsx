@@ -1,4 +1,5 @@
 import { createSignal, Show } from 'solid-js';
+import { PasswordStrengthIndicator } from './PasswordStrengthIndicator';
 import { createJournal, goToJournalPicker } from '../../state/auth';
 
 export default function PasswordCreation() {
@@ -22,11 +23,6 @@ export default function PasswordCreation() {
 
     if (pwd !== repeat) {
       setError('Passwords do not match');
-      return;
-    }
-
-    if (pwd.length < 8) {
-      setError('Password must be at least 8 characters');
       return;
     }
 
@@ -56,7 +52,7 @@ export default function PasswordCreation() {
           <form onSubmit={handleSubmit} class="space-y-6">
             <div>
               <label for="password" class="mb-2 block text-sm font-medium text-secondary">
-                Password
+                Password <span class="text-xs text-tertiary">(1+ characters, 12+ recommended)</span>
               </label>
               <input
                 id="password"
@@ -69,6 +65,7 @@ export default function PasswordCreation() {
                 placeholder="Enter your password"
                 autocomplete="new-password"
               />
+              <PasswordStrengthIndicator password={password()} />
             </div>
 
             <div>

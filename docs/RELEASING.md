@@ -18,6 +18,9 @@ Before starting the release process:
 - [ ] CI/CD pipeline passing on master
 - [ ] No known P0/P1 bugs
 - [ ] CHANGELOG.md updated with release notes
+- [ ] Philosophy alignment reviewed for unreleased changelog items against `PHILOSOPHY.md`
+  - Confirm each unreleased `CHANGELOG.md` item still fits the six philosophy principles: core vs extension, security impact, testability, portability, focused scope, and simplicity cost
+  - If any item introduces a tradeoff or drift risk, record it explicitly in the release PR description or a dedicated audit note before tagging the release
 
 ---
 

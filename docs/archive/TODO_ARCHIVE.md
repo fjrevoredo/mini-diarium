@@ -44,3 +44,16 @@ Archived completed items moved out of [TODO.md](../TODO.md). This keeps the acti
   - **Root cause:** `EditorPanel.tsx:317` and `324` use `placeholder={isLoadingEntry() ? 'Loading...' : '...'}`. TipTap's Placeholder extension shows the placeholder whenever the editor is empty; during async entry-load (`isLoadingEntry === true`) an empty editor displays "Loading..." as its placeholder text.
   - **Fix:** use static placeholders (`'Title (optional)'` and `"What's on your mind today?"`) always; handle the loading state through a separate overlay or by disabling the editor while `isLoadingEntry()` is true — do not overload the placeholder prop for loading feedback.
   - **Files:** `src/components/layout/EditorPanel.tsx:317, 324`.
+- [x] **Add "-" button to delete current extra entry (same day)** — add a delete-entry button next to the existing `+` button in the entry navigator for multi-entry days (2026-03-05)
+  - **Visibility requirement:** show the `-` button only when the selected day has more than 1 entry
+  - **Tooltip requirement:** the `-` button must have a clear tooltip that explains the action before click
+  - **Confirmation requirement:** clicking `-` opens a `Yes` / `No` confirmation dialog
+  - **Delete requirement:** selecting `Yes` deletes the currently selected entry for that day
+  - **Navigation requirement:** after delete, navigate to the next available entry for that same day
+  - **Cancel requirement:** selecting `No` closes the dialog and changes nothing
+- [x] **Unify terminology to "Journal" across app and codebase** (2026-03-05) — remove mixed `diary`/`journal` wording and standardize user-facing language and internal naming conventions
+  - **UI text requirement:** all user-visible labels/messages/tooltips/dialogs must use `Journal` consistently
+  - **Codebase requirement:** naming in frontend/backend command wrappers and state modules should be aligned to the same term where feasible, with compatibility preserved where renames would break public interfaces
+  - **Documentation requirement:** repository docs (README, guides, and related docs) must be updated to use `Journal` terminology consistently
+  - **Website requirement:** marketing website content under `website/` must also use `Journal` terminology consistently
+  - **Compatibility requirement:** existing persisted data, command contracts, and migrations must keep working after terminology cleanup

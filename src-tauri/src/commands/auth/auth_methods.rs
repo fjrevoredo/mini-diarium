@@ -82,8 +82,8 @@ pub fn write_key_file(path: String, private_key_hex: String) -> Result<(), Strin
 /// No existing password is required: being unlocked is the authentication.
 #[tauri::command]
 pub fn register_password(new_password: String, state: State<DiaryState>) -> Result<(), String> {
-    if new_password.len() < 8 {
-        return Err("Password must be at least 8 characters".to_string());
+    if new_password.is_empty() {
+        return Err("Password cannot be empty".to_string());
     }
 
     let db_state = state
@@ -468,15 +468,24 @@ mod tests {
     }
 
     #[test]
-    fn test_register_password_rejects_short_password() {
-        // Minimum length check (< 8 chars)
-        let short = "short";
-        let result: Result<(), String> = if short.len() < 8 {
-            Err("Password must be at least 8 characters".to_string())
+    fn test_register_password_rejects_empty_password() {
+        // Empty password check
+        let empty = "";
+        let result: Result<(), String> = if empty.is_empty() {
+            Err("Password cannot be empty".to_string())
         } else {
             Ok(())
         };
         assert!(result.is_err());
-        assert!(result.unwrap_err().contains("at least 8 characters"));
+        assert!(result.unwrap_err().contains("cannot be empty"));
+
+        // 1-character password should be accepted (even if very weak)
+        let short = "a";
+        let result: Result<(), String> = if short.is_empty() {
+            Err("Password cannot be empty".to_string())
+        } else {
+            Ok(())
+        };
+        assert!(result.is_ok(), "1-char password should be accepted");
     }
 }

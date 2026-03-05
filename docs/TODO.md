@@ -24,20 +24,7 @@ TODO entry format:
   - **Must NOT include (privacy boundary):** entry content/title HTML, search queries, password values, key files/private keys/public keys/master-key material, auth slot wrapped blobs, full filesystem paths, or any raw user text fields; redact/sanitize before write
   - **Implementation notes:** create a backend command for dump generation so sanitization is enforced in Rust, and keep frontend as a simple trigger + save flow
   - **Files:** `src/components/overlays/PreferencesOverlay.tsx`, `src/lib/tauri.ts`, `src-tauri/src/commands/` (new command module and registration in `commands/mod.rs` + `lib.rs`)
-- [x] **Add "-" button to delete current extra entry (same day)** — add a delete-entry button next to the existing `+` button in the entry navigator for multi-entry days (2026-03-05)
-  - **Visibility requirement:** show the `-` button only when the selected day has more than 1 entry
-  - **Tooltip requirement:** the `-` button must have a clear tooltip that explains the action before click
-  - **Confirmation requirement:** clicking `-` opens a `Yes` / `No` confirmation dialog
-  - **Delete requirement:** selecting `Yes` deletes the currently selected entry for that day
-  - **Navigation requirement:** after delete, navigate to the next available entry for that same day
-  - **Cancel requirement:** selecting `No` closes the dialog and changes nothing
-- [x] **Unify terminology to "Journal" across app and codebase** (2026-03-05) — remove mixed `diary`/`journal` wording and standardize user-facing language and internal naming conventions
-  - **UI text requirement:** all user-visible labels/messages/tooltips/dialogs must use `Journal` consistently
-  - **Codebase requirement:** naming in frontend/backend command wrappers and state modules should be aligned to the same term where feasible, with compatibility preserved where renames would break public interfaces
-  - **Documentation requirement:** repository docs (README, guides, and related docs) must be updated to use `Journal` terminology consistently
-  - **Website requirement:** marketing website content under `website/` must also use `Journal` terminology consistently
-  - **Compatibility requirement:** existing persisted data, command contracts, and migrations must keep working after terminology cleanup
-- [ ] **Remove minimum password length requirement** — the current UI enforces a minimum length; the owner needs to verify whether the encryption algorithm truly requires it (Argon2id does not); if not required, remove the hard block and replace with a strength hint/suggestion (issue #43)
+- [x] **Remove minimum password length requirement** — the current UI enforces a minimum length; the owner needs to verify whether the encryption algorithm truly requires it (Argon2id does not); if not required, remove the hard block and replace with a strength hint/suggestion (issue #43) (2026-03-05)
   - **Investigation:** the 8-char minimum is enforced frontend-only in three places: `src/components/auth/PasswordCreation.tsx:28-31`, `src/components/overlays/PreferencesOverlay.tsx:218-221` (change password), and `PreferencesOverlay.tsx:300-303` (add password auth method). The backend (`src-tauri/src/crypto/password.rs`) and Argon2id have **no minimum length** — any string including empty is accepted.
   - **Fix:** remove the hard `return` block in each location; replace with a visual strength hint (e.g. yellow warning if < 8 chars, green if ≥ 12). The "Create"/"Save" button should remain enabled. Optionally add backend validation only for empty-string passwords.
   - **Files:** `src/components/auth/PasswordCreation.tsx:28-31`, `src/components/overlays/PreferencesOverlay.tsx:218-221, 300-303`.
@@ -55,16 +42,8 @@ TODO entry format:
 
 ---
 
-## Low Priority / Future
+## Website Priority
 
-- [ ] **PDF export** — convert journal entries to PDF (A4); likely via Tauri webview printing
-- [ ] **Text input extension point** — create a plugin/extension interface for alternative entry methods so official and user plugins can provide text input flows such as dictation, LLM-assisted drafting, and other future capture modes; define capability boundaries, permission model, and how plugins hand content into the editor without weakening the app’s privacy guarantees
-- [ ] **Statistics extension point** — add a plugin/extension interface for writing statistics so official and user plugins can calculate custom metrics and surface them in the statistics UI; define the data contract, execution/sandbox constraints, and how custom statistics are registered and rendered without weakening the app’s privacy-first local-only model
-- [ ] **Downgrade import path logging** — `commands/import.rs` logs the import file path at `info!` level (line 52 and other locations), leaking the full filesystem path in dev logs; downgrade all path logs to `debug!` level for all import functions
-- [ ] **`DiaryEntry` clone efficiency** — `DiaryEntry` in `db/queries.rs` derives `Clone` and can be heap-copied across import/export flows; pass references where possible to reduce allocations when processing thousands of entries; audit current command and export call sites
-- [ ] **Document keypair hex in JS heap** — `generate_keypair` returns `KeypairFiles` with `private_key_hex` as plain JSON so the frontend can write it to a file; add a comment on the struct in `auth/mod.rs` or `auth/keypair.rs` noting this is an accepted design tradeoff and that the private key briefly exists in the JS heap before the file is written
-- [ ] **Accessibility audit** — only 5 ARIA labels exist (Calendar nav buttons, EditorToolbar buttons); missing ARIA on overlays, form inputs, dialogs, focus trapping, and keyboard calendar navigation; add color contrast testing and screen reader testing (NVDA / VoiceOver)
-- [ ] **Mobile version** — Tauri v2 supports iOS and Android targets; evaluate porting the app to mobile: adapt the SolidJS UI for touch (larger tap targets, bottom navigation, swipe gestures for day navigation), handle mobile file-system sandboxing for the journal location, and assess whether the Argon2id parameters need tuning for mobile CPU/memory constraints
 - [ ] **Add basic manual blog to website** — add a simple static blog section under `website/` with hand-written entries (no CMS, no database, no dynamic rendering). New posts are created by manually adding/updating static files and then fully republishing the website; this manual release flow is intentional to keep implementation simple.
 - [ ] **Website SEO/GEO follow-up backlog** — remaining implementation items from the 2026 website SEO/GEO pass
   - [ ] **Optimize demo media — fix mobile LCP (11.6 s)** — `website/assets/demo.gif` is 4.7 MB and is the LCP element on mobile, causing an 11.6 s Largest Contentful Paint (Google ranks pages with LCP > 4 s as "Poor"); it also has `loading="lazy"` and `fetchpriority="low"` which actively delays it further (`website/index.html:237`)
@@ -89,3 +68,16 @@ TODO entry format:
     - **Fix:** replace `transition: all 0.2s` with explicit property lists that exclude layout properties — e.g. `transition: color 0.2s, background-color 0.2s, border-color 0.2s, opacity 0.2s, transform 0.2s`; edit `website/css/style.css` (the source file) and regenerate/copy the hashed output.
   - [ ] **Resolve Cloudflare-injected robots.txt Content-Signal directive** — Cloudflare automatically appends `Content-Signal: search=yes,ai-train=no` to the live robots.txt at the CDN layer; Lighthouse's robots.txt parser flags this as invalid (not part of RFC 9309), costing 8 SEO points (score 92 → 100); the repo `website/robots.txt` is clean — this is a Cloudflare dashboard setting (REPORT.md FIX 2.1)
     - **Fix:** in the Cloudflare dashboard → Security → Bots → Crawler Hints, disable "Content Signals" injection or switch to the HTTP-header equivalent (`X-Robots-Tag: ai-train=no`) if available. No code change in the repo is needed — AI bot blocking is already handled by explicit `User-agent` blocks in the live robots.txt.
+
+---
+
+## Low Priority / Future
+
+- [ ] **PDF export** — convert journal entries to PDF (A4); likely via Tauri webview printing
+- [ ] **Text input extension point** — create a plugin/extension interface for alternative entry methods so official and user plugins can provide text input flows such as dictation, LLM-assisted drafting, and other future capture modes; define capability boundaries, permission model, and how plugins hand content into the editor without weakening the app’s privacy guarantees
+- [ ] **Statistics extension point** — add a plugin/extension interface for writing statistics so official and user plugins can calculate custom metrics and surface them in the statistics UI; define the data contract, execution/sandbox constraints, and how custom statistics are registered and rendered without weakening the app’s privacy-first local-only model
+- [ ] **Downgrade import path logging** — `commands/import.rs` logs the import file path at `info!` level (line 52 and other locations), leaking the full filesystem path in dev logs; downgrade all path logs to `debug!` level for all import functions
+- [ ] **`DiaryEntry` clone efficiency** — `DiaryEntry` in `db/queries.rs` derives `Clone` and can be heap-copied across import/export flows; pass references where possible to reduce allocations when processing thousands of entries; audit current command and export call sites
+- [ ] **Document keypair hex in JS heap** — `generate_keypair` returns `KeypairFiles` with `private_key_hex` as plain JSON so the frontend can write it to a file; add a comment on the struct in `auth/mod.rs` or `auth/keypair.rs` noting this is an accepted design tradeoff and that the private key briefly exists in the JS heap before the file is written
+- [ ] **Accessibility audit** — only 5 ARIA labels exist (Calendar nav buttons, EditorToolbar buttons); missing ARIA on overlays, form inputs, dialogs, focus trapping, and keyboard calendar navigation; add color contrast testing and screen reader testing (NVDA / VoiceOver)
+- [ ] **Mobile version** — Tauri v2 supports iOS and Android targets; evaluate porting the app to mobile: adapt the SolidJS UI for touch (larger tap targets, bottom navigation, swipe gestures for day navigation), handle mobile file-system sandboxing for the journal location, and assess whether the Argon2id parameters need tuning for mobile CPU/memory constraints

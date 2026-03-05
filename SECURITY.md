@@ -5,13 +5,14 @@
 ## Supported Versions
 
 | Version | Supported |
-|---------|-----------|
+| ------- | --------- |
 | 0.3.x   | Yes       |
 | 0.2.x   | No        |
 
 ## Reporting Vulnerabilities
 
 If you discover a security vulnerability, **please do not open a public issue**. Instead, report it privately via:
+
 - Email (check GitHub profile for contact)
 - GitHub Security Advisories (https://github.com/fjrevoredo/mini-diarium/security/advisories/new)
 
@@ -46,6 +47,8 @@ Mini Diarium is designed to protect diary content against a specific, well-defin
 ## Cryptographic Architecture
 
 Each diary is protected by a **random 256-bit master key** generated at creation time. The master key encrypts all entries and is itself never written to disk in plaintext. Instead, it is wrapped once per registered authentication method and stored in the `auth_slots` table.
+
+**Password strength is your responsibility.** The app accepts any non-empty password (minimum 1 character) and provides a visual strength indicator to guide your choices. Argon2id with 64MB memory and 3 iterations provides strong protection against offline attacks regardless of password length. However, weak passwords remain vulnerable to determined attackers with sufficient resources. We strongly recommend using a strong password (12+ characters with a mix of letters, numbers, and symbols) to ensure your encrypted diary remains secure.
 
 ### Entry encryption
 

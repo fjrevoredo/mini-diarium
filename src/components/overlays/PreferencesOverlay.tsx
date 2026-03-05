@@ -1,4 +1,5 @@
 import { createSignal, createEffect, For, Show, Switch, Match, onMount } from 'solid-js';
+import { PasswordStrengthIndicator } from '../auth/PasswordStrengthIndicator';
 import { save, confirm as dialogConfirm, open as openDirDialog } from '@tauri-apps/plugin-dialog';
 import { Dialog } from '@kobalte/core/dialog';
 import { createLogger } from '../../lib/logger';
@@ -216,11 +217,6 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
       return;
     }
 
-    if (newPassword().length < 8) {
-      setPasswordError('New password must be at least 8 characters');
-      return;
-    }
-
     try {
       await tauri.changePassword(oldPassword(), newPassword());
       setPasswordSuccess(true);
@@ -296,10 +292,6 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
     }
     if (addPasswordNew() !== addPasswordConfirm()) {
       setAddPasswordError('Passwords do not match');
-      return;
-    }
-    if (addPasswordNew().length < 8) {
-      setAddPasswordError('Password must be at least 8 characters');
       return;
     }
 
@@ -712,16 +704,24 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                             </p>
 
                             <div class="mb-3">
-                              <label class="block text-xs font-medium text-secondary mb-1">
-                                New Password
+                              <label
+                                for="addPasswordNew"
+                                class="mb-2 block text-sm font-medium text-secondary"
+                              >
+                                Password{' '}
+                                <span class="text-xs text-tertiary">
+                                  (1+ characters, 12+ recommended)
+                                </span>
                               </label>
                               <input
+                                id="addPasswordNew"
                                 type="password"
                                 value={addPasswordNew()}
                                 onInput={(e) => setAddPasswordNew(e.currentTarget.value)}
                                 class="w-full px-3 py-2 border border-primary bg-primary text-primary rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                placeholder="Min. 8 characters"
+                                placeholder="Enter your password"
                               />
+                              <PasswordStrengthIndicator password={addPasswordNew()} />
                             </div>
 
                             <div class="mb-3">
@@ -827,16 +827,24 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                         </div>
 
                         <div class="mb-4">
-                          <label class="block text-sm font-medium text-secondary mb-2">
-                            New Password
+                          <label
+                            for="newPassword"
+                            class="mb-2 block text-sm font-medium text-secondary"
+                          >
+                            New Password{' '}
+                            <span class="text-xs text-tertiary">
+                              (1+ characters, 12+ recommended)
+                            </span>
                           </label>
                           <input
+                            id="newPassword"
                             type="password"
                             value={newPassword()}
                             onInput={(e) => setNewPassword(e.currentTarget.value)}
                             class="w-full px-3 py-2 border border-primary bg-primary text-primary rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            placeholder="Enter new password (min 8 characters)"
+                            placeholder="Enter new password"
                           />
+                          <PasswordStrengthIndicator password={newPassword()} />
                         </div>
 
                         <div class="mb-4">
