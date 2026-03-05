@@ -144,6 +144,21 @@ Download the latest release for your platform:
 | macOS    | `.dmg`                                               |
 | Linux    | `.AppImage` or `.deb`                                |
 
+### Homebrew (macOS)
+
+The easiest way to install Mini Diarium on macOS is via Homebrew:
+
+```sh
+brew tap fjrevoredo/mini-diarium
+brew install --cask mini-diarium
+```
+
+> **Note:** Mini Diarium is not code-signed. On first launch, macOS Gatekeeper may show a "damaged and can't be opened" error. Run the following command in Terminal, then open the app normally:
+>
+> ```sh
+> xattr -cr "/Applications/Mini Diarium.app"
+> ```
+
 ### Installation Notes
 
 **Windows**
