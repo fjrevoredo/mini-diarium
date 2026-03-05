@@ -41,7 +41,7 @@ TODO entry format:
   - **Investigation:** the 8-char minimum is enforced frontend-only in three places: `src/components/auth/PasswordCreation.tsx:28-31`, `src/components/overlays/PreferencesOverlay.tsx:218-221` (change password), and `PreferencesOverlay.tsx:300-303` (add password auth method). The backend (`src-tauri/src/crypto/password.rs`) and Argon2id have **no minimum length** — any string including empty is accepted.
   - **Fix:** remove the hard `return` block in each location; replace with a visual strength hint (e.g. yellow warning if < 8 chars, green if ≥ 12). The "Create"/"Save" button should remain enabled. Optionally add backend validation only for empty-string passwords.
   - **Files:** `src/components/auth/PasswordCreation.tsx:28-31`, `src/components/overlays/PreferencesOverlay.tsx:218-221, 300-303`.
-- [ ] **Add month/year picker to left calendar** — clicking on the month/year header in the sidebar calendar should open a date-picker so users can jump to any month/year directly (issue #43)
+- [x] **Add month/year picker to left calendar** (2026-03-05) — clicking on the month/year header in the sidebar calendar should open a date-picker so users can jump to any month/year directly (issue #43)
   - **Investigation:** Calendar header (`Calendar.tsx:161`) is a static `<h3>` with no click handler. No date-picker library is installed (only `@kobalte/core` for UI primitives). A native `<input type="month">` approach is viable without new dependencies.
   - **Fix option A (simple):** replace the `<h3>` with a button that shows a `<Show>`-gated `<input type="month">` popover on click — no extra dependency.
   - **Fix option B (polished):** render a 12-month grid + year steppers in a small dropdown (~50 extra lines, no new dependency).

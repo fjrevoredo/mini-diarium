@@ -1,9 +1,24 @@
-import { createSignal, createEffect, untrack, For, createMemo } from 'solid-js';
+import { createSignal, createEffect, untrack, For, createMemo, Show } from 'solid-js';
 import { ChevronLeft, ChevronRight } from 'lucide-solid';
 import { selectedDate, setSelectedDate, setIsSidebarCollapsed } from '../../state/ui';
 import { entryDates } from '../../state/entries';
 import { preferences } from '../../state/preferences';
 import { getTodayString } from '../../lib/dates';
+
+const MONTH_NAMES = [
+  'Jan',
+  'Feb',
+  'Mar',
+  'Apr',
+  'May',
+  'Jun',
+  'Jul',
+  'Aug',
+  'Sep',
+  'Oct',
+  'Nov',
+  'Dec',
+];
 
 interface CalendarDay {
   date: string; // YYYY-MM-DD
@@ -18,6 +33,8 @@ interface CalendarDay {
 
 export default function Calendar() {
   const [currentMonth, setCurrentMonth] = createSignal(new Date());
+  const [showPicker, setShowPicker] = createSignal(false);
+  const [pickerYear, setPickerYear] = createSignal(new Date().getFullYear());
 
   // Generate calendar days for the current month
   const calendarDays = createMemo((): CalendarDay[] => {
@@ -157,59 +174,133 @@ export default function Calendar() {
     <div class="rounded-lg bg-primary p-4 shadow-sm">
       {/* Calendar header */}
       <div class="mb-4 flex items-center justify-between">
-        <button
-          onClick={previousMonth}
-          class="rounded p-2 hover:bg-hover text-primary"
-          aria-label="Previous month"
-        >
-          <ChevronLeft size={20} />
-        </button>
-        <h3 class="text-sm font-semibold text-primary">{monthName()}</h3>
-        <button
-          onClick={nextMonth}
-          class="rounded p-2 hover:bg-hover text-primary"
-          aria-label="Next month"
-        >
-          <ChevronRight size={20} />
-        </button>
-      </div>
-
-      {/* Week day headers */}
-      <div class="mb-2 grid grid-cols-7 gap-1">
-        <For each={weekDays()}>
-          {(day) => <div class="text-center text-xs font-medium text-tertiary">{day}</div>}
-        </For>
-      </div>
-
-      {/* Calendar grid */}
-      <div class="grid grid-cols-7 gap-1">
-        <For each={calendarDays()}>
-          {(day) => (
+        {/* Left button: prev-month OR prev-year */}
+        <Show
+          when={showPicker()}
+          fallback={
             <button
-              data-testid={`calendar-day-${day.date}`}
-              onClick={() => handleDayClick(day)}
-              class={`
-                relative h-8 w-8 rounded text-sm flex flex-col items-center justify-center
-                ${day.isCurrentMonth ? 'text-primary' : 'text-muted'}
-                ${day.isToday ? 'font-bold' : ''}
-                ${day.isSelected ? 'bg-blue-600 text-white hover:bg-blue-700' : !day.isDisabled ? 'hover:bg-hover' : ''}
-                ${day.isDisabled ? 'cursor-not-allowed opacity-40' : 'cursor-pointer'}
-              `}
-              disabled={day.isDisabled}
+              onClick={previousMonth}
+              class="rounded p-2 hover:bg-hover text-primary"
+              aria-label="Previous month"
             >
-              <span>{day.day}</span>
-              {day.hasEntry && (
-                <span
-                  class={`
-                    h-1 w-1 rounded-full mt-0.5
-                    ${day.isSelected ? 'bg-white' : 'bg-blue-600'}
-                  `}
-                />
-              )}
+              <ChevronLeft size={20} />
             </button>
-          )}
-        </For>
+          }
+        >
+          <button
+            onClick={() => setPickerYear((y) => y - 1)}
+            class="rounded p-2 hover:bg-hover text-primary"
+            aria-label="Previous year"
+          >
+            <ChevronLeft size={20} />
+          </button>
+        </Show>
+
+        {/* Centre: toggle button (shows month+year or just year) */}
+        <button
+          onClick={() => {
+            setPickerYear(currentMonth().getFullYear());
+            setShowPicker((v) => !v);
+          }}
+          class="text-sm font-semibold text-primary hover:bg-hover rounded px-2 py-1"
+          aria-label={showPicker() ? 'Close month picker' : 'Open month picker'}
+        >
+          <Show when={showPicker()} fallback={monthName()}>
+            {pickerYear()}
+          </Show>
+        </button>
+
+        {/* Right button: next-month OR next-year */}
+        <Show
+          when={showPicker()}
+          fallback={
+            <button
+              onClick={nextMonth}
+              class="rounded p-2 hover:bg-hover text-primary"
+              aria-label="Next month"
+            >
+              <ChevronRight size={20} />
+            </button>
+          }
+        >
+          <button
+            onClick={() => setPickerYear((y) => y + 1)}
+            class="rounded p-2 hover:bg-hover text-primary"
+            aria-label="Next year"
+          >
+            <ChevronRight size={20} />
+          </button>
+        </Show>
       </div>
+
+      <Show
+        when={showPicker()}
+        fallback={
+          <>
+            {/* Week day headers */}
+            <div class="mb-2 grid grid-cols-7 gap-1">
+              <For each={weekDays()}>
+                {(day) => <div class="text-center text-xs font-medium text-tertiary">{day}</div>}
+              </For>
+            </div>
+
+            {/* Calendar grid */}
+            <div class="grid grid-cols-7 gap-1">
+              <For each={calendarDays()}>
+                {(day) => (
+                  <button
+                    data-testid={`calendar-day-${day.date}`}
+                    onClick={() => handleDayClick(day)}
+                    class={`
+                    relative h-8 w-8 rounded text-sm flex flex-col items-center justify-center
+                    ${day.isCurrentMonth ? 'text-primary' : 'text-muted'}
+                    ${day.isToday ? 'font-bold' : ''}
+                    ${day.isSelected ? 'bg-blue-600 text-white hover:bg-blue-700' : !day.isDisabled ? 'hover:bg-hover' : ''}
+                    ${day.isDisabled ? 'cursor-not-allowed opacity-40' : 'cursor-pointer'}
+                  `}
+                    disabled={day.isDisabled}
+                  >
+                    <span>{day.day}</span>
+                    {day.hasEntry && (
+                      <span
+                        class={`
+                        h-1 w-1 rounded-full mt-0.5
+                        ${day.isSelected ? 'bg-white' : 'bg-blue-600'}
+                      `}
+                      />
+                    )}
+                  </button>
+                )}
+              </For>
+            </div>
+          </>
+        }
+      >
+        {/* Month picker grid — 3×4 */}
+        <div class="grid grid-cols-3 gap-1 py-1">
+          <For each={MONTH_NAMES}>
+            {(name, i) => (
+              <button
+                onClick={() => {
+                  setCurrentMonth(new Date(pickerYear(), i()));
+                  setShowPicker(false);
+                }}
+                class={`text-sm rounded py-2 text-center
+                  ${
+                    pickerYear() === currentMonth().getFullYear() &&
+                    i() === currentMonth().getMonth()
+                      ? 'bg-blue-600 text-white hover:bg-blue-700'
+                      : 'text-primary hover:bg-hover'
+                  }
+                `}
+                aria-label={`${name} ${pickerYear()}`}
+              >
+                {name}
+              </button>
+            )}
+          </For>
+        </div>
+      </Show>
     </div>
   );
 }
