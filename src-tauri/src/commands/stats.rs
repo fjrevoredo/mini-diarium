@@ -22,7 +22,7 @@ pub fn get_statistics(state: State<DiaryState>) -> Result<Statistics, String> {
         .map_err(|_| "State lock poisoned".to_string())?;
     let db = db_state
         .as_ref()
-        .ok_or("Diary must be unlocked to view statistics")?;
+        .ok_or("Journal must be unlocked to view statistics")?;
 
     calculate_statistics(db)
 }

@@ -12,8 +12,8 @@ export function mapTauriError(err: unknown): string {
   if (/cannot decrypt|decryption failed|failed to decrypt/i.test(raw)) {
     return 'Could not decrypt. The key file may be incorrect or the data may be corrupted.';
   }
-  if (/diary (must be|is not) unlocked/i.test(raw)) {
-    return 'Please unlock your diary first.';
+  if (/journal (must be|is not) unlocked/i.test(raw)) {
+    return 'Please unlock your journal first.';
   }
   if (/cannot remove.*(last|only)|minimum.*auth|last.*auth/i.test(raw)) {
     return 'Cannot remove the last authentication method.';

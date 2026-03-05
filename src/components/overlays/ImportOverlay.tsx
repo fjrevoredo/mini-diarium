@@ -143,7 +143,7 @@ export default function ImportOverlay(props: ImportOverlayProps) {
             </div>
 
             <Dialog.Description class="text-sm text-secondary mb-6">
-              Import diary entries from a file
+              Import journal entries from a file
             </Dialog.Description>
 
             {/* Format Selection */}

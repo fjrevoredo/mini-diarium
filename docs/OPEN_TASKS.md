@@ -60,7 +60,7 @@ Improve release pipeline reliability and remove deprecated dependencies.
 ### Task 46: Diary Directory Selection ✅ Completed (2026-02-21)
 **Priority**: High | **Complexity**: Medium
 
-**Outcome**: Shipped in v0.3.0. Users can change the diary location from Preferences → Data → Change Location. The file is moved atomically; the diary is auto-locked during the move. Implementation in `src-tauri/src/commands/auth/auth_directory.rs` (5 tests). Syncs to `config.json`.
+**Outcome**: Shipped in v0.3.0. Users can change the journal location from Preferences → Data → Change Location. The file is moved atomically; the journal is auto-locked during the move. Implementation in `src-tauri/src/commands/auth/auth_directory.rs` (5 tests). Syncs to `config.json`.
 
 ---
 
@@ -130,7 +130,7 @@ Replace hardcoded strings with translation keys.
 ### Task 42: PDF Export
 **Priority**: Low | **Complexity**: High | **File**: `src-tauri/src/export/pdf.rs`
 
-Export diary as PDF (A4 page size).
+Export journal entries as PDF (A4 page size).
 
 **Requirements**:
 - Convert: HTML → PDF (entries are stored as HTML via TipTap)
@@ -209,7 +209,7 @@ Native menu behavior for each platform.
 
 **All Platforms**:
 - File, Edit, View, Help menus
-- Disable menu items when diary locked
+- Disable menu items when journal locked
 - Register keyboard accelerators
 
 **Current state**: Generic menu implemented; needs platform-specific customization
@@ -262,20 +262,20 @@ Import from encrypted Mini Diary v1.x files.
 ### Task 64: First-Launch "Open Existing Diary" Flow ✅ Completed (2026-02-28)
 **Priority**: Medium | **Complexity**: Medium
 
-**Outcome**: Shipped in v0.4.2 via the Journal Picker. The pre-auth picker lets users open an existing `diary.db` from any folder directly (no copy, no workarounds), alongside creating a new diary. Both flows that were previously fragmented are now unified in `src/components/auth/JournalPicker.tsx`.
+**Outcome**: Shipped in v0.4.2 via the Journal Picker. The pre-auth picker lets users open an existing `diary.db` from any folder directly (no copy, no workarounds), alongside creating a new journal. Both flows that were previously fragmented are now unified in `src/components/auth/JournalPicker.tsx`.
 
 ---
 
 ### Task 65: Backup Behavior Documentation for Custom Diary Locations
 **Priority**: Medium | **Complexity**: Low | **Files**: `README.md`, `docs/`
 
-Document how automatic backups behave with custom diary locations and current database/auth architecture.
+Document how automatic backups behave with custom journal locations and current database/auth architecture.
 
 **What to explain**:
 - Backup trigger timing (on unlock) and retention policy (rotation)
-- Backup storage path with default vs custom diary directories
+- Backup storage path with default vs custom journal directories
 - Relationship to auth slots/master-key wrapping (schema v3) and encrypted entries
-- Expected behavior when moving diary location
+- Expected behavior when moving journal location
 - Restore expectations and caveats
 
 **Deliverables**:
@@ -297,7 +297,7 @@ Comprehensive manual testing before each release.
 
 **Test workflows**:
 1. First-time setup (create password, create entry)
-2. Daily journaling (navigate, edit, auto-save)
+2. Daily writing (navigate, edit, auto-save)
 3. Multiple entries per day (create, navigate with `←`/`→` bar, delete)
 4. Import/export (all supported formats via plugin system)
 5. Statistics overlay

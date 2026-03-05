@@ -14,7 +14,7 @@ const mocks = vi.hoisted(() => ({
   removeJournal: vi.fn(),
   renameJournal: vi.fn(),
   refreshAuthState: vi.fn(),
-  checkDiaryPath: vi.fn(),
+  checkJournalPath: vi.fn(),
 }));
 
 vi.mock('../../state/journals', () => ({
@@ -38,7 +38,7 @@ vi.mock('../../state/auth', () => ({
 }));
 
 vi.mock('../../lib/tauri', () => ({
-  checkDiaryPath: mocks.checkDiaryPath,
+  checkJournalPath: mocks.checkJournalPath,
 }));
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -54,7 +54,7 @@ describe('JournalPicker component', () => {
     mocks.removeJournal.mockResolvedValue(undefined);
     mocks.renameJournal.mockResolvedValue(undefined);
     mocks.refreshAuthState.mockResolvedValue(undefined);
-    mocks.checkDiaryPath.mockResolvedValue(false);
+    mocks.checkJournalPath.mockResolvedValue(false);
   });
 
   it('renders empty state when no journals are configured', () => {
@@ -63,7 +63,7 @@ describe('JournalPicker component', () => {
 
     expect(screen.getByTestId('journal-picker')).toBeInTheDocument();
     expect(screen.getByText(/no journals yet/i)).toBeInTheDocument();
-    expect(screen.getByText(/create new diary/i)).toBeInTheDocument();
+    expect(screen.getByText(/create new journal/i)).toBeInTheDocument();
     expect(screen.getByText(/open existing/i)).toBeInTheDocument();
   });
 
@@ -90,7 +90,7 @@ describe('JournalPicker component', () => {
   });
 
   it('shows error when Open Existing is clicked and no diary.db is found', async () => {
-    mocks.checkDiaryPath.mockResolvedValue(false);
+    mocks.checkJournalPath.mockResolvedValue(false);
 
     // Override plugin-dialog mock to return a folder path
     const dialogMock = await import('@tauri-apps/plugin-dialog');
@@ -102,12 +102,12 @@ describe('JournalPicker component', () => {
     fireEvent.click(openExistingBtn);
 
     await vi.waitFor(() => {
-      expect(mocks.checkDiaryPath).toHaveBeenCalledWith('/some/folder');
+      expect(mocks.checkJournalPath).toHaveBeenCalledWith('/some/folder');
     });
 
     // After failed check, addMode becomes 'open' with an error shown
     await vi.waitFor(() => {
-      expect(screen.getByText(/no diary found/i)).toBeInTheDocument();
+      expect(screen.getByText(/no journal found/i)).toBeInTheDocument();
     });
   });
 });

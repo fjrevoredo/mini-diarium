@@ -5,21 +5,21 @@
   color: var(--text-primary);
 }
 
-/* Use higher specificity (.ProseMirror.diary-editor-content) so the user-controlled
+/* Use higher specificity (.ProseMirror.journal-editor-content) so the user-controlled
    CSS variable wins over UnoCSS Typography size-variant classes (prose-sm, lg:prose-lg,
    xl:prose-xl) which share only a single-class selector and are injected after this file. */
-.ProseMirror.diary-editor-content {
+.ProseMirror.journal-editor-content {
   font-size: var(--editor-font-size, 16px);
 }
 
 @media (min-width: 1280px) {
-  .ProseMirror.diary-editor-content {
+  .ProseMirror.journal-editor-content {
     min-height: clamp(320px, 52vh, 680px);
   }
 }
 
 @media (min-width: 1536px), (min-height: 1000px) {
-  .ProseMirror.diary-editor-content {
+  .ProseMirror.journal-editor-content {
     min-height: clamp(420px, 64vh, 860px);
   }
 }

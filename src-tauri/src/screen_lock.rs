@@ -77,9 +77,9 @@ mod imp {
         if let Some(app) = APP_HANDLE.get() {
             let state = app.state::<crate::commands::auth::DiaryState>();
             match crate::commands::auth::auto_lock_diary_if_unlocked(state, app.clone(), reason) {
-                Ok(true) => info!("Diary auto-locked due to {}", reason),
+                Ok(true) => info!("Journal auto-locked due to {}", reason),
                 Ok(false) => {}
-                Err(error) => warn!("Failed to auto-lock diary ({}): {}", reason, error),
+                Err(error) => warn!("Failed to auto-lock journal ({}): {}", reason, error),
             }
         }
     }
@@ -206,9 +206,9 @@ mod imp {
         if let Some(app) = APP_HANDLE.get() {
             let state = app.state::<crate::commands::auth::DiaryState>();
             match crate::commands::auth::auto_lock_diary_if_unlocked(state, app.clone(), reason) {
-                Ok(true) => info!("Diary auto-locked due to {}", reason),
+                Ok(true) => info!("Journal auto-locked due to {}", reason),
                 Ok(false) => {}
-                Err(error) => warn!("Failed to auto-lock diary ({}): {}", reason, error),
+                Err(error) => warn!("Failed to auto-lock journal ({}): {}", reason, error),
             }
         }
     }

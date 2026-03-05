@@ -9,13 +9,13 @@ import { resetSessionState } from './session';
 
 const log = createLogger('Auth');
 
-export type AuthState = 'checking' | 'journal-select' | 'no-diary' | 'locked' | 'unlocked';
+export type AuthState = 'checking' | 'journal-select' | 'no-journal' | 'locked' | 'unlocked';
 
 const [authState, setAuthState] = createSignal<AuthState>('checking');
 const [error, setError] = createSignal<string | null>(null);
 const [authMethods, setAuthMethods] = createSignal<tauri.AuthMethodInfo[]>([]);
 
-interface DiaryLockedEventPayload {
+interface JournalLockedEventPayload {
   reason?: string;
 }
 
@@ -36,18 +36,18 @@ function prepareUnlockedSession(): void {
   setAuthState('unlocked');
 }
 
-// Refresh auth state using the current backend diary path without reloading journal metadata.
+// Refresh auth state using the current backend journal path without reloading journal metadata.
 export async function refreshAuthState(): Promise<void> {
   try {
-    const exists = await tauri.diaryExists();
+    const exists = await tauri.journalExists();
     if (!exists) {
       resetSessionState();
       resetAuthTransientState();
-      setAuthState('no-diary');
+      setAuthState('no-journal');
       return;
     }
 
-    const unlocked = await tauri.isDiaryUnlocked();
+    const unlocked = await tauri.isJournalUnlocked();
     if (unlocked) {
       setAuthState('unlocked');
     } else {
@@ -57,7 +57,7 @@ export async function refreshAuthState(): Promise<void> {
     log.error('Failed to refresh auth state:', err);
     resetSessionState();
     setAuthMethods([]);
-    setError('Failed to check diary status');
+    setError('Failed to check journal status');
     setAuthState('journal-select');
   }
 }
@@ -83,13 +83,13 @@ export function goToJournalPicker(): void {
   setAuthState('journal-select');
 }
 
-// Create new diary
-export async function createDiary(password: string): Promise<void> {
+// Create new journal
+export async function createJournal(password: string): Promise<void> {
   try {
     setError(null);
-    await tauri.createDiary(password);
+    await tauri.createJournal(password);
     prepareUnlockedSession();
-    log.info('Diary created');
+    log.info('Journal created');
 
     // Fetch entry dates after creating diary
     const dates = await tauri.getAllEntryDates();
@@ -101,13 +101,13 @@ export async function createDiary(password: string): Promise<void> {
   }
 }
 
-// Unlock existing diary with password
-export async function unlockDiary(password: string): Promise<void> {
+// Unlock existing journal with password
+export async function unlockJournal(password: string): Promise<void> {
   try {
     setError(null);
-    await tauri.unlockDiary(password);
+    await tauri.unlockJournal(password);
     prepareUnlockedSession();
-    log.info('Diary unlocked');
+    log.info('Journal unlocked');
 
     // Fetch entry dates after unlocking diary
     const dates = await tauri.getAllEntryDates();
@@ -123,9 +123,9 @@ export async function unlockDiary(password: string): Promise<void> {
 export async function unlockWithKeypair(keyPath: string): Promise<void> {
   try {
     setError(null);
-    await tauri.unlockDiaryWithKeypair(keyPath);
+    await tauri.unlockJournalWithKeypair(keyPath);
     prepareUnlockedSession();
-    log.info('Diary unlocked with key file');
+    log.info('Journal unlocked with key file');
 
     const dates = await tauri.getAllEntryDates();
     setEntryDates(dates);
@@ -136,13 +136,13 @@ export async function unlockWithKeypair(keyPath: string): Promise<void> {
   }
 }
 
-// Lock diary
-export async function lockDiary(): Promise<void> {
+// Lock journal
+export async function lockJournal(): Promise<void> {
   try {
     setError(null);
-    await tauri.lockDiary();
+    await tauri.lockJournal();
     resetForLockedSession();
-    log.info('Diary locked');
+    log.info('Journal locked');
   } catch (err) {
     const message = mapTauriError(err);
     setError(message);
@@ -152,17 +152,17 @@ export async function lockDiary(): Promise<void> {
 
 // Listen for backend-originated lock events (e.g. OS session lock).
 export async function setupAuthEventListeners(): Promise<() => void> {
-  const unlistenDiaryLocked: UnlistenFn = await listen<DiaryLockedEventPayload>(
-    'diary-locked',
+  const unlistenJournalLocked: UnlistenFn = await listen<JournalLockedEventPayload>(
+    'journal-locked',
     (event) => {
       const reason = event.payload?.reason ?? 'unknown';
       resetForLockedSession();
-      log.info(`Diary locked by backend event (${reason})`);
+      log.info(`Journal locked by backend event (${reason})`);
     },
   );
 
   return () => {
-    unlistenDiaryLocked();
+    unlistenJournalLocked();
   };
 }
 

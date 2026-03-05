@@ -19,7 +19,7 @@ pub fn create_diary(
         .clone();
 
     if db_path.exists() {
-        return Err("Diary already exists".to_string());
+        return Err("Journal already exists".to_string());
     }
 
     let db_conn = create_database(&db_path, password)?;
@@ -30,7 +30,7 @@ pub fn create_diary(
         .map_err(|_| "State lock poisoned".to_string())?;
     *db_state = Some(db_conn);
 
-    info!("Diary created");
+    info!("Journal created");
     crate::menu::update_menu_lock_state(&app, false);
     Ok(())
 }
@@ -54,7 +54,7 @@ pub fn unlock_diary(
         .clone();
 
     if !db_path.exists() {
-        return Err("No diary found. Please create one first.".to_string());
+        return Err("No journal found. Please create one first.".to_string());
     }
 
     let db_conn = open_database(&db_path, password, &backups_dir)?;
@@ -65,7 +65,7 @@ pub fn unlock_diary(
         .map_err(|_| "State lock poisoned".to_string())?;
     *db_state = Some(db_conn);
 
-    info!("Diary unlocked");
+    info!("Journal unlocked");
 
     if let Err(e) = crate::backup::backup_and_rotate(&db_path, &backups_dir) {
         warn!("Failed to create backup: {}", e);
@@ -94,7 +94,7 @@ pub fn unlock_diary_with_keypair(
         .clone();
 
     if !db_path.exists() {
-        return Err("No diary found. Please create one first.".to_string());
+        return Err("No journal found. Please create one first.".to_string());
     }
 
     // Read private key hex from file
@@ -120,7 +120,7 @@ pub fn unlock_diary_with_keypair(
         .map_err(|_| "State lock poisoned".to_string())?;
     *db_state = Some(db_conn);
 
-    info!("Diary unlocked with key file");
+    info!("Journal unlocked with key file");
 
     if let Err(e) = crate::backup::backup_and_rotate(&db_path, &backups_dir) {
         warn!("Failed to create backup: {}", e);
@@ -134,10 +134,10 @@ pub fn unlock_diary_with_keypair(
 #[tauri::command]
 pub fn lock_diary(state: State<DiaryState>, app: AppHandle<Wry>) -> Result<(), String> {
     if !super::lock_diary_inner(&state)? {
-        return Err("Diary is not unlocked".to_string());
+        return Err("Journal is not unlocked".to_string());
     }
 
-    info!("Diary locked");
+    info!("Journal locked");
     crate::menu::update_menu_lock_state(&app, true);
     super::emit_diary_locked(&app, "manual");
     Ok(())
@@ -181,7 +181,7 @@ pub fn get_diary_path(state: State<DiaryState>) -> Result<String, String> {
     db_path
         .to_str()
         .map(|s| s.to_string())
-        .ok_or_else(|| "Invalid diary path".to_string())
+        .ok_or_else(|| "Invalid journal path".to_string())
 }
 
 /// Changes the diary password.
@@ -200,7 +200,7 @@ pub fn change_password(
         .map_err(|_| "State lock poisoned".to_string())?;
     let db = db_state
         .as_ref()
-        .ok_or("Diary must be unlocked to change password")?;
+        .ok_or("Journal must be unlocked to change password")?;
 
     // Find the password slot
     let (slot_id, wrapped_key) =
@@ -239,12 +239,12 @@ pub fn reset_diary(state: State<DiaryState>, app: AppHandle<Wry>) -> Result<(), 
         .clone();
 
     if !db_path.exists() {
-        return Err("No diary found to reset".to_string());
+        return Err("No journal found to reset".to_string());
     }
 
-    std::fs::remove_file(&db_path).map_err(|e| format!("Failed to delete diary: {}", e))?;
+    std::fs::remove_file(&db_path).map_err(|e| format!("Failed to delete journal: {}", e))?;
 
-    info!("Diary reset");
+    info!("Journal reset");
     crate::menu::update_menu_lock_state(&app, true);
     Ok(())
 }

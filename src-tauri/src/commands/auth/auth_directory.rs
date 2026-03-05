@@ -34,15 +34,15 @@ fn change_diary_directory_inner(
     // Handle file presence matrix
     match (current_db_path.exists(), new_db_path.exists()) {
         (true, true) => {
-            return Err("A diary file already exists at the chosen location. \
+            return Err("A journal file already exists at the chosen location. \
                  Move or remove it first, then try again."
                 .to_string());
         }
         (true, false) => {
             std::fs::copy(&current_db_path, &new_db_path)
-                .map_err(|e| format!("Failed to copy diary file: {}", e))?;
+                .map_err(|e| format!("Failed to copy journal file: {}", e))?;
             std::fs::remove_file(&current_db_path)
-                .map_err(|e| format!("Failed to remove old diary file: {}", e))?;
+                .map_err(|e| format!("Failed to remove old journal file: {}", e))?;
         }
         (false, _) => {
             // No existing diary to move — just update the path
@@ -78,7 +78,7 @@ pub fn change_diary_directory(
     // Auto-lock: close the DB connection before moving the file.
     // Safe on all platforms — SQLite holds a file lock while open.
     if super::auto_lock_diary_if_unlocked(state.clone(), app.clone(), "directory change")? {
-        info!("Diary auto-locked for directory change");
+        info!("Journal auto-locked for directory change");
     }
 
     let current_db_path = state
@@ -109,7 +109,7 @@ pub fn change_diary_directory(
         let _ = crate::config::save_journals(&state.app_data_dir, &updated, &active_id);
     }
 
-    info!("Diary directory changed to: {}", new_dir);
+    info!("Journal directory changed to: {}", new_dir);
     Ok(())
 }
 
@@ -246,7 +246,7 @@ mod tests {
         // We test the guard logic inline (can't construct DatabaseConnection in a unit test).
         let is_unlocked = true;
         let guard_result: Result<(), String> = if is_unlocked {
-            Err("Diary must be locked before changing its storage location.".to_string())
+            Err("Journal must be locked before changing its storage location.".to_string())
         } else {
             Ok(())
         };

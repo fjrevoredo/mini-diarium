@@ -13,7 +13,7 @@ pub fn verify_password(password: String, state: State<DiaryState>) -> Result<(),
         .db
         .lock()
         .map_err(|_| "State lock poisoned".to_string())?;
-    let db = db_state.as_ref().ok_or("Diary must be unlocked")?;
+    let db = db_state.as_ref().ok_or("Journal must be unlocked")?;
 
     let (_, wrapped_key) =
         crate::db::queries::get_password_slot(db)?.ok_or("No password auth method found")?;
@@ -34,7 +34,7 @@ pub fn list_auth_methods(
         .db
         .lock()
         .map_err(|_| "State lock poisoned".to_string())?;
-    let db = db_state.as_ref().ok_or("Diary must be unlocked")?;
+    let db = db_state.as_ref().ok_or("Journal must be unlocked")?;
     crate::db::queries::list_auth_slots(db)
 }
 
@@ -90,7 +90,7 @@ pub fn register_password(new_password: String, state: State<DiaryState>) -> Resu
         .db
         .lock()
         .map_err(|_| "State lock poisoned".to_string())?;
-    let db = db_state.as_ref().ok_or("Diary must be unlocked")?;
+    let db = db_state.as_ref().ok_or("Journal must be unlocked")?;
 
     // Reject if a password slot already exists
     if crate::db::queries::get_password_slot(db)?.is_some() {
@@ -127,7 +127,7 @@ pub fn register_keypair(
         .db
         .lock()
         .map_err(|_| "State lock poisoned".to_string())?;
-    let db = db_state.as_ref().ok_or("Diary must be unlocked")?;
+    let db = db_state.as_ref().ok_or("Journal must be unlocked")?;
 
     // Verify identity via password and recover master_key
     let (_, wrapped_key) =
@@ -197,7 +197,7 @@ pub fn remove_auth_method(
         .db
         .lock()
         .map_err(|_| "State lock poisoned".to_string())?;
-    let db = db_state.as_ref().ok_or("Diary must be unlocked")?;
+    let db = db_state.as_ref().ok_or("Journal must be unlocked")?;
 
     // Verify identity
     let (_, wrapped_key) =

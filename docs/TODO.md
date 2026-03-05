@@ -3,47 +3,15 @@
 Open tasks and planned improvements. For full context and implementation notes on the original tasks, see [OPEN_TASKS.md](OPEN_TASKS.md).
 
 TODO entry format:
-- `- [ ] **Task title** — concise description with scope, constraints, and any key implementation notes`
+- `- [ ] **Task title** — concise requirement-style description with scope and constraints`
+- Write items as requirements/acceptance criteria (what must be true), not implementation plans (how to build it)
+- Keep implementation details minimal in TODO entries; move deep implementation notes to `OPEN_TASKS.md` when needed
 - Put items under the appropriate priority section
 - Use indented checkbox items only for true sub-tasks or explicit dependencies
 
 
 ---
 ## High Priority
-
-- [x] **Fix window position flash on startup** (2026-03-05) — app appears in top-left then blinks to last position; `tauri-plugin-window-state` should restore position before the window is shown; investigate whether `visible_on_all_workspaces` or show-on-ready approach fixes it (issue #43)
-  - **Root cause:** `tauri.conf.json:13-20` has no `"visible": false` on the window object, so Tauri shows the window at default (0,0) immediately; then `tauri-plugin-window-state` restores the saved bounds, causing the visible jump.
-  - **Fix:** add `"visible": false` to the window config in `tauri.conf.json:13-20`; in `lib.rs` setup closure (after the plugin is registered at lines 56-60), call `app.get_webview_window("main").unwrap().show()` to reveal the window only after state has been restored. Must still be skipped in E2E mode (see existing `MINI_DIARIUM_E2E` guard pattern).
-- [x] **Auto-select last-used journal on startup** (2026-03-05) — skip the journal picker when there is a previously used journal; go directly to password prompt and let the user switch journals from within the app (issue #43, owner agreed on this approach)
-  - **Root cause:** `src/state/auth.ts` `initializeAuth()` (lines 66-73) always ends with `setAuthState('journal-select')`, even when `activeJournalId()` is already set after `loadJournals()`.
-  - **Fix:** after `loadJournals()`, check `activeJournalId() !== null`; if so, call `refreshAuthState()` (already handles `diaryExists`/`isDiaryUnlocked` checks and transitions to the right state) instead of hard-coding `'journal-select'`. Only fall back to `'journal-select'` when no active journal is known.
-  - **Files:** `src/state/auth.ts:66-73`, `src/state/journals.ts:8-12`.
-- [x] **Fix "+" (add entry) button not working** (2026-03-05) — the plus icon in the header that creates an additional entry for the same day is reported as non-functional; investigate and fix (issue #43)
-  - **Investigation:** the button IS rendered outside the `<Show when={props.total >= 2}>` guard in `EntryNavBar.tsx:37-43` and IS wired to `addEntry()` in `EditorPanel.tsx:307`. The function logic looks correct (save current → createEntry → refresh list).
-  - **Likely problem:** errors in `addEntry()` are swallowed silently (logged only, `EditorPanel.tsx:204`). No loading/disabled state during async call; rapid double-clicks can cause duplicates. User sees nothing happen if an error occurs.
-  - **Fix:** surface errors to the user (set a visible error signal); disable the button while `addEntry()` is in flight using `isCreatingEntry` (declared at line 38 but not yet used as a guard).
-  - **Files:** `src/components/editor/EntryNavBar.tsx`, `src/components/layout/EditorPanel.tsx:173-206`.
-- [x] **Fix "go to today" calendar button not working** (2026-03-05) — the calendar icon that should navigate to today is reported as non-functional; also disable/hide the button when already viewing today (issue #43)
-  - **Root cause:** the sidebar button (`Sidebar.tsx:52-60`) correctly calls `setSelectedDate(getTodayString())`, but `currentMonth` is a **local `createSignal` inside `Calendar.tsx:20`** not connected to `selectedDate`. So when viewing a past/future month, "go to today" updates `selectedDate` but the calendar view stays on the old month — today is never visible.
-  - **Fix option A (recommended):** add a `createEffect` inside `Calendar.tsx` that watches `selectedDate` and resets `currentMonth` when the selected date falls outside the currently displayed month. The sidebar button should also call `setCurrentMonth(new Date())`.
-  - **Fix option B:** move `currentMonth`/`setCurrentMonth` into `src/state/ui.ts` as a shared signal, and have the sidebar button set it directly.
-  - **Files:** `src/components/calendar/Calendar.tsx:20`, `src/components/layout/Sidebar.tsx:52-60`, `src/state/ui.ts`.
-- [x] **Fix clicking days from adjacent months in calendar** (2026-03-05) — clicking a day shown from the previous or next month in the left calendar panel should navigate to that day (issue #43)
-  - **Root cause:** `Calendar.tsx:130-138` `handleDayClick` has an `if (day.isCurrentMonth)` guard; adjacent-month day buttons are also `disabled={!day.isCurrentMonth}` (line 193).
-  - **Fix:** remove the `isCurrentMonth` guard in `handleDayClick` and the `disabled` condition for adjacent-month days. When an adjacent-month day is clicked, call `setCurrentMonth` to navigate the calendar to that month AND call `setSelectedDate(day.date)`. The `isDisabled` future-date guard should remain — only the `isCurrentMonth` restriction is removed.
-  - **Files:** `src/components/calendar/Calendar.tsx:130-138, 193`.
-- [x] **Fix text alignment in left panel** (2026-03-05) — lines in the left sidebar panel are not aligned correctly; audit sidebar/calendar layout CSS (issue #43)
-  - **Root cause:** the "Go to Today" button wrapper in `Sidebar.tsx:50` uses `flex justify-end`, right-aligning the button, while the Calendar below it is left-aligned — creating visual misalignment.
-  - **Fix:** change the wrapper to `flex justify-start` (or remove the flex wrapper entirely) so the button aligns with the left edge of the calendar.
-  - **File:** `src/components/layout/Sidebar.tsx:50`.
-- [x] **Fix settings tab hover text readability on light theme** (2026-03-05) — hovered tab text becomes hard to read in the light theme; pick a contrast-safe color (issue #43)
-  - **Root cause:** the active tab in `PreferencesOverlay.tsx:402` uses hardcoded Tailwind classes `bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200` instead of CSS variables. The `dark:` prefix only applies when a `.dark` class is on a parent element; if the dialog renders in a portal without that class, dark-mode active-tab colors won't apply.
-  - **Fix:** replace hardcoded Tailwind active-tab colors with CSS variables (`bg-active`/`text-primary` or a dedicated `--tab-active-bg`/`--tab-active-text` variable in `index.css`) so they always follow the current theme.
-  - **Files:** `src/components/overlays/PreferencesOverlay.tsx:399-403`, `src/index.css`.
-- [x] **Fix empty editor placeholder showing "loading"** (2026-03-05) — when no entry exists for the selected day the editor placeholder reads "loading" instead of a proper empty-state message (issue #43)
-  - **Root cause:** `EditorPanel.tsx:317` and `324` use `placeholder={isLoadingEntry() ? 'Loading...' : '...'}`. TipTap's Placeholder extension shows the placeholder whenever the editor is empty; during async entry-load (`isLoadingEntry === true`) an empty editor displays "Loading..." as its placeholder text.
-  - **Fix:** use static placeholders (`'Title (optional)'` and `"What's on your mind today?"`) always; handle the loading state through a separate overlay or by disabling the editor while `isLoadingEntry()` is true — do not overload the placeholder prop for loading feedback.
-  - **Files:** `src/components/layout/EditorPanel.tsx:317, 324`.
 
 
 ---
@@ -63,7 +31,7 @@ TODO entry format:
   - **Delete requirement:** selecting `Yes` deletes the currently selected entry for that day
   - **Navigation requirement:** after delete, navigate to the next available entry for that same day
   - **Cancel requirement:** selecting `No` closes the dialog and changes nothing
-- [ ] **Unify terminology to "Journal" across app and codebase** (issue #46) — remove mixed `diary`/`journal` wording and standardize user-facing language and internal naming conventions
+- [x] **Unify terminology to "Journal" across app and codebase** (2026-03-05) — remove mixed `diary`/`journal` wording and standardize user-facing language and internal naming conventions
   - **UI text requirement:** all user-visible labels/messages/tooltips/dialogs must use `Journal` consistently
   - **Codebase requirement:** naming in frontend/backend command wrappers and state modules should be aligned to the same term where feasible, with compatibility preserved where renames would break public interfaces
   - **Documentation requirement:** repository docs (README, guides, and related docs) must be updated to use `Journal` terminology consistently
@@ -90,14 +58,14 @@ TODO entry format:
 
 ## Low Priority / Future
 
-- [ ] **PDF export** — convert diary entries to PDF (A4); likely via Tauri webview printing
+- [ ] **PDF export** — convert journal entries to PDF (A4); likely via Tauri webview printing
 - [ ] **Text input extension point** — create a plugin/extension interface for alternative entry methods so official and user plugins can provide text input flows such as dictation, LLM-assisted drafting, and other future capture modes; define capability boundaries, permission model, and how plugins hand content into the editor without weakening the app’s privacy guarantees
-- [ ] **Statistics extension point** — add a plugin/extension interface for journal statistics so official and user plugins can calculate custom metrics and surface them in the statistics UI; define the data contract, execution/sandbox constraints, and how custom statistics are registered and rendered without weakening the app’s privacy-first local-only model
+- [ ] **Statistics extension point** — add a plugin/extension interface for writing statistics so official and user plugins can calculate custom metrics and surface them in the statistics UI; define the data contract, execution/sandbox constraints, and how custom statistics are registered and rendered without weakening the app’s privacy-first local-only model
 - [ ] **Downgrade import path logging** — `commands/import.rs` logs the import file path at `info!` level (line 52 and other locations), leaking the full filesystem path in dev logs; downgrade all path logs to `debug!` level for all import functions
 - [ ] **`DiaryEntry` clone efficiency** — `DiaryEntry` in `db/queries.rs` derives `Clone` and can be heap-copied across import/export flows; pass references where possible to reduce allocations when processing thousands of entries; audit current command and export call sites
 - [ ] **Document keypair hex in JS heap** — `generate_keypair` returns `KeypairFiles` with `private_key_hex` as plain JSON so the frontend can write it to a file; add a comment on the struct in `auth/mod.rs` or `auth/keypair.rs` noting this is an accepted design tradeoff and that the private key briefly exists in the JS heap before the file is written
 - [ ] **Accessibility audit** — only 5 ARIA labels exist (Calendar nav buttons, EditorToolbar buttons); missing ARIA on overlays, form inputs, dialogs, focus trapping, and keyboard calendar navigation; add color contrast testing and screen reader testing (NVDA / VoiceOver)
-- [ ] **Mobile version** — Tauri v2 supports iOS and Android targets; evaluate porting the app to mobile: adapt the SolidJS UI for touch (larger tap targets, bottom navigation, swipe gestures for day navigation), handle mobile file-system sandboxing for the diary DB location, and assess whether the Argon2id parameters need tuning for mobile CPU/memory constraints
+- [ ] **Mobile version** — Tauri v2 supports iOS and Android targets; evaluate porting the app to mobile: adapt the SolidJS UI for touch (larger tap targets, bottom navigation, swipe gestures for day navigation), handle mobile file-system sandboxing for the journal location, and assess whether the Argon2id parameters need tuning for mobile CPU/memory constraints
 - [ ] **Add basic manual blog to website** — add a simple static blog section under `website/` with hand-written entries (no CMS, no database, no dynamic rendering). New posts are created by manually adding/updating static files and then fully republishing the website; this manual release flow is intentional to keep implementation simple.
 - [ ] **Website SEO/GEO follow-up backlog** — remaining implementation items from the 2026 website SEO/GEO pass
   - [ ] **Optimize demo media — fix mobile LCP (11.6 s)** — `website/assets/demo.gif` is 4.7 MB and is the LCP element on mobile, causing an 11.6 s Largest Contentful Paint (Google ranks pages with LCP > 4 s as "Poor"); it also has `loading="lazy"` and `fetchpriority="low"` which actively delays it further (`website/index.html:237`)

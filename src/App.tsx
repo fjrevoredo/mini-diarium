@@ -1,5 +1,5 @@
 import { Match, Switch, createEffect, onCleanup, onMount } from 'solid-js';
-import { authState, initializeAuth, lockDiary, setupAuthEventListeners } from './state/auth';
+import { authState, initializeAuth, lockJournal, setupAuthEventListeners } from './state/auth';
 import { initializeTheme } from './lib/theme';
 import { createLogger } from './lib/logger';
 import { preferences } from './state/preferences';
@@ -22,7 +22,7 @@ function App() {
 
     function handleActivity() {
       if (idleTimer !== null) clearTimeout(idleTimer);
-      idleTimer = setTimeout(() => void lockDiary(), autoLockTimeout * 1000);
+      idleTimer = setTimeout(() => void lockJournal(), autoLockTimeout * 1000);
     }
 
     handleActivity(); // start initial timer
@@ -71,7 +71,7 @@ function App() {
         <JournalPicker />
       </Match>
 
-      <Match when={authState() === 'no-diary'}>
+      <Match when={authState() === 'no-journal'}>
         <PasswordCreation />
       </Match>
 

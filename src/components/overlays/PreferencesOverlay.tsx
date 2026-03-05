@@ -56,8 +56,8 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
   );
   const [localEditorFontSize, setLocalEditorFontSize] = createSignal(preferences().editorFontSize);
 
-  // Diary file state
-  const [diaryPath, setDiaryPath] = createSignal<string>('');
+  // Journal file state
+  const [journalPath, setJournalPath] = createSignal<string>('');
   const [changeDirError, setChangeDirError] = createSignal<string | null>(null);
   const [isChangingDir, setIsChangingDir] = createSignal(false);
 
@@ -86,20 +86,20 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
   const isUnlocked = () => authState() === 'unlocked';
   const hasPasswordSlot = () => authMethods().some((m) => m.slot_type === 'password');
 
-  // Reset locked-only tabs when diary is locked
+  // Reset locked-only tabs when journal is locked
   createEffect(() => {
     if (!isUnlocked() && (activeTab() === 'writing' || activeTab() === 'security')) {
       setActiveTab('general');
     }
   });
 
-  // Load diary path and auth methods on mount
+  // Load journal path and auth methods on mount
   onMount(async () => {
     try {
-      const path = await tauri.getDiaryPath();
-      setDiaryPath(path);
+      const path = await tauri.getJournalPath();
+      setJournalPath(path);
     } catch (err) {
-      log.error('Failed to load diary path:', err);
+      log.error('Failed to load journal path:', err);
     }
     if (authState() === 'unlocked') {
       try {
@@ -156,12 +156,12 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
       setAddPasswordError(null);
       setAddPasswordSuccess(false);
 
-      // Reload diary path
+      // Reload journal path
       try {
-        const path = await tauri.getDiaryPath();
-        setDiaryPath(path);
+        const path = await tauri.getJournalPath();
+        setJournalPath(path);
       } catch (err) {
-        log.error('Failed to load diary path:', err);
+        log.error('Failed to load journal path:', err);
       }
 
       // Reset change-dir state
@@ -265,7 +265,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
         return;
       }
 
-      // Step 4: Register public key with the diary (DB write first)
+      // Step 4: Register public key with the journal (DB write first)
       // Doing this before the file write means a failed registration never touches disk.
       await tauri.registerKeypair(addKeypairPassword(), kp.public_key_hex, addKeypairLabel());
 
@@ -349,45 +349,45 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
     }
   };
 
-  // Handle diary reset
-  const handleResetDiary = async () => {
+  // Handle journal reset
+  const handleResetJournal = async () => {
     const confirmed = await dialogConfirm(
-      'Are you sure you want to reset your diary? This will permanently delete all entries and cannot be undone.',
-      { title: 'Reset Diary', kind: 'warning' },
+      'Are you sure you want to reset your journal? This will permanently delete all entries and cannot be undone.',
+      { title: 'Reset Journal', kind: 'warning' },
     );
 
     if (!confirmed) return;
 
     // Double confirmation
     const doubleConfirmed = await dialogConfirm(
-      'This is your last chance. Are you absolutely sure you want to delete all your diary entries?',
-      { title: 'Reset Diary — Final Warning', kind: 'warning' },
+      'This is your last chance. Are you absolutely sure you want to delete all your journal entries?',
+      { title: 'Reset Journal — Final Warning', kind: 'warning' },
     );
 
     if (!doubleConfirmed) return;
 
     try {
-      await tauri.resetDiary();
-      // The diary will be locked and reset, which will trigger the auth state to change
+      await tauri.resetJournal();
+      // The journal will be locked and reset, which will trigger the auth state to change
       window.location.reload();
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      alert(`Failed to reset diary: ${message}`);
+      alert(`Failed to reset journal: ${message}`);
     }
   };
 
-  // Handle changing the diary storage directory
-  const handleChangeDiaryDirectory = async () => {
+  // Handle changing the journal storage directory
+  const handleChangeJournalDirectory = async () => {
     setChangeDirError(null);
     const selected = await openDirDialog({
       directory: true,
       multiple: false,
-      title: 'Choose Diary Directory',
+      title: 'Choose Journal Directory',
     });
     if (!selected || typeof selected !== 'string') return;
     setIsChangingDir(true);
     try {
-      await tauri.changeDiaryDirectory(selected);
+      await tauri.changeJournalDirectory(selected);
       window.location.reload();
     } catch (err) {
       setChangeDirError(mapTauriError(err));
@@ -646,7 +646,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                           Authentication Methods
                         </h3>
                         <p class="text-xs text-tertiary mb-4 leading-relaxed">
-                          Registered methods that can unlock this diary. At least one must remain.
+                          Registered methods that can unlock this journal. At least one must remain.
                         </p>
 
                         {/* Registered methods list */}
@@ -804,7 +804,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                           </button>
                           <p class="mt-2 text-xs text-tertiary leading-relaxed">
                             Generates a new keypair and saves the private key file locally. Register
-                            the public key with your diary so you can unlock without a password.
+                            the public key with your journal so you can unlock without a password.
                           </p>
                         </div>
                       </div>
@@ -923,7 +923,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                           Current Location
                         </label>
                         <div class="px-3 py-3 bg-tertiary border border-primary rounded-md text-sm text-secondary font-mono break-all">
-                          {diaryPath() || 'Loading...'}
+                          {journalPath() || 'Loading...'}
                         </div>
                       </div>
 
@@ -931,7 +931,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                       <div class="space-y-2">
                         <button
                           type="button"
-                          onClick={handleChangeDiaryDirectory}
+                          onClick={handleChangeJournalDirectory}
                           disabled={isChangingDir()}
                           class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
@@ -941,19 +941,19 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                           <p class="text-sm text-error">{changeDirError()}</p>
                         </Show>
                         <p class="text-xs text-tertiary">
-                          Moves your diary file to a new folder. The diary will be locked — you'll
-                          need to unlock it again from the new location.
+                          Moves your journal file to a new folder. The journal will be locked —
+                          you'll need to unlock it again from the new location.
                         </p>
                       </div>
 
-                      {/* Reset Diary */}
+                      {/* Reset Journal */}
                       <div class="space-y-2">
                         <button
                           type="button"
-                          onClick={handleResetDiary}
+                          onClick={handleResetJournal}
                           class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
                         >
-                          Reset Diary
+                          Reset Journal
                         </button>
                         <p class="text-xs text-tertiary leading-relaxed">
                           Warning: This will permanently delete all entries. This action cannot be

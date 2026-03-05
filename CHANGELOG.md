@@ -8,6 +8,7 @@ All notable changes to Mini Diarium are documented here. This project uses [Sema
 
 ### Changed
 
+- **Unified user-facing terminology to "Journal"**: all UI text, error messages, and documentation now consistently use "Journal" instead of the mixed "diary"/"journal" wording; internal Tauri command names and filesystem identifiers (`diary.db`) are preserved for compatibility (issue #46)
 - **Auto-select last-used journal on startup**: the app now skips the Journal Picker when a previously used journal is known (`active_journal_id` set in config). `initializeAuth()` calls `refreshAuthState()` directly and transitions to the password prompt (or unlocked state if already unlocked). The Journal Picker is shown only on a fresh install or when no active journal is configured. (#43)
 
 ### Fixed

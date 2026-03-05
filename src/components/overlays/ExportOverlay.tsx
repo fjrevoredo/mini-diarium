@@ -124,13 +124,13 @@ export default function ExportOverlay(props: ExportOverlayProps) {
             </div>
 
             <Dialog.Description class="text-sm text-secondary mb-6">
-              Export all diary entries to a file
+              Export all journal entries to a file
             </Dialog.Description>
 
             {/* Security Warning */}
             <div class="mb-4 rounded-md bg-amber-50 border border-amber-200 p-3 dark:bg-amber-900/20 dark:border-amber-800">
               <p class="text-sm text-amber-800 dark:text-amber-200">
-                Exported files contain your diary entries as plain text. Store them in a secure
+                Exported files contain your journal entries as plain text. Store them in a secure
                 location.
               </p>
             </div>

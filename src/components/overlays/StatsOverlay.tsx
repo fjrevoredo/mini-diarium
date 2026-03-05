@@ -85,7 +85,7 @@ export default function StatsOverlay(props: StatsOverlayProps) {
             </div>
 
             <Dialog.Description class="text-sm text-secondary mb-6">
-              Overview of your diary entries and writing habits
+              Overview of your journal entries and writing habits
             </Dialog.Description>
 
             <Show when={loading()}>

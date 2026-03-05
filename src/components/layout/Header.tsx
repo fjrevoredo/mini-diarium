@@ -1,7 +1,7 @@
 import { createSignal, Show } from 'solid-js';
 import { Menu, Lock, Info } from 'lucide-solid';
 import { selectedDate, setIsAboutOpen } from '../../state/ui';
-import { lockDiary } from '../../state/auth';
+import { lockJournal } from '../../state/auth';
 
 interface HeaderProps {
   onMenuClick?: () => void;
@@ -26,7 +26,7 @@ export default function Header(props: HeaderProps) {
     if (isLocking()) return;
     setIsLocking(true);
     try {
-      await lockDiary();
+      await lockJournal();
     } finally {
       setIsLocking(false);
     }
@@ -61,9 +61,9 @@ export default function Header(props: HeaderProps) {
         <button
           onClick={() => handleLock()}
           disabled={isLocking()}
-          data-testid="lock-diary-button"
+          data-testid="lock-journal-button"
           class="rounded p-2 hover:bg-hover text-tertiary transition-colors disabled:opacity-50"
-          aria-label="Lock diary"
+          aria-label="Lock journal"
         >
           <Lock size={20} />
         </button>

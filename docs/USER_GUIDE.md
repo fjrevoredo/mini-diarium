@@ -4,15 +4,15 @@
 
 ### First Launch
 
-When you open Mini Diarium, the app starts at the **Journal Picker**. From there you can create a new diary or open an existing `diary.db`.
+When you open Mini Diarium, the app starts at the **Journal Picker**. From there you can create a new journal or open an existing `diary.db`.
 
-If you create a new diary, you'll be asked to create a password. This password encrypts your entire diary using AES-256-GCM encryption.
+If you create a new journal, you'll be asked to create a password. This password encrypts your entire journal using AES-256-GCM encryption.
 
 **There is no password recovery.** If you forget your password, your entries cannot be recovered. Choose something memorable and keep it safe.
 
 ### Locking and Unlocking
 
-Your diary is encrypted whenever it's locked. After selecting a journal, enter your password to unlock it. The diary locks when you close the app, and you can also lock it manually from the header.
+Your journal is encrypted whenever it's locked. After selecting a journal, enter your password to unlock it. The journal locks when you close the app, and you can also lock it manually from the header.
 
 As an alternative to your password, you can register a key file in Preferences → Authentication Methods. Once registered, use the "Key File" tab on the unlock screen and select your `.key` file to unlock without typing your password.
 
@@ -20,13 +20,13 @@ You can also enable **idle auto-lock** in Preferences → Security → Auto-Lock
 
 ### Multiple Journals
 
-You can maintain separate journals for different purposes (personal, work, travel, etc.). Each journal is an independent encrypted diary file in its own folder.
+You can maintain separate journals for different purposes (personal, work, travel, etc.). Each journal is an independent encrypted file in its own folder.
 
-**Adding a journal:** Use the Journal Picker's add actions. You can create a new diary in a chosen folder or add an existing `diary.db`.
+**Adding a journal:** Use the Journal Picker's add actions. You can create a new journal in a chosen folder or add an existing `diary.db`.
 
-**Switching journals:** Open the Journal Picker, choose the journal you want, and then unlock it. On a shared device, this lets each person select their own diary before any authentication prompt appears.
+**Switching journals:** Open the Journal Picker, choose the journal you want, and then unlock it. On a shared device, this lets each person select their own journal before any authentication prompt appears.
 
-**Removing a journal:** Remove a journal entry from the Journal Picker. This only removes it from the configured list; the diary files on disk are not deleted. Removing the last configured journal is allowed and leaves the picker in an empty state.
+**Removing a journal:** Remove a journal entry from the Journal Picker. This only removes it from the configured list; the journal files on disk are not deleted. Removing the last configured journal is allowed and leaves the picker in an empty state.
 
 If you only have one journal, the Journal Picker simply shows that single journal as the only choice.
 
@@ -68,7 +68,7 @@ Entries save automatically as you type with a short debounce delay. If you clear
 
 A live word count is displayed below the editor.
 
-## Navigating Your Diary
+## Navigating Your Journal
 
 ### Calendar
 
@@ -97,7 +97,7 @@ Full-text search is not available in this version. It will be added in a future 
 
 ## Import
 
-Open the import dialog from **Diary → Import...** in the app menu.
+Open the import dialog from **Journal → Import...** in the app menu.
 
 **Built-in formats:**
 
@@ -110,7 +110,7 @@ Imports are additive. If an imported entry falls on a date that already has entr
 
 ## Export
 
-Open the export dialog from **Diary → Export...** in the app menu:
+Open the export dialog from **Journal → Export...** in the app menu:
 
 - **Mini Diary JSON**: machine-readable, can be re-imported into Mini Diarium
 - **Markdown**: human-readable, grouped by date; if a day has multiple entries, each appears under its own sub-heading
@@ -119,7 +119,7 @@ JSON is the structural export format and preserves entry IDs. Markdown is a read
 
 ## Custom Import/Export Plugins
 
-You can add custom import and export formats by writing Rhai scripts and placing them in the `plugins/` folder inside your diary directory.
+You can add custom import and export formats by writing Rhai scripts and placing them in the `plugins/` folder inside your journal directory.
 
 An official example script is included in the repository at `docs/user-plugins/plain-text-timeline.rhai`.
 
@@ -131,7 +131,7 @@ The `plugins/` folder is created automatically next to your `diary.db` file:
 - **macOS**: `~/Library/Application Support/com.minidiarium/plugins/`
 - **Linux**: `~/.local/share/com.minidiarium/plugins/`
 
-If you have changed your diary location, the plugins folder is `{your chosen directory}/plugins/`.
+If you have changed your journal location, the plugins folder is `{your chosen directory}/plugins/`.
 
 A `README.md` file with templates and API documentation is auto-generated in the plugins folder on first launch.
 
@@ -208,14 +208,14 @@ Open with `Ctrl+,`:
 | Hide titles | Remove the title field for a minimal look |
 | Spellcheck | Toggle browser spellcheck in the editor |
 | Auto-Lock | Lock automatically after a configurable idle timeout |
-| Change password | Re-encrypt your diary with a new password |
+| Change password | Re-encrypt your journal with a new password |
 | Authentication Methods | View registered unlock methods; add a new key file or remove existing ones |
 | At least one method must remain | removing the last is blocked |
-| Reset diary | Delete all data and start fresh (irreversible) |
+| Reset journal | Delete all data and start fresh (irreversible) |
 
 ## Statistics
 
-Open from **Diary → Statistics...** in the app menu:
+Open from **Journal → Statistics...** in the app menu:
 
 - **Total entries** and **total words**
 - **Average words per entry**
@@ -226,17 +226,17 @@ Open from **Diary → Statistics...** in the app menu:
 
 ### When backups are created
 
-A backup is created automatically each time you successfully unlock your diary, whether by password or key file. If the unlock fails (wrong password, missing key file), no backup is taken.
+A backup is created automatically each time you successfully unlock your journal, whether by password or key file. If the unlock fails (wrong password, missing key file), no backup is taken.
 
 ### Backup location
 
-Backups are stored in a `backups/` subfolder **inside the same directory as your `diary.db`**. The default diary directory by OS:
+Backups are stored in a `backups/` subfolder **inside the same directory as your `diary.db`**. The default journal directory by OS:
 
 - **Windows**: `%APPDATA%\com.minidiarium\` (legacy: `%APPDATA%\com.minidiarium.app\`)
 - **macOS**: `~/Library/Application Support/com.minidiarium/` (legacy: `~/Library/Application Support/com.minidiarium.app/`)
 - **Linux**: `~/.local/share/com.minidiarium/` (legacy: `~/.local/share/com.minidiarium.app/`)
 
-If you have changed your diary location (see *Preferences → Storage Location*), backups are created in `{your chosen directory}/backups/` instead.
+If you have changed your journal location (see *Preferences → Storage Location*), backups are created in `{your chosen directory}/backups/` instead.
 
 ### Backup filenames
 
@@ -246,20 +246,20 @@ Each backup is named `backup-YYYY-MM-DD-HHhMM.db` (for example, `backup-2024-01-
 
 Mini Diarium keeps the **50 most recent backups**. When a new backup would push the count above 50, the oldest backups are deleted automatically. Only files matching the `backup-*.db` naming pattern are counted; any other files you place in the `backups/` folder are left untouched.
 
-### Custom diary locations
+### Custom journal locations
 
-When you move your diary to a different folder via Preferences, `diary.db` is physically moved to the new location and all future backups will go into `{new location}/backups/`.
+When you move your journal to a different folder via Preferences, `diary.db` is physically moved to the new location and all future backups will go into `{new location}/backups/`.
 
-**Existing backups in the old `backups/` folder are not moved.** If you want to keep your backup history, copy the old `backups/` folder to the new diary directory before or after the move.
+**Existing backups in the old `backups/` folder are not moved.** If you want to keep your backup history, copy the old `backups/` folder to the new journal directory before or after the move.
 
 ### Cloud-synced and external locations
 
-If you place your diary directory inside a cloud-synced folder (Dropbox, OneDrive, iCloud Drive, etc.), both `diary.db` and the `backups/` subfolder will be included in the sync, giving you off-site backup on top of local rotation. Keep in mind that Mini Diarium does not coordinate concurrent access — **do not open the same diary from two devices at the same time**.
+If you place your journal directory inside a cloud-synced folder (Dropbox, OneDrive, iCloud Drive, etc.), both `diary.db` and the `backups/` subfolder will be included in the sync, giving you off-site backup on top of local rotation. Keep in mind that Mini Diarium does not coordinate concurrent access — **do not open the same journal from two devices at the same time**.
 
 ## FAQ
 
 **I forgot my password. Can I recover my entries?**
-No — unless you registered a key file as an authentication method. If you have a key file, you can still unlock using it. If you have neither your password nor your key file, your entries cannot be recovered. This is by design.
+No — unless you registered a key file as an authentication method. If you have a key file, you can still unlock your journal using it. If you have neither your password nor your key file, your entries cannot be recovered. This is by design.
 
 **Where is my data stored?**
 Locally on your machine in an SQLite database. See Backups above for the path.
@@ -268,7 +268,7 @@ Locally on your machine in an SQLite database. See Backups above for the path.
 Never. No network requests, no analytics, no telemetry, no automatic updates.
 
 **Can I sync across devices?**
-Not directly. Mini Diarium is local-only by design. You could manually copy the database file, but simultaneous access from multiple devices is not supported.
+Not directly. Mini Diarium is local-only by design. You could manually copy the journal file, but simultaneous access from multiple devices is not supported.
 
 **I used Mini Diary before. Can I migrate?**
-Yes. Export from Mini Diary as JSON, then import in Mini Diarium from **Diary → Import...** using the Mini Diary JSON format.
+Yes. Export from Mini Diary as JSON, then import in Mini Diarium from **Journal → Import...** using the Mini Diary JSON format.

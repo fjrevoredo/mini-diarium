@@ -5,12 +5,12 @@ const mocks = vi.hoisted(() => ({
   listen: vi.fn(),
   loadJournals: vi.fn(),
   tauri: {
-    diaryExists: vi.fn(),
-    isDiaryUnlocked: vi.fn(),
-    createDiary: vi.fn(),
-    unlockDiary: vi.fn(),
-    unlockDiaryWithKeypair: vi.fn(),
-    lockDiary: vi.fn(),
+    journalExists: vi.fn(),
+    isJournalUnlocked: vi.fn(),
+    createJournal: vi.fn(),
+    unlockJournal: vi.fn(),
+    unlockJournalWithKeypair: vi.fn(),
+    lockJournal: vi.fn(),
     getAllEntryDates: vi.fn(),
   },
 }));
@@ -30,12 +30,12 @@ import {
   authMethods,
   authState,
   initializeAuth,
-  lockDiary,
+  lockJournal,
   refreshAuthState,
   resetAuthTransientState,
   setAuthMethods,
   setupAuthEventListeners,
-  unlockDiary,
+  unlockJournal,
 } from './auth';
 import { entryDates, setCurrentEntry, setEntryDates, setIsLoading, setIsSaving } from './entries';
 import { searchQuery, setIsSearching, setSearchQuery, setSearchResults } from './search';
@@ -100,12 +100,12 @@ describe('auth session boundary reset', () => {
     vi.clearAllMocks();
 
     mocks.loadJournals.mockResolvedValue(undefined);
-    mocks.tauri.diaryExists.mockResolvedValue(true);
-    mocks.tauri.isDiaryUnlocked.mockResolvedValue(true);
-    mocks.tauri.createDiary.mockResolvedValue(undefined);
-    mocks.tauri.unlockDiary.mockResolvedValue(undefined);
-    mocks.tauri.unlockDiaryWithKeypair.mockResolvedValue(undefined);
-    mocks.tauri.lockDiary.mockResolvedValue(undefined);
+    mocks.tauri.journalExists.mockResolvedValue(true);
+    mocks.tauri.isJournalUnlocked.mockResolvedValue(true);
+    mocks.tauri.createJournal.mockResolvedValue(undefined);
+    mocks.tauri.unlockJournal.mockResolvedValue(undefined);
+    mocks.tauri.unlockJournalWithKeypair.mockResolvedValue(undefined);
+    mocks.tauri.lockJournal.mockResolvedValue(undefined);
     mocks.tauri.getAllEntryDates.mockResolvedValue([]);
 
     resetSessionState();
@@ -116,7 +116,7 @@ describe('auth session boundary reset', () => {
   it('clears transient state on manual lock', async () => {
     primeTransientState();
 
-    await lockDiary();
+    await lockJournal();
 
     expect(authState()).toBe('locked');
     expect(selectedDate()).toBe(getTodayString());
@@ -132,7 +132,7 @@ describe('auth session boundary reset', () => {
     expect(authMethods()).toEqual([]);
   });
 
-  it('clears transient state on backend diary-locked event', async () => {
+  it('clears transient state on backend journal-locked event', async () => {
     const holder: {
       handler?: (event: { payload?: { reason?: string } }) => void;
     } = {};
@@ -150,7 +150,7 @@ describe('auth session boundary reset', () => {
     primeTransientState();
 
     if (!holder.handler) {
-      throw new Error('Expected diary-locked event handler to be registered');
+      throw new Error('Expected journal-locked event handler to be registered');
     }
     holder.handler({ payload: { reason: 'session lock' } });
 
@@ -169,7 +169,7 @@ describe('auth session boundary reset', () => {
     setSearchResults([{ date: '1999-12-31', title: 'Old', snippet: 'Old' }]);
     mocks.tauri.getAllEntryDates.mockResolvedValue(['2024-01-15']);
 
-    await unlockDiary('secret');
+    await unlockJournal('secret');
 
     expect(authState()).toBe('unlocked');
     expect(selectedDate()).toBe(getTodayString());
@@ -179,8 +179,8 @@ describe('auth session boundary reset', () => {
 
   it('refreshAuthState does not reload journals', async () => {
     mocks.loadJournals.mockClear();
-    mocks.tauri.diaryExists.mockResolvedValue(true);
-    mocks.tauri.isDiaryUnlocked.mockResolvedValue(false);
+    mocks.tauri.journalExists.mockResolvedValue(true);
+    mocks.tauri.isJournalUnlocked.mockResolvedValue(false);
 
     await refreshAuthState();
 

@@ -1,8 +1,8 @@
 /**
- * E2E test: Core diary workflow
+ * E2E test: Core journal workflow
  *
  * Exercises the full app stack (real Tauri binary + real SQLite DB) as a user would:
- *   create diary → write an entry → lock → unlock → verify persistence
+ *   create journal → write an entry → lock → unlock → verify persistence
  *
  * Prerequisites:
  *   - `bun run tauri build --` must have been run
@@ -23,8 +23,8 @@ const TODAY_DATE = `${year}-${month}-${String(now.getDate()).padStart(2, '0')}`;
 const testDay = String(Math.min(now.getDate(), 15)).padStart(2, '0');
 const TEST_DATE = `${year}-${month}-${testDay}`;
 
-describe('Core diary workflow', () => {
-  it('creates diary, writes an entry, locks, and verifies persistence after unlock', async () => {
+describe('Core journal workflow', () => {
+  it('creates journal, writes an entry, locks, and verifies persistence after unlock', async () => {
     // Navigate to the app — session connects before the window finishes loading its URL
     await browser.url('tauri://localhost');
 
@@ -35,8 +35,8 @@ describe('Core diary workflow', () => {
     //    and transitions directly to the auth screen.
 
     // 2. Auth screen is either:
-    //    - PasswordCreation (no diary yet — clean mode always, stateful first run)
-    //    - PasswordPrompt   (diary exists — stateful mode on second+ run)
+    //    - PasswordCreation (no journal yet — clean mode always, stateful first run)
+    //    - PasswordPrompt   (journal exists — stateful mode on second+ run)
     const authScreen = await browser.waitUntil(
       async () => {
         const create = await $('[data-testid="password-create-input"]').isDisplayed().catch(() => false);
@@ -51,13 +51,13 @@ describe('Core diary workflow', () => {
     if (authScreen === 'create') {
       await $('[data-testid="password-create-input"]').setValue(TEST_PASSWORD);
       await $('[data-testid="password-repeat-input"]').setValue(TEST_PASSWORD);
-      await $('[data-testid="create-diary-button"]').click();
+      await $('[data-testid="create-journal-button"]').click();
     } else {
       await $('[data-testid="password-unlock-input"]').setValue(TEST_PASSWORD);
-      await $('[data-testid="unlock-diary-button"]').click();
+      await $('[data-testid="unlock-journal-button"]').click();
     }
 
-    // 3. Diary created and unlocked → MainLayout is now visible
+    // 3. Journal created and unlocked → MainLayout is now visible
     //    Sidebar starts collapsed; open it to access the calendar, then click the target date
     await $('[data-testid="toggle-sidebar-button"]').waitForClickable({ timeout: 10000 });
     await $('[data-testid="toggle-sidebar-button"]').click();
@@ -76,15 +76,15 @@ describe('Core diary workflow', () => {
     // 6. Wait for autosave to flush (debounce is ~1.5 s)
     await browser.pause(2500);
 
-    // 7. Lock the diary
-    await $('[data-testid="lock-diary-button"]').click();
+    // 7. Lock the journal
+    await $('[data-testid="lock-journal-button"]').click();
 
-    // 8. Verify we are now on the unlock screen
+    // 8. Verify we are now on the unlock screen (journal locked)
     await $('[data-testid="password-unlock-input"]').waitForDisplayed({ timeout: 5000 });
 
     // 9. Unlock again to verify the entry was persisted
     await $('[data-testid="password-unlock-input"]').setValue(TEST_PASSWORD);
-    await $('[data-testid="unlock-diary-button"]').click();
+    await $('[data-testid="unlock-journal-button"]').click();
 
     // 10. Verify a fresh session baseline: unlock should select today.
     //     Sidebar starts collapsed after unlock; open it to access the calendar.

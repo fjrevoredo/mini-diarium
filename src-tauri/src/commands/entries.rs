@@ -12,7 +12,7 @@ pub fn create_entry(date: String, state: State<DiaryState>) -> Result<DiaryEntry
         .map_err(|_| "State lock poisoned".to_string())?;
     let db = db_state
         .as_ref()
-        .ok_or("Diary must be unlocked to create entries")?;
+        .ok_or("Journal must be unlocked to create entries")?;
 
     let now = chrono::Utc::now().to_rfc3339();
 
@@ -50,7 +50,7 @@ pub fn save_entry(
         .map_err(|_| "State lock poisoned".to_string())?;
     let db = db_state
         .as_ref()
-        .ok_or("Diary must be unlocked to save entries")?;
+        .ok_or("Journal must be unlocked to save entries")?;
 
     // Get current entry to preserve date and date_created
     let mut entry = queries::get_entry_by_id(db, id)?
@@ -82,7 +82,7 @@ pub fn get_entries_for_date(
         .map_err(|_| "State lock poisoned".to_string())?;
     let db = db_state
         .as_ref()
-        .ok_or("Diary must be unlocked to read entries")?;
+        .ok_or("Journal must be unlocked to read entries")?;
 
     queries::get_entries_by_date(db, &date)
 }
@@ -103,7 +103,7 @@ pub fn delete_entry_if_empty(
         .map_err(|_| "State lock poisoned".to_string())?;
     let db = db_state
         .as_ref()
-        .ok_or("Diary must be unlocked to delete entries")?;
+        .ok_or("Journal must be unlocked to delete entries")?;
 
     // Only delete if both title and text are empty/whitespace
     if title.trim().is_empty() && text.trim().is_empty() {
@@ -125,7 +125,7 @@ pub fn get_all_entry_dates(state: State<DiaryState>) -> Result<Vec<String>, Stri
         .map_err(|_| "State lock poisoned".to_string())?;
     let db = db_state
         .as_ref()
-        .ok_or("Diary must be unlocked to read entry dates")?;
+        .ok_or("Journal must be unlocked to read entry dates")?;
 
     queries::get_all_entry_dates(db)
 }

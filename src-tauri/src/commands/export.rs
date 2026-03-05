@@ -27,7 +27,7 @@ pub fn export_json(file_path: String, state: State<DiaryState>) -> Result<Export
         .lock()
         .map_err(|_| "State lock poisoned".to_string())?;
     let db = db_state.as_ref().ok_or_else(|| {
-        let err = "Diary must be unlocked to export entries";
+        let err = "Journal must be unlocked to export entries";
         error!("{}", err);
         err.to_string()
     })?;
@@ -69,7 +69,7 @@ pub fn export_markdown(
         .lock()
         .map_err(|_| "State lock poisoned".to_string())?;
     let db = db_state.as_ref().ok_or_else(|| {
-        let err = "Diary must be unlocked to export entries";
+        let err = "Journal must be unlocked to export entries";
         error!("{}", err);
         err.to_string()
     })?;

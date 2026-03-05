@@ -1,5 +1,5 @@
 import { createSignal, Show } from 'solid-js';
-import { unlockDiary, unlockWithKeypair, goToJournalPicker } from '../../state/auth';
+import { unlockJournal, unlockWithKeypair, goToJournalPicker } from '../../state/auth';
 import { open } from '@tauri-apps/plugin-dialog';
 
 type UnlockMode = 'password' | 'keyfile';
@@ -23,7 +23,7 @@ export default function PasswordPrompt() {
 
     try {
       setIsUnlocking(true);
-      await unlockDiary(pwd);
+      await unlockJournal(pwd);
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
       setError(message);
@@ -79,7 +79,7 @@ export default function PasswordPrompt() {
             <img src="/logo-transparent.svg" alt="Mini Diarium" class="h-16 w-16 rounded-xl" />
           </div>
           <h1 class="mb-2 text-center text-3xl font-bold text-primary">Mini Diarium</h1>
-          <p class="mb-2 text-center text-sm text-secondary">Unlock your diary</p>
+          <p class="mb-2 text-center text-sm text-secondary">Unlock your journal</p>
 
           <div class="mb-4 text-center">
             <button
@@ -153,11 +153,11 @@ export default function PasswordPrompt() {
 
               <button
                 type="submit"
-                data-testid="unlock-diary-button"
+                data-testid="unlock-journal-button"
                 disabled={isUnlocking()}
                 class="w-full rounded-md bg-blue-600 px-4 py-3 font-medium text-white transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isUnlocking() ? 'Unlocking...' : 'Unlock Diary'}
+                {isUnlocking() ? 'Unlocking...' : 'Unlock Journal'}
               </button>
             </form>
           </Show>
@@ -187,7 +187,7 @@ export default function PasswordPrompt() {
                   </button>
                 </div>
                 <p class="mt-1 text-xs text-tertiary">
-                  Select the private key file (.key) registered with this diary.
+                  Select the private key file (.key) registered with this journal.
                 </p>
               </div>
 

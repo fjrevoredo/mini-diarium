@@ -55,7 +55,7 @@ pub fn import_minidiary_json(
         .lock()
         .map_err(|_| "State lock poisoned".to_string())?;
     let db = db_state.as_ref().ok_or_else(|| {
-        let err = "Diary must be unlocked to import entries";
+        let err = "Journal must be unlocked to import entries";
         error!("{}", err);
         err.to_string()
     })?;
@@ -108,7 +108,7 @@ pub fn import_dayone_json(
         .lock()
         .map_err(|_| "State lock poisoned".to_string())?;
     let db = db_state.as_ref().ok_or_else(|| {
-        let err = "Diary must be unlocked to import entries";
+        let err = "Journal must be unlocked to import entries";
         error!("{}", err);
         err.to_string()
     })?;
@@ -161,7 +161,7 @@ pub fn import_jrnl_json(
         .lock()
         .map_err(|_| "State lock poisoned".to_string())?;
     let db = db_state.as_ref().ok_or_else(|| {
-        let err = "Diary must be unlocked to import entries";
+        let err = "Journal must be unlocked to import entries";
         error!("{}", err);
         err.to_string()
     })?;
@@ -211,7 +211,7 @@ pub fn import_dayone_txt(
         .lock()
         .map_err(|_| "State lock poisoned".to_string())?;
     let db = db_state.as_ref().ok_or_else(|| {
-        let err = "Diary must be unlocked to import entries";
+        let err = "Journal must be unlocked to import entries";
         error!("{}", err);
         err.to_string()
     })?;

@@ -9,7 +9,7 @@ import {
   renameJournal,
 } from '../../state/journals';
 import { refreshAuthState, error as authError } from '../../state/auth';
-import { checkDiaryPath } from '../../lib/tauri';
+import { checkJournalPath } from '../../lib/tauri';
 
 type AddMode = null | 'create' | 'open';
 
@@ -38,7 +38,7 @@ export default function JournalPicker() {
 
   const handleRemove = async (id: string) => {
     const ok = await confirm(
-      'Remove this journal from the list? The diary file will not be deleted.',
+      'Remove this journal from the list? The journal file will not be deleted.',
       { title: 'Remove Journal', kind: 'warning' },
     );
     if (!ok) return;
@@ -76,7 +76,7 @@ export default function JournalPicker() {
     const selected = await openDirDialog({
       directory: true,
       multiple: false,
-      title: 'Choose Diary Folder',
+      title: 'Choose Journal Folder',
     });
     if (!selected || typeof selected !== 'string') return;
     const folderName =
@@ -118,14 +118,14 @@ export default function JournalPicker() {
     const selected = await openDirDialog({
       directory: true,
       multiple: false,
-      title: 'Select Diary Folder',
+      title: 'Select Journal Folder',
     });
     if (!selected || typeof selected !== 'string') return;
 
-    const found = await checkDiaryPath(selected);
+    const found = await checkJournalPath(selected);
     if (!found) {
       setLocalError(
-        'No diary found in the selected folder. Make sure the folder contains a diary.db file.',
+        'No journal found in the selected folder. Make sure the folder contains a diary.db file.',
       );
       setAddMode('open');
       return;
@@ -271,7 +271,7 @@ export default function JournalPicker() {
           {/* Empty state */}
           <Show when={journals().length === 0}>
             <p class="mb-6 text-center text-sm text-secondary">
-              No journals yet. Create a new diary or open an existing one.
+              No journals yet. Create a new journal or open an existing one.
             </p>
           </Show>
 
@@ -285,7 +285,7 @@ export default function JournalPicker() {
                   disabled={isWorking()}
                   class="flex-1 rounded-md bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  + Create New Diary
+                  + Create New Journal
                 </button>
                 <button
                   type="button"
@@ -301,7 +301,7 @@ export default function JournalPicker() {
             {/* Create form */}
             <Show when={addMode() === 'create'}>
               <div class="space-y-3">
-                <p class="text-xs font-medium text-secondary">Create New Diary</p>
+                <p class="text-xs font-medium text-secondary">Create New Journal</p>
                 <div>
                   <label class="block text-xs font-medium text-secondary mb-1">Name</label>
                   <input
@@ -313,7 +313,7 @@ export default function JournalPicker() {
                     }}
                     autofocus
                     class="w-full rounded-md border border-primary px-3 py-2 text-sm text-primary bg-primary focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="e.g. My Diary"
+                    placeholder="e.g. My Journal"
                   />
                 </div>
                 <div>
@@ -356,7 +356,7 @@ export default function JournalPicker() {
             {/* Open existing form */}
             <Show when={addMode() === 'open'}>
               <div class="space-y-3">
-                <p class="text-xs font-medium text-secondary">Open Existing Diary</p>
+                <p class="text-xs font-medium text-secondary">Open Existing Journal</p>
                 <div>
                   <button
                     type="button"

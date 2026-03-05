@@ -106,7 +106,7 @@
           },
           {
             "@type": "Question",
-            "name": "How are diary entries encrypted?",
+            "name": "How are journal entries encrypted?",
             "acceptedAnswer": {
               "@type": "Answer",
               "text": "Entries are encrypted with AES-256-GCM before being written to the local SQLite database."
@@ -270,7 +270,7 @@
           <em>before it ever touches disk</em>. There is no cloud, no sync service, and no server to compromise.
         </p>
         <p>
-          You can also unlock your diary with a private key file, the same concept as SSH keys,
+          You can also unlock your journal with a private key file, the same concept as SSH keys,
           instead of (or alongside) a password.
           Keep the file on a USB drive, in a password manager, or on a separate machine.
           Each auth method holds its own wrapped copy of the master key; adding or removing
@@ -416,7 +416,7 @@
         <p class="section-label">Under the hood</p>
         <h2 class="section-title">We don't trust us with your data.</h2>
         <p>
-          A random 256-bit master key is generated when you create the diary and never changes.
+          A random 256-bit master key is generated when you create the journal and never changes.
           Every entry is encrypted with AES-256-GCM using that key before it is written to SQLite.
           The master key itself is never stored in plaintext: each authentication method (password or key file)
           holds its own <em>wrapped</em> copy: password slots use Argon2id key derivation + AES-GCM wrapping;
