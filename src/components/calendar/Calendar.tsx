@@ -1,4 +1,4 @@
-import { createSignal, createEffect, For, createMemo } from 'solid-js';
+import { createSignal, createEffect, untrack, For, createMemo } from 'solid-js';
 import { ChevronLeft, ChevronRight } from 'lucide-solid';
 import { selectedDate, setSelectedDate, setIsSidebarCollapsed } from '../../state/ui';
 import { entryDates } from '../../state/entries';
@@ -127,10 +127,12 @@ export default function Calendar() {
     setCurrentMonth(new Date(currentMonth().getFullYear(), currentMonth().getMonth() + 1));
   };
 
-  // Sync calendar month when selectedDate changes (e.g. "go to today", go-to-date overlay)
+  // Sync calendar month when selectedDate changes to a different month.
+  // currentMonth is read via untrack so changes to it (prev/next month buttons)
+  // do NOT re-trigger this effect — only selectedDate changes do.
   createEffect(() => {
     const d = new Date(selectedDate() + 'T00:00:00');
-    const cm = currentMonth();
+    const cm = untrack(currentMonth);
     if (d.getFullYear() !== cm.getFullYear() || d.getMonth() !== cm.getMonth()) {
       setCurrentMonth(d);
     }
