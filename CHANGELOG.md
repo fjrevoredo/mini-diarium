@@ -20,8 +20,10 @@ All notable changes to Mini Diarium are documented here. This project uses [Sema
 - **"Go to today" button alignment**: the button in the sidebar was right-aligned (`justify-end`) while the calendar below it is left-aligned. Changed to `justify-start` so the button aligns with the calendar's left edge. (#43)
 - **Settings tab active state on light theme**: the active tab in Preferences used hardcoded Tailwind classes (`bg-blue-100 text-blue-700`) that could render with low contrast. Replaced with CSS-variable classes (`bg-active text-primary`) that correctly follow the current theme in both light and dark mode. (#43)
 - **Editor placeholder showing "Loading…"**: TipTap's placeholder extension showed "Loading…" whenever the editor was empty during an async entry load, which could flicker on fast navigations. Placeholders are now always static ("Title (optional)" / "What's on your mind today?"). (#43)
-
-
+- **Calendar month navigation broken by reactive loop**: clicking the previous/next month buttons had no effect because the `createEffect` that syncs `currentMonth` to `selectedDate` was also reading `currentMonth()` as a reactive dependency — causing it to immediately reset the month back. Fixed by using `untrack(currentMonth)` so the effect only re-runs when `selectedDate` changes.
+- **"+" button creates spurious entry on empty day**: pressing "+" when no content existed would create and immediately delete an empty entry (visible briefly as a dot in the calendar). The button is now disabled unless the current entry has body content. Contextual tooltip text explains why the button is disabled ("Write something first to add another entry for this day") or what it does when enabled ("Add another entry for this day").
+- **New entry auto-deleted 500 ms after creation**: after creating a new entry via "+", `setContent('')` caused TipTap to fire `onUpdate` synchronously with empty content, scheduling a debounced save that would delete the blank entry. An explicit `debouncedSave.cancel()` now runs immediately after state is reset to prevent this.
+- **Multi-entry day counter order**: entries for a day are now displayed in chronological order (oldest = 1/N, newest = N/N). Previously the backend's newest-first ordering made the counter confusingly start at 1 for the most-recent entry. New entries created via "+" always land at position N/N. Opening a multi-entry day now navigates to the newest entry (N/N) instead of the oldest.
 
 ## [0.4.4] — 03-03-2026
 

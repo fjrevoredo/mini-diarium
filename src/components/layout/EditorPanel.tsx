@@ -37,6 +37,13 @@ export default function EditorPanel() {
   let saveRequestId = 0;
   const [isCreatingEntry, setIsCreatingEntry] = createSignal(false);
 
+  // Backend returns entries newest-first; reverse so index 0 = oldest and index N-1 = newest.
+  // This makes the counter read "1/N … N/N" in chronological order and puts new entries last.
+  const fetchEntriesOrdered = async (date: string): Promise<DiaryEntry[]> => {
+    const entries = await getEntriesForDate(date);
+    return entries.slice().reverse();
+  };
+
   const isContentEmpty = () => {
     const editor = editorInstance();
     if (editor && !editor.isDestroyed) {
@@ -100,14 +107,15 @@ export default function EditorPanel() {
     setIsLoadingEntry(true);
 
     try {
-      const entries = await getEntriesForDate(date);
+      const entries = await fetchEntriesOrdered(date);
       if (isDisposed || requestId !== loadRequestId) return;
 
       setDayEntries(entries);
 
       if (entries.length > 0) {
-        setCurrentIndex(0);
-        const entry = entries[0];
+        const startIndex = entries.length - 1; // newest entry is last in chronological order
+        setCurrentIndex(startIndex);
+        const entry = entries[startIndex];
         setPendingEntryId(entry.id);
         setTitle(entry.title);
         setContent(entry.text);
@@ -143,7 +151,7 @@ export default function EditorPanel() {
 
     // Refresh entries list from backend
     try {
-      const refreshed = await getEntriesForDate(selectedDate());
+      const refreshed = await fetchEntriesOrdered(selectedDate());
       if (isDisposed) return;
       setDayEntries(refreshed);
 
@@ -173,6 +181,10 @@ export default function EditorPanel() {
   // Add a new entry for the current date
   const addEntry = async () => {
     if (isCreatingEntry()) return;
+    // Only allow adding a second entry when the current one has real content.
+    // An empty pendingEntryId means no entry yet (typing auto-creates the first one).
+    // An empty title+body means the entry hasn't been filled in yet.
+    if (pendingEntryId() === null || isContentEmpty()) return;
     setIsCreatingEntry(true);
 
     try {
@@ -187,7 +199,7 @@ export default function EditorPanel() {
       if (isDisposed) return;
 
       // Refresh entries for the date
-      const refreshed = await getEntriesForDate(selectedDate());
+      const refreshed = await fetchEntriesOrdered(selectedDate());
       if (isDisposed) return;
 
       setDayEntries(refreshed);
@@ -199,6 +211,10 @@ export default function EditorPanel() {
       setTitle('');
       setContent('');
       setWordCount(0);
+      // setContent('') causes TipTap to fire onUpdate synchronously, which schedules
+      // a debounced save with empty content on the new entry ID — cancelling here
+      // prevents that save from running and immediately deleting the new blank entry.
+      debouncedSave.cancel();
 
       // Refresh dates
       const dates = await getAllEntryDates();
@@ -234,7 +250,7 @@ export default function EditorPanel() {
           const newEntry = await createEntry(selectedDate());
           if (isDisposed) return;
           setPendingEntryId(newEntry.id);
-          const refreshed = await getEntriesForDate(selectedDate());
+          const refreshed = await fetchEntriesOrdered(selectedDate());
           if (!isDisposed) setDayEntries(refreshed);
           // Use current signal values — user may have typed more while awaiting
           debouncedSave(newEntry.id, title(), content());
@@ -263,7 +279,7 @@ export default function EditorPanel() {
           const newEntry = await createEntry(selectedDate());
           if (isDisposed) return;
           setPendingEntryId(newEntry.id);
-          const refreshed = await getEntriesForDate(selectedDate());
+          const refreshed = await fetchEntriesOrdered(selectedDate());
           if (!isDisposed) setDayEntries(refreshed);
           debouncedSave(newEntry.id, title(), content());
         } catch (error) {
@@ -310,7 +326,14 @@ export default function EditorPanel() {
         onPrev={() => void navigateToEntry(currentIndex() - 1)}
         onNext={() => void navigateToEntry(currentIndex() + 1)}
         onAdd={() => void addEntry()}
-        addDisabled={isCreatingEntry()}
+        addDisabled={isCreatingEntry() || pendingEntryId() === null || isContentEmpty()}
+        addTitle={
+          isCreatingEntry()
+            ? 'Creating entry…'
+            : pendingEntryId() === null || isContentEmpty()
+              ? 'Write something first to add another entry for this day'
+              : 'Add another entry for this day'
+        }
       />
       <div class="flex-1 overflow-y-auto p-6">
         <div class="mx-auto w-full max-w-3xl xl:max-w-5xl 2xl:max-w-6xl">

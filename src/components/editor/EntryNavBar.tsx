@@ -7,6 +7,7 @@ interface EntryNavBarProps {
   onNext: () => void;
   onAdd: () => void;
   addDisabled?: boolean;
+  addTitle?: string;
 }
 
 export function EntryNavBar(props: EntryNavBarProps) {
@@ -38,8 +39,9 @@ export function EntryNavBar(props: EntryNavBarProps) {
       <button
         onClick={() => props.onAdd()}
         disabled={props.addDisabled}
+        title={props.addTitle}
         class="px-2 py-0.5 rounded hover:bg-neutral-100 dark:hover:bg-neutral-700 text-neutral-500 ml-auto disabled:opacity-30"
-        aria-label="Add entry"
+        aria-label={props.addTitle ?? 'Add entry'}
       >
         +
       </button>

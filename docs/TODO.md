@@ -50,6 +50,25 @@ TODO entry format:
 
 ## Medium Priority
 
+- [ ] **Add safe "Debug Dump" export in Preferences → Advanced** — add a user-triggered "Generate Debug Dump" button in a new `Advanced` subsection of settings that writes a support-friendly diagnostic file for troubleshooting while preserving privacy
+  - **Scope:** add an `Advanced` section in `PreferencesOverlay.tsx` and place a clearly labeled action button (e.g. "Generate Debug Dump"); allow user-selected save path via dialog; show success/error feedback after generation
+  - **Must include (safe diagnostics):** app version, OS/platform info, runtime/build metadata, enabled feature flags, non-sensitive preference values, active journal id (or anonymized identifier), and recent app logs relevant to failures
+  - **Must NOT include (privacy boundary):** entry content/title HTML, search queries, password values, key files/private keys/public keys/master-key material, auth slot wrapped blobs, full filesystem paths, or any raw user text fields; redact/sanitize before write
+  - **Implementation notes:** create a backend command for dump generation so sanitization is enforced in Rust, and keep frontend as a simple trigger + save flow
+  - **Files:** `src/components/overlays/PreferencesOverlay.tsx`, `src/lib/tauri.ts`, `src-tauri/src/commands/` (new command module and registration in `commands/mod.rs` + `lib.rs`)
+- [ ] **Add "-" button to delete current extra entry (same day)** — add a delete-entry button next to the existing `+` button in the entry navigator for multi-entry days
+  - **Visibility requirement:** show the `-` button only when the selected day has more than 1 entry
+  - **Tooltip requirement:** the `-` button must have a clear tooltip that explains the action before click
+  - **Confirmation requirement:** clicking `-` opens a `Yes` / `No` confirmation dialog
+  - **Delete requirement:** selecting `Yes` deletes the currently selected entry for that day
+  - **Navigation requirement:** after delete, navigate to the next available entry for that same day
+  - **Cancel requirement:** selecting `No` closes the dialog and changes nothing
+- [ ] **Unify terminology to "Journal" across app and codebase** (issue #46) — remove mixed `diary`/`journal` wording and standardize user-facing language and internal naming conventions
+  - **UI text requirement:** all user-visible labels/messages/tooltips/dialogs must use `Journal` consistently
+  - **Codebase requirement:** naming in frontend/backend command wrappers and state modules should be aligned to the same term where feasible, with compatibility preserved where renames would break public interfaces
+  - **Documentation requirement:** repository docs (README, guides, and related docs) must be updated to use `Journal` terminology consistently
+  - **Website requirement:** marketing website content under `website/` must also use `Journal` terminology consistently
+  - **Compatibility requirement:** existing persisted data, command contracts, and migrations must keep working after terminology cleanup
 - [ ] **Remove minimum password length requirement** — the current UI enforces a minimum length; the owner needs to verify whether the encryption algorithm truly requires it (Argon2id does not); if not required, remove the hard block and replace with a strength hint/suggestion (issue #43)
   - **Investigation:** the 8-char minimum is enforced frontend-only in three places: `src/components/auth/PasswordCreation.tsx:28-31`, `src/components/overlays/PreferencesOverlay.tsx:218-221` (change password), and `PreferencesOverlay.tsx:300-303` (add password auth method). The backend (`src-tauri/src/crypto/password.rs`) and Argon2id have **no minimum length** — any string including empty is accepted.
   - **Fix:** remove the hard `return` block in each location; replace with a visual strength hint (e.g. yellow warning if < 8 chars, green if ≥ 12). The "Create"/"Save" button should remain enabled. Optionally add backend validation only for empty-string passwords.
