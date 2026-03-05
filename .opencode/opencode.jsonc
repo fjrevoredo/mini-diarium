@@ -1,0 +1,196 @@
+{
+	"$schema": "https://opencode.ai/config.json",
+	"permission": {
+		"task": "deny",
+		"context7_*": "deny",
+		"exa_*": "deny",
+		"gh_grep_*": "deny",
+		"kagi_*": "deny",
+		"webfetch": "deny",
+		"worktree_*": "deny"
+	},
+	"agent": {
+		"researcher": {
+			"permission": {
+				"context7_*": "allow",
+				"exa_*": "allow",
+				"gh_grep_*": "allow",
+				"kagi_*": "deny",
+				"webfetch": "allow",
+				"write": "deny",
+				"edit": "deny",
+				"plan_read": "deny",
+				"todoread": "deny",
+				"bash": {
+					"*": "deny",
+					"gh repo view*": "allow",
+					"gh pr view*": "allow",
+					"gh pr list*": "allow",
+					"gh issue view*": "allow",
+					"gh issue list*": "allow",
+					"gh release view*": "allow",
+					"gh release list*": "allow",
+					"gh run view*": "allow",
+					"gh run list*": "allow",
+					"gh workflow list*": "allow",
+					"gh search *": "allow",
+					"gh api *": "allow",
+					"npm view*": "allow",
+					"npm info*": "allow",
+					"npm show*": "allow",
+					"pip show*": "allow",
+					"pip index*": "allow",
+					"cargo search*": "allow",
+					"cargo info*": "allow",
+					"man *": "allow",
+					"tldr *": "allow",
+					"dig *": "allow",
+					"nslookup *": "allow",
+					"whois *": "allow",
+					"host *": "allow",
+					"jq *": "allow",
+					"head *": "allow",
+					"tail *": "allow",
+					"base64 *": "allow",
+					"grep *": "allow",
+					"rg *": "allow",
+					"wc *": "allow",
+					"sort *": "allow",
+					"uniq *": "allow",
+					"cut *": "allow",
+					"awk *": "allow",
+					"tr *": "allow"
+				}
+			}
+		},
+		"scribe": {
+			"permission": {
+				"bash": {
+					"*": "deny"
+				},
+				"edit": "allow",
+				"glob": "allow",
+				"read": "allow",
+				"write": "allow",
+				"plan_read": "deny",
+				"todoread": "deny"
+			}
+		},
+		"coder": {
+			"permission": {
+				"context7_*": "deny",
+				"exa_*": "deny",
+				"gh_grep_*": "deny",
+				"read": "allow",
+				"write": "allow",
+				"edit": "allow",
+				"glob": "allow",
+				"grep": "allow",
+				"bash": "allow",
+				"plan_read": "deny",
+				"todoread": "deny"
+			}
+		},
+		"reviewer": {
+			"temperature": 0.1,
+			"permission": {
+				"edit": "deny",
+				"write": "deny",
+				"bash": {
+					"*": "deny",
+					"git diff*": "allow",
+					"git log*": "allow",
+					"git show*": "allow",
+					"git blame*": "allow",
+					"rg *": "allow"
+				},
+				"plan_read": "allow",
+				"delegation_read": "allow",
+				"delegation_list": "allow"
+			}
+		},
+		"plan": {
+			"permission": {
+				"edit": "deny",
+				"write": "deny",
+				"bash": {
+					"*": "deny"
+				},
+				"task": "allow",
+				"worktree_*": "allow"
+			}
+		},
+		"build": {
+			"prompt": "You are a **build orchestrator**. You coordinate implementation through delegation - you do NOT implement directly.\\\\\\\\n\\\\\\\\n## Your Role\\\\\\\\n- Delegate implementation to `coder`\\\\\\\\n- Delegate documentation to `scribe`\\\\\\\\n- Delegate codebase analysis to `explore`\\\\\\\\n- Delegate external research to `researcher`\\\\\\\\n- Interpret results and decide next steps\\\\\\\\n\\\\\\\\n## Critical Constraint\\\\\\\\nYou CANNOT edit files or run commands directly. For ALL implementation and verification, delegate to `coder`.",
+			"permission": {
+				"edit": "deny",
+				"write": "deny",
+				"bash": {
+					"*": "deny"
+				},
+				"task": "allow",
+				"worktree_*": "allow"
+			}
+		},
+		"explore": {
+			"permission": {
+				"edit": "deny",
+				"write": "deny",
+				"plan_read": "deny",
+				"todoread": "deny",
+				"bash": {
+					"*": "deny",
+					"ls *": "allow",
+					"tree *": "allow",
+					"pwd": "allow",
+					"cat *": "allow",
+					"head *": "allow",
+					"tail *": "allow",
+					"wc *": "allow",
+					"file *": "allow",
+					"stat *": "allow",
+					"grep *": "allow",
+					"rg *": "allow",
+					"find *": "allow",
+					"git status*": "allow",
+					"git log*": "allow",
+					"git diff*": "allow",
+					"git show*": "allow",
+					"git blame*": "allow",
+					"git branch*": "allow",
+					"git ls-files*": "allow",
+					"uname*": "allow",
+					"hostname": "allow",
+					"whoami": "allow",
+					"which *": "allow",
+					"realpath *": "allow"
+				}
+			}
+		}
+	},
+	"mcp": {
+		"context7": {
+			"type": "remote",
+			"url": "https://mcp.context7.com/mcp",
+			"enabled": true
+		},
+		"exa": {
+			"type": "remote",
+			"url": "https://mcp.exa.ai/mcp",
+			"enabled": true
+		},
+		"gh_grep": {
+			"type": "remote",
+			"url": "https://mcp.grep.app",
+			"enabled": true
+		}
+	},
+	"instructions": [
+		"./tools/philosophy.md"
+	],
+	"plugin": [
+		"@tarquinen/opencode-dcp@1.2.7",
+		"@franlol/opencode-md-table-formatter@0.0.3"
+	]
+	// Add MCP servers, tools, plugins here
+}

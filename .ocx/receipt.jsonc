@@ -1,0 +1,497 @@
+{
+  "version": 1,
+  "root": "D:\\Repos\\mini-diarium",
+  "installed": {
+    "https://registry.kdco.dev::kdco/kdco-primitives@sha256:688d2d5f536e8db0b44fdff5d588000a5a9ed7028ec715828cc458d27f34dd8d": {
+      "registryUrl": "https://registry.kdco.dev",
+      "registryName": "kdco",
+      "name": "kdco-primitives",
+      "revision": "sha256:688d2d5f536e8db0b44fdff5d588000a5a9ed7028ec715828cc458d27f34dd8d",
+      "hash": "688d2d5f536e8db0b44fdff5d588000a5a9ed7028ec715828cc458d27f34dd8d",
+      "files": [
+        {
+          "path": ".opencode/plugins/kdco-primitives/get-project-id.ts",
+          "hash": "2bdcb8e839171e8a9ddff36f7b9c28c90fae972cb395cec38f8d3e85cfd66ad9"
+        },
+        {
+          "path": ".opencode/plugins/kdco-primitives/with-timeout.ts",
+          "hash": "3c582e3e89f5d0de8230122ef0fea2066b3ebff3d77579515cef251628439527"
+        },
+        {
+          "path": ".opencode/plugins/kdco-primitives/log-warn.ts",
+          "hash": "7ed7eb195fd4d67cbee8057ae35593b92693e1e5e84012fcf5402a14df071311"
+        },
+        {
+          "path": ".opencode/plugins/kdco-primitives/types.ts",
+          "hash": "4471c8d97b16e06906f3446e89e01c4a436130a42e5fa6c31f107e63f3b42666"
+        },
+        {
+          "path": ".opencode/plugins/kdco-primitives/mutex.ts",
+          "hash": "4caacfd38bb4b971c356ed9dbfb4dcc10634a83a39c51e724852325d84be941e"
+        },
+        {
+          "path": ".opencode/plugins/kdco-primitives/shell.ts",
+          "hash": "9941f4f642c10f04795304a7657111b2cd10ec066b08f0e0866ae87de5160669"
+        },
+        {
+          "path": ".opencode/plugins/kdco-primitives/temp.ts",
+          "hash": "b66983f2a747d87fb84dcdaa3ed88e5da2e8e46c8151e98f74e76755148f7e08"
+        },
+        {
+          "path": ".opencode/plugins/kdco-primitives/terminal-detect.ts",
+          "hash": "523435085e8fc31883a6a702e70fd9ba82c5d799026d0f04be890c84dbab6b41"
+        },
+        {
+          "path": ".opencode/plugins/kdco-primitives/index.ts",
+          "hash": "012301f644639e930b30ea09f43b0a3808d8dfed3970c242dd60ab1c530fc5e6"
+        }
+      ],
+      "installedAt": "2026-03-05T20:12:53.910Z"
+    },
+    "https://registry.kdco.dev::kdco/background-agents@sha256:48f0844d9959996a41458acc2c35e8729683255142bce09f12888c4ab0c4d71d": {
+      "registryUrl": "https://registry.kdco.dev",
+      "registryName": "kdco",
+      "name": "background-agents",
+      "revision": "sha256:48f0844d9959996a41458acc2c35e8729683255142bce09f12888c4ab0c4d71d",
+      "hash": "48f0844d9959996a41458acc2c35e8729683255142bce09f12888c4ab0c4d71d",
+      "files": [
+        {
+          "path": ".opencode/plugins/background-agents.ts",
+          "hash": "58888250845d02e2d3d305a8004659d5938e8f49eb34c0d02dc37af7de341b26"
+        }
+      ],
+      "installedAt": "2026-03-05T20:12:53.919Z",
+      "opencode": {
+        "permission": {
+          "task": "deny"
+        }
+      }
+    },
+    "https://registry.kdco.dev::kdco/workspace-plugin@sha256:d70f924c872dc4541f90d417d1c90545faf01ddc19a90ebc4408509dd073c890": {
+      "registryUrl": "https://registry.kdco.dev",
+      "registryName": "kdco",
+      "name": "workspace-plugin",
+      "revision": "sha256:d70f924c872dc4541f90d417d1c90545faf01ddc19a90ebc4408509dd073c890",
+      "hash": "d70f924c872dc4541f90d417d1c90545faf01ddc19a90ebc4408509dd073c890",
+      "files": [
+        {
+          "path": ".opencode/plugins/workspace-plugin.ts",
+          "hash": "aae8ff0b6bcf7994c81dccea4a92a352ffb9d772edd83e886992d4a70adb36e5"
+        }
+      ],
+      "installedAt": "2026-03-05T20:12:53.933Z"
+    },
+    "https://registry.kdco.dev::kdco/plan-protocol@sha256:50dae3e515ac7d89b2081ec501cc05f7e00c6a706635abc2b6a6e9a52347bdc0": {
+      "registryUrl": "https://registry.kdco.dev",
+      "registryName": "kdco",
+      "name": "plan-protocol",
+      "revision": "sha256:50dae3e515ac7d89b2081ec501cc05f7e00c6a706635abc2b6a6e9a52347bdc0",
+      "hash": "50dae3e515ac7d89b2081ec501cc05f7e00c6a706635abc2b6a6e9a52347bdc0",
+      "files": [
+        {
+          "path": ".opencode/skills/plan-protocol/SKILL.md",
+          "hash": "3e2708c8c62e34c84eea8d0b09976ccfb7557493c250555939aaf75cf3b82177"
+        }
+      ],
+      "installedAt": "2026-03-05T20:12:53.944Z"
+    },
+    "https://registry.kdco.dev::kdco/researcher@sha256:123019a6e34f563ce0cf16cc17ab780c0316e097cf4577cf6feb5c3d47948f4c": {
+      "registryUrl": "https://registry.kdco.dev",
+      "registryName": "kdco",
+      "name": "researcher",
+      "revision": "sha256:123019a6e34f563ce0cf16cc17ab780c0316e097cf4577cf6feb5c3d47948f4c",
+      "hash": "123019a6e34f563ce0cf16cc17ab780c0316e097cf4577cf6feb5c3d47948f4c",
+      "files": [
+        {
+          "path": ".opencode/agents/researcher.md",
+          "hash": "2b5138f97cada5d5048d1c015d8c11a96c3d72f5e2705ca268d4a1858dcfd614"
+        }
+      ],
+      "installedAt": "2026-03-05T20:12:53.960Z",
+      "opencode": {
+        "agent": {
+          "researcher": {
+            "permission": {
+              "context7_*": "allow",
+              "exa_*": "allow",
+              "gh_grep_*": "allow",
+              "kagi_*": "deny",
+              "webfetch": "allow",
+              "write": "deny",
+              "edit": "deny",
+              "plan_read": "deny",
+              "todoread": "deny",
+              "bash": {
+                "*": "deny",
+                "gh repo view*": "allow",
+                "gh pr view*": "allow",
+                "gh pr list*": "allow",
+                "gh issue view*": "allow",
+                "gh issue list*": "allow",
+                "gh release view*": "allow",
+                "gh release list*": "allow",
+                "gh run view*": "allow",
+                "gh run list*": "allow",
+                "gh workflow list*": "allow",
+                "gh search *": "allow",
+                "gh api *": "allow",
+                "npm view*": "allow",
+                "npm info*": "allow",
+                "npm show*": "allow",
+                "pip show*": "allow",
+                "pip index*": "allow",
+                "cargo search*": "allow",
+                "cargo info*": "allow",
+                "man *": "allow",
+                "tldr *": "allow",
+                "dig *": "allow",
+                "nslookup *": "allow",
+                "whois *": "allow",
+                "host *": "allow",
+                "jq *": "allow",
+                "head *": "allow",
+                "tail *": "allow",
+                "base64 *": "allow",
+                "grep *": "allow",
+                "rg *": "allow",
+                "wc *": "allow",
+                "sort *": "allow",
+                "uniq *": "allow",
+                "cut *": "allow",
+                "awk *": "allow",
+                "tr *": "allow"
+              }
+            }
+          }
+        },
+        "permission": {
+          "context7_*": "deny",
+          "exa_*": "deny",
+          "gh_grep_*": "deny",
+          "kagi_*": "deny"
+        },
+        "mcp": {
+          "context7": {
+            "type": "remote",
+            "url": "https://mcp.context7.com/mcp",
+            "enabled": true
+          },
+          "exa": {
+            "type": "remote",
+            "url": "https://mcp.exa.ai/mcp",
+            "enabled": true
+          },
+          "gh_grep": {
+            "type": "remote",
+            "url": "https://mcp.grep.app",
+            "enabled": true
+          }
+        }
+      }
+    },
+    "https://registry.kdco.dev::kdco/scribe@sha256:866002e39e09902b08de096b8b254226ad27c8fb05af4d66ca729f50b0d436ee": {
+      "registryUrl": "https://registry.kdco.dev",
+      "registryName": "kdco",
+      "name": "scribe",
+      "revision": "sha256:866002e39e09902b08de096b8b254226ad27c8fb05af4d66ca729f50b0d436ee",
+      "hash": "866002e39e09902b08de096b8b254226ad27c8fb05af4d66ca729f50b0d436ee",
+      "files": [
+        {
+          "path": ".opencode/agents/scribe.md",
+          "hash": "2d42f3e18b4017006b84f8f462c6736c66626ad01b820b2e367e080482d1728c"
+        }
+      ],
+      "installedAt": "2026-03-05T20:12:53.968Z",
+      "opencode": {
+        "agent": {
+          "scribe": {
+            "permission": {
+              "bash": {
+                "*": "deny"
+              },
+              "edit": "allow",
+              "glob": "allow",
+              "read": "allow",
+              "write": "allow",
+              "plan_read": "deny",
+              "todoread": "deny"
+            }
+          }
+        }
+      }
+    },
+    "https://registry.kdco.dev::kdco/coder@sha256:ba4339cc89f34fcf95716e9ee7232c704853dbb924461ea582578e12b2175021": {
+      "registryUrl": "https://registry.kdco.dev",
+      "registryName": "kdco",
+      "name": "coder",
+      "revision": "sha256:ba4339cc89f34fcf95716e9ee7232c704853dbb924461ea582578e12b2175021",
+      "hash": "ba4339cc89f34fcf95716e9ee7232c704853dbb924461ea582578e12b2175021",
+      "files": [
+        {
+          "path": ".opencode/agents/coder.md",
+          "hash": "0d2437ac14530fb3d21675a8e1a90b578577e3f205abfffc390d516e3439f7e5"
+        }
+      ],
+      "installedAt": "2026-03-05T20:12:53.976Z",
+      "opencode": {
+        "agent": {
+          "coder": {
+            "permission": {
+              "context7_*": "deny",
+              "exa_*": "deny",
+              "gh_grep_*": "deny",
+              "read": "allow",
+              "write": "allow",
+              "edit": "allow",
+              "glob": "allow",
+              "grep": "allow",
+              "bash": "allow",
+              "plan_read": "deny",
+              "todoread": "deny"
+            }
+          }
+        }
+      }
+    },
+    "https://registry.kdco.dev::kdco/code-review@sha256:5b5d505d4fb9b1623940937d6d4773ae2679995dcc08be6153a390965c7c256f": {
+      "registryUrl": "https://registry.kdco.dev",
+      "registryName": "kdco",
+      "name": "code-review",
+      "revision": "sha256:5b5d505d4fb9b1623940937d6d4773ae2679995dcc08be6153a390965c7c256f",
+      "hash": "5b5d505d4fb9b1623940937d6d4773ae2679995dcc08be6153a390965c7c256f",
+      "files": [
+        {
+          "path": ".opencode/skills/code-review/SKILL.md",
+          "hash": "98200cc8992cdebd921e33cd426db5d9a9a80bb82bed19520c947289d55215ad"
+        }
+      ],
+      "installedAt": "2026-03-05T20:12:53.985Z"
+    },
+    "https://registry.kdco.dev::kdco/plan-review@sha256:cb99ef1ef4518ecbbc0083d892327f1819d045c50c8765733dd9de1470e4b8b6": {
+      "registryUrl": "https://registry.kdco.dev",
+      "registryName": "kdco",
+      "name": "plan-review",
+      "revision": "sha256:cb99ef1ef4518ecbbc0083d892327f1819d045c50c8765733dd9de1470e4b8b6",
+      "hash": "cb99ef1ef4518ecbbc0083d892327f1819d045c50c8765733dd9de1470e4b8b6",
+      "files": [
+        {
+          "path": ".opencode/skills/plan-review/SKILL.md",
+          "hash": "73a2c9310024940ee6e87f24c34bea60a6c27c5f2776c8e41c59184cfa6ac0e7"
+        }
+      ],
+      "installedAt": "2026-03-05T20:12:53.992Z"
+    },
+    "https://registry.kdco.dev::kdco/reviewer@sha256:a15138b10262d8481e24a848f1da5501cce2025f3b2f5bd12eed0a5f03fc0375": {
+      "registryUrl": "https://registry.kdco.dev",
+      "registryName": "kdco",
+      "name": "reviewer",
+      "revision": "sha256:a15138b10262d8481e24a848f1da5501cce2025f3b2f5bd12eed0a5f03fc0375",
+      "hash": "a15138b10262d8481e24a848f1da5501cce2025f3b2f5bd12eed0a5f03fc0375",
+      "files": [
+        {
+          "path": ".opencode/agents/reviewer.md",
+          "hash": "b18c61724c795de926d2c5d0b060da92cb470a8072a0d55d63cc7640be493854"
+        }
+      ],
+      "installedAt": "2026-03-05T20:12:54.003Z",
+      "opencode": {
+        "agent": {
+          "reviewer": {
+            "temperature": 0.1,
+            "permission": {
+              "edit": "deny",
+              "write": "deny",
+              "bash": {
+                "*": "deny",
+                "git diff*": "allow",
+                "git log*": "allow",
+                "git show*": "allow",
+                "git blame*": "allow",
+                "rg *": "allow"
+              },
+              "plan_read": "allow",
+              "delegation_read": "allow",
+              "delegation_list": "allow"
+            }
+          }
+        }
+      }
+    },
+    "https://registry.kdco.dev::kdco/review@sha256:b772e609bf063350f529bdd94449b690dd5c374c33cdcd39dc8004f5d600224a": {
+      "registryUrl": "https://registry.kdco.dev",
+      "registryName": "kdco",
+      "name": "review",
+      "revision": "sha256:b772e609bf063350f529bdd94449b690dd5c374c33cdcd39dc8004f5d600224a",
+      "hash": "b772e609bf063350f529bdd94449b690dd5c374c33cdcd39dc8004f5d600224a",
+      "files": [
+        {
+          "path": ".opencode/commands/review.md",
+          "hash": "4dd8c9ab0b80f7b97a9ce662b5270557d7cb134e4739ed96b8ac707cf9e1efaf"
+        }
+      ],
+      "installedAt": "2026-03-05T20:12:54.022Z"
+    },
+    "https://registry.kdco.dev::kdco/notify@sha256:ec7f564f771d8c48292b359d2a0e2f2b4f7b90c48a24c148b61a0ec252c8b797": {
+      "registryUrl": "https://registry.kdco.dev",
+      "registryName": "kdco",
+      "name": "notify",
+      "revision": "sha256:ec7f564f771d8c48292b359d2a0e2f2b4f7b90c48a24c148b61a0ec252c8b797",
+      "hash": "ec7f564f771d8c48292b359d2a0e2f2b4f7b90c48a24c148b61a0ec252c8b797",
+      "files": [
+        {
+          "path": ".opencode/plugins/notify.ts",
+          "hash": "5074901fb8c538d589bbf26cf298c83ad8deb0785534d4d673f50b0f6797ca14"
+        }
+      ],
+      "installedAt": "2026-03-05T20:12:54.033Z"
+    },
+    "https://registry.kdco.dev::kdco/worktree@sha256:fe3fa2b7b14339cedf411229170f840ef6540ff2ee71aad29f5c3670a83f1124": {
+      "registryUrl": "https://registry.kdco.dev",
+      "registryName": "kdco",
+      "name": "worktree",
+      "revision": "sha256:fe3fa2b7b14339cedf411229170f840ef6540ff2ee71aad29f5c3670a83f1124",
+      "hash": "fe3fa2b7b14339cedf411229170f840ef6540ff2ee71aad29f5c3670a83f1124",
+      "files": [
+        {
+          "path": ".opencode/plugins/worktree.ts",
+          "hash": "41eb73f183107cb6e41d6d5ba244c83e77bd04e74a3261f48cf58f0e73070569"
+        },
+        {
+          "path": ".opencode/plugins/worktree/state.ts",
+          "hash": "a01df412d046ffdd137372b4edc5217c0ac041dd5d23e2034617edfd569f1e6c"
+        },
+        {
+          "path": ".opencode/plugins/worktree/terminal.ts",
+          "hash": "df1592e6ac011d1c790ec8d383551bae66b696a246670261c66bebbf2645e28b"
+        }
+      ],
+      "installedAt": "2026-03-05T20:12:54.058Z"
+    },
+    "https://registry.kdco.dev::kdco/code-philosophy@sha256:c41fffa9bb00b6e3b7df547158a0ba29d47a783d4b3299af5f0c8ed3dfcd621c": {
+      "registryUrl": "https://registry.kdco.dev",
+      "registryName": "kdco",
+      "name": "code-philosophy",
+      "revision": "sha256:c41fffa9bb00b6e3b7df547158a0ba29d47a783d4b3299af5f0c8ed3dfcd621c",
+      "hash": "c41fffa9bb00b6e3b7df547158a0ba29d47a783d4b3299af5f0c8ed3dfcd621c",
+      "files": [
+        {
+          "path": ".opencode/skills/code-philosophy/SKILL.md",
+          "hash": "7f15b42b52e5f47c44c6d3cf93613f1918d69b74b3ae70d4115100368e1eb7c9"
+        }
+      ],
+      "installedAt": "2026-03-05T20:12:54.064Z"
+    },
+    "https://registry.kdco.dev::kdco/frontend-philosophy@sha256:b90812b8ffb040eef0d31a87222eaa9471e168cc1792425e2767f2235268febe": {
+      "registryUrl": "https://registry.kdco.dev",
+      "registryName": "kdco",
+      "name": "frontend-philosophy",
+      "revision": "sha256:b90812b8ffb040eef0d31a87222eaa9471e168cc1792425e2767f2235268febe",
+      "hash": "b90812b8ffb040eef0d31a87222eaa9471e168cc1792425e2767f2235268febe",
+      "files": [
+        {
+          "path": ".opencode/skills/frontend-philosophy/SKILL.md",
+          "hash": "42d577992ad9fe5349a522870b14d69ba60da6d00442b1d744d15d155666bf8b"
+        }
+      ],
+      "installedAt": "2026-03-05T20:12:54.073Z"
+    },
+    "https://registry.kdco.dev::kdco/philosophy@sha256:f0b040317909a32d044167a65f37bf96710713f27860960405eec15003c4b88d": {
+      "registryUrl": "https://registry.kdco.dev",
+      "registryName": "kdco",
+      "name": "philosophy",
+      "revision": "sha256:f0b040317909a32d044167a65f37bf96710713f27860960405eec15003c4b88d",
+      "hash": "f0b040317909a32d044167a65f37bf96710713f27860960405eec15003c4b88d",
+      "files": [
+        {
+          "path": ".opencode/tools/philosophy.md",
+          "hash": "910f20e1b2d2a68238d68b3d4090302a0b41acadb7b8e6a9f0fbde4405db25c9"
+        }
+      ],
+      "installedAt": "2026-03-05T20:12:54.082Z",
+      "opencode": {
+        "instructions": [
+          "./tools/philosophy.md"
+        ]
+      }
+    },
+    "https://registry.kdco.dev::kdco/workspace@sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855": {
+      "registryUrl": "https://registry.kdco.dev",
+      "registryName": "kdco",
+      "name": "workspace",
+      "revision": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "files": [],
+      "installedAt": "2026-03-05T20:12:54.082Z",
+      "opencode": {
+        "plugin": [
+          "@tarquinen/opencode-dcp@1.2.7",
+          "@franlol/opencode-md-table-formatter@0.0.3"
+        ],
+        "agent": {
+          "plan": {
+            "permission": {
+              "edit": "deny",
+              "write": "deny",
+              "bash": {
+                "*": "deny"
+              },
+              "task": "allow",
+              "worktree_*": "allow"
+            }
+          },
+          "build": {
+            "prompt": "You are a **build orchestrator**. You coordinate implementation through delegation - you do NOT implement directly.\\\\\\\\n\\\\\\\\n## Your Role\\\\\\\\n- Delegate implementation to `coder`\\\\\\\\n- Delegate documentation to `scribe`\\\\\\\\n- Delegate codebase analysis to `explore`\\\\\\\\n- Delegate external research to `researcher`\\\\\\\\n- Interpret results and decide next steps\\\\\\\\n\\\\\\\\n## Critical Constraint\\\\\\\\nYou CANNOT edit files or run commands directly. For ALL implementation and verification, delegate to `coder`.",
+            "permission": {
+              "edit": "deny",
+              "write": "deny",
+              "bash": {
+                "*": "deny"
+              },
+              "task": "allow",
+              "worktree_*": "allow"
+            }
+          },
+          "explore": {
+            "permission": {
+              "edit": "deny",
+              "write": "deny",
+              "plan_read": "deny",
+              "todoread": "deny",
+              "bash": {
+                "*": "deny",
+                "ls *": "allow",
+                "tree *": "allow",
+                "pwd": "allow",
+                "cat *": "allow",
+                "head *": "allow",
+                "tail *": "allow",
+                "wc *": "allow",
+                "file *": "allow",
+                "stat *": "allow",
+                "grep *": "allow",
+                "rg *": "allow",
+                "find *": "allow",
+                "git status*": "allow",
+                "git log*": "allow",
+                "git diff*": "allow",
+                "git show*": "allow",
+                "git blame*": "allow",
+                "git branch*": "allow",
+                "git ls-files*": "allow",
+                "uname*": "allow",
+                "hostname": "allow",
+                "whoami": "allow",
+                "which *": "allow",
+                "realpath *": "allow"
+              }
+            }
+          }
+        },
+        "permission": {
+          "webfetch": "deny",
+          "worktree_*": "deny"
+        }
+      }
+    }
+  }
+}
