@@ -8,6 +8,9 @@ interface EntryNavBarProps {
   onAdd: () => void;
   addDisabled?: boolean;
   addTitle?: string;
+  onDelete?: () => void;
+  deleteDisabled?: boolean;
+  deleteTitle?: string;
 }
 
 export function EntryNavBar(props: EntryNavBarProps) {
@@ -36,15 +39,28 @@ export function EntryNavBar(props: EntryNavBarProps) {
           </button>
         </div>
       </Show>
-      <button
-        onClick={() => props.onAdd()}
-        disabled={props.addDisabled}
-        title={props.addTitle}
-        class="px-2 py-0.5 rounded hover:bg-neutral-100 dark:hover:bg-neutral-700 text-neutral-500 ml-auto disabled:opacity-30"
-        aria-label={props.addTitle ?? 'Add entry'}
-      >
-        +
-      </button>
+      <div class="flex items-center gap-2">
+        <Show when={props.total > 1 && props.onDelete}>
+          <button
+            onClick={() => props.onDelete!()}
+            disabled={props.deleteDisabled}
+            title={props.deleteTitle}
+            class="px-2 py-0.5 rounded hover:bg-neutral-100 dark:hover:bg-neutral-700 text-neutral-500 disabled:opacity-30"
+            aria-label={props.deleteTitle ?? 'Delete entry'}
+          >
+            −
+          </button>
+        </Show>
+        <button
+          onClick={() => props.onAdd()}
+          disabled={props.addDisabled}
+          title={props.addTitle}
+          class="px-2 py-0.5 rounded hover:bg-neutral-100 dark:hover:bg-neutral-700 text-neutral-500 disabled:opacity-30"
+          aria-label={props.addTitle ?? 'Add entry'}
+        >
+          +
+        </button>
+      </div>
     </div>
   );
 }

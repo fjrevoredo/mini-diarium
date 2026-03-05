@@ -114,6 +114,25 @@ pub fn delete_entry_if_empty(
     }
 }
 
+/// Deletes an entry by id
+#[tauri::command]
+pub fn delete_entry(id: i64, state: State<DiaryState>) -> Result<(), String> {
+    let db_state = state
+        .db
+        .lock()
+        .map_err(|_| "State lock poisoned".to_string())?;
+    let db = db_state.as_ref().ok_or("Diary not unlocked")?;
+
+    let deleted = queries::delete_entry_by_id(db, id)
+        .map_err(|e| format!("Failed to delete entry: {}", e))?;
+
+    if !deleted {
+        return Err("Entry not found".to_string());
+    }
+
+    Ok(())
+}
+
 /// Gets all dates that have entries
 ///
 /// Returns a sorted list of distinct dates in YYYY-MM-DD format

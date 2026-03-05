@@ -11,12 +11,14 @@ import {
   saveEntry,
   getEntriesForDate,
   deleteEntryIfEmpty,
+  deleteEntry,
   getAllEntryDates,
 } from '../../lib/tauri';
 import type { DiaryEntry } from '../../lib/tauri';
 import { debounce } from '../../lib/debounce';
 import { isSaving, setIsSaving, setEntryDates } from '../../state/entries';
 import { preferences } from '../../state/preferences';
+import { confirm } from '@tauri-apps/plugin-dialog';
 
 const log = createLogger('Editor');
 
@@ -263,6 +265,50 @@ export default function EditorPanel() {
     }
   };
 
+  const handleDeleteEntry = async () => {
+    if (dayEntries().length <= 1) return;
+
+    const confirmed = await confirm('Are you sure you want to delete this entry?', {
+      title: 'Delete Entry',
+      kind: 'warning',
+    });
+
+    if (!confirmed) return;
+
+    try {
+      const entryToDelete = dayEntries()[currentIndex()];
+      if (!entryToDelete?.id) return;
+
+      await deleteEntry(entryToDelete.id);
+
+      const refreshed = await fetchEntriesOrdered(selectedDate());
+
+      if (refreshed.length === 0) {
+        setPendingEntryId(null);
+        setTitle('');
+        setContent('');
+        setWordCount(0);
+        setDayEntries([]);
+        setCurrentIndex(0);
+      } else {
+        let newIndex = currentIndex();
+        if (newIndex >= refreshed.length) {
+          newIndex = refreshed.length - 1;
+        }
+        const entry = refreshed[newIndex];
+        setPendingEntryId(entry.id);
+        setTitle(entry.title);
+        setContent(entry.text);
+        const words = entry.text.trim().split(/\s+/).filter(Boolean);
+        setWordCount(words.length);
+        setDayEntries(refreshed);
+        setCurrentIndex(newIndex);
+      }
+    } catch (error) {
+      log.error('Failed to delete entry:', error);
+    }
+  };
+
   const handleTitleInput = (newTitle: string) => {
     setTitle(newTitle);
     const id = pendingEntryId();
@@ -334,6 +380,9 @@ export default function EditorPanel() {
               ? 'Write something first to add another entry for this day'
               : 'Add another entry for this day'
         }
+        onDelete={handleDeleteEntry}
+        deleteDisabled={isCreatingEntry() || dayEntries().length <= 1}
+        deleteTitle="Delete entry"
       />
       <div class="flex-1 overflow-y-auto p-6">
         <div class="mx-auto w-full max-w-3xl xl:max-w-5xl 2xl:max-w-6xl">

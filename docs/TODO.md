@@ -3,16 +3,16 @@
 Open tasks and planned improvements. For full context and implementation notes on the original tasks, see [OPEN_TASKS.md](OPEN_TASKS.md).
 
 TODO entry format:
+
 - `- [ ] **Task title** — concise requirement-style description with scope and constraints`
 - Write items as requirements/acceptance criteria (what must be true), not implementation plans (how to build it)
 - Keep implementation details minimal in TODO entries; move deep implementation notes to `OPEN_TASKS.md` when needed
 - Put items under the appropriate priority section
 - Use indented checkbox items only for true sub-tasks or explicit dependencies
 
-
 ---
-## High Priority
 
+## High Priority
 
 ---
 
@@ -24,7 +24,7 @@ TODO entry format:
   - **Must NOT include (privacy boundary):** entry content/title HTML, search queries, password values, key files/private keys/public keys/master-key material, auth slot wrapped blobs, full filesystem paths, or any raw user text fields; redact/sanitize before write
   - **Implementation notes:** create a backend command for dump generation so sanitization is enforced in Rust, and keep frontend as a simple trigger + save flow
   - **Files:** `src/components/overlays/PreferencesOverlay.tsx`, `src/lib/tauri.ts`, `src-tauri/src/commands/` (new command module and registration in `commands/mod.rs` + `lib.rs`)
-- [ ] **Add "-" button to delete current extra entry (same day)** — add a delete-entry button next to the existing `+` button in the entry navigator for multi-entry days
+- [x] **Add "-" button to delete current extra entry (same day)** — add a delete-entry button next to the existing `+` button in the entry navigator for multi-entry days (2026-03-05)
   - **Visibility requirement:** show the `-` button only when the selected day has more than 1 entry
   - **Tooltip requirement:** the `-` button must have a clear tooltip that explains the action before click
   - **Confirmation requirement:** clicking `-` opens a `Yes` / `No` confirmation dialog
@@ -52,7 +52,6 @@ TODO entry format:
   - [ ] **Translate all UI text** — replace hardcoded strings with translation keys (~145 keys); depends on i18n framework above
 - [ ] **Frontend test coverage** — auth screens (`PasswordPrompt.tsx`, `PasswordCreation.tsx`), Calendar, and all overlays (GoToDateOverlay, PreferencesOverlay, StatsOverlay, ImportOverlay, ExportOverlay) have zero test coverage; add Vitest + @solidjs/testing-library tests for each; use existing pattern from `TitleEditor.test.tsx` and `WordCount.test.tsx`
 - [ ] **`screen_lock.rs` unit tests** — the Windows session-lock hook is untested because it calls Win32 APIs directly; extract `trigger_auto_lock` and test it with a mock `DiaryState`; requires Win32 API mocking strategy.
-
 
 ---
 

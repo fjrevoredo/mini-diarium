@@ -180,6 +180,7 @@ pub fn run() {
             commands::entries::save_entry,
             commands::entries::get_entries_for_date,
             commands::entries::delete_entry_if_empty,
+            commands::entries::delete_entry,
             commands::entries::get_all_entry_dates,
             // Search
             commands::search::search_entries,

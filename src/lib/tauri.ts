@@ -154,6 +154,10 @@ export async function deleteEntryIfEmpty(
   return await invoke('delete_entry_if_empty', { id, title, text });
 }
 
+export async function deleteEntry(id: number): Promise<void> {
+  return invoke('delete_entry', { id });
+}
+
 export async function getAllEntryDates(): Promise<string[]> {
   return await invoke('get_all_entry_dates');
 }

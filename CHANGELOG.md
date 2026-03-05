@@ -6,6 +6,8 @@ All notable changes to Mini Diarium are documented here. This project uses [Sema
 
 ### Added
 
+- **Delete entry button for multi-entry days**: a "−" button now appears next to the "+" button in the entry navigator when a day has more than one entry. Clicking "−" opens a confirmation dialog ("Delete Entry" — "Are you sure you want to delete this entry?") and, if confirmed, deletes the currently selected entry and navigates to the next available entry for the same day (staying at the same index, clamping to bounds if the last entry was deleted). The button is only visible when the day has multiple entries and is disabled while an entry is being created. (#43)
+
 ### Changed
 
 - **Unified user-facing terminology to "Journal"**: all UI text, error messages, and documentation now consistently use "Journal" instead of the mixed "diary"/"journal" wording; internal Tauri command names and filesystem identifiers (`diary.db`) are preserved for compatibility (issue #46)
@@ -33,7 +35,6 @@ All notable changes to Mini Diarium are documented here. This project uses [Sema
 - **Text highlight formatting** in the advanced editor toolbar (`Ctrl/Cmd+Shift+H`). Highlighted text is rendered with a yellow background (theme-safe in light and dark mode). HTML `<mark>` tags are preserved in storage and JSON export; Markdown export strips the tags and keeps the text. (#41)
 - **Embedded images in the editor**: images can now be inserted into diary entries via drag-and-drop, clipboard paste (Ctrl/Cmd+V), or the new "Insert image" button in the advanced toolbar. Images are resized client-side (max 1200 × 1200 px, JPEG 85% quality) before embedding as base64 data URIs in the encrypted entry HTML. Plaintext never touches disk. Note: JSON/Markdown exports will include the full base64 strings and may be large for entries with many images. (#40)
 - **Configurable editor font size** (12–24 px) in Preferences → Writing (#30)
-
 
 ## [0.4.3] — 01-03-2026
 
@@ -88,7 +89,6 @@ All notable changes to Mini Diarium are documented here. This project uses [Sema
 - **Plugin documentation structure simplified**: user plugin documentation and canonical example now live together in `docs/user-plugins/` for discoverability; README now links to this area from a dedicated **Extending Mini Diarium** section.
 - **E2E test isolation hardened**: `bun run test:e2e` now runs in deterministic clean-room mode (isolated diary data, isolated WebView profile on Windows, fixed 800×660 viewport, and backend window-state persistence disabled via `MINI_DIARIUM_E2E=1`), with `bun run test:e2e:stateful` available for persistence-focused checks in a repo-local state directory.
 
-
 ## [0.4.0] - 25-02-2026
 
 ### Added
@@ -110,7 +110,6 @@ All notable changes to Mini Diarium are documented here. This project uses [Sema
 ### Changed
 
 - **PHILOSOPHY.md restructured and expanded**: split into Part I (what and why for each principle) and Part II (how each principle is implemented in the codebase). Added concrete extension/plugin system description, E2E test stack guidance, rationale for the no-password-recovery rule, OS integration and Rhai scripting as justified complexity examples, a typo fix ("rich-text support"), a clarification distinguishing local Rhai plugins from plugin marketplaces, a version/date header, and a new "Honest threat documentation" non-negotiable. README now links to PHILOSOPHY.md under a dedicated Philosophy section.
-
 
 ## [0.3.0] — 2026-02-21
 
@@ -152,8 +151,6 @@ All notable changes to Mini Diarium are documented here. This project uses [Sema
 
 - **Documentation diagrams synced with codebase**: refreshed architecture/context diagrams to match the current SolidJS signal state model, command/backend layout, and security posture (no plaintext search index); updated stale `AGENTS.md`/`CLAUDE.md` diagram references and regeneration instructions; added light-theme `architecture.svg` generation and CI existence checks alongside `architecture-dark.svg`.
 
-
-
 ## [0.2.1] — 2026-02-19
 
 ### Added
@@ -167,8 +164,6 @@ All notable changes to Mini Diarium are documented here. This project uses [Sema
 - macOS "damaged and can't be opened" error: added ad-hoc code signing (`signingIdentity: "-"`) and updated installation instructions to use `xattr -cr` workaround
 - macOS release builds now correctly produce a universal binary (arm64 + x86_64) by passing `--target universal-apple-darwin` to the build step
 - The entries_skipped field was declared but never used, it was added a condition in the for loop to skip and count entries that have no meaningful content rather than inserting empty records. by @Yujonpradhananga
-
-
 
 ## [0.2.0] — 2026-02-18
 
@@ -205,8 +200,6 @@ All notable changes to Mini Diarium are documented here. This project uses [Sema
 - `change_password` now re-wraps the master key in O(1) — no entry re-encryption required regardless of diary size
 - Existing v1 and v2 databases are automatically migrated to v3 then v4 on the first unlock
 - App icon and logo updated across all platforms (Windows ICO, macOS ICNS, Linux PNG, Windows AppX, iOS, Android); logo also shown on the unlock and diary creation screens
-
-
 
 ## [0.1.0] — 2026-02-16
 

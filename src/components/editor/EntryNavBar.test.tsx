@@ -1,4 +1,4 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { render } from '@solidjs/testing-library';
 import { EntryNavBar } from './EntryNavBar';
 
@@ -115,5 +115,109 @@ describe('EntryNavBar arrow disabled states', () => {
     ));
     const next = container.querySelector('[aria-label="Next entry"]') as HTMLButtonElement;
     expect(next.disabled).toBe(false);
+  });
+});
+
+describe('EntryNavBar — delete button', () => {
+  it('does NOT render delete button when total is 1', () => {
+    const mockDelete = vi.fn();
+    const { container } = render(() => (
+      <EntryNavBar
+        total={1}
+        index={0}
+        onPrev={noop}
+        onNext={noop}
+        onAdd={noop}
+        onDelete={mockDelete}
+      />
+    ));
+    expect(container.querySelector('[aria-label="Delete entry"]')).toBeNull();
+  });
+
+  it('does NOT render delete button when onDelete not provided', () => {
+    const { container } = render(() => (
+      <EntryNavBar total={3} index={0} onPrev={noop} onNext={noop} onAdd={noop} />
+    ));
+    expect(container.querySelector('[aria-label="Delete entry"]')).toBeNull();
+  });
+
+  it('renders delete button when total > 1 and onDelete provided', () => {
+    const mockDelete = vi.fn();
+    const { container } = render(() => (
+      <EntryNavBar
+        total={3}
+        index={1}
+        onPrev={noop}
+        onNext={noop}
+        onAdd={noop}
+        onDelete={mockDelete}
+      />
+    ));
+    expect(container.querySelector('[aria-label="Delete entry"]')).not.toBeNull();
+  });
+
+  it('calls onDelete callback when delete button clicked', () => {
+    const mockDelete = vi.fn();
+    const { container } = render(() => (
+      <EntryNavBar
+        total={2}
+        index={0}
+        onPrev={noop}
+        onNext={noop}
+        onAdd={noop}
+        onDelete={mockDelete}
+      />
+    ));
+    const deleteBtn = container.querySelector('[aria-label="Delete entry"]') as HTMLButtonElement;
+    deleteBtn.click();
+    expect(mockDelete).toHaveBeenCalledTimes(1);
+  });
+
+  it('disables delete button when deleteDisabled is true', () => {
+    const mockDelete = vi.fn();
+    const { container } = render(() => (
+      <EntryNavBar
+        total={2}
+        index={0}
+        onPrev={noop}
+        onNext={noop}
+        onAdd={noop}
+        onDelete={mockDelete}
+        deleteDisabled={true}
+      />
+    ));
+    const deleteBtn = container.querySelector('[aria-label="Delete entry"]') as HTMLButtonElement;
+    expect(deleteBtn.disabled).toBe(true);
+  });
+
+  it('uses default aria-label when deleteTitle not provided', () => {
+    const mockDelete = vi.fn();
+    const { container } = render(() => (
+      <EntryNavBar
+        total={2}
+        index={0}
+        onPrev={noop}
+        onNext={noop}
+        onAdd={noop}
+        onDelete={mockDelete}
+      />
+    ));
+    expect(container.querySelector('[aria-label="Delete entry"]')).not.toBeNull();
+  });
+
+  it('uses custom aria-label from deleteTitle prop', () => {
+    const mockDelete = vi.fn();
+    const { container } = render(() => (
+      <EntryNavBar
+        total={2}
+        index={0}
+        onPrev={noop}
+        onNext={noop}
+        onAdd={noop}
+        onDelete={mockDelete}
+        deleteTitle="Remove this entry"
+      />
+    ));
+    expect(container.querySelector('[aria-label="Remove this entry"]')).not.toBeNull();
   });
 });
