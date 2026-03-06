@@ -207,6 +207,8 @@ pub fn run() {
             commands::plugin::list_export_plugins,
             commands::plugin::run_import_plugin,
             commands::plugin::run_export_plugin,
+            // Debug
+            commands::debug::generate_debug_dump,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

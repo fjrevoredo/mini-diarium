@@ -27,7 +27,7 @@ const FIRST_DAY_OPTIONS = [
 
 const log = createLogger('Preferences');
 
-type Tab = 'general' | 'writing' | 'security' | 'data';
+type Tab = 'general' | 'writing' | 'security' | 'data' | 'advanced';
 
 export default function PreferencesOverlay(props: PreferencesOverlayProps) {
   // Tab state
@@ -84,12 +84,20 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
   const [addPasswordError, setAddPasswordError] = createSignal<string | null>(null);
   const [addPasswordSuccess, setAddPasswordSuccess] = createSignal(false);
 
+  // Debug dump state
+  const [dumpGenerating, setDumpGenerating] = createSignal(false);
+  const [dumpStatus, setDumpStatus] = createSignal<'idle' | 'success' | 'error'>('idle');
+  const [dumpError, setDumpError] = createSignal('');
+
   const isUnlocked = () => authState() === 'unlocked';
   const hasPasswordSlot = () => authMethods().some((m) => m.slot_type === 'password');
 
   // Reset locked-only tabs when journal is locked
   createEffect(() => {
-    if (!isUnlocked() && (activeTab() === 'writing' || activeTab() === 'security')) {
+    if (
+      !isUnlocked() &&
+      (activeTab() === 'writing' || activeTab() === 'security' || activeTab() === 'advanced')
+    ) {
       setActiveTab('general');
     }
   });
@@ -168,6 +176,10 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
       // Reset change-dir state
       setChangeDirError(null);
       setIsChangingDir(false);
+
+      setDumpGenerating(false);
+      setDumpStatus('idle');
+      setDumpError('');
     }
     if (!open) {
       props.onClose();
@@ -388,6 +400,29 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
     }
   };
 
+  const handleGenerateDebugDump = async () => {
+    setDumpGenerating(true);
+    setDumpStatus('idle');
+    setDumpError('');
+    try {
+      const filePath = await save({
+        defaultPath: `mini-diarium-debug-${Date.now()}.json`,
+        filters: [{ name: 'JSON Files', extensions: ['json'] }],
+      });
+      if (!filePath) {
+        setDumpGenerating(false);
+        return;
+      }
+      await tauri.generateDebugDump(filePath, JSON.stringify(preferences()));
+      setDumpStatus('success');
+    } catch (err) {
+      setDumpError(mapTauriError(err));
+      setDumpStatus('error');
+    } finally {
+      setDumpGenerating(false);
+    }
+  };
+
   // Tab button class helper
   const tabClass = (tab: Tab) =>
     activeTab() === tab
@@ -461,6 +496,16 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                 <button type="button" onClick={() => setActiveTab('data')} class={tabClass('data')}>
                   Data
                 </button>
+
+                <Show when={isUnlocked()}>
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('advanced')}
+                    class={tabClass('advanced')}
+                  >
+                    Advanced
+                  </button>
+                </Show>
               </nav>
 
               {/* Tab content */}
@@ -967,6 +1012,34 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                           Warning: This will permanently delete all entries. This action cannot be
                           undone.
                         </p>
+                      </div>
+                    </div>
+                  </Match>
+                  {/* ── Advanced ── */}
+                  <Match when={activeTab() === 'advanced'}>
+                    <div class="space-y-6">
+                      <div>
+                        <h3 class="text-sm font-medium text-primary mb-1">Diagnostics</h3>
+                        <p class="text-xs text-tertiary mb-3 leading-relaxed">
+                          Generates a JSON file with app metadata to help diagnose issues. No
+                          journal content, passwords, or encryption keys are included.
+                        </p>
+                        <div class="space-y-2">
+                          <button
+                            type="button"
+                            onClick={handleGenerateDebugDump}
+                            disabled={dumpGenerating()}
+                            class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            {dumpGenerating() ? 'Generating…' : 'Generate Debug Dump'}
+                          </button>
+                          <Show when={dumpStatus() === 'success'}>
+                            <p class="text-sm text-success">Debug dump saved successfully.</p>
+                          </Show>
+                          <Show when={dumpStatus() === 'error'}>
+                            <p class="text-sm text-error">{dumpError()}</p>
+                          </Show>
+                        </div>
                       </div>
                     </div>
                   </Match>

@@ -270,6 +270,7 @@ All 45 registered Tauri commands (source: `lib.rs`). Rust names use `snake_case`
 | plugin | `list_export_plugins` | `listExportPlugins()` | List all export plugins (built-in + Rhai) |
 | plugin | `run_import_plugin` | `runImportPlugin(pluginId, filePath)` | Run import via plugin registry |
 | plugin | `run_export_plugin` | `runExportPlugin(pluginId, filePath)` | Run export via plugin registry |
+| debug | `generate_debug_dump` | `generateDebugDump(filePath, preferencesJson)` | Write privacy-safe diagnostic JSON to file |
 
 ## State Management
 
@@ -284,7 +285,7 @@ Six signal-based state modules in `src/state/`:
 | `ui.ts` | `selectedDate`, `isSidebarCollapsed`, `isGoToDateOpen`, `isPreferencesOpen`, `isStatsOpen`, `isImportOpen`, `isExportOpen`, `isAboutOpen` | Setters exported directly; `resetUiState()` resets all |
 | `preferences.ts` | `preferences: Preferences` | `setPreferences(Partial<Preferences>)`, `resetPreferences()` |
 
-`Preferences` fields: `allowFutureEntries` (bool), `firstDayOfWeek` (number|null), `hideTitles` (bool), `enableSpellcheck` (bool). Stored in `localStorage`.
+`Preferences` fields: `allowFutureEntries` (bool), `firstDayOfWeek` (number|null), `hideTitles` (bool), `enableSpellcheck` (bool), `escAction` (`'none'|'lock'|'quit'`), `autoLockEnabled` (bool), `autoLockTimeout` (number, seconds), `advancedToolbar` (bool), `editorFontSize` (number, px). Stored in `localStorage`.
 
 ## Conventions
 
@@ -365,7 +366,7 @@ All menu event names are prefixed `menu-`. See `menu.rs:78-107` for the full lis
 
 ## Testing
 
-### Backend: 229 tests across 28 modules
+### Backend: 233 tests across 29 modules
 
 Run: `cd src-tauri && cargo test`
 
@@ -388,6 +389,7 @@ Run: `cd src-tauri && cargo test`
 | import-cmd | 3 | `commands/import.rs` |
 | export-cmd | 2 | `commands/export.rs` |
 | plugin-cmd | 4 | `commands/plugin.rs` |
+| debug-cmd | 4 | `commands/debug.rs` |
 | minidiary | 8 | `import/minidiary.rs` |
 | dayone | 14 | `import/dayone.rs` |
 | dayone_txt | 16 | `import/dayone_txt.rs` |

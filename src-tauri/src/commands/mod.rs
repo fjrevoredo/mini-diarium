@@ -1,4 +1,5 @@
 pub mod auth;
+pub mod debug;
 pub mod entries;
 pub mod export;
 pub mod files;

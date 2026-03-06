@@ -26,7 +26,7 @@ impl DatabaseConnection {
 }
 
 /// Current schema version
-const SCHEMA_VERSION: i32 = 5;
+pub const SCHEMA_VERSION: i32 = 5;
 
 /// Creates a new encrypted diary database (schema v5)
 ///

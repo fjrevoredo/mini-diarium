@@ -6,6 +6,7 @@ All notable changes to Mini Diarium are documented here. This project uses [Sema
 
 ### Added
 
+- **Advanced tab in Preferences** with a "Generate Debug Dump" button — exports a privacy-safe JSON diagnostic file (app version, OS/platform, schema version, entry counts, auth method types, backup count, plugin count, preferences); no entry content, passwords, or key material is ever included
 - **Month/year picker in calendar header**: clicking the month/year label in the sidebar calendar now toggles an inline month picker. The calendar body switches to a 3×4 month grid with year-step arrows; selecting a month jumps directly to that month and closes the picker. The currently displayed month is highlighted in the grid. No new dependencies. (#43)
 - **Delete entry button for multi-entry days**: a "−" button now appears next to the "+" button in the entry navigator when a day has more than one entry. Clicking "−" opens a confirmation dialog ("Delete Entry" — "Are you sure you want to delete this entry?") and, if confirmed, deletes the currently selected entry and navigates to the next available entry for the same day (staying at the same index, clamping to bounds if the last entry was deleted). The button is only visible when the day has multiple entries and is disabled while an entry is being created. (#43)
 

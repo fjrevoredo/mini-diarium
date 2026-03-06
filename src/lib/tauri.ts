@@ -272,3 +272,16 @@ export async function runExportPlugin(pluginId: string, filePath: string): Promi
 export async function readFileBytes(path: string): Promise<number[]> {
   return await invoke('read_file_bytes', { path });
 }
+
+// Debug commands
+export interface DebugDumpResult {
+  file_path: string;
+  generated_at: string;
+}
+
+export async function generateDebugDump(
+  filePath: string,
+  preferencesJson: string,
+): Promise<DebugDumpResult> {
+  return await invoke<DebugDumpResult>('generate_debug_dump', { filePath, preferencesJson });
+}
