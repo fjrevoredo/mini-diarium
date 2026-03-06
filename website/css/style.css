@@ -222,7 +222,12 @@ section {
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s;
+  transition:
+    color 0.2s,
+    background-color 0.2s,
+    border-color 0.2s,
+    opacity 0.2s,
+    transform 0.2s;
   border: 1.5px solid transparent;
   white-space: nowrap;
 }
@@ -342,10 +347,12 @@ section {
   color: var(--text-muted);
 }
 
-.demo-gif {
+.demo-media {
   width: 100%;
-  height: auto;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
   display: block;
+  background: #111;
 }
 
 /* ===== Section Headings ===== */
@@ -712,7 +719,12 @@ section {
   color: var(--text);
   font-size: 0.85rem;
   font-weight: 600;
-  transition: all 0.2s;
+  transition:
+    color 0.2s,
+    background-color 0.2s,
+    border-color 0.2s,
+    opacity 0.2s,
+    transform 0.2s;
 }
 
 .badge-btn:hover {
@@ -808,7 +820,12 @@ section {
   border: 1px solid var(--border);
   border-radius: 6px;
   padding: 0.25rem 0.6rem;
-  transition: all 0.2s;
+  transition:
+    color 0.2s,
+    background-color 0.2s,
+    border-color 0.2s,
+    opacity 0.2s,
+    transform 0.2s;
 }
 
 .author-link:hover {

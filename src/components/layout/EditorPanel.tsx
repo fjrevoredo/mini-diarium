@@ -16,7 +16,7 @@ import {
 } from '../../lib/tauri';
 import type { DiaryEntry } from '../../lib/tauri';
 import { debounce } from '../../lib/debounce';
-import { isSaving, setIsSaving, setEntryDates } from '../../state/entries';
+import { isSaving, setIsSaving, setEntryDates, registerCleanupCallback } from '../../state/entries';
 import { preferences } from '../../state/preferences';
 import { confirm } from '@tauri-apps/plugin-dialog';
 
@@ -355,12 +355,20 @@ export default function EditorPanel() {
 
     window.addEventListener('beforeunload', handleBeforeUnload);
 
+    const unregister = registerCleanupCallback(async () => {
+      const currentId = pendingEntryId();
+      if (currentId !== null) {
+        await saveCurrentById(currentId, title(), content());
+      }
+    });
+
     onCleanup(() => {
       isDisposed = true;
       loadRequestId += 1;
       saveRequestId += 1;
       debouncedSave.cancel();
       window.removeEventListener('beforeunload', handleBeforeUnload);
+      unregister();
     });
   });
 

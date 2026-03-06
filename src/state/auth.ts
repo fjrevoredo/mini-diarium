@@ -1,7 +1,7 @@
 import { createSignal } from 'solid-js';
 import { listen, UnlistenFn } from '@tauri-apps/api/event';
 import * as tauri from '../lib/tauri';
-import { setEntryDates } from './entries';
+import { setEntryDates, executeCleanupCallbacks } from './entries';
 import { createLogger } from '../lib/logger';
 import { mapTauriError } from '../lib/errors';
 import { activeJournalId, loadJournals } from './journals';
@@ -140,6 +140,7 @@ export async function unlockWithKeypair(keyPath: string): Promise<void> {
 export async function lockJournal(): Promise<void> {
   try {
     setError(null);
+    await executeCleanupCallbacks();
     await tauri.lockJournal();
     resetForLockedSession();
     log.info('Journal locked');
@@ -152,16 +153,26 @@ export async function lockJournal(): Promise<void> {
 
 // Listen for backend-originated lock events (e.g. OS session lock).
 export async function setupAuthEventListeners(): Promise<() => void> {
+  const unlistenJournalLocking: UnlistenFn = await listen<string>(
+    'journal-locking',
+    async (event) => {
+      const reason = event.payload ?? 'unknown';
+      log.info(`Journal locking by backend (${reason})`);
+      await executeCleanupCallbacks();
+    },
+  );
+
   const unlistenJournalLocked: UnlistenFn = await listen<JournalLockedEventPayload>(
     'journal-locked',
     (event) => {
       const reason = event.payload?.reason ?? 'unknown';
       resetForLockedSession();
-      log.info(`Journal locked by backend event (${reason})`);
+      log.info(`Journal locked by backend (${reason})`);
     },
   );
 
   return () => {
+    unlistenJournalLocking();
     unlistenJournalLocked();
   };
 }

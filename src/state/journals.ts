@@ -1,5 +1,6 @@
 import { createSignal } from 'solid-js';
 import * as tauri from '../lib/tauri';
+import { executeCleanupCallbacks } from './entries';
 
 const [journals, setJournals] = createSignal<tauri.JournalConfig[]>([]);
 const [activeJournalId, setActiveJournalId] = createSignal<string | null>(null);
@@ -15,6 +16,7 @@ export async function switchJournal(id: string): Promise<void> {
   if (isSwitching()) return;
   setIsSwitching(true);
   try {
+    await executeCleanupCallbacks();
     await tauri.switchJournal(id);
     setActiveJournalId(id);
   } finally {

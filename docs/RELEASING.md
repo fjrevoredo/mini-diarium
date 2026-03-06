@@ -54,12 +54,13 @@ This automatically updates:
 - `src-tauri/tauri.conf.json`
 - `src-tauri/Cargo.toml`
 - `src-tauri/Cargo.lock`
+- `website/index.html` version badge, structured-data `softwareVersion`, and direct website download URLs
 
 ### Step 3: Commit and Push Branch
 
 ```bash
 # Commit version bump
-git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock
+git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock website/index.html README.md
 git commit -m "chore: bump version to 0.1.1"
 
 # Push branch
@@ -113,10 +114,33 @@ git push origin v0.1.1
 
 After publishing:
 
+- [ ] Verify the direct website installer URLs match the published release assets
+  ```bash
+  ./scripts/website-release-urls.sh
+  ```
+- [ ] In Google Search Console, inspect `https://mini-diarium.com/` and click "Request indexing"
+- [ ] Optionally ping IndexNow if you have a configured key
+  ```bash
+  INDEXNOW_KEY=your-key ./scripts/ping-indexnow.sh https://mini-diarium.com/
+  ```
+- [ ] Confirm production hosting still redirects `https://www.mini-diarium.com/` to `https://mini-diarium.com/`
+- [ ] Confirm Cloudflare is not injecting the invalid `Content-Signal` directive into `robots.txt`
 - [ ] Test installers on each platform (Windows, macOS, Linux)
 - [ ] Announce release (if applicable)
 - [ ] Close related GitHub issues/PRs
 - [ ] Update project board/milestones
+
+### Search Discovery Notes
+
+- Search Console submission is still manual. Keep it in the release checklist for every public release.
+- `scripts/ping-indexnow.sh` is optional and only works if you have an IndexNow key provisioned for `mini-diarium.com`.
+- Production is served as static content on Coolify. Docker/nginx files in `website/` are local/dev parity references, not the production control plane.
+- Keep production cache rules aligned with the site assumptions:
+  - static assets (`css`, `js`, `png`, `jpg`, `svg`, `ico`, `woff2`, `mp4`, `webm`) should be cached for 1 year with `immutable`
+  - HTML should remain non-cached
+- Cloudflare-specific ops:
+  - disable `robots.txt` Content Signals injection, or move the AI-training policy to a supported header such as `X-Robots-Tag`
+  - keep any Cloudflare canonical-host redirect rules aligned with apex `https://mini-diarium.com/`
 
 ---
 
@@ -177,7 +201,7 @@ git checkout master && git pull && git checkout -b release-X.Y.Z
 ./bump-version.sh X.Y.Z
 
 # 3. Commit and push branch
-git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock
+git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock website/index.html README.md
 git commit -m "chore: bump version to X.Y.Z"
 git push origin release-X.Y.Z
 
@@ -200,7 +224,7 @@ git checkout master; git pull; git checkout -b release-X.Y.Z
 .\bump-version.ps1 X.Y.Z
 
 # 3. Commit and push branch
-git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock
+git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock website/index.html README.md
 git commit -m "chore: bump version to X.Y.Z"
 git push origin release-X.Y.Z
 

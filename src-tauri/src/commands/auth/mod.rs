@@ -44,6 +44,12 @@ fn lock_diary_inner(state: &DiaryState) -> Result<bool, String> {
     Ok(true)
 }
 
+fn emit_diary_locking(app: &AppHandle<Wry>, reason: &str) {
+    if let Err(error) = app.emit("journal-locking", reason) {
+        warn!("Failed to emit journal-locking event: {}", error);
+    }
+}
+
 fn emit_diary_locked(app: &AppHandle<Wry>, reason: &str) {
     if let Err(error) = app.emit(
         "journal-locked",
@@ -60,6 +66,7 @@ pub(crate) fn auto_lock_diary_if_unlocked(
     app: AppHandle<Wry>,
     reason: &str,
 ) -> Result<bool, String> {
+    emit_diary_locking(&app, reason);
     let did_lock = lock_diary_inner(&state)?;
 
     if did_lock {

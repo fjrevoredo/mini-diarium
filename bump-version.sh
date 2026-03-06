@@ -67,7 +67,11 @@ cd ..
 # 5. Update website/index.html
 echo "Updating website/index.html..."
 sed -i.bak -E 's|<span class="app-version">[0-9]+\.[0-9]+\.[0-9]+</span>|<span class="app-version">'"${NEW_VERSION}"'</span>|g' website/index.html
+sed -i.bak2 -E 's|Mini-Diarium-[0-9]+\.[0-9]+\.[0-9]+-(windows\.exe|macos\.dmg|linux\.AppImage)|Mini-Diarium-'"${NEW_VERSION}"'-\1|g' website/index.html
+sed -i.bak3 -E 's|"softwareVersion": "[0-9]+\.[0-9]+\.[0-9]+"|"softwareVersion": "'"${NEW_VERSION}"'"|g' website/index.html
 rm website/index.html.bak
+rm website/index.html.bak2
+rm website/index.html.bak3
 
 # 6. Update README version badge
 echo "Updating README.md version badge..."
@@ -107,6 +111,19 @@ else
   if [ -n "${website_mismatch_values}" ]; then
     report_mismatch "website/index.html" "${NEW_VERSION}" "$(printf '%s' "${website_mismatch_values}" | tr '\n' ',' | sed 's/,$//')"
   fi
+fi
+
+website_download_versions=$(grep -oE 'Mini-Diarium-[0-9]+\.[0-9]+\.[0-9]+-(windows\.exe|macos\.dmg|linux\.AppImage)' website/index.html | sed -E 's|Mini-Diarium-([0-9]+\.[0-9]+\.[0-9]+)-.*|\1|' | sort -u || true)
+if [ -n "${website_download_versions}" ]; then
+  website_download_mismatches=$(printf '%s\n' "${website_download_versions}" | awk -v target="${NEW_VERSION}" '$0 != target { print }')
+  if [ -n "${website_download_mismatches}" ]; then
+    report_mismatch "website/index.html download URLs" "${NEW_VERSION}" "$(printf '%s' "${website_download_mismatches}" | tr '\n' ',' | sed 's/,$//')"
+  fi
+fi
+
+website_software_version=$(sed -nE 's|.*"softwareVersion": "([0-9]+\.[0-9]+\.[0-9]+)".*|\1|p' website/index.html | head -n1)
+if [ "${website_software_version}" != "${NEW_VERSION}" ]; then
+  report_mismatch "website/index.html softwareVersion" "${NEW_VERSION}" "${website_software_version:-<missing>}"
 fi
 
 if [ "${validation_failed}" -ne 0 ]; then

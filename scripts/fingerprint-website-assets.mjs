@@ -20,7 +20,7 @@ const ASSETS = [
     dir: "css",
     base: "style",
     ext: "css",
-    htmlPattern: /href="css\/style(?:\.[0-9a-f]{8})?\.css"/,
+    htmlPattern: /href="css\/style(?:\.[0-9a-f]{8})?\.css"/g,
     htmlAttr: "href",
   },
   {

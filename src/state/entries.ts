@@ -24,6 +24,20 @@ export function resetEntriesState(): void {
   setIsSaving(false);
 }
 
+// Cleanup callback system
+const [cleanupCallbacks, setCleanupCallbacks] = createSignal<(() => void | Promise<void>)[]>([]);
+
+export function registerCleanupCallback(callback: () => void | Promise<void>): () => void {
+  setCleanupCallbacks((prev) => [...prev, callback]);
+  return () => setCleanupCallbacks((prev) => prev.filter((cb) => cb !== callback));
+}
+
+export async function executeCleanupCallbacks(): Promise<void> {
+  for (const callback of cleanupCallbacks()) {
+    await callback();
+  }
+}
+
 export {
   currentEntry,
   setCurrentEntry,

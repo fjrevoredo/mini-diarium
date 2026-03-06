@@ -79,6 +79,8 @@ Write-Host "Updating website/index.html..."
 $websitePath = "website\index.html"
 $website = Get-Content $websitePath -Raw
 $website = $website -replace '<span class="app-version">\d+\.\d+\.\d+</span>', "<span class=`"app-version`">$Version</span>"
+$website = $website -replace 'Mini-Diarium-\d+\.\d+\.\d+-(windows\.exe|macos\.dmg|linux\.AppImage)', "Mini-Diarium-$Version-`$1"
+$website = $website -replace '"softwareVersion":\s*"\d+\.\d+\.\d+"', "`"softwareVersion`": `"$Version`""
 Set-Content -Path $websitePath -Value $website -NoNewline
 
 # 6. Update README version badge
@@ -125,6 +127,24 @@ if ($websiteMatches.Count -eq 0) {
     if ($websiteMismatchValues.Count -gt 0) {
         Report-Mismatch -FilePath "website\index.html" -Expected $Version -Actual ($websiteMismatchValues -join ",")
     }
+}
+
+$websiteDownloadMatches = [regex]::Matches((Get-Content $websitePath -Raw), 'Mini-Diarium-(\d+\.\d+\.\d+)-(windows\.exe|macos\.dmg|linux\.AppImage)')
+if ($websiteDownloadMatches.Count -gt 0) {
+    $websiteDownloadMismatchValues = @(
+        $websiteDownloadMatches |
+            ForEach-Object { $_.Groups[1].Value } |
+            Where-Object { $_ -ne $Version } |
+            Sort-Object -Unique
+    )
+    if ($websiteDownloadMismatchValues.Count -gt 0) {
+        Report-Mismatch -FilePath "website\index.html download URLs" -Expected $Version -Actual ($websiteDownloadMismatchValues -join ",")
+    }
+}
+
+$websiteSoftwareVersion = [regex]::Match((Get-Content $websitePath -Raw), '"softwareVersion"\s*:\s*"(\d+\.\d+\.\d+)"').Groups[1].Value
+if ($websiteSoftwareVersion -ne $Version) {
+    Report-Mismatch -FilePath "website\index.html softwareVersion" -Expected $Version -Actual ($(if ($websiteSoftwareVersion) { $websiteSoftwareVersion } else { "<missing>" }))
 }
 
 if ($validationFailed) {

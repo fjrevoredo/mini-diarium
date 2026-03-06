@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Mini Diarium: an encrypted, local-first desktop journal. AES-256-GCM encryption, no cloud, no tracking, no nonsense. Your entries stay on your device." />
+  <meta name="description" content="Encrypted offline journal app for Windows, macOS &amp; Linux. AES-256-GCM encryption, no cloud, no tracking, no subscriptions." />
   <meta name="robots" content="index,follow,max-snippet:-1,max-image-preview:large,max-video-preview:-1" />
   <meta name="theme-color" content="#0e0e0e" />
   <meta name="author" content="Francisco J. Revoredo" />
@@ -13,10 +13,10 @@
   <meta property="og:site_name" content="Mini Diarium" />
   <meta property="og:locale" content="en_US" />
   <meta property="og:url" content="https://mini-diarium.com/" />
-  <meta property="og:title" content="Mini Diarium: Your journal. Your device. Your keys." />
-  <meta property="og:description" content="An encrypted, local-first desktop journal for Windows, macOS, and Linux. No cloud, no tracking, no subscriptions." />
-  <meta property="og:image" content="https://mini-diarium.com/assets/og-cover.svg" />
-  <meta property="og:image:type" content="image/svg+xml" />
+  <meta property="og:title" content="Mini Diarium — Encrypted Offline Journal for Windows, macOS &amp; Linux" />
+  <meta property="og:description" content="Encrypted offline journal app for Windows, macOS &amp; Linux. AES-256-GCM encryption, no cloud, no tracking, no subscriptions." />
+  <meta property="og:image" content="https://mini-diarium.com/assets/og-cover.png" />
+  <meta property="og:image:type" content="image/png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
   <meta property="og:image:alt" content="Mini Diarium - encrypted local-first desktop journal" />
@@ -25,19 +25,57 @@
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:site" content="@MiniDiarium" />
   <meta name="twitter:creator" content="@MiniDiarium" />
-  <meta name="twitter:title" content="Mini Diarium: Your journal. Your device. Your keys." />
-  <meta name="twitter:description" content="An encrypted, local-first desktop journal. AES-256-GCM. No cloud, no tracking." />
-  <meta name="twitter:image" content="https://mini-diarium.com/assets/og-cover.svg" />
+  <meta name="twitter:title" content="Mini Diarium — Encrypted Offline Journal for Windows, macOS &amp; Linux" />
+  <meta name="twitter:description" content="Encrypted offline journal app for Windows, macOS &amp; Linux. AES-256-GCM encryption, no cloud, no tracking, no subscriptions." />
+  <meta name="twitter:image" content="https://mini-diarium.com/assets/og-cover.png" />
 
-  <title>Mini Diarium: Your journal. Your device. Your keys.</title>
+  <title>Mini Diarium — Encrypted Offline Journal for Windows, macOS &amp; Linux</title>
   <link rel="canonical" href="https://mini-diarium.com/" />
+  <link rel="preload" as="video" href="/assets/demo.mp4" type="video/mp4" fetchpriority="high" />
   <link rel="icon" href="assets/logo.svg" type="image/svg+xml" />
   <link rel="icon" href="favicon.ico" sizes="any" />
   <link rel="icon" href="favicon-16x16.png" type="image/png" sizes="16x16" />
   <link rel="icon" href="favicon-32x32.png" type="image/png" sizes="32x32" />
   <link rel="icon" href="favicon-128x128.png" type="image/png" sizes="128x128" />
   <link rel="apple-touch-icon" href="apple-touch-icon.png" sizes="180x180" />
-  <link rel="stylesheet" href="css/style.d6319c6e.css" />
+  <style>
+    :root{--bg:#0e0e0e;--bg-card:#161616;--bg-raised:#1f1f1f;--accent:#f5c94d;--accent-dim:#c49c2e;--text:#f0ede6;--text-muted:#888;--border:#2a2a2a;--radius:10px}
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+    body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;background-color:var(--bg);color:var(--text);line-height:1.6;-webkit-font-smoothing:antialiased}
+    img,video{max-width:100%;height:auto;display:block}
+    a{color:var(--accent);text-decoration:none}
+    .container{max-width:1100px;margin:0 auto;padding:0 clamp(1rem,5vw,2.5rem)}
+    .nav{position:sticky;top:0;z-index:100;background-color:rgba(14,14,14,.92);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--border)}
+    .nav-inner{display:flex;align-items:center;gap:2rem;height:60px}
+    .nav-brand{display:flex;align-items:center;gap:.65rem;color:var(--text);font-weight:700;font-size:1rem;letter-spacing:-.01em;white-space:nowrap}
+    .nav-links{display:flex;align-items:center;gap:1.5rem;margin-left:auto;list-style:none}
+    .nav-links a{color:var(--text-muted);font-size:.875rem;font-weight:500}
+    .nav-github{display:flex;align-items:center;gap:.4rem;padding:.4rem .9rem;background:var(--bg-raised);border:1px solid var(--border);border-radius:6px;color:var(--text)!important;font-size:.8rem!important;font-weight:600!important}
+    .hero{padding:clamp(4rem,10vw,8rem) 0 clamp(3rem,8vw,5rem);text-align:center}
+    .hero-version{display:inline-flex;align-items:center;gap:.4rem;font-size:.75rem;color:var(--text-muted);background:var(--bg-card);border:1px solid var(--border);border-radius:99px;padding:.2rem .7rem;margin-bottom:1.25rem}
+    .hero-version span,.hero-eyebrow{color:var(--accent);font-weight:700}
+    .hero-eyebrow{display:inline-flex;align-items:center;gap:.5rem;font-size:.75rem;letter-spacing:.12em;text-transform:uppercase;margin-bottom:1.5rem}
+    .hero-eyebrow::before,.hero-eyebrow::after{content:'';display:block;width:24px;height:1px;background:var(--accent);opacity:.5}
+    .hero h1{font-size:clamp(2.4rem,7vw,4.5rem);font-weight:800;line-height:1.05;letter-spacing:-.03em;color:var(--text);margin-bottom:1.25rem}
+    .hero h1 em{font-style:normal;color:var(--accent)}
+    .hero-sub{font-size:clamp(1rem,2.5vw,1.2rem);color:var(--text-muted);max-width:520px;margin:0 auto 2.5rem;line-height:1.7}
+    .hero-actions{display:flex;flex-wrap:wrap;justify-content:center;gap:.75rem;margin-bottom:1.5rem}
+    .btn{display:inline-flex;align-items:center;gap:.5rem;padding:.7rem 1.4rem;border-radius:var(--radius);font-size:.9rem;font-weight:600;border:1.5px solid transparent;white-space:nowrap}
+    .btn-primary{background:var(--accent);color:#0e0e0e;border-color:var(--accent)}
+    .btn-secondary{background:var(--bg-raised);color:var(--text);border-color:var(--border)}
+    .hero-sourceforge{display:inline-block;margin:.1rem auto 1rem}
+    .hero-source{font-size:.8rem;color:var(--text-muted)}
+    .demo{padding:0 0 clamp(3rem,8vw,6rem)}
+    .demo-window{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,.6);max-width:900px;margin:0 auto}
+    .demo-titlebar{display:flex;align-items:center;gap:.5rem;padding:.75rem 1rem;background:var(--bg-raised);border-bottom:1px solid var(--border)}
+    .demo-dot{width:12px;height:12px;border-radius:50%}
+    .demo-dot-close{background:#ff5f57}.demo-dot-min{background:#febc2e}.demo-dot-max{background:#28c840}
+    .demo-title{flex:1;text-align:center;font-size:.75rem;color:var(--text-muted)}
+    .demo-media{width:100%;aspect-ratio:4/3;object-fit:cover;background:#111}
+    @media (max-width:768px){.nav-links{display:none}.nav-toggle{display:block;background:none;border:none;cursor:pointer;padding:.5rem;color:var(--text);margin-left:auto}}
+  </style>
+  <link rel="preload" href="css/style.3eaec9e6.css" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+  <noscript><link rel="stylesheet" href="css/style.3eaec9e6.css" /></noscript>
 
   <script type="application/ld+json">
   {
@@ -51,7 +89,7 @@
         "url": "https://mini-diarium.com",
         "applicationCategory": "UtilitiesApplication",
         "operatingSystem": "Windows, macOS, Linux",
-        "softwareVersion": "0.4.1",
+        "softwareVersion": "0.4.5",
         "downloadUrl": "https://github.com/fjrevoredo/mini-diarium/releases",
         "installUrl": "https://github.com/fjrevoredo/mini-diarium/releases",
         "dateModified": "2026-03-03",
@@ -194,7 +232,7 @@
     </p>
 
     <div class="hero-actions">
-      <a class="btn btn-primary" href="https://github.com/fjrevoredo/mini-diarium/releases" target="_blank" rel="noopener noreferrer">
+      <a class="btn btn-primary" href="https://github.com/fjrevoredo/mini-diarium/releases/latest/download/Mini-Diarium-0.4.5-windows.exe" target="_blank" rel="noopener noreferrer" aria-label="Download Mini Diarium for Windows">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
           <polyline points="7 10 12 15 17 10"/>
@@ -202,13 +240,21 @@
         </svg>
         Download for Windows
       </a>
-      <a class="btn btn-secondary" href="https://github.com/fjrevoredo/mini-diarium/releases" target="_blank" rel="noopener noreferrer">
+      <a class="btn btn-secondary" href="https://github.com/fjrevoredo/mini-diarium/releases/latest/download/Mini-Diarium-0.4.5-macos.dmg" target="_blank" rel="noopener noreferrer" aria-label="Download Mini Diarium for macOS">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
           <polyline points="7 10 12 15 17 10"/>
           <line x1="12" y1="15" x2="12" y2="3"/>
         </svg>
-        macOS &amp; Linux
+        Download for macOS
+      </a>
+      <a class="btn btn-secondary" href="https://github.com/fjrevoredo/mini-diarium/releases/latest/download/Mini-Diarium-0.4.5-linux.AppImage" target="_blank" rel="noopener noreferrer" aria-label="Download Mini Diarium for Linux">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="7 10 12 15 17 10"/>
+          <line x1="12" y1="15" x2="12" y2="3"/>
+        </svg>
+        Download for Linux
       </a>
       <a class="btn btn-secondary" href="https://github.com/fjrevoredo/mini-diarium" target="_blank" rel="noopener noreferrer">
         <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -234,7 +280,11 @@
         <div class="demo-dot demo-dot-max"></div>
         <div class="demo-title">Mini Diarium</div>
       </div>
-      <img src="assets/demo.gif" alt="Mini Diarium in action: calendar navigation, rich text editor, and encrypted entry saving" class="demo-gif" loading="lazy" decoding="async" fetchpriority="low" width="900" height="562" />
+      <video class="demo-media" autoplay loop muted playsinline preload="auto" fetchpriority="high" poster="assets/demo-poster.png" width="720" height="540" aria-label="Mini Diarium in action: calendar navigation, rich text editor, and encrypted entry saving">
+        <source src="assets/demo.mp4" type="video/mp4" />
+        <source src="assets/demo.webm" type="video/webm" />
+        <img src="assets/demo-poster.png" alt="Mini Diarium in action: calendar navigation, rich text editor, and encrypted entry saving" width="720" height="540" />
+      </video>
     </div>
   </div>
 </section>
@@ -672,25 +722,13 @@
         <a href="https://github.com/fjrevoredo/mini-diarium/blob/master/CHANGELOG.md" target="_blank" rel="noopener noreferrer">Changelog</a>
         <a href="/ai-crawlers.txt">AI Crawlers</a>
         <a href="/llms.txt">LLMs</a>
-        <a id="contact-email" data-user="minidiarium" data-domain="gmail.com" aria-label="Email Mini Diarium">Email</a>
+        <a id="contact-email" href="mailto:minidiarium@gmail.com" aria-label="Email Mini Diarium">minidiarium@gmail.com</a>
         <span style="color: var(--text-muted);">mini-diarium.com</span>
       </div>
     </div>
   </div>
 </footer>
 
-<script>
-  ;(() => {
-    const el = document.getElementById('contact-email')
-    if (!el) return
-    const user = el.dataset.user
-    const domain = el.dataset.domain
-    if (!user || !domain) return
-    const email = `${user}@${domain}`
-    el.href = `mailto:${email}`
-    el.textContent = email
-  })()
-</script>
 <script src="js/main.8acbcb52.js"></script>
 </body>
 </html>
