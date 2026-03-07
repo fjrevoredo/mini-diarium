@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="An encrypted offline journal changes who controls your writing, your risk surface, and your long-term ownership. Privacy-first journaling starts with architecture." />
+  <meta name="robots" content="index,follow,max-snippet:-1,max-image-preview:large,max-video-preview:-1" />
+  <meta name="theme-color" content="#0e0e0e" />
+  <meta name="author" content="Francisco J. Revoredo" />
+  <meta property="og:type" content="article" />
+  <meta property="og:site_name" content="Mini Diarium" />
+  <meta property="og:locale" content="en_US" />
+  <meta property="og:url" content="https://mini-diarium.com/blog/why-an-offline-journal-is-different/" />
+  <meta property="og:title" content="Why an Offline Journal Is Different From a Cloud Notes App — Mini Diarium Blog" />
+  <meta property="og:description" content="An encrypted offline journal changes who controls your writing, your risk surface, and your long-term ownership. Privacy-first journaling starts with architecture." />
+  <meta property="og:image" content="https://mini-diarium.com/assets/og-cover.png" />
+  <meta property="og:image:type" content="image/png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="Mini Diarium - encrypted local-first desktop journal" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:site" content="@MiniDiarium" />
+  <meta name="twitter:creator" content="@MiniDiarium" />
+  <meta name="twitter:title" content="Why an Offline Journal Is Different From a Cloud Notes App — Mini Diarium Blog" />
+  <meta name="twitter:description" content="An encrypted offline journal changes who controls your writing, your risk surface, and your long-term ownership. Privacy-first journaling starts with architecture." />
+  <meta name="twitter:image" content="https://mini-diarium.com/assets/og-cover.png" />
+  <meta property="article:published_time" content="2026-03-06T00:00:00Z" />
+  <meta property="article:modified_time" content="2026-03-06T00:00:00Z" />
+  <meta property="article:author" content="Francisco J. Revoredo" />
+  <meta property="article:tag" content="offline journaling" />
+  <meta property="article:tag" content="privacy-first software" />
+  <meta property="article:tag" content="encrypted journal" />
+  <title>Why an Offline Journal Is Different From a Cloud Notes App — Mini Diarium Blog</title>
+  <link rel="canonical" href="https://mini-diarium.com/blog/why-an-offline-journal-is-different/" />
+  <link rel="alternate" type="application/rss+xml" title="Mini Diarium Blog" href="https://mini-diarium.com/blog/feed.xml" />
+  <link rel="icon" href="/assets/logo.svg" type="image/svg+xml" />
+  <link rel="icon" href="/favicon.ico" sizes="any" />
+  <link rel="icon" href="/favicon-16x16.png" type="image/png" sizes="16x16" />
+  <link rel="icon" href="/favicon-32x32.png" type="image/png" sizes="32x32" />
+  <link rel="icon" href="/favicon-128x128.png" type="image/png" sizes="128x128" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
+  <link rel="preload" href="/css/style.f155d41e.css" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+  <noscript><link rel="stylesheet" href="/css/style.f155d41e.css" /></noscript>
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "BlogPosting",
+      "@id": "https://mini-diarium.com/blog/why-an-offline-journal-is-different/#article",
+      "headline": "Why an Offline Journal Is Different From a Cloud Notes App",
+      "description": "An encrypted offline journal changes who controls your writing, your risk surface, and your long-term ownership. Privacy-first journaling starts with architecture.",
+      "datePublished": "2026-03-06T00:00:00Z",
+      "dateModified": "2026-03-06T00:00:00Z",
+      "author": {
+        "@type": "Person",
+        "name": "Francisco J. Revoredo",
+        "url": "https://fjrevoredo.com"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "Mini Diarium",
+        "url": "https://mini-diarium.com"
+      },
+      "image": "https://mini-diarium.com/assets/og-cover.png",
+      "keywords": "offline journaling, privacy-first software, encrypted journal",
+      "mainEntityOfPage": "https://mini-diarium.com/blog/why-an-offline-journal-is-different/"
+    },
+    {
+      "@type": "BreadcrumbList",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://mini-diarium.com"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Blog",
+          "item": "https://mini-diarium.com/blog/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 3,
+          "name": "Why an Offline Journal Is Different From a Cloud Notes App",
+          "item": "https://mini-diarium.com/blog/why-an-offline-journal-is-different/"
+        }
+      ]
+    }
+  ]
+}
+  </script>
+</head>
+<body>
+
+<nav class="nav" aria-label="Main navigation">
+  <div class="container nav-inner">
+    <a class="nav-brand" href="/">
+      <img src="/assets/logo.svg" alt="Mini Diarium logo" class="nav-logo" width="28" height="28" />
+      Mini Diarium
+    </a>
+
+    <ul class="nav-links" id="nav-links" role="list">
+      <li><a href="/#features">Features</a></li>
+      <li><a href="/#security">Security</a></li>
+      <li><a href="/blog/" aria-current="page">Blog</a></li>
+      <li><a href="/#facts">FAQ</a></li>
+      <li><a href="/#platforms">Download</a></li>
+      <li><a href="/#about">About</a></li>
+      <li>
+        <a class="nav-github" href="https://github.com/fjrevoredo/mini-diarium" target="_blank" rel="noopener noreferrer" aria-label="View on GitHub">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M12 .3a12 12 0 0 0-3.8 23.38c.6.12.83-.26.83-.57L9 21.07c-3.34.72-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.08-.74.09-.73.09-.73 1.2.09 1.83 1.24 1.83 1.24 1.07 1.83 2.81 1.3 3.5 1 .1-.78.42-1.31.76-1.61-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.14-.3-.54-1.52.1-3.18 0 0 1-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.28-1.55 3.29-1.23 3.29-1.23.64 1.66.24 2.88.12 3.18a4.65 4.65 0 0 1 1.23 3.22c0 4.61-2.8 5.63-5.48 5.92.43.37.81 1.1.81 2.22l-.01 3.29c0 .31.2.69.82.57A12 12 0 0 0 12 .3z"/>
+          </svg>
+          Star on GitHub
+        </a>
+      </li>
+    </ul>
+
+    <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="nav-links">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+        <line x1="3" y1="6" x2="21" y2="6" />
+        <line x1="3" y1="12" x2="21" y2="12" />
+        <line x1="3" y1="18" x2="21" y2="18" />
+      </svg>
+    </button>
+  </div>
+</nav>
+<main class="blog-shell">
+
+<section class="blog-post-hero">
+  <div class="container">
+    <nav class="breadcrumbs" aria-label="Breadcrumb">
+      <a href="/">Home</a>
+      <span>/</span>
+      <a href="/blog/">Blog</a>
+      <span>/</span>
+      <span>Why an Offline Journal Is Different From a Cloud Notes App</span>
+    </nav>
+    <div class="post-header">
+      <p class="hero-eyebrow">Mini Diarium blog</p>
+      <h1>Why an Offline Journal Is Different From a Cloud Notes App</h1>
+      <p class="hero-sub">An encrypted offline journal changes who controls your writing, your risk surface, and your long-term ownership. Privacy-first journaling starts with architecture.</p>
+      <div class="post-meta">
+        <span>March 6, 2026</span>
+        <span>Updated March 6, 2026</span>
+        <span>By Francisco J. Revoredo</span>
+      </div>
+      <ul class="tag-list" role="list">
+  <li>offline journaling</li>
+  <li>privacy-first software</li>
+  <li>encrypted journal</li>
+</ul>
+    </div>
+  </div>
+</section>
+
+<section class="blog-post-body">
+  <div class="container blog-post-layout">
+    <article class="blog-post prose" aria-label="Why an Offline Journal Is Different From a Cloud Notes App">
+      <p>Many writing apps talk about privacy. Fewer are designed so the product works without a network at all.</p>
+      <p>That difference matters more than any settings page or policy document. If the app depends on a server, sync backend, or cloud account, your writing lives inside a system that can change underneath you. If the app is offline-first by design, the control surface is smaller: your words stay on your device, and the product does not need a remote service to function.</p>
+      <h2 id="privacy-is-an-architectural-property">Privacy is an architectural property</h2><p>In Mini Diarium, privacy is not a mode you turn on after setup. The app is designed around local ownership from the start:</p>
+      <ul>
+      <li>entries are encrypted before they touch disk</li>
+      <li>the app makes no network requests</li>
+      <li>there is no account system, subscription gate, or remote dependency for normal use</li>
+      <li>JSON and Markdown exports stay available so your data is not trapped inside one tool</li>
+      </ul>
+      <p>That architecture changes the practical threat model. A cloud app can promise good intentions while still concentrating user data in places the user does not control. An offline journal does not have to make that trade.</p>
+      <h2 id="the-product-question-is-simple">The product question is simple</h2><p>If you are keeping a journal, the content is usually personal by default. Some entries are trivial. Others are not. A product that treats every entry as acceptable cloud material is making a value judgment for the user.</p>
+      <p>Mini Diarium takes the opposite position: journaling should start from ownership, not from assumptions that cloud storage is the default.</p>
+      <p>That is why the current product language is so direct:</p>
+      <ul>
+      <li>encrypted</li>
+      <li>offline-only</li>
+      <li>local-first</li>
+      <li>exportable</li>
+      </ul>
+      <p>Those are not decorative marketing claims. They are the boundaries that keep the app honest.</p>
+      <h2 id="what-an-offline-journal-gives-you">What an offline journal gives you</h2><p>An offline journal is not just about being disconnected from the internet. It gives you a different relationship with the software:</p>
+      <ul>
+      <li>your writing habit does not depend on service uptime</li>
+      <li>your journal is usable on the train, on a plane, or in a locked-down environment</li>
+      <li>your data path is understandable enough to audit</li>
+      <li>migration out of the app stays possible</li>
+      </ul>
+      <p>That is a better default for a category built around intimate writing.</p>
+      <h2 id="why-mini-diarium-leans-hard-into-this">Why Mini Diarium leans hard into this</h2><p>Mini Diarium is an encrypted desktop journal for Windows, macOS, and Linux. Entries are encrypted with AES-256-GCM before they are written to the local SQLite database, and the app makes zero network requests. That keeps the promise legible: your journal is yours because the software is built that way.</p>
+      <p>If you want the deeper technical model, the public docs are already available:</p>
+      <ul>
+      <li><a href="https://github.com/fjrevoredo/mini-diarium/blob/master/SECURITY.md" target="_blank" rel="noopener noreferrer">Security model</a></li>
+      <li><a href="https://github.com/fjrevoredo/mini-diarium/blob/master/docs/PRIVACY.md" target="_blank" rel="noopener noreferrer">Privacy policy</a></li>
+      <li><a href="https://github.com/fjrevoredo/mini-diarium" target="_blank" rel="noopener noreferrer">Source code on GitHub</a></li>
+      </ul>
+      <p>An offline journal is not automatically good software. But for private writing, it is the right starting point.</p>
+      
+    </article>
+    <aside class="blog-sidebar">
+      <div class="blog-sidebar-card">
+        <p class="section-label">Why this matters</p>
+        <h2>Mini Diarium is built for ownership</h2>
+        <p>Offline by default, encrypted at rest, and exportable when you want out.</p>
+        <a class="btn btn-secondary" href="/#security">See the security model</a>
+      </div>
+      <div class="blog-sidebar-card">
+        <p class="section-label">Keep reading</p>
+        <div class="related-list">
+          <a class="related-link" href="/blog/local-first-journaling-and-ownership/">
+            <strong>Local-First Journaling Means You Keep the Exit Door Open</strong>
+            <span>Local-first journaling protects more than secrecy. It protects portability, continuity, and the ability to leave with your data intact.</span>
+          </a>
+          <a class="related-link" href="/blog/why-mini-diarium-exists/">
+            <strong>Why Mini Diarium Exists</strong>
+            <span>A maintained Mini Diary successor, rebuilt with Tauri, SolidJS, and Rust around the same private journaling philosophy.</span>
+          </a>
+        </div>
+      </div>
+    </aside>
+  </div>
+</section>
+</main>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-inner">
+      <div class="footer-left">
+        <img src="/assets/logo.svg" alt="" class="footer-logo" width="20" height="20" aria-hidden="true" />
+        <span>Mini Diarium</span>
+        <span class="footer-sep">·</span>
+        <span>Offline-first</span>
+        <span class="footer-sep">·</span>
+        <span>MIT License</span>
+      </div>
+      <div class="footer-right">
+        <a href="https://github.com/fjrevoredo/mini-diarium" target="_blank" rel="noopener noreferrer">GitHub</a>
+        <a href="https://github.com/fjrevoredo/mini-diarium/blob/master/SECURITY.md" target="_blank" rel="noopener noreferrer">Security</a>
+        <a href="https://github.com/fjrevoredo/mini-diarium/blob/master/CHANGELOG.md" target="_blank" rel="noopener noreferrer">Changelog</a>
+        <a href="/blog/feed.xml">RSS</a>
+        <a href="/ai-crawlers.txt">AI Crawlers</a>
+        <a href="/llms.txt">LLMs</a>
+        <a href="mailto:minidiarium@gmail.com" aria-label="Email Mini Diarium">minidiarium@gmail.com</a>
+        <span style="color: var(--text-muted);">mini-diarium.com</span>
+      </div>
+    </div>
+  </div>
+</footer>
+<script src="/js/main.8acbcb52.js"></script>
+</body>
+</html>

@@ -22,6 +22,8 @@
     "check": "node scripts/quick-check.js",
     "diagrams": "node scripts/render-diagrams.mjs",
     "diagrams:check": "node scripts/verify-diagrams.mjs",
+    "website:blog": "node scripts/generate-website-blog.mjs",
+    "website:build-static": "node scripts/generate-website-blog.mjs && node scripts/fingerprint-website-assets.mjs",
     "website:fingerprint": "node scripts/fingerprint-website-assets.mjs",
     "test:e2e": "node scripts/run-e2e.js clean",
     "test:e2e:stateful": "node scripts/run-e2e.js stateful",

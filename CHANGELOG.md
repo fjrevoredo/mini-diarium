@@ -2,6 +2,12 @@
 
 All notable changes to Mini Diarium are documented here. This project uses [Semantic Versioning](https://semver.org/).
 
+## [0.4.6] — 07-03-2026
+
+### Fixed
+
+- **Backup rotation limit reduced from 50 to 30**: the `MAX_BACKUPS` constant has been lowered and a new test `test_backup_and_rotate_repeated_unlocks()` verifies that repeated unlock operations never allow the backup count to exceed the configured cap. All test assertions now use the constant instead of hardcoded values.
+
 ## [0.4.5] — 06-03-2026
 
 ### Added

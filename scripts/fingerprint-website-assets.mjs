@@ -1,8 +1,10 @@
 import { createHash } from "node:crypto";
 import {
   copyFileSync,
+  existsSync,
   readFileSync,
   readdirSync,
+  statSync,
   unlinkSync,
   writeFileSync,
 } from "node:fs";
@@ -13,21 +15,20 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const ROOT_DIR = path.resolve(__dirname, "..");
 const WEBSITE_DIR = path.join(ROOT_DIR, "website");
-const INDEX_PATH = path.join(WEBSITE_DIR, "index.html");
 
 const ASSETS = [
   {
     dir: "css",
     base: "style",
     ext: "css",
-    htmlPattern: /href="css\/style(?:\.[0-9a-f]{8})?\.css"/g,
+    htmlPattern: /href="\/?css\/style(?:\.[0-9a-f]{8})?\.css"/g,
     htmlAttr: "href",
   },
   {
     dir: "js",
     base: "main",
     ext: "js",
-    htmlPattern: /src="js\/main(?:\.[0-9a-f]{8})?\.js"/,
+    htmlPattern: /src="\/?js\/main(?:\.[0-9a-f]{8})?\.js"/g,
     htmlAttr: "src",
   },
 ];
@@ -43,7 +44,35 @@ function assertReplacement(content, pattern, replacement) {
   return content.replace(pattern, replacement);
 }
 
-let html = readFileSync(INDEX_PATH, "utf8");
+function walkHtmlFiles(dirPath) {
+  if (!existsSync(dirPath)) {
+    return [];
+  }
+
+  const files = [];
+
+  for (const entry of readdirSync(dirPath)) {
+    const entryPath = path.join(dirPath, entry);
+    const stats = statSync(entryPath);
+
+    if (stats.isDirectory()) {
+      files.push(...walkHtmlFiles(entryPath));
+      continue;
+    }
+
+    if (entry.endsWith(".html")) {
+      files.push(entryPath);
+    }
+  }
+
+  return files;
+}
+
+const htmlFiles = walkHtmlFiles(WEBSITE_DIR);
+
+if (htmlFiles.length === 0) {
+  throw new Error("No HTML files found under website/");
+}
 
 for (const asset of ASSETS) {
   const sourcePath = path.join(WEBSITE_DIR, asset.dir, `${asset.base}.${asset.ext}`);
@@ -62,14 +91,24 @@ for (const asset of ASSETS) {
 
   copyFileSync(sourcePath, hashedPath);
 
-  html = assertReplacement(
-    html,
-    asset.htmlPattern,
-    `${asset.htmlAttr}="${asset.dir}/${hashedFilename}"`,
-  );
-
   console.log(`Fingerprint updated: ${asset.dir}/${hashedFilename}`);
 }
 
-writeFileSync(INDEX_PATH, html);
-console.log("Updated website/index.html references");
+for (const htmlPath of htmlFiles) {
+  let html = readFileSync(htmlPath, "utf8");
+
+  for (const asset of ASSETS) {
+    const sourcePath = path.join(WEBSITE_DIR, asset.dir, `${asset.base}.${asset.ext}`);
+    const hash = shortHash(readFileSync(sourcePath));
+    const hashedFilename = `${asset.base}.${hash}.${asset.ext}`;
+
+    html = assertReplacement(
+      html,
+      asset.htmlPattern,
+      `${asset.htmlAttr}="/${asset.dir}/${hashedFilename}"`,
+    );
+  }
+
+  writeFileSync(htmlPath, html);
+  console.log(`Updated asset references: ${path.relative(WEBSITE_DIR, htmlPath)}`);
+}

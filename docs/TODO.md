@@ -18,7 +18,7 @@ TODO entry format:
 
 ## Medium Priority
 
-- [ ] **Investigate backup rotation limit** — a manual debug dump revealed `backup_count: 50` on a production journal, suggesting the rotation cap may not be enforced or may be set too high; verify the rotation limit constant in `backup.rs`, confirm it is applied on every unlock, and add or strengthen a test that asserts the count never exceeds the configured cap after repeated unlocks
+- [x] **Investigate backup rotation limit** — a manual debug dump revealed `backup_count: 50` on a production journal, suggesting the rotation cap may not be enforced or may be set too high; verify the rotation limit constant in `backup.rs`, confirm it is applied on every unlock, and add or strengthen a test that asserts the count never exceeds the configured cap after repeated unlocks
 - [ ] **Restore CI diagram content-diff check** — the byte-comparison check in `scripts/verify-diagrams.mjs` was reverted to existence-only because mmdc/d2 produce slightly different SVG bytes depending on version (local vs CI runners differ). The proper fix is to pin identical tool versions in both CI and local dev (e.g. lock `@mermaid-js/mermaid-cli` in `devDependencies` and `d2` via a specific release download in CI), then re-add the byte comparison. Until then, `diagrams:check` only verifies that all 8 `.svg` files are present.
 - [ ] **i18n framework** — detect OS locale, set up translation files (`en.json`, `es.json`), add `t()` helper
   - [ ] **Translate all UI text** — replace hardcoded strings with translation keys (~145 keys); depends on i18n framework above
@@ -29,9 +29,8 @@ TODO entry format:
 
 ## Website Priority
 
-- [ ] **Add basic manual blog to website** — add a simple static blog section under `website/` with hand-written entries (no CMS, no database, no dynamic rendering). New posts are created by manually adding/updating static files and then fully republishing the website; this manual release flow is intentional to keep implementation simple.
 - [ ] **Website SEO/GEO follow-up backlog** — remaining implementation items from the 2026 website SEO/GEO pass
-    - **Fix:** replace `transition: all 0.2s` with explicit property lists that exclude layout properties — e.g. `transition: color 0.2s, background-color 0.2s, border-color 0.2s, opacity 0.2s, transform 0.2s`; edit `website/css/style.css` (the source file) and regenerate/copy the hashed output.
+  - **Fix:** replace `transition: all 0.2s` with explicit property lists that exclude layout properties — e.g. `transition: color 0.2s, background-color 0.2s, border-color 0.2s, opacity 0.2s, transform 0.2s`; edit `website/css/style.css` (the source file) and regenerate/copy the hashed output.
   - [ ] **Resolve Cloudflare-injected robots.txt Content-Signal directive** — Cloudflare automatically appends `Content-Signal: search=yes,ai-train=no` to the live robots.txt at the CDN layer; Lighthouse's robots.txt parser flags this as invalid (not part of RFC 9309), costing 8 SEO points (score 92 → 100); the repo `website/robots.txt` is clean — this is a Cloudflare dashboard setting (REPORT.md FIX 2.1)
     - **Fix:** in the Cloudflare dashboard → Security → Bots → Crawler Hints, disable "Content Signals" injection or switch to the HTTP-header equivalent (`X-Robots-Tag: ai-train=no`) if available. No code change in the repo is needed — AI bot blocking is already handled by explicit `User-agent` blocks in the live robots.txt.
 

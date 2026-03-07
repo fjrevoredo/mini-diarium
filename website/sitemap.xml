@@ -2,6 +2,22 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://mini-diarium.com/</loc>
-    <lastmod>2026-02-26</lastmod>
+    <lastmod>2026-03-06</lastmod>
+  </url>
+  <url>
+    <loc>https://mini-diarium.com/blog/</loc>
+    <lastmod>2026-03-06</lastmod>
+  </url>
+  <url>
+    <loc>https://mini-diarium.com/blog/local-first-journaling-and-ownership/</loc>
+    <lastmod>2026-03-06</lastmod>
+  </url>
+  <url>
+    <loc>https://mini-diarium.com/blog/why-an-offline-journal-is-different/</loc>
+    <lastmod>2026-03-06</lastmod>
+  </url>
+  <url>
+    <loc>https://mini-diarium.com/blog/why-mini-diarium-exists/</loc>
+    <lastmod>2026-03-06</lastmod>
   </url>
 </urlset>

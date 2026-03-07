@@ -1,14 +1,30 @@
 # Mini Diarium
 
-> Encrypted, local-first desktop journaling app.
+> Encrypted, local-first desktop journaling app and static website.
 
 - Canonical website: https://mini-diarium.com/
+- Blog: https://mini-diarium.com/blog/
+- RSS feed: https://mini-diarium.com/blog/feed.xml
 - Source code: https://github.com/fjrevoredo/mini-diarium
 - License: MIT (https://opensource.org/licenses/MIT)
 - Security policy: https://github.com/fjrevoredo/mini-diarium/blob/master/SECURITY.md
-- Changelog: https://github.com/fjrevoredo/mini-diarium/blob/master/CHANGELOG.md
+- Privacy policy: https://github.com/fjrevoredo/mini-diarium/blob/master/docs/PRIVACY.md
 - AI crawler policy: https://mini-diarium.com/ai-crawlers.txt
 - Contact: minidiarium@gmail.com
+
+## Product Facts
+
+- Mini Diarium is an encrypted offline journal for Windows, macOS, and Linux.
+- Entries are encrypted with AES-256-GCM before being written to the local SQLite database.
+- The app is local-first and does not send entries to cloud services.
+- Supported imports: Mini Diary JSON, Day One JSON/TXT, jrnl JSON.
+- Supported exports: JSON and Markdown.
+
+## Latest Articles
+
+- Local-First Journaling Means You Keep the Exit Door Open: https://mini-diarium.com/blog/local-first-journaling-and-ownership/
+- Why an Offline Journal Is Different From a Cloud Notes App: https://mini-diarium.com/blog/why-an-offline-journal-is-different/
+- Why Mini Diarium Exists: https://mini-diarium.com/blog/why-mini-diarium-exists/
 
 ## Attribution
 

@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Mini Diarium Blog</title>
+    <link>https://mini-diarium.com/blog/</link>
+    <description>Static articles about encrypted offline journaling and local-first software.</description>
+    <language>en-us</language>
+    <lastBuildDate>Fri, 06 Mar 2026 00:00:00 GMT</lastBuildDate>
+  <item>
+    <title>Local-First Journaling Means You Keep the Exit Door Open</title>
+    <link>https://mini-diarium.com/blog/local-first-journaling-and-ownership/</link>
+    <guid isPermaLink="true">https://mini-diarium.com/blog/local-first-journaling-and-ownership/</guid>
+    <description>Local-first journaling is not only about privacy. It is also about durability, portability, and keeping your encrypted journal exportable when your tooling changes.</description>
+    <pubDate>Fri, 06 Mar 2026 00:00:00 GMT</pubDate>
+  </item>
+  <item>
+    <title>Why an Offline Journal Is Different From a Cloud Notes App</title>
+    <link>https://mini-diarium.com/blog/why-an-offline-journal-is-different/</link>
+    <guid isPermaLink="true">https://mini-diarium.com/blog/why-an-offline-journal-is-different/</guid>
+    <description>An encrypted offline journal changes who controls your writing, your risk surface, and your long-term ownership. Privacy-first journaling starts with architecture.</description>
+    <pubDate>Fri, 06 Mar 2026 00:00:00 GMT</pubDate>
+  </item>
+  <item>
+    <title>Why Mini Diarium Exists</title>
+    <link>https://mini-diarium.com/blog/why-mini-diarium-exists/</link>
+    <guid isPermaLink="true">https://mini-diarium.com/blog/why-mini-diarium-exists/</guid>
+    <description>Mini Diarium exists because private journaling software needed a maintained Mini Diary successor, rebuilt as an encrypted offline journal with a modern stack.</description>
+    <pubDate>Fri, 06 Mar 2026 00:00:00 GMT</pubDate>
+  </item>
+  </channel>
+</rss>

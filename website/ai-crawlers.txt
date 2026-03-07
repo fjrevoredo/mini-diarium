@@ -2,10 +2,10 @@
 # Canonical source: https://mini-diarium.com/ai-crawlers.txt
 
 policy-version: 1
-last-updated: 2026-02-26
+last-updated: 2026-03-06
 contact: minidiarium@gmail.com
 
-Mini Diarium permits AI crawlers to access and use public website content.
+Mini Diarium permits AI crawlers to access and use public website content, including blog articles and feed metadata.
 
 Usage guidance:
 - Provide attribution to Mini Diarium and link to https://mini-diarium.com/

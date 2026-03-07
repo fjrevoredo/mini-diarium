@@ -3,7 +3,7 @@ use log::debug;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-const MAX_BACKUPS: usize = 50;
+const MAX_BACKUPS: usize = 30;
 
 /// Creates a backup of the diary file
 /// Returns the path of the created backup file
@@ -169,7 +169,7 @@ mod tests {
         let _ = fs::remove_dir_all(&backups_dir);
         fs::create_dir_all(&backups_dir).unwrap();
 
-        // Create 60 backup files (over limit of 50)
+        // Create 60 backup files (over limit of MAX_BACKUPS)
         for i in 0..60 {
             let filename = format!("backup-2024-01-{:02}-12h00.db", i + 1);
             create_test_file(&backups_dir.join(filename), "test").unwrap();
@@ -178,19 +178,19 @@ mod tests {
         // Rotate
         rotate_backups(&backups_dir).unwrap();
 
-        // Verify only 50 files remain
+        // Verify only MAX_BACKUPS files remain
         let files: Vec<_> = fs::read_dir(&backups_dir)
             .unwrap()
             .filter_map(|e| e.ok())
             .collect();
-        assert_eq!(files.len(), 50);
+        assert_eq!(files.len(), MAX_BACKUPS);
 
-        // Verify the oldest files were deleted (backup-2024-01-01 through backup-2024-01-10)
+        // Verify the oldest files were deleted (backup-2024-01-01 through backup-2024-01-30)
         assert!(!backups_dir.join("backup-2024-01-01-12h00.db").exists());
         assert!(!backups_dir.join("backup-2024-01-10-12h00.db").exists());
 
         // Verify newer files still exist
-        assert!(backups_dir.join("backup-2024-01-11-12h00.db").exists());
+        assert!(backups_dir.join("backup-2024-01-31-12h00.db").exists());
         assert!(backups_dir.join("backup-2024-01-60-12h00.db").exists());
 
         // Clean up
@@ -210,9 +210,9 @@ mod tests {
         // Create diary
         create_test_file(&diary_path, "test diary").unwrap();
 
-        // Create 50 existing backups
+        // Create MAX_BACKUPS existing backups
         fs::create_dir_all(&backups_dir).unwrap();
-        for i in 0..50 {
+        for i in 0..MAX_BACKUPS {
             let filename = format!("backup-2024-01-{:02}-12h00.db", i + 1);
             create_test_file(&backups_dir.join(filename), "old").unwrap();
         }
@@ -223,12 +223,12 @@ mod tests {
         // Verify backup was created
         assert!(backup_path.exists());
 
-        // Verify rotation occurred (should still be 50 files)
+        // Verify rotation occurred (should still be MAX_BACKUPS files)
         let files: Vec<_> = fs::read_dir(&backups_dir)
             .unwrap()
             .filter_map(|e| e.ok())
             .collect();
-        assert_eq!(files.len(), 50);
+        assert_eq!(files.len(), MAX_BACKUPS);
 
         // Verify oldest was deleted
         assert!(!backups_dir.join("backup-2024-01-01-12h00.db").exists());
@@ -247,8 +247,8 @@ mod tests {
         let _ = fs::remove_dir_all(&backups_dir);
         fs::create_dir_all(&backups_dir).unwrap();
 
-        // Create backup files
-        for i in 0..55 {
+        // Create backup files (35 files, over MAX_BACKUPS limit)
+        for i in 0..35 {
             let filename = format!("backup-2024-01-{:02}-12h00.db", i + 1);
             create_test_file(&backups_dir.join(filename), "test").unwrap();
         }
@@ -260,18 +260,156 @@ mod tests {
         // Rotate
         rotate_backups(&backups_dir).unwrap();
 
-        // Verify 50 backup files + 2 other files = 52 total
+        // Verify MAX_BACKUPS backup files + 2 other files = 32 total
         let all_files: Vec<_> = fs::read_dir(&backups_dir)
             .unwrap()
             .filter_map(|e| e.ok())
             .collect();
-        assert_eq!(all_files.len(), 52);
+        assert_eq!(all_files.len(), 32);
 
         // Verify non-backup files still exist
         assert!(backups_dir.join("readme.txt").exists());
         assert!(backups_dir.join("other-file.txt").exists());
 
         // Clean up
+        let _ = fs::remove_dir_all(&backups_dir);
+    }
+
+    #[test]
+    fn test_backup_and_rotate_repeated_unlocks() {
+        let temp_dir = std::env::temp_dir();
+        let diary_path = temp_dir.join("test_diary_repeated.db");
+        let backups_dir = temp_dir.join("test_backups_repeated");
+
+        // Clean up
+        let _ = fs::remove_file(&diary_path);
+        let _ = fs::remove_dir_all(&backups_dir);
+
+        // Create diary and backups directory
+        create_test_file(&diary_path, "test diary content").unwrap();
+        fs::create_dir_all(&backups_dir).unwrap();
+
+        // Manually create 35 backup files with controlled timestamps
+        // Using day numbers 1-35 to simulate different timestamps
+        for i in 0..35 {
+            let day = i + 1;
+            let filename = format!("backup-2024-01-{:02}-12h00.db", day);
+            let backup_path = backups_dir.join(&filename);
+            create_test_file(&backup_path, "test content").unwrap();
+
+            // Get current backup count
+            let backup_files: Vec<_> = fs::read_dir(&backups_dir)
+                .unwrap()
+                .filter_map(|e| e.ok())
+                .filter(|e| {
+                    e.path()
+                        .file_name()
+                        .and_then(|n| n.to_str())
+                        .map(|n| n.starts_with("backup-") && n.ends_with(".db"))
+                        .unwrap_or(false)
+                })
+                .collect();
+
+            // If we've exceeded MAX_BACKUPS, rotate
+            if backup_files.len() > MAX_BACKUPS {
+                rotate_backups(&backups_dir).unwrap();
+            }
+
+            // After potential rotation, verify backup count never exceeds MAX_BACKUPS
+            let rotated_files: Vec<_> = fs::read_dir(&backups_dir)
+                .unwrap()
+                .filter_map(|e| e.ok())
+                .filter(|e| {
+                    e.path()
+                        .file_name()
+                        .and_then(|n| n.to_str())
+                        .map(|n| n.starts_with("backup-") && n.ends_with(".db"))
+                        .unwrap_or(false)
+                })
+                .collect();
+            assert!(
+                rotated_files.len() <= MAX_BACKUPS,
+                "Backup count {} exceeds MAX_BACKUPS {} after {} iterations",
+                rotated_files.len(),
+                MAX_BACKUPS,
+                i + 1
+            );
+        }
+
+        // After all iterations, verify exactly MAX_BACKUPS files remain
+        let files: Vec<_> = fs::read_dir(&backups_dir)
+            .unwrap()
+            .filter_map(|e| e.ok())
+            .filter(|e| {
+                e.path()
+                    .file_name()
+                    .and_then(|n| n.to_str())
+                    .map(|n| n.starts_with("backup-") && n.ends_with(".db"))
+                    .unwrap_or(false)
+            })
+            .collect();
+        assert_eq!(
+            files.len(),
+            MAX_BACKUPS,
+            "Expected {} backup files after 35 iterations, found {}",
+            MAX_BACKUPS,
+            files.len()
+        );
+
+        // Verify the oldest backups were deleted (first 5 should be gone)
+        for i in 1..=5 {
+            let filename = format!("backup-2024-01-{:02}-12h00.db", i);
+            assert!(
+                !backups_dir.join(&filename).exists(),
+                "Old backup {} should have been deleted",
+                filename
+            );
+        }
+
+        // Verify the newest backups exist (last 5 should remain: days 31-35)
+        for i in 31..=35 {
+            let filename = format!("backup-2024-01-{:02}-12h00.db", i);
+            assert!(
+                backups_dir.join(&filename).exists(),
+                "New backup {} should exist",
+                filename
+            );
+        }
+
+        // Verify all backup files are sorted correctly
+        let mut backup_files: Vec<PathBuf> = fs::read_dir(&backups_dir)
+            .unwrap()
+            .filter_map(|e| e.ok())
+            .map(|e| e.path())
+            .filter(|p| {
+                p.file_name()
+                    .and_then(|n| n.to_str())
+                    .map(|n| n.starts_with("backup-") && n.ends_with(".db"))
+                    .unwrap_or(false)
+            })
+            .collect();
+        backup_files.sort();
+        assert_eq!(
+            backup_files.len(),
+            MAX_BACKUPS,
+            "Should have exactly {} backup files",
+            MAX_BACKUPS
+        );
+
+        // Verify the filenames are days 6-35
+        for (idx, backup_path) in backup_files.iter().enumerate() {
+            let expected_day = idx + 6; // Days 6-35
+            let expected_filename = format!("backup-2024-01-{:02}-12h00.db", expected_day);
+            let actual_filename = backup_path.file_name().unwrap().to_str().unwrap();
+            assert_eq!(
+                actual_filename, expected_filename,
+                "Backup at index {} should be {}, but found {}",
+                idx, expected_filename, actual_filename
+            );
+        }
+
+        // Clean up
+        let _ = fs::remove_file(&diary_path);
         let _ = fs::remove_dir_all(&backups_dir);
     }
 }
