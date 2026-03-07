@@ -10,6 +10,9 @@ All notable changes to Mini Diarium are documented here. This project uses [Sema
 
 ### Fixed
 
+- **About dialog now accessible from the native menu at any auth state**: the `AboutOverlay` and its `menu-about` listener have been lifted from `MainLayout` (unlocked-only) up to `App` (always mounted). Help → About Mini Diarium now opens correctly from the journal picker, password prompt, and creation screens — not just when the journal is unlocked.
+- **E2E: title persistence assertion now waits for async DB load**: replaced `waitForDisplayed` + immediate `getValue` with a `waitUntil` poll, preventing a race between the WebDriver assertion and the async `loadEntriesForDate` round-trip to the backend.
+
 - **Backup rotation limit reduced from 50 to 30**: the `MAX_BACKUPS` constant has been lowered and a new test `test_backup_and_rotate_repeated_unlocks()` verifies that repeated unlock operations never allow the backup count to exceed the configured cap. All test assertions now use the constant instead of hardcoded values.
 
 ## [0.4.5] — 06-03-2026

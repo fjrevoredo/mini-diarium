@@ -151,8 +151,16 @@ Download the latest release for your platform from [GitHub Releases](https://git
 
 ### Windows (WinGet)
 
+The easiest way to install Mini Diarium on Windows is via WinGet:
+
 ```powershell
-winget install fjrevoredo.MiniDiarium
+winget install mini-diarium
+```
+
+To update an existing installation later:
+
+```powershell
+winget upgrade mini-diarium
 ```
 
 ### Homebrew (macOS)

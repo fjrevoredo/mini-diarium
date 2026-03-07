@@ -10,7 +10,6 @@ import PreferencesOverlay from '../overlays/PreferencesOverlay';
 import StatsOverlay from '../overlays/StatsOverlay';
 import ImportOverlay from '../overlays/ImportOverlay';
 import ExportOverlay from '../overlays/ExportOverlay';
-import AboutOverlay from '../overlays/AboutOverlay';
 import {
   selectedDate,
   setSelectedDate,
@@ -27,7 +26,6 @@ import {
   isExportOpen,
   setIsExportOpen,
   isAboutOpen,
-  setIsAboutOpen,
 } from '../../state/ui';
 import {
   navigatePreviousDay,
@@ -141,13 +139,6 @@ export default function MainLayout() {
       }),
     );
 
-    // About menu item
-    unlisteners.push(
-      await listen('menu-about', () => {
-        setIsAboutOpen(true);
-      }),
-    );
-
     // Previous Month menu item
     unlisteners.push(
       await listen('menu-navigate-previous-month', async () => {
@@ -214,7 +205,6 @@ export default function MainLayout() {
         }}
       />
       <ExportOverlay isOpen={isExportOpen()} onClose={() => setIsExportOpen(false)} />
-      <AboutOverlay isOpen={isAboutOpen()} onClose={() => setIsAboutOpen(false)} />
     </div>
   );
 }

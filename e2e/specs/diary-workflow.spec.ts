@@ -101,7 +101,11 @@ describe('Core journal workflow', () => {
       await $(`[data-testid="calendar-day-${TEST_DATE}"]`).click();
     }
 
-    await $('[data-testid="title-input"]').waitForDisplayed({ timeout: 10000 });
-    expect(await $('[data-testid="title-input"]').getValue()).toBe(TEST_TITLE);
+    // Wait for the entry to load from the DB (async) before asserting the title.
+    // waitForDisplayed only checks element visibility, not value readiness.
+    await browser.waitUntil(
+      async () => (await $('[data-testid="title-input"]').getValue()) === TEST_TITLE,
+      { timeout: 10000, timeoutMsg: `Title did not load "${TEST_TITLE}" within 10s` },
+    );
   });
 });
