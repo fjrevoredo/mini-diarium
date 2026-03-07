@@ -4,6 +4,10 @@ All notable changes to Mini Diarium are documented here. This project uses [Sema
 
 ## [0.4.6] — 07-03-2026
 
+### Added
+
+- **Automatic WinGet publishing**: every published release now automatically submits a WinGet manifest update to the community repository (`microsoft/winget-pkgs`), opening a pull request for the new version. The workflow triggers on `release.published` events (not drafts), handles the `vX.Y.Z` tag format by stripping the `v` prefix, verifies the Windows asset `Mini-Diarium-{VERSION}-windows.exe` exists, and uses `wingetcreate.exe --submit` to auto-submit the PR. Users can install/upgrade via `winget install fjrevoredo.MiniDiarium` and `winget upgrade fjrevoredo.MiniDiarium`. Requires the `WINGET_TOKEN` repository secret to be configured.
+
 ### Fixed
 
 - **Backup rotation limit reduced from 50 to 30**: the `MAX_BACKUPS` constant has been lowered and a new test `test_backup_and_rotate_repeated_unlocks()` verifies that repeated unlock operations never allow the backup count to exceed the configured cap. All test assertions now use the constant instead of hardcoded values.

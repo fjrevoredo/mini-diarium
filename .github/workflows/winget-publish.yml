@@ -1,0 +1,76 @@
+name: Publish to WinGet
+
+permissions:
+  contents: read
+
+on:
+  release:
+    types: [released]
+
+jobs:
+  publish-winget:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Determine version and asset
+        id: prep
+        shell: pwsh
+        run: |
+          # Extract tag from GITHUB_REF_NAME (format: v0.4.6)
+          $tag = "${{ github.ref_name }}"
+          # Strip 'v' prefix to get version (0.4.6)
+          $version = $tag -replace '^v', ''
+
+          # Construct asset name
+          $assetName = "Mini-Diarium-$version-windows.exe"
+
+          # Construct download URL
+          $url = "https://github.com/fjrevoredo/mini-diarium/releases/download/$tag/$assetName"
+
+          # Set outputs
+          echo "version=$version" >> $env:GITHUB_OUTPUT
+          echo "asset_name=$assetName" >> $env:GITHUB_OUTPUT
+          echo "url=$url" >> $env:GITHUB_OUTPUT
+
+      - name: Verify release asset exists
+        shell: pwsh
+        run: |
+          $tag = "${{ github.ref_name }}"
+          $assetName = "${{ steps.prep.outputs.asset_name }}"
+
+          # Use gh CLI to check if asset exists
+          gh release view "$tag" --json assets --jq '.assets[].name' --repo "fjrevoredo/mini-diarium" | Select-String -Pattern "$assetName" -Quiet
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "Asset $assetName not found in release $tag"
+            exit 1
+          }
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+      - name: Download wingetcreate tool
+        shell: pwsh
+        run: |
+          iwr https://aka.ms/wingetcreate/latest -OutFile wingetcreate.exe
+          if (-not (Test-Path wingetcreate.exe)) {
+            Write-Error "Failed to download wingetcreate.exe"
+            exit 1
+          }
+
+      - name: Submit WinGet manifest
+        shell: pwsh
+        env:
+          WINGET_CREATE_GITHUB_TOKEN: ${{ secrets.WINGET_TOKEN }}
+        run: |
+          $version = "${{ steps.prep.outputs.version }}"
+          $url = "${{ steps.prep.outputs.url }}"
+
+          # Submit manifest to WinGet repo
+          .\wingetcreate.exe update fjrevoredo.MiniDiarium --version $version --urls $url --submit
+
+          if ($LASTEXITCODE -ne 0) {
+            Write-Error "wingetcreate failed with exit code $LASTEXITCODE"
+            exit 1
+          }

@@ -40,16 +40,19 @@ git checkout -b release-0.1.1
 Run the version bump script:
 
 **Linux/macOS:**
+
 ```bash
 ./bump-version.sh 0.1.1
 ```
 
 **Windows (PowerShell):**
+
 ```powershell
 .\bump-version.ps1 0.1.1
 ```
 
 This automatically updates:
+
 - `package.json`
 - `src-tauri/tauri.conf.json`
 - `src-tauri/Cargo.toml`
@@ -153,6 +156,7 @@ Mini Diarium uses [Semantic Versioning](https://semver.org/):
 - **Patch (0.0.X)**: Bug fixes, minor improvements
 
 **Examples:**
+
 - Bug fix: `0.1.0` → `0.1.1`
 - New feature: `0.1.1` → `0.2.0`
 - Breaking change: `0.9.0` → `1.0.0`
@@ -162,14 +166,17 @@ Mini Diarium uses [Semantic Versioning](https://semver.org/):
 ## Troubleshooting
 
 ### "Resource not accessible by integration"
+
 - **Cause**: Missing permissions in workflow
 - **Fix**: Ensure `.github/workflows/release.yml` has `permissions: contents: write`
 
 ### Release workflow fails on artifact upload
+
 - **Cause**: Build artifacts not found
 - **Fix**: Check Tauri build succeeded for all platforms in workflow logs
 
 ### Tag already exists
+
 ```bash
 # Delete local tag
 git tag -d v0.1.1
@@ -183,6 +190,7 @@ git push origin v0.1.1
 ```
 
 ### Need to cancel/redo a release
+
 1. Delete the draft release on GitHub
 2. Delete the tag (see above)
 3. Fix any issues
@@ -193,6 +201,7 @@ git push origin v0.1.1
 ## Quick Reference
 
 **Full release workflow (Linux/macOS):**
+
 ```bash
 # 1. Create release branch
 git checkout master && git pull && git checkout -b release-X.Y.Z
@@ -216,6 +225,7 @@ git push origin vX.Y.Z
 ```
 
 **Full release workflow (Windows PowerShell):**
+
 ```powershell
 # 1. Create release branch
 git checkout master; git pull; git checkout -b release-X.Y.Z
@@ -251,6 +261,31 @@ The following happens automatically when you push a tag:
 ✅ Upload artifacts to release
 
 You only need to:
+
 1. Bump version
 2. Push tag
 3. Publish the draft release
+
+---
+
+## Automated WinGet Publishing
+
+When you publish a release (Step 7), an additional workflow automatically:
+
+✅ Submits WinGet manifest update to `microsoft/winget-pkgs`
+✅ Opens a pull request for the new version
+✅ Package identifier: `fjrevoredo.MiniDiarium`
+
+**Requirements:**
+
+- Repository secret `WINGET_TOKEN` must be configured (one-time setup)
+- Windows asset `Mini-Diarium-X.Y.Z-windows.exe` must be in the release
+
+**After the release:**
+
+1. WinGet PR will appear in: https://github.com/microsoft/winget-pkgs/pulls
+2. Wait for WinGet maintainers to review and merge the PR
+3. Users can then upgrade with: `winget upgrade fjrevoredo.MiniDiarium`
+
+**Setup Instructions:**
+See `WINGET.md` for complete setup documentation.

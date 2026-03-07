@@ -18,7 +18,6 @@ TODO entry format:
 
 ## Medium Priority
 
-- [x] **Investigate backup rotation limit** — a manual debug dump revealed `backup_count: 50` on a production journal, suggesting the rotation cap may not be enforced or may be set too high; verify the rotation limit constant in `backup.rs`, confirm it is applied on every unlock, and add or strengthen a test that asserts the count never exceeds the configured cap after repeated unlocks
 - [ ] **Restore CI diagram content-diff check** — the byte-comparison check in `scripts/verify-diagrams.mjs` was reverted to existence-only because mmdc/d2 produce slightly different SVG bytes depending on version (local vs CI runners differ). The proper fix is to pin identical tool versions in both CI and local dev (e.g. lock `@mermaid-js/mermaid-cli` in `devDependencies` and `d2` via a specific release download in CI), then re-add the byte comparison. Until then, `diagrams:check` only verifies that all 8 `.svg` files are present.
 - [ ] **i18n framework** — detect OS locale, set up translation files (`en.json`, `es.json`), add `t()` helper
   - [ ] **Translate all UI text** — replace hardcoded strings with translation keys (~145 keys); depends on i18n framework above
