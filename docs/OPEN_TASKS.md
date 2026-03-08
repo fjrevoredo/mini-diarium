@@ -2,10 +2,10 @@
 
 This document tracks features and improvements deferred from the v0.1.0 release.
 
-**Status**: 12 open tasks across 3 categories
+**Status**: 13 open tasks across 3 categories
 - **Infrastructure**: 1 task (release workflow modernization)
 - **Features**: 8 tasks (PDF export, i18n framework, i18n translations, menus, auto-update, legacy migration, extension system, text input extension point)
-- **Quality**: 3 tasks (accessibility audit, QA pass, backup behavior documentation)
+- **Quality**: 4 tasks (accessibility audit, dark-theme form-control contrast, QA pass, backup behavior documentation)
 
 See [docs/TODO.md](TODO.md) for the active working backlog and `CHANGELOG.md` for completed shipped work.
 
@@ -79,6 +79,30 @@ Ensure the app is usable by everyone.
 - Visible focus indicators
 
 **Testing**: Automated with axe-core, manual screen reader testing
+
+---
+
+### Task 68: Dark Theme Form-Control Contrast on Linux ✅ Completed (2026-03-08)
+**Priority**: High | **Complexity**: Medium | **Files**: `src/index.css`, `src/components/auth/*.tsx`, `src/components/overlays/*.tsx`, `src/components/editor/EditorToolbar.tsx`
+
+Fix the dark-theme readability bug reported in [GitHub issue #48](https://github.com/fjrevoredo/mini-diarium/issues/48): on Linux desktop themes, text inside password fields, text inputs, and native dropdowns can become invisible or too low-contrast in dark mode.
+
+**Reported environment**:
+- Mini Diarium 0.4.4
+- Debian Sid
+- Cinnamon desktop environment
+- Numix theme
+
+**Requirements**:
+- Password fields, plain text inputs, read-only file-path inputs, and native `<select>` controls must keep readable text in dark mode and must not rely on Linux/GTK theme defaults that can override the intended foreground/background pairing.
+- Verify all currently affected surfaces: `PasswordPrompt`, `PasswordCreation`, `PreferencesOverlay`, `ImportOverlay`, `ExportOverlay`, and `EditorToolbar` heading-style dropdown.
+- Placeholder text, selected option text, disabled states, and focus states must remain legible in dark mode.
+- Light mode and auto theme must keep their current appearance; the fix must not introduce a regression on macOS or Windows.
+- Add regression coverage where practical (frontend component tests and/or targeted style assertions) plus a manual Linux validation pass on a Cinnamon-like environment.
+
+**Testing**:
+- Manual: dark-mode verification on Linux (Mint/Cinnamon acceptable proxy for Debian Sid + Cinnamon)
+- Frontend: extend component coverage for affected auth/overlay controls where the current suite is missing coverage
 
 ---
 
@@ -335,14 +359,14 @@ Comprehensive manual testing before each release.
 |----------|------|-----------|
 | **Infrastructure** | 1 | 5 |
 | **Features** | 8 | 41 |
-| **Quality** | 3 | 6 |
+| **Quality** | 4 | 6 |
 | **Testing** | 0 | 4 |
-| **Total** | **12** | **56** |
+| **Total** | **13** | **56** |
 
 **Next milestone candidates**:
 - **v0.1.1**: Task 61 (release workflow modernization)
 - **v0.2.0**: Task 52 (accessibility audit)
 - **v0.3.0**: Tasks 47–48, 65 (i18n + backup documentation)
-- **v0.4.x**: Tasks 49, 51, 53, 66 (menus, auto-update, legacy migration, extension architecture)
+- **v0.4.x**: Tasks 49, 51, 53, 66, 68 (menus, auto-update, legacy migration, extension architecture, dark theme form-control contrast)
 - **Future**: Task 67 (text input extension point)
 - **v1.0.0**: Task 58 (comprehensive QA pass)

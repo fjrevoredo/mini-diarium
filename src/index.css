@@ -11,6 +11,8 @@
    ============================================ */
 
 :root {
+  color-scheme: light;
+
   /* Background Colors */
   --bg-primary: #ffffff;
   --bg-secondary: #f9fafb;
@@ -58,6 +60,8 @@
 }
 
 .dark {
+  color-scheme: dark;
+
   /* Background Colors */
   --bg-primary: #1f2937;
   --bg-secondary: #111827;
@@ -206,5 +210,22 @@ body {
   color: var(--text-tertiary);
 }
 .placeholder-muted::placeholder {
+  color: var(--text-muted);
+}
+
+/* Form-control baseline — prevents GTK/WebKit from applying OS light-theme colors to
+   inputs/selects when the app is in dark mode. Wrapped in :where() so specificity is 0,0,0;
+   any UnoCSS utility class (bg-primary, bg-tertiary, disabled:bg-tertiary, etc.) wins. */
+:where(input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file'])),
+:where(select),
+:where(textarea) {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+:where(
+  input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='file'])
+)::placeholder,
+:where(textarea)::placeholder {
   color: var(--text-muted);
 }

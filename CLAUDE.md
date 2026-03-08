@@ -402,7 +402,7 @@ Run: `cd src-tauri && cargo test`
 | plugin/rhai_loader | 11 | `plugin/rhai_loader.rs` |
 | config | 11 | `config.rs` |
 
-### Frontend: 80 tests across 10 files
+### Frontend: 109 tests across 13 files
 
 Run: `bun run test:run` (single run) or `bun run test` (watch mode)
 
@@ -410,13 +410,16 @@ Run: `bun run test:run` (single run) or `bun run test` (watch mode)
 |------|-------|
 | `src/lib/dates.test.ts` | 10 |
 | `src/lib/import.test.ts` | 4 |
-| `src/lib/tauri-params.test.ts` | 4 |
+| `src/lib/tauri-params.test.ts` | 8 |
 | `src/components/auth/JournalPicker.test.tsx` | 4 |
+| `src/components/auth/PasswordPrompt.test.tsx` | 4 |
+| `src/components/auth/PasswordCreation.test.tsx` | 3 |
 | `src/components/editor/TitleEditor.test.tsx` | 6 |
 | `src/components/editor/WordCount.test.tsx` | 3 |
-| `src/components/editor/EntryNavBar.test.tsx` | 11 |
+| `src/components/editor/EntryNavBar.test.tsx` | 21 |
 | `src/components/layout/MainLayout-event-listeners.test.tsx` | 4 |
 | `src/components/layout/EditorPanel-save-logic.test.ts` | 23 |
+| `src/components/layout/EditorPanel-delete-logic.test.ts` | 15 |
 | `src/state/auth-session-boundary.test.ts` | 4 |
 
 Coverage: `bun run test:coverage`
@@ -519,7 +522,7 @@ bun run tauri build      # Full app bundle
 
 ## Known Issues / Technical Debt
 
-- **Frontend test coverage is still incomplete**: coverage has improved substantially, but `PasswordPrompt.tsx`, `PasswordCreation.tsx`, `Calendar.tsx`, `Sidebar.tsx`, most overlays, and broader editor workflows still lack direct tests.
+- **Frontend test coverage is still incomplete**: coverage has improved substantially, but `Calendar.tsx`, `Sidebar.tsx`, most overlays, and broader editor workflows still lack direct tests.
 - **No Tauri integration tests**: All backend tests use direct DB connections, not the Tauri command layer.
 - **No error boundary components**: Unhandled errors in components crash the app.
 - **Search not implemented**: `search_entries` is a stub returning `[]`. A secure search backend needs to be designed and implemented.

@@ -14,6 +14,8 @@ TODO entry format:
 
 ## High Priority
 
+- [x] **Dark theme form-control contrast on Linux** — in dark theme, text inside password fields, text inputs, and native dropdowns must remain readable on Linux desktop themes; cover the auth screens, Preferences, Import/Export overlays, and editor toolbar selects; add regression coverage so issue [#48](https://github.com/fjrevoredo/mini-diarium/issues/48) does not recur
+
 ---
 
 ## Medium Priority

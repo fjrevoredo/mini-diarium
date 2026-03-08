@@ -61,7 +61,7 @@ export default function PasswordCreation() {
                 value={password()}
                 onInput={(e) => setPassword(e.currentTarget.value)}
                 disabled={isCreating()}
-                class="w-full rounded-md border border-primary px-4 py-2 text-primary focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-tertiary"
+                class="w-full rounded-md border border-primary bg-primary px-4 py-2 text-primary focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-tertiary"
                 placeholder="Enter your password"
                 autocomplete="new-password"
               />
@@ -79,7 +79,7 @@ export default function PasswordCreation() {
                 value={repeatPassword()}
                 onInput={(e) => setRepeatPassword(e.currentTarget.value)}
                 disabled={isCreating()}
-                class="w-full rounded-md border border-primary px-4 py-2 text-primary focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-tertiary"
+                class="w-full rounded-md border border-primary bg-primary px-4 py-2 text-primary focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-tertiary"
                 placeholder="Repeat your password"
                 autocomplete="new-password"
               />

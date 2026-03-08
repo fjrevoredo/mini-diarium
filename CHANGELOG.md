@@ -10,6 +10,8 @@ All notable changes to Mini Diarium are documented here. This project uses [Sema
 
 ### Fixed
 
+- **Dark theme form-control contrast on Linux**: text inside password fields, plain text inputs, and native `<select>` dropdowns is now always readable in dark mode regardless of the active GTK theme. Added `color-scheme: light` / `color-scheme: dark` to `:root` / `.dark` so WebKit/GTK respects the app's color scheme for native form-control rendering. Added a zero-specificity `:where()` baseline that sets `background-color: var(--bg-primary)` and `color: var(--text-primary)` on all non-checkbox/radio/range/file inputs, selects, and textareas — any UnoCSS utility class (`bg-primary`, `bg-tertiary`, `disabled:bg-tertiary`, etc.) overrides it. Auth-screen password inputs in `PasswordPrompt` and `PasswordCreation` now carry explicit `bg-primary` classes. Fixes [#48](https://github.com/fjrevoredo/mini-diarium/issues/48).
+
 - **About dialog now accessible from the native menu at any auth state**: the `AboutOverlay` and its `menu-about` listener have been lifted from `MainLayout` (unlocked-only) up to `App` (always mounted). Help → About Mini Diarium now opens correctly from the journal picker, password prompt, and creation screens — not just when the journal is unlocked.
 - **E2E: title persistence assertion now waits for async DB load**: replaced `waitForDisplayed` + immediate `getValue` with a `waitUntil` poll, preventing a race between the WebDriver assertion and the async `loadEntriesForDate` round-trip to the backend.
 
