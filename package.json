@@ -43,7 +43,7 @@
     "@tiptap/extension-underline": "^3.19.0",
     "@tiptap/pm": "^3.19.0",
     "@tiptap/starter-kit": "^3.19.0",
-    "lucide-solid": "^0.576.0",
+    "lucide-solid": "^0.577.0",
     "solid-js": "^1.9.11"
   },
   "devDependencies": {
