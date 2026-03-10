@@ -6,7 +6,7 @@ All notable changes to Mini Diarium are documented here. This project uses [Sema
 
 ### Added
 
-- **Entry timestamps**: the editor now shows the `date_created` and `date_updated` timestamps for the current entry below the title, formatted using the OS locale. The updated timestamp is only shown when it differs from the created timestamp. Both timestamps are hidden when the "Hide Titles" preference is enabled.
+- **Entry timestamps**: the editor can now show the `date_created` and `date_updated` timestamps for the current entry below the title, formatted using the OS locale. Opt-in via **Preferences → Writing → Show entry timestamps** (disabled by default). The updated timestamp is only shown when it differs from the created timestamp. Both timestamps are hidden when "Hide Titles" is enabled.
 
 ## [0.4.6] — 08-03-2026
 

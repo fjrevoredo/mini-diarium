@@ -56,6 +56,9 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
     preferences().advancedToolbar,
   );
   const [localEditorFontSize, setLocalEditorFontSize] = createSignal(preferences().editorFontSize);
+  const [localShowEntryTimestamps, setLocalShowEntryTimestamps] = createSignal(
+    preferences().showEntryTimestamps,
+  );
 
   // Journal file state
   const [journalPath, setJournalPath] = createSignal<string>('');
@@ -136,6 +139,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
       setLocalAutoLockTimeout(String(preferences().autoLockTimeout));
       setLocalAdvancedToolbar(preferences().advancedToolbar);
       setLocalEditorFontSize(preferences().editorFontSize);
+      setLocalShowEntryTimestamps(preferences().showEntryTimestamps);
 
       // Reset password fields
       setOldPassword('');
@@ -202,6 +206,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
       autoLockTimeout: Math.min(999, Math.max(1, parseInt(localAutoLockTimeout(), 10) || 300)),
       advancedToolbar: localAdvancedToolbar(),
       editorFontSize: Math.min(24, Math.max(12, Number(localEditorFontSize()))),
+      showEntryTimestamps: localShowEntryTimestamps(),
     });
     props.onClose();
   };
@@ -606,6 +611,26 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                         </div>
                         <p class="ml-7 text-xs text-tertiary leading-relaxed">
                           When enabled, the title editor will be hidden. Title data is still saved.
+                        </p>
+                      </div>
+
+                      {/* Show Entry Timestamps */}
+                      <div class="space-y-2">
+                        <div class="flex items-center">
+                          <input
+                            type="checkbox"
+                            id="show-timestamps"
+                            checked={localShowEntryTimestamps()}
+                            onChange={(e) => setLocalShowEntryTimestamps(e.currentTarget.checked)}
+                            class="h-4 w-4 rounded border-primary text-blue-600 focus:ring-blue-500"
+                          />
+                          <label for="show-timestamps" class="ml-3 text-sm text-secondary">
+                            Show entry timestamps
+                          </label>
+                        </div>
+                        <p class="ml-7 text-xs text-tertiary leading-relaxed">
+                          Displays the creation and last updated time below the title for the
+                          current entry.
                         </p>
                       </div>
 

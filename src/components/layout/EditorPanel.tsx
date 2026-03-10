@@ -404,19 +404,21 @@ export default function EditorPanel() {
                 placeholder="Title (optional)"
                 spellCheck={preferences().enableSpellcheck}
               />
-              <Show when={dayEntries()[currentIndex()]}>
-                {(entry) => (
-                  <div class="flex flex-wrap gap-x-4 gap-y-0.5">
-                    <p class="text-xs text-tertiary">
-                      Created: {formatTimestamp(entry().date_created)}
-                    </p>
-                    <Show when={entry().date_updated !== entry().date_created}>
+              <Show when={preferences().showEntryTimestamps}>
+                <Show when={dayEntries()[currentIndex()]}>
+                  {(entry) => (
+                    <div class="flex flex-wrap gap-x-4 gap-y-0.5">
                       <p class="text-xs text-tertiary">
-                        Updated: {formatTimestamp(entry().date_updated)}
+                        Created: {formatTimestamp(entry().date_created)}
                       </p>
-                    </Show>
-                  </div>
-                )}
+                      <Show when={entry().date_updated !== entry().date_created}>
+                        <p class="text-xs text-tertiary">
+                          Updated: {formatTimestamp(entry().date_updated)}
+                        </p>
+                      </Show>
+                    </div>
+                  )}
+                </Show>
               </Show>
             </Show>
             <DiaryEditor
