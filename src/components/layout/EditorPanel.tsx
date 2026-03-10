@@ -16,6 +16,7 @@ import {
 } from '../../lib/tauri';
 import type { DiaryEntry } from '../../lib/tauri';
 import { debounce } from '../../lib/debounce';
+import { formatTimestamp } from '../../lib/dates';
 import { isSaving, setIsSaving, setEntryDates, registerCleanupCallback } from '../../state/entries';
 import { preferences } from '../../state/preferences';
 import { confirm } from '@tauri-apps/plugin-dialog';
@@ -403,6 +404,20 @@ export default function EditorPanel() {
                 placeholder="Title (optional)"
                 spellCheck={preferences().enableSpellcheck}
               />
+              <Show when={dayEntries()[currentIndex()]}>
+                {(entry) => (
+                  <div class="flex flex-wrap gap-x-4 gap-y-0.5">
+                    <p class="text-xs text-tertiary">
+                      Created: {formatTimestamp(entry().date_created)}
+                    </p>
+                    <Show when={entry().date_updated !== entry().date_created}>
+                      <p class="text-xs text-tertiary">
+                        Updated: {formatTimestamp(entry().date_updated)}
+                      </p>
+                    </Show>
+                  </div>
+                )}
+              </Show>
             </Show>
             <DiaryEditor
               content={content()}

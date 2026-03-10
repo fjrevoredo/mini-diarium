@@ -1,5 +1,12 @@
 import { describe, it, expect } from 'vitest';
-import { getTodayString, formatDate, isValidDate, addDays, addMonths } from './dates';
+import {
+  getTodayString,
+  formatDate,
+  isValidDate,
+  addDays,
+  addMonths,
+  formatTimestamp,
+} from './dates';
 
 describe('dates utility functions', () => {
   describe('getTodayString', () => {
@@ -77,6 +84,24 @@ describe('dates utility functions', () => {
     it('should subtract months with negative values', () => {
       expect(addMonths('2024-02-15', -1)).toBe('2024-01-15');
       expect(addMonths('2024-01-15', -1)).toBe('2023-12-15'); // Year boundary
+    });
+  });
+
+  describe('formatTimestamp', () => {
+    it('should return a non-empty string for a valid ISO timestamp', () => {
+      const result = formatTimestamp('2024-01-15T14:30:00.000Z');
+      expect(typeof result).toBe('string');
+      expect(result.length).toBeGreaterThan(0);
+    });
+
+    it('should include the year in the output', () => {
+      expect(formatTimestamp('2024-06-20T09:00:00.000Z')).toContain('2024');
+    });
+
+    it('should produce different output for different timestamps', () => {
+      const a = formatTimestamp('2024-01-01T00:00:00.000Z');
+      const b = formatTimestamp('2024-12-31T23:59:00.000Z');
+      expect(a).not.toBe(b);
     });
   });
 });

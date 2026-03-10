@@ -2,6 +2,12 @@
 
 All notable changes to Mini Diarium are documented here. This project uses [Semantic Versioning](https://semver.org/).
 
+## [0.4.7] — Unreleased
+
+### Added
+
+- **Entry timestamps**: the editor now shows the `date_created` and `date_updated` timestamps for the current entry below the title, formatted using the OS locale. The updated timestamp is only shown when it differs from the created timestamp. Both timestamps are hidden when the "Hide Titles" preference is enabled.
+
 ## [0.4.6] — 08-03-2026
 
 ### Added
