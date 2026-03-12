@@ -2,6 +2,13 @@
 
 The marketing site stays fully static. Blog posts are authored in Markdown, then generated into committed HTML plus SEO/GEO artifacts.
 
+## Deployment Boundary
+
+- `website/docker-compose.yml` and `website/nginx.conf` are for local website testing only.
+- Production is deployed through Coolify.
+- Production redirects, canonical host enforcement, TLS behavior, and proxy rules are not controlled by the local `nginx.conf`.
+- If Search Console shows canonicalization issues such as `http://mini-diarium.com/` impressions, fix them in Coolify or the real production edge configuration, not only in the local website container.
+
 ## Source of Truth
 
 - Write and edit posts only in `website/posts-src/`

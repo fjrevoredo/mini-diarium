@@ -1,4 +1,4 @@
-import { mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { marked } from "marked";
@@ -16,6 +16,15 @@ const DEFAULT_OG_IMAGE = `${SITE_URL}/assets/og-cover.png`;
 const INDEX_PATH = path.join(WEBSITE_DIR, "index.html");
 const SITEMAP_PATH = path.join(WEBSITE_DIR, "sitemap.xml");
 const LLMS_PATH = path.join(WEBSITE_DIR, "llms.txt");
+const STATIC_PAGES = [
+  {
+    title: "Encrypted Journal App Guide",
+    url: `${SITE_URL}/encrypted-journal/`,
+    filePath: path.join(WEBSITE_DIR, "encrypted-journal", "index.html"),
+    summary:
+      "A direct overview of what an encrypted journal app should do, how Mini Diarium handles offline storage, and why local-first ownership matters.",
+  },
+];
 
 const REQUIRED_FIELDS = ["title", "slug", "description", "date", "updated", "author", "tags"];
 
@@ -133,6 +142,10 @@ function isoDate(value) {
   return `${value}T00:00:00Z`;
 }
 
+function fileLastModified(filePath) {
+  return statSync(filePath).mtime.toISOString().slice(0, 10);
+}
+
 function readPosts() {
   const files = readdirSync(POSTS_DIR)
     .filter((fileName) => fileName.endsWith(".md"))
@@ -209,6 +222,7 @@ function buildFooter() {
       </div>
       <div class="footer-right">
         <a href="https://github.com/fjrevoredo/mini-diarium" target="_blank" rel="noopener noreferrer">GitHub</a>
+        <a href="https://x.com/MiniDiarium" target="_blank" rel="noopener noreferrer">X</a>
         <a href="https://github.com/fjrevoredo/mini-diarium/blob/master/SECURITY.md" target="_blank" rel="noopener noreferrer">Security</a>
         <a href="https://github.com/fjrevoredo/mini-diarium/blob/master/CHANGELOG.md" target="_blank" rel="noopener noreferrer">Changelog</a>
         <a href="/blog/feed.xml">RSS</a>
@@ -323,7 +337,7 @@ function renderBlogIndex(posts) {
         url: `${SITE_URL}/blog/`,
         name: "Mini Diarium Blog",
         description:
-          "Static articles about offline journaling, privacy-first software, and Mini Diarium's local-first design.",
+          "Static articles about encrypted journals, private diary apps, offline journaling, and Mini Diarium's local-first design.",
         inLanguage: "en-US",
         publisher: {
           "@type": "Organization",
@@ -348,9 +362,9 @@ function renderBlogIndex(posts) {
   };
 
   const head = buildHead({
-    pageTitle: "Mini Diarium Blog — Offline Journaling, Privacy, and Local-First Writing",
+    pageTitle: "Mini Diarium Blog — Encrypted Journals, Private Diary Apps, and Local-First Writing",
     description:
-      "Static articles about offline journaling, privacy-first software, and why Mini Diarium is built as an encrypted local-first journal.",
+      "Static articles about encrypted journals, private diary apps, offline journaling, and why Mini Diarium is built as a local-first desktop journal.",
     canonical: `${SITE_URL}/blog/`,
     ogType: "website",
     structuredData,
@@ -377,10 +391,10 @@ function renderBlogIndex(posts) {
     <div class="blog-index-header">
       <div>
         <p class="section-label">Latest articles</p>
-        <h2 class="section-title">Articles about private journaling and local-first software</h2>
+        <h2 class="section-title">Articles about encrypted journals, private diary apps, and local-first writing</h2>
       </div>
       <p class="section-body">
-        Every article is plain HTML generated from Markdown, focused on Mini Diarium's actual product scope and public documentation.
+        Every article is plain HTML generated from Markdown, focused on private journaling, offline ownership, and Mini Diarium's real product scope.
       </p>
     </div>
     <div class="article-grid">
@@ -502,7 +516,7 @@ ${htmlBody
         <p class="section-label">Why this matters</p>
         <h2>Mini Diarium is built for ownership</h2>
         <p>Offline by default, encrypted at rest, and exportable when you want out.</p>
-        <a class="btn btn-secondary" href="/#security">See the security model</a>
+        <a class="btn btn-secondary" href="/encrypted-journal/">See the encrypted journal guide</a>
       </div>
       <div class="blog-sidebar-card">
         <p class="section-label">Keep reading</p>
@@ -536,10 +550,10 @@ function renderIndexTeaser(posts) {
     <div class="blog-preview-header">
       <div>
         <p class="section-label">From the blog</p>
-        <h2 class="section-title">Offline journaling, privacy, and product notes</h2>
+        <h2 class="section-title">Encrypted journals, offline writing, and product notes</h2>
       </div>
       <p class="section-body">
-        Static articles that explain what Mini Diarium is, why it exists, and how local-first journaling protects ownership.
+        Static articles that explain encrypted journaling, private diary apps, and how local-first writing protects ownership.
       </p>
     </div>
     <div class="article-grid">
@@ -578,6 +592,10 @@ function writeSitemap(posts) {
   const latestHomeUpdate = posts[0]?.updated ?? "2026-03-06";
   const urls = [
     { loc: `${SITE_URL}/`, lastmod: latestHomeUpdate },
+    ...STATIC_PAGES.map((page) => ({
+      loc: page.url,
+      lastmod: fileLastModified(page.filePath),
+    })),
     { loc: `${SITE_URL}/blog/`, lastmod: latestHomeUpdate },
     ...posts.map((post) => ({
       loc: `${SITE_URL}/blog/${post.slug}/`,
@@ -608,6 +626,7 @@ function writeLlms(posts) {
     "> Encrypted, local-first desktop journaling app and static website.",
     "",
     `- Canonical website: ${SITE_URL}/`,
+    ...STATIC_PAGES.map((page) => `- ${page.title}: ${page.url}`),
     "- Blog: https://mini-diarium.com/blog/",
     "- RSS feed: https://mini-diarium.com/blog/feed.xml",
     "- Source code: https://github.com/fjrevoredo/mini-diarium",
@@ -622,8 +641,13 @@ function writeLlms(posts) {
     "- Mini Diarium is an encrypted offline journal for Windows, macOS, and Linux.",
     "- Entries are encrypted with AES-256-GCM before being written to the local SQLite database.",
     "- The app is local-first and does not send entries to cloud services.",
+    "- Mini Diarium is a private diary app for desktop users who want local-only storage instead of a cloud account.",
     "- Supported imports: Mini Diary JSON, Day One JSON/TXT, jrnl JSON.",
     "- Supported exports: JSON and Markdown.",
+    "",
+    "## Canonical Pages",
+    "",
+    ...STATIC_PAGES.map((page) => `- ${page.title}: ${page.summary} (${page.url})`),
     "",
     "## Latest Articles",
     "",
@@ -655,7 +679,7 @@ function writeFeed(posts) {
   <channel>
     <title>Mini Diarium Blog</title>
     <link>${SITE_URL}/blog/</link>
-    <description>Static articles about encrypted offline journaling and local-first software.</description>
+    <description>Static articles about encrypted journals, private diary apps, offline journaling, and local-first software.</description>
     <language>en-us</language>
     <lastBuildDate>${new Date(isoDate(posts[0]?.updated ?? "2026-03-06")).toUTCString()}</lastBuildDate>
 ${items}

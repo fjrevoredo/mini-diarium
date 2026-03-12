@@ -1,3 +1,6 @@
+# Local website testing only.
+# Production deployment runs through Coolify; do not treat this compose file as the source of truth for
+# production redirects, canonical host rules, TLS, or proxy behavior.
 services:
   web:
     build: .

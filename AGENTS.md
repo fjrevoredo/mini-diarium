@@ -96,6 +96,8 @@ website/
 
 **Coolify deploy:** In Coolify, set the compose file path to `website/docker-compose.yml`. The build context is the `website/` subfolder.
 
+Important: `website/docker-compose.yml` and `website/nginx.conf` are for local website testing only. Production redirects, canonical host enforcement, TLS, and proxy behavior are controlled by Coolify / the real production edge, not by the local Nginx config alone.
+
 ### Frontend (`src/`)
 
 ```

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Encrypted offline journal app for Windows, macOS &amp; Linux. AES-256-GCM encryption, no cloud, no tracking, no subscriptions." />
+  <meta name="description" content="Mini Diarium is a private offline journal app for Windows, macOS &amp; Linux. AES-256-GCM encryption, local-first storage, no cloud, no telemetry." />
   <meta name="robots" content="index,follow,max-snippet:-1,max-image-preview:large,max-video-preview:-1" />
   <meta name="theme-color" content="#0e0e0e" />
   <meta name="author" content="Francisco J. Revoredo" />
@@ -13,8 +13,8 @@
   <meta property="og:site_name" content="Mini Diarium" />
   <meta property="og:locale" content="en_US" />
   <meta property="og:url" content="https://mini-diarium.com/" />
-  <meta property="og:title" content="Mini Diarium — Encrypted Offline Journal for Windows, macOS &amp; Linux" />
-  <meta property="og:description" content="Encrypted offline journal app for Windows, macOS &amp; Linux. AES-256-GCM encryption, no cloud, no tracking, no subscriptions." />
+  <meta property="og:title" content="Mini Diarium — Encrypted Journal App for Windows, macOS &amp; Linux" />
+  <meta property="og:description" content="Mini Diarium is a private offline journal app for Windows, macOS &amp; Linux. AES-256-GCM encryption, local-first storage, no cloud, no telemetry." />
   <meta property="og:image" content="https://mini-diarium.com/assets/og-cover.png" />
   <meta property="og:image:type" content="image/png" />
   <meta property="og:image:width" content="1200" />
@@ -25,11 +25,11 @@
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:site" content="@MiniDiarium" />
   <meta name="twitter:creator" content="@MiniDiarium" />
-  <meta name="twitter:title" content="Mini Diarium — Encrypted Offline Journal for Windows, macOS &amp; Linux" />
-  <meta name="twitter:description" content="Encrypted offline journal app for Windows, macOS &amp; Linux. AES-256-GCM encryption, no cloud, no tracking, no subscriptions." />
+  <meta name="twitter:title" content="Mini Diarium — Encrypted Journal App for Windows, macOS &amp; Linux" />
+  <meta name="twitter:description" content="Mini Diarium is a private offline journal app for Windows, macOS &amp; Linux. AES-256-GCM encryption, local-first storage, no cloud, no telemetry." />
   <meta name="twitter:image" content="https://mini-diarium.com/assets/og-cover.png" />
 
-  <title>Mini Diarium — Encrypted Offline Journal for Windows, macOS &amp; Linux</title>
+  <title>Mini Diarium — Encrypted Journal App for Windows, macOS &amp; Linux</title>
   <link rel="canonical" href="https://mini-diarium.com/" />
   <link rel="preload" as="video" href="/assets/demo.mp4" type="video/mp4" fetchpriority="high" />
   <link rel="icon" href="assets/logo.svg" type="image/svg+xml" />
@@ -63,6 +63,12 @@
     .btn{display:inline-flex;align-items:center;gap:.5rem;padding:.7rem 1.4rem;border-radius:var(--radius);font-size:.9rem;font-weight:600;border:1.5px solid transparent;white-space:nowrap}
     .btn-primary{background:var(--accent);color:#0e0e0e;border-color:var(--accent)}
     .btn-secondary{background:var(--bg-raised);color:var(--text);border-color:var(--border)}
+    .hero-facts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.75rem;max-width:920px;margin:0 auto 1.5rem}
+    .hero-fact{padding:.9rem 1rem;background:var(--bg-card);border:1px solid var(--border);border-radius:12px;text-align:left}
+    .hero-fact strong{display:block;font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:.35rem}
+    .hero-fact span{display:block;color:var(--text);font-size:.92rem;line-height:1.5}
+    .hero-context{max-width:720px;margin:0 auto 1.25rem;color:var(--text-muted);font-size:.95rem}
+    .hero-context a{color:var(--text)}
     .hero-sourceforge{display:inline-block;margin:.1rem auto 1rem}
     .hero-source{font-size:.8rem;color:var(--text-muted)}
     .demo{padding:0 0 clamp(3rem,8vw,6rem)}
@@ -72,7 +78,8 @@
     .demo-dot-close{background:#ff5f57}.demo-dot-min{background:#febc2e}.demo-dot-max{background:#28c840}
     .demo-title{flex:1;text-align:center;font-size:.75rem;color:var(--text-muted)}
     .demo-media{width:100%;aspect-ratio:4/3;object-fit:cover;background:#111}
-    @media (max-width:768px){.nav-links{display:none}.nav-toggle{display:block;background:none;border:none;cursor:pointer;padding:.5rem;color:var(--text);margin-left:auto}}
+    @media (max-width:900px){.hero-facts{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    @media (max-width:768px){.nav-links{display:none}.nav-toggle{display:block;background:none;border:none;cursor:pointer;padding:.5rem;color:var(--text);margin-left:auto}.hero-facts{grid-template-columns:1fr}}
   </style>
   <link rel="preload" href="/css/style.f155d41e.css" as="style" onload="this.onload=null;this.rel='stylesheet'" />
   <noscript><link rel="stylesheet" href="/css/style.f155d41e.css" /></noscript>
@@ -85,14 +92,14 @@
         "@type": "SoftwareApplication",
         "@id": "https://mini-diarium.com/#software",
         "name": "Mini Diarium",
-        "description": "An encrypted, local-first desktop journal for Windows, macOS, and Linux. AES-256-GCM encryption, no cloud, no telemetry.",
+        "description": "A private offline journal app for Windows, macOS, and Linux. AES-256-GCM encryption, local-first storage, no cloud, no telemetry.",
         "url": "https://mini-diarium.com",
         "applicationCategory": "UtilitiesApplication",
         "operatingSystem": "Windows, macOS, Linux",
         "softwareVersion": "0.4.6",
         "downloadUrl": "https://github.com/fjrevoredo/mini-diarium/releases",
         "installUrl": "https://github.com/fjrevoredo/mini-diarium/releases",
-        "dateModified": "2026-03-03",
+        "dateModified": "2026-03-12",
         "offers": {
           "@type": "Offer",
           "price": "0",
@@ -128,12 +135,20 @@
         "publisher": {
           "@id": "https://mini-diarium.com/#organization"
         },
-        "dateModified": "2026-03-03"
+        "dateModified": "2026-03-12"
       },
       {
         "@type": "FAQPage",
         "@id": "https://mini-diarium.com/#faq",
         "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "What is Mini Diarium?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Mini Diarium is a private offline journal app for Windows, macOS, and Linux. It stores entries locally and encrypts them before they are written to disk."
+            }
+          },
           {
             "@type": "Question",
             "name": "Does Mini Diarium work fully offline?",
@@ -152,7 +167,7 @@
           },
           {
             "@type": "Question",
-            "name": "Which operating systems are supported?",
+            "name": "Which desktop platforms are supported?",
             "acceptedAnswer": {
               "@type": "Answer",
               "text": "Mini Diarium supports Windows, macOS, and Linux."
@@ -160,18 +175,10 @@
           },
           {
             "@type": "Question",
-            "name": "Can I import existing journals?",
+            "name": "Can I import and export journal data?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Yes. You can import from Mini Diary JSON, Day One JSON and TXT, and jrnl JSON."
-            }
-          },
-          {
-            "@type": "Question",
-            "name": "Can I export my data anytime?",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "Yes. You can export all entries as JSON or Markdown at any time."
+              "text": "Yes. Mini Diarium can import Mini Diary JSON, Day One JSON and TXT, and jrnl JSON, and can export all entries as JSON or Markdown."
             }
           }
         ]
@@ -225,11 +232,11 @@
     <div class="hero-version">
       <span>Daily releases</span> published on GitHub
     </div>
-    <p class="hero-eyebrow">Privacy-first journaling</p>
-    <h1>Your journal.<br><em>Your device.</em> Your keys.</h1>
+    <p class="hero-eyebrow">Encrypted journal app</p>
+    <h1>An encrypted journal app<br><em>that stays yours.</em></h1>
     <p class="hero-sub">
-      Mini Diarium is an encrypted desktop journal that never touches the cloud.
-      AES-256-GCM encryption, offline-only, no accounts, no telemetry. Just your words.
+      Mini Diarium is a private offline diary app for Windows, macOS, and Linux.
+      AES-256-GCM encryption, local-first storage, no cloud, no telemetry. Just your words.
     </p>
 
     <div class="hero-actions">
@@ -257,17 +264,41 @@
         </svg>
         Download for Linux
       </a>
-      <a class="btn btn-secondary" href="https://github.com/fjrevoredo/mini-diarium" target="_blank" rel="noopener noreferrer">
-        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-          <path d="M12 .3a12 12 0 0 0-3.8 23.38c.6.12.83-.26.83-.57L9 21.07c-3.34.72-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.08-.74.09-.73.09-.73 1.2.09 1.83 1.24 1.83 1.24 1.07 1.83 2.81 1.3 3.5 1 .1-.78.42-1.31.76-1.61-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.14-.3-.54-1.52.1-3.18 0 0 1-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.28-1.55 3.29-1.23 3.29-1.23.64 1.66.24 2.88.12 3.18a4.65 4.65 0 0 1 1.23 3.22c0 4.61-2.8 5.63-5.48 5.92.43.37.81 1.1.81 2.22l-.01 3.29c0 .31.2.69.82.57A12 12 0 0 0 12 .3z"/>
+      <a class="btn btn-secondary" href="/encrypted-journal/">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="9"/>
+          <path d="M12 8v4l3 3"/>
         </svg>
-        View Source
+        See how it works
       </a>
     </div>
-    <a class="hero-sourceforge" href="https://sourceforge.net/projects/mini-diarium/files/latest/download">
+    <div class="hero-facts" aria-label="Product facts">
+      <div class="hero-fact">
+        <strong>Offline-only</strong>
+        <span>No sync service, no HTTP client, no telemetry.</span>
+      </div>
+      <div class="hero-fact">
+        <strong>Encrypted at rest</strong>
+        <span>AES-256-GCM protects each entry before it reaches disk.</span>
+      </div>
+      <div class="hero-fact">
+        <strong>Local-first storage</strong>
+        <span>Your journal lives in a local encrypted SQLite database.</span>
+      </div>
+      <div class="hero-fact">
+        <strong>Desktop support</strong>
+        <span>Windows, macOS, and Linux releases are available.</span>
+      </div>
+    </div>
+    <p class="hero-context">
+      Looking specifically for an encrypted journal app? Start with the
+      <a href="/encrypted-journal/">encrypted journal guide</a>
+      for the short version of how Mini Diarium handles privacy, storage, and ownership.
+    </p>
+    <a class="hero-sourceforge" href="https://sourceforge.net/projects/mini-diarium/files/latest/download" data-nosnippet>
       <img alt="Download Mini-Diarium" src="https://a.fsdn.com/con/app/sf-download-button" width="276" height="48" srcset="https://a.fsdn.com/con/app/sf-download-button?button_size=2x 2x" />
     </a>
-    <p class="hero-source">Free &amp; open source · MIT License · No account required</p>
+    <p class="hero-source" data-nosnippet>Free &amp; open source · MIT License · No account required</p>
   </div>
 </section>
 
@@ -339,45 +370,45 @@
     <div class="blog-preview-header">
       <div>
         <p class="section-label">From the blog</p>
-        <h2 class="section-title">Offline journaling, privacy, and product notes</h2>
+        <h2 class="section-title">Encrypted journals, offline writing, and product notes</h2>
       </div>
       <p class="section-body">
-        Static articles that explain what Mini Diarium is, why it exists, and how local-first journaling protects ownership.
+        Static articles that explain encrypted journaling, private diary apps, and how local-first writing protects ownership.
       </p>
     </div>
     <div class="article-grid">
       <article class="article-card">
-        <p class="article-card-meta">March 6, 2026</p>
-        <h2><a href="/blog/local-first-journaling-and-ownership/">Local-First Journaling Means You Keep the Exit Door Open</a></h2>
-        <p>Local-first journaling protects more than secrecy. It protects portability, continuity, and the ability to leave with your data intact.</p>
+        <p class="article-card-meta">March 12, 2026</p>
+        <h2><a href="/blog/encrypted-journal-vs-cloud-notes-app/">Encrypted Journal App vs. Cloud Notes App</a></h2>
+        <p>A direct comparison of local encrypted journaling versus cloud-first note storage and why the architecture changes who controls the writing.</p>
         <ul class="tag-list" role="list">
-        <li>local-first journaling</li>
+        <li>encrypted journal</li>
+        <li>cloud notes</li>
+        <li>private diary app</li>
+      </ul>
+        <a class="article-card-link" href="/blog/encrypted-journal-vs-cloud-notes-app/">Read article</a>
+      </article>
+      <article class="article-card">
+        <p class="article-card-meta">March 12, 2026</p>
+        <h2><a href="/blog/offline-journal-that-you-own/">Offline Journal That You Own</a></h2>
+        <p>Why offline journaling is about more than privacy alone: it also changes portability, continuity, and long-term ownership.</p>
+        <ul class="tag-list" role="list">
+        <li>offline journal</li>
+        <li>local-first writing</li>
         <li>data ownership</li>
-        <li>encrypted journal</li>
       </ul>
-        <a class="article-card-link" href="/blog/local-first-journaling-and-ownership/">Read article</a>
+        <a class="article-card-link" href="/blog/offline-journal-that-you-own/">Read article</a>
       </article>
       <article class="article-card">
-        <p class="article-card-meta">March 6, 2026</p>
-        <h2><a href="/blog/why-an-offline-journal-is-different/">Why an Offline Journal Is Different From a Cloud Notes App</a></h2>
-        <p>An encrypted offline journal changes who controls your writing and your long-term ownership. Privacy-first journaling starts with architecture.</p>
+        <p class="article-card-meta">March 12, 2026</p>
+        <h2><a href="/blog/private-diary-app-for-desktop/">Private Diary App for Desktop: What Actually Matters</a></h2>
+        <p>Which requirements matter most when you want a diary app for personal writing on your own machine instead of a cloud account.</p>
         <ul class="tag-list" role="list">
-        <li>offline journaling</li>
-        <li>privacy-first software</li>
-        <li>encrypted journal</li>
+        <li>private diary app</li>
+        <li>desktop journaling</li>
+        <li>offline journal</li>
       </ul>
-        <a class="article-card-link" href="/blog/why-an-offline-journal-is-different/">Read article</a>
-      </article>
-      <article class="article-card">
-        <p class="article-card-meta">March 6, 2026</p>
-        <h2><a href="/blog/why-mini-diarium-exists/">Why Mini Diarium Exists</a></h2>
-        <p>A maintained Mini Diary successor, rebuilt with Tauri, SolidJS, and Rust around the same private journaling philosophy.</p>
-        <ul class="tag-list" role="list">
-        <li>mini diary successor</li>
-        <li>local-first journaling</li>
-        <li>privacy-first software</li>
-      </ul>
-        <a class="article-card-link" href="/blog/why-mini-diarium-exists/">Read article</a>
+        <a class="article-card-link" href="/blog/private-diary-app-for-desktop/">Read article</a>
       </article>
     </div>
     <div class="blog-preview-actions">
@@ -394,7 +425,7 @@
     <div class="features-header">
       <p class="section-label">What's inside</p>
       <h2 class="section-title">Built for privacy.<br>Designed for daily use.</h2>
-      <p class="section-body">Every feature decision starts with the same question: does this need the network? The answer is always no.</p>
+      <p class="section-body">A private diary app should not depend on a server. Every feature decision starts with the same question: does this need the network? The answer is always no.</p>
     </div>
 
     <div class="features-grid">
@@ -484,7 +515,7 @@
         <p>Export everything as JSON or Markdown any time. Your data is never locked in. Use it in other apps, back it up yourself, or just have peace of mind.</p>
       </div>
 
-      <div class="feature-card">
+      <div class="feature-card" data-nosnippet>
         <div class="feature-icon">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
@@ -549,7 +580,7 @@
     <div class="facts-header">
       <p class="section-label">At a glance</p>
       <h2 class="section-title">Quick facts</h2>
-      <p class="section-body">Short answers for humans and machines: what Mini Diarium is, how it protects data, and what platforms it supports.</p>
+      <p class="section-body">Short answers for humans and machines: what Mini Diarium is, how it protects data, and what platforms it supports. For the category overview, read the <a href="/encrypted-journal/">encrypted journal guide</a>.</p>
     </div>
 
     <div class="facts-grid">
@@ -584,31 +615,31 @@
       <h3 class="faq-title">FAQ</h3>
 
       <details class="faq-item">
+        <summary>What is Mini Diarium?</summary>
+        <p>Mini Diarium is a private offline journal app for Windows, macOS, and Linux. It stores entries locally and encrypts them before they are written to disk.</p>
+      </details>
+      <details class="faq-item">
         <summary>Does Mini Diarium work fully offline?</summary>
         <p>Yes. The app does not send entries to cloud services and does not include telemetry. See the <a href="https://github.com/fjrevoredo/mini-diarium/blob/master/PRIVACY.md" target="_blank" rel="noopener noreferrer">privacy policy</a>.</p>
       </details>
       <details class="faq-item">
-        <summary>How are entries encrypted?</summary>
+        <summary>How are journal entries encrypted?</summary>
         <p>Each entry is encrypted with AES-256-GCM before it is written to disk. See the <a href="https://github.com/fjrevoredo/mini-diarium/blob/master/SECURITY.md" target="_blank" rel="noopener noreferrer">security model</a> for details.</p>
       </details>
       <details class="faq-item">
-        <summary>Which systems are supported?</summary>
+        <summary>Which desktop platforms are supported?</summary>
         <p>Mini Diarium supports Windows, macOS, and Linux builds published from the GitHub releases page.</p>
       </details>
       <details class="faq-item">
-        <summary>Can I import old journal data?</summary>
-        <p>Yes. Supported imports are Mini Diary JSON, Day One JSON/TXT, and jrnl JSON.</p>
-      </details>
-      <details class="faq-item">
-        <summary>Can I export everything any time?</summary>
-        <p>Yes. Exports are available in JSON and Markdown so your data is never locked in.</p>
+        <summary>Can I import and export journal data?</summary>
+        <p>Yes. Supported imports are Mini Diary JSON, Day One JSON/TXT, and jrnl JSON. Exports are available in JSON and Markdown so your data is never locked in.</p>
       </details>
     </div>
   </div>
 </section>
 
 <!-- ========== PLATFORMS ========== -->
-<section class="platforms" id="platforms">
+<section class="platforms" id="platforms" data-nosnippet>
   <div class="container">
     <div style="text-align:center; max-width: 520px; margin: 0 auto;">
       <p class="section-label">Available on</p>
@@ -664,7 +695,7 @@
 </section>
 
 <!-- ========== RELEASE STATUS ========== -->
-<section class="release-status" id="release-status">
+<section class="release-status" id="release-status" data-nosnippet>
   <div class="container release-status-inner">
     <p class="section-label">Release freshness</p>
     <h2 class="section-title">Release status</h2>
@@ -674,7 +705,7 @@
 </section>
 
 <!-- ========== SOCIAL ========== -->
-<section class="social" id="social">
+<section class="social" id="social" data-nosnippet>
   <div class="container">
     <p class="section-label">Follow the project</p>
     <h2 class="section-title">Stay in the loop</h2>
@@ -714,7 +745,7 @@
 </section>
 
 <!-- ========== ABOUT ========== -->
-<section class="about" id="about">
+<section class="about" id="about" data-nosnippet>
   <div class="container">
     <p class="section-label">The author</p>
     <h2 class="section-title" style="margin-bottom: 1.75rem;">Made with love</h2>
@@ -775,6 +806,7 @@
       </div>
       <div class="footer-right">
         <a href="https://github.com/fjrevoredo/mini-diarium" target="_blank" rel="noopener noreferrer">GitHub</a>
+        <a href="https://x.com/MiniDiarium" target="_blank" rel="noopener noreferrer">X</a>
         <a href="https://github.com/fjrevoredo/mini-diarium/blob/master/SECURITY.md" target="_blank" rel="noopener noreferrer">Security</a>
         <a href="https://github.com/fjrevoredo/mini-diarium/blob/master/CHANGELOG.md" target="_blank" rel="noopener noreferrer">Changelog</a>
         <a href="/ai-crawlers.txt">AI Crawlers</a>
