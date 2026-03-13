@@ -8,6 +8,10 @@ All notable changes to Mini Diarium are documented here. This project uses [Sema
 
 - **Entry timestamps**: the editor can now show the `date_created` and `date_updated` timestamps for the current entry below the title, formatted using the OS locale. Opt-in via **Preferences → Writing → Show entry timestamps** (disabled by default). The updated timestamp is only shown when it differs from the created timestamp. Both timestamps are hidden when "Hide Titles" is enabled.
 
+### Changed
+
+- **Theme system hardening**: all raw palette classes (`bg-blue-600`, `bg-red-600`, `border-blue-600`, `text-blue-500`, `text-red-500`, etc.) have been replaced with semantic CSS variable tokens and utility classes across 13 component files and `src/styles/editor.css`. New tokens added to `src/index.css`: `--btn-primary-*`, `--btn-destructive-*`, `--btn-active-*`, `--spinner-color` (button/spinner family), and `--editor-*` (editor content family). New utility classes: `.interactive-primary`, `.interactive-destructive`, `.text-destructive`, `.btn-active`, `.spinner-border`, `.text-interactive`, `.bg-interactive`. `editor.css` now uses only CSS variables with no `.dark`-specific override blocks. This task establishes the stable token contract for future user theme overrides (Task 69).
+
 ## [0.4.6] — 08-03-2026
 
 ### Added

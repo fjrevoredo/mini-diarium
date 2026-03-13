@@ -253,28 +253,59 @@ Dark mode shadows use 30% opacity instead of 5–10% to remain visible against d
 
 ### Editor-Specific Colors (`src/styles/editor.css`)
 
-TipTap (ProseMirror) styles are partially outside the CSS variable system due to specificity constraints with UnoCSS Typography.
+TipTap (ProseMirror) styles use CSS custom properties from `src/index.css`. All `.dark`-specific overrides inside `editor.css` have been removed — the light/dark cascade is handled entirely by `:root` / `.dark` variable definitions.
 
-| Element | Light | Dark |
-|---------|-------|------|
-| Body text | `var(--text-primary)` | `#e5e7eb` |
-| Headings, bold | (inherits) | `#f3f4f6` |
-| Placeholder | `#adb5bd` | `#adb5bd` |
-| Blockquote border | `#d1d5db` | `#6b7280` |
-| Blockquote text | `#6b7280` | `#9ca3af` |
-| HR rule | `#e5e7eb` | `#4b5563` |
-| Inline code bg | `#f3f4f6` | `#374151` |
-| Inline code text | (inherits) | `#e5e7eb` |
-| Code block bg | `#1f2937` | `#1f2937` |
-| Code block text | `#f3f4f6` | `#f3f4f6` |
-| Link (dark) | — | `#60a5fa` |
-| Highlight mark | `#b45309` (amber-700) | `#fbbf24` (amber-400) |
-| Selected image outline | `#3b82f6` | `#60a5fa` |
-| Editor font size | `var(--editor-font-size, 16px)` | same |
+| Element | Token | Light value | Dark value |
+|---------|-------|-------------|------------|
+| Body text | `--editor-body-text` | `var(--text-primary)` | `#e5e7eb` |
+| Headings, bold | `--editor-heading-text` | `var(--text-primary)` | `#f3f4f6` |
+| Placeholder | `--editor-placeholder-text` | `#adb5bd` | `#adb5bd` (same) |
+| Blockquote border | `--editor-blockquote-border` | `var(--border-secondary)` | `var(--interactive-secondary)` |
+| Blockquote text | `--editor-blockquote-text` | `var(--text-tertiary)` | `var(--text-tertiary)` |
+| HR rule | `--editor-rule-color` | `var(--border-primary)` | `var(--bg-active)` |
+| Inline code bg | `--editor-code-bg` | `var(--bg-tertiary)` | `var(--bg-tertiary)` |
+| Code block bg | `--editor-code-block-bg` | `#1f2937` (fixed) | `#1f2937` (fixed) |
+| Code block text | `--editor-code-block-text` | `#f3f4f6` (fixed) | `#f3f4f6` (fixed) |
+| Link | `--editor-link-color` | `var(--interactive-primary)` | `var(--interactive-primary-hover)` |
+| Highlight mark | `--editor-highlight-color` | `#b45309` (amber-700) | `#fbbf24` (amber-400) |
+| Selected image outline | `--editor-selection-outline` | `var(--interactive-primary)` | `var(--interactive-primary-hover)` |
+| Editor font size | `var(--editor-font-size, 16px)` | — | — |
+
+**Note:** `--editor-code-block-bg` / `--editor-code-block-text` are intentionally fixed to the same dark/light values in both themes — code blocks always render as dark-surface content. A user override to these tokens would change code block appearance in all themes.
 
 Highlight (`<mark>`) intentionally uses amber to distinguish it visually from the blue interactive palette without conflicting with status colors.
 
-**Known gap — editor toolbar active state:** `EditorToolbar.tsx` hard-codes `bg-blue-100 text-blue-700` for the active toolbar button state. These are light-mode-only Tailwind values with no `.dark` counterpart. In dark mode the active state falls back to whatever the non-active style provides. This is tracked as technical debt; when fixed, the active state should use a CSS variable pair or `dark:` variant classes.
+---
+
+### Button Tokens
+
+#### Light theme
+
+| Token | Value | Role |
+|-------|-------|------|
+| `--btn-primary-bg` | `#3b82f6` | Primary button background |
+| `--btn-primary-bg-hover` | `#2563eb` | Primary button hover |
+| `--btn-primary-text` | `#ffffff` | Primary button text |
+| `--btn-primary-ring` | `#3b82f6` | Primary button focus ring (matches `focus:ring-blue-500`) |
+| `--btn-destructive-bg` | `#dc2626` | Destructive button background |
+| `--btn-destructive-bg-hover` | `#b91c1c` | Destructive button hover |
+| `--btn-destructive-text` | `#ffffff` | Destructive button text |
+| `--btn-destructive-ring` | `#ef4444` | Destructive button focus ring |
+| `--btn-active-bg` | `#dbeafe` | Active/selected badge background (toolbar, picker badge) |
+| `--btn-active-text` | `#1d4ed8` | Active/selected badge text |
+| `--spinner-color` | `#3b82f6` | Loading spinner border |
+
+#### Dark theme
+
+| Token | Value | Role |
+|-------|-------|------|
+| `--btn-primary-bg` | `#3b82f6` | Same as light |
+| `--btn-primary-bg-hover` | `#60a5fa` | Lighter hover for dark backgrounds |
+| `--btn-destructive-bg` | `#ef4444` | Lighter red for legibility on dark |
+| `--btn-destructive-bg-hover` | `#dc2626` | |
+| `--btn-destructive-ring` | `#f87171` | |
+| `--btn-active-bg` | `#1e3a8a` | Dark blue badge background |
+| `--btn-active-text` | `#bfdbfe` | Light blue badge text |
 
 ---
 
@@ -289,6 +320,15 @@ Highlight (`<mark>`) intentionally uses amber to distinguish it visually from th
 **Status border:** `.border-success`, `.border-error`, `.border-warning`, `.border-info`
 **Status text:** `.text-success`, `.text-error`, `.text-warning`, `.text-info`
 **Placeholder:** `.placeholder-primary`, `.placeholder-secondary`, `.placeholder-tertiary`, `.placeholder-muted`
+
+**Interactive components:**
+- `.interactive-primary` — primary action button (replaces `bg-blue-600 text-white hover:bg-blue-700`)
+- `.interactive-destructive` — destructive action button (replaces `bg-red-600 text-white hover:bg-red-700`)
+- `.text-destructive` — text-only destructive link/button (replaces `text-red-500 hover:text-red-700`)
+- `.btn-active` — toolbar active / selected badge (replaces `bg-blue-100 text-blue-700`)
+- `.spinner-border` — loading spinner border color (replaces `border-blue-600`)
+- `.text-interactive` — interactive accent text (replaces `text-blue-500`)
+- `.bg-interactive` — interactive accent background (replaces `bg-blue-600` on dots/indicators)
 
 ---
 
@@ -328,13 +368,32 @@ Use this when writing a new component or modifying an existing one.
 - [ ] **Backgrounds** — use `.bg-primary`, `.bg-secondary`, `.bg-tertiary`, or `var(--bg-*)`. No raw hex.
 - [ ] **Text** — use `.text-primary`, `.text-secondary`, `.text-tertiary`, `.text-muted`, or `var(--text-*)`.
 - [ ] **Borders** — use `.border-primary`, `.border-secondary`, or `var(--border-*)`. Focus borders always `border-blue-500` / `var(--border-focus)`.
-- [ ] **Interactive elements** — primary buttons use `bg-blue-600 hover:bg-blue-700`; dark hover uses `dark:hover:bg-blue-500`. Focus ring: `focus:ring-blue-500`.
+- [ ] **Interactive elements** — primary buttons use `.interactive-primary`; destructive buttons use `.interactive-destructive`; text-only destructive buttons/links use `.text-destructive`. Focus ring: `focus:ring-blue-500` (consistent with `--btn-primary-ring` token).
 - [ ] **Dark mode** — every color that appears in the component must have a dark variant, either via CSS variables (automatic) or explicit `dark:` UnoCSS classes.
 - [ ] **Status messages** — use the status tokens (`--status-{success,error,warning,info}-{bg,border,text}`) or the `.bg-*` / `.border-*` / `.text-*` utility classes. Do not invent new colors for feedback states.
 - [ ] **No gold in the app** — if you are tempted to use `#F5C94D` or any amber/yellow for non-highlight, non-warning UI, stop and reconsider.
 - [ ] **No `primary-*` UnoCSS classes** — use `blue-*` for the interactive color. The `primary` scale in `uno.config.ts` is unused sky-blue and will not match.
 - [ ] **Overlays** — backdrop uses `style={{ 'background-color': 'var(--overlay-bg)' }}`. Panel shadow uses `style={{ 'box-shadow': 'var(--shadow-lg)' }}`.
 - [ ] **New token needed?** — add it to both `:root` and `.dark` in `src/index.css`, then document it here.
+
+---
+
+### Theme Override Boundary
+
+This section defines the stable token contract for future user theme overrides.
+
+**Inside the stable token contract (overridable):**
+
+All custom properties in `:root` / `.dark` in `src/index.css`:
+`--bg-*`, `--text-*`, `--border-*`, `--interactive-*`, `--status-*`, `--btn-*`, `--editor-*`, `--spinner-color`, `--overlay-bg`, `--shadow-*`.
+
+**Outside the contract (not supported for user overrides):**
+
+- `src/styles/critical-auth.css` — intentionally hardcoded light-mode, pre-hydration; overriding these has no effect at runtime because the file is loaded before CSS variable resolution
+- `focus:ring-blue-500` on form inputs (browser focus affordance; its value `#3b82f6` matches `--btn-primary-ring` but is applied via UnoCSS static class, not the token)
+- Native checkbox `accent-color` behavior (`text-blue-600`)
+- `hover:text-blue-600` on journal name paragraph (minor hover affordance)
+- Static marketing website (`website/`) — independent palette, always dark
 
 ---
 

@@ -733,7 +733,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                                   <button
                                     type="button"
                                     onClick={() => handleRemoveAuthMethod(method.id)}
-                                    class="text-xs text-red-500 hover:text-red-700 focus:outline-none"
+                                    class="text-xs text-destructive focus:outline-none"
                                   >
                                     Remove
                                   </button>
@@ -819,7 +819,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                             <button
                               type="button"
                               onClick={handleAddPassword}
-                              class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              class="px-4 py-2 text-sm font-medium interactive-primary rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                             >
                               Add Password
                             </button>
@@ -868,7 +868,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                           <button
                             type="button"
                             onClick={handleGenerateAndRegisterKeypair}
-                            class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            class="px-4 py-2 text-sm font-medium interactive-primary rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                           >
                             Generate &amp; Register Key File
                           </button>
@@ -944,7 +944,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                         <button
                           type="button"
                           onClick={handlePasswordChange}
-                          class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                          class="px-4 py-2 text-sm font-medium interactive-primary rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                         >
                           Change Password
                         </button>
@@ -1011,7 +1011,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                           type="button"
                           onClick={handleChangeJournalDirectory}
                           disabled={isChangingDir()}
-                          class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                          class="px-4 py-2 text-sm font-medium interactive-primary rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           {isChangingDir() ? 'Moving...' : 'Change Location'}
                         </button>
@@ -1029,7 +1029,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                         <button
                           type="button"
                           onClick={handleResetJournal}
-                          class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                          class="px-4 py-2 text-sm font-medium interactive-destructive rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
                         >
                           Reset Journal
                         </button>
@@ -1054,7 +1054,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                             type="button"
                             onClick={handleGenerateDebugDump}
                             disabled={dumpGenerating()}
-                            class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                            class="px-4 py-2 text-sm font-medium interactive-primary rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             {dumpGenerating() ? 'Generating…' : 'Generate Debug Dump'}
                           </button>
@@ -1084,7 +1084,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
               <button
                 type="button"
                 onClick={handleSave}
-                class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                class="px-4 py-2 text-sm font-medium interactive-primary rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
               >
                 Save
               </button>

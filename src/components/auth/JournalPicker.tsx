@@ -215,7 +215,7 @@ export default function JournalPicker() {
                             >
                               {journal.name}
                               <Show when={activeJournalId() === journal.id}>
-                                <span class="ml-2 inline-block px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-200">
+                                <span class="ml-2 inline-block px-2 py-0.5 text-xs rounded-full btn-active">
                                   Last used
                                 </span>
                               </Show>
@@ -248,7 +248,7 @@ export default function JournalPicker() {
                           data-testid="journal-open-button"
                           onClick={() => handleOpen(journal.id)}
                           disabled={isWorking()}
-                          class="rounded-md bg-blue-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                          class="rounded-md interactive-primary px-3 py-1.5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           Open
                         </button>
@@ -256,7 +256,7 @@ export default function JournalPicker() {
                           type="button"
                           onClick={() => handleRemove(journal.id)}
                           disabled={isWorking()}
-                          class="rounded-md border border-primary px-3 py-1.5 text-xs font-medium text-red-500 hover:text-red-700 hover:bg-hover focus:outline-none focus:ring-2 focus:ring-red-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                          class="rounded-md border border-primary px-3 py-1.5 text-xs font-medium text-destructive hover:bg-hover focus:outline-none focus:ring-2 focus:ring-red-400 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           Remove
                         </button>
@@ -283,7 +283,7 @@ export default function JournalPicker() {
                   type="button"
                   onClick={() => handleBrowseCreate()}
                   disabled={isWorking()}
-                  class="flex-1 rounded-md bg-blue-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  class="flex-1 rounded-md interactive-primary px-4 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   + Create New Journal
                 </button>
@@ -338,7 +338,7 @@ export default function JournalPicker() {
                     type="button"
                     onClick={() => handleConfirmCreate()}
                     disabled={isWorking() || !newDir()}
-                    class="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                    class="rounded-md interactive-primary px-4 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isWorking() ? 'Creating...' : 'Add'}
                   </button>
@@ -389,7 +389,7 @@ export default function JournalPicker() {
                       type="button"
                       onClick={() => handleConfirmOpen()}
                       disabled={isWorking()}
-                      class="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                      class="rounded-md interactive-primary px-4 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {isWorking() ? 'Opening...' : 'Open'}
                     </button>

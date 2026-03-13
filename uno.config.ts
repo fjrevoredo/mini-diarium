@@ -39,7 +39,7 @@ export default defineConfig({
     'mb-2', 'mb-4', 'mb-8', 'mt-4',
     // Colors - Auth screens
     'bg-white', 'bg-gray-50', 'bg-gray-100', 'bg-gray-400',
-    'bg-blue-600', 'bg-blue-700', 'bg-red-50',
+    'bg-red-50',
     'text-gray-900', 'text-gray-700', 'text-gray-600', 'text-gray-500', 'text-white', 'text-red-800',
     'border-gray-200', 'border-gray-300', 'border-blue-500',
     // Typography
@@ -51,7 +51,7 @@ export default defineConfig({
     // Effects
     'shadow', 'shadow-lg',
     // States - Complete
-    'hover:bg-gray-100', 'hover:bg-blue-700',
+    'hover:bg-gray-100',
     'focus:outline-none', 'focus:ring-2', 'focus:ring-blue-500', 'focus:ring-offset-2', 'focus:border-blue-500',
     'disabled:bg-gray-100', 'disabled:bg-gray-400',
     'transition-colors',

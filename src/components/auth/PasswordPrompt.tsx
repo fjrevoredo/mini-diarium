@@ -102,7 +102,7 @@ export default function PasswordPrompt() {
               }}
               class={`flex-1 px-3 py-2 text-sm font-medium transition-colors ${
                 mode() === 'password'
-                  ? 'bg-blue-600 text-white'
+                  ? 'interactive-primary'
                   : 'bg-primary text-secondary hover:bg-hover'
               }`}
             >
@@ -116,7 +116,7 @@ export default function PasswordPrompt() {
               }}
               class={`flex-1 px-3 py-2 text-sm font-medium transition-colors ${
                 mode() === 'keyfile'
-                  ? 'bg-blue-600 text-white'
+                  ? 'interactive-primary'
                   : 'bg-primary text-secondary hover:bg-hover'
               }`}
             >
@@ -155,7 +155,7 @@ export default function PasswordPrompt() {
                 type="submit"
                 data-testid="unlock-journal-button"
                 disabled={isUnlocking()}
-                class="w-full rounded-md bg-blue-600 px-4 py-3 font-medium text-white transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                class="w-full rounded-md interactive-primary px-4 py-3 font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isUnlocking() ? 'Unlocking...' : 'Unlock Journal'}
               </button>
@@ -200,7 +200,7 @@ export default function PasswordPrompt() {
               <button
                 type="submit"
                 disabled={isUnlocking() || !keyFilePath()}
-                class="w-full rounded-md bg-blue-600 px-4 py-3 font-medium text-white transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                class="w-full rounded-md interactive-primary px-4 py-3 font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isUnlocking() ? 'Unlocking...' : 'Unlock with Key File'}
               </button>

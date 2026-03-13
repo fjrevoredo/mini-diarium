@@ -38,6 +38,33 @@
   --interactive-secondary: #6b7280;
   --interactive-secondary-hover: #4b5563;
 
+  /* Button actions */
+  --btn-primary-bg: #3b82f6;
+  --btn-primary-bg-hover: #2563eb;
+  --btn-primary-text: #ffffff;
+  --btn-primary-ring: #3b82f6;
+  --btn-destructive-bg: #dc2626;
+  --btn-destructive-bg-hover: #b91c1c;
+  --btn-destructive-text: #ffffff;
+  --btn-destructive-ring: #ef4444;
+  --btn-active-bg: #dbeafe;
+  --btn-active-text: #1d4ed8;
+  --spinner-color: #3b82f6;
+
+  /* Editor content */
+  --editor-body-text: var(--text-primary);
+  --editor-heading-text: var(--text-primary);
+  --editor-placeholder-text: #adb5bd;
+  --editor-blockquote-border: var(--border-secondary);
+  --editor-blockquote-text: var(--text-tertiary);
+  --editor-rule-color: var(--border-primary);
+  --editor-code-bg: var(--bg-tertiary);
+  --editor-code-block-bg: #1f2937;
+  --editor-code-block-text: #f3f4f6;
+  --editor-link-color: var(--interactive-primary);
+  --editor-highlight-color: #b45309;
+  --editor-selection-outline: var(--interactive-primary);
+
   /* Status Colors */
   --status-success-bg: #f0fdf4;
   --status-success-border: #bbf7d0;
@@ -86,6 +113,33 @@
   --interactive-primary-hover: #60a5fa;
   --interactive-secondary: #9ca3af;
   --interactive-secondary-hover: #d1d5db;
+
+  /* Button actions */
+  --btn-primary-bg: #3b82f6;
+  --btn-primary-bg-hover: #60a5fa;
+  --btn-primary-text: #ffffff;
+  --btn-primary-ring: #3b82f6;
+  --btn-destructive-bg: #ef4444;
+  --btn-destructive-bg-hover: #dc2626;
+  --btn-destructive-text: #ffffff;
+  --btn-destructive-ring: #f87171;
+  --btn-active-bg: #1e3a8a;
+  --btn-active-text: #bfdbfe;
+  --spinner-color: #3b82f6;
+
+  /* Editor content */
+  --editor-body-text: #e5e7eb;
+  --editor-heading-text: #f3f4f6;
+  --editor-placeholder-text: #adb5bd;
+  --editor-blockquote-border: var(--interactive-secondary);
+  --editor-blockquote-text: var(--text-tertiary);
+  --editor-rule-color: var(--bg-active);
+  --editor-code-bg: var(--bg-tertiary);
+  --editor-code-block-bg: #1f2937;
+  --editor-code-block-text: #f3f4f6;
+  --editor-link-color: var(--interactive-primary-hover);
+  --editor-highlight-color: #fbbf24;
+  --editor-selection-outline: var(--interactive-primary-hover);
 
   /* Status Colors */
   --status-success-bg: #064e3b;
@@ -228,4 +282,57 @@ body {
 )::placeholder,
 :where(textarea)::placeholder {
   color: var(--text-muted);
+}
+
+/* ============================================
+   INTERACTIVE COMPONENT UTILITIES
+   ============================================ */
+
+/* Primary action button (replaces: bg-blue-600 text-white hover:bg-blue-700) */
+.interactive-primary {
+  background-color: var(--btn-primary-bg);
+  color: var(--btn-primary-text);
+}
+/* :not(:disabled) — hover must not fire on disabled buttons; [disabled] suppresses clicks
+   but not CSS :hover in WebKit/Chromium (Tauri's renderer). */
+.interactive-primary:not(:disabled):hover {
+  background-color: var(--btn-primary-bg-hover);
+}
+
+/* Destructive action button (replaces: bg-red-600 text-white hover:bg-red-700) */
+.interactive-destructive {
+  background-color: var(--btn-destructive-bg);
+  color: var(--btn-destructive-text);
+}
+.interactive-destructive:not(:disabled):hover {
+  background-color: var(--btn-destructive-bg-hover);
+}
+
+/* Text-only destructive link/button (replaces: text-red-500 hover:text-red-700) */
+.text-destructive {
+  color: var(--status-error-text);
+}
+.text-destructive:hover {
+  color: var(--btn-destructive-bg);
+}
+
+/* Toolbar active / selected badge (replaces: bg-blue-100 text-blue-700) */
+.btn-active {
+  background-color: var(--btn-active-bg);
+  color: var(--btn-active-text);
+}
+
+/* Spinner loading indicator (replaces: border-blue-600) */
+.spinner-border {
+  border-color: var(--spinner-color);
+}
+
+/* Interactive accent text (replaces: text-blue-500) */
+.text-interactive {
+  color: var(--interactive-primary);
+}
+
+/* Interactive accent background (replaces: bg-blue-600 on non-button dots/indicators) */
+.bg-interactive {
+  background-color: var(--interactive-primary);
 }

@@ -2,9 +2,9 @@
 
 This document tracks features and improvements deferred from the v0.1.0 release.
 
-**Status**: 13 open tasks across 3 categories
+**Status**: 15 open tasks across 3 categories
 - **Infrastructure**: 1 task (release workflow modernization)
-- **Features**: 8 tasks (PDF export, i18n framework, i18n translations, menus, auto-update, legacy migration, extension system, text input extension point)
+- **Features**: 10 tasks (PDF export, i18n framework, i18n translations, menus, auto-update, legacy migration, extension system, text input extension point, theme hardening, theme overrides)
 - **Quality**: 4 tasks (accessibility audit, dark-theme form-control contrast, QA pass, backup behavior documentation)
 
 See [docs/TODO.md](TODO.md) for the active working backlog and `CHANGELOG.md` for completed shipped work.
@@ -216,6 +216,115 @@ Design an extension/plugin API for third-party integrations (importers, exporter
 
 ---
 
+### Task 69: Advanced Local Theme Overrides
+**Priority**: Low | **Complexity**: Medium | **Files**: `src/index.css`, `src/lib/theme.ts`, `src/components/overlays/PreferencesOverlay.tsx`, `docs/DESIGN_SYSTEM.md`
+
+Explore the request from [GitHub issue #53](https://github.com/fjrevoredo/mini-diarium/issues/53): let advanced users customize the built-in light and dark themes beyond the current `auto` / `light` / `dark` selector.
+
+**Philosophy assessment**:
+- **Aligned**: this is a local presentation-layer feature only; it does not touch encryption, network behavior, storage format, or diary content
+- **Tension with the philosophy**: a raw "paste arbitrary CSS into Preferences" feature expands the supported surface, increases UI breakage risk, and cuts against "small, extensible core" and "simple is good"
+- **Conclusion**: the acceptable path is bounded local theme overrides, not a fully supported in-app app-wide CSS injection surface
+
+**Current state**:
+- Theme preference is app-level and stored in `localStorage` via `src/lib/theme.ts`
+- The supported built-in themes are `auto`, `light`, and `dark`
+- App theme colors are already centralized as CSS custom properties in `src/index.css`
+- `docs/DESIGN_SYSTEM.md` already treats CSS variables as the theme contract for app UI
+- The theme abstraction is incomplete in practice: several app surfaces still use raw Tailwind palette classes and `src/styles/editor.css` still contains direct color literals
+- `src/styles/critical-auth.css` is intentionally light-only during cold launch and should not be assumed themeable by any first pass
+
+**Recommended scope**:
+- Allow advanced users to override documented theme tokens for light and dark mode locally
+- Keep overrides fully offline and local to the machine; no sync, sharing, gallery, or remote fetch behavior
+- Treat the supported surface as the token contract (`--bg-*`, `--text-*`, `--border-*`, `--interactive-*`, status colors, and any explicitly added future tokens), not arbitrary selectors across the full DOM
+- Keep the website out of scope; this only applies to the desktop app theme system
+
+**Options considered**:
+1. **Documented token overrides in a local file** — preferred; smallest support surface, aligns with existing CSS-variable architecture, easy to disable/reset
+2. **Structured advanced theme editor for known tokens** — acceptable later if the token list stabilizes; more user-friendly but more UI/validation work
+3. **Free-form CSS textarea in Preferences** — not preferred for a first implementation; too easy to break layout, accessibility, overlays, or editor behavior and too broad to support responsibly
+
+**Requirements**:
+- Users must be able to customize built-in light and dark palettes without weakening the app's offline-only/privacy-first model
+- The default themes must remain the documented and fully supported experience
+- Invalid or missing overrides must fail safely and fall back to the built-in theme without blocking app startup
+- `auto` theme resolution must continue to work correctly with overrides applied on top of the resolved light/dark theme
+- The initial supported override contract must be limited to documented theme tokens; arbitrary selector overrides should be explicitly unsupported unless a later extension architecture formalizes them
+- Auth screens and critical pre-hydration CSS may remain on the built-in styling path in an initial version if that materially reduces complexity
+- Users must have a clear reset/disable path if a custom override harms readability
+- No remote CSS, web fonts, external assets, or any network-backed theme mechanism
+
+**Dependencies**:
+- Task 70: Theme System Hardening for Future Overrides
+
+**Out of scope**:
+- Theme marketplace or bundled third-party theme distribution
+- Syncing theme customizations across devices
+- Theme scripts or any executable customization mechanism
+- Support guarantees for layout-changing CSS or arbitrary selector overrides
+- Re-theming the static marketing website
+
+**Open design questions**:
+- Should overrides live in `localStorage`, in an app-level config file, or as a user-owned CSS file next to other local app data?
+- Is the first supported format CSS (`:root` / `.dark` token overrides) or a structured JSON/token map that the app serializes into CSS variables?
+- Should the feature ship only as an external file contract first, with the Preferences UI limited to "open theme override location" and "reset" actions?
+- Does broader theming belong under Task 66's future extension architecture, with this task intentionally staying limited to token overrides only?
+
+**Testing**:
+- Frontend unit tests for override loading/parsing/fallback logic if a new theme loader module is added
+- Manual verification for `auto`, `light`, and `dark` with and without overrides
+- Manual regression pass for overlays, editor toolbar, form controls, and sidebar/calendar surfaces in both themes
+- Accessibility contrast spot-checks for user-facing documentation/examples; do not promise automated validation of arbitrary user colors
+
+**Rationale for deferral**:
+- Valuable request, but cosmetic rather than core
+- Existing theme token architecture makes it feasible later
+- Needs clear boundaries to avoid turning Preferences into a general-purpose CSS sandbox
+
+---
+
+### Task 70: Theme System Hardening for Future Overrides
+**Priority**: Low | **Complexity**: Medium | **Files**: `src/index.css`, `src/styles/editor.css`, `src/components/**/*`, `docs/DESIGN_SYSTEM.md`
+
+Prepare the theming layer so future user overrides can target a stable semantic contract instead of today's mixed set of CSS variables, UnoCSS utility colors, and hardcoded editor styles.
+
+**Why this exists**:
+- The app already has a solid token foundation in `src/index.css`, but the abstraction is not consistently enforced
+- Many components still use raw palette utility classes such as `bg-blue-600`, `hover:bg-blue-700`, `focus:ring-blue-500`, `bg-red-600`, and `text-white`
+- `src/styles/editor.css` still hardcodes multiple colors instead of consuming semantic tokens
+- Shipping theme overrides before this cleanup would either create a weak/incomplete customization feature or freeze current styling details as accidental API
+
+**Requirements**:
+- Define the supported app-theme contract explicitly in `docs/DESIGN_SYSTEM.md`
+- Replace remaining raw palette classes in app UI where they represent semantic roles that should be themeable
+- Add any missing semantic tokens needed for common roles such as primary action, destructive action, selected state, focus state, editor code blocks, and inline editor accents
+- Refactor `src/styles/editor.css` to consume theme tokens wherever the styles are part of the app theme rather than intentional content styling
+- Audit loading/auth/pre-hydration surfaces and explicitly document which ones are inside or outside the first supported theming boundary
+- Ensure future theme work can evolve by treating semantic tokens as stable and component DOM/class structure as internal implementation detail
+
+**Non-goals**:
+- Building the end-user override feature itself
+- Guaranteeing that every current class name or DOM selector remains stable forever
+- Making the static website share the app's theme contract
+
+**Deliverables**:
+- Reduced use of raw palette utility classes across app components
+- Expanded semantic token set in `src/index.css` where the current set is insufficient
+- Updated theming guidance in `docs/DESIGN_SYSTEM.md` that distinguishes stable tokens from internal styling details
+- A clear statement of what Task 69 may support safely once this cleanup is done
+
+**Testing**:
+- Frontend regression pass for light, dark, and auto theme behavior
+- Manual verification of overlays, calendar selection states, auth flows, toolbar actions, destructive buttons, and editor content chrome
+- Targeted component test updates where class-level assertions need to move from raw colors to semantic theme behavior
+
+**Rationale**:
+- This keeps Task 69 from becoming a compatibility trap
+- It preserves freedom to improve the UI later without breaking a user-facing arbitrary-CSS contract
+
+---
+
 ## 🖥️ Platform Features (v0.4.0)
 
 ### Task 49: Platform-Specific Menus
@@ -358,15 +467,15 @@ Comprehensive manual testing before each release.
 | Category | Open | Completed |
 |----------|------|-----------|
 | **Infrastructure** | 1 | 5 |
-| **Features** | 8 | 41 |
+| **Features** | 10 | 41 |
 | **Quality** | 4 | 6 |
 | **Testing** | 0 | 4 |
-| **Total** | **13** | **56** |
+| **Total** | **15** | **56** |
 
 **Next milestone candidates**:
 - **v0.1.1**: Task 61 (release workflow modernization)
 - **v0.2.0**: Task 52 (accessibility audit)
 - **v0.3.0**: Tasks 47–48, 65 (i18n + backup documentation)
 - **v0.4.x**: Tasks 49, 51, 53, 66, 68 (menus, auto-update, legacy migration, extension architecture, dark theme form-control contrast)
-- **Future**: Task 67 (text input extension point)
+- **Future**: Tasks 67, 69, 70 (text input extension point, theme overrides, theme hardening)
 - **v1.0.0**: Task 58 (comprehensive QA pass)
