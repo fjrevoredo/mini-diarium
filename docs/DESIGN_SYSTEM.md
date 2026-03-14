@@ -283,8 +283,8 @@ Highlight (`<mark>`) intentionally uses amber to distinguish it visually from th
 
 | Token | Value | Role |
 |-------|-------|------|
-| `--btn-primary-bg` | `#3b82f6` | Primary button background |
-| `--btn-primary-bg-hover` | `#2563eb` | Primary button hover |
+| `--btn-primary-bg` | `#2563eb` | Primary button background (blue-600) |
+| `--btn-primary-bg-hover` | `#1d4ed8` | Primary button hover (blue-700) |
 | `--btn-primary-text` | `#ffffff` | Primary button text |
 | `--btn-primary-ring` | `#3b82f6` | Primary button focus ring (matches `focus:ring-blue-500`) |
 | `--btn-destructive-bg` | `#dc2626` | Destructive button background |
@@ -293,14 +293,15 @@ Highlight (`<mark>`) intentionally uses amber to distinguish it visually from th
 | `--btn-destructive-ring` | `#ef4444` | Destructive button focus ring |
 | `--btn-active-bg` | `#dbeafe` | Active/selected badge background (toolbar, picker badge) |
 | `--btn-active-text` | `#1d4ed8` | Active/selected badge text |
-| `--spinner-color` | `#3b82f6` | Loading spinner border |
+| `--spinner-color` | `#2563eb` | Loading spinner border (blue-600) |
 
 #### Dark theme
 
 | Token | Value | Role |
 |-------|-------|------|
-| `--btn-primary-bg` | `#3b82f6` | Same as light |
-| `--btn-primary-bg-hover` | `#60a5fa` | Lighter hover for dark backgrounds |
+| `--btn-primary-bg` | `#2563eb` | blue-600 — same as light (original had no dark variant) |
+| `--btn-primary-bg-hover` | `#1d4ed8` | blue-700 — same as light |
+| `--spinner-color` | `#2563eb` | blue-600 — same as light |
 | `--btn-destructive-bg` | `#ef4444` | Lighter red for legibility on dark |
 | `--btn-destructive-bg-hover` | `#dc2626` | |
 | `--btn-destructive-ring` | `#f87171` | |
