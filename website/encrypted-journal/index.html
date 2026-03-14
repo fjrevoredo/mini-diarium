@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Looking for an encrypted journal app? Mini Diarium is a private offline diary app for Windows, macOS, and Linux with AES-256-GCM encryption, local-first storage, and no cloud." />
+  <meta name="robots" content="index,follow,max-snippet:-1,max-image-preview:large,max-video-preview:-1" />
+  <meta name="theme-color" content="#0e0e0e" />
+  <meta name="author" content="Francisco J. Revoredo" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Mini Diarium" />
+  <meta property="og:locale" content="en_US" />
+  <meta property="og:url" content="https://mini-diarium.com/encrypted-journal/" />
+  <meta property="og:title" content="Encrypted Journal App for Windows, macOS, and Linux | Mini Diarium" />
+  <meta property="og:description" content="Mini Diarium is a private offline diary app with AES-256-GCM encryption, local-first storage, no cloud, and import/export support." />
+  <meta property="og:image" content="https://mini-diarium.com/assets/og-cover.png" />
+  <meta property="og:image:type" content="image/png" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta property="og:image:alt" content="Mini Diarium - encrypted local-first desktop journal" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:site" content="@MiniDiarium" />
+  <meta name="twitter:creator" content="@MiniDiarium" />
+  <meta name="twitter:title" content="Encrypted Journal App for Windows, macOS, and Linux | Mini Diarium" />
+  <meta name="twitter:description" content="Mini Diarium is a private offline diary app with AES-256-GCM encryption, local-first storage, no cloud, and import/export support." />
+  <meta name="twitter:image" content="https://mini-diarium.com/assets/og-cover.png" />
+  <title>Encrypted Journal App for Windows, macOS, and Linux | Mini Diarium</title>
+  <link rel="canonical" href="https://mini-diarium.com/encrypted-journal/" />
+  <link rel="icon" href="/assets/logo.svg" type="image/svg+xml" />
+  <link rel="icon" href="/favicon.ico" sizes="any" />
+  <link rel="icon" href="/favicon-16x16.png" type="image/png" sizes="16x16" />
+  <link rel="icon" href="/favicon-32x32.png" type="image/png" sizes="32x32" />
+  <link rel="icon" href="/favicon-128x128.png" type="image/png" sizes="128x128" />
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
+  <link rel="preload" href="/css/style.f155d41e.css" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+  <noscript><link rel="stylesheet" href="/css/style.f155d41e.css" /></noscript>
+  <script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebPage",
+      "@id": "https://mini-diarium.com/encrypted-journal/#page",
+      "url": "https://mini-diarium.com/encrypted-journal/",
+      "name": "Encrypted Journal App for Windows, macOS, and Linux",
+      "description": "A direct guide to what an encrypted journal app should do and how Mini Diarium handles offline storage, encryption at rest, and local-first ownership.",
+      "isPartOf": {
+        "@id": "https://mini-diarium.com/#website"
+      },
+      "dateModified": "2026-03-12",
+      "inLanguage": "en-US"
+    },
+    {
+      "@type": "SoftwareApplication",
+      "@id": "https://mini-diarium.com/#software",
+      "name": "Mini Diarium",
+      "description": "A private offline journal app for Windows, macOS, and Linux. AES-256-GCM encryption, local-first storage, no cloud, no telemetry.",
+      "url": "https://mini-diarium.com/",
+      "applicationCategory": "UtilitiesApplication",
+      "operatingSystem": "Windows, macOS, Linux",
+      "softwareVersion": "0.4.6",
+      "downloadUrl": "https://github.com/fjrevoredo/mini-diarium/releases",
+      "installUrl": "https://github.com/fjrevoredo/mini-diarium/releases",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "author": {
+        "@type": "Person",
+        "name": "Francisco J. Revoredo",
+        "url": "https://fjrevoredo.com"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "Mini Diarium",
+        "url": "https://mini-diarium.com/"
+      },
+      "license": "https://opensource.org/licenses/MIT",
+      "codeRepository": "https://github.com/fjrevoredo/mini-diarium"
+    },
+    {
+      "@type": "BreadcrumbList",
+      "@id": "https://mini-diarium.com/encrypted-journal/#breadcrumbs",
+      "itemListElement": [
+        {
+          "@type": "ListItem",
+          "position": 1,
+          "name": "Home",
+          "item": "https://mini-diarium.com/"
+        },
+        {
+          "@type": "ListItem",
+          "position": 2,
+          "name": "Encrypted Journal App",
+          "item": "https://mini-diarium.com/encrypted-journal/"
+        }
+      ]
+    },
+    {
+      "@type": "FAQPage",
+      "@id": "https://mini-diarium.com/encrypted-journal/#faq",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What should an encrypted journal app do?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "An encrypted journal app should store entries locally, encrypt them before they are written to disk, avoid unnecessary network dependencies, and let you export your writing when you want out."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Does Mini Diarium store journal entries in the cloud?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No. Mini Diarium is offline-first and does not send entries to cloud services."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How does Mini Diarium encrypt journal entries?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Mini Diarium encrypts each entry with AES-256-GCM before it is written to the local SQLite database."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can I migrate to Mini Diarium from another journal app?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. Mini Diarium supports imports from Mini Diary JSON, Day One JSON and TXT, and jrnl JSON, and exports entries as JSON or Markdown."
+          }
+        }
+      ]
+    }
+  ]
+}
+  </script>
+</head>
+<body>
+
+<nav class="nav" aria-label="Main navigation">
+  <div class="container nav-inner">
+    <a class="nav-brand" href="/">
+      <img src="/assets/logo.svg" alt="Mini Diarium logo" class="nav-logo" width="28" height="28" />
+      Mini Diarium
+    </a>
+
+    <ul class="nav-links" id="nav-links" role="list">
+      <li><a href="/#features">Features</a></li>
+      <li><a href="/#security">Security</a></li>
+      <li><a href="/blog/">Blog</a></li>
+      <li><a href="/#facts">FAQ</a></li>
+      <li><a href="/#platforms">Download</a></li>
+      <li><a href="/#about">About</a></li>
+      <li>
+        <a class="nav-github" href="https://github.com/fjrevoredo/mini-diarium" target="_blank" rel="noopener noreferrer" aria-label="View on GitHub">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M12 .3a12 12 0 0 0-3.8 23.38c.6.12.83-.26.83-.57L9 21.07c-3.34.72-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.08-.74.09-.73.09-.73 1.2.09 1.83 1.24 1.83 1.24 1.07 1.83 2.81 1.3 3.5 1 .1-.78.42-1.31.76-1.61-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.14-.3-.54-1.52.1-3.18 0 0 1-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.28-1.55 3.29-1.23 3.29-1.23.64 1.66.24 2.88.12 3.18a4.65 4.65 0 0 1 1.23 3.22c0 4.61-2.8 5.63-5.48 5.92.43.37.81 1.1.81 2.22l-.01 3.29c0 .31.2.69.82.57A12 12 0 0 0 12 .3z"/>
+          </svg>
+          Star on GitHub
+        </a>
+      </li>
+    </ul>
+
+    <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="nav-links">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+        <line x1="3" y1="6" x2="21" y2="6" />
+        <line x1="3" y1="12" x2="21" y2="12" />
+        <line x1="3" y1="18" x2="21" y2="18" />
+      </svg>
+    </button>
+  </div>
+</nav>
+
+<main>
+
+<section class="hero">
+  <div class="container">
+    <p class="hero-eyebrow">Encrypted journal app</p>
+    <h1>Encrypted journaling for desktop.<br><em>Offline by default.</em></h1>
+    <p class="hero-sub">
+      If you are looking for an encrypted journal app, the core requirement is simple:
+      your writing should stay on your device, protected before it ever touches disk.
+      Mini Diarium is built around that model.
+    </p>
+    <div class="hero-actions">
+      <a class="btn btn-primary" href="/#platforms">Download Mini Diarium</a>
+      <a class="btn btn-secondary" href="/#security">Read the security model</a>
+      <a class="btn btn-secondary" href="/blog/">Read the blog</a>
+    </div>
+  </div>
+</section>
+
+<section class="story">
+  <div class="container">
+    <div class="story-grid">
+      <div class="story-col">
+        <p class="section-label">What matters</p>
+        <h2 class="section-title">What an encrypted journal app should actually guarantee</h2>
+        <p>
+          An encrypted journal app should do more than add a password screen. It should keep entries local,
+          encrypt them before they are written to disk, avoid unnecessary network dependencies, and let you
+          export your writing when you want out.
+        </p>
+        <p>
+          That is the difference between a private diary app and a cloud notes app that happens to mention
+          privacy in its marketing. Architecture decides who really controls the writing.
+        </p>
+      </div>
+      <div class="story-col">
+        <p class="section-label">How Mini Diarium fits</p>
+        <h2 class="section-title">Built for local ownership, not service dependence</h2>
+        <p>
+          Mini Diarium stores journal entries in a local encrypted SQLite database and encrypts each entry with
+          AES-256-GCM before it touches disk. There is no cloud backend, no sync requirement, and no telemetry.
+        </p>
+        <p>
+          You can import existing writing from Mini Diary, Day One, or jrnl, and export to JSON or Markdown at
+          any time. The goal is straightforward: private writing that remains usable, portable, and under your control.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="features">
+  <div class="container">
+    <div class="features-header">
+      <p class="section-label">Why people search for this</p>
+      <h2 class="section-title">The practical requirements are not complicated</h2>
+      <p class="section-body">The right encrypted journal app should be legible. You should be able to explain how it works in a few plain sentences.</p>
+    </div>
+
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+          </svg>
+        </div>
+        <h3>Encrypt before disk</h3>
+        <p>Entries are encrypted with AES-256-GCM before they are stored in the local database. Plaintext does not become the storage format.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="2" y1="12" x2="22" y2="12"/>
+            <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+          </svg>
+        </div>
+        <h3>Stay offline</h3>
+        <p>Mini Diarium has no HTTP client, no analytics package, and no cloud service dependency. Your journal works without a network.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="16 17 21 12 16 7"/>
+            <path d="M21 12H9"/>
+            <path d="M9 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h4"/>
+          </svg>
+        </div>
+        <h3>Leave with your data</h3>
+        <p>Exports are available in JSON and Markdown, so private writing is not trapped inside an account or service contract.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+            <line x1="16" y1="2" x2="16" y2="6"/>
+            <line x1="8" y1="2" x2="8" y2="6"/>
+            <line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
+        </div>
+        <h3>Write on desktop</h3>
+        <p>Windows, macOS, and Linux builds are available, with rich-text editing, calendar navigation, and auto-save for daily use.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <polyline points="8 17 12 21 16 17"/>
+            <line x1="12" y1="12" x2="12" y2="21"/>
+            <path d="M20.88 18.09A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.29"/>
+          </svg>
+        </div>
+        <h3>Bring your existing journal</h3>
+        <p>Imports are supported for Mini Diary JSON, Day One JSON and TXT, and jrnl JSON, so migration does not require starting from zero.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-icon">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+        </div>
+        <h3>Keep backups local too</h3>
+        <p>Mini Diarium creates automatic backups of the encrypted database, keeping recovery close to the same local-first ownership model.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="facts" id="encrypted-journal-faq">
+  <div class="container">
+    <div class="facts-header">
+      <p class="section-label">Direct answers</p>
+      <h2 class="section-title">Encrypted journal app FAQ</h2>
+      <p class="section-body">These are the questions most worth answering before you trust any diary app with years of private writing.</p>
+    </div>
+
+    <div class="facts-grid">
+      <div class="fact-card">
+        <p class="fact-label">Category</p>
+        <p class="fact-value">Private offline journal app for desktop.</p>
+      </div>
+      <div class="fact-card">
+        <p class="fact-label">Encryption</p>
+        <p class="fact-value">AES-256-GCM for entries at rest.</p>
+      </div>
+      <div class="fact-card">
+        <p class="fact-label">Storage</p>
+        <p class="fact-value">Local encrypted SQLite database.</p>
+      </div>
+      <div class="fact-card">
+        <p class="fact-label">Platforms</p>
+        <p class="fact-value">Windows, macOS, and Linux.</p>
+      </div>
+      <div class="fact-card">
+        <p class="fact-label">Imports</p>
+        <p class="fact-value">Mini Diary, Day One, and jrnl formats.</p>
+      </div>
+      <div class="fact-card">
+        <p class="fact-label">Exports</p>
+        <p class="fact-value">JSON and Markdown whenever you need them.</p>
+      </div>
+    </div>
+
+    <div class="faq-list">
+      <p class="section-label">Common questions</p>
+      <h3 class="faq-title">FAQ</h3>
+
+      <details class="faq-item">
+        <summary>What should an encrypted journal app do?</summary>
+        <p>An encrypted journal app should store entries locally, encrypt them before they are written to disk, avoid unnecessary network dependencies, and let you export your writing when you want out.</p>
+      </details>
+      <details class="faq-item">
+        <summary>Does Mini Diarium store journal entries in the cloud?</summary>
+        <p>No. Mini Diarium is offline-first and does not send entries to cloud services.</p>
+      </details>
+      <details class="faq-item">
+        <summary>How does Mini Diarium encrypt journal entries?</summary>
+        <p>Mini Diarium encrypts each entry with AES-256-GCM before it is written to the local SQLite database. You can read the <a href="https://github.com/fjrevoredo/mini-diarium/blob/master/SECURITY.md" target="_blank" rel="noopener noreferrer">security model</a> for the implementation details.</p>
+      </details>
+      <details class="faq-item">
+        <summary>Can I migrate to Mini Diarium from another journal app?</summary>
+        <p>Yes. Mini Diarium supports imports from Mini Diary JSON, Day One JSON and TXT, and jrnl JSON, and exports entries as JSON or Markdown.</p>
+      </details>
+    </div>
+  </div>
+</section>
+
+<section class="blog-preview">
+  <div class="container">
+    <div class="blog-preview-header">
+      <div>
+        <p class="section-label">Keep reading</p>
+        <h2 class="section-title">Articles for people comparing encrypted and offline journaling tools</h2>
+      </div>
+      <p class="section-body">
+        Use these articles to go deeper on local-first ownership, private diary app requirements, and what changes when a journal stays off the cloud.
+      </p>
+    </div>
+    <div class="article-grid">
+      <article class="article-card">
+        <p class="article-card-meta">March 12, 2026</p>
+        <h2><a href="/blog/encrypted-journal-vs-cloud-notes-app/">Encrypted Journal App vs. Cloud Notes App</a></h2>
+        <p>A direct comparison of local encrypted journaling versus cloud-first note storage and why the architecture changes who controls the writing.</p>
+        <ul class="tag-list" role="list">
+          <li>encrypted journal</li>
+          <li>cloud notes</li>
+          <li>private diary app</li>
+        </ul>
+        <a class="article-card-link" href="/blog/encrypted-journal-vs-cloud-notes-app/">Read article</a>
+      </article>
+      <article class="article-card">
+        <p class="article-card-meta">March 12, 2026</p>
+        <h2><a href="/blog/private-diary-app-for-desktop/">Private Diary App for Desktop: What Actually Matters</a></h2>
+        <p>Which requirements matter most when you want a diary app for personal writing on your own machine instead of a cloud account.</p>
+        <ul class="tag-list" role="list">
+          <li>private diary app</li>
+          <li>desktop journaling</li>
+          <li>offline journal</li>
+        </ul>
+        <a class="article-card-link" href="/blog/private-diary-app-for-desktop/">Read article</a>
+      </article>
+      <article class="article-card">
+        <p class="article-card-meta">March 12, 2026</p>
+        <h2><a href="/blog/offline-journal-that-you-own/">Offline Journal That You Own</a></h2>
+        <p>Why offline journaling is about more than privacy alone: it also changes portability, continuity, and long-term ownership.</p>
+        <ul class="tag-list" role="list">
+          <li>offline journal</li>
+          <li>local-first writing</li>
+          <li>data ownership</li>
+        </ul>
+        <a class="article-card-link" href="/blog/offline-journal-that-you-own/">Read article</a>
+      </article>
+    </div>
+  </div>
+</section>
+
+<section class="platforms">
+  <div class="container">
+    <div style="text-align:center; max-width: 620px; margin: 0 auto;">
+      <p class="section-label">Ready to try it?</p>
+      <h2 class="section-title">Download a private journal app that does the obvious things right</h2>
+      <p class="section-body" style="margin: 0 auto;">
+        Mini Diarium is free, open source, and built for people who want offline writing without handing their journal to a service dependency.
+      </p>
+    </div>
+
+    <div class="hero-actions" style="margin-top: 2rem;">
+      <a class="btn btn-primary" href="/#platforms">Go to downloads</a>
+      <a class="btn btn-secondary" href="https://github.com/fjrevoredo/mini-diarium/releases" target="_blank" rel="noopener noreferrer">Browse releases</a>
+      <a class="btn btn-secondary" href="https://github.com/fjrevoredo/mini-diarium" target="_blank" rel="noopener noreferrer">View source</a>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-inner">
+      <div class="footer-left">
+        <img src="/assets/logo.svg" alt="" class="footer-logo" width="20" height="20" aria-hidden="true" />
+        <span>Mini Diarium</span>
+        <span class="footer-sep">·</span>
+        <span>Offline-first</span>
+        <span class="footer-sep">·</span>
+        <span>MIT License</span>
+      </div>
+      <div class="footer-right">
+        <a href="https://github.com/fjrevoredo/mini-diarium" target="_blank" rel="noopener noreferrer">GitHub</a>
+        <a href="https://x.com/MiniDiarium" target="_blank" rel="noopener noreferrer">X</a>
+        <a href="https://github.com/fjrevoredo/mini-diarium/blob/master/SECURITY.md" target="_blank" rel="noopener noreferrer">Security</a>
+        <a href="https://github.com/fjrevoredo/mini-diarium/blob/master/CHANGELOG.md" target="_blank" rel="noopener noreferrer">Changelog</a>
+        <a href="/blog/feed.xml">RSS</a>
+        <a href="/ai-crawlers.txt">AI Crawlers</a>
+        <a href="/llms.txt">LLMs</a>
+        <a href="mailto:minidiarium@gmail.com" aria-label="Email Mini Diarium">minidiarium@gmail.com</a>
+        <span style="color: var(--text-muted);">mini-diarium.com</span>
+      </div>
+    </div>
+  </div>
+</footer>
+<script src="/js/main.8acbcb52.js"></script>
+</body>
+</html>

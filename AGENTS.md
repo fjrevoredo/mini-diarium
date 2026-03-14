@@ -20,7 +20,7 @@
 **Regenerate diagrams**:
 
 ```bash
-bun run diagrams
+cmd.exe /c bun run diagrams
 # Renders docs/diagrams/{unlock,unlock-dark,save-entry,save-entry-dark,context,context-dark}.mmd → *.svg (via mmdc)
 # Renders docs/diagrams/architecture.d2      → docs/diagrams/architecture.svg      (via d2)
 # Renders docs/diagrams/architecture-dark.d2 → docs/diagrams/architecture-dark.svg (via d2)
@@ -66,12 +66,48 @@ Quick reference (ASCII art):
 **Most common agent tasks:**
 
 - Add new command → See "Adding a New Tauri Command" checklist
+- Run project commands from this Codex shell → Use the Windows toolchain via `cmd.exe /c ...`; do **not** assume WSL-native `bun`/Rust/Tauri are installed
 - Frontend component → Follow "Frontend Testing Pattern" + SolidJS Reactivity Gotchas
 - Backend module → Check "Backend Command Pattern" convention
-- Debug failing test → Run `cd src-tauri && cargo test <module>` directly
+- Debug failing test → Run `cmd.exe /c "cd /d D:\Repos\mini-diarium\src-tauri && cargo test <module>"`
 - Find command → Search `lib.rs` for `generate_handler![]` macro
 - Add import format → See "Adding a New Import/Export Format" checklist
 - Implement search → See "Implementing Search" section (full guide preserved)
+
+## Execution Environment
+
+This repo is commonly accessed from a **WSL shell over a Windows checkout** (`/mnt/d/Repos/mini-diarium` ↔ `D:\Repos\mini-diarium`). In that setup, the reliable execution path is the **Windows toolchain**, not the WSL one.
+
+**Audit-verified status (2026-03-13):**
+
+- Working from Windows via `cmd.exe /c`: `bun`, `cargo`, `rustc`, repo-local Tauri CLI (`bun run tauri`), `tauri-driver`, `d2`
+- Not available in the audited WSL shell: `bun`, `cargo`, `rustc`, `rustup`, `tauri-driver`, `d2`, `pkg-config`
+- Existing `node_modules` may be Windows-installed, which breaks WSL-native Vite/Vitest/Tauri because Linux optional native packages are missing
+- Existing `src-tauri/target` artifacts may be Windows `.exe` binaries; do not treat them as Linux-native builds
+
+**Operational rule for agents in this environment:**
+
+- Prefer `cmd.exe /c ...` for all project commands unless you have explicitly confirmed a Linux-native toolchain and Linux-native dependencies are installed
+- Do **not** start by trying bare `bun`, `cargo`, `vitest`, `vite`, or `tauri` from WSL in this repo
+- For Rust commands under `src-tauri`, use Windows path switching: `cmd.exe /c "cd /d D:\Repos\mini-diarium\src-tauri && cargo test"`
+- `cargo tauri` does not need to be globally installed on Windows here; `bun run tauri ...` uses the repo-local `@tauri-apps/cli` and is the preferred path
+- Treat generic command snippets elsewhere in this file as documentation for humans, not the default execution form for this terminal; from this Codex shell, translate them to `cmd.exe /c ...` unless the snippet already says "Run from this Codex shell"
+
+**Audit-verified commands that worked from this shell via Windows:**
+
+- `cmd.exe /c bun run type-check`
+- `cmd.exe /c bun run lint`
+- `cmd.exe /c bun run test:run`
+- `cmd.exe /c bun run build`
+- `cmd.exe /c "cd /d D:\Repos\mini-diarium\src-tauri && cargo test"`
+- `cmd.exe /c bun run test:e2e`
+- `cmd.exe /c bun run tauri info`
+- `cmd.exe /c bun run diagrams:check`
+
+**Commands with side effects:**
+
+- `cmd.exe /c bun run website:build-static` rewrites generated files under `website/`; do not use it for a read-only environment audit
+- `cmd.exe /c bun run diagrams` regenerates SVG outputs; use `cmd.exe /c bun run diagrams:check` for verification-only
 
 ## File Structure
 
@@ -95,6 +131,8 @@ website/
 **Version sync:** `bump-version.sh` updates `<span class="app-version">X.Y.Z</span>` in `index.html` (step 5). Always commit `website/index.html` alongside the other version files.
 
 **Coolify deploy:** In Coolify, set the compose file path to `website/docker-compose.yml`. The build context is the `website/` subfolder.
+
+Important: `website/docker-compose.yml` and `website/nginx.conf` are for local website testing only. Production redirects, canonical host enforcement, TLS, and proxy behavior are controlled by Coolify / the real production edge, not by the local Nginx config alone.
 
 ### Frontend (`src/`)
 
@@ -173,14 +211,14 @@ wdio.conf.ts                    # WebdriverIO config (root level)
 **Prerequisites to run locally:**
 
 ```bash
-cargo install tauri-driver   # once
-bun run test:e2e:local       # builds binary + runs suite (use --skip-build on repeat runs)
+cmd.exe /c cargo install tauri-driver
+cmd.exe /c bun run test:e2e:local
 ```
 
 **Test isolation modes:**
 
-- Default `bun run test:e2e` runs in **clean-room mode** (`E2E_MODE=clean`): fresh temp diary directory, explicit E2E app mode, deterministic viewport (800×660)
-- Optional `bun run test:e2e:stateful` runs in **stateful mode** (`E2E_MODE=stateful`) and reuses a repo-local persistent root (`.e2e-stateful/`, configurable via `E2E_STATEFUL_ROOT`)
+- Default `cmd.exe /c bun run test:e2e` runs in **clean-room mode** (`E2E_MODE=clean`): fresh temp diary directory, explicit E2E app mode, deterministic viewport (800×660)
+- Optional `cmd.exe /c bun run test:e2e:stateful` runs in **stateful mode** (`E2E_MODE=stateful`) and reuses a repo-local persistent root (`.e2e-stateful/`, configurable via `E2E_STATEFUL_ROOT`)
 
 ### Backend (`src-tauri/src/`)
 
@@ -351,13 +389,13 @@ All menu event names are prefixed `menu-`. See `menu.rs:78-107` for the full lis
 
 ### Backend: 234 tests across 30 modules
 
-Run: `cd src-tauri && cargo test` (all tests) or `cd src-tauri && cargo test <module>` (specific module)
+Run from this Codex shell: `cmd.exe /c "cd /d D:\Repos\mini-diarium\src-tauri && cargo test"` (all tests) or `cmd.exe /c "cd /d D:\Repos\mini-diarium\src-tauri && cargo test <module>"` (specific module)
 
 Key test areas: auth, crypto, db/queries, db/schema, export/markdown, parsers (Mini Diary, Day One, jrnl), plugin system.
 
 ### Frontend: 80 tests across 10 files
 
-Run: `bun run test:run` (single run) or `bun run test` (watch mode)
+Run from this Codex shell: `cmd.exe /c bun run test:run` (single run) or `cmd.exe /c bun run test` (watch mode)
 
 | File                                                        | Tests |
 | ----------------------------------------------------------- | ----- |
@@ -372,11 +410,11 @@ Run: `bun run test:run` (single run) or `bun run test` (watch mode)
 | `src/components/layout/EditorPanel-save-logic.test.ts`      | 23    |
 | `src/state/auth-session-boundary.test.ts`                   | 4     |
 
-Coverage: `bun run test:coverage`
+Coverage from this Codex shell: `cmd.exe /c bun run test:coverage`
 
 ### E2E: 1 spec (real binary, real SQLite)
 
-Run: `bun run test:e2e` (requires release binary + `tauri-driver` installed)
+Run from this Codex shell: `cmd.exe /c bun run test:e2e` (requires release binary + `tauri-driver` installed)
 
 | File                               | Description                                                                                                                                                                       |
 | ---------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -399,30 +437,32 @@ Run: `bun run test:e2e` (requires release binary + `tauri-driver` installed)
 ## Verification Commands
 
 ```bash
+# IMPORTANT: In the shared WSL/Windows setup used by Codex, run the Windows toolchain via cmd.exe.
+
 # Development
-bun run dev              # Vite dev server (frontend only)
-bun run tauri dev        # Full Tauri dev (frontend + backend)
+cmd.exe /c bun run dev
+cmd.exe /c bun run tauri dev
 
 # Testing
-cd src-tauri && cargo test                     # All backend tests
-cd src-tauri && cargo test navigation          # Specific module
-bun run test:run                               # All frontend tests
-bun run test:run -- dates                      # Specific test file
-bun run test:e2e:local                         # E2E tests: build binary + run suite
-bun run test:e2e:local -- --skip-build         # E2E tests: skip build, run suite only
-bun run test:e2e                               # Run suite only (binary must already exist)
-bun run test:e2e:stateful                      # Stateful E2E mode (persistence-oriented lane)
+cmd.exe /c "cd /d D:\Repos\mini-diarium\src-tauri && cargo test"
+cmd.exe /c "cd /d D:\Repos\mini-diarium\src-tauri && cargo test navigation"
+cmd.exe /c bun run test:run
+cmd.exe /c bun run test:run -- dates
+cmd.exe /c bun run test:e2e:local
+cmd.exe /c bun run test:e2e:local -- --skip-build
+cmd.exe /c bun run test:e2e
+cmd.exe /c bun run test:e2e:stateful
 
 # Code quality
-bun run lint             # ESLint
-bun run lint:fix         # ESLint autofix
-bun run format:check     # Prettier check
-bun run format           # Prettier fix
-bun run type-check       # TypeScript type check
+cmd.exe /c bun run lint
+cmd.exe /c bun run lint:fix
+cmd.exe /c bun run format:check
+cmd.exe /c bun run format
+cmd.exe /c bun run type-check
 
 # Build
-bun run build            # Frontend production build
-bun run tauri build      # Full app bundle
+cmd.exe /c bun run build
+cmd.exe /c bun run tauri build
 ```
 
 ## Gotchas and Pitfalls
@@ -447,7 +487,7 @@ bun run tauri build      # Full app bundle
 
 10. **Auth slots (v3 schema):** Each auth method stores its own wrapped copy of the master key in `auth_slots`. `remove_auth_method` refuses to delete the last slot (minimum one required). `change_password` re-wraps the master key in O(1) — no entry re-encryption needed. `verify_password` exists as a side-effect-free check used before multi-step operations.
 
-11. **E2E mode contracts:** Default E2E uses clean-room mode (`E2E_MODE=clean`) and sets both `MINI_DIARIUM_DATA_DIR` (fresh temp diary path) and `MINI_DIARIUM_E2E=1` (backend disables `tauri-plugin-window-state` so host window geometry does not leak into tests). Stateful lane (`bun run test:e2e:stateful`) uses a repo-local persistent root (`.e2e-stateful/`, optionally overridden by `E2E_STATEFUL_ROOT`) for persistence-specific checks.
+11. **E2E mode contracts:** Default E2E uses clean-room mode (`E2E_MODE=clean`) and sets both `MINI_DIARIUM_DATA_DIR` (fresh temp diary path) and `MINI_DIARIUM_E2E=1` (backend disables `tauri-plugin-window-state` so host window geometry does not leak into tests). Stateful lane (`cmd.exe /c bun run test:e2e:stateful` from this shell) uses a repo-local persistent root (`.e2e-stateful/`, optionally overridden by `E2E_STATEFUL_ROOT`) for persistence-specific checks.
 
 12. **Plugin registry is initialized once at startup** in `lib.rs` `.setup()`. It reads `{diary_dir}/plugins/` for `.rhai` scripts. The registry is stored as `State<Mutex<PluginRegistry>>`. If the user changes the diary directory, plugins are not reloaded until app restart (consistent with existing behavior).
 
@@ -460,6 +500,8 @@ bun run tauri build      # Full app bundle
 16. **Default E2E clean mode runs at 800×660 px — below the `lg` breakpoint (1024 px)**: The sidebar uses `lg:relative lg:translate-x-0`, so in default clean E2E mode it is always in mobile/overlay behavior. Any change to `isSidebarCollapsed` default or `resetUiState()` affects whether calendar day elements are reachable in E2E tests. **Planning rule**: when changing the default value of any UI visibility signal (`isSidebarCollapsed`, overlay open states, etc.), explicitly audit `e2e/specs/` for interactions that depend on the affected element being visible and update the test accordingly.
 
 17. **JSON export format (breaking change in v0.5.0)**: JSON export now outputs an array under the `"entries"` key with each entry including its `id` field, instead of a date-keyed object. Example: `{ "entries": [{ "id": 1, "date": "2024-01-15", "title": "...", "text": "...", "word_count": 0, "date_created": "...", "date_updated": "..." }] }`.
+
+18. **Codex shell execution path matters in this repo**: In the audited shared environment, WSL lacks `bun`/Rust/Tauri and `node_modules` is Windows-installed, so WSL-native `bun run ...` and `cargo ...` fail or produce misleading optional-dependency errors. From this shell, use `cmd.exe /c ...` and Windows paths (`D:\Repos\mini-diarium`) for project commands unless you have explicitly verified a Linux-native setup first.
 
 ## Security Rules
 
@@ -495,7 +537,7 @@ Replace the file and the change takes effect immediately on the next build.
 **2. Tauri app icons** — all platform icon sizes in `src-tauri/icons/` are derived from the same SVG. Regenerate them with:
 
 ```bash
-bun run tauri icon public/logo-transparent.svg
+cmd.exe /c bun run tauri icon public/logo-transparent.svg
 ```
 
 This overwrites every icon variant (ICO, ICNS, PNG at all sizes, Windows AppX, iOS, Android) in one command. Commit the updated `src-tauri/icons/` directory alongside any change to the source SVG.
@@ -566,10 +608,12 @@ See [RELEASING.md](RELEASING.md) for complete step-by-step instructions.
 
 **Quick summary:**
 
-1. Create release branch: `git checkout -b release-X.Y.Z`
-2. Bump version: `./bump-version.sh X.Y.Z` (updates `package.json`, `tauri.conf.json`, `Cargo.toml`, `Cargo.lock`, and `website/index.html`)
-3. Commit and push branch: `git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock website/index.html && git commit -m "chore: bump version to X.Y.Z" && git push origin release-X.Y.Z`
+From this Codex shell, route Git commands through `cmd.exe /c ...` and use the Windows bump script `bump-version.ps1`.
+
+1. Create release branch: `cmd.exe /c git checkout -b release-X.Y.Z`
+2. Bump version: `powershell -ExecutionPolicy Bypass -File .\bump-version.ps1 X.Y.Z` (updates `package.json`, `tauri.conf.json`, `Cargo.toml`, `Cargo.lock`, and `website/index.html`)
+3. Commit and push branch: `cmd.exe /c git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock website/index.html`, then `cmd.exe /c git commit -m "chore: bump version to X.Y.Z"`, then `cmd.exe /c git push origin release-X.Y.Z`
 4. Create PR to merge release branch → master
-5. After PR merged, tag on master: `git checkout master && git pull && git tag -a vX.Y.Z -m "Release vX.Y.Z" && git push origin vX.Y.Z`
+5. After PR merged, tag on master: `cmd.exe /c git checkout master`, then `cmd.exe /c git pull`, then `cmd.exe /c git tag -a vX.Y.Z -m "Release vX.Y.Z"`, then `cmd.exe /c git push origin vX.Y.Z`
 6. Wait for GitHub Actions to build and create draft release
 7. Publish the draft release on GitHub

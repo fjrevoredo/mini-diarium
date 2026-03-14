@@ -2,7 +2,7 @@
 .ProseMirror {
   min-height: 200px;
   outline: none;
-  color: var(--text-primary);
+  color: var(--editor-body-text);
 }
 
 /* Use higher specificity (.ProseMirror.journal-editor-content) so the user-controlled
@@ -24,21 +24,16 @@
   }
 }
 
-/* Dark mode text colors */
-.dark .ProseMirror {
-  color: #e5e7eb;
-}
-
-.dark .ProseMirror h1,
-.dark .ProseMirror h2,
-.dark .ProseMirror h3,
-.dark .ProseMirror strong,
-.dark .ProseMirror b {
-  color: #f3f4f6;
+.ProseMirror h1,
+.ProseMirror h2,
+.ProseMirror h3,
+.ProseMirror strong,
+.ProseMirror b {
+  color: var(--editor-heading-text);
 }
 
 .ProseMirror p.is-editor-empty:first-child::before {
-  color: #adb5bd;
+  color: var(--editor-placeholder-text);
   content: attr(data-placeholder);
   float: left;
   height: 0;
@@ -81,7 +76,7 @@
 }
 
 .ProseMirror code {
-  background-color: #f3f4f6;
+  background-color: var(--editor-code-bg);
   border-radius: 0.25rem;
   padding: 0.125rem 0.25rem;
   font-family: 'Courier New', monospace;
@@ -89,8 +84,8 @@
 }
 
 .ProseMirror pre {
-  background-color: #1f2937;
-  color: #f3f4f6;
+  background-color: var(--editor-code-block-bg);
+  color: var(--editor-code-block-text);
   border-radius: 0.5rem;
   padding: 1rem;
   overflow-x: auto;
@@ -104,42 +99,24 @@
 }
 
 .ProseMirror blockquote {
-  border-left: 3px solid #d1d5db;
+  border-left: 3px solid var(--editor-blockquote-border);
   padding-left: 1rem;
   margin: 1rem 0;
-  color: #6b7280;
-}
-
-.dark .ProseMirror blockquote {
-  border-left-color: #6b7280;
-  color: #9ca3af;
+  color: var(--editor-blockquote-text);
 }
 
 .ProseMirror hr {
   border: none;
-  border-top: 2px solid #e5e7eb;
+  border-top: 2px solid var(--editor-rule-color);
   margin: 2rem 0;
 }
 
-.dark .ProseMirror hr {
-  border-top-color: #4b5563;
-}
-
-.dark .ProseMirror code {
-  background-color: #374151;
-  color: #e5e7eb;
-}
-
-.dark .ProseMirror a {
-  color: #60a5fa;
+.ProseMirror a {
+  color: var(--editor-link-color);
 }
 
 /* Explicit underline — WebKit/Blink can strip text-decoration inside contenteditable */
 .ProseMirror u {
-  text-decoration: underline;
-}
-
-.dark .ProseMirror u {
   text-decoration: underline;
 }
 
@@ -153,20 +130,12 @@
 }
 
 .ProseMirror img.ProseMirror-selectednode {
-  outline: 2px solid #3b82f6;
+  outline: 2px solid var(--editor-selection-outline);
   outline-offset: 2px;
-}
-
-.dark .ProseMirror img.ProseMirror-selectednode {
-  outline-color: #60a5fa;
 }
 
 /* Highlight mark — color only, no background */
 .ProseMirror mark {
   background-color: transparent;
-  color: #b45309; /* amber-700 */
-}
-
-.dark .ProseMirror mark {
-  color: #fbbf24; /* amber-400 */
+  color: var(--editor-highlight-color);
 }

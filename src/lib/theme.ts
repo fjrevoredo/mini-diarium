@@ -1,5 +1,6 @@
 import { createSignal } from 'solid-js';
 import { createLogger } from './logger';
+import { applyThemeOverrides } from './theme-overrides';
 
 const log = createLogger('Theme');
 
@@ -79,6 +80,9 @@ function applyTheme(theme: ResolvedTheme): void {
 
   // Also set data attribute for easier CSS targeting
   html.setAttribute('data-theme', theme);
+
+  // Apply user-defined token overrides on top of the built-in theme
+  applyThemeOverrides(theme);
 }
 
 /**

@@ -3,6 +3,7 @@
 > Encrypted, local-first desktop journaling app and static website.
 
 - Canonical website: https://mini-diarium.com/
+- Encrypted Journal App Guide: https://mini-diarium.com/encrypted-journal/
 - Blog: https://mini-diarium.com/blog/
 - RSS feed: https://mini-diarium.com/blog/feed.xml
 - Source code: https://github.com/fjrevoredo/mini-diarium
@@ -17,11 +18,19 @@
 - Mini Diarium is an encrypted offline journal for Windows, macOS, and Linux.
 - Entries are encrypted with AES-256-GCM before being written to the local SQLite database.
 - The app is local-first and does not send entries to cloud services.
+- Mini Diarium is a private diary app for desktop users who want local-only storage instead of a cloud account.
 - Supported imports: Mini Diary JSON, Day One JSON/TXT, jrnl JSON.
 - Supported exports: JSON and Markdown.
 
+## Canonical Pages
+
+- Encrypted Journal App Guide: A direct overview of what an encrypted journal app should do, how Mini Diarium handles offline storage, and why local-first ownership matters. (https://mini-diarium.com/encrypted-journal/)
+
 ## Latest Articles
 
+- Encrypted Journal App vs. Cloud Notes App: https://mini-diarium.com/blog/encrypted-journal-vs-cloud-notes-app/
+- Offline Journal That You Own: https://mini-diarium.com/blog/offline-journal-that-you-own/
+- Private Diary App for Desktop: What Actually Matters: https://mini-diarium.com/blog/private-diary-app-for-desktop/
 - Local-First Journaling Means You Keep the Exit Door Open: https://mini-diarium.com/blog/local-first-journaling-and-ownership/
 - Why an Offline Journal Is Different From a Cloud Notes App: https://mini-diarium.com/blog/why-an-offline-journal-is-different/
 - Why Mini Diarium Exists: https://mini-diarium.com/blog/why-mini-diarium-exists/

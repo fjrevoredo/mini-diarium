@@ -202,7 +202,8 @@ Open with `Ctrl+,`:
 
 | Setting | Description |
 |---------|-------------|
-| Theme | Light or dark mode |
+| Theme | Light, dark, or follow system (auto) |
+| Theme Overrides | Advanced: override individual color tokens (see below) |
 | First day of week | Sunday, Monday, or auto-detect from locale |
 | Allow future entries | Write entries for dates that haven't happened yet |
 | Hide titles | Remove the title field for a minimal look |
@@ -212,6 +213,51 @@ Open with `Ctrl+,`:
 | Authentication Methods | View registered unlock methods; add a new key file or remove existing ones |
 | At least one method must remain | removing the last is blocked |
 | Reset journal | Delete all data and start fresh (irreversible) |
+
+### Theme Overrides (Advanced)
+
+Advanced users can customize the app's color palette by overriding individual theme tokens.
+
+Open **Preferences → General**, scroll to the **Theme Overrides** section. Enter a JSON
+object with `light` and/or `dark` keys, each mapping CSS variable names to color values:
+
+```json
+{
+  "light": {
+    "--bg-primary": "#fffde0",
+    "--text-primary": "#1a1a1a"
+  },
+  "dark": {
+    "--bg-primary": "#0d1117",
+    "--text-primary": "#c9d1d9"
+  }
+}
+```
+
+Click **Apply Overrides** to apply immediately. Overrides are saved in `localStorage`
+and re-applied automatically every time you open the app. They layer on top of the
+selected built-in theme (light, dark, or auto-resolved).
+
+**Supported tokens** — only CSS variable names from the documented token contract are
+accepted. Unrecognised names are silently ignored. The supported families are:
+
+| Family | Example tokens |
+|--------|---------------|
+| Background | `--bg-primary`, `--bg-secondary`, `--bg-tertiary`, `--bg-hover`, `--bg-active` |
+| Text | `--text-primary`, `--text-secondary`, `--text-tertiary`, `--text-muted`, `--text-inverse` |
+| Border | `--border-primary`, `--border-secondary`, `--border-focus` |
+| Interactive | `--interactive-primary`, `--interactive-primary-hover`, `--interactive-secondary`, `--interactive-secondary-hover` |
+| Buttons | `--btn-primary-bg`, `--btn-primary-bg-hover`, `--btn-primary-text`, `--btn-primary-ring`, `--btn-destructive-bg`, `--btn-destructive-bg-hover`, `--btn-destructive-text`, `--btn-destructive-ring`, `--btn-active-bg`, `--btn-active-text` |
+| Editor | `--editor-body-text`, `--editor-heading-text`, `--editor-placeholder-text`, `--editor-blockquote-border`, `--editor-blockquote-text`, `--editor-rule-color`, `--editor-code-bg`, `--editor-code-block-bg`, `--editor-code-block-text`, `--editor-link-color`, `--editor-highlight-color`, `--editor-selection-outline` |
+| Status | `--status-success-bg/border/text`, `--status-error-bg/border/text`, `--status-warning-bg/border/text`, `--status-info-bg/border/text` |
+| Other | `--spinner-color`, `--overlay-bg`, `--shadow-sm`, `--shadow-md`, `--shadow-lg` |
+
+**To reset:** click **Reset to Default** to remove all overrides and restore the built-in theme instantly.
+
+**Notes:**
+- The JSON must be valid — any syntax error will show an inline error message and leave the current overrides unchanged.
+- Auth and pre-unlock screens are not affected by theme overrides (they use a fixed light-mode style sheet loaded before the app initialises).
+- For the full token reference with light/dark values, see `docs/DESIGN_SYSTEM.md`.
 
 ## Statistics
 

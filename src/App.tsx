@@ -69,10 +69,10 @@ function App() {
     <>
       <Switch>
         <Match when={authState() === 'checking'}>
-          <div class="flex min-h-screen items-center justify-center bg-gray-50">
+          <div class="flex min-h-screen items-center justify-center bg-secondary">
             <div class="text-center">
-              <div class="mb-4 h-12 w-12 animate-spin rounded-full border-4 border-blue-600 border-t-transparent mx-auto" />
-              <p class="text-gray-600">Loading...</p>
+              <div class="mb-4 h-12 w-12 animate-spin rounded-full border-4 spinner-border border-t-transparent mx-auto" />
+              <p class="text-secondary">Loading...</p>
             </div>
           </div>
         </Match>

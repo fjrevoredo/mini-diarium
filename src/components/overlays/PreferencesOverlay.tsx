@@ -1,10 +1,23 @@
 import { createSignal, createEffect, For, Show, Switch, Match, onMount } from 'solid-js';
 import { PasswordStrengthIndicator } from '../auth/PasswordStrengthIndicator';
 import { save, confirm as dialogConfirm, open as openDirDialog } from '@tauri-apps/plugin-dialog';
+import { openUrl } from '@tauri-apps/plugin-opener';
 import { Dialog } from '@kobalte/core/dialog';
 import { createLogger } from '../../lib/logger';
 import { preferences, setPreferences, type EscAction } from '../../state/preferences';
-import { getThemePreference, setTheme, type ThemePreference } from '../../lib/theme';
+import {
+  getThemePreference,
+  setTheme,
+  getActiveTheme,
+  type ThemePreference,
+} from '../../lib/theme';
+import {
+  saveThemeOverrides,
+  applyThemeOverrides,
+  resetThemeOverrides,
+  getThemeOverridesJson,
+  parseOverridesJson,
+} from '../../lib/theme-overrides';
 import { authState } from '../../state/auth';
 import * as tauri from '../../lib/tauri';
 import { mapTauriError } from '../../lib/errors';
@@ -56,6 +69,14 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
     preferences().advancedToolbar,
   );
   const [localEditorFontSize, setLocalEditorFontSize] = createSignal(preferences().editorFontSize);
+  const [localShowEntryTimestamps, setLocalShowEntryTimestamps] = createSignal(
+    preferences().showEntryTimestamps,
+  );
+
+  // Theme overrides state
+  const [localOverridesJson, setLocalOverridesJson] = createSignal('{}');
+  const [overridesParseError, setOverridesParseError] = createSignal<string | null>(null);
+  const [overridesApplied, setOverridesApplied] = createSignal(false);
 
   // Journal file state
   const [journalPath, setJournalPath] = createSignal<string>('');
@@ -136,6 +157,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
       setLocalAutoLockTimeout(String(preferences().autoLockTimeout));
       setLocalAdvancedToolbar(preferences().advancedToolbar);
       setLocalEditorFontSize(preferences().editorFontSize);
+      setLocalShowEntryTimestamps(preferences().showEntryTimestamps);
 
       // Reset password fields
       setOldPassword('');
@@ -180,6 +202,11 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
       setDumpGenerating(false);
       setDumpStatus('idle');
       setDumpError('');
+
+      // Initialize theme overrides editor
+      setLocalOverridesJson(getThemeOverridesJson());
+      setOverridesParseError(null);
+      setOverridesApplied(false);
     }
     if (!open) {
       props.onClose();
@@ -202,6 +229,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
       autoLockTimeout: Math.min(999, Math.max(1, parseInt(localAutoLockTimeout(), 10) || 300)),
       advancedToolbar: localAdvancedToolbar(),
       editorFontSize: Math.min(24, Math.max(12, Number(localEditorFontSize()))),
+      showEntryTimestamps: localShowEntryTimestamps(),
     });
     props.onClose();
   };
@@ -423,6 +451,29 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
     }
   };
 
+  // Handle applying theme overrides
+  const handleApplyOverrides = () => {
+    const parsed = parseOverridesJson(localOverridesJson());
+    if (parsed === null) {
+      setOverridesParseError('Invalid JSON. Check for syntax errors.');
+      setOverridesApplied(false);
+      return;
+    }
+    saveThemeOverrides(parsed);
+    applyThemeOverrides(getActiveTheme());
+    setLocalOverridesJson(getThemeOverridesJson());
+    setOverridesParseError(null);
+    setOverridesApplied(true);
+  };
+
+  // Handle resetting theme overrides to defaults
+  const handleResetOverrides = () => {
+    resetThemeOverrides();
+    setLocalOverridesJson('{}');
+    setOverridesParseError(null);
+    setOverridesApplied(false);
+  };
+
   // Tab button class helper
   const tabClass = (tab: Tab) =>
     activeTab() === tab
@@ -549,6 +600,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                           open.
                         </p>
                       </div>
+
                     </div>
                   </Match>
 
@@ -606,6 +658,26 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                         </div>
                         <p class="ml-7 text-xs text-tertiary leading-relaxed">
                           When enabled, the title editor will be hidden. Title data is still saved.
+                        </p>
+                      </div>
+
+                      {/* Show Entry Timestamps */}
+                      <div class="space-y-2">
+                        <div class="flex items-center">
+                          <input
+                            type="checkbox"
+                            id="show-timestamps"
+                            checked={localShowEntryTimestamps()}
+                            onChange={(e) => setLocalShowEntryTimestamps(e.currentTarget.checked)}
+                            class="h-4 w-4 rounded border-primary text-blue-600 focus:ring-blue-500"
+                          />
+                          <label for="show-timestamps" class="ml-3 text-sm text-secondary">
+                            Show entry timestamps
+                          </label>
+                        </div>
+                        <p class="ml-7 text-xs text-tertiary leading-relaxed">
+                          Displays the creation and last updated time below the title for the
+                          current entry.
                         </p>
                       </div>
 
@@ -708,7 +780,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                                   <button
                                     type="button"
                                     onClick={() => handleRemoveAuthMethod(method.id)}
-                                    class="text-xs text-red-500 hover:text-red-700 focus:outline-none"
+                                    class="text-xs text-destructive focus:outline-none"
                                   >
                                     Remove
                                   </button>
@@ -794,7 +866,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                             <button
                               type="button"
                               onClick={handleAddPassword}
-                              class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              class="px-4 py-2 text-sm font-medium interactive-primary rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                             >
                               Add Password
                             </button>
@@ -843,7 +915,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                           <button
                             type="button"
                             onClick={handleGenerateAndRegisterKeypair}
-                            class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                            class="px-4 py-2 text-sm font-medium interactive-primary rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                           >
                             Generate &amp; Register Key File
                           </button>
@@ -919,7 +991,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                         <button
                           type="button"
                           onClick={handlePasswordChange}
-                          class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                          class="px-4 py-2 text-sm font-medium interactive-primary rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                         >
                           Change Password
                         </button>
@@ -986,7 +1058,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                           type="button"
                           onClick={handleChangeJournalDirectory}
                           disabled={isChangingDir()}
-                          class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                          class="px-4 py-2 text-sm font-medium interactive-primary rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           {isChangingDir() ? 'Moving...' : 'Change Location'}
                         </button>
@@ -1004,7 +1076,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                         <button
                           type="button"
                           onClick={handleResetJournal}
-                          class="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                          class="px-4 py-2 text-sm font-medium interactive-destructive rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
                         >
                           Reset Journal
                         </button>
@@ -1018,7 +1090,63 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                   {/* ── Advanced ── */}
                   <Match when={activeTab() === 'advanced'}>
                     <div class="space-y-6">
+                      {/* Theme Overrides */}
                       <div>
+                        <h3 class="text-sm font-medium text-primary mb-1">Theme Overrides</h3>
+                        <p class="text-xs text-tertiary mb-3 leading-relaxed">
+                          Override individual theme color tokens. Enter a JSON object with{' '}
+                          <code class="text-xs font-mono">light</code> and/or{' '}
+                          <code class="text-xs font-mono">dark</code> keys. Only documented tokens (
+                          <code class="text-xs font-mono">--bg-*</code>,{' '}
+                          <code class="text-xs font-mono">--text-*</code>, etc.) are supported.
+                          Invalid tokens are silently ignored.{' '}
+                          <button
+                            type="button"
+                            class="underline text-xs text-tertiary hover:text-primary focus:outline-none"
+                            onClick={() =>
+                              openUrl(
+                                'https://github.com/fjrevoredo/mini-diarium/blob/master/docs/USER_GUIDE.md#theme-overrides-advanced',
+                              )
+                            }
+                          >
+                            See User Guide
+                          </button>
+                        </p>
+                        <textarea
+                          rows="6"
+                          class="w-full text-xs font-mono bg-tertiary text-primary border border-primary rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y"
+                          value={localOverridesJson()}
+                          onInput={(e) => {
+                            setLocalOverridesJson(e.currentTarget.value);
+                            setOverridesApplied(false);
+                            setOverridesParseError(null);
+                          }}
+                          spellcheck={false}
+                        />
+                        <Show when={overridesParseError() !== null}>
+                          <p class="text-xs text-error mt-1">{overridesParseError()}</p>
+                        </Show>
+                        <Show when={overridesApplied()}>
+                          <p class="text-xs text-success mt-1">Overrides applied.</p>
+                        </Show>
+                        <div class="flex gap-2 mt-2">
+                          <button
+                            type="button"
+                            onClick={handleApplyOverrides}
+                            class="px-3 py-1.5 text-sm font-medium interactive-primary rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                          >
+                            Apply Overrides
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleResetOverrides}
+                            class="px-3 py-1.5 text-sm font-medium text-destructive bg-primary border border-primary rounded-md hover:bg-hover focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                          >
+                            Reset to Default
+                          </button>
+                        </div>
+                      </div>
+                      <div class="border-t border-primary pt-4 mt-4">
                         <h3 class="text-sm font-medium text-primary mb-1">Diagnostics</h3>
                         <p class="text-xs text-tertiary mb-3 leading-relaxed">
                           Generates a JSON file with app metadata to help diagnose issues. No
@@ -1029,7 +1157,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                             type="button"
                             onClick={handleGenerateDebugDump}
                             disabled={dumpGenerating()}
-                            class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                            class="px-4 py-2 text-sm font-medium interactive-primary rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             {dumpGenerating() ? 'Generating…' : 'Generate Debug Dump'}
                           </button>
@@ -1059,7 +1187,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
               <button
                 type="button"
                 onClick={handleSave}
-                class="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                class="px-4 py-2 text-sm font-medium interactive-primary rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
               >
                 Save
               </button>

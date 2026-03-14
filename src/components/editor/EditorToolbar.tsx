@@ -72,7 +72,7 @@ export default function EditorToolbar(props: EditorToolbarProps) {
 
   const btnBase =
     'rounded p-2 transition-colors text-secondary hover:bg-tertiary hover:text-primary';
-  const btnActive = 'rounded p-2 transition-colors bg-blue-100 text-blue-700';
+  const btnActive = 'rounded p-2 transition-colors btn-active';
 
   const btnClass = (active: boolean) => (active ? btnActive : btnBase);
 

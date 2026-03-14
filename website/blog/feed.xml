@@ -3,9 +3,30 @@
   <channel>
     <title>Mini Diarium Blog</title>
     <link>https://mini-diarium.com/blog/</link>
-    <description>Static articles about encrypted offline journaling and local-first software.</description>
+    <description>Static articles about encrypted journals, private diary apps, offline journaling, and local-first software.</description>
     <language>en-us</language>
-    <lastBuildDate>Fri, 06 Mar 2026 00:00:00 GMT</lastBuildDate>
+    <lastBuildDate>Thu, 12 Mar 2026 00:00:00 GMT</lastBuildDate>
+  <item>
+    <title>Encrypted Journal App vs. Cloud Notes App</title>
+    <link>https://mini-diarium.com/blog/encrypted-journal-vs-cloud-notes-app/</link>
+    <guid isPermaLink="true">https://mini-diarium.com/blog/encrypted-journal-vs-cloud-notes-app/</guid>
+    <description>An encrypted journal app keeps private writing local and encrypted before storage, while a cloud notes app optimizes for sync and service convenience. The architecture changes who controls the words.</description>
+    <pubDate>Thu, 12 Mar 2026 00:00:00 GMT</pubDate>
+  </item>
+  <item>
+    <title>Offline Journal That You Own</title>
+    <link>https://mini-diarium.com/blog/offline-journal-that-you-own/</link>
+    <guid isPermaLink="true">https://mini-diarium.com/blog/offline-journal-that-you-own/</guid>
+    <description>An offline journal is not only about privacy. It also changes portability, continuity, and who controls the writing when the software or service around it changes.</description>
+    <pubDate>Thu, 12 Mar 2026 00:00:00 GMT</pubDate>
+  </item>
+  <item>
+    <title>Private Diary App for Desktop: What Actually Matters</title>
+    <link>https://mini-diarium.com/blog/private-diary-app-for-desktop/</link>
+    <guid isPermaLink="true">https://mini-diarium.com/blog/private-diary-app-for-desktop/</guid>
+    <description>A private diary app for desktop should work offline, encrypt entries at rest, keep storage local, and make exports available when you want your writing back.</description>
+    <pubDate>Thu, 12 Mar 2026 00:00:00 GMT</pubDate>
+  </item>
   <item>
     <title>Local-First Journaling Means You Keep the Exit Door Open</title>
     <link>https://mini-diarium.com/blog/local-first-journaling-and-ownership/</link>

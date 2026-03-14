@@ -222,7 +222,7 @@ export default function ImportOverlay(props: ImportOverlayProps) {
             {/* Import Progress */}
             <Show when={importing()}>
               <div class="mb-4 flex items-center justify-center py-4">
-                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 spinner-border" />
                 <span class="ml-3 text-sm text-secondary">Importing...</span>
               </div>
             </Show>
@@ -240,7 +240,7 @@ export default function ImportOverlay(props: ImportOverlayProps) {
                 <button
                   onClick={handleImport}
                   disabled={!selectedFile() || importing()}
-                  class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  class="px-4 py-2 interactive-primary rounded-md transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
                   <FileUp size={16} />
                   Start Import

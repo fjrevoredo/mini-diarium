@@ -61,3 +61,17 @@ export function addMonths(dateStr: string, months: number): string {
   const day = String(date.getDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 }
+
+/**
+ * Formats an ISO 8601 timestamp string using the OS/browser locale.
+ * Example: "2024-01-15T14:30:00.000Z" -> "Jan 15, 2024, 2:30 PM"
+ */
+export function formatTimestamp(isoString: string): string {
+  return new Date(isoString).toLocaleString(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+  });
+}

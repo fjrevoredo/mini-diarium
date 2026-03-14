@@ -73,7 +73,7 @@ export default function AboutOverlay(props: AboutOverlayProps) {
             <div class="flex justify-center mb-6">
               <button
                 onClick={() => openUrl('https://github.com/fjrevoredo/mini-diarium')}
-                class="text-sm text-blue-500 hover:underline"
+                class="text-sm text-interactive hover:underline"
               >
                 github.com/fjrevoredo/mini-diarium
               </button>

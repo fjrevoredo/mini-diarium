@@ -93,7 +93,7 @@ describe('Core journal workflow', () => {
     const todayButton = await $(`[data-testid="calendar-day-${TODAY_DATE}"]`);
     await todayButton.waitForDisplayed({ timeout: 10000 });
     const todayButtonClass = await todayButton.getAttribute('class');
-    expect(todayButtonClass).toContain('bg-blue-600');
+    expect(todayButtonClass).toContain('interactive-primary');
 
     // 11. Navigate back to the saved date and verify persistence.
     if (TEST_DATE !== TODAY_DATE) {

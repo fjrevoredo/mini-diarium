@@ -255,7 +255,7 @@ export default function Calendar() {
                     relative h-8 w-8 rounded text-sm flex flex-col items-center justify-center
                     ${day.isCurrentMonth ? 'text-primary' : 'text-muted'}
                     ${day.isToday ? 'font-bold' : ''}
-                    ${day.isSelected ? 'bg-blue-600 text-white hover:bg-blue-700' : !day.isDisabled ? 'hover:bg-hover' : ''}
+                    ${day.isSelected ? 'interactive-primary' : !day.isDisabled ? 'hover:bg-hover' : ''}
                     ${day.isDisabled ? 'cursor-not-allowed opacity-40' : 'cursor-pointer'}
                   `}
                     disabled={day.isDisabled}
@@ -265,7 +265,7 @@ export default function Calendar() {
                       <span
                         class={`
                         h-1 w-1 rounded-full mt-0.5
-                        ${day.isSelected ? 'bg-white' : 'bg-blue-600'}
+                        ${day.isSelected ? 'bg-white' : 'bg-interactive'}
                       `}
                       />
                     )}
@@ -289,7 +289,7 @@ export default function Calendar() {
                   ${
                     pickerYear() === currentMonth().getFullYear() &&
                     i() === currentMonth().getMonth()
-                      ? 'bg-blue-600 text-white hover:bg-blue-700'
+                      ? 'interactive-primary'
                       : 'text-primary hover:bg-hover'
                   }
                 `}

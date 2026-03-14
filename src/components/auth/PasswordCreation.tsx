@@ -95,7 +95,7 @@ export default function PasswordCreation() {
               type="submit"
               data-testid="create-journal-button"
               disabled={isCreating()}
-              class="w-full rounded-md bg-blue-600 px-4 py-3 font-medium text-white transition-colors hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              class="w-full rounded-md interactive-primary px-4 py-3 font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isCreating() ? 'Creating...' : 'Create Journal'}
             </button>
