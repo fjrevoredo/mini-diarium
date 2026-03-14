@@ -216,7 +216,7 @@ Design an extension/plugin API for third-party integrations (importers, exporter
 
 ---
 
-### Task 69: Advanced Local Theme Overrides
+### Task 69: Advanced Local Theme Overrides ✓ (2026-03-14)
 **Priority**: Low | **Complexity**: Medium | **Files**: `src/index.css`, `src/lib/theme.ts`, `src/components/overlays/PreferencesOverlay.tsx`, `docs/DESIGN_SYSTEM.md`
 
 Explore the request from [GitHub issue #53](https://github.com/fjrevoredo/mini-diarium/issues/53): let advanced users customize the built-in light and dark themes beyond the current `auto` / `light` / `dark` selector.

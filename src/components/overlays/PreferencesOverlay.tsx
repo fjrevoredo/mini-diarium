@@ -1,10 +1,23 @@
 import { createSignal, createEffect, For, Show, Switch, Match, onMount } from 'solid-js';
 import { PasswordStrengthIndicator } from '../auth/PasswordStrengthIndicator';
 import { save, confirm as dialogConfirm, open as openDirDialog } from '@tauri-apps/plugin-dialog';
+import { openUrl } from '@tauri-apps/plugin-opener';
 import { Dialog } from '@kobalte/core/dialog';
 import { createLogger } from '../../lib/logger';
 import { preferences, setPreferences, type EscAction } from '../../state/preferences';
-import { getThemePreference, setTheme, type ThemePreference } from '../../lib/theme';
+import {
+  getThemePreference,
+  setTheme,
+  getActiveTheme,
+  type ThemePreference,
+} from '../../lib/theme';
+import {
+  saveThemeOverrides,
+  applyThemeOverrides,
+  resetThemeOverrides,
+  getThemeOverridesJson,
+  parseOverridesJson,
+} from '../../lib/theme-overrides';
 import { authState } from '../../state/auth';
 import * as tauri from '../../lib/tauri';
 import { mapTauriError } from '../../lib/errors';
@@ -59,6 +72,11 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
   const [localShowEntryTimestamps, setLocalShowEntryTimestamps] = createSignal(
     preferences().showEntryTimestamps,
   );
+
+  // Theme overrides state
+  const [localOverridesJson, setLocalOverridesJson] = createSignal('{}');
+  const [overridesParseError, setOverridesParseError] = createSignal<string | null>(null);
+  const [overridesApplied, setOverridesApplied] = createSignal(false);
 
   // Journal file state
   const [journalPath, setJournalPath] = createSignal<string>('');
@@ -184,6 +202,11 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
       setDumpGenerating(false);
       setDumpStatus('idle');
       setDumpError('');
+
+      // Initialize theme overrides editor
+      setLocalOverridesJson(getThemeOverridesJson());
+      setOverridesParseError(null);
+      setOverridesApplied(false);
     }
     if (!open) {
       props.onClose();
@@ -428,6 +451,29 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
     }
   };
 
+  // Handle applying theme overrides
+  const handleApplyOverrides = () => {
+    const parsed = parseOverridesJson(localOverridesJson());
+    if (parsed === null) {
+      setOverridesParseError('Invalid JSON. Check for syntax errors.');
+      setOverridesApplied(false);
+      return;
+    }
+    saveThemeOverrides(parsed);
+    applyThemeOverrides(getActiveTheme());
+    setLocalOverridesJson(getThemeOverridesJson());
+    setOverridesParseError(null);
+    setOverridesApplied(true);
+  };
+
+  // Handle resetting theme overrides to defaults
+  const handleResetOverrides = () => {
+    resetThemeOverrides();
+    setLocalOverridesJson('{}');
+    setOverridesParseError(null);
+    setOverridesApplied(false);
+  };
+
   // Tab button class helper
   const tabClass = (tab: Tab) =>
     activeTab() === tab
@@ -554,6 +600,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                           open.
                         </p>
                       </div>
+
                     </div>
                   </Match>
 
@@ -1043,7 +1090,63 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                   {/* ── Advanced ── */}
                   <Match when={activeTab() === 'advanced'}>
                     <div class="space-y-6">
+                      {/* Theme Overrides */}
                       <div>
+                        <h3 class="text-sm font-medium text-primary mb-1">Theme Overrides</h3>
+                        <p class="text-xs text-tertiary mb-3 leading-relaxed">
+                          Override individual theme color tokens. Enter a JSON object with{' '}
+                          <code class="text-xs font-mono">light</code> and/or{' '}
+                          <code class="text-xs font-mono">dark</code> keys. Only documented tokens (
+                          <code class="text-xs font-mono">--bg-*</code>,{' '}
+                          <code class="text-xs font-mono">--text-*</code>, etc.) are supported.
+                          Invalid tokens are silently ignored.{' '}
+                          <button
+                            type="button"
+                            class="underline text-xs text-tertiary hover:text-primary focus:outline-none"
+                            onClick={() =>
+                              openUrl(
+                                'https://github.com/fjrevoredo/mini-diarium/blob/master/docs/USER_GUIDE.md#theme-overrides-advanced',
+                              )
+                            }
+                          >
+                            See User Guide
+                          </button>
+                        </p>
+                        <textarea
+                          rows="6"
+                          class="w-full text-xs font-mono bg-tertiary text-primary border border-primary rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y"
+                          value={localOverridesJson()}
+                          onInput={(e) => {
+                            setLocalOverridesJson(e.currentTarget.value);
+                            setOverridesApplied(false);
+                            setOverridesParseError(null);
+                          }}
+                          spellcheck={false}
+                        />
+                        <Show when={overridesParseError() !== null}>
+                          <p class="text-xs text-error mt-1">{overridesParseError()}</p>
+                        </Show>
+                        <Show when={overridesApplied()}>
+                          <p class="text-xs text-success mt-1">Overrides applied.</p>
+                        </Show>
+                        <div class="flex gap-2 mt-2">
+                          <button
+                            type="button"
+                            onClick={handleApplyOverrides}
+                            class="px-3 py-1.5 text-sm font-medium interactive-primary rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                          >
+                            Apply Overrides
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleResetOverrides}
+                            class="px-3 py-1.5 text-sm font-medium text-destructive bg-primary border border-primary rounded-md hover:bg-hover focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                          >
+                            Reset to Default
+                          </button>
+                        </div>
+                      </div>
+                      <div class="border-t border-primary pt-4 mt-4">
                         <h3 class="text-sm font-medium text-primary mb-1">Diagnostics</h3>
                         <p class="text-xs text-tertiary mb-3 leading-relaxed">
                           Generates a JSON file with app metadata to help diagnose issues. No

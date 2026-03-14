@@ -402,7 +402,7 @@ Run: `cd src-tauri && cargo test`
 | plugin/rhai_loader | 11 | `plugin/rhai_loader.rs` |
 | config | 11 | `config.rs` |
 
-### Frontend: 109 tests across 13 files
+### Frontend: 127 tests across 14 files
 
 Run: `bun run test:run` (single run) or `bun run test` (watch mode)
 
@@ -411,6 +411,7 @@ Run: `bun run test:run` (single run) or `bun run test` (watch mode)
 | `src/lib/dates.test.ts` | 10 |
 | `src/lib/import.test.ts` | 4 |
 | `src/lib/tauri-params.test.ts` | 8 |
+| `src/lib/theme-overrides.test.ts` | 15 |
 | `src/components/auth/JournalPicker.test.tsx` | 4 |
 | `src/components/auth/PasswordPrompt.test.tsx` | 4 |
 | `src/components/auth/PasswordCreation.test.tsx` | 3 |
