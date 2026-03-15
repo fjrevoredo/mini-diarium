@@ -121,16 +121,23 @@
   text-decoration: underline;
 }
 
-/* Embedded images */
-.ProseMirror img {
-  max-width: 100%;
-  height: auto;
-  border-radius: 0.375rem;
+/* Image container — alignment is controlled by TextAlign on this element */
+.ProseMirror figure.image-container {
   margin: 0.5rem 0;
   display: block;
 }
 
-.ProseMirror img.ProseMirror-selectednode {
+/* Image inside container — inline-block so parent text-align takes effect */
+.ProseMirror figure.image-container img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 0.375rem;
+  display: inline-block;
+}
+
+/* ProseMirror adds ProseMirror-selectednode to the root element of the selected
+   node — which is now <figure>, not <img>. Apply the outline to the inner img. */
+.ProseMirror figure.image-container.ProseMirror-selectednode img {
   outline: 2px solid var(--editor-selection-outline);
   outline-offset: 2px;
 }

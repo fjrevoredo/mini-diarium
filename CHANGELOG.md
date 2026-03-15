@@ -2,6 +2,13 @@
 
 All notable changes to Mini Diarium are documented here. This project uses [Semantic Versioning](https://semver.org/).
 
+## [0.4.8] - Unreleased
+
+### Changed
+
+- **Image alignment**: alignment controls now apply to images as well as text blocks, using a container model that makes future block types (tables, etc.) trivially alignable without per-node workarounds. Each image is wrapped in a `<figure class="image-container">` element; `TextAlign` sets `text-align` on the container and the inner `<img>` responds as `display: inline-block`. Existing bare `<img>` entries load correctly via a parse fallback (no migration needed).
+
+
 ## [0.4.7] — 15-03-2026
 
 ### Added

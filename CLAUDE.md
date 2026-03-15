@@ -514,6 +514,11 @@ bun run tauri build      # Full app bundle
 
 17. **JSON export format (breaking change in v0.5.0)**: JSON export now outputs an array under the `"entries"` key with each entry including its `id` field, instead of a date-keyed object. Example: `{ "entries": [{ "id": 1, "date": "2024-01-15", "title": "...", "text": "...", "word_count": 0, "date_created": "...", "date_updated": "..." }] }`.
 
+18. **Block alignment uses a container model (not per-node)**: Alignment is applied via `TextAlign` on a wrapping container (`<figure>`, `<div>`), not on the content element itself. This means:
+    - `ProseMirror-selectednode` is added to the **container**, not the inner element
+    - CSS must use `display: inline-block` on the inner element for `text-align` to work
+    - To align a new block type, extend its node to use a wrapper and add its name to the TextAlign `types` array — see "Adding an Alignable Editor Block Node" in Common Task Checklists
+
 ## Security Rules
 
 - **Never** log, print, or serialize passwords or encryption keys
@@ -571,6 +576,42 @@ This overwrites every icon variant (ICO, ICNS, PNG at all sizes, Windows AppX, i
 **Option B: User-scriptable (Rhai)**
 
 Users drop a `.rhai` file in `{diary_dir}/plugins/`. The file must have a `// @name`, `// @type`, and optionally `// @extensions` comment header. Import scripts define `fn parse(content)` returning an array of entry maps; export scripts define `fn format_entries(entries)` returning a string. See `docs/user-plugins/USER_PLUGIN_GUIDE.md` for templates and `plugin/rhai_loader.rs` for the runtime.
+
+### Adding an Alignable Editor Block Node
+
+The editor uses a **generic block/container alignment model**: alignment is
+controlled by `TextAlign` on a wrapping container element, not on the content
+node itself. All block node types share the same mechanism and the same
+`setTextAlign` command.
+
+**Steps to make a new TipTap block node alignable:**
+
+1. **Extend the base node** in `src/components/editor/DiaryEditor.tsx`:
+   - Override `renderHTML` to wrap the content in a container element
+     (use `<figure class="X-container">` for media, `<div class="X-container">` for others)
+   - Pass `mergeAttributes({ class: 'X-container' }, style ? { style } : {})` to
+     the container; pass image/content attrs to the inner element without `style`
+   - Override `parseHTML` with two rules: the wrapped format (primary) and a bare
+     fallback for any pre-existing stored content
+   - The `style` key in `HTMLAttributes` is the alignment value injected by TextAlign
+
+2. **Register the node type** with TextAlign:
+   ```typescript
+   TextAlign.configure({ types: ['heading', 'paragraph', 'image', 'yourNodeName'] })
+   ```
+
+3. **Add CSS** in `src/styles/editor.css`:
+   - `.ProseMirror figure.X-container` (or div): `display: block; margin: 0.5rem 0;`
+   - `.ProseMirror figure.X-container .inner-element`: `display: inline-block;`
+     (inline-block responds to the parent container's `text-align`)
+   - `.ProseMirror figure.X-container.ProseMirror-selectednode .inner-element`:
+     selection outline — note `ProseMirror-selectednode` lands on the **container**,
+     not the inner element
+
+**No changes needed** to `EditorToolbar.tsx` — the `setTextAlign` command and
+`isActive({ textAlign: value })` check work for any node type once registered.
+
+**Reference implementation:** `AlignableImage` in `DiaryEditor.tsx` (image node).
 
 ### Implementing Search
 
