@@ -2,14 +2,15 @@
 .ProseMirror {
   min-height: 200px;
   outline: none;
-  color: var(--editor-body-text);
 }
 
-/* Use higher specificity (.ProseMirror.journal-editor-content) so the user-controlled
-   CSS variable wins over UnoCSS Typography size-variant classes (prose-sm, lg:prose-lg,
-   xl:prose-xl) which share only a single-class selector and are injected after this file. */
+/* Use higher specificity (.ProseMirror.journal-editor-content) so theme-controlled CSS
+   variables win over @tailwindcss/typography's .prose rules (single-class selectors
+   injected after this file). Without the double-class selector, .prose sets a fixed
+   dark-gray color that overrides --editor-body-text on dark themes. */
 .ProseMirror.journal-editor-content {
   font-size: var(--editor-font-size, 16px);
+  color: var(--editor-body-text);
 }
 
 @media (min-width: 1280px) {

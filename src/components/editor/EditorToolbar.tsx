@@ -128,7 +128,7 @@ export default function EditorToolbar(props: EditorToolbarProps) {
                   .run();
               }
             }}
-            class="h-8 rounded border border-primary bg-primary px-2 text-sm text-primary transition-colors hover:bg-tertiary focus:outline-none focus:ring-2 focus:ring-blue-500"
+            class="h-8 rounded border border-primary bg-primary px-2 text-sm text-primary transition-colors hover:bg-tertiary focus:outline-none focus:ring-2 focus:ring-[var(--border-focus)]"
           >
             <option value="0">Normal</option>
             <option value="1">Heading 1</option>

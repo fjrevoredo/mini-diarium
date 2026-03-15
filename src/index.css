@@ -128,7 +128,7 @@
   --spinner-color: #2563eb;
 
   /* Editor content */
-  --editor-body-text: #e5e7eb;
+  --editor-body-text: var(--text-primary);
   --editor-heading-text: #f3f4f6;
   --editor-placeholder-text: #adb5bd;
   --editor-blockquote-border: var(--interactive-secondary);
