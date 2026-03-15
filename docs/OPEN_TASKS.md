@@ -171,6 +171,40 @@ Export journal entries as PDF (A4 page size).
 
 ---
 
+## ✍️ Editor Experience
+
+### Task 71: Editor Alignment Controls
+**Priority**: Medium | **Complexity**: Medium | **Files**: `src/components/editor/DiaryEditor.tsx`, `src/components/editor/EditorToolbar.tsx`, `src/styles/editor.css`, editor tests
+
+Explore the request from [GitHub issue #54](https://github.com/fjrevoredo/mini-diarium/issues/54): add alignment options for text and, where appropriate, other block-level editor content.
+
+**Current state**:
+- The editor is TipTap-based and currently supports headings, lists, blockquotes, inline formatting, highlights, horizontal rules, and block images
+- There are no alignment controls in the toolbar today
+- Entries are stored as HTML, so any alignment feature must round-trip cleanly through the saved HTML format
+- Tables are not currently part of the shipped editor feature set
+
+**Requirements**:
+- Users must be able to set **left**, **center**, **right**, and **justified** alignment for block text content in the editor
+- Existing entries with no alignment metadata must continue to render exactly as they do today
+- Alignment must survive save/load round-trips because entry content is stored as HTML
+- Existing export paths must remain safe: JSON export should preserve the stored HTML as-is, and Markdown export may degrade alignment semantics but must not corrupt or drop entry content
+- The control surface must be discoverable in the editor UI and fit the existing toolbar model without regressing the simpler default writing experience
+- The alignment model should be defined at the block/node level so existing and future block content (for example images, and later tables if they are ever added) can opt in without reworking the whole feature
+- Inline formatting behavior (bold, italic, underline, highlight, inline code) must remain unaffected by block alignment changes
+- Lists, blockquotes, and headings must either support alignment correctly or be explicitly constrained/documented so the behavior is predictable
+- If image alignment is not included in the first shipped pass, existing image behavior must remain unchanged and the follow-up gap should be documented explicitly rather than implied
+
+**Out of scope for an initial pass**:
+- Shipping table support just to satisfy alignment for tables
+- Arbitrary layout controls beyond standard editor alignment semantics
+
+**Testing**:
+- Frontend coverage for toolbar actions and HTML round-tripping
+- Manual verification for paragraphs, headings, lists, blockquotes, and images
+
+---
+
 ### Task 67: Text Input Extension Point
 **Priority**: Medium | **Complexity**: High | **Files**: TBD (see `docs/text-input-extension-design.md`)
 

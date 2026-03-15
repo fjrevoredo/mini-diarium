@@ -600,7 +600,6 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                           open.
                         </p>
                       </div>
-
                     </div>
                   </Match>
 
