@@ -48,22 +48,6 @@ Improve release pipeline reliability and remove deprecated dependencies.
 
 ---
 
-### Task 62: CI Diagram Diff Verification ✅ Completed (2026-02-21)
-**Priority**: Medium | **Complexity**: Low | **Files**: `.github/workflows/ci.yml`, `docs/diagrams/*`
-
-**Outcome**: CI now regenerates all diagram SVGs, diffs each against the committed file, and fails with a clear remediation message (`bun run diagrams`) when any output is stale. Temporary check files are cleaned up via shell trap.
-
----
-
-## 🎯 High Priority (v0.2.0 Candidates)
-
-### Task 46: Diary Directory Selection ✅ Completed (2026-02-21)
-**Priority**: High | **Complexity**: Medium
-
-**Outcome**: Shipped in v0.3.0. Users can change the journal location from Preferences → Data → Change Location. The file is moved atomically; the journal is auto-locked during the move. Implementation in `src-tauri/src/commands/auth/auth_directory.rs` (5 tests). Syncs to `config.json`.
-
----
-
 ### Task 52: Accessibility Audit & Improvements
 **Priority**: High | **Complexity**: Medium | **Files**: All components
 
@@ -79,37 +63,6 @@ Ensure the app is usable by everyone.
 - Visible focus indicators
 
 **Testing**: Automated with axe-core, manual screen reader testing
-
----
-
-### Task 68: Dark Theme Form-Control Contrast on Linux ✅ Completed (2026-03-08)
-**Priority**: High | **Complexity**: Medium | **Files**: `src/index.css`, `src/components/auth/*.tsx`, `src/components/overlays/*.tsx`, `src/components/editor/EditorToolbar.tsx`
-
-Fix the dark-theme readability bug reported in [GitHub issue #48](https://github.com/fjrevoredo/mini-diarium/issues/48): on Linux desktop themes, text inside password fields, text inputs, and native dropdowns can become invisible or too low-contrast in dark mode.
-
-**Reported environment**:
-- Mini Diarium 0.4.4
-- Debian Sid
-- Cinnamon desktop environment
-- Numix theme
-
-**Requirements**:
-- Password fields, plain text inputs, read-only file-path inputs, and native `<select>` controls must keep readable text in dark mode and must not rely on Linux/GTK theme defaults that can override the intended foreground/background pairing.
-- Verify all currently affected surfaces: `PasswordPrompt`, `PasswordCreation`, `PreferencesOverlay`, `ImportOverlay`, `ExportOverlay`, and `EditorToolbar` heading-style dropdown.
-- Placeholder text, selected option text, disabled states, and focus states must remain legible in dark mode.
-- Light mode and auto theme must keep their current appearance; the fix must not introduce a regression on macOS or Windows.
-- Add regression coverage where practical (frontend component tests and/or targeted style assertions) plus a manual Linux validation pass on a Cinnamon-like environment.
-
-**Testing**:
-- Manual: dark-mode verification on Linux (Mint/Cinnamon acceptable proxy for Debian Sid + Cinnamon)
-- Frontend: extend component coverage for affected auth/overlay controls where the current suite is missing coverage
-
----
-
-### Task 63: Keyboard Shortcuts Audit & Recovery ✅ Completed (2026-02-25)
-**Priority**: High | **Complexity**: Medium
-
-**Outcome**: Shipped in v0.4.0. Bracket-key accelerators (`CmdOrCtrl+[`/`]`, `CmdOrCtrl+Shift+[`/`]`) replaced conflicting arrow-key combos. Duplicate frontend listener removed. All shortcut definitions consolidated in `menu.rs` as OS-level accelerators. Lock-state enforcement (Navigation/Diary items disable while locked) shipped in v0.3.0.
 
 ---
 
@@ -171,40 +124,6 @@ Export journal entries as PDF (A4 page size).
 
 ---
 
-## ✍️ Editor Experience
-
-### Task 71: Editor Alignment Controls ✓ (2026-03-15)
-**Priority**: Medium | **Complexity**: Medium | **Files**: `src/components/editor/DiaryEditor.tsx`, `src/components/editor/EditorToolbar.tsx`, `src/styles/editor.css`, editor tests
-
-Explore the request from [GitHub issue #54](https://github.com/fjrevoredo/mini-diarium/issues/54): add alignment options for text and, where appropriate, other block-level editor content.
-
-**Current state**:
-- The editor is TipTap-based and currently supports headings, lists, blockquotes, inline formatting, highlights, horizontal rules, and block images
-- There are no alignment controls in the toolbar today
-- Entries are stored as HTML, so any alignment feature must round-trip cleanly through the saved HTML format
-- Tables are not currently part of the shipped editor feature set
-
-**Requirements**:
-- Users must be able to set **left**, **center**, **right**, and **justified** alignment for block text content in the editor
-- Existing entries with no alignment metadata must continue to render exactly as they do today
-- Alignment must survive save/load round-trips because entry content is stored as HTML
-- Existing export paths must remain safe: JSON export should preserve the stored HTML as-is, and Markdown export may degrade alignment semantics but must not corrupt or drop entry content
-- The control surface must be discoverable in the editor UI and fit the existing toolbar model without regressing the simpler default writing experience
-- In the current UI model, alignment controls should live behind the existing **Show advanced formatting toolbar** preference unless a broader toolbar redesign explicitly changes that contract
-- The alignment model should be defined at the block/node level so existing and future block content (for example images, and later tables if they are ever added) can opt in without reworking the whole feature
-- Inline formatting behavior (bold, italic, underline, highlight, inline code) must remain unaffected by block alignment changes
-- Lists, blockquotes, and headings must either support alignment correctly or be explicitly constrained/documented so the behavior is predictable
-- If image alignment is not included in the first shipped pass, existing image behavior must remain unchanged and the follow-up gap should be documented explicitly rather than implied
-
-**Out of scope for an initial pass**:
-- Shipping table support just to satisfy alignment for tables
-- Arbitrary layout controls beyond standard editor alignment semantics
-
-**Testing**:
-- Frontend coverage for toolbar actions and HTML round-tripping
-- Manual verification for paragraphs, headings, lists, blockquotes, and images
-
----
 
 ### Task 67: Text Input Extension Point
 **Priority**: Medium | **Complexity**: High | **Files**: TBD (see `docs/text-input-extension-design.md`)

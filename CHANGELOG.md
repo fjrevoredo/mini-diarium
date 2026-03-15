@@ -2,7 +2,7 @@
 
 All notable changes to Mini Diarium are documented here. This project uses [Semantic Versioning](https://semver.org/).
 
-## [0.4.7] — Unreleased
+## [0.4.7] — 15-03-2026
 
 ### Added
 
