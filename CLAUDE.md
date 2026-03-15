@@ -97,13 +97,14 @@ src/
 │   │   └── Calendar.tsx               # Monthly calendar with entry indicators
 │   ├── editor/
 │   │   ├── DiaryEditor.tsx            # TipTap rich-text editor
-│   │   ├── EditorToolbar.tsx          # Formatting toolbar
+│   │   ├── EditorToolbar.tsx          # Formatting toolbar (basic + advanced; alignment in advanced)
 │   │   ├── TitleEditor.tsx            # Entry title input
 │   │   ├── WordCount.tsx              # Live word count display
 │   │   ├── EntryNavBar.tsx            # Per-day entry counter/navigator (hidden when ≤1 entry)
 │   │   ├── TitleEditor.test.tsx       # 6 tests
 │   │   ├── WordCount.test.tsx         # 3 tests
-│   │   └── EntryNavBar.test.tsx       # 11 tests
+│   │   ├── EntryNavBar.test.tsx       # 21 tests
+│   │   └── EditorToolbar.test.tsx     # 10 tests
 │   ├── layout/
 │   │   ├── MainLayout.tsx             # App shell (sidebar + editor)
 │   │   ├── Header.tsx                 # Top bar
@@ -402,7 +403,7 @@ Run: `cd src-tauri && cargo test`
 | plugin/rhai_loader | 11 | `plugin/rhai_loader.rs` |
 | config | 11 | `config.rs` |
 
-### Frontend: 127 tests across 14 files
+### Frontend: 137 tests across 15 files
 
 Run: `bun run test:run` (single run) or `bun run test` (watch mode)
 
@@ -418,6 +419,7 @@ Run: `bun run test:run` (single run) or `bun run test` (watch mode)
 | `src/components/editor/TitleEditor.test.tsx` | 6 |
 | `src/components/editor/WordCount.test.tsx` | 3 |
 | `src/components/editor/EntryNavBar.test.tsx` | 21 |
+| `src/components/editor/EditorToolbar.test.tsx` | 10 |
 | `src/components/layout/MainLayout-event-listeners.test.tsx` | 4 |
 | `src/components/layout/EditorPanel-save-logic.test.ts` | 23 |
 | `src/components/layout/EditorPanel-delete-logic.test.ts` | 15 |

@@ -2,9 +2,9 @@
 
 This document tracks features and improvements deferred from the v0.1.0 release.
 
-**Status**: 15 open tasks across 3 categories
+**Status**: 14 open tasks across 3 categories
 - **Infrastructure**: 1 task (release workflow modernization)
-- **Features**: 10 tasks (PDF export, i18n framework, i18n translations, menus, auto-update, legacy migration, extension system, text input extension point, theme hardening, theme overrides)
+- **Features**: 9 tasks (PDF export, i18n framework, i18n translations, menus, auto-update, legacy migration, extension system, text input extension point, theme hardening)
 - **Quality**: 4 tasks (accessibility audit, dark-theme form-control contrast, QA pass, backup behavior documentation)
 
 See [docs/TODO.md](TODO.md) for the active working backlog and `CHANGELOG.md` for completed shipped work.
@@ -173,7 +173,7 @@ Export journal entries as PDF (A4 page size).
 
 ## ✍️ Editor Experience
 
-### Task 71: Editor Alignment Controls
+### Task 71: Editor Alignment Controls ✓ (2026-03-15)
 **Priority**: Medium | **Complexity**: Medium | **Files**: `src/components/editor/DiaryEditor.tsx`, `src/components/editor/EditorToolbar.tsx`, `src/styles/editor.css`, editor tests
 
 Explore the request from [GitHub issue #54](https://github.com/fjrevoredo/mini-diarium/issues/54): add alignment options for text and, where appropriate, other block-level editor content.
@@ -190,6 +190,7 @@ Explore the request from [GitHub issue #54](https://github.com/fjrevoredo/mini-d
 - Alignment must survive save/load round-trips because entry content is stored as HTML
 - Existing export paths must remain safe: JSON export should preserve the stored HTML as-is, and Markdown export may degrade alignment semantics but must not corrupt or drop entry content
 - The control surface must be discoverable in the editor UI and fit the existing toolbar model without regressing the simpler default writing experience
+- In the current UI model, alignment controls should live behind the existing **Show advanced formatting toolbar** preference unless a broader toolbar redesign explicitly changes that contract
 - The alignment model should be defined at the block/node level so existing and future block content (for example images, and later tables if they are ever added) can opt in without reworking the whole feature
 - Inline formatting behavior (bold, italic, underline, highlight, inline code) must remain unaffected by block alignment changes
 - Lists, blockquotes, and headings must either support alignment correctly or be explicitly constrained/documented so the behavior is predictable
@@ -501,10 +502,10 @@ Comprehensive manual testing before each release.
 | Category | Open | Completed |
 |----------|------|-----------|
 | **Infrastructure** | 1 | 5 |
-| **Features** | 10 | 41 |
+| **Features** | 9 | 42 |
 | **Quality** | 4 | 6 |
 | **Testing** | 0 | 4 |
-| **Total** | **15** | **56** |
+| **Total** | **14** | **57** |
 
 **Next milestone candidates**:
 - **v0.1.1**: Task 61 (release workflow modernization)

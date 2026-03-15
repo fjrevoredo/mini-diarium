@@ -13,6 +13,10 @@ import {
   Code,
   Minus,
   ImagePlus,
+  AlignLeft,
+  AlignCenter,
+  AlignRight,
+  AlignJustify,
 } from 'lucide-solid';
 
 interface EditorToolbarProps {
@@ -32,6 +36,9 @@ export default function EditorToolbar(props: EditorToolbarProps) {
   const [isCodeActive, setIsCodeActive] = createSignal(false);
   const [isHighlightActive, setIsHighlightActive] = createSignal(false);
   const [activeHeadingLevel, setActiveHeadingLevel] = createSignal(0);
+  const [activeAlignment, setActiveAlignment] = createSignal<
+    'left' | 'center' | 'right' | 'justify'
+  >('left');
 
   // Update active states when editor changes
   createEffect(() => {
@@ -56,6 +63,15 @@ export default function EditorToolbar(props: EditorToolbarProps) {
             : editor.isActive('heading', { level: 3 })
               ? 3
               : 0,
+      );
+      setActiveAlignment(
+        editor.isActive({ textAlign: 'center' })
+          ? 'center'
+          : editor.isActive({ textAlign: 'right' })
+            ? 'right'
+            : editor.isActive({ textAlign: 'justify' })
+              ? 'justify'
+              : 'left',
       );
     };
 
@@ -236,6 +252,43 @@ export default function EditorToolbar(props: EditorToolbarProps) {
             aria-label="Insert image"
           >
             <ImagePlus size={18} />
+          </button>
+        </Show>
+
+        {/* Alignment controls — advanced only */}
+        <Show when={preferences().advancedToolbar}>
+          <div class="mx-1 h-6 w-px bg-primary" />
+          <button
+            onClick={() => props.editor?.chain().focus().setTextAlign('left').run()}
+            class={btnClass(activeAlignment() === 'left')}
+            title="Align left"
+            aria-label="Align left"
+          >
+            <AlignLeft size={18} />
+          </button>
+          <button
+            onClick={() => props.editor?.chain().focus().setTextAlign('center').run()}
+            class={btnClass(activeAlignment() === 'center')}
+            title="Align center"
+            aria-label="Align center"
+          >
+            <AlignCenter size={18} />
+          </button>
+          <button
+            onClick={() => props.editor?.chain().focus().setTextAlign('right').run()}
+            class={btnClass(activeAlignment() === 'right')}
+            title="Align right"
+            aria-label="Align right"
+          >
+            <AlignRight size={18} />
+          </button>
+          <button
+            onClick={() => props.editor?.chain().focus().setTextAlign('justify').run()}
+            class={btnClass(activeAlignment() === 'justify')}
+            title="Justify"
+            aria-label="Justify"
+          >
+            <AlignJustify size={18} />
           </button>
         </Show>
       </div>

@@ -5,6 +5,7 @@ import Placeholder from '@tiptap/extension-placeholder';
 import Underline from '@tiptap/extension-underline';
 import Highlight from '@tiptap/extension-highlight';
 import { Image as TiptapImage } from '@tiptap/extension-image';
+import TextAlign from '@tiptap/extension-text-align';
 import { listen, UnlistenFn } from '@tauri-apps/api/event';
 import EditorToolbar from './EditorToolbar';
 import { preferences } from '../../state/preferences';
@@ -109,6 +110,7 @@ export default function DiaryEditor(props: DiaryEditorProps) {
         Underline,
         Highlight,
         TiptapImage.configure({ allowBase64: true, inline: false }),
+        TextAlign.configure({ types: ['heading', 'paragraph'] }),
       ],
       content: props.content,
       editorProps: {
