@@ -16,13 +16,7 @@
 - [Save-entry flow](docs/diagrams/save-entry.mmd) - Multi-entry editor persistence flow with create/save/delete and date refresh (Mermaid)
 - [Layered architecture](docs/diagrams/architecture.svg) - Presentation/state/backend/data layers including journals, config, and plugins (D2)
 
-**Regenerate diagrams**:
-```bash
-bun run diagrams
-# Renders docs/diagrams/{unlock,unlock-dark,save-entry,save-entry-dark,context,context-dark}.mmd → *.svg (via mmdc)
-# Renders docs/diagrams/architecture.d2      → docs/diagrams/architecture.svg      (via d2)
-# Renders docs/diagrams/architecture-dark.d2 → docs/diagrams/architecture-dark.svg (via d2)
-```
+**Regenerate diagrams:** `bun run diagrams` — regenerates all `docs/diagrams/` SVGs; `.mmd` sources via mmdc, `.d2` sources via d2.
 
 Quick reference (ASCII art):
 
@@ -62,24 +56,8 @@ Quick reference (ASCII art):
 
 ### Website (`website/`)
 
-Static marketing site for [mini-diarium.com](https://mini-diarium.com). Plain HTML + CSS + JS, no build step. Deployed via Docker / Coolify (compose file path: `website/docker-compose.yml`).
-
-```
-website/
-├── index.html            # Single-page site (all content)
-├── css/style.css         # All styles (CSS variables, grid, clamp())
-├── js/main.js            # Mobile nav toggle + smooth scroll (~30 lines)
-├── assets/
-│   ├── logo.svg          # Copy of public/logo-transparent.svg
-│   └── demo.gif          # Copy of public/demo.gif
-├── nginx.conf            # Gzip, cache headers, security headers
-├── Dockerfile            # FROM nginx:alpine
-└── docker-compose.yml    # Single service, port 80
-```
-
-**Version sync:** `bump-version.sh` updates `<span class="app-version">X.Y.Z</span>` in `index.html` (step 5). Always commit `website/index.html` alongside the other version files.
-
-**Coolify deploy:** In Coolify, set the compose file path to `website/docker-compose.yml`. The build context is the `website/` subfolder.
+Static marketing site — plain HTML/CSS/JS, no build step. Deploy via Coolify using `website/docker-compose.yml`.
+**Version sync:** `bump-version.sh` updates `<span class="app-version">` in `website/index.html`. Always commit it alongside version files.
 
 ### Frontend (`src/`)
 
@@ -90,9 +68,11 @@ src/
 ├── components/
 │   ├── auth/
 │   │   ├── JournalPicker.tsx          # Pre-auth journal selection + management (outermost layer)
-│   │   ├── JournalPicker.test.tsx     # 4 tests
+│   │   ├── JournalPicker.test.tsx
 │   │   ├── PasswordCreation.tsx       # New diary setup
-│   │   └── PasswordPrompt.tsx         # Password + Key File unlock modes
+│   │   ├── PasswordCreation.test.tsx
+│   │   ├── PasswordPrompt.tsx         # Password + Key File unlock modes
+│   │   └── PasswordPrompt.test.tsx
 │   ├── calendar/
 │   │   └── Calendar.tsx               # Monthly calendar with entry indicators
 │   ├── editor/
@@ -101,16 +81,16 @@ src/
 │   │   ├── TitleEditor.tsx            # Entry title input
 │   │   ├── WordCount.tsx              # Live word count display
 │   │   ├── EntryNavBar.tsx            # Per-day entry counter/navigator (hidden when ≤1 entry)
-│   │   ├── TitleEditor.test.tsx       # 6 tests
-│   │   ├── WordCount.test.tsx         # 3 tests
-│   │   ├── EntryNavBar.test.tsx       # 21 tests
-│   │   └── EditorToolbar.test.tsx     # 10 tests
+│   │   ├── TitleEditor.test.tsx
+│   │   ├── WordCount.test.tsx
+│   │   ├── EntryNavBar.test.tsx
+│   │   └── EditorToolbar.test.tsx
 │   ├── layout/
 │   │   ├── MainLayout.tsx             # App shell (sidebar + editor)
 │   │   ├── Header.tsx                 # Top bar
 │   │   ├── Sidebar.tsx                # Calendar panel (search removed; see "Implementing Search")
 │   │   ├── EditorPanel.tsx            # Editor container
-│   │   └── MainLayout-event-listeners.test.tsx  # 4 tests
+│   │   └── MainLayout-event-listeners.test.tsx
 │   ├── overlays/
 │   │   ├── GoToDateOverlay.tsx        # Date picker dialog
 │   │   ├── PreferencesOverlay.tsx     # Settings dialog (includes Auth Methods section)
@@ -126,6 +106,7 @@ src/
 │   ├── entries.ts                     # currentEntry, entryDates, isLoading, isSaving
 │   ├── journals.ts                    # journals, activeJournalId, isSwitching + loadJournals/switchJournal/addJournal/removeJournal/renameJournal
 │   ├── search.ts                      # searchQuery, searchResults, isSearching
+│   ├── session.ts                     # resetSessionState() — resets entries/search/UI on journal lock
 │   ├── ui.ts                          # selectedDate, overlay open states, sidebar state
 │   └── preferences.ts                 # Preferences interface, localStorage persistence
 ├── lib/
@@ -133,9 +114,14 @@ src/
 │   ├── dates.ts                       # Date formatting/arithmetic helpers
 │   ├── debounce.ts                    # Generic debounce utility
 │   ├── shortcuts.ts                   # Keyboard shortcut + menu event listeners
-│   ├── dates.test.ts                  # 10 tests
-│   ├── import.test.ts                 # 4 tests
-│   └── tauri-params.test.ts           # 4 tests
+│   ├── logger.ts                      # createLogger(name) factory used throughout frontend
+│   ├── errors.ts                      # mapTauriError() for user-facing error message mapping
+│   ├── theme.ts                       # Theme signals + initializeTheme() / setTheme()
+│   ├── theme-overrides.ts             # User CSS token overrides per theme
+│   ├── dates.test.ts
+│   ├── import.test.ts
+│   ├── tauri-params.test.ts
+│   └── theme-overrides.test.ts
 ├── test/
 │   └── setup.ts                       # Vitest setup: Tauri API mocks, cleanup
 ├── styles/
@@ -162,10 +148,6 @@ cargo install tauri-driver   # once
 bun run test:e2e:local       # builds binary + runs suite (use --skip-build on repeat runs)
 ```
 
-**Test isolation modes:**
-- Default `bun run test:e2e` runs in **clean-room mode** (`E2E_MODE=clean`): fresh temp diary directory (`MINI_DIARIUM_DATA_DIR`), explicit E2E app mode (`MINI_DIARIUM_E2E=1`), deterministic viewport (`800x660`), and on Windows a fresh WebView2 profile (`webviewOptions.userDataFolder`).
-- Optional `bun run test:e2e:stateful` runs in **stateful mode** (`E2E_MODE=stateful`) and reuses a repo-local persistent root (`.e2e-stateful/`, configurable via `E2E_STATEFUL_ROOT`) for persistence-focused checks.
-
 ### Backend (`src-tauri/src/`)
 
 ```
@@ -173,55 +155,58 @@ src-tauri/src/
 ├── main.rs                            # Tauri bootstrap
 ├── lib.rs                             # Plugin init, state setup, command registration
 ├── menu.rs                            # App menu builder + event emitter
-├── config.rs                          # Journal + diary directory config persistence (11 tests)
-├── backup.rs                          # Automatic backups on unlock + rotation (5 tests)
+├── config.rs                          # Journal + diary directory config persistence
+├── backup.rs                          # Automatic backups on unlock + rotation
+├── screen_lock.rs                     # OS-level auto-lock listener (Windows WM_WTSSESSION_CHANGE/WM_POWERBROADCAST; macOS screen-sleep/lock notifications)
 ├── auth/
 │   ├── mod.rs                             # AuthMethodInfo, KeypairFiles structs; re-exports
-│   ├── password.rs                        # PasswordMethod: Argon2id wrap/unwrap (5 tests)
-│   └── keypair.rs                         # KeypairMethod: X25519 ECIES wrap/unwrap (6 tests)
+│   ├── password.rs                        # PasswordMethod: Argon2id wrap/unwrap
+│   └── keypair.rs                         # KeypairMethod: X25519 ECIES wrap/unwrap
 ├── commands/
-│   ├── mod.rs                         # Re-exports: auth, entries, search, navigation, stats, import, export, plugin
+│   ├── mod.rs                         # Re-exports: auth, entries, search, navigation, stats, import, export, plugin, files
 │   ├── auth/
 │   │   ├── mod.rs                     # DiaryState struct; re-exports, auto_lock_diary_if_unlocked
-│   │   ├── auth_core.rs               # create/unlock/lock/reset/change_password (5 tests)
-│   │   ├── auth_directory.rs          # change_diary_directory with file move + sync to config (5 tests)
-│   │   ├── auth_journals.rs           # list/add/remove/rename/switch journals, auto-lock guards (6 tests)
-│   │   └── auth_methods.rs            # Password & keypair registration, unlock_with_keypair (7 tests)
-│   ├── entries.rs                     # CRUD + delete-if-empty (4 tests)
-│   ├── search.rs                      # Search stub — returns empty results (1 test)
-│   ├── navigation.rs                  # Day/month navigation (5 tests)
-│   ├── stats.rs                       # Aggregated statistics (9 tests)
-│   ├── import.rs                      # Import orchestration (3 tests)
-│   ├── export.rs                      # JSON + Markdown export commands (2 tests)
-│   └── plugin.rs                      # Plugin list/run commands (4 tests)
+│   │   ├── auth_core.rs               # create/unlock/lock/reset/change_password
+│   │   ├── auth_directory.rs          # change_diary_directory with file move + sync to config
+│   │   ├── auth_journals.rs           # list/add/remove/rename/switch journals, auto-lock guards
+│   │   └── auth_methods.rs            # Password & keypair registration, unlock_with_keypair
+│   ├── entries.rs                     # CRUD + delete-if-empty + delete (unconditional)
+│   ├── search.rs                      # Search stub — returns empty results
+│   ├── navigation.rs                  # Day/month navigation
+│   ├── stats.rs                       # Aggregated statistics
+│   ├── import.rs                      # Import orchestration
+│   ├── export.rs                      # JSON + Markdown export commands
+│   ├── plugin.rs                      # Plugin list/run commands
+│   ├── debug.rs                       # Privacy-safe diagnostic dump
+│   └── files.rs                       # Image file reading (jpg/jpeg/png/gif/webp/bmp only)
 ├── crypto/
 │   ├── mod.rs                         # Re-exports
-│   ├── password.rs                    # Argon2id hashing + verification (10 tests)
-│   └── cipher.rs                      # AES-256-GCM encrypt/decrypt (11 tests)
+│   ├── password.rs                    # Argon2id hashing + verification
+│   └── cipher.rs                      # AES-256-GCM encrypt/decrypt
 ├── db/
 │   ├── mod.rs                         # Re-exports
-│   ├── schema.rs                      # DB creation, migrations, password verification (6 tests)
-│   └── queries.rs                     # All SQL: CRUD, dates, word count (9 tests)
+│   ├── schema.rs                      # DB creation, migrations, password verification
+│   └── queries.rs                     # All SQL: CRUD, dates, word count
 ├── export/
 │   ├── mod.rs                         # Re-exports
 │   ├── json.rs                        # Mini Diary-compatible JSON export
 │   └── markdown.rs                    # HTML-to-Markdown conversion + export
 ├── plugin/
 │   ├── mod.rs                         # ImportPlugin/ExportPlugin traits, PluginInfo struct
-│   ├── builtins.rs                    # 6 unit structs wrapping built-in parsers/exporters (3 tests)
-│   ├── registry.rs                    # PluginRegistry: register/find/list (5 tests)
-│   └── rhai_loader.rs                 # Rhai engine, script discovery, sandbox, wrappers (11 tests)
+│   ├── builtins.rs                    # 6 unit structs wrapping built-in parsers/exporters
+│   ├── registry.rs                    # PluginRegistry: register/find/list
+│   └── rhai_loader.rs                 # Rhai engine, script discovery, sandbox, wrappers
 └── import/
     ├── mod.rs                         # Re-exports + DiaryEntry conversion
-    ├── minidiary.rs                   # Mini Diary JSON parser (8 tests)
-    ├── dayone.rs                      # Day One JSON parser (14 tests)
-    ├── dayone_txt.rs                  # Day One TXT parser (16 tests)
-    └── jrnl.rs                        # jrnl JSON parser (12 tests)
+    ├── minidiary.rs                   # Mini Diary JSON parser
+    ├── dayone.rs                      # Day One JSON parser
+    ├── dayone_txt.rs                  # Day One TXT parser
+    └── jrnl.rs                        # jrnl JSON parser
 ```
 
 ## Command Registry
 
-All 45 registered Tauri commands (source: `lib.rs`). Rust names use `snake_case`; frontend wrappers in `src/lib/tauri.ts` use `camelCase`.
+All 49 registered Tauri commands (source: `lib.rs`). Rust names use `snake_case`; frontend wrappers in `src/lib/tauri.ts` use `camelCase`.
 
 | Module | Rust Command | Frontend Wrapper | Description |
 |--------|-------------|-----------------|-------------|
@@ -253,7 +238,9 @@ All 45 registered Tauri commands (source: `lib.rs`). Rust names use `snake_case`
 | entries | `save_entry` | `saveEntry(id, title, text)` | Update entry by id (encrypts) |
 | entries | `get_entries_for_date` | `getEntriesForDate(date)` | Fetch all entries for a date (newest-first) |
 | entries | `delete_entry_if_empty` | `deleteEntryIfEmpty(id, title, text)` | Remove entry by id if content is empty |
+| entries | `delete_entry` | `deleteEntry(id)` | Delete entry by id unconditionally |
 | entries | `get_all_entry_dates` | `getAllEntryDates()` | List all dates with entries |
+| files | `read_file_bytes` | `readFileBytes(path)` | Read local image file bytes (jpg/jpeg/png/gif/webp/bmp) |
 | search | `search_entries` | `searchEntries(query)` | Stub — always returns `[]`; interface preserved for future secure search |
 | nav | `navigate_previous_day` | `navigatePreviousDay(currentDate)` | Previous day with entry |
 | nav | `navigate_next_day` | `navigateNextDay(currentDate)` | Next day with entry |
@@ -286,7 +273,7 @@ Six signal-based state modules in `src/state/`:
 | `ui.ts` | `selectedDate`, `isSidebarCollapsed`, `isGoToDateOpen`, `isPreferencesOpen`, `isStatsOpen`, `isImportOpen`, `isExportOpen`, `isAboutOpen` | Setters exported directly; `resetUiState()` resets all |
 | `preferences.ts` | `preferences: Preferences` | `setPreferences(Partial<Preferences>)`, `resetPreferences()` |
 
-`Preferences` fields: `allowFutureEntries` (bool), `firstDayOfWeek` (number|null), `hideTitles` (bool), `enableSpellcheck` (bool), `escAction` (`'none'|'lock'|'quit'`), `autoLockEnabled` (bool), `autoLockTimeout` (number, seconds), `advancedToolbar` (bool), `editorFontSize` (number, px). Stored in `localStorage`.
+`Preferences` fields: `allowFutureEntries` (bool), `firstDayOfWeek` (number|null), `hideTitles` (bool), `enableSpellcheck` (bool), `escAction` (`'none'|'quit'`), `autoLockEnabled` (bool), `autoLockTimeout` (number, seconds), `advancedToolbar` (bool), `editorFontSize` (number, px), `showEntryTimestamps` (bool). Stored in `localStorage`.
 
 ## Conventions
 
@@ -312,19 +299,20 @@ pub fn my_command(arg: String, state: State<DiaryState>) -> Result<ReturnType, S
 
 All commands return `Result<T, String>`. Register in both `commands/mod.rs` and `generate_handler![]` in `lib.rs`.
 
+**Two delete commands — use the right one:**
+- `delete_entry_if_empty(id, title, text)` — soft delete: only removes the entry if both title and text are blank. Returns `bool`. Used by the editor on blur/navigation to silently clean up orphaned blank entries.
+- `delete_entry(id)` — hard delete: unconditional removal, returns an error if the entry is not found. Used for explicit user-initiated "delete entry" actions.
+
 ### Error Handling
 
 - Backend: `Result<T, String>` — map errors with `.map_err(|e| format!(...))`.
 - Frontend: `try/catch` around `invoke()` calls; set error signals for UI display.
+- **Always pass raw Tauri error strings through `mapTauriError()` from `src/lib/errors.ts` before displaying to users.** It strips filesystem paths, OS error codes, SQLite internals, and Argon2 details to prevent information disclosure.
 
 ### Naming
 
 | Context | Convention | Example |
 |---------|-----------|---------|
-| Rust functions/vars | `snake_case` | `get_entry`, `db_path` |
-| Rust types/structs | `PascalCase` | `DiaryState`, `ImportResult` |
-| TS functions/vars | `camelCase` | `getEntry`, `selectedDate` |
-| TS components | `PascalCase` | `DiaryEditor`, `SearchBar` |
 | TS signals | `camelCase` + `set` prefix | `isLoading` / `setIsLoading` |
 | CSS | UnoCSS utility classes | `class="flex items-center gap-2"` |
 | Dates | `YYYY-MM-DD` string | `"2024-01-15"` |
@@ -367,63 +355,13 @@ All menu event names are prefixed `menu-`. See `menu.rs:78-107` for the full lis
 
 ## Testing
 
-### Backend: 233 tests across 29 modules
+### Backend: 239 tests across 30 modules
 
 Run: `cd src-tauri && cargo test`
-
-| Module | Tests | File |
-|--------|-------|------|
-| auth/password | 5 | `auth/password.rs` |
-| auth/keypair | 6 | `auth/keypair.rs` |
-| password | 10 | `crypto/password.rs` |
-| cipher | 11 | `crypto/cipher.rs` |
-| schema | 11 | `db/schema.rs` |
-| queries | 17 | `db/queries.rs` |
-| auth-core | 6 | `commands/auth/auth_core.rs` |
-| auth-directory | 5 | `commands/auth/auth_directory.rs` |
-| auth-journals | 6 | `commands/auth/auth_journals.rs` |
-| auth-methods | 7 | `commands/auth/auth_methods.rs` |
-| entries | 6 | `commands/entries.rs` |
-| search | 1 | `commands/search.rs` |
-| navigation | 5 | `commands/navigation.rs` |
-| stats | 9 | `commands/stats.rs` |
-| import-cmd | 3 | `commands/import.rs` |
-| export-cmd | 2 | `commands/export.rs` |
-| plugin-cmd | 4 | `commands/plugin.rs` |
-| debug-cmd | 4 | `commands/debug.rs` |
-| minidiary | 8 | `import/minidiary.rs` |
-| dayone | 14 | `import/dayone.rs` |
-| dayone_txt | 16 | `import/dayone_txt.rs` |
-| jrnl | 12 | `import/jrnl.rs` |
-| json-export | 6 | `export/json.rs` |
-| md-export | 20 | `export/markdown.rs` |
-| backup | 5 | `backup.rs` |
-| plugin/builtins | 3 | `plugin/builtins.rs` |
-| plugin/registry | 5 | `plugin/registry.rs` |
-| plugin/rhai_loader | 11 | `plugin/rhai_loader.rs` |
-| config | 11 | `config.rs` |
 
 ### Frontend: 137 tests across 15 files
 
 Run: `bun run test:run` (single run) or `bun run test` (watch mode)
-
-| File | Tests |
-|------|-------|
-| `src/lib/dates.test.ts` | 10 |
-| `src/lib/import.test.ts` | 4 |
-| `src/lib/tauri-params.test.ts` | 8 |
-| `src/lib/theme-overrides.test.ts` | 15 |
-| `src/components/auth/JournalPicker.test.tsx` | 4 |
-| `src/components/auth/PasswordPrompt.test.tsx` | 4 |
-| `src/components/auth/PasswordCreation.test.tsx` | 3 |
-| `src/components/editor/TitleEditor.test.tsx` | 6 |
-| `src/components/editor/WordCount.test.tsx` | 3 |
-| `src/components/editor/EntryNavBar.test.tsx` | 21 |
-| `src/components/editor/EditorToolbar.test.tsx` | 10 |
-| `src/components/layout/MainLayout-event-listeners.test.tsx` | 4 |
-| `src/components/layout/EditorPanel-save-logic.test.ts` | 23 |
-| `src/components/layout/EditorPanel-delete-logic.test.ts` | 15 |
-| `src/state/auth-session-boundary.test.ts` | 4 |
 
 Coverage: `bun run test:coverage`
 
@@ -452,10 +390,6 @@ Run: `bun run test:e2e` (requires release binary + `tauri-driver` installed)
 ## Verification Commands
 
 ```bash
-# Development
-bun run dev              # Vite dev server (frontend only)
-bun run tauri dev        # Full Tauri dev (frontend + backend)
-
 # Testing
 cd src-tauri && cargo test                     # All backend tests
 cd src-tauri && cargo test navigation          # Specific module
@@ -472,10 +406,6 @@ bun run lint:fix         # ESLint autofix
 bun run format:check     # Prettier check
 bun run format           # Prettier fix
 bun run type-check       # TypeScript type check
-
-# Build
-bun run build            # Frontend production build
-bun run tauri build      # Full app bundle
 ```
 
 ## Gotchas and Pitfalls
@@ -484,40 +414,45 @@ bun run tauri build      # Full app bundle
 
 2. **Search interface preserved**: `SearchResult`, `search_entries` (Rust), `searchEntries` (TS), `SearchBar.tsx`, `SearchResults.tsx`, and `src/state/search.ts` are all kept intact as the interface contract for future secure search — do not remove them.
 
-3. **SolidJS test render wrapper**: Tests must use `render(() => <Component />)` with the arrow function. `render(<Component />)` will fail silently or error.
+3. **Date format is always `YYYY-MM-DD`**: The `T00:00:00` suffix is appended in `dates.ts` functions (`new Date(dateStr + 'T00:00:00')`) to avoid timezone-related date shifts.
 
-4. **Date format is always `YYYY-MM-DD`**: The `T00:00:00` suffix is appended in `dates.ts` functions (`new Date(dateStr + 'T00:00:00')`) to avoid timezone-related date shifts.
+4. **Command registration is two places**: New commands must be added to both `commands/mod.rs` (module declaration) and `generate_handler![]` in `lib.rs`. Missing either causes silent failures or compile errors.
 
-5. **Command registration is two places**: New commands must be added to both `commands/mod.rs` (module declaration) and `generate_handler![]` in `lib.rs`. Missing either causes silent failures or compile errors.
+5. **TipTap stores HTML**: The editor content is stored as HTML strings, not Markdown. This is intentional — the `text` field in `DiaryEntry` is HTML.
 
-6. **Menu events**: Rust `app.emit("menu-*")` → frontend `listen()`. The menu items are defined in `menu.rs`; keyboard shortcut listeners are in `shortcuts.ts` and individual overlay components.
+6. **Import behavior (no merge)**: Parsers in `import/*.rs` return `Vec<DiaryEntry>`. Imports always create new entries; there is no date-conflict merging. Re-importing the same file creates duplicate entries. The old merge path has been removed from the current codebase.
 
-7. **Preferences use localStorage**: Not Tauri's store plugin. See `state/preferences.ts`.
+7. **Auth slots (v3 schema):** Each auth method stores its own wrapped copy of the master key in `auth_slots`. `remove_auth_method` refuses to delete the last slot (minimum one required). `change_password` re-wraps the master key in O(1) — no entry re-encryption needed. `verify_password` exists as a side-effect-free check used before multi-step operations.
 
-8. **TipTap stores HTML**: The editor content is stored as HTML strings, not Markdown. This is intentional — the `text` field in `DiaryEntry` is HTML.
+8. **E2E mode contracts:** Default E2E uses clean-room mode (`E2E_MODE=clean`) and sets both `MINI_DIARIUM_DATA_DIR` (fresh temp diary path) and `MINI_DIARIUM_E2E=1` (backend disables `tauri-plugin-window-state` so host window geometry does not leak into tests). Stateful lane (`bun run test:e2e:stateful`) uses a repo-local persistent root (`.e2e-stateful/`, optionally overridden by `E2E_STATEFUL_ROOT`) for persistence-specific checks.
 
-9. **Import behavior (no merge)**: Parsers in `import/*.rs` return `Vec<DiaryEntry>`. Imports always create new entries; there is no date-conflict merging. Re-importing the same file creates duplicate entries. The old merge path has been removed from the current codebase.
+9. **Plugin registry is initialized once at startup** in `lib.rs` `.setup()`. It reads `{diary_dir}/plugins/` for `.rhai` scripts. The registry is stored as `State<Mutex<PluginRegistry>>`. If the user changes the diary directory, plugins are not reloaded until app restart (consistent with existing behavior).
 
-10. **Auth slots (v3 schema):** Each auth method stores its own wrapped copy of the master key in `auth_slots`. `remove_auth_method` refuses to delete the last slot (minimum one required). `change_password` re-wraps the master key in O(1) — no entry re-encryption needed. `verify_password` exists as a side-effect-free check used before multi-step operations.
+10. **Rhai's `export` keyword is reserved**: Export plugin scripts must use `fn format_entries(entries)` instead of `fn export(entries)`. The `RhaiExportPlugin` wrapper calls `"format_entries"` internally.
 
-11. **E2E mode contracts:** Default E2E uses clean-room mode (`E2E_MODE=clean`) and sets both `MINI_DIARIUM_DATA_DIR` (fresh temp diary path) and `MINI_DIARIUM_E2E=1` (backend disables `tauri-plugin-window-state` so host window geometry does not leak into tests). Stateful lane (`bun run test:e2e:stateful`) uses a repo-local persistent root (`.e2e-stateful/`, optionally overridden by `E2E_STATEFUL_ROOT`) for persistence-specific checks.
+11. **Rhai AST requires `unsafe impl Send + Sync`**: The `rhai::AST` type does not implement `Send + Sync` in the current version. The `unsafe` impls on `RhaiImportPlugin` and `RhaiExportPlugin` are required and justified: AST is immutable after compilation, and Engine is created fresh per invocation.
 
-12. **Plugin registry is initialized once at startup** in `lib.rs` `.setup()`. It reads `{diary_dir}/plugins/` for `.rhai` scripts. The registry is stored as `State<Mutex<PluginRegistry>>`. If the user changes the diary directory, plugins are not reloaded until app restart (consistent with existing behavior).
+12. **Old import/export commands are preserved**: The original `import_minidiary_json`, `import_dayone_json`, etc. commands remain registered for backward compatibility. The Import/Export overlays now use the plugin system (`runImportPlugin`/`runExportPlugin`) but the legacy commands still work.
 
-13. **Rhai's `export` keyword is reserved**: Export plugin scripts must use `fn format_entries(entries)` instead of `fn export(entries)`. The `RhaiExportPlugin` wrapper calls `"format_entries"` internally.
+13. **Default E2E clean mode runs at 800×660 px — below the `lg` breakpoint (1024 px)**: The sidebar uses `lg:relative lg:translate-x-0`, so in default clean E2E mode it is always in mobile/overlay behavior. Any change to `isSidebarCollapsed` default or `resetUiState()` affects whether calendar day elements are reachable in E2E tests. **Planning rule**: when changing the default value of any UI visibility signal (`isSidebarCollapsed`, overlay open states, etc.), explicitly audit `e2e/specs/` for interactions that depend on the affected element being visible and update the test accordingly.
 
-14. **Rhai AST requires `unsafe impl Send + Sync`**: The `rhai::AST` type does not implement `Send + Sync` in the current version. The `unsafe` impls on `RhaiImportPlugin` and `RhaiExportPlugin` are required and justified: AST is immutable after compilation, and Engine is created fresh per invocation.
+14. **JSON export format (breaking change in v0.5.0)**: JSON export now outputs an array under the `"entries"` key with each entry including its `id` field, instead of a date-keyed object. Example: `{ "entries": [{ "id": 1, "date": "2024-01-15", "title": "...", "text": "...", "word_count": 0, "date_created": "...", "date_updated": "..." }] }`.
 
-15. **Old import/export commands are preserved**: The original `import_minidiary_json`, `import_dayone_json`, etc. commands remain registered for backward compatibility. The Import/Export overlays now use the plugin system (`runImportPlugin`/`runExportPlugin`) but the legacy commands still work.
-
-16. **Default E2E clean mode runs at 800×660 px — below the `lg` breakpoint (1024 px)**: The sidebar uses `lg:relative lg:translate-x-0`, so in default clean E2E mode it is always in mobile/overlay behavior. Any change to `isSidebarCollapsed` default or `resetUiState()` affects whether calendar day elements are reachable in E2E tests. **Planning rule**: when changing the default value of any UI visibility signal (`isSidebarCollapsed`, overlay open states, etc.), explicitly audit `e2e/specs/` for interactions that depend on the affected element being visible and update the test accordingly.
-
-17. **JSON export format (breaking change in v0.5.0)**: JSON export now outputs an array under the `"entries"` key with each entry including its `id` field, instead of a date-keyed object. Example: `{ "entries": [{ "id": 1, "date": "2024-01-15", "title": "...", "text": "...", "word_count": 0, "date_created": "...", "date_updated": "..." }] }`.
-
-18. **Block alignment uses a container model (not per-node)**: Alignment is applied via `TextAlign` on a wrapping container (`<figure>`, `<div>`), not on the content element itself. This means:
+15. **Block alignment uses a container model (not per-node)**: Alignment is applied via `TextAlign` on a wrapping container (`<figure>`, `<div>`), not on the content element itself. This means:
     - `ProseMirror-selectednode` is added to the **container**, not the inner element
     - CSS must use `display: inline-block` on the inner element for `text-align` to work
     - To align a new block type, extend its node to use a wrapper and add its name to the TextAlign `types` array — see "Adding an Alignable Editor Block Node" in Common Task Checklists
+
+16. **Auto-lock fires from two independent paths** — any change to the lock/unlock flow must account for both:
+    - **Frontend idle timer** (`App.tsx`): tracks user activity events (mousemove, keydown, click, scroll, touchstart). After `autoLockTimeout` seconds of inactivity, calls `lockJournal()`. Controlled by `autoLockEnabled` + `autoLockTimeout` preferences.
+    - **Backend OS events** (`screen_lock.rs`): listens for OS-level session lock, logoff, or system suspend (Windows: `WM_WTSSESSION_CHANGE`, `WM_POWERBROADCAST`; macOS: screen-sleep and `com.apple.screenIsLocked` notifications). Immediately calls `auto_lock_diary_if_unlocked()` and emits `'journal-locked'` event. Fires even when the app is in the background.
+
+17. **Images are stored as base64 in the encrypted HTML `text` field** — there is no separate media storage. Users can drag-drop, paste, or pick images; they are auto-resized to max 1200×1200 px and embedded as base64 data URLs. Backend `read_file_bytes()` reads disk images for drag-drop paths (Tauri drag-drop gives file paths, not `File` objects). Large images significantly increase encrypted entry size.
+
+18. **Theme preference and CSS token overrides are separate localStorage keys**, independent of the main `'preferences'` key. Any code that resets or exports user settings must handle all three keys:
+    - `'preferences'` — the `Preferences` interface (autoLockEnabled, hideTitles, etc.)
+    - `'theme-preference'` — `'auto'|'light'|'dark'` (managed by `src/lib/theme.ts`)
+    - `'theme-overrides'` — JSON object of CSS token overrides (managed by `src/lib/theme-overrides.ts`)
 
 ## Security Rules
 
@@ -533,9 +468,6 @@ bun run tauri build      # Full app bundle
 - **Frontend test coverage is still incomplete**: coverage has improved substantially, but `Calendar.tsx`, `Sidebar.tsx`, most overlays, and broader editor workflows still lack direct tests.
 - **No Tauri integration tests**: All backend tests use direct DB connections, not the Tauri command layer.
 - **No error boundary components**: Unhandled errors in components crash the app.
-- **Search not implemented**: `search_entries` is a stub returning `[]`. A secure search backend needs to be designed and implemented.
-- **SolidJS reactivity warnings**: ~5 non-critical warnings in dev mode from signal access patterns.
-- See `docs/OPEN_TASKS.md` and `docs/TODO.md` for remaining planned work.
 
 ## Common Task Checklists
 
@@ -579,39 +511,7 @@ Users drop a `.rhai` file in `{diary_dir}/plugins/`. The file must have a `// @n
 
 ### Adding an Alignable Editor Block Node
 
-The editor uses a **generic block/container alignment model**: alignment is
-controlled by `TextAlign` on a wrapping container element, not on the content
-node itself. All block node types share the same mechanism and the same
-`setTextAlign` command.
-
-**Steps to make a new TipTap block node alignable:**
-
-1. **Extend the base node** in `src/components/editor/DiaryEditor.tsx`:
-   - Override `renderHTML` to wrap the content in a container element
-     (use `<figure class="X-container">` for media, `<div class="X-container">` for others)
-   - Pass `mergeAttributes({ class: 'X-container' }, style ? { style } : {})` to
-     the container; pass image/content attrs to the inner element without `style`
-   - Override `parseHTML` with two rules: the wrapped format (primary) and a bare
-     fallback for any pre-existing stored content
-   - The `style` key in `HTMLAttributes` is the alignment value injected by TextAlign
-
-2. **Register the node type** with TextAlign:
-   ```typescript
-   TextAlign.configure({ types: ['heading', 'paragraph', 'image', 'yourNodeName'] })
-   ```
-
-3. **Add CSS** in `src/styles/editor.css`:
-   - `.ProseMirror figure.X-container` (or div): `display: block; margin: 0.5rem 0;`
-   - `.ProseMirror figure.X-container .inner-element`: `display: inline-block;`
-     (inline-block responds to the parent container's `text-align`)
-   - `.ProseMirror figure.X-container.ProseMirror-selectednode .inner-element`:
-     selection outline — note `ProseMirror-selectednode` lands on the **container**,
-     not the inner element
-
-**No changes needed** to `EditorToolbar.tsx` — the `setTextAlign` command and
-`isActive({ textAlign: value })` check work for any node type once registered.
-
-**Reference implementation:** `AlignableImage` in `DiaryEditor.tsx` (image node).
+Wrap the node in a `<figure class="X-container">` container, register it in `TextAlign.configure({ types: [..., 'yourNodeName'] })`, and add CSS: `figure.X-container { display: block }` + `.inner-element { display: inline-block }` (container's `text-align` propagates). `ProseMirror-selectednode` lands on the container, not the inner element. See Gotcha #15 and `AlignableImage` in `DiaryEditor.tsx` as the reference implementation.
 
 ### Implementing Search
 
@@ -642,24 +542,6 @@ refactoring.
 3. **UI placement is undecided** — `SearchBar` and `SearchResults` exist but where they appear (sidebar, overlay, command palette, etc.) should be designed fresh. Wire them into `Sidebar.tsx` or a new component; do not assume the old sidebar layout.
 4. **State is ready** — `src/state/search.ts` signals can be used as-is or extended.
 
-**Steps to implement:**
-
-1. Design and build the secure index in `src-tauri/src/db/` (new file, e.g. `search_index.rs`)
-2. Replace the stub body in `commands/search.rs` — keep the `SearchResult` struct and command signature
-3. Call index write/delete at the `// Search index hook:` sites in `queries.rs` and `import.rs`
-4. Bump `SCHEMA_VERSION`, add migration in `db/schema.rs`
-5. Decide on UI placement; render `SearchBar` + `SearchResults` (or new components) in the chosen location
-6. Update `CLAUDE.md` and `CHANGELOG.md`
-
 ### Creating a Release
 
-See [RELEASING.md](RELEASING.md) for complete step-by-step instructions.
-
-**Quick summary:**
-1. Create release branch: `git checkout -b release-X.Y.Z`
-2. Bump version: `./bump-version.sh X.Y.Z` (updates `package.json`, `tauri.conf.json`, `Cargo.toml`, `Cargo.lock`, and `website/index.html`)
-3. Commit and push branch: `git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock website/index.html && git commit -m "chore: bump version to X.Y.Z" && git push origin release-X.Y.Z`
-4. Create PR to merge release branch → master
-5. After PR merged, tag on master: `git checkout master && git pull && git tag -a vX.Y.Z -m "Release vX.Y.Z" && git push origin vX.Y.Z`
-6. Wait for GitHub Actions to build and create draft release
-7. Publish the draft release on GitHub
+See [RELEASING.md](RELEASING.md) for the full process. Version bump script: `./bump-version.sh X.Y.Z`.
