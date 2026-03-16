@@ -27,7 +27,7 @@ serde_json = "1"
 argon2 = { version = "0.5", features = ["std"] }
 aes-gcm = "0.10"
 zeroize = { version = "1.8", features = ["derive"] }
-rusqlite = { version = "0.38", features = ["bundled"] }
+rusqlite = { version = "0.39", features = ["bundled"] }
 rand = "0.8"
 hex = "0.4"
 x25519-dalek = { version = "2", features = ["static_secrets"] }
