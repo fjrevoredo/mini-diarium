@@ -19,6 +19,8 @@ TODO entry format:
 
 ## Medium Priority
 
+- [ ] **Show journal name on unlock screen** — `PasswordPrompt.tsx` must display the active journal's name so users know which journal they are unlocking; this matters most when multiple journals are configured; the name is already available via the `journals` signal in `journals.ts` and the `activeJournalId` signal — no new backend call needed.
+
 - [ ] **Restore CI diagram content-diff check** — the byte-comparison check in `scripts/verify-diagrams.mjs` was reverted to existence-only because mmdc/d2 produce slightly different SVG bytes depending on version (local vs CI runners differ). The proper fix is to pin identical tool versions in both CI and local dev (e.g. lock `@mermaid-js/mermaid-cli` in `devDependencies` and `d2` via a specific release download in CI), then re-add the byte comparison. Until then, `diagrams:check` only verifies that all 8 `.svg` files are present.
 - [ ] **i18n framework** — detect OS locale, set up translation files (`en.json`, `es.json`), add `t()` helper
   - [ ] **Translate all UI text** — replace hardcoded strings with translation keys (~145 keys); depends on i18n framework above
