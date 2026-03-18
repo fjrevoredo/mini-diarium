@@ -5,7 +5,14 @@
     <link>https://mini-diarium.com/blog/</link>
     <description>Static articles about encrypted journals, private diary apps, offline journaling, and local-first software.</description>
     <language>en-us</language>
-    <lastBuildDate>Thu, 12 Mar 2026 00:00:00 GMT</lastBuildDate>
+    <lastBuildDate>Wed, 18 Mar 2026 00:00:00 GMT</lastBuildDate>
+  <item>
+    <title>Day One Alternative for Private Offline Journaling</title>
+    <link>https://mini-diarium.com/blog/day-one-alternative-for-private-offline-journaling/</link>
+    <guid isPermaLink="true">https://mini-diarium.com/blog/day-one-alternative-for-private-offline-journaling/</guid>
+    <description>Looking for a Day One alternative? The right replacement should keep journal entries local, work offline, support import and export, and make long-term ownership clearer.</description>
+    <pubDate>Wed, 18 Mar 2026 00:00:00 GMT</pubDate>
+  </item>
   <item>
     <title>Encrypted Journal App vs. Cloud Notes App</title>
     <link>https://mini-diarium.com/blog/encrypted-journal-vs-cloud-notes-app/</link>

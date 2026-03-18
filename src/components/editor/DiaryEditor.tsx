@@ -1,5 +1,5 @@
 import { createEffect, onCleanup, onMount, createSignal } from 'solid-js';
-import { Editor } from '@tiptap/core';
+import { Editor, mergeAttributes } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import Underline from '@tiptap/extension-underline';
@@ -86,6 +86,44 @@ async function resizeAndEmbedPath(path: string, editor: Editor): Promise<void> {
   await resizeAndEmbedDataUrl(`data:${mime};base64,${btoa(binary)}`, mime, editor);
 }
 
+// AlignableImage wraps every image in a <figure> container so that TextAlign's
+// style="text-align: X" is applied to the container (a block element), not to
+// the <img> itself. The <img> is display:inline-block so it responds to the
+// parent's text-align — the generic container model.
+const AlignableImage = TiptapImage.extend({
+  renderHTML({ HTMLAttributes }) {
+    // TextAlign sets style="text-align: X" on the node's HTMLAttributes.
+    // Split it: alignment style → <figure> container, image attrs → <img>.
+    const { style, ...imgAttrs } = HTMLAttributes;
+    return [
+      'figure',
+      mergeAttributes({ class: 'image-container' }, style ? { style } : {}),
+      ['img', mergeAttributes(this.options.HTMLAttributes, imgAttrs)],
+    ];
+  },
+  parseHTML() {
+    return [
+      {
+        // Primary: new wrapped format — read alignment from <figure>, image src from inner <img>
+        tag: 'figure.image-container',
+        getAttrs(dom) {
+          const img = (dom as HTMLElement).querySelector('img');
+          if (!img) return false;
+          // Filter out null for optional attributes to avoid schema issues
+          const attrs: Record<string, string> = { src: img.getAttribute('src') ?? '' };
+          const alt = img.getAttribute('alt');
+          const title = img.getAttribute('title');
+          if (alt !== null) attrs.alt = alt;
+          if (title !== null) attrs.title = title;
+          return attrs;
+        },
+      },
+      // Fallback: existing bare <img> entries render fine, loaded without alignment
+      { tag: 'img[src]' },
+    ];
+  },
+});
+
 export default function DiaryEditor(props: DiaryEditorProps) {
   // eslint-disable-next-line no-unassigned-vars -- SolidJS assigns via ref={editorElement}; ESLint can't see the JSX assignment
   let editorElement!: HTMLDivElement;
@@ -109,8 +147,8 @@ export default function DiaryEditor(props: DiaryEditorProps) {
         }),
         Underline,
         Highlight,
-        TiptapImage.configure({ allowBase64: true, inline: false }),
-        TextAlign.configure({ types: ['heading', 'paragraph'] }),
+        AlignableImage.configure({ allowBase64: true, inline: false }),
+        TextAlign.configure({ types: ['heading', 'paragraph', 'image'] }),
       ],
       content: props.content,
       editorProps: {

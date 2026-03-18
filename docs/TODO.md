@@ -19,6 +19,8 @@ TODO entry format:
 
 ## Medium Priority
 
+- [ ] **Show journal name on unlock screen** — `PasswordPrompt.tsx` must display the active journal's name so users know which journal they are unlocking; this matters most when multiple journals are configured; the name is already available via the `journals` signal in `journals.ts` and the `activeJournalId` signal — no new backend call needed.
+
 - [ ] **Restore CI diagram content-diff check** — the byte-comparison check in `scripts/verify-diagrams.mjs` was reverted to existence-only because mmdc/d2 produce slightly different SVG bytes depending on version (local vs CI runners differ). The proper fix is to pin identical tool versions in both CI and local dev (e.g. lock `@mermaid-js/mermaid-cli` in `devDependencies` and `d2` via a specific release download in CI), then re-add the byte comparison. Until then, `diagrams:check` only verifies that all 8 `.svg` files are present.
 - [ ] **i18n framework** — detect OS locale, set up translation files (`en.json`, `es.json`), add `t()` helper
   - [ ] **Translate all UI text** — replace hardcoded strings with translation keys (~145 keys); depends on i18n framework above
@@ -38,9 +40,6 @@ TODO entry format:
 
 ## Low Priority / Future
 - [ ] **PDF export** — convert journal entries to PDF (A4); likely via Tauri webview printing
-- [x] **Theme system hardening for future overrides** — finish abstracting app theming onto stable semantic tokens by replacing remaining raw palette classes/hex values, bringing editor/theme-specific CSS onto the token system where practical, and documenting the supported theming contract before exposing user overrides
-- [x] **Advanced local theme overrides** — allow users to restyle the built-in light and dark themes locally via documented theme tokens or a user-owned override stylesheet; keep it fully offline, avoid any theme marketplace or sync surface, and keep the supported customization boundary narrower than arbitrary app-wide CSS injection in Preferences; depends on the theme-system hardening task above
-- [ ] **Generic block alignment model** — replace the current text-only alignment approach with a generic block/container alignment model so centering and related alignment controls can apply consistently to non-text content such as images and future block types like tables, without introducing one-off per-node behavior (#55)
 - [ ] **Text input extension point** — create a plugin/extension interface for alternative entry methods so official and user plugins can provide text input flows such as dictation, LLM-assisted drafting, and other future capture modes; define capability boundaries, permission model, and how plugins hand content into the editor without weakening the app’s privacy guarantees
 - [ ] **Statistics extension point** — add a plugin/extension interface for writing statistics so official and user plugins can calculate custom metrics and surface them in the statistics UI; define the data contract, execution/sandbox constraints, and how custom statistics are registered and rendered without weakening the app’s privacy-first local-only model
 - [ ] **Downgrade import path logging** — `commands/import.rs` logs the import file path at `info!` level (line 52 and other locations), leaking the full filesystem path in dev logs; downgrade all path logs to `debug!` level for all import functions

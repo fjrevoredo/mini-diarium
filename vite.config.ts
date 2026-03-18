@@ -17,11 +17,11 @@ export default defineConfig(async () => ({
     cssCodeSplit: false, // Inline all CSS in one file for faster loading
     rollupOptions: {
       output: {
-        manualChunks: {
-          // Separate vendor chunks for better caching
-          'vendor-solid': ['solid-js'],
-          'vendor-tiptap': ['@tiptap/core', '@tiptap/starter-kit', '@tiptap/extension-placeholder'],
-          'vendor-ui': ['@kobalte/core'],
+        manualChunks: (id) => {
+          // Separate vendor chunks for better caching (function form required by Vite 8 / rolldown)
+          if (id.includes('node_modules/solid-js')) return 'vendor-solid';
+          if (id.includes('node_modules/@tiptap')) return 'vendor-tiptap';
+          if (id.includes('node_modules/@kobalte')) return 'vendor-ui';
         },
       },
     },
