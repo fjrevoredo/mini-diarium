@@ -1,21 +1,28 @@
+<div align="center">
+
+<img src="public/logo-transparent.svg" alt="Mini Diarium" width="128" />
+
 # Mini Diarium
 
-[![CI Status](https://github.com/fjrevoredo/mini-diarium/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/fjrevoredo/mini-diarium/actions/workflows/ci.yml)
+**A local-only journal with serious encryption.**
+Free, open source, and never touches the internet.
+
+[![CI](https://github.com/fjrevoredo/mini-diarium/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/fjrevoredo/mini-diarium/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-0.4.8-blue.svg)](https://github.com/fjrevoredo/mini-diarium/releases)
-[![Platform](https://img.shields.io/badge/platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey.svg)](https://github.com/fjrevoredo/mini-diarium#download)
-[![Follow on X](https://img.shields.io/badge/Follow-%40MiniDiarium-000000?logo=x)](https://x.com/MiniDiarium)
+[![Version](https://img.shields.io/badge/version-0.4.8-blue)](https://github.com/fjrevoredo/mini-diarium/releases)
+[![Platform](https://img.shields.io/badge/platform-Windows_%7C_macOS_%7C_Linux-lightgrey)](https://github.com/fjrevoredo/mini-diarium#download)
+[![Follow @MiniDiarium](https://img.shields.io/badge/Follow-%40MiniDiarium-000?logo=x&logoColor=white)](https://x.com/MiniDiarium)
 [![IdeaCred](https://ideacred.com/api/badge/fjrevoredo/mini-diarium)](https://ideacred.com/submissions)
 
-**Website:** [mini-diarium.com](https://mini-diarium.com)
+[![Tauri v2](https://img.shields.io/badge/Tauri_v2-24C8DB?logo=tauri&logoColor=white)](https://tauri.app)
+[![SolidJS](https://img.shields.io/badge/SolidJS-2C4F7C?logo=solid&logoColor=white)](https://solidjs.com)
+[![Rust](https://img.shields.io/badge/Rust-CE422B?logo=rust&logoColor=white)](https://www.rust-lang.org)
 
-A local-only journal with serious encryption. Free, open source, and never touches the internet.
+[mini-diarium.com](https://mini-diarium.com) · [Download](#download) · [Features](#features) · [Philosophy](PHILOSOPHY.md)
 
-Mini Diarium keeps your journal private. Every entry is encrypted with AES-256-GCM, the app never connects to the internet, and your data never leaves your machine. Built with Tauri, SolidJS, and Rust.
+<img src="public/demo.gif" alt="Demo" width="768" />
 
-<p align="center">
-  <img src="public/demo.gif" alt="Demo" width="768" />
-</p>
+</div>
 
 ## Download
 
