@@ -35,17 +35,11 @@ jobs:
           key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
           restore-keys: ${{ runner.os }}-bun-
 
-      - name: Cache cargo dependencies
-        uses: actions/cache@v5
+      - name: Cache Rust artifacts
+        uses: Swatinem/rust-cache@v2
         with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            src-tauri/target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('src-tauri/Cargo.lock') }}
-          restore-keys: ${{ runner.os }}-cargo-
+          workspaces: src-tauri -> target
+          cache-on-failure: true
 
       - name: Install Linux system dependencies
         run: |
@@ -72,13 +66,22 @@ jobs:
         working-directory: src-tauri
         run: cargo fmt --check
 
+      - name: Cache D2 binary
+        id: cache-d2
+        uses: actions/cache@v5
+        with:
+          path: ~/.local/bin/d2
+          key: d2-v0.7.1-linux  # bump this key when upgrading D2
+
       - name: Install D2
+        if: steps.cache-d2.outputs.cache-hit != 'true'
         run: |
           set -euo pipefail
           curl -fsSL https://d2lang.com/install.sh | sh -s -- --version v0.7.1 || D2_VERSION=v0.7.1 curl -fsSL https://d2lang.com/install.sh | sh -s --
-          ~/.local/bin/d2 --version
           ~/.local/bin/d2 --version | grep -Eq '0\.7\.1'
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Add D2 to PATH
+        run: echo "$HOME/.local/bin" >> $GITHUB_PATH
 
       - name: Verify diagrams are up-to-date
         run: bun run diagrams:check
@@ -102,17 +105,11 @@ jobs:
           key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
           restore-keys: ${{ runner.os }}-bun-
 
-      - name: Cache cargo dependencies
-        uses: actions/cache@v5
+      - name: Cache Rust artifacts
+        uses: Swatinem/rust-cache@v2
         with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            src-tauri/target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('src-tauri/Cargo.lock') }}
-          restore-keys: ${{ runner.os }}-cargo-
+          workspaces: src-tauri -> target
+          cache-on-failure: true
 
       - name: Install Linux system dependencies
         run: |
@@ -122,21 +119,28 @@ jobs:
       - name: Install frontend dependencies
         run: bun install --frozen-lockfile
 
+      - name: Cache nextest binary
+        id: cache-nextest
+        uses: actions/cache@v5
+        with:
+          path: ~/.cargo/bin/cargo-nextest
+          key: nextest-Linux-v0.9  # bump this key when upgrading nextest
+
+      - name: Install cargo-nextest
+        if: steps.cache-nextest.outputs.cache-hit != 'true'
+        run: cargo install cargo-nextest --locked
+
       - name: Frontend tests
         run: bun run test:run
 
       - name: Backend tests
         working-directory: src-tauri
-        run: cargo test
+        run: cargo nextest run
 
-  build:
-    name: Build (${{ matrix.os }})
+  build-linux:
+    name: Build (Linux)
     needs: [lint, test]
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
 
@@ -150,20 +154,14 @@ jobs:
 
       - uses: dtolnay/rust-toolchain@stable
 
-      - name: Cache cargo dependencies
-        uses: actions/cache@v5
+      - name: Cache Rust artifacts
+        uses: Swatinem/rust-cache@v2
         with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-            src-tauri/target/
-          key: ${{ runner.os }}-cargo-${{ hashFiles('src-tauri/Cargo.lock') }}
-          restore-keys: ${{ runner.os }}-cargo-
+          workspaces: src-tauri -> target
+          cache-targets: false   # release+LTO artifacts too large; not incrementally reusable
+          cache-on-failure: false
 
       - name: Install Linux system dependencies
-        if: runner.os == 'Linux'
         run: |
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
@@ -171,15 +169,69 @@ jobs:
       - name: Install frontend dependencies
         run: bun install --frozen-lockfile
 
+      - name: Build Tauri app
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CARGO_PROFILE_RELEASE_LTO: thin         # thin LTO for CI speed; release.yml uses full LTO
+          CARGO_PROFILE_RELEASE_OPT_LEVEL: "2"    # opt-level 2 sufficient for CI validation
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v7
+        with:
+          name: mini-diarium-ubuntu-latest
+          path: |
+            src-tauri/target/release/bundle/**/*.AppImage
+            src-tauri/target/release/bundle/**/*.deb
+          if-no-files-found: ignore
+
+      - name: Upload Linux binary for E2E tests
+        uses: actions/upload-artifact@v7
+        with:
+          name: mini-diarium-linux-binary
+          path: src-tauri/target/release/mini-diarium
+
+  build-other:
+    name: Build (${{ matrix.os }})
+    needs: [lint, test]
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.2
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 20
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust artifacts
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri -> target
+          cache-targets: false   # release+LTO artifacts too large; not incrementally reusable
+          cache-on-failure: false
+
+      - name: Install frontend dependencies
+        run: bun install --frozen-lockfile
+
       - name: Configure macOS DMG bundling for headless CI
         if: runner.os == 'macOS'
-        run: |
-          echo "JENKINS_URL=${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" >> "$GITHUB_ENV"
+        run: echo "JENKINS_URL=${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" >> "$GITHUB_ENV"
 
       - name: Build Tauri app
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CARGO_PROFILE_RELEASE_LTO: thin         # thin LTO for CI speed; release.yml uses full LTO
+          CARGO_PROFILE_RELEASE_OPT_LEVEL: "2"    # opt-level 2 sufficient for CI validation
 
       - name: Debug macOS DMG bundling failure
         if: failure() && runner.os == 'macOS'
@@ -196,21 +248,12 @@ jobs:
             src-tauri/target/release/bundle/**/*.app
             src-tauri/target/release/bundle/**/*.msi
             src-tauri/target/release/bundle/**/*.exe
-            src-tauri/target/release/bundle/**/*.AppImage
-            src-tauri/target/release/bundle/**/*.deb
           if-no-files-found: ignore
-
-      - name: Upload Linux binary for E2E tests
-        if: runner.os == 'Linux'
-        uses: actions/upload-artifact@v7
-        with:
-          name: mini-diarium-linux-binary
-          path: src-tauri/target/release/mini-diarium
 
   e2e:
     name: E2E Tests
     runs-on: ubuntu-latest
-    needs: build
+    needs: build-linux   # only needs Linux binary; decoupled from slow macOS/Windows builds
     steps:
       - uses: actions/checkout@v6
 
@@ -218,18 +261,21 @@ jobs:
         with:
           bun-version: 1.2
 
-      - uses: dtolnay/rust-toolchain@stable
-
-      - name: Cache cargo dependencies
+      - name: Cache tauri-driver binary
+        id: cache-tauri-driver
         uses: actions/cache@v5
         with:
-          path: |
-            ~/.cargo/bin/
-            ~/.cargo/registry/index/
-            ~/.cargo/registry/cache/
-            ~/.cargo/git/db/
-          key: ${{ runner.os }}-cargo-e2e-${{ hashFiles('src-tauri/Cargo.lock') }}
-          restore-keys: ${{ runner.os }}-cargo-e2e-
+          path: ~/.cargo/bin/tauri-driver
+          key: tauri-driver-Linux-v0.1   # bump this key when upgrading tauri-driver
+          restore-keys: tauri-driver-Linux-
+
+      - name: Install Rust toolchain (for tauri-driver install only)
+        if: steps.cache-tauri-driver.outputs.cache-hit != 'true'
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Install tauri-driver
+        if: steps.cache-tauri-driver.outputs.cache-hit != 'true'
+        run: cargo install tauri-driver
 
       - name: Install Linux system dependencies
         run: |
@@ -240,14 +286,6 @@ jobs:
             xvfb \
             libappindicator3-dev \
             librsvg2-dev
-
-      - name: Install tauri-driver
-        run: |
-          if ! command -v tauri-driver >/dev/null 2>&1; then
-            cargo install tauri-driver
-          else
-            echo "tauri-driver already installed; skipping install"
-          fi
 
       - name: Download Linux binary
         uses: actions/download-artifact@v8
