@@ -2,6 +2,13 @@
 
 All notable changes to Mini Diarium are documented here. This project uses [Semantic Versioning](https://semver.org/).
 
+## [0.4.9] - Unreleased
+
+### Added
+
+- **Journal name on unlock screen**: the unlock screen now shows the name of the selected journal ("Unlock *My Journal*") instead of the generic "Unlock your journal" subtitle. Falls back to the generic text when no journal name is available.
+
+
 ## [0.4.8] - 18-03-2026
 
 ### Changed

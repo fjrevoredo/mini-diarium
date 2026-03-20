@@ -1,5 +1,6 @@
 import { createSignal, Show } from 'solid-js';
 import { unlockJournal, unlockWithKeypair, goToJournalPicker } from '../../state/auth';
+import { journals, activeJournalId } from '../../state/journals';
 import { open } from '@tauri-apps/plugin-dialog';
 
 type UnlockMode = 'password' | 'keyfile';
@@ -71,6 +72,8 @@ export default function PasswordPrompt() {
     }
   };
 
+  const activeJournalName = () => journals().find((j) => j.id === activeJournalId())?.name ?? null;
+
   return (
     <div class="flex flex-col min-h-screen items-center bg-tertiary px-4 py-6">
       <div class="my-auto w-full max-w-md">
@@ -79,7 +82,14 @@ export default function PasswordPrompt() {
             <img src="/logo-transparent.svg" alt="Mini Diarium" class="h-16 w-16 rounded-xl" />
           </div>
           <h1 class="mb-2 text-center text-3xl font-bold text-primary">Mini Diarium</h1>
-          <p class="mb-2 text-center text-sm text-secondary">Unlock your journal</p>
+          <Show
+            when={activeJournalName()}
+            fallback={<p class="mb-2 text-center text-sm text-secondary">Unlock your journal</p>}
+          >
+            <p class="mb-2 text-center text-sm text-secondary">
+              Unlock <span class="font-medium text-primary">{activeJournalName()}</span>
+            </p>
+          </Show>
 
           <div class="mb-4 text-center">
             <button
