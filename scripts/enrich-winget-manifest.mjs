@@ -42,6 +42,16 @@ function stripMarkdownFormatting(text) {
     .replace(/_([^_]+)_/g, '$1');
 }
 
+function removeHtmlComments(text) {
+  let previous;
+  let current = text;
+  do {
+    previous = current;
+    current = current.replace(/<!--[\s\S]*?-->/g, '');
+  } while (current !== previous);
+  return current;
+}
+
 function wrapLine(line, width = 100) {
   if (!line || line.length <= width) {
     return [line];
@@ -84,9 +94,9 @@ function wrapLine(line, width = 100) {
 }
 
 export function normalizeReleaseNotes(markdown) {
-  const normalizedLines = markdown
-    .replace(/\r\n/g, '\n')
-    .replace(/<!--[\s\S]*?-->/g, '')
+  const normalizedLines = removeHtmlComments(
+    markdown.replace(/\r\n/g, '\n')
+  )
     .split('\n')
     .map((line) => line.trimEnd())
     .filter((line, index, lines) => !(line === '' && lines[index - 1] === ''))
