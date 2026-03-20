@@ -53,16 +53,18 @@ export function PasswordStrengthIndicator(props: { password: string }) {
   });
 
   return (
-    <Show when={props.password.length > 0}>
-      <div class="mt-2 text-xs">
-        <span class={strength().color}>● {strength().label}</span>
-        <Show when={strength().warning}>
-          <div class="mt-2 rounded-md bg-warning p-3 text-sm text-warning">
-            We strongly recommend using a stronger password (12+ characters with a mix of letters,
-            numbers, and symbols).
-          </div>
-        </Show>
-      </div>
-    </Show>
+    <div aria-live="polite" aria-atomic="true">
+      <Show when={props.password.length > 0}>
+        <div class="mt-2 text-xs">
+          <span class={strength().color}>● {strength().label}</span>
+          <Show when={strength().warning}>
+            <div class="mt-2 rounded-md bg-warning p-3 text-sm text-warning">
+              We strongly recommend using a stronger password (12+ characters with a mix of letters,
+              numbers, and symbols).
+            </div>
+          </Show>
+        </div>
+      </Show>
+    </div>
   );
 }

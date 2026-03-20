@@ -86,7 +86,7 @@ export default function PasswordCreation() {
             </div>
 
             <Show when={error()}>
-              <div class="rounded-md bg-error p-3">
+              <div role="alert" class="rounded-md bg-error p-3">
                 <p class="text-sm text-error">{error()}</p>
               </div>
             </Show>

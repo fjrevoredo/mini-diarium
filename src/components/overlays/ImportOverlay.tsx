@@ -188,7 +188,10 @@ export default function ImportOverlay(props: ImportOverlayProps) {
 
             {/* Error Display */}
             <Show when={error()}>
-              <div class="mb-4 bg-error border border-error rounded-md p-4 flex items-start gap-2">
+              <div
+                role="alert"
+                class="mb-4 bg-error border border-error rounded-md p-4 flex items-start gap-2"
+              >
                 <AlertCircle size={20} class="text-error flex-shrink-0 mt-0.5" />
                 <div class="flex-1">
                   <p class="text-sm font-medium text-error">Import Failed</p>
@@ -199,7 +202,7 @@ export default function ImportOverlay(props: ImportOverlayProps) {
 
             {/* Success Display */}
             <Show when={result() && !error()}>
-              <div class="mb-4 bg-success border border-success rounded-md p-4">
+              <div role="status" class="mb-4 bg-success border border-success rounded-md p-4">
                 <div class="flex items-start gap-2 mb-3">
                   <CheckCircle size={20} class="text-success flex-shrink-0 mt-0.5" />
                   <p class="text-sm font-medium text-success">Import Successful!</p>
@@ -221,9 +224,14 @@ export default function ImportOverlay(props: ImportOverlayProps) {
 
             {/* Import Progress */}
             <Show when={importing()}>
-              <div class="mb-4 flex items-center justify-center py-4">
-                <div class="animate-spin rounded-full h-8 w-8 border-b-2 spinner-border" />
-                <span class="ml-3 text-sm text-secondary">Importing...</span>
+              <div class="mb-4 flex items-center justify-center py-4" aria-busy="true">
+                <div
+                  class="animate-spin rounded-full h-8 w-8 border-b-2 spinner-border"
+                  aria-hidden="true"
+                />
+                <span class="ml-3 text-sm text-secondary" role="status">
+                  Importing...
+                </span>
               </div>
             </Show>
 

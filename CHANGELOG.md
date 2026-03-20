@@ -7,6 +7,7 @@ All notable changes to Mini Diarium are documented here. This project uses [Sema
 ### Added
 
 - **Journal name on unlock screen**: the unlock screen now shows the name of the selected journal ("Unlock *My Journal*") instead of the generic "Unlock your journal" subtitle. Falls back to the generic text when no journal name is available.
+- **Accessibility improvements**: comprehensive ARIA audit and fixes across the app. Editor toolbar now has `role="toolbar"` and `aria-pressed` on all toggle buttons (bold, italic, lists, alignment, etc.). Error and success message regions across all overlays and auth screens now carry `role="alert"` / `role="status"` for automatic screen-reader announcement. Loading spinners use `aria-busy` and `aria-hidden`. Calendar grid now exposes full WCAG `role="grid"` / `role="row"` / `role="gridcell"` / `role="columnheader"` semantics with `aria-selected`, `aria-current="date"`, and descriptive `aria-label` on each day button; arrow-key navigation (←→ day, ↑↓ week, Home/End month, PageUp/PageDown month) added so the calendar is fully keyboard-operable. Preferences dialog tabs now implement the ARIA tab pattern (`role="tablist"`, `role="tab"`, `role="tabpanel"`, `aria-selected`, `aria-controls`, `aria-labelledby`) with Left/Right arrow key switching. Hamburger button gains `aria-expanded` and `aria-controls`. Mobile sidebar overlay gains focus trapping and focus restoration. Journal picker list uses `<ul>`/`<li>` semantics. Password strength indicator announces changes via `aria-live="polite"`.
 
 
 ## [0.4.8] - 18-03-2026

@@ -1,6 +1,6 @@
 import { createSignal, Show } from 'solid-js';
 import { Menu, Lock, Info } from 'lucide-solid';
-import { selectedDate, setIsAboutOpen } from '../../state/ui';
+import { selectedDate, setIsAboutOpen, isSidebarCollapsed } from '../../state/ui';
 import { lockJournal } from '../../state/auth';
 
 interface HeaderProps {
@@ -42,6 +42,8 @@ export default function Header(props: HeaderProps) {
             data-testid="toggle-sidebar-button"
             class="rounded p-2 hover:bg-hover text-primary lg:hidden"
             aria-label="Toggle menu"
+            aria-expanded={!isSidebarCollapsed()}
+            aria-controls="sidebar"
           >
             <Menu size={24} />
           </button>

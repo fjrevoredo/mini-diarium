@@ -103,13 +103,18 @@ export default function PasswordPrompt() {
           </div>
 
           {/* Mode toggle */}
-          <div class="mb-6 flex rounded-md border border-primary overflow-hidden">
+          <div
+            class="mb-6 flex rounded-md border border-primary overflow-hidden"
+            role="group"
+            aria-label="Unlock method"
+          >
             <button
               type="button"
               onClick={() => {
                 setMode('password');
                 setError(null);
               }}
+              aria-pressed={mode() === 'password'}
               class={`flex-1 px-3 py-2 text-sm font-medium transition-colors ${
                 mode() === 'password'
                   ? 'interactive-primary'
@@ -124,6 +129,7 @@ export default function PasswordPrompt() {
                 setMode('keyfile');
                 setError(null);
               }}
+              aria-pressed={mode() === 'keyfile'}
               class={`flex-1 px-3 py-2 text-sm font-medium transition-colors ${
                 mode() === 'keyfile'
                   ? 'interactive-primary'
@@ -156,7 +162,7 @@ export default function PasswordPrompt() {
               </div>
 
               <Show when={error()}>
-                <div class="rounded-md bg-error p-3">
+                <div role="alert" class="rounded-md bg-error p-3">
                   <p class="text-sm text-error">{error()}</p>
                 </div>
               </Show>
@@ -191,6 +197,7 @@ export default function PasswordPrompt() {
                     type="button"
                     onClick={handlePickKeyFile}
                     disabled={isUnlocking()}
+                    aria-label="Browse for key file"
                     class="rounded-md border border-primary px-3 py-2 text-sm font-medium text-secondary hover:bg-hover focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
                   >
                     Browse
@@ -202,7 +209,7 @@ export default function PasswordPrompt() {
               </div>
 
               <Show when={error()}>
-                <div class="rounded-md bg-error p-3">
+                <div role="alert" class="rounded-md bg-error p-3">
                   <p class="text-sm text-error">{error()}</p>
                 </div>
               </Show>
