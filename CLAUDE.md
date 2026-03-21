@@ -355,7 +355,7 @@ All menu event names are prefixed `menu-`. See `menu.rs:78-107` for the full lis
 
 ## Testing
 
-### Backend: 239 tests across 30 modules
+### Backend: 249 tests across 30 modules
 
 Run: `cd src-tauri && cargo test`
 

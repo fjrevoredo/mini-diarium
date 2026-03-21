@@ -794,4 +794,44 @@ mod tests {
         assert!(!title_enc_str.contains("Test Title"));
         assert!(!text_enc_str.contains("test entry"));
     }
+
+    #[test]
+    fn test_update_slot_last_used_sets_timestamp() {
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+
+        // Get the password slot id created by create_database
+        let (slot_id, _) = get_password_slot(&db).unwrap().unwrap();
+
+        // Fresh slot: last_used must be NULL
+        let last_used_before: Option<String> = db
+            .conn()
+            .query_row(
+                "SELECT last_used FROM auth_slots WHERE id = ?1",
+                rusqlite::params![slot_id],
+                |row| row.get(0),
+            )
+            .unwrap();
+        assert!(
+            last_used_before.is_none(),
+            "expected last_used to be NULL on a fresh slot"
+        );
+
+        // Update last_used
+        update_slot_last_used(db.conn(), slot_id).unwrap();
+
+        // last_used must now be non-null
+        let last_used_after: Option<String> = db
+            .conn()
+            .query_row(
+                "SELECT last_used FROM auth_slots WHERE id = ?1",
+                rusqlite::params![slot_id],
+                |row| row.get(0),
+            )
+            .unwrap();
+        assert!(
+            last_used_after.is_some(),
+            "expected last_used to be set after update_slot_last_used"
+        );
+    }
 }

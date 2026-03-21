@@ -558,6 +558,11 @@ fn migrate_v2_to_v3_inner(
 /// raw file access. This migration drops the table, purging the leaked data.
 /// `DROP TABLE IF EXISTS` makes the migration idempotent.
 fn migrate_v3_to_v4(db: &DatabaseConnection) -> Result<(), String> {
+    // No pre-migration backup is created: this migration is DDL-only and runs
+    // inside a single IMMEDIATE transaction. If it fails, SQLite rolls it back
+    // automatically, leaving the database unchanged. Contrast with
+    // migrate_v2_to_v3, which re-encrypts every entry (not transactionally
+    // atomic) and therefore requires a backup before starting.
     let version: i32 = db
         .conn()
         .query_row("SELECT version FROM schema_version", [], |row| row.get(0))
@@ -588,6 +593,11 @@ fn migrate_v3_to_v4(db: &DatabaseConnection) -> Result<(), String> {
 /// Existing entries are migrated preserving their content, ordered by
 /// `date_created ASC` so the oldest entry on each date gets the lowest id.
 fn migrate_v4_to_v5(db: &DatabaseConnection) -> Result<(), String> {
+    // No pre-migration backup is created: this migration is DDL-only and runs
+    // inside a single IMMEDIATE transaction. If it fails, SQLite rolls it back
+    // automatically, leaving the database unchanged. Contrast with
+    // migrate_v2_to_v3, which re-encrypts every entry (not transactionally
+    // atomic) and therefore requires a backup before starting.
     let version: i32 = db
         .conn()
         .query_row("SELECT version FROM schema_version", [], |row| row.get(0))
@@ -1107,5 +1117,138 @@ mod tests {
         assert_eq!(version, 5);
 
         cleanup_backups_dir(&backups_dir);
+    }
+
+    #[test]
+    fn test_migrate_v3_to_v4_removes_fts_table() {
+        // Build a minimal v3 schema: entries + entries_fts + schema_version=3
+        let conn = Connection::open_in_memory().unwrap();
+        conn.execute_batch(
+            "CREATE TABLE schema_version (version INTEGER PRIMARY KEY);
+             INSERT INTO schema_version (version) VALUES (3);
+             CREATE TABLE entries (
+                 date TEXT PRIMARY KEY,
+                 title_encrypted BLOB,
+                 text_encrypted BLOB,
+                 word_count INTEGER DEFAULT 0,
+                 date_created TEXT NOT NULL,
+                 date_updated TEXT NOT NULL
+             );
+             CREATE VIRTUAL TABLE entries_fts USING fts5(
+                 title, text, content='entries', content_rowid='rowid'
+             );",
+        )
+        .unwrap();
+        let db = DatabaseConnection {
+            conn,
+            encryption_key: cipher::Key::from_slice(&[0u8; 32]).unwrap(),
+        };
+
+        migrate_v3_to_v4(&db).unwrap();
+
+        // Schema version must be 4
+        let version: i32 = db
+            .conn()
+            .query_row("SELECT version FROM schema_version", [], |row| row.get(0))
+            .unwrap();
+        assert_eq!(version, 4);
+
+        // entries_fts must no longer exist
+        let fts_count: i64 = db
+            .conn()
+            .query_row(
+                "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='entries_fts'",
+                [],
+                |row| row.get(0),
+            )
+            .unwrap();
+        assert_eq!(
+            fts_count, 0,
+            "entries_fts should be removed by the v3→v4 migration"
+        );
+    }
+
+    #[test]
+    fn test_migrate_v4_to_v5_preserves_entries_in_order() {
+        // Build a v4 schema: entries with date TEXT PRIMARY KEY, no id AUTOINCREMENT
+        let conn = Connection::open_in_memory().unwrap();
+        conn.execute_batch(
+            "CREATE TABLE schema_version (version INTEGER PRIMARY KEY);
+             INSERT INTO schema_version (version) VALUES (4);
+             CREATE TABLE auth_slots (
+                 id          INTEGER PRIMARY KEY AUTOINCREMENT,
+                 type        TEXT NOT NULL,
+                 label       TEXT NOT NULL,
+                 public_key  BLOB,
+                 wrapped_key BLOB NOT NULL,
+                 created_at  TEXT NOT NULL,
+                 last_used   TEXT
+             );
+             CREATE TABLE entries (
+                 date TEXT PRIMARY KEY,
+                 title_encrypted BLOB,
+                 text_encrypted BLOB,
+                 word_count INTEGER DEFAULT 0,
+                 date_created TEXT NOT NULL,
+                 date_updated TEXT NOT NULL
+             );",
+        )
+        .unwrap();
+
+        // Insert two entries with different date_created timestamps.
+        // The row with date_created '2024-01-01T06:00:00Z' (older) should receive
+        // the lower id after migration (INSERT ... ORDER BY date_created ASC).
+        conn.execute(
+            "INSERT INTO entries (date, word_count, date_created, date_updated)
+             VALUES ('2024-03-01', 1, '2024-03-01T08:00:00Z', '2024-03-01T08:00:00Z')",
+            [],
+        )
+        .unwrap();
+        conn.execute(
+            "INSERT INTO entries (date, word_count, date_created, date_updated)
+             VALUES ('2024-01-01', 1, '2024-01-01T06:00:00Z', '2024-01-01T06:00:00Z')",
+            [],
+        )
+        .unwrap();
+
+        let db = DatabaseConnection {
+            conn,
+            encryption_key: cipher::Key::from_slice(&[0u8; 32]).unwrap(),
+        };
+
+        migrate_v4_to_v5(&db).unwrap();
+
+        // Schema version must be 5
+        let version: i32 = db
+            .conn()
+            .query_row("SELECT version FROM schema_version", [], |row| row.get(0))
+            .unwrap();
+        assert_eq!(version, 5);
+
+        // Both entries must be preserved
+        let count: i64 = db
+            .conn()
+            .query_row("SELECT COUNT(*) FROM entries", [], |row| row.get(0))
+            .unwrap();
+        assert_eq!(count, 2);
+
+        // The entry with the earlier date_created should have the lower id
+        let rows: Vec<(i64, String)> = {
+            let mut stmt = db
+                .conn()
+                .prepare("SELECT id, date_created FROM entries ORDER BY id ASC")
+                .unwrap();
+            stmt.query_map([], |row| Ok((row.get(0)?, row.get(1)?)))
+                .unwrap()
+                .collect::<Result<Vec<_>, _>>()
+                .unwrap()
+        };
+        assert_eq!(rows.len(), 2);
+        assert!(
+            rows[0].1.starts_with("2024-01-01"),
+            "entry with earlier date_created should get the lower id; got {}",
+            rows[0].1
+        );
+        assert!(rows[1].1.starts_with("2024-03-01"));
     }
 }

@@ -121,7 +121,9 @@ pub fn delete_entry(id: i64, state: State<DiaryState>) -> Result<(), String> {
         .db
         .lock()
         .map_err(|_| "State lock poisoned".to_string())?;
-    let db = db_state.as_ref().ok_or("Diary not unlocked")?;
+    let db = db_state
+        .as_ref()
+        .ok_or("Journal must be unlocked to delete entries")?;
 
     let deleted = queries::delete_entry_by_id(db, id)
         .map_err(|e| format!("Failed to delete entry: {}", e))?;
@@ -307,5 +309,44 @@ mod tests {
         assert_eq!(queries::count_words("Hello world"), 2);
         assert_eq!(queries::count_words(""), 0);
         assert_eq!(queries::count_words("One two three four five"), 5);
+    }
+
+    #[test]
+    fn test_delete_entry_workflow() {
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+
+        // Insert an entry
+        let now = chrono::Utc::now().to_rfc3339();
+        let entry = DiaryEntry {
+            id: 0,
+            date: "2024-03-01".to_string(),
+            title: "To delete".to_string(),
+            text: "Some content".to_string(),
+            word_count: 2,
+            date_created: now.clone(),
+            date_updated: now,
+        };
+        queries::insert_entry(&db, &entry).unwrap();
+        let id = db.conn().last_insert_rowid();
+
+        // delete_entry_by_id returns Ok(true) when entry exists — mirrors command Ok(())
+        let deleted = queries::delete_entry_by_id(&db, id).unwrap();
+        assert!(deleted);
+
+        // Entry is gone
+        let retrieved = queries::get_entry_by_id(&db, id).unwrap();
+        assert!(retrieved.is_none());
+    }
+
+    #[test]
+    fn test_delete_entry_not_found() {
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+
+        // delete_entry_by_id returns Ok(false) for a non-existent id — the command
+        // maps this to Err("Entry not found")
+        let deleted = queries::delete_entry_by_id(&db, 9999).unwrap();
+        assert!(!deleted);
     }
 }

@@ -1,0 +1,58 @@
+{
+  "tags": {
+    "@work": 3,
+    "@health": 2,
+    "@idea": 1,
+    "@personal": 2
+  },
+  "entries": [
+    {
+      "title": "Back to work after the holidays.",
+      "body": "First day back. Inbox had 200+ emails. Spent the morning triaging and deleting the noise. Afternoon was more productive — merged two PRs that had been sitting since December.\n\nTeam morale seems good. Planning session on Friday.",
+      "date": "2024-01-08",
+      "time": "19:00",
+      "tags": ["@work"],
+      "starred": false
+    },
+    {
+      "title": "Started running again.",
+      "body": "3 km this morning. Felt terrible but finished. Knees held up fine.\n\nGoal: 5 km by end of month.",
+      "date": "2024-01-10",
+      "time": "07:30",
+      "tags": ["@health"],
+      "starred": false
+    },
+    {
+      "title": "Idea: offline-first sync without a server.",
+      "body": "Been thinking about how to handle sync conflicts without centralised state. CRDT is probably overkill for a diary. Simpler approach: last-write-wins per entry with a manual merge UI shown on import conflict.\n\nWrite this up properly before it evaporates.",
+      "date": "2024-01-12",
+      "time": "22:15",
+      "tags": ["@idea", "@work"],
+      "starred": true
+    },
+    {
+      "title": "Dentist, then dinner.",
+      "body": "Routine check — no cavities. Dinner at the new place downtown. Good pasta, slow service.",
+      "date": "2024-02-14",
+      "time": "20:00",
+      "tags": ["@health", "@personal"],
+      "starred": false
+    },
+    {
+      "title": "Quiet Sunday.",
+      "body": "",
+      "date": "2024-02-18",
+      "time": "17:00",
+      "tags": [],
+      "starred": false
+    },
+    {
+      "title": "Shipped v2.",
+      "body": "Finally. Six months of work. The deployment was clean — no rollback needed. Stayed up watching logs for two hours anyway.\n\nTeam went out for drinks. Worth every late night.",
+      "date": "2024-03-01",
+      "time": "23:30",
+      "tags": ["@work", "@personal"],
+      "starred": true
+    }
+  ]
+}

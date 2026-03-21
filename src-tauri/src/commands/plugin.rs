@@ -202,4 +202,40 @@ mod tests {
         assert!(output.contains("Test"));
         assert!(output.contains("2024-01-01"));
     }
+
+    #[test]
+    fn test_import_plugin_not_found() {
+        let mut registry = PluginRegistry::new();
+        builtins::register_all(&mut registry);
+
+        // Mirrors the ok_or_else in run_import_plugin; use .err().unwrap() because
+        // dyn ImportPlugin does not implement Debug (required by .unwrap_err())
+        let plugin_id = "nonexistent-importer";
+        let result = registry
+            .find_importer(plugin_id)
+            .ok_or_else(|| format!("Import plugin '{}' not found", plugin_id));
+        assert!(result.is_err());
+        assert_eq!(
+            result.err().unwrap(),
+            "Import plugin 'nonexistent-importer' not found"
+        );
+    }
+
+    #[test]
+    fn test_export_plugin_not_found() {
+        let mut registry = PluginRegistry::new();
+        builtins::register_all(&mut registry);
+
+        // Mirrors the ok_or_else in run_export_plugin; use .err().unwrap() because
+        // dyn ExportPlugin does not implement Debug (required by .unwrap_err())
+        let plugin_id = "nonexistent-exporter";
+        let result = registry
+            .find_exporter(plugin_id)
+            .ok_or_else(|| format!("Export plugin '{}' not found", plugin_id));
+        assert!(result.is_err());
+        assert_eq!(
+            result.err().unwrap(),
+            "Export plugin 'nonexistent-exporter' not found"
+        );
+    }
 }

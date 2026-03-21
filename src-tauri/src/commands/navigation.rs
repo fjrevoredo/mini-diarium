@@ -112,4 +112,13 @@ mod tests {
         assert!(navigate_previous_day("invalid".to_string()).is_err());
         assert!(navigate_next_day("2024-13-01".to_string()).is_err());
     }
+
+    #[test]
+    fn test_navigate_to_today() {
+        let result = navigate_to_today().unwrap();
+        assert!(
+            NaiveDate::parse_from_str(&result, "%Y-%m-%d").is_ok(),
+            "navigate_to_today returned an invalid YYYY-MM-DD string: {result}"
+        );
+    }
 }

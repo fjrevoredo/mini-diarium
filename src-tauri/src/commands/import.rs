@@ -329,6 +329,45 @@ mod tests {
     }
 
     #[test]
+    fn test_import_file_at_size_limit() {
+        use std::io::{Seek, SeekFrom, Write};
+        let tmp = tempfile::Builder::new().suffix(".txt").tempfile().unwrap();
+        // Seek to exactly MAX_IMPORT_FILE_SIZE - 1, then write one newline byte.
+        // The file is MAX_IMPORT_FILE_SIZE bytes with a sparse null-padded interior
+        // (valid UTF-8). The size check is `> MAX_IMPORT_FILE_SIZE` (strict), so
+        // this file passes.
+        let mut f = tmp.reopen().unwrap();
+        f.seek(SeekFrom::Start(MAX_IMPORT_FILE_SIZE - 1)).unwrap();
+        f.write_all(b"\n").unwrap();
+        drop(f);
+        let result = read_import_file(tmp.path().to_str().unwrap());
+        assert!(
+            result.is_ok(),
+            "file at exactly the size limit should be accepted"
+        );
+    }
+
+    #[test]
+    fn test_import_file_over_size_limit() {
+        use std::io::{Seek, SeekFrom, Write};
+        let tmp = tempfile::Builder::new().suffix(".txt").tempfile().unwrap();
+        // One byte over the limit — read_import_file must reject it before reading.
+        let mut f = tmp.reopen().unwrap();
+        f.seek(SeekFrom::Start(MAX_IMPORT_FILE_SIZE)).unwrap();
+        f.write_all(b"\n").unwrap();
+        drop(f);
+        let result = read_import_file(tmp.path().to_str().unwrap());
+        assert!(
+            result.is_err(),
+            "file over the size limit should be rejected"
+        );
+        assert!(
+            result.unwrap_err().contains("too large"),
+            "error message should mention 'too large'"
+        );
+    }
+
+    #[test]
     fn test_import_empty_list() {
         let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
         let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();

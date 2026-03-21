@@ -7,8 +7,8 @@ use serde::Deserialize;
 #[derive(Debug, Deserialize)]
 struct JrnlJson {
     entries: Vec<JrnlEntry>,
-    #[allow(dead_code)]
-    tags: serde_json::Value, // We don't use the tags summary
+    #[allow(dead_code)] // jrnl JSON schema field; the tags summary is not used by Mini Diarium
+    tags: serde_json::Value,
 }
 
 /// Individual jrnl entry
@@ -17,12 +17,14 @@ struct JrnlEntry {
     title: String,
     body: String,
     date: String, // Format: "YYYY-MM-DD"
+    #[allow(dead_code)] // jrnl JSON schema field; format "HH:MM" — only the date is imported
+    time: String,
     #[allow(dead_code)]
-    time: String, // Format: "HH:MM" (not used, we only care about date)
+    // jrnl JSON schema field; required for Serde deserialization but tags are not imported
+    tags: Vec<String>,
     #[allow(dead_code)]
-    tags: Vec<String>, // We don't import tags
-    #[allow(dead_code)]
-    starred: bool, // We don't import starred status
+    // jrnl JSON schema field; required for Serde deserialization but starred status is not imported
+    starred: bool,
 }
 
 /// Parse a jrnl JSON export file into a list of DiaryEntry objects.
