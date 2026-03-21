@@ -9,7 +9,7 @@ Free, open source, and never touches the internet.
 
 [![CI](https://github.com/fjrevoredo/mini-diarium/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/fjrevoredo/mini-diarium/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-0.4.8-blue)](https://github.com/fjrevoredo/mini-diarium/releases)
+[![Version](https://img.shields.io/badge/version-0.4.9-blue)](https://github.com/fjrevoredo/mini-diarium/releases)
 [![Platform](https://img.shields.io/badge/platform-Windows_%7C_macOS_%7C_Linux-lightgrey)](https://github.com/fjrevoredo/mini-diarium#download)
 [![Follow @MiniDiarium](https://img.shields.io/badge/Follow-%40MiniDiarium-000?logo=x&logoColor=white)](https://x.com/MiniDiarium)
 [![IdeaCred](https://ideacred.com/api/badge/fjrevoredo/mini-diarium)](https://ideacred.com/submissions)
@@ -301,7 +301,14 @@ Artifacts will be in `src-tauri/target/release/bundle/`.
 
 ## Known Issues
 
-- Concurrent access to the journal is not supported
+For the full list of known limitations, deliberate tradeoffs, and technical debt, see [docs/KNOWN_ISSUES.md](docs/KNOWN_ISSUES.md).
+
+**User-facing highlights:**
+- Concurrent access to the same journal file is not supported (by design)
+- No password recovery — losing all credentials is permanent (by design)
+- Full-text search is not available — removed in v0.2.0 because the FTS index stored plaintext, defeating encryption
+- Importing the same file twice creates duplicate entries (no deduplication)
+- Plugin changes require an app restart to take effect
 
 ## Extending Mini Diarium
 

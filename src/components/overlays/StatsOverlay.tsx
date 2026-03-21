@@ -89,13 +89,16 @@ export default function StatsOverlay(props: StatsOverlayProps) {
             </Dialog.Description>
 
             <Show when={loading()}>
-              <div class="flex items-center justify-center py-12">
-                <div class="animate-spin rounded-full h-8 w-8 border-b-2 spinner-border" />
+              <div class="flex items-center justify-center py-12" aria-busy="true">
+                <div
+                  class="animate-spin rounded-full h-8 w-8 border-b-2 spinner-border"
+                  aria-label="Loading statistics"
+                />
               </div>
             </Show>
 
             <Show when={error()}>
-              <div class="bg-error border border-error rounded-md p-4 mb-4">
+              <div role="alert" class="bg-error border border-error rounded-md p-4 mb-4">
                 <p class="text-sm text-error">{error()}</p>
               </div>
             </Show>

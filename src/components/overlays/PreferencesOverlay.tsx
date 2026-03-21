@@ -480,6 +480,30 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
       ? 'w-full text-left px-3 py-2 text-sm font-medium rounded-md bg-active text-primary'
       : 'w-full text-left px-3 py-2 text-sm font-medium rounded-md text-secondary hover:bg-hover hover:text-primary';
 
+  // Keyboard navigation within the tablist
+  const handleTabListKeyDown = (e: KeyboardEvent) => {
+    // Vertical tablist uses ArrowUp/ArrowDown per ARIA spec (aria-orientation="vertical")
+    if (!['ArrowUp', 'ArrowDown', 'Home', 'End'].includes(e.key)) return;
+    e.preventDefault();
+    const tabs: Tab[] = [
+      'general',
+      ...(isUnlocked() ? (['writing', 'security'] as Tab[]) : []),
+      'data',
+      ...(isUnlocked() ? (['advanced'] as Tab[]) : []),
+    ];
+    const currentIndex = tabs.indexOf(activeTab());
+    let nextIndex = currentIndex;
+    if (e.key === 'ArrowDown') nextIndex = (currentIndex + 1) % tabs.length;
+    if (e.key === 'ArrowUp') nextIndex = (currentIndex - 1 + tabs.length) % tabs.length;
+    if (e.key === 'Home') nextIndex = 0;
+    if (e.key === 'End') nextIndex = tabs.length - 1;
+    setActiveTab(tabs[nextIndex]);
+    requestAnimationFrame(() => {
+      const btn = document.querySelector<HTMLButtonElement>(`#pref-tab-${tabs[nextIndex]}`);
+      btn?.focus();
+    });
+  };
+
   return (
     <Dialog open={props.isOpen} onOpenChange={handleOpenChange}>
       <Dialog.Portal>
@@ -501,9 +525,20 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
             {/* Main content: sidebar tabs + pane */}
             <div class="flex flex-row min-h-0">
               {/* Tab sidebar */}
-              <nav class="w-36 shrink-0 border-r border-primary pr-2 space-y-1">
+              <nav
+                role="tablist"
+                aria-label="Preferences sections"
+                aria-orientation="vertical"
+                class="w-36 shrink-0 border-r border-primary pr-2 space-y-1"
+                onKeyDown={handleTabListKeyDown}
+              >
                 <button
+                  id="pref-tab-general"
                   type="button"
+                  role="tab"
+                  aria-selected={activeTab() === 'general'}
+                  aria-controls="pref-panel-general"
+                  tabIndex={activeTab() === 'general' ? 0 : -1}
                   onClick={() => setActiveTab('general')}
                   class={tabClass('general')}
                 >
@@ -513,13 +548,27 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                 <Show
                   when={isUnlocked()}
                   fallback={
-                    <span class="block px-3 py-2 text-sm font-medium text-tertiary cursor-not-allowed select-none">
+                    <button
+                      id="pref-tab-writing"
+                      type="button"
+                      role="tab"
+                      disabled
+                      aria-selected={false}
+                      aria-controls="pref-panel-writing"
+                      tabIndex={-1}
+                      class="w-full text-left px-3 py-2 text-sm font-medium rounded-md text-tertiary cursor-not-allowed select-none opacity-50"
+                    >
                       Writing
-                    </span>
+                    </button>
                   }
                 >
                   <button
+                    id="pref-tab-writing"
                     type="button"
+                    role="tab"
+                    aria-selected={activeTab() === 'writing'}
+                    aria-controls="pref-panel-writing"
+                    tabIndex={activeTab() === 'writing' ? 0 : -1}
                     onClick={() => setActiveTab('writing')}
                     class={tabClass('writing')}
                   >
@@ -530,13 +579,27 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                 <Show
                   when={isUnlocked()}
                   fallback={
-                    <span class="block px-3 py-2 text-sm font-medium text-tertiary cursor-not-allowed select-none">
+                    <button
+                      id="pref-tab-security"
+                      type="button"
+                      role="tab"
+                      disabled
+                      aria-selected={false}
+                      aria-controls="pref-panel-security"
+                      tabIndex={-1}
+                      class="w-full text-left px-3 py-2 text-sm font-medium rounded-md text-tertiary cursor-not-allowed select-none opacity-50"
+                    >
                       Security
-                    </span>
+                    </button>
                   }
                 >
                   <button
+                    id="pref-tab-security"
                     type="button"
+                    role="tab"
+                    aria-selected={activeTab() === 'security'}
+                    aria-controls="pref-panel-security"
+                    tabIndex={activeTab() === 'security' ? 0 : -1}
                     onClick={() => setActiveTab('security')}
                     class={tabClass('security')}
                   >
@@ -544,13 +607,27 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                   </button>
                 </Show>
 
-                <button type="button" onClick={() => setActiveTab('data')} class={tabClass('data')}>
+                <button
+                  id="pref-tab-data"
+                  type="button"
+                  role="tab"
+                  aria-selected={activeTab() === 'data'}
+                  aria-controls="pref-panel-data"
+                  tabIndex={activeTab() === 'data' ? 0 : -1}
+                  onClick={() => setActiveTab('data')}
+                  class={tabClass('data')}
+                >
                   Data
                 </button>
 
                 <Show when={isUnlocked()}>
                   <button
+                    id="pref-tab-advanced"
                     type="button"
+                    role="tab"
+                    aria-selected={activeTab() === 'advanced'}
+                    aria-controls="pref-panel-advanced"
+                    tabIndex={activeTab() === 'advanced' ? 0 : -1}
                     onClick={() => setActiveTab('advanced')}
                     class={tabClass('advanced')}
                   >
@@ -564,11 +641,23 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                 <Switch>
                   {/* ── General ── */}
                   <Match when={activeTab() === 'general'}>
-                    <div class="space-y-6">
+                    <div
+                      id="pref-panel-general"
+                      role="tabpanel"
+                      aria-labelledby="pref-tab-general"
+                      tabIndex={0}
+                      class="space-y-6 focus:outline-none"
+                    >
                       {/* Theme */}
                       <div>
-                        <label class="block text-sm font-medium text-secondary mb-2">Theme</label>
+                        <label
+                          for="pref-theme"
+                          class="block text-sm font-medium text-secondary mb-2"
+                        >
+                          Theme
+                        </label>
                         <select
+                          id="pref-theme"
                           value={localTheme()}
                           onChange={(e) => setLocalTheme(e.currentTarget.value as ThemePreference)}
                           class="w-full px-3 py-2 border border-primary bg-primary text-primary rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -584,10 +673,14 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
 
                       {/* ESC key action */}
                       <div>
-                        <label class="block text-sm font-medium text-secondary mb-2">
+                        <label
+                          for="pref-esc-action"
+                          class="block text-sm font-medium text-secondary mb-2"
+                        >
                           ESC key action
                         </label>
                         <select
+                          id="pref-esc-action"
                           value={localEscAction()}
                           onChange={(e) => setLocalEscAction(e.currentTarget.value as EscAction)}
                           class="w-full px-3 py-2 border border-primary bg-primary text-primary rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -605,13 +698,23 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
 
                   {/* ── Writing ── */}
                   <Match when={activeTab() === 'writing'}>
-                    <div class="space-y-6">
+                    <div
+                      id="pref-panel-writing"
+                      role="tabpanel"
+                      aria-labelledby="pref-tab-writing"
+                      tabIndex={0}
+                      class="space-y-6 focus:outline-none"
+                    >
                       {/* First Day of Week */}
                       <div>
-                        <label class="block text-sm font-medium text-secondary mb-2">
+                        <label
+                          for="pref-first-day"
+                          class="block text-sm font-medium text-secondary mb-2"
+                        >
                           First Day of Week
                         </label>
                         <select
+                          id="pref-first-day"
                           value={localFirstDayOfWeek()}
                           onChange={(e) => setLocalFirstDayOfWeek(e.currentTarget.value)}
                           class="w-full px-3 py-2 border border-primary bg-primary text-primary rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -747,7 +850,13 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
 
                   {/* ── Security ── */}
                   <Match when={activeTab() === 'security'}>
-                    <div class="space-y-8">
+                    <div
+                      id="pref-panel-security"
+                      role="tabpanel"
+                      aria-labelledby="pref-tab-security"
+                      tabIndex={0}
+                      class="space-y-8 focus:outline-none"
+                    >
                       {/* Authentication Methods */}
                       <div>
                         <h3 class="text-sm font-medium text-primary mb-3">
@@ -1040,7 +1149,13 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
 
                   {/* ── Data ── */}
                   <Match when={activeTab() === 'data'}>
-                    <div class="space-y-6">
+                    <div
+                      id="pref-panel-data"
+                      role="tabpanel"
+                      aria-labelledby="pref-tab-data"
+                      tabIndex={0}
+                      class="space-y-6 focus:outline-none"
+                    >
                       {/* Current Path */}
                       <div>
                         <label class="block text-sm font-medium text-secondary mb-2">
@@ -1088,7 +1203,13 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                   </Match>
                   {/* ── Advanced ── */}
                   <Match when={activeTab() === 'advanced'}>
-                    <div class="space-y-6">
+                    <div
+                      id="pref-panel-advanced"
+                      role="tabpanel"
+                      aria-labelledby="pref-tab-advanced"
+                      tabIndex={0}
+                      class="space-y-6 focus:outline-none"
+                    >
                       {/* Theme Overrides */}
                       <div>
                         <h3 class="text-sm font-medium text-primary mb-1">Theme Overrides</h3>

@@ -7,12 +7,23 @@ const mocks = vi.hoisted(() => ({
   unlockJournal: vi.fn(),
   unlockWithKeypair: vi.fn(),
   goToJournalPicker: vi.fn(),
+  journals: vi.fn(() => [{ id: 'j1', name: 'My Journal', path: '/tmp' }]),
+  activeJournalId: vi.fn(() => 'j1'),
 }));
 
 vi.mock('../../state/auth', () => ({
   unlockJournal: mocks.unlockJournal,
   unlockWithKeypair: mocks.unlockWithKeypair,
   goToJournalPicker: mocks.goToJournalPicker,
+}));
+
+vi.mock('../../state/journals', () => ({
+  get journals() {
+    return mocks.journals;
+  },
+  get activeJournalId() {
+    return mocks.activeJournalId;
+  },
 }));
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -55,6 +66,11 @@ describe('PasswordPrompt component', () => {
     await vi.waitFor(() => {
       expect(screen.getByText('Invalid password')).toBeInTheDocument();
     });
+  });
+
+  it('displays the active journal name in the subtitle', () => {
+    render(() => <PasswordPrompt />);
+    expect(screen.getByText('My Journal')).toBeInTheDocument();
   });
 
   it('renders key-file mode when Key File tab is clicked', () => {

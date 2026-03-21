@@ -1,5 +1,6 @@
 import { createSignal, Show } from 'solid-js';
 import { unlockJournal, unlockWithKeypair, goToJournalPicker } from '../../state/auth';
+import { journals, activeJournalId } from '../../state/journals';
 import { open } from '@tauri-apps/plugin-dialog';
 
 type UnlockMode = 'password' | 'keyfile';
@@ -71,6 +72,8 @@ export default function PasswordPrompt() {
     }
   };
 
+  const activeJournalName = () => journals().find((j) => j.id === activeJournalId())?.name ?? null;
+
   return (
     <div class="flex flex-col min-h-screen items-center bg-tertiary px-4 py-6">
       <div class="my-auto w-full max-w-md">
@@ -79,7 +82,14 @@ export default function PasswordPrompt() {
             <img src="/logo-transparent.svg" alt="Mini Diarium" class="h-16 w-16 rounded-xl" />
           </div>
           <h1 class="mb-2 text-center text-3xl font-bold text-primary">Mini Diarium</h1>
-          <p class="mb-2 text-center text-sm text-secondary">Unlock your journal</p>
+          <Show
+            when={activeJournalName()}
+            fallback={<p class="mb-2 text-center text-sm text-secondary">Unlock your journal</p>}
+          >
+            <p class="mb-2 text-center text-sm text-secondary">
+              Unlock <span class="font-medium text-primary">{activeJournalName()}</span>
+            </p>
+          </Show>
 
           <div class="mb-4 text-center">
             <button
@@ -93,13 +103,18 @@ export default function PasswordPrompt() {
           </div>
 
           {/* Mode toggle */}
-          <div class="mb-6 flex rounded-md border border-primary overflow-hidden">
+          <div
+            class="mb-6 flex rounded-md border border-primary overflow-hidden"
+            role="group"
+            aria-label="Unlock method"
+          >
             <button
               type="button"
               onClick={() => {
                 setMode('password');
                 setError(null);
               }}
+              aria-pressed={mode() === 'password'}
               class={`flex-1 px-3 py-2 text-sm font-medium transition-colors ${
                 mode() === 'password'
                   ? 'interactive-primary'
@@ -114,6 +129,7 @@ export default function PasswordPrompt() {
                 setMode('keyfile');
                 setError(null);
               }}
+              aria-pressed={mode() === 'keyfile'}
               class={`flex-1 px-3 py-2 text-sm font-medium transition-colors ${
                 mode() === 'keyfile'
                   ? 'interactive-primary'
@@ -146,7 +162,7 @@ export default function PasswordPrompt() {
               </div>
 
               <Show when={error()}>
-                <div class="rounded-md bg-error p-3">
+                <div role="alert" class="rounded-md bg-error p-3">
                   <p class="text-sm text-error">{error()}</p>
                 </div>
               </Show>
@@ -181,6 +197,7 @@ export default function PasswordPrompt() {
                     type="button"
                     onClick={handlePickKeyFile}
                     disabled={isUnlocking()}
+                    aria-label="Browse for key file"
                     class="rounded-md border border-primary px-3 py-2 text-sm font-medium text-secondary hover:bg-hover focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
                   >
                     Browse
@@ -192,7 +209,7 @@ export default function PasswordPrompt() {
               </div>
 
               <Show when={error()}>
-                <div class="rounded-md bg-error p-3">
+                <div role="alert" class="rounded-md bg-error p-3">
                   <p class="text-sm text-error">{error()}</p>
                 </div>
               </Show>

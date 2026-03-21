@@ -189,7 +189,7 @@ export default function JournalPicker() {
 
           {/* Error banner */}
           <Show when={displayError()}>
-            <div class="mb-4 rounded-md bg-error p-3">
+            <div role="alert" class="mb-4 rounded-md bg-error p-3">
               <p class="text-sm text-error">{displayError()}</p>
             </div>
           </Show>
@@ -199,18 +199,20 @@ export default function JournalPicker() {
             <h2 class="mb-3 text-sm font-semibold text-secondary uppercase tracking-wide">
               Your Journals
             </h2>
-            <div class="space-y-2 mb-6">
+            <ul aria-label="Your journals" class="space-y-2 mb-6">
               <For each={journals()}>
                 {(journal) => (
-                  <div class="rounded-md border border-primary bg-tertiary p-3">
+                  <li class="rounded-md border border-primary bg-tertiary p-3">
                     <div class="flex items-start justify-between gap-2">
                       <div class="flex-1 min-w-0">
                         <Show
                           when={renamingId() === journal.id}
                           fallback={
-                            <p
-                              class="text-sm font-medium text-primary cursor-pointer hover:text-blue-600"
+                            <button
+                              type="button"
+                              class="text-sm font-medium text-primary cursor-pointer hover:text-blue-600 text-left w-full focus:outline-none focus:ring-2 focus:ring-blue-500 rounded"
                               title="Click to rename"
+                              aria-label={`Rename ${journal.name}`}
                               onClick={() => handleStartRename(journal.id, journal.name)}
                             >
                               {journal.name}
@@ -219,7 +221,7 @@ export default function JournalPicker() {
                                   Last used
                                 </span>
                               </Show>
-                            </p>
+                            </button>
                           }
                         >
                           <input
@@ -262,10 +264,10 @@ export default function JournalPicker() {
                         </button>
                       </div>
                     </div>
-                  </div>
+                  </li>
                 )}
               </For>
-            </div>
+            </ul>
           </Show>
 
           {/* Empty state */}

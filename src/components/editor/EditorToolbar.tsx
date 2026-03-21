@@ -97,7 +97,11 @@ export default function EditorToolbar(props: EditorToolbarProps) {
 
   return (
     <Show when={props.editor}>
-      <div class="flex flex-wrap items-center gap-1 border-b border-primary bg-tertiary px-3 py-2">
+      <div
+        role="toolbar"
+        aria-label="Formatting options"
+        class="flex flex-wrap items-center gap-1 border-b border-primary bg-tertiary px-3 py-2"
+      >
         {/* Hidden file input for image insertion — always rendered so ref is valid */}
         <input
           type="file"
@@ -135,7 +139,7 @@ export default function EditorToolbar(props: EditorToolbarProps) {
             <option value="2">Heading 2</option>
             <option value="3">Heading 3</option>
           </select>
-          <div class="mx-1 h-6 w-px bg-primary" />
+          <div aria-hidden="true" class="mx-1 h-6 w-px bg-primary" />
         </Show>
 
         {/* Bold — always */}
@@ -144,6 +148,7 @@ export default function EditorToolbar(props: EditorToolbarProps) {
           class={btnClass(isBoldActive())}
           title="Bold (Ctrl/Cmd+B)"
           aria-label="Bold"
+          aria-pressed={isBoldActive()}
         >
           <Bold size={18} />
         </button>
@@ -154,6 +159,7 @@ export default function EditorToolbar(props: EditorToolbarProps) {
           class={btnClass(isItalicActive())}
           title="Italic (Ctrl/Cmd+I)"
           aria-label="Italic"
+          aria-pressed={isItalicActive()}
         >
           <Italic size={18} />
         </button>
@@ -165,6 +171,7 @@ export default function EditorToolbar(props: EditorToolbarProps) {
             class={btnClass(isUnderlineActive())}
             title="Underline (Ctrl/Cmd+U)"
             aria-label="Underline (Ctrl/Cmd+U)"
+            aria-pressed={isUnderlineActive()}
           >
             <Underline size={18} />
           </button>
@@ -173,6 +180,7 @@ export default function EditorToolbar(props: EditorToolbarProps) {
             class={btnClass(isStrikeActive())}
             title="Strikethrough (Ctrl/Cmd+Shift+S)"
             aria-label="Strikethrough (Ctrl/Cmd+Shift+S)"
+            aria-pressed={isStrikeActive()}
           >
             <Strikethrough size={18} />
           </button>
@@ -181,13 +189,14 @@ export default function EditorToolbar(props: EditorToolbarProps) {
             class={btnClass(isHighlightActive())}
             title="Highlight (Ctrl/Cmd+Shift+H)"
             aria-label="Highlight (Ctrl/Cmd+Shift+H)"
+            aria-pressed={isHighlightActive()}
           >
             <Highlighter size={18} />
           </button>
         </Show>
 
         {/* Divider — always, between text-formatting group and list group */}
-        <div class="mx-1 h-6 w-px bg-primary" />
+        <div aria-hidden="true" class="mx-1 h-6 w-px bg-primary" />
 
         {/* Blockquote, Inline Code + trailing divider — advanced only */}
         <Show when={preferences().advancedToolbar}>
@@ -196,6 +205,7 @@ export default function EditorToolbar(props: EditorToolbarProps) {
             class={btnClass(isBlockquoteActive())}
             title="Blockquote (Ctrl/Cmd+Shift+B)"
             aria-label="Blockquote (Ctrl/Cmd+Shift+B)"
+            aria-pressed={isBlockquoteActive()}
           >
             <Quote size={18} />
           </button>
@@ -204,10 +214,11 @@ export default function EditorToolbar(props: EditorToolbarProps) {
             class={btnClass(isCodeActive())}
             title="Inline Code (Ctrl/Cmd+E)"
             aria-label="Inline Code (Ctrl/Cmd+E)"
+            aria-pressed={isCodeActive()}
           >
             <Code size={18} />
           </button>
-          <div class="mx-1 h-6 w-px bg-primary" />
+          <div aria-hidden="true" class="mx-1 h-6 w-px bg-primary" />
         </Show>
 
         {/* Bullet List — always */}
@@ -216,6 +227,7 @@ export default function EditorToolbar(props: EditorToolbarProps) {
           class={btnClass(isBulletListActive())}
           title="Bullet List"
           aria-label="Bullet List"
+          aria-pressed={isBulletListActive()}
         >
           <List size={18} />
         </button>
@@ -226,13 +238,14 @@ export default function EditorToolbar(props: EditorToolbarProps) {
           class={btnClass(isOrderedListActive())}
           title="Numbered List"
           aria-label="Numbered List"
+          aria-pressed={isOrderedListActive()}
         >
           <ListOrdered size={18} />
         </button>
 
         {/* Leading divider + Horizontal Rule — advanced only */}
         <Show when={preferences().advancedToolbar}>
-          <div class="mx-1 h-6 w-px bg-primary" />
+          <div aria-hidden="true" class="mx-1 h-6 w-px bg-primary" />
           <button
             onClick={() => props.editor?.chain().focus().setHorizontalRule().run()}
             class={btnBase}
@@ -257,12 +270,13 @@ export default function EditorToolbar(props: EditorToolbarProps) {
 
         {/* Alignment controls — advanced only */}
         <Show when={preferences().advancedToolbar}>
-          <div class="mx-1 h-6 w-px bg-primary" />
+          <div aria-hidden="true" class="mx-1 h-6 w-px bg-primary" />
           <button
             onClick={() => props.editor?.chain().focus().setTextAlign('left').run()}
             class={btnClass(activeAlignment() === 'left')}
             title="Align left"
             aria-label="Align left"
+            aria-pressed={activeAlignment() === 'left'}
           >
             <AlignLeft size={18} />
           </button>
@@ -271,6 +285,7 @@ export default function EditorToolbar(props: EditorToolbarProps) {
             class={btnClass(activeAlignment() === 'center')}
             title="Align center"
             aria-label="Align center"
+            aria-pressed={activeAlignment() === 'center'}
           >
             <AlignCenter size={18} />
           </button>
@@ -279,6 +294,7 @@ export default function EditorToolbar(props: EditorToolbarProps) {
             class={btnClass(activeAlignment() === 'right')}
             title="Align right"
             aria-label="Align right"
+            aria-pressed={activeAlignment() === 'right'}
           >
             <AlignRight size={18} />
           </button>
@@ -287,6 +303,7 @@ export default function EditorToolbar(props: EditorToolbarProps) {
             class={btnClass(activeAlignment() === 'justify')}
             title="Justify"
             aria-label="Justify"
+            aria-pressed={activeAlignment() === 'justify'}
           >
             <AlignJustify size={18} />
           </button>

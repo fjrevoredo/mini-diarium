@@ -31,10 +31,36 @@ interface CalendarDay {
   isDisabled: boolean;
 }
 
+/** Format a YYYY-MM-DD string for screen readers, e.g. "Friday, March 20, 2026" */
+function formatDateLabel(dateStr: string): string {
+  return new Date(dateStr + 'T00:00:00').toLocaleDateString(undefined, {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+}
+
+/** Advance a YYYY-MM-DD date string by `delta` days */
+function shiftDate(dateStr: string, delta: number): string {
+  const d = new Date(dateStr + 'T00:00:00');
+  d.setDate(d.getDate() + delta);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+/** Shift a YYYY-MM-DD date string by `delta` months */
+function shiftMonth(dateStr: string, delta: number): string {
+  const d = new Date(dateStr + 'T00:00:00');
+  d.setMonth(d.getMonth() + delta);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
 export default function Calendar() {
   const [currentMonth, setCurrentMonth] = createSignal(new Date());
   const [showPicker, setShowPicker] = createSignal(false);
   const [pickerYear, setPickerYear] = createSignal(new Date().getFullYear());
+  // focusedDate tracks keyboard focus independently from the selected date
+  const [focusedDate, setFocusedDate] = createSignal(selectedDate());
 
   // Generate calendar days for the current month
   const calendarDays = createMemo((): CalendarDay[] => {
@@ -129,6 +155,12 @@ export default function Calendar() {
     return [...prevMonthDays, ...currentMonthDays, ...nextMonthDays];
   });
 
+  // Chunk the flat 42-day array into 6 rows of 7 for the grid structure
+  const weeks = createMemo(() => {
+    const days = calendarDays();
+    return Array.from({ length: 6 }, (_, i) => days.slice(i * 7, i * 7 + 7));
+  });
+
   const monthName = () => {
     return currentMonth().toLocaleDateString('en-US', {
       month: 'long',
@@ -153,22 +185,111 @@ export default function Calendar() {
     if (d.getFullYear() !== cm.getFullYear() || d.getMonth() !== cm.getMonth()) {
       setCurrentMonth(d);
     }
+    // Keep focusedDate in sync with selectedDate when user clicks a day
+    setFocusedDate(selectedDate());
   });
 
   const handleDayClick = (day: CalendarDay) => {
     if (day.isDisabled) return;
     setSelectedDate(day.date);
+    setFocusedDate(day.date);
     setIsSidebarCollapsed(true);
   };
 
   // Week day headers, rotated based on preference
   const weekDays = createMemo(() => {
     const allDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const fullDays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
     const preferredFirstDay = preferences().firstDayOfWeek ?? 0;
 
     // Rotate array to start on preferred day
-    return [...allDays.slice(preferredFirstDay), ...allDays.slice(0, preferredFirstDay)];
+    const rotatedShort = [
+      ...allDays.slice(preferredFirstDay),
+      ...allDays.slice(0, preferredFirstDay),
+    ];
+    const rotatedFull = [
+      ...fullDays.slice(preferredFirstDay),
+      ...fullDays.slice(0, preferredFirstDay),
+    ];
+    return rotatedShort.map((short, i) => ({ short, full: rotatedFull[i] }));
   });
+
+  // Keyboard navigation on the grid
+  const handleGridKeyDown = (e: KeyboardEvent) => {
+    const handledKeys = [
+      'ArrowLeft',
+      'ArrowRight',
+      'ArrowUp',
+      'ArrowDown',
+      'Home',
+      'End',
+      'PageUp',
+      'PageDown',
+      'Enter',
+      ' ',
+    ];
+    if (!handledKeys.includes(e.key)) return;
+    e.preventDefault();
+
+    const current = focusedDate();
+
+    if (e.key === 'Enter' || e.key === ' ') {
+      const day = calendarDays().find((d) => d.date === current);
+      if (day && !day.isDisabled) handleDayClick(day);
+      return;
+    }
+
+    let newDate = current;
+    const d = new Date(current + 'T00:00:00');
+
+    switch (e.key) {
+      case 'ArrowLeft':
+        newDate = shiftDate(current, -1);
+        break;
+      case 'ArrowRight':
+        newDate = shiftDate(current, 1);
+        break;
+      case 'ArrowUp':
+        newDate = shiftDate(current, -7);
+        break;
+      case 'ArrowDown':
+        newDate = shiftDate(current, 7);
+        break;
+      case 'Home': {
+        const first = new Date(d.getFullYear(), d.getMonth(), 1);
+        newDate = `${first.getFullYear()}-${String(first.getMonth() + 1).padStart(2, '0')}-01`;
+        break;
+      }
+      case 'End': {
+        const last = new Date(d.getFullYear(), d.getMonth() + 1, 0);
+        newDate = `${last.getFullYear()}-${String(last.getMonth() + 1).padStart(2, '0')}-${String(last.getDate()).padStart(2, '0')}`;
+        break;
+      }
+      case 'PageUp':
+        newDate = shiftMonth(current, -1);
+        break;
+      case 'PageDown':
+        newDate = shiftMonth(current, 1);
+        break;
+    }
+
+    setFocusedDate(newDate);
+
+    // Navigate calendar month if focused date is outside current month
+    const nd = new Date(newDate + 'T00:00:00');
+    const cm = currentMonth();
+    if (nd.getFullYear() !== cm.getFullYear() || nd.getMonth() !== cm.getMonth()) {
+      setCurrentMonth(new Date(nd.getFullYear(), nd.getMonth()));
+    }
+
+    // Imperatively focus the day button after DOM updates
+    requestAnimationFrame(() => {
+      const btn = document.querySelector<HTMLButtonElement>(
+        `[data-testid="calendar-day-${newDate}"]`,
+      );
+      btn?.focus();
+    });
+  };
 
   return (
     <div class="rounded-lg bg-primary p-4 shadow-sm">
@@ -204,6 +325,7 @@ export default function Calendar() {
           }}
           class="text-sm font-semibold text-primary hover:bg-hover rounded px-2 py-1"
           aria-label={showPicker() ? 'Close month picker' : 'Open month picker'}
+          aria-expanded={showPicker()}
         >
           <Show when={showPicker()} fallback={monthName()}>
             {pickerYear()}
@@ -237,39 +359,66 @@ export default function Calendar() {
         when={showPicker()}
         fallback={
           <>
-            {/* Week day headers */}
-            <div class="mb-2 grid grid-cols-7 gap-1">
-              <For each={weekDays()}>
-                {(day) => <div class="text-center text-xs font-medium text-tertiary">{day}</div>}
-              </For>
-            </div>
+            {/* Calendar grid with ARIA grid semantics */}
+            <div
+              role="grid"
+              aria-label={monthName()}
+              class="grid grid-cols-7 gap-1"
+              onKeyDown={handleGridKeyDown}
+            >
+              {/* Week day headers */}
+              <div role="row" class="contents">
+                <For each={weekDays()}>
+                  {(day) => (
+                    <div
+                      role="columnheader"
+                      aria-label={day.full}
+                      class="text-center text-xs font-medium text-tertiary mb-2"
+                    >
+                      {day.short}
+                    </div>
+                  )}
+                </For>
+              </div>
 
-            {/* Calendar grid */}
-            <div class="grid grid-cols-7 gap-1">
-              <For each={calendarDays()}>
-                {(day) => (
-                  <button
-                    data-testid={`calendar-day-${day.date}`}
-                    onClick={() => handleDayClick(day)}
-                    class={`
-                    relative h-8 w-8 rounded text-sm flex flex-col items-center justify-center
-                    ${day.isCurrentMonth ? 'text-primary' : 'text-muted'}
-                    ${day.isToday ? 'font-bold' : ''}
-                    ${day.isSelected ? 'interactive-primary' : !day.isDisabled ? 'hover:bg-hover' : ''}
-                    ${day.isDisabled ? 'cursor-not-allowed opacity-40' : 'cursor-pointer'}
-                  `}
-                    disabled={day.isDisabled}
-                  >
-                    <span>{day.day}</span>
-                    {day.hasEntry && (
-                      <span
-                        class={`
-                        h-1 w-1 rounded-full mt-0.5
-                        ${day.isSelected ? 'bg-white' : 'bg-interactive'}
-                      `}
-                      />
-                    )}
-                  </button>
+              {/* Calendar weeks */}
+              <For each={weeks()}>
+                {(week) => (
+                  <div role="row" class="contents">
+                    <For each={week}>
+                      {(day) => (
+                        <div role="gridcell">
+                          <button
+                            data-testid={`calendar-day-${day.date}`}
+                            onClick={() => handleDayClick(day)}
+                            tabIndex={focusedDate() === day.date ? 0 : -1}
+                            aria-selected={day.isSelected}
+                            aria-current={day.isToday ? 'date' : undefined}
+                            aria-label={`${formatDateLabel(day.date)}${day.hasEntry ? ', has entry' : ''}`}
+                            class={`
+                            relative h-8 w-full rounded text-sm flex flex-col items-center justify-center
+                            ${day.isCurrentMonth ? 'text-primary' : 'text-muted'}
+                            ${day.isToday ? 'font-bold' : ''}
+                            ${day.isSelected ? 'interactive-primary' : !day.isDisabled ? 'hover:bg-hover' : ''}
+                            ${day.isDisabled ? 'cursor-not-allowed opacity-40' : 'cursor-pointer'}
+                          `}
+                            disabled={day.isDisabled}
+                          >
+                            <span aria-hidden="true">{day.day}</span>
+                            {day.hasEntry && (
+                              <span
+                                aria-hidden="true"
+                                class={`
+                                h-1 w-1 rounded-full mt-0.5
+                                ${day.isSelected ? 'bg-white' : 'bg-interactive'}
+                              `}
+                              />
+                            )}
+                          </button>
+                        </div>
+                      )}
+                    </For>
+                  </div>
                 )}
               </For>
             </div>
@@ -294,6 +443,9 @@ export default function Calendar() {
                   }
                 `}
                 aria-label={`${name} ${pickerYear()}`}
+                aria-pressed={
+                  pickerYear() === currentMonth().getFullYear() && i() === currentMonth().getMonth()
+                }
               >
                 {name}
               </button>
