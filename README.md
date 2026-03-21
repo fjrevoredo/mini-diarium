@@ -301,7 +301,14 @@ Artifacts will be in `src-tauri/target/release/bundle/`.
 
 ## Known Issues
 
-- Concurrent access to the journal is not supported
+For the full list of known limitations, deliberate tradeoffs, and technical debt, see [docs/KNOWN_ISSUES.md](docs/KNOWN_ISSUES.md).
+
+**User-facing highlights:**
+- Concurrent access to the same journal file is not supported (by design)
+- No password recovery — losing all credentials is permanent (by design)
+- Full-text search is not available — removed in v0.2.0 because the FTS index stored plaintext, defeating encryption
+- Importing the same file twice creates duplicate entries (no deduplication)
+- Plugin changes require an app restart to take effect
 
 ## Extending Mini Diarium
 
