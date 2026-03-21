@@ -39,6 +39,12 @@ export default function EditorPanel() {
   let loadRequestId = 0;
   let saveRequestId = 0;
   const [isCreatingEntry, setIsCreatingEntry] = createSignal(false);
+  // Reactive trigger: set by handleContentUpdate so addDisabled re-evaluates AFTER TipTap
+  // fires onUpdate. Without this, addDisabled is evaluated when setPendingEntryId() fires —
+  // at which point TipTap's editor.isEmpty is stale (still true from the previous blank entry).
+  // When TipTap later fires onUpdate, handleContentUpdate sets this signal, causing
+  // isContentEmpty() to re-evaluate with the correct editor.isEmpty value.
+  const [editorIsEmpty, setEditorIsEmpty] = createSignal(true);
 
   // Backend returns entries newest-first; reverse so index 0 = oldest and index N-1 = newest.
   // This makes the counter read "1/N … N/N" in chronological order and puts new entries last.
@@ -48,6 +54,11 @@ export default function EditorPanel() {
   };
 
   const isContentEmpty = () => {
+    // Access editorIsEmpty() to add it as a reactive dependency. This forces re-evaluation
+    // when handleContentUpdate sets it (after TipTap fires onUpdate), not only when
+    // editorInstance() or content() changes. The actual empty check still reads
+    // editor.isEmpty directly so it reflects TipTap's current document state.
+    editorIsEmpty();
     const editor = editorInstance();
     if (editor && !editor.isDestroyed) {
       return editor.isEmpty || editor.getText().trim() === '';
@@ -66,13 +77,33 @@ export default function EditorPanel() {
       try {
         await deleteEntryIfEmpty(entryId, currentTitle, '');
         if (isDisposed || requestId !== saveRequestId) return;
-        // Reset so the next real keystroke creates a fresh entry
-        setPendingEntryId(null);
-        setDayEntries((prev) => prev.filter((e) => e.id !== entryId));
+        const updatedEntries = dayEntries().filter((e) => e.id !== entryId);
+        setDayEntries(updatedEntries);
         const dates = await getAllEntryDates();
         if (isDisposed || requestId !== saveRequestId) return;
         setEntryDates(dates);
-        setWordCount(0);
+        if (updatedEntries.length > 0) {
+          // Other entries remain — navigate to the nearest so the editor always shows
+          // real content after a blank entry is auto-deleted. Without this, switching
+          // days and back leaves pendingEntryId=null with stale blank content,
+          // permanently disabling the "+" button (Bug 2).
+          const newIdx = Math.min(currentIndex(), updatedEntries.length - 1);
+          const entry = updatedEntries[newIdx];
+          setCurrentIndex(newIdx);
+          setPendingEntryId(entry.id);
+          setTitle(entry.title);
+          setContent(entry.text);
+          const words = entry.text.trim().split(/\s+/).filter(Boolean);
+          setWordCount(words.length);
+          // Prevent the debounced save that setContent triggers via TipTap —
+          // the remaining entry is already persisted and has not changed.
+          debouncedSave.cancel();
+        } else {
+          // No entries remain — reset so the next keystroke creates a fresh entry.
+          setPendingEntryId(null);
+          setCurrentIndex(0);
+          setWordCount(0);
+        }
       } catch (error) {
         log.error('Failed to delete empty entry:', error);
       }
@@ -235,6 +266,15 @@ export default function EditorPanel() {
 
   const handleContentUpdate = (newContent: string) => {
     setContent(newContent);
+    // Update the reactive trigger so isContentEmpty() re-evaluates with TipTap's actual
+    // document state. This fires after TipTap processes the content, not when the SolidJS
+    // content() signal is set — closing the timing gap where editor.isEmpty is stale.
+    const edInst = editorInstance();
+    setEditorIsEmpty(
+      edInst && !edInst.isDestroyed
+        ? edInst.isEmpty || edInst.getText().trim() === ''
+        : newContent.trim() === '',
+    );
     const id = pendingEntryId();
     if (id !== null) {
       debouncedSave(id, title(), newContent);

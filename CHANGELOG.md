@@ -4,6 +4,12 @@ All notable changes to Mini Diarium are documented here. This project uses [Sema
 
 ## [0.4.9] - Unreleased
 
+### Fixed
+
+- **"+" button stuck disabled after multi-entry navigation (two variants)**: fixed two related bugs where the "Add entry for this day" button became permanently disabled on a day with real content.
+  - *Variant 1 (navigation arrow)*: clicking "+", getting a blank second entry, then navigating back via "←" left the "+" permanently disabled. Root cause: SolidJS re-evaluated `addDisabled` when `setPendingEntryId()` changed, but TipTap had not yet processed the loaded entry's content, so `editor.isEmpty` was stale. Fixed by adding an `editorIsEmpty` reactive signal updated in `handleContentUpdate` (called by TipTap's `onUpdate`), forcing re-evaluation after TipTap reflects the correct state.
+  - *Variant 2 (day switch)*: same setup, but switching to a different day instead of using the arrow, then switching back, also blocked the "+". Root cause: the blank entry's debounced auto-delete (500 ms) called `setPendingEntryId(null)` and left the editor showing stale blank content even though the original real entry still existed. Fixed by having `saveCurrentById` auto-navigate to the nearest remaining entry after deleting a blank entry, so `pendingEntryId` is never left as `null` while real entries still exist on the day.
+
 ### Added
 
 - **Backend assessment follow-up** (Task 71): addressed all actionable findings from the March 2026 assessment. Two code quality fixes: `delete_entry` unlock guard now uses the consistent "Journal must be unlocked to …" error message (A1); `#[allow(dead_code)]` suppressions in `jrnl.rs` now carry "why" comments on the attribute line per project convention (A2). Ten new backend tests added: `delete_entry` command logic (A3), `navigate_to_today` valid-date assertion (A4), `update_slot_last_used` NULL→non-null column check (A5), import/export plugin "not found" error message format (A6), `MAX_IMPORT_FILE_SIZE` boundary (A7), and isolated v3→v4 and v4→v5 migration tests (A8). Comments added to `migrate_v3_to_v4` and `migrate_v4_to_v5` explaining why no pre-migration backup is taken (A9). Backend test count: 239 → 249.
