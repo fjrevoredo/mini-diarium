@@ -15,10 +15,14 @@ interface EntryNavBarProps {
 
 export function EntryNavBar(props: EntryNavBarProps) {
   return (
-    <div class="flex items-center justify-between px-4 py-1 border-b border-primary text-sm">
+    <div
+      data-testid="entry-nav-bar"
+      class="flex items-center justify-between px-4 py-1 border-b border-primary text-sm"
+    >
       <Show when={props.total >= 2}>
         <div class="flex items-center gap-2">
           <button
+            data-testid="entry-prev-button"
             onClick={() => props.onPrev()}
             disabled={props.index === 0}
             class="px-2 py-0.5 rounded disabled:opacity-30 hover:bg-hover"
@@ -26,10 +30,11 @@ export function EntryNavBar(props: EntryNavBarProps) {
           >
             ←
           </button>
-          <span class="text-tertiary">
+          <span data-testid="entry-counter" class="text-tertiary">
             {props.index + 1} / {props.total}
           </span>
           <button
+            data-testid="entry-next-button"
             onClick={() => props.onNext()}
             disabled={props.index === props.total - 1}
             class="px-2 py-0.5 rounded disabled:opacity-30 hover:bg-hover"
@@ -42,6 +47,7 @@ export function EntryNavBar(props: EntryNavBarProps) {
       <div class="flex items-center gap-2">
         <Show when={props.total > 1 && props.onDelete}>
           <button
+            data-testid="entry-delete-button"
             onClick={() => props.onDelete!()}
             disabled={props.deleteDisabled}
             title={props.deleteTitle}
@@ -52,6 +58,7 @@ export function EntryNavBar(props: EntryNavBarProps) {
           </button>
         </Show>
         <button
+          data-testid="entry-add-button"
           onClick={() => props.onAdd()}
           disabled={props.addDisabled}
           title={props.addTitle}

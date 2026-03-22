@@ -371,7 +371,8 @@ Run: `bun run test:e2e` (requires release binary + `tauri-driver` installed)
 
 | File | Description |
 |------|-------------|
-| `e2e/specs/diary-workflow.spec.ts` | 2 tests: (1) create diary → write entry → lock → unlock → verify persistence; (2) multi-date calendar navigation → write second entry → lock/unlock → verify both entries persist |
+| `e2e/specs/diary-workflow.spec.ts` | 1 test: create diary → write entry → lock → unlock → verify persistence |
+| `e2e/specs/multi-entry.spec.ts` | 1 test (3 scenarios): (A) 2 entries persist after lock/unlock; (B) "+" enabled after "←" navigation from blank entry (v0.4.9 Variant 1); (C) "+" enabled after day-switch with blank entry (v0.4.9 Variant 2) |
 
 **data-testid attributes** used by E2E tests (do not remove):
 
@@ -386,6 +387,12 @@ Run: `bun run test:e2e` (requires release binary + `tauri-driver` installed)
 | `Header.tsx` | Lock button | `lock-journal-button` |
 | `TitleEditor.tsx` | Title input | `title-input` |
 | `Calendar.tsx` | Each day button | `calendar-day-YYYY-MM-DD` |
+| `EntryNavBar.tsx` | Nav bar container | `entry-nav-bar` |
+| `EntryNavBar.tsx` | Previous entry button (`←`) | `entry-prev-button` |
+| `EntryNavBar.tsx` | Entry position counter | `entry-counter` |
+| `EntryNavBar.tsx` | Next entry button (`→`) | `entry-next-button` |
+| `EntryNavBar.tsx` | Delete entry button (`−`) | `entry-delete-button` |
+| `EntryNavBar.tsx` | Add entry button (`+`) | `entry-add-button` |
 
 ## Verification Commands
 
