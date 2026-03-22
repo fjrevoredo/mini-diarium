@@ -140,9 +140,13 @@ describe('Multi-entry workflow', () => {
     // Regression: clicking "+", getting a blank 2nd entry, then navigating back with "←"
     // left the "+" permanently disabled. Fixed by the `editorIsEmpty` reactive signal.
 
-    // Navigate to a fresh date with no prior entries
-    await $(`[data-testid="calendar-day-${MULTI_DATE_2}"]`).waitForClickable({ timeout: 10000 });
-    await $(`[data-testid="calendar-day-${MULTI_DATE_2}"]`).click();
+    // Navigate to a fresh date with no prior entries.
+    // Scenario A's last calendar click (MULTI_DATE_1) auto-closed the sidebar via handleDayClick;
+    // reopen it before accessing the calendar (required in mobile/overlay mode at 800 px).
+    await $('[data-testid="toggle-sidebar-button"]').waitForClickable({ timeout: 5000 });
+    await $('[data-testid="toggle-sidebar-button"]').click();
+    await $(`[data-testid="calendar-day-${MULTI_DATE_2}"]`).waitForDisplayed({ timeout: 10000 });
+    await $(`[data-testid="calendar-day-${MULTI_DATE_2}"]`).click(); // sidebar closes after this
     await $('[data-testid="title-input"]').waitForDisplayed({ timeout: 5000 });
 
     // Write a first entry
