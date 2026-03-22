@@ -174,7 +174,7 @@ export default function MainLayout() {
   });
 
   return (
-    <div class="flex h-screen overflow-hidden bg-secondary">
+    <div class="flex h-full overflow-hidden bg-secondary">
       {/* Sidebar */}
       <Sidebar isCollapsed={isSidebarCollapsed()} onClose={() => setIsSidebarCollapsed(true)} />
 

@@ -177,7 +177,7 @@ export default function JournalPicker() {
   return (
     <div
       data-testid="journal-picker"
-      class="flex flex-col min-h-screen items-center bg-tertiary px-4 py-6"
+      class="flex flex-col h-full items-center bg-tertiary px-4 py-6"
     >
       <div class="my-auto w-full max-w-md">
         <div class="rounded-lg bg-primary px-8 py-8 shadow-lg">

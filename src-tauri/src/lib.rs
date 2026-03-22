@@ -60,7 +60,7 @@ pub fn run() {
     }
 
     builder
-        .setup(|app| {
+        .setup(move |app| {
             // Get app data directory and create diary path
             let system_app_dir = match app.path().app_data_dir() {
                 Ok(dir) => dir,
@@ -139,9 +139,18 @@ pub fn run() {
                 warn!("Screen-lock listener initialization failed: {}", error);
             }
 
-            // Show the window after setup is complete (window-state plugin has restored
-            // position by now), avoiding a flash at the default position on startup.
             if let Some(win) = app.get_webview_window("main") {
+                if is_e2e {
+                    // Set the window to the exact E2E viewport size BEFORE show() so the WebView
+                    // renders at 800×660 from the very first paint. WebView2 captures CSS viewport
+                    // values (100vh, window.innerHeight) at first paint; any resize after show()
+                    // leaves those values stale and produces a white gap in screen-filling layouts.
+                    info!("E2E mode: forcing window to 800×660 before show");
+                    let _ = win.set_size(tauri::LogicalSize::new(800.0_f64, 660.0_f64));
+                }
+                // Show the window after setup is complete (window-state plugin has restored
+                // position/size by now for non-E2E mode), avoiding a flash at the default
+                // position on startup.
                 let _ = win.show();
             }
 

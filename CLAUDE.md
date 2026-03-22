@@ -461,6 +461,13 @@ bun run type-check       # TypeScript type check
     - `'theme-preference'` — `'auto'|'light'|'dark'` (managed by `src/lib/theme.ts`)
     - `'theme-overrides'` — JSON object of CSS token overrides (managed by `src/lib/theme-overrides.ts`)
 
+19. **E2E viewport sizing — three rules that must hold:**
+    - **Why this keeps breaking:** WebView2 captures CSS viewport values (`100vh`, `window.innerHeight`) at first paint. Any resize after `win.show()` leaves those values stale, producing a white gap above vertically-centred content. This has broken three times (v0.4.3, v0.4.9 ×2); the root cause is always the same pattern.
+    - **Rust** (`lib.rs`): call `win.set_size(LogicalSize::new(800, 660))` **before** `win.show()` in E2E mode. Never move it after. This is the single source of truth for E2E viewport size. Production window: `800×780` (`tauri.conf.json`).
+    - **CSS**: all screen-filling containers (`JournalPicker`, `PasswordCreation`, `PasswordPrompt`, `App` checking state, `MainLayout`) use `h-full` (`height: 100%` via `html → body → #root` chain from `index.html`). **Never** use `h-screen`/`min-h-screen` (`100vh`) — it may report the full Tauri inner-window height (including the native app menu bar) rather than the WebView viewport, making containers taller than the visible area.
+    - **wdio** (`wdio.conf.ts`): the `before` hook must NOT call `browser.setWindowSize()`. WebDriver `setWindowRect` fires after first paint and uses different size semantics than Tauri's `LogicalSize` — see "why this keeps breaking" above.
+    - **uno.config.ts**: `h-screen` and `min-h-screen` are intentionally **absent** from the safelist. Do not add them back.
+
 ## Security Rules
 
 - **Never** log, print, or serialize passwords or encryption keys

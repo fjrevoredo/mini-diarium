@@ -201,13 +201,12 @@ export const config: Options.Testrunner = {
   before: async () => {
     if (!isCleanMode) return;
 
-    // Force deterministic viewport so responsive breakpoints do not depend on host state.
-    await browser.setWindowSize(800, 660);
-    const size = await browser.getWindowSize();
-    if (size.width !== 800 || size.height !== 660) {
-      await browser.pause(250);
-      await browser.setWindowSize(800, 660);
-    }
+    // Window size is set by lib.rs (MINI_DIARIUM_E2E=1) before win.show(), so the
+    // WebView renders at 800×660 from its very first paint.
+    // Do NOT add browser.setWindowSize() here. WebDriver setWindowRect fires after
+    // first paint and uses different size semantics than Tauri's LogicalSize —
+    // a post-render resize leaves CSS viewport values stale and re-introduces the
+    // white-gap-at-top bug. The Rust pre-show resize is the single source of truth.
   },
 
   // onPrepare runs in the main process before any workers start.

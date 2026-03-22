@@ -13,8 +13,8 @@
 .justify-center {
   justify-content: center;
 }
-.min-h-screen {
-  min-height: 100vh;
+.h-full {
+  height: 100%;
 }
 
 /* Container */
