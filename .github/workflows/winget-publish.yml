@@ -121,7 +121,8 @@ jobs:
           node scripts/enrich-winget-manifest.mjs `
             --manifest-dir winget-manifests `
             --release-notes-file release-body.md `
-            --release-notes-url "${{ steps.release.outputs.release_url }}"
+            --release-notes-url "${{ steps.release.outputs.release_url }}" `
+            --release-date "${{ steps.release.outputs.release_date }}"
 
       - name: Verify enriched manifest
         id: verify_manifest
@@ -164,7 +165,7 @@ jobs:
           $manifestPath = "${{ steps.verify_manifest.outputs.manifest_path }}"
 
           .\wingetcreate.exe submit `
-            --prtitle "Add ${{ env.PACKAGE_IDENTIFIER }} version $version" `
+            --prtitle "Update ${{ env.PACKAGE_IDENTIFIER }} version $version" `
             --token $env:WINGET_CREATE_GITHUB_TOKEN `
             --no-open `
             $manifestPath

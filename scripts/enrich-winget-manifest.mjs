@@ -26,6 +26,7 @@ function parseArgs(argv) {
     manifestDir: args.get('manifest-dir'),
     releaseNotesFile: args.get('release-notes-file'),
     releaseNotesUrl: args.get('release-notes-url'),
+    releaseDate: args.get('release-date'),
   };
 }
 
@@ -194,11 +195,13 @@ function buildReleaseNotesField(releaseNotes) {
   return ['ReleaseNotes: |-', ...releaseNotes.split('\n').map((line) => `  ${line}`)];
 }
 
-export function enrichDefaultLocaleManifest(manifestText, { releaseNotes, releaseNotesUrl }) {
+export function enrichDefaultLocaleManifest(manifestText, { releaseNotes, releaseNotesUrl, releaseDate }) {
   let lines = manifestText.replace(/\r\n/g, '\n').trimEnd().split('\n');
+  lines = removeManifestField(lines, 'ReleaseDate');
   lines = removeManifestField(lines, 'ReleaseNotes');
   lines = removeManifestField(lines, 'ReleaseNotesUrl');
   lines = insertBeforeManifestType(lines, [
+    ...(releaseDate ? [`ReleaseDate: ${releaseDate}`] : []),
     ...buildReleaseNotesField(releaseNotes),
     `ReleaseNotesUrl: ${releaseNotesUrl}`,
   ]);
@@ -213,11 +216,11 @@ function ensureDirectoryExists(directoryPath) {
 }
 
 function main() {
-  const { manifestDir, releaseNotesFile, releaseNotesUrl } = parseArgs(process.argv.slice(2));
+  const { manifestDir, releaseNotesFile, releaseNotesUrl, releaseDate } = parseArgs(process.argv.slice(2));
 
   if (!manifestDir || !releaseNotesFile || !releaseNotesUrl) {
     throw new Error(
-      'Usage: node scripts/enrich-winget-manifest.mjs --manifest-dir <dir> --release-notes-file <file> --release-notes-url <url>',
+      'Usage: node scripts/enrich-winget-manifest.mjs --manifest-dir <dir> --release-notes-file <file> --release-notes-url <url> [--release-date <yyyy-MM-dd>]',
     );
   }
 
@@ -235,6 +238,7 @@ function main() {
   const enrichedManifest = enrichDefaultLocaleManifest(manifestText, {
     releaseNotes,
     releaseNotesUrl,
+    releaseDate,
   });
 
   writeFileSync(manifestPath, enrichedManifest, 'utf8');
