@@ -222,7 +222,7 @@ jobs:
         run: |
           tag="${GITHUB_REF_NAME}"
           version="${{ needs.create-release.outputs.version }}"
-          assets="$(gh release view "$tag" --json assets --jq '.assets[].name')"
+          assets="$(gh release view "$tag" --repo "${{ github.repository }}" --json assets --jq '.assets[].name')"
 
           printf '%s\n' "$assets"
 
@@ -243,7 +243,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release edit "$GITHUB_REF_NAME" --draft=false
+          gh release edit "$GITHUB_REF_NAME" --repo "${{ github.repository }}" --draft=false
 
       - name: Check out master for changelog cleanup
         uses: actions/checkout@v6
