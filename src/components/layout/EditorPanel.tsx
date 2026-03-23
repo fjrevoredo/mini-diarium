@@ -1,4 +1,4 @@
-import { createSignal, createEffect, onCleanup, onMount, Show } from 'solid-js';
+import { createSignal, createEffect, onCleanup, onMount, Show, untrack } from 'solid-js';
 import { Editor } from '@tiptap/core';
 import { createLogger } from '../../lib/logger';
 import TitleEditor from '../editor/TitleEditor';
@@ -44,6 +44,8 @@ export default function EditorPanel() {
   // Forces isContentEmpty() to re-evaluate AFTER TipTap updates editor.isEmpty.
   // Without this, addDisabled evaluates when setPendingEntryId() fires but editor.isEmpty
   // is still stale from the previous entry — causing the wrong addDisabled state.
+  // onSetContent also triggers debouncedSave for blank entries (auto-deletion on navigation)
+  // because emitUpdate:false suppresses the onUpdate path that previously handled this.
   const [editorIsEmpty, setEditorIsEmpty] = createSignal(true);
 
   // Backend returns entries newest-first; reverse so index 0 = oldest and index N-1 = newest.
@@ -463,7 +465,18 @@ export default function EditorPanel() {
             <DiaryEditor
               content={content()}
               onUpdate={handleContentUpdate}
-              onSetContent={(isEmpty) => setEditorIsEmpty(isEmpty)}
+              onSetContent={(isEmpty) => {
+                setEditorIsEmpty(isEmpty);
+                // When a blank entry is programmatically loaded, trigger the debounce so it
+                // gets auto-deleted (replaces the onUpdate path suppressed by emitUpdate:false).
+                // untrack() prevents signal reads from being tracked by DiaryEditor's effect.
+                if (isEmpty) {
+                  const id = untrack(pendingEntryId);
+                  if (id !== null) {
+                    debouncedSave(id, untrack(title), untrack(content));
+                  }
+                }
+              }}
               placeholder="What's on your mind today?"
               onEditorReady={setEditorInstance}
               spellCheck={preferences().enableSpellcheck}
