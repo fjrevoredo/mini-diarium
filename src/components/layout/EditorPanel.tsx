@@ -39,11 +39,11 @@ export default function EditorPanel() {
   let loadRequestId = 0;
   let saveRequestId = 0;
   const [isCreatingEntry, setIsCreatingEntry] = createSignal(false);
-  // Reactive trigger: set by handleContentUpdate so addDisabled re-evaluates AFTER TipTap
-  // fires onUpdate. Without this, addDisabled is evaluated when setPendingEntryId() fires —
-  // at which point TipTap's editor.isEmpty is stale (still true from the previous blank entry).
-  // When TipTap later fires onUpdate, handleContentUpdate sets this signal, causing
-  // isContentEmpty() to re-evaluate with the correct editor.isEmpty value.
+  // Reactive trigger: updated by handleContentUpdate (user edits via onUpdate) and by
+  // the onSetContent callback from DiaryEditor (programmatic loads via setContent).
+  // Forces isContentEmpty() to re-evaluate AFTER TipTap updates editor.isEmpty.
+  // Without this, addDisabled evaluates when setPendingEntryId() fires but editor.isEmpty
+  // is still stale from the previous entry — causing the wrong addDisabled state.
   const [editorIsEmpty, setEditorIsEmpty] = createSignal(true);
 
   // Backend returns entries newest-first; reverse so index 0 = oldest and index N-1 = newest.
@@ -245,9 +245,8 @@ export default function EditorPanel() {
       setTitle('');
       setContent('');
       setWordCount(0);
-      // setContent('') causes TipTap to fire onUpdate synchronously, which schedules
-      // a debounced save with empty content on the new entry ID — cancelling here
-      // prevents that save from running and immediately deleting the new blank entry.
+      // Cancel any previously queued debounced save from the current entry before
+      // switching to the new blank entry — prevents saving the wrong entry data.
       debouncedSave.cancel();
 
       // Refresh dates
@@ -464,6 +463,7 @@ export default function EditorPanel() {
             <DiaryEditor
               content={content()}
               onUpdate={handleContentUpdate}
+              onSetContent={(isEmpty) => setEditorIsEmpty(isEmpty)}
               placeholder="What's on your mind today?"
               onEditorReady={setEditorInstance}
               spellCheck={preferences().enableSpellcheck}

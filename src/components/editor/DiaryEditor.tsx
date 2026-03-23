@@ -14,6 +14,8 @@ import { readFileBytes } from '../../lib/tauri';
 interface DiaryEditorProps {
   content: string;
   onUpdate?: (content: string) => void;
+  /** Called after a programmatic setContent so EditorPanel can update editorIsEmpty. */
+  onSetContent?: (isEmpty: boolean) => void;
   placeholder?: string;
   onEditorReady?: (editor: Editor) => void;
   spellCheck?: boolean;
@@ -214,7 +216,15 @@ export default function DiaryEditor(props: DiaryEditorProps) {
   createEffect(() => {
     const editorInstance = editor();
     if (editorInstance && props.content !== editorInstance.getHTML()) {
-      editorInstance.commands.setContent(props.content);
+      // Pass emitUpdate:false to suppress onUpdate for programmatic content loads.
+      // TipTap v3 changed the default from false (v2) to true — without this, every
+      // navigation fires handleContentUpdate which queues a debouncedSave that in the
+      // production bundle overwrites alignment with the intermediate getHTML() state.
+      editorInstance.commands.setContent(props.content, { emitUpdate: false });
+      // Notify EditorPanel of the new empty state after TipTap processes the content.
+      // This replaces the editorIsEmpty update that onUpdate previously provided:
+      // EditorPanel uses this signal to re-evaluate addDisabled correctly.
+      props.onSetContent?.(editorInstance.isEmpty);
     }
   });
 
