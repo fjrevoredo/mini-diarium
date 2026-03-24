@@ -217,9 +217,10 @@ export default function DiaryEditor(props: DiaryEditorProps) {
     const editorInstance = editor();
     if (editorInstance && props.content !== editorInstance.getHTML()) {
       // Pass emitUpdate:false to suppress onUpdate for programmatic content loads.
-      // TipTap v3 changed the default from false (v2) to true — without this, every
-      // navigation fires handleContentUpdate which queues a debouncedSave that in the
-      // production bundle overwrites alignment with the intermediate getHTML() state.
+      // Without this, loading an entry fires handleContentUpdate which resets the
+      // debounce timer with the newly-loaded content, discarding any pending save for
+      // the previous entry. It also triggers the "first keystroke creates entry" path
+      // on blank days, creating a spurious entry before the user types anything.
       editorInstance.commands.setContent(props.content, { emitUpdate: false });
       // Notify EditorPanel of the new empty state after TipTap processes the content.
       // This replaces the editorIsEmpty update that onUpdate previously provided:

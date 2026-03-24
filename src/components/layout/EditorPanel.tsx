@@ -142,6 +142,35 @@ export default function EditorPanel() {
     const requestId = ++loadRequestId;
     setIsLoadingEntry(true);
 
+    // Flush any pending save for the current entry before switching dates.
+    // Without this, the onSetContent(isEmpty=true) callback on the new date's blank entry
+    // calls debouncedSave() with the new entry's args, resetting the timer and replacing
+    // the pending save for the current entry — silently discarding edits (incl. alignment).
+    //
+    // Critical: ALL signal reads here must go through untrack(). This block runs
+    // synchronously before the first await, still inside the createEffect tracking scope.
+    // Without untrack(), pendingEntryId/title/content and — via saveCurrentById's
+    // synchronous isContentEmpty() call — editorIsEmpty/editorInstance would all become
+    // reactive dependencies of the calling effect, causing loadEntriesForDate to re-fire
+    // on every keystroke (reactive loop).
+    const currentId = untrack(pendingEntryId);
+    if (currentId !== null) {
+      debouncedSave.cancel();
+      const savedTitle = untrack(title);
+      // Read directly from the TipTap editor instance rather than the content() signal.
+      // Alignment changes (style="text-align: X") are node-attribute transactions in TipTap.
+      // If onUpdate timing is inconsistent or the signal is stale for any reason, content()
+      // would silently save the pre-alignment HTML. editor.getHTML() always reflects the
+      // true current document state, capturing alignment even if onUpdate hasn't propagated.
+      const edInst = untrack(editorInstance);
+      const savedContent =
+        edInst && !edInst.isDestroyed ? edInst.getHTML() : untrack(content);
+      // untrack() wraps the call so saveCurrentById's synchronous body (isContentEmpty reads)
+      // is also isolated from the outer effect's tracking scope.
+      await untrack(() => saveCurrentById(currentId, savedTitle, savedContent));
+      if (isDisposed || requestId !== loadRequestId) return;
+    }
+
     try {
       const entries = await fetchEntriesOrdered(date);
       if (isDisposed || requestId !== loadRequestId) return;
@@ -175,11 +204,13 @@ export default function EditorPanel() {
 
   // Navigate to an entry within the current day
   const navigateToEntry = async (newIndex: number) => {
-    // Save current first
+    // Save current first — read from editor directly to capture alignment (see loadEntriesForDate comment).
     const currentId = pendingEntryId();
     if (currentId !== null) {
       debouncedSave.cancel();
-      await saveCurrentById(currentId, title(), content());
+      const edInst = editorInstance();
+      const currentContent = edInst && !edInst.isDestroyed ? edInst.getHTML() : content();
+      await saveCurrentById(currentId, title(), currentContent);
     }
 
     const entries = dayEntries();
@@ -224,11 +255,13 @@ export default function EditorPanel() {
     setIsCreatingEntry(true);
 
     try {
-      // Save current first
+      // Save current first — read from editor directly to capture alignment (see loadEntriesForDate comment).
       const currentId = pendingEntryId();
       if (currentId !== null) {
         debouncedSave.cancel();
-        await saveCurrentById(currentId, title(), content());
+        const edInst = editorInstance();
+        const currentContent = edInst && !edInst.isDestroyed ? edInst.getHTML() : content();
+        await saveCurrentById(currentId, title(), currentContent);
       }
 
       const newEntry = await createEntry(selectedDate());
@@ -391,7 +424,9 @@ export default function EditorPanel() {
     const handleBeforeUnload = () => {
       const id = pendingEntryId();
       if (id !== null) {
-        void saveCurrentById(id, title(), content());
+        const edInst = editorInstance();
+        const currentContent = edInst && !edInst.isDestroyed ? edInst.getHTML() : content();
+        void saveCurrentById(id, title(), currentContent);
       }
     };
 
@@ -400,7 +435,9 @@ export default function EditorPanel() {
     const unregister = registerCleanupCallback(async () => {
       const currentId = pendingEntryId();
       if (currentId !== null) {
-        await saveCurrentById(currentId, title(), content());
+        const edInst = editorInstance();
+        const currentContent = edInst && !edInst.isDestroyed ? edInst.getHTML() : content();
+        await saveCurrentById(currentId, title(), currentContent);
       }
     });
 
