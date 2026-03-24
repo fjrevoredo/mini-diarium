@@ -163,8 +163,7 @@ export default function EditorPanel() {
       // would silently save the pre-alignment HTML. editor.getHTML() always reflects the
       // true current document state, capturing alignment even if onUpdate hasn't propagated.
       const edInst = untrack(editorInstance);
-      const savedContent =
-        edInst && !edInst.isDestroyed ? edInst.getHTML() : untrack(content);
+      const savedContent = edInst && !edInst.isDestroyed ? edInst.getHTML() : untrack(content);
       // untrack() wraps the call so saveCurrentById's synchronous body (isContentEmpty reads)
       // is also isolated from the outer effect's tracking scope.
       await untrack(() => saveCurrentById(currentId, savedTitle, savedContent));
