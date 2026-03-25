@@ -1,5 +1,5 @@
 use super::registry::PluginRegistry;
-use super::{ExportPlugin, ImportPlugin, PluginInfo};
+use super::{ExportOutput, ExportPlugin, ImportPlugin, PluginInfo};
 use crate::db::queries::DiaryEntry;
 use log::{info, warn};
 use rhai::{Array, Dynamic, Engine, Map, Scope, AST};
@@ -178,15 +178,15 @@ impl ExportPlugin for RhaiExportPlugin {
         self.info.clone()
     }
 
-    fn export(&self, entries: Vec<DiaryEntry>) -> Result<String, String> {
+    fn export(&self, entries: Vec<DiaryEntry>) -> Result<ExportOutput, String> {
         let engine = create_sandboxed_engine();
         let mut scope = Scope::new();
         let arr = entries_to_rhai_array(entries);
         // "export" is a reserved keyword in Rhai, so scripts use "format_entries" instead
-        let result: String = engine
+        let content: String = engine
             .call_fn(&mut scope, &self.script, "format_entries", (arr,))
             .map_err(|e| format!("Rhai script error: {}", e))?;
-        Ok(result)
+        Ok(ExportOutput { content, assets: vec![] })
     }
 }
 
@@ -438,7 +438,7 @@ fn format_entries(entries) {
         }];
 
         let result = plugin.export(entries).unwrap();
-        assert_eq!(result, "2024-06-15: My Day\n");
+        assert_eq!(result.content, "2024-06-15: My Day\n");
     }
 
     #[test]
@@ -541,6 +541,6 @@ fn parse(content) {
             crate::export::markdown::html_to_markdown("<p>Second body</p>")
         );
 
-        assert_eq!(output, expected);
+        assert_eq!(output.content, expected);
     }
 }

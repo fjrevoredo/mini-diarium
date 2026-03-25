@@ -1,4 +1,4 @@
-use super::{ExportPlugin, ImportPlugin, PluginInfo};
+use super::{ExportOutput, ExportPlugin, ImportPlugin, PluginInfo};
 use crate::db::queries::DiaryEntry;
 use crate::export::{json, markdown};
 use crate::import::{dayone, dayone_txt, jrnl, minidiary};
@@ -88,8 +88,9 @@ impl ExportPlugin for JsonExporter {
         }
     }
 
-    fn export(&self, entries: Vec<DiaryEntry>) -> Result<String, String> {
-        json::export_entries_to_json(entries)
+    fn export(&self, entries: Vec<DiaryEntry>) -> Result<ExportOutput, String> {
+        let content = json::export_entries_to_json(entries)?;
+        Ok(ExportOutput { content, assets: vec![] })
     }
 }
 
@@ -105,8 +106,29 @@ impl ExportPlugin for MarkdownExporter {
         }
     }
 
-    fn export(&self, entries: Vec<DiaryEntry>) -> Result<String, String> {
-        Ok(markdown::export_entries_to_markdown(entries))
+    fn export(&self, entries: Vec<DiaryEntry>) -> Result<ExportOutput, String> {
+        let (content, assets) = markdown::export_entries_to_markdown_with_assets(entries);
+        Ok(ExportOutput { content, assets })
+    }
+}
+
+pub struct MarkdownInlineExporter;
+
+impl ExportPlugin for MarkdownInlineExporter {
+    fn info(&self) -> PluginInfo {
+        PluginInfo {
+            id: "builtin:markdown-inline".into(),
+            name: "Markdown (inline images)".into(),
+            file_extensions: vec!["md".into()],
+            builtin: true,
+        }
+    }
+
+    fn export(&self, entries: Vec<DiaryEntry>) -> Result<ExportOutput, String> {
+        Ok(ExportOutput {
+            content: markdown::export_entries_to_markdown_inline(entries),
+            assets: vec![],
+        })
     }
 }
 
@@ -118,6 +140,7 @@ pub fn register_all(registry: &mut PluginRegistry) {
     registry.register_importer(Box::new(JrnlImporter));
     registry.register_exporter(Box::new(JsonExporter));
     registry.register_exporter(Box::new(MarkdownExporter));
+    registry.register_exporter(Box::new(MarkdownInlineExporter));
 }
 
 #[cfg(test)]
@@ -146,6 +169,6 @@ mod tests {
         let mut registry = PluginRegistry::new();
         register_all(&mut registry);
         assert_eq!(registry.list_importers().len(), 4);
-        assert_eq!(registry.list_exporters().len(), 2);
+        assert_eq!(registry.list_exporters().len(), 3);
     }
 }

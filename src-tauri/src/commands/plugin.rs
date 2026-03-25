@@ -131,11 +131,27 @@ pub fn run_export_plugin(
         })?
     };
 
-    std::fs::write(&file_path, &output).map_err(|e| {
+    std::fs::write(&file_path, &output.content).map_err(|e| {
         let err = format!("Failed to write file: {}", e);
         error!("{}", err);
         err
     })?;
+
+    if !output.assets.is_empty() {
+        let assets_dir = std::path::Path::new(&file_path)
+            .parent()
+            .unwrap_or(std::path::Path::new("."))
+            .join("assets");
+        std::fs::create_dir_all(&assets_dir).map_err(|e| {
+            format!("Failed to create assets directory: {}", e)
+        })?;
+        for (filename, bytes) in &output.assets {
+            std::fs::write(assets_dir.join(filename), bytes).map_err(|e| {
+                format!("Failed to write asset '{}': {}", filename, e)
+            })?;
+        }
+        debug!("Wrote {} asset file(s) to {}", output.assets.len(), assets_dir.display());
+    }
 
     info!(
         "Plugin export complete: {} entries exported to {}",
@@ -167,7 +183,7 @@ mod tests {
         let mut registry = PluginRegistry::new();
         builtins::register_all(&mut registry);
         let list = registry.list_exporters();
-        assert_eq!(list.len(), 2);
+        assert_eq!(list.len(), 3);
         assert!(list.iter().all(|p| p.builtin));
     }
 
@@ -199,8 +215,8 @@ mod tests {
             date_updated: "2024-01-01T00:00:00Z".into(),
         }];
         let output = plugin.export(entries).unwrap();
-        assert!(output.contains("Test"));
-        assert!(output.contains("2024-01-01"));
+        assert!(output.content.contains("Test"));
+        assert!(output.content.contains("2024-01-01"));
     }
 
     #[test]

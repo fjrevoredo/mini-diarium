@@ -2323,6 +2323,7 @@ version = "0.4.13"
 dependencies = [
  "aes-gcm",
  "argon2",
+ "base64 0.22.1",
  "block2",
  "chrono",
  "env_logger",

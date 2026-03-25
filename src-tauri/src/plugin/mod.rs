@@ -19,8 +19,18 @@ pub trait ImportPlugin: Send + Sync {
     fn parse(&self, content: &str) -> Result<Vec<DiaryEntry>, String>;
 }
 
-/// A plugin that can export diary entries to a string format.
+/// Output from an export plugin: the formatted text content plus optional binary asset files.
+///
+/// Most plugins return only `content`. The built-in Markdown exporter additionally
+/// returns `assets` — a list of `(filename, bytes)` pairs to be written to a
+/// sibling `assets/` directory alongside the main output file.
+pub struct ExportOutput {
+    pub content: String,
+    pub assets: Vec<(String, Vec<u8>)>,
+}
+
+/// A plugin that can export diary entries to a formatted output.
 pub trait ExportPlugin: Send + Sync {
     fn info(&self) -> PluginInfo;
-    fn export(&self, entries: Vec<DiaryEntry>) -> Result<String, String>;
+    fn export(&self, entries: Vec<DiaryEntry>) -> Result<ExportOutput, String>;
 }

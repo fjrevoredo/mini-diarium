@@ -78,13 +78,29 @@ pub fn export_markdown(
     let entries_exported = entries.len();
     debug!("Converting {} entries to Markdown...", entries_exported);
 
-    let md_string = markdown::export_entries_to_markdown(entries);
+    let (md_string, assets) = markdown::export_entries_to_markdown_with_assets(entries);
 
     std::fs::write(&file_path, &md_string).map_err(|e| {
         let err = format!("Failed to write file: {}", e);
         error!("{}", err);
         err
     })?;
+
+    if !assets.is_empty() {
+        let assets_dir = std::path::Path::new(&file_path)
+            .parent()
+            .unwrap_or(std::path::Path::new("."))
+            .join("assets");
+        std::fs::create_dir_all(&assets_dir).map_err(|e| {
+            format!("Failed to create assets directory: {}", e)
+        })?;
+        for (filename, bytes) in &assets {
+            std::fs::write(assets_dir.join(filename), bytes).map_err(|e| {
+                format!("Failed to write asset '{}': {}", filename, e)
+            })?;
+        }
+        debug!("Wrote {} asset file(s) to {}", assets.len(), assets_dir.display());
+    }
 
     info!(
         "Markdown export complete: {} entries exported to {}",

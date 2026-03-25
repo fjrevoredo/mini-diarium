@@ -73,8 +73,8 @@ mod tests {
                 builtin: false,
             }
         }
-        fn export(&self, _entries: Vec<DiaryEntry>) -> Result<String, String> {
-            Ok(String::new())
+        fn export(&self, _entries: Vec<DiaryEntry>) -> Result<crate::plugin::ExportOutput, String> {
+            Ok(crate::plugin::ExportOutput { content: String::new(), assets: vec![] })
         }
     }
 

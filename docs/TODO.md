@@ -37,7 +37,7 @@ TODO entry format:
 ---
 
 ## Low Priority / Future
-- [ ] **Markdown export image handling** — embedded base64 images in entry HTML are currently written as inline `data:` URIs in the exported Markdown, making files very large and unreadable in most Markdown editors; export should extract images to a sibling `assets/` folder and replace `<img src="data:...">` tags with relative `![](assets/image-N.ext)` Markdown references; the export command is in `src-tauri/src/export/markdown.rs`
+- [x] **Markdown export image handling** (2026-03-25) — embedded base64 images in entry HTML are currently written as inline `data:` URIs in the exported Markdown, making files very large and unreadable in most Markdown editors; export should extract images to a sibling `assets/` folder and replace `<img src="data:...">` tags with relative `![](assets/image-N.ext)` Markdown references; the export command is in `src-tauri/src/export/markdown.rs`
 - [ ] **PDF export** — convert journal entries to PDF (A4); likely via Tauri webview printing
 - [ ] **Text input extension point** — create a plugin/extension interface for alternative entry methods so official and user plugins can provide text input flows such as dictation, LLM-assisted drafting, and other future capture modes; define capability boundaries, permission model, and how plugins hand content into the editor without weakening the app’s privacy guarantees
 - [ ] **Statistics extension point** — add a plugin/extension interface for writing statistics so official and user plugins can calculate custom metrics and surface them in the statistics UI; define the data contract, execution/sandbox constraints, and how custom statistics are registered and rendered without weakening the app’s privacy-first local-only model
