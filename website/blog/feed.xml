@@ -5,7 +5,14 @@
     <link>https://mini-diarium.com/blog/</link>
     <description>Static articles about encrypted journals, private diary apps, offline journaling, and local-first software.</description>
     <language>en-us</language>
-    <lastBuildDate>Wed, 18 Mar 2026 00:00:00 GMT</lastBuildDate>
+    <lastBuildDate>Wed, 25 Mar 2026 00:00:00 GMT</lastBuildDate>
+  <item>
+    <title>Journal App Without Cloud: What Actually Matters</title>
+    <link>https://mini-diarium.com/blog/journal-app-without-cloud/</link>
+    <guid isPermaLink="true">https://mini-diarium.com/blog/journal-app-without-cloud/</guid>
+    <description>A journal app without cloud dependency should keep entries local, work offline, encrypt writing before storage, and make export straightforward when you want full control.</description>
+    <pubDate>Wed, 25 Mar 2026 00:00:00 GMT</pubDate>
+  </item>
   <item>
     <title>Day One Alternative for Private Offline Journaling</title>
     <link>https://mini-diarium.com/blog/day-one-alternative-for-private-offline-journaling/</link>

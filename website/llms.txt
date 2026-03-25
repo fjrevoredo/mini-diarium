@@ -28,6 +28,7 @@
 
 ## Latest Articles
 
+- Journal App Without Cloud: What Actually Matters: https://mini-diarium.com/blog/journal-app-without-cloud/
 - Day One Alternative for Private Offline Journaling: https://mini-diarium.com/blog/day-one-alternative-for-private-offline-journaling/
 - Encrypted Journal App vs. Cloud Notes App: https://mini-diarium.com/blog/encrypted-journal-vs-cloud-notes-app/
 - Offline Journal That You Own: https://mini-diarium.com/blog/offline-journal-that-you-own/
