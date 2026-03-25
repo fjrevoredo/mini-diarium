@@ -186,7 +186,10 @@ impl ExportPlugin for RhaiExportPlugin {
         let content: String = engine
             .call_fn(&mut scope, &self.script, "format_entries", (arr,))
             .map_err(|e| format!("Rhai script error: {}", e))?;
-        Ok(ExportOutput { content, assets: vec![] })
+        Ok(ExportOutput {
+            content,
+            assets: vec![],
+        })
     }
 }
 

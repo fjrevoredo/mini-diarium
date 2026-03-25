@@ -1,5 +1,5 @@
-use base64::{engine::general_purpose, Engine as _};
 use crate::db::queries::DiaryEntry;
+use base64::{engine::general_purpose, Engine as _};
 
 /// Exports diary entries to a Markdown-formatted string
 ///
@@ -573,10 +573,7 @@ fn extract_src_data_uri(tag: &str) -> Option<(String, String)> {
             let b64_start = rest.strip_prefix("base64,")?;
             let q_end = b64_start.find(quote)?;
             let b64_data = &b64_start[..q_end];
-            return Some((
-                format!("image/{}", mime_subtype),
-                b64_data.to_string(),
-            ));
+            return Some((format!("image/{}", mime_subtype), b64_data.to_string()));
         }
     }
     None
@@ -976,7 +973,10 @@ mod tests {
 
         assert_eq!(counter, 1);
         assert!(
-            processed.contains(&format!("![Image 1](data:image/png;base64,{})", TINY_PNG_B64)),
+            processed.contains(&format!(
+                "![Image 1](data:image/png;base64,{})",
+                TINY_PNG_B64
+            )),
             "expected inline data URI ref in: {}",
             processed
         );
@@ -1005,7 +1005,10 @@ mod tests {
 
         assert!(markdown.contains("## 2024-01-15"));
         assert!(
-            markdown.contains(&format!("![Image 1](data:image/png;base64,{})", TINY_PNG_B64)),
+            markdown.contains(&format!(
+                "![Image 1](data:image/png;base64,{})",
+                TINY_PNG_B64
+            )),
             "expected inline data URI in: {}",
             markdown
         );

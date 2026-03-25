@@ -74,7 +74,10 @@ mod tests {
             }
         }
         fn export(&self, _entries: Vec<DiaryEntry>) -> Result<crate::plugin::ExportOutput, String> {
-            Ok(crate::plugin::ExportOutput { content: String::new(), assets: vec![] })
+            Ok(crate::plugin::ExportOutput {
+                content: String::new(),
+                assets: vec![],
+            })
         }
     }
 

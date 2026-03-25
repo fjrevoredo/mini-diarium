@@ -142,15 +142,17 @@ pub fn run_export_plugin(
             .parent()
             .unwrap_or(std::path::Path::new("."))
             .join("assets");
-        std::fs::create_dir_all(&assets_dir).map_err(|e| {
-            format!("Failed to create assets directory: {}", e)
-        })?;
+        std::fs::create_dir_all(&assets_dir)
+            .map_err(|e| format!("Failed to create assets directory: {}", e))?;
         for (filename, bytes) in &output.assets {
-            std::fs::write(assets_dir.join(filename), bytes).map_err(|e| {
-                format!("Failed to write asset '{}': {}", filename, e)
-            })?;
+            std::fs::write(assets_dir.join(filename), bytes)
+                .map_err(|e| format!("Failed to write asset '{}': {}", filename, e))?;
         }
-        debug!("Wrote {} asset file(s) to {}", output.assets.len(), assets_dir.display());
+        debug!(
+            "Wrote {} asset file(s) to {}",
+            output.assets.len(),
+            assets_dir.display()
+        );
     }
 
     info!(

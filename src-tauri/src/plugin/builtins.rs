@@ -90,7 +90,10 @@ impl ExportPlugin for JsonExporter {
 
     fn export(&self, entries: Vec<DiaryEntry>) -> Result<ExportOutput, String> {
         let content = json::export_entries_to_json(entries)?;
-        Ok(ExportOutput { content, assets: vec![] })
+        Ok(ExportOutput {
+            content,
+            assets: vec![],
+        })
     }
 }
 
