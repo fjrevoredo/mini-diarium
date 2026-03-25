@@ -31,7 +31,7 @@ Template:
 # Versions
 
 
-## [0.4.13] - Unreleased
+## [0.4.13] - 25-03-2026
 
 ### Added
 
