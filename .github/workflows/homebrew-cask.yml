@@ -6,6 +6,11 @@ permissions:
 on:
   release:
     types: [released]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag (e.g. v0.4.12)'
+        required: true
 
 jobs:
   update-cask:
@@ -18,8 +23,8 @@ jobs:
       - name: Determine version and asset
         id: info
         run: |
-          # GITHUB_REF_NAME is the full tag, e.g. v0.4.4
-          TAG="${GITHUB_REF_NAME}"
+          # On workflow_dispatch use the input; on release use the ref tag
+          TAG="${{ github.event.inputs.tag || github.ref_name }}"
 
           # Strip leading 'v' for the version string and asset name
           VERSION="${TAG#v}"
