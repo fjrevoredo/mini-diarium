@@ -2,11 +2,43 @@
 
 All notable changes to Mini Diarium are documented here. This project uses [Semantic Versioning](https://semver.org/).
 
-## [0.4.13] - 2026-03-25
+Template:
+
+```markdown
+## [X.Y.Z] - dd-mm-YYYY/Unreleased
+
+### Added
+- **Change X**: Change X description
+    - **Change X sub-item**: Change X subitem description
+
+### Fixed
+- **Fix X**: Fix X description
+
+### Changed
+- **Change X**: Change X description
+
+### Removed
+- **Removal X**: Removal X description
+
+
+## [X.Y.Z-1] - dd-mm-YYYY
+
+...
+```
+
+
+
+# Versions
+
+
+## [0.4.13] - Unreleased
 
 ### Added
 
-- **Markdown export image handling**: embedded base64 images are no longer silently stripped on export. Two new export options appear in the Export dialog: **Markdown** (`builtin:markdown`) extracts images to a sibling `assets/` folder and replaces `<img>` tags with relative `![Image N](assets/image-N.ext)` references — compatible with Obsidian, Typora, and VS Code; **Markdown (inline images)** (`builtin:markdown-inline`) embeds images as `![Image N](data:image/TYPE;base64,…)` data URIs for single-file portability in editors that support them. Backend test count: 249 → 265.
+- **Markdown export image handling**: embedded base64 images are no longer silently stripped on export. Two new export options appear in the Export dialog:
+    - **Markdown** (`builtin:markdown`) extracts images to a sibling `assets/` folder and replaces `<img>` tags with relative `![Image N](assets/image-N.ext)` references — compatible with Obsidian, Typora, and VS Code
+    - **Markdown (inline images)** (`builtin:markdown-inline`) embeds images as `![Image N](data:image/TYPE;base64,…)` data URIs for single-file portability in editors that support them
+    - Backend test count: 249 → 265
 
 
 ## [0.4.11] - 24-03-2026
