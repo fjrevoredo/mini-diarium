@@ -272,6 +272,8 @@ const en = {
       escNone: 'Do nothing',
       escQuit: 'Quit the app',
       escHint: 'When set to "Quit", pressing Escape closes the app while no dialog is open.',
+      languageLabel: 'Language',
+      languageHint: 'Select the display language.',
     },
     writing: {
       firstDayLabel: 'First Day of Week',

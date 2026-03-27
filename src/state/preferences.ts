@@ -16,6 +16,7 @@ export interface Preferences {
   advancedToolbar: boolean;
   editorFontSize: number; // px, 12–24
   showEntryTimestamps: boolean;
+  language: string; // locale code, e.g. 'en'
 }
 
 const DEFAULT_PREFERENCES: Preferences = {
@@ -29,6 +30,7 @@ const DEFAULT_PREFERENCES: Preferences = {
   advancedToolbar: false,
   editorFontSize: 16,
   showEntryTimestamps: false,
+  language: 'en',
 };
 
 // Load preferences from localStorage

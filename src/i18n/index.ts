@@ -1,5 +1,5 @@
 import { translator, flatten, resolveTemplate } from '@solid-primitives/i18n';
-import { createContext, useContext, createComponent, type JSX } from 'solid-js';
+import { createSignal, createContext, useContext, createComponent, type JSX } from 'solid-js';
 import en from './locales/en';
 
 // Pre-flatten the English dictionary once at module load time.
@@ -7,6 +7,17 @@ import en from './locales/en';
 // can look up e.g. 'auth.picker.empty' without deep traversal.
 const flatEn = flatten(en);
 type FlatEn = typeof flatEn;
+
+// Reactive locale signal — starts with English flat dict.
+// When a new locale is loaded, update this signal to switch all t() calls.
+const [activeLocaleDict, setActiveLocaleDict] = createSignal(flatEn);
+
+// Switch the active locale. For now only 'en' is available; future locales
+// should dynamically import their JSON file, flatten it, and call
+// setActiveLocaleDict(flattenedLocale) here.
+export function setLocale(_code: string): void {
+  setActiveLocaleDict(flatEn);
+}
 
 // T is the typed translator function: t(key, params?) → string (never undefined).
 // The raw @solid-primitives/i18n translator returns string | undefined for
@@ -16,10 +27,10 @@ export type T = (key: keyof FlatEn, params?: Record<string, string | number>) =>
 
 // The first argument to translator() must be a reactive getter (() => dict),
 // not a plain dict — this is required by @solid-primitives/i18n v2 for SolidJS
-// reactivity. For the English-only iteration the getter is a constant function.
-// When locale switching is added later, replace () => flatEn with a signal here
-// without touching any call site.
-const _rawT = translator(() => flatEn, resolveTemplate);
+// reactivity. Passing the signal accessor means all t(key) calls inside JSX
+// are reactive: when activeLocaleDict changes, affected components re-render.
+// eslint-disable-next-line solid/reactivity -- activeLocaleDict is a reactive getter passed to translator(); the library calls it inside its own tracking scope, so reactivity is preserved even though ESLint can't see the internal call site
+const _rawT = translator(activeLocaleDict, resolveTemplate);
 
 // Wrap the raw translator so T always returns string.
 // Falls back to the key name if a key is somehow missing (aids debugging).
@@ -39,8 +50,6 @@ const I18nContext = createContext<T>(defaultT);
 export function I18nProvider(props: { children: JSX.Element }) {
   // createComponent avoids JSX in this .ts file while providing identical
   // behaviour to <I18nContext.Provider value={defaultT}>{children}</I18nContext.Provider>.
-  // Currently English only. Future: accept a locale prop or read a signal here,
-  // then pass the appropriate flattened dict to translator().
   return createComponent(I18nContext.Provider, {
     value: defaultT,
     get children() {

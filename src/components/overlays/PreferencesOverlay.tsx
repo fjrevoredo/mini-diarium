@@ -14,6 +14,7 @@ import { openUrl } from '@tauri-apps/plugin-opener';
 import { Dialog } from '@kobalte/core/dialog';
 import { createLogger } from '../../lib/logger';
 import { preferences, setPreferences, type EscAction } from '../../state/preferences';
+import { AVAILABLE_LOCALES } from '../../i18n/locales/index';
 import {
   getThemePreference,
   setTheme,
@@ -44,6 +45,11 @@ type Tab = 'general' | 'writing' | 'security' | 'data' | 'advanced';
 export default function PreferencesOverlay(props: PreferencesOverlayProps) {
   const t = useI18n();
 
+  // Language options — reactive to follow the same pattern as FIRST_DAY_OPTIONS
+  const LANGUAGE_OPTIONS = createMemo(() =>
+    AVAILABLE_LOCALES.map((l) => ({ value: l.code, label: l.nativeName })),
+  );
+
   // First day of week options — reactive so labels are translated
   const FIRST_DAY_OPTIONS = createMemo(() => [
     { value: 'null', label: t('prefs.writing.firstDaySystem') },
@@ -60,6 +66,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
   const [activeTab, setActiveTab] = createSignal<Tab>('general');
 
   // Local state for form values
+  const [localLanguage, setLocalLanguage] = createSignal(preferences().language);
   const [localTheme, setLocalTheme] = createSignal<ThemePreference>(getThemePreference());
   const [localAllowFutureEntries, setLocalAllowFutureEntries] = createSignal(
     preferences().allowFutureEntries,
@@ -158,6 +165,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
   const handleOpenChange = async (open: boolean) => {
     if (open) {
       setActiveTab('general');
+      setLocalLanguage(preferences().language);
       setLocalTheme(getThemePreference());
       setLocalAllowFutureEntries(preferences().allowFutureEntries);
       setLocalFirstDayOfWeek(
@@ -233,6 +241,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
 
     // Save other preferences
     setPreferences({
+      language: localLanguage(),
       allowFutureEntries: localAllowFutureEntries(),
       firstDayOfWeek: localFirstDayOfWeek() === 'null' ? null : Number(localFirstDayOfWeek()),
       hideTitles: localHideTitles(),
@@ -681,6 +690,29 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                         </select>
                         <p class="mt-2 text-xs text-tertiary leading-relaxed">
                           {t('prefs.general.themeHint')}
+                        </p>
+                      </div>
+
+                      {/* Language */}
+                      <div>
+                        <label
+                          for="pref-language"
+                          class="block text-sm font-medium text-secondary mb-2"
+                        >
+                          {t('prefs.general.languageLabel')}
+                        </label>
+                        <select
+                          id="pref-language"
+                          value={localLanguage()}
+                          onChange={(e) => setLocalLanguage(e.currentTarget.value)}
+                          class="w-full px-3 py-2 border border-primary bg-primary text-primary rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        >
+                          <For each={LANGUAGE_OPTIONS()}>
+                            {(option) => <option value={option.value}>{option.label}</option>}
+                          </For>
+                        </select>
+                        <p class="mt-2 text-xs text-tertiary leading-relaxed">
+                          {t('prefs.general.languageHint')}
                         </p>
                       </div>
 

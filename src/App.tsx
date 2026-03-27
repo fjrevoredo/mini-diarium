@@ -4,8 +4,8 @@ import { authState, initializeAuth, lockJournal, setupAuthEventListeners } from 
 import { initializeTheme } from './lib/theme';
 import { createLogger } from './lib/logger';
 import { preferences } from './state/preferences';
+import { setLocale, useI18n } from './i18n';
 import { isAboutOpen, setIsAboutOpen } from './state/ui';
-import { useI18n } from './i18n';
 import JournalPicker from './components/auth/JournalPicker';
 import PasswordCreation from './components/auth/PasswordCreation';
 import PasswordPrompt from './components/auth/PasswordPrompt';
@@ -18,6 +18,12 @@ function App() {
   const t = useI18n();
   const ACTIVITY_EVENTS = ['mousemove', 'keydown', 'click', 'touchstart', 'scroll'] as const;
   let idleTimer: ReturnType<typeof setTimeout> | null = null;
+
+  // Sync locale signal from persisted preference — runs immediately on mount
+  // and re-runs whenever preferences().language changes.
+  createEffect(() => {
+    setLocale(preferences().language);
+  });
 
   createEffect(() => {
     const { autoLockEnabled, autoLockTimeout } = preferences();
