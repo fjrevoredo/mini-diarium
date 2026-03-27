@@ -4,10 +4,13 @@ import { searchQuery, setSearchQuery, setSearchResults, setIsSearching } from '.
 import { searchEntries } from '../../lib/tauri';
 import { debounce } from '../../lib/debounce';
 import { createLogger } from '../../lib/logger';
+import { useI18n } from '../../i18n';
 
 const log = createLogger('Search');
 
 export default function SearchBar() {
+  const t = useI18n();
+
   // eslint-disable-next-line no-unassigned-vars
   let inputRef: HTMLInputElement | undefined;
 
@@ -68,14 +71,14 @@ export default function SearchBar() {
           type="text"
           value={searchQuery()}
           onInput={handleInput}
-          placeholder="Search entries..."
+          placeholder={t('search.placeholder')}
           class="w-full rounded-md border border-primary bg-primary text-primary px-3 py-2 pr-8 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 placeholder-tertiary"
         />
         {searchQuery() && (
           <button
             onClick={handleClear}
             class="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-tertiary hover:bg-hover hover:text-secondary"
-            aria-label="Clear search"
+            aria-label={t('search.clearAria')}
           >
             <X size={16} />
           </button>

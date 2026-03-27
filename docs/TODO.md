@@ -23,6 +23,9 @@ TODO entry format:
 - [ ] **i18n framework** — detect OS locale, set up translation files (`en.json`, `es.json`), add `t()` helper
   - [ ] **Translate all UI text** — replace hardcoded strings with translation keys (~145 keys); depends on i18n framework above
 - [ ] **Frontend test coverage** — auth screens (`PasswordPrompt.tsx`, `PasswordCreation.tsx`), Calendar, and all overlays (GoToDateOverlay, PreferencesOverlay, StatsOverlay, ImportOverlay, ExportOverlay) have zero test coverage; add Vitest + @solidjs/testing-library tests for each; use existing pattern from `TitleEditor.test.tsx` and `WordCount.test.tsx`
+- [ ] **Full image drag-and-drop support** — dropping images into the editor should work consistently both from file managers and from other applications (for example browsers, chat apps, or image editors), not only when the drag payload exposes file paths; image drops should embed the image the same way as the toolbar picker and paste flow, while unsupported payloads fail safely without breaking the editor
+  - [ ] **First compatibility target: Typora** — validate and support dragging images from Typora into Mini Diarium as the first cross-application drag-and-drop case before widening compatibility to other apps
+- [ ] **Provide Flatpak package for Linux distribution** — solve GitHub issue `#70` by extending the release process so Mini Diarium can be packaged and released automatically to Flathub with a repeatable, low-manual-step workflow; consider JReleaser if it helps reduce maintenance, but do not treat it as a required solution
 - [ ] **`screen_lock.rs` unit tests** — the Windows session-lock hook is untested because it calls Win32 APIs directly; extract `trigger_auto_lock` and test it with a mock `DiaryState`; requires Win32 API mocking strategy.
 
 ---
@@ -37,7 +40,6 @@ TODO entry format:
 ---
 
 ## Low Priority / Future
-- [x] **Markdown export image handling** (2026-03-25) — embedded base64 images in entry HTML are currently written as inline `data:` URIs in the exported Markdown, making files very large and unreadable in most Markdown editors; export should extract images to a sibling `assets/` folder and replace `<img src="data:...">` tags with relative `![](assets/image-N.ext)` Markdown references; the export command is in `src-tauri/src/export/markdown.rs`
 - [ ] **PDF export** — convert journal entries to PDF (A4); likely via Tauri webview printing
 - [ ] **Text input extension point** — create a plugin/extension interface for alternative entry methods so official and user plugins can provide text input flows such as dictation, LLM-assisted drafting, and other future capture modes; define capability boundaries, permission model, and how plugins hand content into the editor without weakening the app’s privacy guarantees
 - [ ] **Statistics extension point** — add a plugin/extension interface for writing statistics so official and user plugins can calculate custom metrics and surface them in the statistics UI; define the data contract, execution/sandbox constraints, and how custom statistics are registered and rendered without weakening the app’s privacy-first local-only model

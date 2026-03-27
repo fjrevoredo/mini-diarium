@@ -3,6 +3,7 @@ import { X, Calendar as CalendarIcon } from 'lucide-solid';
 import Calendar from '../calendar/Calendar';
 import { selectedDate, setSelectedDate } from '../../state/ui';
 import { getTodayString } from '../../lib/dates';
+import { useI18n } from '../../i18n';
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -13,6 +14,8 @@ const FOCUSABLE_SELECTORS =
   'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
 export default function Sidebar(props: SidebarProps) {
+  const t = useI18n();
+
   // eslint-disable-next-line no-unassigned-vars -- SolidJS assigns via ref={sidebarRef}; ESLint can't see the JSX assignment
   let sidebarRef!: HTMLElement;
   let previousFocus: Element | null = null;
@@ -87,7 +90,7 @@ export default function Sidebar(props: SidebarProps) {
         class={`fixed inset-y-0 left-0 z-30 w-80 transform bg-primary border-r border-primary transition-transform duration-300 lg:relative lg:translate-x-0 ${
           props.isCollapsed ? '-translate-x-full' : 'translate-x-0'
         }`}
-        aria-label="Navigation"
+        aria-label={t('layout.sidebar.navigation')}
       >
         <div class="flex h-full flex-col">
           {/* Sidebar Header */}
@@ -97,7 +100,7 @@ export default function Sidebar(props: SidebarProps) {
               <button
                 onClick={() => props.onClose?.()}
                 class="rounded p-2 hover:bg-hover text-primary lg:hidden"
-                aria-label="Close menu"
+                aria-label={t('layout.sidebar.closeMenu')}
               >
                 <X size={24} />
               </button>
@@ -113,8 +116,8 @@ export default function Sidebar(props: SidebarProps) {
                   onClick={() => setSelectedDate(getTodayString())}
                   disabled={selectedDate() === getTodayString()}
                   class="flex items-center gap-1 rounded-md bg-tertiary px-3 py-2 text-sm font-medium text-secondary hover:bg-active disabled:opacity-50 disabled:cursor-not-allowed"
-                  aria-label="Go to Today"
-                  title="Go to Today"
+                  aria-label={t('layout.sidebar.goToToday')}
+                  title={t('layout.sidebar.goToToday')}
                 >
                   <CalendarIcon size={16} />
                 </button>

@@ -9,6 +9,7 @@ import {
   type ExportResult,
 } from '../../lib/tauri';
 import { mapTauriError } from '../../lib/errors';
+import { useI18n } from '../../i18n';
 import { X, FileDown, CheckCircle, AlertCircle } from 'lucide-solid';
 
 interface ExportOverlayProps {
@@ -19,6 +20,8 @@ interface ExportOverlayProps {
 const log = createLogger('Export');
 
 export default function ExportOverlay(props: ExportOverlayProps) {
+  const t = useI18n();
+
   const [plugins, setPlugins] = createSignal<PluginInfo[]>([]);
   const [selectedPluginId, setSelectedPluginId] = createSignal<string>('');
   const [exporting, setExporting] = createSignal(false);
@@ -84,7 +87,7 @@ export default function ExportOverlay(props: ExportOverlayProps) {
       setResult(exportResult);
     } catch (err) {
       log.error('Export failed:', err);
-      setError(mapTauriError(err) || 'Export failed');
+      setError(mapTauriError(err, t) || t('export.exportFailed'));
     } finally {
       setExporting(false);
     }
@@ -113,10 +116,12 @@ export default function ExportOverlay(props: ExportOverlayProps) {
             onKeyDown={handleKeyDown}
           >
             <div class="flex items-center justify-between mb-4">
-              <Dialog.Title class="text-lg font-semibold text-primary">Export Entries</Dialog.Title>
+              <Dialog.Title class="text-lg font-semibold text-primary">
+                {t('export.title')}
+              </Dialog.Title>
               <Dialog.CloseButton
                 class="rounded-md p-1 hover:bg-hover transition-colors"
-                aria-label="Close"
+                aria-label={t('export.closeAria')}
                 disabled={exporting()}
               >
                 <X size={20} class="text-tertiary" />
@@ -124,21 +129,20 @@ export default function ExportOverlay(props: ExportOverlayProps) {
             </div>
 
             <Dialog.Description class="text-sm text-secondary mb-6">
-              Export all journal entries to a file
+              {t('export.description')}
             </Dialog.Description>
 
             {/* Security Warning */}
             <div class="mb-4 rounded-md bg-amber-50 border border-amber-200 p-3 dark:bg-amber-900/20 dark:border-amber-800">
               <p class="text-sm text-amber-800 dark:text-amber-200">
-                Exported files contain your journal entries as plain text. Store them in a secure
-                location.
+                {t('export.securityWarning')}
               </p>
             </div>
 
             {/* Format Selection */}
             <div class="mb-6">
               <label for="export-format" class="block text-sm font-medium text-secondary mb-2">
-                Format
+                {t('export.formatLabel')}
               </label>
               <select
                 id="export-format"
@@ -165,7 +169,7 @@ export default function ExportOverlay(props: ExportOverlayProps) {
               >
                 <AlertCircle size={20} class="text-error flex-shrink-0 mt-0.5" />
                 <div class="flex-1">
-                  <p class="text-sm font-medium text-error">Export Failed</p>
+                  <p class="text-sm font-medium text-error">{t('export.failedTitle')}</p>
                   <p class="text-sm text-error mt-1">{error()}</p>
                 </div>
               </div>
@@ -176,15 +180,15 @@ export default function ExportOverlay(props: ExportOverlayProps) {
               <div role="status" class="mb-4 bg-success border border-success rounded-md p-4">
                 <div class="flex items-start gap-2 mb-3">
                   <CheckCircle size={20} class="text-success flex-shrink-0 mt-0.5" />
-                  <p class="text-sm font-medium text-success">Export Successful!</p>
+                  <p class="text-sm font-medium text-success">{t('export.successTitle')}</p>
                 </div>
                 <div class="space-y-2 text-sm text-success">
                   <div class="flex justify-between">
-                    <span>Entries exported:</span>
+                    <span>{t('export.entriesExported')}</span>
                     <span class="font-semibold">{formatCount(result()!.entries_exported)}</span>
                   </div>
                   <div class="flex justify-between">
-                    <span>Saved to:</span>
+                    <span>{t('export.savedTo')}</span>
                     <span class="font-semibold truncate ml-2">
                       {getFileName(result()!.file_path)}
                     </span>
@@ -201,7 +205,7 @@ export default function ExportOverlay(props: ExportOverlayProps) {
                   aria-hidden="true"
                 />
                 <span class="ml-3 text-sm text-secondary" role="status">
-                  Exporting...
+                  {t('export.exporting')}
                 </span>
               </div>
             </Show>
@@ -213,7 +217,7 @@ export default function ExportOverlay(props: ExportOverlayProps) {
                 disabled={exporting()}
                 class="px-4 py-2 text-sm font-medium text-secondary hover:bg-hover rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {result() ? 'Close' : 'Cancel'}
+                {result() ? t('common.close') : t('common.cancel')}
               </button>
               <Show when={!result()}>
                 <button
@@ -222,7 +226,7 @@ export default function ExportOverlay(props: ExportOverlayProps) {
                   class="px-4 py-2 interactive-primary rounded-md transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
                   <FileDown size={16} />
-                  Start Export
+                  {t('export.startExport')}
                 </button>
               </Show>
             </div>

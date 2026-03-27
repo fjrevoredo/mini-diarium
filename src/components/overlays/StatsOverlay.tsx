@@ -1,6 +1,7 @@
 import { createSignal, createEffect, Show } from 'solid-js';
 import { Dialog } from '@kobalte/core/dialog';
 import { getStatistics, type Statistics } from '../../lib/tauri';
+import { useI18n } from '../../i18n';
 import { X } from 'lucide-solid';
 
 interface StatsOverlayProps {
@@ -9,6 +10,8 @@ interface StatsOverlayProps {
 }
 
 export default function StatsOverlay(props: StatsOverlayProps) {
+  const t = useI18n();
+
   const [stats, setStats] = createSignal<Statistics | null>(null);
   const [loading, setLoading] = createSignal(false);
   const [error, setError] = createSignal<string | null>(null);
@@ -27,7 +30,7 @@ export default function StatsOverlay(props: StatsOverlayProps) {
       const result = await getStatistics();
       setStats(result);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load statistics');
+      setError(err instanceof Error ? err.message : t('stats.failedToLoad'));
     } finally {
       setLoading(false);
     }
@@ -75,24 +78,26 @@ export default function StatsOverlay(props: StatsOverlayProps) {
             onKeyDown={handleKeyDown}
           >
             <div class="flex items-center justify-between mb-4">
-              <Dialog.Title class="text-lg font-semibold text-primary">Statistics</Dialog.Title>
+              <Dialog.Title class="text-lg font-semibold text-primary">
+                {t('stats.title')}
+              </Dialog.Title>
               <Dialog.CloseButton
                 class="rounded-md p-1 hover:bg-hover transition-colors"
-                aria-label="Close"
+                aria-label={t('stats.closeAria')}
               >
                 <X size={20} class="text-tertiary" />
               </Dialog.CloseButton>
             </div>
 
             <Dialog.Description class="text-sm text-secondary mb-6">
-              Overview of your journal entries and writing habits
+              {t('stats.description')}
             </Dialog.Description>
 
             <Show when={loading()}>
               <div class="flex items-center justify-center py-12" aria-busy="true">
                 <div
                   class="animate-spin rounded-full h-8 w-8 border-b-2 spinner-border"
-                  aria-label="Loading statistics"
+                  aria-label={t('stats.loadingAria')}
                 />
               </div>
             </Show>
@@ -107,7 +112,7 @@ export default function StatsOverlay(props: StatsOverlayProps) {
               <div class="space-y-4">
                 {/* Total Entries */}
                 <div class="flex items-center justify-between border-b border-primary pb-3">
-                  <span class="text-sm font-medium text-secondary">Total Entries</span>
+                  <span class="text-sm font-medium text-secondary">{t('stats.totalEntries')}</span>
                   <span class="text-lg font-semibold text-primary">
                     {formatNumber(stats()!.total_entries)}
                   </span>
@@ -115,7 +120,9 @@ export default function StatsOverlay(props: StatsOverlayProps) {
 
                 {/* Entries per Week */}
                 <div class="flex items-center justify-between border-b border-primary pb-3">
-                  <span class="text-sm font-medium text-secondary">Entries per Week</span>
+                  <span class="text-sm font-medium text-secondary">
+                    {t('stats.entriesPerWeek')}
+                  </span>
                   <span class="text-lg font-semibold text-primary">
                     {formatDecimal(stats()!.entries_per_week)}
                   </span>
@@ -123,25 +130,27 @@ export default function StatsOverlay(props: StatsOverlayProps) {
 
                 {/* Best Streak */}
                 <div class="flex items-center justify-between border-b border-primary pb-3">
-                  <span class="text-sm font-medium text-secondary">Best Streak</span>
+                  <span class="text-sm font-medium text-secondary">{t('stats.bestStreak')}</span>
                   <span class="text-lg font-semibold text-primary">
-                    {formatNumber(stats()!.best_streak)}{' '}
-                    {stats()!.best_streak === 1 ? 'day' : 'days'}
+                    {t(stats()!.best_streak === 1 ? 'stats.day_one' : 'stats.day_other', {
+                      count: stats()!.best_streak,
+                    })}
                   </span>
                 </div>
 
                 {/* Current Streak */}
                 <div class="flex items-center justify-between border-b border-primary pb-3">
-                  <span class="text-sm font-medium text-secondary">Current Streak</span>
+                  <span class="text-sm font-medium text-secondary">{t('stats.currentStreak')}</span>
                   <span class="text-lg font-semibold text-primary">
-                    {formatNumber(stats()!.current_streak)}{' '}
-                    {stats()!.current_streak === 1 ? 'day' : 'days'}
+                    {t(stats()!.current_streak === 1 ? 'stats.day_one' : 'stats.day_other', {
+                      count: stats()!.current_streak,
+                    })}
                   </span>
                 </div>
 
                 {/* Total Words */}
                 <div class="flex items-center justify-between border-b border-primary pb-3">
-                  <span class="text-sm font-medium text-secondary">Total Words</span>
+                  <span class="text-sm font-medium text-secondary">{t('stats.totalWords')}</span>
                   <span class="text-lg font-semibold text-primary">
                     {formatNumber(stats()!.total_words)}
                   </span>
@@ -149,7 +158,9 @@ export default function StatsOverlay(props: StatsOverlayProps) {
 
                 {/* Average Words per Entry */}
                 <div class="flex items-center justify-between">
-                  <span class="text-sm font-medium text-secondary">Avg. Words per Entry</span>
+                  <span class="text-sm font-medium text-secondary">
+                    {t('stats.avgWordsPerEntry')}
+                  </span>
                   <span class="text-lg font-semibold text-primary">
                     {formatDecimal(stats()!.avg_words_per_entry)}
                   </span>
@@ -162,7 +173,7 @@ export default function StatsOverlay(props: StatsOverlayProps) {
                 onClick={() => props.onClose()}
                 class="rounded-md bg-tertiary px-4 py-2 text-sm font-medium text-secondary hover:bg-hover transition-colors"
               >
-                Close
+                {t('common.close')}
               </button>
             </div>
           </Dialog.Content>

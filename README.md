@@ -9,7 +9,7 @@ Free, open source, and never touches the internet.
 
 [![CI](https://github.com/fjrevoredo/mini-diarium/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/fjrevoredo/mini-diarium/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-0.4.13-blue)](https://github.com/fjrevoredo/mini-diarium/releases)
+[![Version](https://img.shields.io/badge/version-0.4.14-blue)](https://github.com/fjrevoredo/mini-diarium/releases)
 [![Platform](https://img.shields.io/badge/platform-Windows_%7C_macOS_%7C_Linux-lightgrey)](https://github.com/fjrevoredo/mini-diarium#download)
 [![Follow @MiniDiarium](https://img.shields.io/badge/Follow-%40MiniDiarium-000?logo=x&logoColor=white)](https://x.com/MiniDiarium)
 [![IdeaCred](https://ideacred.com/api/badge/fjrevoredo/mini-diarium)](https://ideacred.com/submissions)
@@ -319,6 +319,10 @@ See [docs/user-plugins/USER_PLUGIN_GUIDE.md](docs/user-plugins/USER_PLUGIN_GUIDE
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for setup instructions, development workflow, and conventions.
 For maintainers adding official plugins, see [docs/BUILTIN_PLUGIN_GUIDE.md](docs/BUILTIN_PLUGIN_GUIDE.md).
+
+### Translations
+
+Mini Diarium currently ships in English only. If you'd like to add support for another language, see [docs/TRANSLATIONS.md](docs/TRANSLATIONS.md) for instructions on creating a locale file and submitting a PR.
 
 ## Releasing
 

@@ -10,10 +10,13 @@ import {
 } from '../../state/journals';
 import { refreshAuthState, error as authError } from '../../state/auth';
 import { checkJournalPath } from '../../lib/tauri';
+import { useI18n } from '../../i18n';
 
 type AddMode = null | 'create' | 'open';
 
 export default function JournalPicker() {
+  const t = useI18n();
+
   const [isWorking, setIsWorking] = createSignal(false);
   const [localError, setLocalError] = createSignal<string | null>(null);
   const [addMode, setAddMode] = createSignal<AddMode>(null);
@@ -37,10 +40,10 @@ export default function JournalPicker() {
   };
 
   const handleRemove = async (id: string) => {
-    const ok = await confirm(
-      'Remove this journal from the list? The journal file will not be deleted.',
-      { title: 'Remove Journal', kind: 'warning' },
-    );
+    const ok = await confirm(t('auth.picker.confirmRemoveMessage'), {
+      title: t('auth.picker.confirmRemoveTitle'),
+      kind: 'warning',
+    });
     if (!ok) return;
     setLocalError(null);
     try {
@@ -76,7 +79,7 @@ export default function JournalPicker() {
     const selected = await openDirDialog({
       directory: true,
       multiple: false,
-      title: 'Choose Journal Folder',
+      title: t('auth.picker.chooseFolderTitle'),
     });
     if (!selected || typeof selected !== 'string') return;
     const folderName =
@@ -93,11 +96,11 @@ export default function JournalPicker() {
     const name = newName().trim();
     const dir = newDir();
     if (!name) {
-      setLocalError('Journal name is required');
+      setLocalError(t('auth.picker.nameRequired'));
       return;
     }
     if (!dir) {
-      setLocalError('Please choose a folder first');
+      setLocalError(t('auth.picker.folderRequired'));
       return;
     }
     setLocalError(null);
@@ -118,15 +121,13 @@ export default function JournalPicker() {
     const selected = await openDirDialog({
       directory: true,
       multiple: false,
-      title: 'Select Journal Folder',
+      title: t('auth.picker.selectFolderTitle'),
     });
     if (!selected || typeof selected !== 'string') return;
 
     const found = await checkJournalPath(selected);
     if (!found) {
-      setLocalError(
-        'No journal found in the selected folder. Make sure the folder contains a diary.db file.',
-      );
+      setLocalError(t('auth.picker.noJournalFound'));
       setAddMode('open');
       return;
     }
@@ -145,11 +146,11 @@ export default function JournalPicker() {
     const name = newName().trim();
     const dir = newDir();
     if (!name) {
-      setLocalError('Journal name is required');
+      setLocalError(t('auth.picker.nameRequired'));
       return;
     }
     if (!dir) {
-      setLocalError('Please choose a folder first');
+      setLocalError(t('auth.picker.folderRequired'));
       return;
     }
     setLocalError(null);
@@ -185,7 +186,7 @@ export default function JournalPicker() {
           <div class="mb-3 flex justify-center">
             <img src="/logo-transparent.svg" alt="Mini Diarium" class="h-16 w-16 rounded-xl" />
           </div>
-          <h1 class="mb-6 text-center text-3xl font-bold text-primary">Mini Diarium</h1>
+          <h1 class="mb-6 text-center text-3xl font-bold text-primary">{t('auth.picker.title')}</h1>
 
           {/* Error banner */}
           <Show when={displayError()}>
@@ -197,9 +198,9 @@ export default function JournalPicker() {
           {/* Journal list */}
           <Show when={journals().length > 0}>
             <h2 class="mb-3 text-sm font-semibold text-secondary uppercase tracking-wide">
-              Your Journals
+              {t('auth.picker.yourJournals')}
             </h2>
-            <ul aria-label="Your journals" class="space-y-2 mb-6">
+            <ul aria-label={t('auth.picker.yourJournalsAria')} class="space-y-2 mb-6">
               <For each={journals()}>
                 {(journal) => (
                   <li class="rounded-md border border-primary bg-tertiary p-3">
@@ -211,14 +212,14 @@ export default function JournalPicker() {
                             <button
                               type="button"
                               class="text-sm font-medium text-primary cursor-pointer hover:text-blue-600 text-left w-full focus:outline-none focus:ring-2 focus:ring-blue-500 rounded"
-                              title="Click to rename"
-                              aria-label={`Rename ${journal.name}`}
+                              title={t('auth.picker.renameAria', { name: journal.name })}
+                              aria-label={t('auth.picker.renameAria', { name: journal.name })}
                               onClick={() => handleStartRename(journal.id, journal.name)}
                             >
                               {journal.name}
                               <Show when={activeJournalId() === journal.id}>
                                 <span class="ml-2 inline-block px-2 py-0.5 text-xs rounded-full btn-active">
-                                  Last used
+                                  {t('auth.picker.lastUsed')}
                                 </span>
                               </Show>
                             </button>
@@ -252,7 +253,7 @@ export default function JournalPicker() {
                           disabled={isWorking()}
                           class="rounded-md interactive-primary px-3 py-1.5 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          Open
+                          {t('auth.picker.openButton')}
                         </button>
                         <button
                           type="button"
@@ -260,7 +261,7 @@ export default function JournalPicker() {
                           disabled={isWorking()}
                           class="rounded-md border border-primary px-3 py-1.5 text-xs font-medium text-destructive hover:bg-hover focus:outline-none focus:ring-2 focus:ring-red-400 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          Remove
+                          {t('auth.picker.removeButton')}
                         </button>
                       </div>
                     </div>
@@ -272,9 +273,7 @@ export default function JournalPicker() {
 
           {/* Empty state */}
           <Show when={journals().length === 0}>
-            <p class="mb-6 text-center text-sm text-secondary">
-              No journals yet. Create a new journal or open an existing one.
-            </p>
+            <p class="mb-6 text-center text-sm text-secondary">{t('auth.picker.empty')}</p>
           </Show>
 
           {/* Add Journal section */}
@@ -287,7 +286,7 @@ export default function JournalPicker() {
                   disabled={isWorking()}
                   class="flex-1 rounded-md interactive-primary px-4 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  + Create New Journal
+                  {t('auth.picker.createNew')}
                 </button>
                 <button
                   type="button"
@@ -295,7 +294,7 @@ export default function JournalPicker() {
                   disabled={isWorking()}
                   class="flex-1 rounded-md border border-primary px-4 py-2.5 text-sm font-medium text-secondary hover:bg-secondary focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  + Open Existing
+                  {t('auth.picker.openExisting')}
                 </button>
               </div>
             </Show>
@@ -303,9 +302,11 @@ export default function JournalPicker() {
             {/* Create form */}
             <Show when={addMode() === 'create'}>
               <div class="space-y-3">
-                <p class="text-xs font-medium text-secondary">Create New Journal</p>
+                <p class="text-xs font-medium text-secondary">{t('auth.picker.createFormTitle')}</p>
                 <div>
-                  <label class="block text-xs font-medium text-secondary mb-1">Name</label>
+                  <label class="block text-xs font-medium text-secondary mb-1">
+                    {t('auth.picker.nameLabel')}
+                  </label>
                   <input
                     type="text"
                     value={newName()}
@@ -315,18 +316,20 @@ export default function JournalPicker() {
                     }}
                     autofocus
                     class="w-full rounded-md border border-primary px-3 py-2 text-sm text-primary bg-primary focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    placeholder="e.g. My Journal"
+                    placeholder={t('auth.picker.namePlaceholder')}
                   />
                 </div>
                 <div>
-                  <label class="block text-xs font-medium text-secondary mb-1">Location</label>
+                  <label class="block text-xs font-medium text-secondary mb-1">
+                    {t('auth.picker.locationLabel')}
+                  </label>
                   <div class="flex gap-2 items-center">
                     <button
                       type="button"
                       onClick={() => handleBrowseCreate()}
                       class="rounded-md border border-primary px-3 py-1.5 text-xs font-medium text-secondary hover:bg-hover focus:outline-none"
                     >
-                      Browse...
+                      {t('common.browseDotDotDot')}
                     </button>
                     <Show when={newDir()}>
                       <p class="text-xs text-tertiary font-mono truncate" title={newDir()}>
@@ -342,14 +345,14 @@ export default function JournalPicker() {
                     disabled={isWorking() || !newDir()}
                     class="rounded-md interactive-primary px-4 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {isWorking() ? 'Creating...' : 'Add'}
+                    {isWorking() ? t('auth.picker.creating') : t('common.add')}
                   </button>
                   <button
                     type="button"
                     onClick={cancelAdd}
                     class="rounded-md border border-primary px-4 py-2 text-sm font-medium text-secondary hover:bg-hover focus:outline-none"
                   >
-                    Cancel
+                    {t('common.cancel')}
                   </button>
                 </div>
               </div>
@@ -358,14 +361,14 @@ export default function JournalPicker() {
             {/* Open existing form */}
             <Show when={addMode() === 'open'}>
               <div class="space-y-3">
-                <p class="text-xs font-medium text-secondary">Open Existing Journal</p>
+                <p class="text-xs font-medium text-secondary">{t('auth.picker.openFormTitle')}</p>
                 <div>
                   <button
                     type="button"
                     onClick={() => handleBrowseOpen()}
                     class="rounded-md border border-primary px-3 py-1.5 text-xs font-medium text-secondary hover:bg-hover focus:outline-none"
                   >
-                    Browse Folder...
+                    {t('common.browseFolderDotDotDot')}
                   </button>
                   <Show when={newDir()}>
                     <p class="mt-1 text-xs text-tertiary font-mono break-all">{newDir()}</p>
@@ -373,7 +376,9 @@ export default function JournalPicker() {
                 </div>
                 <Show when={newDir()}>
                   <div>
-                    <label class="block text-xs font-medium text-secondary mb-1">Name</label>
+                    <label class="block text-xs font-medium text-secondary mb-1">
+                      {t('auth.picker.nameLabel')}
+                    </label>
                     <input
                       type="text"
                       value={newName()}
@@ -383,7 +388,7 @@ export default function JournalPicker() {
                       }}
                       autofocus
                       class="w-full rounded-md border border-primary px-3 py-2 text-sm text-primary bg-primary focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      placeholder="Journal name"
+                      placeholder={t('auth.picker.journalNamePlaceholder')}
                     />
                   </div>
                   <div class="flex gap-2">
@@ -393,14 +398,14 @@ export default function JournalPicker() {
                       disabled={isWorking()}
                       class="rounded-md interactive-primary px-4 py-2 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {isWorking() ? 'Opening...' : 'Open'}
+                      {isWorking() ? t('auth.picker.opening') : t('common.open')}
                     </button>
                     <button
                       type="button"
                       onClick={cancelAdd}
                       class="rounded-md border border-primary px-4 py-2 text-sm font-medium text-secondary hover:bg-hover focus:outline-none"
                     >
-                      Cancel
+                      {t('common.cancel')}
                     </button>
                   </div>
                 </Show>
@@ -410,7 +415,7 @@ export default function JournalPicker() {
                     onClick={cancelAdd}
                     class="text-xs text-tertiary hover:text-secondary underline focus:outline-none"
                   >
-                    Cancel
+                    {t('common.cancel')}
                   </button>
                 </Show>
               </div>

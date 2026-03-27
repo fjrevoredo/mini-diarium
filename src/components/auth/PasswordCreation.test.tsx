@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@solidjs/testing-library';
+import { screen, fireEvent } from '@solidjs/testing-library';
+import { renderWithI18n } from '../../test/i18n-test-utils';
 
 // ── Mocks ──────────────────────────────────────────────────────────────────────
 
@@ -24,14 +25,14 @@ describe('PasswordCreation component', () => {
   });
 
   it('renders both password inputs with correct data-testid attributes', () => {
-    render(() => <PasswordCreation />);
+    renderWithI18n(() => <PasswordCreation />);
 
     expect(screen.getByTestId('password-create-input')).toBeInTheDocument();
     expect(screen.getByTestId('password-repeat-input')).toBeInTheDocument();
   });
 
   it('both password inputs have bg-primary class (dark theme regression)', () => {
-    render(() => <PasswordCreation />);
+    renderWithI18n(() => <PasswordCreation />);
 
     const createInput = screen.getByTestId('password-create-input');
     const repeatInput = screen.getByTestId('password-repeat-input');
@@ -41,7 +42,7 @@ describe('PasswordCreation component', () => {
   });
 
   it('shows "Passwords do not match" error when passwords differ before submit', async () => {
-    render(() => <PasswordCreation />);
+    renderWithI18n(() => <PasswordCreation />);
 
     const createInput = screen.getByTestId('password-create-input');
     const repeatInput = screen.getByTestId('password-repeat-input');

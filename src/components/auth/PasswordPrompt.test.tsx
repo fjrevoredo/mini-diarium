@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@solidjs/testing-library';
+import { screen, fireEvent } from '@solidjs/testing-library';
+import { renderWithI18n } from '../../test/i18n-test-utils';
 
 // ── Mocks ──────────────────────────────────────────────────────────────────────
 
@@ -38,7 +39,7 @@ describe('PasswordPrompt component', () => {
   });
 
   it('renders password input with correct testid and type', () => {
-    render(() => <PasswordPrompt />);
+    renderWithI18n(() => <PasswordPrompt />);
 
     const input = screen.getByTestId('password-unlock-input');
     expect(input).toBeInTheDocument();
@@ -46,7 +47,7 @@ describe('PasswordPrompt component', () => {
   });
 
   it('password input has bg-primary class (dark theme regression)', () => {
-    render(() => <PasswordPrompt />);
+    renderWithI18n(() => <PasswordPrompt />);
 
     const input = screen.getByTestId('password-unlock-input');
     expect(input.className).toContain('bg-primary');
@@ -55,7 +56,7 @@ describe('PasswordPrompt component', () => {
   it('shows error message when unlockJournal rejects', async () => {
     mocks.unlockJournal.mockRejectedValueOnce(new Error('Invalid password'));
 
-    render(() => <PasswordPrompt />);
+    renderWithI18n(() => <PasswordPrompt />);
 
     const input = screen.getByTestId('password-unlock-input');
     fireEvent.input(input, { target: { value: 'wrongpassword' } });
@@ -69,12 +70,12 @@ describe('PasswordPrompt component', () => {
   });
 
   it('displays the active journal name in the subtitle', () => {
-    render(() => <PasswordPrompt />);
+    renderWithI18n(() => <PasswordPrompt />);
     expect(screen.getByText('My Journal')).toBeInTheDocument();
   });
 
   it('renders key-file mode when Key File tab is clicked', () => {
-    render(() => <PasswordPrompt />);
+    renderWithI18n(() => <PasswordPrompt />);
 
     const keyFileTab = screen.getByText('Key File');
     fireEvent.click(keyFileTab);

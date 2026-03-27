@@ -1,26 +1,26 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render } from '@solidjs/testing-library';
+import { renderWithI18n } from '../../test/i18n-test-utils';
 import { EntryNavBar } from './EntryNavBar';
 
 const noop = () => {};
 
 describe('EntryNavBar — + button always visible', () => {
   it('shows + button when total is 0 (empty day)', () => {
-    const { container } = render(() => (
+    const { container } = renderWithI18n(() => (
       <EntryNavBar total={0} index={0} onPrev={noop} onNext={noop} onAdd={noop} />
     ));
     expect(container.querySelector('[aria-label="Add entry"]')).not.toBeNull();
   });
 
   it('shows + button when total is 1 (single entry)', () => {
-    const { container } = render(() => (
+    const { container } = renderWithI18n(() => (
       <EntryNavBar total={1} index={0} onPrev={noop} onNext={noop} onAdd={noop} />
     ));
     expect(container.querySelector('[aria-label="Add entry"]')).not.toBeNull();
   });
 
   it('shows + button when total is 2', () => {
-    const { container } = render(() => (
+    const { container } = renderWithI18n(() => (
       <EntryNavBar total={2} index={0} onPrev={noop} onNext={noop} onAdd={noop} />
     ));
     expect(container.querySelector('[aria-label="Add entry"]')).not.toBeNull();
@@ -29,7 +29,7 @@ describe('EntryNavBar — + button always visible', () => {
 
 describe('EntryNavBar — navigation hidden below 2 entries', () => {
   it('hides prev/next arrows when total is 0', () => {
-    const { container } = render(() => (
+    const { container } = renderWithI18n(() => (
       <EntryNavBar total={0} index={0} onPrev={noop} onNext={noop} onAdd={noop} />
     ));
     expect(container.querySelector('[aria-label="Previous entry"]')).toBeNull();
@@ -37,7 +37,7 @@ describe('EntryNavBar — navigation hidden below 2 entries', () => {
   });
 
   it('hides prev/next arrows when total is 1', () => {
-    const { container } = render(() => (
+    const { container } = renderWithI18n(() => (
       <EntryNavBar total={1} index={0} onPrev={noop} onNext={noop} onAdd={noop} />
     ));
     expect(container.querySelector('[aria-label="Previous entry"]')).toBeNull();
@@ -45,7 +45,7 @@ describe('EntryNavBar — navigation hidden below 2 entries', () => {
   });
 
   it('shows prev/next arrows when total is 2', () => {
-    const { container } = render(() => (
+    const { container } = renderWithI18n(() => (
       <EntryNavBar total={2} index={0} onPrev={noop} onNext={noop} onAdd={noop} />
     ));
     expect(container.querySelector('[aria-label="Previous entry"]')).not.toBeNull();
@@ -53,7 +53,7 @@ describe('EntryNavBar — navigation hidden below 2 entries', () => {
   });
 
   it('shows prev/next arrows when total is 3', () => {
-    const { container } = render(() => (
+    const { container } = renderWithI18n(() => (
       <EntryNavBar total={3} index={1} onPrev={noop} onNext={noop} onAdd={noop} />
     ));
     expect(container.querySelector('[aria-label="Previous entry"]')).not.toBeNull();
@@ -63,21 +63,21 @@ describe('EntryNavBar — navigation hidden below 2 entries', () => {
 
 describe('EntryNavBar counter', () => {
   it('shows "1 / 2" when on first of two entries', () => {
-    const { getByText } = render(() => (
+    const { getByText } = renderWithI18n(() => (
       <EntryNavBar total={2} index={0} onPrev={noop} onNext={noop} onAdd={noop} />
     ));
     expect(getByText('1 / 2')).toBeInTheDocument();
   });
 
   it('shows "2 / 2" when on second of two entries', () => {
-    const { getByText } = render(() => (
+    const { getByText } = renderWithI18n(() => (
       <EntryNavBar total={2} index={1} onPrev={noop} onNext={noop} onAdd={noop} />
     ));
     expect(getByText('2 / 2')).toBeInTheDocument();
   });
 
   it('shows "2 / 3" when on middle entry', () => {
-    const { getByText } = render(() => (
+    const { getByText } = renderWithI18n(() => (
       <EntryNavBar total={3} index={1} onPrev={noop} onNext={noop} onAdd={noop} />
     ));
     expect(getByText('2 / 3')).toBeInTheDocument();
@@ -86,7 +86,7 @@ describe('EntryNavBar counter', () => {
 
 describe('EntryNavBar arrow disabled states', () => {
   it('disables prev arrow at index 0', () => {
-    const { container } = render(() => (
+    const { container } = renderWithI18n(() => (
       <EntryNavBar total={2} index={0} onPrev={noop} onNext={noop} onAdd={noop} />
     ));
     const prev = container.querySelector('[aria-label="Previous entry"]') as HTMLButtonElement;
@@ -94,7 +94,7 @@ describe('EntryNavBar arrow disabled states', () => {
   });
 
   it('enables prev arrow when not at first entry', () => {
-    const { container } = render(() => (
+    const { container } = renderWithI18n(() => (
       <EntryNavBar total={2} index={1} onPrev={noop} onNext={noop} onAdd={noop} />
     ));
     const prev = container.querySelector('[aria-label="Previous entry"]') as HTMLButtonElement;
@@ -102,7 +102,7 @@ describe('EntryNavBar arrow disabled states', () => {
   });
 
   it('disables next arrow at last index', () => {
-    const { container } = render(() => (
+    const { container } = renderWithI18n(() => (
       <EntryNavBar total={2} index={1} onPrev={noop} onNext={noop} onAdd={noop} />
     ));
     const next = container.querySelector('[aria-label="Next entry"]') as HTMLButtonElement;
@@ -110,7 +110,7 @@ describe('EntryNavBar arrow disabled states', () => {
   });
 
   it('enables next arrow when not at last entry', () => {
-    const { container } = render(() => (
+    const { container } = renderWithI18n(() => (
       <EntryNavBar total={3} index={1} onPrev={noop} onNext={noop} onAdd={noop} />
     ));
     const next = container.querySelector('[aria-label="Next entry"]') as HTMLButtonElement;
@@ -121,7 +121,7 @@ describe('EntryNavBar arrow disabled states', () => {
 describe('EntryNavBar — delete button', () => {
   it('does NOT render delete button when total is 1', () => {
     const mockDelete = vi.fn();
-    const { container } = render(() => (
+    const { container } = renderWithI18n(() => (
       <EntryNavBar
         total={1}
         index={0}
@@ -135,7 +135,7 @@ describe('EntryNavBar — delete button', () => {
   });
 
   it('does NOT render delete button when onDelete not provided', () => {
-    const { container } = render(() => (
+    const { container } = renderWithI18n(() => (
       <EntryNavBar total={3} index={0} onPrev={noop} onNext={noop} onAdd={noop} />
     ));
     expect(container.querySelector('[aria-label="Delete entry"]')).toBeNull();
@@ -143,7 +143,7 @@ describe('EntryNavBar — delete button', () => {
 
   it('renders delete button when total > 1 and onDelete provided', () => {
     const mockDelete = vi.fn();
-    const { container } = render(() => (
+    const { container } = renderWithI18n(() => (
       <EntryNavBar
         total={3}
         index={1}
@@ -158,7 +158,7 @@ describe('EntryNavBar — delete button', () => {
 
   it('calls onDelete callback when delete button clicked', () => {
     const mockDelete = vi.fn();
-    const { container } = render(() => (
+    const { container } = renderWithI18n(() => (
       <EntryNavBar
         total={2}
         index={0}
@@ -175,7 +175,7 @@ describe('EntryNavBar — delete button', () => {
 
   it('disables delete button when deleteDisabled is true', () => {
     const mockDelete = vi.fn();
-    const { container } = render(() => (
+    const { container } = renderWithI18n(() => (
       <EntryNavBar
         total={2}
         index={0}
@@ -192,7 +192,7 @@ describe('EntryNavBar — delete button', () => {
 
   it('uses default aria-label when deleteTitle not provided', () => {
     const mockDelete = vi.fn();
-    const { container } = render(() => (
+    const { container } = renderWithI18n(() => (
       <EntryNavBar
         total={2}
         index={0}
@@ -207,7 +207,7 @@ describe('EntryNavBar — delete button', () => {
 
   it('uses custom aria-label from deleteTitle prop', () => {
     const mockDelete = vi.fn();
-    const { container } = render(() => (
+    const { container } = renderWithI18n(() => (
       <EntryNavBar
         total={2}
         index={0}

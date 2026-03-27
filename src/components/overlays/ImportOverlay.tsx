@@ -8,6 +8,7 @@ import {
   type PluginInfo,
   type ImportResult,
 } from '../../lib/tauri';
+import { useI18n } from '../../i18n';
 import { X, FileUp, CheckCircle, AlertCircle } from 'lucide-solid';
 
 interface ImportOverlayProps {
@@ -19,6 +20,8 @@ interface ImportOverlayProps {
 const log = createLogger('Import');
 
 export default function ImportOverlay(props: ImportOverlayProps) {
+  const t = useI18n();
+
   const [plugins, setPlugins] = createSignal<PluginInfo[]>([]);
   const [selectedPluginId, setSelectedPluginId] = createSignal<string>('');
   const [selectedFile, setSelectedFile] = createSignal<string | null>(null);
@@ -75,7 +78,7 @@ export default function ImportOverlay(props: ImportOverlayProps) {
         setResult(null);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to open file picker');
+      setError(err instanceof Error ? err.message : t('import.importFailed'));
     }
   };
 
@@ -83,11 +86,11 @@ export default function ImportOverlay(props: ImportOverlayProps) {
     const file = selectedFile();
     const pluginId = selectedPluginId();
     if (!file) {
-      setError('Please select a file first');
+      setError(t('import.selectFilePlease'));
       return;
     }
     if (!pluginId) {
-      setError('Please select an import format');
+      setError(t('import.selectFormatPlease'));
       return;
     }
 
@@ -102,7 +105,7 @@ export default function ImportOverlay(props: ImportOverlayProps) {
     } catch (err) {
       log.error('Import failed:', err);
       const errorMessage = err instanceof Error ? err.message : String(err);
-      setError(errorMessage || 'Import failed');
+      setError(errorMessage || t('import.importFailed'));
     } finally {
       setImporting(false);
     }
@@ -132,10 +135,12 @@ export default function ImportOverlay(props: ImportOverlayProps) {
             onKeyDown={handleKeyDown}
           >
             <div class="flex items-center justify-between mb-4">
-              <Dialog.Title class="text-lg font-semibold text-primary">Import Entries</Dialog.Title>
+              <Dialog.Title class="text-lg font-semibold text-primary">
+                {t('import.title')}
+              </Dialog.Title>
               <Dialog.CloseButton
                 class="rounded-md p-1 hover:bg-hover transition-colors"
-                aria-label="Close"
+                aria-label={t('import.closeAria')}
                 disabled={importing()}
               >
                 <X size={20} class="text-tertiary" />
@@ -143,13 +148,13 @@ export default function ImportOverlay(props: ImportOverlayProps) {
             </div>
 
             <Dialog.Description class="text-sm text-secondary mb-6">
-              Import journal entries from a file
+              {t('import.description')}
             </Dialog.Description>
 
             {/* Format Selection */}
             <div class="mb-4">
               <label for="format" class="block text-sm font-medium text-secondary mb-2">
-                Format
+                {t('import.formatLabel')}
               </label>
               <select
                 id="format"
@@ -171,17 +176,19 @@ export default function ImportOverlay(props: ImportOverlayProps) {
 
             {/* File Selection */}
             <div class="mb-6">
-              <label class="block text-sm font-medium text-secondary mb-2">File</label>
+              <label class="block text-sm font-medium text-secondary mb-2">
+                {t('import.fileLabel')}
+              </label>
               <div class="flex gap-2">
                 <div class="flex-1 px-3 py-2 border border-primary rounded-md bg-tertiary text-sm text-secondary truncate">
-                  {selectedFile() ? getFileName(selectedFile()) : 'No file selected'}
+                  {selectedFile() ? getFileName(selectedFile()) : t('import.noFileSelected')}
                 </div>
                 <button
                   onClick={handleSelectFile}
                   disabled={importing()}
                   class="px-4 py-2 bg-tertiary text-secondary rounded-md hover:bg-hover transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Browse
+                  {t('common.browse')}
                 </button>
               </div>
             </div>
@@ -194,7 +201,7 @@ export default function ImportOverlay(props: ImportOverlayProps) {
               >
                 <AlertCircle size={20} class="text-error flex-shrink-0 mt-0.5" />
                 <div class="flex-1">
-                  <p class="text-sm font-medium text-error">Import Failed</p>
+                  <p class="text-sm font-medium text-error">{t('import.failedTitle')}</p>
                   <p class="text-sm text-error mt-1">{error()}</p>
                 </div>
               </div>
@@ -205,16 +212,16 @@ export default function ImportOverlay(props: ImportOverlayProps) {
               <div role="status" class="mb-4 bg-success border border-success rounded-md p-4">
                 <div class="flex items-start gap-2 mb-3">
                   <CheckCircle size={20} class="text-success flex-shrink-0 mt-0.5" />
-                  <p class="text-sm font-medium text-success">Import Successful!</p>
+                  <p class="text-sm font-medium text-success">{t('import.successTitle')}</p>
                 </div>
                 <div class="space-y-2 text-sm text-success">
                   <div class="flex justify-between">
-                    <span>Entries imported:</span>
+                    <span>{t('import.entriesImported')}</span>
                     <span class="font-semibold">{formatCount(result()!.entries_imported)}</span>
                   </div>
                   <Show when={result()!.entries_skipped > 0}>
                     <div class="flex justify-between">
-                      <span>Entries skipped:</span>
+                      <span>{t('import.entriesSkipped')}</span>
                       <span class="font-semibold">{formatCount(result()!.entries_skipped)}</span>
                     </div>
                   </Show>
@@ -230,7 +237,7 @@ export default function ImportOverlay(props: ImportOverlayProps) {
                   aria-hidden="true"
                 />
                 <span class="ml-3 text-sm text-secondary" role="status">
-                  Importing...
+                  {t('import.importing')}
                 </span>
               </div>
             </Show>
@@ -242,7 +249,7 @@ export default function ImportOverlay(props: ImportOverlayProps) {
                 disabled={importing()}
                 class="px-4 py-2 text-sm font-medium text-secondary hover:bg-hover rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {result() ? 'Close' : 'Cancel'}
+                {result() ? t('common.close') : t('common.cancel')}
               </button>
               <Show when={!result()}>
                 <button
@@ -251,7 +258,7 @@ export default function ImportOverlay(props: ImportOverlayProps) {
                   class="px-4 py-2 interactive-primary rounded-md transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
                   <FileUp size={16} />
-                  Start Import
+                  {t('import.startImport')}
                 </button>
               </Show>
             </div>

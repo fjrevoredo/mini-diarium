@@ -1,4 +1,13 @@
-import { createSignal, createEffect, For, Show, Switch, Match, onMount } from 'solid-js';
+import {
+  createSignal,
+  createEffect,
+  For,
+  Show,
+  Switch,
+  Match,
+  onMount,
+  createMemo,
+} from 'solid-js';
 import { PasswordStrengthIndicator } from '../auth/PasswordStrengthIndicator';
 import { save, confirm as dialogConfirm, open as openDirDialog } from '@tauri-apps/plugin-dialog';
 import { openUrl } from '@tauri-apps/plugin-opener';
@@ -21,28 +30,32 @@ import {
 import { authState } from '../../state/auth';
 import * as tauri from '../../lib/tauri';
 import { mapTauriError } from '../../lib/errors';
+import { useI18n } from '../../i18n';
 
 interface PreferencesOverlayProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-const FIRST_DAY_OPTIONS = [
-  { value: 'null', label: 'System Default' },
-  { value: '0', label: 'Sunday' },
-  { value: '1', label: 'Monday' },
-  { value: '2', label: 'Tuesday' },
-  { value: '3', label: 'Wednesday' },
-  { value: '4', label: 'Thursday' },
-  { value: '5', label: 'Friday' },
-  { value: '6', label: 'Saturday' },
-];
-
 const log = createLogger('Preferences');
 
 type Tab = 'general' | 'writing' | 'security' | 'data' | 'advanced';
 
 export default function PreferencesOverlay(props: PreferencesOverlayProps) {
+  const t = useI18n();
+
+  // First day of week options — reactive so labels are translated
+  const FIRST_DAY_OPTIONS = createMemo(() => [
+    { value: 'null', label: t('prefs.writing.firstDaySystem') },
+    { value: '0', label: t('prefs.writing.firstDaySunday') },
+    { value: '1', label: t('prefs.writing.firstDayMonday') },
+    { value: '2', label: t('prefs.writing.firstDayTuesday') },
+    { value: '3', label: t('prefs.writing.firstDayWednesday') },
+    { value: '4', label: t('prefs.writing.firstDayThursday') },
+    { value: '5', label: t('prefs.writing.firstDayFriday') },
+    { value: '6', label: t('prefs.writing.firstDaySaturday') },
+  ]);
+
   // Tab state
   const [activeTab, setActiveTab] = createSignal<Tab>('general');
 
@@ -248,12 +261,12 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
 
     // Validation
     if (!oldPassword() || !newPassword() || !confirmPassword()) {
-      setPasswordError('All fields are required');
+      setPasswordError(t('prefs.security.allFieldsRequired'));
       return;
     }
 
     if (newPassword() !== confirmPassword()) {
-      setPasswordError('New passwords do not match');
+      setPasswordError(t('prefs.security.passwordsMismatch'));
       return;
     }
 
@@ -265,7 +278,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
       setConfirmPassword('');
       setTimeout(() => setPasswordSuccess(false), 3000);
     } catch (err) {
-      setPasswordError(mapTauriError(err));
+      setPasswordError(mapTauriError(err, t));
     }
   };
 
@@ -275,11 +288,11 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
     setAddKeypairSuccess(false);
 
     if (!addKeypairPassword()) {
-      setAddKeypairError('Current password is required');
+      setAddKeypairError(t('prefs.security.keypairPasswordRequired'));
       return;
     }
     if (!addKeypairLabel()) {
-      setAddKeypairError('Label is required');
+      setAddKeypairError(t('prefs.security.keypairLabelRequired'));
       return;
     }
 
@@ -292,12 +305,12 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
 
       // Step 3: Prompt user to choose a save path
       const savePath = await save({
-        title: 'Save Private Key File',
+        title: t('prefs.security.savePrivateKeyTitle'),
         defaultPath: `mini-diarium-${addKeypairLabel().replace(/\s+/g, '-')}.key`,
         filters: [{ name: 'Key Files', extensions: ['key'] }],
       });
       if (!savePath) {
-        setAddKeypairError('Key file save cancelled');
+        setAddKeypairError(t('prefs.security.keypairFileCancelled'));
         return;
       }
 
@@ -317,7 +330,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
       setAddKeypairLabel('');
       setTimeout(() => setAddKeypairSuccess(false), 4000);
     } catch (err) {
-      setAddKeypairError(mapTauriError(err));
+      setAddKeypairError(mapTauriError(err, t));
     }
   };
 
@@ -327,11 +340,11 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
     setAddPasswordSuccess(false);
 
     if (!addPasswordNew() || !addPasswordConfirm()) {
-      setAddPasswordError('Both fields are required');
+      setAddPasswordError(t('prefs.security.addPasswordBothRequired'));
       return;
     }
     if (addPasswordNew() !== addPasswordConfirm()) {
-      setAddPasswordError('Passwords do not match');
+      setAddPasswordError(t('prefs.security.addPasswordMismatch'));
       return;
     }
 
@@ -344,7 +357,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
       setAddPasswordSuccess(true);
       setTimeout(() => setAddPasswordSuccess(false), 3000);
     } catch (err) {
-      setAddPasswordError(mapTauriError(err));
+      setAddPasswordError(mapTauriError(err, t));
     }
   };
 
@@ -353,7 +366,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
     setRemoveError(null);
 
     if (!removePassword()) {
-      setRemoveError('Current password is required to remove an auth method');
+      setRemoveError(t('prefs.security.removeError'));
       return;
     }
 
@@ -361,14 +374,14 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
       // Validate password before showing the confirmation dialog
       await tauri.verifyPassword(removePassword());
     } catch (err) {
-      setRemoveError(mapTauriError(err));
+      setRemoveError(mapTauriError(err, t));
       return;
     }
 
-    const confirmed = await dialogConfirm(
-      'Are you sure you want to remove this authentication method?',
-      { title: 'Remove Authentication Method', kind: 'warning' },
-    );
+    const confirmed = await dialogConfirm(t('prefs.security.confirmRemoveMessage'), {
+      title: t('prefs.security.confirmRemoveTitle'),
+      kind: 'warning',
+    });
     if (!confirmed) return;
 
     try {
@@ -377,24 +390,24 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
       setAuthMethods(methods);
       setRemovePassword('');
     } catch (err) {
-      setRemoveError(mapTauriError(err));
+      setRemoveError(mapTauriError(err, t));
     }
   };
 
   // Handle journal reset
   const handleResetJournal = async () => {
-    const confirmed = await dialogConfirm(
-      'Are you sure you want to reset your journal? This will permanently delete all entries and cannot be undone.',
-      { title: 'Reset Journal', kind: 'warning' },
-    );
+    const confirmed = await dialogConfirm(t('prefs.data.resetConfirmMessage'), {
+      title: t('prefs.data.resetConfirmTitle'),
+      kind: 'warning',
+    });
 
     if (!confirmed) return;
 
     // Double confirmation
-    const doubleConfirmed = await dialogConfirm(
-      'This is your last chance. Are you absolutely sure you want to delete all your journal entries?',
-      { title: 'Reset Journal — Final Warning', kind: 'warning' },
-    );
+    const doubleConfirmed = await dialogConfirm(t('prefs.data.resetDoubleConfirmMessage'), {
+      title: t('prefs.data.resetDoubleConfirmTitle'),
+      kind: 'warning',
+    });
 
     if (!doubleConfirmed) return;
 
@@ -404,7 +417,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
       window.location.reload();
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err);
-      alert(`Failed to reset journal: ${message}`);
+      alert(t('prefs.data.resetFailedAlert', { message }));
     }
   };
 
@@ -414,7 +427,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
     const selected = await openDirDialog({
       directory: true,
       multiple: false,
-      title: 'Choose Journal Directory',
+      title: t('prefs.data.changeDirectoryTitle'),
     });
     if (!selected || typeof selected !== 'string') return;
     setIsChangingDir(true);
@@ -422,7 +435,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
       await tauri.changeJournalDirectory(selected);
       window.location.reload();
     } catch (err) {
-      setChangeDirError(mapTauriError(err));
+      setChangeDirError(mapTauriError(err, t));
     } finally {
       setIsChangingDir(false);
     }
@@ -444,7 +457,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
       await tauri.generateDebugDump(filePath, JSON.stringify(preferences()));
       setDumpStatus('success');
     } catch (err) {
-      setDumpError(mapTauriError(err));
+      setDumpError(mapTauriError(err, t));
       setDumpStatus('error');
     } finally {
       setDumpGenerating(false);
@@ -455,7 +468,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
   const handleApplyOverrides = () => {
     const parsed = parseOverridesJson(localOverridesJson());
     if (parsed === null) {
-      setOverridesParseError('Invalid JSON. Check for syntax errors.');
+      setOverridesParseError(t('prefs.advanced.overridesParseError'));
       setOverridesApplied(false);
       return;
     }
@@ -517,17 +530,17 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
             style={{ 'box-shadow': 'var(--shadow-lg)' }}
             onKeyDown={handleKeyDown}
           >
-            <Dialog.Title class="text-lg font-semibold text-primary mb-6">Preferences</Dialog.Title>
-            <Dialog.Description class="sr-only">
-              Customize your journaling experience.
-            </Dialog.Description>
+            <Dialog.Title class="text-lg font-semibold text-primary mb-6">
+              {t('prefs.title')}
+            </Dialog.Title>
+            <Dialog.Description class="sr-only">{t('prefs.srDescription')}</Dialog.Description>
 
             {/* Main content: sidebar tabs + pane */}
             <div class="flex flex-row min-h-0">
               {/* Tab sidebar */}
               <nav
                 role="tablist"
-                aria-label="Preferences sections"
+                aria-label={t('prefs.sectionsAria')}
                 aria-orientation="vertical"
                 class="w-36 shrink-0 border-r border-primary pr-2 space-y-1"
                 onKeyDown={handleTabListKeyDown}
@@ -542,7 +555,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                   onClick={() => setActiveTab('general')}
                   class={tabClass('general')}
                 >
-                  General
+                  {t('prefs.tabGeneral')}
                 </button>
 
                 <Show
@@ -558,7 +571,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                       tabIndex={-1}
                       class="w-full text-left px-3 py-2 text-sm font-medium rounded-md text-tertiary cursor-not-allowed select-none opacity-50"
                     >
-                      Writing
+                      {t('prefs.tabWriting')}
                     </button>
                   }
                 >
@@ -572,7 +585,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                     onClick={() => setActiveTab('writing')}
                     class={tabClass('writing')}
                   >
-                    Writing
+                    {t('prefs.tabWriting')}
                   </button>
                 </Show>
 
@@ -589,7 +602,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                       tabIndex={-1}
                       class="w-full text-left px-3 py-2 text-sm font-medium rounded-md text-tertiary cursor-not-allowed select-none opacity-50"
                     >
-                      Security
+                      {t('prefs.tabSecurity')}
                     </button>
                   }
                 >
@@ -603,7 +616,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                     onClick={() => setActiveTab('security')}
                     class={tabClass('security')}
                   >
-                    Security
+                    {t('prefs.tabSecurity')}
                   </button>
                 </Show>
 
@@ -617,7 +630,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                   onClick={() => setActiveTab('data')}
                   class={tabClass('data')}
                 >
-                  Data
+                  {t('prefs.tabData')}
                 </button>
 
                 <Show when={isUnlocked()}>
@@ -631,7 +644,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                     onClick={() => setActiveTab('advanced')}
                     class={tabClass('advanced')}
                   >
-                    Advanced
+                    {t('prefs.tabAdvanced')}
                   </button>
                 </Show>
               </nav>
@@ -654,7 +667,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                           for="pref-theme"
                           class="block text-sm font-medium text-secondary mb-2"
                         >
-                          Theme
+                          {t('prefs.general.themeLabel')}
                         </label>
                         <select
                           id="pref-theme"
@@ -662,12 +675,12 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                           onChange={(e) => setLocalTheme(e.currentTarget.value as ThemePreference)}
                           class="w-full px-3 py-2 border border-primary bg-primary text-primary rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         >
-                          <option value="auto">Auto (System Default)</option>
-                          <option value="light">Light</option>
-                          <option value="dark">Dark</option>
+                          <option value="auto">{t('prefs.general.themeAuto')}</option>
+                          <option value="light">{t('prefs.general.themeLight')}</option>
+                          <option value="dark">{t('prefs.general.themeDark')}</option>
                         </select>
                         <p class="mt-2 text-xs text-tertiary leading-relaxed">
-                          Choose how the app should look. Auto follows your system theme.
+                          {t('prefs.general.themeHint')}
                         </p>
                       </div>
 
@@ -677,7 +690,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                           for="pref-esc-action"
                           class="block text-sm font-medium text-secondary mb-2"
                         >
-                          ESC key action
+                          {t('prefs.general.escLabel')}
                         </label>
                         <select
                           id="pref-esc-action"
@@ -685,12 +698,11 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                           onChange={(e) => setLocalEscAction(e.currentTarget.value as EscAction)}
                           class="w-full px-3 py-2 border border-primary bg-primary text-primary rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         >
-                          <option value="none">Do nothing</option>
-                          <option value="quit">Quit the app</option>
+                          <option value="none">{t('prefs.general.escNone')}</option>
+                          <option value="quit">{t('prefs.general.escQuit')}</option>
                         </select>
                         <p class="mt-2 text-xs text-tertiary leading-relaxed">
-                          When set to "Quit", pressing Escape closes the app while no dialog is
-                          open.
+                          {t('prefs.general.escHint')}
                         </p>
                       </div>
                     </div>
@@ -711,7 +723,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                           for="pref-first-day"
                           class="block text-sm font-medium text-secondary mb-2"
                         >
-                          First Day of Week
+                          {t('prefs.writing.firstDayLabel')}
                         </label>
                         <select
                           id="pref-first-day"
@@ -719,7 +731,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                           onChange={(e) => setLocalFirstDayOfWeek(e.currentTarget.value)}
                           class="w-full px-3 py-2 border border-primary bg-primary text-primary rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                         >
-                          <For each={FIRST_DAY_OPTIONS}>
+                          <For each={FIRST_DAY_OPTIONS()}>
                             {(option) => <option value={option.value}>{option.label}</option>}
                           </For>
                         </select>
@@ -736,11 +748,11 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                             class="h-4 w-4 rounded border-primary text-blue-600 focus:ring-blue-500"
                           />
                           <label for="allow-future" class="ml-3 text-sm text-secondary">
-                            Allow future entries
+                            {t('prefs.writing.allowFutureLabel')}
                           </label>
                         </div>
                         <p class="ml-7 text-xs text-tertiary leading-relaxed">
-                          When disabled, you cannot create entries for future dates.
+                          {t('prefs.writing.allowFutureHint')}
                         </p>
                       </div>
 
@@ -755,11 +767,11 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                             class="h-4 w-4 rounded border-primary text-blue-600 focus:ring-blue-500"
                           />
                           <label for="hide-titles" class="ml-3 text-sm text-secondary">
-                            Hide entry titles
+                            {t('prefs.writing.hideTitlesLabel')}
                           </label>
                         </div>
                         <p class="ml-7 text-xs text-tertiary leading-relaxed">
-                          When enabled, the title editor will be hidden. Title data is still saved.
+                          {t('prefs.writing.hideTitlesHint')}
                         </p>
                       </div>
 
@@ -774,12 +786,11 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                             class="h-4 w-4 rounded border-primary text-blue-600 focus:ring-blue-500"
                           />
                           <label for="show-timestamps" class="ml-3 text-sm text-secondary">
-                            Show entry timestamps
+                            {t('prefs.writing.showTimestampsLabel')}
                           </label>
                         </div>
                         <p class="ml-7 text-xs text-tertiary leading-relaxed">
-                          Displays the creation and last updated time below the title for the
-                          current entry.
+                          {t('prefs.writing.showTimestampsHint')}
                         </p>
                       </div>
 
@@ -794,11 +805,11 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                             class="h-4 w-4 rounded border-primary text-blue-600 focus:ring-blue-500"
                           />
                           <label for="enable-spellcheck" class="ml-3 text-sm text-secondary">
-                            Enable spellcheck
+                            {t('prefs.writing.spellcheckLabel')}
                           </label>
                         </div>
                         <p class="ml-7 text-xs text-tertiary leading-relaxed">
-                          When enabled, browser spellcheck will highlight misspelled words.
+                          {t('prefs.writing.spellcheckHint')}
                         </p>
                       </div>
 
@@ -813,12 +824,11 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                             class="h-4 w-4 rounded border-primary text-blue-600 focus:ring-blue-500"
                           />
                           <label for="advanced-toolbar" class="ml-3 text-sm text-secondary">
-                            Show advanced formatting toolbar
+                            {t('prefs.writing.advancedToolbarLabel')}
                           </label>
                         </div>
                         <p class="ml-7 text-xs text-tertiary leading-relaxed">
-                          When enabled, the toolbar shows additional controls: headings, underline,
-                          strikethrough, blockquote, inline code, and horizontal rule.
+                          {t('prefs.writing.advancedToolbarHint')}
                         </p>
                       </div>
 
@@ -826,9 +836,11 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                       <div>
                         <div class="flex items-center justify-between mb-2">
                           <label for="editor-font-size" class="text-sm font-medium text-secondary">
-                            Editor font size
+                            {t('prefs.writing.fontSizeLabel')}
                           </label>
-                          <span class="text-sm text-tertiary">{localEditorFontSize()} px</span>
+                          <span class="text-sm text-tertiary">
+                            {localEditorFontSize()} {t('prefs.writing.fontSizePxSuffix')}
+                          </span>
                         </div>
                         <input
                           type="range"
@@ -841,8 +853,12 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                           class="w-full accent-blue-500"
                         />
                         <div class="flex justify-between mt-1">
-                          <span class="text-xs text-tertiary">12 px</span>
-                          <span class="text-xs text-tertiary">24 px</span>
+                          <span class="text-xs text-tertiary">
+                            {t('prefs.writing.fontSizeMin')}
+                          </span>
+                          <span class="text-xs text-tertiary">
+                            {t('prefs.writing.fontSizeMax')}
+                          </span>
                         </div>
                       </div>
                     </div>
@@ -860,10 +876,10 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                       {/* Authentication Methods */}
                       <div>
                         <h3 class="text-sm font-medium text-primary mb-3">
-                          Authentication Methods
+                          {t('prefs.security.authMethodsTitle')}
                         </h3>
                         <p class="text-xs text-tertiary mb-4 leading-relaxed">
-                          Registered methods that can unlock this journal. At least one must remain.
+                          {t('prefs.security.authMethodsHint')}
                         </p>
 
                         {/* Registered methods list */}
@@ -875,12 +891,18 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                                   <p class="text-sm font-medium text-primary">
                                     {method.label}
                                     <span class="ml-2 text-xs text-tertiary">
-                                      ({method.slot_type === 'password' ? 'Password' : 'Key File'})
+                                      (
+                                      {method.slot_type === 'password'
+                                        ? t('prefs.security.password')
+                                        : t('prefs.security.keyFile')}
+                                      )
                                     </span>
                                   </p>
                                   <Show when={method.last_used}>
                                     <p class="text-xs text-tertiary">
-                                      Last used: {method.last_used!.slice(0, 10)}
+                                      {t('prefs.security.lastUsed', {
+                                        date: method.last_used!.slice(0, 10),
+                                      })}
                                     </p>
                                   </Show>
                                 </div>
@@ -890,7 +912,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                                     onClick={() => handleRemoveAuthMethod(method.id)}
                                     class="text-xs text-destructive focus:outline-none"
                                   >
-                                    Remove
+                                    {t('prefs.security.removeMethod')}
                                   </button>
                                 </Show>
                               </div>
@@ -902,14 +924,14 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                         <Show when={authMethods().length > 1}>
                           <div class="mb-4">
                             <label class="block text-xs font-medium text-secondary mb-1">
-                              Current Password (required to remove)
+                              {t('prefs.security.currentPwdRequired')}
                             </label>
                             <input
                               type="password"
                               value={removePassword()}
                               onInput={(e) => setRemovePassword(e.currentTarget.value)}
                               class="w-full px-3 py-2 border border-primary bg-primary text-primary rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                              placeholder="Enter current password"
+                              placeholder={t('prefs.security.currentPwdPlaceholder')}
                             />
                           </div>
                           <Show when={removeError()}>
@@ -921,11 +943,10 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                         <Show when={!hasPasswordSlot()}>
                           <div class="mt-4 pt-4 border-t border-primary">
                             <h4 class="text-xs font-medium text-secondary mb-3">
-                              Add Password Auth
+                              {t('prefs.security.addPasswordTitle')}
                             </h4>
                             <p class="text-xs text-tertiary mb-3 leading-relaxed">
-                              No password method is registered. Add one so you can unlock with a
-                              password.
+                              {t('prefs.security.addPasswordHint')}
                             </p>
 
                             <div class="mb-3">
@@ -933,9 +954,9 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                                 for="addPasswordNew"
                                 class="mb-2 block text-sm font-medium text-secondary"
                               >
-                                Password{' '}
+                                {t('prefs.security.passwordLabel')}{' '}
                                 <span class="text-xs text-tertiary">
-                                  (1+ characters, 12+ recommended)
+                                  {t('prefs.security.passwordHint')}
                                 </span>
                               </label>
                               <input
@@ -944,21 +965,21 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                                 value={addPasswordNew()}
                                 onInput={(e) => setAddPasswordNew(e.currentTarget.value)}
                                 class="w-full px-3 py-2 border border-primary bg-primary text-primary rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                placeholder="Enter your password"
+                                placeholder={t('prefs.security.passwordPlaceholder')}
                               />
                               <PasswordStrengthIndicator password={addPasswordNew()} />
                             </div>
 
                             <div class="mb-3">
                               <label class="block text-xs font-medium text-secondary mb-1">
-                                Confirm Password
+                                {t('prefs.security.confirmPasswordLabel')}
                               </label>
                               <input
                                 type="password"
                                 value={addPasswordConfirm()}
                                 onInput={(e) => setAddPasswordConfirm(e.currentTarget.value)}
                                 class="w-full px-3 py-2 border border-primary bg-primary text-primary rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                                placeholder="Repeat password"
+                                placeholder={t('prefs.security.confirmPasswordPlaceholder')}
                               />
                             </div>
 
@@ -967,7 +988,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                             </Show>
                             <Show when={addPasswordSuccess()}>
                               <p class="mb-2 text-sm text-success">
-                                Password registered successfully!
+                                {t('prefs.security.addPasswordSuccess')}
                               </p>
                             </Show>
 
@@ -976,38 +997,40 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                               onClick={handleAddPassword}
                               class="px-4 py-2 text-sm font-medium interactive-primary rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                             >
-                              Add Password
+                              {t('prefs.security.addPasswordButton')}
                             </button>
                           </div>
                         </Show>
 
                         {/* Add Keypair section */}
                         <div class="mt-4 pt-4 border-t border-primary">
-                          <h4 class="text-xs font-medium text-secondary mb-3">Add Key File Auth</h4>
+                          <h4 class="text-xs font-medium text-secondary mb-3">
+                            {t('prefs.security.addKeyTitle')}
+                          </h4>
 
                           <div class="mb-3">
                             <label class="block text-xs font-medium text-secondary mb-1">
-                              Label
+                              {t('prefs.security.labelLabel')}
                             </label>
                             <input
                               type="text"
                               value={addKeypairLabel()}
                               onInput={(e) => setAddKeypairLabel(e.currentTarget.value)}
                               class="w-full px-3 py-2 border border-primary bg-primary text-primary rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                              placeholder="e.g. My YubiKey"
+                              placeholder={t('prefs.security.labelPlaceholder')}
                             />
                           </div>
 
                           <div class="mb-3">
                             <label class="block text-xs font-medium text-secondary mb-1">
-                              Current Password
+                              {t('prefs.security.currentPasswordLabel')}
                             </label>
                             <input
                               type="password"
                               value={addKeypairPassword()}
                               onInput={(e) => setAddKeypairPassword(e.currentTarget.value)}
                               class="w-full px-3 py-2 border border-primary bg-primary text-primary rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                              placeholder="Verify identity"
+                              placeholder={t('prefs.security.currentPasswordPlaceholder')}
                             />
                           </div>
 
@@ -1016,7 +1039,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                           </Show>
                           <Show when={addKeypairSuccess()}>
                             <p class="mb-2 text-sm text-success">
-                              Key file registered successfully!
+                              {t('prefs.security.addKeySuccess')}
                             </p>
                           </Show>
 
@@ -1025,29 +1048,30 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                             onClick={handleGenerateAndRegisterKeypair}
                             class="px-4 py-2 text-sm font-medium interactive-primary rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                           >
-                            Generate &amp; Register Key File
+                            {t('prefs.security.generateRegister')}
                           </button>
                           <p class="mt-2 text-xs text-tertiary leading-relaxed">
-                            Generates a new keypair and saves the private key file locally. Register
-                            the public key with your journal so you can unlock without a password.
+                            {t('prefs.security.generateHint')}
                           </p>
                         </div>
                       </div>
 
                       {/* Change Password */}
                       <div>
-                        <h3 class="text-sm font-medium text-primary mb-3">Change Password</h3>
+                        <h3 class="text-sm font-medium text-primary mb-3">
+                          {t('prefs.security.changePasswordTitle')}
+                        </h3>
 
                         <div class="mb-4">
                           <label class="block text-sm font-medium text-secondary mb-2">
-                            Current Password
+                            {t('prefs.security.currentPasswordLabel2')}
                           </label>
                           <input
                             type="password"
                             value={oldPassword()}
                             onInput={(e) => setOldPassword(e.currentTarget.value)}
                             class="w-full px-3 py-2 border border-primary bg-primary text-primary rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            placeholder="Enter current password"
+                            placeholder={t('prefs.security.currentPasswordPlaceholder2')}
                           />
                         </div>
 
@@ -1056,9 +1080,9 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                             for="newPassword"
                             class="mb-2 block text-sm font-medium text-secondary"
                           >
-                            New Password{' '}
+                            {t('prefs.security.newPasswordLabel')}{' '}
                             <span class="text-xs text-tertiary">
-                              (1+ characters, 12+ recommended)
+                              {t('prefs.security.newPasswordHint')}
                             </span>
                           </label>
                           <input
@@ -1067,21 +1091,21 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                             value={newPassword()}
                             onInput={(e) => setNewPassword(e.currentTarget.value)}
                             class="w-full px-3 py-2 border border-primary bg-primary text-primary rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            placeholder="Enter new password"
+                            placeholder={t('prefs.security.newPasswordPlaceholder')}
                           />
                           <PasswordStrengthIndicator password={newPassword()} />
                         </div>
 
                         <div class="mb-4">
                           <label class="block text-sm font-medium text-secondary mb-2">
-                            Confirm New Password
+                            {t('prefs.security.confirmNewPasswordLabel')}
                           </label>
                           <input
                             type="password"
                             value={confirmPassword()}
                             onInput={(e) => setConfirmPassword(e.currentTarget.value)}
                             class="w-full px-3 py-2 border border-primary bg-primary text-primary rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                            placeholder="Confirm new password"
+                            placeholder={t('prefs.security.confirmNewPasswordPlaceholder')}
                           />
                         </div>
 
@@ -1092,7 +1116,9 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                         </Show>
                         <Show when={passwordSuccess()}>
                           <div class="mb-4 p-2 bg-success border border-success rounded-md">
-                            <p class="text-sm text-success">Password changed successfully!</p>
+                            <p class="text-sm text-success">
+                              {t('prefs.security.changePasswordSuccess')}
+                            </p>
                           </div>
                         </Show>
 
@@ -1101,13 +1127,15 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                           onClick={handlePasswordChange}
                           class="px-4 py-2 text-sm font-medium interactive-primary rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                         >
-                          Change Password
+                          {t('prefs.security.changePasswordButton')}
                         </button>
                       </div>
 
                       {/* Auto-Lock */}
                       <div>
-                        <h3 class="text-sm font-medium text-primary mb-3">Auto-Lock</h3>
+                        <h3 class="text-sm font-medium text-primary mb-3">
+                          {t('prefs.security.autoLockTitle')}
+                        </h3>
                         <div class="space-y-3">
                           <label class="flex items-center gap-3">
                             <input
@@ -1116,12 +1144,14 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                               onChange={(e) => setLocalAutoLockEnabled(e.currentTarget.checked)}
                               class="h-4 w-4 rounded border-primary text-blue-600 focus:ring-blue-500"
                             />
-                            <span class="text-sm text-primary">Lock after inactivity</span>
+                            <span class="text-sm text-primary">
+                              {t('prefs.security.autoLockLabel')}
+                            </span>
                           </label>
                           <Show when={localAutoLockEnabled()}>
                             <div class="flex items-center gap-2 pl-7">
                               <label class="text-sm text-secondary whitespace-nowrap">
-                                Timeout (seconds)
+                                {t('prefs.security.autoLockTimeoutLabel')}
                               </label>
                               <input
                                 type="number"
@@ -1139,7 +1169,9 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                                 }}
                                 class="w-20 px-2 py-1 text-sm border border-primary rounded-md bg-primary text-primary focus:outline-none focus:ring-2 focus:ring-blue-500"
                               />
-                              <span class="text-xs text-tertiary">(1–999)</span>
+                              <span class="text-xs text-tertiary">
+                                {t('prefs.security.autoLockRange')}
+                              </span>
                             </div>
                           </Show>
                         </div>
@@ -1159,10 +1191,10 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                       {/* Current Path */}
                       <div>
                         <label class="block text-sm font-medium text-secondary mb-2">
-                          Current Location
+                          {t('prefs.data.currentLocationLabel')}
                         </label>
                         <div class="px-3 py-3 bg-tertiary border border-primary rounded-md text-sm text-secondary font-mono break-all">
-                          {journalPath() || 'Loading...'}
+                          {journalPath() || t('layout.loading')}
                         </div>
                       </div>
 
@@ -1174,15 +1206,14 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                           disabled={isChangingDir()}
                           class="px-4 py-2 text-sm font-medium interactive-primary rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          {isChangingDir() ? 'Moving...' : 'Change Location'}
+                          {isChangingDir()
+                            ? t('prefs.data.moving')
+                            : t('prefs.data.changeLocation')}
                         </button>
                         <Show when={changeDirError()}>
                           <p class="text-sm text-error">{changeDirError()}</p>
                         </Show>
-                        <p class="text-xs text-tertiary">
-                          Moves your journal file to a new folder. The journal will be locked —
-                          you'll need to unlock it again from the new location.
-                        </p>
+                        <p class="text-xs text-tertiary">{t('prefs.data.changeLocationHint')}</p>
                       </div>
 
                       {/* Reset Journal */}
@@ -1192,15 +1223,15 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                           onClick={handleResetJournal}
                           class="px-4 py-2 text-sm font-medium interactive-destructive rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
                         >
-                          Reset Journal
+                          {t('prefs.data.resetJournal')}
                         </button>
                         <p class="text-xs text-tertiary leading-relaxed">
-                          Warning: This will permanently delete all entries. This action cannot be
-                          undone.
+                          {t('prefs.data.resetJournalHint')}
                         </p>
                       </div>
                     </div>
                   </Match>
+
                   {/* ── Advanced ── */}
                   <Match when={activeTab() === 'advanced'}>
                     <div
@@ -1212,14 +1243,11 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                     >
                       {/* Theme Overrides */}
                       <div>
-                        <h3 class="text-sm font-medium text-primary mb-1">Theme Overrides</h3>
+                        <h3 class="text-sm font-medium text-primary mb-1">
+                          {t('prefs.advanced.themeOverridesTitle')}
+                        </h3>
                         <p class="text-xs text-tertiary mb-3 leading-relaxed">
-                          Override individual theme color tokens. Enter a JSON object with{' '}
-                          <code class="text-xs font-mono">light</code> and/or{' '}
-                          <code class="text-xs font-mono">dark</code> keys. Only documented tokens (
-                          <code class="text-xs font-mono">--bg-*</code>,{' '}
-                          <code class="text-xs font-mono">--text-*</code>, etc.) are supported.
-                          Invalid tokens are silently ignored.{' '}
+                          {t('prefs.advanced.themeOverridesHint')}{' '}
                           <button
                             type="button"
                             class="underline text-xs text-tertiary hover:text-primary focus:outline-none"
@@ -1229,7 +1257,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                               )
                             }
                           >
-                            See User Guide
+                            {t('prefs.advanced.seeUserGuide')}
                           </button>
                         </p>
                         <textarea
@@ -1247,7 +1275,9 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                           <p class="text-xs text-error mt-1">{overridesParseError()}</p>
                         </Show>
                         <Show when={overridesApplied()}>
-                          <p class="text-xs text-success mt-1">Overrides applied.</p>
+                          <p class="text-xs text-success mt-1">
+                            {t('prefs.advanced.overridesApplied')}
+                          </p>
                         </Show>
                         <div class="flex gap-2 mt-2">
                           <button
@@ -1255,22 +1285,23 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                             onClick={handleApplyOverrides}
                             class="px-3 py-1.5 text-sm font-medium interactive-primary rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                           >
-                            Apply Overrides
+                            {t('prefs.advanced.applyOverrides')}
                           </button>
                           <button
                             type="button"
                             onClick={handleResetOverrides}
                             class="px-3 py-1.5 text-sm font-medium text-destructive bg-primary border border-primary rounded-md hover:bg-hover focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                           >
-                            Reset to Default
+                            {t('prefs.advanced.resetToDefault')}
                           </button>
                         </div>
                       </div>
                       <div class="border-t border-primary pt-4 mt-4">
-                        <h3 class="text-sm font-medium text-primary mb-1">Diagnostics</h3>
+                        <h3 class="text-sm font-medium text-primary mb-1">
+                          {t('prefs.advanced.diagnosticsTitle')}
+                        </h3>
                         <p class="text-xs text-tertiary mb-3 leading-relaxed">
-                          Generates a JSON file with app metadata to help diagnose issues. No
-                          journal content, passwords, or encryption keys are included.
+                          {t('prefs.advanced.diagnosticsHint')}
                         </p>
                         <div class="space-y-2">
                           <button
@@ -1279,10 +1310,12 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                             disabled={dumpGenerating()}
                             class="px-4 py-2 text-sm font-medium interactive-primary rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
                           >
-                            {dumpGenerating() ? 'Generating…' : 'Generate Debug Dump'}
+                            {dumpGenerating()
+                              ? t('prefs.advanced.generating')
+                              : t('prefs.advanced.generateDump')}
                           </button>
                           <Show when={dumpStatus() === 'success'}>
-                            <p class="text-sm text-success">Debug dump saved successfully.</p>
+                            <p class="text-sm text-success">{t('prefs.advanced.dumpSuccess')}</p>
                           </Show>
                           <Show when={dumpStatus() === 'error'}>
                             <p class="text-sm text-error">{dumpError()}</p>
@@ -1302,19 +1335,19 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                 onClick={() => props.onClose()}
                 class="px-4 py-2 text-sm font-medium text-secondary bg-primary border border-primary rounded-md hover:bg-hover focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
               >
-                Cancel
+                {t('prefs.footer.cancel')}
               </button>
               <button
                 type="button"
                 onClick={handleSave}
                 class="px-4 py-2 text-sm font-medium interactive-primary rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
               >
-                Save
+                {t('prefs.footer.save')}
               </button>
             </div>
 
             <Dialog.CloseButton class="absolute top-4 right-4 inline-flex items-center justify-center rounded-md p-1 text-tertiary hover:text-secondary hover:bg-hover focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500">
-              <span class="sr-only">Close</span>
+              <span class="sr-only">{t('common.close')}</span>
               <svg
                 class="h-5 w-5"
                 xmlns="http://www.w3.org/2000/svg"

@@ -1,6 +1,6 @@
 {
   "name": "mini-diarium",
-  "version": "0.4.13",
+  "version": "0.4.14",
   "description": "A modern, encrypted, local-first desktop journaling application",
   "type": "module",
   "scripts": {
@@ -27,11 +27,13 @@
     "website:fingerprint": "node scripts/fingerprint-website-assets.mjs",
     "test:e2e": "node scripts/run-e2e.js clean",
     "test:e2e:stateful": "node scripts/run-e2e.js stateful",
-    "test:e2e:local": "node scripts/e2e-local.js"
+    "test:e2e:local": "node scripts/e2e-local.js",
+    "validate:locales": "npx tsx scripts/validate-locales.ts"
   },
   "license": "MIT",
   "dependencies": {
     "@kobalte/core": "^0.13.11",
+    "@solid-primitives/i18n": "^2.2.1",
     "@tailwindcss/typography": "^0.5.19",
     "@tauri-apps/api": "^2",
     "@tauri-apps/plugin-dialog": "^2.6.0",

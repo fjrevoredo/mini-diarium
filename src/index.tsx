@@ -7,11 +7,19 @@ import './styles/editor.css';
 // UnoCSS loads after critical CSS
 import 'virtual:uno.css';
 import App from './App';
+import { I18nProvider } from './i18n';
 
 const root = document.getElementById('root') as HTMLElement;
 
 // Render the app
-render(() => <App />, root);
+render(
+  () => (
+    <I18nProvider>
+      <App />
+    </I18nProvider>
+  ),
+  root,
+);
 
 // Remove loading screen and show app once rendered
 requestAnimationFrame(() => {

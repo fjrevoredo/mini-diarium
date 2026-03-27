@@ -1,11 +1,12 @@
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@solidjs/testing-library';
+import { screen } from '@solidjs/testing-library';
+import { renderWithI18n } from '../../test/i18n-test-utils';
 import userEvent from '@testing-library/user-event';
 import TitleEditor from './TitleEditor';
 
 describe('TitleEditor component', () => {
   it('should render with initial value', () => {
-    render(() => <TitleEditor value="Test Title" />);
+    renderWithI18n(() => <TitleEditor value="Test Title" />);
 
     const input = screen.getByPlaceholderText(/title/i) as HTMLInputElement;
     expect(input.value).toBe('Test Title');
@@ -15,7 +16,7 @@ describe('TitleEditor component', () => {
     const user = userEvent.setup();
     const onInputMock = vi.fn();
 
-    render(() => <TitleEditor value="" onInput={onInputMock} />);
+    renderWithI18n(() => <TitleEditor value="" onInput={onInputMock} />);
 
     const input = screen.getByPlaceholderText(/title/i);
     await user.type(input, 'New Title');
@@ -29,7 +30,7 @@ describe('TitleEditor component', () => {
     const user = userEvent.setup();
     const onEnterMock = vi.fn();
 
-    render(() => <TitleEditor value="Test" onEnter={onEnterMock} />);
+    renderWithI18n(() => <TitleEditor value="Test" onEnter={onEnterMock} />);
 
     const input = screen.getByPlaceholderText(/title/i);
     await user.click(input);
@@ -42,7 +43,7 @@ describe('TitleEditor component', () => {
     const user = userEvent.setup();
     const onEnterMock = vi.fn();
 
-    render(() => <TitleEditor value="Test" onEnter={onEnterMock} />);
+    renderWithI18n(() => <TitleEditor value="Test" onEnter={onEnterMock} />);
 
     const input = screen.getByPlaceholderText(/title/i);
     await user.click(input);
@@ -54,21 +55,21 @@ describe('TitleEditor component', () => {
   });
 
   it('should show placeholder when empty', () => {
-    render(() => <TitleEditor value="" placeholder="Custom placeholder" />);
+    renderWithI18n(() => <TitleEditor value="" placeholder="Custom placeholder" />);
 
     const input = screen.getByPlaceholderText('Custom placeholder');
     expect(input).toBeInTheDocument();
   });
 
   it('should respect spellCheck prop', () => {
-    const { unmount } = render(() => <TitleEditor value="Test" spellCheck={false} />);
+    const { unmount } = renderWithI18n(() => <TitleEditor value="Test" spellCheck={false} />);
 
     const input = screen.getByPlaceholderText(/title/i) as HTMLInputElement;
     expect(input.getAttribute('spellcheck')).toBe('false');
 
     unmount();
 
-    render(() => <TitleEditor value="Test" spellCheck={true} />);
+    renderWithI18n(() => <TitleEditor value="Test" spellCheck={true} />);
     const input2 = screen.getByPlaceholderText(/title/i) as HTMLInputElement;
     expect(input2.getAttribute('spellcheck')).toBe('true');
   });

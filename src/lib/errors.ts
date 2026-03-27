@@ -1,22 +1,30 @@
+import { defaultT, type T } from '../i18n';
+
 /**
- * Maps raw Tauri/Rust error strings to user-friendly messages.
+ * Maps raw Tauri/Rust error strings to user-friendly translated messages.
  * Prevents filesystem paths and system internals from leaking into the UI.
+ *
+ * @param err   - The raw error value thrown by a Tauri invoke() call.
+ * @param t     - The translator function from useI18n(). Components should pass
+ *                their own `t` so the message is returned in the active locale.
+ *                State modules (auth.ts etc.) that lack access to useI18n() may
+ *                omit this argument; defaultT (English) is used as a fallback.
  */
-export function mapTauriError(err: unknown): string {
+export function mapTauriError(err: unknown, t: T = defaultT): string {
   const raw = typeof err === 'string' ? err : err instanceof Error ? err.message : String(err);
 
   // Auth errors — safe to pass through, already user-friendly
   if (/wrong password|invalid password|incorrect password/i.test(raw)) {
-    return 'Incorrect password.';
+    return t('errors.incorrectPassword');
   }
   if (/cannot decrypt|decryption failed|failed to decrypt/i.test(raw)) {
-    return 'Could not decrypt. The key file may be incorrect or the data may be corrupted.';
+    return t('errors.decryptionFailed');
   }
   if (/journal (must be|is not) unlocked/i.test(raw)) {
-    return 'Please unlock your journal first.';
+    return t('errors.journalNotUnlocked');
   }
   if (/cannot remove.*(last|only)|minimum.*auth|last.*auth/i.test(raw)) {
-    return 'Cannot remove the last authentication method.';
+    return t('errors.cannotRemoveLastAuth');
   }
   // File-size error from import size limit — already user-friendly, pass through
   if (/file is too large/i.test(raw)) {
@@ -25,15 +33,13 @@ export function mapTauriError(err: unknown): string {
 
   // Filesystem errors — strip paths / OS details
   if (/failed to (read|write|open|access) key file/i.test(raw)) {
-    return /write/i.test(raw)
-      ? 'Could not save key file. Check folder permissions.'
-      : 'Could not read key file. Check that the file exists and you have permission to read it.';
+    return /write/i.test(raw) ? t('errors.cannotSaveKeyFile') : t('errors.cannotReadKeyFile');
   }
   if (/failed to (read|write|create|copy|open)/i.test(raw) || /os error \d+/i.test(raw)) {
-    return 'A file operation failed. Check that you have the necessary permissions.';
+    return t('errors.fileOperationFailed');
   }
   if (/rusqlite|sqlite|argon2/i.test(raw)) {
-    return 'An internal error occurred.';
+    return t('errors.internalError');
   }
 
   // If no sensitive patterns found, pass the message through as-is
@@ -41,5 +47,5 @@ export function mapTauriError(err: unknown): string {
     return raw;
   }
 
-  return 'An unexpected error occurred.';
+  return t('errors.unexpectedError');
 }

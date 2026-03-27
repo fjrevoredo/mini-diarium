@@ -1,6 +1,7 @@
 import { Show, createSignal, createEffect, onCleanup } from 'solid-js';
 import type { Editor } from '@tiptap/core';
 import { preferences } from '../../state/preferences';
+import { useI18n } from '../../i18n';
 import {
   Bold,
   Italic,
@@ -25,6 +26,8 @@ interface EditorToolbarProps {
 }
 
 export default function EditorToolbar(props: EditorToolbarProps) {
+  const t = useI18n();
+
   // Reactive signals for active states
   const [isBoldActive, setIsBoldActive] = createSignal(false);
   const [isItalicActive, setIsItalicActive] = createSignal(false);
@@ -99,7 +102,7 @@ export default function EditorToolbar(props: EditorToolbarProps) {
     <Show when={props.editor}>
       <div
         role="toolbar"
-        aria-label="Formatting options"
+        aria-label={t('editor.toolbar.aria')}
         class="flex flex-wrap items-center gap-1 border-b border-primary bg-tertiary px-3 py-2"
       >
         {/* Hidden file input for image insertion — always rendered so ref is valid */}
@@ -118,7 +121,7 @@ export default function EditorToolbar(props: EditorToolbarProps) {
         {/* Heading selector + trailing divider — advanced only */}
         <Show when={preferences().advancedToolbar}>
           <select
-            aria-label="Text style"
+            aria-label={t('editor.toolbar.textStyle')}
             value={String(activeHeadingLevel())}
             onChange={(e) => {
               const lvl = parseInt(e.target.value);
@@ -134,10 +137,10 @@ export default function EditorToolbar(props: EditorToolbarProps) {
             }}
             class="h-8 rounded border border-primary bg-primary px-2 text-sm text-primary transition-colors hover:bg-tertiary focus:outline-none focus:ring-2 focus:ring-[var(--border-focus)]"
           >
-            <option value="0">Normal</option>
-            <option value="1">Heading 1</option>
-            <option value="2">Heading 2</option>
-            <option value="3">Heading 3</option>
+            <option value="0">{t('editor.toolbar.normal')}</option>
+            <option value="1">{t('editor.toolbar.heading1')}</option>
+            <option value="2">{t('editor.toolbar.heading2')}</option>
+            <option value="3">{t('editor.toolbar.heading3')}</option>
           </select>
           <div aria-hidden="true" class="mx-1 h-6 w-px bg-primary" />
         </Show>
@@ -146,8 +149,8 @@ export default function EditorToolbar(props: EditorToolbarProps) {
         <button
           onClick={() => props.editor?.chain().focus().toggleBold().run()}
           class={btnClass(isBoldActive())}
-          title="Bold (Ctrl/Cmd+B)"
-          aria-label="Bold"
+          title={t('editor.toolbar.boldTitle')}
+          aria-label={t('editor.toolbar.bold')}
           aria-pressed={isBoldActive()}
         >
           <Bold size={18} />
@@ -157,8 +160,8 @@ export default function EditorToolbar(props: EditorToolbarProps) {
         <button
           onClick={() => props.editor?.chain().focus().toggleItalic().run()}
           class={btnClass(isItalicActive())}
-          title="Italic (Ctrl/Cmd+I)"
-          aria-label="Italic"
+          title={t('editor.toolbar.italicTitle')}
+          aria-label={t('editor.toolbar.italic')}
           aria-pressed={isItalicActive()}
         >
           <Italic size={18} />
@@ -169,8 +172,8 @@ export default function EditorToolbar(props: EditorToolbarProps) {
           <button
             onClick={() => props.editor?.chain().focus().toggleUnderline().run()}
             class={btnClass(isUnderlineActive())}
-            title="Underline (Ctrl/Cmd+U)"
-            aria-label="Underline (Ctrl/Cmd+U)"
+            title={t('editor.toolbar.underline')}
+            aria-label={t('editor.toolbar.underline')}
             aria-pressed={isUnderlineActive()}
           >
             <Underline size={18} />
@@ -178,8 +181,8 @@ export default function EditorToolbar(props: EditorToolbarProps) {
           <button
             onClick={() => props.editor?.chain().focus().toggleStrike().run()}
             class={btnClass(isStrikeActive())}
-            title="Strikethrough (Ctrl/Cmd+Shift+S)"
-            aria-label="Strikethrough (Ctrl/Cmd+Shift+S)"
+            title={t('editor.toolbar.strikethrough')}
+            aria-label={t('editor.toolbar.strikethrough')}
             aria-pressed={isStrikeActive()}
           >
             <Strikethrough size={18} />
@@ -187,8 +190,8 @@ export default function EditorToolbar(props: EditorToolbarProps) {
           <button
             onClick={() => props.editor?.chain().focus().toggleHighlight().run()}
             class={btnClass(isHighlightActive())}
-            title="Highlight (Ctrl/Cmd+Shift+H)"
-            aria-label="Highlight (Ctrl/Cmd+Shift+H)"
+            title={t('editor.toolbar.highlight')}
+            aria-label={t('editor.toolbar.highlight')}
             aria-pressed={isHighlightActive()}
           >
             <Highlighter size={18} />
@@ -203,8 +206,8 @@ export default function EditorToolbar(props: EditorToolbarProps) {
           <button
             onClick={() => props.editor?.chain().focus().toggleBlockquote().run()}
             class={btnClass(isBlockquoteActive())}
-            title="Blockquote (Ctrl/Cmd+Shift+B)"
-            aria-label="Blockquote (Ctrl/Cmd+Shift+B)"
+            title={t('editor.toolbar.blockquote')}
+            aria-label={t('editor.toolbar.blockquote')}
             aria-pressed={isBlockquoteActive()}
           >
             <Quote size={18} />
@@ -212,8 +215,8 @@ export default function EditorToolbar(props: EditorToolbarProps) {
           <button
             onClick={() => props.editor?.chain().focus().toggleCode().run()}
             class={btnClass(isCodeActive())}
-            title="Inline Code (Ctrl/Cmd+E)"
-            aria-label="Inline Code (Ctrl/Cmd+E)"
+            title={t('editor.toolbar.inlineCode')}
+            aria-label={t('editor.toolbar.inlineCode')}
             aria-pressed={isCodeActive()}
           >
             <Code size={18} />
@@ -225,8 +228,8 @@ export default function EditorToolbar(props: EditorToolbarProps) {
         <button
           onClick={() => props.editor?.chain().focus().toggleBulletList().run()}
           class={btnClass(isBulletListActive())}
-          title="Bullet List"
-          aria-label="Bullet List"
+          title={t('editor.toolbar.bulletList')}
+          aria-label={t('editor.toolbar.bulletList')}
           aria-pressed={isBulletListActive()}
         >
           <List size={18} />
@@ -236,8 +239,8 @@ export default function EditorToolbar(props: EditorToolbarProps) {
         <button
           onClick={() => props.editor?.chain().focus().toggleOrderedList().run()}
           class={btnClass(isOrderedListActive())}
-          title="Numbered List"
-          aria-label="Numbered List"
+          title={t('editor.toolbar.numberedList')}
+          aria-label={t('editor.toolbar.numberedList')}
           aria-pressed={isOrderedListActive()}
         >
           <ListOrdered size={18} />
@@ -249,8 +252,8 @@ export default function EditorToolbar(props: EditorToolbarProps) {
           <button
             onClick={() => props.editor?.chain().focus().setHorizontalRule().run()}
             class={btnBase}
-            title="Insert horizontal rule"
-            aria-label="Insert horizontal rule"
+            title={t('editor.toolbar.horizontalRule')}
+            aria-label={t('editor.toolbar.horizontalRule')}
           >
             <Minus size={18} />
           </button>
@@ -261,8 +264,8 @@ export default function EditorToolbar(props: EditorToolbarProps) {
           <button
             onClick={() => fileInputRef.click()}
             class={btnBase}
-            title="Insert image"
-            aria-label="Insert image"
+            title={t('editor.toolbar.insertImage')}
+            aria-label={t('editor.toolbar.insertImage')}
           >
             <ImagePlus size={18} />
           </button>
@@ -274,8 +277,8 @@ export default function EditorToolbar(props: EditorToolbarProps) {
           <button
             onClick={() => props.editor?.chain().focus().setTextAlign('left').run()}
             class={btnClass(activeAlignment() === 'left')}
-            title="Align left"
-            aria-label="Align left"
+            title={t('editor.toolbar.alignLeft')}
+            aria-label={t('editor.toolbar.alignLeft')}
             aria-pressed={activeAlignment() === 'left'}
           >
             <AlignLeft size={18} />
@@ -283,8 +286,8 @@ export default function EditorToolbar(props: EditorToolbarProps) {
           <button
             onClick={() => props.editor?.chain().focus().setTextAlign('center').run()}
             class={btnClass(activeAlignment() === 'center')}
-            title="Align center"
-            aria-label="Align center"
+            title={t('editor.toolbar.alignCenter')}
+            aria-label={t('editor.toolbar.alignCenter')}
             aria-pressed={activeAlignment() === 'center'}
           >
             <AlignCenter size={18} />
@@ -292,8 +295,8 @@ export default function EditorToolbar(props: EditorToolbarProps) {
           <button
             onClick={() => props.editor?.chain().focus().setTextAlign('right').run()}
             class={btnClass(activeAlignment() === 'right')}
-            title="Align right"
-            aria-label="Align right"
+            title={t('editor.toolbar.alignRight')}
+            aria-label={t('editor.toolbar.alignRight')}
             aria-pressed={activeAlignment() === 'right'}
           >
             <AlignRight size={18} />
@@ -301,8 +304,8 @@ export default function EditorToolbar(props: EditorToolbarProps) {
           <button
             onClick={() => props.editor?.chain().focus().setTextAlign('justify').run()}
             class={btnClass(activeAlignment() === 'justify')}
-            title="Justify"
-            aria-label="Justify"
+            title={t('editor.toolbar.justify')}
+            aria-label={t('editor.toolbar.justify')}
             aria-pressed={activeAlignment() === 'justify'}
           >
             <AlignJustify size={18} />

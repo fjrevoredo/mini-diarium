@@ -1,6 +1,7 @@
 import { createSignal, createEffect, onCleanup, onMount, Show, untrack } from 'solid-js';
 import { Editor } from '@tiptap/core';
 import { createLogger } from '../../lib/logger';
+import { useI18n } from '../../i18n';
 import TitleEditor from '../editor/TitleEditor';
 import DiaryEditor from '../editor/DiaryEditor';
 import WordCount from '../editor/WordCount';
@@ -24,6 +25,7 @@ import { confirm } from '@tauri-apps/plugin-dialog';
 const log = createLogger('Editor');
 
 export default function EditorPanel() {
+  const t = useI18n();
   const [title, setTitle] = createSignal('');
   const [content, setContent] = createSignal('');
   const [wordCount, setWordCount] = createSignal(0);
@@ -133,8 +135,8 @@ export default function EditorPanel() {
   // later), not at call-site time — pre-reading the value would capture stale emptiness state
   // before the user has finished typing.
   // eslint-disable-next-line solid/reactivity
-  const debouncedSave = debounce((entryId: number, t: string, c: string) => {
-    void saveCurrentById(entryId, t, c);
+  const debouncedSave = debounce((entryId: number, titleArg: string, contentArg: string) => {
+    void saveCurrentById(entryId, titleArg, contentArg);
   }, 500);
 
   // Load entries for a date
@@ -342,8 +344,8 @@ export default function EditorPanel() {
   const handleDeleteEntry = async () => {
     if (dayEntries().length <= 1) return;
 
-    const confirmed = await confirm('Are you sure you want to delete this entry?', {
-      title: 'Delete Entry',
+    const confirmed = await confirm(t('editor.deleteConfirmMessage'), {
+      title: t('editor.deleteConfirmTitle'),
       kind: 'warning',
     });
 
@@ -461,14 +463,14 @@ export default function EditorPanel() {
         addDisabled={isCreatingEntry() || pendingEntryId() === null || isContentEmpty()}
         addTitle={
           isCreatingEntry()
-            ? 'Creating entry…'
+            ? t('editor.addEntryCreating')
             : pendingEntryId() === null || isContentEmpty()
-              ? 'Write something first to add another entry for this day'
-              : 'Add another entry for this day'
+              ? t('editor.addEntryHint')
+              : t('editor.addEntryTitle')
         }
         onDelete={handleDeleteEntry}
         deleteDisabled={isCreatingEntry() || dayEntries().length <= 1}
-        deleteTitle="Delete entry"
+        deleteTitle={t('editor.deleteEntry')}
       />
       <div class="flex-1 overflow-y-auto p-6">
         <div class="mx-auto w-full max-w-3xl xl:max-w-5xl 2xl:max-w-6xl">
@@ -478,7 +480,7 @@ export default function EditorPanel() {
                 value={title()}
                 onInput={handleTitleInput}
                 onEnter={handleTitleEnter}
-                placeholder="Title (optional)"
+                placeholder={t('editor.titleOptionalPlaceholder')}
                 spellCheck={preferences().enableSpellcheck}
               />
               <Show when={preferences().showEntryTimestamps}>
@@ -486,11 +488,15 @@ export default function EditorPanel() {
                   {(entry) => (
                     <div class="flex flex-wrap gap-x-4 gap-y-0.5">
                       <p class="text-xs text-tertiary">
-                        Created: {formatTimestamp(entry().date_created)}
+                        {t('editor.timestampCreated', {
+                          timestamp: formatTimestamp(entry().date_created),
+                        })}
                       </p>
                       <Show when={entry().date_updated !== entry().date_created}>
                         <p class="text-xs text-tertiary">
-                          Updated: {formatTimestamp(entry().date_updated)}
+                          {t('editor.timestampUpdated', {
+                            timestamp: formatTimestamp(entry().date_updated),
+                          })}
                         </p>
                       </Show>
                     </div>
@@ -513,7 +519,7 @@ export default function EditorPanel() {
                   }
                 }
               }}
-              placeholder="What's on your mind today?"
+              placeholder={t('editor.editorPlaceholder')}
               onEditorReady={setEditorInstance}
               spellCheck={preferences().enableSpellcheck}
             />
@@ -525,7 +531,7 @@ export default function EditorPanel() {
       <div class="border-t border-primary bg-tertiary px-6 py-2">
         <div class="flex items-center justify-between">
           <WordCount count={wordCount()} />
-          {isSaving() && <p class="text-sm text-tertiary">Saving...</p>}
+          {isSaving() && <p class="text-sm text-tertiary">{t('editor.saving')}</p>}
         </div>
       </div>
     </div>

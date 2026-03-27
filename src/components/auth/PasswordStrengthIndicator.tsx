@@ -1,6 +1,9 @@
 import { Show, createMemo } from 'solid-js';
+import { useI18n } from '../../i18n';
 
 export function PasswordStrengthIndicator(props: { password: string }) {
+  const t = useI18n();
+
   const strength = createMemo(() => {
     if (props.password.length === 0) {
       return { level: 'none', label: '', color: 'text-tertiary', warning: false };
@@ -24,28 +27,28 @@ export function PasswordStrengthIndicator(props: { password: string }) {
     if (score <= 2) {
       return {
         level: 'very-weak',
-        label: 'Very weak - prefer a longer, more complex password',
+        label: t('auth.strength.veryWeak'),
         color: 'text-error',
         warning: true,
       };
     } else if (score <= 5) {
       return {
         level: 'weak',
-        label: 'Weak - consider adding complexity',
+        label: t('auth.strength.weak'),
         color: 'text-warning',
         warning: false,
       };
     } else if (score <= 8) {
       return {
         level: 'medium',
-        label: 'Medium - good balance',
+        label: t('auth.strength.medium'),
         color: 'text-info',
         warning: false,
       };
     } else {
       return {
         level: 'strong',
-        label: 'Strong - excellent',
+        label: t('auth.strength.strong'),
         color: 'text-success',
         warning: false,
       };
@@ -59,8 +62,7 @@ export function PasswordStrengthIndicator(props: { password: string }) {
           <span class={strength().color}>● {strength().label}</span>
           <Show when={strength().warning}>
             <div class="mt-2 rounded-md bg-warning p-3 text-sm text-warning">
-              We strongly recommend using a stronger password (12+ characters with a mix of letters,
-              numbers, and symbols).
+              {t('auth.strength.warningText')}
             </div>
           </Show>
         </div>

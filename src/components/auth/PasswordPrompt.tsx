@@ -2,10 +2,13 @@ import { createSignal, Show } from 'solid-js';
 import { unlockJournal, unlockWithKeypair, goToJournalPicker } from '../../state/auth';
 import { journals, activeJournalId } from '../../state/journals';
 import { open } from '@tauri-apps/plugin-dialog';
+import { useI18n } from '../../i18n';
 
 type UnlockMode = 'password' | 'keyfile';
 
 export default function PasswordPrompt() {
+  const t = useI18n();
+
   const [mode, setMode] = createSignal<UnlockMode>('password');
   const [password, setPassword] = createSignal('');
   const [keyFilePath, setKeyFilePath] = createSignal('');
@@ -18,7 +21,7 @@ export default function PasswordPrompt() {
 
     const pwd = password();
     if (!pwd) {
-      setError('Password is required');
+      setError(t('auth.prompt.passwordRequired'));
       return;
     }
 
@@ -37,7 +40,7 @@ export default function PasswordPrompt() {
   const handlePickKeyFile = async () => {
     try {
       const selected = await open({
-        title: 'Select Private Key File',
+        title: t('auth.prompt.keyFileLabel'),
         filters: [{ name: 'Key Files', extensions: ['key', 'txt', '*'] }],
         multiple: false,
         directory: false,
@@ -47,7 +50,7 @@ export default function PasswordPrompt() {
         setError(null);
       }
     } catch {
-      setError('Failed to open file picker');
+      setError(t('auth.prompt.openFilePickerError'));
     }
   };
 
@@ -57,7 +60,7 @@ export default function PasswordPrompt() {
 
     const path = keyFilePath();
     if (!path) {
-      setError('Please select a key file');
+      setError(t('auth.prompt.selectKeyFileError'));
       return;
     }
 
@@ -81,13 +84,18 @@ export default function PasswordPrompt() {
           <div class="mb-3 flex justify-center">
             <img src="/logo-transparent.svg" alt="Mini Diarium" class="h-16 w-16 rounded-xl" />
           </div>
-          <h1 class="mb-2 text-center text-3xl font-bold text-primary">Mini Diarium</h1>
+          <h1 class="mb-2 text-center text-3xl font-bold text-primary">{t('auth.prompt.title')}</h1>
           <Show
             when={activeJournalName()}
-            fallback={<p class="mb-2 text-center text-sm text-secondary">Unlock your journal</p>}
+            fallback={
+              <p class="mb-2 text-center text-sm text-secondary">
+                {t('auth.prompt.unlockFallback')}
+              </p>
+            }
           >
             <p class="mb-2 text-center text-sm text-secondary">
-              Unlock <span class="font-medium text-primary">{activeJournalName()}</span>
+              {t('auth.prompt.unlockPrefix')}{' '}
+              <span class="font-medium text-primary">{activeJournalName()}</span>
             </p>
           </Show>
 
@@ -98,7 +106,7 @@ export default function PasswordPrompt() {
               disabled={isUnlocking()}
               class="text-sm text-tertiary hover:text-secondary underline focus:outline-none disabled:opacity-50"
             >
-              ← Back to Journals
+              {t('auth.prompt.backToJournals')}
             </button>
           </div>
 
@@ -106,7 +114,7 @@ export default function PasswordPrompt() {
           <div
             class="mb-6 flex rounded-md border border-primary overflow-hidden"
             role="group"
-            aria-label="Unlock method"
+            aria-label={t('auth.prompt.unlockMethodAria')}
           >
             <button
               type="button"
@@ -121,7 +129,7 @@ export default function PasswordPrompt() {
                   : 'bg-primary text-secondary hover:bg-hover'
               }`}
             >
-              Password
+              {t('auth.prompt.passwordMode')}
             </button>
             <button
               type="button"
@@ -136,7 +144,7 @@ export default function PasswordPrompt() {
                   : 'bg-primary text-secondary hover:bg-hover'
               }`}
             >
-              Key File
+              {t('auth.prompt.keyFileMode')}
             </button>
           </div>
 
@@ -145,7 +153,7 @@ export default function PasswordPrompt() {
             <form onSubmit={handlePasswordSubmit} class="space-y-6">
               <div>
                 <label for="password" class="mb-2 block text-sm font-medium text-secondary">
-                  Password
+                  {t('auth.prompt.passwordLabel')}
                 </label>
                 <input
                   id="password"
@@ -156,7 +164,7 @@ export default function PasswordPrompt() {
                   disabled={isUnlocking()}
                   autofocus
                   class="w-full rounded-md border border-primary bg-primary px-4 py-2 text-primary focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-tertiary"
-                  placeholder="Enter your password"
+                  placeholder={t('auth.prompt.passwordPlaceholder')}
                   autocomplete="current-password"
                 />
               </div>
@@ -173,7 +181,7 @@ export default function PasswordPrompt() {
                 disabled={isUnlocking()}
                 class="w-full rounded-md interactive-primary px-4 py-3 font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isUnlocking() ? 'Unlocking...' : 'Unlock Journal'}
+                {isUnlocking() ? t('auth.prompt.unlocking') : t('auth.prompt.unlockButton')}
               </button>
             </form>
           </Show>
@@ -183,7 +191,7 @@ export default function PasswordPrompt() {
             <form onSubmit={handleKeyFileSubmit} class="space-y-6">
               <div>
                 <label class="mb-2 block text-sm font-medium text-secondary">
-                  Private Key File
+                  {t('auth.prompt.keyFileLabel')}
                 </label>
                 <div class="flex gap-2">
                   <input
@@ -191,21 +199,19 @@ export default function PasswordPrompt() {
                     value={keyFilePath()}
                     readOnly
                     class="flex-1 rounded-md border border-primary px-4 py-2 text-primary bg-tertiary text-sm"
-                    placeholder="No file selected"
+                    placeholder={t('auth.prompt.keyFilePlaceholder')}
                   />
                   <button
                     type="button"
                     onClick={handlePickKeyFile}
                     disabled={isUnlocking()}
-                    aria-label="Browse for key file"
+                    aria-label={t('auth.prompt.keyFileBrowseAria')}
                     class="rounded-md border border-primary px-3 py-2 text-sm font-medium text-secondary hover:bg-hover focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
                   >
-                    Browse
+                    {t('common.browse')}
                   </button>
                 </div>
-                <p class="mt-1 text-xs text-tertiary">
-                  Select the private key file (.key) registered with this journal.
-                </p>
+                <p class="mt-1 text-xs text-tertiary">{t('auth.prompt.keyFileHint')}</p>
               </div>
 
               <Show when={error()}>
@@ -219,7 +225,7 @@ export default function PasswordPrompt() {
                 disabled={isUnlocking() || !keyFilePath()}
                 class="w-full rounded-md interactive-primary px-4 py-3 font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isUnlocking() ? 'Unlocking...' : 'Unlock with Key File'}
+                {isUnlocking() ? t('auth.prompt.unlocking') : t('auth.prompt.unlockWithKeyFile')}
               </button>
             </form>
           </Show>

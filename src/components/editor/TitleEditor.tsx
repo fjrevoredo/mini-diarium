@@ -1,4 +1,5 @@
 import { createEffect } from 'solid-js';
+import { useI18n } from '../../i18n';
 
 interface TitleEditorProps {
   value: string;
@@ -9,6 +10,8 @@ interface TitleEditorProps {
 }
 
 export default function TitleEditor(props: TitleEditorProps) {
+  const t = useI18n();
+
   // eslint-disable-next-line no-unassigned-vars
   let inputRef!: HTMLInputElement;
 
@@ -37,7 +40,7 @@ export default function TitleEditor(props: TitleEditorProps) {
       value={props.value}
       onInput={handleInput}
       onKeyDown={handleKeyDown}
-      placeholder={props.placeholder || 'Title'}
+      placeholder={props.placeholder || t('editor.titlePlaceholder')}
       spellcheck={props.spellCheck ?? true}
       class="w-full border-0 bg-transparent px-0 text-2xl font-semibold text-primary placeholder-tertiary focus:outline-none focus:ring-0"
     />

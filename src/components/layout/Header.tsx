@@ -2,6 +2,7 @@ import { createSignal, Show } from 'solid-js';
 import { Menu, Lock, Info } from 'lucide-solid';
 import { selectedDate, setIsAboutOpen, isSidebarCollapsed } from '../../state/ui';
 import { lockJournal } from '../../state/auth';
+import { useI18n } from '../../i18n';
 
 interface HeaderProps {
   onMenuClick?: () => void;
@@ -9,12 +10,13 @@ interface HeaderProps {
 }
 
 export default function Header(props: HeaderProps) {
+  const t = useI18n();
   const [isLocking, setIsLocking] = createSignal(false);
 
   // Format date: "Tuesday, January 1, 2019"
   const formattedDate = () => {
     const date = new Date(selectedDate() + 'T00:00:00');
-    return date.toLocaleDateString('en-US', {
+    return date.toLocaleDateString(undefined, {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
@@ -41,7 +43,7 @@ export default function Header(props: HeaderProps) {
             onClick={() => props.onMenuClick?.()}
             data-testid="toggle-sidebar-button"
             class="rounded p-2 hover:bg-hover text-primary lg:hidden"
-            aria-label="Toggle menu"
+            aria-label={t('layout.header.toggleMenu')}
             aria-expanded={!isSidebarCollapsed()}
             aria-controls="sidebar"
           >
@@ -56,7 +58,7 @@ export default function Header(props: HeaderProps) {
         <button
           onClick={() => setIsAboutOpen(true)}
           class="rounded p-2 hover:bg-hover text-tertiary transition-colors"
-          aria-label="About"
+          aria-label={t('layout.header.about')}
         >
           <Info size={20} />
         </button>
@@ -65,7 +67,7 @@ export default function Header(props: HeaderProps) {
           disabled={isLocking()}
           data-testid="lock-journal-button"
           class="rounded p-2 hover:bg-hover text-tertiary transition-colors disabled:opacity-50"
-          aria-label="Lock journal"
+          aria-label={t('layout.header.lockJournal')}
         >
           <Lock size={20} />
         </button>

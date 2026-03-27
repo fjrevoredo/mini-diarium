@@ -2,6 +2,7 @@ import { createSignal, createEffect, Show } from 'solid-js';
 import { Dialog } from '@kobalte/core/dialog';
 import { getVersion } from '@tauri-apps/api/app';
 import { openUrl } from '@tauri-apps/plugin-opener';
+import { useI18n } from '../../i18n';
 import { X } from 'lucide-solid';
 
 interface AboutOverlayProps {
@@ -10,6 +11,7 @@ interface AboutOverlayProps {
 }
 
 export default function AboutOverlay(props: AboutOverlayProps) {
+  const t = useI18n();
   const [version, setVersion] = createSignal('');
 
   createEffect(() => {
@@ -38,10 +40,12 @@ export default function AboutOverlay(props: AboutOverlayProps) {
           >
             {/* Title row */}
             <div class="flex items-center justify-between mb-6">
-              <Dialog.Title class="text-lg font-semibold text-primary">About</Dialog.Title>
+              <Dialog.Title class="text-lg font-semibold text-primary">
+                {t('about.title')}
+              </Dialog.Title>
               <Dialog.CloseButton
                 class="rounded-md p-1 hover:bg-hover transition-colors"
-                aria-label="Close"
+                aria-label={t('about.closeAria')}
               >
                 <X size={20} class="text-tertiary" />
               </Dialog.CloseButton>
@@ -51,22 +55,20 @@ export default function AboutOverlay(props: AboutOverlayProps) {
             <div class="flex flex-col items-center gap-3 mb-6">
               <img src="/logo-transparent.svg" alt="Mini Diarium" class="h-16 w-16 rounded-xl" />
               <div class="text-center">
-                <p class="text-xl font-bold text-primary">Mini Diarium</p>
+                <p class="text-xl font-bold text-primary">{t('about.appName')}</p>
                 <Show when={version()}>
-                  <p class="text-sm text-secondary">Version {version()}</p>
+                  <p class="text-sm text-secondary">{t('about.version', { version: version() })}</p>
                 </Show>
               </div>
             </div>
 
             {/* Description */}
-            <p class="text-sm text-secondary text-center mb-6">
-              An encrypted, local-first desktop journaling app.
-            </p>
+            <p class="text-sm text-secondary text-center mb-6">{t('about.description')}</p>
 
             {/* Meta */}
             <div class="space-y-1 text-sm text-secondary border-t border-primary pt-4 mb-4">
-              <p>MIT License</p>
-              <p>Copyright &copy; 2026 Francisco J. Revoredo</p>
+              <p>{t('about.license')}</p>
+              <p>{t('about.copyright')}</p>
             </div>
 
             {/* GitHub link */}
@@ -75,7 +77,7 @@ export default function AboutOverlay(props: AboutOverlayProps) {
                 onClick={() => openUrl('https://github.com/fjrevoredo/mini-diarium')}
                 class="text-sm text-interactive hover:underline"
               >
-                github.com/fjrevoredo/mini-diarium
+                {t('about.githubLink')}
               </button>
             </div>
 
@@ -85,7 +87,7 @@ export default function AboutOverlay(props: AboutOverlayProps) {
                 onClick={() => props.onClose()}
                 class="rounded-md bg-tertiary px-4 py-2 text-sm font-medium text-secondary hover:bg-hover transition-colors"
               >
-                Close
+                {t('common.close')}
               </button>
             </div>
           </Dialog.Content>

@@ -1,15 +1,18 @@
 import { For, Show } from 'solid-js';
 import { searchQuery, searchResults, isSearching } from '../../state/search';
 import { setSelectedDate } from '../../state/ui';
+import { useI18n } from '../../i18n';
 
 export default function SearchResults() {
+  const t = useI18n();
+
   const handleResultClick = (date: string) => {
     setSelectedDate(date);
   };
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr + 'T00:00:00');
-    return date.toLocaleDateString('en-US', {
+    return date.toLocaleDateString(undefined, {
       weekday: 'short',
       year: 'numeric',
       month: 'short',
@@ -20,12 +23,12 @@ export default function SearchResults() {
   return (
     <div class="mt-2">
       <Show when={isSearching()}>
-        <div class="py-4 text-center text-sm text-tertiary">Searching...</div>
+        <div class="py-4 text-center text-sm text-tertiary">{t('search.searching')}</div>
       </Show>
 
       <Show when={!isSearching() && searchQuery() && searchResults().length === 0}>
         <div class="rounded-md bg-warning p-4 text-sm text-warning">
-          No results found for "{searchQuery()}"
+          {t('search.noResults', { query: searchQuery() })}
         </div>
       </Show>
 
@@ -40,7 +43,7 @@ export default function SearchResults() {
                 <div class="flex items-start justify-between">
                   <div class="flex-1">
                     <div class="text-sm font-medium text-primary">
-                      {result.title || <span class="italic text-muted">No title</span>}
+                      {result.title || <span class="italic text-muted">{t('search.noTitle')}</span>}
                     </div>
                     <div class="mt-1 text-xs text-tertiary">{formatDate(result.date)}</div>
                     <Show when={result.snippet}>

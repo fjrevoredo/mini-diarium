@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@solidjs/testing-library';
+import { screen, fireEvent } from '@solidjs/testing-library';
+import { renderWithI18n } from '../../test/i18n-test-utils';
 import { createSignal } from 'solid-js';
 
 // ── Mocks ──────────────────────────────────────────────────────────────────────
@@ -59,7 +60,7 @@ describe('JournalPicker component', () => {
 
   it('renders empty state when no journals are configured', () => {
     setJournals([]);
-    render(() => <JournalPicker />);
+    renderWithI18n(() => <JournalPicker />);
 
     expect(screen.getByTestId('journal-picker')).toBeInTheDocument();
     expect(screen.getByText(/no journals yet/i)).toBeInTheDocument();
@@ -69,7 +70,7 @@ describe('JournalPicker component', () => {
 
   it('renders journal list when journals are configured', () => {
     setJournals([{ id: 'j1', name: 'My Diary', path: '/home/user/diary' }]);
-    render(() => <JournalPicker />);
+    renderWithI18n(() => <JournalPicker />);
 
     expect(screen.getByText('My Diary')).toBeInTheDocument();
     expect(screen.getByText('/home/user/diary')).toBeInTheDocument();
@@ -78,7 +79,7 @@ describe('JournalPicker component', () => {
 
   it('calls switchJournal and refreshAuthState when Open is clicked', async () => {
     setJournals([{ id: 'j1', name: 'Work Journal', path: '/tmp/work' }]);
-    render(() => <JournalPicker />);
+    renderWithI18n(() => <JournalPicker />);
 
     const openBtn = screen.getByTestId('journal-open-button');
     fireEvent.click(openBtn);
@@ -96,7 +97,7 @@ describe('JournalPicker component', () => {
     const dialogMock = await import('@tauri-apps/plugin-dialog');
     vi.mocked(dialogMock.open).mockResolvedValueOnce('/some/folder');
 
-    render(() => <JournalPicker />);
+    renderWithI18n(() => <JournalPicker />);
 
     const openExistingBtn = screen.getByText(/open existing/i);
     fireEvent.click(openExistingBtn);

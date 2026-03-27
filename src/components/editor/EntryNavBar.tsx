@@ -1,4 +1,5 @@
 import { Show } from 'solid-js';
+import { useI18n } from '../../i18n';
 
 interface EntryNavBarProps {
   total: number;
@@ -14,6 +15,8 @@ interface EntryNavBarProps {
 }
 
 export function EntryNavBar(props: EntryNavBarProps) {
+  const t = useI18n();
+
   return (
     <div
       data-testid="entry-nav-bar"
@@ -26,7 +29,7 @@ export function EntryNavBar(props: EntryNavBarProps) {
             onClick={() => props.onPrev()}
             disabled={props.index === 0}
             class="px-2 py-0.5 rounded disabled:opacity-30 hover:bg-hover"
-            aria-label="Previous entry"
+            aria-label={t('editor.prevEntry')}
           >
             ←
           </button>
@@ -38,7 +41,7 @@ export function EntryNavBar(props: EntryNavBarProps) {
             onClick={() => props.onNext()}
             disabled={props.index === props.total - 1}
             class="px-2 py-0.5 rounded disabled:opacity-30 hover:bg-hover"
-            aria-label="Next entry"
+            aria-label={t('editor.nextEntry')}
           >
             →
           </button>
@@ -52,7 +55,7 @@ export function EntryNavBar(props: EntryNavBarProps) {
             disabled={props.deleteDisabled}
             title={props.deleteTitle}
             class="px-2 py-0.5 rounded hover:bg-hover text-tertiary disabled:opacity-30"
-            aria-label={props.deleteTitle ?? 'Delete entry'}
+            aria-label={props.deleteTitle ?? t('editor.deleteEntry')}
           >
             −
           </button>
@@ -63,7 +66,7 @@ export function EntryNavBar(props: EntryNavBarProps) {
           disabled={props.addDisabled}
           title={props.addTitle}
           class="px-2 py-0.5 rounded hover:bg-hover text-tertiary disabled:opacity-30"
-          aria-label={props.addTitle ?? 'Add entry'}
+          aria-label={props.addTitle ?? t('editor.addEntry')}
         >
           +
         </button>

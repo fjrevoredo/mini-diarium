@@ -4,21 +4,7 @@ import { selectedDate, setSelectedDate, setIsSidebarCollapsed } from '../../stat
 import { entryDates } from '../../state/entries';
 import { preferences } from '../../state/preferences';
 import { getTodayString } from '../../lib/dates';
-
-const MONTH_NAMES = [
-  'Jan',
-  'Feb',
-  'Mar',
-  'Apr',
-  'May',
-  'Jun',
-  'Jul',
-  'Aug',
-  'Sep',
-  'Oct',
-  'Nov',
-  'Dec',
-];
+import { useI18n } from '../../i18n';
 
 interface CalendarDay {
   date: string; // YYYY-MM-DD
@@ -56,6 +42,24 @@ function shiftMonth(dateStr: string, delta: number): string {
 }
 
 export default function Calendar() {
+  const t = useI18n();
+
+  // Translated month names for the picker grid (3-letter abbreviations)
+  const MONTH_NAMES = createMemo(() => [
+    t('calendar.jan'),
+    t('calendar.feb'),
+    t('calendar.mar'),
+    t('calendar.apr'),
+    t('calendar.may'),
+    t('calendar.jun'),
+    t('calendar.jul'),
+    t('calendar.aug'),
+    t('calendar.sep'),
+    t('calendar.oct'),
+    t('calendar.nov'),
+    t('calendar.dec'),
+  ]);
+
   const [currentMonth, setCurrentMonth] = createSignal(new Date());
   const [showPicker, setShowPicker] = createSignal(false);
   const [pickerYear, setPickerYear] = createSignal(new Date().getFullYear());
@@ -162,7 +166,7 @@ export default function Calendar() {
   });
 
   const monthName = () => {
-    return currentMonth().toLocaleDateString('en-US', {
+    return currentMonth().toLocaleDateString(undefined, {
       month: 'long',
       year: 'numeric',
     });
@@ -198,8 +202,24 @@ export default function Calendar() {
 
   // Week day headers, rotated based on preference
   const weekDays = createMemo(() => {
-    const allDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-    const fullDays = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const allDays = [
+      t('calendar.sun'),
+      t('calendar.mon'),
+      t('calendar.tue'),
+      t('calendar.wed'),
+      t('calendar.thu'),
+      t('calendar.fri'),
+      t('calendar.sat'),
+    ];
+    const fullDays = [
+      t('calendar.sunday'),
+      t('calendar.monday'),
+      t('calendar.tuesday'),
+      t('calendar.wednesday'),
+      t('calendar.thursday'),
+      t('calendar.friday'),
+      t('calendar.saturday'),
+    ];
     const preferredFirstDay = preferences().firstDayOfWeek ?? 0;
 
     // Rotate array to start on preferred day
@@ -302,7 +322,7 @@ export default function Calendar() {
             <button
               onClick={previousMonth}
               class="rounded p-2 hover:bg-hover text-primary"
-              aria-label="Previous month"
+              aria-label={t('calendar.prevMonth')}
             >
               <ChevronLeft size={20} />
             </button>
@@ -311,7 +331,7 @@ export default function Calendar() {
           <button
             onClick={() => setPickerYear((y) => y - 1)}
             class="rounded p-2 hover:bg-hover text-primary"
-            aria-label="Previous year"
+            aria-label={t('calendar.prevYear')}
           >
             <ChevronLeft size={20} />
           </button>
@@ -324,7 +344,7 @@ export default function Calendar() {
             setShowPicker((v) => !v);
           }}
           class="text-sm font-semibold text-primary hover:bg-hover rounded px-2 py-1"
-          aria-label={showPicker() ? 'Close month picker' : 'Open month picker'}
+          aria-label={showPicker() ? t('calendar.closePicker') : t('calendar.openPicker')}
           aria-expanded={showPicker()}
         >
           <Show when={showPicker()} fallback={monthName()}>
@@ -339,7 +359,7 @@ export default function Calendar() {
             <button
               onClick={nextMonth}
               class="rounded p-2 hover:bg-hover text-primary"
-              aria-label="Next month"
+              aria-label={t('calendar.nextMonth')}
             >
               <ChevronRight size={20} />
             </button>
@@ -348,7 +368,7 @@ export default function Calendar() {
           <button
             onClick={() => setPickerYear((y) => y + 1)}
             class="rounded p-2 hover:bg-hover text-primary"
-            aria-label="Next year"
+            aria-label={t('calendar.nextYear')}
           >
             <ChevronRight size={20} />
           </button>
@@ -394,7 +414,7 @@ export default function Calendar() {
                             tabIndex={focusedDate() === day.date ? 0 : -1}
                             aria-selected={day.isSelected}
                             aria-current={day.isToday ? 'date' : undefined}
-                            aria-label={`${formatDateLabel(day.date)}${day.hasEntry ? ', has entry' : ''}`}
+                            aria-label={`${formatDateLabel(day.date)}${day.hasEntry ? t('calendar.hasEntry') : ''}`}
                             class={`
                             relative h-8 w-full rounded text-sm flex flex-col items-center justify-center
                             ${day.isCurrentMonth ? 'text-primary' : 'text-muted'}
@@ -427,7 +447,7 @@ export default function Calendar() {
       >
         {/* Month picker grid — 3×4 */}
         <div class="grid grid-cols-3 gap-1 py-1">
-          <For each={MONTH_NAMES}>
+          <For each={MONTH_NAMES()}>
             {(name, i) => (
               <button
                 onClick={() => {
@@ -442,7 +462,7 @@ export default function Calendar() {
                       : 'text-primary hover:bg-hover'
                   }
                 `}
-                aria-label={`${name} ${pickerYear()}`}
+                aria-label={t('calendar.monthYearAria', { name, year: String(pickerYear()) })}
                 aria-pressed={
                   pickerYear() === currentMonth().getFullYear() && i() === currentMonth().getMonth()
                 }

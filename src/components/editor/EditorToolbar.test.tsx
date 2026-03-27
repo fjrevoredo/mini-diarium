@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, fireEvent } from '@solidjs/testing-library';
+import { fireEvent } from '@solidjs/testing-library';
+import { renderWithI18n } from '../../test/i18n-test-utils';
 import EditorToolbar from './EditorToolbar';
 import { setPreferences } from '../../state/preferences';
 import type { Editor } from '@tiptap/core';
@@ -66,7 +67,7 @@ describe('EditorToolbar alignment buttons — visibility', () => {
   it('hides alignment buttons when advancedToolbar is false', () => {
     setPreferences({ advancedToolbar: false });
     const editor = makeEditorMock();
-    const { container } = render(() => <EditorToolbar editor={editor} />);
+    const { container } = renderWithI18n(() => <EditorToolbar editor={editor} />);
 
     expect(container.querySelector('[aria-label="Align left"]')).toBeNull();
     expect(container.querySelector('[aria-label="Align center"]')).toBeNull();
@@ -77,7 +78,7 @@ describe('EditorToolbar alignment buttons — visibility', () => {
   it('shows all four alignment buttons when advancedToolbar is true', () => {
     setPreferences({ advancedToolbar: true });
     const editor = makeEditorMock();
-    const { container } = render(() => <EditorToolbar editor={editor} />);
+    const { container } = renderWithI18n(() => <EditorToolbar editor={editor} />);
 
     expect(container.querySelector('[aria-label="Align left"]')).not.toBeNull();
     expect(container.querySelector('[aria-label="Align center"]')).not.toBeNull();
@@ -96,7 +97,7 @@ describe('EditorToolbar alignment buttons — active state', () => {
     const editor = makeEditorMock({
       isActive: () => false,
     });
-    const { container } = render(() => <EditorToolbar editor={editor} />);
+    const { container } = renderWithI18n(() => <EditorToolbar editor={editor} />);
 
     const leftBtn = container.querySelector('[aria-label="Align left"]') as HTMLButtonElement;
     expect(leftBtn).not.toBeNull();
@@ -112,7 +113,7 @@ describe('EditorToolbar alignment buttons — active state', () => {
         return false;
       },
     });
-    const { container } = render(() => <EditorToolbar editor={editor} />);
+    const { container } = renderWithI18n(() => <EditorToolbar editor={editor} />);
 
     const centerBtn = container.querySelector('[aria-label="Align center"]') as HTMLButtonElement;
     expect(centerBtn.className).toContain('btn-active');
@@ -129,7 +130,7 @@ describe('EditorToolbar alignment buttons — active state', () => {
         return false;
       },
     });
-    const { container } = render(() => <EditorToolbar editor={editor} />);
+    const { container } = renderWithI18n(() => <EditorToolbar editor={editor} />);
 
     const rightBtn = container.querySelector('[aria-label="Align right"]') as HTMLButtonElement;
     expect(rightBtn.className).toContain('btn-active');
@@ -143,7 +144,7 @@ describe('EditorToolbar alignment buttons — active state', () => {
         return false;
       },
     });
-    const { container } = render(() => <EditorToolbar editor={editor} />);
+    const { container } = renderWithI18n(() => <EditorToolbar editor={editor} />);
 
     const justifyBtn = container.querySelector('[aria-label="Justify"]') as HTMLButtonElement;
     expect(justifyBtn.className).toContain('btn-active');
@@ -164,7 +165,7 @@ describe('EditorToolbar alignment buttons — click behaviour', () => {
     const editor = makeEditorMock();
     (editor as unknown as { chain: typeof chain }).chain = chain;
 
-    const { container } = render(() => <EditorToolbar editor={editor} />);
+    const { container } = renderWithI18n(() => <EditorToolbar editor={editor} />);
     const leftBtn = container.querySelector('[aria-label="Align left"]') as HTMLButtonElement;
     fireEvent.click(leftBtn);
 
@@ -181,7 +182,7 @@ describe('EditorToolbar alignment buttons — click behaviour', () => {
     const editor = makeEditorMock();
     (editor as unknown as { chain: typeof chain }).chain = chain;
 
-    const { container } = render(() => <EditorToolbar editor={editor} />);
+    const { container } = renderWithI18n(() => <EditorToolbar editor={editor} />);
     const centerBtn = container.querySelector('[aria-label="Align center"]') as HTMLButtonElement;
     fireEvent.click(centerBtn);
 
@@ -198,7 +199,7 @@ describe('EditorToolbar alignment buttons — click behaviour', () => {
     const editor = makeEditorMock();
     (editor as unknown as { chain: typeof chain }).chain = chain;
 
-    const { container } = render(() => <EditorToolbar editor={editor} />);
+    const { container } = renderWithI18n(() => <EditorToolbar editor={editor} />);
     const rightBtn = container.querySelector('[aria-label="Align right"]') as HTMLButtonElement;
     fireEvent.click(rightBtn);
 
@@ -215,7 +216,7 @@ describe('EditorToolbar alignment buttons — click behaviour', () => {
     const editor = makeEditorMock();
     (editor as unknown as { chain: typeof chain }).chain = chain;
 
-    const { container } = render(() => <EditorToolbar editor={editor} />);
+    const { container } = renderWithI18n(() => <EditorToolbar editor={editor} />);
     const justifyBtn = container.querySelector('[aria-label="Justify"]') as HTMLButtonElement;
     fireEvent.click(justifyBtn);
 

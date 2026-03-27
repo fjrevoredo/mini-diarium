@@ -31,6 +31,12 @@ Template:
 # Versions
 
 
+## [0.4.14] - [Unreleased]
+
+### Added
+- **i18n / Translation support**: All ~220 hardcoded English UI strings are extracted into a typed locale file (`src/i18n/locales/en.ts`) using `@solid-primitives/i18n`. The system is designed for community-contributed translations — add a JSON file to `src/i18n/locales/` and run `bun run validate:locales` to check completeness. See `docs/TRANSLATIONS.md` for the full translator guide covering interpolation syntax, plural key pairs, and PR instructions.
+
+
 ## [0.4.13] - 25-03-2026
 
 ### Added

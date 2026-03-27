@@ -275,6 +275,53 @@ Six signal-based state modules in `src/state/`:
 
 `Preferences` fields: `allowFutureEntries` (bool), `firstDayOfWeek` (number|null), `hideTitles` (bool), `enableSpellcheck` (bool), `escAction` (`'none'|'quit'`), `autoLockEnabled` (bool), `autoLockTimeout` (number, seconds), `advancedToolbar` (bool), `editorFontSize` (number, px), `showEntryTimestamps` (bool). Stored in `localStorage`.
 
+## i18n / Translations
+
+All UI strings are extracted into `src/i18n/locales/en.ts` (the canonical English source). The i18n system uses `@solid-primitives/i18n` v2 with a thin context wrapper (`src/i18n/index.ts`).
+
+### Adding new keys
+
+1. Add the key under the appropriate namespace in `src/i18n/locales/en.ts`.
+2. Key naming: `namespace.camelCase`. Suffixes: `.label` (form labels), `.hint` (helper text), `.placeholder` (inputs), `.aria` (aria-labels). Button text uses the verb directly (`common.save`).
+3. Interpolation syntax: `{{ name }}` (spaces required) — e.g. `"Hello {{ name }}"`.
+4. Plurals: use `_one` / `_other` key suffixes and select in the component:
+   ```typescript
+   t(count === 1 ? 'editor.wordCount_one' : 'editor.wordCount_other', { count })
+   ```
+5. In the component, call `const t = useI18n()` and use `t('namespace.key')`.
+
+### `mapTauriError(err, t)` pattern
+
+`mapTauriError` is a pure function called outside JSX render (in async handlers). It accepts `t: T` as a required second parameter. Every call site is inside a component that already calls `useI18n()`:
+
+```typescript
+import { mapTauriError } from '../../lib/errors';
+import { useI18n } from '../../i18n';
+
+// In component:
+const t = useI18n();
+// In handler:
+setError(mapTauriError(err, t));
+```
+
+### Module-level arrays using translations
+
+Arrays that contain translated strings must be `createMemo` inside the component (not module-level consts), so they are evaluated after `useI18n()` is called. See `MONTH_NAMES` in `Calendar.tsx` and `FIRST_DAY_OPTIONS` in `PreferencesOverlay.tsx` as reference.
+
+### Testing
+
+All component tests use `renderWithI18n()` from `src/test/i18n-test-utils.tsx` instead of bare `render()`. The wrapper provides the `I18nProvider` context. English strings are identical to hardcoded values, so existing `getByText('...')` assertions continue to pass.
+
+### Validating locale files
+
+Community locale JSON files live in `src/i18n/locales/`. To check completeness against `en.ts`:
+
+```bash
+bun run validate:locales
+```
+
+See `docs/TRANSLATIONS.md` for the community translator guide.
+
 ## Conventions
 
 ### SolidJS Reactivity Gotchas

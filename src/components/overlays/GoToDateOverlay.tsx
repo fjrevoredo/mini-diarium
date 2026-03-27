@@ -3,8 +3,10 @@ import { Dialog } from '@kobalte/core/dialog';
 import { isGoToDateOpen, setIsGoToDateOpen, selectedDate, setSelectedDate } from '../../state/ui';
 import { getTodayString, isValidDate } from '../../lib/dates';
 import { preferences } from '../../state/preferences';
+import { useI18n } from '../../i18n';
 
 export default function GoToDateOverlay() {
+  const t = useI18n();
   const [dateInput, setDateInput] = createSignal(selectedDate());
 
   // Reset input when dialog opens
@@ -70,16 +72,18 @@ export default function GoToDateOverlay() {
             style={{ 'box-shadow': 'var(--shadow-lg)' }}
             onKeyDown={handleKeyDown}
           >
-            <Dialog.Title class="text-lg font-semibold text-primary mb-4">Go to Date</Dialog.Title>
+            <Dialog.Title class="text-lg font-semibold text-primary mb-4">
+              {t('goToDate.title')}
+            </Dialog.Title>
 
             <Dialog.Description class="text-sm text-secondary mb-4">
-              Jump to a specific date in your journal.
+              {t('goToDate.description')}
             </Dialog.Description>
 
             <form onSubmit={handleSubmit} class="space-y-4">
               <div>
                 <label for="date-input" class="block text-sm font-medium text-secondary mb-2">
-                  Select Date
+                  {t('goToDate.selectDateLabel')}
                 </label>
                 <input
                   id="date-input"
@@ -97,20 +101,20 @@ export default function GoToDateOverlay() {
                   onClick={() => setIsGoToDateOpen(false)}
                   class="px-4 py-2 text-sm font-medium text-secondary bg-primary border border-primary rounded-md hover:bg-hover focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
                 >
-                  Cancel
+                  {t('common.cancel')}
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitDisabled()}
                   class="px-4 py-2 text-sm font-medium interactive-primary rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  Go to Date
+                  {t('goToDate.goToDate')}
                 </button>
               </div>
             </form>
 
             <Dialog.CloseButton class="absolute top-4 right-4 inline-flex items-center justify-center rounded-md p-1 text-tertiary hover:text-secondary hover:bg-hover focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500">
-              <span class="sr-only">Close</span>
+              <span class="sr-only">{t('goToDate.closeAria')}</span>
               <svg
                 class="h-5 w-5"
                 xmlns="http://www.w3.org/2000/svg"

@@ -5,6 +5,7 @@ import { initializeTheme } from './lib/theme';
 import { createLogger } from './lib/logger';
 import { preferences } from './state/preferences';
 import { isAboutOpen, setIsAboutOpen } from './state/ui';
+import { useI18n } from './i18n';
 import JournalPicker from './components/auth/JournalPicker';
 import PasswordCreation from './components/auth/PasswordCreation';
 import PasswordPrompt from './components/auth/PasswordPrompt';
@@ -14,6 +15,7 @@ import AboutOverlay from './components/overlays/AboutOverlay';
 const log = createLogger('App');
 
 function App() {
+  const t = useI18n();
   const ACTIVITY_EVENTS = ['mousemove', 'keydown', 'click', 'touchstart', 'scroll'] as const;
   let idleTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -72,7 +74,7 @@ function App() {
           <div class="flex h-full items-center justify-center bg-secondary">
             <div class="text-center">
               <div class="mb-4 h-12 w-12 animate-spin rounded-full border-4 spinner-border border-t-transparent mx-auto" />
-              <p class="text-secondary">Loading...</p>
+              <p class="text-secondary">{t('layout.loading')}</p>
             </div>
           </div>
         </Match>
