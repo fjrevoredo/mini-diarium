@@ -14,6 +14,7 @@ TODO entry format:
 
 ## High Priority
 
+- [ ] **Investigate intermittent entry-not-saved flakiness** — both the E2E `diary-workflow` test and the real app exhibit a rare race where an entry written on a fresh (no prior entry) date is not persisted after lock/unlock; the symptom is the editor appearing blank after returning to the date; suspected root cause is a timing window in `EditorPanel.tsx` where `pendingEntryId === null` at the moment the title `onInput` handler fires, causing the `createEntry` → `saveEntry` async chain to start before the entry exists; cannot be reproduced on demand; add logging around the `pendingEntryId` check in `handleTitleInput`, confirm the race, and fix it (e.g. serialise the create+save chain or guard the save with an await on the pending ID)
 
 ---
 
