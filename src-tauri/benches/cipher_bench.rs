@@ -1,3 +1,8 @@
+// Benchmarks AES-256-GCM encrypt/decrypt in isolation.
+// At typical entry sizes (5–20 KB), crypto costs 5–20 µs — not the bottleneck.
+// DB read/write operations dominate at 40–160 µs (see db_bench.rs).
+// This bench's purpose is to catch regressions in the crypto layer itself.
+
 use criterion::{criterion_group, criterion_main, BenchmarkId, Criterion, Throughput};
 use mini_diarium_lib::crypto::cipher::{decrypt, encrypt, Key};
 

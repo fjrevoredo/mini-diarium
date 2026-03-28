@@ -41,6 +41,9 @@ Template:
     - **Spanish (Español) translation**: full translation of all UI strings into Spanish (`src/i18n/locales/es.json`). Select "Español" in Preferences → General → Language.
     - **Native OS menu i18n**: The native app menu (Navigation, Diary, and all items within) now updates to the selected language in real time without an app restart. A new `update_menu_locale` Tauri command stores all translatable `MenuItem` and `Submenu` handles in a `TranslatableMenuItems` managed-state struct and calls `set_text()` on each. Adding a new community locale requires adding its ~15 menu strings to the match block in `src-tauri/src/commands/menu.rs` alongside the JSON locale file.
 
+### Changed
+- **Benchmarks revised to cover actual hot paths**: added `db_update_entry` (the real auto-save path replacing `db_insert_entry` as primary write bench), `db_get_all_entry_dates` at 100 and 500 entries, `auth_argon2` group for Argon2id wrap/unwrap (the unlock path, `sample_size(10)`); scaled `db_get_all` corpus to 500 entries alongside 100; replaced synthetic word-count input with realistic TipTap HTML; added context comments to `cipher_bench`.
+
 
 ## [0.4.13] - 25-03-2026
 

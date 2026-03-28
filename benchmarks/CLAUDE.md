@@ -30,11 +30,17 @@ src/lib/
 |-----------|------|-----------|
 | `cipher_encrypt` | `cipher_bench.rs` | AES-256-GCM encrypt at 1 KB, 10 KB, 100 KB |
 | `cipher_decrypt` | `cipher_bench.rs` | AES-256-GCM decrypt at 1 KB, 10 KB, 100 KB |
-| `db_insert_entry` | `db_bench.rs` | Single insert into fresh DB (measures crypto overhead) |
-| `db_get_entries_by_date` | `db_bench.rs` | Read 1 entry by date (measures decrypt cost) |
-| `db_get_all_entries_100` | `db_bench.rs` | Full journal scan — 100 entries (export/stats path) |
-| `count_words_plain_500w` | `word_count_bench.rs` | Word count on ~500-word plain text |
-| `count_words_html_500w` | `word_count_bench.rs` | Word count on ~500-word HTML (strip + count) |
+| `db_insert_entry` | `db_bench.rs` | One-time entry creation into fresh DB |
+| `db_update_entry` | `db_bench.rs` | Auto-save hot path: update existing entry (realistic HTML) |
+| `db_get_entries_by_date` | `db_bench.rs` | Read 1 entry by date |
+| `db_get_all_entry_dates/100` | `db_bench.rs` | Distinct date list — 100-entry journal |
+| `db_get_all_entry_dates/500` | `db_bench.rs` | Distinct date list — 500-entry journal |
+| `db_get_all_entries/100` | `db_bench.rs` | Full scan — 100-entry journal |
+| `db_get_all_entries/500` | `db_bench.rs` | Full scan — 500-entry journal |
+| `auth_argon2/wrap_master_key` | `auth_bench.rs` | Argon2id hash + AES-GCM wrap (unlock cost) |
+| `auth_argon2/unwrap_master_key` | `auth_bench.rs` | Argon2id verify + AES-GCM unwrap (unlock cost) |
+| `count_words_plain_500w` | `word_count_bench.rs` | Word count on ~500-word plain prose |
+| `count_words_html_500w` | `word_count_bench.rs` | Word count on realistic TipTap HTML |
 | `parseMarkdownToHtml short` | `markdown.bench.ts` | marked + DOMPurify on ~100-word Markdown |
 | `parseMarkdownToHtml long` | `markdown.bench.ts` | marked + DOMPurify on ~1000-word Markdown |
 
@@ -60,3 +66,12 @@ Alert threshold: **200%** — posts a PR comment if a benchmark regresses to 2×
 5. **Keep `NamedTempFile` alive in `iter_batched` setups** — `tempfile::NamedTempFile` deletes its file on `Drop`. In `iter_batched`, the setup closure must return both `(tmp, db)` so the file outlives the benchmark iteration. Dropping `tmp` before the iteration runs will cause SQLite to open a deleted file.
 
 6. **All benchmark imports use `mini_diarium_lib::*`** — the Cargo.toml `[lib]` section declares `name = "mini_diarium_lib"`. Benchmark targets import from this crate name, not from the binary target. Ensure `pub mod crypto` and `pub mod db` are exported from `lib.rs`.
+
+7. **Auth bench uses `sample_size(10)` intentionally** — Argon2id takes 100–300 ms per
+   sample; 10 samples (~30–60 s) is sufficient for trend tracking without blocking CI.
+   Do not increase `sample_size` on this group.
+
+8. **Auth bench alerts on slowdowns only** — criterion tracks regressions (things getting
+   slower). It does NOT alert if Argon2id gets faster/weaker (e.g. reduced iterations).
+   Guarding against weakened parameters requires a dedicated unit test checking minimum
+   param values — that is a separate concern from performance benchmarking.
