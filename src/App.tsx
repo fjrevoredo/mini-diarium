@@ -5,6 +5,7 @@ import { initializeTheme } from './lib/theme';
 import { createLogger } from './lib/logger';
 import { preferences } from './state/preferences';
 import { setLocale, useI18n } from './i18n';
+import { updateMenuLocale } from './lib/tauri';
 import { isAboutOpen, setIsAboutOpen } from './state/ui';
 import JournalPicker from './components/auth/JournalPicker';
 import PasswordCreation from './components/auth/PasswordCreation';
@@ -21,8 +22,11 @@ function App() {
 
   // Sync locale signal from persisted preference — runs immediately on mount
   // and re-runs whenever preferences().language changes.
+  // Also updates native OS menu labels via the backend command.
   createEffect(() => {
-    setLocale(preferences().language);
+    const lang = preferences().language;
+    setLocale(lang);
+    void updateMenuLocale(lang);
   });
 
   createEffect(() => {

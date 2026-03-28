@@ -37,6 +37,7 @@ Template:
 - **i18n / Translation support**: All ~220 hardcoded English UI strings are extracted into a typed locale file (`src/i18n/locales/en.ts`) using `@solid-primitives/i18n`. The system is designed for community-contributed translations — add a JSON file to `src/i18n/locales/` and run `bun run validate:locales` to check completeness. See `docs/TRANSLATIONS.md` for the full translator guide covering interpolation syntax, plural key pairs, and PR instructions.
     - **Language selector in Preferences**: A Language dropdown is now available in Preferences → General. The locale is stored in user preferences and applied reactively at runtime (no restart needed).
     - **Spanish (Español) translation**: full translation of all UI strings into Spanish (`src/i18n/locales/es.json`). Select "Español" in Preferences → General → Language.
+    - **Native OS menu i18n**: The native app menu (Navigation, Diary, and all items within) now updates to the selected language in real time without an app restart. A new `update_menu_locale` Tauri command stores all translatable `MenuItem` and `Submenu` handles in a `TranslatableMenuItems` managed-state struct and calls `set_text()` on each. Adding a new community locale requires adding its ~15 menu strings to the match block in `src-tauri/src/commands/menu.rs` alongside the JSON locale file.
 
 
 ## [0.4.13] - 25-03-2026

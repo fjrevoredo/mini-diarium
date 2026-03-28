@@ -285,3 +285,8 @@ export async function generateDebugDump(
 ): Promise<DebugDumpResult> {
   return await invoke<DebugDumpResult>('generate_debug_dump', { filePath, preferencesJson });
 }
+
+// Menu commands
+export async function updateMenuLocale(locale: string): Promise<void> {
+  await invoke('update_menu_locale', { locale });
+}

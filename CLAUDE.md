@@ -66,7 +66,7 @@ Static marketing site — plain HTML/CSS/JS, no build step. Deploy via Coolify u
 
 ## Command Registry
 
-All 49 registered Tauri commands (source: `lib.rs`). Rust names use `snake_case`; frontend wrappers in `src/lib/tauri.ts` use `camelCase`.
+All 50 registered Tauri commands (source: `lib.rs`). Rust names use `snake_case`; frontend wrappers in `src/lib/tauri.ts` use `camelCase`.
 
 | Module | Rust Command | Frontend Wrapper | Description |
 |--------|-------------|-----------------|-------------|
@@ -119,6 +119,7 @@ All 49 registered Tauri commands (source: `lib.rs`). Rust names use `snake_case`
 | plugin | `run_import_plugin` | `runImportPlugin(pluginId, filePath)` | Run import via plugin registry |
 | plugin | `run_export_plugin` | `runExportPlugin(pluginId, filePath)` | Run export via plugin registry |
 | debug | `generate_debug_dump` | `generateDebugDump(filePath, preferencesJson)` | Write privacy-safe diagnostic JSON to file |
+| menu | `update_menu_locale` | `updateMenuLocale(locale)` | Update all native menu item texts to the given locale; falls back to English |
 
 ## Conventions
 

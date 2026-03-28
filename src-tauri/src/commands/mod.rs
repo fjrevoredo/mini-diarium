@@ -4,6 +4,7 @@ pub mod entries;
 pub mod export;
 pub mod files;
 pub mod import;
+pub mod menu;
 pub mod navigation;
 pub mod plugin;
 pub mod search;

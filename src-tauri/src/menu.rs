@@ -7,6 +7,28 @@ use tauri::{
 /// Stored as Tauri-managed state; `MenuItem<Wry>` is Send + Sync.
 pub struct LockableMenuItems(pub Vec<tauri::menu::MenuItem<Wry>>);
 
+/// Handles to all menu items and submenus whose text must update when the locale changes.
+/// Stored as Tauri-managed state; all Tauri menu handle types are Send + Sync.
+pub struct TranslatableMenuItems {
+    pub navigate_prev_day: tauri::menu::MenuItem<Wry>,
+    pub navigate_next_day: tauri::menu::MenuItem<Wry>,
+    pub navigate_today: tauri::menu::MenuItem<Wry>,
+    pub go_to_date: tauri::menu::MenuItem<Wry>,
+    pub navigate_prev_month: tauri::menu::MenuItem<Wry>,
+    pub navigate_next_month: tauri::menu::MenuItem<Wry>,
+    pub statistics: tauri::menu::MenuItem<Wry>,
+    pub import_item: tauri::menu::MenuItem<Wry>,
+    pub export_item: tauri::menu::MenuItem<Wry>,
+    pub preferences: tauri::menu::MenuItem<Wry>,
+    pub about: tauri::menu::MenuItem<Wry>,
+    pub navigation_menu: tauri::menu::Submenu<Wry>,
+    pub diary_menu: tauri::menu::Submenu<Wry>,
+    #[cfg(not(target_os = "macos"))]
+    pub file_menu: tauri::menu::Submenu<Wry>,
+    #[cfg(not(target_os = "macos"))]
+    pub help_menu: tauri::menu::Submenu<Wry>,
+}
+
 /// Build and set up the application menu
 ///
 /// # Active keyboard shortcuts (single canonical reference)
@@ -26,7 +48,9 @@ pub struct LockableMenuItems(pub Vec<tauri::menu::MenuItem<Wry>>);
 /// | Statistics…       | (none)                  | Removed: was TipTap italic conflict|
 /// | Import…           | (none)                  | Removed: was DevTools conflict     |
 /// | Export…           | (none)                  | Removed: rare operation            |
-pub fn build_menu(app: &AppHandle<Wry>) -> tauri::Result<LockableMenuItems> {
+pub fn build_menu(
+    app: &AppHandle<Wry>,
+) -> tauri::Result<(LockableMenuItems, TranslatableMenuItems)> {
     // Lockable — start disabled, enabled on unlock
     let navigate_prev_day = MenuItemBuilder::with_id("navigate_prev_day", "Previous Day")
         .accelerator("CmdOrCtrl+[")
@@ -149,19 +173,22 @@ pub fn build_menu(app: &AppHandle<Wry>) -> tauri::Result<LockableMenuItems> {
     };
 
     #[cfg(not(target_os = "macos"))]
-    let menu = {
+    let (menu, file_menu_handle, help_menu_handle) = {
         let file_menu = SubmenuBuilder::new(app, "File")
             .item(&preferences)
             .separator()
             .item(&PredefinedMenuItem::quit(app, None)?)
             .build()?;
         let help_menu = SubmenuBuilder::new(app, "Help").item(&about).build()?;
-        MenuBuilder::new(app)
+        let file_clone = file_menu.clone();
+        let help_clone = help_menu.clone();
+        let m = MenuBuilder::new(app)
             .item(&file_menu)
             .item(&navigation_menu)
             .item(&diary_menu)
             .item(&help_menu)
-            .build()?
+            .build()?;
+        (m, file_clone, help_clone)
     };
 
     // Set an app-wide menu.
@@ -212,7 +239,27 @@ pub fn build_menu(app: &AppHandle<Wry>) -> tauri::Result<LockableMenuItems> {
         }
     });
 
-    Ok(LockableMenuItems(lockable))
+    let translatable = TranslatableMenuItems {
+        navigate_prev_day: navigate_prev_day.clone(),
+        navigate_next_day: navigate_next_day.clone(),
+        navigate_today: navigate_today.clone(),
+        go_to_date: go_to_date.clone(),
+        navigate_prev_month: navigate_prev_month.clone(),
+        navigate_next_month: navigate_next_month.clone(),
+        statistics: statistics.clone(),
+        import_item: import_item.clone(),
+        export_item: export_item.clone(),
+        preferences: preferences.clone(),
+        about: about.clone(),
+        navigation_menu: navigation_menu.clone(),
+        diary_menu: diary_menu.clone(),
+        #[cfg(not(target_os = "macos"))]
+        file_menu: file_menu_handle,
+        #[cfg(not(target_os = "macos"))]
+        help_menu: help_menu_handle,
+    };
+
+    Ok((LockableMenuItems(lockable), translatable))
 }
 
 /// Enable or disable the lockable menu items based on diary lock state.
