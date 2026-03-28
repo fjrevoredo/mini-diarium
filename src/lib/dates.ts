@@ -2,9 +2,9 @@
  * Formats a date string (YYYY-MM-DD) to a readable format
  * Example: "2024-01-15" -> "Monday, January 15, 2024"
  */
-export function formatDate(dateStr: string): string {
+export function formatDate(dateStr: string, locale?: string): string {
   const date = new Date(dateStr + 'T00:00:00');
-  return date.toLocaleDateString('en-US', {
+  return date.toLocaleDateString(locale ?? 'en-US', {
     weekday: 'long',
     year: 'numeric',
     month: 'long',
@@ -66,8 +66,8 @@ export function addMonths(dateStr: string, months: number): string {
  * Formats an ISO 8601 timestamp string using the OS/browser locale.
  * Example: "2024-01-15T14:30:00.000Z" -> "Jan 15, 2024, 2:30 PM"
  */
-export function formatTimestamp(isoString: string): string {
-  return new Date(isoString).toLocaleString(undefined, {
+export function formatTimestamp(isoString: string, locale?: string): string {
+  return new Date(isoString).toLocaleString(locale, {
     year: 'numeric',
     month: 'short',
     day: 'numeric',

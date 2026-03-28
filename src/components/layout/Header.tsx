@@ -2,6 +2,7 @@ import { createSignal, Show } from 'solid-js';
 import { Menu, Lock, Info } from 'lucide-solid';
 import { selectedDate, setIsAboutOpen, isSidebarCollapsed } from '../../state/ui';
 import { lockJournal } from '../../state/auth';
+import { preferences } from '../../state/preferences';
 import { useI18n } from '../../i18n';
 
 interface HeaderProps {
@@ -16,7 +17,7 @@ export default function Header(props: HeaderProps) {
   // Format date: "Tuesday, January 1, 2019"
   const formattedDate = () => {
     const date = new Date(selectedDate() + 'T00:00:00');
-    return date.toLocaleDateString(undefined, {
+    return date.toLocaleDateString(preferences().language, {
       weekday: 'long',
       year: 'numeric',
       month: 'long',

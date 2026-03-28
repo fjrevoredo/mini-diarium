@@ -1,6 +1,7 @@
 import { translator, flatten, resolveTemplate } from '@solid-primitives/i18n';
 import { createSignal, createContext, useContext, createComponent, type JSX } from 'solid-js';
 import en from './locales/en';
+import esLocale from './locales/es.json';
 
 // Pre-flatten the English dictionary once at module load time.
 // flatten() converts the nested object to dot-notation keys so the translator
@@ -12,11 +13,15 @@ type FlatEn = typeof flatEn;
 // When a new locale is loaded, update this signal to switch all t() calls.
 const [activeLocaleDict, setActiveLocaleDict] = createSignal(flatEn);
 
-// Switch the active locale. For now only 'en' is available; future locales
-// should dynamically import their JSON file, flatten it, and call
-// setActiveLocaleDict(flattenedLocale) here.
-export function setLocale(_code: string): void {
-  setActiveLocaleDict(flatEn);
+// Pre-flatten community locale files once at module load time.
+const localeMap: Record<string, FlatEn> = {
+  en: flatEn,
+  es: flatten(esLocale as unknown as typeof en) as FlatEn,
+};
+
+// Switch the active locale. Falls back to English for unknown codes.
+export function setLocale(code: string): void {
+  setActiveLocaleDict(localeMap[code] ?? flatEn);
 }
 
 // T is the typed translator function: t(key, params?) → string (never undefined).

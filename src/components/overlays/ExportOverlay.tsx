@@ -10,6 +10,7 @@ import {
 } from '../../lib/tauri';
 import { mapTauriError } from '../../lib/errors';
 import { useI18n } from '../../i18n';
+import { preferences } from '../../state/preferences';
 import { X, FileDown, CheckCircle, AlertCircle } from 'lucide-solid';
 
 interface ExportOverlayProps {
@@ -94,7 +95,7 @@ export default function ExportOverlay(props: ExportOverlayProps) {
   };
 
   const formatCount = (num: number): string => {
-    return num.toLocaleString();
+    return num.toLocaleString(preferences().language);
   };
 
   const getFileName = (path: string): string => {

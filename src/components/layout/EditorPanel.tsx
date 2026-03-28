@@ -489,13 +489,16 @@ export default function EditorPanel() {
                     <div class="flex flex-wrap gap-x-4 gap-y-0.5">
                       <p class="text-xs text-tertiary">
                         {t('editor.timestampCreated', {
-                          timestamp: formatTimestamp(entry().date_created),
+                          timestamp: formatTimestamp(entry().date_created, preferences().language),
                         })}
                       </p>
                       <Show when={entry().date_updated !== entry().date_created}>
                         <p class="text-xs text-tertiary">
                           {t('editor.timestampUpdated', {
-                            timestamp: formatTimestamp(entry().date_updated),
+                            timestamp: formatTimestamp(
+                              entry().date_updated,
+                              preferences().language,
+                            ),
                           })}
                         </p>
                       </Show>

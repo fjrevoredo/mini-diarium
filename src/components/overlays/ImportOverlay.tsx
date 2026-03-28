@@ -9,6 +9,7 @@ import {
   type ImportResult,
 } from '../../lib/tauri';
 import { useI18n } from '../../i18n';
+import { preferences } from '../../state/preferences';
 import { X, FileUp, CheckCircle, AlertCircle } from 'lucide-solid';
 
 interface ImportOverlayProps {
@@ -118,7 +119,7 @@ export default function ImportOverlay(props: ImportOverlayProps) {
   };
 
   const formatCount = (num: number): string => {
-    return num.toLocaleString();
+    return num.toLocaleString(preferences().language);
   };
 
   return (

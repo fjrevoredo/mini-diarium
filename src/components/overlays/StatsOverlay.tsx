@@ -2,6 +2,7 @@ import { createSignal, createEffect, Show } from 'solid-js';
 import { Dialog } from '@kobalte/core/dialog';
 import { getStatistics, type Statistics } from '../../lib/tauri';
 import { useI18n } from '../../i18n';
+import { preferences } from '../../state/preferences';
 import { X } from 'lucide-solid';
 
 interface StatsOverlayProps {
@@ -50,7 +51,7 @@ export default function StatsOverlay(props: StatsOverlayProps) {
 
   // Format numbers with locale separators
   const formatNumber = (num: number, decimals: number = 0): string => {
-    return num.toLocaleString(undefined, {
+    return num.toLocaleString(preferences().language, {
       minimumFractionDigits: decimals,
       maximumFractionDigits: decimals,
     });

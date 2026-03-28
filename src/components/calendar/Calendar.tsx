@@ -18,8 +18,8 @@ interface CalendarDay {
 }
 
 /** Format a YYYY-MM-DD string for screen readers, e.g. "Friday, March 20, 2026" */
-function formatDateLabel(dateStr: string): string {
-  return new Date(dateStr + 'T00:00:00').toLocaleDateString(undefined, {
+function formatDateLabel(dateStr: string, locale?: string): string {
+  return new Date(dateStr + 'T00:00:00').toLocaleDateString(locale, {
     weekday: 'long',
     year: 'numeric',
     month: 'long',
@@ -166,7 +166,7 @@ export default function Calendar() {
   });
 
   const monthName = () => {
-    return currentMonth().toLocaleDateString(undefined, {
+    return currentMonth().toLocaleDateString(preferences().language, {
       month: 'long',
       year: 'numeric',
     });
@@ -414,7 +414,7 @@ export default function Calendar() {
                             tabIndex={focusedDate() === day.date ? 0 : -1}
                             aria-selected={day.isSelected}
                             aria-current={day.isToday ? 'date' : undefined}
-                            aria-label={`${formatDateLabel(day.date)}${day.hasEntry ? t('calendar.hasEntry') : ''}`}
+                            aria-label={`${formatDateLabel(day.date, preferences().language)}${day.hasEntry ? t('calendar.hasEntry') : ''}`}
                             class={`
                             relative h-8 w-full rounded text-sm flex flex-col items-center justify-center
                             ${day.isCurrentMonth ? 'text-primary' : 'text-muted'}

@@ -1,6 +1,7 @@
 import { For, Show } from 'solid-js';
 import { searchQuery, searchResults, isSearching } from '../../state/search';
 import { setSelectedDate } from '../../state/ui';
+import { preferences } from '../../state/preferences';
 import { useI18n } from '../../i18n';
 
 export default function SearchResults() {
@@ -12,7 +13,7 @@ export default function SearchResults() {
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr + 'T00:00:00');
-    return date.toLocaleDateString(undefined, {
+    return date.toLocaleDateString(preferences().language, {
       weekday: 'short',
       year: 'numeric',
       month: 'short',
