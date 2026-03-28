@@ -153,6 +153,7 @@
       "numberedList": "Lista numerada",
       "horizontalRule": "Insertar línea horizontal",
       "insertImage": "Insertar imagen",
+      "importMarkdown": "Import Markdown file",
       "alignLeft": "Alinear a la izquierda",
       "alignCenter": "Centrar",
       "alignRight": "Alinear a la derecha",
@@ -174,7 +175,8 @@
     "timestampCreated": "Creado: {{ timestamp }}",
     "timestampUpdated": "Actualizado: {{ timestamp }}",
     "deleteConfirmMessage": "¿Estás seguro de que quieres eliminar esta entrada?",
-    "deleteConfirmTitle": "Eliminar entrada"
+    "deleteConfirmTitle": "Eliminar entrada",
+    "importMarkdownNoEditor": "No active editor to import into."
   },
   "search": {
     "placeholder": "Buscar entradas...",

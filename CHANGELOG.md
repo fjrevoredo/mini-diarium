@@ -34,6 +34,7 @@ Template:
 ## [0.4.14] - [Unreleased]
 
 ### Added
+- **Markdown file import into current entry**: A new "Import Markdown file" button in the advanced formatting toolbar (next to Insert Image) allows importing a `.md` file from disk into the active editor. When the current entry is empty the imported content replaces it; when the entry already has content the Markdown is appended after a horizontal-rule separator. `marked` (GFM mode) handles Markdown-to-HTML conversion on the frontend; `DOMPurify` sanitizes the output via the `postprocess` hook before it reaches TipTap. File size is capped at 1 MB; import errors surface as a dismissible banner in the editor footer.
 - **i18n / Translation support**: All ~220 hardcoded English UI strings are extracted into a typed locale file (`src/i18n/locales/en.ts`) using `@solid-primitives/i18n`. The system is designed for community-contributed translations — add a JSON file to `src/i18n/locales/` and run `bun run validate:locales` to check completeness. See `docs/TRANSLATIONS.md` for the full translator guide covering interpolation syntax, plural key pairs, and PR instructions.
     - **Language selector in Preferences**: A Language dropdown is now available in Preferences → General. The locale is stored in user preferences and applied reactively at runtime (no restart needed).
     - **Spanish (Español) translation**: full translation of all UI strings into Spanish (`src/i18n/locales/es.json`). Select "Español" in Preferences → General → Language.

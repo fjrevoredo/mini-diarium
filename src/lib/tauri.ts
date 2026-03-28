@@ -273,6 +273,10 @@ export async function readFileBytes(path: string): Promise<number[]> {
   return await invoke('read_file_bytes', { path });
 }
 
+export async function readTextFile(path: string): Promise<string> {
+  return await invoke('read_text_file', { path });
+}
+
 // Debug commands
 export interface DebugDumpResult {
   file_path: string;

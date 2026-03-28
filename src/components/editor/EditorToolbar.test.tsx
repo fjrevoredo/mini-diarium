@@ -224,3 +224,32 @@ describe('EditorToolbar alignment buttons — click behaviour', () => {
     expect(run).toHaveBeenCalled();
   });
 });
+
+// ---------------------------------------------------------------------------
+// Import Markdown button — visibility and callback
+// ---------------------------------------------------------------------------
+
+describe('EditorToolbar import markdown button', () => {
+  it('hides the import markdown button when advancedToolbar is false', () => {
+    setPreferences({ advancedToolbar: false });
+    const { container } = renderWithI18n(() => <EditorToolbar editor={makeEditorMock()} />);
+    expect(container.querySelector('[aria-label="Import Markdown file"]')).toBeNull();
+  });
+
+  it('shows the import markdown button when advancedToolbar is true', () => {
+    setPreferences({ advancedToolbar: true });
+    const { container } = renderWithI18n(() => <EditorToolbar editor={makeEditorMock()} />);
+    expect(container.querySelector('[aria-label="Import Markdown file"]')).not.toBeNull();
+  });
+
+  it('calls onImportMarkdown when the button is clicked', () => {
+    setPreferences({ advancedToolbar: true });
+    const onImportMarkdown = vi.fn();
+    const { container } = renderWithI18n(() => (
+      <EditorToolbar editor={makeEditorMock()} onImportMarkdown={onImportMarkdown} />
+    ));
+    const btn = container.querySelector('[aria-label="Import Markdown file"]') as HTMLButtonElement;
+    fireEvent.click(btn);
+    expect(onImportMarkdown).toHaveBeenCalledOnce();
+  });
+});

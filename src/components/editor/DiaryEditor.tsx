@@ -19,6 +19,7 @@ interface DiaryEditorProps {
   placeholder?: string;
   onEditorReady?: (editor: Editor) => void;
   spellCheck?: boolean;
+  onImportMarkdown?: () => void;
 }
 
 // Core: resize a data URL via canvas and insert at the current cursor position.
@@ -273,6 +274,7 @@ export default function DiaryEditor(props: DiaryEditorProps) {
               console.error('[mini-diarium] image embed failed:', err),
             );
         }}
+        onImportMarkdown={props.onImportMarkdown}
       />
       <div class="p-4">
         <div ref={editorElement} />

@@ -14,13 +14,16 @@ import {
   deleteEntryIfEmpty,
   deleteEntry,
   getAllEntryDates,
+  readTextFile,
 } from '../../lib/tauri';
 import type { DiaryEntry } from '../../lib/tauri';
 import { debounce } from '../../lib/debounce';
 import { formatTimestamp } from '../../lib/dates';
 import { isSaving, setIsSaving, setEntryDates, registerCleanupCallback } from '../../state/entries';
 import { preferences } from '../../state/preferences';
-import { confirm } from '@tauri-apps/plugin-dialog';
+import { confirm, open as openDialog } from '@tauri-apps/plugin-dialog';
+import { parseMarkdownToHtml } from '../../lib/markdown';
+import { mapTauriError } from '../../lib/errors';
 
 const log = createLogger('Editor');
 
@@ -36,6 +39,8 @@ export default function EditorPanel() {
   const [dayEntries, setDayEntries] = createSignal<DiaryEntry[]>([]);
   const [currentIndex, setCurrentIndex] = createSignal(0);
   const [pendingEntryId, setPendingEntryId] = createSignal<number | null>(null);
+
+  const [importError, setImportError] = createSignal<string | null>(null);
 
   let isDisposed = false;
   let loadRequestId = 0;
@@ -385,6 +390,51 @@ export default function EditorPanel() {
     }
   };
 
+  const handleImportMarkdown = async () => {
+    setImportError(null);
+
+    const editor = editorInstance();
+    if (!editor || editor.isDestroyed) {
+      setImportError(t('editor.importMarkdownNoEditor'));
+      return;
+    }
+
+    let filePath: string | null;
+    try {
+      filePath = (await openDialog({
+        multiple: false,
+        filters: [{ name: 'Markdown', extensions: ['md'] }],
+      })) as string | null;
+    } catch (err) {
+      log.error('Failed to open file dialog:', err);
+      return;
+    }
+    if (!filePath) return; // user cancelled
+
+    let markdown: string;
+    try {
+      markdown = await readTextFile(filePath);
+    } catch (err) {
+      log.error('Failed to read markdown file:', err);
+      setImportError(mapTauriError(err, t));
+      return;
+    }
+
+    const html = parseMarkdownToHtml(markdown);
+
+    if (isContentEmpty()) {
+      // Empty entry: replace content — triggers onUpdate → handleContentUpdate →
+      // auto-creates entry if needed, then queues debouncedSave.
+      editor.commands.setContent(html, { emitUpdate: true });
+    } else {
+      // Non-empty entry: append after horizontal rule separator.
+      // setHorizontalRule() uses the ProseMirror command directly (more reliable than
+      // parsing '<hr />' from an HTML string in insertContent).
+      editor.chain().focus('end').setHorizontalRule().insertContent(html).run();
+      // insertContent triggers onUpdate → handleContentUpdate → debouncedSave.
+    }
+  };
+
   const handleTitleInput = (newTitle: string) => {
     setTitle(newTitle);
     const id = pendingEntryId();
@@ -433,6 +483,7 @@ export default function EditorPanel() {
 
     window.addEventListener('beforeunload', handleBeforeUnload);
 
+    // eslint-disable-next-line solid/reactivity -- cleanup callback runs imperatively on journal lock, not in a reactive tracking scope; reading signals here is intentional snapshot behaviour
     const unregister = registerCleanupCallback(async () => {
       const currentId = pendingEntryId();
       if (currentId !== null) {
@@ -525,10 +576,27 @@ export default function EditorPanel() {
               placeholder={t('editor.editorPlaceholder')}
               onEditorReady={setEditorInstance}
               spellCheck={preferences().enableSpellcheck}
+              onImportMarkdown={handleImportMarkdown}
             />
           </div>
         </div>
       </div>
+
+      {/* Import markdown error banner */}
+      <Show when={importError()}>
+        <div class="px-6 pt-2">
+          <div role="alert" class="rounded-md bg-error p-3 flex items-center justify-between gap-2">
+            <p class="text-sm text-error">{importError()}</p>
+            <button
+              onClick={() => setImportError(null)}
+              class="text-sm text-error hover:opacity-75 flex-shrink-0"
+              aria-label={t('common.close')}
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      </Show>
 
       {/* Footer with word count and save status */}
       <div class="border-t border-primary bg-tertiary px-6 py-2">

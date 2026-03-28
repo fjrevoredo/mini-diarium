@@ -14,6 +14,7 @@ import {
   Code,
   Minus,
   ImagePlus,
+  FileInput,
   AlignLeft,
   AlignCenter,
   AlignRight,
@@ -23,6 +24,7 @@ import {
 interface EditorToolbarProps {
   editor: Editor | null;
   onInsertImage?: (file: File) => void;
+  onImportMarkdown?: () => void;
 }
 
 export default function EditorToolbar(props: EditorToolbarProps) {
@@ -268,6 +270,18 @@ export default function EditorToolbar(props: EditorToolbarProps) {
             aria-label={t('editor.toolbar.insertImage')}
           >
             <ImagePlus size={18} />
+          </button>
+        </Show>
+
+        {/* Import Markdown file — advanced only */}
+        <Show when={preferences().advancedToolbar}>
+          <button
+            onClick={() => props.onImportMarkdown?.()}
+            class={btnBase}
+            title={t('editor.toolbar.importMarkdown')}
+            aria-label={t('editor.toolbar.importMarkdown')}
+          >
+            <FileInput size={18} />
           </button>
         </Show>
 

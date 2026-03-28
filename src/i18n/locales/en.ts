@@ -194,6 +194,7 @@ const en = {
       numberedList: 'Numbered List',
       horizontalRule: 'Insert horizontal rule',
       insertImage: 'Insert image',
+      importMarkdown: 'Import Markdown file',
       alignLeft: 'Align left',
       alignCenter: 'Align center',
       alignRight: 'Align right',
@@ -224,6 +225,8 @@ const en = {
     /** EditorPanel — delete entry confirm dialog */
     deleteConfirmMessage: 'Are you sure you want to delete this entry?',
     deleteConfirmTitle: 'Delete Entry',
+    /** EditorPanel — import markdown error */
+    importMarkdownNoEditor: 'No active editor to import into.',
   },
 
   /** Search components */

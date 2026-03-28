@@ -66,7 +66,7 @@ Static marketing site — plain HTML/CSS/JS, no build step. Deploy via Coolify u
 
 ## Command Registry
 
-All 50 registered Tauri commands (source: `lib.rs`). Rust names use `snake_case`; frontend wrappers in `src/lib/tauri.ts` use `camelCase`.
+All 51 registered Tauri commands (source: `lib.rs`). Rust names use `snake_case`; frontend wrappers in `src/lib/tauri.ts` use `camelCase`.
 
 | Module | Rust Command | Frontend Wrapper | Description |
 |--------|-------------|-----------------|-------------|
@@ -101,6 +101,7 @@ All 50 registered Tauri commands (source: `lib.rs`). Rust names use `snake_case`
 | entries | `delete_entry` | `deleteEntry(id)` | Delete entry by id unconditionally |
 | entries | `get_all_entry_dates` | `getAllEntryDates()` | List all dates with entries |
 | files | `read_file_bytes` | `readFileBytes(path)` | Read local image file bytes (jpg/jpeg/png/gif/webp/bmp) |
+| files | `read_text_file` | `readTextFile(path)` | Read local Markdown file as UTF-8 text (.md only, 1 MiB cap) |
 | search | `search_entries` | `searchEntries(query)` | Stub — always returns `[]`; interface preserved for future secure search |
 | nav | `navigate_previous_day` | `navigatePreviousDay(currentDate)` | Previous day with entry |
 | nav | `navigate_next_day` | `navigateNextDay(currentDate)` | Next day with entry |
