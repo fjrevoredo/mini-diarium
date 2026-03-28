@@ -58,7 +58,8 @@ fn bench_insert(c: &mut Criterion) {
         b.iter_batched(
             || {
                 let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
-                let db = create_database(tmp.path().to_str().unwrap(), "bench".to_string()).unwrap();
+                let db =
+                    create_database(tmp.path().to_str().unwrap(), "bench".to_string()).unwrap();
                 (tmp, db)
             },
             |(_tmp, db)| insert_entry(&db, &make_entry("2024-01-01")).unwrap(),
