@@ -14,6 +14,7 @@ For domain-specific conventions, gotchas, and checklists, see:
 - [Frontend (src/)](src/CLAUDE.md) — SolidJS, state, i18n, testing, TipTap, theme
 - [Backend (src-tauri/)](src-tauri/CLAUDE.md) — Tauri commands, Rust patterns, plugins, security, search implementation
 - [E2E (e2e/)](e2e/CLAUDE.md) — WebdriverIO, tauri-driver, viewport rules, E2E mode contracts
+- [Benchmarks (benchmarks/)](benchmarks/CLAUDE.md) — criterion, Vitest bench, CI tracking, gotchas
 
 ## Architecture
 
@@ -163,6 +164,10 @@ bun run test:e2e:local -- --skip-build  # Skip build, run suite only
 
 # Diagrams
 bun run diagrams                        # Regenerate all docs/diagrams/ SVGs
+
+# Benchmarks
+cd src-tauri && cargo bench             # All Rust benchmarks
+bun run bench                           # Frontend benchmarks
 ```
 
 ## Gotchas and Pitfalls

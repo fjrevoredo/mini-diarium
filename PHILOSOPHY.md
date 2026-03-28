@@ -1,6 +1,6 @@
 # PHILOSOPHY.md
 
-_Last updated: 2026-02-23, applies to v0.4.0+_
+_Last updated: 2026-03-28, applies to v0.4.0+_
 
 This document defines the guiding principles for Mini Diarium. Every feature decision, architectural choice, and contribution must align with these values. When in doubt, refer back here.
 
@@ -46,18 +46,21 @@ We use **battle-tested, industry-standard security practices**. No custom crypto
 
 ### 3. Testing Pyramid
 
-Testing follows the classic pyramid: many unit tests, some integration tests, a couple of end-to-end tests.
+Testing follows the classic pyramid: many unit tests, some integration tests, a couple of end-to-end tests, and performance benchmarks on security-critical hot paths.
 
 **Rationale:**
 - Unit tests are fast, isolated, and catch regressions early
 - Integration tests verify component boundaries (crypto vs. storage, UI vs. backend)
 - E2E tests confirm critical user flows work end-to-end
+- Performance benchmarks track throughput of security-critical hot paths over time
 
 **Guidelines:**
 - Every encryption/decryption function must have unit tests
 - Every Tauri command should have an integration test
 - Core user flows (unlock, write, lock, unlock again) need E2E coverage
-- Tests must not require network access or external services
+- Hot paths (cipher operations, DB reads/writes) must have criterion benchmarks
+- Benchmarks track trends and alert on large regressions but do not block CI
+- Tests must not require network access or external services, and benchmarks must not either
 
 ---
 
@@ -225,15 +228,18 @@ Both `ImportOverlay.tsx` and `ExportOverlay.tsx` are wired to the plugin registr
 
 ### Principle 3: Test Infrastructure
 
-**Current coverage** (as of v0.4.3):
+**Current coverage** (as of v0.4.14):
 
 | Layer | Count | How to run |
 |---|---|---|
-| Backend unit + integration | 222 tests across 28 modules | `cd src-tauri && cargo test` |
-| Frontend unit | 80 tests across 10 files | `bun run test:run` |
+| Backend unit + integration | 265 tests across 30 modules | `cd src-tauri && cargo test` |
+| Frontend unit | ~161 tests across 17+ files | `bun run test:run` |
 | E2E | 2 tests | `bun run test:e2e:local` |
+| Benchmarks | 9 scenarios (Rust + frontend) | `cd src-tauri && cargo bench` / `bun run bench` |
 
 **E2E stack**: WebdriverIO v9 + tauri-driver (official Tauri bridge) against the real compiled binary. Config: `wdio.conf.ts` (root). Specs: `e2e/specs/`. Test isolation: each run creates a fresh OS temp directory passed to the app via `MINI_DIARIUM_DATA_DIR`; `lib.rs` uses this as the diary path when set, with no effect on production builds. Run the full suite (build + run): `bun run test:e2e:local`. Run suite only (binary already built): `bun run test:e2e`.
+
+**Benchmark stack**: criterion 0.5 in `src-tauri/benches/` for Rust hot paths (AES-256-GCM cipher, encrypted SQLite queries, word count); Vitest bench in `src/lib/markdown.bench.ts` for frontend Markdown parsing. CI workflow (`.github/workflows/benchmark.yml`) runs on every push to `master`, stores results as JSON in `gh-pages`, and alerts on regressions exceeding 200% without blocking the build. See `benchmarks/CLAUDE.md` for the full guide.
 
 **Known gap**: Frontend coverage is shallow. Auth screens, Calendar, all overlays, DiaryEditor, and Sidebar have no tests. Tracked in `docs/TODO.md`.
 

@@ -1,0 +1,48 @@
+name: Benchmarks
+
+permissions:
+  contents: write
+
+on:
+  push:
+    branches: [master]
+
+concurrency:
+  group: benchmarks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  rust-bench:
+    name: Rust Benchmarks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust artifacts
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri -> target
+          cache-on-failure: true
+
+      - name: Install Linux system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+
+      - name: Run benchmarks (bencher output format)
+        working-directory: src-tauri
+        run: cargo bench -- --output-format bencher | tee ../bench-output.txt 2>&1
+
+      - name: Store benchmark results
+        uses: benchmark-action/github-action-benchmark@v1
+        with:
+          tool: cargo
+          output-file-path: bench-output.txt
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          auto-push: true
+          alert-threshold: '200%'
+          comment-on-alert: true
+          fail-on-alert: false
+          benchmark-data-dir-path: benchmarks

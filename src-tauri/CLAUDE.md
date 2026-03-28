@@ -109,6 +109,8 @@ For **user-scriptable** formats, users drop a `.rhai` file in `{diary_dir}/plugi
 ```bash
 cd src-tauri && cargo test                  # All backend tests
 cd src-tauri && cargo test <module>         # Specific module (e.g., cargo test navigation)
+cd src-tauri && cargo bench                       # All Rust benchmarks (criterion)
+cd src-tauri && cargo bench --bench cipher_bench  # Specific benchmark
 ```
 
 ## Security Rules

@@ -28,7 +28,8 @@
     "test:e2e": "node scripts/run-e2e.js clean",
     "test:e2e:stateful": "node scripts/run-e2e.js stateful",
     "test:e2e:local": "node scripts/e2e-local.js",
-    "validate:locales": "npx tsx scripts/validate-locales.ts"
+    "validate:locales": "npx tsx scripts/validate-locales.ts",
+    "bench": "vitest bench"
   },
   "license": "MIT",
   "dependencies": {
