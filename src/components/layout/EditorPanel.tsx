@@ -43,6 +43,7 @@ export default function EditorPanel() {
   const [importError, setImportError] = createSignal<string | null>(null);
 
   let isDisposed = false;
+  let pendingCreationPromise: Promise<DiaryEntry> | null = null;
   let loadRequestId = 0;
   let saveRequestId = 0;
   const [isCreatingEntry, setIsCreatingEntry] = createSignal(false);
@@ -304,6 +305,39 @@ export default function EditorPanel() {
     void loadEntriesForDate(selectedDate());
   });
 
+  const startEntryCreation = (reason: string) => {
+    if (isCreatingEntry()) {
+      log.debug(`${reason}: isCreatingEntry guard fired — skipping duplicate creation`);
+      return;
+    }
+    log.info(`${reason}: pendingEntryId null — creating entry for date ${selectedDate()}`);
+    setIsCreatingEntry(true);
+    const creationPromise = createEntry(selectedDate());
+    pendingCreationPromise = creationPromise;
+    void (async () => {
+      try {
+        const newEntry = await creationPromise;
+        pendingCreationPromise = null;
+        if (isDisposed) {
+          log.warn(
+            `${reason}: component disposed during createEntry — id=${newEntry.id}, content will be saved by cleanup callback`,
+          );
+          return;
+        }
+        log.info(`${reason}: createEntry completed, id=${newEntry.id}`);
+        setPendingEntryId(newEntry.id);
+        const refreshed = await fetchEntriesOrdered(selectedDate());
+        if (!isDisposed) setDayEntries(refreshed);
+        debouncedSave(newEntry.id, title(), content());
+      } catch (error) {
+        pendingCreationPromise = null;
+        log.error(`${reason}: failed to create entry:`, error);
+      } finally {
+        setIsCreatingEntry(false);
+      }
+    })();
+  };
+
   const handleContentUpdate = (newContent: string) => {
     setContent(newContent);
     // Update the reactive trigger so isContentEmpty() re-evaluates with TipTap's actual
@@ -324,25 +358,9 @@ export default function EditorPanel() {
       const isEmpty = editor
         ? editor.isEmpty || editor.getText().trim() === ''
         : newContent.trim() === '';
-      if (isEmpty || isCreatingEntry()) return;
-
-      // First real keystroke on empty day — create entry then save
-      setIsCreatingEntry(true);
-      void (async () => {
-        try {
-          const newEntry = await createEntry(selectedDate());
-          if (isDisposed) return;
-          setPendingEntryId(newEntry.id);
-          const refreshed = await fetchEntriesOrdered(selectedDate());
-          if (!isDisposed) setDayEntries(refreshed);
-          // Use current signal values — user may have typed more while awaiting
-          debouncedSave(newEntry.id, title(), content());
-        } catch (error) {
-          log.error('Failed to create entry on first keystroke:', error);
-        } finally {
-          setIsCreatingEntry(false);
-        }
-      })();
+      if (isEmpty) return;
+      log.debug('handleContentUpdate: pendingEntryId=null, first real content keystroke');
+      startEntryCreation('handleContentUpdate');
     }
   };
 
@@ -441,25 +459,9 @@ export default function EditorPanel() {
     if (id !== null) {
       debouncedSave(id, newTitle, content());
     } else {
-      // Skip creation on empty title (e.g. programmatic clear)
-      if (newTitle.trim() === '' || isCreatingEntry()) return;
-
-      // First real title keystroke on empty day — create entry then save
-      setIsCreatingEntry(true);
-      void (async () => {
-        try {
-          const newEntry = await createEntry(selectedDate());
-          if (isDisposed) return;
-          setPendingEntryId(newEntry.id);
-          const refreshed = await fetchEntriesOrdered(selectedDate());
-          if (!isDisposed) setDayEntries(refreshed);
-          debouncedSave(newEntry.id, title(), content());
-        } catch (error) {
-          log.error('Failed to create entry on title keystroke:', error);
-        } finally {
-          setIsCreatingEntry(false);
-        }
-      })();
+      if (newTitle.trim() === '') return;
+      log.debug(`handleTitleInput: pendingEntryId=null, title='${newTitle.substring(0, 20)}'`);
+      startEntryCreation('handleTitleInput');
     }
   };
 
@@ -485,6 +487,36 @@ export default function EditorPanel() {
 
     // eslint-disable-next-line solid/reactivity -- cleanup callback runs imperatively on journal lock, not in a reactive tracking scope; reading signals here is intentional snapshot behaviour
     const unregister = registerCleanupCallback(async () => {
+      // If a createEntry() call is in-flight, await it and save immediately.
+      // This window (pendingCreationPromise non-null) is the core of the race:
+      // the cleanup callback fires before the DB is locked but after typing started,
+      // so pendingEntryId is still null and the normal save path below would skip.
+      if (pendingCreationPromise !== null) {
+        try {
+          const newEntry = await pendingCreationPromise;
+          const capturedTitle = title();
+          const edInst = editorInstance();
+          const capturedContent = edInst && !edInst.isDestroyed ? edInst.getHTML() : content();
+          const isContentBlank =
+            edInst && !edInst.isDestroyed
+              ? edInst.isEmpty || edInst.getText().trim() === ''
+              : capturedContent.trim() === '';
+          if (capturedTitle.trim() !== '' || !isContentBlank) {
+            log.info(`cleanup: saving entry id=${newEntry.id} created during lock-race`);
+            await saveEntry(newEntry.id, capturedTitle, capturedContent);
+          } else {
+            log.info(`cleanup: deleting blank ghost entry id=${newEntry.id} from lock-race`);
+            await deleteEntryIfEmpty(newEntry.id, '', '');
+          }
+        } catch (err) {
+          log.warn('cleanup: could not save/delete in-flight entry during lock:', err);
+        }
+        // pendingEntryId may be non-null by now (IIFE's .then() ran first on the same Promise);
+        // return to prevent a redundant second save via saveCurrentById below
+        return;
+      }
+
+      // Normal path: flush any unsaved content for the current entry
       const currentId = pendingEntryId();
       if (currentId !== null) {
         const edInst = editorInstance();
