@@ -31,7 +31,7 @@ Template:
 # Versions
 
 
-## [0.4.14] - [Unreleased]
+## [0.4.14] - 29-03-2026
 
 ### Added
 - **Benchmarking infrastructure**: Rust criterion benchmarks for AES-256-GCM cipher operations, encrypted SQLite queries, and word-count; frontend Vitest bench for Markdown parsing; CI benchmark workflow tracks trends on each merge to master; `benchmarks/CLAUDE.md` domain guide.

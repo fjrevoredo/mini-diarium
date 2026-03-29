@@ -3,6 +3,8 @@
 Archived completed items moved out of [TODO.md](../TODO.md). This keeps the active backlog focused on open work while preserving the original task notes.
 
 ## Completed
+- [x] **Word count: live updates and non-text content** (2026-03-29) — audit the word count feature end-to-end: (1) the counter does not update live as the user types — it should react to editor changes without requiring a save; (2) word count was designed for plain text and has not been revisited since images and other rich content were added to entries — define what "word count" means for non-text nodes (images, embeds) and ensure the counter reflects only actual text, consistently with the statistics view
+- [x] **Provide Flatpak package for Linux distribution** (2026-03-29) — solve GitHub issue `#70` by extending the release process so Mini Diarium can be packaged and released automatically to Flathub with a repeatable, low-manual-step workflow; consider JReleaser if it helps reduce maintenance, but do not treat it as a required solution
 
 - [x] **Expanded rich text editor support** (2026-02-28) — extend the built-in editor with more complete rich text capabilities beyond the current formatting set; define the supported feature set, keep the UX consistent with local-first editing, and ensure stored HTML remains compatible with import/export flows
 - [x] **Configurable auto-lock timeout** (2026-03-01) — add a new Preferences setting to enable auto-lock and set the idle timeout in seconds; enforce a valid range of `1` to `999` seconds and lock the diary automatically when the threshold is reached
