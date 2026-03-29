@@ -1,0 +1,151 @@
+name: Publish to Flathub
+
+permissions:
+  contents: read
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag (e.g. v0.4.14)'
+        required: true
+
+jobs:
+  publish-flathub:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Determine tag and version
+        id: prep
+        run: |
+          tag="${{ inputs.tag || github.event.release.tag_name || github.ref_name }}"
+          version="${tag#v}"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Verify FLATHUB_TOKEN secret is set
+        run: |
+          if [ -z "${{ secrets.FLATHUB_TOKEN }}" ]; then
+            echo "FLATHUB_TOKEN secret is not set."
+            echo "Add it at Settings → Secrets and variables → Actions after Flathub accepts the initial submission."
+            exit 1
+          fi
+          echo "FLATHUB_TOKEN is configured."
+
+      - name: Set up Python 3
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.x'
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.2
+
+      - name: Set up Node 20
+        uses: actions/setup-node@v6
+        with:
+          node-version: 20
+
+      - name: Install flatpak-builder-tools
+        run: |
+          pip install aiohttp toml
+          git clone --depth=1 https://github.com/flatpak/flatpak-builder-tools.git /tmp/flatpak-builder-tools
+
+      - name: Generate cargo-sources.json
+        run: |
+          python3 /tmp/flatpak-builder-tools/cargo/flatpak-cargo-generator.py \
+            src-tauri/Cargo.lock \
+            -o flatpak/cargo-sources.json
+
+      - name: Generate package-lock.json from bun.lock
+        # flatpak-node-generator does not support Bun lock files directly.
+        # We install from bun.lock to populate node_modules, then use npm to derive
+        # a compatible package-lock.json (network call to resolve metadata only).
+        run: |
+          bun install --frozen-lockfile
+          npm install --package-lock-only --ignore-scripts
+
+      - name: Generate node-sources.json
+        run: |
+          python3 /tmp/flatpak-builder-tools/node/flatpak-node-generator.py npm \
+            package-lock.json \
+            -o flatpak/node-sources.json
+
+      - name: Get commit SHA for tag
+        id: sha
+        run: |
+          # git rev-list dereferences annotated tags to their commit SHA.
+          # Full clone (fetch-depth: 0 + fetch-tags: true) ensures all tags are present.
+          commit=$(git rev-list -n 1 "${{ steps.prep.outputs.tag }}")
+          if [ -z "$commit" ]; then
+            echo "Could not resolve commit SHA for ${{ steps.prep.outputs.tag }}"
+            exit 1
+          fi
+          echo "commit=$commit" >> "$GITHUB_OUTPUT"
+
+      - name: Update manifest tag and commit
+        run: |
+          tag="${{ steps.prep.outputs.tag }}"
+          commit="${{ steps.sha.outputs.commit }}"
+          sed -i "s|tag: .*|tag: ${tag}|" flatpak/com.minidiarium.yml
+          sed -i "s|commit: .*|commit: ${commit}|" flatpak/com.minidiarium.yml
+
+      - name: Prepend release entry to metainfo.xml
+        run: |
+          version="${{ steps.prep.outputs.version }}"
+          date="$(date -u +%Y-%m-%d)"
+          release_entry="    <release version=\"${version}\" date=\"${date}\">\n      <url type=\"details\">https://github.com/fjrevoredo/mini-diarium/releases/tag/v${version}</url>\n    </release>"
+          sed -i "s|  <!-- Automation prepends a new <release> entry here on each publish via flathub-publish.yml -->|  <!-- Automation prepends a new <release> entry here on each publish via flathub-publish.yml -->\n${release_entry}|" flatpak/com.minidiarium.metainfo.xml
+
+      - name: Clone Flathub repository
+        env:
+          FLATHUB_TOKEN: ${{ secrets.FLATHUB_TOKEN }}
+        run: |
+          git clone \
+            "https://x-access-token:${FLATHUB_TOKEN}@github.com/flathub/com.minidiarium.git" \
+            /tmp/flathub-repo
+
+      - name: Copy files into Flathub repo
+        run: |
+          cp flatpak/com.minidiarium.yml         /tmp/flathub-repo/com.minidiarium.yml
+          cp flatpak/com.minidiarium.metainfo.xml /tmp/flathub-repo/com.minidiarium.metainfo.xml
+          cp flatpak/com.minidiarium.desktop      /tmp/flathub-repo/com.minidiarium.desktop
+          cp flatpak/cargo-sources.json           /tmp/flathub-repo/cargo-sources.json
+          cp flatpak/node-sources.json            /tmp/flathub-repo/node-sources.json
+
+      - name: Commit and open PR against Flathub repo
+        env:
+          FLATHUB_TOKEN: ${{ secrets.FLATHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.FLATHUB_TOKEN }}
+        run: |
+          tag="${{ steps.prep.outputs.tag }}"
+          version="${{ steps.prep.outputs.version }}"
+          branch="update-${version}"
+
+          cd /tmp/flathub-repo
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git checkout -B "$branch"
+          git add .
+          git diff --cached --quiet && echo "No changes to commit." && exit 0
+          git commit -m "Update to ${version}"
+          git push --force-with-lease origin "HEAD:${branch}"
+
+          gh pr create \
+            --repo "flathub/com.minidiarium" \
+            --base master \
+            --head "$branch" \
+            --title "Update to ${version}" \
+            --body "Automated update from https://github.com/fjrevoredo/mini-diarium/releases/tag/${tag}" \
+          || echo "PR may already exist; check https://github.com/flathub/com.minidiarium/pulls"

@@ -14,7 +14,6 @@ TODO entry format:
 
 ## High Priority
 
-- [x] **Investigate intermittent entry-not-saved flakiness** — both the E2E `diary-workflow` test and the real app exhibit a rare race where an entry written on a fresh (no prior entry) date is not persisted after lock/unlock; the symptom is the editor appearing blank after returning to the date; suspected root cause is a timing window in `EditorPanel.tsx` where `pendingEntryId === null` at the moment the title `onInput` handler fires, causing the `createEntry` → `saveEntry` async chain to start before the entry exists; cannot be reproduced on demand; add logging around the `pendingEntryId` check in `handleTitleInput`, confirm the race, and fix it (e.g. serialise the create+save chain or guard the save with an await on the pending ID)
 
 ---
 
@@ -24,7 +23,6 @@ TODO entry format:
 - [ ] **Frontend test coverage** — auth screens (`PasswordPrompt.tsx`, `PasswordCreation.tsx`), Calendar, and all overlays (GoToDateOverlay, PreferencesOverlay, StatsOverlay, ImportOverlay, ExportOverlay) have zero test coverage; add Vitest + @solidjs/testing-library tests for each; use existing pattern from `TitleEditor.test.tsx` and `WordCount.test.tsx`
 - [ ] **Full image drag-and-drop support** — dropping images into the editor should work consistently both from file managers and from other applications (for example browsers, chat apps, or image editors), not only when the drag payload exposes file paths; image drops should embed the image the same way as the toolbar picker and paste flow, while unsupported payloads fail safely without breaking the editor
   - [ ] **First compatibility target: Typora** — validate and support dragging images from Typora into Mini Diarium as the first cross-application drag-and-drop case before widening compatibility to other apps
-- [ ] **Provide Flatpak package for Linux distribution** — solve GitHub issue `#70` by extending the release process so Mini Diarium can be packaged and released automatically to Flathub with a repeatable, low-manual-step workflow; consider JReleaser if it helps reduce maintenance, but do not treat it as a required solution
 - [ ] **`screen_lock.rs` unit tests** — the Windows session-lock hook is untested because it calls Win32 APIs directly; extract `trigger_auto_lock` and test it with a mock `DiaryState`; requires Win32 API mocking strategy.
 
 ---

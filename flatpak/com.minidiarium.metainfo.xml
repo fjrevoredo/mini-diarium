@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>com.minidiarium</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>MIT</project_license>
+  <name>Mini Diarium</name>
+  <summary>An encrypted, local-first desktop journal</summary>
+  <description>
+    <p>
+      Mini Diarium is a private journaling app for your desktop. All diary entries are
+      encrypted with AES-256-GCM at rest — plaintext never touches disk. Your journal
+      stays entirely on your machine: no cloud sync, no network connections, no telemetry.
+    </p>
+    <p>Features include:</p>
+    <ul>
+      <li>AES-256-GCM encryption for all entries</li>
+      <li>Multiple journals with independent passwords</li>
+      <li>Rich-text editor (bold, italic, headings, lists, images)</li>
+      <li>Calendar navigation and entry browsing</li>
+      <li>Import from Mini Diary, Day One, and jrnl formats</li>
+      <li>Export to JSON and Markdown</li>
+      <li>Auto-lock on idle or OS screen lock</li>
+      <li>Key-file authentication as an alternative to passwords</li>
+    </ul>
+  </description>
+
+  <launchable type="desktop-id">com.minidiarium.desktop</launchable>
+
+  <url type="homepage">https://mini-diarium.com</url>
+  <url type="bugtracker">https://github.com/fjrevoredo/mini-diarium/issues</url>
+
+  <developer>
+    <name>Francisco J. Revoredo</name>
+  </developer>
+
+  <screenshots>
+    <!-- TODO: Add at least 1 screenshot before submitting to Flathub.
+         Screenshots must be taken from a real Linux install and hosted at stable URLs
+         (GitHub release assets or mini-diarium.com). Flathub will reject the submission
+         without at least one screenshot. Suggested: main journal view, calendar navigation,
+         settings/preferences. -->
+  </screenshots>
+
+  <releases>
+    <!-- Automation prepends a new <release> entry here on each publish via flathub-publish.yml -->
+  </releases>
+
+  <content_rating type="oars-1.1" />
+</component>
