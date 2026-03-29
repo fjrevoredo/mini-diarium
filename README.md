@@ -155,7 +155,7 @@ Download the latest release for your platform from [GitHub Releases](https://git
 | -------- | ---------------------------------------------------- |
 | Windows  | `.msi` or `.exe` (NSIS installer, no admin required) |
 | macOS    | `.dmg`                                               |
-| Linux    | `.AppImage` or `.deb`                                |
+| Linux    | `.AppImage`, `.deb`, or Flatpak (Flathub)            |
 
 ### Windows (WinGet)
 
@@ -185,6 +185,28 @@ brew install --cask mini-diarium
 > ```sh
 > xattr -cr "/Applications/Mini Diarium.app"
 > ```
+
+### Flatpak (Linux)
+
+> **Note:** Flathub listing is pending store approval and not yet available.
+
+The easiest way to install Mini Diarium on Linux is via Flatpak:
+
+```bash
+flatpak install flathub com.minidiarium
+```
+
+To run:
+
+```bash
+flatpak run com.minidiarium
+```
+
+To update:
+
+```bash
+flatpak update com.minidiarium
+```
 
 ### Installation Notes
 

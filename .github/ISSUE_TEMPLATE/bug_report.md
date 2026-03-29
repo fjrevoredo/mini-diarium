@@ -26,7 +26,7 @@ The file contains only diagnostic metadata (app version, entry counts, schema ve
 **Environment**
 - OS: [e.g. Windows 11, macOS 14, Ubuntu 24.04]
 - Mini Diarium version: [e.g. 0.1.0]
-- Installation method: [e.g. MSI, DMG, AppImage, built from source]
+- Installation method: [e.g. MSI, DMG, AppImage, Flatpak, built from source]
 
 **Additional context**
 Any other details that might help diagnose the issue.

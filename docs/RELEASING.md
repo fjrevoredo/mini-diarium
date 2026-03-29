@@ -281,6 +281,7 @@ The following happens automatically when you push a tag:
 ✅ Upload artifacts to the draft release
 ✅ Publish the release automatically after artifact verification
 ✅ Open a cleanup PR removing `latest-changelog.md` when it is safe to do so
+✅ Dispatch WinGet, Homebrew, and Flathub publish workflows
 
 You only need to:
 
