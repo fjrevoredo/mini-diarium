@@ -24,6 +24,7 @@ import { preferences } from '../../state/preferences';
 import { confirm, open as openDialog } from '@tauri-apps/plugin-dialog';
 import { parseMarkdownToHtml } from '../../lib/markdown';
 import { mapTauriError } from '../../lib/errors';
+import { countWordsInHtml, countWordsFromText } from '../../lib/wordcount';
 
 const log = createLogger('Editor');
 
@@ -103,8 +104,7 @@ export default function EditorPanel() {
           setPendingEntryId(entry.id);
           setTitle(entry.title);
           setContent(entry.text);
-          const words = entry.text.trim().split(/\s+/).filter(Boolean);
-          setWordCount(words.length);
+          setWordCount(countWordsInHtml(entry.text));
           // Prevent the debounced save that setContent triggers via TipTap —
           // the remaining entry is already persisted and has not changed.
           debouncedSave.cancel();
@@ -191,8 +191,7 @@ export default function EditorPanel() {
         setPendingEntryId(entry.id);
         setTitle(entry.title);
         setContent(entry.text);
-        const words = entry.text.trim().split(/\s+/).filter(Boolean);
-        setWordCount(words.length);
+        setWordCount(countWordsInHtml(entry.text));
       } else {
         setCurrentIndex(0);
         setPendingEntryId(null);
@@ -245,8 +244,7 @@ export default function EditorPanel() {
       setPendingEntryId(entry.id);
       setTitle(entry.title);
       setContent(entry.text);
-      const words = entry.text.trim().split(/\s+/).filter(Boolean);
-      setWordCount(words.length);
+      setWordCount(countWordsInHtml(entry.text));
     } catch (error) {
       log.error('Failed to navigate to entry:', error);
     }
@@ -349,6 +347,11 @@ export default function EditorPanel() {
         ? edInst.isEmpty || edInst.getText().trim() === ''
         : newContent.trim() === '',
     );
+    setWordCount(
+      edInst && !edInst.isDestroyed
+        ? countWordsFromText(edInst.getText())
+        : countWordsInHtml(newContent),
+    );
     const id = pendingEntryId();
     if (id !== null) {
       debouncedSave(id, title(), newContent);
@@ -398,8 +401,7 @@ export default function EditorPanel() {
         setPendingEntryId(entry.id);
         setTitle(entry.title);
         setContent(entry.text);
-        const words = entry.text.trim().split(/\s+/).filter(Boolean);
-        setWordCount(words.length);
+        setWordCount(countWordsInHtml(entry.text));
         setDayEntries(refreshed);
         setCurrentIndex(newIndex);
       }
