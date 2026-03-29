@@ -111,7 +111,11 @@ describe('Multi-entry workflow', () => {
     // Write the second entry via the title field (setValue is deterministic; after clicking "+"
     // focus is on the button and browser.keys() into ProseMirror is unreliable from E2E).
     // handleTitleInput → debouncedSave() so the entry persists even with an empty body.
-    await browser.pause(500); // let the new blank entry's editor settle
+    // Let the new blank entry's editor settle (DiaryEditor createEffect microtask).
+    // This pause is no longer race-critical: the justCreatedEntryId guard in onSetContent
+    // suppresses the auto-delete debounce for a freshly created entry, so typing the
+    // title at any point after this is safe regardless of debounce timing.
+    await browser.pause(500);
     await $('[data-testid="title-input"]').waitForClickable({ timeout: 5000 });
     await $('[data-testid="title-input"]').setValue(ENTRY_2_TITLE);
     await browser.pause(2500); // flush autosave debounce

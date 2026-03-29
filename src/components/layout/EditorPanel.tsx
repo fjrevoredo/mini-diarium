@@ -47,6 +47,20 @@ export default function EditorPanel() {
   let pendingCreationPromise: Promise<DiaryEntry> | null = null;
   let loadRequestId = 0;
   let saveRequestId = 0;
+  // Guards the onSetContent(isEmpty=true) auto-delete debounce for an entry that was
+  // just created by addEntry(). The race: addEntry() calls debouncedSave.cancel()
+  // synchronously (line 290), but DiaryEditor's createEffect runs as a SolidJS
+  // microtask — at the `await getAllEntryDates()` on line 293 — AFTER cancel() has
+  // already returned. onSetContent(isEmpty=true) then re-queues debouncedSave on a
+  // fresh timer that was never cancelled, deleting the entry before the user types.
+  //
+  // Set in addEntry() after the new entry's ID is known. Cleared on first real user
+  // input in handleContentUpdate() or handleTitleInput(). While set, the onSetContent
+  // callback skips queuing the auto-delete debounce for this specific entry ID.
+  //
+  // Note: navigateToEntry and loadEntriesForDate are unaffected — they call
+  // saveCurrentById() directly, which still cleans up blank entries on navigation.
+  let justCreatedEntryId: number | null = null;
   const [isCreatingEntry, setIsCreatingEntry] = createSignal(false);
   // Reactive trigger: updated by handleContentUpdate (user edits via onUpdate) and by
   // the onSetContent callback from DiaryEditor (programmatic loads via setContent).
@@ -282,6 +296,7 @@ export default function EditorPanel() {
       const newIndex = idx >= 0 ? idx : 0;
       setCurrentIndex(newIndex);
       setPendingEntryId(newEntry.id);
+      justCreatedEntryId = newEntry.id;
       setTitle('');
       setContent('');
       setWordCount(0);
@@ -337,6 +352,7 @@ export default function EditorPanel() {
   };
 
   const handleContentUpdate = (newContent: string) => {
+    justCreatedEntryId = null; // user typed — entry is no longer "just created"
     setContent(newContent);
     // Update the reactive trigger so isContentEmpty() re-evaluates with TipTap's actual
     // document state. This fires after TipTap processes the content, not when the SolidJS
@@ -456,6 +472,7 @@ export default function EditorPanel() {
   };
 
   const handleTitleInput = (newTitle: string) => {
+    justCreatedEntryId = null; // user typed — entry is no longer "just created"
     setTitle(newTitle);
     const id = pendingEntryId();
     if (id !== null) {
@@ -602,7 +619,10 @@ export default function EditorPanel() {
                 // untrack() prevents signal reads from being tracked by DiaryEditor's effect.
                 if (isEmpty) {
                   const id = untrack(pendingEntryId);
-                  if (id !== null) {
+                  // Skip the auto-delete debounce for freshly created entries — see justCreatedEntryId
+                  // comment above. For blank entries loaded from DB (e.g. on navigation or date reload),
+                  // justCreatedEntryId is null/mismatched and the debounce fires normally.
+                  if (id !== null && id !== justCreatedEntryId) {
                     debouncedSave(id, untrack(title), untrack(content));
                   }
                 }

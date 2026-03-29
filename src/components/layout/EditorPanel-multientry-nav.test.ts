@@ -385,3 +385,57 @@ describe('Post-delete auto-navigation — Bug 2: day-switch leaves "+" blocked',
     ).toBe(false);
   });
 });
+
+// ---------------------------------------------------------------------------
+// justCreatedEntryId guard — suppresses auto-delete debounce for a freshly
+// created blank entry.
+//
+// Race: addEntry() calls debouncedSave.cancel() synchronously, but DiaryEditor's
+// createEffect runs as a SolidJS microtask at the next await inside addEntry().
+// onSetContent(isEmpty=true) then re-queues a fresh debounce that was never
+// cancelled, deleting the just-created entry before the user types.
+//
+// Fix: addEntry() sets justCreatedEntryId = newEntry.id. The onSetContent callback
+// skips the debounce when id === justCreatedEntryId. handleContentUpdate and
+// handleTitleInput clear the ref on first real keystroke.
+// ---------------------------------------------------------------------------
+
+/**
+ * Mirrors the guard condition in the onSetContent callback:
+ *   if (id !== null && id !== justCreatedEntryId) { debouncedSave(...) }
+ */
+function shouldQueueAutoDeleteDebounce(
+  id: number | null,
+  justCreatedEntryId: number | null,
+): boolean {
+  return id !== null && id !== justCreatedEntryId;
+}
+
+describe('justCreatedEntryId guard — onSetContent skips auto-delete debounce for fresh entry', () => {
+  it('suppresses debounce immediately after entry creation (id === justCreatedEntryId)', () => {
+    // addEntry just ran: justCreatedEntryId = newEntry.id = 42
+    expect(shouldQueueAutoDeleteDebounce(42, 42)).toBe(false);
+  });
+
+  it('allows debounce for a blank entry loaded from DB (justCreatedEntryId is null)', () => {
+    // Entry loaded on date switch-back or via navigation; this is the normal auto-delete path
+    expect(shouldQueueAutoDeleteDebounce(42, null)).toBe(true);
+  });
+
+  it('allows debounce when a different (newer) entry was just created', () => {
+    // Navigated to stale entry 42 while entry 43 is the just-created one
+    expect(shouldQueueAutoDeleteDebounce(42, 43)).toBe(true);
+  });
+
+  it('never queues debounce when no entry is active (id is null)', () => {
+    expect(shouldQueueAutoDeleteDebounce(null, null)).toBe(false);
+    expect(shouldQueueAutoDeleteDebounce(null, 42)).toBe(false);
+  });
+
+  it('allows debounce after first keystroke clears justCreatedEntryId', () => {
+    // User navigates back to the same blank entry after having typed elsewhere;
+    // handleContentUpdate cleared justCreatedEntryId so auto-delete fires normally.
+    const afterFirstKeystroke: number | null = null;
+    expect(shouldQueueAutoDeleteDebounce(42, afterFirstKeystroke)).toBe(true);
+  });
+});
