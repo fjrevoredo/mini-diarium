@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop-application">
-  <id>com.minidiarium</id>
+  <id>io.github.fjrevoredo.mini-diarium</id>
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>MIT</project_license>
   <name>Mini Diarium</name>
@@ -24,7 +24,7 @@
     </ul>
   </description>
 
-  <launchable type="desktop-id">com.minidiarium.desktop</launchable>
+  <launchable type="desktop-id">io.github.fjrevoredo.mini-diarium.desktop</launchable>
 
   <url type="homepage">https://mini-diarium.com</url>
   <url type="bugtracker">https://github.com/fjrevoredo/mini-diarium/issues</url>

@@ -96,29 +96,29 @@ jobs:
         run: |
           tag="${{ steps.prep.outputs.tag }}"
           commit="${{ steps.sha.outputs.commit }}"
-          sed -i "s|tag: .*|tag: ${tag}|" flatpak/com.minidiarium.yml
-          sed -i "s|commit: .*|commit: ${commit}|" flatpak/com.minidiarium.yml
+          sed -i "s|tag: .*|tag: ${tag}|" flatpak/io.github.fjrevoredo.mini-diarium.yml
+          sed -i "s|commit: .*|commit: ${commit}|" flatpak/io.github.fjrevoredo.mini-diarium.yml
 
       - name: Prepend release entry to metainfo.xml
         run: |
           version="${{ steps.prep.outputs.version }}"
           date="$(date -u +%Y-%m-%d)"
           release_entry="    <release version=\"${version}\" date=\"${date}\">\n      <url type=\"details\">https://github.com/fjrevoredo/mini-diarium/releases/tag/v${version}</url>\n    </release>"
-          sed -i "s|  <!-- Automation prepends a new <release> entry here on each publish via flathub-publish.yml -->|  <!-- Automation prepends a new <release> entry here on each publish via flathub-publish.yml -->\n${release_entry}|" flatpak/com.minidiarium.metainfo.xml
+          sed -i "s|  <!-- Automation prepends a new <release> entry here on each publish via flathub-publish.yml -->|  <!-- Automation prepends a new <release> entry here on each publish via flathub-publish.yml -->\n${release_entry}|" flatpak/io.github.fjrevoredo.mini-diarium.metainfo.xml
 
       - name: Clone Flathub repository
         env:
           FLATHUB_TOKEN: ${{ secrets.FLATHUB_TOKEN }}
         run: |
           git clone \
-            "https://x-access-token:${FLATHUB_TOKEN}@github.com/flathub/com.minidiarium.git" \
+            "https://x-access-token:${FLATHUB_TOKEN}@github.com/flathub/io.github.fjrevoredo.mini-diarium.git" \
             /tmp/flathub-repo
 
       - name: Copy files into Flathub repo
         run: |
-          cp flatpak/com.minidiarium.yml         /tmp/flathub-repo/com.minidiarium.yml
-          cp flatpak/com.minidiarium.metainfo.xml /tmp/flathub-repo/com.minidiarium.metainfo.xml
-          cp flatpak/com.minidiarium.desktop      /tmp/flathub-repo/com.minidiarium.desktop
+          cp flatpak/io.github.fjrevoredo.mini-diarium.yml         /tmp/flathub-repo/io.github.fjrevoredo.mini-diarium.yml
+          cp flatpak/io.github.fjrevoredo.mini-diarium.metainfo.xml /tmp/flathub-repo/io.github.fjrevoredo.mini-diarium.metainfo.xml
+          cp flatpak/io.github.fjrevoredo.mini-diarium.desktop      /tmp/flathub-repo/io.github.fjrevoredo.mini-diarium.desktop
           cp flatpak/cargo-sources.json           /tmp/flathub-repo/cargo-sources.json
           cp flatpak/node-sources.json            /tmp/flathub-repo/node-sources.json
 
@@ -143,9 +143,9 @@ jobs:
           git push --force-with-lease origin "HEAD:${branch}"
 
           gh pr create \
-            --repo "flathub/com.minidiarium" \
+            --repo "flathub/io.github.fjrevoredo.mini-diarium" \
             --base master \
             --head "$branch" \
             --title "Update to ${version}" \
             --body "Automated update from https://github.com/fjrevoredo/mini-diarium/releases/tag/${tag}" \
-          || echo "PR may already exist; check https://github.com/flathub/com.minidiarium/pulls"
+          || echo "PR may already exist; check https://github.com/flathub/io.github.fjrevoredo.mini-diarium/pulls"

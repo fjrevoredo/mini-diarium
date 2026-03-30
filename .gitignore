@@ -56,6 +56,10 @@ e2e/screenshots/
 e2e/*.log
 .e2e-stateful/
 
+# Flatpak generated source lists (regenerated per release)
+flatpak/cargo-sources.json
+flatpak/node-sources.json
+
 # Internal development documentation
 *-PLAN.md
 *-STATUS.md

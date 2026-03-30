@@ -324,22 +324,22 @@ When the release workflow publishes a release, the `flathub-publish.yml` workflo
 
 ✅ Generates `cargo-sources.json` from `src-tauri/Cargo.lock` (offline Cargo deps for the Flatpak sandbox)
 ✅ Derives a `package-lock.json` from the Bun lockfile and generates `node-sources.json` (offline npm deps)
-✅ Updates the manifest `flatpak/com.minidiarium.yml` with the release tag and commit SHA
-✅ Prepends a new `<release>` entry to `flatpak/com.minidiarium.metainfo.xml`
-✅ Clones `flathub/com.minidiarium`, copies all updated files, and opens a PR
+✅ Updates the manifest `flatpak/io.github.fjrevoredo.mini-diarium.yml` with the release tag and commit SHA
+✅ Prepends a new `<release>` entry to `flatpak/io.github.fjrevoredo.mini-diarium.metainfo.xml`
+✅ Clones `flathub/io.github.fjrevoredo.mini-diarium`, copies all updated files, and opens a PR
 
 **Requirements:**
 
 - Repository secret `FLATHUB_TOKEN` must be configured (one-time setup — see below)
-- The Flathub repo `flathub/com.minidiarium` must exist (created by Flathub after initial submission)
+- The Flathub repo `flathub/io.github.fjrevoredo.mini-diarium` must exist (created by Flathub after initial submission)
 
 **After the release:**
 
-1. Flathub PR will appear in: https://github.com/flathub/com.minidiarium/pulls
+1. Flathub PR will appear in: https://github.com/flathub/io.github.fjrevoredo.mini-diarium/pulls
 2. Wait for Flathub maintainers to review and merge the PR (same process as WinGet)
-3. Users can then install with: `flatpak install flathub com.minidiarium`
+3. Users can then install with: `flatpak install flathub io.github.fjrevoredo.mini-diarium`
 
-**Annual maintenance:** `org.gnome.Platform//47` in `flatpak/com.minidiarium.yml` must be bumped each major GNOME release (approximately annually). Update it before the first release of the year when GNOME ships a new major version.
+**Annual maintenance:** `org.gnome.Platform//47` in `flatpak/io.github.fjrevoredo.mini-diarium.yml` must be bumped each major GNOME release (approximately annually). Update it before the first release of the year when GNOME ships a new major version.
 
 ---
 
@@ -349,9 +349,10 @@ These steps are required once before the automation can take over. They cannot b
 
 **Step 1 — Take screenshots (hard blocker):**
 Flathub requires at least one screenshot with a hosted URL before it will accept a new app submission.
-Capture 2–3 screenshots of the app running on Linux. Host them at stable URLs (GitHub release assets or `mini-diarium.com`). Add `<screenshot>` entries to `flatpak/com.minidiarium.metainfo.xml`. Without screenshots, Flathub will reject the submission.
+Capture 2–3 screenshots of the app running on Linux. Host them at stable URLs (GitHub release assets or `mini-diarium.com`). Add `<screenshot>` entries to `flatpak/io.github.fjrevoredo.mini-diarium.metainfo.xml`. Without screenshots, Flathub will reject the submission.
 
 **Step 2 — Generate source lists and test locally:**
+
 ```bash
 # On a Linux machine with flatpak + flatpak-builder installed:
 pip install aiohttp toml
@@ -363,12 +364,12 @@ bun install --frozen-lockfile
 npm install --package-lock-only --ignore-scripts
 python3 flatpak-builder-tools/node/flatpak-node-generator.py npm package-lock.json -o flatpak/node-sources.json
 
-flatpak-builder --user --install --force-clean build-dir flatpak/com.minidiarium.yml
-flatpak run com.minidiarium
+flatpak-builder --user --install --force-clean build-dir flatpak/io.github.fjrevoredo.mini-diarium.yml
+flatpak run io.github.fjrevoredo.mini-diarium
 ```
 
 **Step 3 — Submit to Flathub:**
-Open a PR to https://github.com/flathub/flathub with a new directory `new-pr/com.minidiarium/` containing all files from `flatpak/`. Follow the [Flathub submission checklist](https://github.com/flathub/flathub/wiki/App-Submission). The PR description must explain why `--filesystem=home` is needed: the journal directory is user-configurable and can be set to any path on the filesystem — restricting to `xdg-documents` would silently break multi-journal setups.
+Open a PR to https://github.com/flathub/flathub with a new directory `new-pr/io.github.fjrevoredo.mini-diarium/` containing all files from `flatpak/`. Follow the [Flathub submission checklist](https://github.com/flathub/flathub/wiki/App-Submission). The PR description must explain why `--filesystem=home` is needed: the journal directory is user-configurable and can be set to any path on the filesystem — restricting to `xdg-documents` would silently break multi-journal setups.
 
 **Step 4 — After acceptance:**
-Flathub creates the `flathub/com.minidiarium` repository. Add `FLATHUB_TOKEN` (a GitHub PAT with `repo` scope on `flathub/com.minidiarium`) as a repository secret at `Settings → Secrets and variables → Actions`. Subsequent releases are then fully automated.
+Flathub creates the `flathub/io.github.fjrevoredo.mini-diarium` repository. Add `FLATHUB_TOKEN` (a GitHub PAT with `repo` scope on `flathub/io.github.fjrevoredo.mini-diarium`) as a repository secret at `Settings → Secrets and variables → Actions`. Subsequent releases are then fully automated.

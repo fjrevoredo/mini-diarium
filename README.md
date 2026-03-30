@@ -193,19 +193,19 @@ brew install --cask mini-diarium
 Once published on Flathub, the easiest way to install Mini Diarium on Linux will be via Flatpak:
 
 ```bash
-flatpak install flathub com.minidiarium
+flatpak install flathub io.github.fjrevoredo.mini-diarium
 ```
 
 To run:
 
 ```bash
-flatpak run com.minidiarium
+flatpak run io.github.fjrevoredo.mini-diarium
 ```
 
 To update:
 
 ```bash
-flatpak update com.minidiarium
+flatpak update io.github.fjrevoredo.mini-diarium
 ```
 
 ### Installation Notes
