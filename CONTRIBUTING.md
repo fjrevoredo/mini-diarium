@@ -7,9 +7,35 @@ Thanks for your interest in contributing! This guide covers everything you need 
 - **Rust** 1.75 or later (with `clippy` and `rustfmt`)
 - **Bun** 1.x
 - **Tauri v2 system dependencies** (see [Tauri's prerequisites guide](https://v2.tauri.app/start/prerequisites/) for your platform)
-  - **Linux**: `libwebkit2gtk-4.1-dev`, `libappindicator3-dev`, `librsvg2-dev`, `patchelf`
+  - **Linux (Ubuntu/Debian)**: `libwebkit2gtk-4.1-dev`, `libappindicator3-dev`, `librsvg2-dev`, `patchelf`
+  - **Linux (Fedora)**: `webkit2gtk4.1-devel`, `javascriptcoregtk4.1-devel`, `gtk3-devel`, `libsoup3-devel`, `atk-devel`, `cairo-devel`, `gdk-pixbuf2-devel`, `glib2-devel`, `pango-devel`, `libappindicator-gtk3-devel`, `librsvg2-devel`, `patchelf`, `fuse`, `fuse-libs`
+    - If `webkit2gtk4.1-devel` is not found, try `webkit2gtk6.1-devel` and `javascriptcoregtk6.1-devel` instead (newer Fedora releases)
+    - If `libsoup3-devel` is not found, try `libsoup-devel`
   - **macOS**: Xcode Command Line Tools
   - **Windows**: Microsoft Visual Studio C++ Build Tools, WebView2
+
+#### Wayland (Linux)
+
+On Wayland-based Linux desktops (default on Fedora, newer Ubuntu), WebKit2GTK may crash with errors like:
+
+```
+Gdk-Message: Error 71 (Protocol error) dispatching to Wayland display.
+Failed to create GBM buffer of size 800x753: Invalid argument
+```
+
+Fix: run `tauri dev` with X11 backend and software compositing:
+
+```bash
+GDK_BACKEND=x11 WEBKIT_DISABLE_COMPOSITING_MODE=1 LIBGL_ALWAYS_SOFTWARE=1 bun run tauri dev
+```
+
+To persist this, export the variables in your shell profile (e.g. `~/.bashrc` or `~/.zshrc`):
+
+```bash
+export GDK_BACKEND=x11
+export WEBKIT_DISABLE_COMPOSITING_MODE=1
+export LIBGL_ALWAYS_SOFTWARE=1
+```
 
 ## Getting Started
 
@@ -40,6 +66,7 @@ bun run check        # Fast (no tests, ~5-10 seconds)
 ```
 
 These scripts check:
+
 - ✓ TypeScript type checking
 - ✓ ESLint (no errors)
 - ✓ Prettier formatting
@@ -49,12 +76,14 @@ These scripts check:
 - ✓ Rust formatting
 
 **Quick fixes** if checks fail:
+
 ```bash
 bun run lint:fix     # Auto-fix ESLint errors
 bun run format       # Auto-fix formatting
 ```
 
 **Manual check commands** (if you prefer running individually):
+
 ```bash
 # Frontend
 bun run lint          # ESLint
