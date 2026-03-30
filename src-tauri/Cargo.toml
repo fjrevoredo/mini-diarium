@@ -38,7 +38,7 @@ rand = "0.8"
 hex = "0.4"
 x25519-dalek = { version = "2", features = ["static_secrets"] }
 hkdf = "0.12"
-sha2 = "0.10"
+sha2 = "0.11"
 base64 = "0.22"
 chrono = "0.4"
 rhai = { version = "1", features = ["serde"] }
