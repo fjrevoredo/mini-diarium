@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="desktop-application">
-  <id>com.minidiarium</id>
+  <id>io.github.fjrevoredo.mini-diarium</id>
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>MIT</project_license>
   <name>Mini Diarium</name>
@@ -24,7 +24,7 @@
     </ul>
   </description>
 
-  <launchable type="desktop-id">com.minidiarium.desktop</launchable>
+  <launchable type="desktop-id">io.github.fjrevoredo.mini-diarium.desktop</launchable>
 
   <url type="homepage">https://mini-diarium.com</url>
   <url type="bugtracker">https://github.com/fjrevoredo/mini-diarium/issues</url>
@@ -34,11 +34,18 @@
   </developer>
 
   <screenshots>
-    <!-- TODO: Add at least 1 screenshot before submitting to Flathub.
-         Screenshots must be taken from a real Linux install and hosted at stable URLs
-         (GitHub release assets or mini-diarium.com). Flathub will reject the submission
-         without at least one screenshot. Suggested: main journal view, calendar navigation,
-         settings/preferences. -->
+    <screenshot type="default">
+      <caption>Main journal view</caption>
+      <image type="source" width="1920" height="1080">https://github.com/fjrevoredo/mini-diarium/blob/2737c02b96855240122c7bb3586a1f0276fdf439/public/promotional/flatpak/main.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>Calendar navigation</caption>
+      <image type="source" width="1920" height="1080">https://github.com/fjrevoredo/mini-diarium/blob/2737c02b96855240122c7bb3586a1f0276fdf439/public/promotional/flatpak/calendar.png</image>
+    </screenshot>
+    <screenshot>
+      <caption>Preferences</caption>
+      <image type="source" width="1920" height="1080">https://github.com/fjrevoredo/mini-diarium/blob/2737c02b96855240122c7bb3586a1f0276fdf439/public/promotional/flatpak/preferences.png</image>
+    </screenshot>
   </screenshots>
 
   <releases>

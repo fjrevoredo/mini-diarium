@@ -155,7 +155,7 @@ Download the latest release for your platform from [GitHub Releases](https://git
 | -------- | ---------------------------------------------------- |
 | Windows  | `.msi` or `.exe` (NSIS installer, no admin required) |
 | macOS    | `.dmg`                                               |
-| Linux    | `.AppImage`, `.deb`, or Flatpak (Flathub)            |
+| Linux    | `.AppImage` or `.deb` (Flatpak coming soon)          |
 
 ### Windows (WinGet)
 
@@ -188,24 +188,24 @@ brew install --cask mini-diarium
 
 ### Flatpak (Linux)
 
-> **Note:** Flathub listing is pending store approval and not yet available.
+> ⚠️ **Not yet available.** The Flathub listing is pending store approval and is not yet published. The commands below will not work until the listing is approved. In the meantime, download the `.AppImage` or `.deb` from the [latest release](https://github.com/fjrevoredo/mini-diarium/releases/latest).
 
-The easiest way to install Mini Diarium on Linux is via Flatpak:
+Once published on Flathub, the easiest way to install Mini Diarium on Linux will be via Flatpak:
 
 ```bash
-flatpak install flathub com.minidiarium
+flatpak install flathub io.github.fjrevoredo.mini-diarium
 ```
 
 To run:
 
 ```bash
-flatpak run com.minidiarium
+flatpak run io.github.fjrevoredo.mini-diarium
 ```
 
 To update:
 
 ```bash
-flatpak update com.minidiarium
+flatpak update io.github.fjrevoredo.mini-diarium
 ```
 
 ### Installation Notes
@@ -301,6 +301,8 @@ On macOS, use `Cmd` instead of `Ctrl`.
 
 **Prerequisites:** Rust 1.75+, Bun 1.x, and [Tauri v2 system dependencies](https://v2.tauri.app/start/prerequisites/).
 
+For detailed platform-specific instructions (Linux package names, Fedora setup, Wayland troubleshooting), see [CONTRIBUTING.md](CONTRIBUTING.md).
+
 ```bash
 git clone https://github.com/fjrevoredo/mini-diarium.git
 cd mini-diarium
@@ -326,6 +328,7 @@ Artifacts will be in `src-tauri/target/release/bundle/`.
 For the full list of known limitations, deliberate tradeoffs, and technical debt, see [docs/KNOWN_ISSUES.md](docs/KNOWN_ISSUES.md).
 
 **User-facing highlights:**
+
 - Concurrent access to the same journal file is not supported (by design)
 - No password recovery — losing all credentials is permanent (by design)
 - Full-text search is not available — removed in v0.2.0 because the FTS index stored plaintext, defeating encryption
