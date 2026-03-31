@@ -37,13 +37,13 @@ rusqlite = { version = "0.39", features = ["bundled"] }
 rand = "0.8"
 hex = "0.4"
 x25519-dalek = { version = "2", features = ["static_secrets"] }
-hkdf = "0.12"
-sha2 = "0.10"
+hkdf = "0.13"
+sha2 = "0.11"
 base64 = "0.22"
 chrono = "0.4"
 rhai = { version = "1", features = ["serde"] }
 log = "0.4"
-env_logger = "0.11"
+env_logger = "0.11.10"
 
 [profile.release]
 opt-level = 3
@@ -51,7 +51,7 @@ lto = true
 
 [dev-dependencies]
 tempfile = "3"
-criterion = { version = "0.5", features = ["html_reports"] }
+criterion = { version = "0.8.2", features = ["html_reports"] }
 
 [[bench]]
 name = "auth_bench"

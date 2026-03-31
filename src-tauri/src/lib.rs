@@ -44,11 +44,14 @@ fn is_e2e_mode() -> bool {
 pub fn run() {
     // Disable DMA-BUF renderer on Linux to avoid WebKit rendering issues
     // (white screen / GPU reset) on some drivers. Must be set before GTK init.
-    // Skip in E2E mode: the software fallback renderer changes WebKit's compositing
-    // flush timing, which causes hit-testing to lag behind DOM updates and breaks
-    // "element click intercepted" assertions in the WebDriver test suite.
+    // Skip in any E2E mode (clean or stateful): the software fallback renderer
+    // slows WebKit's compositing pipeline, which causes hit-testing to lag behind
+    // DOM updates ("element click intercepted") and makes DOM updates exceed
+    // WebDriver poll timeouts.  MINI_DIARIUM_APP_DIR is always injected by the
+    // wdio.conf.ts harness for both clean and stateful runs; it is absent in
+    // normal production use.
     #[cfg(target_os = "linux")]
-    if !is_e2e_mode() {
+    if std::env::var("MINI_DIARIUM_APP_DIR").is_err() {
         unsafe {
             std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1");
         }

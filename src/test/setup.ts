@@ -24,8 +24,7 @@ declare global {
   }
 }
 
-global.window = global.window || {};
-global.window.__TAURI_INTERNALS__ = {
+window.__TAURI_INTERNALS__ = {
   invoke: () => Promise.resolve(),
   convertFileSrc: (src: string) => src,
 };
