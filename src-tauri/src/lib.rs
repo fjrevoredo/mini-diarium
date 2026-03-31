@@ -44,9 +44,14 @@ fn is_e2e_mode() -> bool {
 pub fn run() {
     // Disable DMA-BUF renderer on Linux to avoid WebKit rendering issues
     // (white screen / GPU reset) on some drivers. Must be set before GTK init.
+    // Skip in E2E mode: the software fallback renderer changes WebKit's compositing
+    // flush timing, which causes hit-testing to lag behind DOM updates and breaks
+    // "element click intercepted" assertions in the WebDriver test suite.
     #[cfg(target_os = "linux")]
-    unsafe {
-        std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1");
+    if !is_e2e_mode() {
+        unsafe {
+            std::env::set_var("WEBKIT_DISABLE_DMABUF_RENDERER", "1");
+        }
     }
 
     env_logger::Builder::from_env(
