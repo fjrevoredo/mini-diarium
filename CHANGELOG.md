@@ -30,6 +30,11 @@ Template:
 
 # Versions
 
+## [0.4.15] - Unreleased
+
+### Fixed
+- **Paste/drop image-only entries silently lost on journal close (issue #84)**: pasting or drag-dropping an image onto a blank day never persisted the entry, and an entry whose only content was one or more images was auto-deleted by the debounced save. Root cause: three `isEmpty` guards in `EditorPanel.tsx` used `editor.getText().trim() === ''` — TipTap's `getText()` ignores image leaf nodes and always returns `''` for image-only content, making all three guards treat the entry as empty. Fixed by adding an `editorHasImages()` helper that walks the ProseMirror document tree; an entry is now only considered empty when `editor.isEmpty` is true *and* no image nodes are present. The fix covers all three affected paths: (1) the blank-day entry-creation gate (image pastes on a fresh date now correctly trigger entry creation), (2) the `editorIsEmpty` reactive signal (the "+" button state is correct for image-only entries), and (3) the `saveCurrentById` auto-delete check (image-only entries are no longer deleted by the 500 ms debounce).
+
 
 ## [0.4.14] - 29-03-2026
 
