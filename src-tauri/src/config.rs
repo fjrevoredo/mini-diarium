@@ -8,6 +8,28 @@ pub struct JournalConfig {
     pub id: String,
     pub name: String,
     pub path: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub auto_key: Option<String>, // hex-encoded 32-byte random key; None for password journals
+}
+
+/// Frontend-facing DTO — safe to send over IPC (raw key never included)
+#[derive(Debug, Clone, Serialize)]
+pub struct JournalInfo {
+    pub id: String,
+    pub name: String,
+    pub path: String,
+    pub auto_protected: bool, // true if auto_key is set; key itself is never sent
+}
+
+impl From<&JournalConfig> for JournalInfo {
+    fn from(j: &JournalConfig) -> Self {
+        JournalInfo {
+            id: j.id.clone(),
+            name: j.name.clone(),
+            path: j.path.clone(),
+            auto_protected: j.auto_key.is_some(),
+        }
+    }
 }
 
 #[derive(Debug, Default, Serialize, Deserialize)]
@@ -84,6 +106,7 @@ pub fn load_journals(app_data_dir: &Path) -> Vec<JournalConfig> {
                 id: id.clone(),
                 name: "My Journal".to_string(),
                 path: dir.clone(),
+                auto_key: None,
             };
             let journals = vec![journal];
             config.journals = Some(journals.clone());
@@ -132,6 +155,21 @@ pub fn save_active_journal_id(app_data_dir: &Path, id: &str) -> Result<(), Strin
         }
     }
 
+    save_config(app_data_dir, &config)
+}
+
+/// Saves the auto_key hex for a specific journal. Pass `None` to clear it.
+pub fn save_journal_auto_key(
+    app_data_dir: &Path,
+    journal_id: &str,
+    auto_key_hex: Option<&str>,
+) -> Result<(), String> {
+    let mut config = load_config(app_data_dir);
+    if let Some(journals) = config.journals.as_mut() {
+        if let Some(j) = journals.iter_mut().find(|j| j.id == journal_id) {
+            j.auto_key = auto_key_hex.map(|s| s.to_string());
+        }
+    }
     save_config(app_data_dir, &config)
 }
 
@@ -266,6 +304,7 @@ mod tests {
                     .to_str()
                     .unwrap()
                     .to_string(),
+                auto_key: None,
             },
             JournalConfig {
                 id: "eeff00112233aabb".to_string(),
@@ -275,6 +314,7 @@ mod tests {
                     .to_str()
                     .unwrap()
                     .to_string(),
+                auto_key: None,
             },
         ];
         save_journals(&dir, &journals, "aabbccdd11223344").unwrap();
@@ -306,6 +346,7 @@ mod tests {
                     .to_str()
                     .unwrap()
                     .to_string(),
+                auto_key: None,
             },
             JournalConfig {
                 id: "bbbb".to_string(),
@@ -315,6 +356,7 @@ mod tests {
                     .to_str()
                     .unwrap()
                     .to_string(),
+                auto_key: None,
             },
         ];
         save_journals(&dir, &journals, "aaaa").unwrap();
@@ -332,5 +374,49 @@ mod tests {
         let id = generate_journal_id();
         assert_eq!(id.len(), 16);
         assert!(id.chars().all(|c| c.is_ascii_hexdigit()));
+    }
+
+    #[test]
+    fn test_save_journal_auto_key_roundtrip() {
+        let dir = temp_dir("auto_key_roundtrip");
+        let journals = vec![JournalConfig {
+            id: "testid1234567890".to_string(),
+            name: "Auto Journal".to_string(),
+            path: std::env::temp_dir()
+                .join("aj")
+                .to_str()
+                .unwrap()
+                .to_string(),
+            auto_key: None,
+        }];
+        save_journals(&dir, &journals, "testid1234567890").unwrap();
+
+        save_journal_auto_key(&dir, "testid1234567890", Some("deadbeef")).unwrap();
+        let loaded = load_journals(&dir);
+        assert_eq!(loaded[0].auto_key.as_deref(), Some("deadbeef"));
+
+        cleanup(&dir);
+    }
+
+    #[test]
+    fn test_save_journal_auto_key_clear() {
+        let dir = temp_dir("auto_key_clear");
+        let journals = vec![JournalConfig {
+            id: "testid1234567890".to_string(),
+            name: "Auto Journal".to_string(),
+            path: std::env::temp_dir()
+                .join("aj2")
+                .to_str()
+                .unwrap()
+                .to_string(),
+            auto_key: Some("deadbeef".to_string()),
+        }];
+        save_journals(&dir, &journals, "testid1234567890").unwrap();
+
+        save_journal_auto_key(&dir, "testid1234567890", None).unwrap();
+        let loaded = load_journals(&dir);
+        assert!(loaded[0].auto_key.is_none());
+
+        cleanup(&dir);
     }
 }

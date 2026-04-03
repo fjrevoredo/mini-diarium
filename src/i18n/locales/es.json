@@ -107,7 +107,9 @@
       "unlockWithKeyFile": "Desbloquear con archivo de clave",
       "selectKeyFileError": "Por favor selecciona un archivo de clave",
       "openFilePickerError": "Error al abrir el selector de archivos",
-      "passwordRequired": "La contraseña es obligatoria"
+      "passwordRequired": "La contraseña es obligatoria",
+      "autoUnlocking": "Abriendo diario\u2026",
+      "autoUnlockFailed": "No se pudo desbloquear automáticamente este diario. Es posible que falte la clave local. Puedes añadir una contraseña en Preferencias."
     },
     "creation": {
       "title": "Bienvenido a Mini Diarium",
@@ -122,7 +124,16 @@
       "localStorageNote": "Tu diario se cifrará y almacenará localmente en tu dispositivo.",
       "backToJournals": "← Volver a los diarios",
       "passwordRequired": "La contraseña es obligatoria",
-      "passwordsMismatch": "Las contraseñas no coinciden"
+      "passwordsMismatch": "Las contraseñas no coinciden",
+      "modeGroupAria": "Modo de protección del diario",
+      "passwordMode": "Contraseña",
+      "localOnlyMode": "Solo local",
+      "localOnlyTitle": "Este diario está protegido por tu cuenta del sistema operativo, no por una contraseña.",
+      "localOnlyPoint1": "Se abre automáticamente en este dispositivo, no hay contraseña que recordar.",
+      "localOnlyPoint2": "La clave de cifrado está almacenada en tu cuenta de usuario del SO actual. Copiar el archivo del diario a otro dispositivo no permitirá abrirlo.",
+      "localOnlyPoint3": "Cualquier persona que pueda iniciar sesión en esta cuenta del SO puede abrir el diario sin contraseña.",
+      "localOnlyPoint4": "Si pierdes el acceso a esta cuenta del SO (contraseña del sistema olvidada, eliminación de la cuenta o reinstalación del SO), la clave de cifrado se perderá y el diario no podrá recuperarse.",
+      "localOnlyAck": "Entiendo que perder el acceso a esta cuenta de usuario del SO significa que este diario no puede recuperarse."
     },
     "strength": {
       "veryWeak": "Muy débil - prefiere una contraseña más larga y compleja",

@@ -92,11 +92,20 @@ export async function removeAuthMethod(slotId: number, currentPassword: string):
   await invoke('remove_auth_method', { slotId, currentPassword });
 }
 
+export async function createJournalAuto(): Promise<void> {
+  await invoke('create_diary_auto');
+}
+
+export async function unlockJournalAuto(): Promise<void> {
+  await invoke('unlock_diary_auto');
+}
+
 // Journal commands
 export interface JournalConfig {
   id: string;
   name: string;
   path: string;
+  auto_protected: boolean; // true if journal uses local key (no password)
 }
 
 export async function listJournals(): Promise<JournalConfig[]> {

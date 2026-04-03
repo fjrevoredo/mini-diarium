@@ -107,6 +107,8 @@
 			"unlockWithKeyFile": "Mit Schlüsseldatei entsperren",
 			"selectKeyFileError": "Bitte wähle eine Schlüsseldatei aus",
 			"openFilePickerError": "Fehler beim Öffnen des Dateiauswahldialogs",
+			"autoUnlocking": "Tagebuch wird geöffnet\u2026",
+			"autoUnlockFailed": "Das Tagebuch konnte nicht automatisch entsperrt werden. Der lokale Schlüssel fehlt möglicherweise. Du kannst in den Einstellungen ein Passwort hinzufügen.",
 			"passwordRequired": "Das Passwort ist erforderlich"
 		},
 		"creation": {
@@ -122,7 +124,16 @@
 			"localStorageNote": "Dein Tagebuch wird verschlüsselt und lokal auf deinem Gerät gespeichert.",
 			"backToJournals": "← Zurück zu den Tagebüchern",
 			"passwordRequired": "Das Passwort ist erforderlich",
-			"passwordsMismatch": "Die Passwörter stimmen nicht überein"
+			"passwordsMismatch": "Die Passwörter stimmen nicht überein",
+			"modeGroupAria": "Tagebuchschutzmodus",
+			"passwordMode": "Passwort",
+			"localOnlyMode": "Nur lokal",
+			"localOnlyTitle": "Dieses Tagebuch wird durch dein Betriebssystem-Konto geschützt, nicht durch ein Passwort.",
+			"localOnlyPoint1": "Öffnet sich automatisch auf diesem Gerät, kein Passwort erforderlich.",
+			"localOnlyPoint2": "Der Verschlüsselungsschlüssel wird in deinem aktuellen Betriebssystem-Benutzerkonto gespeichert. Das Kopieren der Tagebuchdatei auf ein anderes Gerät ermöglicht kein Öffnen.",
+			"localOnlyPoint3": "Jeder, der sich in dieses Betriebssystem-Konto einloggen kann, kann das Tagebuch ohne Passwort öffnen.",
+			"localOnlyPoint4": "Wenn du den Zugriff auf dieses Betriebssystem-Konto verlierst (vergessenes Systempasswort, Kontolöschung oder Neuinstallation des Betriebssystems), geht der Verschlüsselungsschlüssel verloren und das Tagebuch kann nicht wiederhergestellt werden.",
+			"localOnlyAck": "Ich verstehe, dass der Verlust des Zugriffs auf dieses Betriebssystem-Benutzerkonto bedeutet, dass dieses Tagebuch nicht wiederhergestellt werden kann."
 		},
 		"strength": {
 			"veryWeak": "Sehr schwach – verwende ein längeres und komplexeres Passwort",

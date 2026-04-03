@@ -199,6 +199,16 @@ pub fn remove_auth_method(
         .map_err(|_| "State lock poisoned".to_string())?;
     let db = db_state.as_ref().ok_or("Journal must be unlocked")?;
 
+    // Look up the type of the slot being removed (must happen before deletion)
+    let slot_type: String = db
+        .conn()
+        .query_row(
+            "SELECT type FROM auth_slots WHERE id = ?1",
+            rusqlite::params![slot_id],
+            |row| row.get(0),
+        )
+        .map_err(|_| "Auth slot not found".to_string())?;
+
     // Verify identity
     let (_, wrapped_key) =
         crate::db::queries::get_password_slot(db)?.ok_or("No password auth method found")?;
@@ -218,6 +228,14 @@ pub fn remove_auth_method(
 
     crate::db::queries::delete_auth_slot(db, slot_id)?;
     info!("Auth method {} removed", slot_id);
+
+    // Clean up auto_key in config when an auto slot is removed
+    if slot_type == "auto" {
+        if let Some(active_id) = crate::config::load_active_journal_id(&state.app_data_dir) {
+            let _ = crate::config::save_journal_auto_key(&state.app_data_dir, &active_id, None);
+        }
+    }
+
     Ok(())
 }
 

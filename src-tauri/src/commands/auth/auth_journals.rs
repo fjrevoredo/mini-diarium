@@ -3,16 +3,17 @@ use std::path::PathBuf;
 use tauri::{AppHandle, State, Wry};
 
 use super::DiaryState;
-use crate::config::{self, JournalConfig};
+use crate::config::{self, JournalConfig, JournalInfo};
 
 // Note: #[tauri::command] attributes are applied below, after the inner functions.
 
-fn list_journals_inner(app_data_dir: &std::path::Path) -> Result<Vec<JournalConfig>, String> {
-    Ok(config::load_journals(app_data_dir))
+fn list_journals_inner(app_data_dir: &std::path::Path) -> Result<Vec<JournalInfo>, String> {
+    let journals = config::load_journals(app_data_dir);
+    Ok(journals.iter().map(JournalInfo::from).collect())
 }
 
 #[tauri::command]
-pub fn list_journals(state: State<DiaryState>) -> Result<Vec<JournalConfig>, String> {
+pub fn list_journals(state: State<DiaryState>) -> Result<Vec<JournalInfo>, String> {
     list_journals_inner(&state.app_data_dir)
 }
 
@@ -29,7 +30,7 @@ fn add_journal_inner(
     name: String,
     path: String,
     app_data_dir: &std::path::Path,
-) -> Result<JournalConfig, String> {
+) -> Result<JournalInfo, String> {
     let dir = PathBuf::from(&path);
     if !dir.is_absolute() {
         return Err("Path must be absolute".to_string());
@@ -45,6 +46,7 @@ fn add_journal_inner(
         id: id.clone(),
         name,
         path,
+        auto_key: None,
     };
     journals.push(journal.clone());
 
@@ -55,7 +57,7 @@ fn add_journal_inner(
     config::save_journals(app_data_dir, &journals, &active_id)?;
 
     info!("Journal added: {} ({})", journal.name, id);
-    Ok(journal)
+    Ok(JournalInfo::from(&journal))
 }
 
 #[tauri::command]
@@ -63,7 +65,7 @@ pub fn add_journal(
     name: String,
     path: String,
     state: State<DiaryState>,
-) -> Result<JournalConfig, String> {
+) -> Result<JournalInfo, String> {
     add_journal_inner(name, path, &state.app_data_dir)
 }
 

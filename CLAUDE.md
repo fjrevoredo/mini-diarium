@@ -67,11 +67,13 @@ Static marketing site — plain HTML/CSS/JS, no build step. Deploy via Coolify u
 
 ## Command Registry
 
-All 51 registered Tauri commands (source: `lib.rs`). Rust names use `snake_case`; frontend wrappers in `src/lib/tauri.ts` use `camelCase`.
+All 53 registered Tauri commands (source: `lib.rs`). Rust names use `snake_case`; frontend wrappers in `src/lib/tauri.ts` use `camelCase`.
 
 | Module | Rust Command | Frontend Wrapper | Description |
 |--------|-------------|-----------------|-------------|
 | auth | `create_diary` | `createJournal(password)` | Create new encrypted DB |
+| auth | `create_diary_auto` | `createJournalAuto()` | Create local-only journal (no password) |
+| auth | `unlock_diary_auto` | `unlockJournalAuto()` | Auto-unlock local-only journal from config key |
 | auth | `unlock_diary` | `unlockJournal(password)` | Decrypt and open DB |
 | auth | `lock_diary` | `lockJournal()` | Close DB connection |
 | auth | `diary_exists` | `journalExists()` | Check if DB file exists |
