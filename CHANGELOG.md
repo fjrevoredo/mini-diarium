@@ -30,7 +30,7 @@ Template:
 
 # Versions
 
-## [0.4.15] - Unreleased
+## [0.4.15] - 04-04-2026
 
 ### Added
 - **Local-only (device-protected) journals**: A new optional protection mode when creating a journal. Instead of a user-chosen password, the app generates a random 32-byte key at creation time, stores it in `config.json` (the OS-managed app data directory), and uses it to auto-unlock on every open — no password prompt. Entries remain AES-256-GCM encrypted; the key is simply app-managed rather than user-managed. **Security guarantee:** protects against copying only the `diary.db` file (e.g. from a cloud folder or external drive) to another machine, but does not protect against someone with access to the user's OS account. The risk is explained and must be explicitly acknowledged (checkbox) before creation. Existing password/keypair journals are entirely unchanged.
