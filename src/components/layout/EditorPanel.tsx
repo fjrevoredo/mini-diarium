@@ -28,6 +28,17 @@ import { countWordsInHtml, countWordsFromText } from '../../lib/wordcount';
 
 const log = createLogger('Editor');
 
+/** Returns true if the editor document contains at least one image node. */
+function editorHasImages(editor: Editor): boolean {
+  let found = false;
+  editor.state.doc.descendants((node) => {
+    if (node.type.name === 'image') {
+      found = true;
+    }
+  });
+  return found;
+}
+
 export default function EditorPanel() {
   const t = useI18n();
   const [title, setTitle] = createSignal('');
@@ -86,7 +97,7 @@ export default function EditorPanel() {
     editorIsEmpty();
     const editor = editorInstance();
     if (editor && !editor.isDestroyed) {
-      return editor.isEmpty || editor.getText().trim() === '';
+      return editor.isEmpty || (editor.getText().trim() === '' && !editorHasImages(editor));
     }
     return !content().trim();
   };
@@ -360,7 +371,7 @@ export default function EditorPanel() {
     const edInst = editorInstance();
     setEditorIsEmpty(
       edInst && !edInst.isDestroyed
-        ? edInst.isEmpty || edInst.getText().trim() === ''
+        ? edInst.isEmpty || (edInst.getText().trim() === '' && !editorHasImages(edInst))
         : newContent.trim() === '',
     );
     setWordCount(
@@ -375,7 +386,7 @@ export default function EditorPanel() {
       // Skip creation on programmatic updates (loading an empty day fires onUpdate with empty content)
       const editor = editorInstance();
       const isEmpty = editor
-        ? editor.isEmpty || editor.getText().trim() === ''
+        ? editor.isEmpty || (editor.getText().trim() === '' && !editorHasImages(editor))
         : newContent.trim() === '';
       if (isEmpty) return;
       log.debug('handleContentUpdate: pendingEntryId=null, first real content keystroke');

@@ -30,6 +30,19 @@ Template:
 
 # Versions
 
+## [0.4.15] - 04-04-2026
+
+### Added
+- **Local-only (device-protected) journals**: A new optional protection mode when creating a journal. Instead of a user-chosen password, the app generates a random 32-byte key at creation time, stores it in `config.json` (the OS-managed app data directory), and uses it to auto-unlock on every open — no password prompt. Entries remain AES-256-GCM encrypted; the key is simply app-managed rather than user-managed. **Security guarantee:** protects against copying only the `diary.db` file (e.g. from a cloud folder or external drive) to another machine, but does not protect against someone with access to the user's OS account. The risk is explained and must be explicitly acknowledged (checkbox) before creation. Existing password/keypair journals are entirely unchanged.
+    - New `create_diary_auto` / `unlock_diary_auto` Tauri commands backed by a new `AutoKeyMethod` auth slot type (`auth_slots.type = 'auto'`); no KDF is applied (the key is already 32 bytes of random entropy).
+    - The `list_journals` and `add_journal` commands now return a `JournalInfo` DTO with `auto_protected: bool` instead of the raw `JournalConfig` — the auto key never crosses the IPC boundary.
+    - On app startup, journals with `auto_protected = true` are unlocked silently without showing the lock screen. If locked by idle timeout or OS screen lock, `PasswordPrompt` auto-retries on mount.
+    - Upgrading to password protection uses the existing `register_password` + `remove_auth_method` flow; removing the auto slot also clears its key from `config.json`.
+    - UI: mode toggle (Password / Local-only) in `PasswordCreation`; warning block with three risk bullet-points and a required acknowledgment checkbox; new i18n keys in English, German, and Spanish.
+
+### Fixed
+- **Paste/drop image-only entries silently lost on journal close (issue #84)**: pasting or drag-dropping an image onto a blank day never persisted the entry, and an entry whose only content was one or more images was auto-deleted by the debounced save. Root cause: three `isEmpty` guards in `EditorPanel.tsx` used `editor.getText().trim() === ''` — TipTap's `getText()` ignores image leaf nodes and always returns `''` for image-only content, making all three guards treat the entry as empty. Fixed by adding an `editorHasImages()` helper that walks the ProseMirror document tree; an entry is now only considered empty when `editor.isEmpty` is true *and* no image nodes are present. The fix covers all three affected paths: (1) the blank-day entry-creation gate (image pastes on a fresh date now correctly trigger entry creation), (2) the `editorIsEmpty` reactive signal (the "+" button state is correct for image-only entries), and (3) the `saveCurrentById` auto-delete check (image-only entries are no longer deleted by the 500 ms debounce).
+
 
 ## [0.4.14] - 29-03-2026
 

@@ -1,3 +1,4 @@
+pub mod auto_key;
 pub mod keypair;
 pub mod password;
 

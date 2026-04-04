@@ -177,6 +177,8 @@ pub fn run() {
             commands::auth::create_diary,
             commands::auth::unlock_diary,
             commands::auth::unlock_diary_with_keypair,
+            commands::auth::create_diary_auto,
+            commands::auth::unlock_diary_auto,
             commands::auth::lock_diary,
             commands::auth::diary_exists,
             commands::auth::check_diary_path,

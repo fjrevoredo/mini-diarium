@@ -143,6 +143,9 @@ const en = {
       selectKeyFileError: 'Please select a key file',
       openFilePickerError: 'Failed to open file picker',
       passwordRequired: 'Password is required',
+      autoUnlocking: 'Opening journal\u2026',
+      autoUnlockFailed:
+        'Could not auto-unlock this journal. The local key may be missing. You can add a password in Preferences.',
     },
     /** PasswordCreation */
     creation: {
@@ -159,6 +162,19 @@ const en = {
       backToJournals: '← Back to Journals',
       passwordRequired: 'Password is required',
       passwordsMismatch: 'Passwords do not match',
+      modeGroupAria: 'Journal protection mode',
+      passwordMode: 'Password',
+      localOnlyMode: 'Local-only',
+      localOnlyTitle: 'This journal is protected by your OS account, not a password.',
+      localOnlyPoint1: 'Opens automatically on this device, no password to remember.',
+      localOnlyPoint2:
+        'The encryption key is stored in your current OS user account. Copying the journal file to another device will not allow it to be opened.',
+      localOnlyPoint3:
+        'Anyone who can log in to this OS account can open the journal without a password.',
+      localOnlyPoint4:
+        'If you lose access to this OS account (forgotten system password, account deletion, or OS reinstall), the encryption key will be lost and the journal cannot be recovered.',
+      localOnlyAck:
+        'I understand that losing access to this OS user account means this journal cannot be recovered.',
     },
     /** PasswordStrengthIndicator */
     strength: {

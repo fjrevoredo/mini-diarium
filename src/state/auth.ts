@@ -4,7 +4,7 @@ import * as tauri from '../lib/tauri';
 import { setEntryDates, executeCleanupCallbacks } from './entries';
 import { createLogger } from '../lib/logger';
 import { mapTauriError } from '../lib/errors';
-import { activeJournalId, loadJournals } from './journals';
+import { journals, activeJournalId, loadJournals } from './journals';
 import { resetSessionState } from './session';
 
 const log = createLogger('Auth');
@@ -70,10 +70,64 @@ export async function initializeAuth(): Promise<void> {
     log.error('Failed to load journals:', err);
     setError('Failed to load journal list');
   }
+
   if (activeJournalId() !== null) {
-    await refreshAuthState();
+    const activeJournal = journals().find((j) => j.id === activeJournalId());
+    if (activeJournal?.auto_protected) {
+      // Attempt silent auto-unlock; fall back to lock screen on failure
+      try {
+        const exists = await tauri.journalExists();
+        if (!exists) {
+          setAuthState('no-journal');
+          return;
+        }
+        await tauri.unlockJournalAuto();
+        prepareUnlockedSession();
+        const dates = await tauri.getAllEntryDates();
+        setEntryDates(dates);
+      } catch (err) {
+        log.warn('Auto-unlock failed, falling back to lock screen:', err);
+        resetForLockedSession();
+      }
+    } else {
+      await refreshAuthState();
+    }
   } else {
     setAuthState('journal-select');
+  }
+}
+
+export async function createJournalAutoProtected(): Promise<void> {
+  try {
+    setError(null);
+    await tauri.createJournalAuto();
+    // Reload journals so auto_protected = true is reflected in the signal.
+    // Without this, locking the journal in the same session would show the
+    // password form instead of auto-unlocking (journals() would be stale).
+    await loadJournals();
+    prepareUnlockedSession();
+    log.info('Local-only journal created');
+    const dates = await tauri.getAllEntryDates();
+    setEntryDates(dates);
+  } catch (err) {
+    const message = mapTauriError(err);
+    setError(message);
+    throw new Error(message, { cause: err });
+  }
+}
+
+export async function unlockJournalAutoProtected(): Promise<void> {
+  try {
+    setError(null);
+    await tauri.unlockJournalAuto();
+    prepareUnlockedSession();
+    log.info('Local-only journal auto-unlocked');
+    const dates = await tauri.getAllEntryDates();
+    setEntryDates(dates);
+  } catch (err) {
+    const message = mapTauriError(err);
+    setError(message);
+    throw new Error(message, { cause: err });
   }
 }
 

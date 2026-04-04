@@ -14,22 +14,24 @@
  *   - `tauri-driver` must be installed (`cargo install tauri-driver`)
  *   - Run via: `bun run test:e2e`
  *
- * Date strategy: use days 6, 7, 8 of the current month (clamped to today so they
- * are always ≤ today). On days 1–8 of a month some dates may collide — accepted
- * limitation matching the same tradeoff in diary-workflow.spec.ts (TEST_DATE = min(today, 15)).
+ * Date strategy: use days 1, 2, 3 of the PREVIOUS month. These are always distinct,
+ * always in the past, and every month has at least 3 days. The test must navigate
+ * the calendar to the previous month (via "Previous month" button) before clicking
+ * these dates, since the calendar initialises on the current month after each unlock.
  */
 
 const TEST_PASSWORD = 'e2e-test-password-123'; // same journal DB as diary-workflow.spec.ts
 
 const now = new Date();
-const year = now.getFullYear();
-const month = String(now.getMonth() + 1).padStart(2, '0');
-const d1 = String(Math.min(now.getDate(), 6)).padStart(2, '0');
-const d2 = String(Math.min(now.getDate(), 7)).padStart(2, '0');
-const d3 = String(Math.min(now.getDate(), 8)).padStart(2, '0');
-const MULTI_DATE_1 = `${year}-${month}-${d1}`; // scenario A: persistence
-const MULTI_DATE_2 = `${year}-${month}-${d2}`; // scenario B: variant-1 regression
-const MULTI_DATE_3 = `${year}-${month}-${d3}`; // scenario C: variant-2 regression
+// Previous-month dates are always distinct and in the past regardless of today's
+// day-of-month. The old strategy clamped days 6/7/8 to today, which made all three
+// dates collide when today ≤ 8 (e.g. April 2 → all three became 2026-04-02).
+const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+const lmYear = prevMonth.getFullYear().toString();
+const lmMonth = String(prevMonth.getMonth() + 1).padStart(2, '0');
+const MULTI_DATE_1 = `${lmYear}-${lmMonth}-01`; // scenario A: persistence
+const MULTI_DATE_2 = `${lmYear}-${lmMonth}-02`; // scenario B: variant-1 regression
+const MULTI_DATE_3 = `${lmYear}-${lmMonth}-03`; // scenario C: variant-2 regression
 
 const ENTRY_1_BODY = 'First entry for multi-entry test.';
 // Second entry uses the title field (via setValue) rather than the ProseMirror body.
@@ -91,8 +93,11 @@ describe('Multi-entry workflow', () => {
 
     await unlockOrCreate();
 
-    // Open sidebar and navigate to the test date
+    // Open sidebar and navigate to the test date (in the previous month).
     await $('[data-testid="toggle-sidebar-button"]').click();
+    // Calendar opens on the current month — navigate back one month to reach MULTI_DATE_1.
+    await $('[aria-label="Previous month"]').waitForClickable({ timeout: 5000 });
+    await $('[aria-label="Previous month"]').click();
     await $(`[data-testid="calendar-day-${MULTI_DATE_1}"]`).waitForClickable({ timeout: 10000 });
     await $(`[data-testid="calendar-day-${MULTI_DATE_1}"]`).click();
     await $('[data-testid="title-input"]').waitForDisplayed({ timeout: 5000 });
@@ -129,6 +134,9 @@ describe('Multi-entry workflow', () => {
     await $('[data-testid="unlock-journal-button"]').click();
     await $('[data-testid="toggle-sidebar-button"]').waitForClickable({ timeout: 10000 });
     await $('[data-testid="toggle-sidebar-button"]').click(); // sidebar collapses on unlock; reopen
+    // Calendar remounts after unlock and resets to the current month — navigate back.
+    await $('[aria-label="Previous month"]').waitForClickable({ timeout: 5000 });
+    await $('[aria-label="Previous month"]').click();
     await $(`[data-testid="calendar-day-${MULTI_DATE_1}"]`).waitForClickable({ timeout: 10000 });
     await $(`[data-testid="calendar-day-${MULTI_DATE_1}"]`).click();
 
@@ -209,8 +217,7 @@ describe('Multi-entry workflow', () => {
 
     // Switch to MULTI_DATE_2. Switching to another date leaves the blank entry 2 alive in
     // the DB; it will be auto-deleted via the debounce when we reload MULTI_DATE_3 next.
-    // MULTI_DATE_2 is used here (not a separate constant) so it is guaranteed to be a
-    // different date from MULTI_DATE_3 when today > 7.
+    // MULTI_DATE_2 (last month day 2) is always different from MULTI_DATE_3 (last month day 3).
     await $('[data-testid="toggle-sidebar-button"]').waitForClickable({ timeout: 5000 });
     await $('[data-testid="toggle-sidebar-button"]').click();
     // Use waitForDisplayed (not waitForClickable) — addEntry's async setEntryDates call can

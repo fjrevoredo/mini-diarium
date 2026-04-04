@@ -1,19 +1,41 @@
 import { createSignal, Show } from 'solid-js';
 import { PasswordStrengthIndicator } from './PasswordStrengthIndicator';
-import { createJournal, goToJournalPicker } from '../../state/auth';
+import { createJournal, createJournalAutoProtected, goToJournalPicker } from '../../state/auth';
 import { useI18n } from '../../i18n';
 
 export default function PasswordCreation() {
   const t = useI18n();
 
+  const [mode, setMode] = createSignal<'password' | 'local'>('password');
+  const [localOnlyAcknowledged, setLocalOnlyAcknowledged] = createSignal(false);
   const [password, setPassword] = createSignal('');
   const [repeatPassword, setRepeatPassword] = createSignal('');
   const [error, setError] = createSignal<string | null>(null);
   const [isCreating, setIsCreating] = createSignal(false);
 
+  const handleModeChange = (m: 'password' | 'local') => {
+    setMode(m);
+    setLocalOnlyAcknowledged(false);
+    setError(null);
+  };
+
   const handleSubmit = async (e: Event) => {
     e.preventDefault();
     setError(null);
+
+    if (mode() === 'local') {
+      if (!localOnlyAcknowledged()) return;
+      try {
+        setIsCreating(true);
+        await createJournalAutoProtected();
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        setError(message);
+      } finally {
+        setIsCreating(false);
+      }
+      return;
+    }
 
     const pwd = password();
     const repeat = repeatPassword();
@@ -53,41 +75,99 @@ export default function PasswordCreation() {
           <p class="mb-5 text-center text-sm text-secondary">{t('auth.creation.subtitle')}</p>
 
           <form onSubmit={handleSubmit} class="space-y-6">
-            <div>
-              <label for="password" class="mb-2 block text-sm font-medium text-secondary">
-                {t('auth.creation.passwordLabel')}{' '}
-                <span class="text-xs text-tertiary">{t('auth.creation.passwordHint')}</span>
-              </label>
-              <input
-                id="password"
-                type="password"
-                data-testid="password-create-input"
-                value={password()}
-                onInput={(e) => setPassword(e.currentTarget.value)}
-                disabled={isCreating()}
-                class="w-full rounded-md border border-primary bg-primary px-4 py-2 text-primary focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-tertiary"
-                placeholder={t('auth.creation.passwordPlaceholder')}
-                autocomplete="new-password"
-              />
-              <PasswordStrengthIndicator password={password()} />
+            {/* Protection mode toggle */}
+            <div
+              class="flex rounded-md border border-primary overflow-hidden"
+              role="group"
+              aria-label={t('auth.creation.modeGroupAria')}
+            >
+              <button
+                type="button"
+                onClick={() => handleModeChange('password')}
+                aria-pressed={mode() === 'password'}
+                class={`flex-1 px-3 py-2 text-sm font-medium transition-colors ${
+                  mode() === 'password'
+                    ? 'interactive-primary'
+                    : 'bg-primary text-secondary hover:bg-hover'
+                }`}
+              >
+                {t('auth.creation.passwordMode')}
+              </button>
+              <button
+                type="button"
+                onClick={() => handleModeChange('local')}
+                aria-pressed={mode() === 'local'}
+                class={`flex-1 px-3 py-2 text-sm font-medium transition-colors ${
+                  mode() === 'local'
+                    ? 'interactive-primary'
+                    : 'bg-primary text-secondary hover:bg-hover'
+                }`}
+              >
+                {t('auth.creation.localOnlyMode')}
+              </button>
             </div>
 
-            <div>
-              <label for="repeat-password" class="mb-2 block text-sm font-medium text-secondary">
-                {t('auth.creation.repeatLabel')}
-              </label>
-              <input
-                id="repeat-password"
-                type="password"
-                data-testid="password-repeat-input"
-                value={repeatPassword()}
-                onInput={(e) => setRepeatPassword(e.currentTarget.value)}
-                disabled={isCreating()}
-                class="w-full rounded-md border border-primary bg-primary px-4 py-2 text-primary focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-tertiary"
-                placeholder={t('auth.creation.repeatPlaceholder')}
-                autocomplete="new-password"
-              />
-            </div>
+            {/* Local-only: explanation + acknowledgment checkbox */}
+            <Show when={mode() === 'local'}>
+              <div class="rounded-md border border-warning bg-warning/10 p-4 space-y-3">
+                <p class="text-sm text-warning font-medium">{t('auth.creation.localOnlyTitle')}</p>
+                <ul class="text-sm text-secondary list-disc list-inside space-y-1">
+                  <li>{t('auth.creation.localOnlyPoint1')}</li>
+                  <li>{t('auth.creation.localOnlyPoint2')}</li>
+                  <li>{t('auth.creation.localOnlyPoint3')}</li>
+                  <li>{t('auth.creation.localOnlyPoint4')}</li>
+                </ul>
+                <label class="flex items-start gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    data-testid="local-only-ack-checkbox"
+                    checked={localOnlyAcknowledged()}
+                    onChange={(e) => setLocalOnlyAcknowledged(e.currentTarget.checked)}
+                    class="mt-0.5 h-4 w-4 rounded border-primary accent-blue-500"
+                  />
+                  <span class="text-sm text-secondary">{t('auth.creation.localOnlyAck')}</span>
+                </label>
+              </div>
+            </Show>
+
+            {/* Password fields — only shown in password mode */}
+            <Show when={mode() === 'password'}>
+              <div>
+                <label for="password" class="mb-2 block text-sm font-medium text-secondary">
+                  {t('auth.creation.passwordLabel')}{' '}
+                  <span class="text-xs text-tertiary">{t('auth.creation.passwordHint')}</span>
+                </label>
+                <input
+                  id="password"
+                  type="password"
+                  data-testid="password-create-input"
+                  value={password()}
+                  onInput={(e) => setPassword(e.currentTarget.value)}
+                  disabled={isCreating()}
+                  class="w-full rounded-md border border-primary bg-primary px-4 py-2 text-primary focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-tertiary"
+                  placeholder={t('auth.creation.passwordPlaceholder')}
+                  autocomplete="new-password"
+                />
+                <PasswordStrengthIndicator password={password()} />
+              </div>
+
+              <div>
+                <label for="repeat-password" class="mb-2 block text-sm font-medium text-secondary">
+                  {t('auth.creation.repeatLabel')}
+                </label>
+                <input
+                  id="repeat-password"
+                  type="password"
+                  data-testid="password-repeat-input"
+                  value={repeatPassword()}
+                  onInput={(e) => setRepeatPassword(e.currentTarget.value)}
+                  disabled={isCreating()}
+                  class="w-full rounded-md border border-primary bg-primary px-4 py-2 text-primary focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-tertiary"
+                  placeholder={t('auth.creation.repeatPlaceholder')}
+                  autocomplete="new-password"
+                />
+              </div>
+            </Show>
 
             <Show when={error()}>
               <div role="alert" class="rounded-md bg-error p-3">
@@ -98,7 +178,7 @@ export default function PasswordCreation() {
             <button
               type="submit"
               data-testid="create-journal-button"
-              disabled={isCreating()}
+              disabled={isCreating() || (mode() === 'local' && !localOnlyAcknowledged())}
               class="w-full rounded-md interactive-primary px-4 py-3 font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isCreating() ? t('auth.creation.creating') : t('auth.creation.createButton')}

@@ -14,8 +14,6 @@ TODO entry format:
 
 ## High Priority
 
-- [ ] **Auto-delete race on newly-created blank entry** — `addEntry()` calls `debouncedSave.cancel()` synchronously, but DiaryEditor's `createEffect` (which calls `editor.commands.setContent('')` and fires the `onSetContent` callback) runs as a SolidJS microtask — i.e. **after** `cancel()` has already returned. The `onSetContent(isEmpty=true)` handler then queues `debouncedSave(entry2.id, '', '')` on a fresh 500 ms timer that was never cancelled. If the user doesn't type within that window the debounce fires, `saveCurrentById` sees an empty title + empty body, and deletes the newly-created entry. Manifests as the `multi-entry` E2E Scenario A failing ("both entries should survive lock/unlock") when the title-only second entry disappears. This is a different race from the `pendingEntryId === null` case fixed in `30e1c17` (which covered fresh-date first-keystroke). Fix: distinguish "freshly created entry awaiting first input" from "blank entry loaded from DB that should be cleaned up" — e.g. a `justCreatedEntryId` ref that suppresses the auto-delete debounce in `onSetContent` until the first real keystroke clears it
-
 ---
 
 ## Medium Priority
