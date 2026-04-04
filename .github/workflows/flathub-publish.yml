@@ -95,21 +95,35 @@ jobs:
           commit="${{ steps.sha.outputs.commit }}"
           python3 - <<'PY'
 from pathlib import Path
+import re
 
 manifest = Path("flatpak/io.github.fjrevoredo.mini-diarium.yml")
 text = manifest.read_text()
-
-local_block = """      - type: dir
-        # Local step-4 builds should use the current checkout so Flatpak validation
-        # exercises the exact files you are editing, not an older pushed commit.
-        path: .."""
 
 remote_block = """      - type: git
         url: https://github.com/fjrevoredo/mini-diarium
         commit: __COMMIT__"""
 
-text = text.replace(local_block, remote_block)
-text = text.replace("path: ../package-lock.json", "path: package-lock.json")
+text, dir_replacements = re.subn(
+    r"(?m)^ {6}- type: dir\n(?: {8}#.*\n)* {8}path: \.\.$",
+    remote_block,
+    text,
+    count=1,
+)
+if dir_replacements != 1:
+    raise SystemExit("Expected exactly one local dir source block in flatpak manifest")
+
+text, lockfile_replacements = re.subn(
+    r"(?m)^ {8}path: \.\./package-lock\.json$",
+    "        path: package-lock.json",
+    text,
+    count=1,
+)
+if lockfile_replacements != 1:
+    raise SystemExit("Expected exactly one ../package-lock.json path in flatpak manifest")
+
+if "--features custom-protocol" not in text:
+    raise SystemExit("Flatpak manifest is missing the Tauri custom-protocol release build flag")
 
 manifest.write_text(text.replace("__COMMIT__", commit))
 PY
