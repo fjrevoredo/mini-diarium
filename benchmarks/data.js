@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1775320375203,
+  "lastUpdate": 1775323125510,
   "repoUrl": "https://github.com/fjrevoredo/mini-diarium",
   "entries": {
     "Benchmark": [
@@ -1511,6 +1511,132 @@ window.BENCHMARK_DATA = {
             "name": "count_words_html_500w",
             "value": 11494,
             "range": "± 104",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "committer": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "distinct": true,
+          "id": "8458984db013d295bedc3925c1ffd20a5041b0f4",
+          "message": "more flatpak fixes",
+          "timestamp": "2026-04-04T19:11:48+02:00",
+          "tree_id": "a9488e31bf89c72e738a0cf51af78209685d36da",
+          "url": "https://github.com/fjrevoredo/mini-diarium/commit/8458984db013d295bedc3925c1ffd20a5041b0f4"
+        },
+        "date": 1775323125161,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "auth_argon2/wrap_master_key",
+            "value": 97554899,
+            "range": "± 1149692",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "auth_argon2/unwrap_master_key",
+            "value": 96337391,
+            "range": "± 1123142",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_encrypt/1024",
+            "value": 1705,
+            "range": "± 39",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_encrypt/10240",
+            "value": 10105,
+            "range": "± 89",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_encrypt/102400",
+            "value": 127437,
+            "range": "± 183",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_decrypt/1024",
+            "value": 1166,
+            "range": "± 3",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_decrypt/10240",
+            "value": 9416,
+            "range": "± 101",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_decrypt/102400",
+            "value": 92242,
+            "range": "± 95",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_insert_entry",
+            "value": 1030940,
+            "range": "± 970593",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_update_entry",
+            "value": 888005,
+            "range": "± 73588",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_entries_by_date",
+            "value": 14021,
+            "range": "± 46",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_all_entry_dates/100",
+            "value": 31504,
+            "range": "± 258",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_all_entry_dates/500",
+            "value": 126772,
+            "range": "± 1099",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_all_entries/100",
+            "value": 139247,
+            "range": "± 781",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_all_entries/500",
+            "value": 637162,
+            "range": "± 2610",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "count_words_plain_500w",
+            "value": 6789,
+            "range": "± 22",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "count_words_html_500w",
+            "value": 9845,
+            "range": "± 155",
             "unit": "ns/iter"
           }
         ]
