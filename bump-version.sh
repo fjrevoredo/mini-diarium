@@ -73,12 +73,22 @@ rm website/index.html.bak
 rm website/index.html.bak2
 rm website/index.html.bak3
 
-# 6. Update README version badge
+# 6. Regenerate package-lock.json from bun.lock
+echo "Regenerating package-lock.json from bun.lock..."
+bun install --frozen-lockfile
+npm install --package-lock-only --ignore-scripts --legacy-peer-deps
+
+# 7. Prepend release entry to metainfo.xml
+echo "Prepending release entry to data/linux/io.github.fjrevoredo.mini-diarium.metainfo.xml..."
+release_entry="    <release version=\"${NEW_VERSION}\" date=\"$(date -u +%Y-%m-%d)\">\n      <url type=\"details\">https://github.com/fjrevoredo/mini-diarium/releases/tag/v${NEW_VERSION}</url>\n    </release>"
+sed -i "s|    <!-- New release entries are prepended here by bump-version.sh -->|    <!-- New release entries are prepended here by bump-version.sh -->\n${release_entry}|" data/linux/io.github.fjrevoredo.mini-diarium.metainfo.xml
+
+# 8. Update README version badge
 echo "Updating README.md version badge..."
 sed -i.bak -E "s|version-[0-9]+\.[0-9]+\.[0-9]+-|version-${NEW_VERSION}-|g" README.md
 rm README.md.bak
 
-# 7. Validate all versions
+# 9. Validate all versions
 echo "Validating version updates..."
 
 package_version=$(extract_first_match package.json '.*"version"[[:space:]]*:[[:space:]]*"([0-9]+\.[0-9]+\.[0-9]+)".*')
@@ -138,7 +148,7 @@ echo
 
 # Show what changed
 echo "Changes:"
-git diff package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock website/index.html README.md | head -40
+git diff package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock website/index.html README.md package-lock.json data/linux/io.github.fjrevoredo.mini-diarium.metainfo.xml | head -40
 
 # Get current branch
 CURRENT_BRANCH=$(git branch --show-current)
@@ -146,7 +156,7 @@ CURRENT_BRANCH=$(git branch --show-current)
 echo
 echo -e "${YELLOW}Next steps:${NC}"
 echo "1. Review the changes above"
-echo "2. Commit: ${GREEN}git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock website/index.html README.md && git commit -m \"chore: bump version to ${NEW_VERSION}\"${NC}"
+echo "2. Commit: ${GREEN}git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock website/index.html README.md package-lock.json data/linux/io.github.fjrevoredo.mini-diarium.metainfo.xml && git commit -m \"chore: bump version to ${NEW_VERSION}\"${NC}"
 echo "3. Push branch: ${GREEN}git push origin ${CURRENT_BRANCH}${NC}"
 echo "4. Create PR to merge ${CURRENT_BRANCH} → master"
 echo "5. After PR is merged, checkout master and create tag:"

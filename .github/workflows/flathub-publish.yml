@@ -14,6 +14,7 @@ on:
 
 jobs:
   publish-flathub:
+    if: github.event_name == 'release' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
 
     steps:
@@ -45,11 +46,6 @@ jobs:
         with:
           python-version: '3.x'
 
-      - name: Set up Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: 1.2
-
       - name: Set up Node 20
         uses: actions/setup-node@v6
         with:
@@ -65,14 +61,6 @@ jobs:
           python3 /tmp/flatpak-builder-tools/cargo/flatpak-cargo-generator.py \
             src-tauri/Cargo.lock \
             -o flatpak/cargo-sources.json
-
-      - name: Generate package-lock.json from bun.lock
-        # flatpak-node-generator does not support Bun lock files directly.
-        # We install from bun.lock to populate node_modules, then use npm to derive
-        # a compatible package-lock.json (network call to resolve metadata only).
-        run: |
-          bun install --frozen-lockfile
-          npm install --package-lock-only --ignore-scripts --legacy-peer-deps
 
       - name: Generate node-sources.json
         run: |
@@ -113,29 +101,11 @@ text, dir_replacements = re.subn(
 if dir_replacements != 1:
     raise SystemExit("Expected exactly one local dir source block in flatpak manifest")
 
-text, lockfile_replacements = re.subn(
-    r"(?m)^ {8}path: \.\./package-lock\.json$",
-    "        path: package-lock.json",
-    text,
-    count=1,
-)
-if lockfile_replacements != 1:
-    raise SystemExit("Expected exactly one ../package-lock.json path in flatpak manifest")
-
 if "--features custom-protocol" not in text:
     raise SystemExit("Flatpak manifest is missing the Tauri custom-protocol release build flag")
 
 manifest.write_text(text.replace("__COMMIT__", commit))
 PY
-          # In this repo the manifest lives under flatpak/ and references ../package-lock.json.
-          # In the Flathub repo the manifest is copied to the repo root beside package-lock.json.
-
-      - name: Prepend release entry to metainfo.xml
-        run: |
-          version="${{ steps.prep.outputs.version }}"
-          date="$(date -u +%Y-%m-%d)"
-          release_entry="    <release version=\"${version}\" date=\"${date}\">\n      <url type=\"details\">https://github.com/fjrevoredo/mini-diarium/releases/tag/v${version}</url>\n    </release>"
-          sed -i "s|  <!-- Automation prepends a new <release> entry here on each publish via flathub-publish.yml -->|  <!-- Automation prepends a new <release> entry here on each publish via flathub-publish.yml -->\n${release_entry}|" flatpak/io.github.fjrevoredo.mini-diarium.metainfo.xml
 
       - name: Clone Flathub repository
         env:
@@ -147,12 +117,9 @@ PY
 
       - name: Copy files into Flathub repo
         run: |
-          cp flatpak/io.github.fjrevoredo.mini-diarium.yml         /tmp/flathub-repo/io.github.fjrevoredo.mini-diarium.yml
-          cp flatpak/io.github.fjrevoredo.mini-diarium.metainfo.xml /tmp/flathub-repo/io.github.fjrevoredo.mini-diarium.metainfo.xml
-          cp flatpak/io.github.fjrevoredo.mini-diarium.desktop      /tmp/flathub-repo/io.github.fjrevoredo.mini-diarium.desktop
-          cp flatpak/cargo-sources.json           /tmp/flathub-repo/cargo-sources.json
-          cp flatpak/node-sources.json            /tmp/flathub-repo/node-sources.json
-          cp package-lock.json                   /tmp/flathub-repo/package-lock.json
+          cp flatpak/io.github.fjrevoredo.mini-diarium.yml /tmp/flathub-repo/io.github.fjrevoredo.mini-diarium.yml
+          cp flatpak/cargo-sources.json                    /tmp/flathub-repo/cargo-sources.json
+          cp flatpak/node-sources.json                     /tmp/flathub-repo/node-sources.json
 
       - name: Commit and open PR against Flathub repo
         env:
