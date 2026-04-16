@@ -183,6 +183,7 @@ function buildNav() {
       <li><a href="/#features">Features</a></li>
       <li><a href="/#security">Security</a></li>
       <li><a href="/blog/" aria-current="page">Blog</a></li>
+      <li><a href="/docs/">Docs</a></li>
       <li><a href="/#facts">FAQ</a></li>
       <li><a href="/#platforms">Download</a></li>
       <li><a href="/#about">About</a></li>

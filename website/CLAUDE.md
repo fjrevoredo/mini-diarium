@@ -125,15 +125,32 @@ Posts should address real search intent around:
 
 ---
 
+## Documentation Section (`docs-src/`)
+
+Source files: `website/docs-src/*.md` — one file per section.
+
+Required front matter: `title`, `slug`, `description`, `order` (integer), `updated` (YYYY-MM-DD), `tags` (comma-separated). Optional: `draft: true` (excludes from build).
+
+**Never edit `website/docs/` directly** — all HTML there is auto-generated.
+
+- Dev iteration: `bun run website:docs` (docs only)
+- Full deploy build: `bun run website:build-static` (blog → docs → fingerprinter, in that order)
+
+See `website/docs-src/_template.md` for the starter template.
+
+---
+
 ## How the build pipeline works
 
-`bun run website:build-static` runs two scripts in sequence:
+`bun run website:build-static` runs three scripts in sequence:
 
 1. **`generate-website-blog.mjs`** — reads all `.md` sources, renders HTML, updates `blog/index.html`, `feed.xml`, `sitemap.xml`, `llms.txt`, and the homepage blog teaser. Outputs unfingerprinted asset references (`style.css`, `main.js`).
 
-2. **`fingerprint-website-assets.mjs`** — hashes `css/style.css` and `js/main.js`, writes the content-addressed copies (`css/style.<hash>.css`, `js/main.<hash>.js`), and rewrites all HTML references to use the new names. Removes stale fingerprinted files when the hash changes.
+2. **`generate-website-docs.mjs`** — reads all `docs-src/*.md` sources, renders HTML for each section and the hub index, updates `sitemap.xml` and `llms.txt` with docs URLs. Outputs unfingerprinted asset references.
 
-**Do not run the scripts individually.** `bun run website:blog` alone leaves the repo in an inconsistent state (unfingerprinted references committed alongside fingerprinted asset files).
+3. **`fingerprint-website-assets.mjs`** — hashes `css/style.css` and `js/main.js`, writes the content-addressed copies (`css/style.<hash>.css`, `js/main.<hash>.js`), and rewrites all HTML references to use the new names. Removes stale fingerprinted files when the hash changes.
+
+**Do not run the scripts individually.** `bun run website:blog` or `bun run website:docs` alone leaves the repo in an inconsistent state (unfingerprinted references committed alongside fingerprinted asset files).
 
 ---
 
@@ -141,12 +158,18 @@ Posts should address real search intent around:
 
 ```
 website/
-├── posts-src/               # Markdown sources — edit these
+├── posts-src/               # Blog Markdown sources — edit these
 │   ├── _template.md         # Blank post template
 │   └── YYYY-MM-DD-slug.md   # One file per post
+├── docs-src/                # Docs Markdown sources — edit these
+│   ├── _template.md         # Blank section template
+│   └── NN-slug.md           # One file per section (ordered by filename)
 ├── blog/                    # Generated output — do not edit
 │   ├── index.html
 │   ├── feed.xml
+│   └── <slug>/index.html
+├── docs/                    # Generated output — do not edit
+│   ├── index.html
 │   └── <slug>/index.html
 ├── encrypted-journal/       # Static guide page — edit directly
 │   └── index.html

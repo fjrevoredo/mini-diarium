@@ -382,7 +382,8 @@
     "description": "Una aplicación de escritorio para llevar un diario cifrado y de almacenamiento local.",
     "license": "Licencia MIT",
     "copyright": "Copyright © 2026 Francisco J. Revoredo",
-    "githubLink": "github.com/fjrevoredo/mini-diarium"
+    "githubLink": "github.com/fjrevoredo/mini-diarium",
+    "docsLink": "Documentación"
   },
   "goToDate": {
     "title": "Ir a fecha",

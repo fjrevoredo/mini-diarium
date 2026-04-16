@@ -1283,11 +1283,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                           <button
                             type="button"
                             class="underline text-xs text-tertiary hover:text-primary focus:outline-none"
-                            onClick={() =>
-                              openUrl(
-                                'https://github.com/fjrevoredo/mini-diarium/blob/master/docs/USER_GUIDE.md#theme-overrides-advanced',
-                              )
-                            }
+                            onClick={() => openUrl('https://mini-diarium.com/docs/preferences/')}
                           >
                             {t('prefs.advanced.seeUserGuide')}
                           </button>

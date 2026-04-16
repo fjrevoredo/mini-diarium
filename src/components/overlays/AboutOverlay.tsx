@@ -71,13 +71,19 @@ export default function AboutOverlay(props: AboutOverlayProps) {
               <p>{t('about.copyright')}</p>
             </div>
 
-            {/* GitHub link */}
-            <div class="flex justify-center mb-6">
+            {/* GitHub + Documentation links */}
+            <div class="flex justify-center gap-4 mb-6">
               <button
                 onClick={() => openUrl('https://github.com/fjrevoredo/mini-diarium')}
                 class="text-sm text-interactive hover:underline"
               >
                 {t('about.githubLink')}
+              </button>
+              <button
+                onClick={() => openUrl('https://mini-diarium.com/docs/')}
+                class="text-sm text-interactive hover:underline"
+              >
+                {t('about.docsLink')}
               </button>
             </div>
 

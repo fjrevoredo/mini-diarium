@@ -382,7 +382,8 @@
 		"description": "Eine Desktop-Anwendung zum Führen eines verschlüsselten, lokal gespeicherten Tagebuchs.",
 		"license": "MIT-Lizenz",
 		"copyright": "Copyright © 2026 Francisco J. Revoredo",
-		"githubLink": "github.com/fjrevoredo/mini-diarium"
+		"githubLink": "github.com/fjrevoredo/mini-diarium",
+		"docsLink": "Dokumentation"
 	},
 	"goToDate": {
 		"title": "Gehe zu Datum",

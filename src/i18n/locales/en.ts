@@ -461,6 +461,7 @@ const en = {
     license: 'MIT License',
     copyright: 'Copyright © 2026 Francisco J. Revoredo',
     githubLink: 'github.com/fjrevoredo/mini-diarium',
+    docsLink: 'Documentation',
   },
 
   /** GoToDateOverlay */

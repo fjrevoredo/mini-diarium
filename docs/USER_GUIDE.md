@@ -1,5 +1,8 @@
 # Mini Diarium User Guide
 
+> For the best reading experience, see the [online documentation](https://mini-diarium.com/docs/).
+> This file is the plain-text source and is kept for technical users and GitHub readers.
+
 ## Getting Started
 
 ### First Launch
