@@ -8,17 +8,10 @@ sdk-extensions:
 command: mini-diarium
 
 finish-args:
-  # Display
   - --socket=wayland
   - --socket=fallback-x11
   - --share=ipc
-  # WebKitGTK requires network access for proxy resolution via the portal.
-  # The app itself never makes network requests.
-  - --share=network
-  # GPU rendering (WebKit2GTK requires hardware acceleration)
   - --device=dri
-  # Filesystem access (journal directory is user-configurable)
-  - --filesystem=home
 
 modules:
   - name: mini-diarium
