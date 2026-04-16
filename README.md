@@ -47,7 +47,7 @@ Mini Diarium is intentionally opinionated. The philosophy is not a side note, it
 
 Read the full principles and how these translates to the architecture in [PHILOSOPHY.md](PHILOSOPHY.md).
 
-> [!AI as a Tool, Not a Substitute]
+> [!NOTE]
 > Mini Diarium uses AI tooling as leverage for human engineers, never as a replacement. Every change still passes through deliberate design, careful implementation, proper testing, and direct feedback. Responsibility, authorship, and final judgment remain human.
 
 ## Features
