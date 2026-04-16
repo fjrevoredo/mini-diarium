@@ -30,7 +30,7 @@ Template:
 
 # Versions
 
-## [0.4.16] - [Unreleased]
+## [0.4.16] - 17-04-2026
 
 ### Added
 - **Website documentation section**: User guide is now published as a structured, per-section documentation area at `mini-diarium.com/docs/`. Each of the 11 feature sections has its own page with sidebar navigation, breadcrumbs, prev/next links, and section-level SEO. Built from Markdown sources in `website/docs-src/` via a new `generate-website-docs.mjs` script integrated into the `website:build-static` pipeline.

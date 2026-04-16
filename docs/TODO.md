@@ -18,7 +18,6 @@ TODO entry format:
 
 ## Medium Priority
 
-- [x] **Restore CI diagram content-diff check** — the byte-comparison check in `scripts/verify-diagrams.mjs` was reverted to existence-only because mmdc/d2 produce slightly different SVG bytes depending on version (local vs CI runners differ). The proper fix is to pin identical tool versions in both CI and local dev (e.g. lock `@mermaid-js/mermaid-cli` in `devDependencies` and `d2` via a specific release download in CI), then re-add the byte comparison. Until then, `diagrams:check` only verifies that all 8 `.svg` files are present.
 - [ ] **Frontend test coverage** — auth screens (`PasswordPrompt.tsx`, `PasswordCreation.tsx`), Calendar, and all overlays (GoToDateOverlay, PreferencesOverlay, StatsOverlay, ImportOverlay, ExportOverlay) have zero test coverage; add Vitest + @solidjs/testing-library tests for each; use existing pattern from `TitleEditor.test.tsx` and `WordCount.test.tsx`
 - [ ] **Full image drag-and-drop support** — dropping images into the editor should work consistently both from file managers and from other applications (for example browsers, chat apps, or image editors), not only when the drag payload exposes file paths; image drops should embed the image the same way as the toolbar picker and paste flow, while unsupported payloads fail safely without breaking the editor
   - [ ] **First compatibility target: Typora** — validate and support dragging images from Typora into Mini Diarium as the first cross-application drag-and-drop case before widening compatibility to other apps
