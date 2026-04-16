@@ -76,33 +76,9 @@ jobs:
           echo "commit=$commit" >> "$GITHUB_OUTPUT"
 
       - name: Rewrite manifest for Flathub repo layout
-        run: |
-          commit="${{ steps.sha.outputs.commit }}"
-          python3 - <<'PY'
-from pathlib import Path
-import re
-
-manifest = Path("flatpak/io.github.fjrevoredo.mini-diarium.yml")
-text = manifest.read_text()
-
-remote_block = """      - type: git
-        url: https://github.com/fjrevoredo/mini-diarium
-        commit: __COMMIT__"""
-
-text, dir_replacements = re.subn(
-    r"(?m)^ {6}- type: dir\n(?: {8}#.*\n)* {8}path: \.\.$",
-    remote_block,
-    text,
-    count=1,
-)
-if dir_replacements != 1:
-    raise SystemExit("Expected exactly one local dir source block in flatpak manifest")
-
-if "--features custom-protocol" not in text:
-    raise SystemExit("Flatpak manifest is missing the Tauri custom-protocol release build flag")
-
-manifest.write_text(text.replace("__COMMIT__", commit))
-PY
+        env:
+          COMMIT: ${{ steps.sha.outputs.commit }}
+        run: python3 flatpak/rewrite-manifest.py
 
       - name: Clone Flathub repository
         env:
