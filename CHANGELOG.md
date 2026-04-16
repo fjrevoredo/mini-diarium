@@ -30,6 +30,12 @@ Template:
 
 # Versions
 
+## [0.4.16] - [Unreleased]
+
+### Changed
+- **CI diagram content-diff check restored**: `scripts/verify-diagrams.mjs` was previously reverted to an existence-only check because `mmdc` and `d2` produced slightly different SVG bytes across versions, causing spurious CI failures. The script is now a full content-diff check: it guards the required tool versions (`@mermaid-js/mermaid-cli` 11.12.0, D2 0.7.1), regenerates all diagrams in-place, then runs `git diff --name-only docs/diagrams/` — any stale SVG causes the check to fail and names the affected file(s). Supporting changes: `@mermaid-js/mermaid-cli` pinned to an exact version (caret removed from `devDependencies`); `.gitattributes` added to force LF line endings on `docs/diagrams/*.svg` so regenerated output matches committed bytes on Windows.
+
+
 ## [0.4.15] - 04-04-2026
 
 ### Added

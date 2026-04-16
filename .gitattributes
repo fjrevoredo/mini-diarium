@@ -1,0 +1,2 @@
+# Generated SVGs must use LF so regenerated output matches committed bytes on all platforms
+docs/diagrams/*.svg  text eol=lf
