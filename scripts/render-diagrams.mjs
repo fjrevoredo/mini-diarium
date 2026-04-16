@@ -117,7 +117,7 @@ try {
 const hashes = {};
 for (const diagram of [...MERMAID_DIAGRAMS, ...D2_DIAGRAMS]) {
   const sourcePath = path.join(DIAGRAMS_DIR, diagram.source);
-  hashes[diagram.source] = createHash("sha256").update(readFileSync(sourcePath)).digest("hex");
+  hashes[diagram.source] = createHash("sha256").update(readFileSync(sourcePath, "utf8").replace(/\r\n/g, "\n")).digest("hex");
 }
 writeFileSync(
   path.join(DIAGRAMS_DIR, ".source-hashes.json"),

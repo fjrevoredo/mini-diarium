@@ -21,7 +21,7 @@ for (const [source, storedHash] of Object.entries(storedHashes)) {
     stale = true;
     continue;
   }
-  const currentHash = createHash("sha256").update(readFileSync(sourcePath)).digest("hex");
+  const currentHash = createHash("sha256").update(readFileSync(sourcePath, "utf8").replace(/\r\n/g, "\n")).digest("hex");
   if (currentHash !== storedHash) {
     console.error(`❌ Diagram source changed without regenerating: docs/diagrams/${source}`);
     stale = true;
