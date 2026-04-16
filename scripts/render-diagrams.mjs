@@ -1,5 +1,6 @@
+import { createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";
-import { mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import path from "node:path";
 
@@ -111,3 +112,15 @@ try {
     rmSync(generatedPuppeteerDir, { recursive: true, force: true });
   }
 }
+
+// Record source hashes so verify-diagrams.mjs can detect stale diagrams without re-rendering
+const hashes = {};
+for (const diagram of [...MERMAID_DIAGRAMS, ...D2_DIAGRAMS]) {
+  const sourcePath = path.join(DIAGRAMS_DIR, diagram.source);
+  hashes[diagram.source] = createHash("sha256").update(readFileSync(sourcePath)).digest("hex");
+}
+writeFileSync(
+  path.join(DIAGRAMS_DIR, ".source-hashes.json"),
+  JSON.stringify(hashes, null, 2) + "\n",
+  "utf8",
+);
