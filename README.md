@@ -9,7 +9,7 @@ Free, open source, and never touches the internet.
 
 [![CI](https://github.com/fjrevoredo/mini-diarium/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/fjrevoredo/mini-diarium/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-0.4.15-blue)](https://github.com/fjrevoredo/mini-diarium/releases)
+[![Version](https://img.shields.io/badge/version-0.4.16-blue)](https://github.com/fjrevoredo/mini-diarium/releases)
 [![Platform](https://img.shields.io/badge/platform-Windows_%7C_macOS_%7C_Linux-lightgrey)](https://github.com/fjrevoredo/mini-diarium#download)
 [![Follow @MiniDiarium](https://img.shields.io/badge/Follow-%40MiniDiarium-000?logo=x&logoColor=white)](https://x.com/MiniDiarium)
 [![IdeaCred](https://ideacred.com/api/badge/fjrevoredo/mini-diarium)](https://ideacred.com/submissions)
@@ -47,9 +47,8 @@ Mini Diarium is intentionally opinionated. The philosophy is not a side note, it
 
 Read the full principles and how these translates to the architecture in [PHILOSOPHY.md](PHILOSOPHY.md).
 
-## AI as a Tool, Not a Substitute
-
-Mini Diarium uses AI tools willingly and without apology, but always as leverage for human engineers, never as a replacement for them. This is **NOT** a vibe-coded app: every meaningful change still has to pass through deliberate design, careful implementation, proper testing, sound engineering practice, and direct feedback from both developers and users. We do not believe serious software can be reduced to "no-code magic" or delegated to prompts without judgment, especially when privacy, security, and long-term maintainability matter. Good tools should be used; responsibility, authorship, and final judgment remain human.
+> [!AI as a Tool, Not a Substitute]
+> Mini Diarium uses AI tooling as leverage for human engineers, never as a replacement. Every change still passes through deliberate design, careful implementation, proper testing, and direct feedback. Responsibility, authorship, and final judgment remain human.
 
 ## Features
 
