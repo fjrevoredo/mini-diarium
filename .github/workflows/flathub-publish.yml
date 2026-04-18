@@ -73,6 +73,8 @@ jobs:
       - name: Validate tagged metainfo for Flathub
         run: |
           metainfo=/tmp/mini-diarium-release/data/linux/io.github.fjrevoredo.mini-diarium.metainfo.xml
+          version="${{ steps.prep.outputs.version }}"
+          tag="${{ steps.prep.outputs.tag }}"
 
           if ! grep -q '<developer id="io.github.fjrevoredo">' "$metainfo"; then
             echo "Tagged release metainfo is missing <developer id=\"io.github.fjrevoredo\">."
@@ -85,6 +87,19 @@ jobs:
             echo "Tagged release metainfo is missing the vcs-browser URL."
             echo "Flathub will reject this build during AppStream validation."
             echo "Cut a new release after fixing data/linux/io.github.fjrevoredo.mini-diarium.metainfo.xml, or patch the Flathub PR manually."
+            exit 1
+          fi
+
+          if ! grep -q "<release version=\"$version\"" "$metainfo"; then
+            echo "Tagged release metainfo is missing a <release version=\"$version\"> entry."
+            echo "Flathub may publish the new build while still showing the previous version in AppStream metadata."
+            echo "Update the <releases> block before cutting the release tag."
+            exit 1
+          fi
+
+          if ! grep -q "<url type=\"details\">https://github.com/fjrevoredo/mini-diarium/releases/tag/$tag</url>" "$metainfo"; then
+            echo "Tagged release metainfo is missing the matching release details URL for $tag."
+            echo "Update the <releases> block before cutting the release tag."
             exit 1
           fi
 

@@ -194,6 +194,7 @@ When preparing a Flathub update:
 5. If a temporary Flathub-only patch is needed, remove it as soon as the upstream fix is merged and the manifest can point at the new commit.
 6. The release tag itself must already contain valid Flathub/AppStream metadata. Post-tag fixes on `master` do not help an automated Flathub PR for that release.
 7. The publish workflow must generate `cargo-sources.json`, `node-sources.json`, and the rewritten manifest from the tagged source tree, not from whatever is currently on `master`.
+8. The tagged metainfo `<releases>` block must include the exact released version and matching GitHub release URL, otherwise Flathub can publish the new build while still displaying the previous version in the store listing.
 
 ### Required GitHub Secret: `FLATHUB_TOKEN`
 
@@ -236,6 +237,7 @@ The most common annual maintenance task is the GNOME runtime bump. When `runtime
 In particular:
 
 - the workflow must operate on the tagged release tree; generating sources from `master` and pinning the manifest to a different tag commit is invalid
+- the workflow should fail if the tagged metainfo does not contain a matching `<release version="...">` entry for the released tag
 - successful source generation does not guarantee that `node-sources.json` includes all required arch-specific optional native npm packages
 - successful local `x86_64` builds do not guarantee `aarch64` will pass
 - AppStream validation can fail after the build itself succeeds
