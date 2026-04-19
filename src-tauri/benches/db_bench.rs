@@ -1,8 +1,8 @@
 use criterion::{criterion_group, criterion_main, BatchSize, BenchmarkId, Criterion};
 use mini_diarium_lib::db::{
     queries::{
-        count_words, get_all_entries, get_all_entry_dates, get_entries_by_date, insert_entry,
-        update_entry, DiaryEntry,
+        count_words, delete_entry_by_id, get_all_entries, get_all_entry_dates,
+        get_entries_by_date, insert_entry, update_entry, DiaryEntry,
     },
     schema::create_database,
 };
@@ -132,10 +132,31 @@ fn bench_get_all(c: &mut Criterion) {
     group.finish();
 }
 
+/// Deletes an entry by id — explicit user-initiated hard delete.
+fn bench_delete(c: &mut Criterion) {
+    c.bench_function("db_delete_entry", |b| {
+        b.iter_batched(
+            || {
+                let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+                let db =
+                    create_database(tmp.path().to_str().unwrap(), "bench".to_string()).unwrap();
+                insert_entry(&db, &make_entry("2024-01-01")).unwrap();
+                let id = get_entries_by_date(&db, "2024-01-01").unwrap()[0].id;
+                (tmp, db, id)
+            },
+            |(_tmp, db, id)| {
+                delete_entry_by_id(&db, id).unwrap();
+            },
+            BatchSize::SmallInput,
+        );
+    });
+}
+
 criterion_group!(
     benches,
     bench_insert,
     bench_update,
+    bench_delete,
     bench_get_by_date,
     bench_get_all_entry_dates,
     bench_get_all
