@@ -152,6 +152,7 @@ jobs:
           "manifest_dir=$($localeManifest.DirectoryName)" >> $env:GITHUB_OUTPUT
 
       - name: Sync winget-pkgs fork
+        shell: bash
         env:
           GH_TOKEN: ${{ secrets.WINGET_TOKEN }}
         run: |
