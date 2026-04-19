@@ -1,8 +1,8 @@
 use criterion::{criterion_group, criterion_main, BatchSize, BenchmarkId, Criterion};
 use mini_diarium_lib::db::{
     queries::{
-        count_words, delete_entry_by_id, get_all_entries, get_all_entry_dates,
-        get_entries_by_date, insert_entry, update_entry, DiaryEntry,
+        count_words, delete_entry_by_id, get_all_entries, get_all_entry_dates, get_entries_by_date,
+        insert_entry, update_entry, DiaryEntry,
     },
     schema::create_database,
 };
