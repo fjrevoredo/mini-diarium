@@ -525,7 +525,7 @@ function buildToc(htmlBody) {
     headings.push({
       level: match[1],
       id: match[2],
-      title: match[3].replace(/<[^>]*>?/g, ""),
+      title: match[3].replace(/[<>]/g, ""),
     });
   }
   if (headings.length < 2) return "";
