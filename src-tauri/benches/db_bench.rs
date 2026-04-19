@@ -1,11 +1,13 @@
 use criterion::{criterion_group, criterion_main, BatchSize, BenchmarkId, Criterion};
 use mini_diarium_lib::db::{
     queries::{
-        count_words, get_all_entries, get_all_entry_dates, get_entries_by_date, insert_entry,
-        update_entry, DiaryEntry,
+        count_words, delete_entry_by_id, get_all_entries, get_all_entry_dates, get_entries_by_date,
+        insert_entry, update_entry, DiaryEntry,
     },
     schema::create_database,
 };
+
+const BENCH_PASSWORD: &str = "bench-only-not-a-real-secret";
 
 /// Representative TipTap HTML (~200 words): mixed <h2>, <p>, <ul>, <li>, <strong>, <em>
 const REALISTIC_HTML: &str = concat!(
@@ -58,8 +60,8 @@ fn bench_insert(c: &mut Criterion) {
         b.iter_batched(
             || {
                 let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
-                let db =
-                    create_database(tmp.path().to_str().unwrap(), "bench".to_string()).unwrap();
+                let db = create_database(tmp.path().to_str().unwrap(), BENCH_PASSWORD.to_string())
+                    .unwrap();
                 (tmp, db)
             },
             |(_tmp, db)| insert_entry(&db, &make_entry("2024-01-01")).unwrap(),
@@ -71,7 +73,7 @@ fn bench_insert(c: &mut Criterion) {
 /// Updates an existing entry — the real auto-save path, called every ~500ms while typing.
 fn bench_update(c: &mut Criterion) {
     let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
-    let db = create_database(tmp.path().to_str().unwrap(), "bench".to_string()).unwrap();
+    let db = create_database(tmp.path().to_str().unwrap(), BENCH_PASSWORD.to_string()).unwrap();
     insert_entry(&db, &make_entry("2024-06-01")).unwrap();
     let saved = get_entries_by_date(&db, "2024-06-01")
         .unwrap()
@@ -91,7 +93,7 @@ fn bench_update(c: &mut Criterion) {
 
 fn bench_get_by_date(c: &mut Criterion) {
     let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
-    let db = create_database(tmp.path().to_str().unwrap(), "bench".to_string()).unwrap();
+    let db = create_database(tmp.path().to_str().unwrap(), BENCH_PASSWORD.to_string()).unwrap();
     insert_entry(&db, &make_entry("2024-06-01")).unwrap();
 
     c.bench_function("db_get_entries_by_date", |b| {
@@ -104,7 +106,7 @@ fn bench_get_all_entry_dates(c: &mut Criterion) {
     let mut group = c.benchmark_group("db_get_all_entry_dates");
     for count in [100usize, 500] {
         let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
-        let db = create_database(tmp.path().to_str().unwrap(), "bench".to_string()).unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), BENCH_PASSWORD.to_string()).unwrap();
         for i in 0..count {
             insert_entry(&db, &make_entry(&make_date(i))).unwrap();
         }
@@ -120,7 +122,7 @@ fn bench_get_all(c: &mut Criterion) {
     let mut group = c.benchmark_group("db_get_all_entries");
     for count in [100usize, 500] {
         let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
-        let db = create_database(tmp.path().to_str().unwrap(), "bench".to_string()).unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), BENCH_PASSWORD.to_string()).unwrap();
         for i in 0..count {
             insert_entry(&db, &make_entry(&make_date(i))).unwrap();
         }
@@ -132,10 +134,31 @@ fn bench_get_all(c: &mut Criterion) {
     group.finish();
 }
 
+/// Deletes an entry by id — explicit user-initiated hard delete.
+fn bench_delete(c: &mut Criterion) {
+    c.bench_function("db_delete_entry", |b| {
+        b.iter_batched(
+            || {
+                let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+                let db = create_database(tmp.path().to_str().unwrap(), BENCH_PASSWORD.to_string())
+                    .unwrap();
+                insert_entry(&db, &make_entry("2024-01-01")).unwrap();
+                let id = get_entries_by_date(&db, "2024-01-01").unwrap()[0].id;
+                (tmp, db, id)
+            },
+            |(_tmp, db, id)| {
+                delete_entry_by_id(&db, id).unwrap();
+            },
+            BatchSize::SmallInput,
+        );
+    });
+}
+
 criterion_group!(
     benches,
     bench_insert,
     bench_update,
+    bench_delete,
     bench_get_by_date,
     bench_get_all_entry_dates,
     bench_get_all

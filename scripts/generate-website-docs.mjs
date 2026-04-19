@@ -17,6 +17,22 @@ const DEFAULT_OG_IMAGE = `${SITE_URL}/assets/og-cover.png`;
 
 const REQUIRED_FIELDS = ["title", "slug", "description", "order", "updated", "tags"];
 
+const SIDEBAR_GROUPS = [
+  { label: "Basics", slugs: ["getting-started", "writing-entries", "navigating"] },
+  { label: "Discovery", slugs: ["search"] },
+  { label: "Your Data", slugs: ["import", "export", "plugins"] },
+  { label: "Settings & More", slugs: ["preferences", "statistics", "backups"] },
+  { label: "Help", slugs: ["faq"] },
+];
+
+const HUB_GROUPS = [
+  { label: "Basics", icon: "📖", slugs: ["getting-started", "writing-entries", "navigating"] },
+  { label: "Discovery", icon: "🔍", slugs: ["search"] },
+  { label: "Your Data", icon: "📁", slugs: ["import", "export", "plugins"] },
+  { label: "Settings & More", icon: "⚙️", slugs: ["preferences", "statistics", "backups"] },
+  { label: "Help", icon: "💬", slugs: ["faq"] },
+];
+
 function ensureDate(value, fieldName, filePath) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
     throw new Error(`${filePath}: ${fieldName} must use YYYY-MM-DD`);
@@ -262,11 +278,14 @@ function buildHead({
   <style>
     .docs-layout {
       display: grid;
-      grid-template-columns: 240px 1fr;
-      gap: 3rem;
+      grid-template-columns: 240px 1fr 200px;
+      gap: 2.5rem;
       align-items: start;
       padding-top: 2rem;
       padding-bottom: 4rem;
+    }
+    .docs-layout.no-toc {
+      grid-template-columns: 240px 1fr;
     }
     .docs-sidebar {
       position: sticky;
@@ -274,19 +293,28 @@ function buildHead({
       max-height: calc(100vh - 100px);
       overflow-y: auto;
     }
-    .docs-sidebar summary {
-      font-size: .8rem;
+    .docs-sidebar-header {
+      font-size: .75rem;
       font-weight: 700;
-      letter-spacing: .07em;
+      letter-spacing: .1em;
       text-transform: uppercase;
-      color: var(--text-muted);
-      cursor: pointer;
-      list-style: none;
-      margin-bottom: .75rem;
+      color: var(--text-primary, #f0ede6);
+      margin-bottom: 1rem;
       padding: .25rem 0;
     }
-    .docs-sidebar summary::-webkit-details-marker { display: none; }
-    .docs-sidebar details[open] summary { color: var(--text-secondary); }
+    .docs-sidebar-group {
+      margin-bottom: 1.25rem;
+    }
+    .docs-sidebar-group-label {
+      font-size: .65rem;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--text-muted, #666);
+      padding: .25rem .75rem;
+      margin-bottom: .25rem;
+      display: block;
+    }
     .docs-sidebar ul {
       list-style: none;
       padding: 0;
@@ -310,6 +338,69 @@ function buildHead({
       color: #f5c94d;
       font-weight: 600;
     }
+    .docs-toc {
+      position: sticky;
+      top: 80px;
+      max-height: calc(100vh - 100px);
+      overflow-y: auto;
+    }
+    .docs-toc-label {
+      font-size: .7rem;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--text-muted, #666);
+      margin: 0 0 .75rem;
+    }
+    .docs-toc ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: .2rem;
+    }
+    .docs-toc li a {
+      display: block;
+      font-size: .8rem;
+      color: var(--text-muted, #888);
+      text-decoration: none;
+      padding: .2rem 0;
+      transition: color .15s;
+      line-height: 1.4;
+    }
+    .docs-toc li a:hover { color: var(--text-primary, #f0ede6); }
+    .docs-toc li a.active { color: #f5c94d; }
+    .docs-toc-h3 { padding-left: 1rem; }
+    .docs-sidebar-toggle {
+      display: none;
+      align-items: center;
+      gap: .5rem;
+      font-size: .875rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      background: var(--bg-card, #161616);
+      border: 1px solid var(--border, #2a2a2a);
+      border-radius: 6px;
+      padding: .5rem .75rem;
+      cursor: pointer;
+      margin-bottom: 1rem;
+      transition: border-color .15s, color .15s;
+    }
+    .docs-sidebar-toggle:hover { border-color: #f5c94d; color: #f5c94d; }
+    .docs-sidebar.open {
+      display: block !important;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 280px;
+      height: 100%;
+      z-index: 200;
+      background: var(--bg, #0e0e0e);
+      padding: 2rem 1.5rem;
+      overflow-y: auto;
+      box-shadow: 4px 0 24px rgba(0,0,0,.5);
+    }
     .docs-prevnext {
       display: flex;
       justify-content: space-between;
@@ -330,34 +421,48 @@ function buildHead({
     .docs-prevnext a:hover { border-color: #f5c94d; color: #f5c94d; }
     .docs-prevnext a.prev { margin-right: auto; }
     .docs-prevnext a.next { margin-left: auto; }
+    .docs-hub-intro { max-width: 60ch; margin-bottom: 2rem; color: var(--text-secondary); line-height: 1.7; }
+    .docs-hub-intro a { color: #f5c94d; text-decoration: none; }
+    .docs-hub-intro a:hover { text-decoration: underline; }
+    .docs-hub-group { margin-bottom: 2.5rem; }
+    .docs-hub-group-label {
+      font-size: .7rem;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--text-muted, #666);
+      margin-bottom: 1rem;
+      padding-bottom: .5rem;
+      border-bottom: 1px solid var(--border, #2a2a2a);
+    }
     .docs-hub-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 1.25rem;
-      margin-top: 2.5rem;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 1rem;
     }
     .docs-card {
       background: var(--bg-card, #161616);
       border: 1px solid var(--border, #2a2a2a);
       border-radius: 10px;
-      padding: 1.5rem;
+      padding: 1.25rem 1.5rem;
       text-decoration: none;
       display: flex;
       flex-direction: column;
-      gap: .5rem;
+      gap: .4rem;
       transition: border-color .15s, transform .15s;
     }
     .docs-card:hover { border-color: #f5c94d; transform: translateY(-2px); }
-    .docs-card h2 { font-size: 1rem; font-weight: 700; color: var(--text, #f0ede6); margin: 0; }
-    .docs-card p { font-size: .875rem; color: var(--text-muted, #888); margin: 0; line-height: 1.5; }
-    .docs-card .docs-card-num { font-size: .75rem; font-weight: 600; color: #f5c94d; text-transform: uppercase; letter-spacing: .06em; }
-    @media (max-width: 768px) {
-      .docs-layout { grid-template-columns: 1fr; gap: 1.5rem; }
-      .docs-sidebar { position: static; max-height: none; }
+    .docs-card h2 { font-size: .95rem; font-weight: 700; color: var(--text, #f0ede6); margin: 0; }
+    .docs-card p { font-size: .825rem; color: var(--text-muted, #888); margin: 0; line-height: 1.5; }
+    .docs-card-icon { font-size: 1.1rem; }
+    @media (max-width: 1099px) {
+      .docs-layout { grid-template-columns: 240px 1fr; }
+      .docs-toc { display: none; }
     }
-    @media (min-width: 769px) {
-      .docs-sidebar details { display: block; }
-      .docs-sidebar details > ul { display: flex !important; }
+    @media (max-width: 899px) {
+      .docs-layout { grid-template-columns: 1fr; }
+      .docs-sidebar { display: none; position: static; max-height: none; }
+      .docs-sidebar-toggle { display: flex; }
     }
   </style>
   <script type="application/ld+json">
@@ -381,21 +486,63 @@ ${buildFooter()}
 }
 
 function buildSidebar(sections, activeSlug) {
-  const items = sections
-    .map((section) => {
-      const isActive = section.slug === activeSlug;
-      return `      <li${isActive ? ' class="active"' : ""}><a href="/docs/${escapeHtml(section.slug)}/">${escapeHtml(section.title)}</a></li>`;
-    })
-    .join("\n");
+  const slugToSection = new Map(sections.map((s) => [s.slug, s]));
 
-  return `<nav class="docs-sidebar" aria-label="Documentation sections">
-  <details open>
-    <summary>Documentation</summary>
+  const groups = SIDEBAR_GROUPS.map((group) => {
+    const items = group.slugs
+      .map((slug) => {
+        const section = slugToSection.get(slug);
+        if (!section) return "";
+        const isActive = slug === activeSlug;
+        return `      <li${isActive ? ' class="active"' : ""}><a href="/docs/${escapeHtml(slug)}/">${escapeHtml(section.title)}</a></li>`;
+      })
+      .filter(Boolean)
+      .join("\n");
+
+    if (!items) return "";
+
+    return `  <div class="docs-sidebar-group">
+    <span class="docs-sidebar-group-label">${escapeHtml(group.label)}</span>
     <ul>
 ${items}
     </ul>
-  </details>
+  </div>`;
+  })
+    .filter(Boolean)
+    .join("\n");
+
+  return `<nav class="docs-sidebar" aria-label="Documentation sections">
+  <p class="docs-sidebar-header">Documentation</p>
+${groups}
 </nav>`;
+}
+
+function buildToc(htmlBody) {
+  const headingRe = /<h([23])\s+id="([^"]+)">([\s\S]*?)<\/h\1>/g;
+  const headings = [];
+  let match;
+  while ((match = headingRe.exec(htmlBody)) !== null) {
+    headings.push({
+      level: match[1],
+      id: match[2],
+      title: match[3].replace(/[<>]/g, ""),
+    });
+  }
+  if (headings.length < 2) return "";
+
+  const items = headings
+    .map(
+      (h) =>
+        `    <li class="docs-toc-h${h.level}"><a href="#${escapeHtml(h.id)}">${escapeHtml(h.title)}</a></li>`,
+    )
+    .join("\n");
+
+  return `<aside class="docs-toc" aria-label="On this page">
+  <p class="docs-toc-label">On this page</p>
+  <ul>
+${items}
+  </ul>
+</aside>`;
 }
 
 function renderDocsHub(sections) {
@@ -435,14 +582,35 @@ function renderDocsHub(sections) {
     structuredData,
   });
 
-  const cards = sections
-    .map(
-      (section) => `<a class="docs-card" href="/docs/${escapeHtml(section.slug)}/">
-  <span class="docs-card-num">${section.order}. ${escapeHtml(section.title)}</span>
+  const slugToSection = new Map(sections.map((s) => [s.slug, s]));
+
+  const groupsHtml = HUB_GROUPS.map((group) => {
+    const cards = group.slugs
+      .map((slug) => {
+        const section = slugToSection.get(slug);
+        if (!section) return "";
+        return `<a class="docs-card" href="/docs/${escapeHtml(slug)}/">
+  <span class="docs-card-icon">${group.icon}</span>
   <h2>${escapeHtml(section.title)}</h2>
   <p>${escapeHtml(section.description)}</p>
-</a>`,
-    )
+</a>`;
+      })
+      .filter(Boolean)
+      .join("\n");
+
+    if (!cards) return "";
+
+    return `<div class="docs-hub-group">
+  <p class="docs-hub-group-label">${escapeHtml(group.label)}</p>
+  <div class="docs-hub-grid">
+${cards
+  .split("\n")
+  .map((line) => `    ${line}`)
+  .join("\n")}
+  </div>
+</div>`;
+  })
+    .filter(Boolean)
     .join("\n");
 
   const content = `
@@ -458,12 +626,13 @@ function renderDocsHub(sections) {
 
 <section>
   <div class="container">
-    <div class="docs-hub-grid">
-${cards
+    <p class="docs-hub-intro">
+      New here? <a href="/docs/getting-started/">Jump in: Getting Started →</a>
+    </p>
+${groupsHtml
   .split("\n")
-  .map((line) => `      ${line}`)
+  .map((line) => `    ${line}`)
   .join("\n")}
-    </div>
   </div>
 </section>`;
 
@@ -476,6 +645,8 @@ function renderSectionPage(section, sections) {
   const nextSection = sectionIndex < sections.length - 1 ? sections[sectionIndex + 1] : null;
 
   const htmlBody = marked.parse(section.body);
+  const tocHtml = buildToc(htmlBody);
+  const hasToc = tocHtml !== "";
 
   const structuredData = {
     "@context": "https://schema.org",
@@ -537,6 +708,15 @@ function renderSectionPage(section, sections) {
 </div>`
       : "";
 
+  const layoutClass = hasToc ? "docs-layout" : "docs-layout no-toc";
+
+  const tocBlock = hasToc
+    ? `\n${tocHtml
+        .split("\n")
+        .map((line) => `      ${line}`)
+        .join("\n")}`
+    : "";
+
   const content = `
 <section class="blog-post-hero">
   <div class="container">
@@ -557,7 +737,15 @@ function renderSectionPage(section, sections) {
 
 <section class="blog-post-body">
   <div class="container">
-    <div class="docs-layout">
+    <button class="docs-sidebar-toggle" id="docs-sidebar-toggle" aria-label="Open documentation navigation">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+        <line x1="3" y1="6" x2="21" y2="6" />
+        <line x1="3" y1="12" x2="21" y2="12" />
+        <line x1="3" y1="18" x2="21" y2="18" />
+      </svg>
+      Menu
+    </button>
+    <div class="${layoutClass}">
 ${buildSidebar(sections, section.slug)
   .split("\n")
   .map((line) => `      ${line}`)
@@ -571,7 +759,7 @@ ${prevNextHtml
   .split("\n")
   .map((line) => `        ${line}`)
   .join("\n")}
-      </article>
+      </article>${tocBlock}
     </div>
   </div>
 </section>`;

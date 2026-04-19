@@ -38,11 +38,14 @@
   <style>
     .docs-layout {
       display: grid;
-      grid-template-columns: 240px 1fr;
-      gap: 3rem;
+      grid-template-columns: 240px 1fr 200px;
+      gap: 2.5rem;
       align-items: start;
       padding-top: 2rem;
       padding-bottom: 4rem;
+    }
+    .docs-layout.no-toc {
+      grid-template-columns: 240px 1fr;
     }
     .docs-sidebar {
       position: sticky;
@@ -50,19 +53,28 @@
       max-height: calc(100vh - 100px);
       overflow-y: auto;
     }
-    .docs-sidebar summary {
-      font-size: .8rem;
+    .docs-sidebar-header {
+      font-size: .75rem;
       font-weight: 700;
-      letter-spacing: .07em;
+      letter-spacing: .1em;
       text-transform: uppercase;
-      color: var(--text-muted);
-      cursor: pointer;
-      list-style: none;
-      margin-bottom: .75rem;
+      color: var(--text-primary, #f0ede6);
+      margin-bottom: 1rem;
       padding: .25rem 0;
     }
-    .docs-sidebar summary::-webkit-details-marker { display: none; }
-    .docs-sidebar details[open] summary { color: var(--text-secondary); }
+    .docs-sidebar-group {
+      margin-bottom: 1.25rem;
+    }
+    .docs-sidebar-group-label {
+      font-size: .65rem;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--text-muted, #666);
+      padding: .25rem .75rem;
+      margin-bottom: .25rem;
+      display: block;
+    }
     .docs-sidebar ul {
       list-style: none;
       padding: 0;
@@ -86,6 +98,69 @@
       color: #f5c94d;
       font-weight: 600;
     }
+    .docs-toc {
+      position: sticky;
+      top: 80px;
+      max-height: calc(100vh - 100px);
+      overflow-y: auto;
+    }
+    .docs-toc-label {
+      font-size: .7rem;
+      font-weight: 700;
+      letter-spacing: .08em;
+      text-transform: uppercase;
+      color: var(--text-muted, #666);
+      margin: 0 0 .75rem;
+    }
+    .docs-toc ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      gap: .2rem;
+    }
+    .docs-toc li a {
+      display: block;
+      font-size: .8rem;
+      color: var(--text-muted, #888);
+      text-decoration: none;
+      padding: .2rem 0;
+      transition: color .15s;
+      line-height: 1.4;
+    }
+    .docs-toc li a:hover { color: var(--text-primary, #f0ede6); }
+    .docs-toc li a.active { color: #f5c94d; }
+    .docs-toc-h3 { padding-left: 1rem; }
+    .docs-sidebar-toggle {
+      display: none;
+      align-items: center;
+      gap: .5rem;
+      font-size: .875rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      background: var(--bg-card, #161616);
+      border: 1px solid var(--border, #2a2a2a);
+      border-radius: 6px;
+      padding: .5rem .75rem;
+      cursor: pointer;
+      margin-bottom: 1rem;
+      transition: border-color .15s, color .15s;
+    }
+    .docs-sidebar-toggle:hover { border-color: #f5c94d; color: #f5c94d; }
+    .docs-sidebar.open {
+      display: block !important;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 280px;
+      height: 100%;
+      z-index: 200;
+      background: var(--bg, #0e0e0e);
+      padding: 2rem 1.5rem;
+      overflow-y: auto;
+      box-shadow: 4px 0 24px rgba(0,0,0,.5);
+    }
     .docs-prevnext {
       display: flex;
       justify-content: space-between;
@@ -106,34 +181,48 @@
     .docs-prevnext a:hover { border-color: #f5c94d; color: #f5c94d; }
     .docs-prevnext a.prev { margin-right: auto; }
     .docs-prevnext a.next { margin-left: auto; }
+    .docs-hub-intro { max-width: 60ch; margin-bottom: 2rem; color: var(--text-secondary); line-height: 1.7; }
+    .docs-hub-intro a { color: #f5c94d; text-decoration: none; }
+    .docs-hub-intro a:hover { text-decoration: underline; }
+    .docs-hub-group { margin-bottom: 2.5rem; }
+    .docs-hub-group-label {
+      font-size: .7rem;
+      font-weight: 700;
+      letter-spacing: .1em;
+      text-transform: uppercase;
+      color: var(--text-muted, #666);
+      margin-bottom: 1rem;
+      padding-bottom: .5rem;
+      border-bottom: 1px solid var(--border, #2a2a2a);
+    }
     .docs-hub-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 1.25rem;
-      margin-top: 2.5rem;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 1rem;
     }
     .docs-card {
       background: var(--bg-card, #161616);
       border: 1px solid var(--border, #2a2a2a);
       border-radius: 10px;
-      padding: 1.5rem;
+      padding: 1.25rem 1.5rem;
       text-decoration: none;
       display: flex;
       flex-direction: column;
-      gap: .5rem;
+      gap: .4rem;
       transition: border-color .15s, transform .15s;
     }
     .docs-card:hover { border-color: #f5c94d; transform: translateY(-2px); }
-    .docs-card h2 { font-size: 1rem; font-weight: 700; color: var(--text, #f0ede6); margin: 0; }
-    .docs-card p { font-size: .875rem; color: var(--text-muted, #888); margin: 0; line-height: 1.5; }
-    .docs-card .docs-card-num { font-size: .75rem; font-weight: 600; color: #f5c94d; text-transform: uppercase; letter-spacing: .06em; }
-    @media (max-width: 768px) {
-      .docs-layout { grid-template-columns: 1fr; gap: 1.5rem; }
-      .docs-sidebar { position: static; max-height: none; }
+    .docs-card h2 { font-size: .95rem; font-weight: 700; color: var(--text, #f0ede6); margin: 0; }
+    .docs-card p { font-size: .825rem; color: var(--text-muted, #888); margin: 0; line-height: 1.5; }
+    .docs-card-icon { font-size: 1.1rem; }
+    @media (max-width: 1099px) {
+      .docs-layout { grid-template-columns: 240px 1fr; }
+      .docs-toc { display: none; }
     }
-    @media (min-width: 769px) {
-      .docs-sidebar details { display: block; }
-      .docs-sidebar details > ul { display: flex !important; }
+    @media (max-width: 899px) {
+      .docs-layout { grid-template-columns: 1fr; }
+      .docs-sidebar { display: none; position: static; max-height: none; }
+      .docs-sidebar-toggle { display: flex; }
     }
   </style>
   <script type="application/ld+json">
@@ -145,7 +234,7 @@
       "@id": "https://mini-diarium.com/docs/faq/#article",
       "headline": "FAQ",
       "description": "Frequently asked questions about Mini Diarium, encryption, data privacy, and troubleshooting.",
-      "dateModified": "2026-04-16T00:00:00Z",
+      "dateModified": "2026-04-19T00:00:00Z",
       "keywords": "FAQ, troubleshooting, encryption, privacy, data",
       "publisher": {
         "@type": "Organization",
@@ -238,29 +327,59 @@
 
 <section class="blog-post-body">
   <div class="container">
+    <button class="docs-sidebar-toggle" id="docs-sidebar-toggle" aria-label="Open documentation navigation">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+        <line x1="3" y1="6" x2="21" y2="6" />
+        <line x1="3" y1="12" x2="21" y2="12" />
+        <line x1="3" y1="18" x2="21" y2="18" />
+      </svg>
+      Menu
+    </button>
     <div class="docs-layout">
       <nav class="docs-sidebar" aria-label="Documentation sections">
-        <details open>
-          <summary>Documentation</summary>
+        <p class="docs-sidebar-header">Documentation</p>
+        <div class="docs-sidebar-group">
+          <span class="docs-sidebar-group-label">Basics</span>
           <ul>
             <li><a href="/docs/getting-started/">Getting Started</a></li>
             <li><a href="/docs/writing-entries/">Writing Entries</a></li>
             <li><a href="/docs/navigating/">Navigating Your Journal</a></li>
+          </ul>
+        </div>
+        <div class="docs-sidebar-group">
+          <span class="docs-sidebar-group-label">Discovery</span>
+          <ul>
             <li><a href="/docs/search/">Search</a></li>
+          </ul>
+        </div>
+        <div class="docs-sidebar-group">
+          <span class="docs-sidebar-group-label">Your Data</span>
+          <ul>
             <li><a href="/docs/import/">Importing Data</a></li>
             <li><a href="/docs/export/">Exporting Data</a></li>
             <li><a href="/docs/plugins/">Plugins</a></li>
+          </ul>
+        </div>
+        <div class="docs-sidebar-group">
+          <span class="docs-sidebar-group-label">Settings &amp; More</span>
+          <ul>
             <li><a href="/docs/preferences/">Preferences</a></li>
             <li><a href="/docs/statistics/">Statistics</a></li>
             <li><a href="/docs/backups/">Backups</a></li>
+          </ul>
+        </div>
+        <div class="docs-sidebar-group">
+          <span class="docs-sidebar-group-label">Help</span>
+          <ul>
             <li class="active"><a href="/docs/faq/">FAQ</a></li>
           </ul>
-        </details>
+        </div>
       </nav>
       <article class="blog-post prose" aria-label="FAQ">
         <h2 id="i-forgot-my-password-can-i-recover-my-entries">I forgot my password. Can I recover my entries?</h2><p>No — unless you registered a key file as an authentication method. If you have a key file, you can still unlock your journal using the &quot;Key File&quot; tab on the unlock screen. If you have neither your password nor your key file, your entries cannot be recovered. This is by design: the encryption key is derived from your password, and no backup of it is stored anywhere.</p>
         <h2 id="where-is-my-data-stored">Where is my data stored?</h2><p>Locally on your machine in an SQLite database. See the <a href="../backups/">Backups</a> section for the exact default path on your operating system.</p>
         <h2 id="does-mini-diarium-connect-to-the-internet">Does Mini Diarium connect to the internet?</h2><p>Never. Mini Diarium makes no network requests, collects no analytics, sends no telemetry, and does not check for updates automatically. All data stays on your device.</p>
+        <p>Release notes for each version are bundled with the app itself and displayed in the <strong>notification center</strong> (bell icon in the header). No network call is made — the notes ship as a local file inside the application bundle.</p>
         <h2 id="can-i-sync-across-devices">Can I sync across devices?</h2><p>Not directly. Mini Diarium is local-only by design. You could manually copy the <code>diary.db</code> file to another device, but simultaneous access from multiple devices is not supported and could corrupt the database. If you want cloud backup, place your journal directory inside a synced folder (Dropbox, OneDrive, iCloud Drive) and only open it from one device at a time.</p>
         <h2 id="i-used-mini-diary-before-can-i-migrate">I used Mini Diary before. Can I migrate?</h2><p>Yes. Export your journal from Mini Diary as JSON, then import it in Mini Diarium from <strong>Journal → Import...</strong> using the Mini Diary JSON format. All entries are imported with their original dates.</p>
         <h2 id="how-does-the-encryption-work">How does the encryption work?</h2><p>Mini Diarium encrypts each journal entry using AES-256-GCM with a random master key. The master key is never stored in plaintext — it is wrapped (encrypted) by a key derived from your password using Argon2id, and only the wrapped version is saved to disk. When you unlock, your password re-derives the wrapping key, which decrypts the master key in memory. The master key is held only in RAM and discarded when you lock.</p>
@@ -275,6 +394,21 @@
           <span></span>
         </div>
       </article>
+      <aside class="docs-toc" aria-label="On this page">
+        <p class="docs-toc-label">On this page</p>
+        <ul>
+          <li class="docs-toc-h2"><a href="#i-forgot-my-password-can-i-recover-my-entries">I forgot my password. Can I recover my entries?</a></li>
+          <li class="docs-toc-h2"><a href="#where-is-my-data-stored">Where is my data stored?</a></li>
+          <li class="docs-toc-h2"><a href="#does-mini-diarium-connect-to-the-internet">Does Mini Diarium connect to the internet?</a></li>
+          <li class="docs-toc-h2"><a href="#can-i-sync-across-devices">Can I sync across devices?</a></li>
+          <li class="docs-toc-h2"><a href="#i-used-mini-diary-before-can-i-migrate">I used Mini Diary before. Can I migrate?</a></li>
+          <li class="docs-toc-h2"><a href="#how-does-the-encryption-work">How does the encryption work?</a></li>
+          <li class="docs-toc-h2"><a href="#can-i-use-multiple-passwords-or-unlock-methods">Can I use multiple passwords or unlock methods?</a></li>
+          <li class="docs-toc-h2"><a href="#what-is-a-key-file">What is a key file?</a></li>
+          <li class="docs-toc-h2"><a href="#what-happens-if-i-delete-or-lose-my-key-file">What happens if I delete or lose my key file?</a></li>
+          <li class="docs-toc-h2"><a href="#where-can-i-report-a-security-issue">Where can I report a security issue?</a></li>
+        </ul>
+      </aside>
     </div>
   </div>
 </section>

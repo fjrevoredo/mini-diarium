@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mini Diarium — Performance Benchmarks</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg: #f8f9fa;
+      --surface: #ffffff;
+      --border: #dee2e6;
+      --text: #212529;
+      --muted: #6c757d;
+      --accent: #4f6bed;
+      --accent-light: #eef0fd;
+      --heading: #1a1d23;
+      --code-bg: #f1f3f5;
+      --shadow: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.05);
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0d1117;
+        --surface: #161b22;
+        --border: #30363d;
+        --text: #c9d1d9;
+        --muted: #8b949e;
+        --accent: #7da2f7;
+        --accent-light: #1c2a4a;
+        --heading: #e6edf3;
+        --code-bg: #1c2128;
+        --shadow: 0 1px 3px rgba(0,0,0,.3);
+      }
+    }
+    *, *::before, *::after { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-size: 15px;
+      line-height: 1.6;
+      background: var(--bg);
+      color: var(--text);
+    }
+    a { color: var(--accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* Layout */
+    .page-header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 1.5rem 2rem;
+    }
+    .page-header h1 { margin: 0 0 .25rem; font-size: 1.5rem; color: var(--heading); }
+    .page-header .meta { font-size: .85rem; color: var(--muted); }
+    .page-header .meta span + span::before { content: " · "; }
+
+    main { max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+    .section { margin-bottom: 3rem; }
+    .section-header { margin-bottom: 1.25rem; }
+    .section-header h2 {
+      font-size: 1.2rem;
+      color: var(--heading);
+      margin: 0 0 .4rem;
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+    }
+    .section-header h2 .badge {
+      font-size: .7rem;
+      font-weight: 600;
+      background: var(--accent-light);
+      color: var(--accent);
+      padding: .15rem .45rem;
+      border-radius: 20px;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+    }
+    .section-header p { margin: 0; font-size: .9rem; color: var(--muted); }
+
+    /* Benchmark grid */
+    .bench-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(480px, 1fr));
+      gap: 1.25rem;
+    }
+    .bench-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.25rem;
+      box-shadow: var(--shadow);
+    }
+    .bench-card h3 {
+      margin: 0 0 .1rem;
+      font-size: 1rem;
+      color: var(--heading);
+    }
+    .bench-card .bench-key {
+      font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+      font-size: .75rem;
+      color: var(--muted);
+      margin-bottom: .75rem;
+    }
+    .bench-card .description { font-size: .875rem; color: var(--text); margin-bottom: .75rem; }
+    .bench-card .interpretation {
+      font-size: .8rem;
+      color: var(--muted);
+      background: var(--code-bg);
+      border-left: 3px solid var(--accent);
+      padding: .5rem .75rem;
+      border-radius: 0 6px 6px 0;
+      margin-bottom: .85rem;
+    }
+    .latest-value {
+      display: flex;
+      align-items: baseline;
+      gap: .4rem;
+      margin-bottom: .85rem;
+    }
+    .latest-value .value {
+      font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: var(--heading);
+    }
+    .latest-value .unit { font-size: .8rem; color: var(--muted); }
+    .chart-wrap { position: relative; height: 160px; }
+
+    .no-data {
+      text-align: center;
+      padding: 3rem;
+      color: var(--muted);
+      font-size: .9rem;
+      border: 2px dashed var(--border);
+      border-radius: 10px;
+    }
+
+    footer {
+      text-align: center;
+      padding: 2rem;
+      font-size: .8rem;
+      color: var(--muted);
+      border-top: 1px solid var(--border);
+    }
+  </style>
+</head>
+<body>
+<header class="page-header">
+  <h1>Mini Diarium — Performance Benchmarks</h1>
+  <p class="meta">
+    <span id="last-updated">Loading…</span>
+    <span id="latest-commit"></span>
+    <span><a href="https://github.com/fjrevoredo/mini-diarium" target="_blank" rel="noopener">GitHub</a></span>
+  </p>
+</header>
+
+<main id="main">
+  <p class="no-data">Loading benchmark data…</p>
+</main>
+
+<footer>
+  Generated from <code>data.js</code> via <a href="https://github.com/benchmark-action/github-action-benchmark" target="_blank" rel="noopener">github-action-benchmark</a>.
+  Chart.js trends show the last 30 runs (newest on the right).
+</footer>
+
+<script>
+// data.js sets window.BENCHMARK_DATA — loaded by github-action-benchmark on gh-pages
+</script>
+<script src="./data.js"></script>
+<script>
+"use strict";
+
+// ─── Metadata ────────────────────────────────────────────────────────────────
+const SECTIONS = [
+  {
+    id: "auth",
+    title: "Auth Security",
+    badge: "Argon2id",
+    description:
+      "Password-based key derivation (Argon2id) used during journal creation and unlock. " +
+      "These benchmarks intentionally measure slow operations — the KDF is tuned to take ~200 ms " +
+      "to resist offline brute-force attacks. Getting faster is equally bad (it would mean " +
+      "weakened parameters).",
+    benchmarks: ["auth_argon2/wrap_master_key", "auth_argon2/unwrap_master_key"],
+  },
+  {
+    id: "crypto",
+    title: "Cryptography",
+    badge: "AES-256-GCM",
+    description:
+      "AES-256-GCM encrypt/decrypt measured at three realistic entry sizes: 1 KB (short entry), " +
+      "10 KB (medium entry with embedded content), and 100 KB (large entry with base64 images). " +
+      "Cipher operations should be well under 100 µs for all sizes — the database round-trip " +
+      "dominates total save latency, not encryption.",
+    benchmarks: [
+      "cipher_encrypt/1024",
+      "cipher_encrypt/10240",
+      "cipher_encrypt/102400",
+      "cipher_decrypt/1024",
+      "cipher_decrypt/10240",
+      "cipher_decrypt/102400",
+    ],
+  },
+  {
+    id: "db",
+    title: "Database",
+    badge: "SQLite",
+    description:
+      "SQLite operations on the encrypted diary database. " +
+      "<code>db_update_entry</code> is the most latency-critical — it runs every ~500 ms while the user types. " +
+      "Date enumeration and full-scan benchmarks are parameterised at 100 and 500 entries to expose " +
+      "scaling behaviour for large journals.",
+    benchmarks: [
+      "db_insert_entry",
+      "db_update_entry",
+      "db_delete_entry",
+      "db_get_entries_by_date",
+      "db_get_all_entry_dates/100",
+      "db_get_all_entry_dates/500",
+      "db_get_all_entries/100",
+      "db_get_all_entries/500",
+    ],
+  },
+  {
+    id: "wordcount",
+    title: "Word Count",
+    badge: "text",
+    description:
+      "Word-count calculation runs after every auto-save. Two inputs are tested: plain prose " +
+      "(the fast path) and TipTap HTML (requires HTML stripping before counting). Both use a " +
+      "~500-word corpus representative of a typical diary entry.",
+    benchmarks: ["count_words_plain_500w", "count_words_html_500w"],
+  },
+];
+
+const META = {
+  "auth_argon2/wrap_master_key": {
+    title: "Password Setup",
+    description:
+      "Hashes the user's password with Argon2id and wraps the master key with AES-256-GCM. " +
+      "Runs once on journal creation and on every password change.",
+    interpretation:
+      "Target: ~100–300 ms. Slower means stronger protection; faster may mean parameters were weakened. " +
+      "CI runners vary — watch the trend, not the absolute value.",
+  },
+  "auth_argon2/unwrap_master_key": {
+    title: "Password Unlock",
+    description:
+      "Verifies the password via Argon2id and unwraps the master key. Runs once per unlock event.",
+    interpretation:
+      "Same cost as wrap — both paths execute the full Argon2id KDF. " +
+      "A sudden drop here should be investigated immediately.",
+  },
+  "cipher_encrypt/1024": {
+    title: "AES-256-GCM Encrypt — 1 KB",
+    description:
+      "Encrypts 1 KB of diary content. Typical for a short entry of a few sentences.",
+    interpretation: "Target: < 5 µs. Not on the typing hot-path; DB latency dominates.",
+  },
+  "cipher_encrypt/10240": {
+    title: "AES-256-GCM Encrypt — 10 KB",
+    description:
+      "Encrypts 10 KB — a medium entry with formatted text and possibly a small embedded image.",
+    interpretation: "Target: < 30 µs. Still negligible compared to DB round-trip.",
+  },
+  "cipher_encrypt/102400": {
+    title: "AES-256-GCM Encrypt — 100 KB",
+    description:
+      "Encrypts 100 KB — the largest realistic entry (multiple base64-encoded images).",
+    interpretation: "Target: < 100 µs. Regressions here suggest AES throughput issues.",
+  },
+  "cipher_decrypt/1024": {
+    title: "AES-256-GCM Decrypt — 1 KB",
+    description: "Decrypts 1 KB. Runs on every calendar date navigation for short entries.",
+    interpretation: "Decrypt cost ≈ encrypt cost by design. Expect the same range as the encrypt benchmark.",
+  },
+  "cipher_decrypt/10240": {
+    title: "AES-256-GCM Decrypt — 10 KB",
+    description: "Decrypts 10 KB. Shows symmetric AES-GCM throughput on mid-size entries.",
+    interpretation: "Should mirror the encrypt/10240 trend closely.",
+  },
+  "cipher_decrypt/102400": {
+    title: "AES-256-GCM Decrypt — 100 KB",
+    description: "Decrypts 100 KB — the largest realistic entry on load.",
+    interpretation: "Target: < 100 µs. Both encrypt and decrypt hit the same AES hardware path.",
+  },
+  "db_insert_entry": {
+    title: "Create Entry",
+    description:
+      "Inserts a blank entry into a fresh database. Runs once when the user opens a date " +
+      "with no existing entries.",
+    interpretation:
+      "Not on the typing hot-path. A regression here is unusual; check schema migrations.",
+  },
+  "db_update_entry": {
+    title: "Auto-Save Entry",
+    description:
+      "Updates an existing entry with realistic TipTap HTML (~200 words of formatted text). " +
+      "This is the most latency-critical database operation — called every ~500 ms while the user types.",
+    interpretation:
+      "Target: < 2 ms. Regressions here directly affect perceived typing smoothness.",
+  },
+  "db_delete_entry": {
+    title: "Delete Entry",
+    description:
+      "Hard-deletes an entry by primary key id. Triggered by the explicit \"delete entry\" user action.",
+    interpretation:
+      "O(1) by primary key index. Should be consistently fast (< 1 ms). Regressions are unexpected.",
+  },
+  "db_get_entries_by_date": {
+    title: "Load Day's Entries",
+    description:
+      "Fetches all entries for a given date. Runs on every date navigation — the primary read path.",
+    interpretation:
+      "Target: < 1 ms with a single-entry corpus. Scale testing is covered by the parameterised benchmarks.",
+  },
+  "db_get_all_entry_dates/100": {
+    title: "Enumerate Dates (100 entries)",
+    description:
+      "Fetches all distinct entry dates from a 100-entry journal. " +
+      "Called on every calendar render and day navigation.",
+    interpretation: "Target: < 2 ms. Should scale sub-linearly with index support.",
+  },
+  "db_get_all_entry_dates/500": {
+    title: "Enumerate Dates (500 entries)",
+    description:
+      "Same query on a 500-entry journal (~1.4 years of daily entries). Tests scaling behaviour.",
+    interpretation:
+      "Should be 3–5× the 100-entry cost. A super-linear jump signals a missing index.",
+  },
+  "db_get_all_entries/100": {
+    title: "Full Scan (100 entries)",
+    description:
+      "Fetches and decrypts all 100 entries. Used by JSON and Markdown export.",
+    interpretation:
+      "Export is user-initiated, not interactive. Absolute latency matters less here than in navigation benchmarks.",
+  },
+  "db_get_all_entries/500": {
+    title: "Full Scan (500 entries)",
+    description: "Same as above on a 500-entry corpus — larger export workload.",
+    interpretation:
+      "Should scale approximately linearly with entry count. Crypto overhead dominates DB I/O here.",
+  },
+  "count_words_plain_500w": {
+    title: "Word Count — Plain Text",
+    description:
+      "Counts words in ~500 words of plain prose. The fast path — no HTML parsing needed.",
+    interpretation: "Should be sub-microsecond. Regressions here are a regex or allocation issue.",
+  },
+  "count_words_html_500w": {
+    title: "Word Count — TipTap HTML",
+    description:
+      "Counts words after stripping TipTap HTML markup from a ~500-word entry. " +
+      "This is the real production path — the editor always stores HTML.",
+    interpretation:
+      "Slightly slower than plain due to HTML stripping. " +
+      "If the gap widens significantly, check for regex backtracking.",
+  },
+};
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+function formatValue(ns) {
+  if (ns >= 1_000_000_000) return [(ns / 1_000_000_000).toFixed(2), "s"];
+  if (ns >= 1_000_000)     return [(ns / 1_000_000).toFixed(2), "ms"];
+  if (ns >= 1_000)         return [(ns / 1_000).toFixed(2), "µs"];
+  return [ns.toFixed(1), "ns"];
+}
+
+function getChartColors() {
+  const dark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+  return {
+    line: dark ? "#7da2f7" : "#4f6bed",
+    fill: dark ? "rgba(125,162,247,.12)" : "rgba(79,107,237,.08)",
+    grid: dark ? "#30363d" : "#dee2e6",
+    tick: dark ? "#8b949e" : "#6c757d",
+  };
+}
+
+// ─── Build UI ─────────────────────────────────────────────────────────────────
+function buildPage(data) {
+  // Expect the action to store data under the workflow name "Benchmarks"
+  const runs = (data.entries && data.entries["Benchmarks"]) || [];
+
+  // Build lookup: benchmarkName → array of {commit, value(ns)}
+  const history = {};
+  for (const run of runs) {
+    const sha = run.commit && run.commit.id ? run.commit.id.slice(0, 7) : "?";
+    const url = run.commit && run.commit.url ? run.commit.url : null;
+    for (const b of run.benches) {
+      if (!history[b.name]) history[b.name] = [];
+      history[b.name].push({ sha, url, value: b.value });
+    }
+  }
+
+  // Last-updated from most recent run
+  if (runs.length > 0) {
+    const last = runs[runs.length - 1];
+    const date = last.date ? new Date(last.date).toUTCString() : "unknown";
+    document.getElementById("last-updated").textContent = "Last updated: " + date;
+    if (last.commit && last.commit.id) {
+      const sha = last.commit.id.slice(0, 7);
+      const url = last.commit.url || "#";
+      document.getElementById("latest-commit").innerHTML =
+        `Commit: <a href="${url}" target="_blank" rel="noopener">${sha}</a>`;
+    }
+  } else {
+    document.getElementById("last-updated").textContent = "No benchmark data yet";
+  }
+
+  const main = document.getElementById("main");
+  main.innerHTML = "";
+
+  const colors = getChartColors();
+
+  for (const section of SECTIONS) {
+    const sec = document.createElement("section");
+    sec.className = "section";
+
+    const hdr = document.createElement("div");
+    hdr.className = "section-header";
+    hdr.innerHTML = `
+      <h2>${section.title} <span class="badge">${section.badge}</span></h2>
+      <p>${section.description}</p>`;
+    sec.appendChild(hdr);
+
+    const grid = document.createElement("div");
+    grid.className = "bench-grid";
+
+    for (const key of section.benchmarks) {
+      const m = META[key] || { title: key, description: "", interpretation: "" };
+      const pts = (history[key] || []).slice(-30); // last 30 runs
+
+      const card = document.createElement("div");
+      card.className = "bench-card";
+
+      let latestHTML = "";
+      if (pts.length > 0) {
+        const [val, unit] = formatValue(pts[pts.length - 1].value);
+        latestHTML = `<div class="latest-value"><span class="value">${val}</span><span class="unit">${unit} (latest)</span></div>`;
+      }
+
+      card.innerHTML = `
+        <h3>${m.title}</h3>
+        <div class="bench-key">${key}</div>
+        <div class="description">${m.description}</div>
+        <div class="interpretation">${m.interpretation}</div>
+        ${latestHTML}
+        <div class="chart-wrap"><canvas id="chart-${CSS.escape(key)}"></canvas></div>`;
+      grid.appendChild(card);
+
+      // Draw chart after DOM insertion (needs canvas in DOM)
+      requestAnimationFrame(() => {
+        const canvas = card.querySelector("canvas");
+        if (!canvas || pts.length === 0) return;
+        const labels = pts.map(p => p.sha);
+        const values = pts.map(p => {
+          const [v] = formatValue(p.value);
+          return parseFloat(v);
+        });
+        const [, unit] = formatValue(pts[pts.length - 1].value);
+
+        new Chart(canvas, {
+          type: "line",
+          data: {
+            labels,
+            datasets: [{
+              data: values,
+              borderColor: colors.line,
+              backgroundColor: colors.fill,
+              borderWidth: 2,
+              pointRadius: pts.length > 10 ? 2 : 4,
+              pointHoverRadius: 5,
+              fill: true,
+              tension: 0.3,
+            }],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  title: ctx => {
+                    const idx = ctx[0].dataIndex;
+                    return pts[idx] && pts[idx].url
+                      ? pts[idx].sha
+                      : labels[ctx[0].dataIndex];
+                  },
+                  label: ctx => `${ctx.parsed.y} ${unit}`,
+                },
+              },
+            },
+            scales: {
+              x: {
+                ticks: { color: colors.tick, font: { size: 10 }, maxRotation: 45 },
+                grid: { color: colors.grid },
+              },
+              y: {
+                ticks: {
+                  color: colors.tick,
+                  font: { size: 10 },
+                  callback: v => `${v} ${unit}`,
+                },
+                grid: { color: colors.grid },
+                beginAtZero: false,
+              },
+            },
+          },
+        });
+      });
+    }
+
+    sec.appendChild(grid);
+    main.appendChild(sec);
+  }
+}
+
+// ─── Entry point ─────────────────────────────────────────────────────────────
+if (typeof window.BENCHMARK_DATA !== "undefined") {
+  buildPage(window.BENCHMARK_DATA);
+} else {
+  // data.js not yet available (local preview without gh-pages data)
+  document.getElementById("main").innerHTML = `
+    <div class="no-data">
+      <strong>No data loaded.</strong><br>
+      To preview locally, place <code>data.js</code> from the gh-pages branch next to this file, then open it in a browser.
+    </div>`;
+  document.getElementById("last-updated").textContent = "No data";
+}
+</script>
+</body>
+</html>

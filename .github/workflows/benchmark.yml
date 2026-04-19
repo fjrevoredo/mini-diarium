@@ -46,3 +46,16 @@ jobs:
           comment-on-alert: true
           fail-on-alert: false
           benchmark-data-dir-path: benchmarks
+
+      - name: Publish custom report page
+        run: |
+          git clone --depth 1 --branch gh-pages \
+            "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}" \
+            /tmp/gh-pages
+          cp benchmarks/index.html /tmp/gh-pages/benchmarks/index.html
+          cd /tmp/gh-pages
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "github-actions[bot]"
+          git add benchmarks/index.html
+          git diff --staged --quiet || \
+            (git commit -m "chore: update benchmark report page" && git push)

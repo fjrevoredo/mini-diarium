@@ -3,7 +3,7 @@ title: FAQ
 slug: faq
 description: Frequently asked questions about Mini Diarium, encryption, data privacy, and troubleshooting.
 order: 11
-updated: 2026-04-16
+updated: 2026-04-19
 tags: FAQ, troubleshooting, encryption, privacy, data
 ---
 
@@ -18,6 +18,8 @@ Locally on your machine in an SQLite database. See the [Backups](../backups/) se
 ## Does Mini Diarium connect to the internet?
 
 Never. Mini Diarium makes no network requests, collects no analytics, sends no telemetry, and does not check for updates automatically. All data stays on your device.
+
+Release notes for each version are bundled with the app itself and displayed in the **notification center** (bell icon in the header). No network call is made — the notes ship as a local file inside the application bundle.
 
 ## Can I sync across devices?
 

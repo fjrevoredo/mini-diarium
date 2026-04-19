@@ -36,3 +36,37 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     }
   });
 });
+
+// Docs-specific: sidebar drawer + TOC scroll spy
+if (document.querySelector('.docs-layout')) {
+  const sidebarToggle = document.getElementById('docs-sidebar-toggle');
+  const sidebar = document.querySelector('.docs-sidebar');
+  if (sidebarToggle && sidebar) {
+    sidebarToggle.addEventListener('click', () => {
+      sidebar.classList.toggle('open');
+    });
+    document.addEventListener('click', (e) => {
+      if (!sidebar.contains(e.target) && !sidebarToggle.contains(e.target)) {
+        sidebar.classList.remove('open');
+      }
+    });
+  }
+
+  const tocLinks = document.querySelectorAll('.docs-toc a');
+  if (tocLinks.length) {
+    const headings = document.querySelectorAll('.prose h2[id], .prose h3[id]');
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            tocLinks.forEach(a => a.classList.remove('active'));
+            const active = document.querySelector(`.docs-toc a[href="#${entry.target.id}"]`);
+            if (active) active.classList.add('active');
+          }
+        });
+      },
+      { rootMargin: '-60px 0px -70% 0px' }
+    );
+    headings.forEach(h => observer.observe(h));
+  }
+}

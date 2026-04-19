@@ -1,9 +1,15 @@
 import { createSignal, Show } from 'solid-js';
-import { Menu, Lock, Info } from 'lucide-solid';
-import { selectedDate, setIsAboutOpen, isSidebarCollapsed } from '../../state/ui';
+import { Menu, Lock, Info, Bell } from 'lucide-solid';
+import {
+  selectedDate,
+  setIsAboutOpen,
+  isSidebarCollapsed,
+  setIsNotificationsOpen,
+} from '../../state/ui';
 import { lockJournal } from '../../state/auth';
 import { preferences } from '../../state/preferences';
 import { useI18n } from '../../i18n';
+import { hasUnread, unreadCount } from '../../state/notifications';
 
 interface HeaderProps {
   onMenuClick?: () => void;
@@ -54,7 +60,7 @@ export default function Header(props: HeaderProps) {
         <h1 class="text-lg font-semibold text-primary">{formattedDate()}</h1>
       </div>
 
-      {/* Right: About + Lock */}
+      {/* Right: About + Notifications + Lock */}
       <div class="flex items-center gap-1">
         <button
           onClick={() => setIsAboutOpen(true)}
@@ -62,6 +68,27 @@ export default function Header(props: HeaderProps) {
           aria-label={t('layout.header.about')}
         >
           <Info size={20} />
+        </button>
+        <button
+          onClick={() => setIsNotificationsOpen(true)}
+          class="relative rounded p-2 hover:bg-hover text-tertiary transition-colors"
+          aria-label={
+            hasUnread()
+              ? t('layout.header.notificationsUnread', { count: unreadCount() })
+              : t('layout.header.notificationsNone')
+          }
+          data-testid="notifications-button"
+        >
+          <Bell size={20} />
+          <Show when={hasUnread()}>
+            <span
+              class="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-interactive text-xs font-bold leading-none"
+              style={{ color: 'var(--btn-primary-text)' }}
+              aria-hidden="true"
+            >
+              {unreadCount() > 9 ? '9+' : unreadCount()}
+            </span>
+          </Show>
         </button>
         <button
           onClick={() => handleLock()}

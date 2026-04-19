@@ -7,9 +7,10 @@ Performance benchmarks for Mini Diarium. Two layers: Rust hot-path benchmarks (c
 ```
 benchmarks/
   CLAUDE.md              ← this file
+  index.html             ← custom report page (served from gh-pages; loaded by CI after each run)
 src-tauri/benches/
   cipher_bench.rs        ← AES-256-GCM encrypt/decrypt at 1 KB / 10 KB / 100 KB
-  db_bench.rs            ← insert, read-by-date, read-all on 100-entry corpus
+  db_bench.rs            ← insert, update, delete, read-by-date, read-all on 100/500-entry corpus
   word_count_bench.rs    ← plain text and HTML word counting
 src/lib/
   markdown.bench.ts      ← parseMarkdownToHtml short and long entry
@@ -32,6 +33,7 @@ src/lib/
 | `cipher_decrypt` | `cipher_bench.rs` | AES-256-GCM decrypt at 1 KB, 10 KB, 100 KB |
 | `db_insert_entry` | `db_bench.rs` | One-time entry creation into fresh DB |
 | `db_update_entry` | `db_bench.rs` | Auto-save hot path: update existing entry (realistic HTML) |
+| `db_delete_entry` | `db_bench.rs` | Hard delete by id — explicit user-initiated delete |
 | `db_get_entries_by_date` | `db_bench.rs` | Read 1 entry by date |
 | `db_get_all_entry_dates/100` | `db_bench.rs` | Distinct date list — 100-entry journal |
 | `db_get_all_entry_dates/500` | `db_bench.rs` | Distinct date list — 500-entry journal |
@@ -50,6 +52,8 @@ Workflow: `.github/workflows/benchmark.yml`
 Trigger: every push to `master`
 Results: stored as JSON in `gh-pages` branch under `benchmarks/`
 Alert threshold: **200%** — posts a PR comment if a benchmark regresses to 2× but does **not** fail the CI job.
+
+After each run, the workflow also copies `benchmarks/index.html` to gh-pages so the custom report reflects the latest data.
 
 `contents: write` permission is required on the workflow to push results to `gh-pages`.
 
