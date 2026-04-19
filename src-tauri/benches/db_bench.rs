@@ -7,6 +7,8 @@ use mini_diarium_lib::db::{
     schema::create_database,
 };
 
+const BENCH_PASSWORD: &str = "bench-only-not-a-real-secret";
+
 /// Representative TipTap HTML (~200 words): mixed <h2>, <p>, <ul>, <li>, <strong>, <em>
 const REALISTIC_HTML: &str = concat!(
     "<h2>Morning Reflection</h2>",
@@ -59,7 +61,7 @@ fn bench_insert(c: &mut Criterion) {
             || {
                 let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
                 let db =
-                    create_database(tmp.path().to_str().unwrap(), "bench".to_string()).unwrap();
+                    create_database(tmp.path().to_str().unwrap(), BENCH_PASSWORD.to_string()).unwrap();
                 (tmp, db)
             },
             |(_tmp, db)| insert_entry(&db, &make_entry("2024-01-01")).unwrap(),
@@ -71,7 +73,7 @@ fn bench_insert(c: &mut Criterion) {
 /// Updates an existing entry — the real auto-save path, called every ~500ms while typing.
 fn bench_update(c: &mut Criterion) {
     let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
-    let db = create_database(tmp.path().to_str().unwrap(), "bench".to_string()).unwrap();
+    let db = create_database(tmp.path().to_str().unwrap(), BENCH_PASSWORD.to_string()).unwrap();
     insert_entry(&db, &make_entry("2024-06-01")).unwrap();
     let saved = get_entries_by_date(&db, "2024-06-01")
         .unwrap()
@@ -91,7 +93,7 @@ fn bench_update(c: &mut Criterion) {
 
 fn bench_get_by_date(c: &mut Criterion) {
     let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
-    let db = create_database(tmp.path().to_str().unwrap(), "bench".to_string()).unwrap();
+    let db = create_database(tmp.path().to_str().unwrap(), BENCH_PASSWORD.to_string()).unwrap();
     insert_entry(&db, &make_entry("2024-06-01")).unwrap();
 
     c.bench_function("db_get_entries_by_date", |b| {
@@ -104,7 +106,7 @@ fn bench_get_all_entry_dates(c: &mut Criterion) {
     let mut group = c.benchmark_group("db_get_all_entry_dates");
     for count in [100usize, 500] {
         let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
-        let db = create_database(tmp.path().to_str().unwrap(), "bench".to_string()).unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), BENCH_PASSWORD.to_string()).unwrap();
         for i in 0..count {
             insert_entry(&db, &make_entry(&make_date(i))).unwrap();
         }
@@ -120,7 +122,7 @@ fn bench_get_all(c: &mut Criterion) {
     let mut group = c.benchmark_group("db_get_all_entries");
     for count in [100usize, 500] {
         let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
-        let db = create_database(tmp.path().to_str().unwrap(), "bench".to_string()).unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), BENCH_PASSWORD.to_string()).unwrap();
         for i in 0..count {
             insert_entry(&db, &make_entry(&make_date(i))).unwrap();
         }
@@ -139,7 +141,7 @@ fn bench_delete(c: &mut Criterion) {
             || {
                 let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
                 let db =
-                    create_database(tmp.path().to_str().unwrap(), "bench".to_string()).unwrap();
+                    create_database(tmp.path().to_str().unwrap(), BENCH_PASSWORD.to_string()).unwrap();
                 insert_entry(&db, &make_entry("2024-01-01")).unwrap();
                 let id = get_entries_by_date(&db, "2024-01-01").unwrap()[0].id;
                 (tmp, db, id)
