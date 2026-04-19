@@ -17,8 +17,9 @@ Free, open source, and never touches the internet.
 [![Tauri v2](https://img.shields.io/badge/Tauri_v2-24C8DB?logo=tauri&logoColor=white)](https://tauri.app)
 [![SolidJS](https://img.shields.io/badge/SolidJS-2C4F7C?logo=solid&logoColor=white)](https://solidjs.com)
 [![Rust](https://img.shields.io/badge/Rust-CE422B?logo=rust&logoColor=white)](https://www.rust-lang.org)
+[![Flathub](https://img.shields.io/flathub/v/io.github.fjrevoredo.mini-diarium?logo=flathub&logoColor=white&label=Flathub)](https://flathub.org/apps/io.github.fjrevoredo.mini-diarium)
 
-[mini-diarium.com](https://mini-diarium.com) · [Download](#download) · [Features](#features) · [Philosophy](PHILOSOPHY.md)
+[mini-diarium.com](https://mini-diarium.com) · [Download](#download) · [Documentation](https://mini-diarium.com/docs) · [Features](#features) · [Philosophy](PHILOSOPHY.md)
 
 <img src="public/demo.gif" alt="Demo" width="768" />
 
@@ -154,7 +155,7 @@ Download the latest release for your platform from [GitHub Releases](https://git
 | -------- | ---------------------------------------------------- |
 | Windows  | `.msi` or `.exe` (NSIS installer, no admin required) |
 | macOS    | `.dmg`                                               |
-| Linux    | `.AppImage` or `.deb` (Flatpak coming soon)          |
+| Linux    | `.AppImage`, `.deb`, or Flatpak via Flathub          |
 
 ### Windows (WinGet)
 
@@ -187,9 +188,7 @@ brew install --cask mini-diarium
 
 ### Flatpak (Linux)
 
-> ⚠️ **Not yet available.** The Flathub listing is pending store approval and is not yet published. The commands below will not work until the listing is approved. In the meantime, download the `.AppImage` or `.deb` from the [latest release](https://github.com/fjrevoredo/mini-diarium/releases/latest).
-
-Once published on Flathub, the easiest way to install Mini Diarium on Linux will be via Flatpak:
+Mini Diarium is available on [Flathub](https://flathub.org/apps/io.github.fjrevoredo.mini-diarium). The easiest way to install on Linux is via Flatpak:
 
 ```bash
 flatpak install flathub io.github.fjrevoredo.mini-diarium
