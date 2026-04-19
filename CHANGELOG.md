@@ -30,6 +30,15 @@ Template:
 
 # Versions
 
+## [0.4.17] - Unreleased
+
+### Added
+- **Italian translation**: Full Italian (`it`) localisation contributed by the community (#96). Covers all UI strings and the native OS menu.
+
+### Changed
+- **Docs layout and navigation redesign**: The documentation site (`mini-diarium.com/docs/`) moves from a flat two-column layout to a modern three-column experience. The left sidebar now groups pages under labelled sections (Basics, Discovery, Your Data, Settings & More, Help) and is always visible without a `<details>` disclosure wrapper. A right-hand "On this page" TOC is generated from each page's h2/h3 headings and highlights the active heading as you scroll (Intersection Observer). On screens narrower than 900 px the sidebar collapses to a slide-in drawer toggled by a hamburger button; the TOC hides below 1 100 px. The docs hub index page is reorganised to match the same groupings, with emoji category icons and a "Jump in: Getting Started →" CTA. All SEO metadata, canonical URLs, and structured data are unchanged.
+
+
 ## [0.4.16] - 17-04-2026
 
 ### Added
