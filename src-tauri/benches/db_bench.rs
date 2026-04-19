@@ -60,8 +60,8 @@ fn bench_insert(c: &mut Criterion) {
         b.iter_batched(
             || {
                 let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
-                let db =
-                    create_database(tmp.path().to_str().unwrap(), BENCH_PASSWORD.to_string()).unwrap();
+                let db = create_database(tmp.path().to_str().unwrap(), BENCH_PASSWORD.to_string())
+                    .unwrap();
                 (tmp, db)
             },
             |(_tmp, db)| insert_entry(&db, &make_entry("2024-01-01")).unwrap(),
@@ -140,8 +140,8 @@ fn bench_delete(c: &mut Criterion) {
         b.iter_batched(
             || {
                 let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
-                let db =
-                    create_database(tmp.path().to_str().unwrap(), BENCH_PASSWORD.to_string()).unwrap();
+                let db = create_database(tmp.path().to_str().unwrap(), BENCH_PASSWORD.to_string())
+                    .unwrap();
                 insert_entry(&db, &make_entry("2024-01-01")).unwrap();
                 let id = get_entries_by_date(&db, "2024-01-01").unwrap()[0].id;
                 (tmp, db, id)
