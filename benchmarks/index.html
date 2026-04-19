@@ -380,7 +380,7 @@ function getChartColors() {
 // ─── Build UI ─────────────────────────────────────────────────────────────────
 function buildPage(data) {
   // Expect the action to store data under the workflow name "Benchmarks"
-  const runs = (data.entries && data.entries["Benchmarks"]) || [];
+  const runs = (data.entries && data.entries["Benchmark"]) || [];
 
   // Build lookup: benchmarkName → array of {commit, value(ns)}
   const history = {};
