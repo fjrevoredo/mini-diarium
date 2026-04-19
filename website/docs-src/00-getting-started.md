@@ -3,7 +3,7 @@ title: Getting Started
 slug: getting-started
 description: How to create your first journal, set a password, and start writing in Mini Diarium.
 order: 1
-updated: 2026-04-16
+updated: 2026-04-19
 tags: setup, password, first launch
 ---
 
@@ -17,7 +17,9 @@ If you create a new journal, you will be asked to create a password. This passwo
 
 ## Locking and Unlocking
 
-Your journal is encrypted whenever it is locked. After selecting a journal, enter your password to unlock it. The journal locks automatically when you close the app, and you can also lock it manually from the header at any time.
+Your journal is encrypted whenever it is locked. After selecting a journal, enter your password to unlock it. The journal locks automatically when you close the app, and you can also lock it manually using the lock icon in the header at any time.
+
+The header also shows an **About** button (ⓘ) and a **bell icon** for the notification center. The bell displays an unread badge when a new release ships; click it to read what changed and mark notifications as read.
 
 As an alternative to your password, you can register a key file in **Preferences → Authentication Methods**. Once registered, use the "Key File" tab on the unlock screen and select your `.key` file to unlock without typing your password.
 

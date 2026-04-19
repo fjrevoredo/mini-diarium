@@ -7,6 +7,7 @@ import { preferences } from './state/preferences';
 import { setLocale, useI18n } from './i18n';
 import { updateMenuLocale } from './lib/tauri';
 import { isAboutOpen, setIsAboutOpen } from './state/ui';
+import { loadNotifications } from './state/notifications';
 import JournalPicker from './components/auth/JournalPicker';
 import PasswordCreation from './components/auth/PasswordCreation';
 import PasswordPrompt from './components/auth/PasswordPrompt';
@@ -55,6 +56,7 @@ function App() {
   onMount(() => {
     initializeAuth();
     initializeTheme();
+    void loadNotifications();
 
     let cleanupAuthListeners: (() => void) | undefined;
     void setupAuthEventListeners()

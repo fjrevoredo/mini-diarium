@@ -34,7 +34,7 @@
   <link rel="icon" href="/favicon-32x32.png" type="image/png" sizes="32x32" />
   <link rel="icon" href="/favicon-128x128.png" type="image/png" sizes="128x128" />
   <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
-  <link rel="stylesheet" href="/css/style.15f7be9f.css" />
+  <link rel="stylesheet" href="/css/style.css" />
   <style>
     .docs-layout {
       display: grid;
@@ -234,7 +234,7 @@
       "@id": "https://mini-diarium.com/docs/faq/#article",
       "headline": "FAQ",
       "description": "Frequently asked questions about Mini Diarium, encryption, data privacy, and troubleshooting.",
-      "dateModified": "2026-04-16T00:00:00Z",
+      "dateModified": "2026-04-19T00:00:00Z",
       "keywords": "FAQ, troubleshooting, encryption, privacy, data",
       "publisher": {
         "@type": "Organization",
@@ -379,6 +379,7 @@
         <h2 id="i-forgot-my-password-can-i-recover-my-entries">I forgot my password. Can I recover my entries?</h2><p>No — unless you registered a key file as an authentication method. If you have a key file, you can still unlock your journal using the &quot;Key File&quot; tab on the unlock screen. If you have neither your password nor your key file, your entries cannot be recovered. This is by design: the encryption key is derived from your password, and no backup of it is stored anywhere.</p>
         <h2 id="where-is-my-data-stored">Where is my data stored?</h2><p>Locally on your machine in an SQLite database. See the <a href="../backups/">Backups</a> section for the exact default path on your operating system.</p>
         <h2 id="does-mini-diarium-connect-to-the-internet">Does Mini Diarium connect to the internet?</h2><p>Never. Mini Diarium makes no network requests, collects no analytics, sends no telemetry, and does not check for updates automatically. All data stays on your device.</p>
+        <p>Release notes for each version are bundled with the app itself and displayed in the <strong>notification center</strong> (bell icon in the header). No network call is made — the notes ship as a local file inside the application bundle.</p>
         <h2 id="can-i-sync-across-devices">Can I sync across devices?</h2><p>Not directly. Mini Diarium is local-only by design. You could manually copy the <code>diary.db</code> file to another device, but simultaneous access from multiple devices is not supported and could corrupt the database. If you want cloud backup, place your journal directory inside a synced folder (Dropbox, OneDrive, iCloud Drive) and only open it from one device at a time.</p>
         <h2 id="i-used-mini-diary-before-can-i-migrate">I used Mini Diary before. Can I migrate?</h2><p>Yes. Export your journal from Mini Diary as JSON, then import it in Mini Diarium from <strong>Journal → Import...</strong> using the Mini Diary JSON format. All entries are imported with their original dates.</p>
         <h2 id="how-does-the-encryption-work">How does the encryption work?</h2><p>Mini Diarium encrypts each journal entry using AES-256-GCM with a random master key. The master key is never stored in plaintext — it is wrapped (encrypted) by a key derived from your password using Argon2id, and only the wrapped version is saved to disk. When you unlock, your password re-derives the wrapping key, which decrypts the master key in memory. The master key is held only in RAM and discarded when you lock.</p>
@@ -438,6 +439,6 @@
     </div>
   </div>
 </footer>
-<script src="/js/main.c622f826.js"></script>
+<script src="/js/main.js"></script>
 </body>
 </html>

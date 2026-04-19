@@ -15,7 +15,9 @@
 		"header": {
 			"toggleMenu": "Menü umschalten",
 			"about": "Über",
-			"lockJournal": "Tagebuch sperren"
+			"lockJournal": "Tagebuch sperren",
+			"notificationsNone": "Benachrichtigungen",
+			"notificationsUnread": "Benachrichtigungen, {{ count }} ungelesen"
 		},
 		"sidebar": {
 			"navigation": "Navigation",
@@ -384,6 +386,17 @@
 		"copyright": "Copyright © 2026 Francisco J. Revoredo",
 		"githubLink": "github.com/fjrevoredo/mini-diarium",
 		"docsLink": "Dokumentation"
+	},
+	"notifications": {
+		"title": "Neuigkeiten",
+		"closeAria": "Benachrichtigungen schließen",
+		"empty": "Noch keine Ankündigungen.",
+		"markRead": "Als gelesen markieren",
+		"markReadAria": "Diese Benachrichtigung als gelesen markieren",
+		"dismissAll": "Alle als gelesen markieren",
+		"typeRelease": "Version",
+		"typeAnnouncement": "Ankündigung",
+		"typeTip": "Tipp"
 	},
 	"goToDate": {
 		"title": "Gehe zu Datum",

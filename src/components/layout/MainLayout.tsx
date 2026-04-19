@@ -10,6 +10,7 @@ import PreferencesOverlay from '../overlays/PreferencesOverlay';
 import StatsOverlay from '../overlays/StatsOverlay';
 import ImportOverlay from '../overlays/ImportOverlay';
 import ExportOverlay from '../overlays/ExportOverlay';
+import NotificationsOverlay from '../overlays/NotificationsOverlay';
 import {
   selectedDate,
   setSelectedDate,
@@ -26,6 +27,7 @@ import {
   isExportOpen,
   setIsExportOpen,
   isAboutOpen,
+  isNotificationsOpen,
 } from '../../state/ui';
 import {
   navigatePreviousDay,
@@ -52,7 +54,8 @@ export default function MainLayout() {
       isStatsOpen() ||
       isImportOpen() ||
       isExportOpen() ||
-      isAboutOpen()
+      isAboutOpen() ||
+      isNotificationsOpen()
     )
       return;
     if (preferences().escAction === 'quit') {
@@ -205,6 +208,7 @@ export default function MainLayout() {
         }}
       />
       <ExportOverlay isOpen={isExportOpen()} onClose={() => setIsExportOpen(false)} />
+      <NotificationsOverlay />
     </div>
   );
 }

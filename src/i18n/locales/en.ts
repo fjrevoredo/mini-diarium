@@ -36,6 +36,8 @@ const en = {
       toggleMenu: 'Toggle menu',
       about: 'About',
       lockJournal: 'Lock journal',
+      notificationsNone: 'Notifications',
+      notificationsUnread: 'Notifications, {{ count }} unread',
     },
     sidebar: {
       navigation: 'Navigation',
@@ -462,6 +464,19 @@ const en = {
     copyright: 'Copyright © 2026 Francisco J. Revoredo',
     githubLink: 'github.com/fjrevoredo/mini-diarium',
     docsLink: 'Documentation',
+  },
+
+  /** NotificationsOverlay */
+  notifications: {
+    title: "What's New",
+    closeAria: 'Close notifications',
+    empty: 'No announcements yet.',
+    markRead: 'Mark read',
+    markReadAria: 'Mark this notification as read',
+    dismissAll: 'Mark all read',
+    typeRelease: 'Release',
+    typeAnnouncement: 'Announcement',
+    typeTip: 'Tip',
   },
 
   /** GoToDateOverlay */
