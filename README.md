@@ -19,7 +19,7 @@ Free, open source, and never touches the internet.
 [![Rust](https://img.shields.io/badge/Rust-CE422B?logo=rust&logoColor=white)](https://www.rust-lang.org)
 [![Flathub](https://img.shields.io/flathub/v/io.github.fjrevoredo.mini-diarium?logo=flathub&logoColor=white&label=Flathub)](https://flathub.org/apps/io.github.fjrevoredo.mini-diarium)
 
-[mini-diarium.com](https://mini-diarium.com) · [Download](#download) · [Documentation](https://mini-diarium.com/docs) · [Features](#features) · [Philosophy](PHILOSOPHY.md)
+[mini-diarium.com](https://mini-diarium.com) · [Download](#download) · [Documentation](https://mini-diarium.com/docs) · [Features](#features) · [Philosophy](PHILOSOPHY.md) · [Benchmarks](https://fjrevoredo.github.io/mini-diarium/benchmarks/)
 
 <img src="public/demo.gif" alt="Demo" width="768" />
 
@@ -337,6 +337,12 @@ For the full list of known limitations, deliberate tradeoffs, and technical debt
 
 You can add local import/export extensions using Rhai scripts in your journal's `plugins/` folder.
 See [docs/user-plugins/USER_PLUGIN_GUIDE.md](docs/user-plugins/USER_PLUGIN_GUIDE.md) for requirements, best practices, and a complete example plugin.
+
+## Performance Benchmarks
+
+Criterion benchmarks for the crypto and database hot paths are tracked on every push to `master` and published at **[fjrevoredo.github.io/mini-diarium/benchmarks/](https://fjrevoredo.github.io/mini-diarium/benchmarks/)**.
+
+The page covers four areas: Argon2id key derivation (intentionally slow — ~200 ms to resist brute-force), AES-256-GCM encrypt/decrypt at three entry sizes, SQLite operations (insert, update, delete, date enumeration, full scan), and word-count calculation. Each card shows the latest timing and a Chart.js trend chart over the last 30 CI runs.
 
 ## Contributing
 
