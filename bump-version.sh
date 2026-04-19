@@ -67,7 +67,7 @@ cd ..
 # 5. Update website/index.html
 echo "Updating website/index.html..."
 sed -i.bak -E 's|<span class="app-version">[0-9]+\.[0-9]+\.[0-9]+</span>|<span class="app-version">'"${NEW_VERSION}"'</span>|g' website/index.html
-sed -i.bak2 -E 's|Mini-Diarium-[0-9]+\.[0-9]+\.[0-9]+-(windows\.exe|macos\.dmg|linux\.AppImage)|Mini-Diarium-'"${NEW_VERSION}"'-\1|g' website/index.html
+sed -i.bak2 -E 's#Mini-Diarium-[0-9]+\.[0-9]+\.[0-9]+-(windows\.exe|macos\.dmg|linux\.AppImage)#Mini-Diarium-'"${NEW_VERSION}"'-\1#g' website/index.html
 sed -i.bak3 -E 's|"softwareVersion": "[0-9]+\.[0-9]+\.[0-9]+"|"softwareVersion": "'"${NEW_VERSION}"'"|g' website/index.html
 rm website/index.html.bak
 rm website/index.html.bak2

@@ -151,6 +151,16 @@ jobs:
           }
           "manifest_dir=$($localeManifest.DirectoryName)" >> $env:GITHUB_OUTPUT
 
+      - name: Sync winget-pkgs fork
+        env:
+          GH_TOKEN: ${{ secrets.WINGET_TOKEN }}
+        run: |
+          # wingetcreate fails with "forked repository could not be synced" when the fork is
+          # behind upstream. Sync it here before submitting so wingetcreate can fast-forward.
+          gh api -X POST repos/fjrevoredo/winget-pkgs/merge-upstream \
+            --field branch=master \
+            --silent || true
+
       - name: Submit WinGet PR
         shell: pwsh
         env:
