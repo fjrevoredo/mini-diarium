@@ -48,7 +48,17 @@ Read all four files and verify each contains `RELEASE_VERSION`:
 
 ---
 
-## Step 4 — Archive completed TODO items
+## Step 4 — Metainfo release entry check
+
+Read `data/linux/io.github.fjrevoredo.mini-diarium.metainfo.xml`. Look for a `<release version="RELEASE_VERSION"` element inside the `<releases>` block.
+
+- If the entry is **absent** → **STOP** and tell the user:
+  > `metainfo.xml` is missing `<release version="RELEASE_VERSION">`. Run `./bump-version.sh RELEASE_VERSION` again or add the entry manually before tagging — Flathub CI will reject the build without it.
+- If the entry is **present** → continue.
+
+---
+
+## Step 5 — Archive completed TODO items
 
 Read `docs/TODO.md`. Find all top-level `- [x]` items **and** their indented sub-items (lines indented under a checked top-level item).
 
@@ -73,7 +83,7 @@ Read `docs/TODO.md`. Find all top-level `- [x]` items **and** their indented sub
 
 ---
 
-## Step 5 — Generate `latest-changelog.md`
+## Step 6 — Generate `latest-changelog.md`
 
 1. Read `latest-changelog.template.md`. Extract the content between `<template>` and `</template>` tags (exclude the tags themselves and the HTML comment block above them).
 
@@ -93,7 +103,7 @@ Read `docs/TODO.md`. Find all top-level `- [x]` items **and** their indented sub
 
 ---
 
-## Step 6 — Stamp CHANGELOG date
+## Step 7 — Stamp CHANGELOG date
 
 In `CHANGELOG.md`, replace the `[Unreleased]` token in the first version heading:
 
@@ -110,6 +120,7 @@ After all steps complete, print a summary including:
 - `RELEASE_VERSION` found and confirmed
 - Which version files were checked (all four pass)
 - Whether TODO items were archived (count, or "none found")
+- Confirmation that metainfo.xml has the release entry
 - Confirmation that `latest-changelog.md` was written
 - Confirmation that CHANGELOG was date-stamped
 
@@ -132,6 +143,7 @@ Also remind the user to:
 | CHANGELOG top entry already has a date | STOP — ask user |
 | Branch doesn't contain RELEASE_VERSION | STOP — ask user |
 | Any version file mismatch | STOP — report all, suggest bump-version |
+| metainfo.xml missing release entry | STOP — tell user to add entry or re-run bump-version |
 | No checked TODO items | Note it, continue |
 | `latest-changelog.md` already exists | Overwrite silently |
 | CHANGELOG section missing/empty | Omit that section heading from output |

@@ -80,6 +80,8 @@ npm install --package-lock-only --ignore-scripts --legacy-peer-deps
 
 # 7. Prepend release entry to metainfo.xml
 echo "Prepending release entry to data/linux/io.github.fjrevoredo.mini-diarium.metainfo.xml..."
+# Strip \r first so the sed pattern matches even if the file has CRLF line endings (Windows)
+sed -i 's/\r//' data/linux/io.github.fjrevoredo.mini-diarium.metainfo.xml
 release_entry="    <release version=\"${NEW_VERSION}\" date=\"$(date -u +%Y-%m-%d)\">\n      <url type=\"details\">https://github.com/fjrevoredo/mini-diarium/releases/tag/v${NEW_VERSION}</url>\n    </release>"
 sed -i "s|    <!-- New release entries are prepended here by bump-version.sh -->|    <!-- New release entries are prepended here by bump-version.sh -->\n${release_entry}|" data/linux/io.github.fjrevoredo.mini-diarium.metainfo.xml
 

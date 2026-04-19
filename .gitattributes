@@ -2,3 +2,7 @@
 docs/diagrams/*.svg  text eol=lf
 docs/diagrams/*.mmd  text eol=lf
 docs/diagrams/*.d2   text eol=lf
+
+# Linux packaging files must use LF so sed/shell scripts can edit them on Windows
+data/linux/*.xml     text eol=lf
+data/linux/*.desktop text eol=lf
