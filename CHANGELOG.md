@@ -30,7 +30,7 @@ Template:
 
 # Versions
 
-## [0.4.17] - Unreleased
+## [0.4.17] - 19-04-2026
 
 ### Added
 - **In-app notification center**: Bell icon in the header surfaces bundled release notes and announcements without any network access. Notifications ship as `public/notifications.json` with each release. Unread entries show a badge counter; users can mark individual notifications read or dismiss all at once. Read state persists to `localStorage`. Entries older than 90 days are auto-dismissed. Links open in the system browser via `@tauri-apps/plugin-opener`.
