@@ -1,6 +1,6 @@
 # PHILOSOPHY.md
 
-_Last updated: 2026-03-28, applies to v0.4.0+_
+_Last updated: 2026-04-21, applies to v0.4.0+_
 
 This document defines the guiding principles for Mini Diarium. Every feature decision, architectural choice, and contribution must align with these values. When in doubt, refer back here.
 
@@ -228,12 +228,12 @@ Both `ImportOverlay.tsx` and `ExportOverlay.tsx` are wired to the plugin registr
 
 ### Principle 3: Test Infrastructure
 
-**Current coverage** (as of v0.4.14):
+**Current coverage** (as of v0.4.19):
 
 | Layer | Count | How to run |
 |---|---|---|
-| Backend unit + integration | 265 tests across 30 modules | `cd src-tauri && cargo test` |
-| Frontend unit | ~161 tests across 17+ files | `bun run test:run` |
+| Backend unit + integration | 276 tests across 32 modules | `cd src-tauri && cargo test` |
+| Frontend unit | 229 tests across 22 files | `bun run test:run` |
 | E2E | 2 tests | `bun run test:e2e:local` |
 | Benchmarks | 9 scenarios (Rust + frontend) | `cd src-tauri && cargo bench` / `bun run bench` |
 
@@ -241,7 +241,7 @@ Both `ImportOverlay.tsx` and `ExportOverlay.tsx` are wired to the plugin registr
 
 **Benchmark stack**: criterion 0.5 in `src-tauri/benches/` for Rust hot paths (AES-256-GCM cipher, encrypted SQLite queries, word count); Vitest bench in `src/lib/markdown.bench.ts` for frontend Markdown parsing. CI workflow (`.github/workflows/benchmark.yml`) runs on every push to `master`, stores results as JSON in `gh-pages`, and alerts on regressions exceeding 200% without blocking the build. See `benchmarks/CLAUDE.md` for the full guide.
 
-**Known gap**: Frontend coverage is shallow. Auth screens, Calendar, all overlays, DiaryEditor, and Sidebar have no tests. Tracked in `docs/TODO.md`.
+**Known gap**: Frontend coverage is shallow. Calendar, most overlays (GoToDateOverlay, PreferencesOverlay, StatsOverlay, ImportOverlay, ExportOverlay), DiaryEditor, and Sidebar have no tests. Auth screens and NotificationsOverlay now have partial coverage. Tracked in `docs/TODO.md`.
 
 ---
 
@@ -257,7 +257,7 @@ Imports preserve source entries as separate records. If imported data lands on a
 
 **Export formats** (each in `src-tauri/src/export/`):
 - JSON: structured export with entry IDs, 6 tests
-- Markdown: HTML-to-Markdown conversion for readable export, 12 tests
+- Markdown: HTML-to-Markdown conversion for readable export, 38 tests
 
 **Adding a new format** follows the Import Parser Pattern in `CLAUDE.md`: one `*.rs` parser module, one command in `commands/import.rs`, register in `lib.rs`, add wrapper in `src/lib/tauri.ts`. The UI (`ImportOverlay.tsx`) picks it up automatically via `listImportPlugins`; no UI change needed.
 
@@ -275,7 +275,7 @@ The "no plugin marketplaces" rule means no distribution, discovery, or hosting o
 
 ### Principle 6: Simplicity in Practice
 
-- **State**: 6 signal modules (`src/state/`). No Redux, Zustand, derived-state middleware, or selector layers.
+- **State**: 8 signal modules (`src/state/`). No Redux, Zustand, derived-state middleware, or selector layers.
 - **Database**: direct `rusqlite` queries in `src-tauri/src/db/queries.rs`. No ORM, no query builder, no migration framework beyond the inline schema version check.
 - **Dependencies**: the runtime dependency set in `src-tauri/Cargo.toml` is intentionally lean for a cryptographic desktop app.
 - **Justified complexity examples**: `src-tauri/src/screen_lock.rs` uses platform-specific Win32 event hooks (Windows) and equivalent macOS hooks for session-lock detection; this is necessary for auto-lock, not gold-plating. The Rhai scripting engine (`src-tauri/src/plugin/rhai_loader.rs`) adds binary size but is the only way to deliver user-scriptable extensions without requiring a recompile.

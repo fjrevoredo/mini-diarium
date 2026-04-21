@@ -35,6 +35,9 @@ Template:
 ### Fixed
 - **German locale regression**: German (`de`) was accidentally dropped from both the frontend locale map and the native menu translation table when Italian was added, causing all UI strings and native menus to silently fall back to English for users with German selected. Both wiring points are restored.
 
+### Changed
+- **PHILOSOPHY.md test counts updated to v0.4.19**: The implementation guide (Part II) had stale numbers from v0.4.14. Updated to reflect the current test suite: backend 276 tests across 32 modules (was 265/30), frontend 229 tests across 22 files (was ~161/17+), Markdown export 38 tests (was 12), state modules 8 (was 6). Known-gap statement narrowed — auth screens and NotificationsOverlay now have partial coverage.
+
 
 ## [0.4.18] - 19-04-2026
 
