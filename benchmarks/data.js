@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1776742944149,
+  "lastUpdate": 1776744554543,
   "repoUrl": "https://github.com/fjrevoredo/mini-diarium",
   "entries": {
     "Benchmark": [
@@ -4469,6 +4469,138 @@ window.BENCHMARK_DATA = {
             "name": "count_words_html_500w",
             "value": 10013,
             "range": "± 60",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "49699333+dependabot[bot]@users.noreply.github.com",
+            "name": "dependabot[bot]",
+            "username": "dependabot[bot]"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "7fc2431def03145e97d93021a4c529c7032d65fb",
+          "message": "Bump the dev-dependencies group across 1 directory with 4 updates (#103)\n\nBumps the dev-dependencies group with 1 update in the / directory:\n[eslint](https://github.com/eslint/eslint).\n\nUpdates `eslint` from 10.2.0 to 10.2.1\n<details>\n<summary>Release notes</summary>\n<p><em>Sourced from <a\nhref=\"https://github.com/eslint/eslint/releases\">eslint's\nreleases</a>.</em></p>\n<blockquote>\n<h2>v10.2.1</h2>\n<h2>Bug Fixes</h2>\n<ul>\n<li><a\nhref=\"https://github.com/eslint/eslint/commit/14be92b6d1fa0923b8923830f2208e5e2705b002\"><code>14be92b</code></a>\nfix: model generator yield resumption paths in code path analysis (<a\nhref=\"https://redirect.github.com/eslint/eslint/issues/20665\">#20665</a>)\n(sethamus)</li>\n<li><a\nhref=\"https://github.com/eslint/eslint/commit/84a19d2c32255db6b9cfc08644a607aae6d5cb62\"><code>84a19d2</code></a>\nfix: no-async-promise-executor false positives for shadowed Promise (<a\nhref=\"https://redirect.github.com/eslint/eslint/issues/20740\">#20740</a>)\n(xbinaryx)</li>\n<li><a\nhref=\"https://github.com/eslint/eslint/commit/af764af0ec38225755fbf8a6f207f0c77b595a8d\"><code>af764af</code></a>\nfix: clarify language and processor validation errors (<a\nhref=\"https://redirect.github.com/eslint/eslint/issues/20729\">#20729</a>)\n(Pixel998)</li>\n<li><a\nhref=\"https://github.com/eslint/eslint/commit/e251b89a38280973e468a4a9386c138f4f55d10d\"><code>e251b89</code></a>\nfix: update eslint (<a\nhref=\"https://redirect.github.com/eslint/eslint/issues/20715\">#20715</a>)\n(renovate[bot])</li>\n</ul>\n<h2>Documentation</h2>\n<ul>\n<li><a\nhref=\"https://github.com/eslint/eslint/commit/ca92ca0fb4599e8de1e2fb914e695fe7397cbe63\"><code>ca92ca0</code></a>\ndocs: reuse markdown-it instance for markdown filter (<a\nhref=\"https://redirect.github.com/eslint/eslint/issues/20768\">#20768</a>)\n(Amaresh S M)</li>\n<li><a\nhref=\"https://github.com/eslint/eslint/commit/57d2ee213305cee0cb55ef08e0480b57396269a9\"><code>57d2ee2</code></a>\ndocs: Enable Eleventy incremental mode for watch (<a\nhref=\"https://redirect.github.com/eslint/eslint/issues/20767\">#20767</a>)\n(Amaresh S M)</li>\n<li><a\nhref=\"https://github.com/eslint/eslint/commit/c1621b915742276e5f4b25efe790ca62296330dc\"><code>c1621b9</code></a>\ndocs: fix typos in code-path-analyzer.js (<a\nhref=\"https://redirect.github.com/eslint/eslint/issues/20700\">#20700</a>)\n(Ayush Shukla)</li>\n<li><a\nhref=\"https://github.com/eslint/eslint/commit/1418d522d10bde1960f4942afb548bc7160ec49e\"><code>1418d52</code></a>\ndocs: Update README (GitHub Actions Bot)</li>\n<li><a\nhref=\"https://github.com/eslint/eslint/commit/39771e6e600f0b0617fdeafff6dd07e4211ffde6\"><code>39771e6</code></a>\ndocs: Update README (GitHub Actions Bot)</li>\n<li><a\nhref=\"https://github.com/eslint/eslint/commit/71e04693def2df57268f08f3072a2749df6bf438\"><code>71e0469</code></a>\ndocs: fix incomplete JSDoc param description in no-shadow rule (<a\nhref=\"https://redirect.github.com/eslint/eslint/issues/20728\">#20728</a>)\n(kuldeep kumar)</li>\n<li><a\nhref=\"https://github.com/eslint/eslint/commit/22119ceb93e28f62262fc1d98ff1b1442d6e2dbf\"><code>22119ce</code></a>\ndocs: clarify scope of for-direction rule with dead code examples (<a\nhref=\"https://redirect.github.com/eslint/eslint/issues/20723\">#20723</a>)\n(Amaresh S M)</li>\n<li><a\nhref=\"https://github.com/eslint/eslint/commit/8f3fb77f122a5641d1833cad5d93f3f54fa3be0b\"><code>8f3fb77</code></a>\ndocs: document <code>meta.docs.dialects</code> (<a\nhref=\"https://redirect.github.com/eslint/eslint/issues/20718\">#20718</a>)\n(Pixel998)</li>\n</ul>\n<h2>Chores</h2>\n<ul>\n<li><a\nhref=\"https://github.com/eslint/eslint/commit/7ddfea9c4f62add1588c5c0b0da568c299246383\"><code>7ddfea9</code></a>\nchore: update dependency prettier to v3.8.2 (<a\nhref=\"https://redirect.github.com/eslint/eslint/issues/20770\">#20770</a>)\n(renovate[bot])</li>\n<li><a\nhref=\"https://github.com/eslint/eslint/commit/fac40e1de2ba7646cc7cd2d3f93fbdd1f8819001\"><code>fac40e1</code></a>\nci: bump pnpm/action-setup from 5.0.0 to 6.0.0 (<a\nhref=\"https://redirect.github.com/eslint/eslint/issues/20763\">#20763</a>)\n(dependabot[bot])</li>\n<li><a\nhref=\"https://github.com/eslint/eslint/commit/7246f923332522d8b3d46b6ee646fce88535f3fb\"><code>7246f92</code></a>\ntest: add tests for SuppressionsService.load() error handling (<a\nhref=\"https://redirect.github.com/eslint/eslint/issues/20734\">#20734</a>)\n(kuldeep kumar)</li>\n<li><a\nhref=\"https://github.com/eslint/eslint/commit/4f34b1e592b0f63d766d9903998e8e36eb49d3aa\"><code>4f34b1e</code></a>\nchore: update pnpm/action-setup action to v5 (<a\nhref=\"https://redirect.github.com/eslint/eslint/issues/20762\">#20762</a>)\n(renovate[bot])</li>\n<li><a\nhref=\"https://github.com/eslint/eslint/commit/51080eb5c98d619434e4835dbe9f1c6654aca3b8\"><code>51080eb</code></a>\ntest: processor service (<a\nhref=\"https://redirect.github.com/eslint/eslint/issues/20731\">#20731</a>)\n(kuldeep kumar)</li>\n<li><a\nhref=\"https://github.com/eslint/eslint/commit/e7e1889fca9b6044e08f41b38df20a1ce45808c8\"><code>e7e1889</code></a>\nchore: remove stale babel-eslint10 fixture and test (<a\nhref=\"https://redirect.github.com/eslint/eslint/issues/20727\">#20727</a>)\n(kuldeep kumar)</li>\n<li><a\nhref=\"https://github.com/eslint/eslint/commit/4e1a87cb8fb90e309524bc36bc5f31b9f9cfaa76\"><code>4e1a87c</code></a>\ntest: remove redundant async/await in flat config array tests (<a\nhref=\"https://redirect.github.com/eslint/eslint/issues/20722\">#20722</a>)\n(Pixel998)</li>\n<li><a\nhref=\"https://github.com/eslint/eslint/commit/066eabb3643b12931f991594969bcc0028f71a5f\"><code>066eabb</code></a>\ntest: add rule metadata coverage for <code>languages</code> and\n<code>docs.dialects</code> (<a\nhref=\"https://redirect.github.com/eslint/eslint/issues/20717\">#20717</a>)\n(Pixel998)</li>\n</ul>\n</blockquote>\n</details>\n<details>\n<summary>Commits</summary>\n<ul>\n<li><a\nhref=\"https://github.com/eslint/eslint/commit/4d1d8f9737236603f64bbe83d5bb8001627b5611\"><code>4d1d8f9</code></a>\n10.2.1</li>\n<li><a\nhref=\"https://github.com/eslint/eslint/commit/3e33105b05d09b5a4eb894ed75a9811fb40d65e6\"><code>3e33105</code></a>\nBuild: changelog update for 10.2.1</li>\n<li><a\nhref=\"https://github.com/eslint/eslint/commit/ca92ca0fb4599e8de1e2fb914e695fe7397cbe63\"><code>ca92ca0</code></a>\ndocs: reuse markdown-it instance for markdown filter (<a\nhref=\"https://redirect.github.com/eslint/eslint/issues/20768\">#20768</a>)</li>\n<li><a\nhref=\"https://github.com/eslint/eslint/commit/7ddfea9c4f62add1588c5c0b0da568c299246383\"><code>7ddfea9</code></a>\nchore: update dependency prettier to v3.8.2 (<a\nhref=\"https://redirect.github.com/eslint/eslint/issues/20770\">#20770</a>)</li>\n<li><a\nhref=\"https://github.com/eslint/eslint/commit/57d2ee213305cee0cb55ef08e0480b57396269a9\"><code>57d2ee2</code></a>\ndocs: Enable Eleventy incremental mode for watch (<a\nhref=\"https://redirect.github.com/eslint/eslint/issues/20767\">#20767</a>)</li>\n<li><a\nhref=\"https://github.com/eslint/eslint/commit/c1621b915742276e5f4b25efe790ca62296330dc\"><code>c1621b9</code></a>\ndocs: fix typos in code-path-analyzer.js (<a\nhref=\"https://redirect.github.com/eslint/eslint/issues/20700\">#20700</a>)</li>\n<li><a\nhref=\"https://github.com/eslint/eslint/commit/fac40e1de2ba7646cc7cd2d3f93fbdd1f8819001\"><code>fac40e1</code></a>\nci: bump pnpm/action-setup from 5.0.0 to 6.0.0 (<a\nhref=\"https://redirect.github.com/eslint/eslint/issues/20763\">#20763</a>)</li>\n<li><a\nhref=\"https://github.com/eslint/eslint/commit/7246f923332522d8b3d46b6ee646fce88535f3fb\"><code>7246f92</code></a>\ntest: add tests for SuppressionsService.load() error handling (<a\nhref=\"https://redirect.github.com/eslint/eslint/issues/20734\">#20734</a>)</li>\n<li><a\nhref=\"https://github.com/eslint/eslint/commit/4f34b1e592b0f63d766d9903998e8e36eb49d3aa\"><code>4f34b1e</code></a>\nchore: update pnpm/action-setup action to v5 (<a\nhref=\"https://redirect.github.com/eslint/eslint/issues/20762\">#20762</a>)</li>\n<li><a\nhref=\"https://github.com/eslint/eslint/commit/1418d522d10bde1960f4942afb548bc7160ec49e\"><code>1418d52</code></a>\ndocs: Update README</li>\n<li>Additional commits viewable in <a\nhref=\"https://github.com/eslint/eslint/compare/v10.2.0...v10.2.1\">compare\nview</a></li>\n</ul>\n</details>\n<br />\n\nUpdates `typescript` from 6.0.2 to 6.0.3\n<details>\n<summary>Release notes</summary>\n<p><em>Sourced from <a\nhref=\"https://github.com/microsoft/TypeScript/releases\">typescript's\nreleases</a>.</em></p>\n<blockquote>\n<h2>TypeScript 6.0.3</h2>\n<p>For release notes, check out the <a\nhref=\"https://devblogs.microsoft.com/typescript/announcing-typescript-6-0/\">release\nannouncement blog post</a>.</p>\n<ul>\n<li><a\nhref=\"https://github.com/Microsoft/TypeScript/issues?utf8=%E2%9C%93&amp;q=milestone%3A%22TypeScript+6.0.0%22\">fixed\nissues query for TypeScript 6.0.0 (Beta)</a>.</li>\n<li><a\nhref=\"https://github.com/Microsoft/TypeScript/issues?utf8=%E2%9C%93&amp;q=milestone%3A%22TypeScript+6.0.1%22\">fixed\nissues query for TypeScript 6.0.1 (RC)</a>.</li>\n<li><a\nhref=\"https://github.com/Microsoft/TypeScript/issues?utf8=%E2%9C%93&amp;q=milestone%3A%22TypeScript+6.0.2%22\">fixed\nissues query for TypeScript 6.0.2 (Stable)</a>.</li>\n<li><a\nhref=\"https://github.com/Microsoft/TypeScript/issues?utf8=%E2%9C%93&amp;q=milestone%3A%22TypeScript+6.0.3%22\">fixed\nissues query for TypeScript 6.0.3 (Stable)</a>.</li>\n</ul>\n<p>Downloads are available on:</p>\n<ul>\n<li><a href=\"https://www.npmjs.com/package/typescript\">npm</a></li>\n</ul>\n</blockquote>\n</details>\n<details>\n<summary>Commits</summary>\n<ul>\n<li><a\nhref=\"https://github.com/microsoft/TypeScript/commit/050880ce59e30b356b686bd3144efe24f875ebc8\"><code>050880c</code></a>\nBump version to 6.0.3 and LKG</li>\n<li><a\nhref=\"https://github.com/microsoft/TypeScript/commit/eeae9dd0f17aa494658e4ec079dc002e02dd625e\"><code>eeae9dd</code></a>\n🤖 Pick PR <a\nhref=\"https://redirect.github.com/microsoft/TypeScript/issues/63401\">#63401</a>\n(Also check package name validity in...) into release-6.0 (#...</li>\n<li><a\nhref=\"https://github.com/microsoft/TypeScript/commit/ad1c695fada682764bb510dd680e8f175ae54094\"><code>ad1c695</code></a>\n🤖 Pick PR <a\nhref=\"https://redirect.github.com/microsoft/TypeScript/issues/63368\">#63368</a>\n(Harden ATA package name filtering) into release-6.0 (<a\nhref=\"https://redirect.github.com/microsoft/TypeScript/issues/63372\">#63372</a>)</li>\n<li><a\nhref=\"https://github.com/microsoft/TypeScript/commit/0725fb4664a1d5ec94040b6d94db77dc1cc354e4\"><code>0725fb4</code></a>\n🤖 Pick PR <a\nhref=\"https://redirect.github.com/microsoft/TypeScript/issues/63310\">#63310</a>\n(Mark class property initializers as...) into release-6.0 (#...</li>\n<li>See full diff in <a\nhref=\"https://github.com/microsoft/TypeScript/compare/v6.0.2...v6.0.3\">compare\nview</a></li>\n</ul>\n</details>\n<br />\n\nUpdates `typescript-eslint` from 8.58.2 to 8.59.0\n<details>\n<summary>Release notes</summary>\n<p><em>Sourced from <a\nhref=\"https://github.com/typescript-eslint/typescript-eslint/releases\">typescript-eslint's\nreleases</a>.</em></p>\n<blockquote>\n<h2>v8.59.0</h2>\n<h2>8.59.0 (2026-04-20)</h2>\n<h3>🚀 Features</h3>\n<ul>\n<li><strong>eslint-plugin:</strong> [no-unnecessary-type-assertion]\nreport more cases based on assignability (<a\nhref=\"https://redirect.github.com/typescript-eslint/typescript-eslint/pull/11789\">#11789</a>)</li>\n</ul>\n<h3>❤️ Thank You</h3>\n<ul>\n<li>Ulrich Stark</li>\n</ul>\n<p>See <a\nhref=\"https://github.com/typescript-eslint/typescript-eslint/releases/tag/v8.59.0\">GitHub\nReleases</a> for more information.</p>\n<p>You can read about our <a\nhref=\"https://typescript-eslint.io/users/versioning\">versioning\nstrategy</a> and <a\nhref=\"https://typescript-eslint.io/users/releases\">releases</a> on our\nwebsite.</p>\n</blockquote>\n</details>\n<details>\n<summary>Changelog</summary>\n<p><em>Sourced from <a\nhref=\"https://github.com/typescript-eslint/typescript-eslint/blob/main/packages/typescript-eslint/CHANGELOG.md\">typescript-eslint's\nchangelog</a>.</em></p>\n<blockquote>\n<h2>8.59.0 (2026-04-20)</h2>\n<p>This was a version bump only for typescript-eslint to align it with\nother projects, there were no code changes.</p>\n<p>See <a\nhref=\"https://github.com/typescript-eslint/typescript-eslint/releases/tag/v8.59.0\">GitHub\nReleases</a> for more information.</p>\n<p>You can read about our <a\nhref=\"https://typescript-eslint.io/users/versioning\">versioning\nstrategy</a> and <a\nhref=\"https://typescript-eslint.io/users/releases\">releases</a> on our\nwebsite.</p>\n</blockquote>\n</details>\n<details>\n<summary>Commits</summary>\n<ul>\n<li><a\nhref=\"https://github.com/typescript-eslint/typescript-eslint/commit/ea9ae4f8817873480e3501145059f63e39e8d8a1\"><code>ea9ae4f</code></a>\nchore(release): publish 8.59.0</li>\n<li>See full diff in <a\nhref=\"https://github.com/typescript-eslint/typescript-eslint/commits/v8.59.0/packages/typescript-eslint\">compare\nview</a></li>\n</ul>\n</details>\n<br />\n\nUpdates `vite` from 8.0.8 to 8.0.9\n<details>\n<summary>Release notes</summary>\n<p><em>Sourced from <a\nhref=\"https://github.com/vitejs/vite/releases\">vite's\nreleases</a>.</em></p>\n<blockquote>\n<h2>v8.0.9</h2>\n<p>Please refer to <a\nhref=\"https://github.com/vitejs/vite/blob/v8.0.9/packages/vite/CHANGELOG.md\">CHANGELOG.md</a>\nfor details.</p>\n</blockquote>\n</details>\n<details>\n<summary>Changelog</summary>\n<p><em>Sourced from <a\nhref=\"https://github.com/vitejs/vite/blob/main/packages/vite/CHANGELOG.md\">vite's\nchangelog</a>.</em></p>\n<blockquote>\n<h2><!-- raw HTML omitted --><a\nhref=\"https://github.com/vitejs/vite/compare/v8.0.8...v8.0.9\">8.0.9</a>\n(2026-04-20)<!-- raw HTML omitted --></h2>\n<h3>Features</h3>\n<ul>\n<li>update rolldown to 1.0.0-rc.16 (<a\nhref=\"https://redirect.github.com/vitejs/vite/issues/22248\">#22248</a>)\n(<a\nhref=\"https://github.com/vitejs/vite/commit/2947edd57ceb64a0b4dc43269743e8e44e68c09b\">2947edd</a>)</li>\n</ul>\n<h3>Bug Fixes</h3>\n<ul>\n<li>allow binding when strictPort is set but wildcard port is in use (<a\nhref=\"https://redirect.github.com/vitejs/vite/issues/22150\">#22150</a>)\n(<a\nhref=\"https://github.com/vitejs/vite/commit/dfc8aa5057dd8ec2b1223980d1e2eeb946ac3384\">dfc8aa5</a>)</li>\n<li><strong>build:</strong> emptyOutDir should happen for watch rebuilds\n(<a\nhref=\"https://redirect.github.com/vitejs/vite/issues/22207\">#22207</a>)\n(<a\nhref=\"https://github.com/vitejs/vite/commit/ee522672bb374c7ff95a347f14732491121b1cd6\">ee52267</a>)</li>\n<li><strong>bundled-dev:</strong> reject requests to HMR patch files in\nnon potentially trustworthy origins (<a\nhref=\"https://redirect.github.com/vitejs/vite/issues/22269\">#22269</a>)\n(<a\nhref=\"https://github.com/vitejs/vite/commit/868f1411a6f474baa4417f2d6524692dd452f760\">868f141</a>)</li>\n<li><strong>css:</strong> use unique key for cssEntriesMap to prevent\nsame-basename collision (<a\nhref=\"https://redirect.github.com/vitejs/vite/issues/22039\">#22039</a>)\n(<a\nhref=\"https://github.com/vitejs/vite/commit/374bb5d597fcd0485e929565c698d8ed219136f8\">374bb5d</a>)</li>\n<li><strong>deps:</strong> update all non-major dependencies (<a\nhref=\"https://redirect.github.com/vitejs/vite/issues/22219\">#22219</a>)\n(<a\nhref=\"https://github.com/vitejs/vite/commit/4cd0d6760edd5fb0841abe86538de3c225e880a1\">4cd0d67</a>)</li>\n<li><strong>deps:</strong> update all non-major dependencies (<a\nhref=\"https://redirect.github.com/vitejs/vite/issues/22268\">#22268</a>)\n(<a\nhref=\"https://github.com/vitejs/vite/commit/c28e9c12a849f80e6fdc93f42283ad2863ab9dbc\">c28e9c1</a>)</li>\n<li>detect Deno workspace root (fix <a\nhref=\"https://redirect.github.com/vitejs/vite/issues/22237\">#22237</a>)\n(<a\nhref=\"https://redirect.github.com/vitejs/vite/issues/22238\">#22238</a>)\n(<a\nhref=\"https://github.com/vitejs/vite/commit/1b793c0e1726467fffd06ffad9bc81c61a840188\">1b793c0</a>)</li>\n<li><strong>dev:</strong> handle errors in <code>watchChange</code> hook\n(<a\nhref=\"https://redirect.github.com/vitejs/vite/issues/22188\">#22188</a>)\n(<a\nhref=\"https://github.com/vitejs/vite/commit/fc08bdab9bba871b03689f2f6997c3a4ba4351da\">fc08bda</a>)</li>\n<li><strong>optimizer:</strong> handle more chars that will be sanitized\n(<a\nhref=\"https://redirect.github.com/vitejs/vite/issues/22208\">#22208</a>)\n(<a\nhref=\"https://github.com/vitejs/vite/commit/3f24533ac4845ed22547279d1721bd82a35345e3\">3f24533</a>)</li>\n<li>skip fallback sourcemap generation for <code>?raw</code> imports (<a\nhref=\"https://redirect.github.com/vitejs/vite/issues/22148\">#22148</a>)\n(<a\nhref=\"https://github.com/vitejs/vite/commit/3ec9cdaac7936ca32d0956c4cb1eb6e172945996\">3ec9cda</a>)</li>\n</ul>\n<h3>Documentation</h3>\n<ul>\n<li>align the descriptions in READMEs (<a\nhref=\"https://redirect.github.com/vitejs/vite/issues/22231\">#22231</a>)\n(<a\nhref=\"https://github.com/vitejs/vite/commit/44c42b97639bb6ad777e66d752b2829cccb9a27a\">44c42b9</a>)</li>\n<li>fix reuses wording in dev environment comment (<a\nhref=\"https://redirect.github.com/vitejs/vite/issues/22173\">#22173</a>)\n(<a\nhref=\"https://github.com/vitejs/vite/commit/9163412fdfec7fb1656529713326a5b5c5e986ea\">9163412</a>)</li>\n<li>fix wording in sass error comment (<a\nhref=\"https://redirect.github.com/vitejs/vite/issues/22214\">#22214</a>)\n(<a\nhref=\"https://github.com/vitejs/vite/commit/bc5c6a7a498845dff20dc410c395355b79a4b753\">bc5c6a7</a>)</li>\n<li>update build CLI defaults (<a\nhref=\"https://redirect.github.com/vitejs/vite/issues/22261\">#22261</a>)\n(<a\nhref=\"https://github.com/vitejs/vite/commit/605bb97994678a1bb70a8de9a85c29d5f5d48c5a\">605bb97</a>)</li>\n</ul>\n<h3>Miscellaneous Chores</h3>\n<ul>\n<li><strong>deps:</strong> update dependency dotenv-expand to v13 (<a\nhref=\"https://redirect.github.com/vitejs/vite/issues/22271\">#22271</a>)\n(<a\nhref=\"https://github.com/vitejs/vite/commit/0a3887da18812cacb254c616e4dd35631e776fda\">0a3887d</a>)</li>\n</ul>\n</blockquote>\n</details>\n<details>\n<summary>Commits</summary>\n<ul>\n<li><a\nhref=\"https://github.com/vitejs/vite/commit/ce729f5fa1a5adca373b2adcb0e1b18099164a14\"><code>ce729f5</code></a>\nrelease: v8.0.9</li>\n<li><a\nhref=\"https://github.com/vitejs/vite/commit/605bb97994678a1bb70a8de9a85c29d5f5d48c5a\"><code>605bb97</code></a>\ndocs: update build CLI defaults (<a\nhref=\"https://github.com/vitejs/vite/tree/HEAD/packages/vite/issues/22261\">#22261</a>)</li>\n<li><a\nhref=\"https://github.com/vitejs/vite/commit/c28e9c12a849f80e6fdc93f42283ad2863ab9dbc\"><code>c28e9c1</code></a>\nfix(deps): update all non-major dependencies (<a\nhref=\"https://github.com/vitejs/vite/tree/HEAD/packages/vite/issues/22268\">#22268</a>)</li>\n<li><a\nhref=\"https://github.com/vitejs/vite/commit/0a3887da18812cacb254c616e4dd35631e776fda\"><code>0a3887d</code></a>\nchore(deps): update dependency dotenv-expand to v13 (<a\nhref=\"https://github.com/vitejs/vite/tree/HEAD/packages/vite/issues/22271\">#22271</a>)</li>\n<li><a\nhref=\"https://github.com/vitejs/vite/commit/868f1411a6f474baa4417f2d6524692dd452f760\"><code>868f141</code></a>\nfix(bundled-dev): reject requests to HMR patch files in non potentially\ntrust...</li>\n<li><a\nhref=\"https://github.com/vitejs/vite/commit/3ec9cdaac7936ca32d0956c4cb1eb6e172945996\"><code>3ec9cda</code></a>\nfix: skip fallback sourcemap generation for <code>?raw</code> imports\n(<a\nhref=\"https://github.com/vitejs/vite/tree/HEAD/packages/vite/issues/22148\">#22148</a>)</li>\n<li><a\nhref=\"https://github.com/vitejs/vite/commit/3f24533ac4845ed22547279d1721bd82a35345e3\"><code>3f24533</code></a>\nfix(optimizer): handle more chars that will be sanitized (<a\nhref=\"https://github.com/vitejs/vite/tree/HEAD/packages/vite/issues/22208\">#22208</a>)</li>\n<li><a\nhref=\"https://github.com/vitejs/vite/commit/1b793c0e1726467fffd06ffad9bc81c61a840188\"><code>1b793c0</code></a>\nfix: detect Deno workspace root (fix <a\nhref=\"https://github.com/vitejs/vite/tree/HEAD/packages/vite/issues/22237\">#22237</a>)\n(<a\nhref=\"https://github.com/vitejs/vite/tree/HEAD/packages/vite/issues/22238\">#22238</a>)</li>\n<li><a\nhref=\"https://github.com/vitejs/vite/commit/fc08bdab9bba871b03689f2f6997c3a4ba4351da\"><code>fc08bda</code></a>\nfix(dev): handle errors in <code>watchChange</code> hook (<a\nhref=\"https://github.com/vitejs/vite/tree/HEAD/packages/vite/issues/22188\">#22188</a>)</li>\n<li><a\nhref=\"https://github.com/vitejs/vite/commit/374bb5d597fcd0485e929565c698d8ed219136f8\"><code>374bb5d</code></a>\nfix(css): use unique key for cssEntriesMap to prevent same-basename\ncollision...</li>\n<li>Additional commits viewable in <a\nhref=\"https://github.com/vitejs/vite/commits/v8.0.9/packages/vite\">compare\nview</a></li>\n</ul>\n</details>\n<br />\n\nSigned-off-by: dependabot[bot] <support@github.com>\nCo-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",
+          "timestamp": "2026-04-21T06:01:59+02:00",
+          "tree_id": "a2ee5d78cee150312b8f411063ed7c00e4866d0a",
+          "url": "https://github.com/fjrevoredo/mini-diarium/commit/7fc2431def03145e97d93021a4c529c7032d65fb"
+        },
+        "date": 1776744554148,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "auth_argon2/wrap_master_key",
+            "value": 91639436,
+            "range": "± 654066",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "auth_argon2/unwrap_master_key",
+            "value": 91242508,
+            "range": "± 306256",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_encrypt/1024",
+            "value": 2119,
+            "range": "± 5",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_encrypt/10240",
+            "value": 14079,
+            "range": "± 16",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_encrypt/102400",
+            "value": 169430,
+            "range": "± 265",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_decrypt/1024",
+            "value": 1599,
+            "range": "± 2",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_decrypt/10240",
+            "value": 13402,
+            "range": "± 14",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_decrypt/102400",
+            "value": 132301,
+            "range": "± 159",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_insert_entry",
+            "value": 1562485,
+            "range": "± 655714",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_update_entry",
+            "value": 1309213,
+            "range": "± 181960",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_delete_entry",
+            "value": 1387682,
+            "range": "± 364359",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_entries_by_date",
+            "value": 14070,
+            "range": "± 160",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_all_entry_dates/100",
+            "value": 34331,
+            "range": "± 231",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_all_entry_dates/500",
+            "value": 125282,
+            "range": "± 419",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_all_entries/100",
+            "value": 142776,
+            "range": "± 1502",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_all_entries/500",
+            "value": 656594,
+            "range": "± 6952",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "count_words_plain_500w",
+            "value": 6956,
+            "range": "± 51",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "count_words_html_500w",
+            "value": 9820,
+            "range": "± 146",
             "unit": "ns/iter"
           }
         ]
