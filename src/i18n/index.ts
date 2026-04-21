@@ -2,6 +2,7 @@ import { translator, flatten, resolveTemplate } from '@solid-primitives/i18n';
 import { createSignal, createContext, useContext, createComponent, type JSX } from 'solid-js';
 import en from './locales/en';
 import esLocale from './locales/es.json';
+import deLocale from './locales/de.json';
 import itLocale from './locales/it.json';
 
 // Pre-flatten the English dictionary once at module load time.
@@ -18,6 +19,7 @@ const [activeLocaleDict, setActiveLocaleDict] = createSignal(flatEn);
 const localeMap: Record<string, FlatEn> = {
   en: flatEn,
   es: flatten(esLocale as unknown as typeof en) as FlatEn,
+  de: flatten(deLocale as unknown as typeof en) as FlatEn,
   it: flatten(itLocale as unknown as typeof en) as FlatEn,
 };
 

@@ -30,6 +30,12 @@ Template:
 
 # Versions
 
+## [0.4.19] - Unreleased
+
+### Fixed
+- **German locale regression**: German (`de`) was accidentally dropped from both the frontend locale map and the native menu translation table when Italian was added, causing all UI strings and native menus to silently fall back to English for users with German selected. Both wiring points are restored.
+
+
 ## [0.4.18] - 19-04-2026
 
 ### Fixed

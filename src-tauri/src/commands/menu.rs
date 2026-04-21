@@ -46,6 +46,25 @@ fn labels_for_locale(locale: &str) -> MenuLabels {
             #[cfg(not(target_os = "macos"))]
             help_menu: "Ayuda",
         },
+        "de" => MenuLabels {
+            navigation_menu: "Navigation",
+            diary_menu: "Tagebuch",
+            navigate_prev_day: "Vorheriger Tag",
+            navigate_next_day: "Nächster Tag",
+            navigate_today: "Zu heute gehen",
+            go_to_date: "Gehe zu Datum...",
+            navigate_prev_month: "Vorheriger Monat",
+            navigate_next_month: "Nächster Monat",
+            statistics: "Statistiken...",
+            import_item: "Importieren...",
+            export_item: "Exportieren...",
+            preferences: "Einstellungen...",
+            about: "Über Mini Diarium",
+            #[cfg(not(target_os = "macos"))]
+            file_menu: "Datei",
+            #[cfg(not(target_os = "macos"))]
+            help_menu: "Hilfe",
+        },
         "it" => MenuLabels {
             navigation_menu: "Navigazione",
             diary_menu: "Diario",
