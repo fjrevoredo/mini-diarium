@@ -192,6 +192,10 @@ bun run bench                           # Frontend benchmarks
 
 See [Backend guide](src-tauri/CLAUDE.md) for the full auth architecture and per-command security requirements.
 
+### Architecture decision records
+
+- [`docs/decisions/2026-04-passwordless-journal.md`](docs/decisions/2026-04-passwordless-journal.md) — Local-only (passwordless) journals: why Option B-prime (device-bound key in `config.json`) shipped over Option C (OS keychain), threat model, and the migration path if keychain support is ever built.
+
 ## Known Issues / Technical Debt
 
 - **Frontend test coverage is still incomplete**: coverage has improved substantially, but `Calendar.tsx`, `Sidebar.tsx`, most overlays, and broader editor workflows still lack direct tests.

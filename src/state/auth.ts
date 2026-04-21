@@ -131,6 +131,14 @@ export async function unlockJournalAutoProtected(): Promise<void> {
   }
 }
 
+// Refresh the global auth methods list from the backend.
+// Call after any mutation (registration, removal, password change) or when a UI surface
+// that displays auth methods is opened.
+export async function loadAuthMethods(): Promise<void> {
+  const methods = await tauri.listAuthMethods();
+  setAuthMethods(methods);
+}
+
 // Navigate back to the journal picker (e.g. from PasswordPrompt or PasswordCreation).
 export function goToJournalPicker(): void {
   resetAuthTransientState();

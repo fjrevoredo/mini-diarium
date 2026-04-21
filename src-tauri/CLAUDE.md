@@ -15,7 +15,8 @@ src-tauri/src/
 ├── auth/
 │   ├── mod.rs                             # AuthMethodInfo, KeypairFiles structs; re-exports
 │   ├── password.rs                        # PasswordMethod: Argon2id wrap/unwrap
-│   └── keypair.rs                         # KeypairMethod: X25519 ECIES wrap/unwrap
+│   ├── keypair.rs                         # KeypairMethod: X25519 ECIES wrap/unwrap
+│   └── auto_key.rs                        # AutoKeyMethod: device-bound random key wrap/unwrap (local-only journals)
 ├── commands/
 │   ├── mod.rs                         # Re-exports: auth, entries, search, navigation, stats, import, export, plugin, files
 │   ├── auth/

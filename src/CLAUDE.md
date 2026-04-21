@@ -45,8 +45,8 @@ src/
 │       ├── SearchBar.tsx              # Search input (not rendered; reserved for future secure search)
 │       └── SearchResults.tsx          # Search result list
 ├── state/
-│   ├── auth.ts                        # AuthState signal + authMethods + initializeAuth/create/unlock/lock/unlockWithKeypair
-│   ├── entries.ts                     # currentEntry, entryDates, isLoading, isSaving
+│   ├── auth.ts                        # AuthState signal + authMethods + initializeAuth/create/unlock/lock/unlockWithKeypair/loadAuthMethods
+│   ├── entries.ts                     # entryDates, isSaving + resetEntriesState + cleanup-callback registry
 │   ├── journals.ts                    # journals, activeJournalId, isSwitching + loadJournals/switchJournal/addJournal/removeJournal/renameJournal
 │   ├── search.ts                      # searchQuery, searchResults, isSearching
 │   ├── session.ts                     # resetSessionState() — resets entries/search/UI on journal lock
@@ -75,14 +75,15 @@ src/
 
 ## State Management
 
-Six signal-based state modules in `src/state/`:
+Eight signal-based state modules in `src/state/`:
 
 | Module | Signals | Key Functions |
 |--------|---------|---------------|
-| `auth.ts` | `authState: AuthState`, `error`, `authMethods: AuthMethodInfo[]` | `initializeAuth()`, `createJournal()`, `unlockJournal()`, `lockJournal()`, `unlockWithKeypair()`, `goToJournalPicker()` |
-| `entries.ts` | `currentEntry`, `entryDates`, `isLoading`, `isSaving` | Setters exported directly |
+| `auth.ts` | `authState: AuthState`, `error`, `authMethods: AuthMethodInfo[]` | `initializeAuth()`, `createJournal()`, `unlockJournal()`, `lockJournal()`, `unlockWithKeypair()`, `goToJournalPicker()`, `loadAuthMethods()` |
+| `entries.ts` | `entryDates`, `isSaving` | `resetEntriesState()`, `registerCleanupCallback()`, `executeCleanupCallbacks()`; setters exported directly |
 | `journals.ts` | `journals: JournalConfig[]`, `activeJournalId`, `isSwitching` | `loadJournals()`, `switchJournal()`, `addJournal()`, `removeJournal()`, `renameJournal()` |
 | `search.ts` | `searchQuery`, `searchResults`, `isSearching` | Setters exported directly |
+| `session.ts` | — | `resetSessionState()` — resets `entries`/`search`/`ui` on journal lock |
 | `ui.ts` | `selectedDate`, `isSidebarCollapsed`, `isGoToDateOpen`, `isPreferencesOpen`, `isStatsOpen`, `isImportOpen`, `isExportOpen`, `isAboutOpen`, `isNotificationsOpen` | Setters exported directly; `resetUiState()` resets all |
 | `notifications.ts` | `allNotifications: NotificationEntry[]`, `readIds: Set<string>`, `isLoading` | `loadNotifications()`, `markAsRead(id)`, `markAllRead()`, `isRead(id)`, `unreadCount()`, `hasUnread()` |
 | `preferences.ts` | `preferences: Preferences` | `setPreferences(Partial<Preferences>)`, `resetPreferences()` |

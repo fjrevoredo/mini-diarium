@@ -28,7 +28,7 @@ import {
   getThemeOverridesJson,
   parseOverridesJson,
 } from '../../lib/theme-overrides';
-import { authState } from '../../state/auth';
+import { authState, authMethods, loadAuthMethods } from '../../state/auth';
 import * as tauri from '../../lib/tauri';
 import { mapTauriError } from '../../lib/errors';
 import { useI18n } from '../../i18n';
@@ -111,7 +111,6 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
   const [passwordSuccess, setPasswordSuccess] = createSignal(false);
 
   // Auth methods state
-  const [authMethods, setAuthMethods] = createSignal<tauri.AuthMethodInfo[]>([]);
   const [addKeypairPassword, setAddKeypairPassword] = createSignal('');
   const [addKeypairLabel, setAddKeypairLabel] = createSignal('');
   const [addKeypairError, setAddKeypairError] = createSignal<string | null>(null);
@@ -153,8 +152,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
     }
     if (authState() === 'unlocked') {
       try {
-        const methods = await tauri.listAuthMethods();
-        setAuthMethods(methods);
+        await loadAuthMethods();
       } catch (err) {
         log.error('Failed to load auth methods:', err);
       }
@@ -190,8 +188,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
       // Reload auth methods
       if (authState() === 'unlocked') {
         try {
-          const methods = await tauri.listAuthMethods();
-          setAuthMethods(methods);
+          await loadAuthMethods();
         } catch (err) {
           log.error('Failed to reload auth methods:', err);
         }
@@ -331,8 +328,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
       await tauri.writeKeyFile(savePath, kp.private_key_hex);
 
       // Reload auth methods
-      const methods = await tauri.listAuthMethods();
-      setAuthMethods(methods);
+      await loadAuthMethods();
 
       setAddKeypairSuccess(true);
       setAddKeypairPassword('');
@@ -359,8 +355,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
 
     try {
       await tauri.registerPassword(addPasswordNew());
-      const methods = await tauri.listAuthMethods();
-      setAuthMethods(methods);
+      await loadAuthMethods();
       setAddPasswordNew('');
       setAddPasswordConfirm('');
       setAddPasswordSuccess(true);
@@ -395,8 +390,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
 
     try {
       await tauri.removeAuthMethod(slotId, removePassword());
-      const methods = await tauri.listAuthMethods();
-      setAuthMethods(methods);
+      await loadAuthMethods();
       setRemovePassword('');
     } catch (err) {
       setRemoveError(mapTauriError(err, t));
