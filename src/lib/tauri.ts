@@ -223,22 +223,6 @@ export interface ImportResult {
   entries_skipped: number;
 }
 
-export async function importMiniDiaryJson(filePath: string): Promise<ImportResult> {
-  return await invoke('import_minidiary_json', { filePath });
-}
-
-export async function importDayOneJson(filePath: string): Promise<ImportResult> {
-  return await invoke('import_dayone_json', { filePath });
-}
-
-export async function importDayOneTxt(filePath: string): Promise<ImportResult> {
-  return await invoke('import_dayone_txt', { filePath });
-}
-
-export async function importJrnlJson(filePath: string): Promise<ImportResult> {
-  return await invoke('import_jrnl_json', { filePath });
-}
-
 // Export commands
 export interface ExportResult {
   entries_exported: number;

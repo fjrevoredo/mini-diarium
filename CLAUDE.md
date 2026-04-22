@@ -69,7 +69,7 @@ Static marketing site — plain HTML/CSS/JS. Deploy via Coolify using `website/d
 
 ## Command Registry
 
-All 53 registered Tauri commands (source: `lib.rs`). Rust names use `snake_case`; frontend wrappers in `src/lib/tauri.ts` use `camelCase`.
+All 49 registered Tauri commands (source: `lib.rs`). Rust names use `snake_case`; frontend wrappers in `src/lib/tauri.ts` use `camelCase`.
 
 | Module | Rust Command | Frontend Wrapper | Description |
 |--------|-------------|-----------------|-------------|
@@ -114,10 +114,6 @@ All 53 registered Tauri commands (source: `lib.rs`). Rust names use `snake_case`
 | nav | `navigate_previous_month` | `navigatePreviousMonth(currentDate)` | Same day, previous month |
 | nav | `navigate_next_month` | `navigateNextMonth(currentDate)` | Same day, next month |
 | stats | `get_statistics` | `getStatistics()` | Aggregate stats (streaks, counts, words) |
-| import | `import_minidiary_json` | `importMiniDiaryJson(filePath)` | Parse + import Mini Diary format |
-| import | `import_dayone_json` | `importDayOneJson(filePath)` | Parse + import Day One JSON format |
-| import | `import_dayone_txt` | `importDayOneTxt(filePath)` | Parse + import Day One TXT format |
-| import | `import_jrnl_json` | `importJrnlJson(filePath)` | Parse + import jrnl JSON format |
 | export | `export_json` | `exportJson(filePath)` | Export all entries as JSON |
 | export | `export_markdown` | `exportMarkdown(filePath)` | Export all entries as Markdown |
 | plugin | `list_import_plugins` | `listImportPlugins()` | List all import plugins (built-in + Rhai) |

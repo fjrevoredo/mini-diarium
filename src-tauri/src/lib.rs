@@ -222,11 +222,6 @@ pub fn run() {
             // Files (image embedding support + markdown import)
             commands::files::read_file_bytes,
             commands::files::read_text_file,
-            // Import
-            commands::import::import_minidiary_json,
-            commands::import::import_dayone_json,
-            commands::import::import_dayone_txt,
-            commands::import::import_jrnl_json,
             // Export
             commands::export::export_json,
             commands::export::export_markdown,

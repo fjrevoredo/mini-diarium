@@ -173,10 +173,10 @@ This appears verbatim in 10+ files. Extracting it into a helper is complicated b
 
 ---
 
-### AT-10 — Legacy import/export commands coexist with the plugin system
+### AT-10 — Legacy export commands coexist with the plugin system
 **Status:** By design (backward compatibility)
 
-The original commands (`import_minidiary_json`, `import_dayone_json`, `import_dayone_txt`, `import_jrnl_json`, `export_json`, `export_markdown`) remain registered in `generate_handler![]` alongside the plugin-based commands (`run_import_plugin`, `run_export_plugin`). The UI uses the plugin system; the legacy commands exist for backward compatibility with any external tooling or scripts that may call them directly.
+The legacy export commands (`export_json`, `export_markdown`) remain registered in `generate_handler![]` alongside the plugin-based `run_export_plugin`. The UI uses the plugin system; these two commands exist for backward compatibility with external tooling or scripts that may call them directly. The legacy import commands were removed in the 2026-04 cleanup (review finding B1/B2) because no consumer other than the deleted frontend wrappers called them.
 
 ---
 
