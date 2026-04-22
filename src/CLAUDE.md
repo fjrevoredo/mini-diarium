@@ -36,7 +36,14 @@ src/
 │   │   └── MainLayout-event-listeners.test.tsx
 │   ├── overlays/
 │   │   ├── GoToDateOverlay.tsx        # Date picker dialog
-│   │   ├── PreferencesOverlay.tsx     # Settings dialog (includes Auth Methods section)
+│   │   ├── preferences/               # Settings dialog split by tab
+│   │   │   ├── PreferencesOverlay.tsx         # Shell: dialog + tab list + save/cancel footer
+│   │   │   ├── PreferencesGeneralTab.tsx      # Theme, language, ESC-key action
+│   │   │   ├── PreferencesWritingTab.tsx      # Calendar/editor writing preferences
+│   │   │   ├── PreferencesSecurityTab.tsx     # Auth methods, change password, auto-lock
+│   │   │   ├── PreferencesDataTab.tsx         # Journal directory change, reset journal
+│   │   │   ├── PreferencesAdvancedTab.tsx     # Theme overrides editor, debug dump
+│   │   │   └── shared.ts                      # Tab type, TabProps, PreferencesShellContext
 │   │   ├── StatsOverlay.tsx           # Statistics display
 │   │   ├── ImportOverlay.tsx          # Import format selector + file picker
 │   │   ├── ExportOverlay.tsx          # Export format selector + file picker
@@ -121,7 +128,7 @@ setError(mapTauriError(err, t));
 
 ### Module-level arrays using translations
 
-Arrays that contain translated strings must be `createMemo` inside the component (not module-level consts), so they are evaluated after `useI18n()` is called. See `MONTH_NAMES` in `Calendar.tsx` and `FIRST_DAY_OPTIONS` in `PreferencesOverlay.tsx` as reference.
+Arrays that contain translated strings must be `createMemo` inside the component (not module-level consts), so they are evaluated after `useI18n()` is called. See `MONTH_NAMES` in `Calendar.tsx` and `FIRST_DAY_OPTIONS` in `overlays/preferences/PreferencesWritingTab.tsx` as reference.
 
 ### Testing
 
