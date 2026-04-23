@@ -84,8 +84,8 @@ vi.mock('../editor/DiaryEditor', () => {
         isDestroyed: false,
         getHTML: () => bus.lastContent,
         getText: () => {
-          // Strip tags for a rough text representation.
-          return bus.lastContent.replace(/<[^>]*>/g, '');
+          // Strip angle brackets for a rough text representation.
+          return bus.lastContent.replace(/[<>]/g, '');
         },
         commands: {
           setContent: (html: string) => {
