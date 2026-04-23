@@ -77,7 +77,7 @@ export async function writeKeyFile(path: string, privateKeyHex: string): Promise
 }
 
 export async function registerKeypair(
-  currentPassword: string,
+  currentPassword: string | null,
   publicKeyHex: string,
   label: string,
 ): Promise<void> {
@@ -88,7 +88,10 @@ export async function registerPassword(newPassword: string): Promise<void> {
   await invoke('register_password', { newPassword });
 }
 
-export async function removeAuthMethod(slotId: number, currentPassword: string): Promise<void> {
+export async function removeAuthMethod(
+  slotId: number,
+  currentPassword: string | null,
+): Promise<void> {
   await invoke('remove_auth_method', { slotId, currentPassword });
 }
 

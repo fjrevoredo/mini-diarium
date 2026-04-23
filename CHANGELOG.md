@@ -34,6 +34,7 @@ Template:
 
 ### Fixed
 - **German locale regression**: German (`de`) was accidentally dropped from both the frontend locale map and the native menu translation table when Italian was added, causing all UI strings and native menus to silently fall back to English for users with German selected. Both wiring points are restored.
+- **Stale password requirement after password slot removal**: after removing the password auth slot (while retaining one or more keypair slots), `register_keypair` and `remove_auth_method` would fail with "No password auth method found". Both commands now gate the password requirement on whether a password slot actually exists — if none is present, being unlocked is sufficient (the same model used by `register_password`). Master key wrapping in `register_keypair` now always uses the session key (`db.key().as_bytes()`) rather than re-deriving it via the password slot. The "Change Password" section and the current-password field in "Add Key File" are now hidden in the Security preferences when no password slot exists.
 
 ### Changed
 - **PHILOSOPHY.md test counts updated to v0.4.19**: The implementation guide (Part II) had stale numbers from v0.4.14. Updated to reflect the current test suite: backend 276 tests across 32 modules (was 265/30), frontend 229 tests across 22 files (was ~161/17+), Markdown export 38 tests (was 12), state modules 8 (was 6). Known-gap statement narrowed — auth screens and NotificationsOverlay now have partial coverage.

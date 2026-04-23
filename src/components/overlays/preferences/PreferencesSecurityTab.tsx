@@ -119,7 +119,7 @@ export default function PreferencesSecurityTab(props: TabProps) {
     setAddKeypairError(null);
     setAddKeypairSuccess(false);
 
-    if (!addKeypairPassword()) {
+    if (hasPasswordSlot() && !addKeypairPassword()) {
       setAddKeypairError(t('prefs.security.keypairPasswordRequired'));
       return;
     }
@@ -129,8 +129,10 @@ export default function PreferencesSecurityTab(props: TabProps) {
     }
 
     try {
-      // Step 1: Validate password before any file operations
-      await tauri.verifyPassword(addKeypairPassword());
+      // Step 1: Validate password before any file operations (only when a password slot exists)
+      if (hasPasswordSlot()) {
+        await tauri.verifyPassword(addKeypairPassword());
+      }
 
       // Step 2: Generate keypair (in-memory, no side effects yet)
       const kp = await tauri.generateKeypair();
@@ -148,7 +150,11 @@ export default function PreferencesSecurityTab(props: TabProps) {
 
       // Step 4: Register public key with the journal (DB write first) so a
       // failed registration never touches disk.
-      await tauri.registerKeypair(addKeypairPassword(), kp.public_key_hex, addKeypairLabel());
+      await tauri.registerKeypair(
+        hasPasswordSlot() ? addKeypairPassword() : null,
+        kp.public_key_hex,
+        addKeypairLabel(),
+      );
 
       // Step 5: Write private key to disk only after DB confirms registration
       await tauri.writeKeyFile(savePath, kp.private_key_hex);
@@ -192,17 +198,19 @@ export default function PreferencesSecurityTab(props: TabProps) {
   const handleRemoveAuthMethod = async (slotId: number) => {
     setRemoveError(null);
 
-    if (!removePassword()) {
+    if (hasPasswordSlot() && !removePassword()) {
       setRemoveError(t('prefs.security.removeError'));
       return;
     }
 
-    try {
-      // Validate password before showing the confirmation dialog
-      await tauri.verifyPassword(removePassword());
-    } catch (err) {
-      setRemoveError(mapTauriError(err, t));
-      return;
+    if (hasPasswordSlot()) {
+      try {
+        // Validate password before showing the confirmation dialog
+        await tauri.verifyPassword(removePassword());
+      } catch (err) {
+        setRemoveError(mapTauriError(err, t));
+        return;
+      }
     }
 
     const confirmed = await dialogConfirm(t('prefs.security.confirmRemoveMessage'), {
@@ -212,7 +220,7 @@ export default function PreferencesSecurityTab(props: TabProps) {
     if (!confirmed) return;
 
     try {
-      await tauri.removeAuthMethod(slotId, removePassword());
+      await tauri.removeAuthMethod(slotId, hasPasswordSlot() ? removePassword() : null);
       await loadAuthMethods();
       setRemovePassword('');
     } catch (err) {
@@ -277,18 +285,20 @@ export default function PreferencesSecurityTab(props: TabProps) {
 
         {/* Password for removal */}
         <Show when={authMethods().length > 1}>
-          <div class="mb-4">
-            <label class="block text-xs font-medium text-secondary mb-1">
-              {t('prefs.security.currentPwdRequired')}
-            </label>
-            <input
-              type="password"
-              value={removePassword()}
-              onInput={(e) => setRemovePassword(e.currentTarget.value)}
-              class="w-full px-3 py-2 border border-primary bg-primary text-primary rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder={t('prefs.security.currentPwdPlaceholder')}
-            />
-          </div>
+          <Show when={hasPasswordSlot()}>
+            <div class="mb-4">
+              <label class="block text-xs font-medium text-secondary mb-1">
+                {t('prefs.security.currentPwdRequired')}
+              </label>
+              <input
+                type="password"
+                value={removePassword()}
+                onInput={(e) => setRemovePassword(e.currentTarget.value)}
+                class="w-full px-3 py-2 border border-primary bg-primary text-primary rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder={t('prefs.security.currentPwdPlaceholder')}
+              />
+            </div>
+          </Show>
           <Show when={removeError()}>
             <p class="mb-4 text-sm text-error">{removeError()}</p>
           </Show>
@@ -367,18 +377,20 @@ export default function PreferencesSecurityTab(props: TabProps) {
             />
           </div>
 
-          <div class="mb-3">
-            <label class="block text-xs font-medium text-secondary mb-1">
-              {t('prefs.security.currentPasswordLabel')}
-            </label>
-            <input
-              type="password"
-              value={addKeypairPassword()}
-              onInput={(e) => setAddKeypairPassword(e.currentTarget.value)}
-              class="w-full px-3 py-2 border border-primary bg-primary text-primary rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder={t('prefs.security.currentPasswordPlaceholder')}
-            />
-          </div>
+          <Show when={hasPasswordSlot()}>
+            <div class="mb-3">
+              <label class="block text-xs font-medium text-secondary mb-1">
+                {t('prefs.security.currentPasswordLabel')}
+              </label>
+              <input
+                type="password"
+                value={addKeypairPassword()}
+                onInput={(e) => setAddKeypairPassword(e.currentTarget.value)}
+                class="w-full px-3 py-2 border border-primary bg-primary text-primary rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder={t('prefs.security.currentPasswordPlaceholder')}
+              />
+            </div>
+          </Show>
 
           <Show when={addKeypairError()}>
             <p class="mb-2 text-sm text-error">{addKeypairError()}</p>
@@ -400,73 +412,75 @@ export default function PreferencesSecurityTab(props: TabProps) {
         </div>
       </div>
 
-      {/* Change Password */}
-      <div>
-        <h3 class="text-sm font-medium text-primary mb-3">
-          {t('prefs.security.changePasswordTitle')}
-        </h3>
+      {/* Change Password — only shown when a password slot exists */}
+      <Show when={hasPasswordSlot()}>
+        <div>
+          <h3 class="text-sm font-medium text-primary mb-3">
+            {t('prefs.security.changePasswordTitle')}
+          </h3>
 
-        <div class="mb-4">
-          <label class="block text-sm font-medium text-secondary mb-2">
-            {t('prefs.security.currentPasswordLabel2')}
-          </label>
-          <input
-            type="password"
-            value={oldPassword()}
-            onInput={(e) => setOldPassword(e.currentTarget.value)}
-            class="w-full px-3 py-2 border border-primary bg-primary text-primary rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder={t('prefs.security.currentPasswordPlaceholder2')}
-          />
-        </div>
-
-        <div class="mb-4">
-          <label for="newPassword" class="mb-2 block text-sm font-medium text-secondary">
-            {t('prefs.security.newPasswordLabel')}{' '}
-            <span class="text-xs text-tertiary">{t('prefs.security.newPasswordHint')}</span>
-          </label>
-          <input
-            id="newPassword"
-            type="password"
-            value={newPassword()}
-            onInput={(e) => setNewPassword(e.currentTarget.value)}
-            class="w-full px-3 py-2 border border-primary bg-primary text-primary rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder={t('prefs.security.newPasswordPlaceholder')}
-          />
-          <PasswordStrengthIndicator password={newPassword()} />
-        </div>
-
-        <div class="mb-4">
-          <label class="block text-sm font-medium text-secondary mb-2">
-            {t('prefs.security.confirmNewPasswordLabel')}
-          </label>
-          <input
-            type="password"
-            value={confirmPassword()}
-            onInput={(e) => setConfirmPassword(e.currentTarget.value)}
-            class="w-full px-3 py-2 border border-primary bg-primary text-primary rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-            placeholder={t('prefs.security.confirmNewPasswordPlaceholder')}
-          />
-        </div>
-
-        <Show when={passwordError()}>
-          <div class="mb-4 p-2 bg-error border border-error rounded-md">
-            <p class="text-sm text-error">{passwordError()}</p>
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-secondary mb-2">
+              {t('prefs.security.currentPasswordLabel2')}
+            </label>
+            <input
+              type="password"
+              value={oldPassword()}
+              onInput={(e) => setOldPassword(e.currentTarget.value)}
+              class="w-full px-3 py-2 border border-primary bg-primary text-primary rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder={t('prefs.security.currentPasswordPlaceholder2')}
+            />
           </div>
-        </Show>
-        <Show when={passwordSuccess()}>
-          <div class="mb-4 p-2 bg-success border border-success rounded-md">
-            <p class="text-sm text-success">{t('prefs.security.changePasswordSuccess')}</p>
-          </div>
-        </Show>
 
-        <button
-          type="button"
-          onClick={handlePasswordChange}
-          class="px-4 py-2 text-sm font-medium interactive-primary rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-        >
-          {t('prefs.security.changePasswordButton')}
-        </button>
-      </div>
+          <div class="mb-4">
+            <label for="newPassword" class="mb-2 block text-sm font-medium text-secondary">
+              {t('prefs.security.newPasswordLabel')}{' '}
+              <span class="text-xs text-tertiary">{t('prefs.security.newPasswordHint')}</span>
+            </label>
+            <input
+              id="newPassword"
+              type="password"
+              value={newPassword()}
+              onInput={(e) => setNewPassword(e.currentTarget.value)}
+              class="w-full px-3 py-2 border border-primary bg-primary text-primary rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder={t('prefs.security.newPasswordPlaceholder')}
+            />
+            <PasswordStrengthIndicator password={newPassword()} />
+          </div>
+
+          <div class="mb-4">
+            <label class="block text-sm font-medium text-secondary mb-2">
+              {t('prefs.security.confirmNewPasswordLabel')}
+            </label>
+            <input
+              type="password"
+              value={confirmPassword()}
+              onInput={(e) => setConfirmPassword(e.currentTarget.value)}
+              class="w-full px-3 py-2 border border-primary bg-primary text-primary rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              placeholder={t('prefs.security.confirmNewPasswordPlaceholder')}
+            />
+          </div>
+
+          <Show when={passwordError()}>
+            <div class="mb-4 p-2 bg-error border border-error rounded-md">
+              <p class="text-sm text-error">{passwordError()}</p>
+            </div>
+          </Show>
+          <Show when={passwordSuccess()}>
+            <div class="mb-4 p-2 bg-success border border-success rounded-md">
+              <p class="text-sm text-success">{t('prefs.security.changePasswordSuccess')}</p>
+            </div>
+          </Show>
+
+          <button
+            type="button"
+            onClick={handlePasswordChange}
+            class="px-4 py-2 text-sm font-medium interactive-primary rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          >
+            {t('prefs.security.changePasswordButton')}
+          </button>
+        </div>
+      </Show>
 
       {/* Auto-Lock */}
       <div>

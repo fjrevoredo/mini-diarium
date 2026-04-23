@@ -14,7 +14,7 @@ TODO entry format:
 
 ## High Priority
 
-- [ ] **Password-removal leaves stale password requirement** — after removing a password auth slot, operations that previously required a password (e.g. registering a new key file) still prompt for one; investigate which commands require a password parameter even when no password slot exists, and either derive the requirement from the active auth slots or remove the guard when none is present.
+- [x] **Password-removal leaves stale password requirement** — after removing a password auth slot, operations that previously required a password (e.g. registering a new key file) still prompt for one; investigate which commands require a password parameter even when no password slot exists, and either derive the requirement from the active auth slots or remove the guard when none is present.
 
 ---
 
