@@ -64,6 +64,10 @@ export interface KeypairFiles {
   private_key_hex: string;
 }
 
+export type MultiAuthCredential =
+  | { type: 'password'; value: string }
+  | { type: 'keypair'; key_path: string };
+
 export async function listAuthMethods(): Promise<AuthMethodInfo[]> {
   return await invoke('list_auth_methods');
 }
@@ -95,6 +99,14 @@ export async function removeAuthMethod(
   await invoke('remove_auth_method', { slotId, currentPassword });
 }
 
+export async function unlockJournalAllMethods(credentials: MultiAuthCredential[]): Promise<void> {
+  await invoke('unlock_diary_all_methods', { credentials });
+}
+
+export async function setRequireAllAuth(enabled: boolean): Promise<void> {
+  await invoke('set_require_all_auth', { enabled });
+}
+
 export async function createJournalAuto(): Promise<void> {
   await invoke('create_diary_auto');
 }
@@ -109,6 +121,7 @@ export interface JournalConfig {
   name: string;
   path: string;
   auto_protected: boolean; // true if journal uses local key (no password)
+  require_all_auth: boolean;
 }
 
 export async function listJournals(): Promise<JournalConfig[]> {

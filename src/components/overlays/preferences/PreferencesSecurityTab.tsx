@@ -2,7 +2,8 @@ import { createSignal, createEffect, For, Show, onMount, onCleanup } from 'solid
 import { save, confirm as dialogConfirm } from '@tauri-apps/plugin-dialog';
 import { PasswordStrengthIndicator } from '../../auth/PasswordStrengthIndicator';
 import { createLogger } from '../../../lib/logger';
-import { authState, authMethods, loadAuthMethods } from '../../../state/auth';
+import { authState, authMethods, loadAuthMethods, setRequireAllAuth } from '../../../state/auth';
+import { journals, activeJournalId } from '../../../state/journals';
 import { preferences, setPreferences } from '../../../state/preferences';
 import * as tauri from '../../../lib/tauri';
 import { mapTauriError } from '../../../lib/errors';
@@ -16,6 +17,10 @@ export default function PreferencesSecurityTab(props: TabProps) {
   const shell = usePreferencesShell();
 
   const hasPasswordSlot = () => authMethods().some((m) => m.slot_type === 'password');
+  const activeJournal = () => journals().find((j) => j.id === activeJournalId());
+  const isAutoProtected = () => activeJournal()?.auto_protected ?? false;
+  const hasMultipleNonAutoMethods = () =>
+    authMethods().filter((m) => m.slot_type !== 'auto').length >= 2;
 
   // Buffered auto-lock fields — committed on Save
   const [localAutoLockEnabled, setLocalAutoLockEnabled] = createSignal(
@@ -48,6 +53,12 @@ export default function PreferencesSecurityTab(props: TabProps) {
   const [addPasswordError, setAddPasswordError] = createSignal<string | null>(null);
   const [addPasswordSuccess, setAddPasswordSuccess] = createSignal(false);
 
+  // Require-all-auth toggle
+  const [requireAllAuth, setRequireAllAuthLocal] = createSignal(
+    activeJournal()?.require_all_auth ?? false,
+  );
+  const [requireAllAuthError, setRequireAllAuthError] = createSignal<string | null>(null);
+
   // Re-init buffered + transient fields whenever the overlay re-opens
   createEffect(() => {
     if (props.isOpen()) {
@@ -68,6 +79,8 @@ export default function PreferencesSecurityTab(props: TabProps) {
       setAddPasswordConfirm('');
       setAddPasswordError(null);
       setAddPasswordSuccess(false);
+      setRequireAllAuthLocal(activeJournal()?.require_all_auth ?? false);
+      setRequireAllAuthError(null);
 
       if (authState() === 'unlocked') {
         loadAuthMethods().catch((err) => log.error('Failed to reload auth methods:', err));
@@ -225,6 +238,16 @@ export default function PreferencesSecurityTab(props: TabProps) {
       setRemovePassword('');
     } catch (err) {
       setRemoveError(mapTauriError(err, t));
+    }
+  };
+
+  const handleToggleRequireAllAuth = async (checked: boolean) => {
+    setRequireAllAuthError(null);
+    try {
+      await setRequireAllAuth(checked);
+      setRequireAllAuthLocal(checked);
+    } catch (err) {
+      setRequireAllAuthError(mapTauriError(err, t));
     }
   };
 
@@ -411,6 +434,39 @@ export default function PreferencesSecurityTab(props: TabProps) {
           </p>
         </div>
       </div>
+
+      {/* Require All Auth — hidden for auto-protected journals */}
+      <Show when={!isAutoProtected()}>
+        <div>
+          <h3 class="text-sm font-medium text-primary mb-3">
+            {t('prefs.security.requireAllAuthTitle')}
+          </h3>
+          <p class="text-xs text-tertiary mb-4 leading-relaxed">
+            {t('prefs.security.requireAllAuthHint')}
+          </p>
+          <Show
+            when={hasMultipleNonAutoMethods()}
+            fallback={
+              <p class="text-xs text-tertiary italic">
+                {t('prefs.security.requireAllAuthNeedsTwo')}
+              </p>
+            }
+          >
+            <label class="flex items-center gap-3">
+              <input
+                type="checkbox"
+                checked={requireAllAuth()}
+                onChange={(e) => handleToggleRequireAllAuth(e.currentTarget.checked)}
+                class="h-4 w-4 rounded border-primary text-blue-600 focus:ring-blue-500"
+              />
+              <span class="text-sm text-primary">{t('prefs.security.requireAllAuthLabel')}</span>
+            </label>
+            <Show when={requireAllAuthError()}>
+              <p class="mt-2 text-sm text-error">{requireAllAuthError()}</p>
+            </Show>
+          </Show>
+        </div>
+      </Show>
 
       {/* Change Password — only shown when a password slot exists */}
       <Show when={hasPasswordSlot()}>

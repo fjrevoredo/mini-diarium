@@ -198,6 +198,29 @@ export async function unlockWithKeypair(keyPath: string): Promise<void> {
   }
 }
 
+// Unlock with all auth methods simultaneously (multi-auth)
+export async function unlockAllMethods(credentials: tauri.MultiAuthCredential[]): Promise<void> {
+  try {
+    setError(null);
+    await tauri.unlockJournalAllMethods(credentials);
+    prepareUnlockedSession();
+    log.info('Journal unlocked via multi-auth');
+
+    const dates = await tauri.getAllEntryDates();
+    setEntryDates(dates);
+  } catch (err) {
+    const message = mapTauriError(err);
+    setError(message);
+    throw new Error(message, { cause: err });
+  }
+}
+
+// Enable/disable require-all-auth for the active journal
+export async function setRequireAllAuth(enabled: boolean): Promise<void> {
+  await tauri.setRequireAllAuth(enabled);
+  await loadJournals();
+}
+
 // Lock journal
 export async function lockJournal(): Promise<void> {
   try {

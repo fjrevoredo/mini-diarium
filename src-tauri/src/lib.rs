@@ -202,6 +202,8 @@ pub fn run() {
             commands::auth::register_password,
             commands::auth::register_keypair,
             commands::auth::remove_auth_method,
+            commands::auth::unlock_diary_all_methods,
+            commands::auth::set_require_all_auth,
             // Entries
             commands::entries::create_entry,
             commands::entries::save_entry,

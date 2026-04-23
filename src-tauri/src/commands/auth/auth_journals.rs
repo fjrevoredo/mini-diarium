@@ -47,6 +47,7 @@ fn add_journal_inner(
         name,
         path,
         auto_key: None,
+        require_all_auth: None,
     };
     journals.push(journal.clone());
 

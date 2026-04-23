@@ -32,6 +32,9 @@ Template:
 
 ## [0.4.19] - Unreleased
 
+### Added
+- **Mandatory multi-auth unlock setting**: journals can now require all configured authentication methods simultaneously at unlock time. A "Require All Authentication Methods" toggle in Preferences → Security (hidden for auto-protected journals and when fewer than two non-auto methods are registered) writes a `require_all_auth` flag to `config.json`. When active, `unlock_diary` and `unlock_diary_with_keypair` are blocked with a clear error; a new `unlock_diary_all_methods` backend command opens the DB with the first credential and verifies every remaining credential against the already-open connection before committing the session — no crypto changes, no schema migration. The lock screen switches to a combined password + key-file form for affected journals. Removing a non-auto auth method while the flag is active is blocked until the flag is disabled first.
+
 ### Fixed
 - **German locale regression**: German (`de`) was accidentally dropped from both the frontend locale map and the native menu translation table when Italian was added, causing all UI strings and native menus to silently fall back to English for users with German selected. Both wiring points are restored.
 - **Stale password requirement after password slot removal**: after removing the password auth slot (while retaining one or more keypair slots), `register_keypair` and `remove_auth_method` would fail with "No password auth method found". Both commands now gate the password requirement on whether a password slot actually exists — if none is present, being unlocked is sufficient (the same model used by `register_password`). Master key wrapping in `register_keypair` now always uses the session key (`db.key().as_bytes()`) rather than re-deriving it via the password slot. The "Change Password" section and the current-password field in "Add Key File" are now hidden in the Security preferences when no password slot exists.

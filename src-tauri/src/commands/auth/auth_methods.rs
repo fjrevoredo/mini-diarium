@@ -238,6 +238,32 @@ pub fn remove_auth_method(
         );
     }
 
+    // Guard: prevent removal if require_all_auth would be left with < 2 non-auto slots
+    {
+        let all_methods = crate::db::queries::list_auth_slots(db)?;
+        let non_auto_count = all_methods
+            .iter()
+            .filter(|m| m.slot_type != "auto")
+            .count();
+        let removing_non_auto = slot_type != "auto";
+        if removing_non_auto && non_auto_count <= 2 {
+            let active_id = crate::config::load_active_journal_id(&state.app_data_dir)
+                .unwrap_or_default();
+            let journals = crate::config::load_journals(&state.app_data_dir);
+            let require_all = journals
+                .iter()
+                .find(|j| j.id == active_id)
+                .and_then(|j| j.require_all_auth)
+                .unwrap_or(false);
+            if require_all {
+                return Err(
+                    "Disable multi-auth unlock before removing this authentication method."
+                        .to_string(),
+                );
+            }
+        }
+    }
+
     crate::db::queries::delete_auth_slot(db, slot_id)?;
     info!("Auth method {} removed", slot_id);
 
@@ -248,6 +274,36 @@ pub fn remove_auth_method(
         }
     }
 
+    Ok(())
+}
+
+/// Enables or disables the require-all-auth flag for the active journal.
+///
+/// When enabled, `unlock_diary` and `unlock_diary_with_keypair` are blocked; the
+/// caller must use `unlock_diary_all_methods` instead. Requires at least two
+/// non-auto auth methods to be registered.
+#[tauri::command]
+pub fn set_require_all_auth(enabled: bool, state: State<DiaryState>) -> Result<(), String> {
+    let db_state = state
+        .db
+        .lock()
+        .map_err(|_| "State lock poisoned".to_string())?;
+    let db = db_state.as_ref().ok_or("Journal must be unlocked")?;
+
+    if enabled {
+        let methods = crate::db::queries::list_auth_slots(db)?;
+        let non_auto = methods.iter().filter(|m| m.slot_type != "auto").count();
+        if non_auto < 2 {
+            return Err(
+                "Require-all-auth needs at least two non-auto authentication methods.".to_string(),
+            );
+        }
+    }
+
+    let active_id = crate::config::load_active_journal_id(&state.app_data_dir)
+        .ok_or("No active journal")?;
+    crate::config::set_journal_require_all_auth(&state.app_data_dir, &active_id, enabled)?;
+    info!("require_all_auth set to {} for journal {}", enabled, active_id);
     Ok(())
 }
 
