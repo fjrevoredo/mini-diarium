@@ -37,6 +37,7 @@ Template:
 
 ### Changed
 - **PHILOSOPHY.md test counts updated to v0.4.19**: The implementation guide (Part II) had stale numbers from v0.4.14. Updated to reflect the current test suite: backend 276 tests across 32 modules (was 265/30), frontend 229 tests across 22 files (was ~161/17+), Markdown export 38 tests (was 12), state modules 8 (was 6). Known-gap statement narrowed — auth screens and NotificationsOverlay now have partial coverage.
+- **`EditorPanel.tsx` refactored into three custom hooks**: the 675-LOC component became a 308-LOC shell plus three focused hooks under `src/components/layout/editor-panel/`. `useEditorEmptyCheck` owns the `editorIsEmpty` signal and the `editorHasImages` / `computeIsEmpty` helpers. `useEntryLifecycle` owns the `loadRequestId` / `saveRequestId` / `pendingCreationPromise` / `justCreatedEntryId` refs, the 500 ms debounced save, and the journal-lock cleanup callback. `useMultiEntryNav` owns the per-day navigation (prev/next/add/delete) and exports `fetchEntriesOrdered`. The three pre-existing logic-mock tests were renamed to match, and a new `EditorPanel.integration.test.tsx` adds four flow-level tests (load-then-type, switch-day-while-unsaved, delete-empty-on-nav, create-on-first-keystroke) driving the component through a minimal TipTap shim. Behaviour is unchanged — same races guarded, same debounce, same edge cases. See `docs/wip/TECHNICAL_REVIEW_PLAN_2026-04.md` M6.
 
 
 ## [0.4.18] - 19-04-2026

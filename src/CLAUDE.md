@@ -32,7 +32,15 @@ src/
 │   │   ├── MainLayout.tsx             # App shell (sidebar + editor)
 │   │   ├── Header.tsx                 # Top bar
 │   │   ├── Sidebar.tsx                # Calendar panel (search removed; see "Implementing Search")
-│   │   ├── EditorPanel.tsx            # Editor container
+│   │   ├── EditorPanel.tsx            # Editor shell — signals + effects + JSX (≤310 LOC)
+│   │   ├── EditorPanel.integration.test.tsx  # 4 end-to-end flows (load/switch/delete/create)
+│   │   ├── editor-panel/
+│   │   │   ├── useEditorEmptyCheck.ts       # editorIsEmpty signal + computeIsEmpty/editorHasImages
+│   │   │   ├── useEditorEmptyCheck.test.ts
+│   │   │   ├── useEntryLifecycle.ts         # load/save/create/delete + debouncedSave + lock-cleanup
+│   │   │   ├── useEntryLifecycle.test.ts
+│   │   │   ├── useMultiEntryNav.ts          # per-day navigate/add/delete + fetchEntriesOrdered
+│   │   │   └── useMultiEntryNav.test.ts
 │   │   └── MainLayout-event-listeners.test.tsx
 │   ├── overlays/
 │   │   ├── GoToDateOverlay.tsx        # Date picker dialog
