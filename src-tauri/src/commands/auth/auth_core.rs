@@ -16,8 +16,8 @@ pub enum MultiAuthCredential {
 }
 
 fn read_private_key_from_file(key_path: &str) -> Result<[u8; 32], String> {
-    let key_hex = std::fs::read_to_string(key_path)
-        .map_err(|e| format!("Failed to read key file: {}", e))?;
+    let key_hex =
+        std::fs::read_to_string(key_path).map_err(|e| format!("Failed to read key file: {}", e))?;
     let mut key_bytes_vec = hex::decode(key_hex.trim())
         .map_err(|_| "Invalid key file: expected hex-encoded private key".to_string())?;
     if key_bytes_vec.len() != 32 {
@@ -450,8 +450,8 @@ pub fn unlock_diary_all_methods(
     for credential in &credentials[1..] {
         match credential {
             MultiAuthCredential::Password { value } => {
-                let (slot_id, wrapped_key) =
-                    crate::db::queries::get_password_slot(&db_conn)?.ok_or("No password auth method found")?;
+                let (slot_id, wrapped_key) = crate::db::queries::get_password_slot(&db_conn)?
+                    .ok_or("No password auth method found")?;
                 let method = crate::auth::password::PasswordMethod::new(value.clone());
                 method
                     .unwrap_master_key(&wrapped_key)

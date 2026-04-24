@@ -241,14 +241,11 @@ pub fn remove_auth_method(
     // Guard: prevent removal if require_all_auth would be left with < 2 non-auto slots
     {
         let all_methods = crate::db::queries::list_auth_slots(db)?;
-        let non_auto_count = all_methods
-            .iter()
-            .filter(|m| m.slot_type != "auto")
-            .count();
+        let non_auto_count = all_methods.iter().filter(|m| m.slot_type != "auto").count();
         let removing_non_auto = slot_type != "auto";
         if removing_non_auto && non_auto_count <= 2 {
-            let active_id = crate::config::load_active_journal_id(&state.app_data_dir)
-                .unwrap_or_default();
+            let active_id =
+                crate::config::load_active_journal_id(&state.app_data_dir).unwrap_or_default();
             let journals = crate::config::load_journals(&state.app_data_dir);
             let require_all = journals
                 .iter()
@@ -300,10 +297,13 @@ pub fn set_require_all_auth(enabled: bool, state: State<DiaryState>) -> Result<(
         }
     }
 
-    let active_id = crate::config::load_active_journal_id(&state.app_data_dir)
-        .ok_or("No active journal")?;
+    let active_id =
+        crate::config::load_active_journal_id(&state.app_data_dir).ok_or("No active journal")?;
     crate::config::set_journal_require_all_auth(&state.app_data_dir, &active_id, enabled)?;
-    info!("require_all_auth set to {} for journal {}", enabled, active_id);
+    info!(
+        "require_all_auth set to {} for journal {}",
+        enabled, active_id
+    );
     Ok(())
 }
 

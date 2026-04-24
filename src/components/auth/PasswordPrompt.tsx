@@ -25,7 +25,7 @@ export default function PasswordPrompt() {
   const isAutoProtected = () =>
     journals().find((j) => j.id === activeJournalId())?.auto_protected ?? false;
   const requiresAllAuth = () =>
-    !!(journals().find((j) => j.id === activeJournalId())?.require_all_auth);
+    !!journals().find((j) => j.id === activeJournalId())?.require_all_auth;
 
   const handleAutoUnlock = async () => {
     setError(null);

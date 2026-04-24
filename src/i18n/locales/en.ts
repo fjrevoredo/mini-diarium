@@ -382,8 +382,7 @@ const en = {
       requireAllAuthHint:
         'When enabled, you must provide both your password and key file every time you unlock this journal. Similar to VeraCrypt combined-key mode.',
       requireAllAuthLabel: 'Require all authentication methods for unlock',
-      requireAllAuthNeedsTwo:
-        'Add at least two authentication methods to enable this option.',
+      requireAllAuthNeedsTwo: 'Add at least two authentication methods to enable this option.',
     },
     data: {
       currentLocationLabel: 'Current Location',
