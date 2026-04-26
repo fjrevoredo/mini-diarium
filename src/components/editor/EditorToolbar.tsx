@@ -69,6 +69,8 @@ export default function EditorToolbar(props: EditorToolbarProps) {
               ? 3
               : 0,
       );
+      const dir = editor.getAttributes('paragraph').dir ?? editor.getAttributes('heading').dir;
+      const isRtlDefault = dir === 'rtl';
       setActiveAlignment(
         editor.isActive({ textAlign: 'center' })
           ? 'center'
@@ -76,7 +78,11 @@ export default function EditorToolbar(props: EditorToolbarProps) {
             ? 'right'
             : editor.isActive({ textAlign: 'justify' })
               ? 'justify'
-              : 'left',
+              : editor.isActive({ textAlign: 'left' })
+                ? 'left'
+                : isRtlDefault
+                  ? 'right'
+                  : 'left',
       );
     };
 

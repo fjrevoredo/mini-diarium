@@ -15,11 +15,13 @@ function makeEditorMock(
       nameOrAttrs: string | Record<string, unknown>,
       attrs?: Record<string, unknown>,
     ) => boolean;
+    getAttributes?: (name: string) => Record<string, unknown>;
   } = {},
 ): Editor {
   const isActive =
     overrides.isActive ??
     ((_nameOrAttrs: string | Record<string, unknown>, _attrs?: Record<string, unknown>) => false);
+  const getAttributes = overrides.getAttributes ?? ((_name: string) => ({}));
 
   const run = vi.fn();
   const setTextAlign = vi.fn(() => ({ run }));
@@ -32,6 +34,7 @@ function makeEditorMock(
 
   return {
     isActive,
+    getAttributes,
     chain,
     on: vi.fn(),
     off: vi.fn(),
@@ -148,6 +151,35 @@ describe('EditorToolbar alignment buttons — active state', () => {
 
     const justifyBtn = container.querySelector('[aria-label="Justify"]') as HTMLButtonElement;
     expect(justifyBtn.className).toContain('btn-active');
+  });
+
+  it('marks Align right as active for RTL paragraph with no explicit textAlign', () => {
+    setPreferences({ advancedToolbar: true });
+    const editor = makeEditorMock({
+      isActive: () => false,
+      getAttributes: (name) => (name === 'paragraph' ? { dir: 'rtl' } : {}),
+    });
+    const { container } = renderWithI18n(() => <EditorToolbar editor={editor} />);
+
+    const rightBtn = container.querySelector('[aria-label="Align right"]') as HTMLButtonElement;
+    expect(rightBtn.className).toContain('btn-active');
+    const leftBtn = container.querySelector('[aria-label="Align left"]') as HTMLButtonElement;
+    expect(leftBtn.className).not.toContain('btn-active');
+  });
+
+  it('marks Align left as active when explicit text-align:left overrides dir=rtl', () => {
+    setPreferences({ advancedToolbar: true });
+    const editor = makeEditorMock({
+      isActive: (nameOrAttrs) =>
+        typeof nameOrAttrs === 'object' && nameOrAttrs.textAlign === 'left',
+      getAttributes: (name) => (name === 'paragraph' ? { dir: 'rtl' } : {}),
+    });
+    const { container } = renderWithI18n(() => <EditorToolbar editor={editor} />);
+
+    const leftBtn = container.querySelector('[aria-label="Align left"]') as HTMLButtonElement;
+    expect(leftBtn.className).toContain('btn-active');
+    const rightBtn = container.querySelector('[aria-label="Align right"]') as HTMLButtonElement;
+    expect(rightBtn.className).not.toContain('btn-active');
   });
 });
 
