@@ -36,7 +36,7 @@
 .ProseMirror p.is-editor-empty:first-child::before {
   color: var(--editor-placeholder-text);
   content: attr(data-placeholder);
-  float: left;
+  float: inline-start;
   height: 0;
   pointer-events: none;
 }
@@ -48,6 +48,7 @@
   line-height: 1.3;
   margin-top: 1.5rem;
   margin-bottom: 0.5rem;
+  unicode-bidi: plaintext;
 }
 
 .ProseMirror h1 {
@@ -64,11 +65,12 @@
 
 .ProseMirror p {
   margin: 0.75rem 0;
+  unicode-bidi: plaintext;
 }
 
 .ProseMirror ul,
 .ProseMirror ol {
-  padding-left: 1.5rem;
+  padding-inline-start: 1.5rem;
   margin: 0.75rem 0;
 }
 
@@ -100,8 +102,8 @@
 }
 
 .ProseMirror blockquote {
-  border-left: 3px solid var(--editor-blockquote-border);
-  padding-left: 1rem;
+  border-inline-start: 3px solid var(--editor-blockquote-border);
+  padding-inline-start: 1rem;
   margin: 1rem 0;
   color: var(--editor-blockquote-text);
 }

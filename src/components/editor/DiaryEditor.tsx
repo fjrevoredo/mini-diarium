@@ -159,6 +159,7 @@ export default function DiaryEditor(props: DiaryEditorProps) {
           class:
             'journal-editor-content prose prose-sm sm:prose lg:prose-lg xl:prose-xl focus:outline-none max-w-none',
           spellcheck: String(props.spellCheck ?? true),
+          dir: 'auto',
         },
         // Fallback for when Tauri's file-drop interception is disabled or absent.
         handleDrop(_view, event) {

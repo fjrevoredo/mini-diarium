@@ -42,6 +42,7 @@ export default function TitleEditor(props: TitleEditorProps) {
       onKeyDown={handleKeyDown}
       placeholder={props.placeholder || t('editor.titlePlaceholder')}
       spellcheck={props.spellCheck ?? true}
+      dir="auto"
       class="w-full border-0 bg-transparent px-0 text-2xl font-semibold text-primary placeholder-tertiary focus:outline-none focus:ring-0"
     />
   );
