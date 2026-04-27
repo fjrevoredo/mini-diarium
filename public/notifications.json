@@ -1,6 +1,16 @@
 {
   "entries": [
     {
+      "id": "v0.4.19-release",
+      "type": "release",
+      "version": "0.4.19",
+      "title": "What's new in 0.4.19",
+      "body": "New setting to require all authentication methods at once, native right-to-left text support in the editor, and a fix for German users seeing English interface text.",
+      "date": "2026-04-27",
+      "linkUrl": "https://github.com/fjrevoredo/mini-diarium/releases/tag/v0.4.19",
+      "linkLabel": "Full release notes"
+    },
+    {
       "id": "v0.4.17-release",
       "type": "release",
       "version": "0.4.17",
