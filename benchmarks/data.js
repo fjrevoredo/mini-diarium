@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1777283499566,
+  "lastUpdate": 1777288416292,
   "repoUrl": "https://github.com/fjrevoredo/mini-diarium",
   "entries": {
     "Benchmark": [
@@ -5129,6 +5129,138 @@ window.BENCHMARK_DATA = {
             "name": "count_words_html_500w",
             "value": 11896,
             "range": "± 712",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "committer": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "distinct": true,
+          "id": "79321005110c72eb0246f209e38546590c10b319",
+          "message": "fix for flathub",
+          "timestamp": "2026-04-27T13:05:51+02:00",
+          "tree_id": "61bd5e57a0167b0e359b3b5e1649b7c0240373fe",
+          "url": "https://github.com/fjrevoredo/mini-diarium/commit/79321005110c72eb0246f209e38546590c10b319"
+        },
+        "date": 1777288415313,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "auth_argon2/wrap_master_key",
+            "value": 91497524,
+            "range": "± 687278",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "auth_argon2/unwrap_master_key",
+            "value": 91467774,
+            "range": "± 855394",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_encrypt/1024",
+            "value": 2094,
+            "range": "± 4",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_encrypt/10240",
+            "value": 14110,
+            "range": "± 77",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_encrypt/102400",
+            "value": 169631,
+            "range": "± 543",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_decrypt/1024",
+            "value": 1599,
+            "range": "± 3",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_decrypt/10240",
+            "value": 13448,
+            "range": "± 28",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_decrypt/102400",
+            "value": 132838,
+            "range": "± 148",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_insert_entry",
+            "value": 1059223,
+            "range": "± 343845",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_update_entry",
+            "value": 861426,
+            "range": "± 70701",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_delete_entry",
+            "value": 947436,
+            "range": "± 86789",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_entries_by_date",
+            "value": 14115,
+            "range": "± 63",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_all_entry_dates/100",
+            "value": 34665,
+            "range": "± 179",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_all_entry_dates/500",
+            "value": 130188,
+            "range": "± 619",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_all_entries/100",
+            "value": 142970,
+            "range": "± 460",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_all_entries/500",
+            "value": 649896,
+            "range": "± 13772",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "count_words_plain_500w",
+            "value": 8823,
+            "range": "± 316",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "count_words_html_500w",
+            "value": 11486,
+            "range": "± 42",
             "unit": "ns/iter"
           }
         ]
