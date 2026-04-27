@@ -30,7 +30,7 @@ Template:
 
 # Versions
 
-## [0.4.19] - Unreleased
+## [0.4.19] - 27-04-2026
 
 ### Added
 - **Mandatory multi-auth unlock setting**: journals can now require all configured authentication methods simultaneously at unlock time. A "Require All Authentication Methods" toggle in Preferences → Security (hidden for auto-protected journals and when fewer than two non-auto methods are registered) writes a `require_all_auth` flag to `config.json`. When active, `unlock_diary` and `unlock_diary_with_keypair` are blocked with a clear error; a new `unlock_diary_all_methods` backend command opens the DB with the first credential and verifies every remaining credential against the already-open connection before committing the session — no crypto changes, no schema migration. The lock screen switches to a combined password + key-file form for affected journals. Removing a non-auto auth method while the flag is active is blocked until the flag is disabled first.
