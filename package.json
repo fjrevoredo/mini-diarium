@@ -34,6 +34,9 @@
     "bench": "vitest bench"
   },
   "license": "MIT",
+  "puppeteer": {
+    "skipDownload": true
+  },
   "dependencies": {
     "@kobalte/core": "^0.13.11",
     "@solid-primitives/i18n": "^2.2.1",
