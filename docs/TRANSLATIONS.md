@@ -73,7 +73,17 @@ bun run validate:locales
 
 It will list any missing keys (translation incomplete) or extra keys (typo in key name).
 
-### 5. Open a pull request
+### 5. Sync the language list
+
+Run the language-list sync script so README.md and the website reflect the new locale:
+
+```bash
+bun run sync-languages
+```
+
+Commit the updated files alongside your JSON translation.
+
+### 6. Open a pull request
 
 Submit a PR with your JSON file. Title it `i18n: add <Language> translation` (e.g. `i18n: add German translation`). Include in the PR description:
 - Your language name and BCP 47 tag

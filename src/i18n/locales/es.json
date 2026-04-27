@@ -111,7 +111,9 @@
       "openFilePickerError": "Error al abrir el selector de archivos",
       "passwordRequired": "La contraseña es obligatoria",
       "autoUnlocking": "Abriendo diario\u2026",
-      "autoUnlockFailed": "No se pudo desbloquear automáticamente este diario. Es posible que falte la clave local. Puedes añadir una contraseña en Preferencias."
+      "autoUnlockFailed": "No se pudo desbloquear automáticamente este diario. Es posible que falte la clave local. Puedes añadir una contraseña en Preferencias.",
+      "multiAuthAllRequired": "All authentication credentials must be provided.",
+      "multiAuthLoadError": "Failed to load authentication methods."
     },
     "creation": {
       "title": "Bienvenido a Mini Diarium",

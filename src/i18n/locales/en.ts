@@ -147,6 +147,8 @@ const en = {
       passwordRequired: 'Password is required',
       multiAuthNote: 'This journal requires all authentication methods.',
       multiAuthBothRequired: 'Both a password and a key file are required.',
+      multiAuthAllRequired: 'All authentication credentials must be provided.',
+      multiAuthLoadError: 'Failed to load authentication methods.',
       autoUnlocking: 'Opening journal\u2026',
       autoUnlockFailed:
         'Could not auto-unlock this journal. The local key may be missing. You can add a password in Preferences.',

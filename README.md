@@ -351,7 +351,16 @@ For maintainers adding official plugins, see [docs/BUILTIN_PLUGIN_GUIDE.md](docs
 
 ### Translations
 
-Mini Diarium currently ships in English only. If you'd like to add support for another language, see [docs/TRANSLATIONS.md](docs/TRANSLATIONS.md) for instructions on creating a locale file and submitting a PR.
+Mini Diarium ships in the following languages:
+
+<!-- supported-languages-start -->
+- English
+- Spanish (Español)
+- German (Deutsch)
+- Italian (Italiano)
+<!-- supported-languages-end -->
+
+If you'd like to add support for another language, see [docs/TRANSLATIONS.md](docs/TRANSLATIONS.md) for instructions on creating a locale file and submitting a PR.
 
 ## Releasing
 

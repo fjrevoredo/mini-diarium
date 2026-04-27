@@ -59,6 +59,16 @@ export interface AuthMethodInfo {
   last_used: string | null;
 }
 
+export interface AuthSlotPeek {
+  id: number;
+  slot_type: string;
+  label: string;
+}
+
+export async function peekAuthSlotTypes(): Promise<AuthSlotPeek[]> {
+  return await invoke('peek_auth_slot_types');
+}
+
 export interface KeypairFiles {
   public_key_hex: string;
   private_key_hex: string;

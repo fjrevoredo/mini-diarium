@@ -197,6 +197,7 @@ pub fn run() {
             // Auth - method management
             commands::auth::verify_password,
             commands::auth::list_auth_methods,
+            commands::auth::peek_auth_slot_types,
             commands::auth::generate_keypair,
             commands::auth::write_key_file,
             commands::auth::register_password,

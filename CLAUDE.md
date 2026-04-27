@@ -69,7 +69,7 @@ Static marketing site — plain HTML/CSS/JS. Deploy via Coolify using `website/d
 
 ## Command Registry
 
-All 51 registered Tauri commands (source: `lib.rs`). Rust names use `snake_case`; frontend wrappers in `src/lib/tauri.ts` use `camelCase`.
+All 52 registered Tauri commands (source: `lib.rs`). Rust names use `snake_case`; frontend wrappers in `src/lib/tauri.ts` use `camelCase`.
 
 | Module | Rust Command | Frontend Wrapper | Description |
 |--------|-------------|-----------------|-------------|
@@ -95,6 +95,7 @@ All 51 registered Tauri commands (source: `lib.rs`). Rust names use `snake_case`
 | auth | `remove_auth_method` | `removeAuthMethod(slotId, currentPassword)` | Remove auth slot (guards last) |
 | auth | `unlock_diary_all_methods` | `unlockJournalAllMethods(credentials)` | Unlock with all auth methods simultaneously (multi-auth) |
 | auth | `set_require_all_auth` | `setRequireAllAuth(enabled)` | Enable/disable require-all-auth for the active journal |
+| auth | `peek_auth_slot_types` | `peekAuthSlotTypes()` | Read auth slot types from locked DB (no unlock required); used by multi-auth unlock form |
 | auth | `list_journals` | `listJournals()` | List configured journals from config.json |
 | auth | `get_active_journal_id` | `getActiveJournalId()` | Get active journal ID |
 | auth | `add_journal` | `addJournal(name, path)` | Add a new journal entry to config |

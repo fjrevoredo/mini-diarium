@@ -18,6 +18,7 @@ Before starting the release process:
 - [ ] CI/CD pipeline passing on master
 - [ ] No known P0/P1 bugs
 - [ ] CHANGELOG.md updated with release notes
+- [ ] Run `bun run sync-languages` — regenerate the language list in README.md and website/index.html
 - [ ] `public/notifications.json` updated — add a new entry (type `"release"`, today's date, version matching the tag) so users see the release notes in the notification center
 - [ ] Create `latest-changelog.md` from `latest-changelog.example.md` and fill it with the exact release body to publish
 - [ ] Philosophy alignment reviewed for unreleased changelog items against `PHILOSOPHY.md`
