@@ -28,6 +28,7 @@
 
 ## Latest Articles
 
+- Can AI Access Your Journal? Cloud Storage and the Case for Local: https://mini-diarium.com/blog/journal-app-ai-privacy/
 - Mini Diary Alternative: A Private Offline Desktop Journal: https://mini-diarium.com/blog/mini-diary-alternative/
 - Journal App Without Cloud: What Actually Matters: https://mini-diarium.com/blog/journal-app-without-cloud/
 - Day One Alternative for Private Offline Journaling: https://mini-diarium.com/blog/day-one-alternative-for-private-offline-journaling/

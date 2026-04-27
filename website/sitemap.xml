@@ -2,15 +2,19 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://mini-diarium.com/</loc>
-    <lastmod>2026-04-05</lastmod>
+    <lastmod>2026-04-27</lastmod>
   </url>
   <url>
     <loc>https://mini-diarium.com/encrypted-journal/</loc>
-    <lastmod>2026-04-19</lastmod>
+    <lastmod>2026-04-27</lastmod>
   </url>
   <url>
     <loc>https://mini-diarium.com/blog/</loc>
-    <lastmod>2026-04-05</lastmod>
+    <lastmod>2026-04-27</lastmod>
+  </url>
+  <url>
+    <loc>https://mini-diarium.com/blog/journal-app-ai-privacy/</loc>
+    <lastmod>2026-04-27</lastmod>
   </url>
   <url>
     <loc>https://mini-diarium.com/blog/mini-diary-alternative/</loc>
