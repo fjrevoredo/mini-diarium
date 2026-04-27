@@ -108,6 +108,13 @@ pub fn generate_keypair() -> Result<crate::auth::KeypairFiles, String> {
     })
 }
 
+/// Derives the X25519 public key from a private key. Used for slot lookup during multi-auth.
+pub fn derive_public_key(private_key: [u8; 32]) -> [u8; 32] {
+    let secret = StaticSecret::from(private_key);
+    let public = PublicKey::from(&secret);
+    *public.as_bytes()
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

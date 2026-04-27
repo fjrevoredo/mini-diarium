@@ -7,15 +7,23 @@ import { renderWithI18n } from '../../test/i18n-test-utils';
 const mocks = vi.hoisted(() => ({
   unlockJournal: vi.fn(),
   unlockWithKeypair: vi.fn(),
+  unlockAllMethods: vi.fn(),
   goToJournalPicker: vi.fn(),
-  journals: vi.fn(() => [{ id: 'j1', name: 'My Journal', path: '/tmp' }]),
+  peekAuthSlotTypes: vi.fn(),
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  journals: vi.fn(() => [{ id: 'j1', name: 'My Journal', path: '/tmp' }] as any[]),
   activeJournalId: vi.fn(() => 'j1'),
 }));
 
 vi.mock('../../state/auth', () => ({
   unlockJournal: mocks.unlockJournal,
   unlockWithKeypair: mocks.unlockWithKeypair,
+  unlockAllMethods: mocks.unlockAllMethods,
   goToJournalPicker: mocks.goToJournalPicker,
+}));
+
+vi.mock('../../lib/tauri', () => ({
+  peekAuthSlotTypes: () => mocks.peekAuthSlotTypes(),
 }));
 
 vi.mock('../../state/journals', () => ({
@@ -36,7 +44,15 @@ describe('PasswordPrompt component', () => {
     vi.clearAllMocks();
     mocks.unlockJournal.mockResolvedValue(undefined);
     mocks.unlockWithKeypair.mockResolvedValue(undefined);
+    mocks.unlockAllMethods.mockResolvedValue(undefined);
+    mocks.peekAuthSlotTypes.mockResolvedValue([]);
   });
+
+  function setMultiAuthJournal() {
+    mocks.journals.mockReturnValue([
+      { id: 'j1', name: 'My Journal', path: '/tmp', require_all_auth: true, auto_protected: false },
+    ]);
+  }
 
   it('renders password input with correct testid and type', () => {
     renderWithI18n(() => <PasswordPrompt />);
@@ -82,5 +98,42 @@ describe('PasswordPrompt component', () => {
 
     expect(screen.getByText('Private Key File')).toBeInTheDocument();
     expect(screen.getByText('Browse')).toBeInTheDocument();
+  });
+
+  it('multi-auth: renders password and keypair inputs for mixed slots', async () => {
+    setMultiAuthJournal();
+    mocks.peekAuthSlotTypes.mockResolvedValue([
+      { id: 1, slot_type: 'password', label: 'Password' },
+      { id: 2, slot_type: 'keypair', label: 'My Key' },
+    ]);
+    renderWithI18n(() => <PasswordPrompt />);
+    await vi.waitFor(() => {
+      expect(screen.getByTestId('password-unlock-input')).toBeInTheDocument();
+      expect(screen.getByText('My Key')).toBeInTheDocument();
+    });
+  });
+
+  it('multi-auth: renders only keypair pickers when no password slot exists', async () => {
+    setMultiAuthJournal();
+    mocks.peekAuthSlotTypes.mockResolvedValue([
+      { id: 2, slot_type: 'keypair', label: 'Key A' },
+      { id: 3, slot_type: 'keypair', label: 'Key B' },
+    ]);
+    renderWithI18n(() => <PasswordPrompt />);
+    await vi.waitFor(() => {
+      expect(screen.queryByTestId('password-unlock-input')).not.toBeInTheDocument();
+      expect(screen.getByText('Key A')).toBeInTheDocument();
+      expect(screen.getByText('Key B')).toBeInTheDocument();
+      expect(screen.getAllByText('Browse')).toHaveLength(2);
+    });
+  });
+
+  it('multi-auth: shows error when peekAuthSlotTypes rejects', async () => {
+    setMultiAuthJournal();
+    mocks.peekAuthSlotTypes.mockRejectedValueOnce(new Error('db error'));
+    renderWithI18n(() => <PasswordPrompt />);
+    await vi.waitFor(() => {
+      expect(screen.getByText('Failed to load authentication methods.')).toBeInTheDocument();
+    });
   });
 });

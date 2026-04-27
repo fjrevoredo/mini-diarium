@@ -145,6 +145,10 @@ const en = {
       selectKeyFileError: 'Please select a key file',
       openFilePickerError: 'Failed to open file picker',
       passwordRequired: 'Password is required',
+      multiAuthNote: 'This journal requires all authentication methods.',
+      multiAuthBothRequired: 'Both a password and a key file are required.',
+      multiAuthAllRequired: 'All authentication credentials must be provided.',
+      multiAuthLoadError: 'Failed to load authentication methods.',
       autoUnlocking: 'Opening journal\u2026',
       autoUnlockFailed:
         'Could not auto-unlock this journal. The local key may be missing. You can add a password in Preferences.',
@@ -376,6 +380,11 @@ const en = {
       keypairLabelRequired: 'Label is required',
       addPasswordBothRequired: 'Both fields are required',
       addPasswordMismatch: 'Passwords do not match',
+      requireAllAuthTitle: 'Require All Authentication Methods',
+      requireAllAuthHint:
+        'When enabled, you must provide both your password and key file every time you unlock this journal. Similar to VeraCrypt combined-key mode.',
+      requireAllAuthLabel: 'Require all authentication methods for unlock',
+      requireAllAuthNeedsTwo: 'Add at least two authentication methods to enable this option.',
     },
     data: {
       currentLocationLabel: 'Current Location',

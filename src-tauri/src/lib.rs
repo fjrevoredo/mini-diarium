@@ -197,11 +197,14 @@ pub fn run() {
             // Auth - method management
             commands::auth::verify_password,
             commands::auth::list_auth_methods,
+            commands::auth::peek_auth_slot_types,
             commands::auth::generate_keypair,
             commands::auth::write_key_file,
             commands::auth::register_password,
             commands::auth::register_keypair,
             commands::auth::remove_auth_method,
+            commands::auth::unlock_diary_all_methods,
+            commands::auth::set_require_all_auth,
             // Entries
             commands::entries::create_entry,
             commands::entries::save_entry,
@@ -222,11 +225,6 @@ pub fn run() {
             // Files (image embedding support + markdown import)
             commands::files::read_file_bytes,
             commands::files::read_text_file,
-            // Import
-            commands::import::import_minidiary_json,
-            commands::import::import_dayone_json,
-            commands::import::import_dayone_txt,
-            commands::import::import_jrnl_json,
             // Export
             commands::export::export_json,
             commands::export::export_markdown,

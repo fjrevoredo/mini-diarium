@@ -37,7 +37,7 @@ import {
   setupAuthEventListeners,
   unlockJournal,
 } from './auth';
-import { entryDates, setCurrentEntry, setEntryDates, setIsLoading, setIsSaving } from './entries';
+import { entryDates, setEntryDates, setIsSaving } from './entries';
 import { searchQuery, setIsSearching, setSearchQuery, setSearchResults } from './search';
 import { resetSessionState } from './session';
 import {
@@ -68,17 +68,7 @@ function primeTransientState(): void {
   setIsImportOpen(true);
   setIsExportOpen(true);
   setIsAboutOpen(true);
-  setCurrentEntry({
-    id: 1,
-    date: '2024-01-15',
-    title: 'Title',
-    text: '<p>Body</p>',
-    word_count: 1,
-    date_created: '2024-01-15T00:00:00Z',
-    date_updated: '2024-01-15T00:00:00Z',
-  });
   setEntryDates(['2024-01-15']);
-  setIsLoading(true);
   setIsSaving(true);
   setSearchQuery('query');
   setSearchResults([{ date: '2024-01-15', title: 'Title', snippet: 'Body' }]);

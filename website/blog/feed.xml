@@ -5,7 +5,14 @@
     <link>https://mini-diarium.com/blog/</link>
     <description>Static articles about encrypted journals, private diary apps, offline journaling, and local-first software.</description>
     <language>en-us</language>
-    <lastBuildDate>Sun, 05 Apr 2026 00:00:00 GMT</lastBuildDate>
+    <lastBuildDate>Mon, 27 Apr 2026 00:00:00 GMT</lastBuildDate>
+  <item>
+    <title>Can AI Access Your Journal? Cloud Storage and the Case for Local</title>
+    <link>https://mini-diarium.com/blog/journal-app-ai-privacy/</link>
+    <guid isPermaLink="true">https://mini-diarium.com/blog/journal-app-ai-privacy/</guid>
+    <description>Cloud journaling apps can expose your entries to AI training, policy updates, or server-side analysis. An offline, local-first journal provides a structural guarantee that cloud privacy settings cannot match.</description>
+    <pubDate>Mon, 27 Apr 2026 00:00:00 GMT</pubDate>
+  </item>
   <item>
     <title>Mini Diary Alternative: A Private Offline Desktop Journal</title>
     <link>https://mini-diarium.com/blog/mini-diary-alternative/</link>

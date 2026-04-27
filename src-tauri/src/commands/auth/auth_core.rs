@@ -8,6 +8,27 @@ use zeroize::{Zeroize, Zeroizing};
 
 use super::DiaryState;
 
+#[derive(Debug, serde::Deserialize)]
+#[serde(tag = "type", rename_all = "snake_case")]
+pub enum MultiAuthCredential {
+    Password { value: String },
+    Keypair { key_path: String },
+}
+
+fn read_private_key_from_file(key_path: &str) -> Result<[u8; 32], String> {
+    let key_hex =
+        std::fs::read_to_string(key_path).map_err(|e| format!("Failed to read key file: {}", e))?;
+    let mut key_bytes_vec = hex::decode(key_hex.trim())
+        .map_err(|_| "Invalid key file: expected hex-encoded private key".to_string())?;
+    if key_bytes_vec.len() != 32 {
+        return Err("Invalid key file: expected 32-byte (64 hex char) private key".to_string());
+    }
+    let mut private_key = [0u8; 32];
+    private_key.copy_from_slice(&key_bytes_vec);
+    key_bytes_vec.zeroize();
+    Ok(private_key)
+}
+
 /// Creates a new encrypted diary database
 #[tauri::command]
 pub fn create_diary(
@@ -56,6 +77,22 @@ pub fn unlock_diary(
         .map_err(|_| "State lock poisoned".to_string())?
         .clone();
 
+    // Block single-method unlock when require_all_auth is active
+    {
+        let active_id = crate::config::load_active_journal_id(&state.app_data_dir)
+            .ok_or("No active journal")?;
+        let journals = crate::config::load_journals(&state.app_data_dir);
+        if journals
+            .iter()
+            .any(|j| j.id == active_id && j.require_all_auth.unwrap_or(false))
+        {
+            return Err(
+                "This journal requires all authentication methods. Use the combined unlock."
+                    .to_string(),
+            );
+        }
+    }
+
     if !db_path.exists() {
         return Err("No journal found. Please create one first.".to_string());
     }
@@ -96,24 +133,27 @@ pub fn unlock_diary_with_keypair(
         .map_err(|_| "State lock poisoned".to_string())?
         .clone();
 
+    // Block single-method unlock when require_all_auth is active
+    {
+        let active_id = crate::config::load_active_journal_id(&state.app_data_dir)
+            .ok_or("No active journal")?;
+        let journals = crate::config::load_journals(&state.app_data_dir);
+        if journals
+            .iter()
+            .any(|j| j.id == active_id && j.require_all_auth.unwrap_or(false))
+        {
+            return Err(
+                "This journal requires all authentication methods. Use the combined unlock."
+                    .to_string(),
+            );
+        }
+    }
+
     if !db_path.exists() {
         return Err("No journal found. Please create one first.".to_string());
     }
 
-    // Read private key hex from file
-    let key_hex = std::fs::read_to_string(&key_path)
-        .map_err(|e| format!("Failed to read key file: {}", e))?;
-    let mut key_bytes_vec = hex::decode(key_hex.trim())
-        .map_err(|_| "Invalid key file: expected hex-encoded private key".to_string())?;
-
-    if key_bytes_vec.len() != 32 {
-        return Err("Invalid key file: expected 32-byte (64 hex char) private key".to_string());
-    }
-
-    let mut private_key = [0u8; 32];
-    private_key.copy_from_slice(&key_bytes_vec);
-    key_bytes_vec.zeroize();
-
+    let mut private_key = read_private_key_from_file(&key_path)?;
     let db_conn = open_database_with_keypair(&db_path, private_key, &backups_dir)?;
     private_key.zeroize();
 
@@ -353,6 +393,95 @@ pub fn unlock_diary_auto(state: State<DiaryState>, app: AppHandle<Wry>) -> Resul
     *db_state = Some(db_conn);
 
     info!("Local-only journal unlocked");
+
+    if let Err(e) = crate::backup::backup_and_rotate(&db_path, &backups_dir) {
+        warn!("Failed to create backup: {}", e);
+    }
+
+    crate::menu::update_menu_lock_state(&app, false);
+    Ok(())
+}
+
+/// Unlocks an existing diary by verifying ALL provided credentials simultaneously.
+///
+/// Opens the DB with the first credential, then verifies each remaining credential
+/// against the already-open connection. The connection is only committed to
+/// `DiaryState` once every slot is satisfied. This enforces combined password + key
+/// file unlock without any DB schema changes.
+#[tauri::command]
+pub fn unlock_diary_all_methods(
+    credentials: Vec<MultiAuthCredential>,
+    state: State<DiaryState>,
+    app: AppHandle<Wry>,
+) -> Result<(), String> {
+    if credentials.is_empty() {
+        return Err("No credentials provided".to_string());
+    }
+
+    let db_path = state
+        .db_path
+        .lock()
+        .map_err(|_| "State lock poisoned".to_string())?
+        .clone();
+    let backups_dir = state
+        .backups_dir
+        .lock()
+        .map_err(|_| "State lock poisoned".to_string())?
+        .clone();
+
+    if !db_path.exists() {
+        return Err("No journal found. Please create one first.".to_string());
+    }
+
+    // Open DB with first credential
+    let db_conn = match &credentials[0] {
+        MultiAuthCredential::Password { value } => {
+            open_database(&db_path, value.clone(), &backups_dir)?
+        }
+        MultiAuthCredential::Keypair { key_path } => {
+            let mut private_key = read_private_key_from_file(key_path)?;
+            let conn = open_database_with_keypair(&db_path, private_key, &backups_dir)?;
+            private_key.zeroize();
+            conn
+        }
+    };
+
+    // Verify each remaining credential against the open DB's auth slots
+    for credential in &credentials[1..] {
+        match credential {
+            MultiAuthCredential::Password { value } => {
+                let (slot_id, wrapped_key) = crate::db::queries::get_password_slot(&db_conn)?
+                    .ok_or("No password auth method found")?;
+                let method = crate::auth::password::PasswordMethod::new(value.clone());
+                method
+                    .unwrap_master_key(&wrapped_key)
+                    .map_err(|_| "Incorrect password".to_string())?;
+                crate::db::queries::update_slot_last_used(db_conn.conn(), slot_id)?;
+            }
+            MultiAuthCredential::Keypair { key_path } => {
+                let mut private_key = read_private_key_from_file(key_path)?;
+                let pub_key = crate::auth::keypair::derive_public_key(private_key);
+                let (slot_id, wrapped_key) =
+                    crate::db::queries::get_keypair_slot_by_pubkey(&db_conn, &pub_key)?
+                        .ok_or("Key file does not match any registered key")?;
+                let method = crate::auth::keypair::PrivateKeyMethod { private_key };
+                method
+                    .unwrap_master_key(&wrapped_key)
+                    .map_err(|_| "Key file authentication failed".to_string())?;
+                private_key.zeroize();
+                crate::db::queries::update_slot_last_used(db_conn.conn(), slot_id)?;
+            }
+        }
+    }
+
+    // All credentials verified — commit the connection
+    let mut db_state = state
+        .db
+        .lock()
+        .map_err(|_| "State lock poisoned".to_string())?;
+    *db_state = Some(db_conn);
+
+    info!("Journal unlocked via multi-auth");
 
     if let Err(e) = crate::backup::backup_and_rotate(&db_path, &backups_dir) {
         warn!("Failed to create backup: {}", e);

@@ -3,7 +3,7 @@ title: Writing Entries
 slug: writing-entries
 description: How to create, edit, format, and delete journal entries using the rich text editor.
 order: 2
-updated: 2026-04-16
+updated: 2026-04-26
 tags: editor, formatting, entries, writing
 ---
 
@@ -54,6 +54,18 @@ You can add images to your entries in three ways:
 - Use the **Insert Image** button in the advanced toolbar to pick a file.
 
 Images are embedded directly into the entry as base64 data and are stored encrypted alongside your text. Supported formats are JPG, PNG, GIF, WebP, and BMP. Images are automatically resized to a maximum of 1200×1200 pixels before embedding.
+
+## Right-to-Left and Bidirectional Text
+
+Mini Diarium supports right-to-left (RTL) writing in Arabic, Hebrew, Syriac, and other RTL scripts. Direction is handled per block — each paragraph and heading carries its own `dir` attribute — so you can freely mix RTL and LTR content in the same entry.
+
+**Auto-detection**: as you type, the editor reads the first strongly-directional character in each paragraph or heading and sets the direction automatically. Arabic and Hebrew script trigger `dir="rtl"`; Latin script triggers `dir="ltr"`. Once a block's direction is set it is locked and will not change if you later add neutral characters (numbers, punctuation, emoji) to the same block.
+
+**Manual override**: press `Ctrl+Shift+D` (or `Cmd+Shift+D` on macOS) to toggle the current block between RTL and LTR. This is useful for paragraphs that start with neutral characters such as numbers or quotation marks that the auto-detector cannot classify.
+
+**Alignment toolbar**: when the cursor is in an RTL paragraph, the alignment toolbar reflects the browser's actual rendering and shows **Right** as the active alignment (not Left). Clicking an alignment button writes an explicit `text-align` override as normal.
+
+**Persistence**: the `dir` attribute is stored in the encrypted HTML content of each entry, so direction is preserved across save, export, and re-open cycles.
 
 ## Importing a Markdown File
 

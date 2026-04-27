@@ -6,7 +6,7 @@ import Header from './Header';
 import Sidebar from './Sidebar';
 import EditorPanel from './EditorPanel';
 import GoToDateOverlay from '../overlays/GoToDateOverlay';
-import PreferencesOverlay from '../overlays/PreferencesOverlay';
+import PreferencesOverlay from '../overlays/preferences/PreferencesOverlay';
 import StatsOverlay from '../overlays/StatsOverlay';
 import ImportOverlay from '../overlays/ImportOverlay';
 import ExportOverlay from '../overlays/ExportOverlay';

@@ -69,7 +69,7 @@ Static marketing site — plain HTML/CSS/JS. Deploy via Coolify using `website/d
 
 ## Command Registry
 
-All 53 registered Tauri commands (source: `lib.rs`). Rust names use `snake_case`; frontend wrappers in `src/lib/tauri.ts` use `camelCase`.
+All 52 registered Tauri commands (source: `lib.rs`). Rust names use `snake_case`; frontend wrappers in `src/lib/tauri.ts` use `camelCase`.
 
 | Module | Rust Command | Frontend Wrapper | Description |
 |--------|-------------|-----------------|-------------|
@@ -93,6 +93,9 @@ All 53 registered Tauri commands (source: `lib.rs`). Rust names use `snake_case`
 | auth | `register_password` | `registerPassword(newPassword)` | Register a password auth slot (requires journal unlocked) |
 | auth | `register_keypair` | `registerKeypair(currentPassword, publicKeyHex, label)` | Add keypair auth slot |
 | auth | `remove_auth_method` | `removeAuthMethod(slotId, currentPassword)` | Remove auth slot (guards last) |
+| auth | `unlock_diary_all_methods` | `unlockJournalAllMethods(credentials)` | Unlock with all auth methods simultaneously (multi-auth) |
+| auth | `set_require_all_auth` | `setRequireAllAuth(enabled)` | Enable/disable require-all-auth for the active journal |
+| auth | `peek_auth_slot_types` | `peekAuthSlotTypes()` | Read auth slot types from locked DB (no unlock required); used by multi-auth unlock form |
 | auth | `list_journals` | `listJournals()` | List configured journals from config.json |
 | auth | `get_active_journal_id` | `getActiveJournalId()` | Get active journal ID |
 | auth | `add_journal` | `addJournal(name, path)` | Add a new journal entry to config |
@@ -114,10 +117,6 @@ All 53 registered Tauri commands (source: `lib.rs`). Rust names use `snake_case`
 | nav | `navigate_previous_month` | `navigatePreviousMonth(currentDate)` | Same day, previous month |
 | nav | `navigate_next_month` | `navigateNextMonth(currentDate)` | Same day, next month |
 | stats | `get_statistics` | `getStatistics()` | Aggregate stats (streaks, counts, words) |
-| import | `import_minidiary_json` | `importMiniDiaryJson(filePath)` | Parse + import Mini Diary format |
-| import | `import_dayone_json` | `importDayOneJson(filePath)` | Parse + import Day One JSON format |
-| import | `import_dayone_txt` | `importDayOneTxt(filePath)` | Parse + import Day One TXT format |
-| import | `import_jrnl_json` | `importJrnlJson(filePath)` | Parse + import jrnl JSON format |
 | export | `export_json` | `exportJson(filePath)` | Export all entries as JSON |
 | export | `export_markdown` | `exportMarkdown(filePath)` | Export all entries as Markdown |
 | plugin | `list_import_plugins` | `listImportPlugins()` | List all import plugins (built-in + Rhai) |
@@ -191,6 +190,10 @@ bun run bench                           # Frontend benchmarks
 - **Never** send data over the network — no analytics, no telemetry, no update checks
 
 See [Backend guide](src-tauri/CLAUDE.md) for the full auth architecture and per-command security requirements.
+
+### Architecture decision records
+
+- [`docs/decisions/2026-04-passwordless-journal.md`](docs/decisions/2026-04-passwordless-journal.md) — Local-only (passwordless) journals: why Option B-prime (device-bound key in `config.json`) shipped over Option C (OS keychain), threat model, and the migration path if keychain support is ever built.
 
 ## Known Issues / Technical Debt
 

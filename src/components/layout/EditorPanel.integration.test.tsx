@@ -1,0 +1,297 @@
+/* eslint-disable solid/reactivity -- intentional test shim, not a reactive component */
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { screen, waitFor } from '@solidjs/testing-library';
+import { renderWithI18n } from '../../test/i18n-test-utils';
+import type { DiaryEntry } from '../../lib/tauri';
+
+/**
+ * Integration tests for EditorPanel covering the four flows called out in the
+ * M6 review: load-then-type, switch-day-while-unsaved, delete-empty-on-nav,
+ * create-on-first-keystroke.
+ *
+ * TipTap refuses to mount in jsdom, so `DiaryEditor` is replaced with a minimal
+ * shim that honours `content`, `onUpdate`, `onSetContent`, and `onEditorReady`.
+ * A shared `editorBus` lets tests synchronously drive callbacks the way TipTap
+ * would in the real app.
+ */
+
+// ── Shared editor bus + tauri mocks (hoisted so vi.mock sees them) ────────────
+
+const bus = vi.hoisted(() => {
+  const state = {
+    onUpdate: null as ((html: string) => void) | null,
+    onSetContent: null as ((isEmpty: boolean) => void) | null,
+    lastContent: '' as string,
+    mockEditor: null as unknown as {
+      isEmpty: boolean;
+      isDestroyed: boolean;
+      getHTML: () => string;
+      getText: () => string;
+      commands: { setContent: (html: string) => void; focus: () => void };
+      chain: () => {
+        focus: () => { setHorizontalRule: () => { insertContent: () => { run: () => void } } };
+      };
+      state: { doc: { descendants: () => void } };
+    },
+  };
+  return state;
+});
+
+const mocks = vi.hoisted(() => ({
+  createEntry: vi.fn(),
+  saveEntry: vi.fn(),
+  deleteEntry: vi.fn(),
+  deleteEntryIfEmpty: vi.fn(),
+  getEntriesForDate: vi.fn(),
+  getAllEntryDates: vi.fn(),
+  readTextFile: vi.fn(),
+  confirm: vi.fn(),
+}));
+
+vi.mock('../../lib/tauri', async () => {
+  const actual = await vi.importActual<typeof import('../../lib/tauri')>('../../lib/tauri');
+  return {
+    ...actual,
+    createEntry: mocks.createEntry,
+    saveEntry: mocks.saveEntry,
+    deleteEntry: mocks.deleteEntry,
+    deleteEntryIfEmpty: mocks.deleteEntryIfEmpty,
+    getEntriesForDate: mocks.getEntriesForDate,
+    getAllEntryDates: mocks.getAllEntryDates,
+    readTextFile: mocks.readTextFile,
+  };
+});
+
+vi.mock('@tauri-apps/plugin-dialog', () => ({
+  open: vi.fn(() => Promise.resolve(null)),
+  confirm: mocks.confirm,
+}));
+
+vi.mock('../editor/DiaryEditor', () => {
+  return {
+    default: (props: {
+      content: string;
+      onUpdate?: (html: string) => void;
+      onSetContent?: (isEmpty: boolean) => void;
+      onEditorReady?: (editor: unknown) => void;
+    }) => {
+      bus.onUpdate = props.onUpdate ?? null;
+      bus.onSetContent = props.onSetContent ?? null;
+
+      // Wire a mock editor that mirrors the surface EditorPanel reads.
+      const editor = {
+        isEmpty: !props.content || props.content === '<p></p>',
+        isDestroyed: false,
+        getHTML: () => bus.lastContent,
+        getText: () => {
+          // Strip angle brackets for a rough text representation.
+          return bus.lastContent.replace(/[<>]/g, '');
+        },
+        commands: {
+          setContent: (html: string) => {
+            bus.lastContent = html;
+            editor.isEmpty = !html || html === '<p></p>';
+            bus.onSetContent?.(editor.isEmpty);
+          },
+          focus: () => {},
+        },
+        chain: () => ({
+          focus: () => ({
+            setHorizontalRule: () => ({
+              insertContent: () => ({ run: () => {} }),
+            }),
+          }),
+        }),
+        state: { doc: { descendants: () => {} } },
+      };
+      bus.mockEditor = editor;
+      bus.lastContent = props.content;
+      props.onEditorReady?.(editor);
+      return <div data-testid="diary-editor-shim">{props.content}</div>;
+    },
+  };
+});
+
+// ── Import-after-mock ─────────────────────────────────────────────────────────
+
+import EditorPanel from './EditorPanel';
+import { setSelectedDate } from '../../state/ui';
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+function makeEntry(overrides: Partial<DiaryEntry>): DiaryEntry {
+  return {
+    id: overrides.id ?? 1,
+    date: overrides.date ?? '2026-04-23',
+    title: overrides.title ?? '',
+    text: overrides.text ?? '',
+    word_count: overrides.word_count ?? 0,
+    date_created: overrides.date_created ?? '2026-04-23T10:00:00Z',
+    date_updated: overrides.date_updated ?? '2026-04-23T10:00:00Z',
+  };
+}
+
+/** Drive the shim's onUpdate as TipTap would after a keystroke. */
+function typeIntoEditor(html: string) {
+  bus.lastContent = html;
+  if (bus.mockEditor) {
+    bus.mockEditor.isEmpty = !html || html === '<p></p>';
+  }
+  bus.onUpdate?.(html);
+}
+
+/** Flush all pending microtasks — awaits Tauri invoke + state settlement. */
+async function flushMicrotasks() {
+  await new Promise<void>((resolve) => {
+    setTimeout(resolve, 0);
+  });
+}
+
+// ── Tests ─────────────────────────────────────────────────────────────────────
+
+describe('EditorPanel integration', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    bus.onUpdate = null;
+    bus.onSetContent = null;
+    bus.lastContent = '';
+    mocks.getEntriesForDate.mockResolvedValue([]);
+    mocks.getAllEntryDates.mockResolvedValue([]);
+    mocks.saveEntry.mockResolvedValue(undefined);
+    mocks.deleteEntryIfEmpty.mockResolvedValue(true);
+    mocks.deleteEntry.mockResolvedValue(undefined);
+    mocks.confirm.mockResolvedValue(true);
+    setSelectedDate('2026-04-23');
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+  });
+
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('load-then-type: loads existing entry and debounced-saves a keystroke edit', async () => {
+    const existing = makeEntry({ id: 42, title: 'Morning', text: '<p>Hello</p>' });
+    mocks.getEntriesForDate.mockResolvedValue([existing]);
+
+    renderWithI18n(() => <EditorPanel />);
+
+    // Wait for the initial load effect to resolve the getEntriesForDate Promise.
+    await waitFor(() => {
+      expect(mocks.getEntriesForDate).toHaveBeenCalledWith('2026-04-23');
+    });
+    await flushMicrotasks();
+
+    // Simulate the user typing additional content.
+    typeIntoEditor('<p>Hello world</p>');
+    // Debounce is 500 ms; advance past it.
+    await vi.advanceTimersByTimeAsync(600);
+    await flushMicrotasks();
+
+    expect(mocks.saveEntry).toHaveBeenCalledWith(42, 'Morning', '<p>Hello world</p>');
+    // Must not have treated the typed content as empty (no delete).
+    expect(mocks.deleteEntryIfEmpty).not.toHaveBeenCalled();
+  });
+
+  it('switch-day-while-unsaved: flushes pending save before loading the new day', async () => {
+    const day1Entry = makeEntry({
+      id: 7,
+      date: '2026-04-23',
+      title: 'Day 1',
+      text: '<p>Day 1</p>',
+    });
+    const day2Entry = makeEntry({
+      id: 8,
+      date: '2026-04-24',
+      title: 'Day 2',
+      text: '<p>Day 2</p>',
+    });
+    mocks.getEntriesForDate.mockImplementation(async (date: string) => {
+      if (date === '2026-04-23') return [day1Entry];
+      if (date === '2026-04-24') return [day2Entry];
+      return [];
+    });
+
+    renderWithI18n(() => <EditorPanel />);
+    await waitFor(() => {
+      expect(mocks.getEntriesForDate).toHaveBeenCalledWith('2026-04-23');
+    });
+    await flushMicrotasks();
+
+    // Type an unsaved edit (queues the 500 ms debounce).
+    typeIntoEditor('<p>Day 1 edited</p>');
+    // Switch dates BEFORE the debounce fires.
+    setSelectedDate('2026-04-24');
+
+    // The synchronous pre-load flush path should call saveEntry(7, …) with the latest content.
+    await waitFor(() => {
+      expect(mocks.saveEntry).toHaveBeenCalledWith(7, 'Day 1', '<p>Day 1 edited</p>');
+    });
+    await flushMicrotasks();
+    expect(mocks.getEntriesForDate).toHaveBeenCalledWith('2026-04-24');
+
+    // Advance timers — the cancelled debounce must NOT fire an extra save against the old id.
+    await vi.advanceTimersByTimeAsync(1000);
+    await flushMicrotasks();
+    const saveCalls = mocks.saveEntry.mock.calls.filter((c) => c[0] === 7);
+    expect(saveCalls).toHaveLength(1);
+  });
+
+  it('delete-empty-on-nav: clears a blank entry when the user navigates to a new date', async () => {
+    const blank = makeEntry({ id: 11, date: '2026-04-23', title: '', text: '<p></p>' });
+    const other = makeEntry({ id: 12, date: '2026-04-24', title: 'Real', text: '<p>Real</p>' });
+    mocks.getEntriesForDate.mockImplementation(async (date: string) => {
+      if (date === '2026-04-23') return [blank];
+      if (date === '2026-04-24') return [other];
+      return [];
+    });
+
+    renderWithI18n(() => <EditorPanel />);
+    await waitFor(() => {
+      expect(mocks.getEntriesForDate).toHaveBeenCalledWith('2026-04-23');
+    });
+    await flushMicrotasks();
+
+    // Simulate TipTap reporting empty after the programmatic load.
+    bus.onSetContent?.(true);
+    await vi.advanceTimersByTimeAsync(600);
+    await flushMicrotasks();
+
+    // Now switch days — the pre-load save path treats the blank current entry as delete-worthy.
+    setSelectedDate('2026-04-24');
+    await waitFor(() => {
+      expect(mocks.deleteEntryIfEmpty).toHaveBeenCalledWith(11, '', '');
+    });
+    await flushMicrotasks();
+    expect(mocks.getEntriesForDate).toHaveBeenCalledWith('2026-04-24');
+  });
+
+  it('create-on-first-keystroke: creates a new entry and debounces the save', async () => {
+    // Start with an empty day.
+    mocks.getEntriesForDate.mockResolvedValue([]);
+    mocks.createEntry.mockImplementation(async (date: string) =>
+      makeEntry({ id: 99, date, title: '', text: '' }),
+    );
+
+    renderWithI18n(() => <EditorPanel />);
+    await waitFor(() => {
+      expect(mocks.getEntriesForDate).toHaveBeenCalledWith('2026-04-23');
+    });
+    await flushMicrotasks();
+
+    // Simulate the first real keystroke.
+    typeIntoEditor('<p>H</p>');
+    // createEntry fires immediately (synchronous call, awaited inside async IIFE).
+    await waitFor(() => {
+      expect(mocks.createEntry).toHaveBeenCalledWith('2026-04-23');
+    });
+    await flushMicrotasks();
+
+    // After createEntry resolves, the hook queues a debounced save against id=99.
+    await vi.advanceTimersByTimeAsync(600);
+    await flushMicrotasks();
+
+    expect(mocks.saveEntry).toHaveBeenCalledWith(99, '', '<p>H</p>');
+    // Interface sanity: the shim rendered.
+    expect(screen.getByTestId('diary-editor-shim')).toBeInTheDocument();
+  });
+});

@@ -1,6 +1,6 @@
 {
   "name": "mini-diarium",
-  "version": "0.4.18",
+  "version": "0.4.19",
   "description": "A modern, encrypted, local-first desktop journaling application",
   "type": "module",
   "scripts": {
@@ -30,6 +30,7 @@
     "test:e2e:stateful": "node scripts/run-e2e.js stateful",
     "test:e2e:local": "node scripts/e2e-local.js",
     "validate:locales": "npx tsx scripts/validate-locales.ts",
+    "sync-languages": "npx tsx scripts/sync-languages.ts",
     "bench": "vitest bench"
   },
   "license": "MIT",

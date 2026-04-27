@@ -59,10 +59,24 @@ export interface AuthMethodInfo {
   last_used: string | null;
 }
 
+export interface AuthSlotPeek {
+  id: number;
+  slot_type: string;
+  label: string;
+}
+
+export async function peekAuthSlotTypes(): Promise<AuthSlotPeek[]> {
+  return await invoke('peek_auth_slot_types');
+}
+
 export interface KeypairFiles {
   public_key_hex: string;
   private_key_hex: string;
 }
+
+export type MultiAuthCredential =
+  | { type: 'password'; value: string }
+  | { type: 'keypair'; key_path: string };
 
 export async function listAuthMethods(): Promise<AuthMethodInfo[]> {
   return await invoke('list_auth_methods');
@@ -77,7 +91,7 @@ export async function writeKeyFile(path: string, privateKeyHex: string): Promise
 }
 
 export async function registerKeypair(
-  currentPassword: string,
+  currentPassword: string | null,
   publicKeyHex: string,
   label: string,
 ): Promise<void> {
@@ -88,8 +102,19 @@ export async function registerPassword(newPassword: string): Promise<void> {
   await invoke('register_password', { newPassword });
 }
 
-export async function removeAuthMethod(slotId: number, currentPassword: string): Promise<void> {
+export async function removeAuthMethod(
+  slotId: number,
+  currentPassword: string | null,
+): Promise<void> {
   await invoke('remove_auth_method', { slotId, currentPassword });
+}
+
+export async function unlockJournalAllMethods(credentials: MultiAuthCredential[]): Promise<void> {
+  await invoke('unlock_diary_all_methods', { credentials });
+}
+
+export async function setRequireAllAuth(enabled: boolean): Promise<void> {
+  await invoke('set_require_all_auth', { enabled });
 }
 
 export async function createJournalAuto(): Promise<void> {
@@ -106,6 +131,7 @@ export interface JournalConfig {
   name: string;
   path: string;
   auto_protected: boolean; // true if journal uses local key (no password)
+  require_all_auth: boolean;
 }
 
 export async function listJournals(): Promise<JournalConfig[]> {
@@ -221,22 +247,6 @@ export async function getStatistics(): Promise<Statistics> {
 export interface ImportResult {
   entries_imported: number;
   entries_skipped: number;
-}
-
-export async function importMiniDiaryJson(filePath: string): Promise<ImportResult> {
-  return await invoke('import_minidiary_json', { filePath });
-}
-
-export async function importDayOneJson(filePath: string): Promise<ImportResult> {
-  return await invoke('import_dayone_json', { filePath });
-}
-
-export async function importDayOneTxt(filePath: string): Promise<ImportResult> {
-  return await invoke('import_dayone_txt', { filePath });
-}
-
-export async function importJrnlJson(filePath: string): Promise<ImportResult> {
-  return await invoke('import_jrnl_json', { filePath });
 }
 
 // Export commands

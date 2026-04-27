@@ -38,6 +38,53 @@ pub fn list_auth_methods(
     crate::db::queries::list_auth_slots(db)
 }
 
+/// Reads auth slot types and labels from a locked journal (no key required).
+///
+/// Opens the SQLite container with a plain connection — the container is not encrypted
+/// at the SQLite level; only entry content is AES-256-GCM encrypted at the application
+/// layer. Excludes `auto` slots (device-bound keys that never require user input).
+/// Returns an empty vec if the DB file does not yet exist.
+/// Does NOT expose wrapped_key or public_key.
+#[tauri::command]
+pub fn peek_auth_slot_types(state: State<DiaryState>) -> Result<Vec<AuthSlotPeek>, String> {
+    let db_path = state
+        .db_path
+        .lock()
+        .map_err(|_| "State lock poisoned".to_string())?
+        .clone();
+
+    if !db_path.exists() {
+        return Ok(vec![]);
+    }
+
+    let conn = rusqlite::Connection::open(&db_path)
+        .map_err(|e| format!("Failed to open journal: {}", e))?;
+
+    let mut stmt = conn
+        .prepare("SELECT id, type, label FROM auth_slots WHERE type != 'auto' ORDER BY id ASC")
+        .map_err(|e| format!("Failed to prepare: {}", e))?;
+
+    let rows = stmt
+        .query_map([], |row| {
+            Ok(AuthSlotPeek {
+                id: row.get(0)?,
+                slot_type: row.get(1)?,
+                label: row.get(2)?,
+            })
+        })
+        .map_err(|e| format!("Failed to query: {}", e))?
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| format!("Failed to collect: {}", e))?;
+    Ok(rows)
+}
+
+#[derive(Debug, serde::Serialize)]
+pub struct AuthSlotPeek {
+    pub id: i64,
+    pub slot_type: String,
+    pub label: String,
+}
+
 /// Generates a new X25519 keypair.
 ///
 /// The caller is responsible for saving the private key securely (to a file).
@@ -114,11 +161,12 @@ pub fn register_password(new_password: String, state: State<DiaryState>) -> Resu
 
 /// Registers a new keypair auth method.
 ///
-/// Requires the current password to verify identity before adding a new method.
+/// Requires the current password only when a password slot already exists.
+/// If no password slot exists, being unlocked is sufficient (same model as register_password).
 /// The master key is wrapped for the given public key and stored in auth_slots.
 #[tauri::command]
 pub fn register_keypair(
-    current_password: String,
+    current_password: Option<String>,
     public_key_hex: String,
     label: String,
     state: State<DiaryState>,
@@ -129,13 +177,17 @@ pub fn register_keypair(
         .map_err(|_| "State lock poisoned".to_string())?;
     let db = db_state.as_ref().ok_or("Journal must be unlocked")?;
 
-    // Verify identity via password and recover master_key
-    let (_, wrapped_key) =
-        crate::db::queries::get_password_slot(db)?.ok_or("No password auth method found")?;
-    let method = crate::auth::password::PasswordMethod::new(current_password);
-    let master_key_bytes = method
-        .unwrap_master_key(&wrapped_key)
-        .map_err(|_| "Incorrect password".to_string())?;
+    // Identity gate: require password verification only when a password slot exists.
+    // If no password slot, being unlocked is sufficient (same model as register_password).
+    let password_slot = crate::db::queries::get_password_slot(db)?;
+    if let Some((_, wrapped_key)) = password_slot {
+        let pwd = current_password
+            .ok_or("Password required to add a key file when a password method exists")?;
+        let method = crate::auth::password::PasswordMethod::new(pwd);
+        method
+            .unwrap_master_key(&wrapped_key)
+            .map_err(|_| "Incorrect password".to_string())?;
+    }
 
     // Decode public key
     let pub_key_vec =
@@ -159,14 +211,14 @@ pub fn register_keypair(
         return Err("A keypair with this public key is already registered".to_string());
     }
 
-    // Wrap master_key for this public key
+    // Wrap master_key for the new keypair using the session key (always available).
+    // db.key().as_bytes() returns &[u8; 32], which coerces to &[u8] for wrap_master_key.
     let keypair_method = crate::auth::keypair::KeypairMethod {
         public_key: pub_key,
     };
     let wrapped_for_keypair = keypair_method
-        .wrap_master_key(&master_key_bytes)
+        .wrap_master_key(db.key().as_bytes())
         .map_err(|e| format!("Failed to wrap master key for keypair: {}", e))?;
-    // master_key_bytes zeroed automatically on drop (SecretBytes)
 
     // Insert into auth_slots
     let now = chrono::Utc::now().to_rfc3339();
@@ -185,12 +237,13 @@ pub fn register_keypair(
 
 /// Removes an authentication method by slot id.
 ///
-/// Requires the current password to prevent rogue removal.
+/// Requires the current password only when a password slot exists.
+/// If no password slot exists, being unlocked is sufficient.
 /// Refuses to remove the last auth method.
 #[tauri::command]
 pub fn remove_auth_method(
     slot_id: i64,
-    current_password: String,
+    current_password: Option<String>,
     state: State<DiaryState>,
 ) -> Result<(), String> {
     let db_state = state
@@ -209,14 +262,20 @@ pub fn remove_auth_method(
         )
         .map_err(|_| "Auth slot not found".to_string())?;
 
-    // Verify identity
-    let (_, wrapped_key) =
-        crate::db::queries::get_password_slot(db)?.ok_or("No password auth method found")?;
-    let method = crate::auth::password::PasswordMethod::new(current_password);
-    // The returned SecretBytes is dropped immediately after the guard check, zeroing memory.
-    let _master_key_bytes = method
-        .unwrap_master_key(&wrapped_key)
-        .map_err(|_| "Incorrect password".to_string())?;
+    // Identity gate: verify password only when a password slot exists.
+    // If no password slot, being unlocked is sufficient.
+    let password_slot = crate::db::queries::get_password_slot(db)?;
+    if let Some((_, wrapped_key)) = password_slot {
+        let pwd = current_password.ok_or(
+            "Password required to remove an auth method when a password method exists".to_string(),
+        )?;
+        let method = crate::auth::password::PasswordMethod::new(pwd);
+        // The returned SecretBytes is dropped immediately after the guard check, zeroing memory.
+        method
+            .unwrap_master_key(&wrapped_key)
+            .map_err(|_| "Incorrect password".to_string())?;
+    }
+    // No password slot: being unlocked is sufficient
 
     // Guard: never remove the last auth method
     let count = crate::db::queries::count_auth_slots(db)?;
@@ -224,6 +283,29 @@ pub fn remove_auth_method(
         return Err(
             "Cannot remove the last authentication method. Add another method first.".to_string(),
         );
+    }
+
+    // Guard: prevent removal if require_all_auth would be left with < 2 non-auto slots
+    {
+        let all_methods = crate::db::queries::list_auth_slots(db)?;
+        let non_auto_count = all_methods.iter().filter(|m| m.slot_type != "auto").count();
+        let removing_non_auto = slot_type != "auto";
+        if removing_non_auto && non_auto_count <= 2 {
+            let active_id =
+                crate::config::load_active_journal_id(&state.app_data_dir).unwrap_or_default();
+            let journals = crate::config::load_journals(&state.app_data_dir);
+            let require_all = journals
+                .iter()
+                .find(|j| j.id == active_id)
+                .and_then(|j| j.require_all_auth)
+                .unwrap_or(false);
+            if require_all {
+                return Err(
+                    "Disable multi-auth unlock before removing this authentication method."
+                        .to_string(),
+                );
+            }
+        }
     }
 
     crate::db::queries::delete_auth_slot(db, slot_id)?;
@@ -236,6 +318,39 @@ pub fn remove_auth_method(
         }
     }
 
+    Ok(())
+}
+
+/// Enables or disables the require-all-auth flag for the active journal.
+///
+/// When enabled, `unlock_diary` and `unlock_diary_with_keypair` are blocked; the
+/// caller must use `unlock_diary_all_methods` instead. Requires at least two
+/// non-auto auth methods to be registered.
+#[tauri::command]
+pub fn set_require_all_auth(enabled: bool, state: State<DiaryState>) -> Result<(), String> {
+    let db_state = state
+        .db
+        .lock()
+        .map_err(|_| "State lock poisoned".to_string())?;
+    let db = db_state.as_ref().ok_or("Journal must be unlocked")?;
+
+    if enabled {
+        let methods = crate::db::queries::list_auth_slots(db)?;
+        let non_auto = methods.iter().filter(|m| m.slot_type != "auto").count();
+        if non_auto < 2 {
+            return Err(
+                "Require-all-auth needs at least two non-auto authentication methods.".to_string(),
+            );
+        }
+    }
+
+    let active_id =
+        crate::config::load_active_journal_id(&state.app_data_dir).ok_or("No active journal")?;
+    crate::config::set_journal_require_all_auth(&state.app_data_dir, &active_id, enabled)?;
+    info!(
+        "require_all_auth set to {} for journal {}",
+        enabled, active_id
+    );
     Ok(())
 }
 
@@ -505,5 +620,116 @@ mod tests {
             Ok(())
         };
         assert!(result.is_ok(), "1-char password should be accepted");
+    }
+
+    #[test]
+    fn test_register_keypair_no_password_slot() {
+        use crate::auth::keypair::generate_keypair;
+        use crate::db::schema::open_database_with_keypair;
+
+        let (_, db_path, backups_dir) = make_state("reg_kp_no_pw");
+
+        let db = create_database(&db_path, "password".to_string()).unwrap();
+
+        // Delete the password slot to simulate a keypair-only diary
+        let (pw_slot_id, _) = crate::db::queries::get_password_slot(&db).unwrap().unwrap();
+        crate::db::queries::delete_auth_slot(&db, pw_slot_id).unwrap();
+        assert!(crate::db::queries::get_password_slot(&db)
+            .unwrap()
+            .is_none());
+
+        // Simulate register_keypair with no password slot: wrap via session key directly
+        let kp = generate_keypair().unwrap();
+        let priv_bytes_vec = hex::decode(&kp.private_key_hex).unwrap();
+        let pub_bytes_vec = hex::decode(&kp.public_key_hex).unwrap();
+        let mut pub_key = [0u8; 32];
+        pub_key.copy_from_slice(&pub_bytes_vec);
+
+        let keypair_method = crate::auth::keypair::KeypairMethod {
+            public_key: pub_key,
+        };
+        let wrapped = keypair_method.wrap_master_key(db.key().as_bytes()).unwrap();
+
+        let now = chrono::Utc::now().to_rfc3339();
+        crate::db::queries::insert_auth_slot(
+            &db,
+            "keypair",
+            "No-pw key",
+            Some(&pub_bytes_vec),
+            &wrapped,
+            &now,
+        )
+        .unwrap();
+
+        let count = crate::db::queries::count_auth_slots(&db).unwrap();
+        assert_eq!(count, 1, "Should have exactly one keypair slot");
+        drop(db);
+
+        // Verify the keypair slot can actually unlock the DB
+        let mut priv_key = [0u8; 32];
+        priv_key.copy_from_slice(&priv_bytes_vec);
+        let db2 = open_database_with_keypair(&db_path, priv_key, &backups_dir).unwrap();
+        let version: i32 = db2
+            .conn()
+            .query_row("SELECT version FROM schema_version", [], |r| r.get(0))
+            .unwrap();
+        assert_eq!(version, 5);
+
+        cleanup(&db_path, &backups_dir);
+    }
+
+    #[test]
+    fn test_remove_auth_method_no_password_slot() {
+        use crate::auth::keypair::generate_keypair;
+
+        let (_, db_path, backups_dir) = make_state("rm_no_pw");
+
+        let db = create_database(&db_path, "password".to_string()).unwrap();
+
+        // Add two keypair slots
+        for label in &["Key A", "Key B"] {
+            let kp = generate_keypair().unwrap();
+            let pub_bytes_vec = hex::decode(&kp.public_key_hex).unwrap();
+            let mut pub_key = [0u8; 32];
+            pub_key.copy_from_slice(&pub_bytes_vec);
+            let kp_method = crate::auth::keypair::KeypairMethod {
+                public_key: pub_key,
+            };
+            let wrapped = kp_method.wrap_master_key(db.key().as_bytes()).unwrap();
+            let now = chrono::Utc::now().to_rfc3339();
+            crate::db::queries::insert_auth_slot(
+                &db,
+                "keypair",
+                label,
+                Some(&pub_bytes_vec),
+                &wrapped,
+                &now,
+            )
+            .unwrap();
+        }
+
+        // Remove the password slot — now only keypair slots remain
+        let (pw_slot_id, _) = crate::db::queries::get_password_slot(&db).unwrap().unwrap();
+        crate::db::queries::delete_auth_slot(&db, pw_slot_id).unwrap();
+        assert!(crate::db::queries::get_password_slot(&db)
+            .unwrap()
+            .is_none());
+
+        let count_before = crate::db::queries::count_auth_slots(&db).unwrap();
+        assert_eq!(count_before, 2, "Should have two keypair slots");
+
+        // Simulate remove_auth_method with no password slot:
+        // no password check needed, count > 1, so removal is allowed.
+        let slots = crate::db::queries::list_auth_slots(&db).unwrap();
+        let slot_to_remove = slots[0].id;
+
+        let count = crate::db::queries::count_auth_slots(&db).unwrap();
+        assert!(count > 1, "Guard: must not be the last slot");
+        crate::db::queries::delete_auth_slot(&db, slot_to_remove).unwrap();
+
+        let count_after = crate::db::queries::count_auth_slots(&db).unwrap();
+        assert_eq!(count_after, 1, "Should have one keypair slot remaining");
+
+        cleanup(&db_path, &backups_dir);
     }
 }

@@ -10,6 +10,8 @@ pub struct JournalConfig {
     pub path: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub auto_key: Option<String>, // hex-encoded 32-byte random key; None for password journals
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub require_all_auth: Option<bool>,
 }
 
 /// Frontend-facing DTO — safe to send over IPC (raw key never included)
@@ -19,6 +21,7 @@ pub struct JournalInfo {
     pub name: String,
     pub path: String,
     pub auto_protected: bool, // true if auto_key is set; key itself is never sent
+    pub require_all_auth: bool,
 }
 
 impl From<&JournalConfig> for JournalInfo {
@@ -28,6 +31,7 @@ impl From<&JournalConfig> for JournalInfo {
             name: j.name.clone(),
             path: j.path.clone(),
             auto_protected: j.auto_key.is_some(),
+            require_all_auth: j.require_all_auth.unwrap_or(false),
         }
     }
 }
@@ -107,6 +111,7 @@ pub fn load_journals(app_data_dir: &Path) -> Vec<JournalConfig> {
                 name: "My Journal".to_string(),
                 path: dir.clone(),
                 auto_key: None,
+                require_all_auth: None,
             };
             let journals = vec![journal];
             config.journals = Some(journals.clone());
@@ -168,6 +173,22 @@ pub fn save_journal_auto_key(
     if let Some(journals) = config.journals.as_mut() {
         if let Some(j) = journals.iter_mut().find(|j| j.id == journal_id) {
             j.auto_key = auto_key_hex.map(|s| s.to_string());
+        }
+    }
+    save_config(app_data_dir, &config)
+}
+
+/// Sets or clears the `require_all_auth` flag for a specific journal.
+/// Pass `enabled = true` to require all auth methods; `false` clears the flag.
+pub fn set_journal_require_all_auth(
+    app_data_dir: &Path,
+    journal_id: &str,
+    enabled: bool,
+) -> Result<(), String> {
+    let mut config = load_config(app_data_dir);
+    if let Some(journals) = config.journals.as_mut() {
+        if let Some(j) = journals.iter_mut().find(|j| j.id == journal_id) {
+            j.require_all_auth = if enabled { Some(true) } else { None };
         }
     }
     save_config(app_data_dir, &config)
@@ -305,6 +326,7 @@ mod tests {
                     .unwrap()
                     .to_string(),
                 auto_key: None,
+                require_all_auth: None,
             },
             JournalConfig {
                 id: "eeff00112233aabb".to_string(),
@@ -315,6 +337,7 @@ mod tests {
                     .unwrap()
                     .to_string(),
                 auto_key: None,
+                require_all_auth: None,
             },
         ];
         save_journals(&dir, &journals, "aabbccdd11223344").unwrap();
@@ -347,6 +370,7 @@ mod tests {
                     .unwrap()
                     .to_string(),
                 auto_key: None,
+                require_all_auth: None,
             },
             JournalConfig {
                 id: "bbbb".to_string(),
@@ -357,6 +381,7 @@ mod tests {
                     .unwrap()
                     .to_string(),
                 auto_key: None,
+                require_all_auth: None,
             },
         ];
         save_journals(&dir, &journals, "aaaa").unwrap();
@@ -388,12 +413,42 @@ mod tests {
                 .unwrap()
                 .to_string(),
             auto_key: None,
+            require_all_auth: None,
         }];
         save_journals(&dir, &journals, "testid1234567890").unwrap();
 
         save_journal_auto_key(&dir, "testid1234567890", Some("deadbeef")).unwrap();
         let loaded = load_journals(&dir);
         assert_eq!(loaded[0].auto_key.as_deref(), Some("deadbeef"));
+
+        cleanup(&dir);
+    }
+
+    #[test]
+    fn test_set_journal_require_all_auth_roundtrip() {
+        let dir = temp_dir("require_all_auth_rt");
+        let journals = vec![JournalConfig {
+            id: "testid1234567890".to_string(),
+            name: "Test Journal".to_string(),
+            path: std::env::temp_dir()
+                .join("raj")
+                .to_str()
+                .unwrap()
+                .to_string(),
+            auto_key: None,
+            require_all_auth: None,
+        }];
+        save_journals(&dir, &journals, "testid1234567890").unwrap();
+
+        // Enable require_all_auth
+        set_journal_require_all_auth(&dir, "testid1234567890", true).unwrap();
+        let loaded = load_journals(&dir);
+        assert_eq!(loaded[0].require_all_auth, Some(true));
+
+        // Disable (clears to None, which omits from JSON)
+        set_journal_require_all_auth(&dir, "testid1234567890", false).unwrap();
+        let loaded2 = load_journals(&dir);
+        assert!(loaded2[0].require_all_auth.is_none());
 
         cleanup(&dir);
     }
@@ -410,6 +465,7 @@ mod tests {
                 .unwrap()
                 .to_string(),
             auto_key: Some("deadbeef".to_string()),
+            require_all_auth: None,
         }];
         save_journals(&dir, &journals, "testid1234567890").unwrap();
 

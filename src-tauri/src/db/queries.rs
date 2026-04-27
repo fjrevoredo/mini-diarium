@@ -343,6 +343,23 @@ pub fn get_password_slot(db: &DatabaseConnection) -> Result<Option<(i64, Vec<u8>
     }
 }
 
+/// Returns the (id, wrapped_key) of the keypair slot matching `pub_key`, or `None`.
+pub fn get_keypair_slot_by_pubkey(
+    db: &DatabaseConnection,
+    pub_key: &[u8],
+) -> Result<Option<(i64, Vec<u8>)>, String> {
+    let result = db.conn().query_row(
+        "SELECT id, wrapped_key FROM auth_slots WHERE type = 'keypair' AND public_key = ?1 LIMIT 1",
+        rusqlite::params![pub_key],
+        |row| Ok((row.get::<_, i64>(0)?, row.get::<_, Vec<u8>>(1)?)),
+    );
+    match result {
+        Ok(r) => Ok(Some(r)),
+        Err(rusqlite::Error::QueryReturnedNoRows) => Ok(None),
+        Err(e) => Err(format!("Database error: {}", e)),
+    }
+}
+
 /// Updates the `wrapped_key` of an auth slot (used by change_password).
 pub fn update_auth_slot_wrapped_key(
     db: &DatabaseConnection,

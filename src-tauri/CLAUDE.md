@@ -15,7 +15,8 @@ src-tauri/src/
 ├── auth/
 │   ├── mod.rs                             # AuthMethodInfo, KeypairFiles structs; re-exports
 │   ├── password.rs                        # PasswordMethod: Argon2id wrap/unwrap
-│   └── keypair.rs                         # KeypairMethod: X25519 ECIES wrap/unwrap
+│   ├── keypair.rs                         # KeypairMethod: X25519 ECIES wrap/unwrap
+│   └── auto_key.rs                        # AutoKeyMethod: device-bound random key wrap/unwrap (local-only journals)
 ├── commands/
 │   ├── mod.rs                         # Re-exports: auth, entries, search, navigation, stats, import, export, plugin, files
 │   ├── auth/
@@ -28,7 +29,7 @@ src-tauri/src/
 │   ├── search.rs                      # Search stub — returns empty results
 │   ├── navigation.rs                  # Day/month navigation
 │   ├── stats.rs                       # Aggregated statistics
-│   ├── import.rs                      # Import orchestration
+│   ├── import.rs                      # Shared import helpers (read_import_file, import_entries, ImportResult) — used by the plugin runner
 │   ├── export.rs                      # JSON + Markdown export commands
 │   ├── plugin.rs                      # Plugin list/run commands
 │   ├── debug.rs                       # Privacy-safe diagnostic dump
@@ -97,10 +98,10 @@ All menu event names are prefixed `menu-`. See `menu.rs:78-107` for the full lis
 
 To add a new **built-in** import format (compiled Rust):
 1. Create `src-tauri/src/import/FORMAT.rs` — parser returning `Vec<DiaryEntry>`
-2. Add command in `src-tauri/src/commands/import.rs` — orchestrate parse → merge (see "Search index hook" comment for where to add reindex)
-3. Register command in `commands/mod.rs` and `lib.rs` `generate_handler![]`
-4. Add frontend wrapper in `src/lib/tauri.ts` and UI option in `ImportOverlay.tsx`
-5. Add a builtin wrapper struct in `plugin/builtins.rs` implementing `ImportPlugin`, and register it in `register_all()`
+2. Add `pub mod FORMAT;` to `src-tauri/src/import/mod.rs`
+3. Add a builtin wrapper struct in `plugin/builtins.rs` implementing `ImportPlugin`, and register it in `register_all()`
+
+The plugin system (`run_import_plugin`) is the single entry point; no per-format Tauri command is needed. The search reindex hook lives in `commands::import::import_entries` (see `// Search index hook:` comment).
 
 For **user-scriptable** formats, users drop a `.rhai` file in `{diary_dir}/plugins/`. See `plugin/rhai_loader.rs` for the Rhai script contract and `docs/user-plugins/USER_PLUGIN_GUIDE.md` for the end-user plugin guide and templates.
 
@@ -138,8 +139,6 @@ cd src-tauri && cargo bench --bench cipher_bench  # Specific benchmark
 
 7. **Rhai AST requires `unsafe impl Send + Sync`**: The `rhai::AST` type does not implement `Send + Sync` in the current version. The `unsafe` impls on `RhaiImportPlugin` and `RhaiExportPlugin` are required and justified: AST is immutable after compilation, and Engine is created fresh per invocation.
 
-8. **Old import/export commands are preserved**: The original `import_minidiary_json`, `import_dayone_json`, etc. commands remain registered for backward compatibility. The Import/Export overlays now use the plugin system (`runImportPlugin`/`runExportPlugin`) but the legacy commands still work.
-
 ## Common Task Checklists
 
 ### Adding a New Tauri Command
@@ -154,9 +153,9 @@ cd src-tauri && cargo bench --bench cipher_bench  # Specific benchmark
 
 1. Create `src-tauri/src/import/FORMAT.rs` with a `parse_FORMAT(content: &str) -> Result<Vec<DiaryEntry>, String>` function
 2. Add `pub mod FORMAT;` to `src-tauri/src/import/mod.rs`
-3. Add command in `commands/import.rs` (follow existing pattern: parse → `import_entries()`; add search reindex call at the `// Search index hook:` comment when a search module exists)
-4. Register command, add frontend wrapper in `tauri.ts` (legacy commands are preserved for backward compatibility)
-5. Add a builtin wrapper struct in `plugin/builtins.rs` implementing `ImportPlugin` (or `ExportPlugin`), register in `register_all()`
+3. Add a builtin wrapper struct in `plugin/builtins.rs` implementing `ImportPlugin` (or `ExportPlugin`), register in `register_all()`
+
+The plugin runner (`run_import_plugin` / `run_export_plugin`) dispatches to the builtin. No per-format Tauri command is required — the frontend discovers available formats via `list_import_plugins()` / `list_export_plugins()`.
 
 **Option B: User-scriptable (Rhai)**
 
@@ -182,7 +181,7 @@ refactoring.
 **Hook points in the backend (search for `// Search index hook:`):**
 
 - `db/queries.rs` — `insert_entry()`, `update_entry()`, `delete_entry()` — index/remove individual entries
-- `commands/import.rs` — all four import commands — bulk reindex after import
+- `commands/import.rs` — `import_entries()` helper — bulk reindex after import (reached via `run_import_plugin`)
 
 **Design constraints for any future implementation:**
 

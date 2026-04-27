@@ -131,6 +131,14 @@ export async function unlockJournalAutoProtected(): Promise<void> {
   }
 }
 
+// Refresh the global auth methods list from the backend.
+// Call after any mutation (registration, removal, password change) or when a UI surface
+// that displays auth methods is opened.
+export async function loadAuthMethods(): Promise<void> {
+  const methods = await tauri.listAuthMethods();
+  setAuthMethods(methods);
+}
+
 // Navigate back to the journal picker (e.g. from PasswordPrompt or PasswordCreation).
 export function goToJournalPicker(): void {
   resetAuthTransientState();
@@ -188,6 +196,29 @@ export async function unlockWithKeypair(keyPath: string): Promise<void> {
     setError(message);
     throw new Error(message, { cause: err });
   }
+}
+
+// Unlock with all auth methods simultaneously (multi-auth)
+export async function unlockAllMethods(credentials: tauri.MultiAuthCredential[]): Promise<void> {
+  try {
+    setError(null);
+    await tauri.unlockJournalAllMethods(credentials);
+    prepareUnlockedSession();
+    log.info('Journal unlocked via multi-auth');
+
+    const dates = await tauri.getAllEntryDates();
+    setEntryDates(dates);
+  } catch (err) {
+    const message = mapTauriError(err);
+    setError(message);
+    throw new Error(message, { cause: err });
+  }
+}
+
+// Enable/disable require-all-auth for the active journal
+export async function setRequireAllAuth(enabled: boolean): Promise<void> {
+  await tauri.setRequireAllAuth(enabled);
+  await loadJournals();
 }
 
 // Lock journal

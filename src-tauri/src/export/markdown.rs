@@ -78,6 +78,80 @@ pub fn export_entries_to_markdown(entries: Vec<DiaryEntry>) -> String {
     output
 }
 
+// Replacement tables for `html_to_markdown`.
+//
+// Each table runs at a specific point in the conversion pipeline; the order of
+// the stages matters (see `html_to_markdown`), but within a stage the individual
+// tag → markdown mappings are independent and their listing order does not
+// affect the output. Extending a table with a new synonym (e.g. `<mark>`) is a
+// one-line change with no copy-paste risk of getting the replacement wrong.
+
+/// Stage 1: line breaks. Runs before heading processing so `<br>` inside a
+/// heading becomes a real newline.
+const BR_REPLACEMENTS: &[(&str, &str)] = &[("<br>", "\n"), ("<br/>", "\n"), ("<br />", "\n")];
+
+/// Stage 3: inline formatting (bold, italic, strikethrough). Runs after
+/// heading processing and before `process_code_blocks`, which protects
+/// `<code>` inside `<pre>` from being consumed here.
+const INLINE_FORMATTING: &[(&str, &str)] = &[
+    ("<strong>", "**"),
+    ("</strong>", "**"),
+    ("<b>", "**"),
+    ("</b>", "**"),
+    ("<em>", "*"),
+    ("</em>", "*"),
+    ("<i>", "*"),
+    ("</i>", "*"),
+    ("<s>", "~~"),
+    ("</s>", "~~"),
+    ("<del>", "~~"),
+    ("</del>", "~~"),
+    ("<strike>", "~~"),
+    ("</strike>", "~~"),
+];
+
+/// Stage 5: inline code. Runs after `process_code_blocks` so any `<code>`
+/// inside `<pre>` has already been stripped.
+const INLINE_CODE: &[(&str, &str)] = &[("<code>", "`"), ("</code>", "`")];
+
+/// Stage 7: horizontal rules. Ordering relative to ordered/unordered lists
+/// does not matter; placed here to mirror the pipeline the tests expect.
+const HR_REPLACEMENTS: &[(&str, &str)] = &[
+    ("<hr>", "\n---\n"),
+    ("<hr/>", "\n---\n"),
+    ("<hr />", "\n---\n"),
+];
+
+/// Stage 9: residual block tags (unordered list wrappers, unordered list
+/// items, paragraphs). Runs after `number_ordered_lists` so `<li>` items
+/// inside `<ol>` have already been converted to numbered markdown.
+const BLOCK_TAGS: &[(&str, &str)] = &[
+    ("<ul>", "\n"),
+    ("</ul>", "\n"),
+    ("<li>", "- "),
+    ("</li>", "\n"),
+    ("<p>", ""),
+    ("</p>", "\n\n"),
+];
+
+/// Stage 11: HTML entity decoding. Runs after `strip_remaining_tags` so tags
+/// containing `&` attributes have already been removed.
+const HTML_ENTITIES: &[(&str, &str)] = &[
+    ("&amp;", "&"),
+    ("&lt;", "<"),
+    ("&gt;", ">"),
+    ("&quot;", "\""),
+    ("&#39;", "'"),
+    ("&nbsp;", " "),
+];
+
+fn apply_replacements(mut s: String, table: &[(&str, &str)]) -> String {
+    for &(pat, rep) in table {
+        s = s.replace(pat, rep);
+    }
+    s
+}
+
 /// Converts TipTap HTML to Markdown
 ///
 /// Handles the common elements TipTap generates:
@@ -102,12 +176,11 @@ pub fn html_to_markdown(html: &str) -> String {
 
     let mut result = html.to_string();
 
-    // 1. Handle line breaks before block elements are processed
-    result = result.replace("<br>", "\n");
-    result = result.replace("<br/>", "\n");
-    result = result.replace("<br />", "\n");
+    // 1. Line breaks — must run before heading processing
+    result = apply_replacements(result, BR_REPLACEMENTS);
 
-    // 2. Handle headings (offset by 2 to avoid clashing with # and ## used for doc/entry)
+    // 2. Headings (offset by 2 to avoid clashing with # and ## used for doc/entry).
+    // Level-dependent formatting keeps this as a loop rather than a static table.
     for level in 1..=6 {
         let hashes = "#".repeat((level + 2).min(6));
         let open = format!("<h{}>", level);
@@ -116,73 +189,39 @@ pub fn html_to_markdown(html: &str) -> String {
         result = result.replace(&close, "\n");
     }
 
-    // 3. Handle bold
-    result = result.replace("<strong>", "**");
-    result = result.replace("</strong>", "**");
-    result = result.replace("<b>", "**");
-    result = result.replace("</b>", "**");
+    // 3. Inline formatting: bold, italic, strikethrough
+    result = apply_replacements(result, INLINE_FORMATTING);
 
-    // 4. Handle italic
-    result = result.replace("<em>", "*");
-    result = result.replace("</em>", "*");
-    result = result.replace("<i>", "*");
-    result = result.replace("</i>", "*");
-
-    // 5. Handle strikethrough
-    result = result.replace("<s>", "~~");
-    result = result.replace("</s>", "~~");
-    result = result.replace("<del>", "~~");
-    result = result.replace("</del>", "~~");
-    result = result.replace("<strike>", "~~");
-    result = result.replace("</strike>", "~~");
-
-    // 6. Handle fenced code blocks (<pre>...<code>...</code>...</pre>) — must run before inline code
+    // 4. Fenced code blocks — must run before inline `<code>` replacement
     result = process_code_blocks(&result);
 
-    // 7. Handle inline code
-    result = result.replace("<code>", "`");
-    result = result.replace("</code>", "`");
+    // 5. Inline code
+    result = apply_replacements(result, INLINE_CODE);
 
-    // 8. Handle blockquotes — must run before <p> replacement
+    // 6. Blockquotes — must run before `<p>` replacement
     result = process_blockquotes(&result);
 
-    // 9. Handle horizontal rules
-    result = result.replace("<hr>", "\n---\n");
-    result = result.replace("<hr/>", "\n---\n");
-    result = result.replace("<hr />", "\n---\n");
+    // 7. Horizontal rules
+    result = apply_replacements(result, HR_REPLACEMENTS);
 
-    // 10. Handle ordered lists with proper numbering (must be before <li> replacement)
+    // 8. Ordered lists with proper numbering — must run before `<li>` replacement
     result = number_ordered_lists(&result);
 
-    // 11. Handle unordered lists
-    result = result.replace("<ul>", "\n");
-    result = result.replace("</ul>", "\n");
+    // 9. Unordered list wrappers, list items, paragraphs
+    result = apply_replacements(result, BLOCK_TAGS);
 
-    // 12. Handle list items (for unordered lists only — ordered list items already processed)
-    result = result.replace("<li>", "- ");
-    result = result.replace("</li>", "\n");
-
-    // 13. Handle paragraphs
-    result = result.replace("<p>", "");
-    result = result.replace("</p>", "\n\n");
-
-    // 14. Strip any remaining HTML tags (handles <u>, <a>, etc.)
+    // 10. Strip any remaining HTML tags (handles <u>, <a>, etc.)
     result = strip_remaining_tags(&result);
 
-    // 15. Decode common HTML entities
-    result = result.replace("&amp;", "&");
-    result = result.replace("&lt;", "<");
-    result = result.replace("&gt;", ">");
-    result = result.replace("&quot;", "\"");
-    result = result.replace("&#39;", "'");
-    result = result.replace("&nbsp;", " ");
+    // 11. Decode common HTML entities
+    result = apply_replacements(result, HTML_ENTITIES);
 
-    // 16. Clean up excessive blank lines (3+ newlines → 2)
+    // 12. Clean up excessive blank lines (3+ newlines → 2)
     while result.contains("\n\n\n") {
         result = result.replace("\n\n\n", "\n\n");
     }
 
-    // 17. Trim trailing whitespace
+    // 13. Trim trailing whitespace
     result.trim().to_string()
 }
 

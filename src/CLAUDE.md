@@ -32,11 +32,26 @@ src/
 │   │   ├── MainLayout.tsx             # App shell (sidebar + editor)
 │   │   ├── Header.tsx                 # Top bar
 │   │   ├── Sidebar.tsx                # Calendar panel (search removed; see "Implementing Search")
-│   │   ├── EditorPanel.tsx            # Editor container
+│   │   ├── EditorPanel.tsx            # Editor shell — signals + effects + JSX (≤310 LOC)
+│   │   ├── EditorPanel.integration.test.tsx  # 4 end-to-end flows (load/switch/delete/create)
+│   │   ├── editor-panel/
+│   │   │   ├── useEditorEmptyCheck.ts       # editorIsEmpty signal + computeIsEmpty/editorHasImages
+│   │   │   ├── useEditorEmptyCheck.test.ts
+│   │   │   ├── useEntryLifecycle.ts         # load/save/create/delete + debouncedSave + lock-cleanup
+│   │   │   ├── useEntryLifecycle.test.ts
+│   │   │   ├── useMultiEntryNav.ts          # per-day navigate/add/delete + fetchEntriesOrdered
+│   │   │   └── useMultiEntryNav.test.ts
 │   │   └── MainLayout-event-listeners.test.tsx
 │   ├── overlays/
 │   │   ├── GoToDateOverlay.tsx        # Date picker dialog
-│   │   ├── PreferencesOverlay.tsx     # Settings dialog (includes Auth Methods section)
+│   │   ├── preferences/               # Settings dialog split by tab
+│   │   │   ├── PreferencesOverlay.tsx         # Shell: dialog + tab list + save/cancel footer
+│   │   │   ├── PreferencesGeneralTab.tsx      # Theme, language, ESC-key action
+│   │   │   ├── PreferencesWritingTab.tsx      # Calendar/editor writing preferences
+│   │   │   ├── PreferencesSecurityTab.tsx     # Auth methods, change password, auto-lock
+│   │   │   ├── PreferencesDataTab.tsx         # Journal directory change, reset journal
+│   │   │   ├── PreferencesAdvancedTab.tsx     # Theme overrides editor, debug dump
+│   │   │   └── shared.ts                      # Tab type, TabProps, PreferencesShellContext
 │   │   ├── StatsOverlay.tsx           # Statistics display
 │   │   ├── ImportOverlay.tsx          # Import format selector + file picker
 │   │   ├── ExportOverlay.tsx          # Export format selector + file picker
@@ -45,8 +60,8 @@ src/
 │       ├── SearchBar.tsx              # Search input (not rendered; reserved for future secure search)
 │       └── SearchResults.tsx          # Search result list
 ├── state/
-│   ├── auth.ts                        # AuthState signal + authMethods + initializeAuth/create/unlock/lock/unlockWithKeypair
-│   ├── entries.ts                     # currentEntry, entryDates, isLoading, isSaving
+│   ├── auth.ts                        # AuthState signal + authMethods + initializeAuth/create/unlock/lock/unlockWithKeypair/loadAuthMethods
+│   ├── entries.ts                     # entryDates, isSaving + resetEntriesState + cleanup-callback registry
 │   ├── journals.ts                    # journals, activeJournalId, isSwitching + loadJournals/switchJournal/addJournal/removeJournal/renameJournal
 │   ├── search.ts                      # searchQuery, searchResults, isSearching
 │   ├── session.ts                     # resetSessionState() — resets entries/search/UI on journal lock
@@ -75,14 +90,15 @@ src/
 
 ## State Management
 
-Six signal-based state modules in `src/state/`:
+Eight signal-based state modules in `src/state/`:
 
 | Module | Signals | Key Functions |
 |--------|---------|---------------|
-| `auth.ts` | `authState: AuthState`, `error`, `authMethods: AuthMethodInfo[]` | `initializeAuth()`, `createJournal()`, `unlockJournal()`, `lockJournal()`, `unlockWithKeypair()`, `goToJournalPicker()` |
-| `entries.ts` | `currentEntry`, `entryDates`, `isLoading`, `isSaving` | Setters exported directly |
+| `auth.ts` | `authState: AuthState`, `error`, `authMethods: AuthMethodInfo[]` | `initializeAuth()`, `createJournal()`, `unlockJournal()`, `lockJournal()`, `unlockWithKeypair()`, `goToJournalPicker()`, `loadAuthMethods()` |
+| `entries.ts` | `entryDates`, `isSaving` | `resetEntriesState()`, `registerCleanupCallback()`, `executeCleanupCallbacks()`; setters exported directly |
 | `journals.ts` | `journals: JournalConfig[]`, `activeJournalId`, `isSwitching` | `loadJournals()`, `switchJournal()`, `addJournal()`, `removeJournal()`, `renameJournal()` |
 | `search.ts` | `searchQuery`, `searchResults`, `isSearching` | Setters exported directly |
+| `session.ts` | — | `resetSessionState()` — resets `entries`/`search`/`ui` on journal lock |
 | `ui.ts` | `selectedDate`, `isSidebarCollapsed`, `isGoToDateOpen`, `isPreferencesOpen`, `isStatsOpen`, `isImportOpen`, `isExportOpen`, `isAboutOpen`, `isNotificationsOpen` | Setters exported directly; `resetUiState()` resets all |
 | `notifications.ts` | `allNotifications: NotificationEntry[]`, `readIds: Set<string>`, `isLoading` | `loadNotifications()`, `markAsRead(id)`, `markAllRead()`, `isRead(id)`, `unreadCount()`, `hasUnread()` |
 | `preferences.ts` | `preferences: Preferences` | `setPreferences(Partial<Preferences>)`, `resetPreferences()` |
@@ -120,7 +136,7 @@ setError(mapTauriError(err, t));
 
 ### Module-level arrays using translations
 
-Arrays that contain translated strings must be `createMemo` inside the component (not module-level consts), so they are evaluated after `useI18n()` is called. See `MONTH_NAMES` in `Calendar.tsx` and `FIRST_DAY_OPTIONS` in `PreferencesOverlay.tsx` as reference.
+Arrays that contain translated strings must be `createMemo` inside the component (not module-level consts), so they are evaluated after `useI18n()` is called. See `MONTH_NAMES` in `Calendar.tsx` and `FIRST_DAY_OPTIONS` in `overlays/preferences/PreferencesWritingTab.tsx` as reference.
 
 ### Testing
 

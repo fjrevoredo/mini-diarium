@@ -14,6 +14,8 @@ TODO entry format:
 
 ## High Priority
 
+- [ ] **`bump-version` scripts don't inject metainfo.xml release entry** — `bump-version.sh` and `bump-version.ps1` both claim to prepend a `<release version="X.Y.Z">` entry to `data/linux/io.github.fjrevoredo.mini-diarium.metainfo.xml` (the comment on line 53 says so), but neither script actually does it; the pre-release checklist catches the omission, but it was manually patched in v0.4.19; fix both scripts so the entry is injected automatically at bump time alongside the other version strings
+
 ---
 
 ## Medium Priority
@@ -35,6 +37,8 @@ TODO entry format:
 ---
 
 ## Low Priority / Future
+- [ ] **Multi-entry number navigation bar** — when multiple entries exist on a date, replace (or augment) the existing prev/next arrows with a `← 1 2 3 →` indicator row where each number is a clickable link that jumps directly to that entry and the current entry's number is visually highlighted (e.g. bold); the arrows should retain their existing behaviour of stepping to the previous/next entry
+- [ ] **Editor font selection** — allow users to select the editor font from a list; investigate sourcing fonts from the OS (system-installed fonts queried at runtime) to avoid bundling additional assets; assess viability and font enumeration API across all distribution methods (Windows installer, macOS DMG, Flatpak sandbox, Linux `.deb`/`.rpm`) before committing to an approach; the selected font should apply to the editor only and be persisted as a preference
 - [ ] **PDF export** — convert journal entries to PDF (A4); likely via Tauri webview printing
 - [ ] **Text input extension point** — create a plugin/extension interface for alternative entry methods so official and user plugins can provide text input flows such as dictation, LLM-assisted drafting, and other future capture modes; define capability boundaries, permission model, and how plugins hand content into the editor without weakening the app’s privacy guarantees
 - [ ] **Statistics extension point** — add a plugin/extension interface for writing statistics so official and user plugins can calculate custom metrics and surface them in the statistics UI; define the data contract, execution/sandbox constraints, and how custom statistics are registered and rendered without weakening the app’s privacy-first local-only model
