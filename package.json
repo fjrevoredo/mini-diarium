@@ -52,8 +52,8 @@
     "@tiptap/extension-underline": "^3.22.4",
     "@tiptap/pm": "^3.22.4",
     "@tiptap/starter-kit": "^3.22.4",
-    "dompurify": "^3.3.3",
-    "lucide-solid": "^1.8.0",
+    "dompurify": "^3.4.1",
+    "lucide-solid": "^1.11.0",
     "marked": "^18.0.2",
     "solid-js": "^1.9.12"
   },
@@ -68,7 +68,7 @@
     "@types/node": "^25",
     "@unocss/reset": "^66.6.8",
     "@unocss/vite": "^66.6.8",
-    "@vitest/ui": "^4.1.4",
+    "@vitest/ui": "^4.1.5",
     "@wdio/cli": "^9",
     "@wdio/local-runner": "^9",
     "@wdio/mocha-framework": "^9",
@@ -77,14 +77,14 @@
     "eslint": "^10.2.1",
     "eslint-plugin-solid": "^0.14.5",
     "happy-dom": "^20.8.9",
-    "jsdom": "^29.0.2",
+    "jsdom": "^29.1.0",
     "prettier": "^3.8.2",
     "typescript": "~6.0.3",
     "typescript-eslint": "^8.59.0",
     "unocss": "^66.6.8",
-    "vite": "^8.0.9",
+    "vite": "^8.0.10",
     "vite-plugin-solid": "^2.11.12",
-    "vitest": "^4.0.18",
+    "vitest": "^4.1.5",
     "webdriverio": "^9"
   }
 }

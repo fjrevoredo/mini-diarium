@@ -34,11 +34,12 @@ impl<'a> AutoKeyMethod<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use rand::RngCore;
+    use aes_gcm::aead::rand_core::RngCore;
+    use aes_gcm::aead::OsRng;
 
     fn random_key() -> [u8; 32] {
         let mut k = [0u8; 32];
-        rand::rngs::OsRng.fill_bytes(&mut k);
+        OsRng.fill_bytes(&mut k);
         k
     }
 

@@ -97,9 +97,10 @@ mod tests {
     use super::*;
 
     fn random_master_key() -> Vec<u8> {
-        use rand::RngCore;
+        use aes_gcm::aead::rand_core::RngCore;
+        use aes_gcm::aead::OsRng;
         let mut key = vec![0u8; 32];
-        rand::rngs::OsRng.fill_bytes(&mut key);
+        OsRng.fill_bytes(&mut key);
         key
     }
 

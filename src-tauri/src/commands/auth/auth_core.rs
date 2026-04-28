@@ -310,9 +310,10 @@ pub fn create_diary_auto(state: State<DiaryState>, app: AppHandle<Wry>) -> Resul
 
     // Generate a 32-byte random local key.
     // Zeroizing<T> auto-zeroizes on drop — ensures memory is wiped even on early return via `?`.
-    use rand::RngCore;
+    use aes_gcm::aead::rand_core::RngCore;
+    use aes_gcm::aead::OsRng;
     let mut auto_key_bytes = Zeroizing::new([0u8; 32]);
-    rand::rngs::OsRng.fill_bytes(auto_key_bytes.as_mut());
+    OsRng.fill_bytes(auto_key_bytes.as_mut());
     let auto_key_hex = hex::encode(auto_key_bytes.as_ref());
 
     // Persist the auto key to the active journal's config entry

@@ -1,7 +1,7 @@
 use crate::crypto::{cipher, password};
 use crate::db::queries;
+use aes_gcm::aead::rand_core::RngCore;
 use log::{debug, error, info, warn};
-use rand::RngCore;
 use rusqlite::Connection;
 use std::path::Path;
 use zeroize::Zeroize;
@@ -1352,13 +1352,14 @@ mod tests {
 
     #[test]
     fn test_create_and_auto_unlock() {
-        use rand::RngCore;
+        use aes_gcm::aead::rand_core::RngCore;
+        use aes_gcm::aead::OsRng;
         let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
         let db_path = tmp.path().to_path_buf();
         drop(tmp); // release the file so SQLite can write to it
 
         let mut auto_key = [0u8; 32];
-        rand::rngs::OsRng.fill_bytes(&mut auto_key);
+        OsRng.fill_bytes(&mut auto_key);
 
         let db = create_database_auto(&db_path, &auto_key).unwrap();
 
@@ -1384,15 +1385,16 @@ mod tests {
 
     #[test]
     fn test_auto_unlock_wrong_key_fails() {
-        use rand::RngCore;
+        use aes_gcm::aead::rand_core::RngCore;
+        use aes_gcm::aead::OsRng;
         let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
         let db_path = tmp.path().to_path_buf();
         drop(tmp);
 
         let mut auto_key = [0u8; 32];
         let mut wrong_key = [0u8; 32];
-        rand::rngs::OsRng.fill_bytes(&mut auto_key);
-        rand::rngs::OsRng.fill_bytes(&mut wrong_key);
+        OsRng.fill_bytes(&mut auto_key);
+        OsRng.fill_bytes(&mut wrong_key);
 
         create_database_auto(&db_path, &auto_key).unwrap();
 

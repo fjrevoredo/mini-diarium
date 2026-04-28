@@ -1,8 +1,8 @@
+use aes_gcm::aead::rand_core::RngCore;
 use aes_gcm::{
     aead::{Aead, KeyInit, OsRng},
     Aes256Gcm, Nonce,
 };
-use rand::RngCore;
 use zeroize::{Zeroize, ZeroizeOnDrop};
 
 /// Size of AES-256 key in bytes

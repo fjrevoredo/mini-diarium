@@ -45,8 +45,7 @@ struct AppConfig {
 
 /// Generates a random 16-char hex string for use as a journal ID.
 pub fn generate_journal_id() -> String {
-    use rand::Rng;
-    let bytes: [u8; 8] = rand::thread_rng().gen();
+    let bytes: [u8; 8] = rand::random();
     hex::encode(bytes)
 }
 

@@ -25,7 +25,7 @@ pub struct PrivateKeyMethod {
 impl KeypairMethod {
     /// Wraps `master_key` for this public key. Returns the `wrapped_key` blob.
     pub fn wrap_master_key(&self, master_key: &[u8]) -> Result<Vec<u8>, String> {
-        use rand::rngs::OsRng;
+        use aes_gcm::aead::OsRng;
 
         // Generate ephemeral keypair
         let eph_secret = EphemeralSecret::random_from_rng(OsRng);
@@ -97,7 +97,7 @@ impl PrivateKeyMethod {
 /// The private key should be saved to a file by the user; the public key
 /// is registered with the diary via `register_keypair`.
 pub fn generate_keypair() -> Result<crate::auth::KeypairFiles, String> {
-    use rand::rngs::OsRng;
+    use aes_gcm::aead::OsRng;
 
     let private = StaticSecret::random_from_rng(OsRng);
     let public = PublicKey::from(&private);
@@ -120,14 +120,15 @@ mod tests {
     use super::*;
 
     fn random_master_key() -> Vec<u8> {
-        use rand::RngCore;
+        use aes_gcm::aead::rand_core::RngCore;
+        use aes_gcm::aead::OsRng;
         let mut key = vec![0u8; 32];
-        rand::rngs::OsRng.fill_bytes(&mut key);
+        OsRng.fill_bytes(&mut key);
         key
     }
 
     fn random_keypair() -> ([u8; 32], [u8; 32]) {
-        use rand::rngs::OsRng;
+        use aes_gcm::aead::OsRng;
         let private = StaticSecret::random_from_rng(OsRng);
         let public = PublicKey::from(&private);
         (private.to_bytes(), *public.as_bytes())
