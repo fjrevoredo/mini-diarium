@@ -219,6 +219,23 @@ bun run tauri icon public/logo-transparent.svg
 ```
 This overwrites every icon variant (ICO, ICNS, PNG at all sizes, Windows AppX, iOS, Android) in one command. Commit the updated `src-tauri/icons/` directory alongside any change to the source SVG.
 
+### Updating Dependencies (npm/bun)
+
+When bumping versions in `package.json`, two lockfiles must both be updated:
+
+1. **`bun.lock`** — used by the dev workflow. Regenerate with:
+   ```bash
+   bun install
+   ```
+
+2. **`package-lock.json`** — required by Flathub's `flatpak-node-generator` to resolve npm dependencies at build time. Regenerate with:
+   ```bash
+   npm install --package-lock-only --legacy-peer-deps
+   ```
+   The `--legacy-peer-deps` flag is required because `eslint-plugin-solid` declares a peer of `eslint@^9` but the project uses `eslint@10`; bun resolves this silently, npm does not.
+
+Both files are committed to the repo. Always commit them together after any `package.json` change.
+
 ### Creating a Release
 
 See [RELEASING.md](RELEASING.md) for the full process. Version bump script: `./bump-version.sh X.Y.Z`.
