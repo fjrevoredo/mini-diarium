@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Mini Diarium — Performance Benchmarks</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3/dist/chartjs-plugin-annotation.min.js"></script>
   <style>
     :root {
       --bg: #f8f9fa;
@@ -17,6 +18,17 @@
       --heading: #1a1d23;
       --code-bg: #f1f3f5;
       --shadow: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.05);
+      --threshold-target: rgba(40, 167, 69, 0.7);
+      --threshold-target-bg: rgba(40, 167, 69, 0.15);
+      --threshold-warning: rgba(210, 160, 30, 0.7);
+      --threshold-warning-bg: rgba(210, 160, 30, 0.15);
+      --threshold-critical: rgba(210, 50, 50, 0.7);
+      --threshold-critical-bg: rgba(210, 50, 50, 0.10);
+      --trendline: #d4832f;
+      --regression-warn-border: rgba(210, 160, 30, 0.7);
+      --regression-warn-bg: rgba(210, 160, 30, 0.04);
+      --regression-critical-border: rgba(210, 50, 50, 0.8);
+      --regression-critical-bg: rgba(210, 50, 50, 0.06);
     }
     @media (prefers-color-scheme: dark) {
       :root {
@@ -30,6 +42,17 @@
         --heading: #e6edf3;
         --code-bg: #1c2128;
         --shadow: 0 1px 3px rgba(0,0,0,.3);
+        --threshold-target: rgba(63, 185, 80, 0.7);
+        --threshold-target-bg: rgba(63, 185, 80, 0.15);
+        --threshold-warning: rgba(220, 175, 50, 0.7);
+        --threshold-warning-bg: rgba(220, 175, 50, 0.15);
+        --threshold-critical: rgba(230, 70, 70, 0.7);
+        --threshold-critical-bg: rgba(230, 70, 70, 0.12);
+        --trendline: #f0a050;
+        --regression-warn-border: rgba(220, 175, 50, 0.7);
+        --regression-warn-bg: rgba(220, 175, 50, 0.06);
+        --regression-critical-border: rgba(230, 70, 70, 0.8);
+        --regression-critical-bg: rgba(230, 70, 70, 0.08);
       }
     }
     *, *::before, *::after { box-sizing: border-box; }
@@ -51,8 +74,30 @@
       padding: 1.5rem 2rem;
     }
     .page-header h1 { margin: 0 0 .25rem; font-size: 1.5rem; color: var(--heading); }
-    .page-header .meta { font-size: .85rem; color: var(--muted); }
+    .page-header .meta { font-size: .85rem; color: var(--muted); margin-top: .5rem; }
     .page-header .meta span + span::before { content: " · "; }
+
+    /* Toggle controls */
+    .controls {
+      display: flex;
+      gap: 1.25rem;
+      margin-top: .6rem;
+      font-size: .82rem;
+      color: var(--muted);
+    }
+    .controls label {
+      display: flex;
+      align-items: center;
+      gap: .35rem;
+      cursor: pointer;
+      user-select: none;
+    }
+    .controls input[type="checkbox"] {
+      accent-color: var(--accent);
+      width: 15px;
+      height: 15px;
+      cursor: pointer;
+    }
 
     main { max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem; }
 
@@ -78,6 +123,34 @@
     }
     .section-header p { margin: 0; font-size: .9rem; color: var(--muted); }
 
+    /* Legend */
+    .section-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .9rem;
+      align-items: center;
+      margin-bottom: 1rem;
+      font-size: .75rem;
+      color: var(--muted);
+    }
+    .section-legend .legend-item {
+      display: flex;
+      align-items: center;
+      gap: .3rem;
+    }
+    .section-legend .legend-line {
+      display: inline-block;
+      width: 22px;
+      height: 0;
+      border-top-width: 2px;
+      border-top-style: solid;
+    }
+    .legend-line.measured { border-top-color: var(--accent); border-top-style: solid; }
+    .legend-line.trendline { border-top-color: var(--trendline); border-top-style: dashed; }
+    .legend-line.threshold-target { border-top-color: var(--threshold-target); border-top-style: dashed; }
+    .legend-line.threshold-warning { border-top-color: var(--threshold-warning); border-top-style: dashed; }
+    .legend-line.threshold-critical { border-top-color: var(--threshold-critical); border-top-style: dashed; }
+
     /* Benchmark grid */
     .bench-grid {
       display: grid;
@@ -90,11 +163,40 @@
       border-radius: 10px;
       padding: 1.25rem;
       box-shadow: var(--shadow);
+      transition: border-color .2s, background-color .2s;
+    }
+    .bench-card.regression-warning {
+      border-color: var(--regression-warn-border);
+      background: var(--regression-warn-bg);
+    }
+    .bench-card.regression-critical {
+      border-color: var(--regression-critical-border);
+      background: var(--regression-critical-bg);
     }
     .bench-card h3 {
       margin: 0 0 .1rem;
       font-size: 1rem;
       color: var(--heading);
+      display: flex;
+      align-items: center;
+      gap: .5rem;
+    }
+    .bench-card .regression-badge {
+      font-size: .7rem;
+      font-weight: 600;
+      padding: .1rem .4rem;
+      border-radius: 12px;
+      white-space: nowrap;
+    }
+    .regression-badge.warn {
+      background: var(--threshold-warning-bg);
+      color: var(--threshold-warning);
+      border: 1px solid var(--threshold-warning);
+    }
+    .regression-badge.critical {
+      background: var(--threshold-critical-bg);
+      color: var(--threshold-critical);
+      border: 1px solid var(--threshold-critical);
     }
     .bench-card .bench-key {
       font-family: ui-monospace, "Cascadia Code", Consolas, monospace;
@@ -125,6 +227,8 @@
       color: var(--heading);
     }
     .latest-value .unit { font-size: .8rem; color: var(--muted); }
+    .latest-value .value.warn { color: var(--threshold-warning); }
+    .latest-value .value.critical { color: var(--threshold-critical); }
     .chart-wrap { position: relative; height: 160px; }
 
     .no-data {
@@ -148,6 +252,16 @@
 <body>
 <header class="page-header">
   <h1>Mini Diarium — Performance Benchmarks</h1>
+  <div class="controls">
+    <label>
+      <input type="checkbox" id="show-trendline" checked />
+      Show trendline
+    </label>
+    <label>
+      <input type="checkbox" id="show-thresholds" checked />
+      Show thresholds
+    </label>
+  </div>
   <p class="meta">
     <span id="last-updated">Loading…</span>
     <span id="latest-commit"></span>
@@ -161,7 +275,7 @@
 
 <footer>
   Generated from <code>data.js</code> via <a href="https://github.com/benchmark-action/github-action-benchmark" target="_blank" rel="noopener">github-action-benchmark</a>.
-  Chart.js trends show the last 30 runs (newest on the right).
+  Charts show the last 30 runs (newest on the right). Trendline is a simple moving average (SMA).
 </footer>
 
 <script>
@@ -359,12 +473,55 @@ const META = {
   },
 };
 
+// ─── Thresholds (all values in nanoseconds) ──────────────────────────────────
+// Covers the 18 Rust benchmarks rendered on the dashboard (SECTIONS array).
+// Frontend Vitest benchmarks (parseMarkdownToHtml) are NOT run in CI and do not
+// appear in data.js.
+const THRESHOLDS = {
+  "auth_argon2/wrap_master_key":    { target: 300_000_000, critical: 600_000_000 },
+  "auth_argon2/unwrap_master_key":  { target: 300_000_000, critical: 600_000_000 },
+  "cipher_encrypt/1024":            { target: 5_000,       critical: 10_000 },
+  "cipher_encrypt/10240":           { target: 30_000,      critical: 60_000 },
+  "cipher_encrypt/102400":          { target: 100_000,     critical: 200_000 },
+  "cipher_decrypt/1024":            { target: 5_000,       critical: 10_000 },
+  "cipher_decrypt/10240":           { target: 30_000,      critical: 60_000 },
+  "cipher_decrypt/102400":          { target: 100_000,     critical: 200_000 },
+  "db_insert_entry":                { target: 2_000_000,   critical: 4_000_000 },
+  "db_update_entry":                { target: 2_000_000,   critical: 4_000_000 },
+  "db_delete_entry":                { target: 1_000_000,   critical: 2_000_000 },
+  "db_get_entries_by_date":         { target: 1_000_000,   critical: 2_000_000 },
+  "db_get_all_entry_dates/100":     { target: 2_000_000,   critical: 4_000_000 },
+  "db_get_all_entry_dates/500":     { target: 10_000_000,  critical: 20_000_000 },
+  "db_get_all_entries/100":         { target: 10_000_000,  critical: 20_000_000 },
+  "db_get_all_entries/500":         { target: 50_000_000,  critical: 100_000_000 },
+  "count_words_plain_500w":         { target: 1_000,       critical: 2_000 },
+  "count_words_html_500w":          { target: 5_000,       critical: 10_000 },
+};
+
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 function formatValue(ns) {
   if (ns >= 1_000_000_000) return [(ns / 1_000_000_000).toFixed(2), "s"];
   if (ns >= 1_000_000)     return [(ns / 1_000_000).toFixed(2), "ms"];
   if (ns >= 1_000)         return [(ns / 1_000).toFixed(2), "µs"];
   return [ns.toFixed(1), "ns"];
+}
+
+function getUnitDivisor(ns) {
+  if (ns >= 1_000_000_000) return 1_000_000_000;
+  if (ns >= 1_000_000)     return 1_000_000;
+  if (ns >= 1_000)         return 1_000;
+  return 1;
+}
+
+function getWarningNs(threshold) {
+  return Math.round(threshold.target * 1.5);
+}
+
+function getRegressionStatus(latestValueNs, threshold) {
+  if (!threshold) return "normal";
+  if (latestValueNs >= threshold.critical) return "critical";
+  if (latestValueNs >= getWarningNs(threshold)) return "warning";
+  return "normal";
 }
 
 function getChartColors() {
@@ -374,12 +531,42 @@ function getChartColors() {
     fill: dark ? "rgba(125,162,247,.12)" : "rgba(79,107,237,.08)",
     grid: dark ? "#30363d" : "#dee2e6",
     tick: dark ? "#8b949e" : "#6c757d",
+    trendline: dark ? "#f0a050" : "#d4832f",
+    thresholdTarget: dark ? "rgba(63,185,80,0.7)" : "rgba(40,167,69,0.7)",
+    thresholdTargetBg: dark ? "rgba(63,185,80,0.15)" : "rgba(40,167,69,0.15)",
+    thresholdWarning: dark ? "rgba(220,175,50,0.7)" : "rgba(210,160,30,0.7)",
+    thresholdWarningBg: dark ? "rgba(220,175,50,0.15)" : "rgba(210,160,30,0.15)",
+    thresholdCritical: dark ? "rgba(230,70,70,0.7)" : "rgba(210,50,50,0.7)",
+    thresholdCriticalBg: dark ? "rgba(230,70,70,0.15)" : "rgba(210,50,50,0.15)",
   };
 }
 
-// ─── Build UI ─────────────────────────────────────────────────────────────────
+// ─── SMA Trendline ───────────────────────────────────────────────────────────
+function computeSMA(values, windowSize) {
+  const result = [];
+  for (let i = 0; i < values.length; i++) {
+    const start = Math.max(0, i - Math.floor(windowSize / 2));
+    const end = Math.min(values.length, i + Math.ceil(windowSize / 2));
+    const slice = values.slice(start, end);
+    result.push(slice.reduce((a, b) => a + b, 0) / slice.length);
+  }
+  return result;
+}
+
+function getSMAWindow(dataPointCount) {
+  if (dataPointCount <= 5) return 0;       // no trendline
+  if (dataPointCount <= 15) return 3;
+  if (dataPointCount <= 30) return 5;
+  return 7;
+}
+
+// ─── Chart registry ──────────────────────────────────────────────────────────
+// Stores all Chart instances so toggle controls can iterate them.
+const allCharts = [];
+
+// ─── Build UI ────────────────────────────────────────────────────────────────
 function buildPage(data) {
-  // Expect the action to store data under the workflow name "Benchmarks"
+  // Expect the action to store data under the workflow name "Benchmark"
   const runs = (data.entries && data.entries["Benchmark"]) || [];
 
   // Build lookup: benchmarkName → array of {commit, value(ns)}
@@ -410,6 +597,7 @@ function buildPage(data) {
 
   const main = document.getElementById("main");
   main.innerHTML = "";
+  allCharts.length = 0;
 
   const colors = getChartColors();
 
@@ -424,24 +612,55 @@ function buildPage(data) {
       <p>${section.description}</p>`;
     sec.appendChild(hdr);
 
+    // Section legend
+    const legend = document.createElement("div");
+    legend.className = "section-legend";
+    legend.innerHTML = [
+      `<span class="legend-item"><span class="legend-line measured"></span> Measured</span>`,
+      `<span class="legend-item"><span class="legend-line trendline"></span> Trend (SMA)</span>`,
+      `<span class="legend-item"><span class="legend-line threshold-target"></span> Target</span>`,
+      `<span class="legend-item"><span class="legend-line threshold-warning"></span> Warning</span>`,
+      `<span class="legend-item"><span class="legend-line threshold-critical"></span> Critical</span>`,
+    ].join("");
+    sec.appendChild(legend);
+
     const grid = document.createElement("div");
     grid.className = "bench-grid";
 
     for (const key of section.benchmarks) {
       const m = META[key] || { title: key, description: "", interpretation: "" };
+      const threshold = THRESHOLDS[key] || null;
       const pts = (history[key] || []).slice(-30); // last 30 runs
 
       const card = document.createElement("div");
       card.className = "bench-card";
 
+      // Regression status
+      let status = "normal";
+      if (pts.length > 0 && threshold) {
+        status = getRegressionStatus(pts[pts.length - 1].value, threshold);
+      }
+      if (status === "warning") card.classList.add("regression-warning");
+      if (status === "critical") card.classList.add("regression-critical");
+
+      // Regression badge HTML
+      let badgeHTML = "";
+      if (status === "warning") {
+        badgeHTML = `<span class="regression-badge warn">⚠ Above target</span>`;
+      } else if (status === "critical") {
+        badgeHTML = `<span class="regression-badge critical">🔴 Critical</span>`;
+      }
+
       let latestHTML = "";
       if (pts.length > 0) {
-        const [val, unit] = formatValue(pts[pts.length - 1].value);
-        latestHTML = `<div class="latest-value"><span class="value">${val}</span><span class="unit">${unit} (latest)</span></div>`;
+        const latestNs = pts[pts.length - 1].value;
+        const [val, unit] = formatValue(latestNs);
+        const valueClass = status !== "normal" ? ` ${status}` : "";
+        latestHTML = `<div class="latest-value"><span class="value${valueClass}">${val}</span><span class="unit">${unit} (latest)</span></div>`;
       }
 
       card.innerHTML = `
-        <h3>${m.title}</h3>
+        <h3>${m.title}${badgeHTML}</h3>
         <div class="bench-key">${key}</div>
         <div class="description">${m.description}</div>
         <div class="interpretation">${m.interpretation}</div>
@@ -453,28 +672,115 @@ function buildPage(data) {
       requestAnimationFrame(() => {
         const canvas = card.querySelector("canvas");
         if (!canvas || pts.length === 0) return;
-        const labels = pts.map(p => p.sha);
-        const values = pts.map(p => {
-          const [v] = formatValue(p.value);
-          return parseFloat(v);
-        });
-        const [, unit] = formatValue(pts[pts.length - 1].value);
 
-        new Chart(canvas, {
+        const labels = pts.map(p => p.sha);
+        const latestNs = pts[pts.length - 1].value;
+        const divisor = getUnitDivisor(latestNs);
+        const [, unit] = formatValue(latestNs);
+
+        // Chart data in display units
+        const values = pts.map(p => p.value / divisor);
+
+        // SMA trendline
+        const smaWindow = getSMAWindow(pts.length);
+        const smaValues = smaWindow > 0 ? computeSMA(values, smaWindow) : [];
+
+        // Build datasets
+        const datasets = [];
+
+        // Trendline dataset (drawn first = behind, lower order)
+        if (smaWindow > 0) {
+          datasets.push({
+            label: "Trend (SMA)",
+            data: smaValues,
+            borderColor: colors.trendline,
+            borderWidth: 2,
+            borderDash: [4, 3],
+            pointRadius: 0,
+            pointHoverRadius: 0,
+            fill: false,
+            tension: 0.4,
+            order: 1,
+          });
+        }
+
+        // Measured data dataset (drawn on top, higher order)
+        datasets.push({
+          label: "Measured",
+          data: values,
+          borderColor: colors.line,
+          backgroundColor: colors.fill,
+          borderWidth: 2,
+          pointRadius: pts.length > 10 ? 2 : 4,
+          pointHoverRadius: 5,
+          fill: true,
+          tension: 0.3,
+          order: 2,
+        });
+
+        // Threshold annotations
+        const annotations = {};
+        if (threshold) {
+          const targetDisplay = threshold.target / divisor;
+          const warningDisplay = getWarningNs(threshold) / divisor;
+          const criticalDisplay = threshold.critical / divisor;
+
+          annotations.targetLine = {
+            type: "line",
+            yMin: targetDisplay,
+            yMax: targetDisplay,
+            borderColor: colors.thresholdTarget,
+            borderWidth: 1.5,
+            borderDash: [6, 4],
+            label: {
+              display: true,
+              content: "Target",
+              position: "start",
+              font: { size: 10 },
+              color: colors.thresholdTarget,
+              backgroundColor: colors.thresholdTargetBg,
+              padding: { top: 1, bottom: 1, left: 4, right: 4 },
+            },
+          };
+          annotations.warningLine = {
+            type: "line",
+            yMin: warningDisplay,
+            yMax: warningDisplay,
+            borderColor: colors.thresholdWarning,
+            borderWidth: 1.5,
+            borderDash: [6, 4],
+            label: {
+              display: true,
+              content: "Warning",
+              position: "start",
+              font: { size: 10 },
+              color: colors.thresholdWarning,
+              backgroundColor: colors.thresholdWarningBg,
+              padding: { top: 1, bottom: 1, left: 4, right: 4 },
+            },
+          };
+          annotations.criticalLine = {
+            type: "line",
+            yMin: criticalDisplay,
+            yMax: criticalDisplay,
+            borderColor: colors.thresholdCritical,
+            borderWidth: 1.5,
+            borderDash: [6, 4],
+            label: {
+              display: true,
+              content: "Critical",
+              position: "start",
+              font: { size: 10 },
+              color: colors.thresholdCritical,
+              backgroundColor: colors.thresholdCriticalBg,
+              padding: { top: 1, bottom: 1, left: 4, right: 4 },
+            },
+          };
+        }
+
+        const chart = new Chart(canvas, {
           type: "line",
-          data: {
-            labels,
-            datasets: [{
-              data: values,
-              borderColor: colors.line,
-              backgroundColor: colors.fill,
-              borderWidth: 2,
-              pointRadius: pts.length > 10 ? 2 : 4,
-              pointHoverRadius: 5,
-              fill: true,
-              tension: 0.3,
-            }],
-          },
+          data: { labels, datasets },
           options: {
             responsive: true,
             maintainAspectRatio: false,
@@ -488,8 +794,11 @@ function buildPage(data) {
                       ? pts[idx].sha
                       : labels[ctx[0].dataIndex];
                   },
-                  label: ctx => `${ctx.parsed.y} ${unit}`,
+                  label: ctx => `${ctx.dataset.label}: ${ctx.parsed.y.toFixed(2)} ${unit}`,
                 },
+              },
+              annotation: {
+                annotations,
               },
             },
             scales: {
@@ -509,12 +818,45 @@ function buildPage(data) {
             },
           },
         });
+
+        allCharts.push(chart);
       });
     }
 
     sec.appendChild(grid);
     main.appendChild(sec);
   }
+}
+
+// ─── Toggle controls ─────────────────────────────────────────────────────────
+function setupToggles() {
+  const trendlineCheckbox = document.getElementById("show-trendline");
+  const thresholdsCheckbox = document.getElementById("show-thresholds");
+
+  trendlineCheckbox.addEventListener("change", () => {
+    const visible = trendlineCheckbox.checked;
+    for (const chart of allCharts) {
+      for (const ds of chart.data.datasets) {
+        if (ds.label === "Trend (SMA)") {
+          ds.hidden = !visible;
+        }
+      }
+      chart.update();
+    }
+  });
+
+  thresholdsCheckbox.addEventListener("change", () => {
+    const visible = thresholdsCheckbox.checked;
+    for (const chart of allCharts) {
+      const annotations = chart.options.plugins.annotation.annotations;
+      if (annotations) {
+        for (const key of Object.keys(annotations)) {
+          annotations[key].display = visible;
+        }
+      }
+      chart.update();
+    }
+  });
 }
 
 // ─── Entry point ─────────────────────────────────────────────────────────────
@@ -529,6 +871,8 @@ if (typeof window.BENCHMARK_DATA !== "undefined") {
     </div>`;
   document.getElementById("last-updated").textContent = "No data";
 }
+
+setupToggles();
 </script>
 </body>
 </html>

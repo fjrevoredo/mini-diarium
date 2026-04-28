@@ -46,6 +46,30 @@ src/lib/
 | `parseMarkdownToHtml short` | `markdown.bench.ts` | marked + DOMPurify on ~100-word Markdown |
 | `parseMarkdownToHtml long` | `markdown.bench.ts` | marked + DOMPurify on ~1000-word Markdown |
 
+## Benchmark Dashboard (`index.html`)
+
+The custom report page is a single static HTML file served from the `gh-pages` branch. It has no build step — all dependencies (Chart.js, chartjs-plugin-annotation) are loaded from CDN.
+
+### Visual features
+
+- **Threshold lines**: Horizontal reference lines on each chart showing target (green), warning (amber, 1.5× target), and critical (red, 2× target) performance envelopes. Rendered via `chartjs-plugin-annotation`.
+- **SMA trendline**: Simple moving average overlay (orange dashed) to smooth CI runner noise and reveal long-term drift. Window auto-scales: 3 for 6–15 points, 5 for 16–30, 7 for >30.
+- **Regression highlighting**: Cards with the latest value above warning get an amber border + "⚠ Above target" badge; above critical gets a red border + "🔴 Critical" badge.
+- **Toggle controls**: "Show trendline" and "Show thresholds" checkboxes in the page header.
+
+### `THRESHOLDS` constant
+
+All threshold values are stored in nanoseconds inside `index.html` as a `THRESHOLDS` object keyed by benchmark name. Only the 18 Rust benchmarks that appear in `data.js` have thresholds. The `warning` level is not stored — it is derived as `target * 1.5` at render time.
+
+When adding a new benchmark:
+1. Add it to the `SECTIONS` array (for grouping).
+2. Add a `META` entry (title, description, interpretation).
+3. Add a `THRESHOLDS` entry with `target` and `critical` values in nanoseconds.
+
+### Auth threshold gap
+
+Auth benchmarks only have upper-bound thresholds. A value dropping *below* expected (faster Argon2id) is equally dangerous (weakened KDF parameters) but is not shown on the dashboard. This is mitigated by CI (which alerts on slowdowns) and a dedicated unit test checking minimum Argon2 parameters.
+
 ## CI Integration
 
 Workflow: `.github/workflows/benchmark.yml`
@@ -79,3 +103,9 @@ After each run, the workflow also copies `benchmarks/index.html` to gh-pages so 
    slower). It does NOT alert if Argon2id gets faster/weaker (e.g. reduced iterations).
    Guarding against weakened parameters requires a dedicated unit test checking minimum
    param values — that is a separate concern from performance benchmarking.
+
+9. **`parseMarkdownToHtml` benchmarks do not appear on the dashboard** — they are frontend Vitest benchmarks not run in CI. Only the 18 Rust benchmarks are in `data.js` and rendered on the report page. Do not add them to `SECTIONS` or `THRESHOLDS` unless the CI workflow is also updated to run and store frontend results.
+
+10. **Threshold values are initial estimates** — they are calibrated from interpretation text and domain knowledge, not from actual CI data. Once real data flows, review and tighten/relax as needed.
+
+11. **`chartjs-plugin-annotation` must match Chart.js v4** — the report page loads `chartjs-plugin-annotation@3` which is the major version compatible with Chart.js 4. Do not upgrade one without the other.
