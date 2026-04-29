@@ -30,6 +30,12 @@ Template:
 
 # Versions
 
+## [0.4.20] - Unreleased
+
+### Security
+- **Multi-auth requirement can no longer be bypassed by re-adding a journal**: the "Require All Authentication Methods" setting was previously stored in `config.json`. Removing a journal from the list and re-adding the same database file produced a fresh config entry with the flag absent, allowing a single-credential unlock even when multi-auth was required. The flag is now stored inside `diary.db` itself (new `db_settings` table, schema v6), so it stays with the database file regardless of what happens to the config. Existing journals are migrated automatically on the first unlock after updating.
+
+
 ## [0.4.19] - 27-04-2026
 
 ### Added

@@ -10,6 +10,7 @@ pub struct JournalConfig {
     pub path: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub auto_key: Option<String>, // hex-encoded 32-byte random key; None for password journals
+    // TODO: deprecated — migrated to db_settings (v6). Keep for the migration window in unlock_diary.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub require_all_auth: Option<bool>,
 }

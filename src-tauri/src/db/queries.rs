@@ -327,6 +327,28 @@ pub fn count_words(text: &str) -> i32 {
     strip_html_tags(text).split_whitespace().count() as i32
 }
 
+// ─── DB settings queries ──────────────────────────────────────────────────────
+
+/// Returns the value for `key`, or `None` if absent or if `db_settings` doesn't exist yet.
+pub fn get_db_setting(conn: &rusqlite::Connection, key: &str) -> Option<String> {
+    conn.query_row(
+        "SELECT value FROM db_settings WHERE key = ?1",
+        rusqlite::params![key],
+        |row| row.get(0),
+    )
+    .ok()
+}
+
+/// Upserts a key-value pair in `db_settings`.
+pub fn set_db_setting(conn: &rusqlite::Connection, key: &str, value: &str) -> Result<(), String> {
+    conn.execute(
+        "INSERT OR REPLACE INTO db_settings (key, value) VALUES (?1, ?2)",
+        rusqlite::params![key, value],
+    )
+    .map(|_| ())
+    .map_err(|e| format!("Failed to write db_setting '{}': {}", key, e))
+}
+
 // ─── Auth slot queries ────────────────────────────────────────────────────────
 
 /// Returns the (id, wrapped_key) of the first password slot, or `None` if absent.
@@ -849,6 +871,46 @@ mod tests {
         assert!(
             last_used_after.is_some(),
             "expected last_used to be set after update_slot_last_used"
+        );
+    }
+
+    #[test]
+    fn test_get_db_setting_missing_key_returns_none() {
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+        let result = get_db_setting(db.conn(), "nonexistent_key");
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_set_and_get_db_setting_roundtrip() {
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+
+        set_db_setting(db.conn(), "require_all_auth", "true").unwrap();
+        let value = get_db_setting(db.conn(), "require_all_auth");
+        assert_eq!(value, Some("true".to_string()));
+
+        // Update the same key
+        set_db_setting(db.conn(), "require_all_auth", "false").unwrap();
+        let value2 = get_db_setting(db.conn(), "require_all_auth");
+        assert_eq!(value2, Some("false".to_string()));
+    }
+
+    #[test]
+    fn test_get_db_setting_on_missing_table_returns_none() {
+        // Open a raw in-memory connection without db_settings — simulates a v5 DB
+        let conn = rusqlite::Connection::open_in_memory().unwrap();
+        conn.execute_batch(
+            "CREATE TABLE schema_version (version INTEGER PRIMARY KEY);
+             INSERT INTO schema_version VALUES (5);",
+        )
+        .unwrap();
+
+        let result = get_db_setting(&conn, "require_all_auth");
+        assert!(
+            result.is_none(),
+            "must return None when table does not exist"
         );
     }
 }

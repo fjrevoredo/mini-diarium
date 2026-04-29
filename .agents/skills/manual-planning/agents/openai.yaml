@@ -1,0 +1,4 @@
+interface:
+  display_name: "Manual Planning"
+  short_description: "Create and maintain agent-executable Markdown plans."
+  default_prompt: "Create a manual implementation plan for this task."

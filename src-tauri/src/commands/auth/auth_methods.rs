@@ -43,10 +43,10 @@ pub fn list_auth_methods(
 /// Opens the SQLite container with a plain connection — the container is not encrypted
 /// at the SQLite level; only entry content is AES-256-GCM encrypted at the application
 /// layer. Excludes `auto` slots (device-bound keys that never require user input).
-/// Returns an empty vec if the DB file does not yet exist.
+/// Returns empty slots and `require_all_auth: false` if the DB file does not yet exist.
 /// Does NOT expose wrapped_key or public_key.
 #[tauri::command]
-pub fn peek_auth_slot_types(state: State<DiaryState>) -> Result<Vec<AuthSlotPeek>, String> {
+pub fn peek_auth_slot_types(state: State<DiaryState>) -> Result<JournalPeek, String> {
     let db_path = state
         .db_path
         .lock()
@@ -54,7 +54,10 @@ pub fn peek_auth_slot_types(state: State<DiaryState>) -> Result<Vec<AuthSlotPeek
         .clone();
 
     if !db_path.exists() {
-        return Ok(vec![]);
+        return Ok(JournalPeek {
+            slots: vec![],
+            require_all_auth: false,
+        });
     }
 
     let conn = rusqlite::Connection::open(&db_path)
@@ -75,7 +78,21 @@ pub fn peek_auth_slot_types(state: State<DiaryState>) -> Result<Vec<AuthSlotPeek
         .map_err(|e| format!("Failed to query: {}", e))?
         .collect::<Result<Vec<_>, _>>()
         .map_err(|e| format!("Failed to collect: {}", e))?;
-    Ok(rows)
+
+    let require_all_auth = crate::db::queries::get_db_setting(&conn, "require_all_auth")
+        .map(|v| v == "true")
+        .unwrap_or(false);
+
+    Ok(JournalPeek {
+        slots: rows,
+        require_all_auth,
+    })
+}
+
+#[derive(Debug, serde::Serialize)]
+pub struct JournalPeek {
+    pub slots: Vec<AuthSlotPeek>,
+    pub require_all_auth: bool,
 }
 
 #[derive(Debug, serde::Serialize)]
@@ -291,13 +308,8 @@ pub fn remove_auth_method(
         let non_auto_count = all_methods.iter().filter(|m| m.slot_type != "auto").count();
         let removing_non_auto = slot_type != "auto";
         if removing_non_auto && non_auto_count <= 2 {
-            let active_id =
-                crate::config::load_active_journal_id(&state.app_data_dir).unwrap_or_default();
-            let journals = crate::config::load_journals(&state.app_data_dir);
-            let require_all = journals
-                .iter()
-                .find(|j| j.id == active_id)
-                .and_then(|j| j.require_all_auth)
+            let require_all = crate::db::queries::get_db_setting(db.conn(), "require_all_auth")
+                .map(|v| v == "true")
                 .unwrap_or(false);
             if require_all {
                 return Err(
@@ -325,7 +337,8 @@ pub fn remove_auth_method(
 ///
 /// When enabled, `unlock_diary` and `unlock_diary_with_keypair` are blocked; the
 /// caller must use `unlock_diary_all_methods` instead. Requires at least two
-/// non-auto auth methods to be registered.
+/// non-auto auth methods to be registered. The flag is stored in `db_settings` inside
+/// the database file (schema v6+) so it cannot be stripped by config manipulation.
 #[tauri::command]
 pub fn set_require_all_auth(enabled: bool, state: State<DiaryState>) -> Result<(), String> {
     let db_state = state
@@ -344,13 +357,15 @@ pub fn set_require_all_auth(enabled: bool, state: State<DiaryState>) -> Result<(
         }
     }
 
-    let active_id =
-        crate::config::load_active_journal_id(&state.app_data_dir).ok_or("No active journal")?;
-    crate::config::set_journal_require_all_auth(&state.app_data_dir, &active_id, enabled)?;
-    info!(
-        "require_all_auth set to {} for journal {}",
-        enabled, active_id
-    );
+    let value = if enabled { "true" } else { "false" };
+    crate::db::queries::set_db_setting(db.conn(), "require_all_auth", value)?;
+
+    // Best-effort cleanup of legacy config.json value
+    if let Some(active_id) = crate::config::load_active_journal_id(&state.app_data_dir) {
+        let _ = crate::config::set_journal_require_all_auth(&state.app_data_dir, &active_id, false);
+    }
+
+    info!("require_all_auth set to {} in db_settings", enabled);
     Ok(())
 }
 
@@ -423,7 +438,7 @@ mod tests {
             .conn()
             .query_row("SELECT version FROM schema_version", [], |r| r.get(0))
             .unwrap();
-        assert_eq!(version, 5);
+        assert_eq!(version, 6);
 
         // Verify entry is decryptable with the master key unwrapped via keypair
         let entries = crate::db::queries::get_entries_by_date(&db2, "2024-03-15").unwrap();
@@ -673,7 +688,7 @@ mod tests {
             .conn()
             .query_row("SELECT version FROM schema_version", [], |r| r.get(0))
             .unwrap();
-        assert_eq!(version, 5);
+        assert_eq!(version, 6);
 
         cleanup(&db_path, &backups_dir);
     }

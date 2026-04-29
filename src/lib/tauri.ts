@@ -65,7 +65,12 @@ export interface AuthSlotPeek {
   label: string;
 }
 
-export async function peekAuthSlotTypes(): Promise<AuthSlotPeek[]> {
+export interface JournalPeek {
+  slots: AuthSlotPeek[];
+  require_all_auth: boolean;
+}
+
+export async function peekAuthSlotTypes(): Promise<JournalPeek> {
   return await invoke('peek_auth_slot_types');
 }
 
