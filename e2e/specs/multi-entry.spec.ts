@@ -48,13 +48,20 @@ describe('Multi-entry workflow', () => {
     const unlockOrCreate = async () => {
       const authScreen = await browser.waitUntil(
         async () => {
-          const create = await $('[data-testid="password-create-input"]').isDisplayed().catch(() => false);
-          const unlock = await $('[data-testid="password-unlock-input"]').isDisplayed().catch(() => false);
+          const create = await $('[data-testid="password-create-input"]')
+            .isDisplayed()
+            .catch(() => false);
+          const unlock = await $('[data-testid="password-unlock-input"]')
+            .isDisplayed()
+            .catch(() => false);
           if (create) return 'create' as const;
           if (unlock) return 'unlock' as const;
           return false;
         },
-        { timeout: 10000, timeoutMsg: 'Neither password-create-input nor password-unlock-input appeared' },
+        {
+          timeout: 10000,
+          timeoutMsg: 'Neither password-create-input nor password-unlock-input appeared',
+        },
       );
 
       if (authScreen === 'create') {
@@ -69,13 +76,12 @@ describe('Multi-entry workflow', () => {
       await $('[data-testid="toggle-sidebar-button"]').waitForClickable({ timeout: 10000 });
     };
 
-    const waitForCounter = async (msg: string) => {
+    const waitForEntryButtons = async (expectedTotal: number, msg: string) => {
       await browser.waitUntil(
         async () => {
-          const el = $('[data-testid="entry-counter"]');
+          const el = $(`[data-testid="entry-number-button-${expectedTotal}"]`);
           if (!(await el.isExisting())) return false;
-          // Counter format: "{index+1} / {total}" — match "/ 2" at end to confirm 2 total entries
-          return /\/ 2$/.test((await el.getText()).trim());
+          return await el.isDisplayed();
         },
         { timeout: 10000, timeoutMsg: msg },
       );
@@ -111,7 +117,7 @@ describe('Multi-entry workflow', () => {
     // Add a second entry and write its body
     await $('[data-testid="entry-add-button"]').waitForClickable({ timeout: 5000 });
     await $('[data-testid="entry-add-button"]').click();
-    await waitForCounter('counter should show 2 total entries after clicking "+"');
+    await waitForEntryButtons(2, 'entry number button 2 should appear after clicking "+"');
 
     // Write the second entry via the title field (setValue is deterministic; after clicking "+"
     // focus is on the button and browser.keys() into ProseMirror is unreliable from E2E).
@@ -142,10 +148,16 @@ describe('Multi-entry workflow', () => {
 
     // Both entries must have survived the lock/unlock cycle.
     // Counter "/ 2" confirms both exist; title check confirms we're on the newest entry.
-    await waitForCounter('both entries should survive lock/unlock (counter "/ 2")');
+    await waitForEntryButtons(
+      2,
+      'both entries should survive lock/unlock (entry number button 2 visible)',
+    );
     await browser.waitUntil(
       async () => (await $('[data-testid="title-input"]').getValue()) === ENTRY_2_TITLE,
-      { timeout: 10000, timeoutMsg: `Newest entry title "${ENTRY_2_TITLE}" not loaded after unlock` },
+      {
+        timeout: 10000,
+        timeoutMsg: `Newest entry title "${ENTRY_2_TITLE}" not loaded after unlock`,
+      },
     );
 
     // ── Scenario B: "+" enabled after backward navigation (v0.4.9 Variant 1) ──
@@ -170,7 +182,10 @@ describe('Multi-entry workflow', () => {
     // Click "+" — creates a blank second entry (counter shows "2 / 2")
     await $('[data-testid="entry-add-button"]').waitForClickable({ timeout: 5000 });
     await $('[data-testid="entry-add-button"]').click();
-    await waitForCounter('counter should show 2 entries after clicking "+" in scenario B');
+    await waitForEntryButtons(
+      2,
+      'entry number button 2 should appear after clicking "+" in scenario B',
+    );
 
     // Navigate back to entry 1 with "←" — entry 1 has real content
     await $('[data-testid="entry-prev-button"]').waitForClickable({ timeout: 5000 });
@@ -179,10 +194,10 @@ describe('Multi-entry workflow', () => {
     // THE REGRESSION GUARD: "+" must be enabled once TipTap loads entry 1's content.
     // Before the fix, editorIsEmpty was stale (still true from the blank entry), keeping
     // addDisabled=true even though the loaded entry had content.
-    await browser.waitUntil(
-      async () => $('[data-testid="entry-add-button"]').isEnabled(),
-      { timeout: 5000, timeoutMsg: '"+" button stuck disabled after backward navigation (v0.4.9 Variant 1)' },
-    );
+    await browser.waitUntil(async () => $('[data-testid="entry-add-button"]').isEnabled(), {
+      timeout: 5000,
+      timeoutMsg: '"+" button stuck disabled after backward navigation (v0.4.9 Variant 1)',
+    });
 
     // ── Scenario C: "+" enabled after day switch with blank entry (v0.4.9 Variant 2) ──
     // Regression: creating a blank 2nd entry and switching to another day triggered a
@@ -210,7 +225,10 @@ describe('Multi-entry workflow', () => {
     // Click "+" — creates a blank second entry
     await $('[data-testid="entry-add-button"]').waitForClickable({ timeout: 5000 });
     await $('[data-testid="entry-add-button"]').click();
-    await waitForCounter('counter should show 2 entries after clicking "+" in scenario C');
+    await waitForEntryButtons(
+      2,
+      'entry number button 2 should appear after clicking "+" in scenario C',
+    );
     // addEntry() is still finishing (getAllEntryDates is async). Wait for it to complete so
     // setEntryDates() doesn't fire a calendar re-render while we're trying to click a day.
     await browser.pause(1000);
@@ -237,9 +255,52 @@ describe('Multi-entry workflow', () => {
 
     // THE REGRESSION GUARD: "+" must be enabled. Before the fix, saveCurrentById set
     // pendingEntryId(null) after deleting the blank entry, leaving "+" disabled on switch-back.
+    await browser.waitUntil(async () => $('[data-testid="entry-add-button"]').isEnabled(), {
+      timeout: 5000,
+      timeoutMsg: '"+" button stuck disabled after day switch (v0.4.9 Variant 2)',
+    });
+    // ── Scenario D: Direct jump via number button ──────────────────────────
+    // Navigate directly to entry 1 by clicking its number button while on entry 2.
+    // This validates the new `← 1 2 →` clickable number bar end-to-end.
+
+    // We're currently on MULTI_DATE_3 with 1 surviving entry (blank entry was auto-deleted).
+    // Add a second entry so we have 2 entries to navigate between.
+    await browser.waitUntil(async () => $('[data-testid="entry-add-button"]').isEnabled(), {
+      timeout: 5000,
+      timeoutMsg: '"+" button not enabled before Scenario D',
+    });
+    await $('[data-testid="entry-add-button"]').click();
+    await browser.pause(500);
+    await $('[data-testid="title-input"]').waitForClickable({ timeout: 5000 });
+    await $('[data-testid="title-input"]').setValue('Second entry for direct jump');
+    await browser.pause(2500); // flush autosave
+
+    // Confirm we have 2 entries and are on entry 2
+    await waitForEntryButtons(2, 'Scenario D: should have 2 entries');
     await browser.waitUntil(
-      async () => $('[data-testid="entry-add-button"]').isEnabled(),
-      { timeout: 5000, timeoutMsg: '"+" button stuck disabled after day switch (v0.4.9 Variant 2)' },
+      async () =>
+        (await $('[data-testid="title-input"]').getValue()) === 'Second entry for direct jump',
+      { timeout: 5000, timeoutMsg: 'Scenario D: should be on entry 2' },
     );
+
+    // Click number button 1 to jump directly to entry 1
+    await $('[data-testid="entry-number-button-1"]').waitForClickable({ timeout: 5000 });
+    await $('[data-testid="entry-number-button-1"]').click();
+
+    // Verify we jumped to entry 1 — its title should be empty (only body was set)
+    await browser.waitUntil(
+      async () => (await $('[data-testid="title-input"]').getValue()) === '',
+      {
+        timeout: 5000,
+        timeoutMsg: 'Scenario D: direct jump to entry 1 failed (title should be empty)',
+      },
+    );
+
+    // Verify entry 1 number button is now active
+    const activeBtn = await $(`[data-testid="entry-number-button-1"][aria-current='true']`);
+    await activeBtn.waitForExist({
+      timeout: 5000,
+      timeoutMsg: 'Scenario D: entry-number-button-1 should be active',
+    });
   });
 });

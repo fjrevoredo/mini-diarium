@@ -222,7 +222,9 @@ These are used by E2E tests — **do not remove** from components.
 | `Calendar.tsx` | Each day button | `calendar-day-YYYY-MM-DD` |
 | `EntryNavBar.tsx` | Nav bar container | `entry-nav-bar` |
 | `EntryNavBar.tsx` | Previous entry button (`←`) | `entry-prev-button` |
-| `EntryNavBar.tsx` | Entry position counter | `entry-counter` |
+| `EntryNavBar.tsx` | Entry number button N (1-based) | `entry-number-button-{N}` |
+
+> **Note:** The active entry's number button has `aria-current="true"`.
 | `EntryNavBar.tsx` | Next entry button (`→`) | `entry-next-button` |
 | `EntryNavBar.tsx` | Delete entry button (`−`) | `entry-delete-button` |
 | `EntryNavBar.tsx` | Add entry button (`+`) | `entry-add-button` |

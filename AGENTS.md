@@ -244,7 +244,7 @@ Current test shape:
 - `calendar-day-YYYY-MM-DD`
 - `entry-nav-bar`
 - `entry-prev-button`
-- `entry-counter`
+- `entry-number-button-{N}`
 - `entry-next-button`
 - `entry-delete-button`
 - `entry-add-button`

@@ -179,6 +179,7 @@
     "titlePlaceholder": "Titolo",
     "prevEntry": "Voce precedente",
     "nextEntry": "Voce successiva",
+    "goToEntry": "Vai alla voce {{ number }}",
     "deleteEntry": "Elimina voce",
     "addEntry": "Aggiungi voce",
     "addEntryCreating": "Creazione voce…",

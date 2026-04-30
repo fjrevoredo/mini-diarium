@@ -179,6 +179,7 @@
 		"titlePlaceholder": "Titel",
 		"prevEntry": "Vorheriger Eintrag",
 		"nextEntry": "Nächster Eintrag",
+		"goToEntry": "Gehe zu Eintrag {{ number }}",
 		"deleteEntry": "Eintrag löschen",
 		"addEntry": "Eintrag hinzufügen",
 		"addEntryCreating": "Erstelle Eintrag…",

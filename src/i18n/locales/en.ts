@@ -230,6 +230,7 @@ const en = {
     /** EntryNavBar aria-labels (fallbacks) */
     prevEntry: 'Previous entry',
     nextEntry: 'Next entry',
+    goToEntry: 'Go to entry {{ number }}',
     deleteEntry: 'Delete entry',
     addEntry: 'Add entry',
     /** EditorPanel — add/delete button titles */

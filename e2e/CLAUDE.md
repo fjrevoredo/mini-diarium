@@ -51,7 +51,7 @@ The source of truth for these attributes is the frontend components in `src/`. D
 | `Calendar.tsx` | Each day button | `calendar-day-YYYY-MM-DD` |
 | `EntryNavBar.tsx` | Nav bar container | `entry-nav-bar` |
 | `EntryNavBar.tsx` | Previous entry button (`←`) | `entry-prev-button` |
-| `EntryNavBar.tsx` | Entry position counter | `entry-counter` |
+| `EntryNavBar.tsx` | Entry number button N (1-based) | `entry-number-button-{N}` |
 | `EntryNavBar.tsx` | Next entry button (`→`) | `entry-next-button` |
 | `EntryNavBar.tsx` | Delete entry button (`−`) | `entry-delete-button` |
 | `EntryNavBar.tsx` | Add entry button (`+`) | `entry-add-button` |

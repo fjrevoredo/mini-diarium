@@ -32,6 +32,9 @@ Template:
 
 ## [0.4.20] - Unreleased
 
+### Added
+- **Multi-entry number navigation bar**: the entry counter (`1 / 3`) has been replaced with clickable number buttons (`← 1 2 3 →`) that jump directly to the chosen entry. The current entry is highlighted in bold with an `aria-current="true"` attribute for screen readers. The prev/next arrows retain their existing step-by-step behaviour. A `goToEntry` aria-label key is added to all four locales.
+
 ### Security
 - **Multi-auth requirement can no longer be bypassed by re-adding a journal**: the "Require All Authentication Methods" setting was previously stored in `config.json`. Removing a journal from the list and re-adding the same database file produced a fresh config entry with the flag absent, allowing a single-credential unlock even when multi-auth was required. The flag is now stored inside `diary.db` itself (new `db_settings` table, schema v6), so it stays with the database file regardless of what happens to the config. Existing journals are migrated automatically on the first unlock after updating.
 
