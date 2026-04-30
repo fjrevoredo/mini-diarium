@@ -160,7 +160,7 @@ See `docs/TRANSLATIONS.md` for the community translator guide.
 - **Wrap async in components** — use `onMount` or `createResource`, never top-level `await`.
 - **Event handlers** — use `on:click` (native) or `onClick` (SolidJS delegated). Wrap async handlers: `onClick={() => handleAsync()}`.
 - **Conditional rendering** — use `<Show when={...}>`, not JS ternaries.
-- **Lists** — use `<For each={...}>`, never `.map()`.
+- **Lists** — use `<For each={...}>`, never `.map()`. The `<For>` callback receives the unwrapped item directly for primitive arrays: `(item) => ...`, not `(item) => item()`. Only store/object entries behave like signals.
 
 ### Error Handling
 

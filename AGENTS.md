@@ -253,6 +253,11 @@ Current test shape:
 
 For the authoritative test-selector inventory and E2E rules, see `src/CLAUDE.md` and `e2e/CLAUDE.md`.
 
+## Agent Workflow Rules
+
+1. **Validate after each completed task.** Run the relevant test/type-check/lint command immediately after finishing a task — before moving to the next one. This catches bugs at the point of introduction and keeps diagnosis trivial. Do not batch multiple tasks and validate only at the end.
+2. **Format only files you changed.** When running Prettier, pass explicit file paths for files you created or modified. Never run `prettier --write` on broad globs — it will reformat unrelated files with pre-existing style differences, creating noise in the diff.
+
 ## Gotchas and Pitfalls
 
 1. **No plaintext search index on disk:** `entries_fts` was removed because it stored plaintext. Search remains a stub by design.

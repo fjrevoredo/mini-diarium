@@ -58,7 +58,7 @@ export function EntryNavBar(props: EntryNavBarProps) {
           </button>
         </div>
       </Show>
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-2 ml-auto">
         <Show when={props.total > 1 && props.onDelete}>
           <button
             data-testid="entry-delete-button"
