@@ -90,7 +90,16 @@ $readme = Get-Content $readmePath -Raw
 $readme = $readme -replace 'version-\d+\.\d+\.\d+-', "version-$Version-"
 Set-Content -Path $readmePath -Value $readme -NoNewline
 
-# 7. Validate all versions
+# 7. Prepend release entry to metainfo.xml
+Write-Host "Prepending release entry to data\linux\io.github.fjrevoredo.mini-diarium.metainfo.xml..."
+$metainfoPath = "data\linux\io.github.fjrevoredo.mini-diarium.metainfo.xml"
+$metainfo = Get-Content $metainfoPath -Raw
+$releaseDate = (Get-Date).ToUniversalTime().ToString("yyyy-MM-dd")
+$releaseEntry = "    <release version=`"$Version`" date=`"$releaseDate`">`n      <url type=`"details`">https://github.com/fjrevoredo/mini-diarium/releases/tag/v$Version</url>`n    </release>"
+$metainfo = $metainfo -replace "(<!-- New release entries are prepended here by bump-version.sh -->)", "`$1`n$releaseEntry"
+Set-Content -Path $metainfoPath -Value $metainfo -NoNewline
+
+# 8. Validate all versions
 Write-Host "Validating version updates..."
 
 $packageVersion = [regex]::Match((Get-Content $packageJsonPath -Raw), '"version"\s*:\s*"(\d+\.\d+\.\d+)"').Groups[1].Value
@@ -147,6 +156,11 @@ if ($websiteSoftwareVersion -ne $Version) {
     Report-Mismatch -FilePath "website\index.html softwareVersion" -Expected $Version -Actual ($(if ($websiteSoftwareVersion) { $websiteSoftwareVersion } else { "<missing>" }))
 }
 
+$metainfoRelease = [regex]::Match((Get-Content $metainfoPath -Raw), "<release version=`"$Version`"").Success
+if (-not $metainfoRelease) {
+    Report-Mismatch -FilePath "data\linux\io.github.fjrevoredo.mini-diarium.metainfo.xml" -Expected $Version -Actual "<release entry not found>"
+}
+
 if ($validationFailed) {
     Write-Host ""
     Write-Host "${Red}Version bump aborted: one or more files did not match $Version.${Reset}"
@@ -159,7 +173,7 @@ Write-Host ""
 
 # Show what changed
 Write-Host "Changes:"
-git diff package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock website/index.html README.md | Select-Object -First 30
+git diff package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock website/index.html README.md data\linux\io.github.fjrevoredo.mini-diarium.metainfo.xml | Select-Object -First 30
 
 # Get current branch
 $currentBranch = git branch --show-current
@@ -167,7 +181,7 @@ $currentBranch = git branch --show-current
 Write-Host ""
 Write-Host "${Yellow}Next steps:${Reset}"
 Write-Host "1. Review the changes above"
-Write-Host "2. Commit: ${Green}git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock website/index.html README.md; git commit -m `"chore: bump version to $Version`"${Reset}"
+Write-Host "2. Commit: ${Green}git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock website/index.html README.md data\linux\io.github.fjrevoredo.mini-diarium.metainfo.xml; git commit -m `"chore: bump version to $Version`"${Reset}"
 Write-Host "3. Push branch: ${Green}git push origin $currentBranch${Reset}"
 Write-Host "4. Create PR to merge $currentBranch → master"
 Write-Host "5. After PR is merged, checkout master and create tag:"

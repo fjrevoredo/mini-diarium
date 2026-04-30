@@ -82,8 +82,11 @@ npm install --package-lock-only --ignore-scripts --legacy-peer-deps
 echo "Prepending release entry to data/linux/io.github.fjrevoredo.mini-diarium.metainfo.xml..."
 # Strip \r first so the sed pattern matches even if the file has CRLF line endings (Windows)
 sed -i 's/\r//' data/linux/io.github.fjrevoredo.mini-diarium.metainfo.xml
-release_entry="    <release version=\"${NEW_VERSION}\" date=\"$(date -u +%Y-%m-%d)\">\n      <url type=\"details\">https://github.com/fjrevoredo/mini-diarium/releases/tag/v${NEW_VERSION}</url>\n    </release>"
-sed -i "s|    <!-- New release entries are prepended here by bump-version.sh -->|    <!-- New release entries are prepended here by bump-version.sh -->\n${release_entry}|" data/linux/io.github.fjrevoredo.mini-diarium.metainfo.xml
+# Build release block in a temp file (printf is POSIX-portable; \n in sed -i replacement is not portable to BSD/macOS)
+printf '    <release version="%s" date="%s">\n      <url type="details">https://github.com/fjrevoredo/mini-diarium/releases/tag/v%s</url>\n    </release>\n' "${NEW_VERSION}" "$(date -u +%Y-%m-%d)" "${NEW_VERSION}" > /tmp/bump-metainfo-release.txt
+sed -i.bak -e "/<!-- New release entries are prepended here by bump-version.sh -->/r /tmp/bump-metainfo-release.txt" data/linux/io.github.fjrevoredo.mini-diarium.metainfo.xml
+rm data/linux/io.github.fjrevoredo.mini-diarium.metainfo.xml.bak
+rm /tmp/bump-metainfo-release.txt
 
 # 8. Update README version badge
 echo "Updating README.md version badge..."
@@ -136,6 +139,11 @@ fi
 website_software_version=$(sed -nE 's|.*"softwareVersion": "([0-9]+\.[0-9]+\.[0-9]+)".*|\1|p' website/index.html | head -n1)
 if [ "${website_software_version}" != "${NEW_VERSION}" ]; then
   report_mismatch "website/index.html softwareVersion" "${NEW_VERSION}" "${website_software_version:-<missing>}"
+fi
+
+metainfo_release=$(grep -c "<release version=\"${NEW_VERSION}\"" data/linux/io.github.fjrevoredo.mini-diarium.metainfo.xml || true)
+if [ "${metainfo_release}" -eq 0 ]; then
+  report_mismatch "data/linux/io.github.fjrevoredo.mini-diarium.metainfo.xml" "${NEW_VERSION}" "<release entry not found>"
 fi
 
 if [ "${validation_failed}" -ne 0 ]; then

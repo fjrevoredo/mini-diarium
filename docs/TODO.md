@@ -14,7 +14,7 @@ TODO entry format:
 
 ## High Priority
 
-- [ ] **`bump-version` scripts don't inject metainfo.xml release entry** — `bump-version.sh` and `bump-version.ps1` both claim to prepend a `<release version="X.Y.Z">` entry to `data/linux/io.github.fjrevoredo.mini-diarium.metainfo.xml` (the comment on line 53 says so), but neither script actually does it; the pre-release checklist catches the omission, but it was manually patched in v0.4.19; fix both scripts so the entry is injected automatically at bump time alongside the other version strings
+- [x] **`bump-version` scripts don't inject metainfo.xml release entry** — `bump-version.sh` and `bump-version.ps1` both claim to prepend a `<release version="X.Y.Z">` entry to `data/linux/io.github.fjrevoredo.mini-diarium.metainfo.xml` (the comment on line 53 says so), but neither script actually does it; the pre-release checklist catches the omission, but it was manually patched in v0.4.19; fix both scripts so the entry is injected automatically at bump time alongside the other version strings
 
 ---
 

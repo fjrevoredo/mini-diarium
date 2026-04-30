@@ -34,7 +34,7 @@ Run: `git rev-parse --abbrev-ref HEAD`
 
 ## Step 3 — Version file consistency
 
-Read all four files and verify each contains `RELEASE_VERSION`:
+Read all five files and verify each contains `RELEASE_VERSION`:
 
 | File | What to check |
 |------|---------------|
@@ -42,9 +42,10 @@ Read all four files and verify each contains `RELEASE_VERSION`:
 | `src-tauri/Cargo.toml` | first `version = "X.Y.Z"` under `[package]` |
 | `src-tauri/tauri.conf.json` | `"version": "X.Y.Z"` field |
 | `README.md` | badge string `version-X.Y.Z-blue` |
+| `data/linux/io.github.fjrevoredo.mini-diarium.metainfo.xml` | first `<release version="X.Y.Z">` under `<releases>` |
 
 - If **any** file has a different version → **STOP**, report every discrepancy, and suggest running `./bump-version.sh X.Y.Z` (Linux/macOS) or `.\bump-version.ps1 X.Y.Z` (Windows).
-- All four must match before continuing.
+- All five must match before continuing.
 
 ---
 
@@ -108,7 +109,7 @@ In `CHANGELOG.md`, replace the `[Unreleased]` token in the first version heading
 After all steps complete, print a summary including:
 
 - `RELEASE_VERSION` found and confirmed
-- Which version files were checked (all four pass)
+- Which version files were checked (all five pass)
 - Whether TODO items were archived (count, or "none found")
 - Confirmation that `latest-changelog.md` was written
 - Confirmation that CHANGELOG was date-stamped
