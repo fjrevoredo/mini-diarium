@@ -31,7 +31,7 @@
 
 ## Open Questions
 
-- [Question or `None`]
+- [Question surfaced to the user, or `None`]
 
 ## Tasks
 
@@ -63,6 +63,7 @@
 
 - [ ] Plan location follows the default location rule.
 - [ ] Scope, non-goals, assumptions, and open questions are explicit.
+- [ ] Any unresolved open questions have been surfaced to the user.
 - [ ] Every task has concrete steps and validation.
 - [ ] Cleanup and final verification are included.
 - [ ] The plan avoids vague actions without concrete targets.

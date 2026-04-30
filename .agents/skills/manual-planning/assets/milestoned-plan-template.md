@@ -31,7 +31,7 @@
 
 ## Open Questions
 
-- [Question or `None`]
+- [Question surfaced to the user, or `None`]
 
 ## Milestones
 
@@ -94,6 +94,7 @@ Implementation must not start until the user approves this plan.
 
 - [ ] Plan location follows the default location rule.
 - [ ] Scope, non-goals, assumptions, and open questions are explicit.
+- [ ] Any unresolved open questions have been surfaced to the user.
 - [ ] Tasks are grouped into milestones because the plan has more than 10 tasks.
 - [ ] Every task has concrete steps and validation.
 - [ ] Every milestone has exit criteria.

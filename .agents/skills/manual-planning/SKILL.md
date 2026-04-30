@@ -19,11 +19,35 @@ Use a descriptive kebab-case filename such as `docs/payment-refactor-plan.md` or
 2. Draft the plan as a Markdown file using one of:
    - `assets/simple-plan-template.md` for 10 or fewer tasks.
    - `assets/milestoned-plan-template.md` for more than 10 tasks.
-3. Set `Plan Status` to `QUESTIONS PENDING` if clarification is required, then ask the user all clarifying questions needed after the first draft exists. Put unresolved questions in the plan under `Open Questions`.
+3. Set `Plan Status` to `QUESTIONS PENDING` if clarification is required, then surface all clarifying questions to the user. Put the same unresolved questions in the plan under `Open Questions`.
 4. Incorporate the answers, then self-check the whole plan before requesting final approval.
 5. Set `Plan Status` to `READY FOR APPROVAL` only when the self-check passes and the only remaining gate is user approval.
 
 Do not begin implementation until the user approves the plan, unless the user explicitly asks to proceed without approval.
+
+## Open Question Handling
+
+Open questions are not plan-only notes. When clarification is needed, actively ask the user before marking the plan `READY FOR APPROVAL`.
+
+Use this order:
+
+1. Prefer the native ask-user or request-input tool when the current harness exposes one.
+2. If no native ask-user tool is available, send a concise formatted message in the conversation.
+3. Mirror the exact unresolved questions in the plan's `Open Questions` section.
+4. After the user answers, update `Open Questions` with the resolved answer or replace the section with `None`.
+
+Ask only questions that affect correctness, scope, risk, validation, sequencing, or user approval. Do not ask questions whose answers can be discovered from the repository or safely handled as explicit assumptions.
+
+Fallback message format:
+
+```markdown
+I drafted the plan, but need these clarifications before it is ready for approval:
+
+1. [Question]
+2. [Question]
+```
+
+Do not combine unresolved clarifying questions and final approval in the same user prompt. Ask for final approval only after the questions are answered and the self-check passes.
 
 ## Plan State Lifecycle
 
@@ -128,6 +152,7 @@ Before asking for final approval, verify:
 - The plan status is `READY FOR APPROVAL`.
 - Scope, non-goals, and assumptions are explicit.
 - All open questions are either answered or clearly marked as unresolved.
+- Any unresolved open questions have been surfaced to the user through a native ask-user tool or formatted conversation message.
 - Every task has concrete steps and validation.
 - More than 10 tasks are grouped into milestones.
 - Every milestone has exit criteria when milestones exist.
