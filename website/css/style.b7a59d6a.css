@@ -1094,6 +1094,21 @@ section {
   padding: 0;
 }
 
+/* ===== BLUF (Bottom Line Up Front) ===== */
+.bluf {
+  font-size: 1.05em;
+  padding: .75rem 1rem;
+  border-left: 3px solid #f5c94d;
+  background: rgba(245, 201, 77, .06);
+  margin-bottom: 1.5rem;
+  color: var(--text-muted);
+  line-height: 1.75;
+}
+
+.bluf strong {
+  color: #f5c94d;
+}
+
 .blog-sidebar {
   display: grid;
   gap: 1rem;

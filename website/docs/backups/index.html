@@ -34,7 +34,7 @@
   <link rel="icon" href="/favicon-32x32.png" type="image/png" sizes="32x32" />
   <link rel="icon" href="/favicon-128x128.png" type="image/png" sizes="128x128" />
   <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
-  <link rel="stylesheet" href="/css/style.15f7be9f.css" />
+  <link rel="stylesheet" href="/css/style.css" />
   <style>
     .docs-layout {
       display: grid;
@@ -265,6 +265,31 @@
           "item": "https://mini-diarium.com/docs/backups/"
         }
       ]
+    },
+    {
+      "@type": "HowTo",
+      "name": "Restore a Journal Backup in Mini Diarium",
+      "description": "Step-by-step guide to locating and restoring from a Mini Diarium encrypted backup.",
+      "step": [
+        {
+          "@type": "HowToStep",
+          "position": 1,
+          "name": "Locate the backups directory",
+          "text": "Backups are stored in your journal's 'backups' subdirectory. You can navigate to it from the app via the menu or find it manually in your user data directory."
+        },
+        {
+          "@type": "HowToStep",
+          "position": 2,
+          "name": "Restore from a backup",
+          "text": "Open Mini Diarium and use 'Restore from backup' in the app menu. Select the backup file you want to restore. The encrypted backup is loaded and replaces the current journal state."
+        },
+        {
+          "@type": "HowToStep",
+          "position": 3,
+          "name": "Open your journal",
+          "text": "After restoring, unlock your journal with your password or key file. Your entries from the backup are now available."
+        }
+      ]
     }
   ]
 }
@@ -429,6 +454,7 @@
       <div class="footer-right">
         <a href="https://github.com/fjrevoredo/mini-diarium" target="_blank" rel="noopener noreferrer">GitHub</a>
         <a href="https://x.com/MiniDiarium" target="_blank" rel="noopener noreferrer">X</a>
+        <a href="/privacy/">Privacy</a>
         <a href="https://github.com/fjrevoredo/mini-diarium/blob/master/SECURITY.md" target="_blank" rel="noopener noreferrer">Security</a>
         <a href="https://github.com/fjrevoredo/mini-diarium/blob/master/CHANGELOG.md" target="_blank" rel="noopener noreferrer">Changelog</a>
         <a href="/blog/feed.xml">RSS</a>
@@ -440,6 +466,6 @@
     </div>
   </div>
 </footer>
-<script src="/js/main.c622f826.js"></script>
+<script src="/js/main.js"></script>
 </body>
 </html>

@@ -100,9 +100,9 @@ Fix all failures before proceeding.
 - [ ] `tsc --noEmit` passes
 - [ ] `bun run lint` passes
 - [ ] `bun run build` succeeds
+- [ ] `bun run format` succeeds
 - [ ] All new i18n keys added to every locale file (verify with `grep`)
 - [ ] Any text-processing function tested with non-ASCII strings (ASCII + RTL + CJK minimum)
-- [ ] E2E coverage confirmed for new UI flows (or coverage gap explicitly documented)
 - [ ] Plan status updated to COMPLETED
 
 ## Plan Self-Check

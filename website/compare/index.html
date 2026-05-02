@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="How does Mini Diarium compare to Day One, Notion, Obsidian, and other journaling apps? A feature matrix covering encryption, cloud dependency, platform support, and data ownership." />
+  <meta name="robots" content="index,follow" />
+  <meta name="theme-color" content="#0e0e0e" />
+  <meta name="author" content="Francisco J. Revoredo" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="Mini Diarium" />
+  <meta property="og:locale" content="en_US" />
+  <meta property="og:url" content="https://mini-diarium.com/compare/" />
+  <meta property="og:title" content="Mini Diarium vs. The Alternatives | Comparison Guide" />
+  <meta property="og:description" content="Side-by-side comparison of Mini Diarium against Day One, Notion, Obsidian, and other journal apps on encryption, cloud dependency, platform support, and data ownership." />
+  <meta property="og:image" content="https://mini-diarium.com/assets/og-cover.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:site" content="@MiniDiarium" />
+  <meta name="twitter:creator" content="@MiniDiarium" />
+  <meta name="twitter:title" content="Mini Diarium vs. The Alternatives | Comparison Guide" />
+  <meta name="twitter:description" content="Feature matrix: Mini Diarium vs. Day One, Notion, Obsidian, and other journal apps." />
+  <meta name="twitter:image" content="https://mini-diarium.com/assets/og-cover.png" />
+  <title>Mini Diarium vs. The Alternatives | Comparison Guide</title>
+  <link rel="canonical" href="https://mini-diarium.com/compare/" />
+  <link rel="icon" href="/assets/logo.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="/css/style.b7a59d6a.css" />
+  <style>
+    .compare-table-wrap {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+    .compare-table {
+      width: 100%;
+      min-width: 600px;
+      border-collapse: collapse;
+      font-size: .9rem;
+    }
+    .compare-table th,
+    .compare-table td {
+      padding: .75rem 1rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+    }
+    .compare-table thead th {
+      background: var(--bg-card);
+      font-weight: 700;
+      font-size: .8rem;
+      color: var(--accent);
+      letter-spacing: .06em;
+      text-transform: uppercase;
+      border-bottom: 2px solid var(--border);
+    }
+    .compare-table tbody tr:hover {
+      background: rgba(255,255,255,.03);
+    }
+    .compare-table .app-name {
+      font-weight: 700;
+      color: var(--text);
+    }
+    .compare-table .feature-name {
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+    .compare-table .check {
+      color: #4ade80;
+    }
+    .compare-table .cross {
+      color: #f87171;
+    }
+    .compare-table .partial {
+      color: #facc15;
+    }
+    .compare-table td:not(:first-child) {
+      text-align: center;
+    }
+    .compare-table tbody td:first-child {
+      color: var(--text);
+    }
+  </style>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebPage",
+        "@id": "https://mini-diarium.com/compare/#page",
+        "url": "https://mini-diarium.com/compare/",
+        "name": "Mini Diarium vs. The Alternatives",
+        "description": "Feature comparison of Mini Diarium against popular journaling and note-taking apps.",
+        "isPartOf": {
+          "@id": "https://mini-diarium.com/#website"
+        },
+        "dateModified": "2026-04-27",
+        "inLanguage": "en-US"
+      },
+      {
+        "@type": "FAQPage",
+        "@id": "https://mini-diarium.com/compare/#faq",
+        "mainEntity": [
+          {
+            "@type": "Question",
+            "name": "How is Mini Diarium different from Day One?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Day One uses cloud sync by default and stores entries on their servers. Mini Diarium stores everything locally with AES-256-GCM encryption and has no sync service, network client, or telemetry."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "How is Mini Diarium different from Notion or Obsidian?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Notion stores all content on their servers and is a collaborative workspace tool. Obsidian stores files locally in Markdown but does not encrypt entries by default. Mini Diarium does both: local storage and AES-256-GCM encryption."
+            }
+          },
+          {
+            "@type": "Question",
+            "name": "Why does Mini Diarium not have a mobile app?",
+            "acceptedAnswer": {
+              "@type": "Answer",
+              "text": "Mobile apps require network infrastructure (APNs, sync, account management) that would add cloud dependencies. Mini Diarium focuses on the desktop use case where local-first ownership is fully achievable without compromise."
+            }
+          }
+        ]
+      }
+    ]
+  }
+  </script>
+</head>
+<body>
+
+<nav class="nav" aria-label="Main navigation">
+  <div class="container nav-inner">
+    <a class="nav-brand" href="/">
+      <img src="/assets/logo.svg" alt="Mini Diarium logo" class="nav-logo" width="28" height="28" />
+      Mini Diarium
+    </a>
+
+    <ul class="nav-links" id="nav-links" role="list">
+      <li><a href="/#features">Features</a></li>
+      <li><a href="/#security">Security</a></li>
+      <li><a href="/blog/">Blog</a></li>
+      <li><a href="/docs/">Docs</a></li>
+      <li><a href="/#facts">FAQ</a></li>
+      <li><a href="/#platforms">Download</a></li>
+      <li><a href="/#about">About</a></li>
+      <li>
+        <a class="nav-github" href="https://github.com/fjrevoredo/mini-diarium" target="_blank" rel="noopener noreferrer" aria-label="View on GitHub">
+          <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+            <path d="M12 .3a12 12 0 0 0-3.8 23.38c.6.12.83-.26.83-.57L9 21.07c-3.34.72-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.08-.74.09-.73.09-.73 1.2.09 1.83 1.24 1.83 1.24 1.07 1.83 2.81 1.3 3.5 1 .1-.78.42-1.31.76-1.61-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.14-.3-.54-1.52.1-3.18 0 0 1-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.28-1.55 3.29-1.23 3.29-1.23.64 1.66.24 2.88.12 3.18a4.65 4.65 0 0 1 1.23 3.22c0 4.61-2.8 5.63-5.48 5.92.43.37.81 1.1.81 2.22l-.01 3.29c0 .31.2.69.82.57A12 12 0 0 0 12 .3z"/>
+          </svg>
+          Star on GitHub
+        </a>
+      </li>
+    </ul>
+
+    <button class="nav-toggle" id="nav-toggle" aria-label="Toggle navigation" aria-expanded="false" aria-controls="nav-links">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+        <line x1="3" y1="6" x2="21" y2="6" />
+        <line x1="3" y1="12" x2="21" y2="12" />
+        <line x1="3" y1="18" x2="21" y2="18" />
+      </svg>
+    </button>
+  </div>
+</nav>
+
+<main>
+
+<section class="hero">
+  <div class="container">
+    <p class="hero-eyebrow">Compare</p>
+    <h1>Mini Diarium vs.<br><em>The Alternatives</em></h1>
+    <p class="hero-sub">
+      A feature matrix comparing Mini Diarium to Day One, Notion, Obsidian,
+      Standard Notes, and Apple Notes — on encryption, cloud dependency, platform support, and data ownership.
+    </p>
+    <div class="hero-actions">
+      <a class="btn btn-primary" href="/#platforms">Download Mini Diarium</a>
+      <a class="btn btn-secondary" href="/encrypted-journal/">See the encrypted journal guide</a>
+    </div>
+  </div>
+</section>
+
+<section class="blog-post-body">
+  <div class="container">
+    <div class="blog-post prose" aria-label="Comparison guide">
+
+      <h2>Feature comparison matrix</h2>
+      <p>The table below covers the attributes that most directly affect journal privacy, ownership, and portability.</p>
+
+      <div class="compare-table-wrap">
+        <table class="compare-table">
+          <thead>
+            <tr>
+              <th>Feature</th>
+              <th>Mini Diarium</th>
+              <th>Day One</th>
+              <th>Notion</th>
+              <th>Obsidian</th>
+              <th>Standard Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="feature-name">Local storage only</td>
+              <td class="check">✓ Yes</td>
+              <td class="partial">Optional</td>
+              <td class="cross">✗ No</td>
+              <td class="check">✓ Yes</td>
+              <td class="check">✓ Yes</td>
+            </tr>
+            <tr>
+              <td class="feature-name">Encryption at rest</td>
+              <td class="check">✓ AES-256-GCM</td>
+              <td class="cross">✗ No</td>
+              <td class="cross">✗ No</td>
+              <td class="partial">Plugin required</td>
+              <td class="check">✓ E2E encrypted</td>
+            </tr>
+            <tr>
+              <td class="feature-name">No network access by app</td>
+              <td class="check">✓ No HTTP client</td>
+              <td class="cross">✗ Sync over network</td>
+              <td class="cross">✗ Full cloud app</td>
+              <td class="check">✓ Offline-first</td>
+              <td class="check">✓ Local-first</td>
+            </tr>
+            <tr>
+              <td class="feature-name">No telemetry / analytics</td>
+              <td class="check">✓ Verified</td>
+              <td class="cross">✗ Analytics present</td>
+              <td class="cross">✗ Full telemetry</td>
+              <td class="check">✓ No telemetry</td>
+              <td class="check">✓ No telemetry</td>
+            </tr>
+            <tr>
+              <td class="feature-name">Open export format</td>
+              <td class="check">✓ JSON + Markdown</td>
+              <td class="partial">JSON (paid)</td>
+              <td class="partial">Export limited</td>
+              <td class="check">✓ Markdown files</td>
+              <td class="check">✓ Markdown / HTML</td>
+            </tr>
+            <tr>
+              <td class="feature-name">Desktop platforms</td>
+              <td class="check">✓ Win, Mac, Linux</td>
+              <td class="check">✓ Mac, iOS</td>
+              <td class="check">✓ Win, Mac, Linux</td>
+              <td class="check">✓ Win, Mac, Linux</td>
+              <td class="check">✓ Win, Mac, Linux</td>
+            </tr>
+            <tr>
+              <td class="feature-name">Mobile app</td>
+              <td class="cross">✗ Desktop only</td>
+              <td class="check">✓ iOS, Android</td>
+              <td class="check">✓ iOS, Android</td>
+              <td class="check">✓ iOS, Android</td>
+              <td class="check">✓ iOS, Android</td>
+            </tr>
+            <tr>
+              <td class="feature-name">Open source</td>
+              <td class="check">✓ MIT license</td>
+              <td class="cross">✗ Proprietary</td>
+              <td class="cross">✗ Proprietary</td>
+              <td class="partial">Gated features</td>
+              <td class="check">✓ MIT license</td>
+            </tr>
+            <tr>
+              <td class="feature-name">Key-file auth (no password required)</td>
+              <td class="check">✓ Supported</td>
+              <td class="cross">✗ No</td>
+              <td class="cross">✗ No</td>
+              <td class="cross">✗ No</td>
+              <td class="cross">✗ No</td>
+            </tr>
+            <tr>
+              <td class="feature-name">Import from Mini Diary</td>
+              <td class="check">✓ Direct support</td>
+              <td class="cross">✗ No</td>
+              <td class="cross">✗ No</td>
+              <td class="cross">✗ No</td>
+              <td class="cross">✗ No</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2>What this means in practice</h2>
+      <p>
+        <strong>Day One</strong> is a polished journaling app with strong writing UX and iCloud sync. If you want to keep entries on your own device only, you can disable sync — but the app is designed around the sync model and it is easy to accidentally leave it on.
+      </p>
+      <p>
+        <strong>Notion</strong> is a collaborative workspace. It is excellent for databases, wikis, and team documents. Journal entries stored in Notion are on Notion's servers and accessible to their team. Notion has added AI features that process content on their infrastructure.
+      </p>
+      <p>
+        <strong>Obsidian</strong> stores notes as plain Markdown files on your device. This makes it fully portable and local. Encryption is not built in — you need a community plugin for that, and the vault lives as unencrypted files on disk unless you add a plugin.
+      </p>
+      <p>
+        <strong>Standard Notes</strong> uses end-to-end encryption with a freemium model. It is local-first and the vault is encrypted. The sync service is paid; without it you manage backups manually.
+      </p>
+      <p>
+        <strong>Mini Diarium</strong> is built around one constraint: entries are encrypted with AES-256-GCM before they reach the local SQLite database, and the app has no network client. This is verifiable — there is no HTTP client in the binary. The trade-off is desktop-only; there is no mobile app.
+      </p>
+
+      <h2>Choose Mini Diarium if you want:</h2>
+      <ul>
+        <li>Encryption that is on by default, not a plugin or option</li>
+        <li>A journal that works fully offline with no sync service</li>
+        <li>Portable exports in open formats (JSON, Markdown)</li>
+        <li>Import directly from Mini Diary JSON</li>
+        <li>A desktop-only app where data never leaves your machine</li>
+      </ul>
+
+      <h2>Choose something else if you need:</h2>
+      <ul>
+        <li>Mobile sync across devices (Day One, Notion, Obsidian all support this)</li>
+        <li>Collaborative features or team sharing (Notion)</li>
+        <li>Free-form notes with no structured journal model (Obsidian)</li>
+        <li>E2E encrypted sync as a managed service (Standard Notes)</li>
+      </ul>
+
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="footer">
+  <div class="container">
+    <div class="footer-inner">
+      <div class="footer-left">
+        <img src="/assets/logo.svg" alt="" class="footer-logo" width="20" height="20" aria-hidden="true" />
+        <span>Mini Diarium</span>
+        <span class="footer-sep">·</span>
+        <span>Offline-first</span>
+        <span class="footer-sep">·</span>
+        <span>MIT License</span>
+      </div>
+      <div class="footer-right">
+        <a href="https://github.com/fjrevoredo/mini-diarium" target="_blank" rel="noopener noreferrer">GitHub</a>
+        <a href="https://x.com/MiniDiarium" target="_blank" rel="noopener noreferrer">X</a>
+        <a href="/privacy/">Privacy</a>
+        <a href="https://github.com/fjrevoredo/mini-diarium/blob/master/SECURITY.md" target="_blank" rel="noopener noreferrer">Security</a>
+        <a href="https://github.com/fjrevoredo/mini-diarium/blob/master/CHANGELOG.md" target="_blank" rel="noopener noreferrer">Changelog</a>
+        <a href="/blog/feed.xml">RSS</a>
+        <a href="/ai-crawlers.txt">AI Crawlers</a>
+        <a href="/llms.txt">LLMs</a>
+        <a href="mailto:minidiarium@gmail.com" aria-label="Email Mini Diarium">minidiarium@gmail.com</a>
+        <span style="color: var(--text-muted);">mini-diarium.com</span>
+      </div>
+    </div>
+  </div>
+</footer>
+<script src="/js/main.c622f826.js"></script>
+</body>
+</html>

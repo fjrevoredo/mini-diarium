@@ -2,12 +2,20 @@
 
 This document tracks features and improvements deferred from the v0.1.0 release.
 
-**Status**: 14 open tasks across 3 categories
+**Status**: 14 open tasks across 3 categories (+ 1 documented deferral)
 - **Infrastructure**: 1 task (release workflow modernization)
 - **Features**: 9 tasks (PDF export, i18n framework, i18n translations, menus, auto-update, legacy migration, extension system, text input extension point, theme hardening)
 - **Quality**: 4 tasks (accessibility audit, dark-theme form-control contrast, QA pass, backup behavior documentation)
+- **Website**: 1 documented deferral (per-post OG images)
 
-See [docs/TODO.md](TODO.md) for the active working backlog and `CHANGELOG.md` for completed shipped work.
+---
+
+## 🌐 Website / SEO
+
+### Deferred: Per-post OG Images (P4-F)
+**Reference**: [`docs/seo-geo-implementation-plan.md`](seo-geo-implementation-plan.md) — Task 4.4
+
+Unique per-post OG images would require a design step and an image generation pipeline not present in the current static site. Out of scope for the current static website architecture.
 
 ---
 

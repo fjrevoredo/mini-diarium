@@ -3,6 +3,8 @@
 > Encrypted, local-first desktop journaling app and static website.
 
 - Canonical website: https://mini-diarium.com/
+- Compare: https://mini-diarium.com/compare/
+- Privacy Policy: https://mini-diarium.com/privacy/
 - Encrypted Journal App Guide: https://mini-diarium.com/encrypted-journal/
 - Blog: https://mini-diarium.com/blog/
 - RSS feed: https://mini-diarium.com/blog/feed.xml
@@ -24,20 +26,22 @@
 
 ## Canonical Pages
 
+- Compare: Feature comparison of Mini Diarium vs. Day One, Notion, Obsidian, Standard Notes, and other journal apps. (https://mini-diarium.com/compare/)
+- Privacy Policy: Mini Diarium's privacy policy: no telemetry, no cloud storage, no analytics. (https://mini-diarium.com/privacy/)
 - Encrypted Journal App Guide: A direct overview of what an encrypted journal app should do, how Mini Diarium handles offline storage, and why local-first ownership matters. (https://mini-diarium.com/encrypted-journal/)
 
 ## Latest Articles
 
-- Can AI Access Your Journal? Cloud Storage and the Case for Local: https://mini-diarium.com/blog/journal-app-ai-privacy/
-- Mini Diary Alternative: A Private Offline Desktop Journal: https://mini-diarium.com/blog/mini-diary-alternative/
-- Journal App Without Cloud: What Actually Matters: https://mini-diarium.com/blog/journal-app-without-cloud/
-- Day One Alternative for Private Offline Journaling: https://mini-diarium.com/blog/day-one-alternative-for-private-offline-journaling/
-- Encrypted Journal App vs. Cloud Notes App: https://mini-diarium.com/blog/encrypted-journal-vs-cloud-notes-app/
-- Offline Journal That You Own: https://mini-diarium.com/blog/offline-journal-that-you-own/
-- Private Diary App for Desktop: What Actually Matters: https://mini-diarium.com/blog/private-diary-app-for-desktop/
-- Local-First Journaling Means You Keep the Exit Door Open: https://mini-diarium.com/blog/local-first-journaling-and-ownership/
-- Why an Offline Journal Is Different From a Cloud Notes App: https://mini-diarium.com/blog/why-an-offline-journal-is-different/
-- Why Mini Diarium Exists: https://mini-diarium.com/blog/why-mini-diarium-exists/
+- Explains why cloud architecture, not privacy settings, determines AI access to journal entries. (https://mini-diarium.com/blog/journal-app-ai-privacy/)
+- Covers why Mini Diarium is the maintained successor to Mini Diary with stronger encryption. (https://mini-diarium.com/blog/mini-diary-alternative/)
+- A practical checklist of what to look for in a journal app without cloud dependency. (https://mini-diarium.com/blog/journal-app-without-cloud/)
+- Compares Mini Diarium to Day One for users who want local-only storage and no sync service. (https://mini-diarium.com/blog/day-one-alternative-for-private-offline-journaling/)
+- Side-by-side analysis of what separates an encrypted local journal from a cloud notes app. (https://mini-diarium.com/blog/encrypted-journal-vs-cloud-notes-app/)
+- Explains what data ownership means in practice and why it requires local storage. (https://mini-diarium.com/blog/offline-journal-that-you-own/)
+- Outlines the practical requirements for a private diary app on desktop that stays offline. (https://mini-diarium.com/blog/private-diary-app-for-desktop/)
+- Argues that local-first design is primarily about portability and long-term data control. (https://mini-diarium.com/blog/local-first-journaling-and-ownership/)
+- Addresses the specific architectural differences between offline journals and connected apps. (https://mini-diarium.com/blog/why-an-offline-journal-is-different/)
+- The origin story of Mini Diarium — why an unmaintained predecessor led to building from scratch. (https://mini-diarium.com/blog/why-mini-diarium-exists/)
 
 ## Attribution
 
