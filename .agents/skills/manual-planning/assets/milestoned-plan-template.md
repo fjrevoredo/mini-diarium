@@ -90,6 +90,21 @@
 
 Implementation must not start until the user approves this plan.
 
+## Pre-flight Checks
+
+Run these commands before marking the plan COMPLETED or requesting final approval.
+Fix all failures before proceeding.
+
+- [ ] `cargo clippy` passes with zero warnings
+- [ ] `cargo test` passes with zero failures
+- [ ] `tsc --noEmit` passes
+- [ ] `bun run lint` passes
+- [ ] `bun run build` succeeds
+- [ ] All new i18n keys added to every locale file (verify with `grep`)
+- [ ] Any text-processing function tested with non-ASCII strings (ASCII + RTL + CJK minimum)
+- [ ] E2E coverage confirmed for new UI flows (or coverage gap explicitly documented)
+- [ ] Plan status updated to COMPLETED
+
 ## Plan Self-Check
 
 - [ ] Plan location follows the default location rule.
