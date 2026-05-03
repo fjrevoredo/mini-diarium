@@ -40,6 +40,7 @@ Template:
 
 ### Security
 - **Multi-auth requirement can no longer be bypassed by re-adding a journal**: the "Require All Authentication Methods" setting was previously stored in `config.json`. Removing a journal from the list and re-adding the same database file produced a fresh config entry with the flag absent, allowing a single-credential unlock even when multi-auth was required. The flag is now stored inside `diary.db` itself (new `db_settings` table, schema v6), so it stays with the database file regardless of what happens to the config. Existing journals are migrated automatically on the first unlock after updating.
+- **Multi-auth requirement MAC integrity**: the `require_all_auth` flag stored in `db_settings` inside `diary.db` was vulnerable to plaintext SQLite tampering — deleting or modifying the row would bypass the guard and allow single-credential unlock. The flag is now bound to the master key via HKDF-SHA256 MAC (computed as `HKDF-SHA256(IKM=master_key, salt=None, info="mini-diarium:require_all_auth:v1")` and stored as a 64-char hex string under the `require_all_auth_mac` key). A fail-safe ensures any tampering (absent, malformed, or mismatched MAC) enforces the guard. Existing journals are self-healed on the first successful all-methods unlock — no user action required. No schema migration; no new dependencies.
 
 
 ## [0.4.19] - 27-04-2026

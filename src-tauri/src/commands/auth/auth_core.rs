@@ -124,10 +124,7 @@ pub fn unlock_diary(
     migrate_require_all_auth_to_db(&db_conn, &state);
 
     // Guard: block single-method unlock when require_all_auth is active in the DB
-    if crate::db::queries::get_db_setting(db_conn.conn(), "require_all_auth")
-        .map(|v| v == "true")
-        .unwrap_or(false)
-    {
+    if crate::db::queries::verify_require_all_auth(db_conn.conn(), db_conn.key().as_bytes()) {
         return Err(
             "This journal requires all authentication methods. Use the combined unlock."
                 .to_string(),
@@ -180,10 +177,7 @@ pub fn unlock_diary_with_keypair(
     migrate_require_all_auth_to_db(&db_conn, &state);
 
     // Guard: block single-method unlock when require_all_auth is active in the DB
-    if crate::db::queries::get_db_setting(db_conn.conn(), "require_all_auth")
-        .map(|v| v == "true")
-        .unwrap_or(false)
-    {
+    if crate::db::queries::verify_require_all_auth(db_conn.conn(), db_conn.key().as_bytes()) {
         return Err(
             "This journal requires all authentication methods. Use the combined unlock."
                 .to_string(),
@@ -487,9 +481,8 @@ pub fn unlock_diary_all_methods(
     // credentials as there are non-auto slots. Without this check, a single-credential
     // call to unlock_diary_all_methods would bypass the multi-auth requirement.
     {
-        let require_all = crate::db::queries::get_db_setting(db_conn.conn(), "require_all_auth")
-            .map(|v| v == "true")
-            .unwrap_or(false);
+        let require_all =
+            crate::db::queries::verify_require_all_auth(db_conn.conn(), db_conn.key().as_bytes());
         if require_all {
             let all_slots = crate::db::queries::list_auth_slots(&db_conn)?;
             let non_auto_count = all_slots.iter().filter(|s| s.slot_type != "auto").count();
@@ -526,6 +519,19 @@ pub fn unlock_diary_all_methods(
                 private_key.zeroize();
                 crate::db::queries::update_slot_last_used(db_conn.conn(), slot_id)?;
             }
+        }
+    }
+
+    // Self-heal: write MAC for existing v6 journals that predate MAC support
+    if crate::db::queries::get_db_setting(db_conn.conn(), "require_all_auth")
+        .map(|v| v == "true")
+        .unwrap_or(false)
+        && crate::db::queries::get_db_setting(db_conn.conn(), "require_all_auth_mac").is_none()
+    {
+        if let Err(e) =
+            crate::db::queries::write_require_all_auth_mac(db_conn.conn(), db_conn.key().as_bytes())
+        {
+            warn!("Failed to write require_all_auth MAC: {}", e);
         }
     }
 
