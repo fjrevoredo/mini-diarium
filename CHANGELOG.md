@@ -34,6 +34,7 @@ Template:
 
 ### Added
 - **Multi-entry number navigation bar**: the entry counter (`1 / 3`) has been replaced with clickable number buttons (`← 1 2 3 →`) that jump directly to the chosen entry. The current entry is highlighted in bold with an `aria-current="true"` attribute for screen readers. The prev/next arrows retain their existing step-by-step behaviour. A `goToEntry` aria-label key is added to all four locales.
+- **Insert timestamp in the editor**: a new clock button in the advanced formatting toolbar opens a popup that lets you choose between 12-hour and 24-hour format, pick hours:minutes or hours:minutes:seconds precision, and insert the current time at the cursor position. Both selections are remembered across sessions.
 
 ### Fixed
 - **`bump-version` scripts now inject metainfo.xml release entry**: `bump-version.sh` and `bump-version.ps1` both prepend a `<release version="X.Y.Z">` element to the AppStream metainfo file during version bumps. The `.sh` script was also made portable to BSD/macOS sed. The pre-release checklist now validates the metainfo version as a fifth consistency check.

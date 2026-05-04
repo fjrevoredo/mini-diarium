@@ -16,6 +16,8 @@ export interface Preferences {
   advancedToolbar: boolean;
   editorFontSize: number; // px, 12–24
   showEntryTimestamps: boolean;
+  timestampFormat: '12h' | '24h';
+  timestampPrecision: 'hm' | 'hms';
   language: string; // locale code, e.g. 'en'
 }
 
@@ -30,6 +32,8 @@ const DEFAULT_PREFERENCES: Preferences = {
   advancedToolbar: false,
   editorFontSize: 16,
   showEntryTimestamps: false,
+  timestampFormat: '12h',
+  timestampPrecision: 'hm',
   language: 'en',
 };
 

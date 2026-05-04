@@ -2,6 +2,7 @@ import { Show, createSignal, createEffect, onCleanup } from 'solid-js';
 import type { Editor } from '@tiptap/core';
 import { preferences } from '../../state/preferences';
 import { useI18n } from '../../i18n';
+import TimestampOverlay from './TimestampOverlay';
 import {
   Bold,
   Italic,
@@ -19,6 +20,7 @@ import {
   AlignCenter,
   AlignRight,
   AlignJustify,
+  Clock,
 } from 'lucide-solid';
 
 interface EditorToolbarProps {
@@ -44,6 +46,7 @@ export default function EditorToolbar(props: EditorToolbarProps) {
   const [activeAlignment, setActiveAlignment] = createSignal<
     'left' | 'center' | 'right' | 'justify'
   >('left');
+  const [isTimestampOpen, setIsTimestampOpen] = createSignal(false);
 
   // Update active states when editor changes
   createEffect(() => {
@@ -291,6 +294,19 @@ export default function EditorToolbar(props: EditorToolbarProps) {
           </button>
         </Show>
 
+        {/* Insert Timestamp — advanced only */}
+        <Show when={preferences().advancedToolbar}>
+          <button
+            onClick={() => setIsTimestampOpen(true)}
+            class={btnBase}
+            title={t('editor.toolbar.insertTimestampTitle')}
+            aria-label={t('editor.toolbar.insertTimestamp')}
+            data-testid="insert-timestamp-button"
+          >
+            <Clock size={18} />
+          </button>
+        </Show>
+
         {/* Alignment controls — advanced only */}
         <Show when={preferences().advancedToolbar}>
           <div aria-hidden="true" class="mx-1 h-6 w-px bg-primary" />
@@ -331,6 +347,12 @@ export default function EditorToolbar(props: EditorToolbarProps) {
             <AlignJustify size={18} />
           </button>
         </Show>
+
+        <TimestampOverlay
+          editor={props.editor}
+          isOpen={isTimestampOpen()}
+          onClose={() => setIsTimestampOpen(false)}
+        />
       </div>
     </Show>
   );

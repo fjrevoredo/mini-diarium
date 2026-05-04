@@ -1,5 +1,5 @@
 import { createEffect, onCleanup, onMount, createSignal } from 'solid-js';
-import { Editor, Extension, mergeAttributes } from '@tiptap/core';
+import { Editor, Extension, Mark, mergeAttributes } from '@tiptap/core';
 import { Plugin, PluginKey } from '@tiptap/pm/state';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
@@ -229,6 +229,16 @@ const BidiExtension = Extension.create({
   },
 });
 
+const TimestampMark = Mark.create({
+  name: 'timestamp',
+  parseHTML() {
+    return [{ tag: 'span.timestamp', getAttrs: () => ({}) }];
+  },
+  renderHTML() {
+    return ['span', { class: 'timestamp' }, 0];
+  },
+});
+
 export default function DiaryEditor(props: DiaryEditorProps) {
   // eslint-disable-next-line no-unassigned-vars -- SolidJS assigns via ref={editorElement}; ESLint can't see the JSX assignment
   let editorElement!: HTMLDivElement;
@@ -255,6 +265,7 @@ export default function DiaryEditor(props: DiaryEditorProps) {
         AlignableImage.configure({ allowBase64: true, inline: false }),
         TextAlign.configure({ types: ['heading', 'paragraph', 'image'] }),
         BidiExtension,
+        TimestampMark,
       ],
       content: props.content,
       editorProps: {

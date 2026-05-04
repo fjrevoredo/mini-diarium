@@ -285,3 +285,23 @@ describe('EditorToolbar import markdown button', () => {
     expect(onImportMarkdown).toHaveBeenCalledOnce();
   });
 });
+
+// ---------------------------------------------------------------------------
+// Insert Timestamp button — visibility
+// ---------------------------------------------------------------------------
+
+describe('EditorToolbar insert timestamp button — visibility', () => {
+  it('hides the insert timestamp button when advancedToolbar is false', () => {
+    setPreferences({ advancedToolbar: false });
+    const editor = makeEditorMock();
+    const { container } = renderWithI18n(() => <EditorToolbar editor={editor} />);
+    expect(container.querySelector('[aria-label="Insert timestamp"]')).toBeNull();
+  });
+
+  it('shows the insert timestamp button when advancedToolbar is true', () => {
+    setPreferences({ advancedToolbar: true });
+    const editor = makeEditorMock();
+    const { container } = renderWithI18n(() => <EditorToolbar editor={editor} />);
+    expect(container.querySelector('[aria-label="Insert timestamp"]')).not.toBeNull();
+  });
+});

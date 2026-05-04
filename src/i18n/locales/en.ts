@@ -221,6 +221,8 @@ const en = {
       alignCenter: 'Align center',
       alignRight: 'Align right',
       justify: 'Justify',
+      insertTimestamp: 'Insert timestamp',
+      insertTimestampTitle: 'Insert current timestamp',
     },
     /** WordCount — plural pair */
     wordCount_one: '{{ count }} word',
@@ -487,6 +489,18 @@ const en = {
     typeRelease: 'Release',
     typeAnnouncement: 'Announcement',
     typeTip: 'Tip',
+  },
+
+  /** TimestampOverlay */
+  timestamp: {
+    popupTitle: 'Insert Timestamp',
+    formatLabel: 'Time format',
+    format12h: '12-hour (AM/PM)',
+    format24h: '24-hour',
+    precisionLabel: 'Precision',
+    precisionHm: 'HH:mm',
+    precisionHms: 'HH:mm:ss',
+    insert: 'Insert',
   },
 
   /** GoToDateOverlay */
