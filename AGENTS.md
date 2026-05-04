@@ -75,6 +75,7 @@ This repo is commonly worked on from a WSL shell over a Windows checkout (`/mnt/
 - `cmd.exe /c bun run test:e2e`
 - `cmd.exe /c bun run tauri info`
 - `cmd.exe /c bun run diagrams:check`
+- `cmd.exe /c bun run validate:locales`
 
 **Commands with side effects:**
 
@@ -221,6 +222,7 @@ cmd.exe /c bun run build
 cmd.exe /c bun run test:e2e:local
 cmd.exe /c bun run test:e2e:stateful
 cmd.exe /c bun run diagrams:check
+cmd.exe /c bun run validate:locales
 ```
 
 Current test shape:
@@ -256,7 +258,7 @@ For the authoritative test-selector inventory and E2E rules, see `src/CLAUDE.md`
 ## Agent Workflow Rules
 
 1. **Validate after each completed task.** Run the relevant test/type-check/lint command immediately after finishing a task — before moving to the next one. This catches bugs at the point of introduction and keeps diagnosis trivial. Do not batch multiple tasks and validate only at the end.
-2. **Format only files you changed.** When running Prettier, pass explicit file paths for files you created or modified. Never run `prettier --write` on broad globs — it will reformat unrelated files with pre-existing style differences, creating noise in the diff.
+2. **Format after changes.** Use `bun run format`. Prettier is configured for the full `src/` tree and only modifies files with style violations. Since the repo is kept formatted, running it on the full tree produces no noise — it only touches files you changed.
 
 ## Gotchas and Pitfalls
 
