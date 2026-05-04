@@ -223,6 +223,8 @@ const en = {
       justify: 'Justify',
       insertTimestamp: 'Insert timestamp',
       insertTimestampTitle: 'Insert current timestamp',
+      textDirection: 'Text direction',
+      textDirectionTitle: 'Toggle text direction (Ctrl+Shift+D)',
     },
     /** WordCount — plural pair */
     wordCount_one: '{{ count }} word',

@@ -21,6 +21,8 @@ import {
   AlignRight,
   AlignJustify,
   Clock,
+  PilcrowLeft,
+  PilcrowRight,
 } from 'lucide-solid';
 
 interface EditorToolbarProps {
@@ -47,6 +49,7 @@ export default function EditorToolbar(props: EditorToolbarProps) {
     'left' | 'center' | 'right' | 'justify'
   >('left');
   const [isTimestampOpen, setIsTimestampOpen] = createSignal(false);
+  const [isRtlActive, setIsRtlActive] = createSignal(false);
 
   // Update active states when editor changes
   createEffect(() => {
@@ -74,6 +77,7 @@ export default function EditorToolbar(props: EditorToolbarProps) {
       );
       const dir = editor.getAttributes('paragraph').dir ?? editor.getAttributes('heading').dir;
       const isRtlDefault = dir === 'rtl';
+      setIsRtlActive(isRtlDefault);
       setActiveAlignment(
         editor.isActive({ textAlign: 'center' })
           ? 'center'
@@ -310,6 +314,24 @@ export default function EditorToolbar(props: EditorToolbarProps) {
         {/* Alignment controls — advanced only */}
         <Show when={preferences().advancedToolbar}>
           <div aria-hidden="true" class="mx-1 h-6 w-px bg-primary" />
+          {/* Text direction toggle — advanced only */}
+          <button
+            onClick={() => {
+              const ed = props.editor;
+              if (!ed) return;
+              const pd = ed.getAttributes('paragraph').dir as string | null | undefined;
+              const hd = ed.getAttributes('heading').dir as string | null | undefined;
+              const cur = pd ?? hd ?? null;
+              const next = cur === 'rtl' ? ('ltr' as const) : ('rtl' as const);
+              ed.chain().focus().setTextDirection(next).run();
+            }}
+            class={btnClass(isRtlActive())}
+            title={t('editor.toolbar.textDirectionTitle')}
+            aria-label={t('editor.toolbar.textDirection')}
+            aria-pressed={isRtlActive()}
+          >
+            {isRtlActive() ? <PilcrowLeft size={18} /> : <PilcrowRight size={18} />}
+          </button>
           <button
             onClick={() => props.editor?.chain().focus().setTextAlign('left').run()}
             class={btnClass(activeAlignment() === 'left')}

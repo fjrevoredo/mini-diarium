@@ -48,7 +48,6 @@
   line-height: 1.3;
   margin-top: 1.5rem;
   margin-bottom: 0.5rem;
-  unicode-bidi: plaintext;
 }
 
 .ProseMirror h1 {
@@ -65,7 +64,6 @@
 
 .ProseMirror p {
   margin: 0.75rem 0;
-  unicode-bidi: plaintext;
 }
 
 .ProseMirror ul,

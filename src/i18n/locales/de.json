@@ -176,7 +176,9 @@
       "alignRight": "Rechts ausrichten",
       "justify": "Blocksatz",
       "insertTimestamp": "Zeitstempel einfügen",
-      "insertTimestampTitle": "Aktuellen Zeitstempel einfügen"
+      "insertTimestampTitle": "Aktuellen Zeitstempel einfügen",
+      "textDirection": "Textrichtung",
+      "textDirectionTitle": "Textrichtung umschalten (Strg+Shift+D)"
     },
     "wordCount_one": "{{ count }} Wort",
     "wordCount_other": "{{ count }} Wörter",

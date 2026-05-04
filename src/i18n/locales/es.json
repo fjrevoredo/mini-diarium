@@ -176,7 +176,9 @@
       "alignRight": "Alinear a la derecha",
       "justify": "Justificar",
       "insertTimestamp": "Insertar marca de tiempo",
-      "insertTimestampTitle": "Insertar marca de tiempo actual"
+      "insertTimestampTitle": "Insertar marca de tiempo actual",
+      "textDirection": "Dirección del texto",
+      "textDirectionTitle": "Alternar dirección del texto (Ctrl+Shift+D)"
     },
     "wordCount_one": "{{ count }} palabra",
     "wordCount_other": "{{ count }} palabras",

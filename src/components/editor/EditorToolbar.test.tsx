@@ -305,3 +305,91 @@ describe('EditorToolbar insert timestamp button — visibility', () => {
     expect(container.querySelector('[aria-label="Insert timestamp"]')).not.toBeNull();
   });
 });
+
+// ---------------------------------------------------------------------------
+// Text direction button
+// ---------------------------------------------------------------------------
+
+describe('Text direction button', () => {
+  it('hides the text direction button when advancedToolbar is false', () => {
+    setPreferences({ advancedToolbar: false });
+    const editor = makeEditorMock();
+    const { container } = renderWithI18n(() => <EditorToolbar editor={editor} />);
+    expect(container.querySelector('[aria-label="Text direction"]')).toBeNull();
+  });
+
+  it('shows the text direction button when advancedToolbar is true', () => {
+    setPreferences({ advancedToolbar: true });
+    const editor = makeEditorMock();
+    const { container } = renderWithI18n(() => <EditorToolbar editor={editor} />);
+    expect(container.querySelector('[aria-label="Text direction"]')).not.toBeNull();
+  });
+
+  it('marks the button as active for RTL paragraph', () => {
+    setPreferences({ advancedToolbar: true });
+    const editor = makeEditorMock({
+      getAttributes: (name) => (name === 'paragraph' ? { dir: 'rtl' } : {}),
+    });
+    const { container } = renderWithI18n(() => <EditorToolbar editor={editor} />);
+    const btn = container.querySelector('[aria-label="Text direction"]') as HTMLButtonElement;
+    expect(btn.className).toContain('btn-active');
+  });
+
+  it('does not mark the button as active for LTR paragraph', () => {
+    setPreferences({ advancedToolbar: true });
+    const editor = makeEditorMock({
+      getAttributes: (name) => (name === 'paragraph' ? { dir: 'ltr' } : {}),
+    });
+    const { container } = renderWithI18n(() => <EditorToolbar editor={editor} />);
+    const btn = container.querySelector('[aria-label="Text direction"]') as HTMLButtonElement;
+    expect(btn.className).not.toContain('btn-active');
+  });
+
+  it('does not mark the button as active when dir is absent', () => {
+    setPreferences({ advancedToolbar: true });
+    const editor = makeEditorMock({
+      getAttributes: () => ({}),
+    });
+    const { container } = renderWithI18n(() => <EditorToolbar editor={editor} />);
+    const btn = container.querySelector('[aria-label="Text direction"]') as HTMLButtonElement;
+    expect(btn.className).not.toContain('btn-active');
+  });
+
+  it('calls setTextDirection("rtl") when clicked on LTR paragraph', () => {
+    setPreferences({ advancedToolbar: true });
+    const run = vi.fn();
+    const setTextDirection = vi.fn(() => ({ run }));
+    const focus = vi.fn(() => ({ setTextDirection }));
+    const chain = vi.fn(() => ({ focus }));
+    const editor = makeEditorMock({
+      getAttributes: (name) => (name === 'paragraph' || name === 'heading' ? { dir: 'ltr' } : {}),
+    });
+    (editor as unknown as { chain: typeof chain }).chain = chain;
+
+    const { container } = renderWithI18n(() => <EditorToolbar editor={editor} />);
+    const btn = container.querySelector('[aria-label="Text direction"]') as HTMLButtonElement;
+    fireEvent.click(btn);
+
+    expect(setTextDirection).toHaveBeenCalledWith('rtl');
+    expect(run).toHaveBeenCalled();
+  });
+
+  it('calls setTextDirection("ltr") when clicked on RTL paragraph', () => {
+    setPreferences({ advancedToolbar: true });
+    const run = vi.fn();
+    const setTextDirection = vi.fn(() => ({ run }));
+    const focus = vi.fn(() => ({ setTextDirection }));
+    const chain = vi.fn(() => ({ focus }));
+    const editor = makeEditorMock({
+      getAttributes: (name) => (name === 'paragraph' || name === 'heading' ? { dir: 'rtl' } : {}),
+    });
+    (editor as unknown as { chain: typeof chain }).chain = chain;
+
+    const { container } = renderWithI18n(() => <EditorToolbar editor={editor} />);
+    const btn = container.querySelector('[aria-label="Text direction"]') as HTMLButtonElement;
+    fireEvent.click(btn);
+
+    expect(setTextDirection).toHaveBeenCalledWith('ltr');
+    expect(run).toHaveBeenCalled();
+  });
+});
