@@ -331,6 +331,10 @@ const en = {
       fontSizePxSuffix: 'px',
       fontSizeMin: '12 px',
       fontSizeMax: '24 px',
+      fontFamilyLabel: 'Editor font',
+      fontFamilySystemDefault: 'System Default',
+      fontFamilyHint:
+        'Select a font for the editor. Fonts are bundled with the app and work offline.',
     },
     security: {
       authMethodsTitle: 'Authentication Methods',

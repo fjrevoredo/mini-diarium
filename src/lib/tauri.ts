@@ -318,3 +318,18 @@ export async function generateDebugDump(
 export async function updateMenuLocale(locale: string): Promise<void> {
   await invoke('update_menu_locale', { locale });
 }
+
+// Font commands
+export async function listBundledFonts(): Promise<string[]> {
+  return await invoke('list_bundled_fonts');
+}
+
+export interface FontFaceData {
+  family: string;
+  regular: string;
+  bold: string;
+}
+
+export async function getFontData(family: string): Promise<FontFaceData> {
+  return await invoke('get_font_data', { family });
+}

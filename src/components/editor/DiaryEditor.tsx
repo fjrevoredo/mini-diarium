@@ -1,4 +1,4 @@
-import { createEffect, onCleanup, onMount, createSignal } from 'solid-js';
+import { createEffect, onCleanup, onMount, createSignal, createResource } from 'solid-js';
 import { Editor, Extension, Mark, mergeAttributes } from '@tiptap/core';
 import { Plugin, PluginKey } from '@tiptap/pm/state';
 import StarterKit from '@tiptap/starter-kit';
@@ -10,7 +10,7 @@ import TextAlign from '@tiptap/extension-text-align';
 import { listen, UnlistenFn } from '@tauri-apps/api/event';
 import EditorToolbar from './EditorToolbar';
 import { preferences } from '../../state/preferences';
-import { readFileBytes } from '../../lib/tauri';
+import { readFileBytes, getFontData } from '../../lib/tauri';
 
 interface DiaryEditorProps {
   content: string;
@@ -245,6 +245,44 @@ export default function DiaryEditor(props: DiaryEditorProps) {
   const [editor, setEditor] = createSignal<Editor | null>(null);
   let unlistenDragDrop: UnlistenFn | undefined;
 
+  // @font-face injection: loads the selected editor font from bundled TTF files
+  // as base64 data URLs so the browser can render it.
+  const fontFamily = () => preferences().editorFontFamily;
+  const [fontData] = createResource(fontFamily, getFontData);
+
+  createEffect(() => {
+    const existing = document.getElementById('editor-font-face');
+    const data = fontData();
+
+    if (!data) {
+      existing?.remove();
+      return;
+    }
+
+    const style = existing || document.createElement('style');
+    style.id = 'editor-font-face';
+    style.textContent = [
+      `@font-face {`,
+      `  font-family: "${data.family}";`,
+      `  src: url(${data.regular});`,
+      `  font-weight: 400;`,
+      `  font-style: normal;`,
+      `}`,
+      `@font-face {`,
+      `  font-family: "${data.family}";`,
+      `  src: url(${data.bold});`,
+      `  font-weight: 700;`,
+      `  font-style: normal;`,
+      `}`,
+    ].join('\n');
+
+    if (!existing) document.head.appendChild(style);
+  });
+
+  onCleanup(() => {
+    document.getElementById('editor-font-face')?.remove();
+  });
+
   onMount(() => {
     if (!editorElement) return;
 
@@ -378,7 +416,10 @@ export default function DiaryEditor(props: DiaryEditorProps) {
   return (
     <div
       class="rounded-lg border border-primary bg-primary overflow-hidden"
-      style={{ '--editor-font-size': `${preferences().editorFontSize}px` }}
+      style={{
+        '--editor-font-size': `${preferences().editorFontSize}px`,
+        '--editor-font-family': preferences().editorFontFamily ?? 'inherit',
+      }}
     >
       <EditorToolbar
         editor={editor()}
