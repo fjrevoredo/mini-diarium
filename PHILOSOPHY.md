@@ -261,7 +261,7 @@ Imports preserve source entries as separate records. If imported data lands on a
 
 **Adding a new format** follows the Import Parser Pattern in `CLAUDE.md`: one `*.rs` parser module, one command in `commands/import.rs`, register in `lib.rs`, add wrapper in `src/lib/tauri.ts`. The UI (`ImportOverlay.tsx`) picks it up automatically via `listImportPlugins`; no UI change needed.
 
-**Schema**: documented inline in `src-tauri/src/db/schema.rs` with full migration history. Current version: v5. Entries use stable integer IDs and support multiple entries per day. AES-256-GCM with standard key derivation; decryptable with any standard crypto toolkit given the password.
+**Schema**: documented inline in `src-tauri/src/db/schema.rs` with full migration history. Current version: v6. Entries use stable integer IDs and support multiple entries per day. AES-256-GCM with standard key derivation; decryptable with any standard crypto toolkit given the password.
 
 ---
 

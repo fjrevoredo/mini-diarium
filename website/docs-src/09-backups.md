@@ -3,7 +3,7 @@ title: Backups
 slug: backups
 description: How Mini Diarium automatically backs up your encrypted journal and how to manage backup files.
 order: 10
-updated: 2026-04-16
+updated: 2026-05-06
 tags: backups, data safety, backup rotation, storage
 ---
 
@@ -27,7 +27,7 @@ Each backup is named `backup-YYYY-MM-DD-HHhMM.db`, for example `backup-2024-01-1
 
 ## Rotation
 
-Mini Diarium keeps the **50 most recent backups**. When a new backup would push the count above 50, the oldest backups are deleted automatically. Only files matching the `backup-*.db` naming pattern are counted; any other files you place in the `backups/` folder are left untouched.
+Mini Diarium keeps the **30 most recent backups**. When a new backup would push the count above 30, the oldest backup is deleted automatically. Only files matching the `backup-*.db` naming pattern are counted; any other files you place in the `backups/` folder are left untouched.
 
 ## Custom Journal Locations
 

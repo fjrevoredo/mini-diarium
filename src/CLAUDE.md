@@ -103,7 +103,7 @@ Eight signal-based state modules in `src/state/`:
 | `notifications.ts` | `allNotifications: NotificationEntry[]`, `readIds: Set<string>`, `isLoading` | `loadNotifications()`, `markAsRead(id)`, `markAllRead()`, `isRead(id)`, `unreadCount()`, `hasUnread()` |
 | `preferences.ts` | `preferences: Preferences` | `setPreferences(Partial<Preferences>)`, `resetPreferences()` |
 
-`Preferences` fields: `allowFutureEntries` (bool), `firstDayOfWeek` (number|null), `hideTitles` (bool), `enableSpellcheck` (bool), `escAction` (`'none'|'quit'`), `autoLockEnabled` (bool), `autoLockTimeout` (number, seconds), `advancedToolbar` (bool), `editorFontSize` (number, px), `showEntryTimestamps` (bool). Stored in `localStorage`.
+`Preferences` fields: `allowFutureEntries` (bool), `firstDayOfWeek` (number|null), `hideTitles` (bool), `enableSpellcheck` (bool), `escAction` (`'none'|'quit'`), `autoLockEnabled` (bool), `autoLockTimeout` (number, seconds), `advancedToolbar` (bool), `editorFontSize` (number, px), `editorFontFamily` (string|null), `showEntryTimestamps` (bool), `timestampFormat` (`'12h'|'24h'`), `timestampPrecision` (`'hm'|'hms'`), `language` (string). Stored in `localStorage`.
 
 ## i18n / Translations
 

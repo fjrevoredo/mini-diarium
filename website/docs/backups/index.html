@@ -234,7 +234,7 @@
       "@id": "https://mini-diarium.com/docs/backups/#article",
       "headline": "Backups",
       "description": "How Mini Diarium automatically backs up your encrypted journal and how to manage backup files.",
-      "dateModified": "2026-04-16T00:00:00Z",
+      "dateModified": "2026-05-06T00:00:00Z",
       "keywords": "backups, data safety, backup rotation, storage",
       "publisher": {
         "@type": "Organization",
@@ -410,7 +410,7 @@
         </ul>
         <p>If you have changed your journal location in Preferences, backups are created in <code>{your chosen directory}/backups/</code> instead.</p>
         <h2 id="backup-filenames">Backup Filenames</h2><p>Each backup is named <code>backup-YYYY-MM-DD-HHhMM.db</code>, for example <code>backup-2024-01-15-14h30.db</code>. The timestamp reflects local time at the moment of unlock.</p>
-        <h2 id="rotation">Rotation</h2><p>Mini Diarium keeps the <strong>50 most recent backups</strong>. When a new backup would push the count above 50, the oldest backups are deleted automatically. Only files matching the <code>backup-*.db</code> naming pattern are counted; any other files you place in the <code>backups/</code> folder are left untouched.</p>
+        <h2 id="rotation">Rotation</h2><p>Mini Diarium keeps the <strong>30 most recent backups</strong>. When a new backup would push the count above 30, the oldest backup is deleted automatically. Only files matching the <code>backup-*.db</code> naming pattern are counted; any other files you place in the <code>backups/</code> folder are left untouched.</p>
         <h2 id="custom-journal-locations">Custom Journal Locations</h2><p>When you move your journal to a different folder via Preferences, <code>diary.db</code> is physically moved to the new location and all future backups will go into <code>{new location}/backups/</code>.</p>
         <p><strong>Existing backups in the old folder are not moved automatically.</strong> If you want to keep your backup history, copy the old <code>backups/</code> folder to the new journal directory before or after the move.</p>
         <h2 id="cloud-synced-locations">Cloud-Synced Locations</h2><p>If you place your journal directory inside a cloud-synced folder — Dropbox, OneDrive, iCloud Drive, and so on — both <code>diary.db</code> and the <code>backups/</code> subfolder will be included in the sync, giving you off-site backup on top of local rotation.</p>

@@ -37,6 +37,8 @@ Mini Diarium encrypts each journal entry using AES-256-GCM with a random master 
 
 Yes. Mini Diarium supports multiple authentication slots. You can register a password and one or more key files. Each method independently wraps the same master key. You can add or remove methods in **Preferences → Authentication Methods** without re-encrypting your entries. At least one method must remain active.
 
+For stronger security, you can enable **Require All Authentication Methods** in **Preferences → Security**. When active, every registered method must be provided at unlock — for example, both your password AND your key file. This prevents access even if one credential is compromised.
+
 ## What is a key file?
 
 A key file is a private key stored as a file on disk (or a USB drive, or a password manager). It plays the same role as a password but is a file you present instead of something you type. Key files use X25519 ECDH internally. Generate one from **Preferences → Authentication Methods → Add Key File**, then keep the `.key` file somewhere safe.

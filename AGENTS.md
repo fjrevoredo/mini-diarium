@@ -113,7 +113,7 @@ Notes:
 
 ## Command Registry
 
-There are **51 registered Tauri commands** in `src-tauri/src/lib.rs`. Rust command names use `snake_case`; frontend wrappers in `src/lib/tauri.ts` use `camelCase`.
+There are **54 registered Tauri commands** in `src-tauri/src/lib.rs`. Rust command names use `snake_case`; frontend wrappers in `src/lib/tauri.ts` use `camelCase`.
 
 Current categories:
 
@@ -134,7 +134,7 @@ Use the repo as source of truth:
 
 ## State Management
 
-Frontend state currently lives in seven signal modules under `src/state/`:
+Frontend state currently lives in eight signal modules under `src/state/`:
 
 - `auth.ts`
 - `entries.ts`
@@ -142,6 +142,7 @@ Frontend state currently lives in seven signal modules under `src/state/`:
 - `search.ts`
 - `session.ts`
 - `ui.ts`
+- `notifications.ts`
 - `preferences.ts`
 
 `Preferences` currently includes:
@@ -155,7 +156,10 @@ Frontend state currently lives in seven signal modules under `src/state/`:
 - `autoLockTimeout`
 - `advancedToolbar`
 - `editorFontSize`
+- `editorFontFamily`
 - `showEntryTimestamps`
+- `timestampFormat`
+- `timestampPrecision`
 - `language`
 
 See `src/CLAUDE.md` for the full state inventory and testing patterns.
