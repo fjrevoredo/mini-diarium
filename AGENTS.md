@@ -75,6 +75,7 @@ This repo is commonly worked on from a WSL shell over a Windows checkout (`/mnt/
 - `cmd.exe /c bun run test:e2e`
 - `cmd.exe /c bun run tauri info`
 - `cmd.exe /c bun run diagrams:check`
+- `cmd.exe /c bun run validate:locales`
 
 **Commands with side effects:**
 
@@ -112,7 +113,7 @@ Notes:
 
 ## Command Registry
 
-There are **51 registered Tauri commands** in `src-tauri/src/lib.rs`. Rust command names use `snake_case`; frontend wrappers in `src/lib/tauri.ts` use `camelCase`.
+There are **54 registered Tauri commands** in `src-tauri/src/lib.rs`. Rust command names use `snake_case`; frontend wrappers in `src/lib/tauri.ts` use `camelCase`.
 
 Current categories:
 
@@ -133,7 +134,7 @@ Use the repo as source of truth:
 
 ## State Management
 
-Frontend state currently lives in seven signal modules under `src/state/`:
+Frontend state currently lives in eight signal modules under `src/state/`:
 
 - `auth.ts`
 - `entries.ts`
@@ -141,6 +142,7 @@ Frontend state currently lives in seven signal modules under `src/state/`:
 - `search.ts`
 - `session.ts`
 - `ui.ts`
+- `notifications.ts`
 - `preferences.ts`
 
 `Preferences` currently includes:
@@ -154,7 +156,10 @@ Frontend state currently lives in seven signal modules under `src/state/`:
 - `autoLockTimeout`
 - `advancedToolbar`
 - `editorFontSize`
+- `editorFontFamily`
 - `showEntryTimestamps`
+- `timestampFormat`
+- `timestampPrecision`
 - `language`
 
 See `src/CLAUDE.md` for the full state inventory and testing patterns.
@@ -221,6 +226,7 @@ cmd.exe /c bun run build
 cmd.exe /c bun run test:e2e:local
 cmd.exe /c bun run test:e2e:stateful
 cmd.exe /c bun run diagrams:check
+cmd.exe /c bun run validate:locales
 ```
 
 Current test shape:
@@ -244,7 +250,7 @@ Current test shape:
 - `calendar-day-YYYY-MM-DD`
 - `entry-nav-bar`
 - `entry-prev-button`
-- `entry-counter`
+- `entry-number-button-{N}`
 - `entry-next-button`
 - `entry-delete-button`
 - `entry-add-button`
@@ -252,6 +258,12 @@ Current test shape:
 - `journal-open-button`
 
 For the authoritative test-selector inventory and E2E rules, see `src/CLAUDE.md` and `e2e/CLAUDE.md`.
+
+## Agent Workflow Rules
+
+1. **Validate after each completed task.** Run the relevant test/type-check/lint command immediately after finishing a task — before moving to the next one. This catches bugs at the point of introduction and keeps diagnosis trivial. Do not batch multiple tasks and validate only at the end.
+2. **Format after changes.** Use `bun run format`. Prettier is configured for the full `src/` tree and only modifies files with style violations. Since the repo is kept formatted, running it on the full tree produces no noise — it only touches files you changed.
+3. **Use `manual-planning` skill for any plan.** When asked to create a plan, roadmap, implementation checklist, or planning document, load the `manual-planning` skill and follow its template before writing the file. Do not create a plan from scratch — always delegate to the skill's workflow and format.
 
 ## Gotchas and Pitfalls
 

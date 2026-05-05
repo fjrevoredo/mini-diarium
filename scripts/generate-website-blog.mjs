@@ -16,7 +16,72 @@ const DEFAULT_OG_IMAGE = `${SITE_URL}/assets/og-cover.png`;
 const INDEX_PATH = path.join(WEBSITE_DIR, "index.html");
 const SITEMAP_PATH = path.join(WEBSITE_DIR, "sitemap.xml");
 const LLMS_PATH = path.join(WEBSITE_DIR, "llms.txt");
+
+const DESCRIPTION_MAP = {
+  "journal-app-ai-privacy":
+    "Explains why cloud architecture, not privacy settings, determines AI access to journal entries.",
+  "mini-diary-alternative":
+    "Covers why Mini Diarium is the maintained successor to Mini Diary with stronger encryption.",
+  "journal-app-without-cloud":
+    "A practical checklist of what to look for in a journal app without cloud dependency.",
+  "day-one-alternative":
+    "Compares Mini Diarium to Day One for users who want local-only storage and no sync service.",
+  "day-one-alternative-for-private-offline-journaling":
+    "Compares Mini Diarium to Day One for users who want local-only storage and no sync service.",
+  "encrypted-journal-vs-cloud-notes-app":
+    "Side-by-side analysis of what separates an encrypted local journal from a cloud notes app.",
+  "offline-journal-that-you-own":
+    "Explains what data ownership means in practice and why it requires local storage.",
+  "private-diary-app-for-desktop":
+    "Outlines the practical requirements for a private diary app on desktop that stays offline.",
+  "local-first-journaling-and-ownership":
+    "Argues that local-first design is primarily about portability and long-term data control.",
+  "why-an-offline-journal-is-different":
+    "Addresses the specific architectural differences between offline journals and connected apps.",
+  "why-mini-diarium-exists":
+    "The origin story of Mini Diarium — why an unmaintained predecessor led to building from scratch.",
+};
+
+const BLUF_MAP = {
+  "journal-app-ai-privacy":
+    '<p class="bluf"><strong>Short answer:</strong> Yes — if your journal is stored on a server, that server\'s operator controls when and how your entries can be processed by AI systems. A local-first encrypted journal changes this by keeping plaintext off the server entirely.</p>',
+  "mini-diary-alternative":
+    '<p class="bluf"><strong>Short answer:</strong> Mini Diarium is the direct maintained successor to Mini Diary. It was built from scratch in a modern stack (Tauri 2, SolidJS, Rust) with stronger encryption (AES-256-GCM), key file authentication, and import support for Mini Diary JSON.</p>',
+  "journal-app-without-cloud":
+    '<p class="bluf"><strong>Short answer:</strong> A journal app without cloud dependency needs local storage, encryption at rest, no telemetry, and a portable export format. Everything else is secondary.</p>',
+  "day-one-alternative":
+    '<p class="bluf"><strong>Short answer:</strong> Mini Diarium and Day One both support rich text and calendar views, but Mini Diarium stores entries locally with AES-256-GCM encryption and has no sync service. Day One\'s cloud sync is optional but enabled by default.</p>',
+  "day-one-alternative-for-private-offline-journaling":
+    '<p class="bluf"><strong>Short answer:</strong> Mini Diarium and Day One both support rich text and calendar views, but Mini Diarium stores entries locally with AES-256-GCM encryption and has no sync service. Day One\'s cloud sync is optional but enabled by default.</p>',
+  "encrypted-journal-vs-cloud-notes-app":
+    '<p class="bluf"><strong>Short answer:</strong> An encrypted journal app encrypts entries before they reach storage. A cloud notes app stores plaintext on a server and may share it with AI partners. The encryption model determines who can access your writing.</p>',
+  "offline-journal-that-you-own":
+    '<p class="bluf"><strong>Short answer:</strong> Owning your journal means having a local copy in an open format that you can export anytime. An offline journal that you own adds the constraint that no cloud service is involved in storage or sync.</p>',
+  "private-diary-app-for-desktop":
+    '<p class="bluf"><strong>Short answer:</strong> A private diary app for desktop should encrypt entries before they reach disk, run fully offline, avoid telemetry, and export to open formats. These are practical requirements, not optional features.</p>',
+  "local-first-journaling-and-ownership":
+    '<p class="bluf"><strong>Short answer:</strong> Local-first journaling keeps the primary copy on your own device. Ownership goes further — it means the export format is open, your backup is under your control, and no service can revoke access.</p>',
+  "why-an-offline-journal-is-different":
+    '<p class="bluf"><strong>Short answer:</strong> An offline journal cannot send your entries to a server, a sync service, or an AI partner. This is an architectural constraint, not a preference or setting that can be changed by a policy update.</p>',
+  "why-mini-diarium-exists":
+    '<p class="bluf"><strong>Short answer:</strong> Mini Diary was a clean, simple journal app that went unmaintained. Its dependencies aged and a fork was impractical. Mini Diarium was built from scratch keeping the same philosophy while adopting a modern stack with stronger security guarantees.</p>',
+};
+
 const STATIC_PAGES = [
+  {
+    title: "Compare",
+    url: `${SITE_URL}/compare/`,
+    filePath: path.join(WEBSITE_DIR, "compare", "index.html"),
+    summary:
+      "Feature comparison of Mini Diarium vs. Day One, Notion, Obsidian, Standard Notes, and other journal apps.",
+  },
+  {
+    title: "Privacy Policy",
+    url: `${SITE_URL}/privacy/`,
+    filePath: path.join(WEBSITE_DIR, "privacy", "index.html"),
+    summary:
+      "Mini Diarium's privacy policy: no telemetry, no cloud storage, no analytics.",
+  },
   {
     title: "Encrypted Journal App Guide",
     url: `${SITE_URL}/encrypted-journal/`,
@@ -224,6 +289,7 @@ function buildFooter() {
       <div class="footer-right">
         <a href="https://github.com/fjrevoredo/mini-diarium" target="_blank" rel="noopener noreferrer">GitHub</a>
         <a href="https://x.com/MiniDiarium" target="_blank" rel="noopener noreferrer">X</a>
+        <a href="/privacy/">Privacy</a>
         <a href="https://github.com/fjrevoredo/mini-diarium/blob/master/SECURITY.md" target="_blank" rel="noopener noreferrer">Security</a>
         <a href="https://github.com/fjrevoredo/mini-diarium/blob/master/CHANGELOG.md" target="_blank" rel="noopener noreferrer">Changelog</a>
         <a href="/blog/feed.xml">RSS</a>
@@ -358,11 +424,24 @@ function renderBlogIndex(posts) {
         },
         dateModified: latestUpdated,
       },
+      {
+        "@type": "ItemList",
+        "@id": `${SITE_URL}/blog/#itemlist`,
+        name: "Mini Diarium Blog Articles",
+        description: "All blog posts from the Mini Diarium blog about encrypted journaling, local-first software, and privacy.",
+        numberOfItems: posts.length,
+        itemListElement: posts.map((post, i) => ({
+          "@type": "ListItem",
+          position: i + 1,
+          url: `${SITE_URL}/blog/${post.slug}/`,
+          name: post.title,
+        })),
+      },
     ],
   };
 
   const head = buildHead({
-    pageTitle: "Mini Diarium Blog — Encrypted Journals, Private Diary Apps, and Local-First Writing",
+    pageTitle: "Mini Diarium Blog | Encrypted Journals & Local-First Writing",
     description:
       "Static articles about encrypted journals, private diary apps, offline journaling, and why Mini Diarium is built as a local-first desktop journal.",
     canonical: `${SITE_URL}/blog/`,
@@ -412,6 +491,7 @@ ${renderArticleCards(posts)
 function renderPostPage(post, posts) {
   const relatedPosts = posts.filter((candidate) => candidate.slug !== post.slug).slice(0, 2);
   const htmlBody = marked.parse(post.body);
+  const bluf = BLUF_MAP[post.slug] ?? "";
   const structuredData = {
     "@context": "https://schema.org",
     "@graph": [
@@ -466,11 +546,12 @@ function renderPostPage(post, posts) {
     `<meta property="article:published_time" content="${escapeHtml(isoDate(post.date))}" />`,
     `<meta property="article:modified_time" content="${escapeHtml(isoDate(post.updated))}" />`,
     `<meta property="article:author" content="${escapeHtml(post.author)}" />`,
+    `<meta property="article:section" content="Privacy & Security" />`,
     ...post.tags.map((tag) => `<meta property="article:tag" content="${escapeHtml(tag)}" />`),
   ].join("\n  ");
 
   const head = buildHead({
-    pageTitle: `${post.title} — Mini Diarium Blog`,
+    pageTitle: `${post.title} | Mini Diarium Blog`,
     description: post.description,
     canonical: post.canonical,
     ogType: "article",
@@ -506,6 +587,7 @@ function renderPostPage(post, posts) {
 <section class="blog-post-body">
   <div class="container blog-post-layout">
     <article class="blog-post prose" aria-label="${escapeHtml(post.title)}">
+${bluf}
 ${htmlBody
   .split("\n")
   .map((line) => `      ${line}`)
@@ -651,7 +733,10 @@ function writeLlms(posts) {
     "",
     "## Latest Articles",
     "",
-    ...posts.map((post) => `- ${post.title}: ${SITE_URL}/blog/${post.slug}/`),
+    ...posts.map((post) => {
+      const desc = DESCRIPTION_MAP[post.slug] ?? post.description;
+      return `- ${desc} (${SITE_URL}/blog/${post.slug}/)`;
+    }),
     "",
     "## Attribution",
     "",

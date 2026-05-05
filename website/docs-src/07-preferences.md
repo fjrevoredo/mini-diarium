@@ -3,7 +3,7 @@ title: Preferences
 slug: preferences
 description: How to configure Mini Diarium: themes, auto-lock, editor settings, and more.
 order: 8
-updated: 2026-04-16
+updated: 2026-05-06
 tags: preferences, settings, theme, auto-lock, configuration
 ---
 
@@ -16,14 +16,17 @@ Press `Ctrl+,` (or `Cmd+,` on macOS) to open the Preferences dialog, or use the 
 | Setting | Description |
 |---------|-------------|
 | Theme | Light, dark, or follow system (auto) |
-| Language | Interface language: English, Spanish, or German |
+| Language | Interface language: English, Spanish, German, or Italian |
 | First day of week | Sunday, Monday, or auto-detect from locale |
 | Allow future entries | Write entries for dates that have not happened yet |
 | Hide titles | Remove the title field for a minimal, distraction-free look |
 | Spellcheck | Toggle browser spellcheck in the editor |
-| Advanced toolbar | Show the full formatting toolbar with alignment and image options |
-| Editor font size | Adjust the body text size in the editor |
+| Advanced toolbar | Show the full formatting toolbar with text direction, timestamp, alignment, and image options |
+| Editor font size | Adjust the body text size in the editor (12–24 px) |
+| Editor font | Choose a font family for the editor body from five bundled options |
 | Show entry timestamps | Display creation and last-updated timestamps on each entry |
+| Timestamp format | Choose between 12-hour and 24-hour time display |
+| Timestamp precision | Choose between hours:minutes or hours:minutes:seconds |
 
 ## Security Settings
 

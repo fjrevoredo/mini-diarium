@@ -112,6 +112,8 @@
       "passwordRequired": "La password è obbligatoria",
       "autoUnlocking": "Apertura diario…",
       "autoUnlockFailed": "Impossibile sbloccare automaticamente questo diario. Potrebbe mancare la chiave locale. Puoi aggiungere una password in Preferenze.",
+      "multiAuthNote": "Questo diario richiede tutti i metodi di autenticazione.",
+      "multiAuthBothRequired": "Sono richiesti sia una password che un file chiave.",
       "multiAuthAllRequired": "All authentication credentials must be provided.",
       "multiAuthLoadError": "Failed to load authentication methods."
     },
@@ -172,13 +174,18 @@
       "alignLeft": "Allinea a sinistra",
       "alignCenter": "Centra",
       "alignRight": "Allinea a destra",
-      "justify": "Giustifica"
+      "justify": "Giustifica",
+      "insertTimestamp": "Inserisci timestamp",
+      "insertTimestampTitle": "Inserisci timestamp corrente",
+      "textDirection": "Direzione testo",
+      "textDirectionTitle": "Inverti direzione testo (Ctrl+Shift+D)"
     },
     "wordCount_one": "{{ count }} parola",
     "wordCount_other": "{{ count }} parole",
     "titlePlaceholder": "Titolo",
     "prevEntry": "Voce precedente",
     "nextEntry": "Voce successiva",
+    "goToEntry": "Vai alla voce {{ number }}",
     "deleteEntry": "Elimina voce",
     "addEntry": "Aggiungi voce",
     "addEntryCreating": "Creazione voce…",
@@ -260,7 +267,10 @@
       "fontSizeLabel": "Dimensione carattere editor",
       "fontSizePxSuffix": "px",
       "fontSizeMin": "12 px",
-      "fontSizeMax": "24 px"
+      "fontSizeMax": "24 px",
+      "fontFamilyLabel": "Editor font",
+      "fontFamilySystemDefault": "System Default",
+      "fontFamilyHint": "Select a font for the editor. Fonts are bundled with the app and work offline."
     },
     "security": {
       "authMethodsTitle": "Metodi di autenticazione",
@@ -312,7 +322,11 @@
       "keypairPasswordRequired": "La password attuale è obbligatoria",
       "keypairLabelRequired": "L'etichetta è obbligatoria",
       "addPasswordBothRequired": "Entrambi i campi sono obbligatori",
-      "addPasswordMismatch": "Le password non corrispondono"
+      "addPasswordMismatch": "Le password non corrispondono",
+      "requireAllAuthTitle": "Richiedi tutti i metodi di autenticazione",
+      "requireAllAuthHint": "Quando attivato, devi fornire sia la password che il file chiave ogni volta che sblocchi questo diario. Simile alla modalità a chiave combinata di VeraCrypt.",
+      "requireAllAuthLabel": "Richiedi tutti i metodi di autenticazione per lo sblocco",
+      "requireAllAuthNeedsTwo": "Aggiungi almeno due metodi di autenticazione per abilitare questa opzione."
     },
     "data": {
       "currentLocationLabel": "Posizione attuale",
@@ -399,6 +413,16 @@
     "typeRelease": "Versione",
     "typeAnnouncement": "Annuncio",
     "typeTip": "Suggerimento"
+  },
+  "timestamp": {
+    "popupTitle": "Inserisci timestamp",
+    "formatLabel": "Formato ora",
+    "format12h": "12 ore (AM/PM)",
+    "format24h": "24 ore",
+    "precisionLabel": "Precisione",
+    "precisionHm": "HH:mm",
+    "precisionHms": "HH:mm:ss",
+    "insert": "Inserisci"
   },
   "goToDate": {
     "title": "Vai a data",

@@ -9,7 +9,7 @@ import {
 import { journals, activeJournalId } from '../../state/journals';
 import { open } from '@tauri-apps/plugin-dialog';
 import { useI18n } from '../../i18n';
-import { peekAuthSlotTypes, type AuthSlotPeek, type MultiAuthCredential } from '../../lib/tauri';
+import { peekAuthSlotTypes, type JournalPeek, type MultiAuthCredential } from '../../lib/tauri';
 import { mapTauriError } from '../../lib/errors';
 
 type UnlockMode = 'password' | 'keyfile';
@@ -22,21 +22,21 @@ export default function PasswordPrompt() {
   const [keyFilePath, setKeyFilePath] = createSignal('');
   const [error, setError] = createSignal<string | null>(null);
   const [isUnlocking, setIsUnlocking] = createSignal(false);
-  const [multiAuthSlots, setMultiAuthSlots] = createSignal<AuthSlotPeek[]>([]);
+  const [journalPeek, setJournalPeek] = createSignal<JournalPeek | null>(null);
   const [keypairPaths, setKeypairPaths] = createSignal<Record<number, string>>({});
   const [isLoadingSlots, setIsLoadingSlots] = createSignal(false);
 
   const activeJournalName = () => journals().find((j) => j.id === activeJournalId())?.name ?? null;
   const isAutoProtected = () =>
     journals().find((j) => j.id === activeJournalId())?.auto_protected ?? false;
-  const requiresAllAuth = () =>
-    !!journals().find((j) => j.id === activeJournalId())?.require_all_auth;
+  const requiresAllAuth = () => journalPeek()?.require_all_auth ?? false;
+  const multiAuthSlots = () => journalPeek()?.slots ?? [];
 
   onMount(async () => {
-    if (requiresAllAuth() && !isAutoProtected()) {
+    if (!isAutoProtected()) {
       setIsLoadingSlots(true);
       try {
-        setMultiAuthSlots(await peekAuthSlotTypes());
+        setJournalPeek(await peekAuthSlotTypes());
       } catch (err) {
         setError(mapTauriError(err, t));
       } finally {

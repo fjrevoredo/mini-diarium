@@ -33,6 +33,43 @@ const HUB_GROUPS = [
   { label: "Help", icon: "💬", slugs: ["faq"] },
 ];
 
+const HOWTO_NAME_MAP = {
+  "getting-started": "Getting Started with Mini Diarium",
+  import: "Import Journal Entries into Mini Diarium",
+  export: "Export Journal Entries from Mini Diarium",
+  backups: "Restore a Journal Backup in Mini Diarium",
+};
+
+const HOWTO_DESC_MAP = {
+  "getting-started": "Step-by-step guide to download, install, create your first journal, and write your first entry in Mini Diarium.",
+  import: "Step-by-step guide to importing journal entries from Mini Diary, Day One, or jrnl into Mini Diarium.",
+  export: "Step-by-step guide to exporting all journal entries as JSON or Markdown from Mini Diarium.",
+  backups: "Step-by-step guide to locating and restoring from a Mini Diarium encrypted backup.",
+};
+
+const HOWTO_STEPS_MAP = {
+  "getting-started": [
+    { name: "Download Mini Diarium", text: "Download the installer for your platform (Windows, macOS, or Linux) from the GitHub releases page. Run the installer and launch Mini Diarium." },
+    { name: "Create your first journal", text: "Click 'Create journal'. Set a journal name, choose a password (or password + key file), and confirm. Your encrypted journal is created in your user data directory." },
+    { name: "Write your first entry", text: "Navigate to today's date using the calendar. Click the editor and start writing. Entries are auto-saved and encrypted with AES-256-GCM before they reach disk." },
+  ],
+  import: [
+    { name: "Open the import dialog", text: "In Mini Diarium, open the menu (three-line icon or File menu) and select 'Import entries'. The import dialog will open." },
+    { name: "Select the format", text: "Choose the source format: Mini Diary JSON, Day One JSON, Day One TXT, or jrnl JSON. Mini Diarium detects the format automatically for Mini Diary and jrnl." },
+    { name: "Choose the file and confirm", text: "Select the exported file from your device. Review the preview of entries to be imported and confirm. Imported entries are encrypted and added to your journal." },
+  ],
+  export: [
+    { name: "Open the export dialog", text: "In Mini Diarium, open the menu and select 'Export entries'. The export dialog will open." },
+    { name: "Select the format", text: "Choose between JSON (structured, machine-readable) or Markdown (human-readable, one file per entry)." },
+    { name: "Choose the destination", text: "Pick a location on your device to save the exported file(s). The export runs locally with no network involvement." },
+  ],
+  backups: [
+    { name: "Locate the backups directory", text: "Backups are stored in your journal's 'backups' subdirectory. You can navigate to it from the app via the menu or find it manually in your user data directory." },
+    { name: "Restore from a backup", text: "Open Mini Diarium and use 'Restore from backup' in the app menu. Select the backup file you want to restore. The encrypted backup is loaded and replaces the current journal state." },
+    { name: "Open your journal", text: "After restoring, unlock your journal with your password or key file. Your entries from the backup are now available." },
+  ],
+};
+
 function ensureDate(value, fieldName, filePath) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
     throw new Error(`${filePath}: ${fieldName} must use YYYY-MM-DD`);
@@ -216,6 +253,7 @@ function buildFooter() {
       <div class="footer-right">
         <a href="https://github.com/fjrevoredo/mini-diarium" target="_blank" rel="noopener noreferrer">GitHub</a>
         <a href="https://x.com/MiniDiarium" target="_blank" rel="noopener noreferrer">X</a>
+        <a href="/privacy/">Privacy</a>
         <a href="https://github.com/fjrevoredo/mini-diarium/blob/master/SECURITY.md" target="_blank" rel="noopener noreferrer">Security</a>
         <a href="https://github.com/fjrevoredo/mini-diarium/blob/master/CHANGELOG.md" target="_blank" rel="noopener noreferrer">Changelog</a>
         <a href="/blog/feed.xml">RSS</a>
@@ -688,6 +726,21 @@ function renderSectionPage(section, sections) {
           },
         ],
       },
+      ...(HOWTO_NAME_MAP[section.slug]
+        ? [
+            {
+              "@type": "HowTo",
+              name: HOWTO_NAME_MAP[section.slug],
+              description: HOWTO_DESC_MAP[section.slug],
+              step: HOWTO_STEPS_MAP[section.slug].map((step, i) => ({
+                "@type": "HowToStep",
+                position: i + 1,
+                name: step.name,
+                text: step.text,
+              })),
+            },
+          ]
+        : []),
     ],
   };
 

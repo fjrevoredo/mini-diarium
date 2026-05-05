@@ -77,11 +77,21 @@ Pop-Location
 # 5. Update website/index.html
 Write-Host "Updating website/index.html..."
 $websitePath = "website\index.html"
+$releaseDate = (Get-Date).ToUniversalTime().ToString("yyyy-MM-dd")
 $website = Get-Content $websitePath -Raw
 $website = $website -replace '<span class="app-version">\d+\.\d+\.\d+</span>', "<span class=`"app-version`">$Version</span>"
 $website = $website -replace 'Mini-Diarium-\d+\.\d+\.\d+-(windows\.exe|macos\.dmg|linux\.AppImage)', "Mini-Diarium-$Version-`$1"
-$website = $website -replace '"softwareVersion":\s*"\d+\.\d+\.\d+"', "`"softwareVersion`": `"$Version`""
+$website = $website -replace '"softwareVersion":\s*"[^"]*"', "`"softwareVersion`": `"$Version`""
+$website = $website -replace '"dateModified":\s*"[^"]*"', "`"dateModified`": `"$releaseDate`""
 Set-Content -Path $websitePath -Value $website -NoNewline
+
+# 5b. Update website/encrypted-journal/index.html
+Write-Host "Updating website/encrypted-journal/index.html..."
+$encryptedJournalPath = "website\encrypted-journal\index.html"
+$encryptedJournal = Get-Content $encryptedJournalPath -Raw
+$encryptedJournal = $encryptedJournal -replace '"softwareVersion":\s*"[^"]*"', "`"softwareVersion`": `"$Version`""
+$encryptedJournal = $encryptedJournal -replace '"dateModified":\s*"[^"]*"', "`"dateModified`": `"$releaseDate`""
+Set-Content -Path $encryptedJournalPath -Value $encryptedJournal -NoNewline
 
 # 6. Update README version badge
 Write-Host "Updating README.md version badge..."
@@ -90,7 +100,15 @@ $readme = Get-Content $readmePath -Raw
 $readme = $readme -replace 'version-\d+\.\d+\.\d+-', "version-$Version-"
 Set-Content -Path $readmePath -Value $readme -NoNewline
 
-# 7. Validate all versions
+# 7. Prepend release entry to metainfo.xml
+Write-Host "Prepending release entry to data\linux\io.github.fjrevoredo.mini-diarium.metainfo.xml..."
+$metainfoPath = "data\linux\io.github.fjrevoredo.mini-diarium.metainfo.xml"
+$metainfo = Get-Content $metainfoPath -Raw
+$releaseEntry = "    <release version=`"$Version`" date=`"$releaseDate`">`n      <url type=`"details`">https://github.com/fjrevoredo/mini-diarium/releases/tag/v$Version</url>`n    </release>"
+$metainfo = $metainfo -replace "(<!-- New release entries are prepended here by bump-version.sh -->)", "`$1`n$releaseEntry"
+Set-Content -Path $metainfoPath -Value $metainfo -NoNewline
+
+# 8. Validate all versions
 Write-Host "Validating version updates..."
 
 $packageVersion = [regex]::Match((Get-Content $packageJsonPath -Raw), '"version"\s*:\s*"(\d+\.\d+\.\d+)"').Groups[1].Value
@@ -147,6 +165,36 @@ if ($websiteSoftwareVersion -ne $Version) {
     Report-Mismatch -FilePath "website\index.html softwareVersion" -Expected $Version -Actual ($(if ($websiteSoftwareVersion) { $websiteSoftwareVersion } else { "<missing>" }))
 }
 
+$encryptedJournalSoftwareVersion = [regex]::Match((Get-Content $encryptedJournalPath -Raw), '"softwareVersion"\s*:\s*"(\d+\.\d+\.\d+)"').Groups[1].Value
+if ($encryptedJournalSoftwareVersion -ne $Version) {
+    Report-Mismatch -FilePath "website\encrypted-journal\index.html softwareVersion" -Expected $Version -Actual ($(if ($encryptedJournalSoftwareVersion) { $encryptedJournalSoftwareVersion } else { "<missing>" }))
+}
+
+$encryptedJournalDateModified = [regex]::Match((Get-Content $encryptedJournalPath -Raw), '"dateModified"\s*:\s*"([^"]+)"').Groups[1].Value
+if ($encryptedJournalDateModified -ne $releaseDate) {
+    Report-Mismatch -FilePath "website\encrypted-journal\index.html dateModified" -Expected $releaseDate -Actual ($(if ($encryptedJournalDateModified) { $encryptedJournalDateModified } else { "<missing>" }))
+}
+
+$websiteDateModified = [regex]::Matches((Get-Content $websitePath -Raw), '"dateModified"\s*:\s*"([^"]+)"')
+if ($websiteDateModified.Count -eq 0) {
+    Report-Mismatch -FilePath "website\index.html dateModified" -Expected $releaseDate -Actual "<no dateModified found>"
+} else {
+    $websiteDateMismatchValues = @(
+        $websiteDateModified |
+            ForEach-Object { $_.Groups[1].Value } |
+            Where-Object { $_ -ne $releaseDate } |
+            Sort-Object -Unique
+    )
+    if ($websiteDateMismatchValues.Count -gt 0) {
+        Report-Mismatch -FilePath "website\index.html dateModified" -Expected $releaseDate -Actual ($websiteDateMismatchValues -join ",")
+    }
+}
+
+$metainfoRelease = [regex]::Match((Get-Content $metainfoPath -Raw), "<release version=`"$Version`"").Success
+if (-not $metainfoRelease) {
+    Report-Mismatch -FilePath "data\linux\io.github.fjrevoredo.mini-diarium.metainfo.xml" -Expected $Version -Actual "<release entry not found>"
+}
+
 if ($validationFailed) {
     Write-Host ""
     Write-Host "${Red}Version bump aborted: one or more files did not match $Version.${Reset}"
@@ -159,7 +207,7 @@ Write-Host ""
 
 # Show what changed
 Write-Host "Changes:"
-git diff package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock website/index.html README.md | Select-Object -First 30
+git diff package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock website/index.html website/encrypted-journal/index.html README.md data\linux\io.github.fjrevoredo.mini-diarium.metainfo.xml | Select-Object -First 30
 
 # Get current branch
 $currentBranch = git branch --show-current
@@ -167,7 +215,7 @@ $currentBranch = git branch --show-current
 Write-Host ""
 Write-Host "${Yellow}Next steps:${Reset}"
 Write-Host "1. Review the changes above"
-Write-Host "2. Commit: ${Green}git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock website/index.html README.md; git commit -m `"chore: bump version to $Version`"${Reset}"
+Write-Host "2. Commit: ${Green}git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock website/index.html README.md data\linux\io.github.fjrevoredo.mini-diarium.metainfo.xml; git commit -m `"chore: bump version to $Version`"${Reset}"
 Write-Host "3. Push branch: ${Green}git push origin $currentBranch${Reset}"
 Write-Host "4. Create PR to merge $currentBranch → master"
 Write-Host "5. After PR is merged, checkout master and create tag:"

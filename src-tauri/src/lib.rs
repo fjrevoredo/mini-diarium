@@ -237,6 +237,9 @@ pub fn run() {
             commands::debug::generate_debug_dump,
             // Menu locale
             commands::menu::update_menu_locale,
+            // Fonts
+            commands::fonts::list_bundled_fonts,
+            commands::fonts::get_font_data,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

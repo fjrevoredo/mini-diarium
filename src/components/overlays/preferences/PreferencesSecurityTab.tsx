@@ -54,9 +54,7 @@ export default function PreferencesSecurityTab(props: TabProps) {
   const [addPasswordSuccess, setAddPasswordSuccess] = createSignal(false);
 
   // Require-all-auth toggle
-  const [requireAllAuth, setRequireAllAuthLocal] = createSignal(
-    activeJournal()?.require_all_auth ?? false,
-  );
+  const [requireAllAuth, setRequireAllAuthLocal] = createSignal(false);
   const [requireAllAuthError, setRequireAllAuthError] = createSignal<string | null>(null);
 
   // Re-init buffered + transient fields whenever the overlay re-opens
@@ -79,11 +77,14 @@ export default function PreferencesSecurityTab(props: TabProps) {
       setAddPasswordConfirm('');
       setAddPasswordError(null);
       setAddPasswordSuccess(false);
-      setRequireAllAuthLocal(activeJournal()?.require_all_auth ?? false);
       setRequireAllAuthError(null);
 
       if (authState() === 'unlocked') {
         loadAuthMethods().catch((err) => log.error('Failed to reload auth methods:', err));
+        tauri
+          .peekAuthSlotTypes()
+          .then((peek) => setRequireAllAuthLocal(peek.require_all_auth))
+          .catch((err) => log.error('Failed to load require_all_auth:', err));
       }
     }
   });

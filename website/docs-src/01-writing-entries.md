@@ -3,7 +3,7 @@ title: Writing Entries
 slug: writing-entries
 description: How to create, edit, format, and delete journal entries using the rich text editor.
 order: 2
-updated: 2026-04-26
+updated: 2026-05-06
 tags: editor, formatting, entries, writing
 ---
 
@@ -32,7 +32,7 @@ Each entry can have an optional title. If you prefer a cleaner look without titl
 Each date can contain multiple separate entries. This is useful for writing at different times of day or keeping different threads of thought separate.
 
 - When a date has more than one entry, an entry navigation bar appears above the editor.
-- Use `←` and `→` to move between entries for the selected date.
+- Use `←` and `→` to step between entries, or click the **numbered buttons** (`1 2 3`) to jump directly to a specific entry. The active entry is shown in bold.
 - Use `+` to create a new blank entry on the same date.
 - Use `−` to delete the current entry.
 - If a day has only one entry, the navigation bar stays hidden.
@@ -61,11 +61,19 @@ Mini Diarium supports right-to-left (RTL) writing in Arabic, Hebrew, Syriac, and
 
 **Auto-detection**: as you type, the editor reads the first strongly-directional character in each paragraph or heading and sets the direction automatically. Arabic and Hebrew script trigger `dir="rtl"`; Latin script triggers `dir="ltr"`. Once a block's direction is set it is locked and will not change if you later add neutral characters (numbers, punctuation, emoji) to the same block.
 
-**Manual override**: press `Ctrl+Shift+D` (or `Cmd+Shift+D` on macOS) to toggle the current block between RTL and LTR. This is useful for paragraphs that start with neutral characters such as numbers or quotation marks that the auto-detector cannot classify.
+**Manual override**: press `Ctrl+Shift+D` (or `Cmd+Shift+D` on macOS) to toggle the current block between RTL and LTR, or use the **¶R / ¶L toggle button** (pilcrow icon with directional arrow) in the advanced formatting toolbar. This is useful for paragraphs that start with neutral characters such as numbers or quotation marks that the auto-detector cannot classify. The button icon shows the current direction and the direction you will switch to when clicked.
 
 **Alignment toolbar**: when the cursor is in an RTL paragraph, the alignment toolbar reflects the browser's actual rendering and shows **Right** as the active alignment (not Left). Clicking an alignment button writes an explicit `text-align` override as normal.
 
 **Persistence**: the `dir` attribute is stored in the encrypted HTML content of each entry, so direction is preserved across save, export, and re-open cycles.
+
+## Inserting the Current Time
+
+The advanced toolbar includes a **clock button** that inserts the current time at the cursor position. Clicking the button opens a popup where you can choose between **12-hour** and **24-hour** format and select hours:minutes or hours:minutes:seconds precision. Both selections are remembered across sessions.
+
+## Editor Font
+
+You can change the font used in the editor body via **Preferences → Writing → Editor font**. Choose from five bundled open-source font families: Noto Sans, Source Sans 3, Noto Serif, JetBrains Mono, and Fira Mono. Fonts are loaded on demand and work fully offline — no network requests, no OS-level font enumeration.
 
 ## Importing a Markdown File
 

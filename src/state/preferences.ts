@@ -15,7 +15,10 @@ export interface Preferences {
   autoLockTimeout: number; // seconds, 1–999
   advancedToolbar: boolean;
   editorFontSize: number; // px, 12–24
+  editorFontFamily: string | null; // null means system default
   showEntryTimestamps: boolean;
+  timestampFormat: '12h' | '24h';
+  timestampPrecision: 'hm' | 'hms';
   language: string; // locale code, e.g. 'en'
 }
 
@@ -29,7 +32,10 @@ const DEFAULT_PREFERENCES: Preferences = {
   autoLockTimeout: 300,
   advancedToolbar: false,
   editorFontSize: 16,
+  editorFontFamily: null,
   showEntryTimestamps: false,
+  timestampFormat: '12h',
+  timestampPrecision: 'hm',
   language: 'en',
 };
 

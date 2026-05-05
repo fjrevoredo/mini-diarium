@@ -221,6 +221,10 @@ const en = {
       alignCenter: 'Align center',
       alignRight: 'Align right',
       justify: 'Justify',
+      insertTimestamp: 'Insert timestamp',
+      insertTimestampTitle: 'Insert current timestamp',
+      textDirection: 'Text direction',
+      textDirectionTitle: 'Toggle text direction (Ctrl+Shift+D)',
     },
     /** WordCount — plural pair */
     wordCount_one: '{{ count }} word',
@@ -230,6 +234,7 @@ const en = {
     /** EntryNavBar aria-labels (fallbacks) */
     prevEntry: 'Previous entry',
     nextEntry: 'Next entry',
+    goToEntry: 'Go to entry {{ number }}',
     deleteEntry: 'Delete entry',
     addEntry: 'Add entry',
     /** EditorPanel — add/delete button titles */
@@ -326,6 +331,10 @@ const en = {
       fontSizePxSuffix: 'px',
       fontSizeMin: '12 px',
       fontSizeMax: '24 px',
+      fontFamilyLabel: 'Editor font',
+      fontFamilySystemDefault: 'System Default',
+      fontFamilyHint:
+        'Select a font for the editor. Fonts are bundled with the app and work offline.',
     },
     security: {
       authMethodsTitle: 'Authentication Methods',
@@ -486,6 +495,18 @@ const en = {
     typeRelease: 'Release',
     typeAnnouncement: 'Announcement',
     typeTip: 'Tip',
+  },
+
+  /** TimestampOverlay */
+  timestamp: {
+    popupTitle: 'Insert Timestamp',
+    formatLabel: 'Time format',
+    format12h: '12-hour (AM/PM)',
+    format24h: '24-hour',
+    precisionLabel: 'Precision',
+    precisionHm: 'HH:mm',
+    precisionHms: 'HH:mm:ss',
+    insert: 'Insert',
   },
 
   /** GoToDateOverlay */

@@ -205,6 +205,7 @@ export default function EditorPanel() {
         index={currentIndex()}
         onPrev={() => void nav.navigateToEntry(currentIndex() - 1)}
         onNext={() => void nav.navigateToEntry(currentIndex() + 1)}
+        onGoTo={(idx) => void nav.navigateToEntry(idx)}
         onAdd={() => void nav.addEntry()}
         addDisabled={isCreatingEntry() || pendingEntryId() === null || emptyCheck.isContentEmpty()}
         addTitle={

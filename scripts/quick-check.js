@@ -62,6 +62,17 @@ if (format.success) {
   results.failed.push('Prettier');
 }
 
+// Validate locales
+process.stdout.write('Locales... ');
+const locales = run('bun run validate:locales');
+if (locales.success) {
+  log('✓', 'green');
+  results.passed.push('Locales');
+} else {
+  log('✗', 'red');
+  results.failed.push('Locales');
+}
+
 // Summary
 console.log();
 if (results.failed.length === 0) {
@@ -71,5 +82,6 @@ if (results.failed.length === 0) {
   log(`❌ ${results.failed.length} check(s) failed: ${results.failed.join(', ')}`, 'red');
   if (results.failed.includes('ESLint')) log('  Fix: bun run lint:fix', 'yellow');
   if (results.failed.includes('Prettier')) log('  Fix: bun run format', 'yellow');
+  if (results.failed.includes('Locales')) log('  Fix: add missing keys to src/i18n/locales/*.json', 'yellow');
   process.exit(1);
 }

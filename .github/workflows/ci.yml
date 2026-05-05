@@ -58,6 +58,9 @@ jobs:
       - name: TypeScript
         run: bun run type-check
 
+      - name: Validate locales
+        run: bun run validate:locales
+
       - name: Clippy
         working-directory: src-tauri
         run: cargo clippy --all-targets -- -D warnings

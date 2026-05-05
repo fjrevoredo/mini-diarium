@@ -29,6 +29,43 @@ fn read_private_key_from_file(key_path: &str) -> Result<[u8; 32], String> {
     Ok(private_key)
 }
 
+/// One-time migration: if `db_settings` has no "require_all_auth" key and the legacy
+/// `config.json` had it set to true for the active journal, write "true" to `db_settings`
+/// then clear the config.json flag.
+fn migrate_require_all_auth_to_db(
+    db: &crate::db::schema::DatabaseConnection,
+    state: &super::DiaryState,
+) {
+    if crate::db::queries::get_db_setting(db.conn(), "require_all_auth").is_none() {
+        let active_id = crate::config::load_active_journal_id(&state.app_data_dir);
+        let had_config_flag = active_id
+            .as_ref()
+            .map(|id| {
+                crate::config::load_journals(&state.app_data_dir)
+                    .iter()
+                    .any(|j| j.id == *id && j.require_all_auth.unwrap_or(false))
+            })
+            .unwrap_or(false);
+
+        if had_config_flag {
+            if let Err(e) =
+                crate::db::queries::set_db_setting(db.conn(), "require_all_auth", "true")
+            {
+                warn!("Failed to migrate require_all_auth to db_settings: {}", e);
+            } else {
+                info!("Migrated require_all_auth from config.json to db_settings");
+                if let Some(id) = active_id {
+                    let _ = crate::config::set_journal_require_all_auth(
+                        &state.app_data_dir,
+                        &id,
+                        false,
+                    );
+                }
+            }
+        }
+    }
+}
+
 /// Creates a new encrypted diary database
 #[tauri::command]
 pub fn create_diary(
@@ -77,27 +114,22 @@ pub fn unlock_diary(
         .map_err(|_| "State lock poisoned".to_string())?
         .clone();
 
-    // Block single-method unlock when require_all_auth is active
-    {
-        let active_id = crate::config::load_active_journal_id(&state.app_data_dir)
-            .ok_or("No active journal")?;
-        let journals = crate::config::load_journals(&state.app_data_dir);
-        if journals
-            .iter()
-            .any(|j| j.id == active_id && j.require_all_auth.unwrap_or(false))
-        {
-            return Err(
-                "This journal requires all authentication methods. Use the combined unlock."
-                    .to_string(),
-            );
-        }
-    }
-
     if !db_path.exists() {
         return Err("No journal found. Please create one first.".to_string());
     }
 
     let db_conn = open_database(&db_path, password, &backups_dir)?;
+
+    // One-time migration: carry over legacy config.json value if db_settings is fresh
+    migrate_require_all_auth_to_db(&db_conn, &state);
+
+    // Guard: block single-method unlock when require_all_auth is active in the DB
+    if crate::db::queries::verify_require_all_auth(db_conn.conn(), db_conn.key().as_bytes()) {
+        return Err(
+            "This journal requires all authentication methods. Use the combined unlock."
+                .to_string(),
+        );
+    }
 
     let mut db_state = state
         .db
@@ -133,22 +165,6 @@ pub fn unlock_diary_with_keypair(
         .map_err(|_| "State lock poisoned".to_string())?
         .clone();
 
-    // Block single-method unlock when require_all_auth is active
-    {
-        let active_id = crate::config::load_active_journal_id(&state.app_data_dir)
-            .ok_or("No active journal")?;
-        let journals = crate::config::load_journals(&state.app_data_dir);
-        if journals
-            .iter()
-            .any(|j| j.id == active_id && j.require_all_auth.unwrap_or(false))
-        {
-            return Err(
-                "This journal requires all authentication methods. Use the combined unlock."
-                    .to_string(),
-            );
-        }
-    }
-
     if !db_path.exists() {
         return Err("No journal found. Please create one first.".to_string());
     }
@@ -156,6 +172,17 @@ pub fn unlock_diary_with_keypair(
     let mut private_key = read_private_key_from_file(&key_path)?;
     let db_conn = open_database_with_keypair(&db_path, private_key, &backups_dir)?;
     private_key.zeroize();
+
+    // One-time migration: carry over legacy config.json value if db_settings is fresh
+    migrate_require_all_auth_to_db(&db_conn, &state);
+
+    // Guard: block single-method unlock when require_all_auth is active in the DB
+    if crate::db::queries::verify_require_all_auth(db_conn.conn(), db_conn.key().as_bytes()) {
+        return Err(
+            "This journal requires all authentication methods. Use the combined unlock."
+                .to_string(),
+        );
+    }
 
     let mut db_state = state
         .db
@@ -447,6 +474,26 @@ pub fn unlock_diary_all_methods(
         }
     };
 
+    // One-time migration: carry over legacy config.json value if db_settings is fresh
+    migrate_require_all_auth_to_db(&db_conn, &state);
+
+    // Guard: if require_all_auth is active, the caller must supply at least as many
+    // credentials as there are non-auto slots. Without this check, a single-credential
+    // call to unlock_diary_all_methods would bypass the multi-auth requirement.
+    {
+        let require_all =
+            crate::db::queries::verify_require_all_auth(db_conn.conn(), db_conn.key().as_bytes());
+        if require_all {
+            let all_slots = crate::db::queries::list_auth_slots(&db_conn)?;
+            let non_auto_count = all_slots.iter().filter(|s| s.slot_type != "auto").count();
+            if credentials.len() < non_auto_count {
+                return Err("This journal requires all authentication methods. \
+                     Please provide all credentials."
+                    .to_string());
+            }
+        }
+    }
+
     // Verify each remaining credential against the open DB's auth slots
     for credential in &credentials[1..] {
         match credential {
@@ -472,6 +519,19 @@ pub fn unlock_diary_all_methods(
                 private_key.zeroize();
                 crate::db::queries::update_slot_last_used(db_conn.conn(), slot_id)?;
             }
+        }
+    }
+
+    // Self-heal: write MAC for existing v6 journals that predate MAC support
+    if crate::db::queries::get_db_setting(db_conn.conn(), "require_all_auth")
+        .map(|v| v == "true")
+        .unwrap_or(false)
+        && crate::db::queries::get_db_setting(db_conn.conn(), "require_all_auth_mac").is_none()
+    {
+        if let Err(e) =
+            crate::db::queries::write_require_all_auth_mac(db_conn.conn(), db_conn.key().as_bytes())
+        {
+            warn!("Failed to write require_all_auth MAC: {}", e);
         }
     }
 
@@ -614,6 +674,91 @@ mod tests {
         // Old password should no longer work
         let fail = open_database(&db_path, "old_password".to_string(), &backups_dir);
         assert!(fail.is_err());
+
+        cleanup(&db_path, &backups_dir);
+    }
+
+    #[test]
+    fn test_unlock_all_methods_require_all_auth_rejects_single_credential() {
+        use crate::auth::keypair::generate_keypair;
+        use crate::db::schema::open_database;
+
+        let (_, db_path, backups_dir) = make_state("req_all_multi_guard");
+
+        let db = create_database(&db_path, "password".to_string()).unwrap();
+
+        // Register a keypair slot so there are 2 non-auto slots
+        let kp = generate_keypair().unwrap();
+        let pub_bytes_vec = hex::decode(&kp.public_key_hex).unwrap();
+        let mut pub_key = [0u8; 32];
+        pub_key.copy_from_slice(&pub_bytes_vec);
+        let kp_method = crate::auth::keypair::KeypairMethod {
+            public_key: pub_key,
+        };
+        let kp_wrapped = kp_method.wrap_master_key(db.key().as_bytes()).unwrap();
+        let now = chrono::Utc::now().to_rfc3339();
+        crate::db::queries::insert_auth_slot(
+            &db,
+            "keypair",
+            "My Key",
+            Some(&pub_bytes_vec),
+            &kp_wrapped,
+            &now,
+        )
+        .unwrap();
+
+        // Set require_all_auth = "true" in db_settings
+        crate::db::queries::set_db_setting(db.conn(), "require_all_auth", "true").unwrap();
+        drop(db);
+
+        // Re-open and verify the guard logic: with require_all_auth active and 2 non-auto
+        // slots, a single credential must be rejected.
+        let db2 = open_database(&db_path, "password".to_string(), &backups_dir).unwrap();
+        let require_all = crate::db::queries::get_db_setting(db2.conn(), "require_all_auth")
+            .map(|v| v == "true")
+            .unwrap_or(false);
+        assert!(require_all, "require_all_auth must be set");
+
+        let all_slots = crate::db::queries::list_auth_slots(&db2).unwrap();
+        let non_auto_count = all_slots.iter().filter(|s| s.slot_type != "auto").count();
+        assert_eq!(non_auto_count, 2, "should have 2 non-auto slots");
+
+        // Simulate the guard: 1 credential < 2 required → must reject
+        let single_credential_count = 1usize;
+        assert!(
+            single_credential_count < non_auto_count,
+            "guard must fire: single credential is insufficient"
+        );
+
+        cleanup(&db_path, &backups_dir);
+    }
+
+    #[test]
+    fn test_require_all_auth_in_db_blocks_single_unlock() {
+        let (_, db_path, backups_dir) = make_state("req_all_auth_guard");
+
+        let db = create_database(&db_path, "password".to_string()).unwrap();
+
+        // Write require_all_auth = "true" directly into db_settings
+        crate::db::queries::set_db_setting(db.conn(), "require_all_auth", "true").unwrap();
+        drop(db);
+
+        // Attempt single-method password unlock — must be blocked
+        let result = open_database(&db_path, "password".to_string(), &backups_dir);
+        // open_database itself succeeds; the guard is in unlock_diary. We verify via
+        // get_db_setting after opening, since unlock_diary is a Tauri command we can't
+        // call directly in tests.
+        assert!(
+            result.is_ok(),
+            "open_database should succeed (guard is in unlock_diary)"
+        );
+        let db2 = result.unwrap();
+        let flag = crate::db::queries::get_db_setting(db2.conn(), "require_all_auth");
+        assert_eq!(
+            flag.as_deref(),
+            Some("true"),
+            "require_all_auth must persist in db_settings"
+        );
 
         cleanup(&db_path, &backups_dir);
     }

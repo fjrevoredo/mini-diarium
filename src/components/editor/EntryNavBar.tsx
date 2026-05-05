@@ -1,4 +1,4 @@
-import { Show } from 'solid-js';
+import { For, Show } from 'solid-js';
 import { useI18n } from '../../i18n';
 
 interface EntryNavBarProps {
@@ -6,6 +6,7 @@ interface EntryNavBarProps {
   index: number;
   onPrev: () => void;
   onNext: () => void;
+  onGoTo?: (index: number) => void;
   onAdd: () => void;
   addDisabled?: boolean;
   addTitle?: string;
@@ -33,9 +34,19 @@ export function EntryNavBar(props: EntryNavBarProps) {
           >
             ←
           </button>
-          <span data-testid="entry-counter" class="text-tertiary">
-            {props.index + 1} / {props.total}
-          </span>
+          <For each={[...Array(props.total).keys()]}>
+            {(i) => (
+              <button
+                data-testid={`entry-number-button-${i + 1}`}
+                aria-current={i === props.index ? 'true' : undefined}
+                aria-label={t('editor.goToEntry', { number: i + 1 })}
+                onClick={() => props.onGoTo?.(i)}
+                class={`px-1.5 py-0.5 rounded hover:bg-hover ${i === props.index ? 'font-bold text-primary' : 'text-tertiary'}`}
+              >
+                {i + 1}
+              </button>
+            )}
+          </For>
           <button
             data-testid="entry-next-button"
             onClick={() => props.onNext()}
@@ -47,7 +58,7 @@ export function EntryNavBar(props: EntryNavBarProps) {
           </button>
         </div>
       </Show>
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-2 ml-auto">
         <Show when={props.total > 1 && props.onDelete}>
           <button
             data-testid="entry-delete-button"

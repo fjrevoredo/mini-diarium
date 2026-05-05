@@ -45,13 +45,20 @@ describe('PasswordPrompt component', () => {
     mocks.unlockJournal.mockResolvedValue(undefined);
     mocks.unlockWithKeypair.mockResolvedValue(undefined);
     mocks.unlockAllMethods.mockResolvedValue(undefined);
-    mocks.peekAuthSlotTypes.mockResolvedValue([]);
+    mocks.peekAuthSlotTypes.mockResolvedValue({ slots: [], require_all_auth: false });
   });
 
   function setMultiAuthJournal() {
     mocks.journals.mockReturnValue([
-      { id: 'j1', name: 'My Journal', path: '/tmp', require_all_auth: true, auto_protected: false },
+      { id: 'j1', name: 'My Journal', path: '/tmp', auto_protected: false },
     ]);
+    mocks.peekAuthSlotTypes.mockResolvedValue({
+      slots: [
+        { id: 1, slot_type: 'password', label: 'Password' },
+        { id: 2, slot_type: 'keypair', label: 'My Key' },
+      ],
+      require_all_auth: true,
+    });
   }
 
   it('renders password input with correct testid and type', () => {
@@ -102,10 +109,7 @@ describe('PasswordPrompt component', () => {
 
   it('multi-auth: renders password and keypair inputs for mixed slots', async () => {
     setMultiAuthJournal();
-    mocks.peekAuthSlotTypes.mockResolvedValue([
-      { id: 1, slot_type: 'password', label: 'Password' },
-      { id: 2, slot_type: 'keypair', label: 'My Key' },
-    ]);
+    // setMultiAuthJournal already configures the mock with password + keypair slots
     renderWithI18n(() => <PasswordPrompt />);
     await vi.waitFor(() => {
       expect(screen.getByTestId('password-unlock-input')).toBeInTheDocument();
@@ -114,11 +118,16 @@ describe('PasswordPrompt component', () => {
   });
 
   it('multi-auth: renders only keypair pickers when no password slot exists', async () => {
-    setMultiAuthJournal();
-    mocks.peekAuthSlotTypes.mockResolvedValue([
-      { id: 2, slot_type: 'keypair', label: 'Key A' },
-      { id: 3, slot_type: 'keypair', label: 'Key B' },
+    mocks.journals.mockReturnValue([
+      { id: 'j1', name: 'My Journal', path: '/tmp', auto_protected: false },
     ]);
+    mocks.peekAuthSlotTypes.mockResolvedValue({
+      slots: [
+        { id: 2, slot_type: 'keypair', label: 'Key A' },
+        { id: 3, slot_type: 'keypair', label: 'Key B' },
+      ],
+      require_all_auth: true,
+    });
     renderWithI18n(() => <PasswordPrompt />);
     await vi.waitFor(() => {
       expect(screen.queryByTestId('password-unlock-input')).not.toBeInTheDocument();
@@ -128,12 +137,13 @@ describe('PasswordPrompt component', () => {
     });
   });
 
-  it('multi-auth: shows error when peekAuthSlotTypes rejects', async () => {
-    setMultiAuthJournal();
+  it('peek error is shown in the regular form when peekAuthSlotTypes rejects', async () => {
     mocks.peekAuthSlotTypes.mockRejectedValueOnce(new Error('db error'));
     renderWithI18n(() => <PasswordPrompt />);
+    // When peek fails, journalPeek stays null → requiresAllAuth is false →
+    // regular password form renders and shows the raw error message.
     await vi.waitFor(() => {
-      expect(screen.getByText('Failed to load authentication methods.')).toBeInTheDocument();
+      expect(screen.getByText('db error')).toBeInTheDocument();
     });
   });
 });

@@ -14,8 +14,7 @@ TODO entry format:
 
 ## High Priority
 
-- [ ] **`bump-version` scripts don't inject metainfo.xml release entry** — `bump-version.sh` and `bump-version.ps1` both claim to prepend a `<release version="X.Y.Z">` entry to `data/linux/io.github.fjrevoredo.mini-diarium.metainfo.xml` (the comment on line 53 says so), but neither script actually does it; the pre-release checklist catches the omission, but it was manually patched in v0.4.19; fix both scripts so the entry is injected automatically at bump time alongside the other version strings
-
+- [ ] **Implement dependency updates from PRs #113, #114, #115** — merge three Dependabot PRs updating Rust crates (tauri 2.10.3→2.11.0, tauri-plugin-opener 2.5.3→2.5.4, tauri-plugin-dialog 2.7.0→2.7.1, tauri-build 2.5.6→2.6.0), JS prod deps (6 packages), and JS dev deps (10 packages); implementation plan: `docs/dependabot-updates-plan.md`
 ---
 
 ## Medium Priority
@@ -23,7 +22,7 @@ TODO entry format:
 - [ ] **Frontend test coverage** — auth screens (`PasswordPrompt.tsx`, `PasswordCreation.tsx`), Calendar, and all overlays (GoToDateOverlay, PreferencesOverlay, StatsOverlay, ImportOverlay, ExportOverlay) have zero test coverage; add Vitest + @solidjs/testing-library tests for each; use existing pattern from `TitleEditor.test.tsx` and `WordCount.test.tsx`
 - [ ] **Full image drag-and-drop support** — dropping images into the editor should work consistently both from file managers and from other applications (for example browsers, chat apps, or image editors), not only when the drag payload exposes file paths; image drops should embed the image the same way as the toolbar picker and paste flow, while unsupported payloads fail safely without breaking the editor
   - [ ] **First compatibility target: Typora** — validate and support dragging images from Typora into Mini Diarium as the first cross-application drag-and-drop case before widening compatibility to other apps
-- [ ] **`screen_lock.rs` unit tests** — the Windows session-lock hook is untested because it calls Win32 APIs directly; extract `trigger_auto_lock` and test it with a mock `DiaryState`; requires Win32 API mocking strategy.
+- [ ] **`advancedToolbar` per-item configuration** — the advanced formatting toolbar is currently an all-or-nothing toggle (`advancedToolbar: boolean`); replace with a per-item preference so each toolbar action (headings, underline, strikethrough, blockquote, inline code, horizontal rule) can be activated or deactivated individually; add a new "Toolbar items" section in the Writing preferences tab with a checkbox per available action and sensible defaults (all enabled initially); future toolbar additions (e.g. text highlight, alignment, custom insert actions) can be gated by the same mechanism without overcrowding the toolbar by default
 
 ---
 
@@ -37,8 +36,6 @@ TODO entry format:
 ---
 
 ## Low Priority / Future
-- [ ] **Multi-entry number navigation bar** — when multiple entries exist on a date, replace (or augment) the existing prev/next arrows with a `← 1 2 3 →` indicator row where each number is a clickable link that jumps directly to that entry and the current entry's number is visually highlighted (e.g. bold); the arrows should retain their existing behaviour of stepping to the previous/next entry
-- [ ] **Editor font selection** — allow users to select the editor font from a list; investigate sourcing fonts from the OS (system-installed fonts queried at runtime) to avoid bundling additional assets; assess viability and font enumeration API across all distribution methods (Windows installer, macOS DMG, Flatpak sandbox, Linux `.deb`/`.rpm`) before committing to an approach; the selected font should apply to the editor only and be persisted as a preference
 - [ ] **PDF export** — convert journal entries to PDF (A4); likely via Tauri webview printing
 - [ ] **Text input extension point** — create a plugin/extension interface for alternative entry methods so official and user plugins can provide text input flows such as dictation, LLM-assisted drafting, and other future capture modes; define capability boundaries, permission model, and how plugins hand content into the editor without weakening the app’s privacy guarantees
 - [ ] **Statistics extension point** — add a plugin/extension interface for writing statistics so official and user plugins can calculate custom metrics and surface them in the statistics UI; define the data contract, execution/sandbox constraints, and how custom statistics are registered and rendered without weakening the app’s privacy-first local-only model

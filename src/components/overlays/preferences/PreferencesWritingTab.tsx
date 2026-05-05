@@ -1,9 +1,10 @@
-import { createSignal, createMemo, For, onCleanup, onMount, createEffect } from 'solid-js';
+import { createSignal, createMemo, For, onCleanup, onMount, createResource } from 'solid-js';
 import { useI18n } from '../../../i18n';
 import { preferences, setPreferences } from '../../../state/preferences';
 import { usePreferencesShell, type TabProps } from './shared';
+import { listBundledFonts } from '../../../lib/tauri';
 
-export default function PreferencesWritingTab(props: TabProps) {
+export default function PreferencesWritingTab(_props: TabProps) {
   const t = useI18n();
   const shell = usePreferencesShell();
 
@@ -32,23 +33,14 @@ export default function PreferencesWritingTab(props: TabProps) {
     preferences().advancedToolbar,
   );
   const [localEditorFontSize, setLocalEditorFontSize] = createSignal(preferences().editorFontSize);
+  const [localEditorFontFamily, setLocalEditorFontFamily] = createSignal(
+    preferences().editorFontFamily ?? '',
+  );
   const [localShowEntryTimestamps, setLocalShowEntryTimestamps] = createSignal(
     preferences().showEntryTimestamps,
   );
 
-  createEffect(() => {
-    if (props.isOpen()) {
-      setLocalAllowFutureEntries(preferences().allowFutureEntries);
-      setLocalFirstDayOfWeek(
-        preferences().firstDayOfWeek === null ? 'null' : String(preferences().firstDayOfWeek),
-      );
-      setLocalHideTitles(preferences().hideTitles);
-      setLocalEnableSpellcheck(preferences().enableSpellcheck);
-      setLocalAdvancedToolbar(preferences().advancedToolbar);
-      setLocalEditorFontSize(preferences().editorFontSize);
-      setLocalShowEntryTimestamps(preferences().showEntryTimestamps);
-    }
-  });
+  const [bundledFonts] = createResource(listBundledFonts);
 
   onMount(() => {
     const unregister = shell.registerCommit(
@@ -63,6 +55,7 @@ export default function PreferencesWritingTab(props: TabProps) {
           enableSpellcheck: localEnableSpellcheck(),
           advancedToolbar: localAdvancedToolbar(),
           editorFontSize: Math.min(24, Math.max(12, Number(localEditorFontSize()))),
+          editorFontFamily: localEditorFontFamily() || null,
           showEntryTimestamps: localShowEntryTimestamps(),
         });
       },
@@ -214,6 +207,34 @@ export default function PreferencesWritingTab(props: TabProps) {
           <span class="text-xs text-tertiary">{t('prefs.writing.fontSizeMin')}</span>
           <span class="text-xs text-tertiary">{t('prefs.writing.fontSizeMax')}</span>
         </div>
+      </div>
+
+      {/* Editor Font Family */}
+      <div>
+        <label for="editor-font-family" class="block text-sm font-medium text-secondary mb-2">
+          {t('prefs.writing.fontFamilyLabel')}
+        </label>
+        <select
+          id="editor-font-family"
+          data-testid="editor-font-family-select"
+          onChange={(e) => setLocalEditorFontFamily(e.currentTarget.value)}
+          disabled={bundledFonts.loading}
+          class="w-full px-3 py-2 border border-primary bg-primary text-primary rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        >
+          <option value="" selected={localEditorFontFamily() === ''}>
+            {t('prefs.writing.fontFamilySystemDefault')}
+          </option>
+          <For each={bundledFonts() ?? []}>
+            {(font) => (
+              <option value={font} selected={localEditorFontFamily() === font}>
+                {font}
+              </option>
+            )}
+          </For>
+        </select>
+        <p class="mt-1 text-xs text-tertiary leading-relaxed">
+          {t('prefs.writing.fontFamilyHint')}
+        </p>
       </div>
     </div>
   );

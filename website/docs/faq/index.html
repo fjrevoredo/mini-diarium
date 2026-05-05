@@ -34,7 +34,7 @@
   <link rel="icon" href="/favicon-32x32.png" type="image/png" sizes="32x32" />
   <link rel="icon" href="/favicon-128x128.png" type="image/png" sizes="128x128" />
   <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
-  <link rel="stylesheet" href="/css/style.15f7be9f.css" />
+  <link rel="stylesheet" href="/css/style.css" />
   <style>
     .docs-layout {
       display: grid;
@@ -384,6 +384,7 @@
         <h2 id="i-used-mini-diary-before-can-i-migrate">I used Mini Diary before. Can I migrate?</h2><p>Yes. Export your journal from Mini Diary as JSON, then import it in Mini Diarium from <strong>Journal → Import...</strong> using the Mini Diary JSON format. All entries are imported with their original dates.</p>
         <h2 id="how-does-the-encryption-work">How does the encryption work?</h2><p>Mini Diarium encrypts each journal entry using AES-256-GCM with a random master key. The master key is never stored in plaintext — it is wrapped (encrypted) by a key derived from your password using Argon2id, and only the wrapped version is saved to disk. When you unlock, your password re-derives the wrapping key, which decrypts the master key in memory. The master key is held only in RAM and discarded when you lock.</p>
         <h2 id="can-i-use-multiple-passwords-or-unlock-methods">Can I use multiple passwords or unlock methods?</h2><p>Yes. Mini Diarium supports multiple authentication slots. You can register a password and one or more key files. Each method independently wraps the same master key. You can add or remove methods in <strong>Preferences → Authentication Methods</strong> without re-encrypting your entries. At least one method must remain active.</p>
+        <p>For stronger security, you can enable <strong>Require All Authentication Methods</strong> in <strong>Preferences → Security</strong>. When active, every registered method must be provided at unlock — for example, both your password AND your key file. This prevents access even if one credential is compromised.</p>
         <h2 id="what-is-a-key-file">What is a key file?</h2><p>A key file is a private key stored as a file on disk (or a USB drive, or a password manager). It plays the same role as a password but is a file you present instead of something you type. Key files use X25519 ECDH internally. Generate one from <strong>Preferences → Authentication Methods → Add Key File</strong>, then keep the <code>.key</code> file somewhere safe.</p>
         <h2 id="what-happens-if-i-delete-or-lose-my-key-file">What happens if I delete or lose my key file?</h2><p>If you have another authentication method (a password, or another key file) still registered, you can still unlock your journal. If the key file was your only method, the journal is permanently inaccessible. Always register at least two authentication methods if you rely on key files.</p>
         <h2 id="where-can-i-report-a-security-issue">Where can I report a security issue?</h2><p>See the <a href="https://github.com/fjrevoredo/mini-diarium/blob/master/SECURITY.md" target="_blank" rel="noopener noreferrer">Security Policy</a> in the repository. Do not open a public GitHub issue for security vulnerabilities.</p>
@@ -428,6 +429,7 @@
       <div class="footer-right">
         <a href="https://github.com/fjrevoredo/mini-diarium" target="_blank" rel="noopener noreferrer">GitHub</a>
         <a href="https://x.com/MiniDiarium" target="_blank" rel="noopener noreferrer">X</a>
+        <a href="/privacy/">Privacy</a>
         <a href="https://github.com/fjrevoredo/mini-diarium/blob/master/SECURITY.md" target="_blank" rel="noopener noreferrer">Security</a>
         <a href="https://github.com/fjrevoredo/mini-diarium/blob/master/CHANGELOG.md" target="_blank" rel="noopener noreferrer">Changelog</a>
         <a href="/blog/feed.xml">RSS</a>
@@ -439,6 +441,6 @@
     </div>
   </div>
 </footer>
-<script src="/js/main.c622f826.js"></script>
+<script src="/js/main.js"></script>
 </body>
 </html>

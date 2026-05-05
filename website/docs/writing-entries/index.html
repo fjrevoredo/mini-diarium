@@ -34,7 +34,7 @@
   <link rel="icon" href="/favicon-32x32.png" type="image/png" sizes="32x32" />
   <link rel="icon" href="/favicon-128x128.png" type="image/png" sizes="128x128" />
   <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
-  <link rel="stylesheet" href="/css/style.15f7be9f.css" />
+  <link rel="stylesheet" href="/css/style.css" />
   <style>
     .docs-layout {
       display: grid;
@@ -234,7 +234,7 @@
       "@id": "https://mini-diarium.com/docs/writing-entries/#article",
       "headline": "Writing Entries",
       "description": "How to create, edit, format, and delete journal entries using the rich text editor.",
-      "dateModified": "2026-04-26T00:00:00Z",
+      "dateModified": "2026-05-06T00:00:00Z",
       "keywords": "editor, formatting, entries, writing",
       "publisher": {
         "@type": "Organization",
@@ -393,7 +393,7 @@
         <h2 id="multiple-entries-per-day">Multiple Entries Per Day</h2><p>Each date can contain multiple separate entries. This is useful for writing at different times of day or keeping different threads of thought separate.</p>
         <ul>
         <li>When a date has more than one entry, an entry navigation bar appears above the editor.</li>
-        <li>Use <code>←</code> and <code>→</code> to move between entries for the selected date.</li>
+        <li>Use <code>←</code> and <code>→</code> to step between entries, or click the <strong>numbered buttons</strong> (<code>1 2 3</code>) to jump directly to a specific entry. The active entry is shown in bold.</li>
         <li>Use <code>+</code> to create a new blank entry on the same date.</li>
         <li>Use <code>−</code> to delete the current entry.</li>
         <li>If a day has only one entry, the navigation bar stays hidden.</li>
@@ -409,9 +409,11 @@
         <p>Images are embedded directly into the entry as base64 data and are stored encrypted alongside your text. Supported formats are JPG, PNG, GIF, WebP, and BMP. Images are automatically resized to a maximum of 1200×1200 pixels before embedding.</p>
         <h2 id="right-to-left-and-bidirectional-text">Right-to-Left and Bidirectional Text</h2><p>Mini Diarium supports right-to-left (RTL) writing in Arabic, Hebrew, Syriac, and other RTL scripts. Direction is handled per block — each paragraph and heading carries its own <code>dir</code> attribute — so you can freely mix RTL and LTR content in the same entry.</p>
         <p><strong>Auto-detection</strong>: as you type, the editor reads the first strongly-directional character in each paragraph or heading and sets the direction automatically. Arabic and Hebrew script trigger <code>dir=&quot;rtl&quot;</code>; Latin script triggers <code>dir=&quot;ltr&quot;</code>. Once a block&#39;s direction is set it is locked and will not change if you later add neutral characters (numbers, punctuation, emoji) to the same block.</p>
-        <p><strong>Manual override</strong>: press <code>Ctrl+Shift+D</code> (or <code>Cmd+Shift+D</code> on macOS) to toggle the current block between RTL and LTR. This is useful for paragraphs that start with neutral characters such as numbers or quotation marks that the auto-detector cannot classify.</p>
+        <p><strong>Manual override</strong>: press <code>Ctrl+Shift+D</code> (or <code>Cmd+Shift+D</code> on macOS) to toggle the current block between RTL and LTR, or use the <strong>¶R / ¶L toggle button</strong> (pilcrow icon with directional arrow) in the advanced formatting toolbar. This is useful for paragraphs that start with neutral characters such as numbers or quotation marks that the auto-detector cannot classify. The button icon shows the current direction and the direction you will switch to when clicked.</p>
         <p><strong>Alignment toolbar</strong>: when the cursor is in an RTL paragraph, the alignment toolbar reflects the browser&#39;s actual rendering and shows <strong>Right</strong> as the active alignment (not Left). Clicking an alignment button writes an explicit <code>text-align</code> override as normal.</p>
         <p><strong>Persistence</strong>: the <code>dir</code> attribute is stored in the encrypted HTML content of each entry, so direction is preserved across save, export, and re-open cycles.</p>
+        <h2 id="inserting-the-current-time">Inserting the Current Time</h2><p>The advanced toolbar includes a <strong>clock button</strong> that inserts the current time at the cursor position. Clicking the button opens a popup where you can choose between <strong>12-hour</strong> and <strong>24-hour</strong> format and select hours:minutes or hours:minutes:seconds precision. Both selections are remembered across sessions.</p>
+        <h2 id="editor-font">Editor Font</h2><p>You can change the font used in the editor body via <strong>Preferences → Writing → Editor font</strong>. Choose from five bundled open-source font families: Noto Sans, Source Sans 3, Noto Serif, JetBrains Mono, and Fira Mono. Fonts are loaded on demand and work fully offline — no network requests, no OS-level font enumeration.</p>
         <h2 id="importing-a-markdown-file">Importing a Markdown File</h2><p>The advanced toolbar includes an <strong>Import Markdown</strong> button. This lets you import a <code>.md</code> file from disk into the active entry. If the entry is empty, the imported content replaces it. If the entry already has content, the Markdown is appended after a horizontal rule separator. File size is capped at 1 MB.</p>
         
         
@@ -430,6 +432,8 @@
           <li class="docs-toc-h2"><a href="#word-count">Word Count</a></li>
           <li class="docs-toc-h2"><a href="#inserting-images">Inserting Images</a></li>
           <li class="docs-toc-h2"><a href="#right-to-left-and-bidirectional-text">Right-to-Left and Bidirectional Text</a></li>
+          <li class="docs-toc-h2"><a href="#inserting-the-current-time">Inserting the Current Time</a></li>
+          <li class="docs-toc-h2"><a href="#editor-font">Editor Font</a></li>
           <li class="docs-toc-h2"><a href="#importing-a-markdown-file">Importing a Markdown File</a></li>
         </ul>
       </aside>
@@ -452,6 +456,7 @@
       <div class="footer-right">
         <a href="https://github.com/fjrevoredo/mini-diarium" target="_blank" rel="noopener noreferrer">GitHub</a>
         <a href="https://x.com/MiniDiarium" target="_blank" rel="noopener noreferrer">X</a>
+        <a href="/privacy/">Privacy</a>
         <a href="https://github.com/fjrevoredo/mini-diarium/blob/master/SECURITY.md" target="_blank" rel="noopener noreferrer">Security</a>
         <a href="https://github.com/fjrevoredo/mini-diarium/blob/master/CHANGELOG.md" target="_blank" rel="noopener noreferrer">Changelog</a>
         <a href="/blog/feed.xml">RSS</a>
@@ -463,6 +468,6 @@
     </div>
   </div>
 </footer>
-<script src="/js/main.c622f826.js"></script>
+<script src="/js/main.js"></script>
 </body>
 </html>

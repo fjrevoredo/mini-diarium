@@ -103,7 +103,7 @@ Eight signal-based state modules in `src/state/`:
 | `notifications.ts` | `allNotifications: NotificationEntry[]`, `readIds: Set<string>`, `isLoading` | `loadNotifications()`, `markAsRead(id)`, `markAllRead()`, `isRead(id)`, `unreadCount()`, `hasUnread()` |
 | `preferences.ts` | `preferences: Preferences` | `setPreferences(Partial<Preferences>)`, `resetPreferences()` |
 
-`Preferences` fields: `allowFutureEntries` (bool), `firstDayOfWeek` (number|null), `hideTitles` (bool), `enableSpellcheck` (bool), `escAction` (`'none'|'quit'`), `autoLockEnabled` (bool), `autoLockTimeout` (number, seconds), `advancedToolbar` (bool), `editorFontSize` (number, px), `showEntryTimestamps` (bool). Stored in `localStorage`.
+`Preferences` fields: `allowFutureEntries` (bool), `firstDayOfWeek` (number|null), `hideTitles` (bool), `enableSpellcheck` (bool), `escAction` (`'none'|'quit'`), `autoLockEnabled` (bool), `autoLockTimeout` (number, seconds), `advancedToolbar` (bool), `editorFontSize` (number, px), `editorFontFamily` (string|null), `showEntryTimestamps` (bool), `timestampFormat` (`'12h'|'24h'`), `timestampPrecision` (`'hm'|'hms'`), `language` (string). Stored in `localStorage`.
 
 ## i18n / Translations
 
@@ -160,7 +160,7 @@ See `docs/TRANSLATIONS.md` for the community translator guide.
 - **Wrap async in components** — use `onMount` or `createResource`, never top-level `await`.
 - **Event handlers** — use `on:click` (native) or `onClick` (SolidJS delegated). Wrap async handlers: `onClick={() => handleAsync()}`.
 - **Conditional rendering** — use `<Show when={...}>`, not JS ternaries.
-- **Lists** — use `<For each={...}>`, never `.map()`.
+- **Lists** — use `<For each={...}>`, never `.map()`. The `<For>` callback receives the unwrapped item directly for primitive arrays: `(item) => ...`, not `(item) => item()`. Only store/object entries behave like signals.
 
 ### Error Handling
 
@@ -222,7 +222,9 @@ These are used by E2E tests — **do not remove** from components.
 | `Calendar.tsx` | Each day button | `calendar-day-YYYY-MM-DD` |
 | `EntryNavBar.tsx` | Nav bar container | `entry-nav-bar` |
 | `EntryNavBar.tsx` | Previous entry button (`←`) | `entry-prev-button` |
-| `EntryNavBar.tsx` | Entry position counter | `entry-counter` |
+| `EntryNavBar.tsx` | Entry number button N (1-based) | `entry-number-button-{N}` |
+
+> **Note:** The active entry's number button has `aria-current="true"`.
 | `EntryNavBar.tsx` | Next entry button (`→`) | `entry-next-button` |
 | `EntryNavBar.tsx` | Delete entry button (`−`) | `entry-delete-button` |
 | `EntryNavBar.tsx` | Add entry button (`+`) | `entry-add-button` |

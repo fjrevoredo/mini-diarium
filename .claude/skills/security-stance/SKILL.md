@@ -91,7 +91,7 @@ Compact form of `SECURITY.md:30-43`. This is the "what can I honestly promise?" 
 | `SecretBytes` | `#[derive(ZeroizeOnDrop)]`; Debug shows `SecretBytes([REDACTED; N])` | `src-tauri/src/auth/mod.rs:5-44` | Keys linger in heap; `Debug` would leak bytes |
 | `Key` struct | `#[derive(Zeroize, ZeroizeOnDrop)]`; Debug shows `[REDACTED]` | `src-tauri/src/crypto/cipher.rs:14-22` | Same leak class |
 | Master-key generation | 32 random bytes from `aes_gcm::aead::OsRng.fill_bytes`, raw bytes zeroized after wrap | `src-tauri/src/db/schema.rs:40-66` | Predictable / reused master key would be catastrophic |
-| Schema version | `pub const SCHEMA_VERSION: i32 = 5;` | `src-tauri/src/db/schema.rs:29` | Bump on every breaking schema change |
+| Schema version | `pub const SCHEMA_VERSION: i32 = 6;` | `src-tauri/src/db/schema.rs:29` | Bump on every breaking schema change |
 | Max import file size | 100 MB (`MAX_IMPORT_FILE_SIZE`) | `src-tauri/src/commands/import.rs:5` | Too high → memory DoS; too low → legitimate imports fail |
 | Max text file read | 1 MiB (`MAX_TEXT_FILE_BYTES`) | `src-tauri/src/commands/files.rs:19` | Same DoS class |
 | Max backups retained | 30 (`MAX_BACKUPS`) | `src-tauri/src/backup.rs:6` | Affects rotation; not a crypto invariant but a disk-use guarantee |
@@ -188,8 +188,8 @@ For each match, confirm the surrounding `catch` block routes through `mapTauriEr
 
 | Surface | Encrypted? | Allowed contents | Forbidden contents |
 |---|---|---|---|
-| `diary.db` | YES — per-field AES-256-GCM | Encrypted entry title/body, `auth_slots` (wrapped master key copies), schema metadata | Plaintext entry content; FTS index (removed in schema v4); plaintext title/body |
-| `config.json` | NO — plaintext by design | Journal metadata (id, name, path), optional `auto_key` hex (32-byte random wrapping key), `require_all_auth` flag, `active_journal_id` | Entry content; passwords; master key (plaintext); Argon2 PHC hashes; X25519 private keys; relative paths in journal entries (silently rejected — path-traversal guard) |
+| `diary.db` | YES — per-field AES-256-GCM | Encrypted entry title/body, `auth_slots` (wrapped master key copies), `db_settings` (schema v6: `require_all_auth` + HKDF-SHA256 MAC), schema metadata | Plaintext entry content; FTS index (removed in schema v4); plaintext title/body |
+| `config.json` | NO — plaintext by design | Journal metadata (id, name, path), optional `auto_key` hex (32-byte random wrapping key), `active_journal_id` | Entry content; passwords; master key (plaintext); Argon2 PHC hashes; X25519 private keys; relative paths in journal entries (silently rejected — path-traversal guard); `require_all_auth` flag (moved to `diary.db` `db_settings` table in schema v6) |
 | `backups/` | YES — direct file copies of `diary.db` | Up to 30 timestamped copies (`backup.rs:6`); inherit encryption | Anything not derived from a verbatim `fs::copy` of the live DB |
 | Key files | N/A — owned by user | The X25519 private key (hex). Mode `0o600` on Unix; NTFS ACLs on Windows. App **never** keeps a copy. | App-side caching of the file or its contents. There is no "reveal key" UI — do not add one. |
 | Exports (JSON / Markdown) | NO — **intentionally plaintext** | The portability contract from Principle 4 (`PHILOSOPHY.md:67-88`). UI must warn before write. | Encrypted-export formats. Don't add one without an explicit design review — conflicts with Easy In, Easy Out. |
@@ -385,7 +385,7 @@ Security-critical changes to the listed surfaces must keep these test suites gre
 | Password hash + verify | `cd src-tauri && cargo test crypto::password` | Argon2id parameter shape (`m=65536`, `t=3`, `p=4` literal in PHC string), hash determinism for same salt, salt uniqueness, unicode + empty-string passwords, wrong-password rejection (`crypto/password.rs:108-232`). |
 | Auth slots round-trip | `cd src-tauri && cargo test auth` | Wrap/unwrap of master key for password, keypair, and auto-key methods; last-slot guard; `change_password` re-wraps without entry re-encryption. |
 | File-read allowlists | `cd src-tauri && cargo test files` | `read_file_bytes` rejects non-image extensions; `read_text_file` rejects non-`.md` and oversized files (`commands/files.rs:44-110`). |
-| Schema + migration | `cd src-tauri && cargo test db::schema` | Schema creation; v3→v4→v5 migrations idempotent. |
+| Schema + migration | `cd src-tauri && cargo test db::schema` | Schema creation; v3→v4→v5→v6 migrations idempotent. |
 | Frontend error mapping | `bun run test:run -- errors` | `mapTauriError` strips paths and OS codes; passes through user-friendly `"file is too large"` (see `errors.ts:30-32`). |
 | E2E unlock + lock + re-unlock | `bun run test:e2e:local` | Critical user flow: create journal, lock, unlock again. End-to-end against the real binary. |
 
