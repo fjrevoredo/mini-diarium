@@ -1,0 +1,13 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "command": {
+    "self-check-plan": {
+      "description": "Self-check the current plan",
+      "template": "Ask all the remaining clarifying questions (if any) regarding the plan. Then do a full self-check of the plan to make sure it is correct, complete and accurate. The plan should be ready to be implemented.",
+    },
+    "self-check-implementation": {
+      "description": "Self-check the implementation",
+      "template": "Do a full self-check of the implementation to make sure it is correct, complete and accurate.",
+    },
+  },
+}

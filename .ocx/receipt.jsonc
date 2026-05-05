@@ -1,0 +1,82 @@
+{
+  "version": 1,
+  "root": "D:\\Repos\\mini-diarium",
+  "installed": {
+    "https://registry.kdco.dev::kdco/kdco-primitives@sha256:688d2d5f536e8db0b44fdff5d588000a5a9ed7028ec715828cc458d27f34dd8d": {
+      "registryUrl": "https://registry.kdco.dev",
+      "registryName": "kdco",
+      "name": "kdco-primitives",
+      "revision": "sha256:688d2d5f536e8db0b44fdff5d588000a5a9ed7028ec715828cc458d27f34dd8d",
+      "hash": "688d2d5f536e8db0b44fdff5d588000a5a9ed7028ec715828cc458d27f34dd8d",
+      "files": [
+        {
+          "path": ".opencode/plugins/kdco-primitives/get-project-id.ts",
+          "hash": "2bdcb8e839171e8a9ddff36f7b9c28c90fae972cb395cec38f8d3e85cfd66ad9"
+        },
+        {
+          "path": ".opencode/plugins/kdco-primitives/with-timeout.ts",
+          "hash": "3c582e3e89f5d0de8230122ef0fea2066b3ebff3d77579515cef251628439527"
+        },
+        {
+          "path": ".opencode/plugins/kdco-primitives/log-warn.ts",
+          "hash": "7ed7eb195fd4d67cbee8057ae35593b92693e1e5e84012fcf5402a14df071311"
+        },
+        {
+          "path": ".opencode/plugins/kdco-primitives/types.ts",
+          "hash": "4471c8d97b16e06906f3446e89e01c4a436130a42e5fa6c31f107e63f3b42666"
+        },
+        {
+          "path": ".opencode/plugins/kdco-primitives/mutex.ts",
+          "hash": "4caacfd38bb4b971c356ed9dbfb4dcc10634a83a39c51e724852325d84be941e"
+        },
+        {
+          "path": ".opencode/plugins/kdco-primitives/shell.ts",
+          "hash": "9941f4f642c10f04795304a7657111b2cd10ec066b08f0e0866ae87de5160669"
+        },
+        {
+          "path": ".opencode/plugins/kdco-primitives/temp.ts",
+          "hash": "b66983f2a747d87fb84dcdaa3ed88e5da2e8e46c8151e98f74e76755148f7e08"
+        },
+        {
+          "path": ".opencode/plugins/kdco-primitives/terminal-detect.ts",
+          "hash": "523435085e8fc31883a6a702e70fd9ba82c5d799026d0f04be890c84dbab6b41"
+        },
+        {
+          "path": ".opencode/plugins/kdco-primitives/index.ts",
+          "hash": "012301f644639e930b30ea09f43b0a3808d8dfed3970c242dd60ab1c530fc5e6"
+        }
+      ],
+      "installedAt": "2026-05-05T16:39:28.363Z"
+    },
+    "https://registry.kdco.dev::kdco/notify@sha256:7bba56d002664668aea3e4ce96d2329baa129d79e9681b60e5d7603546275168": {
+      "registryUrl": "https://registry.kdco.dev",
+      "registryName": "kdco",
+      "name": "notify",
+      "revision": "sha256:7bba56d002664668aea3e4ce96d2329baa129d79e9681b60e5d7603546275168",
+      "hash": "7bba56d002664668aea3e4ce96d2329baa129d79e9681b60e5d7603546275168",
+      "files": [
+        {
+          "path": ".opencode/plugins/notify.ts",
+          "hash": "3e99281cfe3aabd85e93fa1b7485a01cc4560263620b9cb94a46100496c92faf"
+        },
+        {
+          "path": ".opencode/plugins/notify/backend.ts",
+          "hash": "d8398dedaba3a14bd85221df0da4415aba85158a33f16899f3010f8746e9c636"
+        },
+        {
+          "path": ".opencode/plugins/notify/cmux.ts",
+          "hash": "0859873b6cf474bb20bb6180920497cf28a9d260c39f4955b9cb7e3f8c601899"
+        },
+        {
+          "path": ".opencode/plugins/notify/status.ts",
+          "hash": "15135b94e74cbe8c97ed46fd6d6051f1bffaa39986ec58ca1e2887271eb0c671"
+        },
+        {
+          "path": ".opencode/plugins/notify/title.ts",
+          "hash": "2909871433a30ae49aad240068f9d350ebe90333dda799a45d022be6d2fd1559"
+        }
+      ],
+      "installedAt": "2026-05-05T16:39:28.378Z"
+    }
+  }
+}

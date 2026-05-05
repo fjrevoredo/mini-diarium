@@ -1,0 +1,12 @@
+{
+  "name": "opencode-plugins",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@opencode-ai/plugin": "1.14.39"
+  },
+  "devDependencies": {
+    "detect-terminal": "2.0.0",
+    "node-notifier": "10.0.1"
+  }
+}
