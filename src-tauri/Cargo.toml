@@ -21,12 +21,12 @@ path = "src/main.rs"
 bench = false  # entry point only; no bench items — libtest rejects --output-format bencher
 
 [build-dependencies]
-tauri-build = { version = "2", features = [] }
+tauri-build = { version = "2.6.0", features = [] }
 
 [dependencies]
-tauri = { version = "2", features = ["devtools"] }
-tauri-plugin-opener = "2"
-tauri-plugin-dialog = "2"
+tauri = { version = "2.11.0", features = ["devtools"] }
+tauri-plugin-opener = "2.5.4"
+tauri-plugin-dialog = "2.7.1"
 tauri-plugin-window-state = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
