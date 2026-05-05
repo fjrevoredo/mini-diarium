@@ -15,8 +15,6 @@ TODO entry format:
 ## High Priority
 
 - [ ] **Implement dependency updates from PRs #113, #114, #115** — merge three Dependabot PRs updating Rust crates (tauri 2.10.3→2.11.0, tauri-plugin-opener 2.5.3→2.5.4, tauri-plugin-dialog 2.7.0→2.7.1, tauri-build 2.5.6→2.6.0), JS prod deps (6 packages), and JS dev deps (10 packages); implementation plan: `docs/dependabot-updates-plan.md`
-- [x] **`bump-version` scripts don't inject metainfo.xml release entry** — `bump-version.sh` and `bump-version.ps1` both claim to prepend a `<release version="X.Y.Z">` entry to `data/linux/io.github.fjrevoredo.mini-diarium.metainfo.xml` (the comment on line 53 says so), but neither script actually does it; the pre-release checklist catches the omission, but it was manually patched in v0.4.19; fix both scripts so the entry is injected automatically at bump time alongside the other version strings
-
 ---
 
 ## Medium Priority
@@ -38,8 +36,6 @@ TODO entry format:
 ---
 
 ## Low Priority / Future
-- [x] **Multi-entry number navigation bar** — when multiple entries exist on a date, replace (or augment) the existing prev/next arrows with a `← 1 2 3 →` indicator row where each number is a clickable link that jumps directly to that entry and the current entry's number is visually highlighted (e.g. bold); the arrows should retain their existing behaviour of stepping to the previous/next entry
-- [x] **Editor font selection** — allow users to select the editor font from a list of curated open-source fonts bundled with the app; fonts are enumerated from the bundle directory at runtime (no OS enumeration, no `font-kit`, no Flatpak sandbox permissions); five families selected for multilingual coverage and category variety (Noto Sans, Source Sans 3, Noto Serif, JetBrains Mono, Fira Mono); the selected font applies to the TipTap editor only and is persisted as the `editorFontFamily` preference; implementation plan: [`docs/editor-font-selection-plan.md`](editor-font-selection-plan.md)
 - [ ] **PDF export** — convert journal entries to PDF (A4); likely via Tauri webview printing
 - [ ] **Text input extension point** — create a plugin/extension interface for alternative entry methods so official and user plugins can provide text input flows such as dictation, LLM-assisted drafting, and other future capture modes; define capability boundaries, permission model, and how plugins hand content into the editor without weakening the app’s privacy guarantees
 - [ ] **Statistics extension point** — add a plugin/extension interface for writing statistics so official and user plugins can calculate custom metrics and surface them in the statistics UI; define the data contract, execution/sandbox constraints, and how custom statistics are registered and rendered without weakening the app’s privacy-first local-only model

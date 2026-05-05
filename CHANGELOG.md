@@ -30,7 +30,7 @@ Template:
 
 # Versions
 
-## [0.4.20] - Unreleased
+## [0.4.20] - 06-05-2026
 
 ### Added
 - **RTL/LTR toggle button in the editor toolbar**: a new paragraph-direction toggle button (pilcrow icon with directional arrow) is now available in the advanced formatting toolbar, placed before the alignment controls. The icon dynamically shows `PilcrowRight` when the current block is LTR (click to switch to RTL) and `PilcrowLeft` when RTL (click to switch to LTR), matching the convention used by Google Docs and LibreOffice. The button reuses the same `setTextDirection` command as the existing `Ctrl+Shift+D` / `Cmd+Shift+D` keyboard shortcut. New `textDirection` / `textDirectionTitle` i18n keys are added to all four locales.
