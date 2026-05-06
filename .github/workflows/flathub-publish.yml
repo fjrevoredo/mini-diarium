@@ -103,6 +103,51 @@ jobs:
             exit 1
           fi
 
+      - name: Validate manifest font paths against tagged tree
+        run: |
+          manifest=/tmp/mini-diarium-release/flatpak/io.github.fjrevoredo.mini-diarium.yml
+          release_tree=/tmp/mini-diarium-release
+
+          # Only run if the manifest installs fonts into the sandbox
+          if ! grep -qF 'app/share/fonts' "$manifest"; then
+            echo "No font install commands in manifest — skipping."
+            exit 0
+          fi
+
+          # Extract source globs from install commands that target /app/share/fonts.
+          # Example line: install -Dm644 fonts/*.ttf -t /app/share/fonts/
+          # We capture the word between the mode flags (-Dm644) and the destination.
+          font_sources=$(grep 'app/share/fonts' "$manifest" | \
+            sed -n 's/.*install [^ ]* \([^ ]*\) .*app\/share\/fonts.*/\1/p')
+
+          if [ -z "$font_sources" ]; then
+            echo "WARNING: Font install lines found but could not parse source path. Skipping."
+            exit 0
+          fi
+
+          for src in $font_sources; do
+            # Strip the glob portion to get the parent directory
+            dir="${src%/*}"
+            if [ -z "$dir" ] || [ "$dir" = "$src" ]; then
+              echo "ERROR: Cannot determine directory from font source path '$src'."
+              exit 1
+            fi
+
+            if [ ! -d "$release_tree/$dir" ]; then
+              echo "ERROR: Font source directory '$dir/' does not exist in the tagged release tree."
+              echo "The manifest references '$src' but the directory is missing."
+              echo "Fix the path in flatpak/io.github.fjrevoredo.mini-diarium.yml before tagging."
+              exit 1
+            fi
+
+            count=$(find "$release_tree/$dir" -maxdepth 1 \( -name '*.ttf' -o -name '*.otf' \) 2>/dev/null | wc -l)
+            if [ "$count" -eq 0 ]; then
+              echo "ERROR: Font source directory '$dir/' exists but contains no .ttf / .otf files."
+              exit 1
+            fi
+            echo "Font source directory '$dir/' validated: $count file(s)."
+          done
+
       - name: Validate package-lock.json for offline npm
         run: |
           lockfile=/tmp/mini-diarium-release/package-lock.json

@@ -34,7 +34,7 @@ modules:
       - install -Dm644 src-tauri/icons/128x128@2x.png /app/share/icons/hicolor/256x256/apps/io.github.fjrevoredo.mini-diarium.png
       - install -Dm644 data/linux/io.github.fjrevoredo.mini-diarium.metainfo.xml /app/share/metainfo/io.github.fjrevoredo.mini-diarium.metainfo.xml
       - install -Dm644 LICENSE /app/share/licenses/io.github.fjrevoredo.mini-diarium/mini-diarium/LICENSE
-      - install -Dm644 files/fonts/*.ttf -t /app/share/fonts/
+      - install -Dm644 fonts/*.ttf -t /app/share/fonts/
     sources:
       - type: dir
         # Local step-4 builds should use the current checkout so Flatpak validation

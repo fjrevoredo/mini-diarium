@@ -30,6 +30,21 @@ Template:
 
 # Versions
 
+## [0.4.21] - Unreleased
+
+### Added
+-
+
+### Fixed
+-
+
+### Changed
+-
+
+### Security
+-
+
+
 ## [0.4.20] - 06-05-2026
 
 ### Added

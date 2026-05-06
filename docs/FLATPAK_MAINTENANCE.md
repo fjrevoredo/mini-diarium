@@ -50,6 +50,7 @@ These are not optional unless there is a deliberate, documented reason to change
   - the metainfo file
   - the icons
   - the upstream `LICENSE`
+  - the bundled fonts (`fonts/*.ttf`)
 
 ### Permissions
 
@@ -127,6 +128,18 @@ Typical failure signatures:
 | `Cannot find module '@rolldown/binding-linux-arm64-gnu'` | `node-sources.json` is missing arch-specific optional native packages. |
 
 Passing `flatpak-node-generator` is not enough by itself. Always verify the generated output when native npm dependencies change.
+
+### Bundled font changes
+
+The app bundles five font families (Noto Sans, Noto Serif, Source Sans 3, JetBrains Mono, Fira Mono) as `.ttf` files in `fonts/` at the repo root. The Flatpak manifest installs them with:
+
+```
+install -Dm644 fonts/*.ttf -t /app/share/fonts/
+```
+
+The path `fonts/*.ttf` is relative to the build directory (repo root for both `type: dir` and `type: git` sources). Do not add a `files/`, `../`, or any other prefix to this path.
+
+Critical invariant: the `fonts/*.ttf` glob must match at least one file at build time, otherwise the `install` command fails. If fonts are ever removed, the install command must be removed too.
 
 ### Rust dependency changes
 
