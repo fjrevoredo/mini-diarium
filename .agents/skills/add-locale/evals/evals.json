@@ -18,6 +18,28 @@
       "prompt": "Add Chinese Simplified locale (code: zh-CN)",
       "expected_output": "Create src/i18n/locales/zh-CN.json with all keys translated to Simplified Chinese, wire in index.ts, add to AVAILABLE_LOCALES, run sync-languages, validate with validate:locales",
       "files": []
+    },
+    {
+      "id": 4,
+      "prompt": "Add Korean locale (code: ko)",
+      "expected_output": "Create src/i18n/locales/ko.json with all keys translated to Korean, wire in index.ts, add to AVAILABLE_LOCALES, run sync-languages, validate with validate:locales",
+      "files": []
+    },
+    {
+      "id": 5,
+      "prompt": "Add Russian locale (code: ru)",
+      "expected_output": "Create src/i18n/locales/ru.json with all keys translated to Russian, wire in index.ts, add to AVAILABLE_LOCALES, run sync-languages, validate with validate:locales",
+      "files": []
     }
+  ],
+  "assertions": [
+    {"id": "a1", "description": "Locale JSON file created at correct path"},
+    {"id": "a2", "description": "validate:locales reports OK with 387 keys"},
+    {"id": "a3", "description": "Wired in src/i18n/index.ts (import + localeMap entry)"},
+    {"id": "a4", "description": "Added to AVAILABLE_LOCALES in src/i18n/locales/index.ts"},
+    {"id": "a5", "description": "sync-languages updated README.md and website/index.html"},
+    {"id": "a6", "description": "All plural forms correct (e.g. wordCount_one/wordCount_other)"},
+    {"id": "a7", "description": "Month/day abbreviations are 3-letter format"},
+    {"id": "a8", "description": "No missing keys in validator output"}
   ]
 }
