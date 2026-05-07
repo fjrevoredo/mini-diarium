@@ -36,7 +36,7 @@ Template:
 -
 
 ### Fixed
--
+- **Bundled fonts not working in macOS/Windows release builds**: the editor font family selector was stuck on "System Default" because `installed_font_dir()` hardcoded platform paths without accounting for Tauri v2's `..` → `_up_` path translation during bundling. Replaced `installed_font_dir()` and `font_directory()` with a single `resolve_font_dir()` that uses `app.path().resolve("../fonts", BaseDirectory::Resource)` for platform-agnostic resource resolution. Added 20 backend tests covering font discovery, MIME detection, and family/stem name mapping.
 
 ### Changed
 -
