@@ -6,7 +6,7 @@
 
 **Platforms:** Windows 10/11, macOS 10.15+, Linux (Ubuntu 20.04+, Fedora, Arch).
 
-**Status:** See `docs/OPEN_TASKS.md` for structured roadmap items and `docs/TODO.md` for the working backlog.
+**Status:** See `docs/todo/TODO_EXTRA.md` for structured roadmap items and `docs/todo/TODO.md` for the working backlog.
 
 ## Domain Guides
 

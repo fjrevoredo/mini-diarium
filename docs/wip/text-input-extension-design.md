@@ -412,7 +412,7 @@ When implementing:
   - Update backend test counts
   - Add `TextInputOverlay.tsx` to file structure
   - Add `textInputPlugins.ts` to `src/lib/`
-- **`docs/OPEN_TASKS.md`**: Mark Task 67 as completed with date
+- **`docs/todo/TODO_EXTRA.md`**: Mark Task 67 as completed with date
 
 ---
 
@@ -450,4 +450,4 @@ When implementing:
 | `docs/user-plugins/USER_PLUGIN_GUIDE.md` | Modify | Add text-input section |
 | `CHANGELOG.md` | Modify | Add entry for the release it ships in |
 | `CLAUDE.md` | Modify | Update registry, file structure, test counts |
-| `docs/OPEN_TASKS.md` | Modify | Mark Task 67 complete |
+| `docs/todo/TODO_EXTRA.md` | Modify | Mark Task 67 complete |

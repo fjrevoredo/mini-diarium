@@ -6,7 +6,7 @@
 
 **Platforms:** Windows 10/11, macOS 10.15+, Linux (Ubuntu 20.04+, Fedora, Arch).
 
-**Status:** See `docs/OPEN_TASKS.md` for structured roadmap items and `docs/TODO.md` for the working backlog.
+**Status:** See `docs/todo/TODO_EXTRA.md` for structured roadmap items and `docs/todo/TODO.md` for the working backlog.
 
 ## Domain Guides
 
@@ -264,6 +264,7 @@ For the authoritative test-selector inventory and E2E rules, see `src/CLAUDE.md`
 1. **Validate after each completed task.** Run the relevant test/type-check/lint command immediately after finishing a task — before moving to the next one. This catches bugs at the point of introduction and keeps diagnosis trivial. Do not batch multiple tasks and validate only at the end.
 2. **Format after changes.** Use `bun run format`. Prettier is configured for the full `src/` tree and only modifies files with style violations. Since the repo is kept formatted, running it on the full tree produces no noise — it only touches files you changed.
 3. **Use `manual-planning` skill for any plan.** When asked to create a plan, roadmap, implementation checklist, or planning document, load the `manual-planning` skill and follow its template before writing the file. Do not create a plan from scratch — always delegate to the skill's workflow and format.
+4. **Use `todo-manager` skill for TODO operations.** When adding, tracking, archiving, or validating TODO items in `docs/todo/TODO.md`, load the `todo-manager` skill. Never manually assign TODO IDs — the skill handles ID assignment, format validation, and archive moves.
 
 ## Gotchas and Pitfalls
 
@@ -300,7 +301,7 @@ See `src-tauri/CLAUDE.md` for the full auth and backend security details.
 - The app still lacks frontend error boundary components
 - Some non-critical SolidJS reactivity warnings remain in dev mode
 
-See `docs/OPEN_TASKS.md`, `docs/TODO.md`, and `docs/KNOWN_ISSUES.md` for the living backlog.
+See `docs/todo/TODO_EXTRA.md`, `docs/todo/TODO.md`, and `docs/KNOWN_ISSUES.md` for the living backlog.
 
 ## Common Task Checklists
 

@@ -241,7 +241,7 @@ Both `ImportOverlay.tsx` and `ExportOverlay.tsx` are wired to the plugin registr
 
 **Benchmark stack**: criterion 0.5 in `src-tauri/benches/` for Rust hot paths (AES-256-GCM cipher, encrypted SQLite queries, word count); Vitest bench in `src/lib/markdown.bench.ts` for frontend Markdown parsing. CI workflow (`.github/workflows/benchmark.yml`) runs on every push to `master`, stores results as JSON in `gh-pages`, and alerts on regressions exceeding 200% without blocking the build. See `benchmarks/CLAUDE.md` for the full guide.
 
-**Known gap**: Frontend coverage is shallow. Calendar, most overlays (GoToDateOverlay, PreferencesOverlay, StatsOverlay, ImportOverlay, ExportOverlay), DiaryEditor, and Sidebar have no tests. Auth screens and NotificationsOverlay now have partial coverage. Tracked in `docs/TODO.md`.
+**Known gap**: Frontend coverage is shallow. Calendar, most overlays (GoToDateOverlay, PreferencesOverlay, StatsOverlay, ImportOverlay, ExportOverlay), DiaryEditor, and Sidebar have no tests. Auth screens and NotificationsOverlay now have partial coverage. Tracked in `docs/todo/TODO.md`.
 
 ---
 

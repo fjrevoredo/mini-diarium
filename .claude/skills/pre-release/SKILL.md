@@ -60,7 +60,7 @@ Read `data/linux/io.github.fjrevoredo.mini-diarium.metainfo.xml`. Look for a `<r
 
 ## Step 5 — Archive completed TODO items
 
-Read `docs/TODO.md`. Find all top-level `- [x]` items **and** their indented sub-items (lines indented under a checked top-level item).
+Read `docs/todo/TODO.md`. Find all top-level `- [x]` items **and** their indented sub-items (lines indented under a checked top-level item).
 
 **If no checked items are found:** note this in the completion report and continue without modifying either file.
 
@@ -72,12 +72,12 @@ Read `docs/TODO.md`. Find all top-level `- [x]` items **and** their indented sub
    - Result: `- [x] **Title** (2026-03-29) — description`
    - Indented sub-items are copied verbatim (no date inserted on sub-items).
 
-2. **Prepend the block** to `docs/archive/TODO_ARCHIVE.md`:
+2. **Prepend the block** to `docs/todo/TODO_ARCHIVE.md`:
    - Insert the archived items immediately after the `## Completed` heading line.
    - Add a single blank line between the new block and any pre-existing entries.
    - Do not add a blank line between the `## Completed` heading and the first new item.
 
-3. **Remove the lines from `docs/TODO.md`**:
+3. **Remove the lines from `docs/todo/TODO.md`**:
    - Delete the checked items and their indented sub-items.
    - Do not introduce extra blank lines where they were removed (collapse consecutive blank lines to at most one).
 
@@ -127,7 +127,7 @@ After all steps complete, print a summary including:
 End the report with the exact `git add` command listing only the files that were actually modified:
 
 ```
-git add CHANGELOG.md latest-changelog.md <include docs/TODO.md and docs/archive/TODO_ARCHIVE.md only if TODO items were archived>
+git add CHANGELOG.md latest-changelog.md <include docs/todo/TODO.md and docs/todo/TODO_ARCHIVE.md only if TODO items were archived>
 ```
 
 Also remind the user to:

@@ -1,6 +1,6 @@
 # TODO Archive
 
-Archived completed items moved out of [TODO.md](../TODO.md). This keeps the active backlog focused on open work while preserving the original task notes.
+Archived completed items moved out of [TODO.md](TODO.md). This keeps the active backlog focused on open work while preserving the original task notes.
 
 ## Completed
 - [x] **Editor font selection** (2026-05-06) — allow users to select the editor font from a list of curated open-source fonts bundled with the app; fonts are enumerated from the bundle directory at runtime (no OS enumeration, no `font-kit`, no Flatpak sandbox permissions); five families selected for multilingual coverage and category variety (Noto Sans, Source Sans 3, Noto Serif, JetBrains Mono, Fira Mono); the selected font applies to the TipTap editor only and is persisted as the `editorFontFamily` preference; implementation plan: [`docs/editor-font-selection-plan.md`](editor-font-selection-plan.md)

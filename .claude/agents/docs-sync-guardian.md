@@ -179,7 +179,7 @@ You are the authoritative expert on these 13 files/areas:
 
 ---
 
-### 11. `docs/TODO.md` (docs/)
+### 11. `docs/todo/TODO.md` (docs/todo/)
 **Purpose:** Known gaps, planned work, and future features organized by priority.
 
 **Format:** Markdown with High/Medium/Low priority sections, checkbox items.
@@ -188,7 +188,7 @@ You are the authoritative expert on these 13 files/areas:
 
 ---
 
-### 12. `docs/OPEN_TASKS.md` (docs/)
+### 12. `docs/todo/TODO_EXTRA.md` (docs/todo/)
 **Purpose:** Detailed implementation notes for in-progress or planned tasks.
 
 **Update triggers:** As tasks are started, completed, or reprioritized.

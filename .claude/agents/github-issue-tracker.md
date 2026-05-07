@@ -24,8 +24,8 @@ Read: title, body, all comments (especially maintainer responses), labels, open/
 
 | Scope | Artifact |
 |-------|----------|
-| Single focused change, clear path, ≤4 bullet points | `docs/TODO.md` |
-| Multiple sub-tasks, architectural decisions, unknowns | `docs/OPEN_TASKS.md` |
+| Single focused change, clear path, ≤4 bullet points | `docs/todo/TODO.md` |
+| Multiple sub-tasks, architectural decisions, unknowns | `docs/todo/TODO_EXTRA.md` |
 | Large with a clear first step | Both (OPEN_TASKS.md + linked TODO.md for the first step) |
 
 ## Step 4: Clarify Only When Genuinely Ambiguous
@@ -50,14 +50,14 @@ Read the target file(s) first to match format and find the next OT-N number.
 - `question`, `discussion`, `docs`, `chore` → **Low**
 - No labels → **Medium** (default)
 
-### `docs/TODO.md` format:
+### `docs/todo/TODO.md` format:
 ```
 - [ ] **<Verb-first title>** (GitHub: #N) — <what to do and why, referencing specific files if known>
   - <optional sub-step if clearly needed>
 ```
 For clear-cut TODO.md entries: **write directly without asking for confirmation**, then report what was added.
 
-### `docs/OPEN_TASKS.md` format:
+### `docs/todo/TODO_EXTRA.md` format:
 ```
 ## OT-N: <Title>
 
@@ -96,7 +96,7 @@ For OPEN_TASKS.md entries: **present draft for confirmation before writing** (st
 - Stack: SolidJS → state signals → Tauri `invoke()` → Rust commands → SQLite
 - TypeScript strict + Rust type safety required throughout
 - No FTS: `entries_fts` removed in schema v4 — any search feature must use an encrypted approach
-- Planning files: `docs/TODO.md` (working backlog), `docs/OPEN_TASKS.md` (structured roadmap)
+- Planning files: `docs/todo/TODO.md` (working backlog), `docs/todo/TODO_EXTRA.md` (structured roadmap)
 
 ## Hard Rules
 

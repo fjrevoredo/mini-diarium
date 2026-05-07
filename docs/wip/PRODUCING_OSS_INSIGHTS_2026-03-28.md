@@ -95,7 +95,7 @@ Mini Diarium is already partially good at this:
 
 - [PHILOSOPHY.md](../PHILOSOPHY.md)
 - [docs/text-input-extension-design.md](./text-input-extension-design.md)
-- [docs/OPEN_TASKS.md](./OPEN_TASKS.md)
+- [docs/todo/TODO_EXTRA.md](../todo/TODO_EXTRA.md)
 
 Those files show reasoning, not just conclusions. That is exactly the right instinct.
 
