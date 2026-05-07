@@ -31,14 +31,16 @@ Open questions are not plan-only notes. When clarification is needed, actively a
 
 Use this order:
 
-1. Prefer the native ask-user or request-input tool when the current harness exposes one.
-2. If no native ask-user tool is available, send a concise formatted message in the conversation.
-3. Mirror the exact unresolved questions in the plan's `Open Questions` section.
+1. **Use the native question-asking tool** (e.g. `question`, `ask-user`, `request-input`, or equivalent tool exposed by the current harness). This is the primary and preferred method — always prefer a structured tool over plain text.
+2. If no native question-asking tool is available, send a concise formatted message in the conversation as a fallback.
+3. Record both the question and the user's answer in the plan's `Open Questions` section.
 4. After the user answers, update `Open Questions` with the resolved answer or replace the section with `None`.
 
 Ask only questions that affect correctness, scope, risk, validation, sequencing, or user approval. Do not ask questions whose answers can be discovered from the repository or safely handled as explicit assumptions.
 
-Fallback message format:
+**All open questions must be answered before the plan can transition to `READY FOR APPROVAL`. Unanswered questions block approval.**
+
+Fallback message format (only when no tool is available):
 
 ```markdown
 I drafted the plan, but need these clarifications before it is ready for approval:
@@ -144,6 +146,10 @@ Every plan must include a cleanup task near the end. It must remove intermediate
 
 Do not remove artifacts that the user asked to keep, artifacts required for future maintainability, or generated files that are part of the repository contract.
 
+If the plan originated from a TODO item in `docs/todo/TODO.md`, the cleanup phase must check off that TODO (mark the checkbox as `[x]`).
+
+If the plan delivers a user-facing feature, bug fix, or behavior change, the cleanup phase must create or update a changelog entry (e.g. append to `CHANGELOG.md` or the project's latest-changelog file) summarizing what changed.
+
 ## Self-Check Before Approval
 
 Before asking for final approval, verify:
@@ -151,8 +157,8 @@ Before asking for final approval, verify:
 - The plan location follows the default location rule.
 - The plan status is `READY FOR APPROVAL`.
 - Scope, non-goals, and assumptions are explicit.
-- All open questions are either answered or clearly marked as unresolved.
-- Any unresolved open questions have been surfaced to the user through a native ask-user tool or formatted conversation message.
+- All open questions have been asked via the native question-asking tool (or chat fallback if no tool exists), answered by the user, and recorded in the plan
+- Zero unanswered questions remain
 - Every task has concrete steps and validation.
 - More than 10 tasks are grouped into milestones.
 - Every milestone has exit criteria when milestones exist.

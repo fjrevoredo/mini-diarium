@@ -9,8 +9,11 @@ TODO entry format:
 - Indented sub-items are free-form and do **not** carry IDs
 - Write items as requirements/acceptance criteria (what must be true), not implementation plans (how to build it)
 - Keep implementation details minimal in TODO entries; move deep implementation notes to [TODO_EXTRA.md](TODO_EXTRA.md) when needed
-- New IDs are assigned by scanning the highest existing `TODO-XXXX` and incrementing — never reuse IDs
+- New IDs are assigned by reading the `Latest TODO ID` marker near the top of this file and incrementing — never reuse IDs
+- After creating a new TODO, update the `Latest TODO ID` marker to reflect the new highest ID
 - Use the `todo-manager` skill (`.agents/skills/todo-manager/`) for creation, tracking, archival, and validation
+
+**Latest TODO ID: TODO-0020** — next new TODO should be TODO-0021
 
 ---
 
@@ -21,6 +24,7 @@ TODO entry format:
 
 ## Medium Priority
 
+- [ ] **TODO-0020: Preferences overlay margins and responsive sizing** — the right margin of the Preferences dialog content area is too tight (content panel at `PreferencesOverlay.tsx:230` has `pl-6` but no right padding, causing content to press against the dialog edge); the overlay width is fixed at `max-w-3xl` and height at `max-h-[60vh]` regardless of viewport size, making it feel cramped on smaller screens and underutilized on larger ones; make the dialog width/height responsive to the available viewport and add consistent horizontal padding to the content panel
 - [ ] **TODO-0002: Frontend test coverage** — auth screens (`PasswordPrompt.tsx`, `PasswordCreation.tsx`), Calendar, and all overlays (GoToDateOverlay, PreferencesOverlay, StatsOverlay, ImportOverlay, ExportOverlay) have zero test coverage; add Vitest + @solidjs/testing-library tests for each; use existing pattern from `TitleEditor.test.tsx` and `WordCount.test.tsx`
 - [ ] **TODO-0003: Full image drag-and-drop support** — dropping images into the editor should work consistently both from file managers and from other applications (for example browsers, chat apps, or image editors), not only when the drag payload exposes file paths; image drops should embed the image the same way as the toolbar picker and paste flow, while unsupported payloads fail safely without breaking the editor
   - [ ] **First compatibility target: Typora** — validate and support dragging images from Typora into Mini Diarium as the first cross-application drag-and-drop case before widening compatibility to other apps
