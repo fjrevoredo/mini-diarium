@@ -8,5 +8,6 @@ export const AVAILABLE_LOCALES: LocaleInfo[] = [
   { code: 'en', name: 'English', nativeName: 'English' },
   { code: 'es', name: 'Spanish', nativeName: 'Español' },
   { code: 'de', name: 'German', nativeName: 'Deutsch' },
+  { code: 'fr', name: 'French', nativeName: 'Français' },
   { code: 'it', name: 'Italian', nativeName: 'Italiano' },
 ];
