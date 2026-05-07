@@ -33,6 +33,7 @@ Template:
 ## [0.4.21] - Unreleased
 
 ### Added
+- **Auto-focus editor on unlock**: the TipTap editor now receives focus automatically after the journal is unlocked so the user can start typing immediately. Focus fires once per unlock session — it does not re-fire on date navigation, entry switching, or save cycles. Re-locking and re-unlocking resets the behavior.
 - **French (`fr`) locale**: full 387-key French translation with proper month/day abbreviations and plural forms.
 
 ### Fixed
