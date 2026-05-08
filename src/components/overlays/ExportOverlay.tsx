@@ -11,6 +11,7 @@ import {
 import { mapTauriError } from '../../lib/errors';
 import { useI18n } from '../../i18n';
 import { preferences } from '../../state/preferences';
+import { isValidDate, addMonths, addDays } from '../../lib/dates';
 import { X, FileDown, CheckCircle, AlertCircle } from 'lucide-solid';
 
 interface ExportOverlayProps {
@@ -28,6 +29,10 @@ export default function ExportOverlay(props: ExportOverlayProps) {
   const [exporting, setExporting] = createSignal(false);
   const [error, setError] = createSignal<string | null>(null);
   const [result, setResult] = createSignal<ExportResult | null>(null);
+  const [filterMode, setFilterMode] = createSignal<'all' | 'range' | 'month'>('all');
+  const [dateFrom, setDateFrom] = createSignal('');
+  const [dateTo, setDateTo] = createSignal('');
+  const [selectedMonth, setSelectedMonth] = createSignal('');
 
   onMount(async () => {
     try {
@@ -43,16 +48,62 @@ export default function ExportOverlay(props: ExportOverlayProps) {
 
   const selectedPlugin = () => plugins().find((p) => p.id === selectedPluginId());
 
+  const computedExportOptions = () => {
+    const mode = filterMode();
+    if (mode === 'all') return undefined;
+    if (mode === 'range') {
+      const from = dateFrom();
+      const to = dateTo();
+      if (!from || !to || !isValidDate(from) || !isValidDate(to)) return undefined;
+      if (from > to) return undefined;
+      return { dateFrom: from, dateTo: to };
+    }
+    if (mode === 'month') {
+      const month = selectedMonth();
+      if (!month) return undefined;
+      const from = `${month}-01`;
+      const to = addDays(addMonths(from, 1), -1);
+      return { dateFrom: from, dateTo: to };
+    }
+    return undefined;
+  };
+
+  const isExportDisabled = () => {
+    if (exporting()) return true;
+    const mode = filterMode();
+    if (mode === 'range') {
+      const from = dateFrom();
+      const to = dateTo();
+      if (!from || !to || !isValidDate(from) || !isValidDate(to)) return true;
+      if (from > to) return true;
+    }
+    if (mode === 'month') {
+      if (!selectedMonth()) return true;
+    }
+    return false;
+  };
+
+  const resetFilterState = () => {
+    setFilterMode('all');
+    setDateFrom('');
+    setDateTo('');
+    setSelectedMonth('');
+  };
+
   const handleOpenChange = (open: boolean) => {
     if (!open) {
       setError(null);
       setResult(null);
+      resetFilterState();
       props.onClose();
     }
   };
 
   const handleKeyDown = (e: KeyboardEvent) => {
     if (e.key === 'Escape' && !exporting()) {
+      setError(null);
+      setResult(null);
+      resetFilterState();
       props.onClose();
     }
   };
@@ -84,7 +135,7 @@ export default function ExportOverlay(props: ExportOverlayProps) {
         return;
       }
 
-      const exportResult = await runExportPlugin(plugin.id, filePath);
+      const exportResult = await runExportPlugin(plugin.id, filePath, computedExportOptions());
       setResult(exportResult);
     } catch (err) {
       log.error('Export failed:', err);
@@ -112,7 +163,7 @@ export default function ExportOverlay(props: ExportOverlayProps) {
         />
         <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
           <Dialog.Content
-            class="w-full max-w-md rounded-lg bg-primary p-6 data-[expanded]:animate-in data-[closed]:animate-out data-[closed]:fade-out-0 data-[expanded]:fade-in-0 data-[closed]:zoom-out-95 data-[expanded]:zoom-in-95"
+            class="w-full max-w-lg rounded-lg bg-primary p-6 data-[expanded]:animate-in data-[closed]:animate-out data-[closed]:fade-out-0 data-[expanded]:fade-in-0 data-[closed]:zoom-out-95 data-[expanded]:zoom-in-95"
             style={{ 'box-shadow': 'var(--shadow-lg)' }}
             onKeyDown={handleKeyDown}
           >
@@ -141,7 +192,7 @@ export default function ExportOverlay(props: ExportOverlayProps) {
             </div>
 
             {/* Format Selection */}
-            <div class="mb-6">
+            <div class="mb-4">
               <label for="export-format" class="block text-sm font-medium text-secondary mb-2">
                 {t('export.formatLabel')}
               </label>
@@ -160,6 +211,83 @@ export default function ExportOverlay(props: ExportOverlayProps) {
                   {(plugin) => <option value={plugin.id}>{plugin.name}</option>}
                 </For>
               </select>
+            </div>
+
+            {/* Date Range Filter */}
+            <div class="mb-6">
+              <label for="export-filter" class="block text-sm font-medium text-secondary mb-2">
+                {t('export.filterModeLabel')}
+              </label>
+              <select
+                id="export-filter"
+                value={filterMode()}
+                onChange={(e) => {
+                  const value = e.currentTarget.value;
+                  setFilterMode(value as 'all' | 'range' | 'month');
+                  setDateFrom('');
+                  setDateTo('');
+                  setSelectedMonth('');
+                }}
+                disabled={exporting()}
+                class="w-full rounded-md border border-primary px-3 py-2 text-sm text-primary bg-primary focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 disabled:bg-tertiary disabled:cursor-not-allowed"
+              >
+                <option value="all">{t('export.filterAll')}</option>
+                <option value="range">{t('export.filterDateRange')}</option>
+                <option value="month">{t('export.filterMonth')}</option>
+              </select>
+
+              <Show when={filterMode() === 'range'}>
+                <div class="flex gap-3 mt-3">
+                  <div class="flex-1">
+                    <label
+                      for="export-date-from"
+                      class="block text-sm font-medium text-secondary mb-1"
+                    >
+                      {t('export.dateFromLabel')}
+                    </label>
+                    <input
+                      id="export-date-from"
+                      type="date"
+                      value={dateFrom()}
+                      onInput={(e) => setDateFrom(e.currentTarget.value)}
+                      disabled={exporting()}
+                      class="w-full px-3 py-2 border border-primary bg-primary text-primary rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-tertiary disabled:cursor-not-allowed"
+                    />
+                  </div>
+                  <div class="flex-1">
+                    <label
+                      for="export-date-to"
+                      class="block text-sm font-medium text-secondary mb-1"
+                    >
+                      {t('export.dateToLabel')}
+                    </label>
+                    <input
+                      id="export-date-to"
+                      type="date"
+                      value={dateTo()}
+                      onInput={(e) => setDateTo(e.currentTarget.value)}
+                      disabled={exporting()}
+                      class="w-full px-3 py-2 border border-primary bg-primary text-primary rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-tertiary disabled:cursor-not-allowed"
+                    />
+                  </div>
+                </div>
+              </Show>
+
+              <Show when={filterMode() === 'month'}>
+                <div class="mt-3">
+                  <label for="export-month" class="block text-sm font-medium text-secondary mb-1">
+                    {t('export.monthLabel')}
+                  </label>
+                  <input
+                    id="export-month"
+                    type="month"
+                    value={selectedMonth()}
+                    onInput={(e) => setSelectedMonth(e.currentTarget.value)}
+                    disabled={exporting()}
+                    class="w-full px-3 py-2 border border-primary bg-primary text-primary rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent disabled:bg-tertiary disabled:cursor-not-allowed"
+                  />
+                </div>
+              </Show>
             </div>
 
             {/* Error Display */}
@@ -223,7 +351,7 @@ export default function ExportOverlay(props: ExportOverlayProps) {
               <Show when={!result()}>
                 <button
                   onClick={handleExport}
-                  disabled={exporting()}
+                  disabled={isExportDisabled()}
                   class="px-4 py-2 interactive-primary rounded-md transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
                   <FileDown size={16} />

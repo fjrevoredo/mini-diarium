@@ -12,14 +12,26 @@ pub struct ExportResult {
     pub file_path: String,
 }
 
-/// Fetches and decrypts all diary entries from the database
-pub(crate) fn fetch_all_entries(db: &DatabaseConnection) -> Result<Vec<DiaryEntry>, String> {
-    queries::get_all_entries(db)
+pub(crate) fn fetch_entries(
+    db: &DatabaseConnection,
+    date_from: Option<&str>,
+    date_to: Option<&str>,
+) -> Result<Vec<DiaryEntry>, String> {
+    if date_from.is_none() && date_to.is_none() {
+        queries::get_all_entries(db)
+    } else {
+        queries::get_entries_in_range(db, date_from, date_to)
+    }
 }
 
 /// Exports all diary entries to a JSON file in Mini Diary-compatible format
 #[tauri::command]
-pub fn export_json(file_path: String, state: State<DiaryState>) -> Result<ExportResult, String> {
+pub fn export_json(
+    file_path: String,
+    date_from: Option<String>,
+    date_to: Option<String>,
+    state: State<DiaryState>,
+) -> Result<ExportResult, String> {
     info!("Starting JSON export to file: {}", file_path);
 
     let db_state = state
@@ -32,7 +44,7 @@ pub fn export_json(file_path: String, state: State<DiaryState>) -> Result<Export
         err.to_string()
     })?;
 
-    let entries = fetch_all_entries(db)?;
+    let entries = fetch_entries(db, date_from.as_deref(), date_to.as_deref())?;
     let entries_exported = entries.len();
     debug!("Serializing {} entries to JSON...", entries_exported);
 
@@ -60,6 +72,8 @@ pub fn export_json(file_path: String, state: State<DiaryState>) -> Result<Export
 #[tauri::command]
 pub fn export_markdown(
     file_path: String,
+    date_from: Option<String>,
+    date_to: Option<String>,
     state: State<DiaryState>,
 ) -> Result<ExportResult, String> {
     info!("Starting Markdown export to file: {}", file_path);
@@ -74,7 +88,7 @@ pub fn export_markdown(
         err.to_string()
     })?;
 
-    let entries = fetch_all_entries(db)?;
+    let entries = fetch_entries(db, date_from.as_deref(), date_to.as_deref())?;
     let entries_exported = entries.len();
     debug!("Converting {} entries to Markdown...", entries_exported);
 

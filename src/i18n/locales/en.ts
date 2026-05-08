@@ -439,7 +439,7 @@ const en = {
   export: {
     title: 'Export Entries',
     closeAria: 'Close',
-    description: 'Export all journal entries to a file',
+    description: 'Export journal entries to a file',
     securityWarning:
       'Exported files contain your journal entries as plain text. Store them in a secure location.',
     formatLabel: 'Format',
@@ -450,6 +450,13 @@ const en = {
     exporting: 'Exporting...',
     startExport: 'Start Export',
     exportFailed: 'Export failed',
+    filterModeLabel: 'Filter',
+    filterAll: 'All entries',
+    filterDateRange: 'Date range',
+    filterMonth: 'Single month',
+    dateFromLabel: 'From',
+    dateToLabel: 'To',
+    monthLabel: 'Month',
   },
 
   /** ImportOverlay */

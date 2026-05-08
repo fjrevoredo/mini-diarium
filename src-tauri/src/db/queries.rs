@@ -303,6 +303,82 @@ pub fn get_all_entries(db: &DatabaseConnection) -> Result<Vec<DiaryEntry>, Strin
     Ok(entries)
 }
 
+pub fn get_entries_in_range(
+    db: &DatabaseConnection,
+    date_from: Option<&str>,
+    date_to: Option<&str>,
+) -> Result<Vec<DiaryEntry>, String> {
+    let mut sql = String::from(
+        "SELECT id, date, title_encrypted, text_encrypted, word_count, date_created, date_updated \
+         FROM entries",
+    );
+    let mut param_values: Vec<String> = Vec::new();
+    let mut has_where = false;
+
+    if let Some(from) = date_from {
+        sql.push_str(" WHERE date >= ?");
+        param_values.push(from.to_string());
+        has_where = true;
+    }
+    if let Some(to) = date_to {
+        if has_where {
+            sql.push_str(" AND");
+        } else {
+            sql.push_str(" WHERE");
+        }
+        sql.push_str(" date <= ?");
+        param_values.push(to.to_string());
+    }
+    sql.push_str(" ORDER BY date ASC, id ASC");
+
+    let params_refs: Vec<&dyn rusqlite::ToSql> = param_values
+        .iter()
+        .map(|p| p as &dyn rusqlite::ToSql)
+        .collect();
+
+    let mut stmt = db
+        .conn()
+        .prepare(&sql)
+        .map_err(|e| format!("Failed to prepare query: {}", e))?;
+
+    let entries = stmt
+        .query_map(params_refs.as_slice(), |row| {
+            Ok((
+                row.get::<_, i64>(0)?,
+                row.get::<_, String>(1)?,
+                row.get::<_, Vec<u8>>(2)?,
+                row.get::<_, Vec<u8>>(3)?,
+                row.get::<_, i32>(4)?,
+                row.get::<_, String>(5)?,
+                row.get::<_, String>(6)?,
+            ))
+        })
+        .map_err(|e| format!("Failed to query entries: {}", e))?
+        .filter_map(|r| r.ok())
+        .map(
+            |(id, date, title_enc, text_enc, word_count, date_created, date_updated)| {
+                let title = cipher::decrypt(db.key(), &title_enc)
+                    .map(|b| String::from_utf8(b).unwrap_or_default())
+                    .unwrap_or_default();
+                let text = cipher::decrypt(db.key(), &text_enc)
+                    .map(|b| String::from_utf8(b).unwrap_or_default())
+                    .unwrap_or_default();
+                DiaryEntry {
+                    id,
+                    date,
+                    title,
+                    text,
+                    word_count,
+                    date_created,
+                    date_updated,
+                }
+            },
+        )
+        .collect();
+
+    Ok(entries)
+}
+
 /// Strips HTML tags from `input`, replacing each closing `>` with a space so
 /// that adjacent words separated only by a tag are not concatenated.
 fn strip_html_tags(input: &str) -> String {
@@ -1119,5 +1195,92 @@ mod tests {
         let mut mac = [0u8; 32];
         mac.copy_from_slice(&decoded);
         assert_eq!(mac, compute_settings_mac(&key));
+    }
+
+    #[test]
+    fn test_get_entries_in_range_no_filter() {
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+
+        insert_entry(&db, &create_test_entry("2024-01-10")).unwrap();
+        insert_entry(&db, &create_test_entry("2024-02-15")).unwrap();
+        insert_entry(&db, &create_test_entry("2024-03-20")).unwrap();
+
+        let entries = get_entries_in_range(&db, None, None).unwrap();
+        assert_eq!(entries.len(), 3);
+    }
+
+    #[test]
+    fn test_get_entries_in_range_from_only() {
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+
+        insert_entry(&db, &create_test_entry("2024-01-10")).unwrap();
+        insert_entry(&db, &create_test_entry("2024-02-15")).unwrap();
+        insert_entry(&db, &create_test_entry("2024-03-20")).unwrap();
+
+        let entries = get_entries_in_range(&db, Some("2024-02-01"), None).unwrap();
+        assert_eq!(entries.len(), 2);
+        assert_eq!(entries[0].date, "2024-02-15");
+        assert_eq!(entries[1].date, "2024-03-20");
+    }
+
+    #[test]
+    fn test_get_entries_in_range_to_only() {
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+
+        insert_entry(&db, &create_test_entry("2024-01-10")).unwrap();
+        insert_entry(&db, &create_test_entry("2024-02-15")).unwrap();
+        insert_entry(&db, &create_test_entry("2024-03-20")).unwrap();
+
+        let entries = get_entries_in_range(&db, None, Some("2024-02-28")).unwrap();
+        assert_eq!(entries.len(), 2);
+        assert_eq!(entries[0].date, "2024-01-10");
+        assert_eq!(entries[1].date, "2024-02-15");
+    }
+
+    #[test]
+    fn test_get_entries_in_range_both_bounds() {
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+
+        insert_entry(&db, &create_test_entry("2024-01-10")).unwrap();
+        insert_entry(&db, &create_test_entry("2024-02-15")).unwrap();
+        insert_entry(&db, &create_test_entry("2024-03-20")).unwrap();
+        insert_entry(&db, &create_test_entry("2024-04-05")).unwrap();
+
+        let entries = get_entries_in_range(&db, Some("2024-02-01"), Some("2024-03-31")).unwrap();
+        assert_eq!(entries.len(), 2);
+        assert_eq!(entries[0].date, "2024-02-15");
+        assert_eq!(entries[1].date, "2024-03-20");
+    }
+
+    #[test]
+    fn test_get_entries_in_range_no_match() {
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+
+        insert_entry(&db, &create_test_entry("2024-01-10")).unwrap();
+        insert_entry(&db, &create_test_entry("2024-02-15")).unwrap();
+
+        let entries = get_entries_in_range(&db, Some("2025-01-01"), Some("2025-12-31")).unwrap();
+        assert!(entries.is_empty());
+    }
+
+    #[test]
+    fn test_get_entries_in_range_inclusive_bounds() {
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+
+        insert_entry(&db, &create_test_entry("2024-01-10")).unwrap();
+        insert_entry(&db, &create_test_entry("2024-01-20")).unwrap();
+        insert_entry(&db, &create_test_entry("2024-01-31")).unwrap();
+
+        let entries =
+            get_entries_in_range(&db, Some("2024-01-10"), Some("2024-01-31")).unwrap();
+        assert_eq!(entries.len(), 3);
+        assert_eq!(entries[0].date, "2024-01-10");
+        assert_eq!(entries[2].date, "2024-01-31");
     }
 }

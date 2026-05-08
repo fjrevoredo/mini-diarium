@@ -364,7 +364,7 @@
   "export": {
     "title": "Esporta voci",
     "closeAria": "Chiudi",
-    "description": "Esporta tutte le voci del diario in un file",
+    "description": "Esporta le voci del diario in un file",
     "securityWarning": "I file esportati contengono le tue voci del diario come testo semplice. Conservali in un luogo sicuro.",
     "formatLabel": "Formato",
     "failedTitle": "Esportazione fallita",
@@ -373,7 +373,14 @@
     "savedTo": "Salvato in:",
     "exporting": "Esportazione...",
     "startExport": "Avvia esportazione",
-    "exportFailed": "Errore nell'esportazione"
+    "exportFailed": "Errore nell'esportazione",
+    "filterModeLabel": "Filtro",
+    "filterAll": "Tutte le voci",
+    "filterDateRange": "Intervallo di date",
+    "filterMonth": "Singolo mese",
+    "dateFromLabel": "Da",
+    "dateToLabel": "A",
+    "monthLabel": "Mese"
   },
   "import": {
     "title": "Importa voci",

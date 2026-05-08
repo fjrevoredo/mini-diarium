@@ -364,7 +364,7 @@
   "export": {
     "title": "Exporter les entrées",
     "closeAria": "Fermer",
-    "description": "Exporter toutes les entrées du journal vers un fichier",
+    "description": "Exporter les entrées du journal vers un fichier",
     "securityWarning": "Les fichiers exportés contiennent vos entrées de journal en texte brut. Stockez-les dans un emplacement sécurisé.",
     "formatLabel": "Format",
     "failedTitle": "Échec de l'exportation",
@@ -373,7 +373,14 @@
     "savedTo": "Enregistré dans :",
     "exporting": "Exportation...",
     "startExport": "Démarrer l'exportation",
-    "exportFailed": "Échec de l'exportation"
+    "exportFailed": "Échec de l'exportation",
+    "filterModeLabel": "Filtre",
+    "filterAll": "Toutes les entrées",
+    "filterDateRange": "Plage de dates",
+    "filterMonth": "Un seul mois",
+    "dateFromLabel": "De",
+    "dateToLabel": "À",
+    "monthLabel": "Mois"
   },
   "import": {
     "title": "Importer des entrées",

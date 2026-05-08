@@ -364,7 +364,7 @@
   "export": {
     "title": "Einträge exportieren",
     "closeAria": "Schließen",
-    "description": "Exportiert alle Tagebucheinträge in eine Datei",
+    "description": "Exportiert Tagebucheinträge in eine Datei",
     "securityWarning": "Exportierte Dateien enthalten deine Tagebucheinträge als Klartext. Bewahre sie an einem sicheren Ort auf.",
     "formatLabel": "Format",
     "failedTitle": "Export fehlgeschlagen",
@@ -373,7 +373,14 @@
     "savedTo": "Gespeichert in:",
     "exporting": "Exportiere...",
     "startExport": "Export starten",
-    "exportFailed": "Fehler beim Export"
+    "exportFailed": "Fehler beim Export",
+    "filterModeLabel": "Filter",
+    "filterAll": "Alle Einträge",
+    "filterDateRange": "Zeitraum",
+    "filterMonth": "Einzelner Monat",
+    "dateFromLabel": "Von",
+    "dateToLabel": "Bis",
+    "monthLabel": "Monat"
   },
   "import": {
     "title": "Einträge importieren",
