@@ -1277,8 +1277,7 @@ mod tests {
         insert_entry(&db, &create_test_entry("2024-01-20")).unwrap();
         insert_entry(&db, &create_test_entry("2024-01-31")).unwrap();
 
-        let entries =
-            get_entries_in_range(&db, Some("2024-01-10"), Some("2024-01-31")).unwrap();
+        let entries = get_entries_in_range(&db, Some("2024-01-10"), Some("2024-01-31")).unwrap();
         assert_eq!(entries.len(), 3);
         assert_eq!(entries[0].date, "2024-01-10");
         assert_eq!(entries[2].date, "2024-01-31");
