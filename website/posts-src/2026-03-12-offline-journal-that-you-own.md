@@ -1,7 +1,7 @@
 ---
-title: Offline Journal That You Own
+title: Offline Journal That You Own: Portability, Privacy, and No Cloud Strings
 slug: offline-journal-that-you-own
-description: An offline journal is not only about privacy. It also changes portability, continuity, and who controls the writing when the software or service around it changes.
+description: Owning your journal means keeping entries local, exporting them in open formats, and never depending on a service to access your own writing. Here's what that requires.
 date: 2026-03-12
 updated: 2026-03-12
 author: Francisco J. Revoredo

@@ -5,7 +5,21 @@
     <link>https://mini-diarium.com/blog/</link>
     <description>Static articles about encrypted journals, private diary apps, offline journaling, and local-first software.</description>
     <language>en-us</language>
-    <lastBuildDate>Mon, 27 Apr 2026 00:00:00 GMT</lastBuildDate>
+    <lastBuildDate>Fri, 08 May 2026 00:00:00 GMT</lastBuildDate>
+  <item>
+    <title>How to Choose a Private Journal App in 2026</title>
+    <link>https://mini-diarium.com/blog/private-journal-app-how-to-choose/</link>
+    <guid isPermaLink="true">https://mini-diarium.com/blog/private-journal-app-how-to-choose/</guid>
+    <description>A private journal app should encrypt entries at rest, work fully offline, avoid telemetry, and give you a portable export. Here is a practical checklist for evaluating one.</description>
+    <pubDate>Fri, 08 May 2026 00:00:00 GMT</pubDate>
+  </item>
+  <item>
+    <title>What Is an Encrypted Diary? Why Encryption at Rest Matters</title>
+    <link>https://mini-diarium.com/blog/what-is-an-encrypted-diary/</link>
+    <guid isPermaLink="true">https://mini-diarium.com/blog/what-is-an-encrypted-diary/</guid>
+    <description>An encrypted diary encrypts entries before they are written to disk. It is not the same as a password-protected app. Here is what the term actually means and why it matters for private journaling.</description>
+    <pubDate>Fri, 08 May 2026 00:00:00 GMT</pubDate>
+  </item>
   <item>
     <title>Can AI Access Your Journal? Cloud Storage and the Case for Local</title>
     <link>https://mini-diarium.com/blog/journal-app-ai-privacy/</link>
@@ -14,10 +28,10 @@
     <pubDate>Mon, 27 Apr 2026 00:00:00 GMT</pubDate>
   </item>
   <item>
-    <title>Mini Diary Alternative: A Private Offline Desktop Journal</title>
+    <title>Mini Diary Alternative in 2026: A Maintained, Encrypted Successor</title>
     <link>https://mini-diarium.com/blog/mini-diary-alternative/</link>
     <guid isPermaLink="true">https://mini-diarium.com/blog/mini-diary-alternative/</guid>
-    <description>Looking for a Mini Diary alternative? Mini Diarium is the maintained successor — same local-first philosophy, rebuilt with encryption and a modern stack, with direct import from Mini Diary JSON.</description>
+    <description>Mini Diary went unmaintained. Mini Diarium is its successor — rebuilt with AES-256-GCM encryption, key file auth, and direct import from Mini Diary JSON. Same philosophy, stronger guarantees.</description>
     <pubDate>Sun, 05 Apr 2026 00:00:00 GMT</pubDate>
   </item>
   <item>
@@ -35,24 +49,24 @@
     <pubDate>Wed, 18 Mar 2026 00:00:00 GMT</pubDate>
   </item>
   <item>
-    <title>Encrypted Journal App vs. Cloud Notes App</title>
+    <title>Encrypted Journal vs. Cloud Notes: Why Architecture Decides Who Owns Your Writing</title>
     <link>https://mini-diarium.com/blog/encrypted-journal-vs-cloud-notes-app/</link>
     <guid isPermaLink="true">https://mini-diarium.com/blog/encrypted-journal-vs-cloud-notes-app/</guid>
-    <description>An encrypted journal app keeps private writing local and encrypted before storage, while a cloud notes app optimizes for sync and service convenience. The architecture changes who controls the words.</description>
+    <description>An encrypted journal app stores entries locally and encrypts before disk. Cloud apps store plaintext on servers. The architecture — not a privacy setting — decides who can read your writing.</description>
     <pubDate>Thu, 12 Mar 2026 00:00:00 GMT</pubDate>
   </item>
   <item>
-    <title>Offline Journal That You Own</title>
+    <title>Offline Journal That You Own: Portability, Privacy, and No Cloud Strings</title>
     <link>https://mini-diarium.com/blog/offline-journal-that-you-own/</link>
     <guid isPermaLink="true">https://mini-diarium.com/blog/offline-journal-that-you-own/</guid>
-    <description>An offline journal is not only about privacy. It also changes portability, continuity, and who controls the writing when the software or service around it changes.</description>
+    <description>Owning your journal means keeping entries local, exporting them in open formats, and never depending on a service to access your own writing. Here&#39;s what that requires.</description>
     <pubDate>Thu, 12 Mar 2026 00:00:00 GMT</pubDate>
   </item>
   <item>
-    <title>Private Diary App for Desktop: What Actually Matters</title>
+    <title>Private Diary App for Desktop: 5 Things Cloud Apps Can&#39;t Promise</title>
     <link>https://mini-diarium.com/blog/private-diary-app-for-desktop/</link>
     <guid isPermaLink="true">https://mini-diarium.com/blog/private-diary-app-for-desktop/</guid>
-    <description>A private diary app for desktop should work offline, encrypt entries at rest, keep storage local, and make exports available when you want your writing back.</description>
+    <description>A private diary app for desktop should encrypt entries at rest, work fully offline, and give you an exit path. Here&#39;s the checklist for evaluating one.</description>
     <pubDate>Thu, 12 Mar 2026 00:00:00 GMT</pubDate>
   </item>
   <item>
@@ -63,10 +77,10 @@
     <pubDate>Fri, 06 Mar 2026 00:00:00 GMT</pubDate>
   </item>
   <item>
-    <title>Why an Offline Journal Is Different From a Cloud Notes App</title>
+    <title>Why an Offline Journal Protects More Than Just Your Privacy</title>
     <link>https://mini-diarium.com/blog/why-an-offline-journal-is-different/</link>
     <guid isPermaLink="true">https://mini-diarium.com/blog/why-an-offline-journal-is-different/</guid>
-    <description>An encrypted offline journal changes who controls your writing, your risk surface, and your long-term ownership. Privacy-first journaling starts with architecture.</description>
+    <description>An offline journal can&#39;t sync your entries to a server or share them with AI. That&#39;s not a setting — it&#39;s the absence of network code. Here&#39;s why architecture outlasts privacy policies.</description>
     <pubDate>Fri, 06 Mar 2026 00:00:00 GMT</pubDate>
   </item>
   <item>
