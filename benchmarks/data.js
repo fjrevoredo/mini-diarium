@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1778156167290,
+  "lastUpdate": 1778287223449,
   "repoUrl": "https://github.com/fjrevoredo/mini-diarium",
   "entries": {
     "Benchmark": [
@@ -6713,6 +6713,138 @@ window.BENCHMARK_DATA = {
             "name": "count_words_html_500w",
             "value": 8419,
             "range": "± 44",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "49699333+dependabot[bot]@users.noreply.github.com",
+            "name": "dependabot[bot]",
+            "username": "dependabot[bot]"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "fb795b67b479791247cc14d467d2039f9970a2e9",
+          "message": "Bump tauri from 2.11.0 to 2.11.1 in /src-tauri (#122)\n\nBumps [tauri](https://github.com/tauri-apps/tauri) from 2.11.0 to\n2.11.1.\n<details>\n<summary>Release notes</summary>\n<p><em>Sourced from <a\nhref=\"https://github.com/tauri-apps/tauri/releases\">tauri's\nreleases</a>.</em></p>\n<blockquote>\n<h2>tauri-cli v2.11.1</h2>\n<!-- raw HTML omitted -->\n<pre><code>Fetching advisory database from\n`https://github.com/RustSec/advisory-db.git`\nLoaded 1067 security advisories (from /home/runner/.cargo/advisory-db)\n    Updating crates.io index\n    Scanning Cargo.lock for vulnerabilities (1088 crate dependencies)\nCrate:     atk\nVersion:   0.18.2\nWarning:   unmaintained\nTitle:     gtk-rs GTK3 bindings - no longer maintained\nDate:      2024-03-04\nID:        RUSTSEC-2024-0413\nURL:       https://rustsec.org/advisories/RUSTSEC-2024-0413\nDependency tree:\natk 0.18.2\n└── gtk 0.18.2\n    ├── wry 0.55.0\n    │   └── tauri-runtime-wry 2.11.1\n    │       └── tauri 2.11.1\n    │           ├── tauri-utils 2.9.1\n    │           │   ├── tauri-schema-generator 0.0.0\n    │           │   ├── tauri-runtime-wry 2.11.1\n    │           │   ├── tauri-runtime 2.11.1\n    │           │   │   ├── tauri-runtime-wry 2.11.1\n    │           │   │   └── tauri 2.11.1\n    │           │   ├── tauri-plugin 2.6.1\n    │           │   │   ├── tauri-plugin-sample 0.1.0\n    │           │   │   │   └── api 0.1.0\n    │           │   │   └── tauri-plugin-log 2.6.0\n    │           │   │       └── api 0.1.0\n    │           │   ├── tauri-macros 2.6.1\n    │           │   │   └── tauri 2.11.1\n    │           │   ├── tauri-codegen 2.6.1\n    │           │   │   ├── tauri-macros 2.6.1\n    │           │   │   └── tauri-build 2.6.1\n    │           │   │       ├── tauri-file-associations-demo 0.1.0\n    │           │   │       ├── tauri 2.11.1\n    │           │   │       ├── resources 0.1.0\n    │           │   │       ├── bench_helloworld 0.1.0\n    │           │   │       ├── bench_files_transfer 0.1.0\n    │           │   │       ├── bench_cpu_intensive 0.1.0\n    │           │   │       └── api 0.1.0\n    │           │   ├── tauri-cli 2.11.1\n    │           │   │   └── tauri-cli-node 0.0.0\n    │           │   ├── tauri-bundler 2.9.1\n    │           │   │   └── tauri-cli 2.11.1\n    │           │   ├── tauri-build 2.6.1\n&lt;/tr&gt;&lt;/table&gt; \n</code></pre>\n</blockquote>\n<p>... (truncated)</p>\n</details>\n<details>\n<summary>Commits</summary>\n<ul>\n<li><a\nhref=\"https://github.com/tauri-apps/tauri/commit/e5ae5b93cdd310045191cc0526f253140ad64b87\"><code>e5ae5b9</code></a>\nchore: fix changelog</li>\n<li><a\nhref=\"https://github.com/tauri-apps/tauri/commit/4d2db70c46de515ed2c1e3752c841a8299623564\"><code>4d2db70</code></a>\nApply Version Updates From Current Changes (<a\nhref=\"https://redirect.github.com/tauri-apps/tauri/issues/15328\">#15328</a>)</li>\n<li><a\nhref=\"https://github.com/tauri-apps/tauri/commit/5e3126ff7045aec54811b227cb4d33d78b3957b5\"><code>5e3126f</code></a>\nfeat(mobile): expose monitor APIs (<a\nhref=\"https://redirect.github.com/tauri-apps/tauri/issues/15338\">#15338</a>)</li>\n<li><a\nhref=\"https://github.com/tauri-apps/tauri/commit/ba025588f3559858f43547e8c04424c47a3c445b\"><code>ba02558</code></a>\nMerge commit from fork</li>\n<li><a\nhref=\"https://github.com/tauri-apps/tauri/commit/5f479c0c364d7f5d89a83eaff66fbb7ef5045ce9\"><code>5f479c0</code></a>\nfix(core): requestPermission crash regression on Android, closes <a\nhref=\"https://redirect.github.com/tauri-apps/tauri/issues/15323\">#15323</a>\n(<a\nhref=\"https://redirect.github.com/tauri-apps/tauri/issues/15336\">#15336</a>)</li>\n<li><a\nhref=\"https://github.com/tauri-apps/tauri/commit/1b26769f92b54b158777a35a7f548f870f4e7901\"><code>1b26769</code></a>\nfix(tauri): enforce ACL for remote origins even without AppManifest (<a\nhref=\"https://redirect.github.com/tauri-apps/tauri/issues/15266\">#15266</a>)</li>\n<li><a\nhref=\"https://github.com/tauri-apps/tauri/commit/3057eda067b87761644209adeec077f232585c5d\"><code>3057eda</code></a>\nfix(driver): enable <code>eq-separator</code> feature for\n<code>pico-args</code>. (<a\nhref=\"https://redirect.github.com/tauri-apps/tauri/issues/15324\">#15324</a>)</li>\n<li><a\nhref=\"https://github.com/tauri-apps/tauri/commit/4f548e73947b3b06bf2073c822564aed3dd5f948\"><code>4f548e7</code></a>\nchore(deps): update phf to 0.13 (<a\nhref=\"https://redirect.github.com/tauri-apps/tauri/issues/15308\">#15308</a>)</li>\n<li><a\nhref=\"https://github.com/tauri-apps/tauri/commit/4ca427de5e1f657cc1609f76748f5ef960fd5a9f\"><code>4ca427d</code></a>\nfix: pin napi for msrv and Node.js on CI (<a\nhref=\"https://redirect.github.com/tauri-apps/tauri/issues/15310\">#15310</a>)</li>\n<li><a\nhref=\"https://github.com/tauri-apps/tauri/commit/a04d907b73e83e538792c7442af39c18561279eb\"><code>a04d907</code></a>\nfix(ci): publish-cli-rs script for Powershell (<a\nhref=\"https://redirect.github.com/tauri-apps/tauri/issues/15309\">#15309</a>)</li>\n<li>See full diff in <a\nhref=\"https://github.com/tauri-apps/tauri/compare/tauri-v2.11.0...tauri-v2.11.1\">compare\nview</a></li>\n</ul>\n</details>\n<br />\n\n\n[![Dependabot compatibility\nscore](https://dependabot-badges.githubapp.com/badges/compatibility_score?dependency-name=tauri&package-manager=cargo&previous-version=2.11.0&new-version=2.11.1)](https://docs.github.com/en/github/managing-security-vulnerabilities/about-dependabot-security-updates#about-compatibility-scores)\n\nDependabot will resolve any conflicts with this PR as long as you don't\nalter it yourself. You can also trigger a rebase manually by commenting\n`@dependabot rebase`.\n\n[//]: # (dependabot-automerge-start)\n[//]: # (dependabot-automerge-end)\n\n---\n\n<details>\n<summary>Dependabot commands and options</summary>\n<br />\n\nYou can trigger Dependabot actions by commenting on this PR:\n- `@dependabot rebase` will rebase this PR\n- `@dependabot recreate` will recreate this PR, overwriting any edits\nthat have been made to it\n- `@dependabot show <dependency name> ignore conditions` will show all\nof the ignore conditions of the specified dependency\n- `@dependabot ignore this major version` will close this PR and stop\nDependabot creating any more for this major version (unless you reopen\nthe PR or upgrade to it yourself)\n- `@dependabot ignore this minor version` will close this PR and stop\nDependabot creating any more for this minor version (unless you reopen\nthe PR or upgrade to it yourself)\n- `@dependabot ignore this dependency` will close this PR and stop\nDependabot creating any more for this dependency (unless you reopen the\nPR or upgrade to it yourself)\nYou can disable automated security fix PRs for this repo from the\n[Security Alerts\npage](https://github.com/fjrevoredo/mini-diarium/network/alerts).\n\n</details>\n\nSigned-off-by: dependabot[bot] <support@github.com>\nCo-authored-by: dependabot[bot] <49699333+dependabot[bot]@users.noreply.github.com>",
+          "timestamp": "2026-05-09T02:32:14+02:00",
+          "tree_id": "cf4365c3514cd4350d16bde412fbd049c952228f",
+          "url": "https://github.com/fjrevoredo/mini-diarium/commit/fb795b67b479791247cc14d467d2039f9970a2e9"
+        },
+        "date": 1778287222584,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "auth_argon2/wrap_master_key",
+            "value": 92945910,
+            "range": "± 906475",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "auth_argon2/unwrap_master_key",
+            "value": 93578548,
+            "range": "± 837253",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_encrypt/1024",
+            "value": 2097,
+            "range": "± 19",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_encrypt/10240",
+            "value": 14136,
+            "range": "± 39",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_encrypt/102400",
+            "value": 167744,
+            "range": "± 217",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_decrypt/1024",
+            "value": 1577,
+            "range": "± 4",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_decrypt/10240",
+            "value": 13461,
+            "range": "± 21",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_decrypt/102400",
+            "value": 132978,
+            "range": "± 951",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_insert_entry",
+            "value": 1029925,
+            "range": "± 266001",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_update_entry",
+            "value": 842782,
+            "range": "± 62840",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_delete_entry",
+            "value": 942828,
+            "range": "± 83247",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_entries_by_date",
+            "value": 14350,
+            "range": "± 232",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_all_entry_dates/100",
+            "value": 32238,
+            "range": "± 291",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_all_entry_dates/500",
+            "value": 124989,
+            "range": "± 807",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_all_entries/100",
+            "value": 141783,
+            "range": "± 647",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_all_entries/500",
+            "value": 647685,
+            "range": "± 3190",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "count_words_plain_500w",
+            "value": 8845,
+            "range": "± 31",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "count_words_html_500w",
+            "value": 11530,
+            "range": "± 77",
             "unit": "ns/iter"
           }
         ]
