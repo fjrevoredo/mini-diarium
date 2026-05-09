@@ -42,7 +42,7 @@ Template:
 - **Bundled fonts not working in macOS/Windows release builds**: the editor font family selector was stuck on "System Default" because `installed_font_dir()` hardcoded platform paths without accounting for Tauri v2's `..` → `_up_` path translation during bundling. Replaced `installed_font_dir()` and `font_directory()` with a single `resolve_font_dir()` that uses `app.path().resolve("../fonts", BaseDirectory::Resource)` for platform-agnostic resource resolution. Added 20 backend tests covering font discovery, MIME detection, and family/stem name mapping.
 
 ### Changed
--
+- **Preferences overlay responsive sizing**: the Preferences dialog now scales its width and height with the viewport instead of using fixed dimensions. Width grows from `max-w-2xl` on small screens to `max-w-3xl` on medium screens and `max-w-4xl` on large screens; the scrollable content panel height increases from `55vh` to `75vh` across the same breakpoints. The content panel also gains symmetric horizontal padding (`px-6`) so form inputs no longer press against the right dialog edge.
 
 ### Security
 -
