@@ -63,6 +63,44 @@ beforeEach(() => {
 });
 
 // ---------------------------------------------------------------------------
+// Underline button — always visible
+// ---------------------------------------------------------------------------
+
+describe('EditorToolbar underline button — visibility', () => {
+  it('shows underline button when advancedToolbar is false', () => {
+    setPreferences({ advancedToolbar: false });
+    const { container } = renderWithI18n(() => <EditorToolbar editor={makeEditorMock()} />);
+    expect(container.querySelector('[aria-label="Underline (Ctrl/Cmd+U)"]')).not.toBeNull();
+  });
+
+  it('shows underline button when advancedToolbar is true', () => {
+    setPreferences({ advancedToolbar: true });
+    const { container } = renderWithI18n(() => <EditorToolbar editor={makeEditorMock()} />);
+    expect(container.querySelector('[aria-label="Underline (Ctrl/Cmd+U)"]')).not.toBeNull();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Color buttons — visibility
+// ---------------------------------------------------------------------------
+
+describe('EditorToolbar color buttons — visibility', () => {
+  it('hides text color and highlight color buttons when advancedToolbar is false', () => {
+    setPreferences({ advancedToolbar: false });
+    const { container } = renderWithI18n(() => <EditorToolbar editor={makeEditorMock()} />);
+    expect(container.querySelector('[aria-label="Text color"]')).toBeNull();
+    expect(container.querySelector('[aria-label="Highlight color"]')).toBeNull();
+  });
+
+  it('shows text color and highlight color buttons when advancedToolbar is true', () => {
+    setPreferences({ advancedToolbar: true });
+    const { container } = renderWithI18n(() => <EditorToolbar editor={makeEditorMock()} />);
+    expect(container.querySelector('[aria-label="Text color"]')).not.toBeNull();
+    expect(container.querySelector('[aria-label="Highlight color"]')).not.toBeNull();
+  });
+});
+
+// ---------------------------------------------------------------------------
 // Alignment buttons — visibility
 // ---------------------------------------------------------------------------
 

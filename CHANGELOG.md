@@ -33,19 +33,17 @@ Template:
 ## [0.4.21] - Unreleased
 
 ### Added
+- **Text color and highlight color formatting**: the advanced formatting toolbar now includes two color picker buttons — one for text color and one for highlight (background) color. Both use a native color picker that lets you choose any color. The text color button shows the active color as a small bar beneath the `Type` icon; the highlight button shows the active highlight color beneath the `Highlighter` icon. Old default `<mark>` highlights (pre-existing entries without an explicit color) continue to render as colored text for backward compatibility. New `textColor` and `highlightColor` i18n keys added to all five locales (en, es, fr, de, it).
 - **Export date/month filter**: you can now export entries from a specific date range or a single month instead of always exporting everything. A new filter dropdown in the export dialog offers "All entries", "Date range", and "Single month" options.
 - **Auto-focus editor on unlock**: the TipTap editor now receives focus automatically after the journal is unlocked so the user can start typing immediately. Focus fires once per unlock session — it does not re-fire on date navigation, entry switching, or save cycles. Re-locking and re-unlocking resets the behavior.
 - **French (`fr`) locale**: full 387-key French translation with proper month/day abbreviations and plural forms.
 
 ### Fixed
-- **Cursor height too tall after Shift+Enter on macOS (#118)**: the text caret appeared disproportionately tall on lines after a soft line break (Shift+Enter), caused by UnoCSS typography preset's `.prose` classes injecting static-article line-height and margin rules that conflict with `contenteditable` caret measurement on macOS WebKit. Removed `prose prose-sm lg:prose-lg xl:prose-xl` classes from the editor root element in `DiaryEditor.tsx` (relying on the self-contained `editor.css` stylesheet instead), and added explicit `line-height: 1.5` to `.ProseMirror.journal-editor-content`, `.ProseMirror p`, and `.ProseMirror li`.
 - **Bundled fonts not working in macOS/Windows release builds**: the editor font family selector was stuck on "System Default" because `installed_font_dir()` hardcoded platform paths without accounting for Tauri v2's `..` → `_up_` path translation during bundling. Replaced `installed_font_dir()` and `font_directory()` with a single `resolve_font_dir()` that uses `app.path().resolve("../fonts", BaseDirectory::Resource)` for platform-agnostic resource resolution. Added 20 backend tests covering font discovery, MIME detection, and family/stem name mapping.
 
 ### Changed
+- **Underline is now always visible**: the Underline button has moved from the advanced formatting toolbar (gated behind **Preferences → Writing → Show advanced formatting toolbar**) to the basic toolbar, where it appears alongside Bold and Italic for all users regardless of the advanced-toolbar preference.
 - **Preferences overlay responsive sizing**: the Preferences dialog now scales its width and height with the viewport instead of using fixed dimensions. Width grows from `max-w-2xl` on small screens to `max-w-3xl` on medium screens and `max-w-4xl` on large screens; the scrollable content panel height increases from `55vh` to `75vh` across the same breakpoints. The content panel also gains symmetric horizontal padding (`px-6`) so form inputs no longer press against the right dialog edge.
-
-### Security
--
 
 
 ## [0.4.20] - 06-05-2026

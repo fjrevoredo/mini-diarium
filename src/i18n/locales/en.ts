@@ -210,6 +210,8 @@ const en = {
       underline: 'Underline (Ctrl/Cmd+U)',
       strikethrough: 'Strikethrough (Ctrl/Cmd+Shift+S)',
       highlight: 'Highlight (Ctrl/Cmd+Shift+H)',
+      textColor: 'Text color',
+      highlightColor: 'Highlight color',
       blockquote: 'Blockquote (Ctrl/Cmd+Shift+B)',
       inlineCode: 'Inline Code (Ctrl/Cmd+E)',
       bulletList: 'Bullet List',
@@ -326,7 +328,7 @@ const en = {
       spellcheckHint: 'When enabled, browser spellcheck will highlight misspelled words.',
       advancedToolbarLabel: 'Show advanced formatting toolbar',
       advancedToolbarHint:
-        'When enabled, the toolbar shows additional controls: headings, underline, strikethrough, blockquote, inline code, and horizontal rule.',
+        'When enabled, the toolbar shows additional controls: headings, strikethrough, text color, highlight color, blockquote, inline code, and horizontal rule.',
       fontSizeLabel: 'Editor font size',
       fontSizePxSuffix: 'px',
       fontSizeMin: '12 px',

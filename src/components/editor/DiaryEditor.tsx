@@ -5,6 +5,8 @@ import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import Underline from '@tiptap/extension-underline';
 import Highlight from '@tiptap/extension-highlight';
+import { TextStyle } from '@tiptap/extension-text-style';
+import Color from '@tiptap/extension-color';
 import { Image as TiptapImage } from '@tiptap/extension-image';
 import TextAlign from '@tiptap/extension-text-align';
 import { listen, UnlistenFn } from '@tauri-apps/api/event';
@@ -299,7 +301,9 @@ export default function DiaryEditor(props: DiaryEditorProps) {
           placeholder: props.placeholder || 'Start writing...',
         }),
         Underline,
-        Highlight,
+        Highlight.configure({ multicolor: true }),
+        TextStyle,
+        Color,
         AlignableImage.configure({ allowBase64: true, inline: false }),
         TextAlign.configure({ types: ['heading', 'paragraph', 'image'] }),
         BidiExtension,
