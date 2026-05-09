@@ -38,13 +38,36 @@ for (const [pkgPath, pkg] of Object.entries(packages)) {
   }
 }
 
-if (missing.length === 0) {
-  console.log('All packages accounted for.');
-  process.exit(0);
+// Validate ordering: all shell/script entries MUST come after all archive entries.
+// flatpak-builder processes entries sequentially; a shell cp that runs before
+// its archive is extracted will fail with "No such file or directory".
+let lastArchiveIndex = -1;
+let firstShellIndex = -1;
+for (let i = 0; i < sources.length; i++) {
+  const e = sources[i];
+  if (e.type === 'archive') lastArchiveIndex = i;
+  if ((e.type === 'shell' || e.type === 'script') && firstShellIndex === -1) firstShellIndex = i;
+}
+const orderingOk = firstShellIndex === -1 || lastArchiveIndex === -1 || lastArchiveIndex < firstShellIndex;
+
+let exitCode = 0;
+
+if (!orderingOk) {
+  console.error(`ORDERING ERROR: shell/script entry at index ${firstShellIndex} appears before last archive at index ${lastArchiveIndex}.`);
+  console.error('flatpak-builder processes entries sequentially — shell commands must come after all archive extractions.');
+  console.error('Move all shell/script entries to the end of the file.');
+  exitCode = 1;
 }
 
-console.log(`${missing.length} package(s) missing from node-sources.json:`);
-for (const m of missing) {
-  console.log(`  ${m.name}@${m.version}  ${m.resolved}`);
+if (missing.length > 0) {
+  console.error(`${missing.length} package(s) missing from node-sources.json:`);
+  for (const m of missing) {
+    console.error(`  ${m.name}@${m.version}  ${m.resolved}`);
+  }
+  exitCode = 1;
 }
-process.exit(1);
+
+if (exitCode === 0) {
+  console.log('All packages accounted for and ordering is correct.');
+}
+process.exit(exitCode);

@@ -154,6 +154,8 @@ Index entry format:
 
 The index JSON object is: `{"key":"make-fetch-happen:request-cache:<url>","integrity":"<integrity>","time":0,"size":<tarball-size>,"metadata":{"url":"<url>","reqHeaders":{},"resHeaders":{}}}`. Compute the SHA1 of the full JSON string for the contents prefix, and the SHA1 of the key string for the index path.
 
+**Critical ordering rule:** When inserting entries or re-sorting, **shell and script entries must always appear after ALL archive entries**. `flatpak-builder` processes `node-sources.json` sequentially — a `cp` in a shell command that runs before its archive is extracted will fail. Only sort URL-bearing entries (type `file`, `archive`); leave `shell` and `script` entries at the end. Run `node flatpak/check-node-sources.mjs` after any modification to verify both coverage and ordering.
+
 See `flatpak/check-node-sources.mjs` for the companion gap-detection script.
 
 ### Patches in the Flathub repo
