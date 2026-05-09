@@ -199,6 +199,20 @@ Any code that resets, exports, or migrates user settings must handle all three i
 
 ---
 
+### AT-13 — Dependabot alert #6: `glib` unsoundness (Linux-only transitive dep)
+**Status:** Open (blocked on Tauri upstream)
+
+GitHub Security Advisory [GHSA-c2rh-4qvr-6q6p](https://github.com/advisories/GHSA-c2rh-4qvr-6q6p) flags `glib` versions ≥0.15.0 and <0.20.0 for unsoundness in the `Iterator` and `DoubleEndedIterator` impls of `glib::VariantStrIter`. Mini Diarium resolves `glib 0.18.5` transitively through the Tauri → GTK → webkit2gtk Linux stack.
+
+**Impact:** Zero practical risk for Mini Diarium:
+- **Linux-only compilation path** — the GTK/WebKit crates only compile on Linux. Windows (WebView2) and macOS (WKWebView) binaries are unaffected.
+- **Fully transitive** — Mini Diarium code never imports or calls `glib` directly, and never uses `VariantStrIter`.
+- **API soundness issue, not a C memory corruption** — the unsoundness is in Rust iterator impls, not the underlying C library.
+
+**Resolution path:** Tauri 2.11.1 pins the gtk-rs 0.18.x ecosystem. Upgrading `glib` independently to 0.20.0 is impossible — it would break the semver contract with every other crate in the GTK stack (gtk, gdk, pango, cairo-rs, webkit2gtk, etc.). The fix arrives when Tauri upstream bumps its Linux GTK dependencies to 0.20+ in a future release. No action is possible at this level.
+
+---
+
 ## Technical Debt
 
 ### TD-1 — Frontend test coverage is incomplete
@@ -236,4 +250,4 @@ The app data directory resolution (`resolve_app_data_dir`) and legacy config det
 
 ---
 
-*Last updated: 2026-03-21. For the security threat model, see [SECURITY.md](../SECURITY.md). For open features and enhancements, see [OPEN_TASKS.md](OPEN_TASKS.md). For the full backend architectural assessment conducted at v0.4.9, see [BACKEND_ASSESSMENT_2026-03.md](BACKEND_ASSESSMENT_2026-03.md).*
+*Last updated: 2026-05-09. For the security threat model, see [SECURITY.md](../SECURITY.md). For open features and enhancements, see [OPEN_TASKS.md](OPEN_TASKS.md). For the full backend architectural assessment conducted at v0.4.9, see [BACKEND_ASSESSMENT_2026-03.md](BACKEND_ASSESSMENT_2026-03.md).*
