@@ -37,6 +37,11 @@
   "puppeteer": {
     "skipDownload": true
   },
+  "overrides": {
+    "serialize-javascript": "7.0.5",
+    "uuid": "^11.1.1",
+    "basic-ftp": "^5.3.1"
+  },
   "dependencies": {
     "@kobalte/core": "^0.13.11",
     "@solid-primitives/i18n": "^2.2.1",
