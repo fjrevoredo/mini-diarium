@@ -308,8 +308,7 @@ export default function DiaryEditor(props: DiaryEditorProps) {
       content: props.content,
       editorProps: {
         attributes: {
-          class:
-            'journal-editor-content prose prose-sm sm:prose lg:prose-lg xl:prose-xl focus:outline-none max-w-none',
+          class: 'journal-editor-content focus:outline-none max-w-none',
           spellcheck: String(props.spellCheck ?? true),
           dir: 'auto',
         },
