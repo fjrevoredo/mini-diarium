@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="An encrypted journal app keeps private writing local and encrypted before storage, while a cloud notes app optimizes for sync and service convenience. The architecture changes who controls the words." />
+  <meta name="description" content="An encrypted journal app stores entries locally and encrypts before disk. Cloud apps store plaintext on servers. The architecture — not a privacy setting — decides who can read your writing." />
   <meta name="robots" content="index,follow,max-snippet:-1,max-image-preview:large,max-video-preview:-1" />
   <meta name="theme-color" content="#0e0e0e" />
   <meta name="author" content="Francisco J. Revoredo" />
@@ -11,8 +11,8 @@
   <meta property="og:site_name" content="Mini Diarium" />
   <meta property="og:locale" content="en_US" />
   <meta property="og:url" content="https://mini-diarium.com/blog/encrypted-journal-vs-cloud-notes-app/" />
-  <meta property="og:title" content="Encrypted Journal App vs. Cloud Notes App | Mini Diarium Blog" />
-  <meta property="og:description" content="An encrypted journal app keeps private writing local and encrypted before storage, while a cloud notes app optimizes for sync and service convenience. The architecture changes who controls the words." />
+  <meta property="og:title" content="Encrypted Journal vs. Cloud Notes: Why Architecture Decides Who Owns Your Writing | Mini Diarium Blog" />
+  <meta property="og:description" content="An encrypted journal app stores entries locally and encrypts before disk. Cloud apps store plaintext on servers. The architecture — not a privacy setting — decides who can read your writing." />
   <meta property="og:image" content="https://mini-diarium.com/assets/og-cover.png" />
   <meta property="og:image:type" content="image/png" />
   <meta property="og:image:width" content="1200" />
@@ -21,8 +21,8 @@
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:site" content="@MiniDiarium" />
   <meta name="twitter:creator" content="@MiniDiarium" />
-  <meta name="twitter:title" content="Encrypted Journal App vs. Cloud Notes App | Mini Diarium Blog" />
-  <meta name="twitter:description" content="An encrypted journal app keeps private writing local and encrypted before storage, while a cloud notes app optimizes for sync and service convenience. The architecture changes who controls the words." />
+  <meta name="twitter:title" content="Encrypted Journal vs. Cloud Notes: Why Architecture Decides Who Owns Your Writing | Mini Diarium Blog" />
+  <meta name="twitter:description" content="An encrypted journal app stores entries locally and encrypts before disk. Cloud apps store plaintext on servers. The architecture — not a privacy setting — decides who can read your writing." />
   <meta name="twitter:image" content="https://mini-diarium.com/assets/og-cover.png" />
   <meta property="article:published_time" content="2026-03-12T00:00:00Z" />
   <meta property="article:modified_time" content="2026-03-12T00:00:00Z" />
@@ -31,8 +31,9 @@
   <meta property="article:tag" content="encrypted journal" />
   <meta property="article:tag" content="cloud notes" />
   <meta property="article:tag" content="private diary app" />
-  <title>Encrypted Journal App vs. Cloud Notes App | Mini Diarium Blog</title>
+  <title>Encrypted Journal vs. Cloud Notes: Why Architecture Decides Who Owns Your Writing | Mini Diarium Blog</title>
   <link rel="canonical" href="https://mini-diarium.com/blog/encrypted-journal-vs-cloud-notes-app/" />
+  <link rel="alternate" hreflang="x-default" href="https://mini-diarium.com/blog/encrypted-journal-vs-cloud-notes-app/" />
   <link rel="alternate" type="application/rss+xml" title="Mini Diarium Blog" href="https://mini-diarium.com/blog/feed.xml" />
   <link rel="icon" href="/assets/logo.svg" type="image/svg+xml" />
   <link rel="icon" href="/favicon.ico" sizes="any" />
@@ -40,7 +41,7 @@
   <link rel="icon" href="/favicon-32x32.png" type="image/png" sizes="32x32" />
   <link rel="icon" href="/favicon-128x128.png" type="image/png" sizes="128x128" />
   <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
-  <link rel="stylesheet" href="/css/style.css" />
+  <link rel="stylesheet" href="/css/style.b7a59d6a.css" />
   <script type="application/ld+json">
 {
   "@context": "https://schema.org",
@@ -48,8 +49,8 @@
     {
       "@type": "BlogPosting",
       "@id": "https://mini-diarium.com/blog/encrypted-journal-vs-cloud-notes-app/#article",
-      "headline": "Encrypted Journal App vs. Cloud Notes App",
-      "description": "An encrypted journal app keeps private writing local and encrypted before storage, while a cloud notes app optimizes for sync and service convenience. The architecture changes who controls the words.",
+      "headline": "Encrypted Journal vs. Cloud Notes: Why Architecture Decides Who Owns Your Writing",
+      "description": "An encrypted journal app stores entries locally and encrypts before disk. Cloud apps store plaintext on servers. The architecture — not a privacy setting — decides who can read your writing.",
       "datePublished": "2026-03-12T00:00:00Z",
       "dateModified": "2026-03-12T00:00:00Z",
       "author": {
@@ -84,7 +85,7 @@
         {
           "@type": "ListItem",
           "position": 3,
-          "name": "Encrypted Journal App vs. Cloud Notes App",
+          "name": "Encrypted Journal vs. Cloud Notes: Why Architecture Decides Who Owns Your Writing",
           "item": "https://mini-diarium.com/blog/encrypted-journal-vs-cloud-notes-app/"
         }
       ]
@@ -106,6 +107,8 @@
       <li><a href="/#features">Features</a></li>
       <li><a href="/#security">Security</a></li>
       <li><a href="/blog/" aria-current="page">Blog</a></li>
+      <li><a href="/compare/">Compare</a></li>
+      <li><a href="/encrypted-journal/">How It Works</a></li>
       <li><a href="/docs/">Docs</a></li>
       <li><a href="/#facts">FAQ</a></li>
       <li><a href="/#platforms">Download</a></li>
@@ -138,12 +141,12 @@
       <span>/</span>
       <a href="/blog/">Blog</a>
       <span>/</span>
-      <span>Encrypted Journal App vs. Cloud Notes App</span>
+      <span>Encrypted Journal vs. Cloud Notes: Why Architecture Decides Who Owns Your Writing</span>
     </nav>
     <div class="post-header">
       <p class="hero-eyebrow">Mini Diarium blog</p>
-      <h1>Encrypted Journal App vs. Cloud Notes App</h1>
-      <p class="hero-sub">An encrypted journal app keeps private writing local and encrypted before storage, while a cloud notes app optimizes for sync and service convenience. The architecture changes who controls the words.</p>
+      <h1>Encrypted Journal vs. Cloud Notes: Why Architecture Decides Who Owns Your Writing</h1>
+      <p class="hero-sub">An encrypted journal app stores entries locally and encrypts before disk. Cloud apps store plaintext on servers. The architecture — not a privacy setting — decides who can read your writing.</p>
       <div class="post-meta">
         <span>March 12, 2026</span>
         <span>Updated March 12, 2026</span>
@@ -160,8 +163,8 @@
 
 <section class="blog-post-body">
   <div class="container blog-post-layout">
-    <article class="blog-post prose" aria-label="Encrypted Journal App vs. Cloud Notes App">
-<p class="bluf"><strong>Short answer:</strong> An encrypted journal app encrypts entries before they reach storage. A cloud notes app stores plaintext on a server and may share it with AI partners. The encryption model determines who can access your writing.</p>
+    <article class="blog-post prose" aria-label="Encrypted Journal vs. Cloud Notes: Why Architecture Decides Who Owns Your Writing">
+<p class="bluf"><strong>Short answer:</strong> An encrypted journal app encrypts entries before they reach storage. A cloud notes app stores plaintext on a server and may share it with AI partners. The architecture — not a privacy setting — determines who can access your writing.</p>
       <p>An encrypted journal app and a cloud notes app solve different problems. One starts from private writing that stays on your device. The other starts from syncing notes through a service layer and making them reachable everywhere through an account.</p>
       <p>That difference matters because a journal is usually personal by default. The longer you use it, the more expensive it becomes to move, recover, or trust the wrong architecture.</p>
       <h2 id="what-a-cloud-notes-app-optimizes-for">What a cloud notes app optimizes for</h2><p>Cloud notes apps usually optimize for:</p>
@@ -199,13 +202,13 @@
       <div class="blog-sidebar-card">
         <p class="section-label">Keep reading</p>
         <div class="related-list">
-          <a class="related-link" href="/blog/journal-app-ai-privacy/">
-            <strong>Can AI Access Your Journal? Cloud Storage and the Case for Local</strong>
-            <span>Cloud apps can change their AI policies without warning. A local-first encrypted journal gives you a structural guarantee — not a setting.</span>
+          <a class="related-link" href="/blog/private-journal-app-how-to-choose/">
+            <strong>How to Choose a Private Journal App in 2026</strong>
+            <span>A practical checklist for evaluating private journal apps: encryption model, storage location, network dependency, export formats, and what actually matters for long-term ownership.</span>
           </a>
-          <a class="related-link" href="/blog/mini-diary-alternative/">
-            <strong>Mini Diary Alternative: A Private Offline Desktop Journal</strong>
-            <span>Mini Diary was simple, local, and private. Mini Diarium is its maintained successor — with direct import from Mini Diary JSON and a stronger encryption model.</span>
+          <a class="related-link" href="/blog/what-is-an-encrypted-diary/">
+            <strong>What Is an Encrypted Diary? Why Encryption at Rest Matters</strong>
+            <span>An encrypted diary encrypts entries before they touch disk — it&#39;s an architectural guarantee, not a login screen. Here&#39;s what that means in practice.</span>
           </a>
         </div>
       </div>
@@ -240,6 +243,6 @@
     </div>
   </div>
 </footer>
-<script src="/js/main.js"></script>
+<script src="/js/main.c622f826.js"></script>
 </body>
 </html>

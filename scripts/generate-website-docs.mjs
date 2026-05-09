@@ -305,6 +305,7 @@ function buildHead({
   ${extraMeta}
   <title>${escapeHtml(pageTitle)}</title>
   <link rel="canonical" href="${escapeHtml(canonical)}" />
+  <link rel="alternate" hreflang="x-default" href="${escapeHtml(canonical)}" />
   <link rel="alternate" type="application/rss+xml" title="Mini Diarium Blog" href="${SITE_URL}/blog/feed.xml" />
   <link rel="icon" href="/assets/logo.svg" type="image/svg+xml" />
   <link rel="icon" href="/favicon.ico" sizes="any" />

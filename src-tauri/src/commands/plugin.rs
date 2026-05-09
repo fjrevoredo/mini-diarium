@@ -89,6 +89,8 @@ pub fn run_import_plugin(
 pub fn run_export_plugin(
     plugin_id: String,
     file_path: String,
+    date_from: Option<String>,
+    date_to: Option<String>,
     state: State<DiaryState>,
     registry: State<Mutex<PluginRegistry>>,
 ) -> Result<ExportResult, String> {
@@ -97,7 +99,6 @@ pub fn run_export_plugin(
         plugin_id, file_path
     );
 
-    // Fetch entries with DB lock only
     let entries = {
         let db_state = state
             .db
@@ -108,7 +109,7 @@ pub fn run_export_plugin(
             error!("{}", err);
             err.to_string()
         })?;
-        super::export::fetch_all_entries(db)?
+        super::export::fetch_entries(db, date_from.as_deref(), date_to.as_deref())?
     };
     let entries_exported = entries.len();
     debug!(

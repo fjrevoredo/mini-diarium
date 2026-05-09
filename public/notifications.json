@@ -1,6 +1,16 @@
 {
   "entries": [
     {
+      "id": "v0.4.21-release",
+      "type": "release",
+      "version": "0.4.21",
+      "title": "What's new in 0.4.21",
+      "body": "v0.4.21 adds text color and highlight formatting, export date/month filters, auto-focus on unlock, and a French locale. It fixes bundled fonts not loading in macOS/Windows release builds, moves Underline to the basic toolbar, and makes the Preferences dialog responsive.",
+      "date": "2026-05-09",
+      "linkUrl": "https://github.com/fjrevoredo/mini-diarium/releases/tag/v0.4.21",
+      "linkLabel": "Full release notes"
+    },
+    {
       "id": "v0.4.19-release",
       "type": "release",
       "version": "0.4.19",

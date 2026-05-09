@@ -1,7 +1,7 @@
 ---
-title: Private Diary App for Desktop: What Actually Matters
+title: Private Diary App for Desktop: 5 Things Cloud Apps Can't Promise
 slug: private-diary-app-for-desktop
-description: A private diary app for desktop should work offline, encrypt entries at rest, keep storage local, and make exports available when you want your writing back.
+description: A private diary app for desktop should encrypt entries at rest, work fully offline, and give you an exit path. Here's the checklist for evaluating one.
 date: 2026-03-12
 updated: 2026-03-12
 author: Francisco J. Revoredo

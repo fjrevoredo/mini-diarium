@@ -32,15 +32,17 @@
 
 ## Latest Articles
 
+- A practical checklist for evaluating private journal apps: encryption at rest, local storage, offline use, open exports, and open source. (https://mini-diarium.com/blog/private-journal-app-how-to-choose/)
+- An encrypted diary encrypts entries before they touch disk. It's an architectural guarantee, not a login screen — here's what that means. (https://mini-diarium.com/blog/what-is-an-encrypted-diary/)
 - Explains why cloud architecture, not privacy settings, determines AI access to journal entries. (https://mini-diarium.com/blog/journal-app-ai-privacy/)
-- Covers why Mini Diarium is the maintained successor to Mini Diary with stronger encryption. (https://mini-diarium.com/blog/mini-diary-alternative/)
+- Mini Diary went unmaintained. Mini Diarium is its successor with AES-256-GCM encryption and direct import from Mini Diary JSON. (https://mini-diarium.com/blog/mini-diary-alternative/)
 - A practical checklist of what to look for in a journal app without cloud dependency. (https://mini-diarium.com/blog/journal-app-without-cloud/)
 - Compares Mini Diarium to Day One for users who want local-only storage and no sync service. (https://mini-diarium.com/blog/day-one-alternative-for-private-offline-journaling/)
-- Side-by-side analysis of what separates an encrypted local journal from a cloud notes app. (https://mini-diarium.com/blog/encrypted-journal-vs-cloud-notes-app/)
-- Explains what data ownership means in practice and why it requires local storage. (https://mini-diarium.com/blog/offline-journal-that-you-own/)
-- Outlines the practical requirements for a private diary app on desktop that stays offline. (https://mini-diarium.com/blog/private-diary-app-for-desktop/)
+- An encrypted journal stores entries locally and encrypts before disk. Cloud apps store plaintext on servers — architecture decides who can read your writing. (https://mini-diarium.com/blog/encrypted-journal-vs-cloud-notes-app/)
+- Owning your journal means keeping entries local, exporting in open formats, and never depending on a service for access. (https://mini-diarium.com/blog/offline-journal-that-you-own/)
+- A private diary app for desktop should encrypt entries at rest, work fully offline, and give you an exit path — here's the checklist. (https://mini-diarium.com/blog/private-diary-app-for-desktop/)
 - Argues that local-first design is primarily about portability and long-term data control. (https://mini-diarium.com/blog/local-first-journaling-and-ownership/)
-- Addresses the specific architectural differences between offline journals and connected apps. (https://mini-diarium.com/blog/why-an-offline-journal-is-different/)
+- An offline journal can't send your entries to a server or share them with AI — that's architecture, not a setting. (https://mini-diarium.com/blog/why-an-offline-journal-is-different/)
 - The origin story of Mini Diarium — why an unmaintained predecessor led to building from scratch. (https://mini-diarium.com/blog/why-mini-diarium-exists/)
 
 ## Attribution

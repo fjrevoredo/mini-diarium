@@ -4,14 +4,14 @@
   outline: none;
 }
 
-/* Use higher specificity (.ProseMirror.journal-editor-content) so theme-controlled CSS
-   variables win over @tailwindcss/typography's .prose rules (single-class selectors
-   injected after this file). Without the double-class selector, .prose sets a fixed
-   dark-gray color that overrides --editor-body-text on dark themes. */
+/* Self-contained typography for the editor — no .prose classes needed.
+   All font-size, line-height, color, margins, and element-specific styles
+   are explicitly defined below using theme CSS custom properties. */
 .ProseMirror.journal-editor-content {
   font-size: var(--editor-font-size, 16px);
   font-family: var(--editor-font-family, inherit);
   color: var(--editor-body-text);
+  line-height: 1.5;
 }
 
 @media (min-width: 1280px) {
@@ -65,16 +65,18 @@
 
 .ProseMirror p {
   margin: 0.75rem 0;
+  line-height: 1.5;
+}
+
+.ProseMirror li {
+  margin: 0.25rem 0;
+  line-height: 1.5;
 }
 
 .ProseMirror ul,
 .ProseMirror ol {
   padding-inline-start: 1.5rem;
   margin: 0.75rem 0;
-}
-
-.ProseMirror li {
-  margin: 0.25rem 0;
 }
 
 .ProseMirror code {

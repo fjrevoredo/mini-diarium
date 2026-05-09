@@ -23,6 +23,7 @@ import {
 } from './editor-panel/useEditorEmptyCheck';
 import { useEntryLifecycle } from './editor-panel/useEntryLifecycle';
 import { useMultiEntryNav } from './editor-panel/useMultiEntryNav';
+import { hasFocusedEditorOnUnlock, setHasFocusedEditorOnUnlock } from '../../state/session';
 
 const log = createLogger('Editor');
 
@@ -87,6 +88,21 @@ export default function EditorPanel() {
 
   createEffect(() => {
     void lifecycle.loadEntriesForDate(selectedDate());
+  });
+
+  // Auto-focus the editor once after initial unlock so the user can start typing immediately.
+  // Depends only on editorInstance() — fires when TipTap is created in DiaryEditor's onMount.
+  // The hasFocusedEditorOnUnlock flag is reset on lock via resetSessionState(), so focus
+  // fires again on the next unlock. requestAnimationFrame ensures the browser has painted.
+  createEffect(() => {
+    const ed = editorInstance();
+    if (!ed || ed.isDestroyed || hasFocusedEditorOnUnlock()) return;
+    requestAnimationFrame(() => {
+      if (!hasFocusedEditorOnUnlock()) {
+        ed.commands.focus('end');
+        setHasFocusedEditorOnUnlock(true);
+      }
+    });
   });
 
   const handleContentUpdate = (newContent: string) => {

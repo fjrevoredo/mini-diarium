@@ -101,7 +101,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
         />
         <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
           <Dialog.Content
-            class="w-full max-w-3xl rounded-lg bg-primary p-8 data-[expanded]:animate-in data-[closed]:animate-out data-[closed]:fade-out-0 data-[expanded]:fade-in-0 data-[closed]:zoom-out-95 data-[expanded]:zoom-in-95"
+            class="w-full max-w-2xl sm:max-w-3xl lg:max-w-4xl rounded-lg bg-primary p-8 data-[expanded]:animate-in data-[closed]:animate-out data-[closed]:fade-out-0 data-[expanded]:fade-in-0 data-[closed]:zoom-out-95 data-[expanded]:zoom-in-95"
             style={{ 'box-shadow': 'var(--shadow-lg)' }}
             onKeyDown={handleKeyDown}
           >
@@ -227,7 +227,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
 
                 {/* Tab content — all panels are mounted while the overlay is open
                     (hidden when not active) so buffered signals survive tab switches. */}
-                <div class="flex-1 overflow-y-auto max-h-[60vh] pl-6">
+                <div class="flex-1 overflow-y-auto max-h-[55vh] sm:max-h-[65vh] md:max-h-[70vh] lg:max-h-[75vh] px-6">
                   <div hidden={activeTab() !== 'general'}>
                     <PreferencesGeneralTab isOpen={isOpenAccessor} onClose={props.onClose} />
                   </div>

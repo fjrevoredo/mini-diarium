@@ -260,12 +260,20 @@ export interface ExportResult {
   file_path: string;
 }
 
-export async function exportJson(filePath: string): Promise<ExportResult> {
-  return await invoke('export_json', { filePath });
+export interface ExportOptions {
+  dateFrom?: string;
+  dateTo?: string;
 }
 
-export async function exportMarkdown(filePath: string): Promise<ExportResult> {
-  return await invoke('export_markdown', { filePath });
+export async function exportJson(filePath: string, options?: ExportOptions): Promise<ExportResult> {
+  return await invoke('export_json', { filePath, ...options });
+}
+
+export async function exportMarkdown(
+  filePath: string,
+  options?: ExportOptions,
+): Promise<ExportResult> {
+  return await invoke('export_markdown', { filePath, ...options });
 }
 
 // Plugin commands
@@ -288,8 +296,12 @@ export async function runImportPlugin(pluginId: string, filePath: string): Promi
   return await invoke('run_import_plugin', { pluginId, filePath });
 }
 
-export async function runExportPlugin(pluginId: string, filePath: string): Promise<ExportResult> {
-  return await invoke('run_export_plugin', { pluginId, filePath });
+export async function runExportPlugin(
+  pluginId: string,
+  filePath: string,
+  options?: ExportOptions,
+): Promise<ExportResult> {
+  return await invoke('run_export_plugin', { pluginId, filePath, ...options });
 }
 
 // File utility commands

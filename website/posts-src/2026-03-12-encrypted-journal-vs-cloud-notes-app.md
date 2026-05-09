@@ -1,7 +1,7 @@
 ---
-title: Encrypted Journal App vs. Cloud Notes App
+title: Encrypted Journal vs. Cloud Notes: Why Architecture Decides Who Owns Your Writing
 slug: encrypted-journal-vs-cloud-notes-app
-description: An encrypted journal app keeps private writing local and encrypted before storage, while a cloud notes app optimizes for sync and service convenience. The architecture changes who controls the words.
+description: An encrypted journal app stores entries locally and encrypts before disk. Cloud apps store plaintext on servers. The architecture — not a privacy setting — decides who can read your writing.
 date: 2026-03-12
 updated: 2026-03-12
 author: Francisco J. Revoredo

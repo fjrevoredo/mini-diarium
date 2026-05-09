@@ -9,6 +9,7 @@ import {
   Underline,
   Strikethrough,
   Highlighter,
+  Type,
   List,
   ListOrdered,
   Quote,
@@ -44,6 +45,8 @@ export default function EditorToolbar(props: EditorToolbarProps) {
   const [isBlockquoteActive, setIsBlockquoteActive] = createSignal(false);
   const [isCodeActive, setIsCodeActive] = createSignal(false);
   const [isHighlightActive, setIsHighlightActive] = createSignal(false);
+  const [activeTextColor, setActiveTextColor] = createSignal<string | null>(null);
+  const [activeHighlightColor, setActiveHighlightColor] = createSignal<string | null>(null);
   const [activeHeadingLevel, setActiveHeadingLevel] = createSignal(0);
   const [activeAlignment, setActiveAlignment] = createSignal<
     'left' | 'center' | 'right' | 'justify'
@@ -66,6 +69,8 @@ export default function EditorToolbar(props: EditorToolbarProps) {
       setIsBlockquoteActive(editor.isActive('blockquote'));
       setIsCodeActive(editor.isActive('code'));
       setIsHighlightActive(editor.isActive('highlight'));
+      setActiveTextColor(editor.getAttributes('textStyle').color ?? null);
+      setActiveHighlightColor(editor.getAttributes('highlight').color ?? null);
       setActiveHeadingLevel(
         editor.isActive('heading', { level: 1 })
           ? 1
@@ -112,6 +117,29 @@ export default function EditorToolbar(props: EditorToolbarProps) {
 
   // eslint-disable-next-line no-unassigned-vars -- SolidJS assigns via ref={fileInputRef}; ESLint can't see the JSX assignment
   let fileInputRef!: HTMLInputElement;
+  // eslint-disable-next-line no-unassigned-vars
+  let textColorInputRef!: HTMLInputElement;
+  // eslint-disable-next-line no-unassigned-vars
+  let highlightColorInputRef!: HTMLInputElement;
+
+  const DEFAULT_TEXT_COLOR = '#000000';
+  const DEFAULT_HIGHLIGHT_COLOR = '#fef08a';
+
+  const handleTextColorChange = (color: string) => {
+    const ed = props.editor;
+    if (!ed) return;
+    if (activeTextColor() === color) {
+      ed.chain().focus().unsetColor().run();
+    } else {
+      ed.chain().focus().setColor(color).run();
+    }
+  };
+
+  const handleHighlightColorChange = (color: string) => {
+    const ed = props.editor;
+    if (!ed) return;
+    ed.chain().focus().toggleHighlight({ color }).run();
+  };
 
   return (
     <Show when={props.editor}>
@@ -182,17 +210,19 @@ export default function EditorToolbar(props: EditorToolbarProps) {
           <Italic size={18} />
         </button>
 
-        {/* Underline + Strikethrough — advanced only */}
+        {/* Underline — always */}
+        <button
+          onClick={() => props.editor?.chain().focus().toggleUnderline().run()}
+          class={btnClass(isUnderlineActive())}
+          title={t('editor.toolbar.underline')}
+          aria-label={t('editor.toolbar.underline')}
+          aria-pressed={isUnderlineActive()}
+        >
+          <Underline size={18} />
+        </button>
+
+        {/* Strikethrough, Highlight, Text Color — advanced only */}
         <Show when={preferences().advancedToolbar}>
-          <button
-            onClick={() => props.editor?.chain().focus().toggleUnderline().run()}
-            class={btnClass(isUnderlineActive())}
-            title={t('editor.toolbar.underline')}
-            aria-label={t('editor.toolbar.underline')}
-            aria-pressed={isUnderlineActive()}
-          >
-            <Underline size={18} />
-          </button>
           <button
             onClick={() => props.editor?.chain().focus().toggleStrike().run()}
             class={btnClass(isStrikeActive())}
@@ -202,15 +232,58 @@ export default function EditorToolbar(props: EditorToolbarProps) {
           >
             <Strikethrough size={18} />
           </button>
+          {/* Text Color */}
           <button
-            onClick={() => props.editor?.chain().focus().toggleHighlight().run()}
+            onClick={() => textColorInputRef?.click()}
+            class={btnClass(!!activeTextColor())}
+            title={t('editor.toolbar.textColor')}
+            aria-label={t('editor.toolbar.textColor')}
+            aria-pressed={!!activeTextColor()}
+          >
+            <span class="relative inline-flex flex-col items-center">
+              <Type size={18} />
+              <span
+                class="mt-0.5 h-0.5 w-3.5 rounded-full"
+                style={{
+                  'background-color': activeTextColor() ?? DEFAULT_TEXT_COLOR,
+                }}
+              />
+            </span>
+          </button>
+          <input
+            ref={textColorInputRef}
+            type="color"
+            class="sr-only"
+            value={activeTextColor() ?? DEFAULT_TEXT_COLOR}
+            onInput={(e) => handleTextColorChange(e.currentTarget.value)}
+            aria-hidden="true"
+          />
+          {/* Highlight Color */}
+          <button
+            onClick={() => highlightColorInputRef?.click()}
             class={btnClass(isHighlightActive())}
-            title={t('editor.toolbar.highlight')}
-            aria-label={t('editor.toolbar.highlight')}
+            title={t('editor.toolbar.highlightColor')}
+            aria-label={t('editor.toolbar.highlightColor')}
             aria-pressed={isHighlightActive()}
           >
-            <Highlighter size={18} />
+            <span class="relative inline-flex flex-col items-center">
+              <Highlighter size={18} />
+              <span
+                class="mt-0.5 h-0.5 w-3.5 rounded-full"
+                style={{
+                  'background-color': activeHighlightColor() ?? DEFAULT_HIGHLIGHT_COLOR,
+                }}
+              />
+            </span>
           </button>
+          <input
+            ref={highlightColorInputRef}
+            type="color"
+            class="sr-only"
+            value={activeHighlightColor() ?? DEFAULT_HIGHLIGHT_COLOR}
+            onInput={(e) => handleHighlightColorChange(e.currentTarget.value)}
+            aria-hidden="true"
+          />
         </Show>
 
         {/* Divider — always, between text-formatting group and list group */}

@@ -12,7 +12,13 @@ The only files you should edit manually are:
 - `posts-src/*.md` — blog post sources (the canonical input)
 - `website/index.html` — homepage (between its static sections, not the blog teaser block)
 - `encrypted-journal/index.html` — the encrypted journal guide page
+- `compare/index.html` — the comparison matrix page
+- `privacy/index.html` — the privacy policy page
 - `css/`, `js/` — styles and scripts
+
+When editing any of the static manual pages above, ensure these elements stay consistent:
+- **Navigation** — all four manual pages share the same nav structure. If you add or remove a nav item, update all four plus the generator's `buildNav()` in `scripts/generate-website-blog.mjs`.
+- **Hreflang** — every page must have `<link rel="alternate" hreflang="x-default" href="...">` pointing to its canonical URL. The generators handle this for blog and docs pages automatically.
 
 ---
 
@@ -87,13 +93,13 @@ Delete the `.md` file from `posts-src/` and run `bun run website:build-static`. 
 
 | Field | Required | Notes |
 |-------|----------|-------|
-| `title` | Yes | Used in `<title>`, OG tags, breadcrumbs, article cards |
+| `title` | Yes | Used in `<title>`, OG tags, breadcrumbs, article cards. **Max 70 chars. Target under 60 chars for SERP display.** Use specific hooks: numbers, years, questions, or concrete claims. |
 | `slug` | Yes | Stable URL segment: `mini-diarium.com/blog/<slug>/` |
-| `description` | Yes | Meta description + OG/Twitter description |
+| `description` | Yes | Meta description + OG/Twitter description. **140–160 chars. Must be click-worthy** — promise a takeaway, not a summary. The page title already summarizes; the description should make the user want to click. |
 | `date` | Yes | Publication date (`YYYY-MM-DD`) |
 | `updated` | Yes | Last modified date (`YYYY-MM-DD`); drives `sitemap.xml` lastmod |
 | `author` | Yes | Defaults available in script; currently always `Francisco J. Revoredo` |
-| `tags` | Yes | Comma-separated; at least one. Rendered as tag pills and `article:tag` meta. |
+| `tags` | Yes | Comma-separated; at least one. Rendered as tag pills and `article:tag` meta. **Each post should target a primary keyword via its title + slug + H1, with related keywords in tags.** |
 | `excerpt` | No | Short card summary; falls back to `description` |
 | `draft` | No | Set `true` to exclude from all output. Omit or set `false` to publish. |
 | `coverImage` | No | Full URL to OG image; defaults to `/assets/og-cover.png` |
@@ -103,6 +109,20 @@ Delete the `.md` file from `posts-src/` and run `bun run website:build-static`. 
 
 ## Content Strategy
 
+### Keyword Map
+
+Every blog post should target at least one specific search query. Current keyword gaps and owned topics:
+
+| Query | Current Pos | Approach |
+|-------|-------------|----------|
+| `encrypted diary` | 26.7 | "What Is an Encrypted Diary" — foundational explainer |
+| `private journal app` | 57.5 | "How to Choose a Private Journal App" — buyer's checklist |
+| `encrypted journal` | 9.4 | Owned by `/encrypted-journal/` landing page |
+| `desktop diary app` | 49.0 | Not yet targeted — opportunity |
+| `private offline journal` | 8.0 | Owned by blog `private-diary-app-for-desktop` |
+
+When writing a new post, check the [SEO audit data](../docs/seo/) to avoid cannibalizing existing pages and to identify new keyword opportunities.
+
 ### Target topics
 
 Posts should address real search intent around:
@@ -111,17 +131,78 @@ Posts should address real search intent around:
 - specific tool comparisons or migrations (Day One, Mini Diary, jrnl, etc.)
 - why architecture matters for private writing
 
+### Title and Description Rules
+
+- **Titles ≤ 70 chars, target ≤ 60 chars** for SERP truncation safety
+- **Descriptions 140–160 chars** — promise a takeaway, not a summary
+- Avoid titles that read as feature lists or specifications (e.g., "App for X, Y, and Z"). Lead with the user's concern, the benefit, or a specific claim
+- Use hooks: numbers ("5 Things"), years ("in 2026"), questions, or "Why X" / "How to X" patterns
+- The title and H1 will appear in the SERP snippet — optimize for click-through, not comprehensiveness
+- **After changing a post's title or description, update the corresponding entry in `DESCRIPTION_MAP` and `BLUF_MAP`** in `scripts/generate-website-blog.mjs` or the OG/Twitter cards and "Short answer" blurb will go stale
+
 ### Style rules
 
 - Lead with the user's problem, not the product.
 - Be concrete. Avoid unsupported superlatives and vague marketing language.
 - Every post should include a "Where Mini Diarium fits" section with factual product claims only.
-- Always link to `/encrypted-journal/` or a related post — internal linking is part of the SEO/GEO strategy.
+- Always link to `/encrypted-journal/`, `/compare/`, or a related post — internal linking is part of the SEO/GEO strategy.
 - The tone across posts should be consistent: direct, clear, no fluff.
 
 ### GEO (Generative Engine Optimization)
 
 `llms.txt` and `ai-crawlers.txt` are maintained so AI crawlers index the content accurately. The generator keeps `llms.txt` in sync automatically. When adding a new post, the `Latest Articles` section in `llms.txt` is updated by the script — no manual edits needed.
+
+---
+
+## SEO & Discoverability
+
+### Static Page Checklist
+
+When creating a new static HTML page (not generated from Markdown), ensure:
+
+1. `<title>` under 60 chars, keyword-rich but click-worthy
+2. `<meta name="description">` 140–160 chars, compelling
+3. `<link rel="canonical">` self-referencing with full `https://` URL
+4. `<link rel="alternate" hreflang="x-default">` matching the canonical
+5. OG and Twitter card meta tags (title, description, image)
+6. JSON-LD structured data (at minimum Organization + WebPage; add FAQPage or BreadcrumbList if the content supports it)
+7. Navigation matches the existing nav structure on all other pages
+8. Added to `STATIC_PAGES` array in `scripts/generate-website-blog.mjs` (ensures inclusion in `llms.txt` and sitemap)
+
+### Navigation Consistency
+
+The main navigation lives in four places that must stay in sync:
+- `website/index.html` (uses `#fragment` links since it's at root)
+- `website/encrypted-journal/index.html` (uses `/#fragment` links)
+- `website/compare/index.html` (uses `/#fragment` links)
+- `website/privacy/index.html` (uses `/#fragment` links)
+- `scripts/generate-website-blog.mjs` → `buildNav()` (uses `/#fragment` links for blog pages)
+- `scripts/generate-website-docs.mjs` → (uses `/#fragment` links for docs pages)
+
+Current nav order: Features → Security → Blog → Compare → How It Works → Docs → FAQ → Download → About
+
+### Generator Map Synchronization
+
+`scripts/generate-website-blog.mjs` contains two hardcoded maps keyed by post slug:
+- `DESCRIPTION_MAP` — used in `llms.txt` entries for AI crawler summary
+- `BLUF_MAP` — used for the "Short answer:" blurb at the top of each blog post
+
+**When changing a post's description, update both maps.** If the slug doesn't exist in these maps, the generator falls back to the front matter directly — but new posts should have explicit entries.
+
+### Monitoring Cadence
+
+- Export Google Search Console data (3-month window) to `docs/seo/` quarterly
+- Compare against the [last audit baseline](../docs/seo/): ~120 clicks/month, ~2,200 impressions/month, 9.5% CTR, avg position 5.9
+- Key metrics to watch:
+  - `/encrypted-journal/` CTR (was 0.32% — target >2%)
+  - Blog post CTR on positions 6–10 (were 0% — target >1%)
+  - US market CTR (was 3.14% — target >5%)
+  - New blog post positions as they get indexed
+- After each audit, create or update `docs/seo/seo-fix-plan.md` with prioritized actions
+
+### Production Configuration
+
+HTTP→HTTPS redirect is handled by Coolify, not the local `website/nginx.conf`. If GSC shows `http://` impressions, the Coolify edge must be configured with 301 redirects. See `docs/seo/production-config-notes.md`.
 
 ---
 
@@ -173,6 +254,10 @@ website/
 │   └── <slug>/index.html
 ├── encrypted-journal/       # Static guide page — edit directly
 │   └── index.html
+├── compare/                  # Static comparison page — edit directly
+│   └── index.html
+├── privacy/                  # Static privacy policy — edit directly
+│   └── index.html
 ├── assets/                  # Images, logo, OG cover
 ├── css/style.css            # Site stylesheet
 ├── js/main.js               # Site JS
@@ -181,5 +266,13 @@ website/
 ├── llms.txt                 # Generated — do not edit
 ├── ai-crawlers.txt          # Static AI crawler policy — edit directly if policy changes
 ├── robots.txt               # Static
-└── nginx.conf               # Nginx config for deployment
+├── nginx.conf               # Nginx config for local testing only
+│
+└── ../docs/seo/              # SEO audit data and strategy (not in website/ but referenced by it)
+    ├── Chart.csv             # GSC daily click/impression/CTR data
+    ├── Pages.csv             # GSC per-page performance
+    ├── Queries.csv           # GSC per-query performance
+    ├── Countries.csv         # GSC per-country breakdown
+    ├── faq-schema-investigation.md  # Rich Results Test outcomes
+    └── production-config-notes.md   # Coolify redirect requirements
 ```

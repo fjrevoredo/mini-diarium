@@ -1,7 +1,7 @@
 ---
-title: Mini Diary Alternative: A Private Offline Desktop Journal
+title: Mini Diary Alternative in 2026: A Maintained, Encrypted Successor
 slug: mini-diary-alternative
-description: Looking for a Mini Diary alternative? Mini Diarium is the maintained successor — same local-first philosophy, rebuilt with encryption and a modern stack, with direct import from Mini Diary JSON.
+description: Mini Diary went unmaintained. Mini Diarium is its successor — rebuilt with AES-256-GCM encryption, key file auth, and direct import from Mini Diary JSON. Same philosophy, stronger guarantees.
 date: 2026-04-05
 updated: 2026-04-05
 author: Francisco J. Revoredo

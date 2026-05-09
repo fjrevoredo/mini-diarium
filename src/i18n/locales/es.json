@@ -164,6 +164,8 @@
       "underline": "Subrayado (Ctrl/Cmd+U)",
       "strikethrough": "Tachado (Ctrl/Cmd+Shift+S)",
       "highlight": "Resaltado (Ctrl/Cmd+Shift+H)",
+      "textColor": "Color de texto",
+      "highlightColor": "Color de resaltado",
       "blockquote": "Cita (Ctrl/Cmd+Shift+B)",
       "inlineCode": "Código en línea (Ctrl/Cmd+E)",
       "bulletList": "Lista con viñetas",
@@ -263,7 +265,7 @@
       "spellcheckLabel": "Activar corrección ortográfica",
       "spellcheckHint": "Cuando está activado, el corrector ortográfico del navegador resaltará las palabras mal escritas.",
       "advancedToolbarLabel": "Mostrar barra de herramientas de formato avanzado",
-      "advancedToolbarHint": "Cuando está activado, la barra muestra controles adicionales: encabezados, subrayado, tachado, cita, código en línea y línea horizontal.",
+      "advancedToolbarHint": "Cuando está activado, la barra muestra controles adicionales: encabezados, tachado, color de texto, color de resaltado, cita, código en línea y línea horizontal.",
       "fontSizeLabel": "Tamaño de fuente del editor",
       "fontSizePxSuffix": "px",
       "fontSizeMin": "12 px",
@@ -364,7 +366,7 @@
   "export": {
     "title": "Exportar entradas",
     "closeAria": "Cerrar",
-    "description": "Exporta todas las entradas del diario a un archivo",
+    "description": "Exporta las entradas del diario a un archivo",
     "securityWarning": "Los archivos exportados contienen tus entradas del diario como texto sin formato. Guárdalos en un lugar seguro.",
     "formatLabel": "Formato",
     "failedTitle": "Exportación fallida",
@@ -373,7 +375,14 @@
     "savedTo": "Guardado en:",
     "exporting": "Exportando...",
     "startExport": "Iniciar exportación",
-    "exportFailed": "Error al exportar"
+    "exportFailed": "Error al exportar",
+    "filterModeLabel": "Filtro",
+    "filterAll": "Todas las entradas",
+    "filterDateRange": "Rango de fechas",
+    "filterMonth": "Un solo mes",
+    "dateFromLabel": "Desde",
+    "dateToLabel": "Hasta",
+    "monthLabel": "Mes"
   },
   "import": {
     "title": "Importar entradas",

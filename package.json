@@ -1,6 +1,6 @@
 {
   "name": "mini-diarium",
-  "version": "0.4.20",
+  "version": "0.4.21",
   "description": "A modern, encrypted, local-first desktop journaling application",
   "type": "module",
   "scripts": {
@@ -45,10 +45,12 @@
     "@tauri-apps/plugin-dialog": "^2.7.1",
     "@tauri-apps/plugin-opener": "^2.5.4",
     "@tiptap/core": "^3.22.5",
+    "@tiptap/extension-color": "^3.23.1",
     "@tiptap/extension-highlight": "^3.22.5",
     "@tiptap/extension-image": "^3.22.5",
     "@tiptap/extension-placeholder": "^3.22.5",
     "@tiptap/extension-text-align": "^3.22.5",
+    "@tiptap/extension-text-style": "^3.23.1",
     "@tiptap/extension-underline": "^3.22.5",
     "@tiptap/pm": "^3.22.5",
     "@tiptap/starter-kit": "^3.22.5",
