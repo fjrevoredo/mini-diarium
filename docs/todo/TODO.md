@@ -34,6 +34,7 @@ TODO entry format:
 - [ ] **TODO-0024: Fix .db file reopening from file picker after lock** — when the app is locked and the user tries to reopen the same `.db` file, the file picker shows the file as grayed out or unselectable; the user has to navigate to the directory and manually type the filename instead of simply clicking the file; fix the file picker dialog to allow re-selecting the previously opened `.db` file
 - [ ] **TODO-0026: Full-text search across diary entries** — implement a secure, performant full-text search that scans all diary entries for words or phrases without storing plaintext on disk or loading all entries into memory; the old SQLite FTS approach was removed because it exposed plaintext; design a solution that preserves encryption at rest while providing reasonable search performance
 - [ ] **TODO-0029: Optimize word-count performance** — benchmarks measure 8.75µs (plain text) and 12.05µs (TipTap HTML), both marked Critical against sub-microsecond targets; the word-count calculation runs after every auto-save; profile and eliminate the regex/allocation bottlenecks in the plain-text fast path and the HTML stripping overhead in the TipTap production path
+- [ ] **TODO-0030: Track GitHub pipeline duration in benchmarks** — add a benchmark metric that tracks the total wall-clock duration of the GitHub CI pipeline on master; surface the trend alongside existing benchmarks to detect CI slowdowns from dependency bloat, build step regressions, or runner contention
 
 ---
 
