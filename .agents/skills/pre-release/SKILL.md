@@ -1,6 +1,6 @@
 ---
 name: pre-release
-description: "Pre-release checklist for Mini Diarium. Run before tagging a release: verifies version consistency, archives completed TODOs, generates latest-changelog.md, and stamps the CHANGELOG date. Use when preparing a feature branch for merge and tagging."
+description: "Pre-release checklist for Mini Diarium. Run before tagging a release: verifies version consistency, archives completed TODOs, generates latest-changelog.md, optionally adds a release notification, and stamps the CHANGELOG date. Use when preparing a feature branch for merge and tagging."
 compatibility: Designed for Claude Code. Requires git.
 ---
 
@@ -94,7 +94,50 @@ Read `docs/todo/TODO.md`. Find all top-level `- [x]` items **and** their indente
 
 ---
 
-## Step 6 — Stamp CHANGELOG date
+## Step 6 — Add release notification (ask user)
+
+Before stamping the CHANGELOG, ask the user whether they want to add a release notification to `public/notifications.json`. Use the question tool:
+
+- **Question:** "Add a release notification for vX.Y.Z to public/notifications.json?"
+- **Options:**
+  - "Yes, add notification" — proceed to add the entry
+  - "No, skip" — skip to Step 7
+
+**If the user chooses "Yes, add notification":**
+
+1. Read `public/notifications.json` and parse it.
+2. Read `latest-changelog.md` and extract the **compact summary** (the 1–2 sentence line immediately after the `## What's Changed` heading).
+3. Build the new notification entry using the template in `assets/notification.template.json` (see the `<template>` block for the exact structure). Replace all placeholders:
+
+```json
+{
+  "id": "vX.Y.Z-release",
+  "type": "release",
+  "version": "X.Y.Z",
+  "title": "What's new in X.Y.Z",
+  "body": "<compact summary from latest-changelog.md>",
+  "date": "YYYY-MM-DD",
+  "linkUrl": "https://github.com/fjrevoredo/mini-diarium/releases/tag/vX.Y.Z",
+  "linkLabel": "Full release notes"
+}
+```
+
+- Use `X.Y.Z` (without the `v` prefix in the `version` field, but **with** the `v` prefix in `id` and `linkUrl`).
+- `date` uses today's date in `YYYY-MM-DD` format.
+- `body` should be the exact compact summary text (no quotes or extra wrapping).
+
+4. **Prepend** the new entry to the `entries` array (newest first, matching the existing order).
+5. Write the updated JSON back to `public/notifications.json` (use 2-space indentation, matching the existing format — a trailing newline at end of file is expected).
+
+**If the user chooses "No, skip":** do nothing and proceed to Step 7.
+
+**Edge cases:**
+- If `public/notifications.json` is missing or cannot be parsed: note the error and skip (do not block the release).
+- If an entry with the same `id` already exists: warn the user and skip (do not create a duplicate).
+
+---
+
+## Step 7 — Stamp CHANGELOG date
 
 In `CHANGELOG.md`, replace the `[Unreleased]` token in the first version heading:
 
@@ -112,12 +155,13 @@ After all steps complete, print a summary including:
 - Which version files were checked (all five pass)
 - Whether TODO items were archived (count, or "none found")
 - Confirmation that `latest-changelog.md` was written
+- Whether a release notification was added to `public/notifications.json` (or "user skipped" / "not added")
 - Confirmation that CHANGELOG was date-stamped
 
 End the report with the exact `git add` command listing only the files that were actually modified:
 
 ```
-git add CHANGELOG.md latest-changelog.md <include docs/todo/TODO.md and docs/todo/TODO_ARCHIVE.md only if TODO items were archived>
+git add CHANGELOG.md latest-changelog.md <include public/notifications.json only if a notification was added> <include docs/todo/TODO.md and docs/todo/TODO_ARCHIVE.md only if TODO items were archived>
 ```
 
 Also remind the user to:
@@ -135,7 +179,10 @@ Also remind the user to:
 | Any version file mismatch | STOP — report all, suggest bump-version |
 | No checked TODO items | Note it, continue |
 | `latest-changelog.md` already exists | Overwrite silently |
+| Notification with same id already exists | Warn, skip adding |
+| `public/notifications.json` missing/unparseable | Note error, skip adding |
 | CHANGELOG section missing/empty | Omit that section heading from output |
+| User skips release notification | Note it, continue |
 
 ## Format Reference
 
@@ -144,5 +191,6 @@ Also remind the user to:
 | CHANGELOG date stamp | `dd-mm-YYYY` | `29-03-2026` |
 | TODO archive date | `(YYYY-MM-DD)` | `(2026-03-29)` |
 | Archive date position | between `**title**` and ` — ` | `**Title** (2026-03-29) — desc` |
+| Notification date | `YYYY-MM-DD` | `2026-04-27` |
 | latest-changelog.md | no HTML comments | all placeholders replaced with real content |
 | Empty CHANGELOG section | omit heading entirely | no `### Fixed` if no Fixed entries |

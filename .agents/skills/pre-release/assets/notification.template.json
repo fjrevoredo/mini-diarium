@@ -1,0 +1,20 @@
+<!--
+  Release notification template for public/notifications.json.
+  This template lives alongside the pre-release skill and is used in Step 6.
+  Replace X.Y.Z, YYYY-MM-DD, and the compact summary with real values from the release branch.
+  The template itself matches the existing notifications.json schema exactly.
+  Do not commit this template file as-is — it is a reference, not application data.
+-->
+
+<template>
+{
+  "id": "vX.Y.Z-release",
+  "type": "release",
+  "version": "X.Y.Z",
+  "title": "What's new in X.Y.Z",
+  "body": "REPLACE BEFORE TAGGING — compact summary from latest-changelog.md",
+  "date": "YYYY-MM-DD",
+  "linkUrl": "https://github.com/fjrevoredo/mini-diarium/releases/tag/vX.Y.Z",
+  "linkLabel": "Full release notes"
+}
+</template>
