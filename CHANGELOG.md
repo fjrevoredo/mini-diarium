@@ -30,7 +30,7 @@ Template:
 
 # Versions
 
-## [0.4.21] - Unreleased
+## [0.4.21] - 09-05-2026
 
 ### Added
 - **Text color and highlight color formatting**: the advanced formatting toolbar now includes two color picker buttons — one for text color and one for highlight (background) color. Both use a native color picker that lets you choose any color. The text color button shows the active color as a small bar beneath the `Type` icon; the highlight button shows the active highlight color beneath the `Highlighter` icon. Old default `<mark>` highlights (pre-existing entries without an explicit color) continue to render as colored text for backward compatibility. New `textColor` and `highlightColor` i18n keys added to all five locales (en, es, fr, de, it).
