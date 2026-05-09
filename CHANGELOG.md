@@ -38,7 +38,7 @@ Template:
 - **French (`fr`) locale**: full 387-key French translation with proper month/day abbreviations and plural forms.
 
 ### Fixed
-- **Cursor height too tall after Shift+Enter on macOS (#118)**: the text caret appeared disproportionately tall on lines after a soft line break (Shift+Enter) when a custom editor font was selected, due to missing explicit `line-height` on the ProseMirror editor root — causing macOS CoreText to fall back to font-internal metrics for caret measurement. Added `line-height: 1.5` to `.ProseMirror.journal-editor-content` in `src/styles/editor.css`.
+- **Cursor height too tall after Shift+Enter on macOS (#118)**: the text caret appeared disproportionately tall on lines after a soft line break (Shift+Enter), caused by missing explicit `line-height` on ProseMirror block elements — allowing macOS WebKit to fall back to font-internal metrics or the typography preset's `1.75` for caret measurement. Added `line-height: 1.5` to `.ProseMirror.journal-editor-content` (root), `.ProseMirror p`, and `.ProseMirror li` in `src/styles/editor.css`.
 - **Bundled fonts not working in macOS/Windows release builds**: the editor font family selector was stuck on "System Default" because `installed_font_dir()` hardcoded platform paths without accounting for Tauri v2's `..` → `_up_` path translation during bundling. Replaced `installed_font_dir()` and `font_directory()` with a single `resolve_font_dir()` that uses `app.path().resolve("../fonts", BaseDirectory::Resource)` for platform-agnostic resource resolution. Added 20 backend tests covering font discovery, MIME detection, and family/stem name mapping.
 
 ### Changed
