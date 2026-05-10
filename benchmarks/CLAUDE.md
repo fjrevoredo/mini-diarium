@@ -60,7 +60,7 @@ The custom report page is a single static HTML file served from the `gh-pages` b
 
 ### `THRESHOLDS` constant
 
-All threshold values are stored in nanoseconds inside `index.html` as a `THRESHOLDS` object keyed by benchmark name. Only the 18 Rust benchmarks that appear in `data.js` have thresholds. The `warning` level is not stored — it is derived as `target * 1.5` at render time.
+All threshold values are stored in nanoseconds inside `index.html` as a `THRESHOLDS` object keyed by benchmark name. All 19 benchmarks (18 Rust + the synthetic `ci_pipeline_duration`) that appear in `data.js` have thresholds. The `warning` level is not stored — it is derived as `target * 1.5` at render time.
 
 When adding a new benchmark:
 1. Add it to the `SECTIONS` array (for grouping).
@@ -88,6 +88,8 @@ A synthetic benchmark named `ci_pipeline_duration` is computed by the workflow i
 It measures total wall-clock time from workflow start to the end of the benchmark job, covering lint, test, build, and e2e stages.
 The value is appended to `bench-output.txt` in bencher format (`<name> <value> nanoseconds`) so it integrates with the existing `github-action-benchmark` storage and appears in `data.js`.
 On the dashboard it is rendered in the "CI Pipeline" section with a target threshold of 600 s and critical at 1 200 s.
+
+The duration step uses `if: always()` so it runs even after earlier steps fail. However, the subsequent "Store benchmark results" step does **not** use `if: always()` — so a `ci_pipeline_duration` data point is only pushed when the full Rust bench job succeeds. Failed runs do not record a duration metric.
 
 ## Gotchas
 
