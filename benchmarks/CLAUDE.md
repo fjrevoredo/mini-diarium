@@ -45,6 +45,7 @@ src/lib/
 | `count_words_html_500w` | `word_count_bench.rs` | Word count on realistic TipTap HTML |
 | `parseMarkdownToHtml short` | `markdown.bench.ts` | marked + DOMPurify on ~100-word Markdown |
 | `parseMarkdownToHtml long` | `markdown.bench.ts` | marked + DOMPurify on ~1000-word Markdown |
+| `ci_pipeline_duration` | _workflow-generated_ | Total wall-clock CI pipeline duration on master |
 
 ## Benchmark Dashboard (`index.html`)
 
@@ -80,6 +81,13 @@ Alert threshold: **200%** — posts a PR comment if a benchmark regresses to 2×
 After each run, the workflow also copies `benchmarks/index.html` to gh-pages so the custom report reflects the latest data.
 
 `contents: write` permission is required on the workflow to push results to `gh-pages`.
+
+### CI Pipeline Duration Metric
+
+A synthetic benchmark named `ci_pipeline_duration` is computed by the workflow itself (not by Cargo/bencher).
+It measures total wall-clock time from workflow start to the end of the benchmark job, covering lint, test, build, and e2e stages.
+The value is appended to `bench-output.txt` in bencher format (`<name> <value> nanoseconds`) so it integrates with the existing `github-action-benchmark` storage and appears in `data.js`.
+On the dashboard it is rendered in the "CI Pipeline" section with a target threshold of 600 s and critical at 1 200 s.
 
 ## Gotchas
 

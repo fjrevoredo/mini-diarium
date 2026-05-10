@@ -35,6 +35,43 @@ jobs:
         working-directory: src-tauri
         run: cargo bench --benches -- --output-format bencher | tee ../bench-output.txt
 
+      - name: Compute and publish CI pipeline duration
+        if: always()
+        run: |
+          # Extract started_at from the workflow run event payload.
+          # $GITHUB_EVENT_PATH is set by GitHub Actions and is a JSON file
+          # whose top-level object has a "workflow_run" key when the event
+          # is "workflow_run"; otherwise we fall back to the run_start
+          # timestamp that github-action-benchmark already provides.
+          STARTED=$(python3 -c "
+          import json, sys, os
+          evt = os.getenv('GITHUB_EVENT_PATH')
+          if evt:
+              with open(evt) as f:
+                  data = json.load(f)
+              run = data.get('workflow_run', {})
+              t = run.get('run_started_at') or run.get('created_at')
+              if t:
+                  print(t)
+                  sys.exit(0)
+          # Fallback: use the job started timestamp from the env
+          print(os.getenv('GITHUB_RUN_STARTED_AT', ''))
+          ")
+
+          if [ -n "$STARTED" ]; then
+            # Compute wall-clock seconds since epoch → duration
+            END=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+            START_EPOCH=$(date -u -d "$STARTED" +"%s" 2>/dev/null || date -u -j -f "%Y-%m-%dT%H:%M:%SZ" "$STARTED" +"%s" 2>/dev/null)
+            END_EPOCH=$(date -u -d "$END" +"%s" 2>/dev/null || date -u -j -f "%Y-%m-%dT%H:%M:%SZ" "$END" +"%s" 2>/dev/null)
+            DURATION_SEC=$(echo "$END_EPOCH - $START_EPOCH" | bc)
+            # Append to bench output in bencher format (nanoseconds for dashboard compatibility)
+            DURATION_NS=$(echo "$DURATION_SEC * 1000000000" | bc | cut -d. -f1)
+            echo "ci_pipeline_duration $DURATION_NS nanoseconds" >> "$GITHUB_WORKSPACE/bench-output.txt"
+            echo "CI pipeline duration: ${DURATION_SEC}s (${DURATION_NS}ns)"
+          else
+            echo "::warning::Could not determine pipeline start time; skipping ci_pipeline_duration metric."
+          fi
+
       - name: Store benchmark results
         uses: benchmark-action/github-action-benchmark@v1
         with:
