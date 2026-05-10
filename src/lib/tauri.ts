@@ -17,8 +17,8 @@ export async function journalExists(): Promise<boolean> {
   return await invoke('diary_exists');
 }
 
-export async function checkJournalPath(dir: string): Promise<boolean> {
-  return invoke<boolean>('check_diary_path', { dir });
+export async function checkJournalPath(path: string): Promise<boolean> {
+  return invoke<boolean>('check_diary_path', { path });
 }
 
 export async function isJournalUnlocked(): Promise<boolean> {
@@ -137,6 +137,7 @@ export interface JournalConfig {
   path: string;
   auto_protected: boolean; // true if journal uses local key (no password)
   require_all_auth: boolean;
+  db_filename: string; // e.g. "diary.db"; always populated
 }
 
 export async function listJournals(): Promise<JournalConfig[]> {
@@ -147,8 +148,12 @@ export async function getActiveJournalId(): Promise<string | null> {
   return await invoke('get_active_journal_id');
 }
 
-export async function addJournal(name: string, path: string): Promise<JournalConfig> {
-  return await invoke('add_journal', { name, path });
+export async function addJournal(
+  name: string,
+  path: string,
+  dbFilename?: string,
+): Promise<JournalConfig> {
+  return await invoke('add_journal', { name, path, dbFilename });
 }
 
 export async function removeJournal(id: string): Promise<void> {

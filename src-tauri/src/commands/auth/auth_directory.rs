@@ -10,6 +10,7 @@ use super::DiaryState;
 fn change_diary_directory_inner(
     new_dir_path: PathBuf,
     current_db_path: PathBuf,
+    db_filename: &str,
     db_path_slot: &Mutex<PathBuf>,
     backups_dir_slot: &Mutex<PathBuf>,
     app_data_dir: &std::path::Path,
@@ -18,7 +19,11 @@ fn change_diary_directory_inner(
         return Err("Selected directory does not exist".to_string());
     }
 
-    let new_db_path = new_dir_path.join("diary.db");
+    let new_db_path = new_dir_path.join(db_filename);
+    let stem = std::path::Path::new(db_filename)
+        .file_stem()
+        .and_then(|s| s.to_str())
+        .unwrap_or("diary");
 
     // Same-directory no-op check using canonicalize when possible
     let cur_dir = current_db_path
@@ -56,7 +61,7 @@ fn change_diary_directory_inner(
         .map_err(|_| "State lock poisoned".to_string())? = new_db_path;
     *backups_dir_slot
         .lock()
-        .map_err(|_| "State lock poisoned".to_string())? = new_dir_path.join("backups");
+        .map_err(|_| "State lock poisoned".to_string())? = new_dir_path.join("backups").join(stem);
 
     Ok(())
 }
@@ -86,9 +91,15 @@ pub fn change_diary_directory(
         .lock()
         .map_err(|_| "State lock poisoned".to_string())?
         .clone();
+    let db_filename = current_db_path
+        .file_name()
+        .and_then(|s| s.to_str())
+        .unwrap_or("diary.db")
+        .to_string();
     change_diary_directory_inner(
         PathBuf::from(&new_dir),
         current_db_path,
+        &db_filename,
         &state.db_path,
         &state.backups_dir,
         &state.app_data_dir,
@@ -133,6 +144,7 @@ mod tests {
         let result = change_diary_directory_inner(
             cur_dir.clone(),
             db_path.clone(),
+            "diary.db",
             &db_path_mutex,
             &backups_mutex,
             &cfg_dir,
@@ -164,6 +176,7 @@ mod tests {
         let result = change_diary_directory_inner(
             dst_abs.clone(),
             src_db.clone(),
+            "diary.db",
             &db_path_mutex,
             &backups_mutex,
             &cfg_dir,
@@ -200,6 +213,7 @@ mod tests {
         let result = change_diary_directory_inner(
             dst_abs,
             src_dir.join("diary.db"),
+            "diary.db",
             &db_path_mutex,
             &backups_mutex,
             &cfg_dir,
@@ -228,6 +242,7 @@ mod tests {
         let result = change_diary_directory_inner(
             dst_abs.clone(),
             PathBuf::from("test_chdir_nodiary_src/diary.db"),
+            "diary.db",
             &db_path_mutex,
             &backups_mutex,
             &cfg_dir,
@@ -266,6 +281,7 @@ mod tests {
         let result = change_diary_directory_inner(
             dst_abs,
             PathBuf::from("test_chdir_blocked_nonexistent/diary.db"),
+            "diary.db",
             &db_path_mutex,
             &backups_mutex,
             &cfg_dir,

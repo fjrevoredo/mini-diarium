@@ -30,6 +30,11 @@ Template:
 
 # Versions
 
+## [0.4.22] - [Unreleased]
+
+### Changed
+- **Open Existing Journal uses a file picker**: instead of picking a folder and requiring a `diary.db` file inside it, the "Open Existing" flow now opens a file dialog filtered to `.db` files so the user selects the database file directly. The DB filename (no longer hardcoded to `diary.db`) is stored in `JournalConfig.db_filename`, and backups are namespaced under `backups/{stem}/` so co-located journals don't share a backup pool. Updated `selectFolderTitle`, `noJournalFound`, and `chooseFolderTitle` to file-oriented text in all five locales.
+
 ## [0.4.21] - 09-05-2026
 
 ### Added

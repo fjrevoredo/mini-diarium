@@ -213,12 +213,12 @@ pub fn lock_diary(state: State<DiaryState>, app: AppHandle<Wry>) -> Result<(), S
     Ok(())
 }
 
-/// Stateless check — returns true if `{dir}/diary.db` exists on disk.
-/// Used by the frontend to validate a picked folder before adding it as a journal.
+/// Stateless check — returns true if the given file path exists on disk.
+/// Used by the frontend to validate a picked `.db` file before adding it as a journal.
 #[tauri::command]
-pub fn check_diary_path(dir: String) -> Result<bool, String> {
-    let path = std::path::PathBuf::from(&dir);
-    Ok(path.join("diary.db").exists())
+pub fn check_diary_path(path: String) -> Result<bool, String> {
+    let path = std::path::PathBuf::from(&path);
+    Ok(path.is_file())
 }
 
 /// Checks if a diary file exists
@@ -562,8 +562,14 @@ mod tests {
     #[test]
     fn test_check_diary_path() {
         let tmp = std::env::temp_dir();
-        // Temp dir exists but has no diary.db -- expect false
+        // Temp dir exists but is a directory, not a file -- expect false
         assert!(!super::check_diary_path(tmp.to_str().unwrap().to_string()).unwrap());
+
+        // Create a temp file -- expect true
+        let file_path = tmp.join("check_diary_test.db");
+        std::fs::write(&file_path, b"test").unwrap();
+        assert!(super::check_diary_path(file_path.to_str().unwrap().to_string()).unwrap());
+        let _ = std::fs::remove_file(&file_path);
     }
 
     #[test]

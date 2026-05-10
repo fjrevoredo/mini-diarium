@@ -1,5 +1,5 @@
 import { createSignal, For, Show } from 'solid-js';
-import { confirm, open as openDirDialog } from '@tauri-apps/plugin-dialog';
+import { confirm, open } from '@tauri-apps/plugin-dialog';
 import {
   journals,
   activeJournalId,
@@ -22,6 +22,7 @@ export default function JournalPicker() {
   const [addMode, setAddMode] = createSignal<AddMode>(null);
   const [newName, setNewName] = createSignal('');
   const [newDir, setNewDir] = createSignal('');
+  const [dbFilename, setDbFilename] = createSignal<string | undefined>(undefined);
   const [renamingId, setRenamingId] = createSignal<string | null>(null);
   const [renameValue, setRenameValue] = createSignal('');
 
@@ -76,7 +77,7 @@ export default function JournalPicker() {
 
   const handleBrowseCreate = async () => {
     setLocalError(null);
-    const selected = await openDirDialog({
+    const selected = await open({
       directory: true,
       multiple: false,
       title: t('auth.picker.chooseFolderTitle'),
@@ -118,9 +119,10 @@ export default function JournalPicker() {
 
   const handleBrowseOpen = async () => {
     setLocalError(null);
-    const selected = await openDirDialog({
-      directory: true,
+    const selected = await open({
+      filters: [{ name: 'Database Files', extensions: ['db'] }],
       multiple: false,
+      directory: false,
       title: t('auth.picker.selectFolderTitle'),
     });
     if (!selected || typeof selected !== 'string') return;
@@ -132,13 +134,12 @@ export default function JournalPicker() {
       return;
     }
 
-    const folderName =
-      selected
-        .replace(/[/\\]+$/, '')
-        .split(/[/\\]/)
-        .pop() || 'My Journal';
-    setNewDir(selected);
-    setNewName(folderName);
+    const parentDir = selected.replace(/[/\\][^/\\]*$/, '');
+    const filename = selected.split(/[/\\]/).pop() || 'diary.db';
+    const stemName = filename.replace(/\.db$/i, '') || 'My Journal';
+    setNewDir(parentDir);
+    setDbFilename(filename);
+    if (!newName()) setNewName(stemName);
     setAddMode('open');
   };
 
@@ -156,7 +157,7 @@ export default function JournalPicker() {
     setLocalError(null);
     setIsWorking(true);
     try {
-      const journal = await addJournal(name, dir);
+      const journal = await addJournal(name, dir, dbFilename());
       await switchJournal(journal.id);
       await refreshAuthState();
     } catch (err) {
@@ -170,6 +171,7 @@ export default function JournalPicker() {
     setAddMode(null);
     setNewName('');
     setNewDir('');
+    setDbFilename(undefined);
     setLocalError(null);
   };
 
@@ -368,7 +370,7 @@ export default function JournalPicker() {
                     onClick={() => handleBrowseOpen()}
                     class="rounded-md border border-primary px-3 py-1.5 text-xs font-medium text-secondary hover:bg-hover focus:outline-none"
                   >
-                    {t('common.browseFolderDotDotDot')}
+                    {t('common.browseDotDotDot')}
                   </button>
                   <Show when={newDir()}>
                     <p class="mt-1 text-xs text-tertiary font-mono break-all">{newDir()}</p>

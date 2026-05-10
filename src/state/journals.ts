@@ -24,8 +24,12 @@ export async function switchJournal(id: string): Promise<void> {
   }
 }
 
-export async function addJournal(name: string, path: string): Promise<tauri.JournalConfig> {
-  const journal = await tauri.addJournal(name, path);
+export async function addJournal(
+  name: string,
+  path: string,
+  dbFilename?: string,
+): Promise<tauri.JournalConfig> {
+  const journal = await tauri.addJournal(name, path, dbFilename);
   await loadJournals();
   return journal;
 }

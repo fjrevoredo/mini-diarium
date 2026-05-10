@@ -2,10 +2,11 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { screen, fireEvent } from '@solidjs/testing-library';
 import { renderWithI18n } from '../../test/i18n-test-utils';
 import { createSignal } from 'solid-js';
+import type { JournalConfig } from '../../lib/tauri';
 
 // ── Mocks ──────────────────────────────────────────────────────────────────────
 
-const [journals, setJournals] = createSignal<{ id: string; name: string; path: string }[]>([]);
+const [journals, setJournals] = createSignal<JournalConfig[]>([]);
 const [activeJournalId] = createSignal<string | null>(null);
 const [authError] = createSignal<string | null>(null);
 
@@ -51,7 +52,14 @@ describe('JournalPicker component', () => {
     vi.clearAllMocks();
     setJournals([]);
     mocks.switchJournal.mockResolvedValue(undefined);
-    mocks.addJournal.mockResolvedValue({ id: 'new', name: 'New', path: '/tmp/new' });
+    mocks.addJournal.mockResolvedValue({
+      id: 'new',
+      name: 'New',
+      path: '/tmp/new',
+      auto_protected: false,
+      require_all_auth: false,
+      db_filename: 'diary.db',
+    });
     mocks.removeJournal.mockResolvedValue(undefined);
     mocks.renameJournal.mockResolvedValue(undefined);
     mocks.refreshAuthState.mockResolvedValue(undefined);
@@ -69,7 +77,16 @@ describe('JournalPicker component', () => {
   });
 
   it('renders journal list when journals are configured', () => {
-    setJournals([{ id: 'j1', name: 'My Diary', path: '/home/user/diary' }]);
+    setJournals([
+      {
+        id: 'j1',
+        name: 'My Diary',
+        path: '/home/user/diary',
+        auto_protected: false,
+        require_all_auth: false,
+        db_filename: 'diary.db',
+      },
+    ]);
     renderWithI18n(() => <JournalPicker />);
 
     expect(screen.getByText('My Diary')).toBeInTheDocument();
@@ -78,7 +95,16 @@ describe('JournalPicker component', () => {
   });
 
   it('calls switchJournal and refreshAuthState when Open is clicked', async () => {
-    setJournals([{ id: 'j1', name: 'Work Journal', path: '/tmp/work' }]);
+    setJournals([
+      {
+        id: 'j1',
+        name: 'Work Journal',
+        path: '/tmp/work',
+        auto_protected: false,
+        require_all_auth: false,
+        db_filename: 'diary.db',
+      },
+    ]);
     renderWithI18n(() => <JournalPicker />);
 
     const openBtn = screen.getByTestId('journal-open-button');
@@ -90,12 +116,12 @@ describe('JournalPicker component', () => {
     });
   });
 
-  it('shows error when Open Existing is clicked and no diary.db is found', async () => {
+  it('shows error when Open Existing is clicked and the selected file is not valid', async () => {
     mocks.checkJournalPath.mockResolvedValue(false);
 
-    // Override plugin-dialog mock to return a folder path
+    // Override plugin-dialog mock to return a file path
     const dialogMock = await import('@tauri-apps/plugin-dialog');
-    vi.mocked(dialogMock.open).mockResolvedValueOnce('/some/folder');
+    vi.mocked(dialogMock.open).mockResolvedValueOnce('/some/folder/myjournal.db');
 
     renderWithI18n(() => <JournalPicker />);
 
@@ -103,12 +129,12 @@ describe('JournalPicker component', () => {
     fireEvent.click(openExistingBtn);
 
     await vi.waitFor(() => {
-      expect(mocks.checkJournalPath).toHaveBeenCalledWith('/some/folder');
+      expect(mocks.checkJournalPath).toHaveBeenCalledWith('/some/folder/myjournal.db');
     });
 
     // After failed check, addMode becomes 'open' with an error shown
     await vi.waitFor(() => {
-      expect(screen.getByText(/no journal found/i)).toBeInTheDocument();
+      expect(screen.getByText(/not a valid diary database/i)).toBeInTheDocument();
     });
   });
 });

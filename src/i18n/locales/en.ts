@@ -114,12 +114,11 @@ const en = {
       confirmRemoveMessage:
         'Remove this journal from the list? The journal file will not be deleted.',
       confirmRemoveTitle: 'Remove Journal',
-      noJournalFound:
-        'No journal found in the selected folder. Make sure the folder contains a diary.db file.',
+      noJournalFound: 'The selected file is not a valid diary database.',
       nameRequired: 'Journal name is required',
       folderRequired: 'Please choose a folder first',
-      chooseFolderTitle: 'Choose Journal Folder',
-      selectFolderTitle: 'Select Journal Folder',
+      chooseFolderTitle: 'Choose Location',
+      selectFolderTitle: 'Select Journal File',
       creating: 'Creating...',
       opening: 'Opening...',
     },
