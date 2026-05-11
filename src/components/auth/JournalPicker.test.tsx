@@ -137,4 +137,38 @@ describe('JournalPicker component', () => {
       expect(screen.getByText(/not a valid diary database/i)).toBeInTheDocument();
     });
   });
+
+  it('applies scroll constraint to journal list when more than 5 journals exist', () => {
+    const manyJournals: JournalConfig[] = Array.from({ length: 6 }, (_, i) => ({
+      id: `j${i}`,
+      name: `Journal ${i}`,
+      path: `/tmp/journal-${i}`,
+      auto_protected: false,
+      require_all_auth: false,
+      db_filename: 'diary.db',
+    }));
+    setJournals(manyJournals);
+    renderWithI18n(() => <JournalPicker />);
+
+    const list = screen.getByRole('list');
+    expect(list).toHaveClass('max-h-96');
+    expect(list).toHaveClass('overflow-y-auto');
+  });
+
+  it('applies scroll constraint to journal list even with 5 or fewer journals', () => {
+    const fewJournals: JournalConfig[] = Array.from({ length: 3 }, (_, i) => ({
+      id: `j${i}`,
+      name: `Journal ${i}`,
+      path: `/tmp/journal-${i}`,
+      auto_protected: false,
+      require_all_auth: false,
+      db_filename: 'diary.db',
+    }));
+    setJournals(fewJournals);
+    renderWithI18n(() => <JournalPicker />);
+
+    const list = screen.getByRole('list');
+    expect(list).toHaveClass('max-h-96');
+    expect(list).toHaveClass('overflow-y-auto');
+  });
 });

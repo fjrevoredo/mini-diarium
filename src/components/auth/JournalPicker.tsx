@@ -202,7 +202,10 @@ export default function JournalPicker() {
             <h2 class="mb-3 text-sm font-semibold text-secondary uppercase tracking-wide">
               {t('auth.picker.yourJournals')}
             </h2>
-            <ul aria-label={t('auth.picker.yourJournalsAria')} class="space-y-2 mb-6">
+            <ul
+              aria-label={t('auth.picker.yourJournalsAria')}
+              class="space-y-2 mb-6 max-h-96 overflow-y-auto"
+            >
               <For each={journals()}>
                 {(journal) => (
                   <li class="rounded-md border border-primary bg-tertiary p-3">
