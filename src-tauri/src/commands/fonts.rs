@@ -16,6 +16,22 @@ fn resolve_font_dir(app_handle: &AppHandle) -> Result<PathBuf, String> {
         }
     }
 
+    // Dev mode: env var takes priority so new fonts appear immediately without rebuild.
+    // Production: env var is unset, falls through to bundled resources.
+    if let Ok(dir) = std::env::var("MINI_DIARIUM_FONTS_DIR") {
+        let dev_path = PathBuf::from(&dir);
+        log::debug!(
+            "[fonts] using env override: {} (exists: {})",
+            dev_path.display(),
+            dev_path.is_dir()
+        );
+        if dev_path.is_dir() {
+            return Ok(dev_path);
+        }
+    } else {
+        log::debug!("[fonts] MINI_DIARIUM_FONTS_DIR not set");
+    }
+
     let resolved = app_handle
         .path()
         .resolve("../fonts", BaseDirectory::Resource)
@@ -27,20 +43,6 @@ fn resolve_font_dir(app_handle: &AppHandle) -> Result<PathBuf, String> {
     );
     if resolved.is_dir() {
         return Ok(resolved);
-    }
-
-    if let Ok(dir) = std::env::var("MINI_DIARIUM_FONTS_DIR") {
-        let dev_path = PathBuf::from(&dir);
-        log::debug!(
-            "[fonts] trying env override: {} (exists: {})",
-            dev_path.display(),
-            dev_path.is_dir()
-        );
-        if dev_path.is_dir() {
-            return Ok(dev_path);
-        }
-    } else {
-        log::debug!("[fonts] MINI_DIARIUM_FONTS_DIR not set");
     }
 
     log::debug!(
@@ -229,6 +231,18 @@ mod tests {
     fn family_from_stem_hyphenated_base() {
         // Filename stems with internal hyphens: "Fira-Mono-Regular" -> "Fira Mono"
         assert_eq!(family_from_stem("Fira-Mono-Regular"), "Fira Mono");
+    }
+
+    #[test]
+    fn family_from_stem_amiri() {
+        assert_eq!(family_from_stem("Amiri-Regular"), "Amiri");
+        assert_eq!(family_from_stem("Amiri-Bold"), "Amiri");
+    }
+
+    #[test]
+    fn family_from_stem_tajawal() {
+        assert_eq!(family_from_stem("Tajawal-Regular"), "Tajawal");
+        assert_eq!(family_from_stem("Tajawal-Bold"), "Tajawal");
     }
 
     // --- stem_from_family ---

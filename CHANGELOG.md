@@ -32,6 +32,9 @@ Template:
 
 ## [0.4.22] - [Unreleased]
 
+### Added
+- **Amiri and Tajawal bundled fonts**: two new open-source font families with Arabic script support are now bundled — Amiri (classic Arabic serif) and Tajawal (modern Arabic sans-serif), each with Regular and Bold weights. Both are SIL Open Font License 1.1. The editor font family dropdown now includes these alongside the existing 5 font families.
+
 ### Changed
 - **Journal picker scroll limit**: the journal list in the picker is now capped at ~5 visible items with a vertical scrollbar appearing for additional journals, preventing the picker card from growing beyond the viewport. The "Your Journals" heading stays fixed above the scrollable list.
 - **Open Existing Journal uses a file picker**: instead of picking a folder and requiring a `diary.db` file inside it, the "Open Existing" flow now opens a file dialog filtered to `.db` files so the user selects the database file directly. The DB filename (no longer hardcoded to `diary.db`) is stored in `JournalConfig.db_filename`, and backups are namespaced under `backups/{stem}/` so co-located journals don't share a backup pool. Updated `selectFolderTitle`, `noJournalFound`, and `chooseFolderTitle` to file-oriented text in all five locales.
