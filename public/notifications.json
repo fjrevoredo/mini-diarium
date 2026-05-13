@@ -1,6 +1,16 @@
 {
   "entries": [
     {
+      "id": "v0.4.22-release",
+      "type": "release",
+      "version": "0.4.22",
+      "title": "What's new in 0.4.22",
+      "body": "Mini Diarium v0.4.22 bundles two new open-source Arabic-capable fonts (Amiri and Tajawal), replaces the folder picker with a direct `.db` file selector for opening existing journals, caps the journal picker list to 5 visible items with scrolling, and optimizes word-count calculation to sub-microsecond performance on both plain text and TipTap HTML paths.",
+      "date": "2026-05-13",
+      "linkUrl": "https://github.com/fjrevoredo/mini-diarium/releases/tag/v0.4.22",
+      "linkLabel": "Full release notes"
+    },
+    {
       "id": "v0.4.21-release",
       "type": "release",
       "version": "0.4.21",

@@ -30,7 +30,7 @@ Template:
 
 # Versions
 
-## [0.4.22] - [Unreleased]
+## [0.4.22] - 13-05-2026
 
 ### Added
 - **Amiri and Tajawal bundled fonts**: two new open-source font families with Arabic script support are now bundled — Amiri (classic Arabic serif) and Tajawal (modern Arabic sans-serif), each with Regular and Bold weights. Both are SIL Open Font License 1.1. The editor font family dropdown now includes these alongside the existing 5 font families.
