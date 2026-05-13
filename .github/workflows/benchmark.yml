@@ -48,7 +48,7 @@ jobs:
           END_EPOCH=$(date -u +"%s")
           DURATION_SEC=$(echo "$END_EPOCH - $START_EPOCH" | bc)
           DURATION_NS=$(echo "$DURATION_SEC * 1000000000" | bc | cut -d. -f1)
-          echo "ci_pipeline_duration $DURATION_NS nanoseconds" >> bench-output.txt
+          printf "test ci_pipeline_duration ... bench: %s ns/iter (+/- 0)\n" "$DURATION_NS" >> bench-output.txt
           echo "CI pipeline duration: ${DURATION_SEC}s (${DURATION_NS}ns)"
 
       - name: Store benchmark results
