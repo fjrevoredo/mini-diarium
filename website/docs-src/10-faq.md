@@ -3,7 +3,7 @@ title: FAQ
 slug: faq
 description: Frequently asked questions about Mini Diarium, encryption, data privacy, and troubleshooting.
 order: 11
-updated: 2026-04-19
+updated: 2026-05-09
 tags: FAQ, troubleshooting, encryption, privacy, data
 ---
 
@@ -46,6 +46,10 @@ A key file is a private key stored as a file on disk (or a USB drive, or a passw
 ## What happens if I delete or lose my key file?
 
 If you have another authentication method (a password, or another key file) still registered, you can still unlock your journal. If the key file was your only method, the journal is permanently inaccessible. Always register at least two authentication methods if you rely on key files.
+
+## Is there a mobile app?
+
+Not currently. Mini Diarium is a desktop app for Windows, macOS, and Linux. A mobile version is in our long-term vision if there is enough demand, but it is a significant development and maintenance effort. We are currently focused on keeping the desktop experience at the highest quality standards.
 
 ## Where can I report a security issue?
 

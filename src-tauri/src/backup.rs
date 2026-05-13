@@ -95,7 +95,7 @@ mod tests {
     fn test_create_backup() {
         let temp_dir = std::env::temp_dir();
         let diary_path = temp_dir.join("test_diary_backup.db");
-        let backups_dir = temp_dir.join("test_backups_create");
+        let backups_dir = temp_dir.join("test_backups_create").join("diary");
 
         // Clean up any existing files
         let _ = fs::remove_file(&diary_path);
@@ -134,7 +134,7 @@ mod tests {
     #[test]
     fn test_rotate_backups_under_limit() {
         let temp_dir = std::env::temp_dir();
-        let backups_dir = temp_dir.join("test_backups_under");
+        let backups_dir = temp_dir.join("test_backups_under").join("diary");
 
         // Clean up
         let _ = fs::remove_dir_all(&backups_dir);
@@ -163,7 +163,7 @@ mod tests {
     #[test]
     fn test_rotate_backups_over_limit() {
         let temp_dir = std::env::temp_dir();
-        let backups_dir = temp_dir.join("test_backups_over");
+        let backups_dir = temp_dir.join("test_backups_over").join("diary");
 
         // Clean up
         let _ = fs::remove_dir_all(&backups_dir);
@@ -201,7 +201,7 @@ mod tests {
     fn test_backup_and_rotate() {
         let temp_dir = std::env::temp_dir();
         let diary_path = temp_dir.join("test_diary_rotate.db");
-        let backups_dir = temp_dir.join("test_backups_full");
+        let backups_dir = temp_dir.join("test_backups_full").join("diary");
 
         // Clean up
         let _ = fs::remove_file(&diary_path);
@@ -241,7 +241,7 @@ mod tests {
     #[test]
     fn test_rotate_ignores_non_backup_files() {
         let temp_dir = std::env::temp_dir();
-        let backups_dir = temp_dir.join("test_backups_ignore");
+        let backups_dir = temp_dir.join("test_backups_ignore").join("diary");
 
         // Clean up
         let _ = fs::remove_dir_all(&backups_dir);
@@ -279,7 +279,7 @@ mod tests {
     fn test_backup_and_rotate_repeated_unlocks() {
         let temp_dir = std::env::temp_dir();
         let diary_path = temp_dir.join("test_diary_repeated.db");
-        let backups_dir = temp_dir.join("test_backups_repeated");
+        let backups_dir = temp_dir.join("test_backups_repeated").join("diary");
 
         // Clean up
         let _ = fs::remove_file(&diary_path);

@@ -1,6 +1,6 @@
 {
   "name": "mini-diarium",
-  "version": "0.4.21",
+  "version": "0.4.22",
   "description": "A modern, encrypted, local-first desktop journaling application",
   "type": "module",
   "scripts": {
@@ -31,7 +31,8 @@
     "test:e2e:local": "node scripts/e2e-local.js",
     "validate:locales": "npx tsx scripts/validate-locales.ts",
     "sync-languages": "npx tsx scripts/sync-languages.ts",
-    "bench": "vitest bench"
+    "bench": "vitest bench",
+    "sync-skills": "node scripts/sync-skills.js"
   },
   "license": "MIT",
   "puppeteer": {

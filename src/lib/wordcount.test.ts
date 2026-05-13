@@ -36,6 +36,10 @@ describe('countWordsInHtml', () => {
     const html = '<p>before</p><img src="data:image/png;base64,abc123==" /><p>after</p>';
     expect(countWordsInHtml(html)).toBe(2);
   });
+
+  it('returns 0 for HTML tags only', () => {
+    expect(countWordsInHtml('<p></p><div></div><br />')).toBe(0);
+  });
 });
 
 describe('countWordsFromText', () => {
@@ -53,5 +57,14 @@ describe('countWordsFromText', () => {
 
   it('normalises multiple spaces', () => {
     expect(countWordsFromText('one   two   three')).toBe(3);
+  });
+
+  it('returns 0 for whitespace-only string', () => {
+    expect(countWordsFromText('   \t\n  ')).toBe(0);
+  });
+
+  it('handles unicode text', () => {
+    expect(countWordsFromText('café résumé')).toBe(2);
+    expect(countWordsFromText('你好 世界')).toBe(2);
   });
 });

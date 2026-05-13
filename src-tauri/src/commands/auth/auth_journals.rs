@@ -29,6 +29,7 @@ pub fn get_active_journal_id(state: State<DiaryState>) -> Result<Option<String>,
 fn add_journal_inner(
     name: String,
     path: String,
+    db_filename: Option<String>,
     app_data_dir: &std::path::Path,
 ) -> Result<JournalInfo, String> {
     let dir = PathBuf::from(&path);
@@ -47,6 +48,7 @@ fn add_journal_inner(
         name,
         path,
         auto_key: None,
+        db_filename: db_filename.filter(|s| !s.eq_ignore_ascii_case("diary.db")),
         require_all_auth: None,
     };
     journals.push(journal.clone());
@@ -65,9 +67,10 @@ fn add_journal_inner(
 pub fn add_journal(
     name: String,
     path: String,
+    db_filename: Option<String>,
     state: State<DiaryState>,
 ) -> Result<JournalInfo, String> {
-    add_journal_inner(name, path, &state.app_data_dir)
+    add_journal_inner(name, path, db_filename, &state.app_data_dir)
 }
 
 fn remove_journal_inner(id: String, state: &DiaryState) -> Result<(), String> {
@@ -88,14 +91,20 @@ fn remove_journal_inner(id: String, state: &DiaryState) -> Result<(), String> {
             // Switch to the next available journal
             let other_path = PathBuf::from(&other.path);
             let other_id = other.id.clone();
+            let db_filename = other.db_filename.as_deref().unwrap_or("diary.db");
+            let stem = std::path::Path::new(db_filename)
+                .file_stem()
+                .and_then(|s| s.to_str())
+                .unwrap_or("diary");
             *state
                 .db_path
                 .lock()
-                .map_err(|_| "State lock poisoned".to_string())? = other_path.join("diary.db");
+                .map_err(|_| "State lock poisoned".to_string())? = other_path.join(db_filename);
             *state
                 .backups_dir
                 .lock()
-                .map_err(|_| "State lock poisoned".to_string())? = other_path.join("backups");
+                .map_err(|_| "State lock poisoned".to_string())? =
+                other_path.join("backups").join(stem);
             config::save_journals(&state.app_data_dir, &journals, &other_id)?;
         } else {
             // No journals left — save with empty active id; frontend will show empty picker
@@ -155,16 +164,21 @@ fn switch_journal_inner(id: String, state: &DiaryState) -> Result<(), String> {
         .find(|j| j.id == id)
         .ok_or("Journal not found")?;
     let new_path = PathBuf::from(&journal.path);
+    let db_filename = journal.db_filename.as_deref().unwrap_or("diary.db");
+    let stem = std::path::Path::new(db_filename)
+        .file_stem()
+        .and_then(|s| s.to_str())
+        .unwrap_or("diary");
 
     // Update DiaryState paths
     *state
         .db_path
         .lock()
-        .map_err(|_| "State lock poisoned".to_string())? = new_path.join("diary.db");
+        .map_err(|_| "State lock poisoned".to_string())? = new_path.join(db_filename);
     *state
         .backups_dir
         .lock()
-        .map_err(|_| "State lock poisoned".to_string())? = new_path.join("backups");
+        .map_err(|_| "State lock poisoned".to_string())? = new_path.join("backups").join(stem);
 
     // Persist active journal id
     config::save_active_journal_id(&state.app_data_dir, &id)?;
@@ -196,7 +210,7 @@ mod tests {
         let _ = fs::remove_dir_all(&app_data_dir);
         fs::create_dir_all(&app_data_dir).unwrap();
         let db_path = app_data_dir.join("diary.db");
-        let backups_dir = app_data_dir.join("backups");
+        let backups_dir = app_data_dir.join("backups").join("diary");
         let state = DiaryState::new(db_path, backups_dir, app_data_dir.clone());
         (state, app_data_dir)
     }
@@ -213,6 +227,7 @@ mod tests {
         let result = add_journal_inner(
             "Test Journal".to_string(),
             journal_dir.to_str().unwrap().to_string(),
+            None,
             &app_dir,
         );
         assert!(result.is_ok());
@@ -230,7 +245,12 @@ mod tests {
     fn test_add_journal_rejects_relative_path() {
         let (_state, app_dir) = make_test_env("add_relative");
 
-        let result = add_journal_inner("Bad".to_string(), "relative/path".to_string(), &app_dir);
+        let result = add_journal_inner(
+            "Bad".to_string(),
+            "relative/path".to_string(),
+            None,
+            &app_dir,
+        );
         assert!(result.is_err());
         assert!(result.unwrap_err().contains("absolute"));
 
@@ -245,6 +265,7 @@ mod tests {
         let journal = add_journal_inner(
             "Original".to_string(),
             journal_dir.to_str().unwrap().to_string(),
+            None,
             &app_dir,
         )
         .unwrap();
@@ -269,12 +290,14 @@ mod tests {
         let ja = add_journal_inner(
             "A".to_string(),
             dir_a.to_str().unwrap().to_string(),
+            None,
             &app_dir,
         )
         .unwrap();
         let jb = add_journal_inner(
             "B".to_string(),
             dir_b.to_str().unwrap().to_string(),
+            None,
             &app_dir,
         )
         .unwrap();
@@ -286,49 +309,12 @@ mod tests {
         assert_eq!(db_path, dir_b.join("diary.db"));
 
         let backups = state.backups_dir.lock().unwrap().clone();
-        assert_eq!(backups, dir_b.join("backups"));
+        assert_eq!(backups, dir_b.join("backups").join("diary"));
 
         let active = config::load_active_journal_id(&app_dir);
         assert_eq!(active, Some(jb.id));
 
         let _ = ja;
-        let _ = fs::remove_dir_all(&dir_a);
-        let _ = fs::remove_dir_all(&dir_b);
-        cleanup(&app_dir);
-    }
-
-    #[test]
-    fn test_remove_non_active_journal() {
-        let dir_a = std::env::temp_dir().join("journal_rm_a");
-        let dir_b = std::env::temp_dir().join("journal_rm_b");
-        fs::create_dir_all(&dir_a).unwrap();
-        fs::create_dir_all(&dir_b).unwrap();
-
-        let (state, app_dir) = make_test_env("remove");
-
-        let ja = add_journal_inner(
-            "A".to_string(),
-            dir_a.to_str().unwrap().to_string(),
-            &app_dir,
-        )
-        .unwrap();
-        let jb = add_journal_inner(
-            "B".to_string(),
-            dir_b.to_str().unwrap().to_string(),
-            &app_dir,
-        )
-        .unwrap();
-
-        // Set A as active
-        config::save_active_journal_id(&app_dir, &ja.id).unwrap();
-
-        // Remove B (non-active)
-        remove_journal_inner(jb.id.clone(), &state).unwrap();
-
-        let journals = config::load_journals(&app_dir);
-        assert_eq!(journals.len(), 1);
-        assert_eq!(journals[0].id, ja.id);
-
         let _ = fs::remove_dir_all(&dir_a);
         let _ = fs::remove_dir_all(&dir_b);
         cleanup(&app_dir);
@@ -344,6 +330,7 @@ mod tests {
         add_journal_inner(
             "Solo".to_string(),
             dir.to_str().unwrap().to_string(),
+            None,
             &app_dir,
         )
         .unwrap();

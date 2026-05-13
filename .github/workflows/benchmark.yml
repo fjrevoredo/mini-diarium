@@ -35,6 +35,22 @@ jobs:
         working-directory: src-tauri
         run: cargo bench --benches -- --output-format bencher | tee ../bench-output.txt
 
+      - name: Compute and publish CI pipeline duration
+        if: always()
+        env:
+          STARTED_AT: ${{ github.run_started_at }}
+        run: |
+          if [ -z "$STARTED_AT" ]; then
+            echo "::warning::Could not determine pipeline start time; skipping ci_pipeline_duration metric."
+            exit 0
+          fi
+          START_EPOCH=$(date -u -d "$STARTED_AT" +"%s")
+          END_EPOCH=$(date -u +"%s")
+          DURATION_SEC=$(echo "$END_EPOCH - $START_EPOCH" | bc)
+          DURATION_NS=$(echo "$DURATION_SEC * 1000000000" | bc | cut -d. -f1)
+          echo "ci_pipeline_duration $DURATION_NS nanoseconds" >> bench-output.txt
+          echo "CI pipeline duration: ${DURATION_SEC}s (${DURATION_NS}ns)"
+
       - name: Store benchmark results
         uses: benchmark-action/github-action-benchmark@v1
         with:

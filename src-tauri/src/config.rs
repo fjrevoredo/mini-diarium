@@ -10,6 +10,8 @@ pub struct JournalConfig {
     pub path: String,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub auto_key: Option<String>, // hex-encoded 32-byte random key; None for password journals
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub db_filename: Option<String>, // e.g. "diary.db"; defaults to "diary.db" when absent
     // TODO: deprecated — migrated to db_settings (v6). Keep for the migration window in unlock_diary.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub require_all_auth: Option<bool>,
@@ -23,6 +25,7 @@ pub struct JournalInfo {
     pub path: String,
     pub auto_protected: bool, // true if auto_key is set; key itself is never sent
     pub require_all_auth: bool,
+    pub db_filename: String, // always populated, defaults to "diary.db" when absent in config
 }
 
 impl From<&JournalConfig> for JournalInfo {
@@ -33,6 +36,10 @@ impl From<&JournalConfig> for JournalInfo {
             path: j.path.clone(),
             auto_protected: j.auto_key.is_some(),
             require_all_auth: j.require_all_auth.unwrap_or(false),
+            db_filename: j
+                .db_filename
+                .clone()
+                .unwrap_or_else(|| "diary.db".to_string()),
         }
     }
 }
@@ -111,6 +118,7 @@ pub fn load_journals(app_data_dir: &Path) -> Vec<JournalConfig> {
                 name: "My Journal".to_string(),
                 path: dir.clone(),
                 auto_key: None,
+                db_filename: None,
                 require_all_auth: None,
             };
             let journals = vec![journal];
@@ -326,6 +334,7 @@ mod tests {
                     .unwrap()
                     .to_string(),
                 auto_key: None,
+                db_filename: None,
                 require_all_auth: None,
             },
             JournalConfig {
@@ -337,6 +346,7 @@ mod tests {
                     .unwrap()
                     .to_string(),
                 auto_key: None,
+                db_filename: None,
                 require_all_auth: None,
             },
         ];
@@ -370,6 +380,7 @@ mod tests {
                     .unwrap()
                     .to_string(),
                 auto_key: None,
+                db_filename: None,
                 require_all_auth: None,
             },
             JournalConfig {
@@ -381,6 +392,7 @@ mod tests {
                     .unwrap()
                     .to_string(),
                 auto_key: None,
+                db_filename: None,
                 require_all_auth: None,
             },
         ];
@@ -413,6 +425,7 @@ mod tests {
                 .unwrap()
                 .to_string(),
             auto_key: None,
+            db_filename: None,
             require_all_auth: None,
         }];
         save_journals(&dir, &journals, "testid1234567890").unwrap();
@@ -436,6 +449,7 @@ mod tests {
                 .unwrap()
                 .to_string(),
             auto_key: None,
+            db_filename: None,
             require_all_auth: None,
         }];
         save_journals(&dir, &journals, "testid1234567890").unwrap();
@@ -465,6 +479,7 @@ mod tests {
                 .unwrap()
                 .to_string(),
             auto_key: Some("deadbeef".to_string()),
+            db_filename: None,
             require_all_auth: None,
         }];
         save_journals(&dir, &journals, "testid1234567890").unwrap();

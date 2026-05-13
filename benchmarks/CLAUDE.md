@@ -45,6 +45,7 @@ src/lib/
 | `count_words_html_500w` | `word_count_bench.rs` | Word count on realistic TipTap HTML |
 | `parseMarkdownToHtml short` | `markdown.bench.ts` | marked + DOMPurify on ~100-word Markdown |
 | `parseMarkdownToHtml long` | `markdown.bench.ts` | marked + DOMPurify on ~1000-word Markdown |
+| `ci_pipeline_duration` | _workflow-generated_ | Total wall-clock CI pipeline duration on master |
 
 ## Benchmark Dashboard (`index.html`)
 
@@ -59,7 +60,7 @@ The custom report page is a single static HTML file served from the `gh-pages` b
 
 ### `THRESHOLDS` constant
 
-All threshold values are stored in nanoseconds inside `index.html` as a `THRESHOLDS` object keyed by benchmark name. Only the 18 Rust benchmarks that appear in `data.js` have thresholds. The `warning` level is not stored — it is derived as `target * 1.5` at render time.
+All threshold values are stored in nanoseconds inside `index.html` as a `THRESHOLDS` object keyed by benchmark name. All 19 benchmarks (18 Rust + the synthetic `ci_pipeline_duration`) that appear in `data.js` have thresholds. The `warning` level is not stored — it is derived as `target * 1.5` at render time.
 
 When adding a new benchmark:
 1. Add it to the `SECTIONS` array (for grouping).
@@ -80,6 +81,15 @@ Alert threshold: **200%** — posts a PR comment if a benchmark regresses to 2×
 After each run, the workflow also copies `benchmarks/index.html` to gh-pages so the custom report reflects the latest data.
 
 `contents: write` permission is required on the workflow to push results to `gh-pages`.
+
+### CI Pipeline Duration Metric
+
+A synthetic benchmark named `ci_pipeline_duration` is computed by the workflow itself (not by Cargo/bencher).
+It measures total wall-clock time from workflow start to the end of the benchmark job, covering lint, test, build, and e2e stages.
+The value is appended to `bench-output.txt` in bencher format (`<name> <value> nanoseconds`) so it integrates with the existing `github-action-benchmark` storage and appears in `data.js`.
+On the dashboard it is rendered in the "CI Pipeline" section with a target threshold of 600 s and critical at 1 200 s.
+
+The duration step uses `if: always()` so it runs even after earlier steps fail. However, the subsequent "Store benchmark results" step does **not** use `if: always()` — so a `ci_pipeline_duration` data point is only pushed when the full Rust bench job succeeds. Failed runs do not record a duration metric.
 
 ## Gotchas
 

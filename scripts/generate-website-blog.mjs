@@ -683,8 +683,11 @@ function updateHomePage(posts) {
 
 function writeSitemap(posts) {
   const latestHomeUpdate = posts[0]?.updated ?? "2026-03-06";
+  const homeLastmod = fileLastModified(INDEX_PATH) > latestHomeUpdate
+    ? fileLastModified(INDEX_PATH)
+    : latestHomeUpdate;
   const urls = [
-    { loc: `${SITE_URL}/`, lastmod: latestHomeUpdate },
+    { loc: `${SITE_URL}/`, lastmod: homeLastmod },
     ...STATIC_PAGES.map((page) => ({
       loc: page.url,
       lastmod: fileLastModified(page.filePath),

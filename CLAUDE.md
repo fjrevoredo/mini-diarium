@@ -181,7 +181,9 @@ bun run bench                           # Frontend benchmarks
 
 2. **JSON export format (breaking change in v0.5.0)**: JSON export now outputs an array under the `"entries"` key with each entry including its `id` field, instead of a date-keyed object. Example: `{ "entries": [{ "id": 1, "date": "2024-01-15", "title": "...", "text": "...", "word_count": 0, "date_created": "...", "date_updated": "..." }] }`.
 
-3. **Auto-lock fires from two independent paths** — any change to the lock/unlock flow must account for both:
+3. **Skill sync requires plugin exclusion list**: Project skills live in `.agents/skills/` and are linked into `.claude/skills/` via `bun run sync-skills`. Skills already provided by a Claude Code plugin must be listed in `PLUGIN_SKILLS` inside `scripts/sync-skills.js` — otherwise duplicates appear and trigger ambiguity arises. **When installing a new plugin that ships skills, check its skill names and add them to that list.**
+
+4. **Auto-lock fires from two independent paths** — any change to the lock/unlock flow must account for both:
    - **Frontend idle timer** (`App.tsx`): tracks user activity events (mousemove, keydown, click, scroll, touchstart). After `autoLockTimeout` seconds of inactivity, calls `lockJournal()`. Controlled by `autoLockEnabled` + `autoLockTimeout` preferences.
    - **Backend OS events** (`screen_lock.rs`): listens for OS-level session lock, logoff, or system suspend (Windows: `WM_WTSSESSION_CHANGE`, `WM_POWERBROADCAST`; macOS: screen-sleep and `com.apple.screenIsLocked` notifications). Immediately calls `auto_lock_diary_if_unlocked()` and emits `'journal-locked'` event. Fires even when the app is in the background.
 
