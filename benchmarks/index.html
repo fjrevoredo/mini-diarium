@@ -337,6 +337,16 @@ const SECTIONS = [
     ],
   },
   {
+    id: "ci",
+    title: "CI Pipeline",
+    badge: "GitHub Actions",
+    description:
+      "Total wall-clock duration of the GitHub CI pipeline on master. " +
+      "Tracks all jobs (lint, test, build, e2e) end-to-end. " +
+      "Regressions here may indicate dependency bloat, build step changes, or runner contention.",
+    benchmarks: ["ci_pipeline_duration"],
+  },
+  {
     id: "wordcount",
     title: "Word Count",
     badge: "text",
@@ -471,10 +481,19 @@ const META = {
       "Slightly slower than plain due to HTML stripping. " +
       "If the gap widens significantly, check for regex backtracking.",
   },
+  "ci_pipeline_duration": {
+    title: "CI Pipeline Duration",
+    description:
+      "Total wall-clock time of the full GitHub Actions pipeline on master (lint → test → build → e2e). " +
+      "Measured from the workflow run start timestamp to the end of the benchmark job.",
+    interpretation:
+      "Track the trend over time. Spikes may come from dependency installs, runner contention, " +
+      "or added build steps. Absolute values depend on GitHub-hosted runner performance.",
+  },
 };
 
 // ─── Thresholds (all values in nanoseconds) ──────────────────────────────────
-// Covers the 18 Rust benchmarks rendered on the dashboard (SECTIONS array).
+// Covers the 18 Rust benchmarks plus the synthetic ci_pipeline_duration metric.
 // Frontend Vitest benchmarks (parseMarkdownToHtml) are NOT run in CI and do not
 // appear in data.js.
 const THRESHOLDS = {
@@ -496,6 +515,8 @@ const THRESHOLDS = {
   "db_get_all_entries/500":         { target: 50_000_000,  critical: 100_000_000 },
   "count_words_plain_500w":         { target: 1_000,       critical: 2_000 },
   "count_words_html_500w":          { target: 5_000,       critical: 10_000 },
+  // CI pipeline duration is measured in seconds but stored as nanoseconds for dashboard compatibility.
+  "ci_pipeline_duration":          { target: 600_000_000_000, critical: 1_200_000_000_000 },
 };
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
