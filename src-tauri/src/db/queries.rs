@@ -379,28 +379,39 @@ pub fn get_entries_in_range(
     Ok(entries)
 }
 
-/// Strips HTML tags from `input`, replacing each closing `>` with a space so
-/// that adjacent words separated only by a tag are not concatenated.
-fn strip_html_tags(input: &str) -> String {
-    let mut out = String::with_capacity(input.len());
+/// Counts words in text, skipping HTML tag content.
+/// Single-pass state machine: tracks tag state and word boundaries without allocating.
+pub fn count_words(text: &str) -> i32 {
+    let mut count = 0;
     let mut in_tag = false;
-    for ch in input.chars() {
-        match ch {
-            '<' => in_tag = true,
-            '>' => {
-                in_tag = false;
-                out.push(' ');
+    let mut in_word = false;
+
+    for ch in text.chars() {
+        if ch == '<' {
+            in_tag = true;
+            if in_word {
+                count += 1;
+                in_word = false;
             }
-            _ if !in_tag => out.push(ch),
-            _ => {}
+        } else if ch == '>' {
+            in_tag = false;
+        } else if !in_tag {
+            if ch.is_whitespace() {
+                if in_word {
+                    count += 1;
+                    in_word = false;
+                }
+            } else {
+                in_word = true;
+            }
         }
     }
-    out
-}
 
-/// Counts words in text, stripping HTML tags first.
-pub fn count_words(text: &str) -> i32 {
-    strip_html_tags(text).split_whitespace().count() as i32
+    if in_word {
+        count += 1;
+    }
+
+    count
 }
 
 // ─── DB settings queries ──────────────────────────────────────────────────────
@@ -805,6 +816,24 @@ mod tests {
         assert_eq!(count_words("<p>One <strong>two</strong> three</p>"), 3);
         assert_eq!(count_words("<p></p>"), 0);
         assert_eq!(count_words("plain text"), 2);
+    }
+
+    #[test]
+    fn test_count_words_base64_image() {
+        let img = "<img src=\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==\" />";
+        assert_eq!(count_words(img), 0);
+        let mixed = "<p>before</p><img src=\"data:image/png;base64,abc123==\" /><p>after</p>";
+        assert_eq!(count_words(mixed), 2);
+    }
+
+    #[test]
+    fn test_count_words_unicode() {
+        assert_eq!(count_words("café résumé"), 2);
+        assert_eq!(count_words("你好 世界"), 2);
+        assert_eq!(
+            count_words("word\u{00A0}with\u{2003}unicode\u{3000}spaces"),
+            4
+        );
     }
 
     #[test]

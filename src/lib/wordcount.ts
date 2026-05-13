@@ -5,11 +5,7 @@
  * (including all attributes) with a space, so base64 blobs are eliminated entirely.
  */
 export function countWordsInHtml(html: string): number {
-  return html
-    .replace(/<[^>]*>/g, ' ') // strip tags, leave spaces
-    .trim()
-    .split(/\s+/)
-    .filter(Boolean).length;
+  return (html.replace(/<[^>]*>/g, ' ').match(/\S+/g) || []).length;
 }
 
 /**
@@ -17,5 +13,5 @@ export function countWordsInHtml(html: string): number {
  * Used with TipTap's `editor.getText()` output.
  */
 export function countWordsFromText(text: string): number {
-  return text.trim().split(/\s+/).filter(Boolean).length;
+  return (text.trim().match(/\S+/g) || []).length;
 }
