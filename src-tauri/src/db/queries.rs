@@ -459,7 +459,7 @@ pub fn create_tag(db: &DatabaseConnection, name: &str) -> Result<Tag, String> {
     })
 }
 
-/// Returns all tags, decrypted and sorted alphabetically by name.
+/// Returns all tags, decrypted and sorted alphabetically by name (case-insensitive).
 pub fn get_all_tags(db: &DatabaseConnection) -> Result<Vec<Tag>, String> {
     let mut stmt = db
         .conn()
@@ -489,7 +489,7 @@ pub fn get_all_tags(db: &DatabaseConnection) -> Result<Vec<Tag>, String> {
         })
         .collect();
 
-    tags.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
+    tags.sort_by_key(|a| a.name.to_lowercase());
     Ok(tags)
 }
 
@@ -582,7 +582,7 @@ pub fn get_tags_for_entry(db: &DatabaseConnection, entry_id: i64) -> Result<Vec<
         })
         .collect();
 
-    tags.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
+    tags.sort_by_key(|a| a.name.to_lowercase());
     Ok(tags)
 }
 
