@@ -215,6 +215,13 @@ jobs:
 
       - uses: dtolnay/rust-toolchain@stable
 
+      - name: Fix cargo PATH (macOS arm64 workaround)
+        if: runner.os == 'macOS'
+        run: |
+          # On macOS arm64 runners, Homebrew's rustup shims can shadow the real cargo.
+          # Use rustup to resolve the actual binary and prepend its directory to PATH.
+          echo "$(dirname "$(rustup which cargo)")" >> "$GITHUB_PATH"
+
       - name: Cache Rust artifacts
         uses: Swatinem/rust-cache@v2
         with:
