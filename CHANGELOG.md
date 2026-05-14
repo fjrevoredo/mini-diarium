@@ -30,6 +30,11 @@ Template:
 
 # Versions
 
+## [0.5.0] - Unreleased
+
+### Changed
+- **Per-item toolbar configuration**: the all-or-nothing **Show advanced formatting toolbar** toggle in Preferences → Writing has been replaced with a fully configurable **Toolbar items** list. Each of the 15 formatting controls (Headings, Underline, Strikethrough, Text color, Highlight color, Blockquote, Inline code, Bullet list, Numbered list, Horizontal rule, Insert image, Import Markdown, Insert timestamp, Text direction, Alignment controls) can be individually enabled or disabled, and reordered with ↑/↓ arrows. **Select all** and **Select none** buttons enable quick bulk actions. Bold and Italic remain fixed at the start of the toolbar and are not configurable. Existing users are migrated automatically: `advancedToolbar: false` keeps Underline, Bullet list, and Numbered list enabled (matching the previous basic toolbar); `advancedToolbar: true` enables all 15 items.
+
 ## [0.4.22] - 13-05-2026
 
 ### Added

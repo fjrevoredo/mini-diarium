@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { fireEvent } from '@solidjs/testing-library';
 import { renderWithI18n } from '../../test/i18n-test-utils';
 import EditorToolbar from './EditorToolbar';
-import { setPreferences } from '../../state/preferences';
+import { setPreferences, DEFAULT_TOOLBAR_ITEMS } from '../../state/preferences';
 import type { Editor } from '@tiptap/core';
 
 // ---------------------------------------------------------------------------
@@ -47,9 +47,9 @@ function makeEditorMock(
 // ---------------------------------------------------------------------------
 
 beforeEach(() => {
-  // Reset to default preferences before each test
+  // Reset to default preferences before each test (all items disabled by default in tests)
   setPreferences({
-    advancedToolbar: false,
+    toolbarItems: DEFAULT_TOOLBAR_ITEMS.map((i) => ({ ...i, enabled: false })),
     allowFutureEntries: false,
     firstDayOfWeek: null,
     hideTitles: false,
@@ -63,20 +63,27 @@ beforeEach(() => {
 });
 
 // ---------------------------------------------------------------------------
-// Underline button — always visible
+// Underline button — visibility
 // ---------------------------------------------------------------------------
 
 describe('EditorToolbar underline button — visibility', () => {
-  it('shows underline button when advancedToolbar is false', () => {
-    setPreferences({ advancedToolbar: false });
+  it('shows underline button when underline item is enabled', () => {
+    setPreferences({
+      toolbarItems: DEFAULT_TOOLBAR_ITEMS.map((i) => ({
+        ...i,
+        enabled: i.key === 'underline',
+      })),
+    });
     const { container } = renderWithI18n(() => <EditorToolbar editor={makeEditorMock()} />);
     expect(container.querySelector('[aria-label="Underline (Ctrl/Cmd+U)"]')).not.toBeNull();
   });
 
-  it('shows underline button when advancedToolbar is true', () => {
-    setPreferences({ advancedToolbar: true });
+  it('hides underline button when underline item is disabled', () => {
+    setPreferences({
+      toolbarItems: DEFAULT_TOOLBAR_ITEMS.map((i) => ({ ...i, enabled: false })),
+    });
     const { container } = renderWithI18n(() => <EditorToolbar editor={makeEditorMock()} />);
-    expect(container.querySelector('[aria-label="Underline (Ctrl/Cmd+U)"]')).not.toBeNull();
+    expect(container.querySelector('[aria-label="Underline (Ctrl/Cmd+U)"]')).toBeNull();
   });
 });
 
@@ -85,15 +92,22 @@ describe('EditorToolbar underline button — visibility', () => {
 // ---------------------------------------------------------------------------
 
 describe('EditorToolbar color buttons — visibility', () => {
-  it('hides text color and highlight color buttons when advancedToolbar is false', () => {
-    setPreferences({ advancedToolbar: false });
+  it('hides text color and highlight color buttons when items are disabled', () => {
+    setPreferences({
+      toolbarItems: DEFAULT_TOOLBAR_ITEMS.map((i) => ({ ...i, enabled: false })),
+    });
     const { container } = renderWithI18n(() => <EditorToolbar editor={makeEditorMock()} />);
     expect(container.querySelector('[aria-label="Text color"]')).toBeNull();
     expect(container.querySelector('[aria-label="Highlight color"]')).toBeNull();
   });
 
-  it('shows text color and highlight color buttons when advancedToolbar is true', () => {
-    setPreferences({ advancedToolbar: true });
+  it('shows text color and highlight color buttons when items are enabled', () => {
+    setPreferences({
+      toolbarItems: DEFAULT_TOOLBAR_ITEMS.map((i) => ({
+        ...i,
+        enabled: i.key === 'textColor' || i.key === 'highlightColor',
+      })),
+    });
     const { container } = renderWithI18n(() => <EditorToolbar editor={makeEditorMock()} />);
     expect(container.querySelector('[aria-label="Text color"]')).not.toBeNull();
     expect(container.querySelector('[aria-label="Highlight color"]')).not.toBeNull();
@@ -105,8 +119,10 @@ describe('EditorToolbar color buttons — visibility', () => {
 // ---------------------------------------------------------------------------
 
 describe('EditorToolbar alignment buttons — visibility', () => {
-  it('hides alignment buttons when advancedToolbar is false', () => {
-    setPreferences({ advancedToolbar: false });
+  it('hides alignment buttons when alignment item is disabled', () => {
+    setPreferences({
+      toolbarItems: DEFAULT_TOOLBAR_ITEMS.map((i) => ({ ...i, enabled: false })),
+    });
     const editor = makeEditorMock();
     const { container } = renderWithI18n(() => <EditorToolbar editor={editor} />);
 
@@ -116,8 +132,13 @@ describe('EditorToolbar alignment buttons — visibility', () => {
     expect(container.querySelector('[aria-label="Justify"]')).toBeNull();
   });
 
-  it('shows all four alignment buttons when advancedToolbar is true', () => {
-    setPreferences({ advancedToolbar: true });
+  it('shows all four alignment buttons when alignment item is enabled', () => {
+    setPreferences({
+      toolbarItems: DEFAULT_TOOLBAR_ITEMS.map((i) => ({
+        ...i,
+        enabled: i.key === 'alignment',
+      })),
+    });
     const editor = makeEditorMock();
     const { container } = renderWithI18n(() => <EditorToolbar editor={editor} />);
 
@@ -134,7 +155,7 @@ describe('EditorToolbar alignment buttons — visibility', () => {
 
 describe('EditorToolbar alignment buttons — active state', () => {
   it('marks Align left as active by default (no textAlign attribute)', () => {
-    setPreferences({ advancedToolbar: true });
+    setPreferences({ toolbarItems: DEFAULT_TOOLBAR_ITEMS });
     const editor = makeEditorMock({
       isActive: () => false,
     });
@@ -147,7 +168,7 @@ describe('EditorToolbar alignment buttons — active state', () => {
   });
 
   it('marks Align center as active when textAlign center is active', () => {
-    setPreferences({ advancedToolbar: true });
+    setPreferences({ toolbarItems: DEFAULT_TOOLBAR_ITEMS });
     const editor = makeEditorMock({
       isActive: (nameOrAttrs) => {
         if (typeof nameOrAttrs === 'object' && nameOrAttrs.textAlign === 'center') return true;
@@ -164,7 +185,7 @@ describe('EditorToolbar alignment buttons — active state', () => {
   });
 
   it('marks Align right as active when textAlign right is active', () => {
-    setPreferences({ advancedToolbar: true });
+    setPreferences({ toolbarItems: DEFAULT_TOOLBAR_ITEMS });
     const editor = makeEditorMock({
       isActive: (nameOrAttrs) => {
         if (typeof nameOrAttrs === 'object' && nameOrAttrs.textAlign === 'right') return true;
@@ -178,7 +199,7 @@ describe('EditorToolbar alignment buttons — active state', () => {
   });
 
   it('marks Justify as active when textAlign justify is active', () => {
-    setPreferences({ advancedToolbar: true });
+    setPreferences({ toolbarItems: DEFAULT_TOOLBAR_ITEMS });
     const editor = makeEditorMock({
       isActive: (nameOrAttrs) => {
         if (typeof nameOrAttrs === 'object' && nameOrAttrs.textAlign === 'justify') return true;
@@ -192,7 +213,7 @@ describe('EditorToolbar alignment buttons — active state', () => {
   });
 
   it('marks Align right as active for RTL paragraph with no explicit textAlign', () => {
-    setPreferences({ advancedToolbar: true });
+    setPreferences({ toolbarItems: DEFAULT_TOOLBAR_ITEMS });
     const editor = makeEditorMock({
       isActive: () => false,
       getAttributes: (name) => (name === 'paragraph' ? { dir: 'rtl' } : {}),
@@ -206,7 +227,7 @@ describe('EditorToolbar alignment buttons — active state', () => {
   });
 
   it('marks Align left as active when explicit text-align:left overrides dir=rtl', () => {
-    setPreferences({ advancedToolbar: true });
+    setPreferences({ toolbarItems: DEFAULT_TOOLBAR_ITEMS });
     const editor = makeEditorMock({
       isActive: (nameOrAttrs) =>
         typeof nameOrAttrs === 'object' && nameOrAttrs.textAlign === 'left',
@@ -227,7 +248,7 @@ describe('EditorToolbar alignment buttons — active state', () => {
 
 describe('EditorToolbar alignment buttons — click behaviour', () => {
   it('calls setTextAlign("left") when Align left is clicked', () => {
-    setPreferences({ advancedToolbar: true });
+    setPreferences({ toolbarItems: DEFAULT_TOOLBAR_ITEMS });
     const run = vi.fn();
     const setTextAlign = vi.fn(() => ({ run }));
     const focus = vi.fn(() => ({ setTextAlign }));
@@ -244,7 +265,7 @@ describe('EditorToolbar alignment buttons — click behaviour', () => {
   });
 
   it('calls setTextAlign("center") when Align center is clicked', () => {
-    setPreferences({ advancedToolbar: true });
+    setPreferences({ toolbarItems: DEFAULT_TOOLBAR_ITEMS });
     const run = vi.fn();
     const setTextAlign = vi.fn(() => ({ run }));
     const focus = vi.fn(() => ({ setTextAlign }));
@@ -261,7 +282,7 @@ describe('EditorToolbar alignment buttons — click behaviour', () => {
   });
 
   it('calls setTextAlign("right") when Align right is clicked', () => {
-    setPreferences({ advancedToolbar: true });
+    setPreferences({ toolbarItems: DEFAULT_TOOLBAR_ITEMS });
     const run = vi.fn();
     const setTextAlign = vi.fn(() => ({ run }));
     const focus = vi.fn(() => ({ setTextAlign }));
@@ -278,7 +299,7 @@ describe('EditorToolbar alignment buttons — click behaviour', () => {
   });
 
   it('calls setTextAlign("justify") when Justify is clicked', () => {
-    setPreferences({ advancedToolbar: true });
+    setPreferences({ toolbarItems: DEFAULT_TOOLBAR_ITEMS });
     const run = vi.fn();
     const setTextAlign = vi.fn(() => ({ run }));
     const focus = vi.fn(() => ({ setTextAlign }));
@@ -300,20 +321,32 @@ describe('EditorToolbar alignment buttons — click behaviour', () => {
 // ---------------------------------------------------------------------------
 
 describe('EditorToolbar import markdown button', () => {
-  it('hides the import markdown button when advancedToolbar is false', () => {
-    setPreferences({ advancedToolbar: false });
+  it('hides the import markdown button when importMarkdown item is disabled', () => {
+    setPreferences({
+      toolbarItems: DEFAULT_TOOLBAR_ITEMS.map((i) => ({ ...i, enabled: false })),
+    });
     const { container } = renderWithI18n(() => <EditorToolbar editor={makeEditorMock()} />);
     expect(container.querySelector('[aria-label="Import Markdown file"]')).toBeNull();
   });
 
-  it('shows the import markdown button when advancedToolbar is true', () => {
-    setPreferences({ advancedToolbar: true });
+  it('shows the import markdown button when importMarkdown item is enabled', () => {
+    setPreferences({
+      toolbarItems: DEFAULT_TOOLBAR_ITEMS.map((i) => ({
+        ...i,
+        enabled: i.key === 'importMarkdown',
+      })),
+    });
     const { container } = renderWithI18n(() => <EditorToolbar editor={makeEditorMock()} />);
     expect(container.querySelector('[aria-label="Import Markdown file"]')).not.toBeNull();
   });
 
   it('calls onImportMarkdown when the button is clicked', () => {
-    setPreferences({ advancedToolbar: true });
+    setPreferences({
+      toolbarItems: DEFAULT_TOOLBAR_ITEMS.map((i) => ({
+        ...i,
+        enabled: i.key === 'importMarkdown',
+      })),
+    });
     const onImportMarkdown = vi.fn();
     const { container } = renderWithI18n(() => (
       <EditorToolbar editor={makeEditorMock()} onImportMarkdown={onImportMarkdown} />
@@ -329,15 +362,22 @@ describe('EditorToolbar import markdown button', () => {
 // ---------------------------------------------------------------------------
 
 describe('EditorToolbar insert timestamp button — visibility', () => {
-  it('hides the insert timestamp button when advancedToolbar is false', () => {
-    setPreferences({ advancedToolbar: false });
+  it('hides the insert timestamp button when insertTimestamp item is disabled', () => {
+    setPreferences({
+      toolbarItems: DEFAULT_TOOLBAR_ITEMS.map((i) => ({ ...i, enabled: false })),
+    });
     const editor = makeEditorMock();
     const { container } = renderWithI18n(() => <EditorToolbar editor={editor} />);
     expect(container.querySelector('[aria-label="Insert timestamp"]')).toBeNull();
   });
 
-  it('shows the insert timestamp button when advancedToolbar is true', () => {
-    setPreferences({ advancedToolbar: true });
+  it('shows the insert timestamp button when insertTimestamp item is enabled', () => {
+    setPreferences({
+      toolbarItems: DEFAULT_TOOLBAR_ITEMS.map((i) => ({
+        ...i,
+        enabled: i.key === 'insertTimestamp',
+      })),
+    });
     const editor = makeEditorMock();
     const { container } = renderWithI18n(() => <EditorToolbar editor={editor} />);
     expect(container.querySelector('[aria-label="Insert timestamp"]')).not.toBeNull();
@@ -349,22 +389,34 @@ describe('EditorToolbar insert timestamp button — visibility', () => {
 // ---------------------------------------------------------------------------
 
 describe('Text direction button', () => {
-  it('hides the text direction button when advancedToolbar is false', () => {
-    setPreferences({ advancedToolbar: false });
+  it('hides the text direction button when textDirection item is disabled', () => {
+    setPreferences({
+      toolbarItems: DEFAULT_TOOLBAR_ITEMS.map((i) => ({ ...i, enabled: false })),
+    });
     const editor = makeEditorMock();
     const { container } = renderWithI18n(() => <EditorToolbar editor={editor} />);
     expect(container.querySelector('[aria-label="Text direction"]')).toBeNull();
   });
 
-  it('shows the text direction button when advancedToolbar is true', () => {
-    setPreferences({ advancedToolbar: true });
+  it('shows the text direction button when textDirection item is enabled', () => {
+    setPreferences({
+      toolbarItems: DEFAULT_TOOLBAR_ITEMS.map((i) => ({
+        ...i,
+        enabled: i.key === 'textDirection',
+      })),
+    });
     const editor = makeEditorMock();
     const { container } = renderWithI18n(() => <EditorToolbar editor={editor} />);
     expect(container.querySelector('[aria-label="Text direction"]')).not.toBeNull();
   });
 
   it('marks the button as active for RTL paragraph', () => {
-    setPreferences({ advancedToolbar: true });
+    setPreferences({
+      toolbarItems: DEFAULT_TOOLBAR_ITEMS.map((i) => ({
+        ...i,
+        enabled: i.key === 'textDirection',
+      })),
+    });
     const editor = makeEditorMock({
       getAttributes: (name) => (name === 'paragraph' ? { dir: 'rtl' } : {}),
     });
@@ -374,7 +426,12 @@ describe('Text direction button', () => {
   });
 
   it('does not mark the button as active for LTR paragraph', () => {
-    setPreferences({ advancedToolbar: true });
+    setPreferences({
+      toolbarItems: DEFAULT_TOOLBAR_ITEMS.map((i) => ({
+        ...i,
+        enabled: i.key === 'textDirection',
+      })),
+    });
     const editor = makeEditorMock({
       getAttributes: (name) => (name === 'paragraph' ? { dir: 'ltr' } : {}),
     });
@@ -384,7 +441,12 @@ describe('Text direction button', () => {
   });
 
   it('does not mark the button as active when dir is absent', () => {
-    setPreferences({ advancedToolbar: true });
+    setPreferences({
+      toolbarItems: DEFAULT_TOOLBAR_ITEMS.map((i) => ({
+        ...i,
+        enabled: i.key === 'textDirection',
+      })),
+    });
     const editor = makeEditorMock({
       getAttributes: () => ({}),
     });
@@ -394,7 +456,12 @@ describe('Text direction button', () => {
   });
 
   it('calls setTextDirection("rtl") when clicked on LTR paragraph', () => {
-    setPreferences({ advancedToolbar: true });
+    setPreferences({
+      toolbarItems: DEFAULT_TOOLBAR_ITEMS.map((i) => ({
+        ...i,
+        enabled: i.key === 'textDirection',
+      })),
+    });
     const run = vi.fn();
     const setTextDirection = vi.fn(() => ({ run }));
     const focus = vi.fn(() => ({ setTextDirection }));
@@ -413,7 +480,12 @@ describe('Text direction button', () => {
   });
 
   it('calls setTextDirection("ltr") when clicked on RTL paragraph', () => {
-    setPreferences({ advancedToolbar: true });
+    setPreferences({
+      toolbarItems: DEFAULT_TOOLBAR_ITEMS.map((i) => ({
+        ...i,
+        enabled: i.key === 'textDirection',
+      })),
+    });
     const run = vi.fn();
     const setTextDirection = vi.fn(() => ({ run }));
     const focus = vi.fn(() => ({ setTextDirection }));

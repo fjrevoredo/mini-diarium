@@ -20,7 +20,7 @@ src/
 │   │   └── Calendar.tsx               # Monthly calendar with entry indicators
 │   ├── editor/
 │   │   ├── DiaryEditor.tsx            # TipTap rich-text editor
-│   │   ├── EditorToolbar.tsx          # Formatting toolbar (basic + advanced; alignment in advanced)
+│   │   ├── EditorToolbar.tsx          # Formatting toolbar (Bold/Italic fixed; 15 configurable items via toolbarItems preference)
 │   │   ├── TitleEditor.tsx            # Entry title input
 │   │   ├── WordCount.tsx              # Live word count display
 │   │   ├── EntryNavBar.tsx            # Per-day entry counter/navigator (hidden when ≤1 entry)
@@ -103,7 +103,7 @@ Eight signal-based state modules in `src/state/`:
 | `notifications.ts` | `allNotifications: NotificationEntry[]`, `readIds: Set<string>`, `isLoading` | `loadNotifications()`, `markAsRead(id)`, `markAllRead()`, `isRead(id)`, `unreadCount()`, `hasUnread()` |
 | `preferences.ts` | `preferences: Preferences` | `setPreferences(Partial<Preferences>)`, `resetPreferences()` |
 
-`Preferences` fields: `allowFutureEntries` (bool), `firstDayOfWeek` (number|null), `hideTitles` (bool), `enableSpellcheck` (bool), `escAction` (`'none'|'quit'`), `autoLockEnabled` (bool), `autoLockTimeout` (number, seconds), `advancedToolbar` (bool), `editorFontSize` (number, px), `editorFontFamily` (string|null), `showEntryTimestamps` (bool), `timestampFormat` (`'12h'|'24h'`), `timestampPrecision` (`'hm'|'hms'`), `language` (string). Stored in `localStorage`.
+`Preferences` fields: `allowFutureEntries` (bool), `firstDayOfWeek` (number|null), `hideTitles` (bool), `enableSpellcheck` (bool), `escAction` (`'none'|'quit'`), `autoLockEnabled` (bool), `autoLockTimeout` (number, seconds), `toolbarItems` (`ToolbarItem[]` — 15 configurable toolbar actions with per-item `enabled` bool and display order; Bold/Italic are fixed and not in this list), `editorFontSize` (number, px), `editorFontFamily` (string|null), `showEntryTimestamps` (bool), `timestampFormat` (`'12h'|'24h'`), `timestampPrecision` (`'hm'|'hms'`), `language` (string). Stored in `localStorage`.
 
 ## i18n / Translations
 

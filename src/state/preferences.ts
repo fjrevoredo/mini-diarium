@@ -5,6 +5,46 @@ const log = createLogger('Preferences');
 
 export type EscAction = 'none' | 'quit';
 
+export type ToolbarItemKey =
+  | 'underline'
+  | 'strikethrough'
+  | 'textColor'
+  | 'highlightColor'
+  | 'headings'
+  | 'blockquote'
+  | 'inlineCode'
+  | 'bulletList'
+  | 'orderedList'
+  | 'horizontalRule'
+  | 'insertImage'
+  | 'importMarkdown'
+  | 'insertTimestamp'
+  | 'textDirection'
+  | 'alignment';
+
+export interface ToolbarItem {
+  key: ToolbarItemKey;
+  enabled: boolean;
+}
+
+export const DEFAULT_TOOLBAR_ITEMS: ToolbarItem[] = [
+  { key: 'headings', enabled: true },
+  { key: 'underline', enabled: true },
+  { key: 'strikethrough', enabled: true },
+  { key: 'textColor', enabled: true },
+  { key: 'highlightColor', enabled: true },
+  { key: 'blockquote', enabled: true },
+  { key: 'inlineCode', enabled: true },
+  { key: 'bulletList', enabled: true },
+  { key: 'orderedList', enabled: true },
+  { key: 'horizontalRule', enabled: true },
+  { key: 'insertImage', enabled: true },
+  { key: 'importMarkdown', enabled: true },
+  { key: 'insertTimestamp', enabled: true },
+  { key: 'textDirection', enabled: true },
+  { key: 'alignment', enabled: true },
+];
+
 export interface Preferences {
   allowFutureEntries: boolean;
   firstDayOfWeek: number | null; // 0-6 (Sunday-Saturday) or null for system default
@@ -13,7 +53,7 @@ export interface Preferences {
   escAction: EscAction;
   autoLockEnabled: boolean;
   autoLockTimeout: number; // seconds, 1–999
-  advancedToolbar: boolean;
+  toolbarItems: ToolbarItem[];
   editorFontSize: number; // px, 12–24
   editorFontFamily: string | null; // null means system default
   showEntryTimestamps: boolean;
@@ -23,14 +63,14 @@ export interface Preferences {
 }
 
 const DEFAULT_PREFERENCES: Preferences = {
-  allowFutureEntries: false, // Default: don't allow future entries
-  firstDayOfWeek: null, // System default
+  allowFutureEntries: false,
+  firstDayOfWeek: null,
   hideTitles: false,
   enableSpellcheck: true,
   escAction: 'none',
   autoLockEnabled: false,
   autoLockTimeout: 300,
-  advancedToolbar: false,
+  toolbarItems: DEFAULT_TOOLBAR_ITEMS,
   editorFontSize: 16,
   editorFontFamily: null,
   showEntryTimestamps: false,
@@ -39,13 +79,27 @@ const DEFAULT_PREFERENCES: Preferences = {
   language: 'en',
 };
 
+// Items that were always visible before the per-item toolbar config was introduced
+const WAS_ALWAYS_VISIBLE: ToolbarItemKey[] = ['underline', 'bulletList', 'orderedList'];
+
 // Load preferences from localStorage
 function loadPreferences(): Preferences {
   try {
     const stored = localStorage.getItem('preferences');
     if (stored) {
-      const parsed = JSON.parse(stored);
-      return { ...DEFAULT_PREFERENCES, ...parsed };
+      const parsed = JSON.parse(stored) as Record<string, unknown>;
+
+      // Migrate from advancedToolbar boolean to per-item toolbarItems array
+      if ('advancedToolbar' in parsed && !('toolbarItems' in parsed)) {
+        const allEnabled = parsed.advancedToolbar === true;
+        parsed.toolbarItems = DEFAULT_TOOLBAR_ITEMS.map((item) => ({
+          ...item,
+          enabled: allEnabled || WAS_ALWAYS_VISIBLE.includes(item.key),
+        }));
+        delete parsed.advancedToolbar;
+      }
+
+      return { ...DEFAULT_PREFERENCES, ...(parsed as Partial<Preferences>) };
     }
   } catch (error) {
     log.warn('Failed to load preferences:', error);
