@@ -71,7 +71,7 @@ Static marketing site — plain HTML/CSS/JS. Deploy via Coolify using `website/d
 
 ## Command Registry
 
-All 54 registered Tauri commands (source: `lib.rs`). Rust names use `snake_case`; frontend wrappers in `src/lib/tauri.ts` use `camelCase`.
+All 62 registered Tauri commands (source: `lib.rs`). Rust names use `snake_case`; frontend wrappers in `src/lib/tauri.ts` use `camelCase`.
 
 | Module | Rust Command | Frontend Wrapper | Description |
 |--------|-------------|-----------------|-------------|
@@ -129,6 +129,14 @@ All 54 registered Tauri commands (source: `lib.rs`). Rust names use `snake_case`
 | menu | `update_menu_locale` | `updateMenuLocale(locale)` | Update all native menu item texts to the given locale; falls back to English |
 | fonts | `list_bundled_fonts` | `listBundledFonts()` | List available bundled editor fonts |
 | fonts | `get_font_data` | `getFontData(fontId)` | Get a font's base64 data URL for on-demand loading |
+| tags | `create_tag` | `createTag(name)` | Create encrypted tag; returns `Tag` (deduplicates by HKDF fingerprint) |
+| tags | `get_all_tags` | `getAllTags()` | Return all tags with decrypted names, sorted alphabetically |
+| tags | `rename_tag` | `renameTag(id, name)` | Re-encrypt tag name and update HKDF fingerprint |
+| tags | `delete_tag` | `deleteTag(id)` | Delete tag; cascades to remove all `entry_tags` associations |
+| tags | `add_tag_to_entry` | `addTagToEntry(entryId, tagId)` | Associate an existing tag with an entry (idempotent) |
+| tags | `remove_tag_from_entry` | `removeTagFromEntry(entryId, tagId)` | Remove tag association from an entry |
+| tags | `get_tags_for_entry` | `getTagsForEntry(entryId)` | Return all tags on a specific entry (decrypted) |
+| tags | `get_entry_dates_by_tag` | `getEntryDatesByTag(tagId)` | Return all entry dates (`YYYY-MM-DD`) associated with a tag |
 
 ## Conventions
 

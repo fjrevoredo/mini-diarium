@@ -64,8 +64,9 @@ src/
 │   ├── entries.ts                     # entryDates, isSaving + resetEntriesState + cleanup-callback registry
 │   ├── journals.ts                    # journals, activeJournalId, isSwitching + loadJournals/switchJournal/addJournal/removeJournal/renameJournal
 │   ├── search.ts                      # searchQuery, searchResults, isSearching
-│   ├── session.ts                     # resetSessionState() — resets entries/search/UI on journal lock
-│   ├── ui.ts                          # selectedDate, overlay open states, sidebar state
+│   ├── session.ts                     # resetSessionState() — resets entries/search/UI/tags on journal lock
+│   ├── tags.ts                        # allTags signal + resetTagsState/loadAllTags; loaded on unlock, reset on lock
+│   ├── ui.ts                          # selectedDate, overlay open states (incl. isTagManagerOpen), sidebar state
 │   └── preferences.ts                 # Preferences interface, localStorage persistence
 ├── lib/
 │   ├── tauri.ts                       # All Tauri invoke() wrappers (typed)
@@ -90,7 +91,7 @@ src/
 
 ## State Management
 
-Eight signal-based state modules in `src/state/`:
+Nine signal-based state modules in `src/state/`:
 
 | Module | Signals | Key Functions |
 |--------|---------|---------------|
@@ -98,8 +99,9 @@ Eight signal-based state modules in `src/state/`:
 | `entries.ts` | `entryDates`, `isSaving` | `resetEntriesState()`, `registerCleanupCallback()`, `executeCleanupCallbacks()`; setters exported directly |
 | `journals.ts` | `journals: JournalConfig[]`, `activeJournalId`, `isSwitching` | `loadJournals()`, `switchJournal()`, `addJournal()`, `removeJournal()`, `renameJournal()` |
 | `search.ts` | `searchQuery`, `searchResults`, `isSearching` | Setters exported directly |
-| `session.ts` | — | `resetSessionState()` — resets `entries`/`search`/`ui` on journal lock |
-| `ui.ts` | `selectedDate`, `isSidebarCollapsed`, `isGoToDateOpen`, `isPreferencesOpen`, `isStatsOpen`, `isImportOpen`, `isExportOpen`, `isAboutOpen`, `isNotificationsOpen` | Setters exported directly; `resetUiState()` resets all |
+| `session.ts` | — | `resetSessionState()` — resets `entries`/`search`/`ui`/`tags` on journal lock |
+| `tags.ts` | `allTags: Tag[]` | `loadAllTags()` — fetches and decrypts all tags; `resetTagsState()` — clears to `[]` on lock |
+| `ui.ts` | `selectedDate`, `isSidebarCollapsed`, `isGoToDateOpen`, `isPreferencesOpen`, `isStatsOpen`, `isImportOpen`, `isExportOpen`, `isAboutOpen`, `isNotificationsOpen`, `isTagManagerOpen` | Setters exported directly; `resetUiState()` resets all |
 | `notifications.ts` | `allNotifications: NotificationEntry[]`, `readIds: Set<string>`, `isLoading` | `loadNotifications()`, `markAsRead(id)`, `markAllRead()`, `isRead(id)`, `unreadCount()`, `hasUnread()` |
 | `preferences.ts` | `preferences: Preferences` | `setPreferences(Partial<Preferences>)`, `resetPreferences()` |
 

@@ -110,7 +110,7 @@
       "selectKeyFileError": "Veuillez sélectionner un fichier clé",
       "openFilePickerError": "Échec de l'ouverture du sélecteur de fichiers",
       "passwordRequired": "Le mot de passe est obligatoire",
-      "autoUnlocking": "Ouverture du journal\u2026",
+      "autoUnlocking": "Ouverture du journal…",
       "autoUnlockFailed": "Impossible de déverrouiller automatiquement ce journal. La clé locale peut être manquante. Vous pouvez ajouter un mot de passe dans les Préférences.",
       "multiAuthNote": "Ce journal requiert toutes les méthodes d'authentification.",
       "multiAuthBothRequired": "Un mot de passe et un fichier clé sont tous deux requis.",
@@ -460,6 +460,20 @@
     "selectDateLabel": "Sélectionner la date",
     "goToDate": "Aller à la date",
     "closeAria": "Fermer"
+  },
+  "tags": {
+    "addTag": "Ajouter un tag",
+    "newTag": "Nouveau tag…",
+    "create": "Créer « {{ name }} »",
+    "manageTags": "Gérer les tags",
+    "noTags": "Aucun tag",
+    "tagManager": "Gestionnaire de tags",
+    "rename": "Renommer",
+    "deleteTag": "Supprimer le tag",
+    "entriesWithTag_one": "{{ count }} entrée",
+    "entriesWithTag_other": "{{ count }} entrées",
+    "errorLoading": "Échec du chargement des tags",
+    "errorSaving": "Échec de l’enregistrement du tag"
   },
   "errors": {
     "incorrectPassword": "Mot de passe incorrect.",

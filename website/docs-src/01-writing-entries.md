@@ -3,7 +3,7 @@ title: Writing Entries
 slug: writing-entries
 description: How to create, edit, format, and delete journal entries using the rich text editor.
 order: 2
-updated: 2026-05-06
+updated: 2026-05-14
 tags: editor, formatting, entries, writing
 ---
 
@@ -74,6 +74,16 @@ The advanced toolbar includes a **clock button** that inserts the current time a
 ## Editor Font
 
 You can change the font used in the editor body via **Preferences → Writing → Editor font**. Choose from five bundled open-source font families: Noto Sans, Source Sans 3, Noto Serif, JetBrains Mono, and Fira Mono. Fonts are loaded on demand and work fully offline — no network requests, no OS-level font enumeration.
+
+## Tags
+
+Each entry can have one or more tags. Tags appear as small chips below the editor body.
+
+- Click **+ Add tag** to open a dropdown. Type to filter existing tags or create a new one; press **Enter** or click **Create "…"** to save.
+- Click **×** on a chip to remove a tag from the current entry.
+- Click **Manage tags** (at the end of the tag row) to open the Tag Manager, where you can rename or delete tags globally across all entries.
+
+Tag names are encrypted with the same key as your diary entries — they are never stored as readable text in the database file.
 
 ## Importing a Markdown File
 

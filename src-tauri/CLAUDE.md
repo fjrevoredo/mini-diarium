@@ -125,7 +125,7 @@ cd src-tauri && cargo bench --bench cipher_bench  # Specific benchmark
 
 ## Gotchas and Pitfalls
 
-1. **Current schema is v6**: `entries_fts` was removed in v4 for security (it stored plaintext). v5 added `id INTEGER PRIMARY KEY AUTOINCREMENT` for multi-entry-per-date support. v6 added the `db_settings` table (`require_all_auth` flag + HKDF-SHA256 MAC) to bind multi-auth requirement to the encrypted database rather than `config.json`. `insert_entry`, `update_entry`, `delete_entry`, and all import commands have `// Search index hook:` comments marking where a future search module should be plugged in.
+1. **Current schema is v7**: `entries_fts` was removed in v4 for security (it stored plaintext). v5 added `id INTEGER PRIMARY KEY AUTOINCREMENT` for multi-entry-per-date support. v6 added the `db_settings` table (`require_all_auth` flag + HKDF-SHA256 MAC) to bind multi-auth requirement to the encrypted database rather than `config.json`. v7 added `tags` (AES-256-GCM encrypted name, HKDF-SHA256 keyed fingerprint for dedup) and `entry_tags` (association table with `ON DELETE CASCADE` on both sides). `insert_entry`, `update_entry`, `delete_entry`, and all import commands have `// Search index hook:` comments marking where a future search module should be plugged in.
 
 2. **Command registration is two places**: New commands must be added to both `commands/mod.rs` (module declaration) and `generate_handler![]` in `lib.rs`. Missing either causes silent failures or compile errors.
 

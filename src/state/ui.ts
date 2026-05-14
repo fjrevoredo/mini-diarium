@@ -28,6 +28,9 @@ const [isAboutOpen, setIsAboutOpen] = createSignal(false);
 // Notifications overlay state
 const [isNotificationsOpen, setIsNotificationsOpen] = createSignal(false);
 
+// Tag manager overlay state
+const [isTagManagerOpen, setIsTagManagerOpen] = createSignal(false);
+
 export function resetUiState(): void {
   setSelectedDate(getTodayString());
   setIsSidebarCollapsed(true);
@@ -38,6 +41,7 @@ export function resetUiState(): void {
   setIsExportOpen(false);
   setIsAboutOpen(false);
   setIsNotificationsOpen(false);
+  setIsTagManagerOpen(false);
 }
 
 export {
@@ -59,4 +63,6 @@ export {
   setIsAboutOpen,
   isNotificationsOpen,
   setIsNotificationsOpen,
+  isTagManagerOpen,
+  setIsTagManagerOpen,
 };

@@ -547,6 +547,22 @@ const en = {
     closeAria: 'Close',
   },
 
+  /** Tags — per-entry tagging and tag management */
+  tags: {
+    addTag: 'Add tag',
+    newTag: 'New tag…',
+    create: 'Create "{{ name }}"',
+    manageTags: 'Manage tags',
+    noTags: 'No tags yet',
+    tagManager: 'Tag Manager',
+    rename: 'Rename',
+    deleteTag: 'Delete tag',
+    entriesWithTag_one: '{{ count }} entry',
+    entriesWithTag_other: '{{ count }} entries',
+    errorLoading: 'Failed to load tags',
+    errorSaving: 'Failed to save tag',
+  },
+
   /**
    * User-facing error messages mapped from raw Tauri/backend errors.
    * Used by mapTauriError() in src/lib/errors.ts.

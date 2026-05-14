@@ -414,6 +414,200 @@ pub fn count_words(text: &str) -> i32 {
     count
 }
 
+// ─── Tag queries ─────────────────────────────────────────────────────────────
+
+/// A tag with its decrypted name (never stored as plaintext in the DB)
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct Tag {
+    pub id: i64,
+    pub name: String,
+    pub created_at: String,
+}
+
+/// Creates a tag (or returns the existing one if the normalized name already exists).
+pub fn create_tag(db: &DatabaseConnection, name: &str) -> Result<Tag, String> {
+    let fingerprint = cipher::tag_name_fingerprint(db.key(), name);
+    let name_encrypted = cipher::encrypt(db.key(), name.trim().as_bytes())
+        .map_err(|e| format!("Failed to encrypt tag name: {}", e))?;
+    let now = chrono::Utc::now().to_rfc3339();
+
+    db.conn()
+        .execute(
+            "INSERT OR IGNORE INTO tags (name_encrypted, name_fingerprint, created_at) VALUES (?1, ?2, ?3)",
+            params![&name_encrypted, &fingerprint, &now],
+        )
+        .map_err(|e| format!("Failed to insert tag: {}", e))?;
+
+    // Fetch by fingerprint (handles both insert and existing-tag cases)
+    let (id, enc, created_at): (i64, Vec<u8>, String) = db
+        .conn()
+        .query_row(
+            "SELECT id, name_encrypted, created_at FROM tags WHERE name_fingerprint = ?1",
+            params![&fingerprint],
+            |row| Ok((row.get(0)?, row.get(1)?, row.get(2)?)),
+        )
+        .map_err(|e| format!("Failed to retrieve tag: {}", e))?;
+
+    let name_bytes = cipher::decrypt(db.key(), &enc)
+        .map_err(|e| format!("Failed to decrypt tag name: {}", e))?;
+    let name = String::from_utf8(name_bytes).map_err(|e| format!("Invalid UTF-8 in tag: {}", e))?;
+
+    Ok(Tag {
+        id,
+        name,
+        created_at,
+    })
+}
+
+/// Returns all tags, decrypted and sorted alphabetically by name.
+pub fn get_all_tags(db: &DatabaseConnection) -> Result<Vec<Tag>, String> {
+    let mut stmt = db
+        .conn()
+        .prepare("SELECT id, name_encrypted, created_at FROM tags")
+        .map_err(|e| format!("Failed to prepare tags query: {}", e))?;
+
+    let rows = stmt
+        .query_map([], |row| {
+            Ok((
+                row.get::<_, i64>(0)?,
+                row.get::<_, Vec<u8>>(1)?,
+                row.get::<_, String>(2)?,
+            ))
+        })
+        .map_err(|e| format!("Failed to query tags: {}", e))?;
+
+    let mut tags: Vec<Tag> = rows
+        .filter_map(|r| r.ok())
+        .filter_map(|(id, enc, created_at)| {
+            let bytes = cipher::decrypt(db.key(), &enc).ok()?;
+            let name = String::from_utf8(bytes).ok()?;
+            Some(Tag {
+                id,
+                name,
+                created_at,
+            })
+        })
+        .collect();
+
+    tags.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
+    Ok(tags)
+}
+
+/// Renames a tag by id. Errors if the new name already exists.
+pub fn rename_tag(db: &DatabaseConnection, id: i64, new_name: &str) -> Result<(), String> {
+    let fingerprint = cipher::tag_name_fingerprint(db.key(), new_name);
+    let name_encrypted = cipher::encrypt(db.key(), new_name.trim().as_bytes())
+        .map_err(|e| format!("Failed to encrypt tag name: {}", e))?;
+
+    let rows = db
+        .conn()
+        .execute(
+            "UPDATE tags SET name_encrypted = ?1, name_fingerprint = ?2 WHERE id = ?3",
+            params![&name_encrypted, &fingerprint, id],
+        )
+        .map_err(|e| format!("Failed to rename tag: {}", e))?;
+
+    if rows == 0 {
+        return Err(format!("No tag found with id: {}", id));
+    }
+    Ok(())
+}
+
+/// Deletes a tag by id. Cascade removes its entry_tags rows.
+pub fn delete_tag(db: &DatabaseConnection, id: i64) -> Result<(), String> {
+    db.conn()
+        .execute("DELETE FROM tags WHERE id = ?1", params![id])
+        .map_err(|e| format!("Failed to delete tag: {}", e))?;
+    Ok(())
+}
+
+/// Associates a tag with an entry (idempotent — INSERT OR IGNORE).
+pub fn add_tag_to_entry(db: &DatabaseConnection, entry_id: i64, tag_id: i64) -> Result<(), String> {
+    db.conn()
+        .execute(
+            "INSERT OR IGNORE INTO entry_tags (entry_id, tag_id) VALUES (?1, ?2)",
+            params![entry_id, tag_id],
+        )
+        .map_err(|e| format!("Failed to add tag to entry: {}", e))?;
+    Ok(())
+}
+
+/// Removes the association between a tag and an entry.
+pub fn remove_tag_from_entry(
+    db: &DatabaseConnection,
+    entry_id: i64,
+    tag_id: i64,
+) -> Result<(), String> {
+    db.conn()
+        .execute(
+            "DELETE FROM entry_tags WHERE entry_id = ?1 AND tag_id = ?2",
+            params![entry_id, tag_id],
+        )
+        .map_err(|e| format!("Failed to remove tag from entry: {}", e))?;
+    Ok(())
+}
+
+/// Returns all tags for a given entry, decrypted and sorted alphabetically.
+pub fn get_tags_for_entry(db: &DatabaseConnection, entry_id: i64) -> Result<Vec<Tag>, String> {
+    let mut stmt = db
+        .conn()
+        .prepare(
+            "SELECT t.id, t.name_encrypted, t.created_at
+             FROM tags t
+             JOIN entry_tags et ON t.id = et.tag_id
+             WHERE et.entry_id = ?1",
+        )
+        .map_err(|e| format!("Failed to prepare tags-for-entry query: {}", e))?;
+
+    let rows = stmt
+        .query_map(params![entry_id], |row| {
+            Ok((
+                row.get::<_, i64>(0)?,
+                row.get::<_, Vec<u8>>(1)?,
+                row.get::<_, String>(2)?,
+            ))
+        })
+        .map_err(|e| format!("Failed to query tags for entry: {}", e))?;
+
+    let mut tags: Vec<Tag> = rows
+        .filter_map(|r| r.ok())
+        .filter_map(|(id, enc, created_at)| {
+            let bytes = cipher::decrypt(db.key(), &enc).ok()?;
+            let name = String::from_utf8(bytes).ok()?;
+            Some(Tag {
+                id,
+                name,
+                created_at,
+            })
+        })
+        .collect();
+
+    tags.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
+    Ok(tags)
+}
+
+/// Returns the distinct entry dates (YYYY-MM-DD) associated with a given tag id.
+pub fn get_entry_dates_by_tag(db: &DatabaseConnection, tag_id: i64) -> Result<Vec<String>, String> {
+    let mut stmt = db
+        .conn()
+        .prepare(
+            "SELECT DISTINCT e.date
+             FROM entries e
+             JOIN entry_tags et ON e.id = et.entry_id
+             WHERE et.tag_id = ?1
+             ORDER BY e.date ASC",
+        )
+        .map_err(|e| format!("Failed to prepare dates-by-tag query: {}", e))?;
+
+    let dates = stmt
+        .query_map(params![tag_id], |row| row.get(0))
+        .map_err(|e| format!("Failed to query dates by tag: {}", e))?
+        .collect::<Result<Vec<String>, _>>()
+        .map_err(|e| format!("Failed to collect dates: {}", e))?;
+
+    Ok(dates)
+}
+
 // ─── DB settings queries ──────────────────────────────────────────────────────
 
 /// Returns the value for `key`, or `None` if absent or if `db_settings` doesn't exist yet.
@@ -1295,6 +1489,92 @@ mod tests {
 
         let entries = get_entries_in_range(&db, Some("2025-01-01"), Some("2025-12-31")).unwrap();
         assert!(entries.is_empty());
+    }
+
+    #[test]
+    fn test_tags_crud() {
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+
+        // No tags initially
+        let all = get_all_tags(&db).unwrap();
+        assert!(all.is_empty());
+
+        // Create a tag
+        let tag = create_tag(&db, "work").unwrap();
+        assert!(tag.id > 0);
+        assert_eq!(tag.name, "work");
+
+        // Duplicate create returns the same tag
+        let tag2 = create_tag(&db, "Work").unwrap(); // different case → same fingerprint
+        assert_eq!(tag.id, tag2.id);
+
+        // get_all_tags returns one entry
+        let all = get_all_tags(&db).unwrap();
+        assert_eq!(all.len(), 1);
+
+        // Rename
+        rename_tag(&db, tag.id, "Work2").unwrap();
+        let all = get_all_tags(&db).unwrap();
+        assert_eq!(all[0].name, "Work2");
+
+        // Delete
+        delete_tag(&db, tag.id).unwrap();
+        let all = get_all_tags(&db).unwrap();
+        assert!(all.is_empty());
+    }
+
+    #[test]
+    fn test_entry_tags_and_cascade() {
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+
+        let entry = create_test_entry("2024-06-01");
+        insert_entry(&db, &entry).unwrap();
+        let entry_id = db.conn().last_insert_rowid();
+
+        let tag = create_tag(&db, "personal").unwrap();
+
+        // Add tag to entry
+        add_tag_to_entry(&db, entry_id, tag.id).unwrap();
+        let tags = get_tags_for_entry(&db, entry_id).unwrap();
+        assert_eq!(tags.len(), 1);
+        assert_eq!(tags[0].name, "personal");
+
+        // Idempotent add
+        add_tag_to_entry(&db, entry_id, tag.id).unwrap();
+        let tags = get_tags_for_entry(&db, entry_id).unwrap();
+        assert_eq!(tags.len(), 1);
+
+        // get_entry_dates_by_tag
+        let dates = get_entry_dates_by_tag(&db, tag.id).unwrap();
+        assert_eq!(dates, vec!["2024-06-01"]);
+
+        // Remove tag from entry
+        remove_tag_from_entry(&db, entry_id, tag.id).unwrap();
+        let tags = get_tags_for_entry(&db, entry_id).unwrap();
+        assert!(tags.is_empty());
+
+        // Re-add then delete entry — cascade must clean entry_tags
+        add_tag_to_entry(&db, entry_id, tag.id).unwrap();
+        delete_entry_by_id(&db, entry_id).unwrap();
+        let dates = get_entry_dates_by_tag(&db, tag.id).unwrap();
+        assert!(
+            dates.is_empty(),
+            "entry_tags must be removed via CASCADE when entry is deleted"
+        );
+
+        // Delete tag — cascade must clean entry_tags
+        let entry2 = create_test_entry("2024-06-02");
+        insert_entry(&db, &entry2).unwrap();
+        let entry2_id = db.conn().last_insert_rowid();
+        add_tag_to_entry(&db, entry2_id, tag.id).unwrap();
+        delete_tag(&db, tag.id).unwrap();
+        let tags2 = get_tags_for_entry(&db, entry2_id).unwrap();
+        assert!(
+            tags2.is_empty(),
+            "entry_tags must be removed via CASCADE when tag is deleted"
+        );
     }
 
     #[test]

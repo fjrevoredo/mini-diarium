@@ -265,6 +265,15 @@ pub fn run() {
             // Fonts
             commands::fonts::list_bundled_fonts,
             commands::fonts::get_font_data,
+            // Tags
+            commands::tags::create_tag,
+            commands::tags::get_all_tags,
+            commands::tags::rename_tag,
+            commands::tags::delete_tag,
+            commands::tags::add_tag_to_entry,
+            commands::tags::remove_tag_from_entry,
+            commands::tags::get_tags_for_entry,
+            commands::tags::get_entry_dates_by_tag,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

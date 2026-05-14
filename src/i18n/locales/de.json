@@ -109,7 +109,7 @@
       "unlockWithKeyFile": "Mit Schlüsseldatei entsperren",
       "selectKeyFileError": "Bitte wähle eine Schlüsseldatei aus",
       "openFilePickerError": "Fehler beim Öffnen des Dateiauswahldialogs",
-      "autoUnlocking": "Tagebuch wird geöffnet\u2026",
+      "autoUnlocking": "Tagebuch wird geöffnet…",
       "autoUnlockFailed": "Das Tagebuch konnte nicht automatisch entsperrt werden. Der lokale Schlüssel fehlt möglicherweise. Du kannst in den Einstellungen ein Passwort hinzufügen.",
       "passwordRequired": "Das Passwort ist erforderlich",
       "multiAuthNote": "Dieses Journal erfordert alle Authentifizierungsmethoden.",
@@ -460,6 +460,20 @@
     "selectDateLabel": "Datum auswählen",
     "goToDate": "Gehe zu Datum",
     "closeAria": "Schließen"
+  },
+  "tags": {
+    "addTag": "Schlagwort hinzufügen",
+    "newTag": "Neues Schlagwort…",
+    "create": "«{{ name }}» erstellen",
+    "manageTags": "Schlagwörter verwalten",
+    "noTags": "Noch keine Schlagwörter",
+    "tagManager": "Schlagwort-Verwaltung",
+    "rename": "Umbenennen",
+    "deleteTag": "Schlagwort löschen",
+    "entriesWithTag_one": "{{ count }} Eintrag",
+    "entriesWithTag_other": "{{ count }} Einträge",
+    "errorLoading": "Schlagwörter konnten nicht geladen werden",
+    "errorSaving": "Schlagwort konnte nicht gespeichert werden"
   },
   "errors": {
     "incorrectPassword": "Falsches Passwort.",

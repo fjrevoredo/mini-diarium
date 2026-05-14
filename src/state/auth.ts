@@ -6,6 +6,7 @@ import { createLogger } from '../lib/logger';
 import { mapTauriError } from '../lib/errors';
 import { journals, activeJournalId, loadJournals } from './journals';
 import { resetSessionState } from './session';
+import { loadAllTags } from './tags';
 
 const log = createLogger('Auth');
 
@@ -85,6 +86,7 @@ export async function initializeAuth(): Promise<void> {
         prepareUnlockedSession();
         const dates = await tauri.getAllEntryDates();
         setEntryDates(dates);
+        await loadAllTags();
       } catch (err) {
         log.warn('Auto-unlock failed, falling back to lock screen:', err);
         resetForLockedSession();
@@ -109,6 +111,7 @@ export async function createJournalAutoProtected(): Promise<void> {
     log.info('Local-only journal created');
     const dates = await tauri.getAllEntryDates();
     setEntryDates(dates);
+    await loadAllTags();
   } catch (err) {
     const message = mapTauriError(err);
     setError(message);
@@ -124,6 +127,7 @@ export async function unlockJournalAutoProtected(): Promise<void> {
     log.info('Local-only journal auto-unlocked');
     const dates = await tauri.getAllEntryDates();
     setEntryDates(dates);
+    await loadAllTags();
   } catch (err) {
     const message = mapTauriError(err);
     setError(message);
@@ -156,6 +160,7 @@ export async function createJournal(password: string): Promise<void> {
     // Fetch entry dates after creating diary
     const dates = await tauri.getAllEntryDates();
     setEntryDates(dates);
+    await loadAllTags();
   } catch (err) {
     const message = mapTauriError(err);
     setError(message);
@@ -174,6 +179,7 @@ export async function unlockJournal(password: string): Promise<void> {
     // Fetch entry dates after unlocking diary
     const dates = await tauri.getAllEntryDates();
     setEntryDates(dates);
+    await loadAllTags();
   } catch (err) {
     const message = mapTauriError(err);
     setError(message);
@@ -191,6 +197,7 @@ export async function unlockWithKeypair(keyPath: string): Promise<void> {
 
     const dates = await tauri.getAllEntryDates();
     setEntryDates(dates);
+    await loadAllTags();
   } catch (err) {
     const message = mapTauriError(err);
     setError(message);
@@ -208,6 +215,7 @@ export async function unlockAllMethods(credentials: tauri.MultiAuthCredential[])
 
     const dates = await tauri.getAllEntryDates();
     setEntryDates(dates);
+    await loadAllTags();
   } catch (err) {
     const message = mapTauriError(err);
     setError(message);

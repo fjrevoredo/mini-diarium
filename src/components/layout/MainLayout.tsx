@@ -11,6 +11,7 @@ import StatsOverlay from '../overlays/StatsOverlay';
 import ImportOverlay from '../overlays/ImportOverlay';
 import ExportOverlay from '../overlays/ExportOverlay';
 import NotificationsOverlay from '../overlays/NotificationsOverlay';
+import TagManager from '../overlays/TagManager';
 import {
   selectedDate,
   setSelectedDate,
@@ -28,6 +29,8 @@ import {
   setIsExportOpen,
   isAboutOpen,
   isNotificationsOpen,
+  isTagManagerOpen,
+  setIsTagManagerOpen,
 } from '../../state/ui';
 import {
   navigatePreviousDay,
@@ -55,7 +58,8 @@ export default function MainLayout() {
       isImportOpen() ||
       isExportOpen() ||
       isAboutOpen() ||
-      isNotificationsOpen()
+      isNotificationsOpen() ||
+      isTagManagerOpen()
     )
       return;
     if (preferences().escAction === 'quit') {
@@ -209,6 +213,7 @@ export default function MainLayout() {
       />
       <ExportOverlay isOpen={isExportOpen()} onClose={() => setIsExportOpen(false)} />
       <NotificationsOverlay />
+      <TagManager isOpen={isTagManagerOpen()} onClose={() => setIsTagManagerOpen(false)} />
     </div>
   );
 }

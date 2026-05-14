@@ -461,6 +461,20 @@
     "goToDate": "Vai a data",
     "closeAria": "Chiudi"
   },
+  "tags": {
+    "addTag": "Aggiungi tag",
+    "newTag": "Nuovo tag…",
+    "create": "Crea «{{ name }}»",
+    "manageTags": "Gestisci tag",
+    "noTags": "Nessun tag",
+    "tagManager": "Gestione tag",
+    "rename": "Rinomina",
+    "deleteTag": "Elimina tag",
+    "entriesWithTag_one": "{{ count }} voce",
+    "entriesWithTag_other": "{{ count }} voci",
+    "errorLoading": "Caricamento tag non riuscito",
+    "errorSaving": "Salvataggio tag non riuscito"
+  },
   "errors": {
     "incorrectPassword": "Password errata.",
     "decryptionFailed": "Impossibile decifrare. Il file chiave potrebbe essere errato o i dati potrebbero essere danneggiati.",

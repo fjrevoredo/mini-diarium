@@ -136,6 +136,21 @@ pub fn decrypt(key: &Key, ciphertext: &[u8]) -> Result<Vec<u8>, CipherError> {
     Ok(plaintext)
 }
 
+/// HKDF-SHA256 keyed fingerprint of a normalized tag name.
+/// Used to enforce UNIQUE deduplication at the DB level despite non-deterministic encryption.
+/// The fingerprint is keyed by the master key, so it leaks nothing to an offline attacker.
+/// Returns a hex-encoded 32-byte output.
+pub fn tag_name_fingerprint(key: &Key, name: &str) -> String {
+    use hkdf::Hkdf;
+    use sha2::Sha256;
+    let normalized = name.trim().to_lowercase();
+    let hk = Hkdf::<Sha256>::new(None, key.as_bytes());
+    let mut okm = [0u8; 32];
+    hk.expand(normalized.as_bytes(), &mut okm)
+        .expect("HKDF expand: 32 bytes always fits");
+    hex::encode(okm)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

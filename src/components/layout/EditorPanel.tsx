@@ -8,6 +8,7 @@ import WordCount from '../editor/WordCount';
 import { EntryNavBar } from '../editor/EntryNavBar';
 import { selectedDate } from '../../state/ui';
 import { readTextFile } from '../../lib/tauri';
+import EntryTags from '../editor/EntryTags';
 import type { DiaryEntry } from '../../lib/tauri';
 import { formatTimestamp } from '../../lib/dates';
 import { isSaving } from '../../state/entries';
@@ -293,6 +294,9 @@ export default function EditorPanel() {
               spellCheck={preferences().enableSpellcheck}
               onImportMarkdown={handleImportMarkdown}
             />
+            <Show when={pendingEntryId() !== null}>
+              <EntryTags entryId={pendingEntryId()!} />
+            </Show>
           </div>
         </div>
       </div>

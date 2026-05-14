@@ -110,7 +110,7 @@
       "selectKeyFileError": "Por favor selecciona un archivo de clave",
       "openFilePickerError": "Error al abrir el selector de archivos",
       "passwordRequired": "La contraseña es obligatoria",
-      "autoUnlocking": "Abriendo diario\u2026",
+      "autoUnlocking": "Abriendo diario…",
       "autoUnlockFailed": "No se pudo desbloquear automáticamente este diario. Es posible que falte la clave local. Puedes añadir una contraseña en Preferencias.",
       "multiAuthNote": "Este diario requiere todos los métodos de autenticación.",
       "multiAuthBothRequired": "Se requieren tanto una contraseña como un archivo de clave.",
@@ -460,6 +460,20 @@
     "selectDateLabel": "Seleccionar fecha",
     "goToDate": "Ir a fecha",
     "closeAria": "Cerrar"
+  },
+  "tags": {
+    "addTag": "Añadir etiqueta",
+    "newTag": "Nueva etiqueta…",
+    "create": "Crear «{{ name }}»",
+    "manageTags": "Gestionar etiquetas",
+    "noTags": "Sin etiquetas",
+    "tagManager": "Gestión de etiquetas",
+    "rename": "Renombrar",
+    "deleteTag": "Eliminar etiqueta",
+    "entriesWithTag_one": "{{ count }} entrada",
+    "entriesWithTag_other": "{{ count }} entradas",
+    "errorLoading": "Error al cargar etiquetas",
+    "errorSaving": "Error al guardar la etiqueta"
   },
   "errors": {
     "incorrectPassword": "Contraseña incorrecta.",
