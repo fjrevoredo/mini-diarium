@@ -103,7 +103,7 @@ To add a new **built-in** import format (compiled Rust):
 
 The plugin system (`run_import_plugin`) is the single entry point; no per-format Tauri command is needed. The search reindex hook lives in `commands::import::import_entries` (see `// Search index hook:` comment).
 
-For **user-scriptable** formats, users drop a `.rhai` file in `{diary_dir}/plugins/`. See `plugin/rhai_loader.rs` for the Rhai script contract and `docs/user-plugins/USER_PLUGIN_GUIDE.md` for the end-user plugin guide and templates.
+For **user-scriptable** formats, users drop a `.rhai` file in `{app_data_dir}/plugins/`. See `plugin/rhai_loader.rs` for the Rhai script contract and `docs/user-plugins/USER_PLUGIN_GUIDE.md` for the end-user plugin guide and templates.
 
 ## Verification Commands
 
@@ -133,7 +133,7 @@ cd src-tauri && cargo bench --bench cipher_bench  # Specific benchmark
 
 4. **Auth slots (v3 schema):** Each auth method stores its own wrapped copy of the master key in `auth_slots`. `remove_auth_method` refuses to delete the last slot (minimum one required). `change_password` re-wraps the master key in O(1) — no entry re-encryption needed. `verify_password` exists as a side-effect-free check used before multi-step operations. The `require_all_auth` flag (v6 schema) lives in the `db_settings` table inside `diary.db`, integrity-protected by an HKDF-SHA256 MAC derived from the master key — tampering with the row enforces the guard via a fail-safe.
 
-5. **Plugin registry is initialized once at startup** in `lib.rs` `.setup()`. It reads `{diary_dir}/plugins/` for `.rhai` scripts. The registry is stored as `State<Mutex<PluginRegistry>>`. If the user changes the diary directory, plugins are not reloaded until app restart (consistent with existing behavior).
+5. **Plugin registry is initialized once at startup** in `lib.rs` `.setup()`. It reads `{app_data_dir}/plugins/` for `.rhai` scripts (central location, shared across all journals). The registry is stored as `State<Mutex<PluginRegistry>>`.
 
 6. **Rhai's `export` keyword is reserved**: Export plugin scripts must use `fn format_entries(entries)` instead of `fn export(entries)`. The `RhaiExportPlugin` wrapper calls `"format_entries"` internally.
 

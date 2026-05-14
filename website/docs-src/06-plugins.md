@@ -3,7 +3,7 @@ title: Plugins
 slug: plugins
 description: How to use and install plugins that extend import and export capabilities with custom scripts.
 order: 7
-updated: 2026-04-16
+updated: 2026-05-14
 tags: plugins, Rhai, import, export, customization
 ---
 
@@ -15,15 +15,13 @@ Plugins appear in the Import and Export overlay dropdowns alongside the built-in
 
 ## Where Is the Plugins Folder?
 
-The `plugins/` folder is created automatically next to your `diary.db` file:
+The `plugins/` folder is shared across all journals and lives in the app data directory (this location is fixed — it does not change when you configure a different journal path in Preferences):
 
 - **Windows**: `%APPDATA%\com.minidiarium\plugins\`
 - **macOS**: `~/Library/Application Support/com.minidiarium/plugins/`
 - **Linux**: `~/.local/share/com.minidiarium/plugins/`
 
-If you have changed your journal location, the plugins folder is `{your chosen directory}/plugins/`.
-
-A `README.md` file with templates and API documentation is auto-generated in the plugins folder on first launch.
+A `README.md` file with templates and API documentation is auto-generated in the plugins folder on first launch. If you previously had `.rhai` scripts in a per-journal `plugins/` folder, they are automatically copied to this central location on first launch after upgrading.
 
 ## Writing a Plugin
 

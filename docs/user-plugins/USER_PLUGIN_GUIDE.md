@@ -2,7 +2,7 @@
 
 This guide is for users writing local `.rhai` import/export plugins.
 
-This file is also the source used to generate `{diary_dir}/plugins/README.md` at runtime.
+This file is also the source used to generate `{app_data_dir}/plugins/README.md` at runtime.
 
 This guide covers both plugin types:
 
@@ -98,14 +98,12 @@ Important:
 
 Use this flow to validate `plain-text-timeline.rhai` end-to-end.
 
-1. Find your diary directory.
-   - Default:
-     - Windows: `%APPDATA%\\com.minidiarium\\`
-     - macOS: `~/Library/Application Support/com.minidiarium/`
-     - Linux: `~/.local/share/com.minidiarium/`
-   - If you changed location in Preferences, use that directory.
+1. Find your app data directory (this location is fixed and does not change when you configure a different journal path in Preferences):
+   - Windows: `%APPDATA%\\com.minidiarium\\`
+   - macOS: `~/Library/Application Support/com.minidiarium/`
+   - Linux: `~/.local/share/com.minidiarium/`
 2. Create a `plugins/` folder there if it does not exist.
-3. Copy `docs/user-plugins/plain-text-timeline.rhai` into `{diary_dir}/plugins/`.
+3. Copy `docs/user-plugins/plain-text-timeline.rhai` into that `plugins/` folder.
 4. Restart Mini Diarium (plugins load at startup).
 5. Open **Diary → Export...** and select **Plain Text Timeline** from the format list.
 6. Export to a `.txt` file and verify:
@@ -118,7 +116,7 @@ Use this flow to validate `plain-text-timeline.rhai` end-to-end.
 
 Use this flow to validate any import plugin you create.
 
-1. Copy your import `.rhai` file into `{diary_dir}/plugins/`.
+1. Copy your import `.rhai` file into `{app_data_dir}/plugins/` (see above for the path on your OS).
 2. Prepare a small input file matching your plugin's expected format (start with 1-2 entries).
 3. Restart Mini Diarium (plugins load at startup).
 4. Open **Diary → Import...**.

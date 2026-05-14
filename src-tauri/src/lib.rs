@@ -148,10 +148,24 @@ pub fn run() {
             let backups_dir = diary_dir.join("backups").join(stem);
 
             // Set up state
-            app.manage(DiaryState::new(db_path, backups_dir, app_dir));
+            app.manage(DiaryState::new(db_path, backups_dir, app_dir.clone()));
 
             // Initialize plugin registry
-            let plugins_dir = diary_dir.join("plugins");
+            let plugins_dir = app_dir.join("plugins");
+
+            // One-time migration: copy any .rhai files from per-journal plugins/ dirs
+            // to the new central location. Non-destructive — originals stay in place.
+            {
+                let mut old_dirs: Vec<PathBuf> = vec![diary_dir.clone()];
+                for j in crate::config::load_journals(&app_dir) {
+                    old_dirs.push(PathBuf::from(&j.path));
+                }
+                if let Some(legacy) = crate::config::load_diary_dir(&app_dir) {
+                    old_dirs.push(legacy);
+                }
+                plugin::rhai_loader::migrate_journal_plugins(&old_dirs, &plugins_dir);
+            }
+
             let mut registry = plugin::registry::PluginRegistry::new();
             plugin::builtins::register_all(&mut registry);
             plugin::rhai_loader::load_plugins(&plugins_dir, &mut registry);

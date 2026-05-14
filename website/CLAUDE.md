@@ -2,14 +2,20 @@
 
 > For project architecture and cross-cutting conventions see the [root CLAUDE.md](../CLAUDE.md).
 
-Static marketing site — plain HTML/CSS/JS served via Nginx. No frontend framework, no build step for the site itself. Blog posts are the only content that requires generation.
+Static marketing site — plain HTML/CSS/JS served via Nginx. No frontend framework, no build step for the site itself. Blog posts and documentation pages both require generation — never edit their HTML output directly.
 
-## Key Rule: Never Edit Blog HTML Directly
+## Key Rule: Never Edit Generated HTML Directly
 
-All blog content is generated from Markdown sources in `posts-src/`. The HTML files in `blog/*/`, `blog/index.html`, `blog/feed.xml`, `sitemap.xml`, and `llms.txt` are **all generated output** — editing them directly will be overwritten on the next generation run.
+Both the blog and the docs sections are generated from Markdown sources. Editing the HTML output directly will be silently overwritten on the next build run.
+
+| Source (edit these) | Generated output (never edit) |
+|---------------------|-------------------------------|
+| `posts-src/*.md` | `blog/*/index.html`, `blog/index.html`, `blog/feed.xml`, `sitemap.xml`, `llms.txt` |
+| `docs-src/*.md` | `docs/*/index.html`, `docs/index.html` |
 
 The only files you should edit manually are:
 - `posts-src/*.md` — blog post sources (the canonical input)
+- `docs-src/*.md` — documentation page sources (the canonical input)
 - `website/index.html` — homepage (between its static sections, not the blog teaser block)
 - `encrypted-journal/index.html` — the encrypted journal guide page
 - `compare/index.html` — the comparison matrix page
@@ -207,6 +213,8 @@ HTTP→HTTPS redirect is handled by Coolify, not the local `website/nginx.conf`.
 ---
 
 ## Documentation Section (`docs-src/`)
+
+`docs-src/` is the **authoritative user-facing reference** for every Mini Diarium feature — the primary source of truth for both users and agents auditing feature behavior. Keep it complete and up to date: whenever a user-facing feature is added, changed, or removed, update the relevant `docs-src/` file in the same task. Stale docs are a bug.
 
 Source files: `website/docs-src/*.md` — one file per section.
 
