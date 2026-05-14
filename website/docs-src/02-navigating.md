@@ -3,13 +3,15 @@ title: Navigating Your Journal
 slug: navigating
 description: How to move between dates and entries using the calendar, keyboard shortcuts, and nav buttons.
 order: 3
-updated: 2026-04-16
+updated: 2026-05-14
 tags: navigation, calendar, keyboard shortcuts, dates
 ---
 
 ## Calendar
 
 The sidebar shows a monthly calendar. Days that have at least one entry are marked with a dot indicator. Click any date to jump to that day's entries.
+
+You can narrow the dot indicators to a specific tag by clicking a tag chip's name on any entry — see [Browsing entries by tag](writing-entries#browsing-entries-by-tag) for details.
 
 ## Keyboard Navigation
 

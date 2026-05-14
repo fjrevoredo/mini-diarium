@@ -83,6 +83,16 @@ Each entry can have one or more tags. Tags appear as small chips below the edito
 - Click **×** on a chip to remove a tag from the current entry.
 - Click **Manage tags** (at the end of the tag row) to open the Tag Manager, where you can rename or delete tags globally across all entries.
 
+### Browsing entries by tag
+
+Click a tag chip's **name** (not the × button) to activate a tag filter. While a filter is active:
+
+- The sidebar opens automatically so the calendar is visible.
+- Calendar dot indicators narrow to show only dates that have entries tagged with that tag.
+- A banner above the calendar shows the active tag name and a `×` button to clear the filter.
+
+Click the same chip again, or press `×` in the banner, to return to the full unfiltered calendar. The filter persists across month navigation and is cleared automatically when you lock the journal or delete the filtered tag in Tag Manager.
+
 Tag names are encrypted with the same key as your diary entries — they are never stored as readable text in the database file.
 
 ## Importing a Markdown File

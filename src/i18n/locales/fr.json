@@ -473,7 +473,10 @@
     "entriesWithTag_one": "{{ count }} entrée",
     "entriesWithTag_other": "{{ count }} entrées",
     "errorLoading": "Échec du chargement des tags",
-    "errorSaving": "Échec de l’enregistrement du tag"
+    "errorSaving": "Échec de l’enregistrement du tag",
+    "filterByTag": "Filtrer par tag",
+    "filterActiveLabel": "Filtre de tag :",
+    "clearFilter": "Effacer le filtre de tag"
   },
   "errors": {
     "incorrectPassword": "Mot de passe incorrect.",

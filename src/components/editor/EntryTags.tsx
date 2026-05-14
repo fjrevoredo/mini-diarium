@@ -7,8 +7,14 @@ import {
   addTagToEntry,
   removeTagFromEntry,
 } from '../../lib/tauri';
-import { allTags, loadAllTags } from '../../state/tags';
-import { setIsTagManagerOpen } from '../../state/ui';
+import {
+  allTags,
+  activeTagFilter,
+  setTagFilter,
+  clearTagFilter,
+  loadAllTags,
+} from '../../state/tags';
+import { setIsTagManagerOpen, setIsSidebarCollapsed } from '../../state/ui';
 import { mapTauriError } from '../../lib/errors';
 
 interface EntryTagsProps {
@@ -38,6 +44,15 @@ export default function EntryTags(props: EntryTagsProps) {
       setEntryTags(tags);
     } catch (err) {
       setError(mapTauriError(err, t));
+    }
+  };
+
+  const handleTagFilterClick = (tag: Tag) => {
+    if (activeTagFilter()?.id === tag.id) {
+      clearTagFilter();
+    } else {
+      void setTagFilter(tag);
+      setIsSidebarCollapsed(false);
     }
   };
 
@@ -134,8 +149,23 @@ export default function EntryTags(props: EntryTagsProps) {
     <div class="flex flex-wrap items-center gap-1.5 text-xs">
       <For each={entryTags()}>
         {(tag) => (
-          <span class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 bg-tertiary text-secondary border border-primary">
-            <span>{tag.name}</span>
+          <span
+            class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 border transition-colors"
+            classList={{
+              'bg-tertiary text-accent border-accent': activeTagFilter()?.id === tag.id,
+              'bg-tertiary text-secondary border-primary': activeTagFilter()?.id !== tag.id,
+            }}
+          >
+            <button
+              type="button"
+              onClick={() => handleTagFilterClick(tag)}
+              class="hover:opacity-75"
+              title={
+                activeTagFilter()?.id === tag.id ? t('tags.clearFilter') : t('tags.filterByTag')
+              }
+            >
+              {tag.name}
+            </button>
             <button
               onClick={() => void handleRemoveTag(tag.id)}
               class="text-tertiary hover:text-primary leading-none"

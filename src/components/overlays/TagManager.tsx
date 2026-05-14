@@ -2,7 +2,7 @@ import { createSignal, createEffect, For, Show } from 'solid-js';
 import { Dialog } from '@kobalte/core/dialog';
 import { useI18n } from '../../i18n';
 import { type Tag, renameTag, deleteTag } from '../../lib/tauri';
-import { allTags, loadAllTags } from '../../state/tags';
+import { allTags, loadAllTags, activeTagFilter, clearTagFilter } from '../../state/tags';
 import { mapTauriError } from '../../lib/errors';
 import { X } from 'lucide-solid';
 
@@ -54,6 +54,7 @@ export default function TagManager(props: TagManagerProps) {
   const handleDelete = async (id: number) => {
     try {
       await deleteTag(id);
+      if (activeTagFilter()?.id === id) clearTagFilter();
       await loadAllTags();
     } catch (err) {
       setError(mapTauriError(err, t));

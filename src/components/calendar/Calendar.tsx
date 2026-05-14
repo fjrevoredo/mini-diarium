@@ -2,6 +2,7 @@ import { createSignal, createEffect, untrack, For, createMemo, Show } from 'soli
 import { ChevronLeft, ChevronRight } from 'lucide-solid';
 import { selectedDate, setSelectedDate, setIsSidebarCollapsed } from '../../state/ui';
 import { entryDates } from '../../state/entries';
+import { tagFilteredDates } from '../../state/tags';
 import { preferences } from '../../state/preferences';
 import { getTodayString } from '../../lib/dates';
 import { useI18n } from '../../i18n';
@@ -80,14 +81,17 @@ export default function Calendar() {
     // Get day of week for first day (0 = Sunday, 1 = Monday, etc.)
     const firstDayOfMonth = firstDay.getDay();
 
-    // Get entry dates for checking
-    const dates = entryDates();
     const today = getTodayString();
     const allowFuture = preferences().allowFutureEntries;
 
     // Get preferred first day of week (0 = Sunday, 1 = Monday, etc.)
     // null means use system default (Sunday in US locale)
     const preferredFirstDay = preferences().firstDayOfWeek ?? 0;
+
+    // Resolve entry dates once — narrowed to tag-filtered dates when a filter is active.
+    // Reading tagFilteredDates() here (inside the memo) keeps signal tracking out of
+    // per-cell <For> render scopes, preventing competing reactive update paths.
+    const dates = tagFilteredDates() ?? entryDates();
 
     // Calculate how many days from previous month to show
     // We need to show days until we reach the preferred first day of week
@@ -428,10 +432,7 @@ export default function Calendar() {
                             {day.hasEntry && (
                               <span
                                 aria-hidden="true"
-                                class={`
-                                h-1 w-1 rounded-full mt-0.5
-                                ${day.isSelected ? 'bg-white' : 'bg-interactive'}
-                              `}
+                                class={`mt-0.5 h-1 w-1 rounded-full ${day.isSelected ? 'bg-white' : 'bg-interactive'}`}
                               />
                             )}
                           </button>

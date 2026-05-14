@@ -473,7 +473,10 @@
     "entriesWithTag_one": "{{ count }} Eintrag",
     "entriesWithTag_other": "{{ count }} Einträge",
     "errorLoading": "Schlagwörter konnten nicht geladen werden",
-    "errorSaving": "Schlagwort konnte nicht gespeichert werden"
+    "errorSaving": "Schlagwort konnte nicht gespeichert werden",
+    "filterByTag": "Nach Schlagwort filtern",
+    "filterActiveLabel": "Schlagwort-Filter:",
+    "clearFilter": "Schlagwort-Filter aufheben"
   },
   "errors": {
     "incorrectPassword": "Falsches Passwort.",

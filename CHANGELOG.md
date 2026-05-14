@@ -34,6 +34,7 @@ Template:
 
 ### Added
 - **Tags for diary entries**: entries can now be tagged with user-defined labels. A row of tag chips appears below the title in the editor. Click `+ Add tag` to type a new tag or pick an existing one from the dropdown; click `×` on a chip to remove it. Tags are managed globally via **Manage tags** → rename or delete any tag across all entries. Tag names are encrypted with AES-256-GCM (the same key as entry content) so they are never stored as readable text in the database. A keyed HKDF-SHA256 fingerprint enforces deduplication at the database level. Existing journals are automatically migrated to schema v7 on next unlock.
+    - **Tag filter**: click a tag chip's name to activate a tag filter — the calendar in the sidebar narrows its dot indicators to only show dates that have entries with that tag. A banner above the calendar names the active filter and provides a `×` to clear it. Clicking the same chip again also clears it. The filter persists across month navigation and is automatically cleared on journal lock or when the filtered tag is deleted.
 
 ### Changed
 - **Central plugins directory**: user `.rhai` plugins now live in `{app_data_dir}/plugins/` (e.g. `%APPDATA%\com.minidiarium\plugins\` on Windows) instead of the per-journal `{journal_path}/plugins/` folder. Plugins are shared across all journals and loaded once at startup. On first launch after upgrading, any `.rhai` scripts found in the old per-journal locations are automatically copied to the new central directory (originals are left in place).

@@ -561,6 +561,9 @@ const en = {
     entriesWithTag_other: '{{ count }} entries',
     errorLoading: 'Failed to load tags',
     errorSaving: 'Failed to save tag',
+    filterByTag: 'Filter by tag',
+    filterActiveLabel: 'Tag filter:',
+    clearFilter: 'Clear tag filter',
   },
 
   /**

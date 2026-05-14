@@ -473,7 +473,10 @@
     "entriesWithTag_one": "{{ count }} entrada",
     "entriesWithTag_other": "{{ count }} entradas",
     "errorLoading": "Error al cargar etiquetas",
-    "errorSaving": "Error al guardar la etiqueta"
+    "errorSaving": "Error al guardar la etiqueta",
+    "filterByTag": "Filtrar por etiqueta",
+    "filterActiveLabel": "Filtro de etiqueta:",
+    "clearFilter": "Quitar filtro de etiqueta"
   },
   "errors": {
     "incorrectPassword": "Contraseña incorrecta.",
