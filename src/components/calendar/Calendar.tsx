@@ -14,6 +14,7 @@ interface CalendarDay {
   isToday: boolean;
   isSelected: boolean;
   hasEntry: boolean;
+  filterActive: boolean;
   isFuture: boolean;
   isDisabled: boolean;
 }
@@ -92,6 +93,7 @@ export default function Calendar() {
     // Reading tagFilteredDates() here (inside the memo) keeps signal tracking out of
     // per-cell <For> render scopes, preventing competing reactive update paths.
     const dates = tagFilteredDates() ?? entryDates();
+    const filterActive = tagFilteredDates() !== null;
 
     // Calculate how many days from previous month to show
     // We need to show days until we reach the preferred first day of week
@@ -114,6 +116,7 @@ export default function Calendar() {
         isToday: false,
         isSelected: false,
         hasEntry: dates.includes(dateStr),
+        filterActive,
         isFuture,
         isDisabled: !allowFuture && isFuture,
       });
@@ -133,6 +136,7 @@ export default function Calendar() {
         isToday: dateStr === today,
         isSelected: dateStr === selected,
         hasEntry: dates.includes(dateStr),
+        filterActive,
         isFuture,
         isDisabled: !allowFuture && isFuture,
       });
@@ -155,6 +159,7 @@ export default function Calendar() {
         isToday: false,
         isSelected: false,
         hasEntry: dates.includes(dateStr),
+        filterActive,
         isFuture,
         isDisabled: !allowFuture && isFuture,
       });
@@ -432,7 +437,7 @@ export default function Calendar() {
                             {day.hasEntry && (
                               <span
                                 aria-hidden="true"
-                                class={`mt-0.5 h-1 w-1 rounded-full ${day.isSelected ? 'bg-white' : 'bg-interactive'}`}
+                                class={`mt-0.5 h-1 w-1 rounded-full ${day.isSelected ? 'bg-white' : day.filterActive ? 'bg-filter-dot' : 'bg-interactive'}`}
                               />
                             )}
                           </button>

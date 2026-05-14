@@ -336,3 +336,8 @@ body {
 .bg-interactive {
   background-color: var(--btn-primary-bg);
 }
+
+/* Tag-filter-active dot — amber, clearly distinct from the default blue bg-interactive dot */
+.bg-filter-dot {
+  background-color: #f59e0b;
+}
