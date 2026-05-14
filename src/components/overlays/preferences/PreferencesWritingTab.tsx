@@ -65,8 +65,10 @@ export default function PreferencesWritingTab(_props: TabProps) {
 
   const [bundledFonts] = createResource(listBundledFonts);
 
-  const selectAll = () => setLocalToolbarItems((prev) => prev.map((item) => ({ ...item, enabled: true })));
-  const selectNone = () => setLocalToolbarItems((prev) => prev.map((item) => ({ ...item, enabled: false })));
+  const selectAll = () =>
+    setLocalToolbarItems((prev) => prev.map((item) => ({ ...item, enabled: true })));
+  const selectNone = () =>
+    setLocalToolbarItems((prev) => prev.map((item) => ({ ...item, enabled: false })));
 
   const moveUp = (i: number) => {
     const arr = [...localToolbarItems()];
@@ -215,11 +217,7 @@ export default function PreferencesWritingTab(_props: TabProps) {
             {t('prefs.writing.toolbarItemsLabel')}
           </label>
           <div class="flex gap-3">
-            <button
-              type="button"
-              onClick={selectAll}
-              class="text-xs text-blue-500 hover:underline"
-            >
+            <button type="button" onClick={selectAll} class="text-xs text-blue-500 hover:underline">
               {t('prefs.writing.toolbarItemSelectAll')}
             </button>
             <button
