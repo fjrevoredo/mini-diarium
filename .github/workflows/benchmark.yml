@@ -16,6 +16,9 @@ jobs:
     name: Rust Benchmarks
     runs-on: ubuntu-latest
     steps:
+      - name: Record job start time
+        run: echo "JOB_STARTED_EPOCH=$(date -u +%s)" >> "$GITHUB_ENV"
+
       - uses: actions/checkout@v6
 
       - uses: dtolnay/rust-toolchain@stable
@@ -37,17 +40,10 @@ jobs:
 
       - name: Compute and publish CI pipeline duration
         if: always()
-        env:
-          STARTED_AT: ${{ github.run_started_at }}
         run: |
-          if [ -z "$STARTED_AT" ]; then
-            echo "::warning::Could not determine pipeline start time; skipping ci_pipeline_duration metric."
-            exit 0
-          fi
-          START_EPOCH=$(date -u -d "$STARTED_AT" +"%s")
-          END_EPOCH=$(date -u +"%s")
-          DURATION_SEC=$(echo "$END_EPOCH - $START_EPOCH" | bc)
-          DURATION_NS=$(echo "$DURATION_SEC * 1000000000" | bc | cut -d. -f1)
+          END_EPOCH=$(date -u +%s)
+          DURATION_SEC=$((END_EPOCH - JOB_STARTED_EPOCH))
+          DURATION_NS=$((DURATION_SEC * 1000000000))
           printf "test ci_pipeline_duration ... bench: %s ns/iter (+/- 0)\n" "$DURATION_NS" >> bench-output.txt
           echo "CI pipeline duration: ${DURATION_SEC}s (${DURATION_NS}ns)"
 
