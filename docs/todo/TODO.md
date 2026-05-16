@@ -13,7 +13,7 @@ TODO entry format:
 - After creating a new TODO, update the `Latest TODO ID` marker to reflect the new highest ID
 - Use the `todo-manager` skill (`.agents/skills/todo-manager/`) for creation, tracking, archival, and validation
 
-**Latest TODO ID: TODO-0034** — next new TODO should be TODO-0035
+**Latest TODO ID: TODO-0035** — next new TODO should be TODO-0036
 
 ---
 
@@ -31,6 +31,7 @@ TODO entry format:
 - [ ] **TODO-0022: Font family and size selectors in editor toolbar** — move font family and font size controls from the Preferences settings into the editor toolbar for quicker access; integrate with the per-item toolbar configuration system so users can choose whether to show these controls in the toolbar
 - [ ] **TODO-0026: Full-text search across diary entries** — implement a secure, performant full-text search that scans all diary entries for words or phrases without storing plaintext on disk or loading all entries into memory; the old SQLite FTS approach was removed because it exposed plaintext; design a solution that preserves encryption at rest while providing reasonable search performance
 - [ ] **TODO-0031: Port todo-manager skill to agent-skills repo** — create a repo-agnostic version of the todo-manager skill in `D:\Repos\agent-skills\todo-manager\SKILL.md`; remove Mini Diarium-specific file paths and conventions; match the structure and patterns of the existing `manual-planning` skill in that repo
+- [ ] **TODO-0035: Anchor onboarding tour cards to real UI elements** — each tour step card is currently positioned with hardcoded screen coordinates (e.g. `bottom-8 left-8`) and feels visually disconnected from the feature it describes; reposition each card so it is anchored to the actual target element (editor toolbar, Import menu item, docs link) and the arrow points at it; use element bounding-rect measurement or a refs-based approach — no third-party tooltip library required
 - [x] **TODO-0033: First-run onboarding suggestions for new journals** — when the user creates a new journal and it is the only journal in the app (indicating a first-time user), show a minimal, easily dismissible set of tips pop-overs or a suggestion card, for example: enabling the advanced formatting toolbar, importing from other apps, and where to find the documentation; must fire only once per app profile (not per journal) and must be trivial to dismiss without leaving persistent UI clutter; keep the implementation simple — no multi-step wizard, no progress tracking, no backend changes
 
 ---
