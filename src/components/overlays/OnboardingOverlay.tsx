@@ -270,7 +270,7 @@ export default function OnboardingTour() {
           fallback={
             <div
               class="fixed inset-0 z-50 pointer-events-none"
-              style={{ 'background-color': 'rgba(0,0,0,0.45)' }}
+              style={{ 'background-color': 'var(--tour-overlay-bg)' }}
             />
           }
         >
@@ -281,7 +281,7 @@ export default function OnboardingTour() {
               left: `${spotlightRect()!.left}px`,
               width: `${spotlightRect()!.width}px`,
               height: `${spotlightRect()!.height}px`,
-              'box-shadow': '0 0 0 9999px rgba(0,0,0,0.45)',
+              'box-shadow': '0 0 0 9999px var(--tour-overlay-bg)',
               outline: '2px solid rgba(255,255,255,0.18)',
               'border-radius': '4px',
             }}
