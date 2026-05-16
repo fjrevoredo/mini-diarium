@@ -7,6 +7,7 @@ import { mapTauriError } from '../lib/errors';
 import { journals, activeJournalId, loadJournals } from './journals';
 import { resetSessionState } from './session';
 import { loadAllTags } from './tags';
+import { startOnboarding } from './onboarding';
 
 const log = createLogger('Auth');
 
@@ -107,6 +108,7 @@ export async function createJournalAutoProtected(): Promise<void> {
     // Without this, locking the journal in the same session would show the
     // password form instead of auto-unlocking (journals() would be stale).
     await loadJournals();
+    startOnboarding();
     prepareUnlockedSession();
     log.info('Local-only journal created');
     const dates = await tauri.getAllEntryDates();
@@ -154,6 +156,7 @@ export async function createJournal(password: string): Promise<void> {
   try {
     setError(null);
     await tauri.createJournal(password);
+    startOnboarding();
     prepareUnlockedSession();
     log.info('Journal created');
 

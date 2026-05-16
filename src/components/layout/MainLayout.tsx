@@ -12,6 +12,7 @@ import ImportOverlay from '../overlays/ImportOverlay';
 import ExportOverlay from '../overlays/ExportOverlay';
 import NotificationsOverlay from '../overlays/NotificationsOverlay';
 import TagManager from '../overlays/TagManager';
+import OnboardingTour from '../overlays/OnboardingOverlay';
 import {
   selectedDate,
   setSelectedDate,
@@ -41,6 +42,7 @@ import {
 } from '../../lib/tauri';
 import { preferences } from '../../state/preferences';
 import { getTodayString } from '../../lib/dates';
+import { onboardingMode, minimizeOnboarding } from '../../state/onboarding';
 
 const log = createLogger('MainLayout');
 
@@ -50,6 +52,11 @@ export default function MainLayout() {
 
   const handleGlobalEsc = (e: KeyboardEvent) => {
     if (e.key !== 'Escape') return;
+    if (onboardingMode() === 'tour') {
+      minimizeOnboarding();
+      return;
+    }
+    if (onboardingMode() === 'minimized') return;
     // Never fire when any dialog is open — they handle their own Escape
     if (
       isGoToDateOpen() ||
@@ -214,6 +221,7 @@ export default function MainLayout() {
       <ExportOverlay isOpen={isExportOpen()} onClose={() => setIsExportOpen(false)} />
       <NotificationsOverlay />
       <TagManager isOpen={isTagManagerOpen()} onClose={() => setIsTagManagerOpen(false)} />
+      <OnboardingTour />
     </div>
   );
 }

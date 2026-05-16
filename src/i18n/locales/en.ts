@@ -511,6 +511,7 @@ const en = {
     copyright: 'Copyright © 2026 Francisco J. Revoredo',
     githubLink: 'github.com/fjrevoredo/mini-diarium',
     docsLink: 'Documentation',
+    showTour: 'Show Welcome Tour',
   },
 
   /** NotificationsOverlay */
@@ -564,6 +565,29 @@ const en = {
     filterByTag: 'Filter by tag',
     filterActiveLabel: 'Tag filter:',
     clearFilter: 'Clear tag filter',
+  },
+
+  /** Onboarding tour — first-run step-by-step guide */
+  onboarding: {
+    title: 'Welcome to Mini Diarium',
+    subtitle: 'A few things to get you started:',
+    tip_toolbar_title: 'Enable the advanced toolbar',
+    tip_toolbar_body: 'Turn on extra formatting tools in Preferences → Writing.',
+    tip_toolbar_action: 'Open Preferences',
+    tip_import_title: 'Import your entries',
+    tip_import_body: 'Bring in entries from Day One, Obsidian, or plain text files.',
+    tip_import_action: 'Open Import',
+    tip_docs_title: 'Read the documentation',
+    tip_docs_body: 'Find tips, keyboard shortcuts, and guides online.',
+    tip_docs_action: 'Open Docs',
+    dismiss: 'Dismiss',
+    back: 'Back',
+    next: 'Next',
+    done: 'Done',
+    minimize: 'Minimize tour',
+    helpAria: 'Open onboarding tips',
+    popoverHint: 'Resume the quick-start tour or dismiss it permanently.',
+    resumeTour: 'Resume Tour',
   },
 
   /**

@@ -431,7 +431,8 @@
     "license": "MIT-Lizenz",
     "copyright": "Copyright © 2026 Francisco J. Revoredo",
     "githubLink": "github.com/fjrevoredo/mini-diarium",
-    "docsLink": "Dokumentation"
+    "docsLink": "Dokumentation",
+    "showTour": "Willkommenstour anzeigen"
   },
   "notifications": {
     "title": "Neuigkeiten",
@@ -477,6 +478,27 @@
     "filterByTag": "Nach Schlagwort filtern",
     "filterActiveLabel": "Schlagwort-Filter:",
     "clearFilter": "Schlagwort-Filter aufheben"
+  },
+  "onboarding": {
+    "title": "Willkommen bei Mini Diarium",
+    "subtitle": "Ein paar Dinge für den Einstieg:",
+    "tip_toolbar_title": "Erweiterte Werkzeugleiste aktivieren",
+    "tip_toolbar_body": "Schalte zusätzliche Formatierungswerkzeuge in Einstellungen → Schreiben ein.",
+    "tip_toolbar_action": "Einstellungen öffnen",
+    "tip_import_title": "Einträge importieren",
+    "tip_import_body": "Importiere Einträge aus Day One, Obsidian oder Textdateien.",
+    "tip_import_action": "Import öffnen",
+    "tip_docs_title": "Dokumentation lesen",
+    "tip_docs_body": "Finde Tipps, Tastenkürzel und Anleitungen online.",
+    "tip_docs_action": "Docs öffnen",
+    "dismiss": "Schließen",
+    "back": "Zurück",
+    "next": "Weiter",
+    "done": "Fertig",
+    "minimize": "Tour minimieren",
+    "helpAria": "Einführungstipps öffnen",
+    "popoverHint": "Setze die Schnellstart-Tour fort oder schließe sie dauerhaft.",
+    "resumeTour": "Tour fortsetzen"
   },
   "errors": {
     "incorrectPassword": "Falsches Passwort.",

@@ -3,7 +3,7 @@ title: Getting Started
 slug: getting-started
 description: How to create your first journal, set a password, and start writing in Mini Diarium.
 order: 1
-updated: 2026-04-19
+updated: 2026-05-15
 tags: setup, password, first launch
 ---
 
@@ -14,6 +14,18 @@ When you open Mini Diarium, the app starts at the **Journal Picker**. From there
 If you create a new journal, you will be asked to create a password. This password encrypts your entire journal using AES-256-GCM encryption.
 
 **There is no password recovery.** If you forget your password, your entries cannot be recovered. Choose something memorable and keep it safe.
+
+## Welcome Tour
+
+The first time you create a journal, a **three-step overlay tour** appears to highlight key features:
+
+1. **Enable the advanced toolbar** — turn on extra formatting controls in **Preferences → Writing**.
+2. **Import your entries** — bring in content from Day One, Obsidian, or plain text files via the Import panel.
+3. **Read the documentation** — links to the online guides and keyboard shortcut reference.
+
+Each step shows a callout card with a direct action link. You can navigate with **Back** and **Next**, or click the **Minimize** (`⊟`) button in the card header to collapse the tour into a floating help icon (`?`) at the bottom-right of the window. Pressing **Escape** while the tour is open minimizes it rather than closing the app.
+
+To resume or permanently dismiss the tour, click the `?` icon and choose **Resume Tour** or **Dismiss**. Completing all three steps also dismisses it automatically. The tour only ever appears once per app profile — it does not repeat on subsequent launches or when adding new journals.
 
 ## Locking and Unlocking
 

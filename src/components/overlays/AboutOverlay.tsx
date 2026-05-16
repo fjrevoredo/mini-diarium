@@ -4,6 +4,7 @@ import { getVersion } from '@tauri-apps/api/app';
 import { openUrl } from '@tauri-apps/plugin-opener';
 import { useI18n } from '../../i18n';
 import { X } from 'lucide-solid';
+import { replayOnboarding } from '../../state/onboarding';
 
 interface AboutOverlayProps {
   isOpen: boolean;
@@ -87,8 +88,17 @@ export default function AboutOverlay(props: AboutOverlayProps) {
               </button>
             </div>
 
-            {/* Close */}
-            <div class="flex justify-end">
+            {/* Footer: tour shortcut + close */}
+            <div class="flex items-center justify-between">
+              <button
+                onClick={() => {
+                  props.onClose();
+                  replayOnboarding();
+                }}
+                class="text-sm text-interactive hover:underline"
+              >
+                {t('about.showTour')}
+              </button>
               <button
                 onClick={() => props.onClose()}
                 class="rounded-md bg-tertiary px-4 py-2 text-sm font-medium text-secondary hover:bg-hover transition-colors"

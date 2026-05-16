@@ -106,10 +106,8 @@ mod imp {
                 WTS_SESSION_LOCK | WTS_SESSION_LOGOFF => trigger_auto_lock("session lock"),
                 _ => {}
             },
-            WM_POWERBROADCAST => {
-                if wparam as u32 == PBT_APMSUSPEND {
-                    trigger_auto_lock("system suspend");
-                }
+            WM_POWERBROADCAST if wparam as u32 == PBT_APMSUSPEND => {
+                trigger_auto_lock("system suspend");
             }
             WM_NCDESTROY => {
                 let _ = WTSUnRegisterSessionNotification(hwnd);

@@ -431,7 +431,8 @@
     "license": "Licenza MIT",
     "copyright": "Copyright © 2026 Francisco J. Revoredo",
     "githubLink": "github.com/fjrevoredo/mini-diarium",
-    "docsLink": "Documentazione"
+    "docsLink": "Documentazione",
+    "showTour": "Mostra il tour di benvenuto"
   },
   "notifications": {
     "title": "Novità",
@@ -477,6 +478,27 @@
     "filterByTag": "Filtra per tag",
     "filterActiveLabel": "Filtro tag:",
     "clearFilter": "Rimuovi filtro tag"
+  },
+  "onboarding": {
+    "title": "Benvenuto in Mini Diarium",
+    "subtitle": "Alcune cose per iniziare:",
+    "tip_toolbar_title": "Abilita la barra degli strumenti avanzata",
+    "tip_toolbar_body": "Attiva strumenti di formattazione aggiuntivi in Preferenze → Scrittura.",
+    "tip_toolbar_action": "Apri Preferenze",
+    "tip_import_title": "Importa le tue voci",
+    "tip_import_body": "Importa voci da Day One, Obsidian o file di testo.",
+    "tip_import_action": "Apri Importazione",
+    "tip_docs_title": "Leggi la documentazione",
+    "tip_docs_body": "Trova consigli, scorciatoie da tastiera e guide online.",
+    "tip_docs_action": "Apri la Documentazione",
+    "dismiss": "Ignora",
+    "back": "Indietro",
+    "next": "Avanti",
+    "done": "Fine",
+    "minimize": "Riduci il tour",
+    "helpAria": "Apri i suggerimenti di benvenuto",
+    "popoverHint": "Riprendi il tour rapido o ignoralo definitivamente.",
+    "resumeTour": "Riprendi il Tour"
   },
   "errors": {
     "incorrectPassword": "Password errata.",
