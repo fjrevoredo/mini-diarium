@@ -396,6 +396,7 @@ export default function EditorToolbar(props: EditorToolbarProps) {
     <Show when={props.editor}>
       <div
         role="toolbar"
+        data-tour-target="toolbar"
         aria-label={t('editor.toolbar.aria')}
         class="flex flex-wrap items-center gap-1 border-b border-primary bg-tertiary px-3 py-2"
       >

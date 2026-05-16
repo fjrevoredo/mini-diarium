@@ -571,14 +571,16 @@ const en = {
   onboarding: {
     title: 'Welcome to Mini Diarium',
     subtitle: 'A few things to get you started:',
-    tip_toolbar_title: 'Enable the advanced toolbar',
-    tip_toolbar_body: 'Turn on extra formatting tools in Preferences → Writing.',
+    tip_toolbar_title: 'Customize your toolbar',
+    tip_toolbar_body:
+      'The default toolbar only shows Bold and Italic. Open Preferences → Writing to enable more tools — headings, colors, lists, alignment — and reorder them to your liking.',
     tip_toolbar_action: 'Open Preferences',
     tip_import_title: 'Import your entries',
     tip_import_body: 'Bring in entries from Day One, Obsidian, or plain text files.',
     tip_import_action: 'Open Import',
-    tip_docs_title: 'Read the documentation',
-    tip_docs_body: 'Find tips, keyboard shortcuts, and guides online.',
+    tip_docs_title: 'Full documentation online',
+    tip_docs_body:
+      'The Mini Diarium website has full documentation covering every feature: keyboard shortcuts, toolbar options, import formats, encryption details, and more.',
     tip_docs_action: 'Open Docs',
     dismiss: 'Dismiss',
     back: 'Back',
