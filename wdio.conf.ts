@@ -207,6 +207,7 @@ export const config: Options.Testrunner = {
     // first paint and uses different size semantics than Tauri's LogicalSize —
     // a post-render resize leaves CSS viewport values stale and re-introduces the
     // white-gap-at-top bug. The Rust pre-show resize is the single source of truth.
+
   },
 
   // onPrepare runs in the main process before any workers start.

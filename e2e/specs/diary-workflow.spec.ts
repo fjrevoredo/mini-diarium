@@ -57,36 +57,45 @@ describe('Core journal workflow', () => {
       await $('[data-testid="unlock-journal-button"]').click();
     }
 
-    // 3. Journal created and unlocked → MainLayout is now visible
+    // 3. Dismiss the first-run onboarding tour if it appears (only on journal creation).
+    //    Click Next three times (step 1 → 2 → 3 → done) to complete the tour naturally.
+    const nextBtn = $('[data-testid="onboarding-next-btn"]');
+    if (await nextBtn.isDisplayed().catch(() => false)) {
+      await nextBtn.click();
+      await nextBtn.click();
+      await nextBtn.click();
+    }
+
+    // 4. Journal created and unlocked → MainLayout is now visible
     //    Sidebar starts collapsed; open it to access the calendar, then click the target date
     await $('[data-testid="toggle-sidebar-button"]').waitForClickable({ timeout: 10000 });
     await $('[data-testid="toggle-sidebar-button"]').click();
     await $(`[data-testid="calendar-day-${TEST_DATE}"]`).waitForClickable({ timeout: 10000 });
     await $(`[data-testid="calendar-day-${TEST_DATE}"]`).click();
 
-    // 4. Write the entry title
+    // 5. Write the entry title
     await $('[data-testid="title-input"]').waitForDisplayed({ timeout: 5000 });
     await $('[data-testid="title-input"]').setValue(TEST_TITLE);
 
-    // 5. Write the entry body in the TipTap ProseMirror contenteditable div
+    // 6. Write the entry body in the TipTap ProseMirror contenteditable div
     const editor = await $('.ProseMirror');
     await editor.click();
     await browser.keys(TEST_BODY);
 
-    // 6. Wait for autosave to flush (debounce is ~1.5 s)
+    // 7. Wait for autosave to flush (debounce is ~1.5 s)
     await browser.pause(2500);
 
-    // 7. Lock the journal
+    // 8. Lock the journal
     await $('[data-testid="lock-journal-button"]').click();
 
-    // 8. Verify we are now on the unlock screen (journal locked)
+    // 9. Verify we are now on the unlock screen (journal locked)
     await $('[data-testid="password-unlock-input"]').waitForDisplayed({ timeout: 5000 });
 
-    // 9. Unlock again to verify the entry was persisted
+    // 10. Unlock again to verify the entry was persisted
     await $('[data-testid="password-unlock-input"]').setValue(TEST_PASSWORD);
     await $('[data-testid="unlock-journal-button"]').click();
 
-    // 10. Verify a fresh session baseline: unlock should select today.
+    // 11. Verify a fresh session baseline: unlock should select today.
     //     Sidebar starts collapsed after unlock; open it to access the calendar.
     await $('[data-testid="toggle-sidebar-button"]').waitForClickable({ timeout: 10000 });
     await $('[data-testid="toggle-sidebar-button"]').click();
@@ -95,7 +104,7 @@ describe('Core journal workflow', () => {
     const todayButtonClass = await todayButton.getAttribute('class');
     expect(todayButtonClass).toContain('interactive-primary');
 
-    // 11. Navigate back to the saved date and verify persistence.
+    // 12. Navigate back to the saved date and verify persistence.
     if (TEST_DATE !== TODAY_DATE) {
       await $(`[data-testid="calendar-day-${TEST_DATE}"]`).waitForClickable({ timeout: 10000 });
       await $(`[data-testid="calendar-day-${TEST_DATE}"]`).click();
