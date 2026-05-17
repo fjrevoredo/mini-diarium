@@ -202,7 +202,8 @@
     "timestampUpdated": "Actualizado: {{ timestamp }}",
     "deleteConfirmMessage": "¿Estás seguro de que quieres eliminar esta entrada?",
     "deleteConfirmTitle": "Eliminar entrada",
-    "importMarkdownNoEditor": "No active editor to import into."
+    "importMarkdownNoEditor": "No active editor to import into.",
+    "dropRejectedWebImage": "Esta imagen no puede incrustarse: requeriría una solicitud de red, y esta aplicación nunca realiza conexiones para proteger tu privacidad. Haz clic derecho en la imagen → Copiar imagen, luego pega con Ctrl+V."
   },
   "search": {
     "placeholder": "Buscar entradas...",

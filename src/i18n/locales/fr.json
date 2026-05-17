@@ -202,7 +202,8 @@
     "timestampUpdated": "Mis à jour : {{ timestamp }}",
     "deleteConfirmMessage": "Êtes-vous sûr de vouloir supprimer cette entrée ?",
     "deleteConfirmTitle": "Supprimer l'entrée",
-    "importMarkdownNoEditor": "Aucun éditeur actif pour l'importation."
+    "importMarkdownNoEditor": "Aucun éditeur actif pour l'importation.",
+    "dropRejectedWebImage": "Cette image ne peut pas être intégrée : cela nécessiterait une requête réseau, que cette application n'effectue jamais pour protéger votre vie privée. Clic droit sur l'image → Copier l'image, puis collez avec Ctrl+V."
   },
   "search": {
     "placeholder": "Rechercher des entrées...",

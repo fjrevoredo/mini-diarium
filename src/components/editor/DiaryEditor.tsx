@@ -1,4 +1,4 @@
-import { createEffect, onCleanup, onMount, createSignal, createResource } from 'solid-js';
+import { createEffect, onCleanup, onMount, createSignal, createResource, Show } from 'solid-js';
 import { Editor, Extension, Mark, mergeAttributes } from '@tiptap/core';
 import { Plugin, PluginKey } from '@tiptap/pm/state';
 import StarterKit from '@tiptap/starter-kit';
@@ -13,6 +13,8 @@ import { listen, UnlistenFn } from '@tauri-apps/api/event';
 import EditorToolbar from './EditorToolbar';
 import { preferences } from '../../state/preferences';
 import { readFileBytes, getFontData } from '../../lib/tauri';
+import { extractImageSourcesFromHtml, htmlHasImages } from '../../lib/image-drag';
+import { useI18n } from '../../i18n';
 
 interface DiaryEditorProps {
   content: string;
@@ -242,10 +244,22 @@ const TimestampMark = Mark.create({
 });
 
 export default function DiaryEditor(props: DiaryEditorProps) {
+  const t = useI18n();
   // eslint-disable-next-line no-unassigned-vars -- SolidJS assigns via ref={editorElement}; ESLint can't see the JSX assignment
   let editorElement!: HTMLDivElement;
   const [editor, setEditor] = createSignal<Editor | null>(null);
   let unlistenDragDrop: UnlistenFn | undefined;
+  let unlistenDragEnter: UnlistenFn | undefined;
+  let unlistenDragLeave: UnlistenFn | undefined;
+  const [isDragOver, setIsDragOver] = createSignal(false);
+  const [dropHint, setDropHint] = createSignal(false);
+  let dropHintTimer: ReturnType<typeof setTimeout> | undefined;
+
+  const showDropHint = () => {
+    clearTimeout(dropHintTimer);
+    setDropHint(true);
+    dropHintTimer = setTimeout(() => setDropHint(false), 6000);
+  };
 
   // @font-face injection: loads the selected editor font from bundled TTF files
   // as base64 data URLs so the browser can render it.
@@ -319,17 +333,50 @@ export default function DiaryEditor(props: DiaryEditorProps) {
         // Fallback for when Tauri's file-drop interception is disabled or absent.
         handleDrop(_view, event) {
           const dragEvent = event as DragEvent;
-          const files = Array.from(dragEvent.dataTransfer?.files ?? []).filter((f) =>
-            f.type.startsWith('image/'),
-          );
-          if (!files.length) return false;
-          dragEvent.preventDefault();
-          files.forEach((f) =>
-            resizeAndEmbedImage(f, editorInstance).catch((err) =>
-              console.error('[mini-diarium] image embed failed:', err),
-            ),
-          );
-          return true;
+          const dt = dragEvent.dataTransfer;
+          if (!dt) return false;
+
+          // Path A: File objects — covers virtual files exposed by some cross-app drags.
+          const files = Array.from(dt.files ?? []).filter((f) => f.type.startsWith('image/'));
+          if (files.length) {
+            dragEvent.preventDefault();
+            files.forEach((f) =>
+              resizeAndEmbedImage(f, editorInstance).catch((err) =>
+                console.error('[mini-diarium] image embed failed:', err),
+              ),
+            );
+            return true;
+          }
+
+          // Path B: HTML payload — Electron/desktop apps (e.g. Typora) expose image drags
+          // as text/html with data:image/... or file:// src values. Browsers (Brave, Chrome)
+          // only expose HTTPS URLs which we skip — no network fetches. We still consume the
+          // drop event when HTTPS images are detected to prevent TipTap from inserting
+          // broken <img src="https://..."> nodes as rich text.
+          const html = dt.getData('text/html');
+          if (html && htmlHasImages(html)) {
+            dragEvent.preventDefault();
+            const { dataUrls, filePaths } = extractImageSourcesFromHtml(html);
+            if (!dataUrls.length && !filePaths.length) {
+              // Images are HTTPS URLs — can't embed without network access.
+              showDropHint();
+              return true;
+            }
+            dataUrls.forEach((url) => {
+              const mime = url.split(';')[0].slice(5); // 'data:image/png;...' → 'image/png'
+              resizeAndEmbedDataUrl(url, mime, editorInstance).catch((err) =>
+                console.error('[mini-diarium] image embed failed:', err),
+              );
+            });
+            filePaths.forEach((path) =>
+              resizeAndEmbedPath(path, editorInstance).catch((err) =>
+                console.error('[mini-diarium] image embed failed:', err),
+              ),
+            );
+            return true;
+          }
+
+          return false;
         },
         handlePaste(_view, event) {
           const items = Array.from(event.clipboardData?.items ?? []);
@@ -358,6 +405,7 @@ export default function DiaryEditor(props: DiaryEditorProps) {
     // Tauri intercepts OS-level file drops on all platforms and emits tauri://drag-drop
     // instead of letting the browser's drop event see the files via dataTransfer.files.
     listen<{ paths: string[] }>('tauri://drag-drop', (event) => {
+      setIsDragOver(false);
       const imagePaths = event.payload.paths.filter((p) => /\.(jpe?g|png|gif|webp|bmp)$/i.test(p));
       imagePaths.forEach((path) =>
         resizeAndEmbedPath(path, editorInstance).catch((err) =>
@@ -366,6 +414,13 @@ export default function DiaryEditor(props: DiaryEditorProps) {
       );
     }).then((fn) => {
       unlistenDragDrop = fn;
+    });
+
+    listen('tauri://drag-enter', () => setIsDragOver(true)).then((fn) => {
+      unlistenDragEnter = fn;
+    });
+    listen('tauri://drag-leave', () => setIsDragOver(false)).then((fn) => {
+      unlistenDragLeave = fn;
     });
   });
 
@@ -414,15 +469,37 @@ export default function DiaryEditor(props: DiaryEditorProps) {
   onCleanup(() => {
     editor()?.destroy();
     unlistenDragDrop?.();
+    unlistenDragEnter?.();
+    unlistenDragLeave?.();
+    clearTimeout(dropHintTimer);
   });
 
   return (
     <div
-      class="rounded-lg border border-primary bg-primary"
+      class={`rounded-lg border bg-primary transition-colors duration-150 ${isDragOver() ? 'editor-drag-over' : 'border-primary'}`}
       style={{
         '--editor-font-size': `${preferences().editorFontSize}px`,
         '--editor-font-family': preferences().editorFontFamily ?? 'inherit',
       }}
+      onDragOver={(e) => {
+        const types = Array.from(e.dataTransfer?.types ?? []);
+        if (types.includes('Files')) {
+          // File drag from OS — we know we can handle it, show the ring.
+          setIsDragOver(true);
+          e.preventDefault();
+        } else if (types.includes('text/html')) {
+          // HTML payload drag — we can't read the data yet to know if it contains
+          // embeddable images (getData is unavailable in dragover for security reasons),
+          // so allow the drop without showing the ring to avoid a false promise.
+          e.preventDefault();
+        }
+      }}
+      onDragLeave={(e) => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+          setIsDragOver(false);
+        }
+      }}
+      onDrop={() => setIsDragOver(false)}
     >
       <EditorToolbar
         editor={editor()}
@@ -438,6 +515,18 @@ export default function DiaryEditor(props: DiaryEditorProps) {
       <div class="p-4">
         <div ref={editorElement} />
       </div>
+      <Show when={dropHint()}>
+        <div class="mx-4 mb-3 rounded-md border border-primary bg-secondary p-2.5 flex items-start justify-between gap-2">
+          <p class="text-xs text-secondary">{t('editor.dropRejectedWebImage')}</p>
+          <button
+            onClick={() => setDropHint(false)}
+            class="text-xs text-tertiary hover:text-primary flex-shrink-0 leading-none"
+            aria-label="Dismiss"
+          >
+            ×
+          </button>
+        </div>
+      </Show>
     </div>
   );
 }

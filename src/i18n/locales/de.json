@@ -202,7 +202,8 @@
     "timestampUpdated": "Aktualisiert: {{ timestamp }}",
     "deleteConfirmMessage": "Möchtest du diesen Eintrag wirklich löschen?",
     "deleteConfirmTitle": "Eintrag löschen",
-    "importMarkdownNoEditor": "Kein aktiver Editor zum Importieren."
+    "importMarkdownNoEditor": "Kein aktiver Editor zum Importieren.",
+    "dropRejectedWebImage": "Dieses Bild kann nicht eingebettet werden: Dafür wäre eine Netzwerkanfrage nötig, die diese App zum Schutz deiner Privatsphäre nie durchführt. Rechtsklick auf das Bild → Bild kopieren, dann mit Strg+V einfügen."
   },
   "search": {
     "placeholder": "Einträge durchsuchen...",

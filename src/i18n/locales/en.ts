@@ -257,6 +257,9 @@ const en = {
     deleteConfirmTitle: 'Delete Entry',
     /** EditorPanel — import markdown error */
     importMarkdownNoEditor: 'No active editor to import into.',
+    /** DiaryEditor — dropped image from web page (HTTPS URL, cannot embed without network) */
+    dropRejectedWebImage:
+      "This image can't be embedded: it would require a network request, which this app never makes to protect your privacy. Right-click the image → Copy Image, then paste with Ctrl+V.",
   },
 
   /** Search components */

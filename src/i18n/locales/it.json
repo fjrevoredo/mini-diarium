@@ -202,7 +202,8 @@
     "timestampUpdated": "Aggiornato: {{ timestamp }}",
     "deleteConfirmMessage": "Sei sicuro di voler eliminare questa voce?",
     "deleteConfirmTitle": "Elimina voce",
-    "importMarkdownNoEditor": "Nessun editor attivo in cui importare."
+    "importMarkdownNoEditor": "Nessun editor attivo in cui importare.",
+    "dropRejectedWebImage": "Questa immagine non può essere incorporata: richiederebbe una richiesta di rete, che questa app non effettua mai per proteggere la tua privacy. Clic destro sull'immagine → Copia immagine, poi incolla con Ctrl+V."
   },
   "search": {
     "placeholder": "Cerca voci...",

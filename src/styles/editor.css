@@ -157,3 +157,9 @@
   opacity: 0.7;
   font-size: 0.85em;
 }
+
+/* Applied to the editor container while an image drag is over it */
+.editor-drag-over {
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--border-focus) 25%, transparent);
+}
