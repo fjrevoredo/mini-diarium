@@ -418,7 +418,7 @@ export default function DiaryEditor(props: DiaryEditorProps) {
 
   return (
     <div
-      class="rounded-lg border border-primary bg-primary overflow-hidden"
+      class="rounded-lg border border-primary bg-primary"
       style={{
         '--editor-font-size': `${preferences().editorFontSize}px`,
         '--editor-font-family': preferences().editorFontFamily ?? 'inherit',

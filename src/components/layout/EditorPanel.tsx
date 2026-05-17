@@ -236,8 +236,8 @@ export default function EditorPanel() {
         deleteDisabled={isCreatingEntry() || dayEntries().length <= 1}
         deleteTitle={t('editor.deleteEntry')}
       />
-      <div class="flex-1 overflow-y-auto p-6">
-        <div class="mx-auto w-full max-w-3xl xl:max-w-5xl 2xl:max-w-6xl">
+      <div class="flex-1 overflow-y-auto px-6 pb-6">
+        <div class="pt-6 mx-auto w-full max-w-3xl xl:max-w-5xl 2xl:max-w-6xl">
           <div class="space-y-4">
             <Show when={!preferences().hideTitles}>
               <TitleEditor

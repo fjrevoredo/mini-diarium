@@ -398,7 +398,7 @@ export default function EditorToolbar(props: EditorToolbarProps) {
         role="toolbar"
         data-tour-target="toolbar"
         aria-label={t('editor.toolbar.aria')}
-        class="flex flex-wrap items-center gap-1 border-b border-primary bg-tertiary px-3 py-2"
+        class="flex flex-wrap items-center gap-1 border-b border-primary bg-tertiary px-3 py-2 sticky top-0 z-10 rounded-t-lg"
       >
         {/* Hidden inputs — always rendered so refs are valid for click triggers */}
         <input
