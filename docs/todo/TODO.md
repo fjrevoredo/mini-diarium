@@ -13,7 +13,7 @@ TODO entry format:
 - After creating a new TODO, update the `Latest TODO ID` marker to reflect the new highest ID
 - Use the `todo-manager` skill (`.agents/skills/todo-manager/`) for creation, tracking, archival, and validation
 
-**Latest TODO ID: TODO-0035** — next new TODO should be TODO-0036
+**Latest TODO ID: TODO-0037** — next new TODO should be TODO-0038
 
 ---
 
@@ -21,9 +21,9 @@ TODO entry format:
 
 ---
 
-## Medium Priority
-
 - [ ] **TODO-0002: Frontend test coverage** — auth screens (`PasswordPrompt.tsx`, `PasswordCreation.tsx`), Calendar, and all overlays (GoToDateOverlay, PreferencesOverlay, StatsOverlay, ImportOverlay, ExportOverlay) have zero test coverage; add Vitest + @solidjs/testing-library tests for each; use existing pattern from `TitleEditor.test.tsx` and `WordCount.test.tsx`
+- [ ] **TODO-0036: Sticky editor toolbar on scroll** — when entry content overflows and a vertical scrollbar appears, the toolbar should remain visible at the top of the view instead of scrolling out of sight; the toolbar should stick to the top edge so formatting controls are always accessible while editing long entries
+- [ ] **TODO-0037: Settings storage location taxonomy** — define and document a clear taxonomy for where each type of setting should be stored (journal-scoped in the journal itself/device-scoped in `config.json`/user-scoped in `localStorage`/etc.); the decision guide must be actionable so that when adding a new setting, contributors can determine the correct storage location and rationale without ambiguity
 - [ ] **TODO-0003: Full image drag-and-drop support** — dropping images into the editor should work consistently both from file managers and from other applications (for example browsers, chat apps, or image editors), not only when the drag payload exposes file paths; image drops should embed the image the same way as the toolbar picker and paste flow, while unsupported payloads fail safely without breaking the editor
   - [ ] **First compatibility target: Typora** — validate and support dragging images from Typora into Mini Diarium as the first cross-application drag-and-drop case before widening compatibility to other apps
 - [ ] **TODO-0008: Cursor height too tall after Shift+Enter on macOS (#118)** — the text caret (cursor) height becomes extra long starting on the second line, but only when inserting a soft line break with Shift+Enter (Enter alone works fine); macOS-only (v0.4.20); likely a `line-height` or `font-family` mismatch in ProseMirror's `<br>` handling introduced with new editor fonts in v0.4.20; audit soft-break styling in `src/styles/editor.css` and the `--editor-font-family` / `--editor-font-size` CSS custom properties
