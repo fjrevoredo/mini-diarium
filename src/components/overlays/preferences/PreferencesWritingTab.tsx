@@ -39,6 +39,8 @@ export default function PreferencesWritingTab(_props: TabProps) {
         insertTimestamp: t('prefs.writing.toolbarItem.insertTimestamp'),
         textDirection: t('prefs.writing.toolbarItem.textDirection'),
         alignment: t('prefs.writing.toolbarItem.alignment'),
+        fontFamily: t('prefs.writing.toolbarItem.fontFamily'),
+        fontSize: t('prefs.writing.toolbarItem.fontSize'),
       }) satisfies Record<ToolbarItemKey, string>,
   );
 

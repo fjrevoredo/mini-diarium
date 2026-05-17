@@ -1,8 +1,9 @@
-import { Show, For, createSignal, createEffect, onCleanup } from 'solid-js';
+import { Show, For, createSignal, createEffect, onCleanup, createResource } from 'solid-js';
 import type { JSX } from 'solid-js';
 import type { Editor } from '@tiptap/core';
-import { preferences } from '../../state/preferences';
+import { preferences, setPreferences } from '../../state/preferences';
 import type { ToolbarItemKey } from '../../state/preferences';
+import { listBundledFonts } from '../../lib/tauri';
 import { useI18n } from '../../i18n';
 import TimestampOverlay from './TimestampOverlay';
 import {
@@ -28,6 +29,8 @@ import {
   PilcrowRight,
 } from 'lucide-solid';
 
+const FONT_SIZES = [12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24] as const;
+
 interface EditorToolbarProps {
   editor: Editor | null;
   onInsertImage?: (file: File) => void;
@@ -36,6 +39,7 @@ interface EditorToolbarProps {
 
 export default function EditorToolbar(props: EditorToolbarProps) {
   const t = useI18n();
+  const [bundledFonts] = createResource(listBundledFonts);
 
   // Reactive signals for active states
   const [isBoldActive, setIsBoldActive] = createSignal(false);
@@ -388,6 +392,37 @@ export default function EditorToolbar(props: EditorToolbarProps) {
               <AlignJustify size={18} />
             </button>
           </>
+        );
+      case 'fontFamily':
+        return (
+          <select
+            aria-label={t('editor.toolbar.fontFamily')}
+            onChange={(e) => setPreferences({ editorFontFamily: e.target.value || null })}
+            class="h-8 rounded border border-primary bg-primary px-2 text-sm text-primary transition-colors hover:bg-tertiary focus:outline-none focus:ring-2 focus:ring-[var(--border-focus)]"
+            disabled={bundledFonts.loading}
+          >
+            <option value="" selected={!preferences().editorFontFamily}>
+              {t('prefs.writing.fontFamilySystemDefault')}
+            </option>
+            <For each={bundledFonts() ?? []}>
+              {(font) => (
+                <option value={font} selected={preferences().editorFontFamily === font}>
+                  {font}
+                </option>
+              )}
+            </For>
+          </select>
+        );
+      case 'fontSize':
+        return (
+          <select
+            aria-label={t('editor.toolbar.fontSize')}
+            value={String(preferences().editorFontSize)}
+            onChange={(e) => setPreferences({ editorFontSize: Number(e.target.value) })}
+            class="h-8 rounded border border-primary bg-primary px-2 text-sm text-primary transition-colors hover:bg-tertiary focus:outline-none focus:ring-2 focus:ring-[var(--border-focus)]"
+          >
+            <For each={FONT_SIZES}>{(s) => <option value={String(s)}>{s}</option>}</For>
+          </select>
         );
     }
   };

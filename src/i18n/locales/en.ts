@@ -226,6 +226,8 @@ const en = {
       insertTimestampTitle: 'Insert current timestamp',
       textDirection: 'Text direction',
       textDirectionTitle: 'Toggle text direction (Ctrl+Shift+D)',
+      fontFamily: 'Font family',
+      fontSize: 'Font size',
     },
     /** WordCount — plural pair */
     wordCount_one: '{{ count }} word',
@@ -348,6 +350,8 @@ const en = {
         insertTimestamp: 'Insert timestamp',
         textDirection: 'Text direction',
         alignment: 'Alignment controls',
+        fontFamily: 'Font family',
+        fontSize: 'Font size',
       },
       fontSizeLabel: 'Editor font size',
       fontSizePxSuffix: 'px',

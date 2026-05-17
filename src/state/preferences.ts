@@ -20,7 +20,9 @@ export type ToolbarItemKey =
   | 'importMarkdown'
   | 'insertTimestamp'
   | 'textDirection'
-  | 'alignment';
+  | 'alignment'
+  | 'fontFamily'
+  | 'fontSize';
 
 export interface ToolbarItem {
   key: ToolbarItemKey;
@@ -43,6 +45,8 @@ export const DEFAULT_TOOLBAR_ITEMS: ToolbarItem[] = [
   { key: 'insertTimestamp', enabled: true },
   { key: 'textDirection', enabled: true },
   { key: 'alignment', enabled: true },
+  { key: 'fontFamily', enabled: false },
+  { key: 'fontSize', enabled: false },
 ];
 
 export interface Preferences {
@@ -97,6 +101,15 @@ function loadPreferences(): Preferences {
           enabled: allEnabled || WAS_ALWAYS_VISIBLE.includes(item.key),
         }));
         delete parsed.advancedToolbar;
+      }
+
+      // Append any new default toolbar keys not yet in stored list
+      if (Array.isArray(parsed.toolbarItems)) {
+        const existingKeys = new Set((parsed.toolbarItems as ToolbarItem[]).map((i) => i.key));
+        const missing = DEFAULT_TOOLBAR_ITEMS.filter((i) => !existingKeys.has(i.key));
+        if (missing.length > 0) {
+          parsed.toolbarItems = [...(parsed.toolbarItems as ToolbarItem[]), ...missing];
+        }
       }
 
       return { ...DEFAULT_PREFERENCES, ...(parsed as Partial<Preferences>) };

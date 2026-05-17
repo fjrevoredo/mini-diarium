@@ -5,6 +5,18 @@ import EditorToolbar from './EditorToolbar';
 import { setPreferences, DEFAULT_TOOLBAR_ITEMS } from '../../state/preferences';
 import type { Editor } from '@tiptap/core';
 
+const { mockListBundledFonts } = vi.hoisted(() => ({
+  mockListBundledFonts: vi.fn<() => Promise<string[]>>().mockResolvedValue(['Font A', 'Font B']),
+}));
+
+vi.mock('../../lib/tauri', async () => {
+  const actual = await vi.importActual<typeof import('../../lib/tauri')>('../../lib/tauri');
+  return {
+    ...actual,
+    listBundledFonts: mockListBundledFonts,
+  };
+});
+
 // ---------------------------------------------------------------------------
 // Minimal Editor mock — TipTap cannot run in jsdom
 // ---------------------------------------------------------------------------
@@ -501,5 +513,99 @@ describe('Text direction button', () => {
 
     expect(setTextDirection).toHaveBeenCalledWith('ltr');
     expect(run).toHaveBeenCalled();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// fontFamily item — visibility and options
+// ---------------------------------------------------------------------------
+
+describe('EditorToolbar fontFamily item — visibility', () => {
+  it('hides font family select when fontFamily item is disabled', () => {
+    setPreferences({
+      toolbarItems: DEFAULT_TOOLBAR_ITEMS.map((i) => ({ ...i, enabled: false })),
+    });
+    const { container } = renderWithI18n(() => <EditorToolbar editor={makeEditorMock()} />);
+    expect(container.querySelector('[aria-label="Font family"]')).toBeNull();
+  });
+
+  it('shows font family select when fontFamily item is enabled', () => {
+    setPreferences({
+      toolbarItems: DEFAULT_TOOLBAR_ITEMS.map((i) => ({
+        ...i,
+        enabled: i.key === 'fontFamily',
+      })),
+    });
+    const { container } = renderWithI18n(() => <EditorToolbar editor={makeEditorMock()} />);
+    expect(container.querySelector('[aria-label="Font family"]')).not.toBeNull();
+  });
+
+  it('has system-default option when fontFamily item is enabled', () => {
+    setPreferences({
+      toolbarItems: DEFAULT_TOOLBAR_ITEMS.map((i) => ({
+        ...i,
+        enabled: i.key === 'fontFamily',
+      })),
+    });
+    const { container } = renderWithI18n(() => <EditorToolbar editor={makeEditorMock()} />);
+    const select = container.querySelector('[aria-label="Font family"]') as HTMLSelectElement;
+    const options = Array.from(select.options).map((o) => o.value);
+    expect(options).toContain('');
+  });
+
+  it('has bundled font options when fontFamily item is enabled', async () => {
+    setPreferences({
+      toolbarItems: DEFAULT_TOOLBAR_ITEMS.map((i) => ({
+        ...i,
+        enabled: i.key === 'fontFamily',
+      })),
+    });
+    const { container } = renderWithI18n(() => <EditorToolbar editor={makeEditorMock()} />);
+    await vi.waitFor(() => {
+      const select = container.querySelector('[aria-label="Font family"]') as HTMLSelectElement;
+      const options = Array.from(select.options).map((o) => o.value);
+      expect(options).toContain('Font A');
+      expect(options).toContain('Font B');
+    });
+  });
+});
+
+// ---------------------------------------------------------------------------
+// fontSize item — visibility and options
+// ---------------------------------------------------------------------------
+
+describe('EditorToolbar fontSize item — visibility', () => {
+  it('hides font size select when fontSize item is disabled', () => {
+    setPreferences({
+      toolbarItems: DEFAULT_TOOLBAR_ITEMS.map((i) => ({ ...i, enabled: false })),
+    });
+    const { container } = renderWithI18n(() => <EditorToolbar editor={makeEditorMock()} />);
+    expect(container.querySelector('[aria-label="Font size"]')).toBeNull();
+  });
+
+  it('shows font size select when fontSize item is enabled', () => {
+    setPreferences({
+      toolbarItems: DEFAULT_TOOLBAR_ITEMS.map((i) => ({
+        ...i,
+        enabled: i.key === 'fontSize',
+      })),
+    });
+    const { container } = renderWithI18n(() => <EditorToolbar editor={makeEditorMock()} />);
+    expect(container.querySelector('[aria-label="Font size"]')).not.toBeNull();
+  });
+
+  it('has all 13 size options (12–24) when fontSize item is enabled', () => {
+    setPreferences({
+      toolbarItems: DEFAULT_TOOLBAR_ITEMS.map((i) => ({
+        ...i,
+        enabled: i.key === 'fontSize',
+      })),
+    });
+    const { container } = renderWithI18n(() => <EditorToolbar editor={makeEditorMock()} />);
+    const select = container.querySelector('[aria-label="Font size"]') as HTMLSelectElement;
+    const values = Array.from(select.options).map((o) => Number(o.value));
+    expect(values).toHaveLength(13);
+    expect(values[0]).toBe(12);
+    expect(values[12]).toBe(24);
   });
 });

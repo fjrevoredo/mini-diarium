@@ -180,7 +180,9 @@
       "insertTimestamp": "Insérer un horodatage",
       "insertTimestampTitle": "Insérer l'horodatage actuel",
       "textDirection": "Direction du texte",
-      "textDirectionTitle": "Basculer la direction du texte (Ctrl+Shift+D)"
+      "textDirectionTitle": "Basculer la direction du texte (Ctrl+Shift+D)",
+      "fontFamily": "Police",
+      "fontSize": "Taille de police"
     },
     "wordCount_one": "{{ count }} mot",
     "wordCount_other": "{{ count }} mots",
@@ -285,7 +287,9 @@
         "importMarkdown": "Importer Markdown",
         "insertTimestamp": "Insérer un horodatage",
         "textDirection": "Direction du texte",
-        "alignment": "Contrôles d'alignement"
+        "alignment": "Contrôles d'alignement",
+        "fontFamily": "Police",
+        "fontSize": "Taille"
       },
       "fontSizeLabel": "Taille de police de l'éditeur",
       "fontSizePxSuffix": "px",

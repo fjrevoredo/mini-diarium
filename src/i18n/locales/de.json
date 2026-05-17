@@ -180,7 +180,9 @@
       "insertTimestamp": "Zeitstempel einfügen",
       "insertTimestampTitle": "Aktuellen Zeitstempel einfügen",
       "textDirection": "Textrichtung",
-      "textDirectionTitle": "Textrichtung umschalten (Strg+Shift+D)"
+      "textDirectionTitle": "Textrichtung umschalten (Strg+Shift+D)",
+      "fontFamily": "Schriftart",
+      "fontSize": "Schriftgröße"
     },
     "wordCount_one": "{{ count }} Wort",
     "wordCount_other": "{{ count }} Wörter",
@@ -285,7 +287,9 @@
         "importMarkdown": "Markdown importieren",
         "insertTimestamp": "Zeitstempel einfügen",
         "textDirection": "Textrichtung",
-        "alignment": "Ausrichtungssteuerelemente"
+        "alignment": "Ausrichtungssteuerelemente",
+        "fontFamily": "Schriftart",
+        "fontSize": "Schriftgröße"
       },
       "fontSizeLabel": "Editor-Schriftgröße",
       "fontSizePxSuffix": "px",

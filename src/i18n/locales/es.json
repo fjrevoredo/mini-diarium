@@ -180,7 +180,9 @@
       "insertTimestamp": "Insertar marca de tiempo",
       "insertTimestampTitle": "Insertar marca de tiempo actual",
       "textDirection": "Dirección del texto",
-      "textDirectionTitle": "Alternar dirección del texto (Ctrl+Shift+D)"
+      "textDirectionTitle": "Alternar dirección del texto (Ctrl+Shift+D)",
+      "fontFamily": "Tipo de letra",
+      "fontSize": "Tamaño de letra"
     },
     "wordCount_one": "{{ count }} palabra",
     "wordCount_other": "{{ count }} palabras",
@@ -285,7 +287,9 @@
         "importMarkdown": "Importar Markdown",
         "insertTimestamp": "Insertar marca de tiempo",
         "textDirection": "Dirección del texto",
-        "alignment": "Controles de alineación"
+        "alignment": "Controles de alineación",
+        "fontFamily": "Tipo de letra",
+        "fontSize": "Tamaño de letra"
       },
       "fontSizeLabel": "Tamaño de fuente del editor",
       "fontSizePxSuffix": "px",

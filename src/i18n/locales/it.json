@@ -180,7 +180,9 @@
       "insertTimestamp": "Inserisci timestamp",
       "insertTimestampTitle": "Inserisci timestamp corrente",
       "textDirection": "Direzione testo",
-      "textDirectionTitle": "Inverti direzione testo (Ctrl+Shift+D)"
+      "textDirectionTitle": "Inverti direzione testo (Ctrl+Shift+D)",
+      "fontFamily": "Carattere",
+      "fontSize": "Dimensione carattere"
     },
     "wordCount_one": "{{ count }} parola",
     "wordCount_other": "{{ count }} parole",
@@ -285,7 +287,9 @@
         "importMarkdown": "Importa Markdown",
         "insertTimestamp": "Inserisci timestamp",
         "textDirection": "Direzione testo",
-        "alignment": "Controlli di allineamento"
+        "alignment": "Controlli di allineamento",
+        "fontFamily": "Carattere",
+        "fontSize": "Dimensione"
       },
       "fontSizeLabel": "Dimensione carattere editor",
       "fontSizePxSuffix": "px",
