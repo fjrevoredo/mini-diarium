@@ -107,6 +107,8 @@ Nine signal-based state modules in `src/state/`:
 
 `Preferences` fields: `allowFutureEntries` (bool), `firstDayOfWeek` (number|null), `hideTitles` (bool), `enableSpellcheck` (bool), `escAction` (`'none'|'quit'`), `autoLockEnabled` (bool), `autoLockTimeout` (number, seconds), `toolbarItems` (`ToolbarItem[]` — 15 configurable toolbar actions with per-item `enabled` bool and display order; Bold/Italic are fixed and not in this list), `editorFontSize` (number, px), `editorFontFamily` (string|null), `showEntryTimestamps` (bool), `timestampFormat` (`'12h'|'24h'`), `timestampPrecision` (`'hm'|'hms'`), `language` (string). Stored in `localStorage`.
 
+> **Settings taxonomy:** When adding a new setting, see [`docs/decisions/2026-05-settings-storage-taxonomy.md`](../docs/decisions/2026-05-settings-storage-taxonomy.md) for the decision flowchart (`localStorage` vs. `config.json` vs. `db_settings` vs. in-memory).
+
 ## i18n / Translations
 
 All UI strings are extracted into `src/i18n/locales/en.ts` (the canonical English source). The i18n system uses `@solid-primitives/i18n` v2 with a thin context wrapper (`src/i18n/index.ts`).
@@ -250,6 +252,8 @@ These are used by E2E tests — **do not remove** from components.
    - `'preferences'` — the `Preferences` interface (autoLockEnabled, hideTitles, etc.)
    - `'theme-preference'` — `'auto'|'light'|'dark'` (managed by `src/lib/theme.ts`)
    - `'theme-overrides'` — JSON object of CSS token overrides (managed by `src/lib/theme-overrides.ts`)
+
+   See [`docs/decisions/2026-05-settings-storage-taxonomy.md`](../docs/decisions/2026-05-settings-storage-taxonomy.md) for the full taxonomy and decision guide.
 
 7. **TipTap inline styles require `dangerousDisableAssetCspModification: ["style-src"]`**: Tauri injects a random nonce into all CSP directives at runtime. Per the CSP spec, when a nonce is present in `style-src`, `'unsafe-inline'` is **ignored** — so TipTap's `style="text-align: X"` node-attribute rendering is silently blocked by the browser. The `tauri.conf.json` security section uses `"dangerousDisableAssetCspModification": ["style-src"]` to prevent nonce injection into `style-src` only (leaving `script-src` nonce-protected). **Do not remove this line or restructure the CSP string without verifying alignment still works** — the failure is silent (no console error in dev mode, only in production builds where the nonce is active). See issue #63.
 
