@@ -9,7 +9,6 @@ import { TextStyle } from '@tiptap/extension-text-style';
 import Color from '@tiptap/extension-color';
 import { Image as TiptapImage } from '@tiptap/extension-image';
 import TextAlign from '@tiptap/extension-text-align';
-import { listen, UnlistenFn } from '@tauri-apps/api/event';
 import EditorToolbar from './EditorToolbar';
 import { preferences } from '../../state/preferences';
 import { readFileBytes, getFontData } from '../../lib/tauri';
@@ -248,9 +247,6 @@ export default function DiaryEditor(props: DiaryEditorProps) {
   // eslint-disable-next-line no-unassigned-vars -- SolidJS assigns via ref={editorElement}; ESLint can't see the JSX assignment
   let editorElement!: HTMLDivElement;
   const [editor, setEditor] = createSignal<Editor | null>(null);
-  let unlistenDragDrop: UnlistenFn | undefined;
-  let unlistenDragEnter: UnlistenFn | undefined;
-  let unlistenDragLeave: UnlistenFn | undefined;
   const [isDragOver, setIsDragOver] = createSignal(false);
   const [dropHint, setDropHint] = createSignal(false);
   let dropHintTimer: ReturnType<typeof setTimeout> | undefined;
@@ -358,7 +354,7 @@ export default function DiaryEditor(props: DiaryEditorProps) {
             dragEvent.preventDefault();
             const { dataUrls, filePaths } = extractImageSourcesFromHtml(html);
             if (!dataUrls.length && !filePaths.length) {
-              // Images are HTTPS URLs — can't embed without network access.
+              // Images are HTTP/HTTPS URLs — can't embed without network access.
               showDropHint();
               return true;
             }
@@ -402,26 +398,6 @@ export default function DiaryEditor(props: DiaryEditorProps) {
     setEditor(editorInstance);
     props.onEditorReady?.(editorInstance);
 
-    // Tauri intercepts OS-level file drops on all platforms and emits tauri://drag-drop
-    // instead of letting the browser's drop event see the files via dataTransfer.files.
-    listen<{ paths: string[] }>('tauri://drag-drop', (event) => {
-      setIsDragOver(false);
-      const imagePaths = event.payload.paths.filter((p) => /\.(jpe?g|png|gif|webp|bmp)$/i.test(p));
-      imagePaths.forEach((path) =>
-        resizeAndEmbedPath(path, editorInstance).catch((err) =>
-          console.error('[mini-diarium] image embed failed:', err),
-        ),
-      );
-    }).then((fn) => {
-      unlistenDragDrop = fn;
-    });
-
-    listen('tauri://drag-enter', () => setIsDragOver(true)).then((fn) => {
-      unlistenDragEnter = fn;
-    });
-    listen('tauri://drag-leave', () => setIsDragOver(false)).then((fn) => {
-      unlistenDragLeave = fn;
-    });
   });
 
   // Update editor content when prop changes
@@ -468,9 +444,6 @@ export default function DiaryEditor(props: DiaryEditorProps) {
 
   onCleanup(() => {
     editor()?.destroy();
-    unlistenDragDrop?.();
-    unlistenDragEnter?.();
-    unlistenDragLeave?.();
     clearTimeout(dropHintTimer);
   });
 
