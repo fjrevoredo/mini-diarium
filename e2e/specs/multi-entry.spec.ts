@@ -45,6 +45,38 @@ describe('Multi-entry workflow', () => {
   it('creates multiple entries, persists them, and guards the "+" button across navigation', async () => {
     // ── helpers ──────────────────────────────────────────────────────────────
 
+    const waitForSidebarExpanded = async (expectedExpanded: boolean, timeoutMsg: string) => {
+      await browser.waitUntil(
+        async () =>
+          (await $('[data-testid="toggle-sidebar-button"]').getAttribute('aria-expanded')) ===
+          String(expectedExpanded),
+        { timeout: 5000, timeoutMsg },
+      );
+    };
+
+    const openSidebar = async () => {
+      const toggle = $('[data-testid="toggle-sidebar-button"]');
+      await toggle.waitForExist({ timeout: 10000 });
+      const expanded = (await toggle.getAttribute('aria-expanded')) === 'true';
+      if (!expanded) {
+        await toggle.waitForClickable({ timeout: 10000 });
+        await toggle.click();
+        await waitForSidebarExpanded(true, 'Sidebar did not open in time');
+      }
+    };
+
+    const clickCalendarDay = async (date: string, waitForDay: 'clickable' | 'displayed' = 'clickable') => {
+      await openSidebar();
+      const dayButton = $(`[data-testid="calendar-day-${date}"]`);
+      if (waitForDay === 'clickable') {
+        await dayButton.waitForClickable({ timeout: 10000 });
+      } else {
+        await dayButton.waitForDisplayed({ timeout: 10000 });
+      }
+      await dayButton.click();
+      await waitForSidebarExpanded(false, `Sidebar did not close after selecting ${date}`);
+    };
+
     const unlockOrCreate = async () => {
       const authScreen = await browser.waitUntil(
         async () => {
@@ -100,12 +132,11 @@ describe('Multi-entry workflow', () => {
     await unlockOrCreate();
 
     // Open sidebar and navigate to the test date (in the previous month).
-    await $('[data-testid="toggle-sidebar-button"]').click();
+    await openSidebar();
     // Calendar opens on the current month — navigate back one month to reach MULTI_DATE_1.
     await $('[aria-label="Previous month"]').waitForClickable({ timeout: 5000 });
     await $('[aria-label="Previous month"]').click();
-    await $(`[data-testid="calendar-day-${MULTI_DATE_1}"]`).waitForClickable({ timeout: 10000 });
-    await $(`[data-testid="calendar-day-${MULTI_DATE_1}"]`).click();
+    await clickCalendarDay(MULTI_DATE_1);
     await $('[data-testid="title-input"]').waitForDisplayed({ timeout: 5000 });
 
     // Write the first entry
@@ -138,13 +169,11 @@ describe('Multi-entry workflow', () => {
     // Unlock and navigate back to the test date
     await $('[data-testid="password-unlock-input"]').setValue(TEST_PASSWORD);
     await $('[data-testid="unlock-journal-button"]').click();
-    await $('[data-testid="toggle-sidebar-button"]').waitForClickable({ timeout: 10000 });
-    await $('[data-testid="toggle-sidebar-button"]').click(); // sidebar collapses on unlock; reopen
+    await openSidebar(); // sidebar collapses on unlock; reopen
     // Calendar remounts after unlock and resets to the current month — navigate back.
     await $('[aria-label="Previous month"]').waitForClickable({ timeout: 5000 });
     await $('[aria-label="Previous month"]').click();
-    await $(`[data-testid="calendar-day-${MULTI_DATE_1}"]`).waitForClickable({ timeout: 10000 });
-    await $(`[data-testid="calendar-day-${MULTI_DATE_1}"]`).click();
+    await clickCalendarDay(MULTI_DATE_1);
 
     // Both entries must have survived the lock/unlock cycle.
     // Counter "/ 2" confirms both exist; title check confirms we're on the newest entry.
@@ -167,10 +196,7 @@ describe('Multi-entry workflow', () => {
     // Navigate to a fresh date with no prior entries.
     // Scenario A's last calendar click (MULTI_DATE_1) auto-closed the sidebar via handleDayClick;
     // reopen it before accessing the calendar (required in mobile/overlay mode at 800 px).
-    await $('[data-testid="toggle-sidebar-button"]').waitForClickable({ timeout: 5000 });
-    await $('[data-testid="toggle-sidebar-button"]').click();
-    await $(`[data-testid="calendar-day-${MULTI_DATE_2}"]`).waitForDisplayed({ timeout: 10000 });
-    await $(`[data-testid="calendar-day-${MULTI_DATE_2}"]`).click(); // sidebar closes after this
+    await clickCalendarDay(MULTI_DATE_2, 'displayed');
     await $('[data-testid="title-input"]').waitForDisplayed({ timeout: 5000 });
 
     // Write a first entry
@@ -210,10 +236,7 @@ describe('Multi-entry workflow', () => {
     // Every calendar interaction in this scenario must explicitly reopen the sidebar first.
 
     // Navigate to another fresh date
-    await $('[data-testid="toggle-sidebar-button"]').waitForClickable({ timeout: 5000 });
-    await $('[data-testid="toggle-sidebar-button"]').click();
-    await $(`[data-testid="calendar-day-${MULTI_DATE_3}"]`).waitForClickable({ timeout: 10000 });
-    await $(`[data-testid="calendar-day-${MULTI_DATE_3}"]`).click(); // sidebar closes after this
+    await clickCalendarDay(MULTI_DATE_3);
     await $('[data-testid="title-input"]').waitForDisplayed({ timeout: 5000 });
 
     // Write a first entry
@@ -236,21 +259,15 @@ describe('Multi-entry workflow', () => {
     // Switch to MULTI_DATE_2. Switching to another date leaves the blank entry 2 alive in
     // the DB; it will be auto-deleted via the debounce when we reload MULTI_DATE_3 next.
     // MULTI_DATE_2 (last month day 2) is always different from MULTI_DATE_3 (last month day 3).
-    await $('[data-testid="toggle-sidebar-button"]').waitForClickable({ timeout: 5000 });
-    await $('[data-testid="toggle-sidebar-button"]').click();
     // Use waitForDisplayed (not waitForClickable) — addEntry's async setEntryDates call can
     // trigger a calendar re-render that momentarily causes elementFromPoint to miss the button.
-    await $(`[data-testid="calendar-day-${MULTI_DATE_2}"]`).waitForDisplayed({ timeout: 10000 });
-    await $(`[data-testid="calendar-day-${MULTI_DATE_2}"]`).click(); // sidebar closes after this
+    await clickCalendarDay(MULTI_DATE_2, 'displayed');
     await browser.pause(1500); // let loadEntriesForDate(MULTI_DATE_2) complete before switching back
 
     // Switch back to MULTI_DATE_3. loadEntriesForDate loads blank entry 2 as current, fires
     // setContent('') → 500 ms debounce → saveCurrentById deletes blank entry 2 and auto-navigates
     // to entry 1 (the v0.4.9 Variant 2 fix).
-    await $('[data-testid="toggle-sidebar-button"]').waitForClickable({ timeout: 5000 });
-    await $('[data-testid="toggle-sidebar-button"]').click();
-    await $(`[data-testid="calendar-day-${MULTI_DATE_3}"]`).waitForDisplayed({ timeout: 10000 });
-    await $(`[data-testid="calendar-day-${MULTI_DATE_3}"]`).click(); // sidebar closes after this
+    await clickCalendarDay(MULTI_DATE_3, 'displayed');
     await $('[data-testid="title-input"]').waitForDisplayed({ timeout: 5000 });
 
     // THE REGRESSION GUARD: "+" must be enabled. Before the fix, saveCurrentById set

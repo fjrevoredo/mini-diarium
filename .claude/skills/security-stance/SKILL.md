@@ -30,6 +30,7 @@ Load when work touches any of:
 - File-read commands & allowlists: `src-tauri/src/commands/files.rs`
 - Tauri capabilities: `src-tauri/capabilities/*.json`
 - CSP: `src-tauri/tauri.conf.json` (`security.csp`, `dangerousDisableAssetCspModification`)
+- Network isolation: `src-tauri/src/lib.rs` (init script, `on_navigation`, `on_new_window`, Windows COM handler, macOS WKContentRuleList handler); `src/lib/network-isolation-script.ts` (TS copy — must stay in sync with Rust)
 - E2E env-var isolation: `src-tauri/src/lib.rs` (`MINI_DIARIUM_E2E*`)
 - Sanitization of imported HTML/Markdown: `src/lib/markdown.ts` (DOMPurify)
 - Anything involving passwords, keys, nonces, zeroization, or persistence of entry content
@@ -47,7 +48,7 @@ From `PHILOSOPHY.md:165-169`. These are not preferences — they are red lines.
 
 | # | Rule | Enforcement / Where it shows up first |
 |---|------|---------------------------------------|
-| 1 | **No network access.** Mini Diarium will never connect to the internet. | `src-tauri/Cargo.toml` contains no `reqwest`, `hyper`, `socket2`, `ureq`, etc. (`PHILOSOPHY.md:225`). Capabilities allowlist (`src-tauri/capabilities/default.json`) has no `http:*`. Adding a network crate or capability is the visible violation. |
+| 1 | **No network access.** Mini Diarium never initiates any network connection. OS-opener links (About screen, Onboarding) hand a URL to the system browser — the app makes no network call itself. | `src-tauri/Cargo.toml` contains no `reqwest`, `hyper`, `socket2`, `ureq`, etc. (`PHILOSOPHY.md:225`). Capabilities allowlist (`src-tauri/capabilities/default.json`) has no `http:*`. CI static check `scripts/check-no-network.ps1` enforces this on every push. Adding a network crate or capability is the visible violation. |
 | 2 | **No custom cryptography.** Standard algorithms and established libraries only. | Code review: any homegrown MAC, KDF, cipher mode, nonce scheme, or "encryption helper" is the violation. We use `aes-gcm`, `argon2`, `x25519-dalek`, `hkdf`, `zeroize`. |
 | 3 | **No password recovery.** If credentials are lost, data is gone. Mitigation = register a second auth method. | Refusing to add a "reset password without old password" path. The only re-wrap is `change_password` (requires current creds). `remove_auth_method` refuses to delete the last slot. |
 | 4 | **No vendor lock-in.** Users must be able to export and migrate freely. | JSON + Markdown exports remain plaintext, with documented schema (`PHILOSOPHY.md:82-87`). Removing or proprietizing an export format is the violation. |
@@ -91,7 +92,7 @@ Compact form of `SECURITY.md:30-43`. This is the "what can I honestly promise?" 
 | `SecretBytes` | `#[derive(ZeroizeOnDrop)]`; Debug shows `SecretBytes([REDACTED; N])` | `src-tauri/src/auth/mod.rs:5-44` | Keys linger in heap; `Debug` would leak bytes |
 | `Key` struct | `#[derive(Zeroize, ZeroizeOnDrop)]`; Debug shows `[REDACTED]` | `src-tauri/src/crypto/cipher.rs:14-22` | Same leak class |
 | Master-key generation | 32 random bytes from `aes_gcm::aead::OsRng.fill_bytes`, raw bytes zeroized after wrap | `src-tauri/src/db/schema.rs:40-66` | Predictable / reused master key would be catastrophic |
-| Schema version | `pub const SCHEMA_VERSION: i32 = 6;` | `src-tauri/src/db/schema.rs:29` | Bump on every breaking schema change |
+| Schema version | `pub const SCHEMA_VERSION: i32 = 7;` | `src-tauri/src/db/schema.rs:29` | Bump on every breaking schema change |
 | Max import file size | 100 MB (`MAX_IMPORT_FILE_SIZE`) | `src-tauri/src/commands/import.rs:5` | Too high → memory DoS; too low → legitimate imports fail |
 | Max text file read | 1 MiB (`MAX_TEXT_FILE_BYTES`) | `src-tauri/src/commands/files.rs:19` | Same DoS class |
 | Max backups retained | 30 (`MAX_BACKUPS`) | `src-tauri/src/backup.rs:6` | Affects rotation; not a crypto invariant but a disk-use guarantee |
@@ -258,7 +259,7 @@ FTS was removed in v0.2.0 (schema v4) because the plaintext `entries_fts` table 
 
 Current CSP:
 ```
-default-src 'self' data:; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:
+default-src 'self' data:; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self' ipc: http://ipc.localhost; worker-src 'none'; child-src 'none'; frame-src 'none'; object-src 'none'; base-uri 'self'; form-action 'none'; manifest-src 'none'
 ```
 
 **Any broadening — external `script-src`, wildcard origins, `'unsafe-eval'`, remote `connect-src` — is a breaking security change.** Requires non-negotiable review and a `### Security` CHANGELOG entry.
@@ -313,7 +314,7 @@ window-state:default
   See `commands/debug.rs:53-54` for the canonical example. **Do not** use `state.db.lock().unwrap()` in a command — that converts a poisoned lock into a process abort.
 - **Schema migrations** (`db/schema.rs`) must be idempotent and wrapped in a transaction. Historical v3→v4 and v4→v5 followed this; new migrations must too. Bump `SCHEMA_VERSION` (`db/schema.rs:29`) and document the migration step inline.
 - New commands must be registered in **two** places: `src-tauri/src/commands/mod.rs` (module) and `lib.rs` `generate_handler![]`. Missing either causes silent failure or compile error. Add the typed wrapper in `src/lib/tauri.ts`. See `src-tauri/CLAUDE.md` "Adding a New Tauri Command".
-- `unsafe` blocks outside crypto crates appear only in `screen_lock.rs` (Win32 subclass / WTS APIs) and the two Rhai wrapper `Send + Sync` impls. Each `unsafe` block has a `// SAFETY:` comment justifying it (e.g. `screen_lock.rs:38-48`). **Any new `unsafe` block elsewhere requires explicit security review and a `SAFETY:` block matching that pattern.**
+- `unsafe` blocks outside crypto crates appear in four places: `screen_lock.rs` (Win32 subclass / WTS APIs), the two Rhai wrapper `Send + Sync` impls in `rhai_loader.rs:149-174`, and the two network-isolation platform handlers in `lib.rs` — `install_webresource_requested_handler` (Windows COM, `lib.rs:373+`) and `install_content_rule_list` (macOS ObjC2, `lib.rs:448+`). Each `unsafe` block has a `// SAFETY:` comment justifying it. **Any new `unsafe` block elsewhere requires explicit security review and a `SAFETY:` block matching that pattern.**
 
 ---
 
@@ -328,7 +329,7 @@ Run these before merging anything that touched a Section 1 surface. A surprising
 | `invoke()` call sites that may need `mapTauriError` review | `grep -rn "invoke(" src/lib/tauri.ts` and audit downstream callers |
 | `MINI_DIARIUM_E2E*` env vars leaking outside `lib.rs` | `grep -rn "MINI_DIARIUM_E2E\|MINI_DIARIUM_APP_DIR\|MINI_DIARIUM_DATA_DIR" src-tauri/src/` (must show `lib.rs` only) |
 | `unwrap()` on the diary mutex (Mutex-poison panic risk) | `grep -rn "state.db.lock().unwrap" src-tauri/src/` |
-| New `unsafe impl` blocks | `grep -rn "unsafe impl" src-tauri/src/` (expect: 2 in `rhai_loader.rs`, plus screen-lock SAFETY comments) |
+| New `unsafe impl` blocks | `grep -rn "unsafe impl" src-tauri/src/` (expect: 4 in `rhai_loader.rs` — `Send`/`Sync` for `RhaiImportPlugin` and `RhaiExportPlugin`; zero in `lib.rs` — the platform handlers use `unsafe {}` blocks, not `unsafe impl`) |
 | New file-read commands without allowlist | `grep -rn "std::fs::read" src-tauri/src/commands/` and confirm extension/size guards |
 | Plaintext logging of secret material | `grep -rnE "info!\|debug!\|println!\|eprintln!" src-tauri/src/auth/ src-tauri/src/crypto/` and confirm no secrets in format args |
 | FTS reintroduction | `grep -rn "fts5\|entries_fts" src-tauri/src/` (must return empty) |

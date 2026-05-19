@@ -61,6 +61,9 @@ jobs:
       - name: Validate locales
         run: bun run validate:locales
 
+      - name: Network isolation static check
+        run: pwsh scripts/check-no-network.ps1
+
       - name: Clippy
         working-directory: src-tauri
         run: cargo clippy --all-targets -- -D warnings

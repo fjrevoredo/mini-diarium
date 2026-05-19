@@ -437,6 +437,7 @@
     "copyright": "Copyright © 2026 Francisco J. Revoredo",
     "githubLink": "github.com/fjrevoredo/mini-diarium",
     "docsLink": "Dokumentation",
+    "opensInBrowser": "Öffnet im Systembrowser",
     "showTour": "Willkommenstour anzeigen"
   },
   "notifications": {

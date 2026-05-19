@@ -518,6 +518,7 @@ const en = {
     copyright: 'Copyright © 2026 Francisco J. Revoredo',
     githubLink: 'github.com/fjrevoredo/mini-diarium',
     docsLink: 'Documentation',
+    opensInBrowser: 'opens in system browser',
     showTour: 'Show Welcome Tour',
   },
 

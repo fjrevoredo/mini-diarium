@@ -1,6 +1,6 @@
 # PHILOSOPHY.md
 
-_Last updated: 2026-04-21, applies to v0.4.0+_
+_Last updated: 2026-05-20, applies to v0.4.0+_
 
 This document defines the guiding principles for Mini Diarium. Every feature decision, architectural choice, and contribution must align with these values. When in doubt, refer back here.
 
@@ -162,7 +162,7 @@ If any principle is violated without strong justification, the proposal should b
 
 Some principles are absolute:
 
-- **No network access.** Mini Diarium will never connect to the internet.
+- **No network access.** Mini Diarium never initiates any network connection; no telemetry, no update checks, no sync, no analytics. When you click a help or documentation link (About screen, Onboarding), the OS opener hands the URL to your system browser; Mini Diarium makes no network call itself. The browser's subsequent connection is entirely independent of this app.
 - **No custom cryptography.** Use standard algorithms and established libraries only.
 - **No password recovery.** Password recovery requires either storing the master key in recoverable form (weakening the encryption guarantee) or trusting a third-party service (violating the no-network principle). Neither is acceptable. If you lose all credentials, your data is inaccessible; this is the correct security outcome. To mitigate accidental lockout, register a second authentication method as a backup.
 - **No vendor lock-in.** Users must be able to export and migrate their data freely at any time.

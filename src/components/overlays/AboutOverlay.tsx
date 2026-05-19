@@ -73,19 +73,22 @@ export default function AboutOverlay(props: AboutOverlayProps) {
             </div>
 
             {/* GitHub + Documentation links */}
-            <div class="flex justify-center gap-4 mb-6">
-              <button
-                onClick={() => openUrl('https://github.com/fjrevoredo/mini-diarium')}
-                class="text-sm text-interactive hover:underline"
-              >
-                {t('about.githubLink')}
-              </button>
-              <button
-                onClick={() => openUrl('https://mini-diarium.com/docs/')}
-                class="text-sm text-interactive hover:underline"
-              >
-                {t('about.docsLink')}
-              </button>
+            <div class="flex flex-col items-center gap-1 mb-6">
+              <div class="flex justify-center gap-4">
+                <button
+                  onClick={() => openUrl('https://github.com/fjrevoredo/mini-diarium')}
+                  class="text-sm text-interactive hover:underline"
+                >
+                  {t('about.githubLink')}
+                </button>
+                <button
+                  onClick={() => openUrl('https://mini-diarium.com/docs/')}
+                  class="text-sm text-interactive hover:underline"
+                >
+                  {t('about.docsLink')}
+                </button>
+              </div>
+              <p class="text-xs text-tertiary">{t('about.opensInBrowser')}</p>
             </div>
 
             {/* Footer: tour shortcut + close */}

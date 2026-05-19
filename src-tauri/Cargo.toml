@@ -24,7 +24,7 @@ bench = false  # entry point only; no bench items — libtest rejects --output-f
 tauri-build = { version = "2.6.0", features = [] }
 
 [dependencies]
-tauri = { version = "2.11.1", features = ["devtools"] }
+tauri = { version = "2.11.1", features = [] }
 tauri-plugin-opener = "2.5.4"
 tauri-plugin-dialog = "2.7.1"
 tauri-plugin-window-state = "2"
@@ -82,13 +82,25 @@ windows-sys = { version = "0.61", features = [
   "Win32_UI_Shell",
   "Win32_UI_WindowsAndMessaging",
 ] }
+# Direct deps for WebResourceRequested COM handler in lib.rs
+webview2-com = "0.38.2"
+windows = { version = "0.61" }
 
 [target.'cfg(target_os = "macos")'.dependencies]
 objc2-app-kit = { version = "0.3", features = ["NSWorkspace"] }
 objc2-foundation = { version = "0.3", features = [
   "NSDistributedNotificationCenter",
+  "NSError",
   "NSNotification",
   "NSOperation",
   "NSString",
+] }
+# Direct deps for WKContentRuleList handler in lib.rs
+objc2-web-kit = { version = "0.3", features = [
+  "WKContentRuleList",
+  "WKContentRuleListStore",
+  "WKUserContentController",
+  "WKWebView",
+  "WKWebViewConfiguration",
 ] }
 block2 = "0.6"
