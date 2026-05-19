@@ -397,7 +397,6 @@ export default function DiaryEditor(props: DiaryEditorProps) {
 
     setEditor(editorInstance);
     props.onEditorReady?.(editorInstance);
-
   });
 
   // Update editor content when prop changes
