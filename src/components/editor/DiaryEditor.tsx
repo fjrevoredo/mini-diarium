@@ -326,11 +326,25 @@ export default function DiaryEditor(props: DiaryEditorProps) {
           spellcheck: String(props.spellCheck ?? true),
           dir: 'auto',
         },
-        // Fallback for when Tauri's file-drop interception is disabled or absent.
         handleDrop(_view, event) {
           const dragEvent = event as DragEvent;
           const dt = dragEvent.dataTransfer;
           if (!dt) return false;
+
+          const types = Array.from(dt.types ?? []);
+
+          // URL drops: silently consume without inserting or navigating.
+          // text/uri-list is present for link drags but also for browser image drags —
+          // the image case is distinguished by text/html containing an <img> tag.
+          // Returning true calls event.preventDefault() via ProseMirror, which is
+          // defense-in-depth alongside the Rust-level on_navigation block.
+          if (types.includes('text/uri-list') && !types.includes('Files')) {
+            const html = dt.getData('text/html');
+            if (!html || !htmlHasImages(html)) {
+              dragEvent.preventDefault();
+              return true;
+            }
+          }
 
           // Path A: File objects — covers virtual files exposed by some cross-app drags.
           const files = Array.from(dt.files ?? []).filter((f) => f.type.startsWith('image/'));

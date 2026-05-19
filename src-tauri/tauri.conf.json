@@ -10,17 +10,7 @@
     "frontendDist": "../dist"
   },
   "app": {
-    "windows": [
-      {
-        "title": "Mini Diarium",
-        "width": 800,
-        "height": 780,
-        "minWidth": 600,
-        "minHeight": 400,
-        "visible": false,
-        "dragDropEnabled": false
-      }
-    ],
+    "windows": [],
     "security": {
       "csp": "default-src 'self' data:; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:",
       "dangerousDisableAssetCspModification": ["style-src"]

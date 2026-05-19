@@ -180,20 +180,56 @@ pub fn run() {
                 warn!("Screen-lock listener initialization failed: {}", error);
             }
 
-            if let Some(win) = app.get_webview_window("main") {
-                if is_e2e {
-                    // Set the window to the exact E2E viewport size BEFORE show() so the WebView
-                    // renders at 800×660 from the very first paint. WebView2 captures CSS viewport
-                    // values (100vh, window.innerHeight) at first paint; any resize after show()
-                    // leaves those values stale and produces a white gap in screen-filling layouts.
-                    info!("E2E mode: forcing window to 800×660 before show");
-                    let _ = win.set_size(tauri::LogicalSize::new(800.0_f64, 660.0_f64));
+            // Create the main window programmatically so we can configure two critical
+            // security properties that are only available on the builder, not at runtime:
+            //
+            // 1. on_navigation — intercepts every WebView2 NavigationStarting event and
+            //    blocks any URL that isn't this app's own scheme or the local dev server.
+            //    Without this, WebView2 silently navigates to any URL dragged onto the
+            //    window, typed into JS, or embedded in dropped HTML — defeating the
+            //    no-network guarantee.
+            //
+            // 2. disable_drag_drop_handler — disables WRY's IDropTarget registration so
+            //    WebView2 receives all drag events natively via the DOM. Without this,
+            //    Tauri's WryDropHandler returns DROPEFFECT_NONE for non-file drags
+            //    (browser images, Typora), blocking the DOM drop event entirely.
+            let mut win_builder = tauri::WebviewWindowBuilder::new(
+                app,
+                "main",
+                tauri::WebviewUrl::App("index.html".into()),
+            )
+            .title("Mini Diarium")
+            .min_inner_size(600.0, 400.0)
+            .visible(false)
+            .disable_drag_drop_handler()
+            .on_navigation(|url| {
+                let scheme = url.scheme();
+                let host = url.host_str().unwrap_or("");
+                let allowed = scheme == "tauri"
+                    || scheme == "ipc"
+                    || (matches!(scheme, "http" | "https")
+                        && matches!(host, "localhost" | "127.0.0.1" | "tauri.localhost"));
+                if !allowed {
+                    warn!("Blocked navigation to external URL: {}", url);
                 }
-                // Show the window after setup is complete (window-state plugin has restored
-                // position/size by now for non-E2E mode), avoiding a flash at the default
-                // position on startup.
-                let _ = win.show();
+                allowed
+            });
+
+            if is_e2e {
+                // Set the window to the exact E2E viewport size in the builder so the WebView
+                // renders at 800×660 from the very first paint. WebView2 captures CSS viewport
+                // values (100vh, window.innerHeight) at first paint; any resize after show()
+                // leaves those values stale and produces a white gap in screen-filling layouts.
+                info!("E2E mode: forcing window to 800×660 before show");
+                win_builder = win_builder.inner_size(800.0, 660.0);
+            } else {
+                win_builder = win_builder.inner_size(800.0, 780.0);
             }
+
+            let win = win_builder.build()?;
+            // Show after setup completes so the window-state plugin has already restored
+            // the saved position/size (non-E2E) before the window becomes visible.
+            let _ = win.show();
 
             Ok(())
         })

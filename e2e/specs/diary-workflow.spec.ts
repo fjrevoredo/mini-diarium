@@ -58,12 +58,20 @@ describe('Core journal workflow', () => {
     }
 
     // 3. Dismiss the first-run onboarding tour if it appears (only on journal creation).
-    //    Click Next three times (step 1 → 2 → 3 → done) to complete the tour naturally.
+    //    The tour mounts asynchronously after startOnboarding() fires, so we first wait up
+    //    to 3 s for the button to appear in DOM before deciding if the tour is present.
+    //    Then browser.execute() fires native JS clicks (bypassing the spotlight overlay's
+    //    z-50 stacking interference with WebDriver's click-interception check), and
+    //    waitForExist reverse polls until the button is actually removed from DOM.
     const nextBtn = $('[data-testid="onboarding-next-btn"]');
-    if (await nextBtn.isDisplayed().catch(() => false)) {
-      await nextBtn.click();
-      await nextBtn.click();
-      await nextBtn.click();
+    const tourPresent = await nextBtn.waitForExist({ timeout: 3000 }).then(() => true).catch(() => false);
+    if (tourPresent) {
+      for (let i = 0; i < 3; i++) {
+        await browser.execute(() => {
+          (document.querySelector('[data-testid="onboarding-next-btn"]') as HTMLElement)?.click();
+        });
+      }
+      await nextBtn.waitForExist({ timeout: 5000, reverse: true });
     }
 
     // 4. Journal created and unlocked → MainLayout is now visible
