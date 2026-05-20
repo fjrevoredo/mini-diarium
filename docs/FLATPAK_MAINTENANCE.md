@@ -243,6 +243,26 @@ If you change runtime version, SDK extension branch, or permissions:
 
 The most common annual maintenance task is the GNOME runtime bump. When `runtime-version` changes, re-check the matching Freedesktop SDK extension branch instead of assuming it stays the same.
 
+## CI Validation
+
+The `ci.yml` workflow includes a `flatpak` job that builds the Flatpak on every PR and push to `master`. This catches build issues, dependency vendoring problems, manifest path errors, and AppStream metadata issues **before** merge — not after the Flathub PR is created.
+
+### How It Works
+
+- The job runs in the `ghcr.io/flathub-infra/flatpak-github-actions:gnome-50` container with `flatpak-builder@v6`.
+- `cargo-sources.json` and `node-sources.json` are generated on-the-fly from `Cargo.lock` and `package-lock.json` (not committed to the repo).
+- Desktop file and AppStream metainfo are validated before the build (fail fast).
+- The build skips bundle creation (`build-bundle: false`) for speed — we only validate the build succeeds.
+- The job depends on `lint` and `test` passing first, and runs in parallel with `build-linux` and `build-other`.
+
+### If the CI Flatpak Job Fails
+
+Fix the issue in the main repo **before merging**. Do NOT wait for the Flathub PR to fail. Typical fixes:
+
+- Regenerate `package-lock.json` with real `npm` if frontend deps changed.
+- Update the manifest, desktop file, or metainfo if IDs or paths drifted.
+- Check `cargo-sources.json` or `node-sources.json` generation if native dependencies changed.
+
 ## Current Automation Caveat
 
 `flathub-publish.yml` is a convenience workflow, not proof that the package is correct.

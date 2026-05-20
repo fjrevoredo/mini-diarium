@@ -282,6 +282,7 @@ For the authoritative test-selector inventory and E2E rules, see `src/CLAUDE.md`
 12. **UI visibility default changes require E2E review:** changing `isSidebarCollapsed`, overlay defaults, or session reset behavior can break the E2E suite.
 13. **Raw Tauri errors should not be shown directly:** use `mapTauriError()` to avoid leaking paths, OS codes, or crypto internals.
 14. **This shell is WSL over a Windows checkout:** WSL-native `bun`/Rust/Tauri commands may fail even when the Windows toolchain works.
+15. **Flatpak builds are validated in CI on every PR:** If the `flatpak` job fails, fix the issue before merging — do not wait for the Flathub release PR. See `docs/FLATPAK_MAINTENANCE.md` for details.
 
 ## Security Rules
 
