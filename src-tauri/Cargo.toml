@@ -24,7 +24,7 @@ bench = false  # entry point only; no bench items — libtest rejects --output-f
 tauri-build = { version = "2.6.0", features = [] }
 
 [dependencies]
-tauri = { version = "2.11.1", features = [] }
+tauri = { version = "2.11.2", features = ["devtools"] }
 tauri-plugin-opener = "2.5.4"
 tauri-plugin-dialog = "2.7.1"
 tauri-plugin-window-state = "2"
