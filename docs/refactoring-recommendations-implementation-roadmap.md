@@ -277,7 +277,7 @@ Implement every recommendation from `docs/refactoring-report-2026-05-21.md` in a
 
 ### Milestone 7: Behavior-Changing Command Refactors
 
-- Status: IN PROGRESS
+- Status: COMPLETED
 - Purpose: Reduce command duplication only after representative command coverage exists.
 - Exit Criteria: Unlocked-DB boilerplate is centralized, shared unlock scaffolding covers password/keypair/all-method unlock paths, `unlock_diary_auto` remains separate by policy, and command tests pass.
 
@@ -297,7 +297,7 @@ Implement every recommendation from `docs/refactoring-report-2026-05-21.md` in a
 
 #### Task 7.2: Unify Non-Auto Unlock Paths (P9)
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Objective: Share unlock scaffolding for password, keypair, and all-method unlocks while preserving auto-key divergence.
 - Steps:
   1. Red: add or update regression tests proving auto-key behavior remains unchanged and all-method unlock still enforces the multi-auth policy.
