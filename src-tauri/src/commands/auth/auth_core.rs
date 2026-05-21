@@ -371,6 +371,18 @@ pub fn create_diary_auto(state: State<DiaryState>, app: AppHandle<Wry>) -> Resul
 ///
 /// Reads the auto key from the active JournalConfig in config.json and
 /// uses it to unwrap the master key from the 'auto' auth slot.
+///
+/// # Auto-Key Multi-Auth Policy (P20 — 2026-05-21 Position A)
+///
+/// `unlock_diary_auto` intentionally bypasses `require_all_auth` verification
+/// and legacy `migrate_require_all_auth_to_db`. Local-only journals use a
+/// device-bound key stored in `config.json` and have no user-facing credential
+/// to combine with a second factor. The `require_all_auth` flag only applies to
+/// password/keypair journals where the user explicitly registers multiple auth
+/// slots. This is a deliberate design boundary: forcing a single-factor local
+/// journal through a multi-auth check would always fail. See
+/// `docs/refactoring-report-2026-05-21.md` §P20 and
+/// `docs/decisions/2026-04-passwordless-journal.md` for the full rationale.
 #[tauri::command]
 pub fn unlock_diary_auto(state: State<DiaryState>, app: AppHandle<Wry>) -> Result<(), String> {
     let db_path = state

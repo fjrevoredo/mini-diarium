@@ -73,4 +73,16 @@ describe('StatsOverlay', () => {
     renderWithI18n(() => <StatsOverlay isOpen={true} onClose={vi.fn()} />);
     await waitFor(() => expect(screen.getByText('5 days')).toBeInTheDocument());
   });
+
+  it('sanitizes raw Tauri error — does not display rusqlite internals to user', async () => {
+    vi.spyOn(tauri, 'getStatistics').mockRejectedValue(
+      new Error('rusqlite: query failed at /home/user/diary.db'),
+    );
+    renderWithI18n(() => <StatsOverlay isOpen={true} onClose={vi.fn()} />);
+    await waitFor(() => {
+      expect(screen.queryByText(/rusqlite/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/home\/user\/diary\.db/)).not.toBeInTheDocument();
+      expect(screen.getByText('An internal error occurred.')).toBeInTheDocument();
+    });
+  });
 });

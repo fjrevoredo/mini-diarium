@@ -3,6 +3,7 @@ import { Dialog } from '@kobalte/core/dialog';
 import { getStatistics, type Statistics } from '../../lib/tauri';
 import { useI18n } from '../../i18n';
 import { preferences } from '../../state/preferences';
+import { mapTauriError } from '../../lib/errors';
 import { X } from 'lucide-solid';
 
 interface StatsOverlayProps {
@@ -31,7 +32,7 @@ export default function StatsOverlay(props: StatsOverlayProps) {
       const result = await getStatistics();
       setStats(result);
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('stats.failedToLoad'));
+      setError(mapTauriError(err, t));
     } finally {
       setLoading(false);
     }

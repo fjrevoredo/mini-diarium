@@ -6,11 +6,13 @@ import { renderWithI18n } from '../../test/i18n-test-utils';
 
 const mocks = vi.hoisted(() => ({
   createJournal: vi.fn(),
+  createJournalAutoProtected: vi.fn(),
   goToJournalPicker: vi.fn(),
 }));
 
 vi.mock('../../state/auth', () => ({
   createJournal: mocks.createJournal,
+  createJournalAutoProtected: mocks.createJournalAutoProtected,
   goToJournalPicker: mocks.goToJournalPicker,
 }));
 
@@ -22,6 +24,7 @@ describe('PasswordCreation component', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mocks.createJournal.mockResolvedValue(undefined);
+    mocks.createJournalAutoProtected.mockResolvedValue(undefined);
   });
 
   it('renders both password inputs with correct data-testid attributes', () => {
@@ -39,6 +42,25 @@ describe('PasswordCreation component', () => {
 
     expect(createInput.className).toContain('bg-primary');
     expect(repeatInput.className).toContain('bg-primary');
+  });
+
+  it('sanitizes raw Tauri error — does not display rusqlite internals to user', async () => {
+    mocks.createJournal.mockRejectedValue(new Error('rusqlite: disk I/O error'));
+
+    renderWithI18n(() => <PasswordCreation />);
+
+    const createInput = screen.getByTestId('password-create-input');
+    const repeatInput = screen.getByTestId('password-repeat-input');
+    const submit = screen.getByTestId('create-journal-button');
+
+    fireEvent.input(createInput, { target: { value: 'testpassword' } });
+    fireEvent.input(repeatInput, { target: { value: 'testpassword' } });
+    fireEvent.click(submit);
+
+    await vi.waitFor(() => {
+      expect(screen.queryByText(/rusqlite/i)).not.toBeInTheDocument();
+      expect(screen.getByText('An internal error occurred.')).toBeInTheDocument();
+    });
   });
 
   it('shows "Passwords do not match" error when passwords differ before submit', async () => {

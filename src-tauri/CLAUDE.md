@@ -122,6 +122,7 @@ cd src-tauri && cargo bench --bench cipher_bench  # Specific benchmark
 - Auth: A random master key is wrapped per auth slot in `auth_slots` (schema v3). Password slots use Argon2id + AES-256-GCM wrapping; keypair slots use X25519 ECIES. The master key is never stored in plaintext.
 - The `DiaryState` holds `Mutex<Option<DatabaseConnection>>` — `None` when locked, `Some` when unlocked
 - All commands that access entries must check `db_state.as_ref().ok_or("Diary not unlocked")?`
+- **`unlock_diary_auto` intentionally bypasses `require_all_auth`**: Local-only journals use a device-bound key stored in `config.json` and have no user credential to combine with a second factor. The multi-auth guard only applies to password/keypair journals. Applying it to auto-key journals would always fail and is not the intended policy. See `commands/auth/auth_core.rs` `unlock_diary_auto` doc comment and `docs/decisions/2026-04-passwordless-journal.md` for the full rationale (P20, 2026-05-21 Position A decision).
 
 ### Network Isolation Defense-in-Depth Stack (v0.5.0)
 

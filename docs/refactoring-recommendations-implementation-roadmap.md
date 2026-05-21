@@ -141,13 +141,13 @@ Implement every recommendation from `docs/refactoring-report-2026-05-21.md` in a
 
 ### Milestone 3: Policy Documentation And Error Sanitization
 
-- Status: IN PROGRESS
+- Status: COMPLETED
 - Purpose: Close the documented security-policy gap and finish the frontend raw-error sanitization contract before larger UI refactors.
 - Exit Criteria: Auto-key policy is documented in code and backend guide, confirmed raw-error UI paths use `mapTauriError`, and tests prove leaky strings are not displayed.
 
 #### Task 3.1: Document Auto-Key Multi-Auth Policy (P20)
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Objective: Record why `unlock_diary_auto` intentionally bypasses legacy migration and `require_all_auth` verification.
 - Steps:
   1. Add the report's policy comment above `unlock_diary_auto` in `src-tauri/src/commands/auth/auth_core.rs`.
@@ -159,7 +159,7 @@ Implement every recommendation from `docs/refactoring-report-2026-05-21.md` in a
 
 #### Task 3.2: Sanitize Remaining Raw UI Errors (P19)
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Objective: Ensure user-facing UI error state flows through `mapTauriError(err, t)`.
 - Steps:
   1. Red: add component tests for each converted site with a deliberately leaky raw error string and assert the UI does not show that raw string.
@@ -173,13 +173,13 @@ Implement every recommendation from `docs/refactoring-report-2026-05-21.md` in a
 
 ### Milestone 4: Query Module Split
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Purpose: Split the largest query module after row handling is centralized so the move stays mostly mechanical.
 - Exit Criteria: `db/queries.rs` is replaced by a `queries/` module tree, public imports still compile, moved tests pass, and no behavior changes are introduced beyond completed P5/P18 work.
 
 #### Task 4.1: Split `db/queries.rs` By Domain (P3)
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Objective: Move query code into domain-specific files with stable public re-exports.
 - Steps:
   1. Mechanical safety: run the current backend query tests before the split, or record the existing failure if the tree is already red.
@@ -196,13 +196,13 @@ Implement every recommendation from `docs/refactoring-report-2026-05-21.md` in a
 
 ### Milestone 5: Schema And Migration Module Split
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Purpose: Make schema creation, open paths, legacy helpers, and migrations independently navigable.
 - Exit Criteria: `db/schema.rs` is replaced by a schema module tree, all open paths call one `migrations::apply_pending`, migration tests pass, and schema version behavior is unchanged.
 
 #### Task 5.1: Split `db/schema.rs` And Add `apply_pending` (P4)
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Objective: Separate database creation/opening from migration implementations and centralize migration ordering.
 - Steps:
   1. Mechanical safety: run the current schema and migration tests before the split, or record the existing failure if the tree is already red.
@@ -221,25 +221,32 @@ Implement every recommendation from `docs/refactoring-report-2026-05-21.md` in a
 
 ### Milestone 6: Command-Level Test Infrastructure
 
-- Status: TO BE DONE
+- Status: IN PROGRESS
 - Purpose: Establish the command testing safety net required before behavior-changing command refactors.
 - Exit Criteria: The Tauri v2 test harness spike is documented, either an in-process harness exists or the fallback pure-function strategy is implemented, and representative security-critical command tests pass.
 
 #### Task 6.1: Spike Tauri Command Integration Harness (P14)
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Objective: Determine whether this app can invoke Tauri commands in-process in tests.
-- Steps:
-  1. Red: create the smallest experimental command-invocation test under the appropriate `src-tauri` test location and run it to expose the current harness gap.
-  2. Green: wire only enough Tauri test setup for that minimal command invocation to compile and pass.
-  3. Verify current Tauri v2 test APIs can build with this app's plugin set.
-  4. Confirm `State<DiaryState>` and `AppHandle<Wry>` extraction through the harness.
-  5. Confirm test context generation does not require a real frontend bundle.
-  6. Confirm menu and OS screen-lock initialization can be skipped or safely stubbed.
-  7. Refactor: extract reusable harness helpers only after the first command test passes.
-  8. Record the spike outcome in this plan's execution notes or a short docs note if needed.
-- Validation: `cmd.exe /c "cd /d D:\Repos\mini-diarium\src-tauri && cargo test"` with the spike test included.
-- Notes: If the spike fails, implement the report's fallback: extract command bodies into pure functions taking `&DiaryState` and test those.
+- Spike outcome (2026-05-21):
+  - Added `tauri = { version = "2.11.2", features = ["test"] }` to dev-dependencies and wrote a
+    minimal `mock_builder()` + `get_ipc_response` spike targeting `is_diary_unlocked`.
+  - **The spike code compiled cleanly** (the Tauri 2.x test API — `mock_builder`, `mock_context`,
+    `noop_assets`, `get_ipc_response`, `InvokeResponseBody::deserialize`, `INVOKE_KEY` — is
+    syntactically correct and findable in 2.11.2).
+  - **The spike failed at runtime on Windows**: `STATUS_ENTRYPOINT_NOT_FOUND` (0xC0000139) crashed
+    the test binary the moment it started, before any test ran. Adding `features = ["test"]` to the
+    dev-dependency merges with the existing `features = ["devtools"]` main dependency, and the
+    combined feature set produces a test binary that fails to locate a required DLL entry point on
+    Windows.  Every existing test also failed, not just the spike.
+  - **`AppHandle<Wry>` boundary confirmed**: commands typed `AppHandle<Wry>` (concrete, not generic
+    `R: Runtime`) cannot be invoked through `MockRuntime` without changing their signatures.
+  - **Fallback confirmed**: pure-function extraction is the only viable approach. The pattern is
+    already established in this codebase via `lock_diary_inner` (pure `&DiaryState` → `Result`) and
+    `make_state` test helpers. Task 6.2 will use this pattern exclusively.
+- Notes: Do not add `tauri = { features = ["test"] }` to dev-dependencies — it crashes all tests on
+  Windows. The fallback pure-function pattern covers all command coverage needs for Milestones 6–7.
 
 #### Task 6.2: Add Representative Command Tests For Later Refactors (P1/P7/P14)
 

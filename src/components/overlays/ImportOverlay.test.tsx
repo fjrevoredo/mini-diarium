@@ -103,4 +103,21 @@ describe('ImportOverlay', () => {
     fireEvent.click(screen.getByRole('button', { name: /Start Import/ }));
     await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument());
   });
+
+  it('sanitizes raw Tauri error — does not display rusqlite internals to user', async () => {
+    vi.mocked(openDialog).mockResolvedValue('/path/to/export.json');
+    vi.spyOn(tauri, 'runImportPlugin').mockRejectedValue(
+      new Error('rusqlite: disk I/O error at /home/user/diary.db'),
+    );
+    renderOverlay();
+    await waitForPlugins();
+    fireEvent.click(screen.getByRole('button', { name: 'Browse' }));
+    await waitFor(() => expect(screen.getByText('export.json')).toBeInTheDocument());
+    fireEvent.click(screen.getByRole('button', { name: /Start Import/ }));
+    await waitFor(() => {
+      expect(screen.queryByText(/rusqlite/i)).not.toBeInTheDocument();
+      expect(screen.queryByText(/home\/user\/diary\.db/)).not.toBeInTheDocument();
+      expect(screen.getByText('An internal error occurred.')).toBeInTheDocument();
+    });
+  });
 });

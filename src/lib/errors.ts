@@ -9,6 +9,22 @@ import { defaultT, type T } from '../i18n';
  *                their own `t` so the message is returned in the active locale.
  *                State modules (auth.ts etc.) that lack access to useI18n() may
  *                omit this argument; defaultT (English) is used as a fallback.
+ *
+ * ## Rule: always use mapTauriError before displaying Tauri errors
+ *
+ * Every catch block that calls setError() with a value from a Tauri invoke()
+ * must route through this function. Direct patterns like:
+ *
+ *   setError(err instanceof Error ? err.message : String(err))
+ *   setError(String(err))
+ *   setError(err.message)
+ *
+ * are prohibited at UI call sites — they bypass path and internals stripping.
+ * Correct usage: `setError(mapTauriError(err, t))`
+ *
+ * Enforcement: grep for the patterns above in src/**\/*.tsx outside this file to
+ * catch regressions, e.g.:
+ *   rg "setError\(err instanceof Error|setError\(String\(err|setError\(err\.message" src
  */
 export function mapTauriError(err: unknown, t: T = defaultT): string {
   const raw = typeof err === 'string' ? err : err instanceof Error ? err.message : String(err);
