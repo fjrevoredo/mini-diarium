@@ -1,4 +1,4 @@
-use crate::commands::auth::DiaryState;
+use crate::commands::auth::{with_unlocked_db, DiaryState};
 use crate::db::queries::{self, DiaryEntry};
 use crate::db::schema::DatabaseConnection;
 use crate::export::{json, markdown};
@@ -33,36 +33,24 @@ pub fn export_json(
     state: State<DiaryState>,
 ) -> Result<ExportResult, String> {
     info!("Starting JSON export to file: {}", file_path);
-
-    let db_state = state
-        .db
-        .lock()
-        .map_err(|_| "State lock poisoned".to_string())?;
-    let db = db_state.as_ref().ok_or_else(|| {
-        let err = "Journal must be unlocked to export entries";
-        error!("{}", err);
-        err.to_string()
-    })?;
-
-    let entries = fetch_entries(db, date_from.as_deref(), date_to.as_deref())?;
-    let entries_exported = entries.len();
-    debug!("Serializing {} entries to JSON...", entries_exported);
-
-    let json_string = json::export_entries_to_json(entries)?;
-
-    std::fs::write(&file_path, &json_string).map_err(|e| {
-        let err = format!("Failed to write file: {}", e);
-        error!("{}", err);
-        err
-    })?;
-
-    info!(
-        "JSON export complete: {} entries exported to {}",
-        entries_exported, file_path
-    );
-    Ok(ExportResult {
-        entries_exported,
-        file_path,
+    with_unlocked_db(&state, |db| {
+        let entries = fetch_entries(db, date_from.as_deref(), date_to.as_deref())?;
+        let entries_exported = entries.len();
+        debug!("Serializing {} entries to JSON...", entries_exported);
+        let json_string = json::export_entries_to_json(entries)?;
+        std::fs::write(&file_path, &json_string).map_err(|e| {
+            let err = format!("Failed to write file: {}", e);
+            error!("{}", err);
+            err
+        })?;
+        info!(
+            "JSON export complete: {} entries exported to {}",
+            entries_exported, file_path
+        );
+        Ok(ExportResult {
+            entries_exported,
+            file_path,
+        })
     })
 }
 
@@ -77,54 +65,41 @@ pub fn export_markdown(
     state: State<DiaryState>,
 ) -> Result<ExportResult, String> {
     info!("Starting Markdown export to file: {}", file_path);
-
-    let db_state = state
-        .db
-        .lock()
-        .map_err(|_| "State lock poisoned".to_string())?;
-    let db = db_state.as_ref().ok_or_else(|| {
-        let err = "Journal must be unlocked to export entries";
-        error!("{}", err);
-        err.to_string()
-    })?;
-
-    let entries = fetch_entries(db, date_from.as_deref(), date_to.as_deref())?;
-    let entries_exported = entries.len();
-    debug!("Converting {} entries to Markdown...", entries_exported);
-
-    let (md_string, assets) = markdown::export_entries_to_markdown_with_assets(entries);
-
-    std::fs::write(&file_path, &md_string).map_err(|e| {
-        let err = format!("Failed to write file: {}", e);
-        error!("{}", err);
-        err
-    })?;
-
-    if !assets.is_empty() {
-        let assets_dir = std::path::Path::new(&file_path)
-            .parent()
-            .unwrap_or(std::path::Path::new("."))
-            .join("assets");
-        std::fs::create_dir_all(&assets_dir)
-            .map_err(|e| format!("Failed to create assets directory: {}", e))?;
-        for (filename, bytes) in &assets {
-            std::fs::write(assets_dir.join(filename), bytes)
-                .map_err(|e| format!("Failed to write asset '{}': {}", filename, e))?;
+    with_unlocked_db(&state, |db| {
+        let entries = fetch_entries(db, date_from.as_deref(), date_to.as_deref())?;
+        let entries_exported = entries.len();
+        debug!("Converting {} entries to Markdown...", entries_exported);
+        let (md_string, assets) = markdown::export_entries_to_markdown_with_assets(entries);
+        std::fs::write(&file_path, &md_string).map_err(|e| {
+            let err = format!("Failed to write file: {}", e);
+            error!("{}", err);
+            err
+        })?;
+        if !assets.is_empty() {
+            let assets_dir = std::path::Path::new(&file_path)
+                .parent()
+                .unwrap_or(std::path::Path::new("."))
+                .join("assets");
+            std::fs::create_dir_all(&assets_dir)
+                .map_err(|e| format!("Failed to create assets directory: {}", e))?;
+            for (filename, bytes) in &assets {
+                std::fs::write(assets_dir.join(filename), bytes)
+                    .map_err(|e| format!("Failed to write asset '{}': {}", filename, e))?;
+            }
+            debug!(
+                "Wrote {} asset file(s) to {}",
+                assets.len(),
+                assets_dir.display()
+            );
         }
-        debug!(
-            "Wrote {} asset file(s) to {}",
-            assets.len(),
-            assets_dir.display()
+        info!(
+            "Markdown export complete: {} entries exported to {}",
+            entries_exported, file_path
         );
-    }
-
-    info!(
-        "Markdown export complete: {} entries exported to {}",
-        entries_exported, file_path
-    );
-    Ok(ExportResult {
-        entries_exported,
-        file_path,
+        Ok(ExportResult {
+            entries_exported,
+            file_path,
+        })
     })
 }
 

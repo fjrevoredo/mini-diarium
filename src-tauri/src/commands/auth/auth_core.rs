@@ -66,6 +66,31 @@ fn migrate_require_all_auth_to_db(
     }
 }
 
+/// Checks that the supplied credential count satisfies the require-all-auth policy.
+///
+/// Returns `Ok(())` if the policy is not active or the count is sufficient.
+/// Returns `Err(...)` if require_all_auth is active and fewer credentials were provided
+/// than there are non-auto auth slots.
+pub(crate) fn check_require_all_auth_credential_count(
+    credential_count: usize,
+    db: &crate::db::schema::DatabaseConnection,
+) -> Result<(), String> {
+    let require_all =
+        crate::db::queries::verify_require_all_auth(db.conn(), db.key().as_bytes());
+    if require_all {
+        let all_slots = crate::db::queries::list_auth_slots(db)?;
+        let non_auto_count = all_slots.iter().filter(|s| s.slot_type != "auto").count();
+        if credential_count < non_auto_count {
+            return Err(
+                "This journal requires all authentication methods. \
+                 Please provide all credentials."
+                    .to_string(),
+            );
+        }
+    }
+    Ok(())
+}
+
 /// Creates a new encrypted diary database
 #[tauri::command]
 pub fn create_diary(
@@ -492,19 +517,7 @@ pub fn unlock_diary_all_methods(
     // Guard: if require_all_auth is active, the caller must supply at least as many
     // credentials as there are non-auto slots. Without this check, a single-credential
     // call to unlock_diary_all_methods would bypass the multi-auth requirement.
-    {
-        let require_all =
-            crate::db::queries::verify_require_all_auth(db_conn.conn(), db_conn.key().as_bytes());
-        if require_all {
-            let all_slots = crate::db::queries::list_auth_slots(&db_conn)?;
-            let non_auto_count = all_slots.iter().filter(|s| s.slot_type != "auto").count();
-            if credentials.len() < non_auto_count {
-                return Err("This journal requires all authentication methods. \
-                     Please provide all credentials."
-                    .to_string());
-            }
-        }
-    }
+    check_require_all_auth_credential_count(credentials.len(), &db_conn)?;
 
     // Verify each remaining credential against the open DB's auth slots
     for credential in &credentials[1..] {
@@ -697,7 +710,7 @@ mod tests {
     }
 
     #[test]
-    fn test_unlock_all_methods_require_all_auth_rejects_single_credential() {
+    fn test_check_require_all_auth_rejects_single_credential() {
         use crate::auth::keypair::generate_keypair;
         use crate::db::schema::open_database;
 
@@ -725,28 +738,24 @@ mod tests {
         )
         .unwrap();
 
-        // Set require_all_auth = "true" in db_settings
+        // Set require_all_auth flag + MAC (MAC is required for verify_require_all_auth)
         crate::db::queries::set_db_setting(db.conn(), "require_all_auth", "true").unwrap();
+        crate::db::queries::write_require_all_auth_mac(db.conn(), db.key().as_bytes()).unwrap();
         drop(db);
 
-        // Re-open and verify the guard logic: with require_all_auth active and 2 non-auto
-        // slots, a single credential must be rejected.
+        // Re-open and call the real guard function
         let db2 = open_database(&db_path, "password".to_string(), &backups_dir).unwrap();
-        let require_all = crate::db::queries::get_db_setting(db2.conn(), "require_all_auth")
-            .map(|v| v == "true")
-            .unwrap_or(false);
-        assert!(require_all, "require_all_auth must be set");
 
-        let all_slots = crate::db::queries::list_auth_slots(&db2).unwrap();
-        let non_auto_count = all_slots.iter().filter(|s| s.slot_type != "auto").count();
-        assert_eq!(non_auto_count, 2, "should have 2 non-auto slots");
-
-        // Simulate the guard: 1 credential < 2 required → must reject
-        let single_credential_count = 1usize;
+        // 1 credential < 2 non-auto slots → must reject
+        let err = super::check_require_all_auth_credential_count(1, &db2).unwrap_err();
         assert!(
-            single_credential_count < non_auto_count,
-            "guard must fire: single credential is insufficient"
+            err.contains("requires all authentication methods"),
+            "got: {}",
+            err
         );
+
+        // 2 credentials == 2 non-auto slots → must pass
+        super::check_require_all_auth_credential_count(2, &db2).unwrap();
 
         cleanup(&db_path, &backups_dir);
     }

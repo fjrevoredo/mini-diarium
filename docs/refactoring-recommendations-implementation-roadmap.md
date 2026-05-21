@@ -221,7 +221,7 @@ Implement every recommendation from `docs/refactoring-report-2026-05-21.md` in a
 
 ### Milestone 6: Command-Level Test Infrastructure
 
-- Status: IN PROGRESS
+- Status: COMPLETED
 - Purpose: Establish the command testing safety net required before behavior-changing command refactors.
 - Exit Criteria: The Tauri v2 test harness spike is documented, either an in-process harness exists or the fallback pure-function strategy is implemented, and representative security-critical command tests pass.
 
@@ -250,7 +250,7 @@ Implement every recommendation from `docs/refactoring-report-2026-05-21.md` in a
 
 #### Task 6.2: Add Representative Command Tests For Later Refactors (P1/P7/P14)
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Objective: Cover the command paths needed before broad `with_unlocked_db` and unlock refactors.
 - Steps:
   1. Red: add locked-vs-unlocked smoke tests for representative commands such as `save_entry`, `get_statistics`, and `list_auth_methods`; run them and confirm failures expose missing command-level coverage or harness gaps.
@@ -260,18 +260,30 @@ Implement every recommendation from `docs/refactoring-report-2026-05-21.md` in a
   5. Red: add a real production-path test for `remove_auth_method` last-slot guard.
   6. Green: adjust only production code or test setup needed for the real guard behavior to pass.
   7. Red/green: add and satisfy a multi-auth test that `unlock_diary_all_methods` rejects too few credentials.
-- Validation: `cmd.exe /c "cd /d D:\Repos\mini-diarium\src-tauri && cargo test"`.
-- Notes: The exact test mechanism depends on Task 6.1. Do not fake guards inline.
+- Validation: `cmd.exe /c "cd /d D:\Repos\mini-diarium\src-tauri && cargo test"` — 334 tests, 0 failures.
+- Notes:
+  - Pure-function extraction pattern used throughout (fallback from Task 6.1 spike).
+  - Extracted: `save_entry_inner` (entries.rs), `get_statistics_inner` (stats.rs),
+    `list_auth_methods_inner` + `remove_auth_method_inner` (auth_methods.rs),
+    `check_require_all_auth_credential_count` (auth_core.rs),
+    `change_diary_directory_with_auto_lock_inner` (auth_directory.rs).
+  - Locked-state tests added for all five extracted functions.
+  - `test_remove_auth_method_last_slot_guard` now calls `remove_auth_method_inner` directly.
+  - `test_check_require_all_auth_rejects_single_credential` now calls
+    `check_require_all_auth_credential_count` directly (replaces the old simulated guard test).
+  - `test_change_diary_directory_auto_locks_and_moves_file` now calls
+    `change_diary_directory_with_auto_lock_inner` directly and verifies DB is locked + file moved.
+  - TODOs from Task 1.3 removed across all three files.
 
 ### Milestone 7: Behavior-Changing Command Refactors
 
-- Status: TO BE DONE
+- Status: IN PROGRESS
 - Purpose: Reduce command duplication only after representative command coverage exists.
 - Exit Criteria: Unlocked-DB boilerplate is centralized, shared unlock scaffolding covers password/keypair/all-method unlock paths, `unlock_diary_auto` remains separate by policy, and command tests pass.
 
 #### Task 7.1: Introduce `with_unlocked_db` Helper And Convert Call Sites (P1)
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Objective: Replace repeated unlocked-DB command preambles with one auditable helper.
 - Steps:
   1. Red: add two focused tests for the helper before implementing it: unlocked path returns the inner result, locked path returns `Journal must be unlocked`.

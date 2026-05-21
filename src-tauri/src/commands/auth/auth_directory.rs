@@ -66,23 +66,18 @@ fn change_diary_directory_inner(
     Ok(())
 }
 
-/// Changes the directory where the diary file is stored.
+/// Pure inner for `change_diary_directory` — locks the DB then moves the file.
 ///
-/// The diary must be locked before calling this command. The file is moved
-/// (copy + delete) to the new directory, and the choice is persisted in
-/// `{app_data_dir}/config.json` so the app finds it on the next launch.
-///
-/// If both the current directory and the new directory already contain a
-/// `diary.db`, the command refuses to proceed to avoid data loss.
-#[tauri::command]
-pub fn change_diary_directory(
-    new_dir: String,
-    state: State<DiaryState>,
-    app: AppHandle<Wry>,
+/// Separated from the Tauri command so the auto-lock + move sequence can be
+/// unit-tested without needing an `AppHandle`. Does not emit events; the Tauri
+/// command layer handles that.
+pub(crate) fn change_diary_directory_with_auto_lock_inner(
+    new_dir: &str,
+    state: &DiaryState,
 ) -> Result<(), String> {
     // Auto-lock: close the DB connection before moving the file.
     // Safe on all platforms — SQLite holds a file lock while open.
-    if super::auto_lock_diary_if_unlocked(state.clone(), app.clone(), "directory change")? {
+    if super::lock_diary_inner(state)? {
         info!("Journal auto-locked for directory change");
     }
 
@@ -97,7 +92,7 @@ pub fn change_diary_directory(
         .unwrap_or("diary.db")
         .to_string();
     change_diary_directory_inner(
-        PathBuf::from(&new_dir),
+        PathBuf::from(new_dir),
         current_db_path,
         &db_filename,
         &state.db_path,
@@ -112,7 +107,7 @@ pub fn change_diary_directory(
             .into_iter()
             .map(|mut j| {
                 if j.id == active_id {
-                    j.path = new_dir.clone();
+                    j.path = new_dir.to_string();
                 }
                 j
             })
@@ -122,6 +117,31 @@ pub fn change_diary_directory(
 
     info!("Journal directory changed to: {}", new_dir);
     Ok(())
+}
+
+/// Changes the directory where the diary file is stored.
+///
+/// The diary must be locked before calling this command. The file is moved
+/// (copy + delete) to the new directory, and the choice is persisted in
+/// `{app_data_dir}/config.json` so the app finds it on the next launch.
+///
+/// If both the current directory and the new directory already contain a
+/// `diary.db`, the command refuses to proceed to avoid data loss.
+#[tauri::command]
+pub fn change_diary_directory(
+    new_dir: String,
+    state: State<DiaryState>,
+    app: AppHandle<Wry>,
+) -> Result<(), String> {
+    // Capture lock state first; the inner locks before the file move.
+    let was_unlocked = state.db.lock().map_err(|_| "State lock poisoned".to_string())?.is_some();
+    let result = change_diary_directory_with_auto_lock_inner(&new_dir, &state);
+    // Emit regardless of move outcome — the DB is already locked at this point if was_unlocked.
+    if was_unlocked {
+        super::emit_diary_locked(&app, "directory change");
+        crate::menu::update_menu_lock_state(&app, true);
+    }
+    result
 }
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
@@ -255,8 +275,39 @@ mod tests {
         let _ = fs::remove_dir_all(&cfg_dir);
     }
 
-    // TODO(M6): add a real production-path test for change_diary_directory auto-lock behavior
-    // via the command test harness once Task 6.1 (Tauri command integration harness) is done.
-    // The old test_change_diary_directory_blocked_when_unlocked only checked an inline boolean,
-    // not the actual db.lock().is_some() guard in the command — removed in Task 1.3.
+    #[test]
+    fn test_change_diary_directory_auto_locks_and_moves_file() {
+        use crate::db::schema::create_database;
+
+        let src_dir = PathBuf::from("test_autolock_src");
+        let dst_dir = PathBuf::from("test_autolock_dst");
+        let cfg_dir = PathBuf::from("test_autolock_cfg");
+        fs::create_dir_all(&src_dir).unwrap();
+        fs::create_dir_all(&dst_dir).unwrap();
+        fs::create_dir_all(&cfg_dir).unwrap();
+
+        let src_db = src_dir.join("diary.db");
+        let db = create_database(src_db.to_str().unwrap(), "test".to_string()).unwrap();
+        let dst_abs = fs::canonicalize(&dst_dir).unwrap();
+
+        let state = DiaryState::new(
+            src_db.clone(),
+            src_dir.join("backups"),
+            cfg_dir.clone(),
+        );
+        *state.db.lock().unwrap() = Some(db);
+        assert!(state.db.lock().unwrap().is_some(), "should start unlocked");
+
+        let result =
+            change_diary_directory_with_auto_lock_inner(dst_abs.to_str().unwrap(), &state);
+        assert!(result.is_ok(), "Expected Ok, got: {:?}", result);
+
+        assert!(state.db.lock().unwrap().is_none(), "DB should be locked after move");
+        assert!(!src_db.exists(), "source file should be gone");
+        assert!(dst_abs.join("diary.db").exists(), "file should be at destination");
+
+        let _ = fs::remove_dir_all(&src_dir);
+        let _ = fs::remove_dir_all(&dst_dir);
+        let _ = fs::remove_dir_all(&cfg_dir);
+    }
 }

@@ -1,7 +1,7 @@
 use log::info;
 use tauri::State;
 
-use super::DiaryState;
+use super::{with_unlocked_db, DiaryState};
 
 /// Verifies the current password without performing any other operation.
 ///
@@ -25,17 +25,19 @@ pub fn verify_password(password: String, state: State<DiaryState>) -> Result<(),
     Ok(())
 }
 
+/// Pure inner of `list_auth_methods` — takes `&DiaryState` so it can be tested without Tauri.
+pub(crate) fn list_auth_methods_inner(
+    state: &DiaryState,
+) -> Result<Vec<crate::auth::AuthMethodInfo>, String> {
+    with_unlocked_db(state, |db| crate::db::queries::list_auth_slots(db))
+}
+
 /// Lists all registered authentication methods (without sensitive key material).
 #[tauri::command]
 pub fn list_auth_methods(
     state: State<DiaryState>,
 ) -> Result<Vec<crate::auth::AuthMethodInfo>, String> {
-    let db_state = state
-        .db
-        .lock()
-        .map_err(|_| "State lock poisoned".to_string())?;
-    let db = db_state.as_ref().ok_or("Journal must be unlocked")?;
-    crate::db::queries::list_auth_slots(db)
+    list_auth_methods_inner(&state)
 }
 
 /// Reads auth slot types and labels from a locked journal (no key required).
@@ -252,16 +254,11 @@ pub fn register_keypair(
     Ok(())
 }
 
-/// Removes an authentication method by slot id.
-///
-/// Requires the current password only when a password slot exists.
-/// If no password slot exists, being unlocked is sufficient.
-/// Refuses to remove the last auth method.
-#[tauri::command]
-pub fn remove_auth_method(
+/// Pure inner of `remove_auth_method` — takes `&DiaryState` so it can be tested without Tauri.
+pub(crate) fn remove_auth_method_inner(
     slot_id: i64,
     current_password: Option<String>,
-    state: State<DiaryState>,
+    state: &DiaryState,
 ) -> Result<(), String> {
     let db_state = state
         .db
@@ -331,6 +328,20 @@ pub fn remove_auth_method(
     }
 
     Ok(())
+}
+
+/// Removes an authentication method by slot id.
+///
+/// Requires the current password only when a password slot exists.
+/// If no password slot exists, being unlocked is sufficient.
+/// Refuses to remove the last auth method.
+#[tauri::command]
+pub fn remove_auth_method(
+    slot_id: i64,
+    current_password: Option<String>,
+    state: State<DiaryState>,
+) -> Result<(), String> {
+    remove_auth_method_inner(slot_id, current_password, &state)
 }
 
 /// Enables or disables the require-all-auth flag for the active journal.
@@ -455,10 +466,52 @@ mod tests {
         cleanup(&db_path, &backups_dir);
     }
 
-    // TODO(M6): add a real production-path test for the remove_auth_method last-slot guard
-    // via the command test harness once Task 6.1 (Tauri command integration harness) is done.
-    // The old test_remove_auth_method_last_slot_guard only simulated the guard inline rather
-    // than calling the real command — removed in Task 1.3.
+    #[test]
+    fn test_list_auth_methods_locked_returns_error() {
+        use std::path::PathBuf;
+        let state = super::super::DiaryState::new(
+            PathBuf::from("test_list_methods_locked.db"),
+            PathBuf::from("test_list_methods_locked_backups"),
+            PathBuf::from("."),
+        );
+        let err = super::list_auth_methods_inner(&state).unwrap_err();
+        assert!(err.contains("unlocked"), "got: {}", err);
+    }
+
+    #[test]
+    fn test_remove_auth_method_locked_returns_error() {
+        use std::path::PathBuf;
+        let state = super::super::DiaryState::new(
+            PathBuf::from("test_rm_locked.db"),
+            PathBuf::from("test_rm_locked_backups"),
+            PathBuf::from("."),
+        );
+        let err = super::remove_auth_method_inner(1, None, &state).unwrap_err();
+        assert!(err.contains("unlocked"), "got: {}", err);
+    }
+
+    #[test]
+    fn test_remove_auth_method_last_slot_guard() {
+        let (state, db_path, backups_dir) = make_state("rm_last_slot");
+        let db = create_database(&db_path, "password".to_string()).unwrap();
+        // One slot exists (password). Put db into state.
+        *state.db.lock().unwrap() = Some(db);
+
+        let slots = super::list_auth_methods_inner(&state).unwrap();
+        assert_eq!(slots.len(), 1);
+        let slot_id = slots[0].id;
+
+        let err =
+            super::remove_auth_method_inner(slot_id, Some("password".to_string()), &state)
+                .unwrap_err();
+        assert!(
+            err.contains("Cannot remove the last"),
+            "got: {}",
+            err
+        );
+
+        cleanup(&db_path, &backups_dir);
+    }
 
     #[test]
     fn test_list_auth_methods() {
