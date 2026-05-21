@@ -505,9 +505,12 @@ fn install_content_rule_list(win: &tauri::WebviewWindow) {
         // `compileContentRuleListForIdentifier` retains the store and the block internally;
         // the compiled rule list is cached on disk by WebKit after the first compilation.
         unsafe {
-            use block2::RcBlock;
+            use block2::Block;
+            use objc2::MainThreadMarker;
             use objc2_foundation::{NSError, NSString};
             use objc2_web_kit::{WKContentRuleList, WKContentRuleListStore, WKWebView};
+
+            let mtm = MainThreadMarker::new().expect("must be on main thread");
 
             let wk_webview = webview.inner() as *mut WKWebView;
             let config = (*wk_webview).configuration();
@@ -524,21 +527,23 @@ fn install_content_rule_list(win: &tauri::WebviewWindow) {
             let identifier = NSString::from_str("mini-diarium-block");
             let rules = NSString::from_str(rules_json);
 
-            // Retain ucc so the async completion handler can call addContentRuleList
+            // Clone ucc so the async completion handler can call addContentRuleList
             // after the with_webview closure returns.
-            let ucc_retained = ucc.retain();
+            let ucc_retained = objc2::rc::Retained::clone(&ucc);
 
-            let block = RcBlock::new(move |list: *mut WKContentRuleList, _err: *mut NSError| {
+            let block = Block::move_new(move |list: *mut WKContentRuleList, _err: *mut NSError| {
                 if let Some(rule_list) = list.as_ref() {
                     ucc_retained.addContentRuleList(rule_list);
                 }
             });
 
-            WKContentRuleListStore::defaultStore()
+            WKContentRuleListStore::defaultStore(mtm)
+                .as_ref()
+                .expect("defaultStore should succeed")
                 .compileContentRuleListForIdentifier_encodedContentRuleList_completionHandler(
-                    &identifier,
-                    &rules,
-                    &*block,
+                    Some(&identifier),
+                    Some(&rules),
+                    Some(&block),
                 );
         }
     }) {
