@@ -32,7 +32,8 @@
     "validate:locales": "npx tsx scripts/validate-locales.ts",
     "sync-languages": "npx tsx scripts/sync-languages.ts",
     "bench": "vitest bench",
-    "sync-skills": "node scripts/sync-skills.js"
+    "sync-skills": "node scripts/sync-skills.js",
+    "check:ui-errors": "node scripts/check-ui-error-sanitization.js"
   },
   "license": "MIT",
   "puppeteer": {

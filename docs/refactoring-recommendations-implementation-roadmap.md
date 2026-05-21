@@ -4,7 +4,7 @@
 
 - Plan Status: IN PROGRESS
 - Created: 2026-05-21
-- Last Updated: 2026-05-21
+- Last Updated: 2026-05-21 (gap-fill: Task 3.2 CI guard, Task 7.1 exclusion notes, Task 8.1 COMPLETED, doc path fixes)
 - Owner: Coding agent
 - Approval: APPROVED 2026-05-21
 - Source Report: `docs/refactoring-report-2026-05-21.md`
@@ -170,6 +170,7 @@ Implement every recommendation from `docs/refactoring-report-2026-05-21.md` in a
   6. Refactor: document the rule in `src/lib/errors.ts` and rerun the full frontend validation.
 - Validation: `cmd.exe /c bun run test:run`; `cmd.exe /c bun run type-check`; run the new grep/script check.
 - Notes: Do not hide errors needed for logs unless those logs are local and intentionally not user-facing.
+- Gap-fill (2026-05-21): Step 5 enforcement guard was missing at initial completion. Added `scripts/check-ui-error-sanitization.js` (exit 1 on raw patterns, exit 0 when clean). Wired into `bun run check:ui-errors`, `scripts/quick-check.js`, and `scripts/pre-commit.js`. Verification: `node scripts/check-ui-error-sanitization.js` exits 0 on the current `src/` tree.
 
 ### Milestone 4: Query Module Split
 
@@ -294,6 +295,11 @@ Implement every recommendation from `docs/refactoring-report-2026-05-21.md` in a
   6. Keep each converted command's inner behavior unchanged and rerun backend tests after each command group.
 - Validation: `cmd.exe /c "cd /d D:\Repos\mini-diarium\src-tauri && cargo test"`; `cmd.exe /c bun run test:run` if frontend mappings changed.
 - Notes: This task is blocked until Milestone 6 has representative tests.
+- Gap-fill (2026-05-21): Assessment found several preamble sites not yet converted. Converted `verify_password`, `register_password`, and `register_keypair` (auth_methods.rs) — all DB-only access, non-canonical `"State lock poisoned"` error string replaced by canonical `with_unlocked_db` errors. Remaining sites intentionally excluded:
+  - `remove_auth_method_inner` and `set_require_all_auth` (auth_methods.rs): also access `state.app_data_dir` (plain PathBuf); restructuring the DB closure around mixed state access is out of scope for this task.
+  - `run_import_plugin` and `run_export_plugin` (plugin.rs): two-phase lock pattern (registry first, then DB); the `ok_or_else` includes a contextual `error!()` log and a custom user-facing message that would be lost if replaced by the generic `with_unlocked_db` error.
+  - `generate_debug_dump` (debug.rs): also acquires `state.db_path` and `state.backups_dir` (both Mutex-wrapped) in the same critical section — a genuine structural mixed-lock pattern, not a simple boilerplate preamble.
+  Validation after gap-fill: `cmd.exe /c "cd /d D:\Repos\mini-diarium\src-tauri && cargo test"` — 337 tests, 0 failures.
 
 #### Task 7.2: Unify Non-Auto Unlock Paths (P9)
 
@@ -312,13 +318,13 @@ Implement every recommendation from `docs/refactoring-report-2026-05-21.md` in a
 
 ### Milestone 8: Structural UI And Backend Splits
 
-- Status: TO BE DONE
+- Status: IN PROGRESS
 - Purpose: Move large components and command modules into smaller files after behavior-sensitive refactors are covered.
 - Exit Criteria: TipTap extensions, security preferences subsections, auth command responsibilities, and platform WebView handlers are split into focused files with unchanged runtime behavior and passing tests.
 
 #### Task 8.1: Move TipTap Extensions Out Of `DiaryEditor.tsx` (P10)
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Objective: Reduce `DiaryEditor.tsx` by moving standalone TipTap extensions into dedicated modules.
 - Steps:
   1. Red/safety: run the existing editor tests before the split; if extension behavior lacks any focused coverage needed for safe movement, add a characterization test first.
@@ -328,6 +334,7 @@ Implement every recommendation from `docs/refactoring-report-2026-05-21.md` in a
   5. Green/refactor: update imports and rerun the same editor tests.
 - Validation: `cmd.exe /c bun run test:run`; `cmd.exe /c bun run type-check`.
 - Notes: If editor behavior is visually affected, run relevant E2E/editor checks.
+- Completion notes (2026-05-21): `src/components/editor/extensions/BidiExtension.ts` (103 lines), `AlignableImage.ts` (40 lines), and `TimestampMark.ts` (11 lines) extracted. `getFirstStrongDir` exported as pure function. `BidiExtension.test.ts` adds 8 characterization tests. `DiaryEditor.tsx` reduced to 370 lines (extension code removed). Validation: `bun run type-check` — 0 errors; `bun run test:run` — 360 tests, 0 failures.
 
 #### Task 8.2: Split `PreferencesSecurityTab.tsx` Into Security Subsections (P11)
 

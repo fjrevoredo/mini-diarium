@@ -9,20 +9,16 @@ use super::{with_unlocked_db, DiaryState};
 /// operations (e.g. keypair registration) where early failure is preferable.
 #[tauri::command]
 pub fn verify_password(password: String, state: State<DiaryState>) -> Result<(), String> {
-    let db_state = state
-        .db
-        .lock()
-        .map_err(|_| "State lock poisoned".to_string())?;
-    let db = db_state.as_ref().ok_or("Journal must be unlocked")?;
-
-    let (_, wrapped_key) =
-        crate::db::queries::get_password_slot(db)?.ok_or("No password auth method found")?;
-    let method = crate::auth::password::PasswordMethod::new(password);
-    // The returned SecretBytes is dropped immediately, zeroing memory automatically.
-    let _master_key_bytes = method
-        .unwrap_master_key(&wrapped_key)
-        .map_err(|_| "Incorrect password".to_string())?;
-    Ok(())
+    with_unlocked_db(&state, |db| {
+        let (_, wrapped_key) =
+            crate::db::queries::get_password_slot(db)?.ok_or("No password auth method found")?;
+        let method = crate::auth::password::PasswordMethod::new(password);
+        // The returned SecretBytes is dropped immediately, zeroing memory automatically.
+        let _master_key_bytes = method
+            .unwrap_master_key(&wrapped_key)
+            .map_err(|_| "Incorrect password".to_string())?;
+        Ok(())
+    })
 }
 
 /// Pure inner of `list_auth_methods` — takes `&DiaryState` so it can be tested without Tauri.
@@ -152,30 +148,27 @@ pub fn register_password(new_password: String, state: State<DiaryState>) -> Resu
         return Err("Password cannot be empty".to_string());
     }
 
-    let db_state = state
-        .db
-        .lock()
-        .map_err(|_| "State lock poisoned".to_string())?;
-    let db = db_state.as_ref().ok_or("Journal must be unlocked")?;
+    with_unlocked_db(&state, |db| {
+        // Reject if a password slot already exists
+        if crate::db::queries::get_password_slot(db)?.is_some() {
+            return Err(
+                "A password method already exists. Use 'Change Password' to update it."
+                    .to_string(),
+            );
+        }
 
-    // Reject if a password slot already exists
-    if crate::db::queries::get_password_slot(db)?.is_some() {
-        return Err(
-            "A password method already exists. Use 'Change Password' to update it.".to_string(),
-        );
-    }
+        // Wrap the master key (already in memory) with the new password
+        let method = crate::auth::password::PasswordMethod::new(new_password);
+        let wrapped_key = method
+            .wrap_master_key(db.key().as_bytes())
+            .map_err(|e| format!("Failed to wrap master key: {}", e))?;
 
-    // Wrap the master key (already in memory) with the new password
-    let method = crate::auth::password::PasswordMethod::new(new_password);
-    let wrapped_key = method
-        .wrap_master_key(db.key().as_bytes())
-        .map_err(|e| format!("Failed to wrap master key: {}", e))?;
+        let now = chrono::Utc::now().to_rfc3339();
+        crate::db::queries::insert_auth_slot(db, "password", "Password", None, &wrapped_key, &now)?;
 
-    let now = chrono::Utc::now().to_rfc3339();
-    crate::db::queries::insert_auth_slot(db, "password", "Password", None, &wrapped_key, &now)?;
-
-    info!("Password auth method registered");
-    Ok(())
+        info!("Password auth method registered");
+        Ok(())
+    })
 }
 
 /// Registers a new keypair auth method.
@@ -190,68 +183,64 @@ pub fn register_keypair(
     label: String,
     state: State<DiaryState>,
 ) -> Result<(), String> {
-    let db_state = state
-        .db
-        .lock()
-        .map_err(|_| "State lock poisoned".to_string())?;
-    let db = db_state.as_ref().ok_or("Journal must be unlocked")?;
+    with_unlocked_db(&state, |db| {
+        // Identity gate: require password verification only when a password slot exists.
+        // If no password slot, being unlocked is sufficient (same model as register_password).
+        let password_slot = crate::db::queries::get_password_slot(db)?;
+        if let Some((_, wrapped_key)) = password_slot {
+            let pwd = current_password
+                .ok_or("Password required to add a key file when a password method exists")?;
+            let method = crate::auth::password::PasswordMethod::new(pwd);
+            method
+                .unwrap_master_key(&wrapped_key)
+                .map_err(|_| "Incorrect password".to_string())?;
+        }
 
-    // Identity gate: require password verification only when a password slot exists.
-    // If no password slot, being unlocked is sufficient (same model as register_password).
-    let password_slot = crate::db::queries::get_password_slot(db)?;
-    if let Some((_, wrapped_key)) = password_slot {
-        let pwd = current_password
-            .ok_or("Password required to add a key file when a password method exists")?;
-        let method = crate::auth::password::PasswordMethod::new(pwd);
-        method
-            .unwrap_master_key(&wrapped_key)
-            .map_err(|_| "Incorrect password".to_string())?;
-    }
+        // Decode public key
+        let pub_key_vec =
+            hex::decode(&public_key_hex).map_err(|_| "Invalid public key hex".to_string())?;
+        if pub_key_vec.len() != 32 {
+            return Err("Invalid public key: expected 32 bytes".to_string());
+        }
+        let mut pub_key = [0u8; 32];
+        pub_key.copy_from_slice(&pub_key_vec);
 
-    // Decode public key
-    let pub_key_vec =
-        hex::decode(&public_key_hex).map_err(|_| "Invalid public key hex".to_string())?;
-    if pub_key_vec.len() != 32 {
-        return Err("Invalid public key: expected 32 bytes".to_string());
-    }
-    let mut pub_key = [0u8; 32];
-    pub_key.copy_from_slice(&pub_key_vec);
+        // Reject duplicate public key registrations
+        let existing: i64 = db
+            .conn()
+            .query_row(
+                "SELECT COUNT(*) FROM auth_slots WHERE type = 'keypair' AND public_key = ?1",
+                rusqlite::params![&pub_key_vec],
+                |row| row.get(0),
+            )
+            .map_err(|e| format!("Failed to check for duplicate key: {}", e))?;
+        if existing > 0 {
+            return Err("A keypair with this public key is already registered".to_string());
+        }
 
-    // Reject duplicate public key registrations
-    let existing: i64 = db
-        .conn()
-        .query_row(
-            "SELECT COUNT(*) FROM auth_slots WHERE type = 'keypair' AND public_key = ?1",
-            rusqlite::params![&pub_key_vec],
-            |row| row.get(0),
-        )
-        .map_err(|e| format!("Failed to check for duplicate key: {}", e))?;
-    if existing > 0 {
-        return Err("A keypair with this public key is already registered".to_string());
-    }
+        // Wrap master_key for the new keypair using the session key (always available).
+        // db.key().as_bytes() returns &[u8; 32], which coerces to &[u8] for wrap_master_key.
+        let keypair_method = crate::auth::keypair::KeypairMethod {
+            public_key: pub_key,
+        };
+        let wrapped_for_keypair = keypair_method
+            .wrap_master_key(db.key().as_bytes())
+            .map_err(|e| format!("Failed to wrap master key for keypair: {}", e))?;
 
-    // Wrap master_key for the new keypair using the session key (always available).
-    // db.key().as_bytes() returns &[u8; 32], which coerces to &[u8] for wrap_master_key.
-    let keypair_method = crate::auth::keypair::KeypairMethod {
-        public_key: pub_key,
-    };
-    let wrapped_for_keypair = keypair_method
-        .wrap_master_key(db.key().as_bytes())
-        .map_err(|e| format!("Failed to wrap master key for keypair: {}", e))?;
+        // Insert into auth_slots
+        let now = chrono::Utc::now().to_rfc3339();
+        crate::db::queries::insert_auth_slot(
+            db,
+            "keypair",
+            &label,
+            Some(&pub_key_vec),
+            &wrapped_for_keypair,
+            &now,
+        )?;
 
-    // Insert into auth_slots
-    let now = chrono::Utc::now().to_rfc3339();
-    crate::db::queries::insert_auth_slot(
-        db,
-        "keypair",
-        &label,
-        Some(&pub_key_vec),
-        &wrapped_for_keypair,
-        &now,
-    )?;
-
-    info!("Keypair auth method registered: {}", label);
-    Ok(())
+        info!("Keypair auth method registered: {}", label);
+        Ok(())
+    })
 }
 
 /// Pure inner of `remove_auth_method` — takes `&DiaryState` so it can be tested without Tauri.

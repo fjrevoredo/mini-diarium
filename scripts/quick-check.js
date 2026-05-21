@@ -73,6 +73,18 @@ if (locales.success) {
   results.failed.push('Locales');
 }
 
+// UI error sanitization guard
+process.stdout.write('UI error sanitization... ');
+const uiErrors = run('bun run check:ui-errors');
+if (uiErrors.success) {
+  log('✓', 'green');
+  results.passed.push('UI error sanitization');
+} else {
+  log('✗', 'red');
+  results.failed.push('UI error sanitization');
+  log(uiErrors.output, 'red');
+}
+
 // Summary
 console.log();
 if (results.failed.length === 0) {

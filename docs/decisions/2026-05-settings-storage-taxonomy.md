@@ -2,7 +2,7 @@
 
 **Status:** Accepted
 **Date:** 2026-05-17
-**Related:** `src/state/preferences.ts`; `src-tauri/src/config.rs`; `src-tauri/src/db/schema.rs` (migrate_v5_to_v6); `src-tauri/src/db/queries.rs` (get_db_setting, set_db_setting, verify_require_all_auth, write_require_all_auth_mac); `src-tauri/src/commands/auth/auth_core.rs` (migrate_require_all_auth_to_db).
+**Related:** `src/state/preferences.ts`; `src-tauri/src/config.rs`; `src-tauri/src/db/schema/migrations/` (migrate_v5_to_v6); `src-tauri/src/db/queries/db_settings.rs` (get_db_setting, set_db_setting, verify_require_all_auth, write_require_all_auth_mac); `src-tauri/src/commands/auth/auth_core.rs` (migrate_require_all_auth_to_db).
 
 ## Context
 
@@ -185,6 +185,6 @@ Schema version bumps for `db_settings` changes must go through the normal migrat
 - `src/lib/theme.ts` — `'theme-preference'` localStorage key management.
 - `src/lib/theme-overrides.ts` — `'theme-overrides'` localStorage key management.
 - `src-tauri/src/config.rs` — `JournalConfig`, `AppConfig`, all config.json helpers.
-- `src-tauri/src/db/schema.rs` — `migrate_v5_to_v6` (adds `db_settings`), `SCHEMA_VERSION`.
-- `src-tauri/src/db/queries.rs` — `get_db_setting`, `set_db_setting`, `verify_require_all_auth` (fail-safe checks MAC presence/well-formedness; `_master_key` param currently unused — does not recompute MAC at read time), `write_require_all_auth_mac` (HKDF-SHA256, info=`"mini-diarium:require_all_auth:v1"`).
+- `src-tauri/src/db/schema/migrations/` — `migrate_v5_to_v6` (adds `db_settings`); `src-tauri/src/db/schema/mod.rs` — `SCHEMA_VERSION`.
+- `src-tauri/src/db/queries/db_settings.rs` — `get_db_setting`, `set_db_setting`, `verify_require_all_auth` (fail-safe checks MAC presence/well-formedness; `_master_key` param currently unused — does not recompute MAC at read time), `write_require_all_auth_mac` (HKDF-SHA256, info=`"mini-diarium:require_all_auth:v1"`).
 - `src-tauri/src/commands/auth/auth_core.rs` — `migrate_require_all_auth_to_db` (reference migration pattern).

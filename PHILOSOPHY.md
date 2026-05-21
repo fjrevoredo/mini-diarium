@@ -261,7 +261,7 @@ Imports preserve source entries as separate records. If imported data lands on a
 
 **Adding a new format** follows the Import Parser Pattern in `CLAUDE.md`: one `*.rs` parser module, one command in `commands/import.rs`, register in `lib.rs`, add wrapper in `src/lib/tauri.ts`. The UI (`ImportOverlay.tsx`) picks it up automatically via `listImportPlugins`; no UI change needed.
 
-**Schema**: documented inline in `src-tauri/src/db/schema.rs` with full migration history. Current version: v7 (tags and entry_tags tables added). Entries use stable integer IDs and support multiple entries per day. AES-256-GCM with standard key derivation; decryptable with any standard crypto toolkit given the password.
+**Schema**: documented in `src-tauri/src/db/schema/` (mod.rs, create.rs, open.rs, legacy.rs, migrations/) with full migration history. Current version: v7 (tags and entry_tags tables added). Entries use stable integer IDs and support multiple entries per day. AES-256-GCM with standard key derivation; decryptable with any standard crypto toolkit given the password.
 
 ---
 
@@ -276,6 +276,6 @@ The "no plugin marketplaces" rule means no distribution, discovery, or hosting o
 ### Principle 6: Simplicity in Practice
 
 - **State**: 8 signal modules (`src/state/`). No Redux, Zustand, derived-state middleware, or selector layers.
-- **Database**: direct `rusqlite` queries in `src-tauri/src/db/queries.rs`. No ORM, no query builder, no migration framework beyond the inline schema version check.
+- **Database**: direct `rusqlite` queries in `src-tauri/src/db/queries/` (entries.rs, tags.rs, auth_slots.rs, db_settings.rs). No ORM, no query builder, no migration framework beyond the inline schema version check.
 - **Dependencies**: the runtime dependency set in `src-tauri/Cargo.toml` is intentionally lean for a cryptographic desktop app.
 - **Justified complexity examples**: `src-tauri/src/screen_lock.rs` uses platform-specific Win32 event hooks (Windows) and equivalent macOS hooks for session-lock detection; this is necessary for auto-lock, not gold-plating. The Rhai scripting engine (`src-tauri/src/plugin/rhai_loader.rs`) adds binary size but is the only way to deliver user-scriptable extensions without requiring a recompile.

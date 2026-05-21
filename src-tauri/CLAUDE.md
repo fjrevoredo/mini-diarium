@@ -40,8 +40,18 @@ src-tauri/src/
 │   └── cipher.rs                      # AES-256-GCM encrypt/decrypt
 ├── db/
 │   ├── mod.rs                         # Re-exports
-│   ├── schema.rs                      # DB creation, migrations, password verification
-│   └── queries.rs                     # All SQL: CRUD, dates, word count
+│   ├── schema/
+│   │   ├── mod.rs                     # DatabaseConnection, SCHEMA_VERSION
+│   │   ├── create.rs                  # DB creation + schema DDL
+│   │   ├── open.rs                    # Password/keypair/auto open paths
+│   │   ├── legacy.rs                  # Legacy metadata/hash helpers
+│   │   └── migrations/                # v1_to_v2 … v6_to_v7 + apply_pending
+│   └── queries/
+│       ├── mod.rs                     # encrypt_for_storage, decrypt_utf8
+│       ├── entries.rs                 # ENTRY_SELECT, row_to_entry, CRUD
+│       ├── tags.rs                    # Tag CRUD + entry_tags associations
+│       ├── auth_slots.rs              # Auth slot CRUD + list
+│       └── db_settings.rs             # get/set/delete_db_setting, require_all_auth MAC
 ├── export/
 │   ├── mod.rs                         # Re-exports
 │   ├── json.rs                        # Mini Diary-compatible JSON export
@@ -66,12 +76,14 @@ src-tauri/src/
 ```rust
 #[tauri::command]
 pub fn my_command(arg: String, state: State<DiaryState>) -> Result<ReturnType, String> {
-    let db_state = state.db.lock().unwrap();
-    let db = db_state.as_ref().ok_or("Diary not unlocked")?;
-    // ... business logic
-    Ok(result)
+    with_unlocked_db(&state, |db| {
+        // ... business logic
+        Ok(result)
+    })
 }
 ```
+
+`with_unlocked_db` acquires the DB lock and checks that the journal is unlocked, returning canonical error strings (`"Journal state lock failed"` / `"Journal must be unlocked"`). Use it for any command that only needs the DB connection. For commands that also access other `DiaryState` fields (e.g. `app_data_dir`, `db_path`) alongside the DB lock, open-code the preamble to avoid restructuring the borrow.
 
 All commands return `Result<T, String>`. Register in both `commands/mod.rs` and `generate_handler![]` in `lib.rs`.
 
@@ -82,7 +94,7 @@ All commands return `Result<T, String>`. Register in both `commands/mod.rs` and 
 ### Error Handling
 
 - `Result<T, String>` — map errors with `.map_err(|e| format!(...))`.
-- All commands that access entries must check `db_state.as_ref().ok_or("Diary not unlocked")?`
+- All commands that access entries must ensure the journal is unlocked. Use `with_unlocked_db` (canonical error strings: `"Journal state lock failed"` and `"Journal must be unlocked"`) wherever the command only needs the DB handle. Canonical strings are matched by `mapTauriError` on the frontend.
 
 ### Menu Event Pattern — Backend
 

@@ -20,7 +20,7 @@ Load when work touches any of:
 - Auth: `src-tauri/src/auth/{mod,password,keypair,auto_key}.rs`, `src-tauri/src/commands/auth/`
 - IPC contract: `src/lib/tauri.ts`, `src/lib/errors.ts`, any new `#[tauri::command]`
 - Auto-lock paths: `src/App.tsx` idle timer, `src-tauri/src/screen_lock.rs`
-- DB schema / migrations: `src-tauri/src/db/schema.rs` (anywhere `SCHEMA_VERSION` appears)
+- DB schema / migrations: `src-tauri/src/db/schema/mod.rs` (`SCHEMA_VERSION` at line 32), `src-tauri/src/db/schema/migrations/`
 - Backups & rotation: `src-tauri/src/backup.rs`
 - Journal config: `src-tauri/src/config.rs` (`JournalConfig`, `auto_key`, `require_all_auth`)
 - Import / export: `src-tauri/src/commands/import.rs`, `commands/export.rs`, `import/*.rs`, `export/*.rs`
@@ -91,15 +91,15 @@ Compact form of `SECURITY.md:30-43`. This is the "what can I honestly promise?" 
 | Wrapped-key blob (keypair) | `[eph_pub(32) ‖ nonce(12) ‖ ciphertext(32) ‖ tag(16)] = 92 bytes` for a 32-byte master key | `src-tauri/src/auth/keypair.rs:12-14` | Existing keypair slots unparseable |
 | `SecretBytes` | `#[derive(ZeroizeOnDrop)]`; Debug shows `SecretBytes([REDACTED; N])` | `src-tauri/src/auth/mod.rs:5-44` | Keys linger in heap; `Debug` would leak bytes |
 | `Key` struct | `#[derive(Zeroize, ZeroizeOnDrop)]`; Debug shows `[REDACTED]` | `src-tauri/src/crypto/cipher.rs:14-22` | Same leak class |
-| Master-key generation | 32 random bytes from `aes_gcm::aead::OsRng.fill_bytes`, raw bytes zeroized after wrap | `src-tauri/src/db/schema.rs:40-66` | Predictable / reused master key would be catastrophic |
-| Schema version | `pub const SCHEMA_VERSION: i32 = 7;` | `src-tauri/src/db/schema.rs:29` | Bump on every breaking schema change |
+| Master-key generation | 32 random bytes from `aes_gcm::aead::OsRng.fill_bytes`, raw bytes zeroized after wrap | `src-tauri/src/db/schema/create.rs` | Predictable / reused master key would be catastrophic |
+| Schema version | `pub const SCHEMA_VERSION: i32 = 7;` | `src-tauri/src/db/schema/mod.rs:32` | Bump on every breaking schema change |
 | Max import file size | 100 MB (`MAX_IMPORT_FILE_SIZE`) | `src-tauri/src/commands/import.rs:5` | Too high → memory DoS; too low → legitimate imports fail |
 | Max text file read | 1 MiB (`MAX_TEXT_FILE_BYTES`) | `src-tauri/src/commands/files.rs:19` | Same DoS class |
 | Max backups retained | 30 (`MAX_BACKUPS`) | `src-tauri/src/backup.rs:6` | Affects rotation; not a crypto invariant but a disk-use guarantee |
 
 **Rule for any change to a row in this table:**
 
-1. Schema migration with `SCHEMA_VERSION` bump in `db/schema.rs`.
+1. Schema migration with `SCHEMA_VERSION` bump in `db/schema/mod.rs`.
 2. Explicit `### Security` section in the next CHANGELOG entry, plus user-facing notes.
 3. `SECURITY.md` update if the threat model shifts.
 4. Stop and confirm with the user before silently "upgrading" parameters.
@@ -108,7 +108,7 @@ Compact form of `SECURITY.md:30-43`. This is the "what can I honestly promise?" 
 
 ## 5. Auth architecture
 
-A random **256-bit master key** is generated at journal creation (`db/schema.rs:40-66`). It encrypts every entry field with AES-256-GCM. The master key itself is **never** stored in plaintext — it is wrapped per registered auth slot in the `auth_slots` table (schema v3+). See `SECURITY.md:47-69`.
+A random **256-bit master key** is generated at journal creation (`db/schema/create.rs`). It encrypts every entry field with AES-256-GCM. The master key itself is **never** stored in plaintext — it is wrapped per registered auth slot in the `auth_slots` table (schema v3+). See `SECURITY.md:47-69`.
 
 Three wrap methods exist:
 
@@ -215,12 +215,12 @@ FTS was removed in v0.2.0 (schema v4) because the plaintext `entries_fts` table 
 | TS wrapper | `src/lib/tauri.ts` | `SearchResult` interface + `searchEntries(query)` |
 | State | `src/state/search.ts` | `searchQuery`, `searchResults`, `isSearching` signals |
 | UI (not rendered) | `src/components/search/SearchBar.tsx`, `SearchResults.tsx` | Reserved input + results list |
-| Reindex anchors | `// Search index hook:` comments in `src-tauri/src/db/queries.rs` (insert/update/delete) and `src-tauri/src/commands/import.rs` (bulk) | Where a future search module plugs in |
+| Reindex anchors | `// Search index hook:` comments in `src-tauri/src/db/queries/entries.rs` (insert/update/delete) and `src-tauri/src/commands/import.rs` (bulk) | Where a future search module plugs in |
 
 **Constraints for any future implementation (non-negotiable):**
 
 1. **No plaintext on disk.** Encrypted index, or in-memory rebuilt at unlock, or SQLCipher-style encrypted FTS. Do not reintroduce a plaintext FTS5 table.
-2. **Schema migration required.** Bump `SCHEMA_VERSION` in `db/schema.rs:29` and add a migration step.
+2. **Schema migration required.** Bump `SCHEMA_VERSION` in `db/schema/mod.rs:32` and add a migration step.
 3. **All reindex hooks wired.** Every `// Search index hook:` site must call into the new module.
 4. **UI placement is undecided.** Wire `SearchBar`/`SearchResults` into `Sidebar.tsx` or a new component; do not assume the old layout. See `src-tauri/CLAUDE.md` "Implementing Search" for the design constraints.
 
@@ -307,12 +307,8 @@ window-state:default
   let db = db_state.as_ref().ok_or("Diary not unlocked")?;
   ```
   (This exact string — or one matched by `errors.ts:23` `journal (must be|is not) unlocked` — so `mapTauriError` can route it to `errors.journalNotUnlocked`.)
-- **Mutex poisoning must not panic.** Commands must propagate a string error rather than letting a panic escape the Tauri boundary (a panic in a command aborts the process). Pattern:
-  ```rust
-  state.db.lock().map_err(|_| "State lock poisoned".to_string())?
-  ```
-  See `commands/debug.rs:53-54` for the canonical example. **Do not** use `state.db.lock().unwrap()` in a command — that converts a poisoned lock into a process abort.
-- **Schema migrations** (`db/schema.rs`) must be idempotent and wrapped in a transaction. Historical v3→v4 and v4→v5 followed this; new migrations must too. Bump `SCHEMA_VERSION` (`db/schema.rs:29`) and document the migration step inline.
+- **Mutex poisoning must not panic.** Commands must propagate a string error rather than letting a panic escape the Tauri boundary (a panic in a command aborts the process). For DB-only commands, use `with_unlocked_db` (canonical errors: `"Journal state lock failed"` / `"Journal must be unlocked"`). For commands that must open-code the preamble, use `.map_err(|_| "Journal state lock failed".to_string())`. **Do not** use `.unwrap()` on a Mutex — that converts a poisoned lock into a process abort.
+- **Schema migrations** (`db/schema/migrations/`) must be idempotent and wrapped in a transaction. Historical v3→v4 and v4→v5 followed this; new migrations must too. Bump `SCHEMA_VERSION` (`db/schema/mod.rs:32`) and document the migration step inline.
 - New commands must be registered in **two** places: `src-tauri/src/commands/mod.rs` (module) and `lib.rs` `generate_handler![]`. Missing either causes silent failure or compile error. Add the typed wrapper in `src/lib/tauri.ts`. See `src-tauri/CLAUDE.md` "Adding a New Tauri Command".
 - `unsafe` blocks outside crypto crates appear in four places: `screen_lock.rs` (Win32 subclass / WTS APIs), the two Rhai wrapper `Send + Sync` impls in `rhai_loader.rs:149-174`, and the two network-isolation platform handlers in `lib.rs` — `install_webresource_requested_handler` (Windows COM, `lib.rs:373+`) and `install_content_rule_list` (macOS ObjC2, `lib.rs:448+`). Each `unsafe` block has a `// SAFETY:` comment justifying it. **Any new `unsafe` block elsewhere requires explicit security review and a `SAFETY:` block matching that pattern.**
 
