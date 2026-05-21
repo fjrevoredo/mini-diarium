@@ -4,10 +4,13 @@
 
 ## Supported Versions
 
+Only the latest release is actively supported with security fixes.
+
 | Version | Supported |
 | ------- | --------- |
-| 0.3.x   | Yes       |
-| 0.2.x   | No        |
+| 0.5.x   | Yes       |
+| 0.4.x   | No        |
+| < 0.4   | No        |
 
 ## Reporting Vulnerabilities
 

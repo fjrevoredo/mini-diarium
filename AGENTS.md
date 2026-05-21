@@ -113,7 +113,7 @@ Notes:
 
 ## Command Registry
 
-There are **54 registered Tauri commands** in `src-tauri/src/lib.rs`. Rust command names use `snake_case`; frontend wrappers in `src/lib/tauri.ts` use `camelCase`.
+All registered Tauri commands are in `src-tauri/src/lib.rs` (`generate_handler![]`). Rust command names use `snake_case`; frontend wrappers in `src/lib/tauri.ts` use `camelCase`. For the full annotated list, see the root `CLAUDE.md` Command Registry table.
 
 Current categories:
 
@@ -125,7 +125,8 @@ Current categories:
 - Stats: aggregate statistics
 - Import/Export: built-in formats plus plugin-based execution
 - Plugin: list and run import/export plugins
-- Debug/Menu: `generate_debug_dump`, `update_menu_locale`
+- Debug/Menu/Fonts: `generate_debug_dump`, `update_menu_locale`, font loading
+- Tags: tag CRUD and entry-tag associations
 
 Use the repo as source of truth:
 

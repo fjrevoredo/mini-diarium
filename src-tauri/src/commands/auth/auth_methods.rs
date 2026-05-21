@@ -455,27 +455,10 @@ mod tests {
         cleanup(&db_path, &backups_dir);
     }
 
-    #[test]
-    fn test_remove_auth_method_last_slot_guard() {
-        let (_, db_path, _backups_dir) = make_state("last_slot_guard");
-
-        let db = create_database(&db_path, "password".to_string()).unwrap();
-
-        // Only 1 slot exists: cannot remove it
-        let count = crate::db::queries::count_auth_slots(&db).unwrap();
-        assert_eq!(count, 1);
-
-        let (slot_id, _) = crate::db::queries::get_password_slot(&db).unwrap().unwrap();
-
-        // Simulate remove_auth_method logic
-        if count <= 1 {
-            // Correctly blocked removal of last method — nothing to do
-        } else {
-            crate::db::queries::delete_auth_slot(&db, slot_id).unwrap();
-        }
-
-        cleanup(&db_path, &_backups_dir);
-    }
+    // TODO(M6): add a real production-path test for the remove_auth_method last-slot guard
+    // via the command test harness once Task 6.1 (Tauri command integration harness) is done.
+    // The old test_remove_auth_method_last_slot_guard only simulated the guard inline rather
+    // than calling the real command — removed in Task 1.3.
 
     #[test]
     fn test_list_auth_methods() {

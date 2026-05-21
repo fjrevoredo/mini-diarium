@@ -33,7 +33,6 @@ export default function EditorPanel() {
   const [title, setTitle] = createSignal('');
   const [content, setContent] = createSignal('');
   const [wordCount, setWordCount] = createSignal(0);
-  const [_isLoadingEntry, setIsLoadingEntry] = createSignal(false);
   const [editorInstance, setEditorInstance] = createSignal<Editor | null>(null);
 
   // Multi-entry state (shared between lifecycle + nav hooks).
@@ -62,7 +61,6 @@ export default function EditorPanel() {
     setPendingEntryId,
     isCreatingEntry,
     setIsCreatingEntry,
-    setIsLoadingEntry,
     emptyCheck,
   });
 

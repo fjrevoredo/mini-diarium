@@ -27,7 +27,6 @@ export interface UseEntryLifecycleOptions {
   setPendingEntryId: Setter<number | null>;
   isCreatingEntry: Accessor<boolean>;
   setIsCreatingEntry: Setter<boolean>;
-  setIsLoadingEntry: Setter<boolean>;
   emptyCheck: EditorEmptyCheckHook;
 }
 
@@ -127,7 +126,6 @@ export function useEntryLifecycle(opts: UseEntryLifecycleOptions): EntryLifecycl
 
   const loadEntriesForDate = async (date: string) => {
     const requestId = ++loadRequestId;
-    opts.setIsLoadingEntry(true);
 
     // Flush any pending save for the current entry before switching dates. ALL signal reads
     // here must go through untrack(): this block runs synchronously before the first await,
@@ -171,10 +169,6 @@ export function useEntryLifecycle(opts: UseEntryLifecycleOptions): EntryLifecycl
       }
     } catch (error) {
       log.error('Failed to load entries:', error);
-    } finally {
-      if (!isDisposed && requestId === loadRequestId) {
-        opts.setIsLoadingEntry(false);
-      }
     }
   };
 

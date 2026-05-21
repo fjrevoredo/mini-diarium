@@ -2,6 +2,38 @@ use crate::crypto::cipher;
 use crate::db::schema::DatabaseConnection;
 use rusqlite::params;
 
+// Shared column projection for all entry queries.
+const ENTRY_SELECT: &str =
+    "SELECT id, date, title_encrypted, text_encrypted, word_count, date_created, date_updated \
+     FROM entries";
+
+type EntryRow = (i64, String, Vec<u8>, Vec<u8>, i32, String, String);
+
+fn encrypt_for_storage(key: &cipher::Key, plaintext: &[u8], label: &str) -> Result<Vec<u8>, String> {
+    cipher::encrypt(key, plaintext).map_err(|e| format!("Failed to encrypt {}: {}", label, e))
+}
+
+fn decrypt_utf8(key: &cipher::Key, ciphertext: &[u8], label: &str) -> Result<String, String> {
+    let bytes = cipher::decrypt(key, ciphertext)
+        .map_err(|e| format!("Failed to decrypt {}: {}", label, e))?;
+    String::from_utf8(bytes).map_err(|e| format!("Invalid UTF-8 in {}: {}", label, e))
+}
+
+fn row_to_entry(db: &DatabaseConnection, row: EntryRow) -> Result<DiaryEntry, String> {
+    let (id, date, title_enc, text_enc, word_count, date_created, date_updated) = row;
+    let title = decrypt_utf8(db.key(), &title_enc, "title")?;
+    let text = decrypt_utf8(db.key(), &text_enc, "text")?;
+    Ok(DiaryEntry {
+        id,
+        date,
+        title,
+        text,
+        word_count,
+        date_created,
+        date_updated,
+    })
+}
+
 /// Represents a diary entry
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct DiaryEntry {
@@ -20,12 +52,8 @@ pub struct DiaryEntry {
 /// * `db` - Database connection with encryption key
 /// * `entry` - The diary entry to insert (id field is ignored; AUTOINCREMENT assigns it)
 pub fn insert_entry(db: &DatabaseConnection, entry: &DiaryEntry) -> Result<(), String> {
-    // Encrypt title and text
-    let title_encrypted = cipher::encrypt(db.key(), entry.title.as_bytes())
-        .map_err(|e| format!("Failed to encrypt title: {}", e))?;
-
-    let text_encrypted = cipher::encrypt(db.key(), entry.text.as_bytes())
-        .map_err(|e| format!("Failed to encrypt text: {}", e))?;
+    let title_encrypted = encrypt_for_storage(db.key(), entry.title.as_bytes(), "title")?;
+    let text_encrypted = encrypt_for_storage(db.key(), entry.text.as_bytes(), "text")?;
 
     // Insert into database (id is handled by AUTOINCREMENT)
     db.conn()
@@ -59,61 +87,29 @@ pub fn insert_entry(db: &DatabaseConnection, entry: &DiaryEntry) -> Result<(), S
 pub fn get_entries_by_date(db: &DatabaseConnection, date: &str) -> Result<Vec<DiaryEntry>, String> {
     let mut stmt = db
         .conn()
-        .prepare(
-            "SELECT id, date, title_encrypted, text_encrypted, word_count, date_created, date_updated
-             FROM entries WHERE date = ?1 ORDER BY id DESC",
-        )
+        .prepare(&format!(
+            "{} WHERE date = ?1 ORDER BY id DESC",
+            ENTRY_SELECT
+        ))
         .map_err(|e| format!("Failed to prepare statement: {}", e))?;
 
-    let rows = stmt
+    let raw: Vec<EntryRow> = stmt
         .query_map(params![date], |row| {
-            let id: i64 = row.get(0)?;
-            let date: String = row.get(1)?;
-            let title_encrypted: Vec<u8> = row.get(2)?;
-            let text_encrypted: Vec<u8> = row.get(3)?;
-            let word_count: i32 = row.get(4)?;
-            let date_created: String = row.get(5)?;
-            let date_updated: String = row.get(6)?;
-
             Ok((
-                id,
-                date,
-                title_encrypted,
-                text_encrypted,
-                word_count,
-                date_created,
-                date_updated,
+                row.get::<_, i64>(0)?,
+                row.get::<_, String>(1)?,
+                row.get::<_, Vec<u8>>(2)?,
+                row.get::<_, Vec<u8>>(3)?,
+                row.get::<_, i32>(4)?,
+                row.get::<_, String>(5)?,
+                row.get::<_, String>(6)?,
             ))
         })
-        .map_err(|e| format!("Failed to query entries: {}", e))?;
+        .map_err(|e| format!("Failed to query entries: {}", e))?
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| format!("Failed to read row: {}", e))?;
 
-    let mut entries = Vec::new();
-    for row_result in rows {
-        let (id, date, title_enc, text_enc, word_count, date_created, date_updated) =
-            row_result.map_err(|e| format!("Failed to read row: {}", e))?;
-
-        let title_bytes = cipher::decrypt(db.key(), &title_enc)
-            .map_err(|e| format!("Failed to decrypt title: {}", e))?;
-        let text_bytes = cipher::decrypt(db.key(), &text_enc)
-            .map_err(|e| format!("Failed to decrypt text: {}", e))?;
-
-        let title =
-            String::from_utf8(title_bytes).map_err(|e| format!("Invalid UTF-8 in title: {}", e))?;
-        let text =
-            String::from_utf8(text_bytes).map_err(|e| format!("Invalid UTF-8 in text: {}", e))?;
-
-        entries.push(DiaryEntry {
-            id,
-            date,
-            title,
-            text,
-            word_count,
-            date_created,
-            date_updated,
-        });
-    }
-
-    Ok(entries)
+    raw.into_iter().map(|row| row_to_entry(db, row)).collect()
 }
 
 /// Retrieves a single entry by its id
@@ -126,8 +122,7 @@ pub fn get_entries_by_date(db: &DatabaseConnection, date: &str) -> Result<Vec<Di
 /// `Some(DiaryEntry)` if found, `None` otherwise
 pub fn get_entry_by_id(db: &DatabaseConnection, id: i64) -> Result<Option<DiaryEntry>, String> {
     let result = db.conn().query_row(
-        "SELECT id, date, title_encrypted, text_encrypted, word_count, date_created, date_updated
-         FROM entries WHERE id = ?1",
+        &format!("{} WHERE id = ?1", ENTRY_SELECT),
         params![id],
         |row| {
             Ok((
@@ -143,27 +138,7 @@ pub fn get_entry_by_id(db: &DatabaseConnection, id: i64) -> Result<Option<DiaryE
     );
 
     match result {
-        Ok((id, date, title_enc, text_enc, word_count, date_created, date_updated)) => {
-            let title_bytes = cipher::decrypt(db.key(), &title_enc)
-                .map_err(|e| format!("Failed to decrypt title: {}", e))?;
-            let text_bytes = cipher::decrypt(db.key(), &text_enc)
-                .map_err(|e| format!("Failed to decrypt text: {}", e))?;
-
-            let title = String::from_utf8(title_bytes)
-                .map_err(|e| format!("Invalid UTF-8 in title: {}", e))?;
-            let text = String::from_utf8(text_bytes)
-                .map_err(|e| format!("Invalid UTF-8 in text: {}", e))?;
-
-            Ok(Some(DiaryEntry {
-                id,
-                date,
-                title,
-                text,
-                word_count,
-                date_created,
-                date_updated,
-            }))
-        }
+        Ok(row) => Ok(Some(row_to_entry(db, row)?)),
         Err(rusqlite::Error::QueryReturnedNoRows) => Ok(None),
         Err(e) => Err(format!("Database error: {}", e)),
     }
@@ -175,12 +150,8 @@ pub fn get_entry_by_id(db: &DatabaseConnection, id: i64) -> Result<Option<DiaryE
 /// * `db` - Database connection with encryption key
 /// * `entry` - The diary entry with updated data (id field identifies which entry to update)
 pub fn update_entry(db: &DatabaseConnection, entry: &DiaryEntry) -> Result<(), String> {
-    // Encrypt title and text
-    let title_encrypted = cipher::encrypt(db.key(), entry.title.as_bytes())
-        .map_err(|e| format!("Failed to encrypt title: {}", e))?;
-
-    let text_encrypted = cipher::encrypt(db.key(), entry.text.as_bytes())
-        .map_err(|e| format!("Failed to encrypt text: {}", e))?;
+    let title_encrypted = encrypt_for_storage(db.key(), entry.title.as_bytes(), "title")?;
+    let text_encrypted = encrypt_for_storage(db.key(), entry.text.as_bytes(), "text")?;
 
     // Update in database using id
     let rows_affected = db
@@ -259,13 +230,10 @@ pub fn get_all_entry_dates(db: &DatabaseConnection) -> Result<Vec<String>, Strin
 pub fn get_all_entries(db: &DatabaseConnection) -> Result<Vec<DiaryEntry>, String> {
     let mut stmt = db
         .conn()
-        .prepare(
-            "SELECT id, date, title_encrypted, text_encrypted, word_count, date_created, date_updated \
-             FROM entries ORDER BY date ASC, id ASC",
-        )
+        .prepare(&format!("{} ORDER BY date ASC, id ASC", ENTRY_SELECT))
         .map_err(|e| format!("Failed to prepare query: {}", e))?;
 
-    let entries = stmt
+    let raw: Vec<EntryRow> = stmt
         .query_map([], |row| {
             Ok((
                 row.get::<_, i64>(0)?,
@@ -278,29 +246,10 @@ pub fn get_all_entries(db: &DatabaseConnection) -> Result<Vec<DiaryEntry>, Strin
             ))
         })
         .map_err(|e| format!("Failed to query entries: {}", e))?
-        .filter_map(|r| r.ok())
-        .map(
-            |(id, date, title_enc, text_enc, word_count, date_created, date_updated)| {
-                let title = cipher::decrypt(db.key(), &title_enc)
-                    .map(|b| String::from_utf8(b).unwrap_or_default())
-                    .unwrap_or_default();
-                let text = cipher::decrypt(db.key(), &text_enc)
-                    .map(|b| String::from_utf8(b).unwrap_or_default())
-                    .unwrap_or_default();
-                DiaryEntry {
-                    id,
-                    date,
-                    title,
-                    text,
-                    word_count,
-                    date_created,
-                    date_updated,
-                }
-            },
-        )
-        .collect();
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| format!("Failed to read row: {}", e))?;
 
-    Ok(entries)
+    raw.into_iter().map(|row| row_to_entry(db, row)).collect()
 }
 
 pub fn get_entries_in_range(
@@ -308,10 +257,7 @@ pub fn get_entries_in_range(
     date_from: Option<&str>,
     date_to: Option<&str>,
 ) -> Result<Vec<DiaryEntry>, String> {
-    let mut sql = String::from(
-        "SELECT id, date, title_encrypted, text_encrypted, word_count, date_created, date_updated \
-         FROM entries",
-    );
+    let mut sql = String::from(ENTRY_SELECT);
     let mut param_values: Vec<String> = Vec::new();
     let mut has_where = false;
 
@@ -341,7 +287,7 @@ pub fn get_entries_in_range(
         .prepare(&sql)
         .map_err(|e| format!("Failed to prepare query: {}", e))?;
 
-    let entries = stmt
+    let raw: Vec<EntryRow> = stmt
         .query_map(params_refs.as_slice(), |row| {
             Ok((
                 row.get::<_, i64>(0)?,
@@ -354,29 +300,10 @@ pub fn get_entries_in_range(
             ))
         })
         .map_err(|e| format!("Failed to query entries: {}", e))?
-        .filter_map(|r| r.ok())
-        .map(
-            |(id, date, title_enc, text_enc, word_count, date_created, date_updated)| {
-                let title = cipher::decrypt(db.key(), &title_enc)
-                    .map(|b| String::from_utf8(b).unwrap_or_default())
-                    .unwrap_or_default();
-                let text = cipher::decrypt(db.key(), &text_enc)
-                    .map(|b| String::from_utf8(b).unwrap_or_default())
-                    .unwrap_or_default();
-                DiaryEntry {
-                    id,
-                    date,
-                    title,
-                    text,
-                    word_count,
-                    date_created,
-                    date_updated,
-                }
-            },
-        )
-        .collect();
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| format!("Failed to read row: {}", e))?;
 
-    Ok(entries)
+    raw.into_iter().map(|row| row_to_entry(db, row)).collect()
 }
 
 /// Counts words in text, skipping HTML tag content.
@@ -427,8 +354,7 @@ pub struct Tag {
 /// Creates a tag (or returns the existing one if the normalized name already exists).
 pub fn create_tag(db: &DatabaseConnection, name: &str) -> Result<Tag, String> {
     let fingerprint = cipher::tag_name_fingerprint(db.key(), name);
-    let name_encrypted = cipher::encrypt(db.key(), name.trim().as_bytes())
-        .map_err(|e| format!("Failed to encrypt tag name: {}", e))?;
+    let name_encrypted = encrypt_for_storage(db.key(), name.trim().as_bytes(), "tag name")?;
     let now = chrono::Utc::now().to_rfc3339();
 
     db.conn()
@@ -448,9 +374,7 @@ pub fn create_tag(db: &DatabaseConnection, name: &str) -> Result<Tag, String> {
         )
         .map_err(|e| format!("Failed to retrieve tag: {}", e))?;
 
-    let name_bytes = cipher::decrypt(db.key(), &enc)
-        .map_err(|e| format!("Failed to decrypt tag name: {}", e))?;
-    let name = String::from_utf8(name_bytes).map_err(|e| format!("Invalid UTF-8 in tag: {}", e))?;
+    let name = decrypt_utf8(db.key(), &enc, "tag name")?;
 
     Ok(Tag {
         id,
@@ -466,7 +390,7 @@ pub fn get_all_tags(db: &DatabaseConnection) -> Result<Vec<Tag>, String> {
         .prepare("SELECT id, name_encrypted, created_at FROM tags")
         .map_err(|e| format!("Failed to prepare tags query: {}", e))?;
 
-    let rows = stmt
+    let raw: Vec<(i64, Vec<u8>, String)> = stmt
         .query_map([], |row| {
             Ok((
                 row.get::<_, i64>(0)?,
@@ -474,20 +398,17 @@ pub fn get_all_tags(db: &DatabaseConnection) -> Result<Vec<Tag>, String> {
                 row.get::<_, String>(2)?,
             ))
         })
-        .map_err(|e| format!("Failed to query tags: {}", e))?;
+        .map_err(|e| format!("Failed to query tags: {}", e))?
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| format!("Failed to read tag row: {}", e))?;
 
-    let mut tags: Vec<Tag> = rows
-        .filter_map(|r| r.ok())
-        .filter_map(|(id, enc, created_at)| {
-            let bytes = cipher::decrypt(db.key(), &enc).ok()?;
-            let name = String::from_utf8(bytes).ok()?;
-            Some(Tag {
-                id,
-                name,
-                created_at,
-            })
+    let mut tags: Vec<Tag> = raw
+        .into_iter()
+        .map(|(id, enc, created_at)| {
+            let name = decrypt_utf8(db.key(), &enc, "tag name")?;
+            Ok(Tag { id, name, created_at })
         })
-        .collect();
+        .collect::<Result<Vec<_>, String>>()?;
 
     tags.sort_by_key(|a| a.name.to_lowercase());
     Ok(tags)
@@ -496,8 +417,7 @@ pub fn get_all_tags(db: &DatabaseConnection) -> Result<Vec<Tag>, String> {
 /// Renames a tag by id. Errors if the new name already exists.
 pub fn rename_tag(db: &DatabaseConnection, id: i64, new_name: &str) -> Result<(), String> {
     let fingerprint = cipher::tag_name_fingerprint(db.key(), new_name);
-    let name_encrypted = cipher::encrypt(db.key(), new_name.trim().as_bytes())
-        .map_err(|e| format!("Failed to encrypt tag name: {}", e))?;
+    let name_encrypted = encrypt_for_storage(db.key(), new_name.trim().as_bytes(), "tag name")?;
 
     let rows = db
         .conn()
@@ -559,7 +479,7 @@ pub fn get_tags_for_entry(db: &DatabaseConnection, entry_id: i64) -> Result<Vec<
         )
         .map_err(|e| format!("Failed to prepare tags-for-entry query: {}", e))?;
 
-    let rows = stmt
+    let raw: Vec<(i64, Vec<u8>, String)> = stmt
         .query_map(params![entry_id], |row| {
             Ok((
                 row.get::<_, i64>(0)?,
@@ -567,20 +487,17 @@ pub fn get_tags_for_entry(db: &DatabaseConnection, entry_id: i64) -> Result<Vec<
                 row.get::<_, String>(2)?,
             ))
         })
-        .map_err(|e| format!("Failed to query tags for entry: {}", e))?;
+        .map_err(|e| format!("Failed to query tags for entry: {}", e))?
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| format!("Failed to read tag row: {}", e))?;
 
-    let mut tags: Vec<Tag> = rows
-        .filter_map(|r| r.ok())
-        .filter_map(|(id, enc, created_at)| {
-            let bytes = cipher::decrypt(db.key(), &enc).ok()?;
-            let name = String::from_utf8(bytes).ok()?;
-            Some(Tag {
-                id,
-                name,
-                created_at,
-            })
+    let mut tags: Vec<Tag> = raw
+        .into_iter()
+        .map(|(id, enc, created_at)| {
+            let name = decrypt_utf8(db.key(), &enc, "tag name")?;
+            Ok(Tag { id, name, created_at })
         })
-        .collect();
+        .collect::<Result<Vec<_>, String>>()?;
 
     tags.sort_by_key(|a| a.name.to_lowercase());
     Ok(tags)
@@ -1574,6 +1491,44 @@ mod tests {
         assert!(
             tags2.is_empty(),
             "entry_tags must be removed via CASCADE when tag is deleted"
+        );
+    }
+
+    #[test]
+    fn test_get_all_entries_corrupted_title_returns_error() {
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "pw".to_string()).unwrap();
+
+        insert_entry(
+            &db,
+            &DiaryEntry {
+                id: 0,
+                date: "2024-01-01".into(),
+                title: "Test".into(),
+                text: "<p>Content</p>".into(),
+                word_count: 1,
+                date_created: "2024-01-01T00:00:00Z".into(),
+                date_updated: "2024-01-01T00:00:00Z".into(),
+            },
+        )
+        .unwrap();
+
+        let id = db.conn().last_insert_rowid();
+
+        // Corrupt the title_encrypted blob with garbage that won't decrypt
+        db.conn()
+            .execute(
+                "UPDATE entries SET title_encrypted = x'deadbeef01020304' WHERE id = ?1",
+                rusqlite::params![id],
+            )
+            .unwrap();
+
+        // get_all_entries must propagate the decrypt error, not silently return empty title
+        let result = get_all_entries(&db);
+        assert!(
+            result.is_err(),
+            "Expected Err when title_encrypted is corrupted, got Ok with entries: {:?}",
+            result.ok()
         );
     }
 

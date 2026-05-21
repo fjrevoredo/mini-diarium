@@ -255,43 +255,8 @@ mod tests {
         let _ = fs::remove_dir_all(&cfg_dir);
     }
 
-    #[test]
-    fn test_change_diary_directory_blocked_when_unlocked() {
-        // The guard in change_diary_directory checks db.lock().is_some().
-        // We test the guard logic inline (can't construct DatabaseConnection in a unit test).
-        let is_unlocked = true;
-        let guard_result: Result<(), String> = if is_unlocked {
-            Err("Journal must be locked before changing its storage location.".to_string())
-        } else {
-            Ok(())
-        };
-        assert!(guard_result.is_err());
-        assert!(guard_result.unwrap_err().contains("must be locked"));
-
-        // And confirm that when locked (is_some() == false) the inner logic proceeds.
-        let dst_dir = PathBuf::from("test_chdir_blocked_dst");
-        fs::create_dir_all(&dst_dir).unwrap();
-        let cfg_dir = PathBuf::from("test_chdir_blocked_cfg");
-        fs::create_dir_all(&cfg_dir).unwrap();
-
-        let db_path_mutex = Mutex::new(PathBuf::from("test_chdir_blocked_nonexistent/diary.db"));
-        let backups_mutex = Mutex::new(PathBuf::from("test_chdir_blocked_nonexistent/backups"));
-
-        let dst_abs = fs::canonicalize(&dst_dir).unwrap();
-        let result = change_diary_directory_inner(
-            dst_abs,
-            PathBuf::from("test_chdir_blocked_nonexistent/diary.db"),
-            "diary.db",
-            &db_path_mutex,
-            &backups_mutex,
-            &cfg_dir,
-        );
-        assert!(
-            result.is_ok(),
-            "Locked state (None db) should allow directory change"
-        );
-
-        let _ = fs::remove_dir_all(&dst_dir);
-        let _ = fs::remove_dir_all(&cfg_dir);
-    }
+    // TODO(M6): add a real production-path test for change_diary_directory auto-lock behavior
+    // via the command test harness once Task 6.1 (Tauri command integration harness) is done.
+    // The old test_change_diary_directory_blocked_when_unlocked only checked an inline boolean,
+    // not the actual db.lock().is_some() guard in the command — removed in Task 1.3.
 }

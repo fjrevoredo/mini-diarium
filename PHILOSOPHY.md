@@ -228,14 +228,14 @@ Both `ImportOverlay.tsx` and `ExportOverlay.tsx` are wired to the plugin registr
 
 ### Principle 3: Test Infrastructure
 
-**Current coverage** (as of v0.4.19):
+**Current coverage** (run the suite for current counts):
 
-| Layer | Count | How to run |
-|---|---|---|
-| Backend unit + integration | 276 tests across 32 modules | `cd src-tauri && cargo test` |
-| Frontend unit | 229 tests across 22 files | `bun run test:run` |
-| E2E | 2 tests | `bun run test:e2e:local` |
-| Benchmarks | 9 scenarios (Rust + frontend) | `cd src-tauri && cargo bench` / `bun run bench` |
+| Layer | How to run |
+|---|---|
+| Backend unit + integration | `cd src-tauri && cargo test` |
+| Frontend unit | `bun run test:run` |
+| E2E | `bun run test:e2e:local` |
+| Benchmarks | `cd src-tauri && cargo bench` / `bun run bench` |
 
 **E2E stack**: WebdriverIO v9 + tauri-driver (official Tauri bridge) against the real compiled binary. Config: `wdio.conf.ts` (root). Specs: `e2e/specs/`. Test isolation: each run creates a fresh OS temp directory passed to the app via `MINI_DIARIUM_DATA_DIR`; `lib.rs` uses this as the diary path when set, with no effect on production builds. Run the full suite (build + run): `bun run test:e2e:local`. Run suite only (binary already built): `bun run test:e2e`.
 
@@ -248,20 +248,20 @@ Both `ImportOverlay.tsx` and `ExportOverlay.tsx` are wired to the plugin registr
 ### Principle 4: Data Portability in Practice
 
 **Import formats** (each in its own `src-tauri/src/import/` module):
-- Mini Diary JSON (`minidiary.rs`), 8 tests
-- Day One JSON (`dayone.rs`), 14 tests
-- Day One TXT (`dayone_txt.rs`), 16 tests
-- jrnl JSON (`jrnl.rs`), 12 tests
+- Mini Diary JSON (`minidiary.rs`)
+- Day One JSON (`dayone.rs`)
+- Day One TXT (`dayone_txt.rs`)
+- jrnl JSON (`jrnl.rs`)
 
 Imports preserve source entries as separate records. If imported data lands on a date that already has entries, Mini Diarium creates additional entries for that date rather than merging content heuristically.
 
 **Export formats** (each in `src-tauri/src/export/`):
-- JSON: structured export with entry IDs, 6 tests
-- Markdown: HTML-to-Markdown conversion for readable export, 38 tests
+- JSON: structured export with entry IDs
+- Markdown: HTML-to-Markdown conversion for readable export
 
 **Adding a new format** follows the Import Parser Pattern in `CLAUDE.md`: one `*.rs` parser module, one command in `commands/import.rs`, register in `lib.rs`, add wrapper in `src/lib/tauri.ts`. The UI (`ImportOverlay.tsx`) picks it up automatically via `listImportPlugins`; no UI change needed.
 
-**Schema**: documented inline in `src-tauri/src/db/schema.rs` with full migration history. Current version: v6. Entries use stable integer IDs and support multiple entries per day. AES-256-GCM with standard key derivation; decryptable with any standard crypto toolkit given the password.
+**Schema**: documented inline in `src-tauri/src/db/schema.rs` with full migration history. Current version: v7 (tags and entry_tags tables added). Entries use stable integer IDs and support multiple entries per day. AES-256-GCM with standard key derivation; decryptable with any standard crypto toolkit given the password.
 
 ---
 

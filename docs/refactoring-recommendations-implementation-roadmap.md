@@ -2,11 +2,11 @@
 
 ## Metadata
 
-- Plan Status: READY FOR APPROVAL
+- Plan Status: IN PROGRESS
 - Created: 2026-05-21
 - Last Updated: 2026-05-21
 - Owner: Coding agent
-- Approval: PENDING
+- Approval: APPROVED 2026-05-21
 - Source Report: `docs/refactoring-report-2026-05-21.md`
 
 ## Status Legend
@@ -52,13 +52,13 @@ Implement every recommendation from `docs/refactoring-report-2026-05-21.md` in a
 
 ### Milestone 1: Safe Documentation And Cleanup
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Purpose: Land unambiguous cleanup first so later refactors start from accurate docs and fewer misleading artifacts.
 - Exit Criteria: Stale docs are corrected, dead frontend state and empty backend directories are removed, misleading guard tests are gone or replaced with honest pending coverage, and the full local validation suite relevant to these changes passes.
 
 #### Task 1.1: Update Stale Documentation (P8)
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Objective: Remove or correct stale version, schema, test-count, and command-count claims in repository docs.
 - Steps:
   1. Update `PHILOSOPHY.md` to remove exact test totals and point readers to current test commands.
@@ -71,7 +71,7 @@ Implement every recommendation from `docs/refactoring-report-2026-05-21.md` in a
 
 #### Task 1.2: Remove Safe Dead Code And Empty Directories (P6 Items 1-2)
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Objective: Remove `_isLoadingEntry` plumbing and ghost backend directories without changing runtime behavior.
 - Steps:
   1. Remove `_isLoadingEntry` from `src/components/editor/EditorPanel.tsx`.
@@ -83,7 +83,7 @@ Implement every recommendation from `docs/refactoring-report-2026-05-21.md` in a
 
 #### Task 1.3: Remove Or Replace Misleading Guard Tests (P7)
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Objective: Eliminate tests that only test inline reimplementations of production guards.
 - Steps:
   1. Red: if a direct production-path replacement is feasible without P14, write that replacement test first and run the focused backend test to confirm it fails against the current misleading coverage gap.
@@ -96,13 +96,13 @@ Implement every recommendation from `docs/refactoring-report-2026-05-21.md` in a
 
 ### Milestone 2: Contained Backend Refactors
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Purpose: Deduplicate local logic in single-file areas before larger module splits.
 - Exit Criteria: Markdown export behavior is unchanged, entry row decoding is centralized, corrupt encrypted entry data surfaces as an error, and backend tests pass.
 
 #### Task 2.1: Deduplicate Markdown Export Walkers (P2)
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Objective: Replace duplicated markdown date grouping and entry-header rendering with one shared implementation.
 - Steps:
   1. Red/safety: before refactoring, identify one existing markdown test per export entry point and run the focused markdown test command as a baseline; if any duplicated behavior is not covered, add a characterization test first.
@@ -115,7 +115,7 @@ Implement every recommendation from `docs/refactoring-report-2026-05-21.md` in a
 
 #### Task 2.2: Centralize Diary Entry Row Decoding (P5)
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Objective: Use one row mapper for encrypted `DiaryEntry` rows and stop silently swallowing decrypt failures.
 - Steps:
   1. Red: add a regression test that corrupts `title_encrypted` and asserts `get_all_entries` returns an error instead of an empty title; run the focused test and confirm it fails against the current silent fallback.
@@ -128,7 +128,7 @@ Implement every recommendation from `docs/refactoring-report-2026-05-21.md` in a
 
 #### Task 2.3: Centralize Encrypted Row Storage Helpers (P18)
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Objective: Make entry and tag encryption/decryption storage format explicit through helper functions.
 - Steps:
   1. Red/safety: add or identify focused entry and tag storage tests that cover insert/update/create/rename encryption paths; run them before changing helpers.
@@ -141,7 +141,7 @@ Implement every recommendation from `docs/refactoring-report-2026-05-21.md` in a
 
 ### Milestone 3: Policy Documentation And Error Sanitization
 
-- Status: TO BE DONE
+- Status: IN PROGRESS
 - Purpose: Close the documented security-policy gap and finish the frontend raw-error sanitization contract before larger UI refactors.
 - Exit Criteria: Auto-key policy is documented in code and backend guide, confirmed raw-error UI paths use `mapTauriError`, and tests prove leaky strings are not displayed.
 

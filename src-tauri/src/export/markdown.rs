@@ -29,53 +29,7 @@ use base64::{engine::general_purpose, Engine as _};
 ///
 /// HTML content from TipTap is converted to Markdown.
 pub fn export_entries_to_markdown(entries: Vec<DiaryEntry>) -> String {
-    let mut output = String::from("# Mini Diarium\n");
-
-    // Group entries by date preserving order (entries should be ordered date ASC, id ASC)
-    // First, collect entries grouped by date to know how many per date
-    let mut date_groups: Vec<(&str, Vec<&DiaryEntry>)> = Vec::new();
-    for entry in &entries {
-        if let Some((last_date, group)) = date_groups.last_mut() {
-            if *last_date == entry.date.as_str() {
-                group.push(entry);
-                continue;
-            }
-        }
-        date_groups.push((entry.date.as_str(), vec![entry]));
-    }
-
-    for (date, group) in &date_groups {
-        output.push_str(&format!("\n## {}\n", date));
-        let multi = group.len() > 1;
-
-        for (i, entry) in group.iter().enumerate() {
-            if multi {
-                // Use title as sub-heading, or "Entry N" if title is empty
-                let heading = if entry.title.is_empty() {
-                    format!("Entry {}", i + 1)
-                } else {
-                    entry.title.clone()
-                };
-                output.push_str(&format!("### {}\n", heading));
-            } else if !entry.title.is_empty() {
-                output.push_str(&format!("**{}**\n", entry.title));
-            }
-
-            let text = html_to_markdown(&entry.text);
-            if !text.is_empty() {
-                output.push_str(&text);
-                if !text.ends_with('\n') {
-                    output.push('\n');
-                }
-            }
-
-            if multi && i + 1 < group.len() {
-                output.push('\n');
-            }
-        }
-    }
-
-    output
+    walk_date_groups(&entries, |entry| html_to_markdown(&entry.text))
 }
 
 // Replacement tables for `html_to_markdown`.
@@ -350,6 +304,56 @@ fn strip_remaining_tags(input: &str) -> String {
     result
 }
 
+// --- Shared walker ---
+
+fn group_entries_by_date(entries: &[DiaryEntry]) -> Vec<(&str, Vec<&DiaryEntry>)> {
+    let mut date_groups: Vec<(&str, Vec<&DiaryEntry>)> = Vec::new();
+    for entry in entries {
+        if let Some((last_date, group)) = date_groups.last_mut() {
+            if *last_date == entry.date.as_str() {
+                group.push(entry);
+                continue;
+            }
+        }
+        date_groups.push((entry.date.as_str(), vec![entry]));
+    }
+    date_groups
+}
+
+fn walk_date_groups<F>(entries: &[DiaryEntry], mut render_entry_text: F) -> String
+where
+    F: FnMut(&DiaryEntry) -> String,
+{
+    let mut output = String::from("# Mini Diarium\n");
+    for (date, group) in group_entries_by_date(entries) {
+        output.push_str(&format!("\n## {}\n", date));
+        let multi = group.len() > 1;
+        for (i, entry) in group.iter().enumerate() {
+            if multi {
+                let heading = if entry.title.is_empty() {
+                    format!("Entry {}", i + 1)
+                } else {
+                    entry.title.clone()
+                };
+                output.push_str(&format!("### {}\n", heading));
+            } else if !entry.title.is_empty() {
+                output.push_str(&format!("**{}**\n", entry.title));
+            }
+            let text = render_entry_text(entry);
+            if !text.is_empty() {
+                output.push_str(&text);
+                if !text.ends_with('\n') {
+                    output.push('\n');
+                }
+            }
+            if multi && i + 1 < group.len() {
+                output.push('\n');
+            }
+        }
+    }
+    output
+}
+
 // --- Image-aware export variants ---
 
 /// Exports diary entries to Markdown, extracting embedded base64 images to
@@ -361,56 +365,15 @@ fn strip_remaining_tags(input: &str) -> String {
 pub fn export_entries_to_markdown_with_assets(
     entries: Vec<DiaryEntry>,
 ) -> (String, Vec<(String, Vec<u8>)>) {
-    let mut output = String::from("# Mini Diarium\n");
     let mut all_assets: Vec<(String, Vec<u8>)> = Vec::new();
     let mut image_counter: usize = 0;
-
-    let mut date_groups: Vec<(&str, Vec<&DiaryEntry>)> = Vec::new();
-    for entry in &entries {
-        if let Some((last_date, group)) = date_groups.last_mut() {
-            if *last_date == entry.date.as_str() {
-                group.push(entry);
-                continue;
-            }
-        }
-        date_groups.push((entry.date.as_str(), vec![entry]));
-    }
-
-    for (date, group) in &date_groups {
-        output.push_str(&format!("\n## {}\n", date));
-        let multi = group.len() > 1;
-
-        for (i, entry) in group.iter().enumerate() {
-            if multi {
-                let heading = if entry.title.is_empty() {
-                    format!("Entry {}", i + 1)
-                } else {
-                    entry.title.clone()
-                };
-                output.push_str(&format!("### {}\n", heading));
-            } else if !entry.title.is_empty() {
-                output.push_str(&format!("**{}**\n", entry.title));
-            }
-
-            let (processed_html, entry_assets) =
-                extract_and_replace_with_assets(&entry.text, &mut image_counter);
-            all_assets.extend(entry_assets);
-
-            let text = html_to_markdown(&processed_html);
-            if !text.is_empty() {
-                output.push_str(&text);
-                if !text.ends_with('\n') {
-                    output.push('\n');
-                }
-            }
-
-            if multi && i + 1 < group.len() {
-                output.push('\n');
-            }
-        }
-    }
-
-    (output, all_assets)
+    let markdown = walk_date_groups(&entries, |entry| {
+        let (processed_html, entry_assets) =
+            extract_and_replace_with_assets(&entry.text, &mut image_counter);
+        all_assets.extend(entry_assets);
+        html_to_markdown(&processed_html)
+    });
+    (markdown, all_assets)
 }
 
 /// Exports diary entries to Markdown, embedding base64 images as inline data URIs.
@@ -420,52 +383,11 @@ pub fn export_entries_to_markdown_with_assets(
 /// embedded data URIs (e.g. Obsidian, VS Code preview). Produces a single file
 /// with no external assets.
 pub fn export_entries_to_markdown_inline(entries: Vec<DiaryEntry>) -> String {
-    let mut output = String::from("# Mini Diarium\n");
     let mut image_counter: usize = 0;
-
-    let mut date_groups: Vec<(&str, Vec<&DiaryEntry>)> = Vec::new();
-    for entry in &entries {
-        if let Some((last_date, group)) = date_groups.last_mut() {
-            if *last_date == entry.date.as_str() {
-                group.push(entry);
-                continue;
-            }
-        }
-        date_groups.push((entry.date.as_str(), vec![entry]));
-    }
-
-    for (date, group) in &date_groups {
-        output.push_str(&format!("\n## {}\n", date));
-        let multi = group.len() > 1;
-
-        for (i, entry) in group.iter().enumerate() {
-            if multi {
-                let heading = if entry.title.is_empty() {
-                    format!("Entry {}", i + 1)
-                } else {
-                    entry.title.clone()
-                };
-                output.push_str(&format!("### {}\n", heading));
-            } else if !entry.title.is_empty() {
-                output.push_str(&format!("**{}**\n", entry.title));
-            }
-
-            let processed_html = inline_replace_images(&entry.text, &mut image_counter);
-            let text = html_to_markdown(&processed_html);
-            if !text.is_empty() {
-                output.push_str(&text);
-                if !text.ends_with('\n') {
-                    output.push('\n');
-                }
-            }
-
-            if multi && i + 1 < group.len() {
-                output.push('\n');
-            }
-        }
-    }
-
-    output
+    walk_date_groups(&entries, |entry| {
+        let processed_html = inline_replace_images(&entry.text, &mut image_counter);
+        html_to_markdown(&processed_html)
+    })
 }
 
 // --- Private image processing helpers ---
