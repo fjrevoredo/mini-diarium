@@ -139,10 +139,13 @@ After publishing:
   ./scripts/website-release-urls.sh
   ```
 - [ ] In Google Search Console, inspect `https://mini-diarium.com/` and click "Request indexing"
-- [ ] Optionally ping IndexNow if you have a configured key
+- [ ] Optionally submit URLs to IndexNow (Bing, Yandex, Seznam, etc.)
   ```bash
-  INDEXNOW_KEY=your-key ./scripts/ping-indexnow.sh https://mini-diarium.com/
+  bun run website:submit-indexnow
+  # Or preview without sending:
+  bun run website:submit-indexnow:dry-run
   ```
+  Alternatively, trigger the `.github/workflows/indexnow.yml` workflow manually from the Actions tab.
 - [ ] Confirm production hosting still redirects `https://www.mini-diarium.com/` to `https://mini-diarium.com/`
 - [ ] Confirm Cloudflare is not injecting the invalid `Content-Signal` directive into `robots.txt`
 - [ ] Test installers on each platform (Windows, macOS, Linux)
@@ -153,7 +156,7 @@ After publishing:
 ### Search Discovery Notes
 
 - Search Console submission is still manual. Keep it in the release checklist for every public release.
-- `scripts/ping-indexnow.sh` is optional and only works if you have an IndexNow key provisioned for `mini-diarium.com`.
+- IndexNow submission is now automated: `bun run website:submit-indexnow` submits all sitemap URLs to participating search engines. The key file lives at `website/indexnow-key-*.txt` and is auto-discovered by the script. A GitHub Actions workflow (`.github/workflows/indexnow.yml`) is also available for manual triggering.
 - Production is served as static content on Coolify. Docker/nginx files in `website/` are local/dev parity references, not the production control plane.
 - Keep production cache rules aligned with the site assumptions:
   - static assets (`css`, `js`, `png`, `jpg`, `svg`, `ico`, `woff2`, `mp4`, `webm`) should be cached for 1 year with `immutable`

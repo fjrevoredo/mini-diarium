@@ -25,6 +25,8 @@
     "website:blog": "node scripts/generate-website-blog.mjs",
     "website:docs": "node scripts/generate-website-docs.mjs",
     "website:build-static": "node scripts/generate-website-blog.mjs && node scripts/generate-website-docs.mjs && node scripts/fingerprint-website-assets.mjs",
+    "website:submit-indexnow": "node scripts/submit-indexnow.mjs",
+    "website:submit-indexnow:dry-run": "node scripts/submit-indexnow.mjs --dry-run",
     "website:fingerprint": "node scripts/fingerprint-website-assets.mjs",
     "test:e2e": "node scripts/run-e2e.js clean",
     "test:e2e:stateful": "node scripts/run-e2e.js stateful",

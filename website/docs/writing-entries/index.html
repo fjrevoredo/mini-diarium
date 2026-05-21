@@ -235,7 +235,7 @@
       "@id": "https://mini-diarium.com/docs/writing-entries/#article",
       "headline": "Writing Entries",
       "description": "How to create, edit, format, and delete journal entries using the rich text editor.",
-      "dateModified": "2026-05-06T00:00:00Z",
+      "dateModified": "2026-05-14T00:00:00Z",
       "keywords": "editor, formatting, entries, writing",
       "publisher": {
         "@type": "Organization",
@@ -415,6 +415,20 @@
         <p><strong>Persistence</strong>: the <code>dir</code> attribute is stored in the encrypted HTML content of each entry, so direction is preserved across save, export, and re-open cycles.</p>
         <h2 id="inserting-the-current-time">Inserting the Current Time</h2><p>The advanced toolbar includes a <strong>clock button</strong> that inserts the current time at the cursor position. Clicking the button opens a popup where you can choose between <strong>12-hour</strong> and <strong>24-hour</strong> format and select hours:minutes or hours:minutes:seconds precision. Both selections are remembered across sessions.</p>
         <h2 id="editor-font">Editor Font</h2><p>You can change the font used in the editor body via <strong>Preferences → Writing → Editor font</strong>. Choose from five bundled open-source font families: Noto Sans, Source Sans 3, Noto Serif, JetBrains Mono, and Fira Mono. Fonts are loaded on demand and work fully offline — no network requests, no OS-level font enumeration.</p>
+        <h2 id="tags">Tags</h2><p>Each entry can have one or more tags. Tags appear as small chips below the editor body.</p>
+        <ul>
+        <li>Click <strong>+ Add tag</strong> to open a dropdown. Type to filter existing tags or create a new one; press <strong>Enter</strong> or click <strong>Create &quot;…&quot;</strong> to save.</li>
+        <li>Click <strong>×</strong> on a chip to remove a tag from the current entry.</li>
+        <li>Click <strong>Manage tags</strong> (at the end of the tag row) to open the Tag Manager, where you can rename or delete tags globally across all entries.</li>
+        </ul>
+        <h3 id="browsing-entries-by-tag">Browsing entries by tag</h3><p>Click a tag chip&#39;s <strong>name</strong> (not the × button) to activate a tag filter. While a filter is active:</p>
+        <ul>
+        <li>The sidebar opens automatically so the calendar is visible.</li>
+        <li>Calendar dot indicators narrow to show only dates that have entries tagged with that tag.</li>
+        <li>A banner above the calendar shows the active tag name and a <code>×</code> button to clear the filter.</li>
+        </ul>
+        <p>Click the same chip again, or press <code>×</code> in the banner, to return to the full unfiltered calendar. The filter persists across month navigation and is cleared automatically when you lock the journal or delete the filtered tag in Tag Manager.</p>
+        <p>Tag names are encrypted with the same key as your diary entries — they are never stored as readable text in the database file.</p>
         <h2 id="importing-a-markdown-file">Importing a Markdown File</h2><p>The advanced toolbar includes an <strong>Import Markdown</strong> button. This lets you import a <code>.md</code> file from disk into the active entry. If the entry is empty, the imported content replaces it. If the entry already has content, the Markdown is appended after a horizontal rule separator. File size is capped at 1 MB.</p>
         
         
@@ -435,6 +449,8 @@
           <li class="docs-toc-h2"><a href="#right-to-left-and-bidirectional-text">Right-to-Left and Bidirectional Text</a></li>
           <li class="docs-toc-h2"><a href="#inserting-the-current-time">Inserting the Current Time</a></li>
           <li class="docs-toc-h2"><a href="#editor-font">Editor Font</a></li>
+          <li class="docs-toc-h2"><a href="#tags">Tags</a></li>
+          <li class="docs-toc-h3"><a href="#browsing-entries-by-tag">Browsing entries by tag</a></li>
           <li class="docs-toc-h2"><a href="#importing-a-markdown-file">Importing a Markdown File</a></li>
         </ul>
       </aside>

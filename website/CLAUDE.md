@@ -210,6 +210,32 @@ Current nav order: Features → Security → Blog → Compare → How It Works �
 
 HTTP→HTTPS redirect is handled by Coolify, not the local `website/nginx.conf`. If GSC shows `http://` impressions, the Coolify edge must be configured with 301 redirects. See `docs/seo/production-config-notes.md`.
 
+### IndexNow
+
+[IndexNow](https://www.indexnow.org) is a protocol that lets search engines (Bing, Yandex, Seznam, and others) know immediately when URLs are added, updated, or deleted. Instead of waiting for crawlers to discover changes, the site actively notifies them.
+
+**Key file:** A single hex key file lives at `website/indexnow-key-<HEX>.txt`. The script auto-discovers it by matching `website/indexnow-key-*.txt`. Exactly one key file must exist — the script errors if zero or multiple are found.
+
+**Manual submission:**
+```bash
+bun run website:submit-indexnow          # Submit all sitemap URLs to IndexNow
+bun run website:submit-indexnow:dry-run  # Preview the payload without sending
+```
+
+**CI/CD workflow:** `.github/workflows/indexnow.yml` is triggered via `workflow_dispatch` (manual). Run it from the Actions tab after deploying the website. The `push` trigger is commented out until Coolify auto-deployment is configured — uncomment it when ready.
+
+**Regenerating the key:** Delete the old `website/indexnow-key-*.txt`, generate a new 32-char hex key (`node -e "console.log(require('crypto').randomBytes(16).toString('hex'))"`), create a new `website/indexnow-key-<NEW_HEX>.txt` with the key followed by a newline, and commit. No other files need updating — the script auto-discovers the key.
+
+**Response codes:**
+
+| Code | Meaning | Action |
+|------|---------|--------|
+| 200 | URLs submitted successfully | None |
+| 400 | Bad request — invalid payload | Check the script output for details |
+| 403 | Forbidden — key not found on domain | Verify the key file is deployed and accessible at `https://mini-diarium.com/indexnow-key-<HEX>.txt` |
+| 422 | URLs don't match declared host | Check the `host` field in the submission payload |
+| 429 | Rate limited | Wait and retry later |
+
 ---
 
 ## Documentation Section (`docs-src/`)
@@ -274,6 +300,7 @@ website/
 ├── llms.txt                 # Generated — do not edit
 ├── ai-crawlers.txt          # Static AI crawler policy — edit directly if policy changes
 ├── robots.txt               # Static
+├── indexnow-key-*.txt       # IndexNow API key — auto-generated, do not edit manually
 ├── nginx.conf               # Nginx config for local testing only
 │
 └── ../docs/seo/              # SEO audit data and strategy (not in website/ but referenced by it)

@@ -32,6 +32,9 @@ Template:
 
 ## [0.5.0] - Unreleased
 
+### Added
+- **IndexNow integration for the marketing website**: all public URLs are now automatically submitted to Bing, Yandex, Seznam, and other participating search engines via the IndexNow protocol. A new `scripts/submit-indexnow.mjs` script reads the sitemap and submits URLs in bulk. A GitHub Actions workflow (`.github/workflows/indexnow.yml`) enables manual submission after deployment, with an automatic push trigger ready to be enabled once Coolify auto-deployment is configured. Run `bun run website:submit-indexnow` to submit, or `bun run website:submit-indexnow:dry-run` to preview the payload.
+
 ### Security
 - **Network isolation hardening**: added defense-in-depth layers to prevent outbound network use from within the WebView. Layers added: explicit `connect-src 'self' ipc: http://ipc.localhost` CSP directive; `worker-src 'none'`, `child-src 'none'`, `frame-src 'none'`, `object-src 'none'`, `form-action 'none'`, `manifest-src 'none'` CSP directives; document-start init script nulling `RTCPeerConnection`, `WebTransport`, `Worker`, `SharedWorker`, `navigator.serviceWorker`, `navigator.sendBeacon`, `navigator.connection`, and `window.open` in all frames; `on_new_window(Deny)` handler blocking popup creation on all platforms; Windows WebView2 `WebResourceRequested` COM handler; macOS `WKContentRuleList` content-blocking rule; Windows installer outbound firewall rule (NSIS, `perMachine`); removed `devtools` Cargo feature from release builds; added CI static check for network-capable crates and APIs. (`fetch`/`XMLHttpRequest`/`WebSocket`/`EventSource` remain available for IPC/local runtime communication and are constrained by CSP + platform handlers.)
 
