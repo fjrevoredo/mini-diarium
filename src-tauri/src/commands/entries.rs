@@ -110,7 +110,7 @@ pub fn delete_entry(id: i64, state: State<DiaryState>) -> Result<(), String> {
 /// Returns a sorted list of distinct dates in YYYY-MM-DD format
 #[tauri::command]
 pub fn get_all_entry_dates(state: State<DiaryState>) -> Result<Vec<String>, String> {
-    with_unlocked_db(&state, |db| queries::get_all_entry_dates(db))
+    with_unlocked_db(&state, queries::get_all_entry_dates)
 }
 
 #[cfg(test)]

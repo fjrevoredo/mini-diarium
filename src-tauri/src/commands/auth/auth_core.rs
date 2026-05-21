@@ -75,17 +75,14 @@ pub(crate) fn check_require_all_auth_credential_count(
     credential_count: usize,
     db: &crate::db::schema::DatabaseConnection,
 ) -> Result<(), String> {
-    let require_all =
-        crate::db::queries::verify_require_all_auth(db.conn(), db.key().as_bytes());
+    let require_all = crate::db::queries::verify_require_all_auth(db.conn(), db.key().as_bytes());
     if require_all {
         let all_slots = crate::db::queries::list_auth_slots(db)?;
         let non_auto_count = all_slots.iter().filter(|s| s.slot_type != "auto").count();
         if credential_count < non_auto_count {
-            return Err(
-                "This journal requires all authentication methods. \
+            return Err("This journal requires all authentication methods. \
                  Please provide all credentials."
-                    .to_string(),
-            );
+                .to_string());
         }
     }
     Ok(())

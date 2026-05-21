@@ -15,7 +15,7 @@ pub struct Statistics {
 
 /// Pure inner of `get_statistics` — takes `&DiaryState` so it can be tested without Tauri.
 pub(crate) fn get_statistics_inner(state: &DiaryState) -> Result<Statistics, String> {
-    with_unlocked_db(state, |db| calculate_statistics(db))
+    with_unlocked_db(state, calculate_statistics)
 }
 
 /// Gets diary statistics

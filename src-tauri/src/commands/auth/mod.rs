@@ -89,9 +89,7 @@ where
         .db
         .lock()
         .map_err(|_| "Journal state lock failed".to_string())?;
-    let db = db_state
-        .as_ref()
-        .ok_or("Journal must be unlocked")?;
+    let db = db_state.as_ref().ok_or("Journal must be unlocked")?;
     f(db)
 }
 

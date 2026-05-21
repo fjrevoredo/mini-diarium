@@ -65,7 +65,11 @@ pub fn get_all_tags(db: &DatabaseConnection) -> Result<Vec<Tag>, String> {
         .into_iter()
         .map(|(id, enc, created_at)| {
             let name = super::decrypt_utf8(db.key(), &enc, "tag name")?;
-            Ok(Tag { id, name, created_at })
+            Ok(Tag {
+                id,
+                name,
+                created_at,
+            })
         })
         .collect::<Result<Vec<_>, String>>()?;
 
@@ -76,7 +80,8 @@ pub fn get_all_tags(db: &DatabaseConnection) -> Result<Vec<Tag>, String> {
 /// Renames a tag by id. Errors if the new name already exists.
 pub fn rename_tag(db: &DatabaseConnection, id: i64, new_name: &str) -> Result<(), String> {
     let fingerprint = cipher::tag_name_fingerprint(db.key(), new_name);
-    let name_encrypted = super::encrypt_for_storage(db.key(), new_name.trim().as_bytes(), "tag name")?;
+    let name_encrypted =
+        super::encrypt_for_storage(db.key(), new_name.trim().as_bytes(), "tag name")?;
 
     let rows = db
         .conn()
@@ -154,7 +159,11 @@ pub fn get_tags_for_entry(db: &DatabaseConnection, entry_id: i64) -> Result<Vec<
         .into_iter()
         .map(|(id, enc, created_at)| {
             let name = super::decrypt_utf8(db.key(), &enc, "tag name")?;
-            Ok(Tag { id, name, created_at })
+            Ok(Tag {
+                id,
+                name,
+                created_at,
+            })
         })
         .collect::<Result<Vec<_>, String>>()?;
 

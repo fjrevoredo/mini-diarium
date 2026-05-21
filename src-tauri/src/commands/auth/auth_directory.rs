@@ -134,7 +134,11 @@ pub fn change_diary_directory(
     app: AppHandle<Wry>,
 ) -> Result<(), String> {
     // Capture lock state first; the inner locks before the file move.
-    let was_unlocked = state.db.lock().map_err(|_| "State lock poisoned".to_string())?.is_some();
+    let was_unlocked = state
+        .db
+        .lock()
+        .map_err(|_| "State lock poisoned".to_string())?
+        .is_some();
     let result = change_diary_directory_with_auto_lock_inner(&new_dir, &state);
     // Emit regardless of move outcome — the DB is already locked at this point if was_unlocked.
     if was_unlocked {
@@ -290,21 +294,22 @@ mod tests {
         let db = create_database(src_db.to_str().unwrap(), "test".to_string()).unwrap();
         let dst_abs = fs::canonicalize(&dst_dir).unwrap();
 
-        let state = DiaryState::new(
-            src_db.clone(),
-            src_dir.join("backups"),
-            cfg_dir.clone(),
-        );
+        let state = DiaryState::new(src_db.clone(), src_dir.join("backups"), cfg_dir.clone());
         *state.db.lock().unwrap() = Some(db);
         assert!(state.db.lock().unwrap().is_some(), "should start unlocked");
 
-        let result =
-            change_diary_directory_with_auto_lock_inner(dst_abs.to_str().unwrap(), &state);
+        let result = change_diary_directory_with_auto_lock_inner(dst_abs.to_str().unwrap(), &state);
         assert!(result.is_ok(), "Expected Ok, got: {:?}", result);
 
-        assert!(state.db.lock().unwrap().is_none(), "DB should be locked after move");
+        assert!(
+            state.db.lock().unwrap().is_none(),
+            "DB should be locked after move"
+        );
         assert!(!src_db.exists(), "source file should be gone");
-        assert!(dst_abs.join("diary.db").exists(), "file should be at destination");
+        assert!(
+            dst_abs.join("diary.db").exists(),
+            "file should be at destination"
+        );
 
         let _ = fs::remove_dir_all(&src_dir);
         let _ = fs::remove_dir_all(&dst_dir);

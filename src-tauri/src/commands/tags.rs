@@ -9,7 +9,7 @@ pub fn create_tag(name: String, state: State<DiaryState>) -> Result<Tag, String>
 
 #[tauri::command]
 pub fn get_all_tags(state: State<DiaryState>) -> Result<Vec<Tag>, String> {
-    with_unlocked_db(&state, |db| queries::get_all_tags(db))
+    with_unlocked_db(&state, queries::get_all_tags)
 }
 
 #[tauri::command]
@@ -37,7 +37,9 @@ pub fn remove_tag_from_entry(
     tag_id: i64,
     state: State<DiaryState>,
 ) -> Result<(), String> {
-    with_unlocked_db(&state, |db| queries::remove_tag_from_entry(db, entry_id, tag_id))
+    with_unlocked_db(&state, |db| {
+        queries::remove_tag_from_entry(db, entry_id, tag_id)
+    })
 }
 
 #[tauri::command]

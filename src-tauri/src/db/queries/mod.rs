@@ -12,7 +12,11 @@ pub use tags::*;
 
 // Shared crypto helpers used by both entries and tags sub-modules.
 // Private items in a parent module are visible to all child modules in Rust.
-fn encrypt_for_storage(key: &cipher::Key, plaintext: &[u8], label: &str) -> Result<Vec<u8>, String> {
+fn encrypt_for_storage(
+    key: &cipher::Key,
+    plaintext: &[u8],
+    label: &str,
+) -> Result<Vec<u8>, String> {
     cipher::encrypt(key, plaintext).map_err(|e| format!("Failed to encrypt {}: {}", label, e))
 }
 

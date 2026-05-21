@@ -29,7 +29,7 @@ pub fn verify_password(password: String, state: State<DiaryState>) -> Result<(),
 pub(crate) fn list_auth_methods_inner(
     state: &DiaryState,
 ) -> Result<Vec<crate::auth::AuthMethodInfo>, String> {
-    with_unlocked_db(state, |db| crate::db::queries::list_auth_slots(db))
+    with_unlocked_db(state, crate::db::queries::list_auth_slots)
 }
 
 /// Lists all registered authentication methods (without sensitive key material).
@@ -501,14 +501,9 @@ mod tests {
         assert_eq!(slots.len(), 1);
         let slot_id = slots[0].id;
 
-        let err =
-            super::remove_auth_method_inner(slot_id, Some("password".to_string()), &state)
-                .unwrap_err();
-        assert!(
-            err.contains("Cannot remove the last"),
-            "got: {}",
-            err
-        );
+        let err = super::remove_auth_method_inner(slot_id, Some("password".to_string()), &state)
+            .unwrap_err();
+        assert!(err.contains("Cannot remove the last"), "got: {}", err);
 
         cleanup(&db_path, &backups_dir);
     }

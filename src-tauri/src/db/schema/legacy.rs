@@ -205,8 +205,7 @@ mod tests {
         add_legacy_entry(&db_path, "2024-06-01", "June Entry", "June content").unwrap();
 
         let db =
-            crate::db::schema::open_database(&db_path, password.to_string(), &backups_dir)
-                .unwrap();
+            crate::db::schema::open_database(&db_path, password.to_string(), &backups_dir).unwrap();
 
         let version: i32 = db
             .conn()
@@ -239,8 +238,7 @@ mod tests {
             let conn = Connection::open(&db_path).unwrap();
             let wrong_key = cipher::Key::from_slice(&[0u8; 32]).unwrap();
             let corrupted_title = cipher::encrypt(&wrong_key, b"Corrupted").unwrap();
-            let corrupted_text =
-                cipher::encrypt(&wrong_key, b"This is corrupted data").unwrap();
+            let corrupted_text = cipher::encrypt(&wrong_key, b"This is corrupted data").unwrap();
             let now = chrono::Utc::now().to_rfc3339();
             conn.execute(
                 "INSERT INTO entries (date, title_encrypted, text_encrypted, word_count, date_created, date_updated)
@@ -250,8 +248,7 @@ mod tests {
             .unwrap();
         }
 
-        let result =
-            crate::db::schema::open_database(&db_path, password.to_string(), &backups_dir);
+        let result = crate::db::schema::open_database(&db_path, password.to_string(), &backups_dir);
         assert!(result.is_err());
 
         let error_msg = result.unwrap_err();
@@ -286,8 +283,7 @@ mod tests {
         add_legacy_entry(&db_path, "2024-01-01", "Test Entry", "Test content").unwrap();
 
         let _db =
-            crate::db::schema::open_database(&db_path, password.to_string(), &backups_dir)
-                .unwrap();
+            crate::db::schema::open_database(&db_path, password.to_string(), &backups_dir).unwrap();
 
         let backup_count = std::fs::read_dir(&backups_dir).unwrap().count();
         assert!(backup_count >= 1, "At least one backup should be created");

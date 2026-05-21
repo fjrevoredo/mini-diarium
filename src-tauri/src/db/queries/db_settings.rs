@@ -22,12 +22,9 @@ pub fn set_db_setting(conn: &rusqlite::Connection, key: &str, value: &str) -> Re
 
 /// Deletes a key from `db_settings`. Does nothing if the key is absent.
 pub fn delete_db_setting(conn: &rusqlite::Connection, key: &str) -> Result<(), String> {
-    conn.execute(
-        "DELETE FROM db_settings WHERE key = ?1",
-        params![key],
-    )
-    .map(|_| ())
-    .map_err(|e| format!("Failed to delete db_setting '{}': {}", key, e))
+    conn.execute("DELETE FROM db_settings WHERE key = ?1", params![key])
+        .map(|_| ())
+        .map_err(|e| format!("Failed to delete db_setting '{}': {}", key, e))
 }
 
 fn compute_settings_mac(master_key: &[u8; 32]) -> [u8; 32] {
