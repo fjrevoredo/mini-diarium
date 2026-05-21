@@ -505,7 +505,7 @@ fn install_content_rule_list(win: &tauri::WebviewWindow) {
         // `compileContentRuleListForIdentifier` retains the store and the block internally;
         // the compiled rule list is cached on disk by WebKit after the first compilation.
         unsafe {
-            use block2::Block;
+            use block2::RcBlock;
             use objc2::MainThreadMarker;
             use objc2_foundation::{NSError, NSString};
             use objc2_web_kit::{WKContentRuleList, WKContentRuleListStore, WKWebView};
@@ -529,9 +529,9 @@ fn install_content_rule_list(win: &tauri::WebviewWindow) {
 
             // Clone ucc so the async completion handler can call addContentRuleList
             // after the with_webview closure returns.
-            let ucc_retained = objc2::rc::Retained::clone(&ucc);
+            let ucc_retained = ucc.clone();
 
-            let block = Block::move_new(move |list: *mut WKContentRuleList, _err: *mut NSError| {
+            let block = RcBlock::new(move |list: *mut WKContentRuleList, _err: *mut NSError| {
                 if let Some(rule_list) = list.as_ref() {
                     ucc_retained.addContentRuleList(rule_list);
                 }
@@ -543,7 +543,7 @@ fn install_content_rule_list(win: &tauri::WebviewWindow) {
                 .compileContentRuleListForIdentifier_encodedContentRuleList_completionHandler(
                     Some(&identifier),
                     Some(&rules),
-                    Some(&block),
+                    Some(&*block),
                 );
         }
     }) {
