@@ -48,7 +48,11 @@ src/
 │   │   │   ├── PreferencesOverlay.tsx         # Shell: dialog + tab list + save/cancel footer
 │   │   │   ├── PreferencesGeneralTab.tsx      # Theme, language, ESC-key action
 │   │   │   ├── PreferencesWritingTab.tsx      # Calendar/editor writing preferences
-│   │   │   ├── PreferencesSecurityTab.tsx     # Auth methods, change password, auto-lock
+│   │   │   ├── PreferencesSecurityTab.tsx     # Auth methods shell + require-all-auth + auto-lock
+│   │   │   ├── AuthMethodsList.tsx            # Registered methods list + removal form
+│   │   │   ├── AddPasswordForm.tsx            # Add-password form (shown when no password slot)
+│   │   │   ├── AddKeypairForm.tsx             # Generate + register keypair form
+│   │   │   ├── ChangePasswordForm.tsx         # Change password form (shown when password slot exists)
 │   │   │   ├── PreferencesDataTab.tsx         # Journal directory change, reset journal
 │   │   │   ├── PreferencesAdvancedTab.tsx     # Theme overrides editor, debug dump
 │   │   │   └── shared.ts                      # Tab type, TabProps, PreferencesShellContext

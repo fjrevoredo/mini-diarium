@@ -9,6 +9,7 @@ pub mod import;
 pub mod menu;
 pub mod plugin;
 pub mod screen_lock;
+mod webview_security;
 
 use commands::auth::DiaryState;
 use log::{info, warn};
@@ -262,17 +263,9 @@ pub fn run() {
 
             let win = win_builder.build()?;
 
-            // Windows: block HTTP(S) subresource requests at the WebView2 engine level
-            // via the WebResourceRequested COM event. This intercepts requests below JS
-            // and CSP, providing engine-level blocking for non-tauri:// traffic.
-            #[cfg(target_os = "windows")]
-            install_webresource_requested_handler(&win);
-
-            // macOS: block HTTP(S) subresource requests via WKContentRuleList.
-            // WKContentRuleList is the only WebKit-supported mechanism for blocking
-            // HTTP(S) subresource requests (NSURLProtocol does not intercept WKWebView).
-            #[cfg(target_os = "macos")]
-            install_content_rule_list(&win);
+            // Install platform-specific engine-level request blockers (Windows/macOS).
+            // Defense-in-depth alongside CSP and the JS init script.
+            webview_security::install_platform_handlers(&win);
 
             // Show after setup completes so the window-state plugin has already restored
             // the saved position/size (non-E2E) before the window becomes visible.
@@ -360,193 +353,4 @@ pub fn run() {
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
-}
-
-// ── Windows: WebResourceRequested handler ────────────────────────────────────
-//
-// Registers a WebView2 WebResourceRequested filter that blocks all HTTP(S)
-// requests to external hosts. Uses `with_webview()` + direct COM bindings
-// because Tauri's `on_web_resource_request` hook only fires for the custom
-// `tauri://` protocol, not for external HTTP(S) requests.
-#[cfg(target_os = "windows")]
-fn install_webresource_requested_handler(win: &tauri::WebviewWindow) {
-    if let Err(e) = win.with_webview(|webview| {
-        // SAFETY: CoreWebView2 is always accessed on the WebView2 creation thread.
-        // The `AddWebResourceRequestedFilter` call must precede `add_WebResourceRequested`.
-        // The event handler closure is invoked on the browser process thread; it only
-        // reads the request URI (no mutable shared state) and is thread-safe per the
-        // WebView2 contract. The token (`*mut i64`) is leaked intentionally — the
-        // handler must remain registered for the lifetime of the WebView.
-        unsafe {
-            use webview2_com::Microsoft::Web::WebView2::Win32::{
-                ICoreWebView2_2, COREWEBVIEW2_WEB_RESOURCE_CONTEXT_ALL,
-            };
-            use webview2_com::WebResourceRequestedEventHandler;
-            use windows::core::{w, Interface, PWSTR};
-
-            let core = match webview.controller().CoreWebView2() {
-                Ok(c) => c,
-                Err(e) => {
-                    warn!("WebResourceRequested: failed to get CoreWebView2: {}", e);
-                    return;
-                }
-            };
-
-            if let Err(e) =
-                core.AddWebResourceRequestedFilter(w!("*"), COREWEBVIEW2_WEB_RESOURCE_CONTEXT_ALL)
-            {
-                warn!("WebResourceRequested: filter registration failed: {}", e);
-                return;
-            }
-
-            let core2 = match core.cast::<ICoreWebView2_2>() {
-                Ok(c) => c,
-                Err(e) => {
-                    warn!(
-                        "WebResourceRequested: failed to cast CoreWebView2 to ICoreWebView2_2: {}",
-                        e
-                    );
-                    return;
-                }
-            };
-
-            let env = match core2.Environment() {
-                Ok(env) => env,
-                Err(e) => {
-                    warn!(
-                        "WebResourceRequested: failed to get WebView2 environment: {}",
-                        e
-                    );
-                    return;
-                }
-            };
-
-            let mut token = 0i64;
-            if let Err(e) = core.add_WebResourceRequested(
-                &WebResourceRequestedEventHandler::create(Box::new(move |_, args| {
-                    let Some(args) = args else {
-                        return Ok(());
-                    };
-                    let request = match args.Request() {
-                        Ok(r) => r,
-                        Err(_) => return Ok(()),
-                    };
-                    let mut uri_ptr = PWSTR(std::ptr::null_mut());
-                    if request.Uri(&mut uri_ptr).is_err() {
-                        return Ok(());
-                    }
-                    // SAFETY: `uri_ptr` is a PWSTR returned by CoreWebView2; valid for
-                    // the duration of this callback, pointing to a null-terminated wide
-                    // string owned by the WebView2 runtime.
-                    let uri_str = uri_ptr.to_string().unwrap_or_default();
-                    let is_http = uri_str.starts_with("http://") || uri_str.starts_with("https://");
-                    let allow_local_http = uri_str.starts_with("http://localhost")
-                        || uri_str.starts_with("http://127.0.0.1")
-                        || uri_str.starts_with("http://tauri.localhost")
-                        || uri_str.starts_with("http://ipc.localhost")
-                        || uri_str.starts_with("https://localhost")
-                        || uri_str.starts_with("https://127.0.0.1")
-                        || uri_str.starts_with("https://tauri.localhost")
-                        || uri_str.starts_with("https://ipc.localhost");
-                    let allow = uri_str.starts_with("tauri://")
-                        || uri_str.starts_with("ipc://")
-                        || allow_local_http;
-
-                    if is_http && !allow {
-                        warn!(
-                            "WebResourceRequested: blocked external request: {}",
-                            uri_str
-                        );
-                        if let Ok(response) = env.CreateWebResourceResponse(
-                            None,
-                            403,
-                            w!("Forbidden"),
-                            w!("Content-Type: text/plain\r\n"),
-                        ) {
-                            let _ = args.SetResponse(&response);
-                        } else {
-                            warn!(
-                                "WebResourceRequested: failed to create 403 response for {}",
-                                uri_str
-                            );
-                        }
-                    }
-                    Ok(())
-                })),
-                &mut token as *mut _,
-            ) {
-                warn!("WebResourceRequested: handler registration failed: {}", e);
-            }
-        }
-    }) {
-        warn!(
-            "with_webview failed for WebResourceRequested handler: {}",
-            e
-        );
-    }
-}
-
-// ── macOS: WKContentRuleList handler ─────────────────────────────────────────
-//
-// Installs a compiled WKContentRuleList that blocks all HTTP(S) subresource
-// requests to external hosts. WKContentRuleList is the only WebKit-supported
-// mechanism for this (NSURLProtocol does not intercept WKWebView traffic —
-// WebKit bug #138169, won't-fix).
-//
-// The rule compilation is async; the completion handler fires on the main queue
-// and immediately calls addContentRuleList on the user content controller.
-#[cfg(target_os = "macos")]
-fn install_content_rule_list(win: &tauri::WebviewWindow) {
-    if let Err(e) = win.with_webview(|webview| {
-        // SAFETY: WKWebView and WKUserContentController must be accessed on the main
-        // thread. This closure is invoked during window setup on the main thread.
-        // The completion handler block captures `ucc_retained` (a Retained<WKUserContentController>
-        // which is Send) and is dispatched by WebKit on the main queue — no data race.
-        // `compileContentRuleListForIdentifier` retains the store and the block internally;
-        // the compiled rule list is cached on disk by WebKit after the first compilation.
-        unsafe {
-            use block2::RcBlock;
-            use objc2::MainThreadMarker;
-            use objc2_foundation::{NSError, NSString};
-            use objc2_web_kit::{WKContentRuleList, WKContentRuleListStore, WKWebView};
-
-            let mtm = MainThreadMarker::new().expect("must be on main thread");
-
-            let wk_webview = webview.inner() as *mut WKWebView;
-            let config = (*wk_webview).configuration();
-            let ucc = config.userContentController();
-
-            // Block all external http/https; allow tauri:// and localhost (dev server).
-            // In production builds, localhost is not reachable anyway.
-            let rules_json = concat!(
-                r#"[{"trigger":{"url-filter":"https?://.*","#,
-                r#""unless-domain":["localhost","127.0.0.1","tauri.localhost"]},"#,
-                r#""action":{"type":"block"}}]"#,
-            );
-
-            let identifier = NSString::from_str("mini-diarium-block");
-            let rules = NSString::from_str(rules_json);
-
-            // Clone ucc so the async completion handler can call addContentRuleList
-            // after the with_webview closure returns.
-            let ucc_retained = ucc.clone();
-
-            let block = RcBlock::new(move |list: *mut WKContentRuleList, _err: *mut NSError| {
-                if let Some(rule_list) = list.as_ref() {
-                    ucc_retained.addContentRuleList(rule_list);
-                }
-            });
-
-            WKContentRuleListStore::defaultStore(mtm)
-                .as_ref()
-                .expect("defaultStore should succeed")
-                .compileContentRuleListForIdentifier_encodedContentRuleList_completionHandler(
-                    Some(&identifier),
-                    Some(&rules),
-                    Some(&*block),
-                );
-        }
-    }) {
-        warn!("with_webview failed for WKContentRuleList handler: {}", e);
-    }
 }

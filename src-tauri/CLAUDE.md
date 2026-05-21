@@ -12,6 +12,10 @@ src-tauri/src/
 ├── config.rs                          # Journal + diary directory config persistence
 ├── backup.rs                          # Automatic backups on unlock + rotation
 ├── screen_lock.rs                     # OS-level auto-lock listener (Windows WM_WTSSESSION_CHANGE/WM_POWERBROADCAST; macOS screen-sleep/lock notifications)
+├── webview_security/
+│   ├── mod.rs                         # install_platform_handlers(&win) — dispatches to platform impl
+│   ├── windows.rs                     # WebView2 WebResourceRequested COM handler (blocks external HTTP(S))
+│   └── macos.rs                       # WKContentRuleList rule compiler (blocks external HTTP(S))
 ├── auth/
 │   ├── mod.rs                             # AuthMethodInfo, KeypairFiles structs; re-exports
 │   ├── password.rs                        # PasswordMethod: Argon2id wrap/unwrap
@@ -23,8 +27,10 @@ src-tauri/src/
 │   │   ├── mod.rs                     # DiaryState struct; re-exports, auto_lock_diary_if_unlocked
 │   │   ├── auth_core.rs               # create/unlock/lock/reset/change_password
 │   │   ├── auth_directory.rs          # change_diary_directory with file move + sync to config
+│   │   ├── auth_identity.rs           # verify_password, list_auth_methods, peek_auth_slot_types + JournalPeek/AuthSlotPeek
 │   │   ├── auth_journals.rs           # list/add/remove/rename/switch journals, auto-lock guards
-│   │   └── auth_methods.rs            # Password & keypair registration, unlock_with_keypair
+│   │   ├── auth_policy.rs             # set_require_all_auth (db_settings flag + MAC)
+│   │   └── auth_slots.rs              # generate_keypair, write_key_file, register_password/keypair, remove_auth_method
 │   ├── entries.rs                     # CRUD + delete-if-empty + delete (unconditional)
 │   ├── search.rs                      # Search stub — returns empty results
 │   ├── navigation.rs                  # Day/month navigation

@@ -4,7 +4,7 @@
 
 - Plan Status: IN PROGRESS
 - Created: 2026-05-21
-- Last Updated: 2026-05-21 (gap-fill: Task 3.2 CI guard, Task 7.1 exclusion notes, Task 8.1 COMPLETED, doc path fixes)
+- Last Updated: 2026-05-21 (gap-fill: Task 3.2 CI guard, Task 7.1 exclusion notes, Task 8.1 COMPLETED, doc path fixes; Task 8.2 COMPLETED)
 - Owner: Coding agent
 - Approval: APPROVED 2026-05-21
 - Source Report: `docs/refactoring-report-2026-05-21.md`
@@ -338,7 +338,7 @@ Implement every recommendation from `docs/refactoring-report-2026-05-21.md` in a
 
 #### Task 8.2: Split `PreferencesSecurityTab.tsx` Into Security Subsections (P11)
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Objective: Split the largest security UI into pragmatic per-feature components.
 - Steps:
   1. Red/safety: before extraction, add the smallest characterization tests needed for behavior that will be moved if existing tests do not already cover it.
@@ -354,10 +354,11 @@ Implement every recommendation from `docs/refactoring-report-2026-05-21.md` in a
   11. Keep all state ownership and Tauri call ordering equivalent unless tests explicitly cover a safe improvement.
 - Validation: `cmd.exe /c bun run test:run`; `cmd.exe /c bun run type-check`.
 - Notes: This task enables P15 tests.
+- Completion notes (2026-05-21): `PreferencesSecurityTab.tsx` reduced from 580 to 184 lines. Extracted: `AuthMethodsList.tsx`, `AddPasswordForm.tsx`, `AddKeypairForm.tsx`, `ChangePasswordForm.tsx` — each owns its own signals and resets via `isOpen` prop. Characterization tests in `PreferencesSecurityTab.test.tsx` (2 tests). Validation: `bun run type-check` — 0 errors; `bun run test:run` — 362 tests, 0 failures.
 
 #### Task 8.3: Split Auth Method Commands By Responsibility (P12)
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Objective: Move `commands/auth/auth_methods.rs` into focused auth command modules without changing command names.
 - Steps:
   1. Mechanical safety: run focused auth command tests before the split, or record the existing failure if the tree is already red.
@@ -369,10 +370,11 @@ Implement every recommendation from `docs/refactoring-report-2026-05-21.md` in a
   7. Green/refactor: repair imports until the same auth tests pass with no command-name changes.
 - Validation: `cmd.exe /c "cd /d D:\Repos\mini-diarium\src-tauri && cargo test auth"`; then full `cargo test`.
 - Notes: Keep the frontend IPC API unchanged.
+- Completion notes (2026-05-21): `auth_methods.rs` (907 lines) deleted; replaced by `auth_identity.rs` (verify/list/peek + 2 tests), `auth_slots.rs` (generate/register/remove + 9 tests), `auth_policy.rs` (set_require_all_auth + 2 tests). `mod.rs` updated with three new `mod`/`pub use` pairs. `test_remove_auth_method_last_slot_guard` uses db query layer directly instead of cross-module `list_auth_methods_inner`. Validation: `cargo test auth` — 61 tests, 0 failures (same as baseline).
 
 #### Task 8.4: Move Platform WebView Handlers Out Of `lib.rs` (P13)
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Objective: Move Windows and macOS WebView security handlers into a dedicated module.
 - Steps:
   1. Mechanical safety: run build/backend tests before the move, or record the existing failure if the tree is already red.
@@ -384,6 +386,7 @@ Implement every recommendation from `docs/refactoring-report-2026-05-21.md` in a
   7. Green/refactor: repair imports/cfg gates until build and backend tests pass.
 - Validation: `cmd.exe /c "cd /d D:\Repos\mini-diarium\src-tauri && cargo test"`; `cmd.exe /c bun run build`; run network-isolation E2E if available in the current environment.
 - Notes: This is a move-only task; do not change CSP or navigation policy here.
+- Completion notes (2026-05-21): `install_webresource_requested_handler` and `install_content_rule_list` extracted from `lib.rs` into `webview_security/windows.rs` and `webview_security/macos.rs`. `lib.rs` now calls `webview_security::install_platform_handlers(&win)` — single call site, no cfg duplication in the setup function. All `unsafe` blocks and SAFETY comments preserved verbatim. Validation: `cargo test` — 337 tests, 0 failures.
 
 ### Milestone 9: Long-Tail Test Coverage And Release-Boundary Cleanup
 

@@ -95,13 +95,17 @@ where
 
 mod auth_core;
 mod auth_directory;
+mod auth_identity;
 mod auth_journals;
-mod auth_methods;
+mod auth_policy;
+mod auth_slots;
 
 pub use auth_core::*;
 pub use auth_directory::*;
+pub use auth_identity::*;
 pub use auth_journals::*;
-pub use auth_methods::*;
+pub use auth_policy::*;
+pub use auth_slots::*;
 
 #[cfg(test)]
 mod tests {

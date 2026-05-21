@@ -3,103 +3,6 @@ use tauri::State;
 
 use super::{with_unlocked_db, DiaryState};
 
-/// Verifies the current password without performing any other operation.
-///
-/// Used by the frontend to validate credentials before starting multi-step
-/// operations (e.g. keypair registration) where early failure is preferable.
-#[tauri::command]
-pub fn verify_password(password: String, state: State<DiaryState>) -> Result<(), String> {
-    with_unlocked_db(&state, |db| {
-        let (_, wrapped_key) =
-            crate::db::queries::get_password_slot(db)?.ok_or("No password auth method found")?;
-        let method = crate::auth::password::PasswordMethod::new(password);
-        // The returned SecretBytes is dropped immediately, zeroing memory automatically.
-        let _master_key_bytes = method
-            .unwrap_master_key(&wrapped_key)
-            .map_err(|_| "Incorrect password".to_string())?;
-        Ok(())
-    })
-}
-
-/// Pure inner of `list_auth_methods` — takes `&DiaryState` so it can be tested without Tauri.
-pub(crate) fn list_auth_methods_inner(
-    state: &DiaryState,
-) -> Result<Vec<crate::auth::AuthMethodInfo>, String> {
-    with_unlocked_db(state, crate::db::queries::list_auth_slots)
-}
-
-/// Lists all registered authentication methods (without sensitive key material).
-#[tauri::command]
-pub fn list_auth_methods(
-    state: State<DiaryState>,
-) -> Result<Vec<crate::auth::AuthMethodInfo>, String> {
-    list_auth_methods_inner(&state)
-}
-
-/// Reads auth slot types and labels from a locked journal (no key required).
-///
-/// Opens the SQLite container with a plain connection — the container is not encrypted
-/// at the SQLite level; only entry content is AES-256-GCM encrypted at the application
-/// layer. Excludes `auto` slots (device-bound keys that never require user input).
-/// Returns empty slots and `require_all_auth: false` if the DB file does not yet exist.
-/// Does NOT expose wrapped_key or public_key.
-#[tauri::command]
-pub fn peek_auth_slot_types(state: State<DiaryState>) -> Result<JournalPeek, String> {
-    let db_path = state
-        .db_path
-        .lock()
-        .map_err(|_| "State lock poisoned".to_string())?
-        .clone();
-
-    if !db_path.exists() {
-        return Ok(JournalPeek {
-            slots: vec![],
-            require_all_auth: false,
-        });
-    }
-
-    let conn = rusqlite::Connection::open(&db_path)
-        .map_err(|e| format!("Failed to open journal: {}", e))?;
-
-    let mut stmt = conn
-        .prepare("SELECT id, type, label FROM auth_slots WHERE type != 'auto' ORDER BY id ASC")
-        .map_err(|e| format!("Failed to prepare: {}", e))?;
-
-    let rows = stmt
-        .query_map([], |row| {
-            Ok(AuthSlotPeek {
-                id: row.get(0)?,
-                slot_type: row.get(1)?,
-                label: row.get(2)?,
-            })
-        })
-        .map_err(|e| format!("Failed to query: {}", e))?
-        .collect::<Result<Vec<_>, _>>()
-        .map_err(|e| format!("Failed to collect: {}", e))?;
-
-    let require_all_auth = crate::db::queries::get_db_setting(&conn, "require_all_auth")
-        .map(|v| v == "true")
-        .unwrap_or(false);
-
-    Ok(JournalPeek {
-        slots: rows,
-        require_all_auth,
-    })
-}
-
-#[derive(Debug, serde::Serialize)]
-pub struct JournalPeek {
-    pub slots: Vec<AuthSlotPeek>,
-    pub require_all_auth: bool,
-}
-
-#[derive(Debug, serde::Serialize)]
-pub struct AuthSlotPeek {
-    pub id: i64,
-    pub slot_type: String,
-    pub label: String,
-}
-
 /// Generates a new X25519 keypair.
 ///
 /// The caller is responsible for saving the private key securely (to a file).
@@ -152,8 +55,7 @@ pub fn register_password(new_password: String, state: State<DiaryState>) -> Resu
         // Reject if a password slot already exists
         if crate::db::queries::get_password_slot(db)?.is_some() {
             return Err(
-                "A password method already exists. Use 'Change Password' to update it."
-                    .to_string(),
+                "A password method already exists. Use 'Change Password' to update it.".to_string(),
             );
         }
 
@@ -333,47 +235,6 @@ pub fn remove_auth_method(
     remove_auth_method_inner(slot_id, current_password, &state)
 }
 
-/// Enables or disables the require-all-auth flag for the active journal.
-///
-/// When enabled, `unlock_diary` and `unlock_diary_with_keypair` are blocked; the
-/// caller must use `unlock_diary_all_methods` instead. Requires at least two
-/// non-auto auth methods to be registered. The flag is stored in `db_settings` inside
-/// the database file (schema v6+) so it cannot be stripped by config manipulation.
-#[tauri::command]
-pub fn set_require_all_auth(enabled: bool, state: State<DiaryState>) -> Result<(), String> {
-    let db_state = state
-        .db
-        .lock()
-        .map_err(|_| "State lock poisoned".to_string())?;
-    let db = db_state.as_ref().ok_or("Journal must be unlocked")?;
-
-    if enabled {
-        let methods = crate::db::queries::list_auth_slots(db)?;
-        let non_auto = methods.iter().filter(|m| m.slot_type != "auto").count();
-        if non_auto < 2 {
-            return Err(
-                "Require-all-auth needs at least two non-auto authentication methods.".to_string(),
-            );
-        }
-    }
-
-    if enabled {
-        crate::db::queries::set_db_setting(db.conn(), "require_all_auth", "true")?;
-        crate::db::queries::write_require_all_auth_mac(db.conn(), db.key().as_bytes())?;
-    } else {
-        crate::db::queries::delete_db_setting(db.conn(), "require_all_auth")?;
-        crate::db::queries::delete_db_setting(db.conn(), "require_all_auth_mac")?;
-    }
-
-    // Best-effort cleanup of legacy config.json value
-    if let Some(active_id) = crate::config::load_active_journal_id(&state.app_data_dir) {
-        let _ = crate::config::set_journal_require_all_auth(&state.app_data_dir, &active_id, false);
-    }
-
-    info!("require_all_auth set to {} in db_settings", enabled);
-    Ok(())
-}
-
 // ─── Tests ────────────────────────────────────────────────────────────────────
 
 #[cfg(test)]
@@ -456,20 +317,7 @@ mod tests {
     }
 
     #[test]
-    fn test_list_auth_methods_locked_returns_error() {
-        use std::path::PathBuf;
-        let state = super::super::DiaryState::new(
-            PathBuf::from("test_list_methods_locked.db"),
-            PathBuf::from("test_list_methods_locked_backups"),
-            PathBuf::from("."),
-        );
-        let err = super::list_auth_methods_inner(&state).unwrap_err();
-        assert!(err.contains("unlocked"), "got: {}", err);
-    }
-
-    #[test]
     fn test_remove_auth_method_locked_returns_error() {
-        use std::path::PathBuf;
         let state = super::super::DiaryState::new(
             PathBuf::from("test_rm_locked.db"),
             PathBuf::from("test_rm_locked_backups"),
@@ -486,57 +334,20 @@ mod tests {
         // One slot exists (password). Put db into state.
         *state.db.lock().unwrap() = Some(db);
 
-        let slots = super::list_auth_methods_inner(&state).unwrap();
-        assert_eq!(slots.len(), 1);
-        let slot_id = slots[0].id;
+        // Get slot id via db query layer directly (list_auth_methods_inner lives in auth_identity)
+        let slot_id = {
+            let db_guard = state.db.lock().unwrap();
+            let db_inner = db_guard.as_ref().unwrap();
+            let slots = crate::db::queries::list_auth_slots(db_inner).unwrap();
+            assert_eq!(slots.len(), 1);
+            slots[0].id
+        };
 
         let err = super::remove_auth_method_inner(slot_id, Some("password".to_string()), &state)
             .unwrap_err();
         assert!(err.contains("Cannot remove the last"), "got: {}", err);
 
         cleanup(&db_path, &backups_dir);
-    }
-
-    #[test]
-    fn test_list_auth_methods() {
-        use crate::auth::keypair::generate_keypair;
-
-        let (_, db_path, _) = make_state("list_methods");
-
-        let db = create_database(&db_path, "password".to_string()).unwrap();
-
-        let slots = crate::db::queries::list_auth_slots(&db).unwrap();
-        assert_eq!(slots.len(), 1);
-        assert_eq!(slots[0].slot_type, "password");
-
-        // Add keypair slot
-        let kp = generate_keypair().unwrap();
-        let pub_key_vec = hex::decode(&kp.public_key_hex).unwrap();
-        let fake_wrapped = [0u8; 92];
-        let now = chrono::Utc::now().to_rfc3339();
-        crate::db::queries::insert_auth_slot(
-            &db,
-            "keypair",
-            "My Key",
-            Some(&pub_key_vec),
-            &fake_wrapped,
-            &now,
-        )
-        .unwrap();
-
-        let slots = crate::db::queries::list_auth_slots(&db).unwrap();
-        assert_eq!(slots.len(), 2);
-        assert!(slots.iter().any(|s| s.slot_type == "keypair"));
-        // Wrapped key is NOT in the returned structs (security)
-        for slot in &slots {
-            // AuthMethodInfo doesn't have wrapped_key field
-            let _ = &slot.id;
-        }
-
-        cleanup(
-            &db_path,
-            &PathBuf::from(format!("test_auth_cmd_backups_{}", "list_methods")),
-        );
     }
 
     #[test]
@@ -769,138 +580,6 @@ mod tests {
 
         let count_after = crate::db::queries::count_auth_slots(&db).unwrap();
         assert_eq!(count_after, 1, "Should have one keypair slot remaining");
-
-        cleanup(&db_path, &backups_dir);
-    }
-
-    #[test]
-    fn test_set_require_all_auth_true_writes_valid_mac() {
-        let (state, db_path, backups_dir) = make_state("require_all_auth_enable");
-
-        let db = create_database(&db_path, "password".to_string()).unwrap();
-
-        // Add a second non-auto auth slot (required for enabling)
-        let method = crate::auth::password::PasswordMethod::new("second_password".to_string());
-        let master_key_bytes = {
-            let (_, wrapped_key) = crate::db::queries::get_password_slot(&db).unwrap().unwrap();
-            crate::auth::password::PasswordMethod::new("password".to_string())
-                .unwrap_master_key(&wrapped_key)
-                .unwrap()
-        };
-        let wrapped = method.wrap_master_key(&master_key_bytes).unwrap();
-        let now = chrono::Utc::now().to_rfc3339();
-        crate::db::queries::insert_auth_slot(
-            &db,
-            "password",
-            "Second Password",
-            None,
-            &wrapped,
-            &now,
-        )
-        .unwrap();
-
-        // Enable require_all_auth using the internal db query functions
-        {
-            let mut db_state = state.db.lock().unwrap();
-            *db_state = Some(db);
-        }
-        {
-            let db_guard = state.db.lock().unwrap();
-            let db_ref = db_guard.as_ref().unwrap();
-            crate::db::queries::set_db_setting(db_ref.conn(), "require_all_auth", "true").unwrap();
-            crate::db::queries::write_require_all_auth_mac(db_ref.conn(), db_ref.key().as_bytes())
-                .unwrap();
-        }
-
-        // Verify "true" flag is set
-        let db_guard = state.db.lock().unwrap();
-        let db_ref = db_guard.as_ref().unwrap();
-        assert_eq!(
-            crate::db::queries::get_db_setting(db_ref.conn(), "require_all_auth").unwrap(),
-            "true"
-        );
-
-        // Verify MAC is present (64-char hex string)
-        let mac_hex =
-            crate::db::queries::get_db_setting(db_ref.conn(), "require_all_auth_mac").unwrap();
-        assert_eq!(mac_hex.len(), 64);
-
-        // Verify the MAC is valid by checking verify_require_all_auth returns true
-        assert!(crate::db::queries::verify_require_all_auth(
-            db_ref.conn(),
-            db_ref.key().as_bytes()
-        ));
-
-        drop(db_guard);
-        cleanup(&db_path, &backups_dir);
-    }
-
-    #[test]
-    fn test_set_require_all_auth_false_deletes_both_rows() {
-        let (state, db_path, backups_dir) = make_state("require_all_auth_disable");
-
-        let db = create_database(&db_path, "password".to_string()).unwrap();
-
-        // Add a second non-auto auth slot
-        let method = crate::auth::password::PasswordMethod::new("second_password".to_string());
-        let master_key_bytes = {
-            let (_, wrapped_key) = crate::db::queries::get_password_slot(&db).unwrap().unwrap();
-            crate::auth::password::PasswordMethod::new("password".to_string())
-                .unwrap_master_key(&wrapped_key)
-                .unwrap()
-        };
-        let wrapped = method.wrap_master_key(&master_key_bytes).unwrap();
-        let now = chrono::Utc::now().to_rfc3339();
-        crate::db::queries::insert_auth_slot(
-            &db,
-            "password",
-            "Second Password",
-            None,
-            &wrapped,
-            &now,
-        )
-        .unwrap();
-
-        // Enable first via internal db query functions
-        {
-            let mut db_state = state.db.lock().unwrap();
-            *db_state = Some(db);
-        }
-        {
-            let db_guard = state.db.lock().unwrap();
-            let db_ref = db_guard.as_ref().unwrap();
-            crate::db::queries::set_db_setting(db_ref.conn(), "require_all_auth", "true").unwrap();
-            crate::db::queries::write_require_all_auth_mac(db_ref.conn(), db_ref.key().as_bytes())
-                .unwrap();
-        }
-
-        let db_guard = state.db.lock().unwrap();
-        let db_ref = db_guard.as_ref().unwrap();
-        assert_eq!(
-            crate::db::queries::get_db_setting(db_ref.conn(), "require_all_auth").unwrap(),
-            "true"
-        );
-        assert!(
-            crate::db::queries::get_db_setting(db_ref.conn(), "require_all_auth_mac").is_some()
-        );
-        drop(db_guard);
-
-        // Disable using internal db query functions
-        {
-            let db_guard = state.db.lock().unwrap();
-            let db_ref = db_guard.as_ref().unwrap();
-            crate::db::queries::delete_db_setting(db_ref.conn(), "require_all_auth").unwrap();
-            crate::db::queries::delete_db_setting(db_ref.conn(), "require_all_auth_mac").unwrap();
-        }
-
-        // Both rows must be deleted
-        let db_guard = state.db.lock().unwrap();
-        let db_ref = db_guard.as_ref().unwrap();
-        assert!(crate::db::queries::get_db_setting(db_ref.conn(), "require_all_auth").is_none());
-        assert!(
-            crate::db::queries::get_db_setting(db_ref.conn(), "require_all_auth_mac").is_none()
-        );
-        drop(db_guard);
 
         cleanup(&db_path, &backups_dir);
     }
