@@ -1,11 +1,11 @@
-import { createSignal, createMemo, For, onCleanup, onMount, createEffect } from 'solid-js';
+import { createSignal, createMemo, For, onCleanup, onMount } from 'solid-js';
 import { useI18n } from '../../../i18n';
 import { AVAILABLE_LOCALES } from '../../../i18n/locales/index';
 import { preferences, setPreferences, type EscAction } from '../../../state/preferences';
 import { getThemePreference, setTheme, type ThemePreference } from '../../../lib/theme';
 import { usePreferencesShell, type TabProps } from './shared';
 
-export default function PreferencesGeneralTab(props: TabProps) {
+export default function PreferencesGeneralTab(_props: TabProps) {
   const t = useI18n();
   const shell = usePreferencesShell();
 
@@ -13,20 +13,14 @@ export default function PreferencesGeneralTab(props: TabProps) {
     AVAILABLE_LOCALES.map((l) => ({ value: l.code, label: l.nativeName })),
   );
 
+  // Drafts are seeded from current preferences on mount. The dialog re-mounts
+  // on each open (Kobalte Portal), so no explicit resync effect is needed —
+  // and adding one that reads `preferences()` would track it as a dependency,
+  // causing the effect to fire when other tabs' commits write to preferences
+  // during a single Save click, clobbering the user's pending draft.
   const [localLanguage, setLocalLanguage] = createSignal(preferences().language);
   const [localTheme, setLocalTheme] = createSignal<ThemePreference>(getThemePreference());
   const [localEscAction, setLocalEscAction] = createSignal<EscAction>(preferences().escAction);
-
-  // Re-sync drafts whenever the overlay re-opens (component mounts only once
-  // per open, so the first read above is the canonical initial value; this
-  // effect guards the case where preferences change while open via another path).
-  createEffect(() => {
-    if (props.isOpen()) {
-      setLocalLanguage(preferences().language);
-      setLocalTheme(getThemePreference());
-      setLocalEscAction(preferences().escAction);
-    }
-  });
 
   onMount(() => {
     const unregister = shell.registerCommit(

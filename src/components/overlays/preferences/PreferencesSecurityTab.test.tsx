@@ -56,18 +56,29 @@ vi.mock('../../../state/journals', () => ({
   activeJournalId: mockActiveJournalId,
 }));
 
-vi.mock('../../../state/preferences', () => ({
-  preferences: vi.fn(() => ({ autoLockEnabled: false, autoLockTimeout: 300 })),
-  setPreferences: vi.fn(),
+const { mockPreferences, mockSetPreferences } = vi.hoisted(() => ({
+  mockPreferences: vi.fn(() => ({ autoLockEnabled: false, autoLockTimeout: 300 })),
+  mockSetPreferences: vi.fn(),
 }));
+
+vi.mock('../../../state/preferences', () => ({
+  preferences: mockPreferences,
+  setPreferences: mockSetPreferences,
+}));
+
+let capturedCommit: (() => void) | null = null;
 
 function renderTab() {
   const [isOpen] = createSignal(true);
+  capturedCommit = null;
   return renderWithI18n(() => (
     <PreferencesShellContext.Provider
       value={{
-        registerCommit: vi.fn((_fn: () => void) => {
-          return () => {};
+        registerCommit: vi.fn((fn: () => void) => {
+          capturedCommit = fn;
+          return () => {
+            capturedCommit = null;
+          };
         }),
       }}
     >
@@ -192,5 +203,62 @@ describe('PreferencesSecurityTab — require-all-auth toggle', () => {
     await vi.waitFor(() => {
       expect(screen.getByText('Please unlock your journal first.')).toBeInTheDocument();
     });
+  });
+});
+
+describe('PreferencesSecurityTab — auto-lock save flow', () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+    mockPreferences.mockReturnValue({ autoLockEnabled: false, autoLockTimeout: 300 });
+  });
+
+  it('renders the auto-lock checkbox unchecked by default', () => {
+    mockPreferences.mockReturnValue({ autoLockEnabled: false, autoLockTimeout: 300 });
+    renderTab();
+    const checkbox = screen.getByRole('checkbox', { name: /lock after inactivity/i });
+    expect(checkbox).not.toBeChecked();
+  });
+
+  it('renders the auto-lock checkbox checked when preferences.autoLockEnabled is true', () => {
+    mockPreferences.mockReturnValue({ autoLockEnabled: true, autoLockTimeout: 60 });
+    renderTab();
+    const checkbox = screen.getByRole('checkbox', { name: /lock after inactivity/i });
+    expect(checkbox).toBeChecked();
+  });
+
+  it('toggling the auto-lock checkbox flips the local UI state immediately', () => {
+    renderTab();
+    const checkbox = screen.getByRole('checkbox', { name: /lock after inactivity/i }) as HTMLInputElement;
+    expect(checkbox).not.toBeChecked();
+    fireEvent.click(checkbox);
+    expect(checkbox).toBeChecked();
+  });
+
+  it('commits autoLockEnabled: true after the user checks the box and Save is clicked', () => {
+    renderTab();
+    const checkbox = screen.getByRole('checkbox', { name: /lock after inactivity/i });
+    fireEvent.click(checkbox);
+
+    expect(capturedCommit).not.toBeNull();
+    capturedCommit!();
+
+    expect(mockSetPreferences).toHaveBeenCalledWith(
+      expect.objectContaining({ autoLockEnabled: true }),
+    );
+  });
+
+  it('commits the updated autoLockTimeout when the user edits it', () => {
+    renderTab();
+    const checkbox = screen.getByRole('checkbox', { name: /lock after inactivity/i });
+    fireEvent.click(checkbox);
+    const timeoutInput = screen.getByRole('spinbutton') as HTMLInputElement;
+    fireEvent.input(timeoutInput, { target: { value: '120' } });
+
+    expect(capturedCommit).not.toBeNull();
+    capturedCommit!();
+
+    expect(mockSetPreferences).toHaveBeenCalledWith(
+      expect.objectContaining({ autoLockEnabled: true, autoLockTimeout: 120 }),
+    );
   });
 });

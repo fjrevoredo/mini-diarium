@@ -36,11 +36,16 @@ export default function PreferencesSecurityTab(props: TabProps) {
   const [requireAllAuth, setRequireAllAuthLocal] = createSignal(false);
   const [requireAllAuthError, setRequireAllAuthError] = createSignal<string | null>(null);
 
-  // Re-init buffered + transient fields whenever the overlay re-opens
+  // Reset transient state + reload auth-related data when the overlay opens.
+  // NOTE: do NOT resync `localAutoLockEnabled`/`localAutoLockTimeout` from
+  // `preferences()` here — the createSignal initializers above already capture
+  // the current values on mount (the dialog re-mounts on each open). Re-reading
+  // `preferences()` inside this effect would track it as a dependency, causing
+  // the effect to fire when an earlier tab's commit (General/Writing) calls
+  // setPreferences during the Save click, which would clobber the user's
+  // pending autoLock changes before the Security tab's own commit runs.
   createEffect(() => {
     if (props.isOpen()) {
-      setLocalAutoLockEnabled(preferences().autoLockEnabled);
-      setLocalAutoLockTimeout(String(preferences().autoLockTimeout));
       setRequireAllAuthError(null);
 
       if (authState() === 'unlocked') {
