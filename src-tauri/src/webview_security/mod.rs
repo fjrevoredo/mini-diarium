@@ -17,7 +17,8 @@ mod macos;
 ///   external HTTP(S) requests.
 /// - macOS: `WKContentRuleList` compiled rule — blocks HTTP(S) to non-localhost domains
 ///   at the WebKit engine level.
-pub fn install_platform_handlers(_win: &tauri::WebviewWindow) {
+#[allow(unused_variables)]
+pub fn install_platform_handlers(win: &tauri::WebviewWindow) {
     #[cfg(target_os = "windows")]
     windows::install_webresource_requested_handler(win);
 
