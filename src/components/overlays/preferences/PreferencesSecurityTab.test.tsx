@@ -228,7 +228,9 @@ describe('PreferencesSecurityTab — auto-lock save flow', () => {
 
   it('toggling the auto-lock checkbox flips the local UI state immediately', () => {
     renderTab();
-    const checkbox = screen.getByRole('checkbox', { name: /lock after inactivity/i }) as HTMLInputElement;
+    const checkbox = screen.getByRole('checkbox', {
+      name: /lock after inactivity/i,
+    }) as HTMLInputElement;
     expect(checkbox).not.toBeChecked();
     fireEvent.click(checkbox);
     expect(checkbox).toBeChecked();

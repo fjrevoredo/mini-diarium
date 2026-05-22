@@ -67,9 +67,7 @@ describe('PreferencesOverlay — auto-lock save persists through shell', () => {
 
   it('persists autoLockEnabled to localStorage after Save', async () => {
     const [isOpen, setIsOpen] = createSignal(true);
-    renderWithI18n(() => (
-      <PreferencesOverlay isOpen={isOpen()} onClose={() => setIsOpen(false)} />
-    ));
+    renderWithI18n(() => <PreferencesOverlay isOpen={isOpen()} onClose={() => setIsOpen(false)} />);
 
     // Switch to the Security tab
     fireEvent.click(screen.getByRole('tab', { name: 'Security' }));
@@ -92,9 +90,7 @@ describe('PreferencesOverlay — auto-lock save persists through shell', () => {
     setPreferences({ autoLockEnabled: true, autoLockTimeout: 120 });
 
     const [isOpen, setIsOpen] = createSignal(true);
-    renderWithI18n(() => (
-      <PreferencesOverlay isOpen={isOpen()} onClose={() => setIsOpen(false)} />
-    ));
+    renderWithI18n(() => <PreferencesOverlay isOpen={isOpen()} onClose={() => setIsOpen(false)} />);
 
     fireEvent.click(screen.getByRole('tab', { name: 'Security' }));
 
@@ -106,9 +102,7 @@ describe('PreferencesOverlay — auto-lock save persists through shell', () => {
 
   it('persists escAction from General tab alongside autoLock from Security tab', async () => {
     const [isOpen, setIsOpen] = createSignal(true);
-    renderWithI18n(() => (
-      <PreferencesOverlay isOpen={isOpen()} onClose={() => setIsOpen(false)} />
-    ));
+    renderWithI18n(() => <PreferencesOverlay isOpen={isOpen()} onClose={() => setIsOpen(false)} />);
 
     const escSelect = screen.getByLabelText(/esc key action/i) as HTMLSelectElement;
     fireEvent.change(escSelect, { target: { value: 'quit' } });
@@ -129,9 +123,7 @@ describe('PreferencesOverlay — auto-lock save persists through shell', () => {
 
   it('persists Writing tab settings (hideTitles) alongside other tabs', async () => {
     const [isOpen, setIsOpen] = createSignal(true);
-    renderWithI18n(() => (
-      <PreferencesOverlay isOpen={isOpen()} onClose={() => setIsOpen(false)} />
-    ));
+    renderWithI18n(() => <PreferencesOverlay isOpen={isOpen()} onClose={() => setIsOpen(false)} />);
 
     fireEvent.click(screen.getByRole('tab', { name: 'Writing' }));
     const hideTitlesCheckbox = screen.getByLabelText(/hide entry titles/i) as HTMLInputElement;
@@ -153,9 +145,7 @@ describe('PreferencesOverlay — auto-lock save persists through shell', () => {
 
   it('persists autoLockEnabled when the user also modifies an earlier tab in the same Save', async () => {
     const [isOpen, setIsOpen] = createSignal(true);
-    renderWithI18n(() => (
-      <PreferencesOverlay isOpen={isOpen()} onClose={() => setIsOpen(false)} />
-    ));
+    renderWithI18n(() => <PreferencesOverlay isOpen={isOpen()} onClose={() => setIsOpen(false)} />);
 
     // Modify the General tab (escAction). The General tab commits FIRST in the
     // Save iteration order, so its setPreferences call updates the preferences
