@@ -41,9 +41,16 @@ vi.mock('../../../state/auth', () => ({
   setRequireAllAuth: vi.fn(() => Promise.resolve()),
 }));
 
+const { mockJournals, mockActiveJournalId } = vi.hoisted(() => ({
+  mockJournals: vi.fn(
+    () => [] as { id: number; name: string; path: string; auto_protected?: boolean }[],
+  ),
+  mockActiveJournalId: vi.fn(() => null as number | null),
+}));
+
 vi.mock('../../../state/journals', () => ({
-  journals: vi.fn(() => []),
-  activeJournalId: vi.fn(() => null),
+  journals: mockJournals,
+  activeJournalId: mockActiveJournalId,
 }));
 
 vi.mock('../../../state/preferences', () => ({
@@ -87,5 +94,53 @@ describe('PreferencesSecurityTab — conditional sections', () => {
     renderTab();
     expect(screen.getByRole('heading', { name: 'Add Password Auth' })).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Change Password' })).not.toBeInTheDocument();
+  });
+});
+
+describe('PreferencesSecurityTab — require-all-auth toggle', () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('shows fallback text when fewer than two non-auto methods are registered', () => {
+    mockAuthMethods.mockReturnValue([
+      { id: 1, slot_type: 'password', label: 'Password', last_used: null },
+    ]);
+    renderTab();
+    expect(
+      screen.getByText('Add at least two authentication methods to enable this option.'),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('checkbox', { name: /require all authentication/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('shows the checkbox when two or more non-auto methods are registered', () => {
+    mockAuthMethods.mockReturnValue([
+      { id: 1, slot_type: 'password', label: 'Password', last_used: null },
+      { id: 2, slot_type: 'keypair', label: 'My Key', last_used: null },
+    ]);
+    renderTab();
+    expect(
+      screen.getByRole('checkbox', { name: /require all authentication/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText('Add at least two authentication methods to enable this option.'),
+    ).not.toBeInTheDocument();
+  });
+
+  it('hides the require-all-auth section for auto-protected journals', () => {
+    mockJournals.mockReturnValue([
+      { id: 1, name: 'My Journal', path: '/tmp', auto_protected: true },
+    ]);
+    mockActiveJournalId.mockReturnValue(1);
+    mockAuthMethods.mockReturnValue([
+      { id: 1, slot_type: 'password', label: 'Password', last_used: null },
+      { id: 2, slot_type: 'keypair', label: 'My Key', last_used: null },
+    ]);
+    renderTab();
+    expect(
+      screen.queryByRole('heading', { name: 'Require All Authentication Methods' }),
+    ).not.toBeInTheDocument();
   });
 });

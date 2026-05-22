@@ -21,6 +21,7 @@ const bus = vi.hoisted(() => {
   const state = {
     onUpdate: null as ((html: string) => void) | null,
     onSetContent: null as ((isEmpty: boolean) => void) | null,
+    onImportMarkdown: null as (() => void) | null,
     lastContent: '' as string,
     mockEditor: null as unknown as {
       isEmpty: boolean;
@@ -46,6 +47,7 @@ const mocks = vi.hoisted(() => ({
   getAllEntryDates: vi.fn(),
   readTextFile: vi.fn(),
   confirm: vi.fn(),
+  open: vi.fn(() => Promise.resolve(null as string | null)),
 }));
 
 vi.mock('../../lib/tauri', async () => {
@@ -63,7 +65,7 @@ vi.mock('../../lib/tauri', async () => {
 });
 
 vi.mock('@tauri-apps/plugin-dialog', () => ({
-  open: vi.fn(() => Promise.resolve(null)),
+  open: mocks.open,
   confirm: mocks.confirm,
 }));
 
@@ -74,9 +76,11 @@ vi.mock('../editor/DiaryEditor', () => {
       onUpdate?: (html: string) => void;
       onSetContent?: (isEmpty: boolean) => void;
       onEditorReady?: (editor: unknown) => void;
+      onImportMarkdown?: () => void;
     }) => {
       bus.onUpdate = props.onUpdate ?? null;
       bus.onSetContent = props.onSetContent ?? null;
+      bus.onImportMarkdown = props.onImportMarkdown ?? null;
 
       // Wire a mock editor that mirrors the surface EditorPanel reads.
       const editor = {
@@ -116,6 +120,7 @@ vi.mock('../editor/DiaryEditor', () => {
 
 import EditorPanel from './EditorPanel';
 import { setSelectedDate } from '../../state/ui';
+import { setIsSaving } from '../../state/entries';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -167,6 +172,7 @@ describe('EditorPanel integration', () => {
 
   afterEach(() => {
     vi.useRealTimers();
+    setIsSaving(false);
   });
 
   it('load-then-type: loads existing entry and debounced-saves a keystroke edit', async () => {
@@ -293,5 +299,52 @@ describe('EditorPanel integration', () => {
     expect(mocks.saveEntry).toHaveBeenCalledWith(99, '', '<p>H</p>');
     // Interface sanity: the shim rendered.
     expect(screen.getByTestId('diary-editor-shim')).toBeInTheDocument();
+  });
+
+  it('word-count display: updates when content changes', async () => {
+    const existing = makeEntry({ id: 42, title: 'Morning', text: '<p>Hello</p>' });
+    mocks.getEntriesForDate.mockResolvedValue([existing]);
+
+    renderWithI18n(() => <EditorPanel />);
+    await waitFor(() => expect(mocks.getEntriesForDate).toHaveBeenCalledWith('2026-04-23'));
+    await flushMicrotasks();
+
+    // After load, countWordsInHtml('<p>Hello</p>') = 1 word.
+    await waitFor(() => expect(screen.getByText('1 word')).toBeInTheDocument());
+
+    // Typing plain text keeps the mock getText() clean: no tag fragments.
+    typeIntoEditor('hello world');
+    await waitFor(() => expect(screen.getByText('2 words')).toBeInTheDocument());
+  });
+
+  it('save-status footer: shows "Saving..." while isSaving is true', async () => {
+    mocks.getEntriesForDate.mockResolvedValue([]);
+    renderWithI18n(() => <EditorPanel />);
+    await waitFor(() => expect(mocks.getEntriesForDate).toHaveBeenCalledWith('2026-04-23'));
+    await flushMicrotasks();
+
+    expect(screen.queryByText('Saving...')).not.toBeInTheDocument();
+
+    setIsSaving(true);
+    await waitFor(() => expect(screen.getByText('Saving...')).toBeInTheDocument());
+
+    setIsSaving(false);
+    await waitFor(() => expect(screen.queryByText('Saving...')).not.toBeInTheDocument());
+  });
+
+  it('import-markdown: shows error banner when readTextFile fails', async () => {
+    const existing = makeEntry({ id: 42, title: '', text: '' });
+    mocks.getEntriesForDate.mockResolvedValue([existing]);
+    renderWithI18n(() => <EditorPanel />);
+    await waitFor(() => expect(mocks.getEntriesForDate).toHaveBeenCalledWith('2026-04-23'));
+    await flushMicrotasks();
+
+    mocks.open.mockResolvedValueOnce('/home/user/notes.md');
+    mocks.readTextFile.mockRejectedValueOnce(new Error('permission denied'));
+
+    bus.onImportMarkdown?.();
+    await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument());
+    expect(screen.getByText('permission denied')).toBeInTheDocument();
+    expect(mocks.saveEntry).not.toHaveBeenCalled();
   });
 });
