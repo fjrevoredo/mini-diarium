@@ -33,6 +33,9 @@
     "test:e2e:local": "node scripts/e2e-local.js",
     "validate:locales": "npx tsx scripts/validate-locales.ts",
     "sync-languages": "npx tsx scripts/sync-languages.ts",
+    "agent:dev:start": "npx tsx scripts/agent-dev/start.ts",
+    "agent:dev:stop": "npx tsx scripts/agent-dev/stop.ts",
+    "agent:dev:probe": "npx tsx scripts/agent-dev/probe.ts",
     "bench": "vitest bench",
     "sync-skills": "node scripts/sync-skills.js",
     "check:ui-errors": "node scripts/check-ui-error-sanitization.js"

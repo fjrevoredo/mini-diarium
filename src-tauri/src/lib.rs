@@ -250,6 +250,20 @@ pub fn run() {
             // Defense-in-depth alongside CSP; runs in main frame and all subframes.
             .initialization_script_for_all_frames(NETWORK_ISOLATION_SCRIPT);
 
+            if let Ok(webview_data_dir) = std::env::var("MINI_DIARIUM_WEBVIEW_DATA_DIR") {
+                let path = PathBuf::from(webview_data_dir);
+                if let Err(e) = std::fs::create_dir_all(&path) {
+                    warn!(
+                        "Failed to create WebView data directory '{}': {}",
+                        path.display(),
+                        e
+                    );
+                } else {
+                    info!("Using WebView data dir override: {}", path.display());
+                    win_builder = win_builder.data_directory(path);
+                }
+            }
+
             if is_e2e {
                 // Set the window to the exact E2E viewport size in the builder so the WebView
                 // renders at 800×660 from the very first paint. WebView2 captures CSS viewport

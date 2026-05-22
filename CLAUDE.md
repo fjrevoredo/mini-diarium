@@ -177,6 +177,9 @@ bun run type-check                      # TypeScript type check
 bun run test:e2e:local                  # Build binary + run suite
 bun run test:e2e:local -- --skip-build  # Skip build, run suite only
 
+# Manual UI verification (agent, Windows-only)
+# See .agents/skills/tauri-agent-dev/SKILL.md
+
 # Diagrams
 bun run diagrams                        # Regenerate all docs/diagrams/ SVGs
 
