@@ -2,6 +2,7 @@ import { createSignal, createEffect, Show } from 'solid-js';
 import { Dialog } from '@kobalte/core/dialog';
 import { authState } from '../../../state/auth';
 import { useI18n } from '../../../i18n';
+import { createLogger } from '../../../lib/logger';
 import { PreferencesShellContext, type PreferencesShellApi, type Tab } from './shared';
 import PreferencesGeneralTab from './PreferencesGeneralTab';
 import PreferencesWritingTab from './PreferencesWritingTab';
@@ -13,6 +14,8 @@ interface PreferencesOverlayProps {
   isOpen: boolean;
   onClose: () => void;
 }
+
+const log = createLogger('PreferencesOverlay');
 
 export default function PreferencesOverlay(props: PreferencesOverlayProps) {
   const t = useI18n();
@@ -56,7 +59,13 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
   };
 
   const handleSave = () => {
-    for (const commit of commits) commit();
+    for (const commit of commits) {
+      try {
+        commit();
+      } catch (err) {
+        log.error('Preferences commit failed', err);
+      }
+    }
     props.onClose();
   };
 
