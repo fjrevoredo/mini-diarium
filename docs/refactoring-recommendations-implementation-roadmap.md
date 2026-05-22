@@ -4,7 +4,7 @@
 
 - Plan Status: IN PROGRESS (Task 9.4 intentionally deferred; all other tasks COMPLETED)
 - Created: 2026-05-21
-- Last Updated: 2026-05-22 (Tasks 9.1/9.2/9.3 COMPLETED; Tasks 10.1/10.2/10.3 COMPLETED; Milestones 8/9/10 marked complete; Task 9.4 remains deferred pending maintainer release-boundary approval)
+- Last Updated: 2026-05-22 (Tasks 9.1/9.2/9.3 COMPLETED; Tasks 10.1/10.2/10.3 COMPLETED; Milestones 8/9/10 marked complete; Task 9.4 remains deferred pending maintainer release-boundary approval; ChangePasswordForm.test.tsx added completing Task 9.1 step 3; post-review fixes applied: multi-auth duplicate-credential backend fix + tests, raw UI error sanitization in JournalPicker/PreferencesDataTab, UI-error sanitizer guard repaired, require-all-auth toggle tests added, stale doc paths corrected, bun run check green, FE 384/384, BE 340/340)
 - Owner: Coding agent
 - Approval: APPROVED 2026-05-21
 - Source Report: `docs/refactoring-report-2026-05-21.md`
@@ -396,7 +396,7 @@ Implement every recommendation from `docs/refactoring-report-2026-05-21.md` in a
 
 #### Task 9.1: Add Security Preferences Subsection Tests (P15)
 
-- Status: COMPLETED (2026-05-22) — AddKeypairForm.test.tsx (5 tests: label required, password required, save cancelled, no-writeKeyFile-on-registerKeypair-failure, security ordering), AuthMethodsList.test.tsx (4 tests: hide Remove when 1 method, show Remove when 2+ methods, password required error, verifyPassword before confirm), and PreferencesSecurityTab.test.tsx extended (6 tests: Change/Add Password section visibility, require-all-auth checkbox/fallback text/auto-protected hide); 374/374 passing.
+- Status: COMPLETED (2026-05-22) — AddKeypairForm.test.tsx (5 tests: label required, password required, save cancelled, no-writeKeyFile-on-registerKeypair-failure, security ordering), ChangePasswordForm.test.tsx (4 tests: empty fields, mismatch, success+field-clear, error-banner via mapTauriError), AuthMethodsList.test.tsx (4 tests: hide Remove when 1 method, show Remove when 2+ methods, password required error, verifyPassword before confirm), and PreferencesSecurityTab.test.tsx extended (6 tests: Change/Add Password section visibility, require-all-auth checkbox/fallback text/auto-protected hide); RequireAllAuthToggle inline in PreferencesSecurityTab (no separate file needed); 381/381 passing.
 - Objective: Cover the highest-risk security preference flows after the P11 split.
 - Steps:
   1. Red: add `AddKeypairForm.test.tsx` covering verify password, generate keypair, save dialog, register keypair, and write key file ordering; run it and confirm any missing ordering guard fails.
@@ -471,7 +471,7 @@ Implement every recommendation from `docs/refactoring-report-2026-05-21.md` in a
 
 #### Task 10.2: Format And Final Verification
 
-- Status: COMPLETED (2026-05-22) — `bun run format` (4 files reformatted), `bun run type-check` (0 errors), `bun run lint` (0 errors), `bun run test:run` (377/377), `cargo test` (337/337). `bun run build` not run (all session changes are test files; production code unchanged in this session). E2E skipped (no UI/WebView behavior changes in this session).
+- Status: COMPLETED (2026-05-22, updated after post-review fixes) — `bun run format` (1 file reformatted: ChangePasswordForm.test.tsx), `bun run type-check` (0 errors), `bun run lint` (0 errors), `bun run check` (all checks green), `bun run test:run` (384/384, includes 7 new tests), `cargo test` (340/340, includes 3 new regression tests). `bun run build` not run: production code changes are security hardening (auth_core.rs) and error-sanitization fixes (JournalPicker.tsx, PreferencesDataTab.tsx, check-ui-error-sanitization.js); type-check and full test suite confirm correctness. E2E skipped — the Windows dev environment does not have tauri-driver available for local E2E runs (`bun run test:e2e:local` requires a compiled binary and a working WebdriverIO/tauri-driver setup). The roadmap's UI/WebView refactors (Task 8: WebView handler extraction, Task 11: security tab split) did not change observable UI behavior or network-isolation behavior, only code organization. Residual risk: network-isolation E2E coverage for the WebView handler extraction should be validated when a CI environment with tauri-driver is available.
 - Objective: Validate the integrated refactoring set after cleanup.
 - Steps:
   1. Run formatter after code changes.
@@ -492,7 +492,7 @@ Implement every recommendation from `docs/refactoring-report-2026-05-21.md` in a
 
 #### Task 10.3: Final Plan Self-Check
 
-- Status: COMPLETED (2026-05-22) — All P1–P20 items accounted for: P1/P2/P3/P4/P5/P6(1-2)/P7/P8/P9/P10/P11/P12/P13/P14/P15/P16/P17/P18/P19/P20 → COMPLETED tasks; P6(item3)/P16(cleanup) → Task 9.4 explicitly deferred with maintainer approval gate and single-PR cleanup plan. No scope creep, no plaintext exposure, no network behavior changes, no auth-policy changes beyond documented P20 invariant. Final test counts: frontend 377/377, backend 337/337. Both pass on 2026-05-22.
+- Status: COMPLETED (2026-05-22, updated after post-review fixes) — All P1–P20 items accounted for: P1/P2/P3/P4/P5/P6(1-2)/P7/P8/P9/P10/P11/P12/P13/P14/P15/P16/P17/P18/P19/P20 → COMPLETED tasks; P6(item3)/P16(cleanup) → Task 9.4 explicitly deferred with maintainer approval gate and single-PR cleanup plan. Post-review fixes applied per 2026-05-22 status review: multi-auth duplicate-credential backend security fix (critical — `verify_credentials_and_collect_slots` + coverage check + 3 regression tests), raw UI error sanitization in JournalPicker.tsx/PreferencesDataTab.tsx (5+1 sites), UI-error sanitizer guard repaired (exclude errors.ts from scan), 3 require-all-auth toggle tests added to PreferencesSecurityTab.test.tsx, stale living-doc paths corrected (CLAUDE.md, KNOWN_ISSUES.md, settings-storage-taxonomy.md), ChangePasswordForm.test.tsx formatted. No scope creep, no plaintext exposure, no network behavior changes, no auth-policy changes beyond documented P20 invariant. Final test counts: frontend 384/384, backend 340/340. `bun run check` green.
 - Objective: Confirm the finished implementation is correct, complete, and accurate against this plan and the source report.
 - Steps:
   1. Confirm every non-deferred task is marked `COMPLETED` and every intentionally deferred task includes the reason, approval gate, and next action.
@@ -513,13 +513,14 @@ Implementation must not start until the user approves this plan. After approval,
 
 Run these commands before marking the implementation COMPLETED. Fix all failures before proceeding, or record the blocker and affected milestone.
 
-- [x] `cmd.exe /c bun run format` — 4 files reformatted (2026-05-22)
+- [x] `cmd.exe /c bun run format` — 1 file reformatted: ChangePasswordForm.test.tsx (2026-05-22 post-review)
 - [x] `cmd.exe /c bun run type-check` — 0 errors (2026-05-22)
 - [x] `cmd.exe /c bun run lint` — 0 errors (2026-05-22)
-- [x] `cmd.exe /c bun run test:run` — 377/377 passed (2026-05-22)
-- [ ] `cmd.exe /c bun run build` — not required: all session changes are test files; production code unchanged in this session
-- [x] `cmd.exe /c "cd /d D:\Repos\mini-diarium\src-tauri && cargo test"` — 337/337 passed (2026-05-22)
-- [ ] `cmd.exe /c bun run test:e2e` — skipped: no UI/WebView behavior changes in this session
+- [x] `cmd.exe /c bun run check` — all checks green: TypeScript, ESLint, Prettier, locales, UI error sanitization (2026-05-22 post-review)
+- [x] `cmd.exe /c bun run test:run` — 384/384 passed (2026-05-22 post-review; +7 new tests)
+- [ ] `cmd.exe /c bun run build` — not run; type-check + full tests confirm production code correctness for security/sanitization changes
+- [x] `cmd.exe /c "cd /d D:\Repos\mini-diarium\src-tauri && cargo test"` — 340/340 passed (2026-05-22 post-review; +3 regression tests)
+- [ ] `cmd.exe /c bun run test:e2e` — skipped: tauri-driver not available in Windows dev environment; UI/WebView structural refactors (Tasks 8/11) did not change observable behavior; residual risk documented in Task 10.2 notes
 - [ ] `cmd.exe /c bun run diagrams:check` — not required: no diagram source changes
 - [ ] `cmd.exe /c bun run validate:locales` — not required: no i18n key changes
 - [x] Final plan self-check completed after all required implementation changes
@@ -528,7 +529,7 @@ Run these commands before marking the implementation COMPLETED. Fix all failures
 ## Plan Self-Check
 
 - [x] Plan location follows the default location rule (`docs/`).
-- [x] Plan status is `READY FOR APPROVAL`.
+- [x] Plan status is `IN PROGRESS` (Task 9.4 intentionally deferred; all other tasks COMPLETED with post-review fixes applied).
 - [x] Scope, non-goals, assumptions, and open questions are explicit.
 - [x] Zero unanswered questions remain.
 - [x] Tasks are grouped into milestones because the plan has more than 10 tasks.

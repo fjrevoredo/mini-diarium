@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, afterEach } from 'vitest';
-import { screen } from '@solidjs/testing-library';
+import { screen, fireEvent } from '@solidjs/testing-library';
 import { renderWithI18n } from '../../../test/i18n-test-utils';
 import { createSignal } from 'solid-js';
 import { PreferencesShellContext } from './shared';
@@ -26,19 +26,22 @@ vi.mock('../../../lib/tauri', async () => {
   };
 });
 
-const { mockAuthMethods, mockAuthState, mockLoadAuthMethods } = vi.hoisted(() => ({
-  mockAuthMethods: vi.fn(
-    () => [] as { id: number; slot_type: string; label: string; last_used: string | null }[],
-  ),
-  mockAuthState: vi.fn(() => 'unlocked' as const),
-  mockLoadAuthMethods: vi.fn(() => Promise.resolve()),
-}));
+const { mockAuthMethods, mockAuthState, mockLoadAuthMethods, mockSetRequireAllAuth } = vi.hoisted(
+  () => ({
+    mockAuthMethods: vi.fn(
+      () => [] as { id: number; slot_type: string; label: string; last_used: string | null }[],
+    ),
+    mockAuthState: vi.fn(() => 'unlocked' as const),
+    mockLoadAuthMethods: vi.fn(() => Promise.resolve()),
+    mockSetRequireAllAuth: vi.fn(() => Promise.resolve()),
+  }),
+);
 
 vi.mock('../../../state/auth', () => ({
   authState: mockAuthState,
   authMethods: mockAuthMethods,
   loadAuthMethods: mockLoadAuthMethods,
-  setRequireAllAuth: vi.fn(() => Promise.resolve()),
+  setRequireAllAuth: mockSetRequireAllAuth,
 }));
 
 const { mockJournals, mockActiveJournalId } = vi.hoisted(() => ({
@@ -142,5 +145,52 @@ describe('PreferencesSecurityTab — require-all-auth toggle', () => {
     expect(
       screen.queryByRole('heading', { name: 'Require All Authentication Methods' }),
     ).not.toBeInTheDocument();
+  });
+
+  it('initialises checkbox as checked when peekAuthSlotTypes returns require_all_auth: true', async () => {
+    mockJournals.mockReturnValue([]);
+    mockActiveJournalId.mockReturnValue(null);
+    mockPeekAuthSlotTypes.mockResolvedValueOnce({ slots: [], require_all_auth: true });
+    mockAuthMethods.mockReturnValue([
+      { id: 1, slot_type: 'password', label: 'Password', last_used: null },
+      { id: 2, slot_type: 'keypair', label: 'My Key', last_used: null },
+    ]);
+    renderTab();
+    const checkbox = screen.getByRole('checkbox', { name: /require all authentication/i });
+    await vi.waitFor(() => {
+      expect(checkbox).toBeChecked();
+    });
+  });
+
+  it('calls setRequireAllAuth with the new value when the checkbox is toggled', async () => {
+    mockJournals.mockReturnValue([]);
+    mockActiveJournalId.mockReturnValue(null);
+    mockAuthMethods.mockReturnValue([
+      { id: 1, slot_type: 'password', label: 'Password', last_used: null },
+      { id: 2, slot_type: 'keypair', label: 'My Key', last_used: null },
+    ]);
+    renderTab();
+    const checkbox = screen.getByRole('checkbox', { name: /require all authentication/i });
+    fireEvent.click(checkbox);
+    await vi.waitFor(() => {
+      expect(mockSetRequireAllAuth).toHaveBeenCalledWith(true);
+    });
+  });
+
+  it('displays a sanitised error when setRequireAllAuth rejects', async () => {
+    // 'Journal must be unlocked' maps to errors.journalNotUnlocked → 'Please unlock your journal first.'
+    mockJournals.mockReturnValue([]);
+    mockActiveJournalId.mockReturnValue(null);
+    mockSetRequireAllAuth.mockRejectedValueOnce(new Error('Journal must be unlocked'));
+    mockAuthMethods.mockReturnValue([
+      { id: 1, slot_type: 'password', label: 'Password', last_used: null },
+      { id: 2, slot_type: 'keypair', label: 'My Key', last_used: null },
+    ]);
+    renderTab();
+    const checkbox = screen.getByRole('checkbox', { name: /require all authentication/i });
+    fireEvent.click(checkbox);
+    await vi.waitFor(() => {
+      expect(screen.getByText('Please unlock your journal first.')).toBeInTheDocument();
+    });
   });
 });

@@ -214,12 +214,12 @@ refactoring.
 
 **Hook points in the backend (search for `// Search index hook:`):**
 
-- `db/queries.rs` — `insert_entry()`, `update_entry()`, `delete_entry()` — index/remove individual entries
+- `db/queries/entries.rs` — `insert_entry()`, `update_entry()`, `delete_entry()` — index/remove individual entries
 - `commands/import.rs` — `import_entries()` helper — bulk reindex after import (reached via `run_import_plugin`)
 
 **Design constraints for any future implementation:**
 
 1. **No plaintext on disk** — the index must be encrypted or derived in a way that does not expose entry content to raw file access. Options to evaluate: encrypted FTS (e.g. SQLCipher), client-side trigram index stored encrypted alongside entries, or an in-memory index rebuilt at unlock time.
-2. **Schema migration required** — bump `SCHEMA_VERSION` in `db/schema.rs` and add a migration step.
+2. **Schema migration required** — bump `SCHEMA_VERSION` in `db/schema/mod.rs` and add a migration step in `db/schema/migrations/`.
 3. **UI placement is undecided** — `SearchBar` and `SearchResults` exist but where they appear (sidebar, overlay, command palette, etc.) should be designed fresh. Wire them into `Sidebar.tsx` or a new component; do not assume the old sidebar layout.
 4. **State is ready** — `src/state/search.ts` signals can be used as-is or extended.

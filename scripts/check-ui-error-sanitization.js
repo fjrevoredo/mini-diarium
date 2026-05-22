@@ -34,7 +34,7 @@ let violations = 0;
 for (const pattern of PATTERNS) {
   let output;
   try {
-    output = execSync(`rg --color never -n "${pattern}" src/`, {
+    output = execSync(`rg --color never -n "${pattern}" --glob "!src/lib/errors.ts" src/`, {
       encoding: 'utf8',
       stdio: 'pipe',
       cwd: new URL('..', import.meta.url).pathname.replace(/^\/([A-Z]:)/, '$1'),

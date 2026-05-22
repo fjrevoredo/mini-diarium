@@ -121,7 +121,7 @@ A future media storage layer would require: a separate table or file system stor
 ### AT-4 — Search index does not exist; stub is intentionally preserved
 **Status:** Open (security tradeoff; future implementation required)
 
-`commands/search.rs` is a stub that always returns `[]`. The FTS5 table was dropped in schema v4 because it stored plaintext. `// Search index hook:` comments in `db/queries.rs` and `commands/import.rs` mark the exact integration points.
+`commands/search.rs` is a stub that always returns `[]`. The FTS5 table was dropped in schema v4 because it stored plaintext. `// Search index hook:` comments in `db/queries/entries.rs` and `commands/import.rs` mark the exact integration points.
 
 Any implementation must satisfy: (1) no plaintext on disk, (2) schema migration (bump `SCHEMA_VERSION`), (3) UI placement is unspecified — the existing `SearchBar.tsx` / `SearchResults.tsx` / `state/search.ts` are preserved as interface contracts but their placement is not decided.
 
@@ -183,7 +183,7 @@ The legacy export commands (`export_json`, `export_markdown`) remain registered 
 ### AT-11 — Auth slots require a minimum of one slot
 **Status:** By design
 
-`remove_auth_method` in `commands/auth/auth_methods.rs` refuses to delete the last remaining auth slot. This prevents users from locking themselves out of their own journal. It is enforced via `count_auth_slots()` before deletion.
+`remove_auth_method` in `commands/auth/auth_slots.rs` refuses to delete the last remaining auth slot. This prevents users from locking themselves out of their own journal. It is enforced via `count_auth_slots()` before deletion.
 
 ---
 

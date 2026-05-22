@@ -45,7 +45,7 @@ export default function PreferencesDataTab(props: TabProps) {
       // The journal will be locked and reset, which will trigger the auth state to change
       window.location.reload();
     } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
+      const message = mapTauriError(err, t);
       alert(t('prefs.data.resetFailedAlert', { message }));
     }
   };

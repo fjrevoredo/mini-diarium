@@ -177,7 +177,7 @@ Every setting change that moves a value from one location to another requires a 
 2. If not, read the legacy location, write to the new location, and clear the legacy location.
 3. Keep the legacy field in the struct with a `// TODO: deprecated` comment for at least one release to support users who haven't upgraded yet.
 
-Schema version bumps for `db_settings` changes must go through the normal migration path in `db/schema.rs` (bump `SCHEMA_VERSION`, add a `migrate_vN_to_vN+1` function).
+Schema version bumps for `db_settings` changes must go through the normal migration path in `db/schema/` (bump `SCHEMA_VERSION` in `db/schema/mod.rs`, add a `migrate_vN_to_vN+1` function in `db/schema/migrations/`).
 
 ## References
 
