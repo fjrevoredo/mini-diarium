@@ -1,6 +1,7 @@
 # Frontend (src/) — Mini Diarium
 
 > For project architecture, command registry, and cross-cutting conventions see the [root CLAUDE.md](../CLAUDE.md).
+> For durable frontend rules, use [Frontend best practices](../docs/best-practices/FRONTEND_BEST_PRACTICES.md) before changing SolidJS reactivity, state ownership, Tauri error UI, TipTap/editor behavior, accessibility, or E2E-visible UI.
 
 ## File Structure
 
@@ -142,6 +143,8 @@ const t = useI18n();
 setError(mapTauriError(err, t));
 ```
 
+For the cross-layer IPC error contract and regression checks, see [`docs/best-practices/TAURI_BEST_PRACTICES.md`](../docs/best-practices/TAURI_BEST_PRACTICES.md).
+
 ### Module-level arrays using translations
 
 Arrays that contain translated strings must be `createMemo` inside the component (not module-level consts), so they are evaluated after `useI18n()` is called. See `MONTH_NAMES` in `Calendar.tsx` and `FIRST_DAY_OPTIONS` in `overlays/preferences/PreferencesWritingTab.tsx` as reference.
@@ -170,10 +173,15 @@ See `docs/TRANSLATIONS.md` for the community translator guide.
 - **Conditional rendering** — use `<Show when={...}>`, not JS ternaries.
 - **Lists** — use `<For each={...}>`, never `.map()`. The `<For>` callback receives the unwrapped item directly for primitive arrays: `(item) => ...`, not `(item) => item()`. Only store/object entries behave like signals.
 
+For review checklists and diagnostic `rg` commands, see [`docs/best-practices/FRONTEND_BEST_PRACTICES.md`](../docs/best-practices/FRONTEND_BEST_PRACTICES.md).
+
 ### Error Handling
 
 - `try/catch` around `invoke()` calls; set error signals for UI display.
 - **Always pass raw Tauri error strings through `mapTauriError()` from `src/lib/errors.ts` before displaying to users.** It strips filesystem paths, OS error codes, SQLite internals, and Argon2 details to prevent information disclosure.
+- Run `bun run check:ui-errors` after adding new user-visible Tauri error paths.
+
+For sensitive UI flow ordering, typed Tauri wrapper usage, and sanitized-error tests, see [`docs/best-practices/FRONTEND_BEST_PRACTICES.md`](../docs/best-practices/FRONTEND_BEST_PRACTICES.md).
 
 ### Testing Pattern
 

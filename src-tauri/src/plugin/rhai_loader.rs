@@ -3,6 +3,7 @@ use super::{ExportOutput, ExportPlugin, ImportPlugin, PluginInfo};
 use crate::db::queries::DiaryEntry;
 use log::{info, warn};
 use rhai::{Array, Dynamic, Engine, Map, Scope, AST};
+use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
 // Keep plugin docs in one place: the generated `{app_data_dir}/plugins/README.md`
@@ -178,7 +179,11 @@ impl ExportPlugin for RhaiExportPlugin {
         self.info.clone()
     }
 
-    fn export(&self, entries: Vec<DiaryEntry>) -> Result<ExportOutput, String> {
+    fn export(
+        &self,
+        entries: Vec<DiaryEntry>,
+        _tags: &HashMap<i64, Vec<String>>,
+    ) -> Result<ExportOutput, String> {
         let engine = create_sandboxed_engine();
         let mut scope = Scope::new();
         let arr = entries_to_rhai_array(entries);
@@ -479,7 +484,7 @@ fn format_entries(entries) {
             date_updated: "2024-06-15T00:00:00Z".into(),
         }];
 
-        let result = plugin.export(entries).unwrap();
+        let result = plugin.export(entries, &HashMap::new()).unwrap();
         assert_eq!(result.content, "2024-06-15: My Day\n");
     }
 
@@ -576,7 +581,7 @@ fn parse(content) {
         load_plugins(dir.path(), &mut registry);
 
         let plugin = registry.find_exporter("rhai:plain-text-timeline").unwrap();
-        let output = plugin.export(sample_entries()).unwrap();
+        let output = plugin.export(sample_entries(), &HashMap::new()).unwrap();
         let expected = format!(
             "2024-01-01 | (untitled)\n{}\n---\n2024-01-02 | Second\n{}",
             crate::export::markdown::html_to_markdown("<p>First body</p>"),

@@ -16,6 +16,16 @@ For domain-specific conventions, gotchas, and checklists, see:
 - [E2E (e2e/)](e2e/CLAUDE.md) — WebdriverIO, tauri-driver, viewport rules, E2E mode contracts
 - [Benchmarks (benchmarks/)](benchmarks/CLAUDE.md) — criterion, Vitest bench, CI tracking, gotchas
 - [Website (website/)](website/CLAUDE.md) — blog post workflow, generator script, content strategy, file layout
+- [Best practices](docs/best-practices/README.md) — durable frontend, Rust, Tauri, and CI rules for code quality and regression diagnosis
+
+## Best-Practice References
+
+Use these before broad refactors, backend command changes, IPC changes, security-sensitive work, or CI/workflow edits:
+
+- [Rust best practices](docs/best-practices/RUST_BEST_PRACTICES.md) — backend invariants, encrypted rows, migrations, lock scope, and production-path tests
+- [Tauri best practices](docs/best-practices/TAURI_BEST_PRACTICES.md) — command registration, IPC validation, error sanitization, capabilities, and WebView security
+- [Frontend best practices](docs/best-practices/FRONTEND_BEST_PRACTICES.md) — SolidJS reactivity, state ownership, Tauri error UI, TipTap/editor flows, accessibility, and E2E stability
+- [CI best practices](docs/best-practices/CI_BEST_PRACTICES.md) — workflow structure, permissions, caching, release safeguards, and diagnostics
 
 ## Architecture
 
@@ -144,6 +154,7 @@ All 62 registered Tauri commands (source: `lib.rs`). Rust names use `snake_case`
 
 - Backend returns `Result<T, String>`; frontend wraps `invoke()` calls with `try/catch` and sets error signals.
 - **Always sanitize raw Tauri error strings with `mapTauriError()` from `src/lib/errors.ts` before displaying to users** — it strips paths, OS codes, and crypto internals.
+- Backend commands must validate IPC input and security invariants themselves. Frontend controls are UX, not enforcement. See [Tauri best practices](docs/best-practices/TAURI_BEST_PRACTICES.md).
 
 ### Naming
 
@@ -256,4 +267,4 @@ Both files are committed to the repo. Always commit them together after any `pac
 
 ### Creating a Release
 
-See [RELEASING.md](RELEASING.md) for the full process. Version bump script: `./bump-version.sh X.Y.Z`.
+See [docs/RELEASING.md](docs/RELEASING.md) for the full process. Version bump script: `./bump-version.sh X.Y.Z`.

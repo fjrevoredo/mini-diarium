@@ -35,9 +35,10 @@ pub fn export_json(
     info!("Starting JSON export to file: {}", file_path);
     with_unlocked_db(&state, |db| {
         let entries = fetch_entries(db, date_from.as_deref(), date_to.as_deref())?;
+        let tags = crate::db::queries::tags::get_tags_names_map(db)?;
         let entries_exported = entries.len();
         debug!("Serializing {} entries to JSON...", entries_exported);
-        let json_string = json::export_entries_to_json(entries)?;
+        let json_string = json::export_entries_to_json(entries, &tags)?;
         std::fs::write(&file_path, &json_string).map_err(|e| {
             let err = format!("Failed to write file: {}", e);
             error!("{}", err);
@@ -67,9 +68,10 @@ pub fn export_markdown(
     info!("Starting Markdown export to file: {}", file_path);
     with_unlocked_db(&state, |db| {
         let entries = fetch_entries(db, date_from.as_deref(), date_to.as_deref())?;
+        let tags = crate::db::queries::tags::get_tags_names_map(db)?;
         let entries_exported = entries.len();
         debug!("Converting {} entries to Markdown...", entries_exported);
-        let (md_string, assets) = markdown::export_entries_to_markdown_with_assets(entries);
+        let (md_string, assets) = markdown::export_entries_to_markdown_with_assets(entries, &tags);
         std::fs::write(&file_path, &md_string).map_err(|e| {
             let err = format!("Failed to write file: {}", e);
             error!("{}", err);
@@ -151,7 +153,9 @@ mod tests {
         // Export using the pure function (can't use Tauri State in unit tests)
         let entries = crate::db::queries::get_all_entries(&db).unwrap();
 
-        let json_string = crate::export::json::export_entries_to_json(entries).unwrap();
+        let json_string =
+            crate::export::json::export_entries_to_json(entries, &std::collections::HashMap::new())
+                .unwrap();
         fs::write(export_path, &json_string).unwrap();
 
         // Verify file exists and contains valid JSON
@@ -183,7 +187,9 @@ mod tests {
         let entries = crate::db::queries::get_all_entries(&db).unwrap();
         assert_eq!(entries.len(), 0);
 
-        let json_string = crate::export::json::export_entries_to_json(entries).unwrap();
+        let json_string =
+            crate::export::json::export_entries_to_json(entries, &std::collections::HashMap::new())
+                .unwrap();
         fs::write(export_path, &json_string).unwrap();
 
         let content = fs::read_to_string(export_path).unwrap();

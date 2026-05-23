@@ -1,5 +1,6 @@
 use crate::db::queries::DiaryEntry;
 use serde_json::{json, Value};
+use std::collections::HashMap;
 
 /// Exports diary entries to an array-based JSON format with id field
 ///
@@ -18,7 +19,10 @@ use serde_json::{json, Value};
 ///
 /// # Returns
 /// Pretty-printed JSON string
-pub fn export_entries_to_json(entries: Vec<DiaryEntry>) -> Result<String, String> {
+pub fn export_entries_to_json(
+    entries: Vec<DiaryEntry>,
+    tags: &HashMap<i64, Vec<String>>,
+) -> Result<String, String> {
     let now = chrono::Utc::now().to_rfc3339();
 
     // Build entries array
@@ -31,6 +35,7 @@ pub fn export_entries_to_json(entries: Vec<DiaryEntry>) -> Result<String, String
                 "title": entry.title,
                 "text": entry.text,
                 "dateUpdated": entry.date_updated,
+                "tags": tags.get(&entry.id).cloned().unwrap_or_default(),
             })
         })
         .collect();
@@ -63,9 +68,13 @@ mod tests {
         }
     }
 
+    fn empty_tags() -> HashMap<i64, Vec<String>> {
+        HashMap::new()
+    }
+
     #[test]
     fn test_export_empty_list() {
-        let result = export_entries_to_json(vec![]).unwrap();
+        let result = export_entries_to_json(vec![], &empty_tags()).unwrap();
         let parsed: Value = serde_json::from_str(&result).unwrap();
 
         assert_eq!(parsed["metadata"]["application"], "Mini Diarium");
@@ -85,7 +94,7 @@ mod tests {
             "Entry content here",
         )];
 
-        let result = export_entries_to_json(entries).unwrap();
+        let result = export_entries_to_json(entries, &empty_tags()).unwrap();
         let parsed: Value = serde_json::from_str(&result).unwrap();
 
         let entries_arr = parsed["entries"].as_array().unwrap();
@@ -106,7 +115,7 @@ mod tests {
             create_test_entry(3, "2024-01-03", "Third", "Content three"),
         ];
 
-        let result = export_entries_to_json(entries).unwrap();
+        let result = export_entries_to_json(entries, &empty_tags()).unwrap();
         let parsed: Value = serde_json::from_str(&result).unwrap();
 
         let entries_arr = parsed["entries"].as_array().unwrap();
@@ -123,7 +132,7 @@ mod tests {
             create_test_entry(2, "2024-01-01", "Evening", "Had dinner"),
         ];
 
-        let result = export_entries_to_json(entries).unwrap();
+        let result = export_entries_to_json(entries, &empty_tags()).unwrap();
         let parsed: Value = serde_json::from_str(&result).unwrap();
 
         let entries_arr = parsed["entries"].as_array().unwrap();
@@ -137,7 +146,7 @@ mod tests {
     #[test]
     fn test_export_entries_is_array_not_object() {
         let entries = vec![create_test_entry(1, "2024-01-15", "Test", "Content")];
-        let result = export_entries_to_json(entries).unwrap();
+        let result = export_entries_to_json(entries, &empty_tags()).unwrap();
         let parsed: Value = serde_json::from_str(&result).unwrap();
 
         // entries must be an array, not an object
@@ -156,12 +165,33 @@ mod tests {
             "Some content here",
         )];
 
-        let json_string = export_entries_to_json(entries).unwrap();
+        let json_string = export_entries_to_json(entries, &empty_tags()).unwrap();
         let parsed: Value = serde_json::from_str(&json_string).unwrap();
 
         let entries_arr = parsed["entries"].as_array().unwrap();
         assert_eq!(entries_arr.len(), 1);
         assert_eq!(entries_arr[0]["id"], 99);
         assert_eq!(entries_arr[0]["title"], "Test Entry");
+    }
+
+    #[test]
+    fn test_export_entry_with_tags() {
+        let entries = vec![create_test_entry(42, "2024-01-15", "My Entry", "Content")];
+        let tags = HashMap::from([(42i64, vec!["travel".to_string(), "work".to_string()])]);
+        let result = export_entries_to_json(entries, &tags).unwrap();
+        let parsed: Value = serde_json::from_str(&result).unwrap();
+        let entry_tags = parsed["entries"][0]["tags"].as_array().unwrap();
+        assert_eq!(entry_tags.len(), 2);
+        assert_eq!(entry_tags[0].as_str().unwrap(), "travel");
+        assert_eq!(entry_tags[1].as_str().unwrap(), "work");
+    }
+
+    #[test]
+    fn test_export_entry_without_tags_has_empty_array() {
+        let entries = vec![create_test_entry(1, "2024-01-15", "Entry", "Content")];
+        let result = export_entries_to_json(entries, &empty_tags()).unwrap();
+        let parsed: Value = serde_json::from_str(&result).unwrap();
+        let entry_tags = parsed["entries"][0]["tags"].as_array().unwrap();
+        assert!(entry_tags.is_empty());
     }
 }

@@ -16,6 +16,7 @@ For subsystem-specific conventions, use these as the detailed references:
 - [Backend (src-tauri/)](src-tauri/CLAUDE.md) — Tauri commands, auth architecture, plugins, search hook points, Rust patterns
 - [E2E (e2e/)](e2e/CLAUDE.md) — WebdriverIO, tauri-driver, viewport rules, E2E mode contracts
 - [Benchmarks (benchmarks/)](benchmarks/CLAUDE.md) — Criterion, Vitest bench, CI tracking
+- [Best practices](docs/best-practices/README.md) — frontend, Rust, Tauri, and CI rules for durable code quality and regression diagnosis
 
 This file is the concise, cross-cutting guide for agents. The domain guides above carry most implementation detail.
 
@@ -87,8 +88,8 @@ This repo is commonly worked on from a WSL shell over a Windows checkout (`/mnt/
 Most common agent tasks:
 
 - Add a Tauri command: implement it in `src-tauri/src/commands/`, register it in `src-tauri/src/lib.rs`, add a typed wrapper in `src/lib/tauri.ts`
-- Change frontend behavior: check `src/CLAUDE.md` first for SolidJS, i18n, and testing patterns
-- Change backend behavior: check `src-tauri/CLAUDE.md` first for command patterns and security constraints
+- Change frontend behavior: check `src/CLAUDE.md` plus `docs/best-practices/FRONTEND_BEST_PRACTICES.md` for SolidJS reactivity, state ownership, Tauri error UI, editor lifecycle, accessibility, and E2E-selector rules
+- Change backend behavior: check `src-tauri/CLAUDE.md` plus `docs/best-practices/RUST_BEST_PRACTICES.md` and `docs/best-practices/TAURI_BEST_PRACTICES.md` for command, IPC, auth, migration, and error-sanitization rules
 - Work on E2E or UI visibility defaults: audit `e2e/specs/` because the suite runs below the `lg` breakpoint
 - Update diagrams: use `cmd.exe /c bun run diagrams:check` for verification-only, `cmd.exe /c bun run diagrams` to regenerate
 
@@ -179,13 +180,13 @@ See `src/CLAUDE.md` for the full state inventory and testing patterns.
 ```rust
 #[tauri::command]
 pub fn my_command(arg: String, state: State<DiaryState>) -> Result<ReturnType, String> {
-    let db_state = state.db.lock().unwrap();
-    let db = db_state.as_ref().ok_or("Journal not unlocked")?;
-    Ok(result)
+    with_unlocked_db(&state, |db| {
+        Ok(result)
+    })
 }
 ```
 
-All commands return `Result<T, String>`. Register new commands in both the command module tree and `generate_handler![]` in `src-tauri/src/lib.rs`.
+All commands return `Result<T, String>`. Register new commands in both the command module tree and `generate_handler![]` in `src-tauri/src/lib.rs`, and add the typed frontend wrapper in `src/lib/tauri.ts`. See `docs/best-practices/TAURI_BEST_PRACTICES.md` before adding or changing IPC surface.
 
 ### Error Handling
 
@@ -282,8 +283,9 @@ For the authoritative test-selector inventory and E2E rules, see `src/CLAUDE.md`
 11. **Default E2E runs at 800x660:** this is below the `lg` breakpoint, so sidebar visibility defaults directly affect test reachability.
 12. **UI visibility default changes require E2E review:** changing `isSidebarCollapsed`, overlay defaults, or session reset behavior can break the E2E suite.
 13. **Raw Tauri errors should not be shown directly:** use `mapTauriError()` to avoid leaking paths, OS codes, or crypto internals.
-14. **This shell is WSL over a Windows checkout:** WSL-native `bun`/Rust/Tauri commands may fail even when the Windows toolchain works.
-15. **Flatpak builds are validated in CI on every PR:** If the `flatpak` job fails, fix the issue before merging — do not wait for the Flathub release PR. See `docs/FLATPAK_MAINTENANCE.md` for details.
+14. **Backend security invariants live in Rust:** do not rely on hidden/disabled frontend controls for auth, encryption, or persistence rules. See `docs/best-practices/RUST_BEST_PRACTICES.md`.
+15. **This shell is WSL over a Windows checkout:** WSL-native `bun`/Rust/Tauri commands may fail even when the Windows toolchain works.
+16. **Flatpak builds are validated in CI on every PR:** If the `flatpak` job fails, fix the issue before merging — do not wait for the Flathub release PR. See `docs/FLATPAK_MAINTENANCE.md` for details.
 
 ## Security Rules
 
@@ -366,6 +368,7 @@ When behavior or conventions change:
 
 1. Update the code first
 2. Update the most specific `CLAUDE.md` file that owns the domain
-3. Update this root `AGENTS.md` only for cross-cutting, agent-relevant guidance
+3. Update the relevant file under `docs/best-practices/` when the change creates a durable frontend, Rust, Tauri, or CI rule
+4. Update this root `AGENTS.md` only for cross-cutting, agent-relevant guidance
 
 If `AGENTS.md` and `CLAUDE.md` disagree, treat the repo code as the source of truth and reconcile the docs.

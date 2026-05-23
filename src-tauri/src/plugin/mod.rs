@@ -3,6 +3,7 @@ pub mod registry;
 pub mod rhai_loader;
 
 use crate::db::queries::DiaryEntry;
+use std::collections::HashMap;
 
 /// Metadata about a plugin, returned to the frontend
 #[derive(Debug, Clone, serde::Serialize)]
@@ -32,5 +33,9 @@ pub struct ExportOutput {
 /// A plugin that can export diary entries to a formatted output.
 pub trait ExportPlugin: Send + Sync {
     fn info(&self) -> PluginInfo;
-    fn export(&self, entries: Vec<DiaryEntry>) -> Result<ExportOutput, String>;
+    fn export(
+        &self,
+        entries: Vec<DiaryEntry>,
+        tags: &HashMap<i64, Vec<String>>,
+    ) -> Result<ExportOutput, String>;
 }

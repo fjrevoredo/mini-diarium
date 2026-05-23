@@ -357,6 +357,7 @@ The page covers four areas: Argon2id key derivation (intentionally slow — ~200
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for setup instructions, development workflow, and conventions.
 For maintainers adding official plugins, see [docs/BUILTIN_PLUGIN_GUIDE.md](docs/BUILTIN_PLUGIN_GUIDE.md).
+For maintainers changing frontend UI/state, the Rust backend, Tauri IPC boundary, WebView security, or CI, see [docs/best-practices](docs/best-practices/README.md).
 
 ### Translations
 

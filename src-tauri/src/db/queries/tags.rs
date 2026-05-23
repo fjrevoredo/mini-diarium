@@ -1,6 +1,7 @@
 use crate::crypto::cipher;
 use crate::db::schema::DatabaseConnection;
 use rusqlite::params;
+use std::collections::HashMap;
 
 /// A tag with its decrypted name (never stored as plaintext in the DB)
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -171,6 +172,37 @@ pub fn get_tags_for_entry(db: &DatabaseConnection, entry_id: i64) -> Result<Vec<
     Ok(tags)
 }
 
+/// Returns a map of entry_id → sorted decrypted tag names for all entries in the journal.
+/// Entries with no tags are not included in the map.
+pub fn get_tags_names_map(db: &DatabaseConnection) -> Result<HashMap<i64, Vec<String>>, String> {
+    let mut stmt = db
+        .conn()
+        .prepare(
+            "SELECT et.entry_id, t.name_encrypted
+             FROM entry_tags et
+             JOIN tags t ON t.id = et.tag_id",
+        )
+        .map_err(|e| format!("Failed to prepare tags map query: {}", e))?;
+
+    let rows: Vec<(i64, Vec<u8>)> = stmt
+        .query_map([], |row| {
+            Ok((row.get::<_, i64>(0)?, row.get::<_, Vec<u8>>(1)?))
+        })
+        .map_err(|e| format!("Failed to query tags map: {}", e))?
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| format!("Failed to read tags map row: {}", e))?;
+
+    let mut map: HashMap<i64, Vec<String>> = HashMap::new();
+    for (entry_id, enc) in rows {
+        let name = super::decrypt_utf8(db.key(), &enc, "tag name")?;
+        map.entry(entry_id).or_default().push(name);
+    }
+    for names in map.values_mut() {
+        names.sort_by_key(|n| n.to_lowercase());
+    }
+    Ok(map)
+}
+
 /// Returns the distinct entry dates (YYYY-MM-DD) associated with a given tag id.
 pub fn get_entry_dates_by_tag(db: &DatabaseConnection, tag_id: i64) -> Result<Vec<String>, String> {
     let mut stmt = db
@@ -210,6 +242,33 @@ mod tests {
             date_created: now.clone(),
             date_updated: now,
         }
+    }
+
+    #[test]
+    fn test_get_tags_names_map() {
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+
+        let entry = create_test_entry("2024-06-01");
+        insert_entry(&db, &entry).unwrap();
+        let entry_id = db.conn().last_insert_rowid();
+
+        let tag1 = create_tag(&db, "work").unwrap();
+        let tag2 = create_tag(&db, "zzz-last").unwrap();
+        let tag3 = create_tag(&db, "aaa-first").unwrap();
+        add_tag_to_entry(&db, entry_id, tag1.id).unwrap();
+        add_tag_to_entry(&db, entry_id, tag2.id).unwrap();
+        add_tag_to_entry(&db, entry_id, tag3.id).unwrap();
+
+        let map = get_tags_names_map(&db).unwrap();
+        let names = map.get(&entry_id).unwrap();
+        assert_eq!(names, &["aaa-first", "work", "zzz-last"]);
+
+        // Entry with no tags → not in map
+        let entry2 = create_test_entry("2024-06-02");
+        insert_entry(&db, &entry2).unwrap();
+        let entry2_id = db.conn().last_insert_rowid();
+        assert!(!map.contains_key(&entry2_id));
     }
 
     #[test]
