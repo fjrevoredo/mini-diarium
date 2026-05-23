@@ -3,7 +3,7 @@ title: Plugins
 slug: plugins
 description: How to use and install plugins that extend import and export capabilities with custom scripts.
 order: 7
-updated: 2026-05-14
+updated: 2026-05-23
 tags: plugins, Rhai, import, export, customization
 ---
 
@@ -82,6 +82,7 @@ fn format_entries(entries) {
 - The `text` field should contain HTML (the editor uses HTML internally).
 - Scripts run in a sandbox: no file system access, no network access.
 - Scripts are limited to 1,000,000 operations to prevent infinite loops.
+- **Tags are not currently passed to Rhai export scripts.** Each entry map contains `date`, `title`, `text`, `word_count`, `date_created`, and `date_updated`. Tag support for Rhai plugins will be added in a future release.
 
 ## Official Example
 

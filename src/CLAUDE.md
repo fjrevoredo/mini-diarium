@@ -167,21 +167,13 @@ See `docs/TRANSLATIONS.md` for the community translator guide.
 
 ### SolidJS Reactivity Gotchas
 
-- **Never destructure props** — kills reactivity. Use `props.name` always.
-- **Wrap async in components** — use `onMount` or `createResource`, never top-level `await`.
-- **Event handlers** — use `on:click` (native) or `onClick` (SolidJS delegated). Wrap async handlers: `onClick={() => handleAsync()}`.
-- **Conditional rendering** — use `<Show when={...}>`, not JS ternaries.
-- **Lists** — use `<For each={...}>`, never `.map()`. The `<For>` callback receives the unwrapped item directly for primitive arrays: `(item) => ...`, not `(item) => item()`. Only store/object entries behave like signals.
+The durable SolidJS reactivity rules and diagnostic `rg` commands live in [`docs/best-practices/FRONTEND_BEST_PRACTICES.md`](../docs/best-practices/FRONTEND_BEST_PRACTICES.md). This domain guide keeps local examples and inventories.
 
-For review checklists and diagnostic `rg` commands, see [`docs/best-practices/FRONTEND_BEST_PRACTICES.md`](../docs/best-practices/FRONTEND_BEST_PRACTICES.md).
+Local note: the `<For>` callback receives the unwrapped item directly for primitive arrays: `(item) => ...`, not `(item) => item()`. Only store/object entries behave like signals.
 
 ### Error Handling
 
-- `try/catch` around `invoke()` calls; set error signals for UI display.
-- **Always pass raw Tauri error strings through `mapTauriError()` from `src/lib/errors.ts` before displaying to users.** It strips filesystem paths, OS error codes, SQLite internals, and Argon2 details to prevent information disclosure.
-- Run `bun run check:ui-errors` after adding new user-visible Tauri error paths.
-
-For sensitive UI flow ordering, typed Tauri wrapper usage, and sanitized-error tests, see [`docs/best-practices/FRONTEND_BEST_PRACTICES.md`](../docs/best-practices/FRONTEND_BEST_PRACTICES.md).
+The durable rules for typed wrappers, sanitized Tauri errors, sensitive UI flow ordering, and regression checks live in [`docs/best-practices/FRONTEND_BEST_PRACTICES.md`](../docs/best-practices/FRONTEND_BEST_PRACTICES.md). Keep the `mapTauriError(err, t)` call pattern above aligned with `src/lib/errors.ts`.
 
 ### Testing Pattern
 

@@ -3,8 +3,8 @@ title: Exporting Data
 slug: export
 description: How to export your journal to JSON, Markdown, and other formats for backup or portability.
 order: 6
-updated: 2026-04-16
-tags: export, backup, JSON, Markdown, portability
+updated: 2026-05-23
+tags: export, backup, JSON, Markdown, portability, tags
 ---
 
 ## Opening the Export Dialog
@@ -15,29 +15,47 @@ Open the export dialog from **Journal → Export...** in the app menu.
 
 ### JSON Export
 
-The JSON format is the primary structural export. It outputs an array of entries under the `"entries"` key:
+The JSON format is the primary structural export. It outputs a `metadata` block and an array of entries under the `"entries"` key:
 
 ```json
 {
+  "metadata": {
+    "application": "Mini Diarium",
+    "version": "0.5.0",
+    "exportedAt": "2024-01-15T12:00:00Z"
+  },
   "entries": [
     {
       "id": 1,
       "date": "2024-01-15",
       "title": "My Entry",
       "text": "<p>Entry content as HTML...</p>",
-      "word_count": 5,
-      "date_created": "2024-01-15T10:00:00Z",
-      "date_updated": "2024-01-15T10:05:00Z"
+      "dateUpdated": "2024-01-15T10:05:00Z",
+      "tags": ["travel", "work"]
     }
   ]
 }
 ```
+
+Every entry includes a `"tags"` array. If the entry has no tags the array is empty (`[]`). Tags are listed in alphabetical order.
 
 This format preserves entry IDs and timestamps and can be re-imported back into Mini Diarium.
 
 ### Markdown Export
 
 The Markdown export produces a human-readable text file, grouped by date. If a day has multiple entries, each appears under its own sub-heading.
+
+If an entry has tags, a `*Tags: …*` line is written immediately after the title (or date heading when there is no title) and before the entry body:
+
+```markdown
+## 2024-01-15
+**My Entry**
+*Tags: travel, work*
+
+Entry content here...
+```
+
+Entries with no tags have no tags line. Tags appear in alphabetical order.
 
 Markdown is a best-effort conversion of the stored HTML editor content. Complex formatting (tables, images) may not convert perfectly, but the text is always readable.
 

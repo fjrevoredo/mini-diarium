@@ -235,7 +235,7 @@
       "@id": "https://mini-diarium.com/docs/plugins/#article",
       "headline": "Plugins",
       "description": "How to use and install plugins that extend import and export capabilities with custom scripts.",
-      "dateModified": "2026-05-14T00:00:00Z",
+      "dateModified": "2026-05-23T00:00:00Z",
       "keywords": "plugins, Rhai, import, export, customization",
       "publisher": {
         "@type": "Organization",
@@ -448,6 +448,7 @@
         <li>The <code>text</code> field should contain HTML (the editor uses HTML internally).</li>
         <li>Scripts run in a sandbox: no file system access, no network access.</li>
         <li>Scripts are limited to 1,000,000 operations to prevent infinite loops.</li>
+        <li><strong>Tags are not currently passed to Rhai export scripts.</strong> Each entry map contains <code>date</code>, <code>title</code>, <code>text</code>, <code>word_count</code>, <code>date_created</code>, and <code>date_updated</code>. Tag support for Rhai plugins will be added in a future release.</li>
         </ul>
         <h2 id="official-example">Official Example</h2><p>An official example plugin is included in the repository at <code>docs/user-plugins/plain-text-timeline.rhai</code>.</p>
         
