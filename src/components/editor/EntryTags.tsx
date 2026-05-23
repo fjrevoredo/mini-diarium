@@ -1,4 +1,4 @@
-import { createSignal, createEffect, For, Show, onCleanup } from 'solid-js';
+import { createSignal, createMemo, createEffect, For, Show, onCleanup } from 'solid-js';
 import { useI18n } from '../../i18n';
 import {
   type Tag,
@@ -24,7 +24,14 @@ interface EntryTagsProps {
 export default function EntryTags(props: EntryTagsProps) {
   const t = useI18n();
 
-  const [entryTags, setEntryTags] = createSignal<Tag[]>([]);
+  const [entryTagIds, setEntryTagIds] = createSignal<number[]>([]);
+  const entryTags = createMemo(() => {
+    const tagMap = new Map(allTags().map((t) => [t.id, t]));
+    return entryTagIds()
+      .map((id) => tagMap.get(id))
+      .filter((t): t is Tag => t !== undefined)
+      .sort((a, b) => a.name.toLowerCase().localeCompare(b.name.toLowerCase()));
+  });
   const [isDropdownOpen, setIsDropdownOpen] = createSignal(false);
   const [newTagName, setNewTagName] = createSignal('');
   const [error, setError] = createSignal<string | null>(null);
@@ -41,7 +48,7 @@ export default function EntryTags(props: EntryTagsProps) {
   const loadEntryTags = async (id: number) => {
     try {
       const tags = await getTagsForEntry(id);
-      setEntryTags(tags);
+      setEntryTagIds(tags.map((t) => t.id));
     } catch (err) {
       setError(mapTauriError(err, t));
     }
@@ -59,7 +66,7 @@ export default function EntryTags(props: EntryTagsProps) {
   const handleRemoveTag = async (tagId: number) => {
     try {
       await removeTagFromEntry(props.entryId, tagId);
-      setEntryTags((prev) => prev.filter((t) => t.id !== tagId));
+      setEntryTagIds((prev) => prev.filter((id) => id !== tagId));
     } catch (err) {
       setError(mapTauriError(err, t));
     }
@@ -68,12 +75,7 @@ export default function EntryTags(props: EntryTagsProps) {
   const handleAddExistingTag = async (tag: Tag) => {
     try {
       await addTagToEntry(props.entryId, tag.id);
-      setEntryTags((prev) => {
-        if (prev.some((t) => t.id === tag.id)) return prev;
-        return [...prev, tag].sort((a, b) =>
-          a.name.toLowerCase().localeCompare(b.name.toLowerCase()),
-        );
-      });
+      setEntryTagIds((prev) => (prev.includes(tag.id) ? prev : [...prev, tag.id]));
       setIsDropdownOpen(false);
       setNewTagName('');
     } catch (err) {
@@ -88,12 +90,7 @@ export default function EntryTags(props: EntryTagsProps) {
       const tag = await createTag(name);
       await addTagToEntry(props.entryId, tag.id);
       await loadAllTags();
-      setEntryTags((prev) => {
-        if (prev.some((t) => t.id === tag.id)) return prev;
-        return [...prev, tag].sort((a, b) =>
-          a.name.toLowerCase().localeCompare(b.name.toLowerCase()),
-        );
-      });
+      setEntryTagIds((prev) => (prev.includes(tag.id) ? prev : [...prev, tag.id]));
       setIsDropdownOpen(false);
       setNewTagName('');
     } catch (err) {

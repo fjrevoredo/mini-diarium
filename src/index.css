@@ -349,8 +349,12 @@ body {
    ============================================ */
 
 @keyframes unlock-backdrop-out {
-  from { opacity: 1; }
-  to   { opacity: 0; }
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
 }
 
 /* Fixed full-screen overlay rendered inside MainLayout on mount.
@@ -366,8 +370,12 @@ body {
 }
 
 @keyframes lock-backdrop-in {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 /* Fixed full-screen overlay rendered from App.tsx during the 'locking' transition.

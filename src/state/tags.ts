@@ -14,6 +14,11 @@ export function resetTagsState(): void {
 export async function loadAllTags(): Promise<void> {
   const tags = await getAllTags();
   setAllTags(tags);
+  const filter = activeTagFilter();
+  if (filter) {
+    const fresh = tags.find((t) => t.id === filter.id);
+    setActiveTagFilterSignal(fresh ?? null);
+  }
 }
 
 export async function setTagFilter(tag: Tag): Promise<void> {

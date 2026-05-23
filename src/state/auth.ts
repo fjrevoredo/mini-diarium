@@ -11,7 +11,13 @@ import { startOnboarding } from './onboarding';
 
 const log = createLogger('Auth');
 
-export type AuthState = 'checking' | 'journal-select' | 'no-journal' | 'locked' | 'locking' | 'unlocked';
+export type AuthState =
+  | 'checking'
+  | 'journal-select'
+  | 'no-journal'
+  | 'locked'
+  | 'locking'
+  | 'unlocked';
 
 const [authState, setAuthState] = createSignal<AuthState>('checking');
 const [error, setError] = createSignal<string | null>(null);
