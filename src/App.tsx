@@ -1,4 +1,4 @@
-import { Match, Switch, createEffect, onCleanup, onMount } from 'solid-js';
+import { Match, Show, Switch, createEffect, onCleanup, onMount } from 'solid-js';
 import { listen, UnlistenFn } from '@tauri-apps/api/event';
 import { authState, initializeAuth, lockJournal, setupAuthEventListeners } from './state/auth';
 import { initializeTheme } from './lib/theme';
@@ -103,10 +103,16 @@ function App() {
           <PasswordPrompt />
         </Match>
 
-        <Match when={authState() === 'unlocked'}>
+        <Match when={authState() === 'unlocked' || authState() === 'locking'}>
           <MainLayout />
         </Match>
       </Switch>
+
+      {/* Lock backdrop — fades in over the mounted MainLayout, then locked state unmounts it */}
+      <Show when={authState() === 'locking'}>
+        <div class="lock-backdrop" aria-hidden="true" />
+      </Show>
+
       <AboutOverlay isOpen={isAboutOpen()} onClose={() => setIsAboutOpen(false)} />
     </>
   );

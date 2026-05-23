@@ -13,7 +13,7 @@ TODO entry format:
 - After creating a new TODO, update the `Latest TODO ID` marker to reflect the new highest ID
 - Use the `todo-manager` skill (`.agents/skills/todo-manager/`) for creation, tracking, archival, and validation
 
-**Latest TODO ID: TODO-0037** — next new TODO should be TODO-0038
+**Latest TODO ID: TODO-0038** — next new TODO should be TODO-0039
 
 ---
 
@@ -50,3 +50,4 @@ TODO entry format:
 - [ ] **TODO-0019: Mobile version** — Tauri v2 supports iOS and Android targets; evaluate porting the app to mobile: adapt the SolidJS UI for touch (larger tap targets, bottom navigation, swipe gestures for day navigation), handle mobile file-system sandboxing for the journal location, and assess whether the Argon2id parameters need tuning for mobile CPU/memory constraints
 - [x] **TODO-0027: Tags support for entries** — add the ability to tag individual entries and look up entries by tag; design a lightweight tagging system that stores tag metadata alongside entries without complicating the data model or weakening privacy guarantees
 - [ ] **TODO-0028: Evaluate Markdown editor migration** — evaluate replacing the current TipTap HTML-based editor with a Markdown-based editor to simplify formatting support and reduce bundle size; research available Markdown editor libraries or consider building a custom one; this is a large architectural change and should only be pursued if the current editor limitations become a significant blocker
+- [ ] **TODO-0038: Remove legacy `require_all_auth` config migration** — once the release boundary is agreed, remove the legacy `JournalConfig.require_all_auth` field, its migration function `migrate_require_all_auth_to_db`, and all call sites from backend and frontend; the DB-settings-backed implementation that replaced it stays untouched; requires maintainer approval before execution; see TODO-0038-01 for full steps

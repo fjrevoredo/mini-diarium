@@ -11,7 +11,7 @@ import { startOnboarding } from './onboarding';
 
 const log = createLogger('Auth');
 
-export type AuthState = 'checking' | 'journal-select' | 'no-journal' | 'locked' | 'unlocked';
+export type AuthState = 'checking' | 'journal-select' | 'no-journal' | 'locked' | 'locking' | 'unlocked';
 
 const [authState, setAuthState] = createSignal<AuthState>('checking');
 const [error, setError] = createSignal<string | null>(null);
@@ -232,15 +232,26 @@ export async function setRequireAllAuth(enabled: boolean): Promise<void> {
   await loadJournals();
 }
 
+const LOCK_ANIMATION_MS = 700;
+
 // Lock journal
 export async function lockJournal(): Promise<void> {
   try {
     setError(null);
-    await executeCleanupCallbacks();
-    await tauri.lockJournal();
-    resetForLockedSession();
-    log.info('Journal locked');
+    setAuthState('locking');
+    await Promise.all([
+      (async () => {
+        await executeCleanupCallbacks();
+        await tauri.lockJournal();
+      })(),
+      new Promise<void>((resolve) => setTimeout(resolve, LOCK_ANIMATION_MS)),
+    ]);
+    if (authState() === 'locking') {
+      resetForLockedSession();
+      log.info('Journal locked');
+    }
   } catch (err) {
+    if (authState() === 'locking') setAuthState('unlocked');
     const message = mapTauriError(err);
     setError(message);
     throw new Error(message, { cause: err });
@@ -262,7 +273,11 @@ export async function setupAuthEventListeners(): Promise<() => void> {
     'journal-locked',
     (event) => {
       const reason = event.payload?.reason ?? 'unknown';
-      resetForLockedSession();
+      // If already in 'locking', the animation timer in lockJournal() owns the transition.
+      // Only force-transition for OS-initiated locks (screen lock, suspend) where authState is 'unlocked'.
+      if (authState() !== 'locking') {
+        resetForLockedSession();
+      }
       log.info(`Journal locked by backend (${reason})`);
     },
   );

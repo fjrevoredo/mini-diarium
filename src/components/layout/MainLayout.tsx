@@ -189,6 +189,9 @@ export default function MainLayout() {
 
   return (
     <div class="flex h-full overflow-hidden bg-secondary">
+      {/* Backdrop that fades out on mount — creates the blur-dissolve unlock animation */}
+      <div class="unlock-backdrop" aria-hidden="true" />
+
       {/* Sidebar */}
       <Sidebar isCollapsed={isSidebarCollapsed()} onClose={() => setIsSidebarCollapsed(true)} />
 
