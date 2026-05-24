@@ -581,7 +581,7 @@ const en = {
     subtitle: 'A few things to get you started:',
     tip_toolbar_title: 'Customize your toolbar',
     tip_toolbar_body:
-      'The default toolbar only shows Bold and Italic. Open Preferences → Writing to enable more tools — headings, colors, lists, alignment — and reorder them to your liking.',
+      'The default toolbar only shows Bold and Italic. Open Preferences → Writing to enable more tools (headings, colors, lists, alignment) and reorder them to your liking.',
     tip_toolbar_action: 'Open Preferences',
     tip_import_title: 'Import your entries',
     tip_import_body: 'Bring in entries from Day One, Obsidian, or plain text files.',
