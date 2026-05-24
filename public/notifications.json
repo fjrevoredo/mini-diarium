@@ -5,7 +5,7 @@
       "type": "release",
       "version": "0.5.0",
       "title": "What's new in 0.5.0",
-      "body": "v0.5.0 adds entry tags with filter, a first-run onboarding tour with spotlight anchoring, cross-application image drag-and-drop, and IndexNow integration for the marketing website, along with multi-layer network isolation hardening, unlock/lock blur animations, a sticky editor toolbar, per-item toolbar configuration, font family and font size in the editor toolbar, and a centralized plugins directory. Error messages across several dialogs have been sanitized, a multi-auth duplicate-credential vulnerability has been fixed, and the entire codebase has been substantially refactored with expanded test coverage.",
+      "body": "The biggest Mini Diarium update yet. Tags are here — label your entries and click a tag to filter the sidebar calendar to only dates with that tag. The editor toolbar is now fully configurable: enable, disable, and reorder any of the 17 formatting controls in Preferences → Writing, with optional font family and size pickers available directly in the toolbar. Cross-app image drag-and-drop now works with Electron editors and apps like Typora, locking and unlocking play smooth blur animations, and new journals get a three-step welcome tour on first launch. A multi-auth duplicate-credential vulnerability has also been fixed.",
       "date": "2026-05-24",
       "linkUrl": "https://github.com/fjrevoredo/mini-diarium/releases/tag/v0.5.0",
       "linkLabel": "Full release notes"

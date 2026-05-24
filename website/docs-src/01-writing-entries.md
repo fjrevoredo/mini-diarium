@@ -3,7 +3,7 @@ title: Writing Entries
 slug: writing-entries
 description: How to create, edit, format, and delete journal entries using the rich text editor.
 order: 2
-updated: 2026-05-14
+updated: 2026-05-24
 tags: editor, formatting, entries, writing
 ---
 
@@ -47,13 +47,16 @@ A live word count is displayed below the editor and updates as you write.
 
 ## Inserting Images
 
-You can add images to your entries in three ways:
+You can add images to your entries in several ways:
 
-- **Drag and drop** an image file from your file manager into the editor.
+- **Drag and drop** from your file manager — the editor shows a blue border when you hover a draggable image over it.
+- **Drag from other desktop apps** — images from Electron-based editors (sent as inline `data:image/...` base64 payloads) and from apps like Typora that reference images via local `file://` paths are both supported.
 - **Paste** an image from the clipboard.
 - Use the **Insert Image** button in the advanced toolbar to pick a file.
 
-Images are embedded directly into the entry as base64 data and are stored encrypted alongside your text. Supported formats are JPG, PNG, GIF, WebP, and BMP. Images are automatically resized to a maximum of 1200×1200 pixels before embedding.
+All dropped or pasted images are resized to a maximum of 1200 px on either side and re-encoded as JPEG or PNG before being embedded. Images are stored as base64 data encrypted alongside your text. Supported source formats are JPG, PNG, GIF, WebP, and BMP.
+
+If you drag an image from a web browser, the editor will show a banner explaining that embedding is not possible — it would require a network request, which the app never makes. Use **right-click → Copy Image** and paste instead.
 
 ## Right-to-Left and Bidirectional Text
 
@@ -74,6 +77,8 @@ The advanced toolbar includes a **clock button** that inserts the current time a
 ## Editor Font
 
 You can change the font used in the editor body via **Preferences → Writing → Editor font**. Choose from five bundled open-source font families: Noto Sans, Source Sans 3, Noto Serif, JetBrains Mono, and Fira Mono. Fonts are loaded on demand and work fully offline — no network requests, no OS-level font enumeration.
+
+Font family and font size are also available as optional controls in the editor toolbar itself. Enable them in **Preferences → Writing → Toolbar items** — they appear as compact dropdowns directly in the toolbar and always stay in sync with the Preferences sliders.
 
 ## Tags
 

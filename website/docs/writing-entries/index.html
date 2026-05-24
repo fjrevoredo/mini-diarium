@@ -235,7 +235,7 @@
       "@id": "https://mini-diarium.com/docs/writing-entries/#article",
       "headline": "Writing Entries",
       "description": "How to create, edit, format, and delete journal entries using the rich text editor.",
-      "dateModified": "2026-05-14T00:00:00Z",
+      "dateModified": "2026-05-24T00:00:00Z",
       "keywords": "editor, formatting, entries, writing",
       "publisher": {
         "@type": "Organization",
@@ -401,13 +401,15 @@
         </ul>
         <h2 id="auto-save">Auto-Save</h2><p>Entries save automatically as you type with a short debounce delay. You do not need to manually save anything. If you clear out an entry completely — emptying both the title and the body — it is automatically deleted after the debounce completes.</p>
         <h2 id="word-count">Word Count</h2><p>A live word count is displayed below the editor and updates as you write.</p>
-        <h2 id="inserting-images">Inserting Images</h2><p>You can add images to your entries in three ways:</p>
+        <h2 id="inserting-images">Inserting Images</h2><p>You can add images to your entries in several ways:</p>
         <ul>
-        <li><strong>Drag and drop</strong> an image file from your file manager into the editor.</li>
+        <li><strong>Drag and drop</strong> from your file manager — the editor shows a blue border when you hover a draggable image over it.</li>
+        <li><strong>Drag from other desktop apps</strong> — images from Electron-based editors (sent as inline <code>data:image/...</code> base64 payloads) and from apps like Typora that reference images via local <code>file://</code> paths are both supported.</li>
         <li><strong>Paste</strong> an image from the clipboard.</li>
         <li>Use the <strong>Insert Image</strong> button in the advanced toolbar to pick a file.</li>
         </ul>
-        <p>Images are embedded directly into the entry as base64 data and are stored encrypted alongside your text. Supported formats are JPG, PNG, GIF, WebP, and BMP. Images are automatically resized to a maximum of 1200×1200 pixels before embedding.</p>
+        <p>All dropped or pasted images are resized to a maximum of 1200 px on either side and re-encoded as JPEG or PNG before being embedded. Images are stored as base64 data encrypted alongside your text. Supported source formats are JPG, PNG, GIF, WebP, and BMP.</p>
+        <p>If you drag an image from a web browser, the editor will show a banner explaining that embedding is not possible — it would require a network request, which the app never makes. Use <strong>right-click → Copy Image</strong> and paste instead.</p>
         <h2 id="right-to-left-and-bidirectional-text">Right-to-Left and Bidirectional Text</h2><p>Mini Diarium supports right-to-left (RTL) writing in Arabic, Hebrew, Syriac, and other RTL scripts. Direction is handled per block — each paragraph and heading carries its own <code>dir</code> attribute — so you can freely mix RTL and LTR content in the same entry.</p>
         <p><strong>Auto-detection</strong>: as you type, the editor reads the first strongly-directional character in each paragraph or heading and sets the direction automatically. Arabic and Hebrew script trigger <code>dir=&quot;rtl&quot;</code>; Latin script triggers <code>dir=&quot;ltr&quot;</code>. Once a block&#39;s direction is set it is locked and will not change if you later add neutral characters (numbers, punctuation, emoji) to the same block.</p>
         <p><strong>Manual override</strong>: press <code>Ctrl+Shift+D</code> (or <code>Cmd+Shift+D</code> on macOS) to toggle the current block between RTL and LTR, or use the <strong>¶R / ¶L toggle button</strong> (pilcrow icon with directional arrow) in the advanced formatting toolbar. This is useful for paragraphs that start with neutral characters such as numbers or quotation marks that the auto-detector cannot classify. The button icon shows the current direction and the direction you will switch to when clicked.</p>
@@ -415,6 +417,7 @@
         <p><strong>Persistence</strong>: the <code>dir</code> attribute is stored in the encrypted HTML content of each entry, so direction is preserved across save, export, and re-open cycles.</p>
         <h2 id="inserting-the-current-time">Inserting the Current Time</h2><p>The advanced toolbar includes a <strong>clock button</strong> that inserts the current time at the cursor position. Clicking the button opens a popup where you can choose between <strong>12-hour</strong> and <strong>24-hour</strong> format and select hours:minutes or hours:minutes:seconds precision. Both selections are remembered across sessions.</p>
         <h2 id="editor-font">Editor Font</h2><p>You can change the font used in the editor body via <strong>Preferences → Writing → Editor font</strong>. Choose from five bundled open-source font families: Noto Sans, Source Sans 3, Noto Serif, JetBrains Mono, and Fira Mono. Fonts are loaded on demand and work fully offline — no network requests, no OS-level font enumeration.</p>
+        <p>Font family and font size are also available as optional controls in the editor toolbar itself. Enable them in <strong>Preferences → Writing → Toolbar items</strong> — they appear as compact dropdowns directly in the toolbar and always stay in sync with the Preferences sliders.</p>
         <h2 id="tags">Tags</h2><p>Each entry can have one or more tags. Tags appear as small chips below the editor body.</p>
         <ul>
         <li>Click <strong>+ Add tag</strong> to open a dropdown. Type to filter existing tags or create a new one; press <strong>Enter</strong> or click <strong>Create &quot;…&quot;</strong> to save.</li>

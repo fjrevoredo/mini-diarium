@@ -1,6 +1,6 @@
 ## What's Changed
 
-v0.5.0 adds entry tags with filter, a first-run onboarding tour with spotlight anchoring, cross-application image drag-and-drop, and IndexNow integration for the marketing website, along with multi-layer network isolation hardening, unlock/lock blur animations, a sticky editor toolbar, per-item toolbar configuration, font family and font size in the editor toolbar, and a centralized plugins directory. Error messages across several dialogs have been sanitized, a multi-auth duplicate-credential vulnerability has been fixed, and the entire codebase has been substantially refactored with expanded test coverage.
+v0.5.0 is the biggest Mini Diarium release to date, delivering substantial improvements on every front. User-facing highlights include entry tags with calendar filtering, a first-run welcome tour, expanded cross-app image drag-and-drop, a fully configurable editor toolbar with 17 individually toggleable controls (including optional font family and size pickers), and smooth blur animations on lock and unlock. On the internal side, the Rust backend and SolidJS frontend were each refactored into focused, independently testable modules, test coverage was substantially expanded across both layers, a multi-auth duplicate-credential vulnerability was fixed, network isolation was hardened with additional defense-in-depth layers, and all user-facing documentation was brought fully up to date.
 
 ### Added
 
