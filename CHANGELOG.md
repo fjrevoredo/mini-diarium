@@ -30,7 +30,7 @@ Template:
 
 # Versions
 
-## [0.5.0] - Unreleased
+## [0.5.0] - 24-05-2026
 
 ### Added
 - **IndexNow integration for the marketing website**: all public URLs are now automatically submitted to Bing, Yandex, Seznam, and other participating search engines via the IndexNow protocol. A new `scripts/submit-indexnow.mjs` script reads the sitemap and submits URLs in bulk. A GitHub Actions workflow (`.github/workflows/indexnow.yml`) enables manual submission after deployment, with an automatic push trigger ready to be enabled once Coolify auto-deployment is configured. Run `bun run website:submit-indexnow` to submit, or `bun run website:submit-indexnow:dry-run` to preview the payload.
