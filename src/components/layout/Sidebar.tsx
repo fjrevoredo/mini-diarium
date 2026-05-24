@@ -4,6 +4,7 @@ import Calendar from '../calendar/Calendar';
 import { selectedDate, setSelectedDate } from '../../state/ui';
 import { getTodayString } from '../../lib/dates';
 import { useI18n } from '../../i18n';
+import { activeTagFilter, clearTagFilter } from '../../state/tags';
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -122,6 +123,25 @@ export default function Sidebar(props: SidebarProps) {
                   <CalendarIcon size={16} />
                 </button>
               </div>
+
+              {/* Tag filter banner */}
+              <Show when={activeTagFilter()}>
+                {(tag) => (
+                  <div class="flex items-center gap-2 px-3 py-1.5 text-xs text-accent bg-tertiary border border-primary rounded-md">
+                    <span class="flex-1 truncate">
+                      {t('tags.filterActiveLabel')} {tag().name}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={clearTagFilter}
+                      class="flex-shrink-0 hover:opacity-75"
+                      aria-label={t('tags.clearFilter')}
+                    >
+                      ×
+                    </button>
+                  </div>
+                )}
+              </Show>
 
               {/* Calendar */}
               <Calendar />

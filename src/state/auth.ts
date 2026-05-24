@@ -6,10 +6,18 @@ import { createLogger } from '../lib/logger';
 import { mapTauriError } from '../lib/errors';
 import { journals, activeJournalId, loadJournals } from './journals';
 import { resetSessionState } from './session';
+import { loadAllTags } from './tags';
+import { startOnboarding } from './onboarding';
 
 const log = createLogger('Auth');
 
-export type AuthState = 'checking' | 'journal-select' | 'no-journal' | 'locked' | 'unlocked';
+export type AuthState =
+  | 'checking'
+  | 'journal-select'
+  | 'no-journal'
+  | 'locked'
+  | 'locking'
+  | 'unlocked';
 
 const [authState, setAuthState] = createSignal<AuthState>('checking');
 const [error, setError] = createSignal<string | null>(null);
@@ -85,6 +93,7 @@ export async function initializeAuth(): Promise<void> {
         prepareUnlockedSession();
         const dates = await tauri.getAllEntryDates();
         setEntryDates(dates);
+        await loadAllTags();
       } catch (err) {
         log.warn('Auto-unlock failed, falling back to lock screen:', err);
         resetForLockedSession();
@@ -105,10 +114,12 @@ export async function createJournalAutoProtected(): Promise<void> {
     // Without this, locking the journal in the same session would show the
     // password form instead of auto-unlocking (journals() would be stale).
     await loadJournals();
+    startOnboarding();
     prepareUnlockedSession();
     log.info('Local-only journal created');
     const dates = await tauri.getAllEntryDates();
     setEntryDates(dates);
+    await loadAllTags();
   } catch (err) {
     const message = mapTauriError(err);
     setError(message);
@@ -124,6 +135,7 @@ export async function unlockJournalAutoProtected(): Promise<void> {
     log.info('Local-only journal auto-unlocked');
     const dates = await tauri.getAllEntryDates();
     setEntryDates(dates);
+    await loadAllTags();
   } catch (err) {
     const message = mapTauriError(err);
     setError(message);
@@ -150,12 +162,14 @@ export async function createJournal(password: string): Promise<void> {
   try {
     setError(null);
     await tauri.createJournal(password);
+    startOnboarding();
     prepareUnlockedSession();
     log.info('Journal created');
 
     // Fetch entry dates after creating diary
     const dates = await tauri.getAllEntryDates();
     setEntryDates(dates);
+    await loadAllTags();
   } catch (err) {
     const message = mapTauriError(err);
     setError(message);
@@ -174,6 +188,7 @@ export async function unlockJournal(password: string): Promise<void> {
     // Fetch entry dates after unlocking diary
     const dates = await tauri.getAllEntryDates();
     setEntryDates(dates);
+    await loadAllTags();
   } catch (err) {
     const message = mapTauriError(err);
     setError(message);
@@ -191,6 +206,7 @@ export async function unlockWithKeypair(keyPath: string): Promise<void> {
 
     const dates = await tauri.getAllEntryDates();
     setEntryDates(dates);
+    await loadAllTags();
   } catch (err) {
     const message = mapTauriError(err);
     setError(message);
@@ -208,6 +224,7 @@ export async function unlockAllMethods(credentials: tauri.MultiAuthCredential[])
 
     const dates = await tauri.getAllEntryDates();
     setEntryDates(dates);
+    await loadAllTags();
   } catch (err) {
     const message = mapTauriError(err);
     setError(message);
@@ -221,15 +238,26 @@ export async function setRequireAllAuth(enabled: boolean): Promise<void> {
   await loadJournals();
 }
 
+const LOCK_ANIMATION_MS = 700;
+
 // Lock journal
 export async function lockJournal(): Promise<void> {
   try {
     setError(null);
-    await executeCleanupCallbacks();
-    await tauri.lockJournal();
-    resetForLockedSession();
-    log.info('Journal locked');
+    setAuthState('locking');
+    await Promise.all([
+      (async () => {
+        await executeCleanupCallbacks();
+        await tauri.lockJournal();
+      })(),
+      new Promise<void>((resolve) => setTimeout(resolve, LOCK_ANIMATION_MS)),
+    ]);
+    if (authState() === 'locking') {
+      resetForLockedSession();
+      log.info('Journal locked');
+    }
   } catch (err) {
+    if (authState() === 'locking') setAuthState('unlocked');
     const message = mapTauriError(err);
     setError(message);
     throw new Error(message, { cause: err });
@@ -251,7 +279,11 @@ export async function setupAuthEventListeners(): Promise<() => void> {
     'journal-locked',
     (event) => {
       const reason = event.payload?.reason ?? 'unknown';
-      resetForLockedSession();
+      // If already in 'locking', the animation timer in lockJournal() owns the transition.
+      // Only force-transition for OS-initiated locks (screen lock, suspend) where authState is 'unlocked'.
+      if (authState() !== 'locking') {
+        resetForLockedSession();
+      }
       log.info(`Journal locked by backend (${reason})`);
     },
   );

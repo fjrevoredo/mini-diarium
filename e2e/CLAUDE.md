@@ -40,6 +40,7 @@ The source of truth for these attributes is the frontend components in `src/`. D
 
 | Component | Element | data-testid |
 |-----------|---------|-------------|
+| `OnboardingOverlay.tsx` | Next / Done button in tour card | `onboarding-next-btn` |
 | `PasswordCreation.tsx` | Password input | `password-create-input` |
 | `PasswordCreation.tsx` | Confirm password input | `password-repeat-input` |
 | `PasswordCreation.tsx` | Create button | `create-journal-button` |

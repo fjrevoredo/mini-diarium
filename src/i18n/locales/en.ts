@@ -226,6 +226,8 @@ const en = {
       insertTimestampTitle: 'Insert current timestamp',
       textDirection: 'Text direction',
       textDirectionTitle: 'Toggle text direction (Ctrl+Shift+D)',
+      fontFamily: 'Font family',
+      fontSize: 'Font size',
     },
     /** WordCount — plural pair */
     wordCount_one: '{{ count }} word',
@@ -255,6 +257,9 @@ const en = {
     deleteConfirmTitle: 'Delete Entry',
     /** EditorPanel — import markdown error */
     importMarkdownNoEditor: 'No active editor to import into.',
+    /** DiaryEditor — dropped image from web page (HTTPS URL, cannot embed without network) */
+    dropRejectedWebImage:
+      "This image can't be embedded: it would require a network request, which this app never makes to protect your privacy. Right-click the image → Copy Image, then paste with Ctrl+V.",
   },
 
   /** Search components */
@@ -325,9 +330,32 @@ const en = {
         'Displays the creation and last updated time below the title for the current entry.',
       spellcheckLabel: 'Enable spellcheck',
       spellcheckHint: 'When enabled, browser spellcheck will highlight misspelled words.',
-      advancedToolbarLabel: 'Show advanced formatting toolbar',
-      advancedToolbarHint:
-        'When enabled, the toolbar shows additional controls: headings, strikethrough, text color, highlight color, blockquote, inline code, and horizontal rule.',
+      toolbarItemsLabel: 'Toolbar items',
+      toolbarItemsHint:
+        'Customize which formatting controls appear in the editor toolbar and their order.',
+      toolbarItemSelectAll: 'Select all',
+      toolbarItemSelectNone: 'Select none',
+      toolbarItemMoveUp: 'Move up',
+      toolbarItemMoveDown: 'Move down',
+      toolbarItem: {
+        headings: 'Headings',
+        underline: 'Underline',
+        strikethrough: 'Strikethrough',
+        textColor: 'Text color',
+        highlightColor: 'Highlight color',
+        blockquote: 'Blockquote',
+        inlineCode: 'Inline code',
+        bulletList: 'Bullet list',
+        orderedList: 'Numbered list',
+        horizontalRule: 'Horizontal rule',
+        insertImage: 'Insert image',
+        importMarkdown: 'Import Markdown',
+        insertTimestamp: 'Insert timestamp',
+        textDirection: 'Text direction',
+        alignment: 'Alignment controls',
+        fontFamily: 'Font family',
+        fontSize: 'Font size',
+      },
       fontSizeLabel: 'Editor font size',
       fontSizePxSuffix: 'px',
       fontSizeMin: '12 px',
@@ -490,6 +518,8 @@ const en = {
     copyright: 'Copyright © 2026 Francisco J. Revoredo',
     githubLink: 'github.com/fjrevoredo/mini-diarium',
     docsLink: 'Documentation',
+    opensInBrowser: 'opens in system browser',
+    showTour: 'Show Welcome Tour',
   },
 
   /** NotificationsOverlay */
@@ -524,6 +554,50 @@ const en = {
     selectDateLabel: 'Select Date',
     goToDate: 'Go to Date',
     closeAria: 'Close',
+  },
+
+  /** Tags — per-entry tagging and tag management */
+  tags: {
+    addTag: 'Add tag',
+    newTag: 'New tag…',
+    create: 'Create "{{ name }}"',
+    manageTags: 'Manage tags',
+    noTags: 'No tags yet',
+    tagManager: 'Tag Manager',
+    rename: 'Rename',
+    deleteTag: 'Delete tag',
+    entriesWithTag_one: '{{ count }} entry',
+    entriesWithTag_other: '{{ count }} entries',
+    errorLoading: 'Failed to load tags',
+    errorSaving: 'Failed to save tag',
+    filterByTag: 'Filter by tag',
+    filterActiveLabel: 'Tag filter:',
+    clearFilter: 'Clear tag filter',
+  },
+
+  /** Onboarding tour — first-run step-by-step guide */
+  onboarding: {
+    title: 'Welcome to Mini Diarium',
+    subtitle: 'A few things to get you started:',
+    tip_toolbar_title: 'Customize your toolbar',
+    tip_toolbar_body:
+      'The default toolbar only shows Bold and Italic. Open Preferences → Writing to enable more tools (headings, colors, lists, alignment) and reorder them to your liking.',
+    tip_toolbar_action: 'Open Preferences',
+    tip_import_title: 'Import your entries',
+    tip_import_body: 'Bring in entries from Day One, Obsidian, or plain text files.',
+    tip_import_action: 'Open Import',
+    tip_docs_title: 'Full documentation online',
+    tip_docs_body:
+      'The Mini Diarium website has full documentation covering every feature: keyboard shortcuts, toolbar options, import formats, encryption details, and more.',
+    tip_docs_action: 'Open Docs',
+    dismiss: 'Dismiss',
+    back: 'Back',
+    next: 'Next',
+    done: 'Done',
+    minimize: 'Minimize tour',
+    helpAria: 'Open onboarding tips',
+    popoverHint: 'Resume the quick-start tour or dismiss it permanently.',
+    resumeTour: 'Resume Tour',
   },
 
   /**

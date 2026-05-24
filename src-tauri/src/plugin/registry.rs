@@ -47,6 +47,7 @@ impl PluginRegistry {
 mod tests {
     use super::*;
     use crate::db::queries::DiaryEntry;
+    use std::collections::HashMap;
 
     struct DummyImporter;
     impl ImportPlugin for DummyImporter {
@@ -73,7 +74,11 @@ mod tests {
                 builtin: false,
             }
         }
-        fn export(&self, _entries: Vec<DiaryEntry>) -> Result<crate::plugin::ExportOutput, String> {
+        fn export(
+            &self,
+            _entries: Vec<DiaryEntry>,
+            _tags: &HashMap<i64, Vec<String>>,
+        ) -> Result<crate::plugin::ExportOutput, String> {
             Ok(crate::plugin::ExportOutput {
                 content: String::new(),
                 assets: vec![],

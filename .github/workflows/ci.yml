@@ -61,6 +61,9 @@ jobs:
       - name: Validate locales
         run: bun run validate:locales
 
+      - name: Network isolation static check
+        run: pwsh scripts/check-no-network.ps1
+
       - name: Clippy
         working-directory: src-tauri
         run: cargo clippy --all-targets -- -D warnings
@@ -259,6 +262,43 @@ jobs:
             src-tauri/target/release/bundle/**/*.msi
             src-tauri/target/release/bundle/**/*.exe
           if-no-files-found: ignore
+
+  flatpak:
+    name: Flatpak (x86_64)
+    needs: [lint, test]
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    container:
+      image: ghcr.io/flathub-infra/flatpak-github-actions:gnome-50
+      options: --privileged
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Clone flatpak-builder-tools
+        run: git clone --depth=1 https://github.com/flatpak/flatpak-builder-tools.git /tmp/flatpak-builder-tools
+
+      - name: Install Python dependencies for cargo generator
+        run: pip install aiohttp toml tomlkit
+
+      - name: Generate cargo-sources.json
+        run: python3 /tmp/flatpak-builder-tools/cargo/flatpak-cargo-generator.py src-tauri/Cargo.lock -o flatpak/cargo-sources.json
+
+      - name: Generate node-sources.json
+        run: node flatpak/generate-node-sources.mjs package-lock.json flatpak/node-sources.json "$HOME/.npm"
+
+      - name: Validate desktop file
+        run: desktop-file-validate data/linux/io.github.fjrevoredo.mini-diarium.desktop
+
+      - name: Validate AppStream metainfo
+        run: appstreamcli validate data/linux/io.github.fjrevoredo.mini-diarium.metainfo.xml
+
+      - uses: flatpak/flatpak-github-actions/flatpak-builder@v6
+        with:
+          manifest-path: flatpak/io.github.fjrevoredo.mini-diarium.yml
+          cache-key: flatpak-builder-${{ github.sha }}
+          build-bundle: false
+          arch: x86_64
+          verbose: true
 
   e2e:
     name: E2E Tests

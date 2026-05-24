@@ -1,0 +1,730 @@
+use crate::db::schema::DatabaseConnection;
+use rusqlite::params;
+
+// Shared column projection for all entry queries.
+const ENTRY_SELECT: &str =
+    "SELECT id, date, title_encrypted, text_encrypted, word_count, date_created, date_updated \
+     FROM entries";
+
+type EntryRow = (i64, String, Vec<u8>, Vec<u8>, i32, String, String);
+
+fn row_to_entry(db: &DatabaseConnection, row: EntryRow) -> Result<DiaryEntry, String> {
+    let (id, date, title_enc, text_enc, word_count, date_created, date_updated) = row;
+    let title = super::decrypt_utf8(db.key(), &title_enc, "title")?;
+    let text = super::decrypt_utf8(db.key(), &text_enc, "text")?;
+    Ok(DiaryEntry {
+        id,
+        date,
+        title,
+        text,
+        word_count,
+        date_created,
+        date_updated,
+    })
+}
+
+/// Represents a diary entry
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct DiaryEntry {
+    pub id: i64,              // AUTOINCREMENT primary key
+    pub date: String,         // ISO 8601 date (YYYY-MM-DD)
+    pub title: String,        // Plaintext title
+    pub text: String,         // Plaintext text
+    pub word_count: i32,      // Word count
+    pub date_created: String, // ISO 8601 timestamp
+    pub date_updated: String, // ISO 8601 timestamp
+}
+
+/// Inserts a new entry into the database
+///
+/// # Arguments
+/// * `db` - Database connection with encryption key
+/// * `entry` - The diary entry to insert (id field is ignored; AUTOINCREMENT assigns it)
+pub fn insert_entry(db: &DatabaseConnection, entry: &DiaryEntry) -> Result<(), String> {
+    let title_encrypted = super::encrypt_for_storage(db.key(), entry.title.as_bytes(), "title")?;
+    let text_encrypted = super::encrypt_for_storage(db.key(), entry.text.as_bytes(), "text")?;
+
+    // Insert into database (id is handled by AUTOINCREMENT)
+    db.conn()
+        .execute(
+            "INSERT INTO entries (date, title_encrypted, text_encrypted, word_count, date_created, date_updated)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+            params![
+                &entry.date,
+                &title_encrypted,
+                &text_encrypted,
+                entry.word_count,
+                &entry.date_created,
+                &entry.date_updated,
+            ],
+        )
+        .map_err(|e| format!("Failed to insert entry: {}", e))?;
+
+    // Search index hook: call search module's index_entry() here when implemented.
+
+    Ok(())
+}
+
+/// Retrieves all entries for a given date, newest-first (ORDER BY id DESC)
+///
+/// # Arguments
+/// * `db` - Database connection with encryption key
+/// * `date` - The date of the entries to retrieve (YYYY-MM-DD)
+///
+/// # Returns
+/// A vector of DiaryEntry (possibly empty if no entries exist for this date)
+pub fn get_entries_by_date(db: &DatabaseConnection, date: &str) -> Result<Vec<DiaryEntry>, String> {
+    let mut stmt = db
+        .conn()
+        .prepare(&format!(
+            "{} WHERE date = ?1 ORDER BY id DESC",
+            ENTRY_SELECT
+        ))
+        .map_err(|e| format!("Failed to prepare statement: {}", e))?;
+
+    let raw: Vec<EntryRow> = stmt
+        .query_map(params![date], |row| {
+            Ok((
+                row.get::<_, i64>(0)?,
+                row.get::<_, String>(1)?,
+                row.get::<_, Vec<u8>>(2)?,
+                row.get::<_, Vec<u8>>(3)?,
+                row.get::<_, i32>(4)?,
+                row.get::<_, String>(5)?,
+                row.get::<_, String>(6)?,
+            ))
+        })
+        .map_err(|e| format!("Failed to query entries: {}", e))?
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| format!("Failed to read row: {}", e))?;
+
+    raw.into_iter().map(|row| row_to_entry(db, row)).collect()
+}
+
+/// Retrieves a single entry by its id
+///
+/// # Arguments
+/// * `db` - Database connection with encryption key
+/// * `id` - The id of the entry to retrieve
+///
+/// # Returns
+/// `Some(DiaryEntry)` if found, `None` otherwise
+pub fn get_entry_by_id(db: &DatabaseConnection, id: i64) -> Result<Option<DiaryEntry>, String> {
+    let result = db.conn().query_row(
+        &format!("{} WHERE id = ?1", ENTRY_SELECT),
+        params![id],
+        |row| {
+            Ok((
+                row.get::<_, i64>(0)?,
+                row.get::<_, String>(1)?,
+                row.get::<_, Vec<u8>>(2)?,
+                row.get::<_, Vec<u8>>(3)?,
+                row.get::<_, i32>(4)?,
+                row.get::<_, String>(5)?,
+                row.get::<_, String>(6)?,
+            ))
+        },
+    );
+
+    match result {
+        Ok(row) => Ok(Some(row_to_entry(db, row)?)),
+        Err(rusqlite::Error::QueryReturnedNoRows) => Ok(None),
+        Err(e) => Err(format!("Database error: {}", e)),
+    }
+}
+
+/// Updates an existing entry in the database by id
+///
+/// # Arguments
+/// * `db` - Database connection with encryption key
+/// * `entry` - The diary entry with updated data (id field identifies which entry to update)
+pub fn update_entry(db: &DatabaseConnection, entry: &DiaryEntry) -> Result<(), String> {
+    let title_encrypted = super::encrypt_for_storage(db.key(), entry.title.as_bytes(), "title")?;
+    let text_encrypted = super::encrypt_for_storage(db.key(), entry.text.as_bytes(), "text")?;
+
+    // Update in database using id
+    let rows_affected = db
+        .conn()
+        .execute(
+            "UPDATE entries
+             SET title_encrypted = ?1, text_encrypted = ?2, word_count = ?3, date_updated = ?4
+             WHERE id = ?5",
+            params![
+                &title_encrypted,
+                &text_encrypted,
+                entry.word_count,
+                &entry.date_updated,
+                entry.id,
+            ],
+        )
+        .map_err(|e| format!("Failed to update entry: {}", e))?;
+
+    if rows_affected == 0 {
+        return Err(format!("No entry found with id: {}", entry.id));
+    }
+
+    // Search index hook: call search module's index_entry() here when implemented.
+
+    Ok(())
+}
+
+/// Deletes an entry from the database by id
+///
+/// # Arguments
+/// * `db` - Database connection with encryption key
+/// * `id` - The id of the entry to delete
+///
+/// # Returns
+/// `Ok(true)` if deleted, `Ok(false)` if entry didn't exist
+pub fn delete_entry_by_id(db: &DatabaseConnection, id: i64) -> Result<bool, String> {
+    let rows_affected = db
+        .conn()
+        .execute("DELETE FROM entries WHERE id = ?1", params![id])
+        .map_err(|e| format!("Failed to delete entry: {}", e))?;
+
+    // Search index hook: call search module's remove_entry() here when implemented.
+
+    Ok(rows_affected > 0)
+}
+
+/// Retrieves all dates that have entries (distinct)
+///
+/// # Arguments
+/// * `db` - Database connection
+///
+/// # Returns
+/// A vector of date strings (YYYY-MM-DD) sorted chronologically
+pub fn get_all_entry_dates(db: &DatabaseConnection) -> Result<Vec<String>, String> {
+    let mut stmt = db
+        .conn()
+        .prepare("SELECT DISTINCT date FROM entries ORDER BY date ASC")
+        .map_err(|e| format!("Failed to prepare statement: {}", e))?;
+
+    let dates = stmt
+        .query_map([], |row| row.get(0))
+        .map_err(|e| format!("Failed to query dates: {}", e))?
+        .collect::<Result<Vec<String>, _>>()
+        .map_err(|e| format!("Failed to collect dates: {}", e))?;
+
+    Ok(dates)
+}
+
+/// Retrieves and decrypts all diary entries in a single query (avoids N+1)
+///
+/// # Arguments
+/// * `db` - Database connection with encryption key
+///
+/// # Returns
+/// A vector of all diary entries sorted chronologically (date ASC, id ASC)
+pub fn get_all_entries(db: &DatabaseConnection) -> Result<Vec<DiaryEntry>, String> {
+    let mut stmt = db
+        .conn()
+        .prepare(&format!("{} ORDER BY date ASC, id ASC", ENTRY_SELECT))
+        .map_err(|e| format!("Failed to prepare query: {}", e))?;
+
+    let raw: Vec<EntryRow> = stmt
+        .query_map([], |row| {
+            Ok((
+                row.get::<_, i64>(0)?,
+                row.get::<_, String>(1)?,
+                row.get::<_, Vec<u8>>(2)?,
+                row.get::<_, Vec<u8>>(3)?,
+                row.get::<_, i32>(4)?,
+                row.get::<_, String>(5)?,
+                row.get::<_, String>(6)?,
+            ))
+        })
+        .map_err(|e| format!("Failed to query entries: {}", e))?
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| format!("Failed to read row: {}", e))?;
+
+    raw.into_iter().map(|row| row_to_entry(db, row)).collect()
+}
+
+pub fn get_entries_in_range(
+    db: &DatabaseConnection,
+    date_from: Option<&str>,
+    date_to: Option<&str>,
+) -> Result<Vec<DiaryEntry>, String> {
+    let mut sql = String::from(ENTRY_SELECT);
+    let mut param_values: Vec<String> = Vec::new();
+    let mut has_where = false;
+
+    if let Some(from) = date_from {
+        sql.push_str(" WHERE date >= ?");
+        param_values.push(from.to_string());
+        has_where = true;
+    }
+    if let Some(to) = date_to {
+        if has_where {
+            sql.push_str(" AND");
+        } else {
+            sql.push_str(" WHERE");
+        }
+        sql.push_str(" date <= ?");
+        param_values.push(to.to_string());
+    }
+    sql.push_str(" ORDER BY date ASC, id ASC");
+
+    let params_refs: Vec<&dyn rusqlite::ToSql> = param_values
+        .iter()
+        .map(|p| p as &dyn rusqlite::ToSql)
+        .collect();
+
+    let mut stmt = db
+        .conn()
+        .prepare(&sql)
+        .map_err(|e| format!("Failed to prepare query: {}", e))?;
+
+    let raw: Vec<EntryRow> = stmt
+        .query_map(params_refs.as_slice(), |row| {
+            Ok((
+                row.get::<_, i64>(0)?,
+                row.get::<_, String>(1)?,
+                row.get::<_, Vec<u8>>(2)?,
+                row.get::<_, Vec<u8>>(3)?,
+                row.get::<_, i32>(4)?,
+                row.get::<_, String>(5)?,
+                row.get::<_, String>(6)?,
+            ))
+        })
+        .map_err(|e| format!("Failed to query entries: {}", e))?
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| format!("Failed to read row: {}", e))?;
+
+    raw.into_iter().map(|row| row_to_entry(db, row)).collect()
+}
+
+/// Counts words in text, skipping HTML tag content.
+/// Single-pass state machine: tracks tag state and word boundaries without allocating.
+pub fn count_words(text: &str) -> i32 {
+    let mut count = 0;
+    let mut in_tag = false;
+    let mut in_word = false;
+
+    for ch in text.chars() {
+        if ch == '<' {
+            in_tag = true;
+            if in_word {
+                count += 1;
+                in_word = false;
+            }
+        } else if ch == '>' {
+            in_tag = false;
+        } else if !in_tag {
+            if ch.is_whitespace() {
+                if in_word {
+                    count += 1;
+                    in_word = false;
+                }
+            } else {
+                in_word = true;
+            }
+        }
+    }
+
+    if in_word {
+        count += 1;
+    }
+
+    count
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::db::schema::create_database;
+
+    fn create_test_entry(date: &str) -> DiaryEntry {
+        let now = "2024-01-01T12:00:00Z".to_string();
+        DiaryEntry {
+            id: 0,
+            date: date.to_string(),
+            title: "Test Title".to_string(),
+            text: "This is a test entry with some words.".to_string(),
+            word_count: 8,
+            date_created: now.clone(),
+            date_updated: now,
+        }
+    }
+
+    #[test]
+    fn test_insert_and_get_entries_by_date() {
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+
+        let entry = create_test_entry("2024-01-15");
+        insert_entry(&db, &entry).unwrap();
+
+        let retrieved = get_entries_by_date(&db, "2024-01-15").unwrap();
+        assert_eq!(retrieved.len(), 1);
+
+        let retrieved_entry = &retrieved[0];
+        assert!(retrieved_entry.id > 0);
+        assert_eq!(retrieved_entry.date, "2024-01-15");
+        assert_eq!(retrieved_entry.title, "Test Title");
+        assert_eq!(
+            retrieved_entry.text,
+            "This is a test entry with some words."
+        );
+        assert_eq!(retrieved_entry.word_count, 8);
+    }
+
+    #[test]
+    fn test_multiple_entries_same_date() {
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+
+        let mut entry1 = create_test_entry("2024-01-15");
+        entry1.title = "First entry".to_string();
+        insert_entry(&db, &entry1).unwrap();
+
+        let mut entry2 = create_test_entry("2024-01-15");
+        entry2.title = "Second entry".to_string();
+        insert_entry(&db, &entry2).unwrap();
+
+        let entries = get_entries_by_date(&db, "2024-01-15").unwrap();
+        assert_eq!(entries.len(), 2);
+
+        // Ordered by id DESC so second entry is first
+        assert_eq!(entries[0].title, "Second entry");
+        assert_eq!(entries[1].title, "First entry");
+        assert!(entries[0].id > entries[1].id);
+    }
+
+    #[test]
+    fn test_get_entries_by_date_empty() {
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+
+        let result = get_entries_by_date(&db, "2024-12-31").unwrap();
+        assert!(result.is_empty());
+    }
+
+    #[test]
+    fn test_get_entry_by_id() {
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+
+        let entry = create_test_entry("2024-02-10");
+        insert_entry(&db, &entry).unwrap();
+        let inserted_id = db.conn().last_insert_rowid();
+
+        let retrieved = get_entry_by_id(&db, inserted_id).unwrap();
+        assert!(retrieved.is_some());
+        let e = retrieved.unwrap();
+        assert_eq!(e.id, inserted_id);
+        assert_eq!(e.date, "2024-02-10");
+        assert_eq!(e.title, "Test Title");
+    }
+
+    #[test]
+    fn test_get_entry_by_id_not_found() {
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+
+        let result = get_entry_by_id(&db, 99999).unwrap();
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_update_entry_by_id() {
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+
+        let entry = create_test_entry("2024-02-10");
+        insert_entry(&db, &entry).unwrap();
+        let id = db.conn().last_insert_rowid();
+
+        let mut updated = get_entry_by_id(&db, id).unwrap().unwrap();
+        updated.title = "Updated Title".to_string();
+        updated.text = "Updated text content.".to_string();
+        updated.word_count = 3;
+        updated.date_updated = "2024-02-11T15:00:00Z".to_string();
+        update_entry(&db, &updated).unwrap();
+
+        let retrieved = get_entry_by_id(&db, id).unwrap().unwrap();
+        assert_eq!(retrieved.title, "Updated Title");
+        assert_eq!(retrieved.text, "Updated text content.");
+        assert_eq!(retrieved.word_count, 3);
+    }
+
+    #[test]
+    fn test_update_nonexistent_entry() {
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+
+        let entry = DiaryEntry {
+            id: 99999,
+            date: "2024-03-20".to_string(),
+            title: "Ghost".to_string(),
+            text: "Ghost entry".to_string(),
+            word_count: 2,
+            date_created: "2024-03-20T00:00:00Z".to_string(),
+            date_updated: "2024-03-20T00:00:00Z".to_string(),
+        };
+        let result = update_entry(&db, &entry);
+
+        assert!(result.is_err());
+        assert!(result.unwrap_err().contains("No entry found"));
+    }
+
+    #[test]
+    fn test_delete_entry_by_id() {
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+
+        let entry = create_test_entry("2024-04-01");
+        insert_entry(&db, &entry).unwrap();
+        let id = db.conn().last_insert_rowid();
+
+        let deleted = delete_entry_by_id(&db, id).unwrap();
+        assert!(deleted);
+
+        let result = get_entry_by_id(&db, id).unwrap();
+        assert!(result.is_none());
+    }
+
+    #[test]
+    fn test_delete_entry_by_id_not_found() {
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+
+        let deleted = delete_entry_by_id(&db, 99999).unwrap();
+        assert!(!deleted);
+    }
+
+    #[test]
+    fn test_get_all_entry_dates_distinct() {
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+
+        insert_entry(&db, &create_test_entry("2024-01-10")).unwrap();
+        insert_entry(&db, &create_test_entry("2024-01-05")).unwrap();
+        insert_entry(&db, &create_test_entry("2024-01-10")).unwrap();
+        insert_entry(&db, &create_test_entry("2024-01-20")).unwrap();
+
+        let dates = get_all_entry_dates(&db).unwrap();
+        assert_eq!(dates.len(), 3);
+        assert_eq!(dates[0], "2024-01-05");
+        assert_eq!(dates[1], "2024-01-10");
+        assert_eq!(dates[2], "2024-01-20");
+    }
+
+    #[test]
+    fn test_count_words() {
+        assert_eq!(count_words("Hello world"), 2);
+        assert_eq!(count_words(""), 0);
+        assert_eq!(count_words("One"), 1);
+        assert_eq!(count_words("  Multiple   spaces   between  "), 3);
+        assert_eq!(count_words("Line\nbreaks\tand\ttabs"), 4);
+    }
+
+    #[test]
+    fn test_count_words_strips_html() {
+        assert_eq!(count_words("<p>Hello world</p>"), 2);
+        assert_eq!(count_words("<p>One <strong>two</strong> three</p>"), 3);
+        assert_eq!(count_words("<p></p>"), 0);
+        assert_eq!(count_words("plain text"), 2);
+    }
+
+    #[test]
+    fn test_count_words_base64_image() {
+        let img = "<img src=\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==\" />";
+        assert_eq!(count_words(img), 0);
+        let mixed = "<p>before</p><img src=\"data:image/png;base64,abc123==\" /><p>after</p>";
+        assert_eq!(count_words(mixed), 2);
+    }
+
+    #[test]
+    fn test_count_words_unicode() {
+        assert_eq!(count_words("café résumé"), 2);
+        assert_eq!(count_words("你好 世界"), 2);
+        assert_eq!(
+            count_words("word\u{00A0}with\u{2003}unicode\u{3000}spaces"),
+            4
+        );
+    }
+
+    #[test]
+    fn test_get_all_entries_returns_all_decrypted() {
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "pw".to_string()).unwrap();
+        insert_entry(
+            &db,
+            &DiaryEntry {
+                id: 0,
+                date: "2024-01-01".into(),
+                title: "A".into(),
+                text: "<p>Hello</p>".into(),
+                word_count: 1,
+                date_created: "2024-01-01T00:00:00Z".into(),
+                date_updated: "2024-01-01T00:00:00Z".into(),
+            },
+        )
+        .unwrap();
+        insert_entry(
+            &db,
+            &DiaryEntry {
+                id: 0,
+                date: "2024-01-02".into(),
+                title: "B".into(),
+                text: "<p>World</p>".into(),
+                word_count: 1,
+                date_created: "2024-01-02T00:00:00Z".into(),
+                date_updated: "2024-01-02T00:00:00Z".into(),
+            },
+        )
+        .unwrap();
+        let entries = get_all_entries(&db).unwrap();
+        assert_eq!(entries.len(), 2);
+        assert_eq!(entries[0].date, "2024-01-01");
+        assert_eq!(entries[0].title, "A");
+        assert!(entries[0].id > 0);
+    }
+
+    #[test]
+    fn test_entry_encryption() {
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+
+        let entry = create_test_entry("2024-06-01");
+        insert_entry(&db, &entry).unwrap();
+
+        let (title_enc, text_enc): (Vec<u8>, Vec<u8>) = db
+            .conn()
+            .query_row(
+                "SELECT title_encrypted, text_encrypted FROM entries WHERE date = '2024-06-01'",
+                [],
+                |row| Ok((row.get(0)?, row.get(1)?)),
+            )
+            .unwrap();
+
+        let title_enc_str = String::from_utf8_lossy(&title_enc);
+        let text_enc_str = String::from_utf8_lossy(&text_enc);
+        assert!(!title_enc_str.contains("Test Title"));
+        assert!(!text_enc_str.contains("test entry"));
+    }
+
+    #[test]
+    fn test_get_entries_in_range_no_filter() {
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+
+        insert_entry(&db, &create_test_entry("2024-01-10")).unwrap();
+        insert_entry(&db, &create_test_entry("2024-02-15")).unwrap();
+        insert_entry(&db, &create_test_entry("2024-03-20")).unwrap();
+
+        let entries = get_entries_in_range(&db, None, None).unwrap();
+        assert_eq!(entries.len(), 3);
+    }
+
+    #[test]
+    fn test_get_entries_in_range_from_only() {
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+
+        insert_entry(&db, &create_test_entry("2024-01-10")).unwrap();
+        insert_entry(&db, &create_test_entry("2024-02-15")).unwrap();
+        insert_entry(&db, &create_test_entry("2024-03-20")).unwrap();
+
+        let entries = get_entries_in_range(&db, Some("2024-02-01"), None).unwrap();
+        assert_eq!(entries.len(), 2);
+        assert_eq!(entries[0].date, "2024-02-15");
+        assert_eq!(entries[1].date, "2024-03-20");
+    }
+
+    #[test]
+    fn test_get_entries_in_range_to_only() {
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+
+        insert_entry(&db, &create_test_entry("2024-01-10")).unwrap();
+        insert_entry(&db, &create_test_entry("2024-02-15")).unwrap();
+        insert_entry(&db, &create_test_entry("2024-03-20")).unwrap();
+
+        let entries = get_entries_in_range(&db, None, Some("2024-02-28")).unwrap();
+        assert_eq!(entries.len(), 2);
+        assert_eq!(entries[0].date, "2024-01-10");
+        assert_eq!(entries[1].date, "2024-02-15");
+    }
+
+    #[test]
+    fn test_get_entries_in_range_both_bounds() {
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+
+        insert_entry(&db, &create_test_entry("2024-01-10")).unwrap();
+        insert_entry(&db, &create_test_entry("2024-02-15")).unwrap();
+        insert_entry(&db, &create_test_entry("2024-03-20")).unwrap();
+        insert_entry(&db, &create_test_entry("2024-04-05")).unwrap();
+
+        let entries = get_entries_in_range(&db, Some("2024-02-01"), Some("2024-03-31")).unwrap();
+        assert_eq!(entries.len(), 2);
+        assert_eq!(entries[0].date, "2024-02-15");
+        assert_eq!(entries[1].date, "2024-03-20");
+    }
+
+    #[test]
+    fn test_get_entries_in_range_no_match() {
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+
+        insert_entry(&db, &create_test_entry("2024-01-10")).unwrap();
+        insert_entry(&db, &create_test_entry("2024-02-15")).unwrap();
+
+        let entries = get_entries_in_range(&db, Some("2025-01-01"), Some("2025-12-31")).unwrap();
+        assert!(entries.is_empty());
+    }
+
+    #[test]
+    fn test_get_entries_in_range_inclusive_bounds() {
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+
+        insert_entry(&db, &create_test_entry("2024-01-10")).unwrap();
+        insert_entry(&db, &create_test_entry("2024-01-20")).unwrap();
+        insert_entry(&db, &create_test_entry("2024-01-31")).unwrap();
+
+        let entries = get_entries_in_range(&db, Some("2024-01-10"), Some("2024-01-31")).unwrap();
+        assert_eq!(entries.len(), 3);
+        assert_eq!(entries[0].date, "2024-01-10");
+        assert_eq!(entries[2].date, "2024-01-31");
+    }
+
+    #[test]
+    fn test_get_all_entries_corrupted_title_returns_error() {
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "pw".to_string()).unwrap();
+
+        insert_entry(
+            &db,
+            &DiaryEntry {
+                id: 0,
+                date: "2024-01-01".into(),
+                title: "Test".into(),
+                text: "<p>Content</p>".into(),
+                word_count: 1,
+                date_created: "2024-01-01T00:00:00Z".into(),
+                date_updated: "2024-01-01T00:00:00Z".into(),
+            },
+        )
+        .unwrap();
+
+        let id = db.conn().last_insert_rowid();
+
+        db.conn()
+            .execute(
+                "UPDATE entries SET title_encrypted = x'deadbeef01020304' WHERE id = ?1",
+                rusqlite::params![id],
+            )
+            .unwrap();
+
+        let result = get_all_entries(&db);
+        assert!(
+            result.is_err(),
+            "Expected Err when title_encrypted is corrupted, got Ok with entries: {:?}",
+            result.ok()
+        );
+    }
+}

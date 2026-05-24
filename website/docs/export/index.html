@@ -235,8 +235,8 @@
       "@id": "https://mini-diarium.com/docs/export/#article",
       "headline": "Exporting Data",
       "description": "How to export your journal to JSON, Markdown, and other formats for backup or portability.",
-      "dateModified": "2026-04-16T00:00:00Z",
-      "keywords": "export, backup, JSON, Markdown, portability",
+      "dateModified": "2026-05-23T00:00:00Z",
+      "keywords": "export, backup, JSON, Markdown, portability, tags",
       "publisher": {
         "@type": "Organization",
         "name": "Mini Diarium",
@@ -403,23 +403,36 @@
       </nav>
       <article class="blog-post prose" aria-label="Exporting Data">
         <h2 id="opening-the-export-dialog">Opening the Export Dialog</h2><p>Open the export dialog from <strong>Journal → Export...</strong> in the app menu.</p>
-        <h2 id="built-in-export-formats">Built-In Export Formats</h2><h3 id="json-export">JSON Export</h3><p>The JSON format is the primary structural export. It outputs an array of entries under the <code>&quot;entries&quot;</code> key:</p>
+        <h2 id="built-in-export-formats">Built-In Export Formats</h2><h3 id="json-export">JSON Export</h3><p>The JSON format is the primary structural export. It outputs a <code>metadata</code> block and an array of entries under the <code>&quot;entries&quot;</code> key:</p>
         <pre><code class="language-json">{
+          &quot;metadata&quot;: {
+            &quot;application&quot;: &quot;Mini Diarium&quot;,
+            &quot;version&quot;: &quot;0.5.0&quot;,
+            &quot;exportedAt&quot;: &quot;2024-01-15T12:00:00Z&quot;
+          },
           &quot;entries&quot;: [
             {
               &quot;id&quot;: 1,
               &quot;date&quot;: &quot;2024-01-15&quot;,
               &quot;title&quot;: &quot;My Entry&quot;,
               &quot;text&quot;: &quot;&lt;p&gt;Entry content as HTML...&lt;/p&gt;&quot;,
-              &quot;word_count&quot;: 5,
-              &quot;date_created&quot;: &quot;2024-01-15T10:00:00Z&quot;,
-              &quot;date_updated&quot;: &quot;2024-01-15T10:05:00Z&quot;
+              &quot;dateUpdated&quot;: &quot;2024-01-15T10:05:00Z&quot;,
+              &quot;tags&quot;: [&quot;travel&quot;, &quot;work&quot;]
             }
           ]
         }
         </code></pre>
+        <p>Every entry includes a <code>&quot;tags&quot;</code> array. If the entry has no tags the array is empty (<code>[]</code>). Tags are listed in alphabetical order.</p>
         <p>This format preserves entry IDs and timestamps and can be re-imported back into Mini Diarium.</p>
         <h3 id="markdown-export">Markdown Export</h3><p>The Markdown export produces a human-readable text file, grouped by date. If a day has multiple entries, each appears under its own sub-heading.</p>
+        <p>If an entry has tags, a <code>*Tags: …*</code> line is written immediately after the title (or date heading when there is no title) and before the entry body:</p>
+        <pre><code class="language-markdown">## 2024-01-15
+        **My Entry**
+        *Tags: travel, work*
+        
+        Entry content here...
+        </code></pre>
+        <p>Entries with no tags have no tags line. Tags appear in alphabetical order.</p>
         <p>Markdown is a best-effort conversion of the stored HTML editor content. Complex formatting (tables, images) may not convert perfectly, but the text is always readable.</p>
         <h2 id="why-export">Why Export?</h2><ul>
         <li><strong>Backup</strong>: Export a copy of your entries for safekeeping before changing devices or reinstalling.</li>

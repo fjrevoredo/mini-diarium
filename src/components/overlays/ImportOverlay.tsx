@@ -9,6 +9,7 @@ import {
   type ImportResult,
 } from '../../lib/tauri';
 import { useI18n } from '../../i18n';
+import { mapTauriError } from '../../lib/errors';
 import { preferences } from '../../state/preferences';
 import { X, FileUp, CheckCircle, AlertCircle } from 'lucide-solid';
 
@@ -79,7 +80,7 @@ export default function ImportOverlay(props: ImportOverlayProps) {
         setResult(null);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : t('import.importFailed'));
+      setError(mapTauriError(err, t));
     }
   };
 
@@ -105,8 +106,7 @@ export default function ImportOverlay(props: ImportOverlayProps) {
       props.onImportComplete?.();
     } catch (err) {
       log.error('Import failed:', err);
-      const errorMessage = err instanceof Error ? err.message : String(err);
-      setError(errorMessage || t('import.importFailed'));
+      setError(mapTauriError(err, t) || t('import.importFailed'));
     } finally {
       setImporting(false);
     }

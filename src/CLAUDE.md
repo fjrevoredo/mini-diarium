@@ -1,6 +1,7 @@
 # Frontend (src/) — Mini Diarium
 
 > For project architecture, command registry, and cross-cutting conventions see the [root CLAUDE.md](../CLAUDE.md).
+> For durable frontend rules, use [Frontend best practices](../docs/best-practices/FRONTEND_BEST_PRACTICES.md) before changing SolidJS reactivity, state ownership, Tauri error UI, TipTap/editor behavior, accessibility, or E2E-visible UI.
 
 ## File Structure
 
@@ -20,7 +21,7 @@ src/
 │   │   └── Calendar.tsx               # Monthly calendar with entry indicators
 │   ├── editor/
 │   │   ├── DiaryEditor.tsx            # TipTap rich-text editor
-│   │   ├── EditorToolbar.tsx          # Formatting toolbar (basic + advanced; alignment in advanced)
+│   │   ├── EditorToolbar.tsx          # Formatting toolbar (Bold/Italic fixed; 15 configurable items via toolbarItems preference)
 │   │   ├── TitleEditor.tsx            # Entry title input
 │   │   ├── WordCount.tsx              # Live word count display
 │   │   ├── EntryNavBar.tsx            # Per-day entry counter/navigator (hidden when ≤1 entry)
@@ -48,7 +49,11 @@ src/
 │   │   │   ├── PreferencesOverlay.tsx         # Shell: dialog + tab list + save/cancel footer
 │   │   │   ├── PreferencesGeneralTab.tsx      # Theme, language, ESC-key action
 │   │   │   ├── PreferencesWritingTab.tsx      # Calendar/editor writing preferences
-│   │   │   ├── PreferencesSecurityTab.tsx     # Auth methods, change password, auto-lock
+│   │   │   ├── PreferencesSecurityTab.tsx     # Auth methods shell + require-all-auth + auto-lock
+│   │   │   ├── AuthMethodsList.tsx            # Registered methods list + removal form
+│   │   │   ├── AddPasswordForm.tsx            # Add-password form (shown when no password slot)
+│   │   │   ├── AddKeypairForm.tsx             # Generate + register keypair form
+│   │   │   ├── ChangePasswordForm.tsx         # Change password form (shown when password slot exists)
 │   │   │   ├── PreferencesDataTab.tsx         # Journal directory change, reset journal
 │   │   │   ├── PreferencesAdvancedTab.tsx     # Theme overrides editor, debug dump
 │   │   │   └── shared.ts                      # Tab type, TabProps, PreferencesShellContext
@@ -64,8 +69,9 @@ src/
 │   ├── entries.ts                     # entryDates, isSaving + resetEntriesState + cleanup-callback registry
 │   ├── journals.ts                    # journals, activeJournalId, isSwitching + loadJournals/switchJournal/addJournal/removeJournal/renameJournal
 │   ├── search.ts                      # searchQuery, searchResults, isSearching
-│   ├── session.ts                     # resetSessionState() — resets entries/search/UI on journal lock
-│   ├── ui.ts                          # selectedDate, overlay open states, sidebar state
+│   ├── session.ts                     # resetSessionState() — resets entries/search/UI/tags on journal lock
+│   ├── tags.ts                        # allTags signal + resetTagsState/loadAllTags; loaded on unlock, reset on lock
+│   ├── ui.ts                          # selectedDate, overlay open states (incl. isTagManagerOpen), sidebar state
 │   └── preferences.ts                 # Preferences interface, localStorage persistence
 ├── lib/
 │   ├── tauri.ts                       # All Tauri invoke() wrappers (typed)
@@ -90,7 +96,7 @@ src/
 
 ## State Management
 
-Eight signal-based state modules in `src/state/`:
+Nine signal-based state modules in `src/state/`:
 
 | Module | Signals | Key Functions |
 |--------|---------|---------------|
@@ -98,12 +104,15 @@ Eight signal-based state modules in `src/state/`:
 | `entries.ts` | `entryDates`, `isSaving` | `resetEntriesState()`, `registerCleanupCallback()`, `executeCleanupCallbacks()`; setters exported directly |
 | `journals.ts` | `journals: JournalConfig[]`, `activeJournalId`, `isSwitching` | `loadJournals()`, `switchJournal()`, `addJournal()`, `removeJournal()`, `renameJournal()` |
 | `search.ts` | `searchQuery`, `searchResults`, `isSearching` | Setters exported directly |
-| `session.ts` | — | `resetSessionState()` — resets `entries`/`search`/`ui` on journal lock |
-| `ui.ts` | `selectedDate`, `isSidebarCollapsed`, `isGoToDateOpen`, `isPreferencesOpen`, `isStatsOpen`, `isImportOpen`, `isExportOpen`, `isAboutOpen`, `isNotificationsOpen` | Setters exported directly; `resetUiState()` resets all |
+| `session.ts` | — | `resetSessionState()` — resets `entries`/`search`/`ui`/`tags` on journal lock |
+| `tags.ts` | `allTags: Tag[]` | `loadAllTags()` — fetches and decrypts all tags; `resetTagsState()` — clears to `[]` on lock |
+| `ui.ts` | `selectedDate`, `isSidebarCollapsed`, `isGoToDateOpen`, `isPreferencesOpen`, `isStatsOpen`, `isImportOpen`, `isExportOpen`, `isAboutOpen`, `isNotificationsOpen`, `isTagManagerOpen` | Setters exported directly; `resetUiState()` resets all |
 | `notifications.ts` | `allNotifications: NotificationEntry[]`, `readIds: Set<string>`, `isLoading` | `loadNotifications()`, `markAsRead(id)`, `markAllRead()`, `isRead(id)`, `unreadCount()`, `hasUnread()` |
 | `preferences.ts` | `preferences: Preferences` | `setPreferences(Partial<Preferences>)`, `resetPreferences()` |
 
-`Preferences` fields: `allowFutureEntries` (bool), `firstDayOfWeek` (number|null), `hideTitles` (bool), `enableSpellcheck` (bool), `escAction` (`'none'|'quit'`), `autoLockEnabled` (bool), `autoLockTimeout` (number, seconds), `advancedToolbar` (bool), `editorFontSize` (number, px), `editorFontFamily` (string|null), `showEntryTimestamps` (bool), `timestampFormat` (`'12h'|'24h'`), `timestampPrecision` (`'hm'|'hms'`), `language` (string). Stored in `localStorage`.
+`Preferences` fields: `allowFutureEntries` (bool), `firstDayOfWeek` (number|null), `hideTitles` (bool), `enableSpellcheck` (bool), `escAction` (`'none'|'quit'`), `autoLockEnabled` (bool), `autoLockTimeout` (number, seconds), `toolbarItems` (`ToolbarItem[]` — 15 configurable toolbar actions with per-item `enabled` bool and display order; Bold/Italic are fixed and not in this list), `editorFontSize` (number, px), `editorFontFamily` (string|null), `showEntryTimestamps` (bool), `timestampFormat` (`'12h'|'24h'`), `timestampPrecision` (`'hm'|'hms'`), `language` (string). Stored in `localStorage`.
+
+> **Settings taxonomy:** When adding a new setting, see [`docs/decisions/2026-05-settings-storage-taxonomy.md`](../docs/decisions/2026-05-settings-storage-taxonomy.md) for the decision flowchart (`localStorage` vs. `config.json` vs. `db_settings` vs. in-memory).
 
 ## i18n / Translations
 
@@ -134,6 +143,8 @@ const t = useI18n();
 setError(mapTauriError(err, t));
 ```
 
+For the cross-layer IPC error contract and regression checks, see [`docs/best-practices/TAURI_BEST_PRACTICES.md`](../docs/best-practices/TAURI_BEST_PRACTICES.md).
+
 ### Module-level arrays using translations
 
 Arrays that contain translated strings must be `createMemo` inside the component (not module-level consts), so they are evaluated after `useI18n()` is called. See `MONTH_NAMES` in `Calendar.tsx` and `FIRST_DAY_OPTIONS` in `overlays/preferences/PreferencesWritingTab.tsx` as reference.
@@ -156,16 +167,13 @@ See `docs/TRANSLATIONS.md` for the community translator guide.
 
 ### SolidJS Reactivity Gotchas
 
-- **Never destructure props** — kills reactivity. Use `props.name` always.
-- **Wrap async in components** — use `onMount` or `createResource`, never top-level `await`.
-- **Event handlers** — use `on:click` (native) or `onClick` (SolidJS delegated). Wrap async handlers: `onClick={() => handleAsync()}`.
-- **Conditional rendering** — use `<Show when={...}>`, not JS ternaries.
-- **Lists** — use `<For each={...}>`, never `.map()`. The `<For>` callback receives the unwrapped item directly for primitive arrays: `(item) => ...`, not `(item) => item()`. Only store/object entries behave like signals.
+The durable SolidJS reactivity rules and diagnostic `rg` commands live in [`docs/best-practices/FRONTEND_BEST_PRACTICES.md`](../docs/best-practices/FRONTEND_BEST_PRACTICES.md). This domain guide keeps local examples and inventories.
+
+Local note: the `<For>` callback receives the unwrapped item directly for primitive arrays: `(item) => ...`, not `(item) => item()`. Only store/object entries behave like signals.
 
 ### Error Handling
 
-- `try/catch` around `invoke()` calls; set error signals for UI display.
-- **Always pass raw Tauri error strings through `mapTauriError()` from `src/lib/errors.ts` before displaying to users.** It strips filesystem paths, OS error codes, SQLite internals, and Argon2 details to prevent information disclosure.
+The durable rules for typed wrappers, sanitized Tauri errors, sensitive UI flow ordering, and regression checks live in [`docs/best-practices/FRONTEND_BEST_PRACTICES.md`](../docs/best-practices/FRONTEND_BEST_PRACTICES.md). Keep the `mapTauriError(err, t)` call pattern above aligned with `src/lib/errors.ts`.
 
 ### Testing Pattern
 
@@ -248,6 +256,8 @@ These are used by E2E tests — **do not remove** from components.
    - `'preferences'` — the `Preferences` interface (autoLockEnabled, hideTitles, etc.)
    - `'theme-preference'` — `'auto'|'light'|'dark'` (managed by `src/lib/theme.ts`)
    - `'theme-overrides'` — JSON object of CSS token overrides (managed by `src/lib/theme-overrides.ts`)
+
+   See [`docs/decisions/2026-05-settings-storage-taxonomy.md`](../docs/decisions/2026-05-settings-storage-taxonomy.md) for the full taxonomy and decision guide.
 
 7. **TipTap inline styles require `dangerousDisableAssetCspModification: ["style-src"]`**: Tauri injects a random nonce into all CSP directives at runtime. Per the CSP spec, when a nonce is present in `style-src`, `'unsafe-inline'` is **ignored** — so TipTap's `style="text-align: X"` node-attribute rendering is silently blocked by the browser. The `tauri.conf.json` security section uses `"dangerousDisableAssetCspModification": ["style-src"]` to prevent nonce injection into `style-src` only (leaving `script-src` nonce-protected). **Do not remove this line or restructure the CSP string without verifying alignment still works** — the failure is silent (no console error in dev mode, only in production builds where the nonce is active). See issue #63.
 

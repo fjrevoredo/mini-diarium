@@ -2,6 +2,7 @@ import { createSignal, Show } from 'solid-js';
 import { PasswordStrengthIndicator } from './PasswordStrengthIndicator';
 import { createJournal, createJournalAutoProtected, goToJournalPicker } from '../../state/auth';
 import { useI18n } from '../../i18n';
+import { mapTauriError } from '../../lib/errors';
 
 export default function PasswordCreation() {
   const t = useI18n();
@@ -29,8 +30,7 @@ export default function PasswordCreation() {
         setIsCreating(true);
         await createJournalAutoProtected();
       } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        setError(message);
+        setError(mapTauriError(err, t));
       } finally {
         setIsCreating(false);
       }
@@ -55,8 +55,7 @@ export default function PasswordCreation() {
       setIsCreating(true);
       await createJournal(pwd);
     } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      setError(message);
+      setError(mapTauriError(err, t));
     } finally {
       setIsCreating(false);
     }

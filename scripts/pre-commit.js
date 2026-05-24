@@ -95,7 +95,18 @@ async function main() {
     results.failed.push('Prettier');
   }
 
-  // 4. Frontend Tests
+  // 4. UI error sanitization guard
+  header('UI Error Sanitization');
+  const uiErrors = run('bun run check:ui-errors', 'Checking raw error display patterns');
+  if (uiErrors.success) {
+    success('No raw UI error display patterns');
+    results.passed.push('UI Error Sanitization');
+  } else {
+    error('Raw UI error display patterns found (wrap with mapTauriError)');
+    results.failed.push('UI Error Sanitization');
+  }
+
+  // 5. Frontend Tests
   header('Frontend Tests');
   const frontendTest = run('bun run test:run', 'Running tests');
   if (frontendTest.success) {
@@ -106,7 +117,7 @@ async function main() {
     results.failed.push('Frontend Tests');
   }
 
-  // 5. Backend Tests (Rust)
+  // 6. Backend Tests (Rust)
   header('Backend Tests (Rust)');
   const cargoPath = 'src-tauri';
   if (existsSync(cargoPath)) {
@@ -123,7 +134,7 @@ async function main() {
     results.warnings.push('Backend tests skipped');
   }
 
-  // 6. Rust Clippy
+  // 7. Rust Clippy
   if (existsSync(cargoPath)) {
     header('Rust Clippy');
     const clippy = run('cargo clippy --all-targets --quiet -- -D warnings', 'Running clippy', { cwd: cargoPath });
@@ -136,7 +147,7 @@ async function main() {
     }
   }
 
-  // 7. Rust Format Check
+  // 8. Rust Format Check
   if (existsSync(cargoPath)) {
     header('Rust Format Check');
     const rustfmt = run('cargo fmt --check', 'Checking Rust formatting', { cwd: cargoPath });

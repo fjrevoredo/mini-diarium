@@ -4,7 +4,7 @@ Thanks for your interest in contributing! This guide covers everything you need 
 
 ## Prerequisites
 
-- **Rust** 1.75 or later (with `clippy` and `rustfmt`)
+- **Rust** (see `rust-toolchain.toml`, with `clippy` and `rustfmt`)
 - **Bun** 1.x
 - **Tauri v2 system dependencies** (see [Tauri's prerequisites guide](https://v2.tauri.app/start/prerequisites/) for your platform)
   - **Linux (Ubuntu/Debian)**: `libwebkit2gtk-4.1-dev`, `libappindicator3-dev`, `librsvg2-dev`, `patchelf`

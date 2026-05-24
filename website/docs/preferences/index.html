@@ -235,7 +235,7 @@
       "@id": "https://mini-diarium.com/docs/preferences/#article",
       "headline": "Preferences",
       "description": "How to configure Mini Diarium: themes, auto-lock, editor settings, and more.",
-      "dateModified": "2026-05-06T00:00:00Z",
+      "dateModified": "2026-05-24T00:00:00Z",
       "keywords": "preferences, settings, theme, auto-lock, configuration",
       "publisher": {
         "@type": "Organization",
@@ -391,13 +391,25 @@
         </tr>
         <tr>
         <td>Language</td>
-        <td>Interface language: English, Spanish, German, or Italian</td>
+        <td>Interface language: English, Spanish, German, French, or Italian</td>
         </tr>
         <tr>
         <td>First day of week</td>
         <td>Sunday, Monday, or auto-detect from locale</td>
         </tr>
         <tr>
+        <td>ESC key action</td>
+        <td>Do nothing or quit the app when pressing Escape</td>
+        </tr>
+        </tbody></table>
+        <h2 id="writing-settings">Writing Settings</h2><table>
+        <thead>
+        <tr>
+        <th>Setting</th>
+        <th>Description</th>
+        </tr>
+        </thead>
+        <tbody><tr>
         <td>Allow future entries</td>
         <td>Write entries for dates that have not happened yet</td>
         </tr>
@@ -410,8 +422,8 @@
         <td>Toggle browser spellcheck in the editor</td>
         </tr>
         <tr>
-        <td>Advanced toolbar</td>
-        <td>Show the full formatting toolbar with text direction, timestamp, alignment, and image options</td>
+        <td>Toolbar items</td>
+        <td>Configure which formatting controls appear in the editor toolbar and their order. Each of the 17 controls (Headings, Underline, Strikethrough, Text color, Highlight color, Blockquote, Inline code, Bullet list, Numbered list, Horizontal rule, Insert image, Import Markdown, Insert timestamp, Text direction, Alignment, Font family, Font size) can be enabled/disabled individually and reordered with ↑/↓ buttons. &quot;Select all&quot; and &quot;Select none&quot; toggle all controls at once. Bold and Italic are always present at the start of the toolbar and cannot be removed. Font family and Font size are disabled by default — enable them to get compact dropdown pickers directly in the toolbar, always in sync with the Preferences sliders.</td>
         </tr>
         <tr>
         <td>Editor font size</td>
@@ -419,7 +431,7 @@
         </tr>
         <tr>
         <td>Editor font</td>
-        <td>Choose a font family for the editor body from five bundled options</td>
+        <td>Choose a font family for the editor body from bundled options</td>
         </tr>
         <tr>
         <td>Show entry timestamps</td>
@@ -521,6 +533,7 @@
         <ul>
           <li class="docs-toc-h2"><a href="#opening-preferences">Opening Preferences</a></li>
           <li class="docs-toc-h2"><a href="#general-settings">General Settings</a></li>
+          <li class="docs-toc-h2"><a href="#writing-settings">Writing Settings</a></li>
           <li class="docs-toc-h2"><a href="#security-settings">Security Settings</a></li>
           <li class="docs-toc-h2"><a href="#storage-settings">Storage Settings</a></li>
           <li class="docs-toc-h2"><a href="#theme-overrides-advanced">Theme Overrides (Advanced)</a></li>

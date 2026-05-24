@@ -78,15 +78,66 @@ pub(crate) fn auto_lock_diary_if_unlocked(
     Ok(did_lock)
 }
 
+/// Acquires the DB lock, checks that the journal is unlocked, then calls `f` with a
+/// reference to the connection.  Centralises the 4-line preamble that every command
+/// that reads or writes entries would otherwise repeat.
+pub(crate) fn with_unlocked_db<F, T>(state: &DiaryState, f: F) -> Result<T, String>
+where
+    F: FnOnce(&DatabaseConnection) -> Result<T, String>,
+{
+    let db_state = state
+        .db
+        .lock()
+        .map_err(|_| "Journal state lock failed".to_string())?;
+    let db = db_state.as_ref().ok_or("Journal must be unlocked")?;
+    f(db)
+}
+
 mod auth_core;
 mod auth_directory;
+mod auth_identity;
 mod auth_journals;
-mod auth_methods;
+mod auth_policy;
+mod auth_slots;
 
 pub use auth_core::*;
 pub use auth_directory::*;
+pub use auth_identity::*;
 pub use auth_journals::*;
-pub use auth_methods::*;
+pub use auth_policy::*;
+pub use auth_slots::*;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::db::schema::create_database;
+    use std::path::PathBuf;
+
+    #[test]
+    fn test_with_unlocked_db_locked_returns_error() {
+        let state = DiaryState::new(
+            PathBuf::from("test_wudb_locked.db"),
+            PathBuf::from("test_wudb_locked_backups"),
+            PathBuf::from("."),
+        );
+        let err = with_unlocked_db(&state, |_db| Ok(())).unwrap_err();
+        assert!(err.contains("Journal must be unlocked"), "got: {}", err);
+    }
+
+    #[test]
+    fn test_with_unlocked_db_unlocked_returns_inner_result() {
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+        let state = DiaryState::new(
+            PathBuf::from("test_wudb_unlocked.db"),
+            PathBuf::from("test_wudb_unlocked_backups"),
+            PathBuf::from("."),
+        );
+        *state.db.lock().unwrap() = Some(db);
+        let result: Result<i32, String> = with_unlocked_db(&state, |_db| Ok(42));
+        assert_eq!(result.unwrap(), 42);
+    }
+}
 
 #[cfg(test)]
 pub(crate) mod test_helpers {

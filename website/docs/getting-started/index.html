@@ -235,7 +235,7 @@
       "@id": "https://mini-diarium.com/docs/getting-started/#article",
       "headline": "Getting Started",
       "description": "How to create your first journal, set a password, and start writing in Mini Diarium.",
-      "dateModified": "2026-04-19T00:00:00Z",
+      "dateModified": "2026-05-15T00:00:00Z",
       "keywords": "setup, password, first launch",
       "publisher": {
         "@type": "Organization",
@@ -405,6 +405,14 @@
         <h2 id="first-launch">First Launch</h2><p>When you open Mini Diarium, the app starts at the <strong>Journal Picker</strong>. From there you can create a new journal or open an existing <code>diary.db</code> file.</p>
         <p>If you create a new journal, you will be asked to create a password. This password encrypts your entire journal using AES-256-GCM encryption.</p>
         <p><strong>There is no password recovery.</strong> If you forget your password, your entries cannot be recovered. Choose something memorable and keep it safe.</p>
+        <h2 id="welcome-tour">Welcome Tour</h2><p>The first time you create a journal, a <strong>three-step overlay tour</strong> appears to highlight key features:</p>
+        <ol>
+        <li><strong>Enable the advanced toolbar</strong> — turn on extra formatting controls in <strong>Preferences → Writing</strong>.</li>
+        <li><strong>Import your entries</strong> — bring in content from Day One, Obsidian, or plain text files via the Import panel.</li>
+        <li><strong>Read the documentation</strong> — links to the online guides and keyboard shortcut reference.</li>
+        </ol>
+        <p>Each step shows a callout card with a direct action link. You can navigate with <strong>Back</strong> and <strong>Next</strong>, or click the <strong>Minimize</strong> (<code>⊟</code>) button in the card header to collapse the tour into a floating help icon (<code>?</code>) at the bottom-right of the window. Pressing <strong>Escape</strong> while the tour is open minimizes it rather than closing the app.</p>
+        <p>To resume or permanently dismiss the tour, click the <code>?</code> icon and choose <strong>Resume Tour</strong> or <strong>Dismiss</strong>. Completing all three steps also dismisses it automatically. The tour only ever appears once per app profile — it does not repeat on subsequent launches or when adding new journals.</p>
         <h2 id="locking-and-unlocking">Locking and Unlocking</h2><p>Your journal is encrypted whenever it is locked. After selecting a journal, enter your password to unlock it. The journal locks automatically when you close the app, and you can also lock it manually using the lock icon in the header at any time.</p>
         <p>The header also shows an <strong>About</strong> button (ⓘ) and a <strong>bell icon</strong> for the notification center. The bell displays an unread badge when a new release ships; click it to read what changed and mark notifications as read.</p>
         <p>As an alternative to your password, you can register a key file in <strong>Preferences → Authentication Methods</strong>. Once registered, use the &quot;Key File&quot; tab on the unlock screen and select your <code>.key</code> file to unlock without typing your password.</p>
@@ -428,6 +436,7 @@
         <p class="docs-toc-label">On this page</p>
         <ul>
           <li class="docs-toc-h2"><a href="#first-launch">First Launch</a></li>
+          <li class="docs-toc-h2"><a href="#welcome-tour">Welcome Tour</a></li>
           <li class="docs-toc-h2"><a href="#locking-and-unlocking">Locking and Unlocking</a></li>
           <li class="docs-toc-h2"><a href="#multiple-journals">Multiple Journals</a></li>
           <li class="docs-toc-h2"><a href="#local-only-journals-no-password">Local-Only Journals (No Password)</a></li>

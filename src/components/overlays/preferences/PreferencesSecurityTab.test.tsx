@@ -1,0 +1,266 @@
+import { describe, it, expect, vi, afterEach } from 'vitest';
+import { screen, fireEvent } from '@solidjs/testing-library';
+import { renderWithI18n } from '../../../test/i18n-test-utils';
+import { createSignal } from 'solid-js';
+import { PreferencesShellContext } from './shared';
+import PreferencesSecurityTab from './PreferencesSecurityTab';
+
+const { mockPeekAuthSlotTypes } = vi.hoisted(() => ({
+  mockPeekAuthSlotTypes: vi.fn(() => Promise.resolve({ slots: [], require_all_auth: false })),
+}));
+
+vi.mock('../../../lib/tauri', async () => {
+  const actual = await vi.importActual<typeof import('../../../lib/tauri')>('../../../lib/tauri');
+  return {
+    ...actual,
+    peekAuthSlotTypes: mockPeekAuthSlotTypes,
+    changePassword: vi.fn(() => Promise.resolve()),
+    verifyPassword: vi.fn(() => Promise.resolve()),
+    generateKeypair: vi.fn(() =>
+      Promise.resolve({ public_key_hex: 'aabb', private_key_hex: 'ccdd' }),
+    ),
+    registerKeypair: vi.fn(() => Promise.resolve()),
+    writeKeyFile: vi.fn(() => Promise.resolve()),
+    registerPassword: vi.fn(() => Promise.resolve()),
+    removeAuthMethod: vi.fn(() => Promise.resolve()),
+  };
+});
+
+const { mockAuthMethods, mockAuthState, mockLoadAuthMethods, mockSetRequireAllAuth } = vi.hoisted(
+  () => ({
+    mockAuthMethods: vi.fn(
+      () => [] as { id: number; slot_type: string; label: string; last_used: string | null }[],
+    ),
+    mockAuthState: vi.fn(() => 'unlocked' as const),
+    mockLoadAuthMethods: vi.fn(() => Promise.resolve()),
+    mockSetRequireAllAuth: vi.fn(() => Promise.resolve()),
+  }),
+);
+
+vi.mock('../../../state/auth', () => ({
+  authState: mockAuthState,
+  authMethods: mockAuthMethods,
+  loadAuthMethods: mockLoadAuthMethods,
+  setRequireAllAuth: mockSetRequireAllAuth,
+}));
+
+const { mockJournals, mockActiveJournalId } = vi.hoisted(() => ({
+  mockJournals: vi.fn(
+    () => [] as { id: number; name: string; path: string; auto_protected?: boolean }[],
+  ),
+  mockActiveJournalId: vi.fn(() => null as number | null),
+}));
+
+vi.mock('../../../state/journals', () => ({
+  journals: mockJournals,
+  activeJournalId: mockActiveJournalId,
+}));
+
+const { mockPreferences, mockSetPreferences } = vi.hoisted(() => ({
+  mockPreferences: vi.fn(() => ({ autoLockEnabled: false, autoLockTimeout: 300 })),
+  mockSetPreferences: vi.fn(),
+}));
+
+vi.mock('../../../state/preferences', () => ({
+  preferences: mockPreferences,
+  setPreferences: mockSetPreferences,
+}));
+
+let capturedCommit: (() => void) | null = null;
+
+function renderTab() {
+  const [isOpen] = createSignal(true);
+  capturedCommit = null;
+  return renderWithI18n(() => (
+    <PreferencesShellContext.Provider
+      value={{
+        registerCommit: vi.fn((fn: () => void) => {
+          capturedCommit = fn;
+          return () => {
+            capturedCommit = null;
+          };
+        }),
+      }}
+    >
+      <PreferencesSecurityTab isOpen={isOpen} onClose={vi.fn()} />
+    </PreferencesShellContext.Provider>
+  ));
+}
+
+describe('PreferencesSecurityTab — conditional sections', () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('shows Change Password section when a password slot is registered', () => {
+    mockAuthMethods.mockReturnValue([
+      { id: 1, slot_type: 'password', label: 'Password', last_used: null },
+    ]);
+    renderTab();
+    expect(screen.getByRole('heading', { name: 'Change Password' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Add Password Auth' })).not.toBeInTheDocument();
+  });
+
+  it('shows Add Password section when no password slot is registered', () => {
+    mockAuthMethods.mockReturnValue([
+      { id: 1, slot_type: 'keypair', label: 'My Key', last_used: null },
+    ]);
+    renderTab();
+    expect(screen.getByRole('heading', { name: 'Add Password Auth' })).toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: 'Change Password' })).not.toBeInTheDocument();
+  });
+});
+
+describe('PreferencesSecurityTab — require-all-auth toggle', () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('shows fallback text when fewer than two non-auto methods are registered', () => {
+    mockAuthMethods.mockReturnValue([
+      { id: 1, slot_type: 'password', label: 'Password', last_used: null },
+    ]);
+    renderTab();
+    expect(
+      screen.getByText('Add at least two authentication methods to enable this option.'),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('checkbox', { name: /require all authentication/i }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('shows the checkbox when two or more non-auto methods are registered', () => {
+    mockAuthMethods.mockReturnValue([
+      { id: 1, slot_type: 'password', label: 'Password', last_used: null },
+      { id: 2, slot_type: 'keypair', label: 'My Key', last_used: null },
+    ]);
+    renderTab();
+    expect(
+      screen.getByRole('checkbox', { name: /require all authentication/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText('Add at least two authentication methods to enable this option.'),
+    ).not.toBeInTheDocument();
+  });
+
+  it('hides the require-all-auth section for auto-protected journals', () => {
+    mockJournals.mockReturnValue([
+      { id: 1, name: 'My Journal', path: '/tmp', auto_protected: true },
+    ]);
+    mockActiveJournalId.mockReturnValue(1);
+    mockAuthMethods.mockReturnValue([
+      { id: 1, slot_type: 'password', label: 'Password', last_used: null },
+      { id: 2, slot_type: 'keypair', label: 'My Key', last_used: null },
+    ]);
+    renderTab();
+    expect(
+      screen.queryByRole('heading', { name: 'Require All Authentication Methods' }),
+    ).not.toBeInTheDocument();
+  });
+
+  it('initialises checkbox as checked when peekAuthSlotTypes returns require_all_auth: true', async () => {
+    mockJournals.mockReturnValue([]);
+    mockActiveJournalId.mockReturnValue(null);
+    mockPeekAuthSlotTypes.mockResolvedValueOnce({ slots: [], require_all_auth: true });
+    mockAuthMethods.mockReturnValue([
+      { id: 1, slot_type: 'password', label: 'Password', last_used: null },
+      { id: 2, slot_type: 'keypair', label: 'My Key', last_used: null },
+    ]);
+    renderTab();
+    const checkbox = screen.getByRole('checkbox', { name: /require all authentication/i });
+    await vi.waitFor(() => {
+      expect(checkbox).toBeChecked();
+    });
+  });
+
+  it('calls setRequireAllAuth with the new value when the checkbox is toggled', async () => {
+    mockJournals.mockReturnValue([]);
+    mockActiveJournalId.mockReturnValue(null);
+    mockAuthMethods.mockReturnValue([
+      { id: 1, slot_type: 'password', label: 'Password', last_used: null },
+      { id: 2, slot_type: 'keypair', label: 'My Key', last_used: null },
+    ]);
+    renderTab();
+    const checkbox = screen.getByRole('checkbox', { name: /require all authentication/i });
+    fireEvent.click(checkbox);
+    await vi.waitFor(() => {
+      expect(mockSetRequireAllAuth).toHaveBeenCalledWith(true);
+    });
+  });
+
+  it('displays a sanitised error when setRequireAllAuth rejects', async () => {
+    // 'Journal must be unlocked' maps to errors.journalNotUnlocked → 'Please unlock your journal first.'
+    mockJournals.mockReturnValue([]);
+    mockActiveJournalId.mockReturnValue(null);
+    mockSetRequireAllAuth.mockRejectedValueOnce(new Error('Journal must be unlocked'));
+    mockAuthMethods.mockReturnValue([
+      { id: 1, slot_type: 'password', label: 'Password', last_used: null },
+      { id: 2, slot_type: 'keypair', label: 'My Key', last_used: null },
+    ]);
+    renderTab();
+    const checkbox = screen.getByRole('checkbox', { name: /require all authentication/i });
+    fireEvent.click(checkbox);
+    await vi.waitFor(() => {
+      expect(screen.getByText('Please unlock your journal first.')).toBeInTheDocument();
+    });
+  });
+});
+
+describe('PreferencesSecurityTab — auto-lock save flow', () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+    mockPreferences.mockReturnValue({ autoLockEnabled: false, autoLockTimeout: 300 });
+  });
+
+  it('renders the auto-lock checkbox unchecked by default', () => {
+    mockPreferences.mockReturnValue({ autoLockEnabled: false, autoLockTimeout: 300 });
+    renderTab();
+    const checkbox = screen.getByRole('checkbox', { name: /lock after inactivity/i });
+    expect(checkbox).not.toBeChecked();
+  });
+
+  it('renders the auto-lock checkbox checked when preferences.autoLockEnabled is true', () => {
+    mockPreferences.mockReturnValue({ autoLockEnabled: true, autoLockTimeout: 60 });
+    renderTab();
+    const checkbox = screen.getByRole('checkbox', { name: /lock after inactivity/i });
+    expect(checkbox).toBeChecked();
+  });
+
+  it('toggling the auto-lock checkbox flips the local UI state immediately', () => {
+    renderTab();
+    const checkbox = screen.getByRole('checkbox', {
+      name: /lock after inactivity/i,
+    }) as HTMLInputElement;
+    expect(checkbox).not.toBeChecked();
+    fireEvent.click(checkbox);
+    expect(checkbox).toBeChecked();
+  });
+
+  it('commits autoLockEnabled: true after the user checks the box and Save is clicked', () => {
+    renderTab();
+    const checkbox = screen.getByRole('checkbox', { name: /lock after inactivity/i });
+    fireEvent.click(checkbox);
+
+    expect(capturedCommit).not.toBeNull();
+    capturedCommit!();
+
+    expect(mockSetPreferences).toHaveBeenCalledWith(
+      expect.objectContaining({ autoLockEnabled: true }),
+    );
+  });
+
+  it('commits the updated autoLockTimeout when the user edits it', () => {
+    renderTab();
+    const checkbox = screen.getByRole('checkbox', { name: /lock after inactivity/i });
+    fireEvent.click(checkbox);
+    const timeoutInput = screen.getByRole('spinbutton') as HTMLInputElement;
+    fireEvent.input(timeoutInput, { target: { value: '120' } });
+
+    expect(capturedCommit).not.toBeNull();
+    capturedCommit!();
+
+    expect(mockSetPreferences).toHaveBeenCalledWith(
+      expect.objectContaining({ autoLockEnabled: true, autoLockTimeout: 120 }),
+    );
+  });
+});

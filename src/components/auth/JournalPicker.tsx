@@ -10,6 +10,7 @@ import {
 } from '../../state/journals';
 import { refreshAuthState, error as authError } from '../../state/auth';
 import { checkJournalPath } from '../../lib/tauri';
+import { mapTauriError } from '../../lib/errors';
 import { useI18n } from '../../i18n';
 
 type AddMode = null | 'create' | 'open';
@@ -33,8 +34,7 @@ export default function JournalPicker() {
       await switchJournal(id);
       await refreshAuthState();
     } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      setLocalError(message);
+      setLocalError(mapTauriError(err, t));
     } finally {
       setIsWorking(false);
     }
@@ -50,8 +50,7 @@ export default function JournalPicker() {
     try {
       await removeJournal(id);
     } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      setLocalError(message);
+      setLocalError(mapTauriError(err, t));
     }
   };
 
@@ -68,8 +67,7 @@ export default function JournalPicker() {
       try {
         await renameJournal(id, name);
       } catch (err) {
-        const message = err instanceof Error ? err.message : String(err);
-        setLocalError(message);
+        setLocalError(mapTauriError(err, t));
       }
     }
     setRenamingId(null);
@@ -111,8 +109,7 @@ export default function JournalPicker() {
       await switchJournal(journal.id);
       await refreshAuthState();
     } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      setLocalError(message);
+      setLocalError(mapTauriError(err, t));
       setIsWorking(false);
     }
   };
@@ -161,8 +158,7 @@ export default function JournalPicker() {
       await switchJournal(journal.id);
       await refreshAuthState();
     } catch (err) {
-      const message = err instanceof Error ? err.message : String(err);
-      setLocalError(message);
+      setLocalError(mapTauriError(err, t));
       setIsWorking(false);
     }
   };

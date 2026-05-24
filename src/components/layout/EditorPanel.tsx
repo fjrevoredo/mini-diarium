@@ -8,6 +8,7 @@ import WordCount from '../editor/WordCount';
 import { EntryNavBar } from '../editor/EntryNavBar';
 import { selectedDate } from '../../state/ui';
 import { readTextFile } from '../../lib/tauri';
+import EntryTags from '../editor/EntryTags';
 import type { DiaryEntry } from '../../lib/tauri';
 import { formatTimestamp } from '../../lib/dates';
 import { isSaving } from '../../state/entries';
@@ -32,7 +33,6 @@ export default function EditorPanel() {
   const [title, setTitle] = createSignal('');
   const [content, setContent] = createSignal('');
   const [wordCount, setWordCount] = createSignal(0);
-  const [_isLoadingEntry, setIsLoadingEntry] = createSignal(false);
   const [editorInstance, setEditorInstance] = createSignal<Editor | null>(null);
 
   // Multi-entry state (shared between lifecycle + nav hooks).
@@ -61,7 +61,6 @@ export default function EditorPanel() {
     setPendingEntryId,
     isCreatingEntry,
     setIsCreatingEntry,
-    setIsLoadingEntry,
     emptyCheck,
   });
 
@@ -235,8 +234,8 @@ export default function EditorPanel() {
         deleteDisabled={isCreatingEntry() || dayEntries().length <= 1}
         deleteTitle={t('editor.deleteEntry')}
       />
-      <div class="flex-1 overflow-y-auto p-6">
-        <div class="mx-auto w-full max-w-3xl xl:max-w-5xl 2xl:max-w-6xl">
+      <div class="flex-1 overflow-y-auto px-6 pb-6">
+        <div class="pt-6 mx-auto w-full max-w-3xl xl:max-w-5xl 2xl:max-w-6xl">
           <div class="space-y-4">
             <Show when={!preferences().hideTitles}>
               <TitleEditor
@@ -293,6 +292,9 @@ export default function EditorPanel() {
               spellCheck={preferences().enableSpellcheck}
               onImportMarkdown={handleImportMarkdown}
             />
+            <Show when={pendingEntryId() !== null}>
+              <EntryTags entryId={pendingEntryId()!} />
+            </Show>
           </div>
         </div>
       </div>

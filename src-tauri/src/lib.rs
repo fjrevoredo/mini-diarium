@@ -9,11 +9,40 @@ pub mod import;
 pub mod menu;
 pub mod plugin;
 pub mod screen_lock;
+mod webview_security;
 
 use commands::auth::DiaryState;
 use log::{info, warn};
 use std::path::{Path, PathBuf};
 use tauri::Manager;
+
+// NOTE: keep in sync with src/lib/network-isolation-script.ts
+const NETWORK_ISOLATION_SCRIPT: &str = r#"(function() {
+  'use strict';
+  const kill = (obj, prop) => {
+    try {
+      Object.defineProperty(obj, prop, {
+        value: undefined, writable: false, configurable: false,
+      });
+    } catch (_) {}
+  };
+  kill(window, 'RTCPeerConnection');
+  kill(window, 'webkitRTCPeerConnection');
+  kill(window, 'mozRTCPeerConnection');
+  kill(window, 'RTCSessionDescription');
+  kill(window, 'WebTransport');
+  // NOTE: fetch/XMLHttpRequest/WebSocket/EventSource stay available because
+  // Tauri IPC and the dev server depend on them. External requests are blocked
+  // by CSP and platform WebView request handlers.
+  kill(window, 'open');
+  kill(window, 'Worker');
+  kill(window, 'SharedWorker');
+  if (navigator) {
+    kill(navigator, 'serviceWorker');
+    kill(navigator, 'sendBeacon');
+    kill(navigator, 'connection');
+  }
+})();"#;
 
 const LEGACY_APP_IDENTIFIER_DIR: &str = "com.minidiarium.app";
 
@@ -148,10 +177,24 @@ pub fn run() {
             let backups_dir = diary_dir.join("backups").join(stem);
 
             // Set up state
-            app.manage(DiaryState::new(db_path, backups_dir, app_dir));
+            app.manage(DiaryState::new(db_path, backups_dir, app_dir.clone()));
 
             // Initialize plugin registry
-            let plugins_dir = diary_dir.join("plugins");
+            let plugins_dir = app_dir.join("plugins");
+
+            // One-time migration: copy any .rhai files from per-journal plugins/ dirs
+            // to the new central location. Non-destructive — originals stay in place.
+            {
+                let mut old_dirs: Vec<PathBuf> = vec![diary_dir.clone()];
+                for j in crate::config::load_journals(&app_dir) {
+                    old_dirs.push(PathBuf::from(&j.path));
+                }
+                if let Some(legacy) = crate::config::load_diary_dir(&app_dir) {
+                    old_dirs.push(legacy);
+                }
+                plugin::rhai_loader::migrate_journal_plugins(&old_dirs, &plugins_dir);
+            }
+
             let mut registry = plugin::registry::PluginRegistry::new();
             plugin::builtins::register_all(&mut registry);
             plugin::rhai_loader::load_plugins(&plugins_dir, &mut registry);
@@ -166,20 +209,81 @@ pub fn run() {
                 warn!("Screen-lock listener initialization failed: {}", error);
             }
 
-            if let Some(win) = app.get_webview_window("main") {
-                if is_e2e {
-                    // Set the window to the exact E2E viewport size BEFORE show() so the WebView
-                    // renders at 800×660 from the very first paint. WebView2 captures CSS viewport
-                    // values (100vh, window.innerHeight) at first paint; any resize after show()
-                    // leaves those values stale and produces a white gap in screen-filling layouts.
-                    info!("E2E mode: forcing window to 800×660 before show");
-                    let _ = win.set_size(tauri::LogicalSize::new(800.0_f64, 660.0_f64));
+            // Create the main window programmatically so we can configure two critical
+            // security properties that are only available on the builder, not at runtime:
+            //
+            // 1. on_navigation — intercepts every WebView2 NavigationStarting event and
+            //    blocks any URL that isn't this app's own scheme or the local dev server.
+            //    Without this, WebView2 silently navigates to any URL dragged onto the
+            //    window, typed into JS, or embedded in dropped HTML — defeating the
+            //    no-network guarantee.
+            //
+            // 2. disable_drag_drop_handler — disables WRY's IDropTarget registration so
+            //    WebView2 receives all drag events natively via the DOM. Without this,
+            //    Tauri's WryDropHandler returns DROPEFFECT_NONE for non-file drags
+            //    (browser images, Typora), blocking the DOM drop event entirely.
+            let mut win_builder = tauri::WebviewWindowBuilder::new(
+                app,
+                "main",
+                tauri::WebviewUrl::App("index.html".into()),
+            )
+            .title("Mini Diarium")
+            .min_inner_size(600.0, 400.0)
+            .visible(false)
+            .disable_drag_drop_handler()
+            .on_navigation(|url| {
+                let scheme = url.scheme();
+                let host = url.host_str().unwrap_or("");
+                let allowed = scheme == "tauri"
+                    || scheme == "ipc"
+                    || (matches!(scheme, "http" | "https")
+                        && matches!(host, "localhost" | "127.0.0.1" | "tauri.localhost"));
+                if !allowed {
+                    warn!("Blocked navigation to external URL: {}", url);
                 }
-                // Show the window after setup is complete (window-state plugin has restored
-                // position/size by now for non-E2E mode), avoiding a flash at the default
-                // position on startup.
-                let _ = win.show();
+                allowed
+            })
+            // Block all new-window creation (window.open, target=_blank) on all platforms.
+            // Maps to WebView2 NewWindowRequested on Windows and WKUIDelegate on macOS.
+            .on_new_window(|_, _| tauri::webview::NewWindowResponse::Deny)
+            // Null network-capable JS globals before any page script runs.
+            // Defense-in-depth alongside CSP; runs in main frame and all subframes.
+            .initialization_script_for_all_frames(NETWORK_ISOLATION_SCRIPT);
+
+            if let Ok(webview_data_dir) = std::env::var("MINI_DIARIUM_WEBVIEW_DATA_DIR") {
+                let path = PathBuf::from(webview_data_dir);
+                if let Err(e) = std::fs::create_dir_all(&path) {
+                    warn!(
+                        "Failed to create WebView data directory '{}': {}",
+                        path.display(),
+                        e
+                    );
+                } else {
+                    info!("Using WebView data dir override: {}", path.display());
+                    win_builder = win_builder.data_directory(path);
+                }
             }
+
+            if is_e2e {
+                // Set the window to the exact E2E viewport size in the builder so the WebView
+                // renders at 800×660 from the very first paint. WebView2 captures CSS viewport
+                // values (100vh, window.innerHeight) at first paint; any resize after show()
+                // leaves those values stale and produces a white gap in screen-filling layouts.
+                info!("E2E mode: forcing window to 800×660 before show");
+                win_builder = win_builder.inner_size(800.0, 660.0);
+            } else {
+                win_builder = win_builder.inner_size(800.0, 780.0);
+            }
+
+            let win = win_builder.build()?;
+
+            // Install platform-specific engine-level request blockers (Windows/macOS).
+            // Defense-in-depth alongside CSP and the JS init script.
+            webview_security::install_platform_handlers(&win);
+
+            // Show after setup completes so the window-state plugin has already restored
+            // the saved position/size (non-E2E) before the window becomes visible.
+            let _ = win.show();
 
             Ok(())
         })
@@ -251,6 +355,15 @@ pub fn run() {
             // Fonts
             commands::fonts::list_bundled_fonts,
             commands::fonts::get_font_data,
+            // Tags
+            commands::tags::create_tag,
+            commands::tags::get_all_tags,
+            commands::tags::rename_tag,
+            commands::tags::delete_tag,
+            commands::tags::add_tag_to_entry,
+            commands::tags::remove_tag_from_entry,
+            commands::tags::get_tags_for_entry,
+            commands::tags::get_entry_dates_by_tag,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

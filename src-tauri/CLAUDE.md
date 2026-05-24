@@ -1,6 +1,7 @@
 # Backend (src-tauri/) — Mini Diarium
 
 > For project architecture, command registry, and cross-cutting conventions see the [root CLAUDE.md](../CLAUDE.md).
+> For durable backend rules, use [Rust best practices](../docs/best-practices/RUST_BEST_PRACTICES.md) and [Tauri best practices](../docs/best-practices/TAURI_BEST_PRACTICES.md) before changing commands, auth policy, migrations, encrypted storage, IPC, or WebView security.
 
 ## File Structure
 
@@ -12,6 +13,10 @@ src-tauri/src/
 ├── config.rs                          # Journal + diary directory config persistence
 ├── backup.rs                          # Automatic backups on unlock + rotation
 ├── screen_lock.rs                     # OS-level auto-lock listener (Windows WM_WTSSESSION_CHANGE/WM_POWERBROADCAST; macOS screen-sleep/lock notifications)
+├── webview_security/
+│   ├── mod.rs                         # install_platform_handlers(&win) — dispatches to platform impl
+│   ├── windows.rs                     # WebView2 WebResourceRequested COM handler (blocks external HTTP(S))
+│   └── macos.rs                       # WKContentRuleList rule compiler (blocks external HTTP(S))
 ├── auth/
 │   ├── mod.rs                             # AuthMethodInfo, KeypairFiles structs; re-exports
 │   ├── password.rs                        # PasswordMethod: Argon2id wrap/unwrap
@@ -23,8 +28,10 @@ src-tauri/src/
 │   │   ├── mod.rs                     # DiaryState struct; re-exports, auto_lock_diary_if_unlocked
 │   │   ├── auth_core.rs               # create/unlock/lock/reset/change_password
 │   │   ├── auth_directory.rs          # change_diary_directory with file move + sync to config
+│   │   ├── auth_identity.rs           # verify_password, list_auth_methods, peek_auth_slot_types + JournalPeek/AuthSlotPeek
 │   │   ├── auth_journals.rs           # list/add/remove/rename/switch journals, auto-lock guards
-│   │   └── auth_methods.rs            # Password & keypair registration, unlock_with_keypair
+│   │   ├── auth_policy.rs             # set_require_all_auth (db_settings flag + MAC)
+│   │   └── auth_slots.rs              # generate_keypair, write_key_file, register_password/keypair, remove_auth_method
 │   ├── entries.rs                     # CRUD + delete-if-empty + delete (unconditional)
 │   ├── search.rs                      # Search stub — returns empty results
 │   ├── navigation.rs                  # Day/month navigation
@@ -40,8 +47,18 @@ src-tauri/src/
 │   └── cipher.rs                      # AES-256-GCM encrypt/decrypt
 ├── db/
 │   ├── mod.rs                         # Re-exports
-│   ├── schema.rs                      # DB creation, migrations, password verification
-│   └── queries.rs                     # All SQL: CRUD, dates, word count
+│   ├── schema/
+│   │   ├── mod.rs                     # DatabaseConnection, SCHEMA_VERSION
+│   │   ├── create.rs                  # DB creation + schema DDL
+│   │   ├── open.rs                    # Password/keypair/auto open paths
+│   │   ├── legacy.rs                  # Legacy metadata/hash helpers
+│   │   └── migrations/                # v1_to_v2 … v6_to_v7 + apply_pending
+│   └── queries/
+│       ├── mod.rs                     # encrypt_for_storage, decrypt_utf8
+│       ├── entries.rs                 # ENTRY_SELECT, row_to_entry, CRUD
+│       ├── tags.rs                    # Tag CRUD + entry_tags associations
+│       ├── auth_slots.rs              # Auth slot CRUD + list
+│       └── db_settings.rs             # get/set/delete_db_setting, require_all_auth MAC
 ├── export/
 │   ├── mod.rs                         # Re-exports
 │   ├── json.rs                        # Mini Diary-compatible JSON export
@@ -66,14 +83,21 @@ src-tauri/src/
 ```rust
 #[tauri::command]
 pub fn my_command(arg: String, state: State<DiaryState>) -> Result<ReturnType, String> {
-    let db_state = state.db.lock().unwrap();
-    let db = db_state.as_ref().ok_or("Diary not unlocked")?;
-    // ... business logic
-    Ok(result)
+    with_unlocked_db(&state, |db| {
+        // ... business logic
+        Ok(result)
+    })
 }
 ```
 
+`with_unlocked_db` acquires the DB lock and checks that the journal is unlocked, returning canonical error strings (`"Journal state lock failed"` / `"Journal must be unlocked"`). Use it for any command that only needs the DB connection. For commands that also access other `DiaryState` fields (e.g. `app_data_dir`, `db_path`) alongside the DB lock, open-code the preamble to avoid restructuring the borrow.
+
 All commands return `Result<T, String>`. Register in both `commands/mod.rs` and `generate_handler![]` in `lib.rs`.
+
+For command design rules that should not regress, see:
+
+- [Tauri best practices](../docs/best-practices/TAURI_BEST_PRACTICES.md) for command registration, IPC validation, mapped error strings, and testable command cores.
+- [Rust best practices](../docs/best-practices/RUST_BEST_PRACTICES.md) for backend-owned invariants, lock scope, encrypted row helpers, migrations, and compatibility shims.
 
 **Two delete commands — use the right one:**
 - `delete_entry_if_empty(id, title, text)` — soft delete: only removes the entry if both title and text are blank. Returns `bool`. Used by the editor on blur/navigation to silently clean up orphaned blank entries.
@@ -82,7 +106,8 @@ All commands return `Result<T, String>`. Register in both `commands/mod.rs` and 
 ### Error Handling
 
 - `Result<T, String>` — map errors with `.map_err(|e| format!(...))`.
-- All commands that access entries must check `db_state.as_ref().ok_or("Diary not unlocked")?`
+- All commands that access entries must ensure the journal is unlocked. Use `with_unlocked_db` (canonical error strings: `"Journal state lock failed"` and `"Journal must be unlocked"`) wherever the command only needs the DB handle. Canonical strings are matched by `mapTauriError` on the frontend.
+- Security-sensitive command input must be validated in Rust even when the frontend already shapes the UI. Collections representing auth slots, credentials, or policy requirements need duplicate and coverage checks where identity matters.
 
 ### Menu Event Pattern — Backend
 
@@ -103,7 +128,7 @@ To add a new **built-in** import format (compiled Rust):
 
 The plugin system (`run_import_plugin`) is the single entry point; no per-format Tauri command is needed. The search reindex hook lives in `commands::import::import_entries` (see `// Search index hook:` comment).
 
-For **user-scriptable** formats, users drop a `.rhai` file in `{diary_dir}/plugins/`. See `plugin/rhai_loader.rs` for the Rhai script contract and `docs/user-plugins/USER_PLUGIN_GUIDE.md` for the end-user plugin guide and templates.
+For **user-scriptable** formats, users drop a `.rhai` file in `{app_data_dir}/plugins/`. See `plugin/rhai_loader.rs` for the Rhai script contract and `docs/user-plugins/USER_PLUGIN_GUIDE.md` for the end-user plugin guide and templates.
 
 ## Verification Commands
 
@@ -122,18 +147,34 @@ cd src-tauri && cargo bench --bench cipher_bench  # Specific benchmark
 - Auth: A random master key is wrapped per auth slot in `auth_slots` (schema v3). Password slots use Argon2id + AES-256-GCM wrapping; keypair slots use X25519 ECIES. The master key is never stored in plaintext.
 - The `DiaryState` holds `Mutex<Option<DatabaseConnection>>` — `None` when locked, `Some` when unlocked
 - All commands that access entries must check `db_state.as_ref().ok_or("Diary not unlocked")?`
+- **`unlock_diary_auto` intentionally bypasses `require_all_auth`**: Local-only journals use a device-bound key stored in `config.json` and have no user credential to combine with a second factor. The multi-auth guard only applies to password/keypair journals. Applying it to auto-key journals would always fail and is not the intended policy. See `commands/auth/auth_core.rs` `unlock_diary_auto` doc comment and `docs/decisions/2026-04-passwordless-journal.md` for the full rationale (P20, 2026-05-21 Position A decision).
+
+### Network Isolation Defense-in-Depth Stack (v0.5.0)
+
+The following layers prevent the embedded WebView from making outbound network requests:
+
+1. **`on_navigation` handler** (`lib.rs`) — blocks any URL navigation that is not `tauri://`, `ipc://`, or localhost. This was in place before v0.5.0.
+2. **CSP** (`tauri.conf.json`) — explicit `connect-src 'self' ipc: http://ipc.localhost`; `worker-src 'none'`; `child-src 'none'`; `frame-src 'none'`; `object-src 'none'`; `form-action 'none'`; `manifest-src 'none'`.
+3. **Init script** (`lib.rs` — `initialization_script_for_all_frames`) — nulls `RTCPeerConnection`, `WebTransport`, `Worker`, `SharedWorker`, `navigator.serviceWorker`, `navigator.sendBeacon`, `navigator.connection`, and `window.open` in all frames before any page script runs. `fetch`/`XMLHttpRequest`/`WebSocket`/`EventSource` stay available because Tauri IPC and the dev server depend on them; external network requests are blocked by CSP and platform WebView handlers. Source of truth: `src/lib/network-isolation-script.ts` — **keep the two copies in sync**.
+4. **`on_new_window(Deny)`** (`lib.rs`) — blocks `window.open()` and `target="_blank"` popup creation on all platforms.
+5. **Windows `WebResourceRequested`** (`lib.rs` `#[cfg(target_os = "windows")]`) — COM event handler that returns a synthetic `403 Forbidden` response (`SetResponse`) for external HTTP(S) requests (non-localhost).
+6. **macOS `WKContentRuleList`** (`lib.rs` `#[cfg(target_os = "macos")]`) — compiled content-blocking rule that blocks all `https?://.*` requests to non-localhost domains at the WebKit engine level.
+7. **Windows Firewall rule** (NSIS installer — `nsis/installer.nsh`) — outbound block rule for `mini-diarium.exe`. Requires `perMachine` install mode (elevated installer). Does not cover WebView2 subprocess traffic (see `docs/network-isolation-plan.md` Task 4.1b).
+8. **Linux Flatpak** (`flatpak/io.github.fjrevoredo.mini-diarium.yml`) — no `--share=network` in `finish-args` → kernel namespace blocks all outbound sockets.
+
+**Opener exception**: `tauri_plugin_opener` is retained. User-clicked help/docs links open in the system browser. This is documented in `PHILOSOPHY.md` and `SECURITY.md`.
 
 ## Gotchas and Pitfalls
 
-1. **Current schema is v6**: `entries_fts` was removed in v4 for security (it stored plaintext). v5 added `id INTEGER PRIMARY KEY AUTOINCREMENT` for multi-entry-per-date support. v6 added the `db_settings` table (`require_all_auth` flag + HKDF-SHA256 MAC) to bind multi-auth requirement to the encrypted database rather than `config.json`. `insert_entry`, `update_entry`, `delete_entry`, and all import commands have `// Search index hook:` comments marking where a future search module should be plugged in.
+1. **Current schema is v7**: `entries_fts` was removed in v4 for security (it stored plaintext). v5 added `id INTEGER PRIMARY KEY AUTOINCREMENT` for multi-entry-per-date support. v6 added the `db_settings` table (`require_all_auth` flag + HKDF-SHA256 MAC) to bind multi-auth requirement to the encrypted database rather than `config.json`. v7 added `tags` (AES-256-GCM encrypted name, HKDF-SHA256 keyed fingerprint for dedup) and `entry_tags` (association table with `ON DELETE CASCADE` on both sides). `insert_entry`, `update_entry`, `delete_entry`, and all import commands have `// Search index hook:` comments marking where a future search module should be plugged in.
 
 2. **Command registration is two places**: New commands must be added to both `commands/mod.rs` (module declaration) and `generate_handler![]` in `lib.rs`. Missing either causes silent failures or compile errors.
 
 3. **Import behavior (no merge)**: Parsers in `import/*.rs` return `Vec<DiaryEntry>`. Imports always create new entries; there is no date-conflict merging. Re-importing the same file creates duplicate entries. The old merge path has been removed from the current codebase.
 
-4. **Auth slots (v3 schema):** Each auth method stores its own wrapped copy of the master key in `auth_slots`. `remove_auth_method` refuses to delete the last slot (minimum one required). `change_password` re-wraps the master key in O(1) — no entry re-encryption needed. `verify_password` exists as a side-effect-free check used before multi-step operations. The `require_all_auth` flag (v6 schema) lives in the `db_settings` table inside `diary.db`, integrity-protected by an HKDF-SHA256 MAC derived from the master key — tampering with the row enforces the guard via a fail-safe.
+4. **Auth slots (v3 schema):** Each auth method stores its own wrapped copy of the master key in `auth_slots`. `remove_auth_method` refuses to delete the last slot (minimum one required). `change_password` re-wraps the master key in O(1) — no entry re-encryption needed. `verify_password` exists as a side-effect-free check used before multi-step operations. The `require_all_auth` flag (v6 schema) lives in the `db_settings` table inside `diary.db`, integrity-protected by an HKDF-SHA256 MAC derived from the master key — tampering with the row enforces the guard via a fail-safe. See [`docs/decisions/2026-05-settings-storage-taxonomy.md`](../docs/decisions/2026-05-settings-storage-taxonomy.md) for the full settings storage taxonomy and when to use `db_settings` vs. `config.json`.
 
-5. **Plugin registry is initialized once at startup** in `lib.rs` `.setup()`. It reads `{diary_dir}/plugins/` for `.rhai` scripts. The registry is stored as `State<Mutex<PluginRegistry>>`. If the user changes the diary directory, plugins are not reloaded until app restart (consistent with existing behavior).
+5. **Plugin registry is initialized once at startup** in `lib.rs` `.setup()`. It reads `{app_data_dir}/plugins/` for `.rhai` scripts (central location, shared across all journals). The registry is stored as `State<Mutex<PluginRegistry>>`.
 
 6. **Rhai's `export` keyword is reserved**: Export plugin scripts must use `fn format_entries(entries)` instead of `fn export(entries)`. The `RhaiExportPlugin` wrapper calls `"format_entries"` internally.
 
@@ -180,12 +221,12 @@ refactoring.
 
 **Hook points in the backend (search for `// Search index hook:`):**
 
-- `db/queries.rs` — `insert_entry()`, `update_entry()`, `delete_entry()` — index/remove individual entries
+- `db/queries/entries.rs` — `insert_entry()`, `update_entry()`, `delete_entry()` — index/remove individual entries
 - `commands/import.rs` — `import_entries()` helper — bulk reindex after import (reached via `run_import_plugin`)
 
 **Design constraints for any future implementation:**
 
 1. **No plaintext on disk** — the index must be encrypted or derived in a way that does not expose entry content to raw file access. Options to evaluate: encrypted FTS (e.g. SQLCipher), client-side trigram index stored encrypted alongside entries, or an in-memory index rebuilt at unlock time.
-2. **Schema migration required** — bump `SCHEMA_VERSION` in `db/schema.rs` and add a migration step.
+2. **Schema migration required** — bump `SCHEMA_VERSION` in `db/schema/mod.rs` and add a migration step in `db/schema/migrations/`.
 3. **UI placement is undecided** — `SearchBar` and `SearchResults` exist but where they appear (sidebar, overlay, command palette, etc.) should be designed fresh. Wire them into `Sidebar.tsx` or a new component; do not assume the old sidebar layout.
 4. **State is ready** — `src/state/search.ts` signals can be used as-is or extended.

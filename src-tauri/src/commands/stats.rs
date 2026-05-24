@@ -1,4 +1,4 @@
-use crate::commands::auth::DiaryState;
+use crate::commands::auth::{with_unlocked_db, DiaryState};
 use crate::db::schema::DatabaseConnection;
 use tauri::State;
 
@@ -13,18 +13,15 @@ pub struct Statistics {
     pub avg_words_per_entry: f64,
 }
 
+/// Pure inner of `get_statistics` — takes `&DiaryState` so it can be tested without Tauri.
+pub(crate) fn get_statistics_inner(state: &DiaryState) -> Result<Statistics, String> {
+    with_unlocked_db(state, calculate_statistics)
+}
+
 /// Gets diary statistics
 #[tauri::command]
 pub fn get_statistics(state: State<DiaryState>) -> Result<Statistics, String> {
-    let db_state = state
-        .db
-        .lock()
-        .map_err(|_| "State lock poisoned".to_string())?;
-    let db = db_state
-        .as_ref()
-        .ok_or("Journal must be unlocked to view statistics")?;
-
-    calculate_statistics(db)
+    get_statistics_inner(&state)
 }
 
 /// Calculates statistics from the database
@@ -296,6 +293,19 @@ mod tests {
         assert_eq!(stats.entries_per_week, 0.0);
         assert_eq!(stats.best_streak, 0);
         assert_eq!(stats.current_streak, 0);
+    }
+
+    #[test]
+    fn test_get_statistics_locked_returns_error() {
+        use crate::commands::auth::DiaryState;
+        use std::path::PathBuf;
+        let state = DiaryState::new(
+            PathBuf::from("test_stats_locked.db"),
+            PathBuf::from("test_stats_locked_backups"),
+            PathBuf::from("."),
+        );
+        let err = get_statistics_inner(&state).unwrap_err();
+        assert!(err.contains("Journal must be unlocked"), "got: {}", err);
     }
 
     #[test]

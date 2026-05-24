@@ -1,6 +1,6 @@
 [package]
 name = "mini-diarium"
-version = "0.4.22"
+version = "0.5.0"
 description = "A modern, encrypted, local-first desktop journaling application"
 authors = ["you"]
 edition = "2021"
@@ -82,13 +82,26 @@ windows-sys = { version = "0.61", features = [
   "Win32_UI_Shell",
   "Win32_UI_WindowsAndMessaging",
 ] }
+# Direct deps for WebResourceRequested COM handler in lib.rs
+webview2-com = "0.38.2"
+windows = { version = "0.61" }
 
 [target.'cfg(target_os = "macos")'.dependencies]
 objc2-app-kit = { version = "0.3", features = ["NSWorkspace"] }
 objc2-foundation = { version = "0.3", features = [
   "NSDistributedNotificationCenter",
+  "NSError",
   "NSNotification",
   "NSOperation",
   "NSString",
+] }
+# Direct deps for WKContentRuleList handler in lib.rs
+objc2 = "0.6"
+objc2-web-kit = { version = "0.3", features = [
+  "WKContentRuleList",
+  "WKContentRuleListStore",
+  "WKUserContentController",
+  "WKWebView",
+  "WKWebViewConfiguration",
 ] }
 block2 = "0.6"

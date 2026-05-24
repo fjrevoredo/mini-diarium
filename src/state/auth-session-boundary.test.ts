@@ -12,6 +12,7 @@ const mocks = vi.hoisted(() => ({
     unlockJournalWithKeypair: vi.fn(),
     lockJournal: vi.fn(),
     getAllEntryDates: vi.fn(),
+    getAllTags: vi.fn(),
   },
 }));
 
@@ -97,6 +98,7 @@ describe('auth session boundary reset', () => {
     mocks.tauri.unlockJournalWithKeypair.mockResolvedValue(undefined);
     mocks.tauri.lockJournal.mockResolvedValue(undefined);
     mocks.tauri.getAllEntryDates.mockResolvedValue([]);
+    mocks.tauri.getAllTags.mockResolvedValue([]);
 
     resetSessionState();
     resetAuthTransientState();

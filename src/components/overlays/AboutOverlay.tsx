@@ -4,6 +4,7 @@ import { getVersion } from '@tauri-apps/api/app';
 import { openUrl } from '@tauri-apps/plugin-opener';
 import { useI18n } from '../../i18n';
 import { X } from 'lucide-solid';
+import { replayOnboarding } from '../../state/onboarding';
 
 interface AboutOverlayProps {
   isOpen: boolean;
@@ -72,23 +73,35 @@ export default function AboutOverlay(props: AboutOverlayProps) {
             </div>
 
             {/* GitHub + Documentation links */}
-            <div class="flex justify-center gap-4 mb-6">
-              <button
-                onClick={() => openUrl('https://github.com/fjrevoredo/mini-diarium')}
-                class="text-sm text-interactive hover:underline"
-              >
-                {t('about.githubLink')}
-              </button>
-              <button
-                onClick={() => openUrl('https://mini-diarium.com/docs/')}
-                class="text-sm text-interactive hover:underline"
-              >
-                {t('about.docsLink')}
-              </button>
+            <div class="flex flex-col items-center gap-1 mb-6">
+              <div class="flex justify-center gap-4">
+                <button
+                  onClick={() => openUrl('https://github.com/fjrevoredo/mini-diarium')}
+                  class="text-sm text-interactive hover:underline"
+                >
+                  {t('about.githubLink')}
+                </button>
+                <button
+                  onClick={() => openUrl('https://mini-diarium.com/docs/')}
+                  class="text-sm text-interactive hover:underline"
+                >
+                  {t('about.docsLink')}
+                </button>
+              </div>
+              <p class="text-xs text-tertiary">{t('about.opensInBrowser')}</p>
             </div>
 
-            {/* Close */}
-            <div class="flex justify-end">
+            {/* Footer: tour shortcut + close */}
+            <div class="flex items-center justify-between">
+              <button
+                onClick={() => {
+                  props.onClose();
+                  replayOnboarding();
+                }}
+                class="text-sm text-interactive hover:underline"
+              >
+                {t('about.showTour')}
+              </button>
               <button
                 onClick={() => props.onClose()}
                 class="rounded-md bg-tertiary px-4 py-2 text-sm font-medium text-secondary hover:bg-hover transition-colors"

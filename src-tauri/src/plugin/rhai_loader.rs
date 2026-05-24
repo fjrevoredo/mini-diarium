@@ -3,9 +3,10 @@ use super::{ExportOutput, ExportPlugin, ImportPlugin, PluginInfo};
 use crate::db::queries::DiaryEntry;
 use log::{info, warn};
 use rhai::{Array, Dynamic, Engine, Map, Scope, AST};
-use std::path::Path;
+use std::collections::HashMap;
+use std::path::{Path, PathBuf};
 
-// Keep plugin docs in one place: the generated `{diary_dir}/plugins/README.md`
+// Keep plugin docs in one place: the generated `{app_data_dir}/plugins/README.md`
 // is a direct copy of this repository guide.
 const PLUGINS_README: &str = include_str!("../../../docs/user-plugins/USER_PLUGIN_GUIDE.md");
 
@@ -178,7 +179,11 @@ impl ExportPlugin for RhaiExportPlugin {
         self.info.clone()
     }
 
-    fn export(&self, entries: Vec<DiaryEntry>) -> Result<ExportOutput, String> {
+    fn export(
+        &self,
+        entries: Vec<DiaryEntry>,
+        _tags: &HashMap<i64, Vec<String>>,
+    ) -> Result<ExportOutput, String> {
         let engine = create_sandboxed_engine();
         let mut scope = Scope::new();
         let arr = entries_to_rhai_array(entries);
@@ -207,6 +212,45 @@ pub fn ensure_plugins_dir(plugins_dir: &Path) {
     if !readme_path.exists() {
         if let Err(e) = std::fs::write(&readme_path, PLUGINS_README) {
             warn!("Failed to write plugins README: {}", e);
+        }
+    }
+}
+
+/// One-time migration: copy .rhai plugin files from per-journal plugin directories
+/// to the new central plugins directory. Originals are left in place.
+pub fn migrate_journal_plugins(old_journal_dirs: &[PathBuf], new_plugins_dir: &Path) {
+    if let Err(e) = std::fs::create_dir_all(new_plugins_dir) {
+        warn!("Failed to create central plugins directory: {}", e);
+        return;
+    }
+    for journal_dir in old_journal_dirs {
+        let old_plugins = journal_dir.join("plugins");
+        if !old_plugins.is_dir() {
+            continue;
+        }
+        let entries = match std::fs::read_dir(&old_plugins) {
+            Ok(e) => e,
+            Err(_) => continue,
+        };
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.extension().and_then(|e| e.to_str()) != Some("rhai") {
+                continue;
+            }
+            let Some(filename) = path.file_name() else {
+                continue;
+            };
+            let dest = new_plugins_dir.join(filename);
+            if dest.exists() {
+                continue;
+            }
+            match std::fs::copy(&path, &dest) {
+                Ok(_) => info!(
+                    "Migrated plugin '{}' to central plugins dir",
+                    path.display()
+                ),
+                Err(e) => warn!("Failed to migrate plugin '{}': {}", path.display(), e),
+            }
         }
     }
 }
@@ -440,7 +484,7 @@ fn format_entries(entries) {
             date_updated: "2024-06-15T00:00:00Z".into(),
         }];
 
-        let result = plugin.export(entries).unwrap();
+        let result = plugin.export(entries, &HashMap::new()).unwrap();
         assert_eq!(result.content, "2024-06-15: My Day\n");
     }
 
@@ -537,7 +581,7 @@ fn parse(content) {
         load_plugins(dir.path(), &mut registry);
 
         let plugin = registry.find_exporter("rhai:plain-text-timeline").unwrap();
-        let output = plugin.export(sample_entries()).unwrap();
+        let output = plugin.export(sample_entries(), &HashMap::new()).unwrap();
         let expected = format!(
             "2024-01-01 | (untitled)\n{}\n---\n2024-01-02 | Second\n{}",
             crate::export::markdown::html_to_markdown("<p>First body</p>"),

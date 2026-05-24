@@ -2,14 +2,20 @@
 
 > For project architecture and cross-cutting conventions see the [root CLAUDE.md](../CLAUDE.md).
 
-Static marketing site — plain HTML/CSS/JS served via Nginx. No frontend framework, no build step for the site itself. Blog posts are the only content that requires generation.
+Static marketing site — plain HTML/CSS/JS served via Nginx. No frontend framework, no build step for the site itself. Blog posts and documentation pages both require generation — never edit their HTML output directly.
 
-## Key Rule: Never Edit Blog HTML Directly
+## Key Rule: Never Edit Generated HTML Directly
 
-All blog content is generated from Markdown sources in `posts-src/`. The HTML files in `blog/*/`, `blog/index.html`, `blog/feed.xml`, `sitemap.xml`, and `llms.txt` are **all generated output** — editing them directly will be overwritten on the next generation run.
+Both the blog and the docs sections are generated from Markdown sources. Editing the HTML output directly will be silently overwritten on the next build run.
+
+| Source (edit these) | Generated output (never edit) |
+|---------------------|-------------------------------|
+| `posts-src/*.md` | `blog/*/index.html`, `blog/index.html`, `blog/feed.xml`, `sitemap.xml`, `llms.txt` |
+| `docs-src/*.md` | `docs/*/index.html`, `docs/index.html` |
 
 The only files you should edit manually are:
 - `posts-src/*.md` — blog post sources (the canonical input)
+- `docs-src/*.md` — documentation page sources (the canonical input)
 - `website/index.html` — homepage (between its static sections, not the blog teaser block)
 - `encrypted-journal/index.html` — the encrypted journal guide page
 - `compare/index.html` — the comparison matrix page
@@ -204,9 +210,37 @@ Current nav order: Features → Security → Blog → Compare → How It Works �
 
 HTTP→HTTPS redirect is handled by Coolify, not the local `website/nginx.conf`. If GSC shows `http://` impressions, the Coolify edge must be configured with 301 redirects. See `docs/seo/production-config-notes.md`.
 
+### IndexNow
+
+[IndexNow](https://www.indexnow.org) is a protocol that lets search engines (Bing, Yandex, Seznam, and others) know immediately when URLs are added, updated, or deleted. Instead of waiting for crawlers to discover changes, the site actively notifies them.
+
+**Key file:** A single hex key file lives at `website/indexnow-key-<HEX>.txt`. The script auto-discovers it by matching `website/indexnow-key-*.txt`. Exactly one key file must exist — the script errors if zero or multiple are found.
+
+**Manual submission:**
+```bash
+bun run website:submit-indexnow          # Submit all sitemap URLs to IndexNow
+bun run website:submit-indexnow:dry-run  # Preview the payload without sending
+```
+
+**CI/CD workflow:** `.github/workflows/indexnow.yml` is triggered via `workflow_dispatch` (manual). Run it from the Actions tab after deploying the website. The `push` trigger is commented out until Coolify auto-deployment is configured — uncomment it when ready.
+
+**Regenerating the key:** Delete the old `website/indexnow-key-*.txt`, generate a new 32-char hex key (`node -e "console.log(require('crypto').randomBytes(16).toString('hex'))"`), create a new `website/indexnow-key-<NEW_HEX>.txt` with the key followed by a newline, and commit. No other files need updating — the script auto-discovers the key.
+
+**Response codes:**
+
+| Code | Meaning | Action |
+|------|---------|--------|
+| 200 | URLs submitted successfully | None |
+| 400 | Bad request — invalid payload | Check the script output for details |
+| 403 | Forbidden — key not found on domain | Verify the key file is deployed and accessible at `https://mini-diarium.com/indexnow-key-<HEX>.txt` |
+| 422 | URLs don't match declared host | Check the `host` field in the submission payload |
+| 429 | Rate limited | Wait and retry later |
+
 ---
 
 ## Documentation Section (`docs-src/`)
+
+`docs-src/` is the **authoritative user-facing reference** for every Mini Diarium feature — the primary source of truth for both users and agents auditing feature behavior. Keep it complete and up to date: whenever a user-facing feature is added, changed, or removed, update the relevant `docs-src/` file in the same task. Stale docs are a bug.
 
 Source files: `website/docs-src/*.md` — one file per section.
 
@@ -266,6 +300,7 @@ website/
 ├── llms.txt                 # Generated — do not edit
 ├── ai-crawlers.txt          # Static AI crawler policy — edit directly if policy changes
 ├── robots.txt               # Static
+├── indexnow-key-*.txt       # IndexNow API key — auto-generated, do not edit manually
 ├── nginx.conf               # Nginx config for local testing only
 │
 └── ../docs/seo/              # SEO audit data and strategy (not in website/ but referenced by it)

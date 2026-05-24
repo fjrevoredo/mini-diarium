@@ -1,0 +1,4 @@
+interface:
+  display_name: "Tauri Agent Dev"
+  short_description: "Drive Mini Diarium's live Tauri dev app"
+  default_prompt: "Use $tauri-agent-dev to start Mini Diarium in dev mode, inspect the real UI, and stop it cleanly."

@@ -15,6 +15,12 @@ pub enum MultiAuthCredential {
     Keypair { key_path: String },
 }
 
+pub(crate) enum UnlockMode {
+    Password(String),
+    Keypair(String),
+    AllMethods(Vec<MultiAuthCredential>),
+}
+
 fn read_private_key_from_file(key_path: &str) -> Result<[u8; 32], String> {
     let key_hex =
         std::fs::read_to_string(key_path).map_err(|e| format!("Failed to read key file: {}", e))?;
@@ -66,6 +72,200 @@ fn migrate_require_all_auth_to_db(
     }
 }
 
+/// Checks that the supplied credential count satisfies the require-all-auth policy.
+///
+/// Returns `Ok(())` if the policy is not active or the count is sufficient.
+/// Returns `Err(...)` if require_all_auth is active and fewer credentials were provided
+/// than there are non-auto auth slots.
+pub(crate) fn check_require_all_auth_credential_count(
+    credential_count: usize,
+    db: &crate::db::schema::DatabaseConnection,
+) -> Result<(), String> {
+    let require_all = crate::db::queries::verify_require_all_auth(db.conn(), db.key().as_bytes());
+    if require_all {
+        let all_slots = crate::db::queries::list_auth_slots(db)?;
+        let non_auto_count = all_slots.iter().filter(|s| s.slot_type != "auto").count();
+        if credential_count < non_auto_count {
+            return Err("This journal requires all authentication methods. \
+                 Please provide all credentials."
+                .to_string());
+        }
+    }
+    Ok(())
+}
+
+/// Verifies every credential in `creds` against the already-open `conn`, rejects duplicate
+/// slot IDs, and returns the set of satisfied slot IDs.
+///
+/// Extracted for independent testability — can be called directly without `AppHandle`/`State`.
+/// Does not enforce `require_all_auth` slot-coverage policy; that check lives in `perform_unlock`.
+pub(crate) fn verify_credentials_and_collect_slots(
+    creds: &[MultiAuthCredential],
+    conn: &crate::db::schema::DatabaseConnection,
+) -> Result<std::collections::HashSet<i64>, String> {
+    use std::collections::HashSet;
+    let mut satisfied: HashSet<i64> = HashSet::new();
+
+    for cred in creds {
+        let slot_id = match cred {
+            MultiAuthCredential::Password { value } => {
+                let (slot_id, wrapped_key) = crate::db::queries::get_password_slot(conn)?
+                    .ok_or("No password auth method found")?;
+                let method = crate::auth::password::PasswordMethod::new(value.clone());
+                method
+                    .unwrap_master_key(&wrapped_key)
+                    .map_err(|_| "Incorrect password".to_string())?;
+                crate::db::queries::update_slot_last_used(conn.conn(), slot_id)?;
+                slot_id
+            }
+            MultiAuthCredential::Keypair { key_path } => {
+                let mut private_key = read_private_key_from_file(key_path)?;
+                let pub_key = crate::auth::keypair::derive_public_key(private_key);
+                let (slot_id, wrapped_key) =
+                    crate::db::queries::get_keypair_slot_by_pubkey(conn, &pub_key)?
+                        .ok_or("Key file does not match any registered key")?;
+                let method = crate::auth::keypair::PrivateKeyMethod { private_key };
+                method
+                    .unwrap_master_key(&wrapped_key)
+                    .map_err(|_| "Key file authentication failed".to_string())?;
+                private_key.zeroize();
+                crate::db::queries::update_slot_last_used(conn.conn(), slot_id)?;
+                slot_id
+            }
+        };
+
+        if !satisfied.insert(slot_id) {
+            return Err(
+                "Duplicate credential: the same auth slot was provided more than once".to_string(),
+            );
+        }
+    }
+
+    Ok(satisfied)
+}
+
+/// Opens the DB with the given credentials, runs the require-all-auth guard and migration,
+/// installs the connection into `DiaryState`, triggers backup rotation, and updates the menu.
+///
+/// Shared by `unlock_diary`, `unlock_diary_with_keypair`, and `unlock_diary_all_methods`.
+/// `unlock_diary_auto` routes through its own path (P20 policy — no multi-auth check for
+/// local-only journals). See `docs/decisions/2026-04-passwordless-journal.md`.
+pub(crate) fn perform_unlock(
+    mode: UnlockMode,
+    state: &DiaryState,
+    app: &AppHandle<Wry>,
+) -> Result<(), String> {
+    // Early validation before acquiring any locks
+    if let UnlockMode::AllMethods(ref creds) = mode {
+        if creds.is_empty() {
+            return Err("No credentials provided".to_string());
+        }
+    }
+
+    let db_path = state
+        .db_path
+        .lock()
+        .map_err(|_| "Journal state lock failed".to_string())?
+        .clone();
+    let backups_dir = state
+        .backups_dir
+        .lock()
+        .map_err(|_| "Journal state lock failed".to_string())?
+        .clone();
+
+    if !db_path.exists() {
+        return Err("No journal found. Please create one first.".to_string());
+    }
+
+    let (db_conn, label) = match mode {
+        UnlockMode::Password(password) => {
+            let conn = open_database(&db_path, password, &backups_dir)?;
+            migrate_require_all_auth_to_db(&conn, state);
+            if crate::db::queries::verify_require_all_auth(conn.conn(), conn.key().as_bytes()) {
+                return Err(
+                    "This journal requires all authentication methods. Use the combined unlock."
+                        .to_string(),
+                );
+            }
+            (conn, "Journal unlocked")
+        }
+        UnlockMode::Keypair(key_path) => {
+            let mut private_key = read_private_key_from_file(&key_path)?;
+            let conn = open_database_with_keypair(&db_path, private_key, &backups_dir)?;
+            private_key.zeroize();
+            migrate_require_all_auth_to_db(&conn, state);
+            if crate::db::queries::verify_require_all_auth(conn.conn(), conn.key().as_bytes()) {
+                return Err(
+                    "This journal requires all authentication methods. Use the combined unlock."
+                        .to_string(),
+                );
+            }
+            (conn, "Journal unlocked with key file")
+        }
+        UnlockMode::AllMethods(credentials) => {
+            let conn = match &credentials[0] {
+                MultiAuthCredential::Password { value } => {
+                    open_database(&db_path, value.clone(), &backups_dir)?
+                }
+                MultiAuthCredential::Keypair { key_path } => {
+                    let mut private_key = read_private_key_from_file(key_path)?;
+                    let c = open_database_with_keypair(&db_path, private_key, &backups_dir)?;
+                    private_key.zeroize();
+                    c
+                }
+            };
+            migrate_require_all_auth_to_db(&conn, state);
+            check_require_all_auth_credential_count(credentials.len(), &conn)?;
+            // Verify all credentials, reject duplicate slot IDs, collect satisfied slot IDs.
+            let satisfied_slots = verify_credentials_and_collect_slots(&credentials, &conn)?;
+            // When require_all_auth is active, every registered non-auto slot must be satisfied.
+            if crate::db::queries::verify_require_all_auth(conn.conn(), conn.key().as_bytes()) {
+                let all_slots = crate::db::queries::list_auth_slots(&conn)?;
+                let non_auto_slot_ids: std::collections::HashSet<i64> = all_slots
+                    .iter()
+                    .filter(|s| s.slot_type != "auto")
+                    .map(|s| s.id)
+                    .collect();
+                if satisfied_slots != non_auto_slot_ids {
+                    return Err("This journal requires all authentication methods. \
+                         Please provide all credentials."
+                        .to_string());
+                }
+            }
+            // Self-heal: write MAC for existing v6 journals that predate MAC support
+            if crate::db::queries::get_db_setting(conn.conn(), "require_all_auth")
+                .map(|v| v == "true")
+                .unwrap_or(false)
+                && crate::db::queries::get_db_setting(conn.conn(), "require_all_auth_mac").is_none()
+            {
+                if let Err(e) = crate::db::queries::write_require_all_auth_mac(
+                    conn.conn(),
+                    conn.key().as_bytes(),
+                ) {
+                    warn!("Failed to write require_all_auth MAC: {}", e);
+                }
+            }
+            (conn, "Journal unlocked via multi-auth")
+        }
+    };
+
+    let mut db_state = state
+        .db
+        .lock()
+        .map_err(|_| "Journal state lock failed".to_string())?;
+    *db_state = Some(db_conn);
+    drop(db_state);
+
+    info!("{}", label);
+
+    if let Err(e) = crate::backup::backup_and_rotate(&db_path, &backups_dir) {
+        warn!("Failed to create backup: {}", e);
+    }
+
+    crate::menu::update_menu_lock_state(app, false);
+    Ok(())
+}
+
 /// Creates a new encrypted diary database
 #[tauri::command]
 pub fn create_diary(
@@ -103,48 +303,7 @@ pub fn unlock_diary(
     state: State<DiaryState>,
     app: AppHandle<Wry>,
 ) -> Result<(), String> {
-    let db_path = state
-        .db_path
-        .lock()
-        .map_err(|_| "State lock poisoned".to_string())?
-        .clone();
-    let backups_dir = state
-        .backups_dir
-        .lock()
-        .map_err(|_| "State lock poisoned".to_string())?
-        .clone();
-
-    if !db_path.exists() {
-        return Err("No journal found. Please create one first.".to_string());
-    }
-
-    let db_conn = open_database(&db_path, password, &backups_dir)?;
-
-    // One-time migration: carry over legacy config.json value if db_settings is fresh
-    migrate_require_all_auth_to_db(&db_conn, &state);
-
-    // Guard: block single-method unlock when require_all_auth is active in the DB
-    if crate::db::queries::verify_require_all_auth(db_conn.conn(), db_conn.key().as_bytes()) {
-        return Err(
-            "This journal requires all authentication methods. Use the combined unlock."
-                .to_string(),
-        );
-    }
-
-    let mut db_state = state
-        .db
-        .lock()
-        .map_err(|_| "State lock poisoned".to_string())?;
-    *db_state = Some(db_conn);
-
-    info!("Journal unlocked");
-
-    if let Err(e) = crate::backup::backup_and_rotate(&db_path, &backups_dir) {
-        warn!("Failed to create backup: {}", e);
-    }
-
-    crate::menu::update_menu_lock_state(&app, false);
-    Ok(())
+    perform_unlock(UnlockMode::Password(password), &state, &app)
 }
 
 /// Unlocks an existing diary using an X25519 private key file
@@ -154,50 +313,7 @@ pub fn unlock_diary_with_keypair(
     state: State<DiaryState>,
     app: AppHandle<Wry>,
 ) -> Result<(), String> {
-    let db_path = state
-        .db_path
-        .lock()
-        .map_err(|_| "State lock poisoned".to_string())?
-        .clone();
-    let backups_dir = state
-        .backups_dir
-        .lock()
-        .map_err(|_| "State lock poisoned".to_string())?
-        .clone();
-
-    if !db_path.exists() {
-        return Err("No journal found. Please create one first.".to_string());
-    }
-
-    let mut private_key = read_private_key_from_file(&key_path)?;
-    let db_conn = open_database_with_keypair(&db_path, private_key, &backups_dir)?;
-    private_key.zeroize();
-
-    // One-time migration: carry over legacy config.json value if db_settings is fresh
-    migrate_require_all_auth_to_db(&db_conn, &state);
-
-    // Guard: block single-method unlock when require_all_auth is active in the DB
-    if crate::db::queries::verify_require_all_auth(db_conn.conn(), db_conn.key().as_bytes()) {
-        return Err(
-            "This journal requires all authentication methods. Use the combined unlock."
-                .to_string(),
-        );
-    }
-
-    let mut db_state = state
-        .db
-        .lock()
-        .map_err(|_| "State lock poisoned".to_string())?;
-    *db_state = Some(db_conn);
-
-    info!("Journal unlocked with key file");
-
-    if let Err(e) = crate::backup::backup_and_rotate(&db_path, &backups_dir) {
-        warn!("Failed to create backup: {}", e);
-    }
-
-    crate::menu::update_menu_lock_state(&app, false);
-    Ok(())
+    perform_unlock(UnlockMode::Keypair(key_path), &state, &app)
 }
 
 /// Locks the diary (closes the database connection)
@@ -371,6 +487,18 @@ pub fn create_diary_auto(state: State<DiaryState>, app: AppHandle<Wry>) -> Resul
 ///
 /// Reads the auto key from the active JournalConfig in config.json and
 /// uses it to unwrap the master key from the 'auto' auth slot.
+///
+/// # Auto-Key Multi-Auth Policy (P20 — 2026-05-21 Position A)
+///
+/// `unlock_diary_auto` intentionally bypasses `require_all_auth` verification
+/// and legacy `migrate_require_all_auth_to_db`. Local-only journals use a
+/// device-bound key stored in `config.json` and have no user-facing credential
+/// to combine with a second factor. The `require_all_auth` flag only applies to
+/// password/keypair journals where the user explicitly registers multiple auth
+/// slots. This is a deliberate design boundary: forcing a single-factor local
+/// journal through a multi-auth check would always fail. See
+/// `docs/refactoring-report-2026-05-21.md` §P20 and
+/// `docs/decisions/2026-04-passwordless-journal.md` for the full rationale.
 #[tauri::command]
 pub fn unlock_diary_auto(state: State<DiaryState>, app: AppHandle<Wry>) -> Result<(), String> {
     let db_path = state
@@ -442,114 +570,7 @@ pub fn unlock_diary_all_methods(
     state: State<DiaryState>,
     app: AppHandle<Wry>,
 ) -> Result<(), String> {
-    if credentials.is_empty() {
-        return Err("No credentials provided".to_string());
-    }
-
-    let db_path = state
-        .db_path
-        .lock()
-        .map_err(|_| "State lock poisoned".to_string())?
-        .clone();
-    let backups_dir = state
-        .backups_dir
-        .lock()
-        .map_err(|_| "State lock poisoned".to_string())?
-        .clone();
-
-    if !db_path.exists() {
-        return Err("No journal found. Please create one first.".to_string());
-    }
-
-    // Open DB with first credential
-    let db_conn = match &credentials[0] {
-        MultiAuthCredential::Password { value } => {
-            open_database(&db_path, value.clone(), &backups_dir)?
-        }
-        MultiAuthCredential::Keypair { key_path } => {
-            let mut private_key = read_private_key_from_file(key_path)?;
-            let conn = open_database_with_keypair(&db_path, private_key, &backups_dir)?;
-            private_key.zeroize();
-            conn
-        }
-    };
-
-    // One-time migration: carry over legacy config.json value if db_settings is fresh
-    migrate_require_all_auth_to_db(&db_conn, &state);
-
-    // Guard: if require_all_auth is active, the caller must supply at least as many
-    // credentials as there are non-auto slots. Without this check, a single-credential
-    // call to unlock_diary_all_methods would bypass the multi-auth requirement.
-    {
-        let require_all =
-            crate::db::queries::verify_require_all_auth(db_conn.conn(), db_conn.key().as_bytes());
-        if require_all {
-            let all_slots = crate::db::queries::list_auth_slots(&db_conn)?;
-            let non_auto_count = all_slots.iter().filter(|s| s.slot_type != "auto").count();
-            if credentials.len() < non_auto_count {
-                return Err("This journal requires all authentication methods. \
-                     Please provide all credentials."
-                    .to_string());
-            }
-        }
-    }
-
-    // Verify each remaining credential against the open DB's auth slots
-    for credential in &credentials[1..] {
-        match credential {
-            MultiAuthCredential::Password { value } => {
-                let (slot_id, wrapped_key) = crate::db::queries::get_password_slot(&db_conn)?
-                    .ok_or("No password auth method found")?;
-                let method = crate::auth::password::PasswordMethod::new(value.clone());
-                method
-                    .unwrap_master_key(&wrapped_key)
-                    .map_err(|_| "Incorrect password".to_string())?;
-                crate::db::queries::update_slot_last_used(db_conn.conn(), slot_id)?;
-            }
-            MultiAuthCredential::Keypair { key_path } => {
-                let mut private_key = read_private_key_from_file(key_path)?;
-                let pub_key = crate::auth::keypair::derive_public_key(private_key);
-                let (slot_id, wrapped_key) =
-                    crate::db::queries::get_keypair_slot_by_pubkey(&db_conn, &pub_key)?
-                        .ok_or("Key file does not match any registered key")?;
-                let method = crate::auth::keypair::PrivateKeyMethod { private_key };
-                method
-                    .unwrap_master_key(&wrapped_key)
-                    .map_err(|_| "Key file authentication failed".to_string())?;
-                private_key.zeroize();
-                crate::db::queries::update_slot_last_used(db_conn.conn(), slot_id)?;
-            }
-        }
-    }
-
-    // Self-heal: write MAC for existing v6 journals that predate MAC support
-    if crate::db::queries::get_db_setting(db_conn.conn(), "require_all_auth")
-        .map(|v| v == "true")
-        .unwrap_or(false)
-        && crate::db::queries::get_db_setting(db_conn.conn(), "require_all_auth_mac").is_none()
-    {
-        if let Err(e) =
-            crate::db::queries::write_require_all_auth_mac(db_conn.conn(), db_conn.key().as_bytes())
-        {
-            warn!("Failed to write require_all_auth MAC: {}", e);
-        }
-    }
-
-    // All credentials verified — commit the connection
-    let mut db_state = state
-        .db
-        .lock()
-        .map_err(|_| "State lock poisoned".to_string())?;
-    *db_state = Some(db_conn);
-
-    info!("Journal unlocked via multi-auth");
-
-    if let Err(e) = crate::backup::backup_and_rotate(&db_path, &backups_dir) {
-        warn!("Failed to create backup: {}", e);
-    }
-
-    crate::menu::update_menu_lock_state(&app, false);
-    Ok(())
+    perform_unlock(UnlockMode::AllMethods(credentials), &state, &app)
 }
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
@@ -685,7 +706,30 @@ mod tests {
     }
 
     #[test]
-    fn test_unlock_all_methods_require_all_auth_rejects_single_credential() {
+    fn test_open_database_auto_ignores_require_all_auth_flag() {
+        // Bypass holds because (a) unlock_diary_auto doesn't route through perform_unlock
+        // and (b) open_database_auto doesn't check the require_all_auth flag.
+        use crate::db::schema::{create_database_auto, open_database_auto};
+
+        let (_, db_path, backups_dir) = make_state("auto_bypass_req_all");
+        let auto_key = [0x2au8; 32]; // arbitrary fixed key
+
+        let db = create_database_auto(&db_path, &auto_key).unwrap();
+        crate::db::queries::set_db_setting(db.conn(), "require_all_auth", "true").unwrap();
+        drop(db);
+
+        let result = open_database_auto(&db_path, &auto_key, &backups_dir);
+        assert!(
+            result.is_ok(),
+            "auto unlock must not be blocked by require_all_auth: {:?}",
+            result.err()
+        );
+
+        cleanup(&db_path, &backups_dir);
+    }
+
+    #[test]
+    fn test_check_require_all_auth_rejects_single_credential() {
         use crate::auth::keypair::generate_keypair;
         use crate::db::schema::open_database;
 
@@ -713,28 +757,24 @@ mod tests {
         )
         .unwrap();
 
-        // Set require_all_auth = "true" in db_settings
+        // Set require_all_auth flag + MAC (MAC is required for verify_require_all_auth)
         crate::db::queries::set_db_setting(db.conn(), "require_all_auth", "true").unwrap();
+        crate::db::queries::write_require_all_auth_mac(db.conn(), db.key().as_bytes()).unwrap();
         drop(db);
 
-        // Re-open and verify the guard logic: with require_all_auth active and 2 non-auto
-        // slots, a single credential must be rejected.
+        // Re-open and call the real guard function
         let db2 = open_database(&db_path, "password".to_string(), &backups_dir).unwrap();
-        let require_all = crate::db::queries::get_db_setting(db2.conn(), "require_all_auth")
-            .map(|v| v == "true")
-            .unwrap_or(false);
-        assert!(require_all, "require_all_auth must be set");
 
-        let all_slots = crate::db::queries::list_auth_slots(&db2).unwrap();
-        let non_auto_count = all_slots.iter().filter(|s| s.slot_type != "auto").count();
-        assert_eq!(non_auto_count, 2, "should have 2 non-auto slots");
-
-        // Simulate the guard: 1 credential < 2 required → must reject
-        let single_credential_count = 1usize;
+        // 1 credential < 2 non-auto slots → must reject
+        let err = super::check_require_all_auth_credential_count(1, &db2).unwrap_err();
         assert!(
-            single_credential_count < non_auto_count,
-            "guard must fire: single credential is insufficient"
+            err.contains("requires all authentication methods"),
+            "got: {}",
+            err
         );
+
+        // 2 credentials == 2 non-auto slots → must pass
+        super::check_require_all_auth_credential_count(2, &db2).unwrap();
 
         cleanup(&db_path, &backups_dir);
     }
@@ -766,6 +806,153 @@ mod tests {
             "require_all_auth must persist in db_settings"
         );
 
+        cleanup(&db_path, &backups_dir);
+    }
+
+    #[test]
+    fn test_duplicate_password_credential_rejected() {
+        use crate::auth::keypair::{generate_keypair, KeypairMethod};
+        use crate::db::schema::{create_database, open_database};
+
+        let (_, db_path, backups_dir) = make_state("dup_pw_cred");
+        let db = create_database(&db_path, "password".to_string()).unwrap();
+
+        let kp = generate_keypair().unwrap();
+        let pub_bytes_vec = hex::decode(&kp.public_key_hex).unwrap();
+        let mut pub_key = [0u8; 32];
+        pub_key.copy_from_slice(&pub_bytes_vec);
+        let kp_method = KeypairMethod {
+            public_key: pub_key,
+        };
+        let kp_wrapped = kp_method.wrap_master_key(db.key().as_bytes()).unwrap();
+        let now = chrono::Utc::now().to_rfc3339();
+        crate::db::queries::insert_auth_slot(
+            &db,
+            "keypair",
+            "My Key",
+            Some(&pub_bytes_vec),
+            &kp_wrapped,
+            &now,
+        )
+        .unwrap();
+        crate::db::queries::set_db_setting(db.conn(), "require_all_auth", "true").unwrap();
+        crate::db::queries::write_require_all_auth_mac(db.conn(), db.key().as_bytes()).unwrap();
+        drop(db);
+
+        let db2 = open_database(&db_path, "password".to_string(), &backups_dir).unwrap();
+        let creds = vec![
+            super::MultiAuthCredential::Password {
+                value: "password".to_string(),
+            },
+            super::MultiAuthCredential::Password {
+                value: "password".to_string(),
+            },
+        ];
+        let err = super::verify_credentials_and_collect_slots(&creds, &db2).unwrap_err();
+        assert!(err.contains("Duplicate credential"), "got: {}", err);
+
+        cleanup(&db_path, &backups_dir);
+    }
+
+    #[test]
+    fn test_duplicate_keypair_credential_rejected() {
+        use crate::auth::keypair::{generate_keypair, KeypairMethod};
+        use crate::db::schema::{create_database, open_database};
+
+        let (_, db_path, backups_dir) = make_state("dup_kp_cred");
+        let db = create_database(&db_path, "password".to_string()).unwrap();
+
+        let kp = generate_keypair().unwrap();
+        let pub_bytes_vec = hex::decode(&kp.public_key_hex).unwrap();
+        let mut pub_key = [0u8; 32];
+        pub_key.copy_from_slice(&pub_bytes_vec);
+        let kp_method = KeypairMethod {
+            public_key: pub_key,
+        };
+        let kp_wrapped = kp_method.wrap_master_key(db.key().as_bytes()).unwrap();
+        let now = chrono::Utc::now().to_rfc3339();
+        crate::db::queries::insert_auth_slot(
+            &db,
+            "keypair",
+            "My Key",
+            Some(&pub_bytes_vec),
+            &kp_wrapped,
+            &now,
+        )
+        .unwrap();
+        crate::db::queries::set_db_setting(db.conn(), "require_all_auth", "true").unwrap();
+        crate::db::queries::write_require_all_auth_mac(db.conn(), db.key().as_bytes()).unwrap();
+        drop(db);
+
+        let key_file = std::env::temp_dir().join("test_dup_kp_cred.key");
+        std::fs::write(&key_file, &kp.private_key_hex).unwrap();
+
+        let db2 = open_database(&db_path, "password".to_string(), &backups_dir).unwrap();
+        let key_path = key_file.to_str().unwrap().to_string();
+        let creds = vec![
+            super::MultiAuthCredential::Keypair {
+                key_path: key_path.clone(),
+            },
+            super::MultiAuthCredential::Keypair {
+                key_path: key_path.clone(),
+            },
+        ];
+        let err = super::verify_credentials_and_collect_slots(&creds, &db2).unwrap_err();
+        assert!(err.contains("Duplicate credential"), "got: {}", err);
+
+        let _ = std::fs::remove_file(&key_file);
+        cleanup(&db_path, &backups_dir);
+    }
+
+    #[test]
+    fn test_valid_password_and_keypair_satisfies_all_slots() {
+        use crate::auth::keypair::{generate_keypair, KeypairMethod};
+        use crate::db::schema::{create_database, open_database};
+
+        let (_, db_path, backups_dir) = make_state("valid_pw_kp_creds");
+        let db = create_database(&db_path, "password".to_string()).unwrap();
+
+        let kp = generate_keypair().unwrap();
+        let pub_bytes_vec = hex::decode(&kp.public_key_hex).unwrap();
+        let mut pub_key = [0u8; 32];
+        pub_key.copy_from_slice(&pub_bytes_vec);
+        let kp_method = KeypairMethod {
+            public_key: pub_key,
+        };
+        let kp_wrapped = kp_method.wrap_master_key(db.key().as_bytes()).unwrap();
+        let now = chrono::Utc::now().to_rfc3339();
+        let kp_slot_id = crate::db::queries::insert_auth_slot(
+            &db,
+            "keypair",
+            "My Key",
+            Some(&pub_bytes_vec),
+            &kp_wrapped,
+            &now,
+        )
+        .unwrap();
+        let (pw_slot_id, _) = crate::db::queries::get_password_slot(&db).unwrap().unwrap();
+        crate::db::queries::set_db_setting(db.conn(), "require_all_auth", "true").unwrap();
+        crate::db::queries::write_require_all_auth_mac(db.conn(), db.key().as_bytes()).unwrap();
+        drop(db);
+
+        let key_file = std::env::temp_dir().join("test_valid_pw_kp.key");
+        std::fs::write(&key_file, &kp.private_key_hex).unwrap();
+
+        let db2 = open_database(&db_path, "password".to_string(), &backups_dir).unwrap();
+        let creds = vec![
+            super::MultiAuthCredential::Password {
+                value: "password".to_string(),
+            },
+            super::MultiAuthCredential::Keypair {
+                key_path: key_file.to_str().unwrap().to_string(),
+            },
+        ];
+        let satisfied = super::verify_credentials_and_collect_slots(&creds, &db2).unwrap();
+        assert_eq!(satisfied.len(), 2);
+        assert!(satisfied.contains(&pw_slot_id));
+        assert!(satisfied.contains(&kp_slot_id));
+
+        let _ = std::fs::remove_file(&key_file);
         cleanup(&db_path, &backups_dir);
     }
 }

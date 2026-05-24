@@ -9,10 +9,11 @@ Free, open source, and never touches the internet.
 
 [![CI](https://github.com/fjrevoredo/mini-diarium/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/fjrevoredo/mini-diarium/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-0.4.22-blue)](https://github.com/fjrevoredo/mini-diarium/releases)
+[![Version](https://img.shields.io/badge/version-0.5.0-blue)](https://github.com/fjrevoredo/mini-diarium/releases)
 [![Platform](https://img.shields.io/badge/platform-Windows_%7C_macOS_%7C_Linux-lightgrey)](https://github.com/fjrevoredo/mini-diarium#download)
 [![Follow @MiniDiarium](https://img.shields.io/badge/Follow-%40MiniDiarium-000?logo=x&logoColor=white)](https://x.com/MiniDiarium)
 [![IdeaCred](https://ideacred.com/api/badge/fjrevoredo/mini-diarium)](https://ideacred.com/submissions)
+[![Ko-fi](https://img.shields.io/badge/Ko--fi-Buy_me_a_coffee-ff5f5f?logo=kofi&logoColor=white)](https://ko-fi.com/fjrevoredo)
 
 [![Tauri v2](https://img.shields.io/badge/Tauri_v2-24C8DB?logo=tauri&logoColor=white)](https://tauri.app)
 [![SolidJS](https://img.shields.io/badge/SolidJS-2C4F7C?logo=solid&logoColor=white)](https://solidjs.com)
@@ -23,13 +24,35 @@ Free, open source, and never touches the internet.
 
 <img src="public/demo.gif" alt="Demo" width="768" />
 
+## ☕ Support the Project
+
+Mini Diarium is free, open source, and will always be. If you find it useful and want to support its development, consider buying me a coffee on Ko-fi. Every donation goes directly toward keeping this project alive and improving.
+
+<a href="https://ko-fi.com/fjrevoredo" target="_blank">
+  <img src="https://storage.ko-fi.com/cdn/kofi2.png" alt="Buy Me a Coffee on Ko-fi" height="48" />
+</a>
+
 </div>
 
 ## Download
 
 Download the latest release for your platform from [GitHub Releases](https://github.com/fjrevoredo/mini-diarium/releases).
 
-For platform package formats and first-run notes, see [Installation](#installation).
+Quick install:
+
+- Windows (WinGet): `winget install fjrevoredo.MiniDiarium`
+- macOS (Homebrew): `brew tap fjrevoredo/mini-diarium` then `brew install --cask mini-diarium`
+- Linux (Flatpak): `flatpak install flathub io.github.fjrevoredo.mini-diarium`
+
+For package formats, first-run notes (Gatekeeper / SmartScreen), and checksum verification, see [docs/INSTALLATION.md](docs/INSTALLATION.md).
+
+## Quick Start
+
+1. Launch Mini Diarium
+2. Create a password (this encrypts your journal; there is no recovery if forgotten)
+3. Write your first entry. It auto-saves as you type
+4. Navigate between days with `Ctrl+[` / `Ctrl+]` or click dates on the calendar
+5. Lock your journal when you're done
 
 ## Background
 
@@ -53,9 +76,12 @@ Read the full principles and how these translates to the architecture in [PHILOS
 
 ## Features
 
-- **Key file authentication**: unlock your journal with an X25519 private key file instead of (or alongside) your password, like SSH keys for your journal. Register multiple key files; manage all auth methods from Preferences. See [Key File Authentication](#key-file-authentication) for details.
+- **Key file authentication**: unlock your journal with an X25519 private key file instead of (or alongside) your password, like SSH keys for your journal. See [docs/KEY_FILE_AUTHENTICATION.md](docs/KEY_FILE_AUTHENTICATION.md).
+- **Local-only journals**: create journals that auto-unlock on your device (no password prompt) while still encrypting entries at rest.
 - **AES-256-GCM encryption**: all entries are encrypted with a random master key. Each auth method holds its own wrapped copy of that key, so adding or removing a method is O(1), with no re-encryption of your entries.
-- **Rich text editor**
+- **Multiple journals**: keep separate journals for different purposes (personal, work, travel).
+- **Rich text editor**: including images.
+- **Tags**
 - **Multiple entries per day**: keep separate entries for the same date without merging them together
 - **Calendar navigation**
 - **Import**: Mini Diary JSON, Day One JSON/TXT, and jrnl JSON with additive imports that preserve separate same-date entries
@@ -63,221 +89,25 @@ Read the full principles and how these translates to the architecture in [PHILOS
 - **Themes**
 - **Automatic backups**: backup on unlock with rotation
 - **Statistics**
-- **Preferences**: first day of week, future entries toggle, title visibility, spellcheck, password change, authentication method management
+- **Preferences**: first day of week, future entries toggle, title visibility, spellcheck, auto-lock, password change, authentication method management
 - **Cross-platform**: Windows, macOS, and Linux
 - **Zero network access**: no telemetry, no analytics, no update checks
 
-# Architecture
-
-# Unlock Model
-
-Mini Diarium uses a wrapped master key design.
-
-- A random master key encrypts all entries using AES-256-GCM
-- Authentication methods wrap the master key
-- Unlocking unwraps the master key into memory for the session
-
-## Unlock Flow
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/diagrams/unlock-dark.svg">
-  <img alt="Unlock Flow Diagram" src="docs/diagrams/unlock.svg">
-</picture>
-
-### Password Unlock
-
-- Argon2 key derivation
-- AES-GCM unwrap of master key
-
-### Key File Unlock
-
-- X25519 key pair
-- ECDH followed by HKDF
-- AES-GCM unwrap of master key
-
-The master key is never stored in plaintext.
-
----
-
-## System Context
-
-Everything runs locally on the user's machine.
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/diagrams/context-dark.svg">
-  <img alt="System Context Diagram" src="docs/diagrams/context.svg">
-</picture>
-
-### Properties
-
-- The UI communicates with the Rust backend via Tauri `invoke()`
-- The backend reads and writes to local SQLite
-- No HTTP clients
-- No background sync
-- No telemetry
-
----
-
-# Saving an Entry
-
-When saving an entry:
-
-1. The content is encrypted using the master key.
-2. The encrypted content is stored in the `entries` table.
-
-<p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/diagrams/save-entry-dark.svg">
-    <img 
-      alt="Save Entry Flow Diagram" 
-      src="docs/diagrams/save-entry.svg"
-      width="600"
-    >
-  </picture>
-</p>
-
----
-
-# Layered Architecture
-
-Mini Diarium follows a layered structure.
-
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/diagrams/architecture-dark.svg">
-  <img alt="Layered Architecture Diagram" src="docs/diagrams/architecture.svg">
-</picture>
-
-## Installation
-
-Download the latest release for your platform from [GitHub Releases](https://github.com/fjrevoredo/mini-diarium/releases):
-
-| Platform | Format                                               |
-| -------- | ---------------------------------------------------- |
-| Windows  | `.msi` or `.exe` (NSIS installer, no admin required) |
-| macOS    | `.dmg`                                               |
-| Linux    | `.AppImage`, `.deb`, or Flatpak via Flathub          |
-
-### Windows (WinGet)
-
-The easiest way to install Mini Diarium on Windows is via WinGet:
-
-```powershell
-winget install mini-diarium
-```
-
-To update an existing installation later:
-
-```powershell
-winget upgrade mini-diarium
-```
-
-### Homebrew (macOS)
-
-The easiest way to install Mini Diarium on macOS is via Homebrew:
-
-```sh
-brew tap fjrevoredo/mini-diarium
-brew install --cask mini-diarium
-```
-
-> **Note:** Mini Diarium is not code-signed. On first launch, macOS Gatekeeper may show a "damaged and can't be opened" error. Run the following command in Terminal, then open the app normally:
->
-> ```sh
-> xattr -cr "/Applications/Mini Diarium.app"
-> ```
-
-### Flatpak (Linux)
-
-Mini Diarium is available on [Flathub](https://flathub.org/apps/io.github.fjrevoredo.mini-diarium). The easiest way to install on Linux is via Flatpak:
-
-```bash
-flatpak install flathub io.github.fjrevoredo.mini-diarium
-```
-
-To run:
-
-```bash
-flatpak run io.github.fjrevoredo.mini-diarium
-```
-
-To update:
-
-```bash
-flatpak update io.github.fjrevoredo.mini-diarium
-```
-
-### Installation Notes
-
-**Windows**
-
-On first launch, Windows SmartScreen may show a warning ("Windows protected your PC"). This is expected for unsigned applications. Click "More info" then "Run anyway" to proceed. Mini Diarium is open source and builds are reproducible from source.
-
-**macOS**
-
-macOS Gatekeeper may block the app on first launch with **"damaged and can't be opened"**. This happens because the app is open-source and not commercially code-signed.
-
-Run this command in Terminal after dragging the app to Applications:
-
-```bash
-xattr -cr "/Applications/Mini Diarium.app"
-```
-
-Then launch the app normally. This is a one-time step.
-
-**Linux**
-
-No code signing is required. For security, verify the SHA256 checksum against `checksums-linux.txt` from the release before installation:
-
-```bash
-sha256sum Mini-Diarium-*.AppImage
-# Compare with checksums-linux.txt
-```
-
-## Quick Start
-
-1. Launch Mini Diarium
-2. Create a password (this encrypts your journal; there is no recovery if forgotten)
-3. Write your first entry. It auto-saves as you type
-4. Navigate between days with `Ctrl+[` / `Ctrl+]` or click dates on the calendar
-5. Lock your journal when you're done
-
-## Key File Authentication
-
-Most journal apps only offer a password. Mini Diarium also lets you unlock with an **X25519 private key file**, a small `.key` file that acts like an SSH key for your journal. You can use a key file instead of your password, or register both and use whichever is convenient.
-
-### Why use a key file?
-
-| Scenario                          | How a key file helps                                                                                                                                    |
-| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| **Physical second factor**        | Keep the `.key` file on a USB drive. The journal can only be unlocked when the drive is plugged in, with no app, no phone, and no OTP codes.            |
-| **Password manager integration**  | Store the `.key` file as a secure attachment. Unlock without memorizing a passphrase at all.                                                            |
-| **Multiple machines**             | Register one key file per machine. Revoke access to a single machine by removing that slot without touching your password or re-encrypting any entries. |
-| **Shared account, separate keys** | Register several key files under different labels. Each is independent, and removing one doesn't affect the others.                                     |
-
-### How it works
-
-Each auth method stores its own encrypted copy of a random **master key** that encrypts all journal entries. For key files, this wrapping uses **X25519 ECIES**:
-
-1. A 256-bit master key is generated once when you create the journal and never changes.
-2. You generate an X25519 keypair in Preferences. The app saves the **private key** to a `.key` file (64-character hex string) and retains only the **public key**.
-3. The public key is used to wrap the master key: an ephemeral DH key exchange produces a one-time secret, HKDF-SHA256 derives a wrapping key from it, and AES-256-GCM encrypts the master key. The resulting blob is stored in the `auth_slots` table alongside your password slot.
-4. To unlock, Mini Diarium reads the `.key` file, performs the same ECDH derivation in reverse, and unwraps the master key; your password is never required.
-
-The private key never enters the database. The public key stored in the database cannot unlock the journal. A wrong or tampered key file is rejected by AES-GCM authentication.
-
-### Setting up a key file
-
-1. Open **Preferences → Authentication Methods**
-2. Click **Generate Key File**
-3. Save the `.key` file somewhere only you control, such as a USB drive, a password manager's secure notes, or an encrypted folder
-4. Enter your current password to authorize the registration
-5. Give the slot a label (e.g. "USB drive" or "laptop")
-
-From that point you can unlock from the login screen by switching to **Key File** mode and selecting your `.key` file. To remove a key file, open Preferences → Authentication Methods and delete its slot (the last remaining method is always protected from deletion).
-
-> **Backup your key file.** Like an SSH private key, it cannot be regenerated. If you lose both your password slot and all key files, there is no recovery path.
-
----
+## Documentation
+
+- Online user docs: https://mini-diarium.com/docs
+- Offline / GitHub user guide: [docs/USER_GUIDE.md](docs/USER_GUIDE.md)
+- Installation: [docs/INSTALLATION.md](docs/INSTALLATION.md)
+- Key file authentication: [docs/KEY_FILE_AUTHENTICATION.md](docs/KEY_FILE_AUTHENTICATION.md)
+- Architecture diagrams and flows: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)
+- Known issues / tradeoffs: [docs/KNOWN_ISSUES.md](docs/KNOWN_ISSUES.md)
+- Privacy: [docs/PRIVACY.md](docs/PRIVACY.md)
+- Security model + reporting: [SECURITY.md](SECURITY.md)
+- User plugins (Rhai): [docs/user-plugins/USER_PLUGIN_GUIDE.md](docs/user-plugins/USER_PLUGIN_GUIDE.md)
+
+## Architecture
+
+For the diagrams and detailed data flows, see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Keyboard Shortcuts
 
@@ -297,7 +127,7 @@ On macOS, use `Cmd` instead of `Ctrl`.
 
 ## Building from Source
 
-**Prerequisites:** Rust 1.75+, Bun 1.x, and [Tauri v2 system dependencies](https://v2.tauri.app/start/prerequisites/).
+**Prerequisites:** Rust (see `rust-toolchain.toml`), Bun 1.x, and [Tauri v2 system dependencies](https://v2.tauri.app/start/prerequisites/).
 
 For detailed platform-specific instructions (Linux package names, Fedora setup, Wayland troubleshooting), see [CONTRIBUTING.md](CONTRIBUTING.md).
 
@@ -348,6 +178,7 @@ The page covers four areas: Argon2id key derivation (intentionally slow — ~200
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for setup instructions, development workflow, and conventions.
 For maintainers adding official plugins, see [docs/BUILTIN_PLUGIN_GUIDE.md](docs/BUILTIN_PLUGIN_GUIDE.md).
+For maintainers changing frontend UI/state, the Rust backend, Tauri IPC boundary, WebView security, or CI, see [docs/best-practices](docs/best-practices/README.md).
 
 ### Translations
 
@@ -370,6 +201,10 @@ For maintainers: See [docs/RELEASING.md](docs/RELEASING.md) for step-by-step rel
 ## Security
 
 See [SECURITY.md](SECURITY.md) for the security model and how to report vulnerabilities.
+
+## License
+
+Mini Diarium is licensed under the MIT License. See [LICENSE](LICENSE).
 
 ## Credits
 

@@ -1,6 +1,6 @@
 # PHILOSOPHY.md
 
-_Last updated: 2026-04-21, applies to v0.4.0+_
+_Last updated: 2026-05-20, applies to v0.4.0+_
 
 This document defines the guiding principles for Mini Diarium. Every feature decision, architectural choice, and contribution must align with these values. When in doubt, refer back here.
 
@@ -162,7 +162,7 @@ If any principle is violated without strong justification, the proposal should b
 
 Some principles are absolute:
 
-- **No network access.** Mini Diarium will never connect to the internet.
+- **No network access.** Mini Diarium never initiates any network connection; no telemetry, no update checks, no sync, no analytics. When you click a help or documentation link (About screen, Onboarding), the OS opener hands the URL to your system browser; Mini Diarium makes no network call itself. The browser's subsequent connection is entirely independent of this app.
 - **No custom cryptography.** Use standard algorithms and established libraries only.
 - **No password recovery.** Password recovery requires either storing the master key in recoverable form (weakening the encryption guarantee) or trusting a third-party service (violating the no-network principle). Neither is acceptable. If you lose all credentials, your data is inaccessible; this is the correct security outcome. To mitigate accidental lockout, register a second authentication method as a backup.
 - **No vendor lock-in.** Users must be able to export and migrate their data freely at any time.
@@ -228,14 +228,14 @@ Both `ImportOverlay.tsx` and `ExportOverlay.tsx` are wired to the plugin registr
 
 ### Principle 3: Test Infrastructure
 
-**Current coverage** (as of v0.4.19):
+**Current coverage** (run the suite for current counts):
 
-| Layer | Count | How to run |
-|---|---|---|
-| Backend unit + integration | 276 tests across 32 modules | `cd src-tauri && cargo test` |
-| Frontend unit | 229 tests across 22 files | `bun run test:run` |
-| E2E | 2 tests | `bun run test:e2e:local` |
-| Benchmarks | 9 scenarios (Rust + frontend) | `cd src-tauri && cargo bench` / `bun run bench` |
+| Layer | How to run |
+|---|---|
+| Backend unit + integration | `cd src-tauri && cargo test` |
+| Frontend unit | `bun run test:run` |
+| E2E | `bun run test:e2e:local` |
+| Benchmarks | `cd src-tauri && cargo bench` / `bun run bench` |
 
 **E2E stack**: WebdriverIO v9 + tauri-driver (official Tauri bridge) against the real compiled binary. Config: `wdio.conf.ts` (root). Specs: `e2e/specs/`. Test isolation: each run creates a fresh OS temp directory passed to the app via `MINI_DIARIUM_DATA_DIR`; `lib.rs` uses this as the diary path when set, with no effect on production builds. Run the full suite (build + run): `bun run test:e2e:local`. Run suite only (binary already built): `bun run test:e2e`.
 
@@ -248,20 +248,20 @@ Both `ImportOverlay.tsx` and `ExportOverlay.tsx` are wired to the plugin registr
 ### Principle 4: Data Portability in Practice
 
 **Import formats** (each in its own `src-tauri/src/import/` module):
-- Mini Diary JSON (`minidiary.rs`), 8 tests
-- Day One JSON (`dayone.rs`), 14 tests
-- Day One TXT (`dayone_txt.rs`), 16 tests
-- jrnl JSON (`jrnl.rs`), 12 tests
+- Mini Diary JSON (`minidiary.rs`)
+- Day One JSON (`dayone.rs`)
+- Day One TXT (`dayone_txt.rs`)
+- jrnl JSON (`jrnl.rs`)
 
 Imports preserve source entries as separate records. If imported data lands on a date that already has entries, Mini Diarium creates additional entries for that date rather than merging content heuristically.
 
 **Export formats** (each in `src-tauri/src/export/`):
-- JSON: structured export with entry IDs, 6 tests
-- Markdown: HTML-to-Markdown conversion for readable export, 38 tests
+- JSON: structured export with entry IDs
+- Markdown: HTML-to-Markdown conversion for readable export
 
 **Adding a new format** follows the Import Parser Pattern in `CLAUDE.md`: one `*.rs` parser module, one command in `commands/import.rs`, register in `lib.rs`, add wrapper in `src/lib/tauri.ts`. The UI (`ImportOverlay.tsx`) picks it up automatically via `listImportPlugins`; no UI change needed.
 
-**Schema**: documented inline in `src-tauri/src/db/schema.rs` with full migration history. Current version: v6. Entries use stable integer IDs and support multiple entries per day. AES-256-GCM with standard key derivation; decryptable with any standard crypto toolkit given the password.
+**Schema**: documented in `src-tauri/src/db/schema/` (mod.rs, create.rs, open.rs, legacy.rs, migrations/) with full migration history. Current version: v7 (tags and entry_tags tables added). Entries use stable integer IDs and support multiple entries per day. AES-256-GCM with standard key derivation; decryptable with any standard crypto toolkit given the password.
 
 ---
 
@@ -276,6 +276,6 @@ The "no plugin marketplaces" rule means no distribution, discovery, or hosting o
 ### Principle 6: Simplicity in Practice
 
 - **State**: 8 signal modules (`src/state/`). No Redux, Zustand, derived-state middleware, or selector layers.
-- **Database**: direct `rusqlite` queries in `src-tauri/src/db/queries.rs`. No ORM, no query builder, no migration framework beyond the inline schema version check.
+- **Database**: direct `rusqlite` queries in `src-tauri/src/db/queries/` (entries.rs, tags.rs, auth_slots.rs, db_settings.rs). No ORM, no query builder, no migration framework beyond the inline schema version check.
 - **Dependencies**: the runtime dependency set in `src-tauri/Cargo.toml` is intentionally lean for a cryptographic desktop app.
 - **Justified complexity examples**: `src-tauri/src/screen_lock.rs` uses platform-specific Win32 event hooks (Windows) and equivalent macOS hooks for session-lock detection; this is necessary for auto-lock, not gold-plating. The Rhai scripting engine (`src-tauri/src/plugin/rhai_loader.rs`) adds binary size but is the only way to deliver user-scriptable extensions without requiring a recompile.

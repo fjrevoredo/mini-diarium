@@ -235,7 +235,7 @@
       "@id": "https://mini-diarium.com/docs/plugins/#article",
       "headline": "Plugins",
       "description": "How to use and install plugins that extend import and export capabilities with custom scripts.",
-      "dateModified": "2026-04-16T00:00:00Z",
+      "dateModified": "2026-05-23T00:00:00Z",
       "keywords": "plugins, Rhai, import, export, customization",
       "publisher": {
         "@type": "Organization",
@@ -379,14 +379,13 @@
       <article class="blog-post prose" aria-label="Plugins">
         <h2 id="what-are-plugins">What Are Plugins?</h2><p>Mini Diarium supports custom import and export formats through Rhai script plugins. Rhai is a simple, sandboxed scripting language that runs inside the app. You can write a plugin to handle any file format that the built-in options do not cover.</p>
         <p>Plugins appear in the Import and Export overlay dropdowns alongside the built-in formats.</p>
-        <h2 id="where-is-the-plugins-folder">Where Is the Plugins Folder?</h2><p>The <code>plugins/</code> folder is created automatically next to your <code>diary.db</code> file:</p>
+        <h2 id="where-is-the-plugins-folder">Where Is the Plugins Folder?</h2><p>The <code>plugins/</code> folder is shared across all journals and lives in the app data directory (this location is fixed — it does not change when you configure a different journal path in Preferences):</p>
         <ul>
         <li><strong>Windows</strong>: <code>%APPDATA%\com.minidiarium\plugins\</code></li>
         <li><strong>macOS</strong>: <code>~/Library/Application Support/com.minidiarium/plugins/</code></li>
         <li><strong>Linux</strong>: <code>~/.local/share/com.minidiarium/plugins/</code></li>
         </ul>
-        <p>If you have changed your journal location, the plugins folder is <code>{your chosen directory}/plugins/</code>.</p>
-        <p>A <code>README.md</code> file with templates and API documentation is auto-generated in the plugins folder on first launch.</p>
+        <p>A <code>README.md</code> file with templates and API documentation is auto-generated in the plugins folder on first launch. If you previously had <code>.rhai</code> scripts in a per-journal <code>plugins/</code> folder, they are automatically copied to this central location on first launch after upgrading.</p>
         <h2 id="writing-a-plugin">Writing a Plugin</h2><p>Each plugin is a single <code>.rhai</code> file with a metadata comment header and one entry-point function.</p>
         <h3 id="import-plugin">Import Plugin</h3><pre><code class="language-rhai">// @name: My Custom Format
         // @type: import
@@ -449,6 +448,7 @@
         <li>The <code>text</code> field should contain HTML (the editor uses HTML internally).</li>
         <li>Scripts run in a sandbox: no file system access, no network access.</li>
         <li>Scripts are limited to 1,000,000 operations to prevent infinite loops.</li>
+        <li><strong>Tags are not currently passed to Rhai export scripts.</strong> Each entry map contains <code>date</code>, <code>title</code>, <code>text</code>, <code>word_count</code>, <code>date_created</code>, and <code>date_updated</code>. Tag support for Rhai plugins will be added in a future release.</li>
         </ul>
         <h2 id="official-example">Official Example</h2><p>An official example plugin is included in the repository at <code>docs/user-plugins/plain-text-timeline.rhai</code>.</p>
         

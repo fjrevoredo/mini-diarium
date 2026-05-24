@@ -3,6 +3,7 @@ use crate::db::queries::DiaryEntry;
 use crate::export::{json, markdown};
 use crate::import::{dayone, dayone_txt, jrnl, minidiary};
 use crate::plugin::registry::PluginRegistry;
+use std::collections::HashMap;
 
 // --- Import plugins ---
 
@@ -88,8 +89,12 @@ impl ExportPlugin for JsonExporter {
         }
     }
 
-    fn export(&self, entries: Vec<DiaryEntry>) -> Result<ExportOutput, String> {
-        let content = json::export_entries_to_json(entries)?;
+    fn export(
+        &self,
+        entries: Vec<DiaryEntry>,
+        tags: &HashMap<i64, Vec<String>>,
+    ) -> Result<ExportOutput, String> {
+        let content = json::export_entries_to_json(entries, tags)?;
         Ok(ExportOutput {
             content,
             assets: vec![],
@@ -109,8 +114,12 @@ impl ExportPlugin for MarkdownExporter {
         }
     }
 
-    fn export(&self, entries: Vec<DiaryEntry>) -> Result<ExportOutput, String> {
-        let (content, assets) = markdown::export_entries_to_markdown_with_assets(entries);
+    fn export(
+        &self,
+        entries: Vec<DiaryEntry>,
+        tags: &HashMap<i64, Vec<String>>,
+    ) -> Result<ExportOutput, String> {
+        let (content, assets) = markdown::export_entries_to_markdown_with_assets(entries, tags);
         Ok(ExportOutput { content, assets })
     }
 }
@@ -127,9 +136,13 @@ impl ExportPlugin for MarkdownInlineExporter {
         }
     }
 
-    fn export(&self, entries: Vec<DiaryEntry>) -> Result<ExportOutput, String> {
+    fn export(
+        &self,
+        entries: Vec<DiaryEntry>,
+        tags: &HashMap<i64, Vec<String>>,
+    ) -> Result<ExportOutput, String> {
         Ok(ExportOutput {
-            content: markdown::export_entries_to_markdown_inline(entries),
+            content: markdown::export_entries_to_markdown_inline(entries, tags),
             assets: vec![],
         })
     }

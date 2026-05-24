@@ -1,6 +1,8 @@
 import { createSignal, createMemo, For, onCleanup, onMount, createResource } from 'solid-js';
+import { ChevronUp, ChevronDown } from 'lucide-solid';
 import { useI18n } from '../../../i18n';
 import { preferences, setPreferences } from '../../../state/preferences';
+import type { ToolbarItem, ToolbarItemKey } from '../../../state/preferences';
 import { usePreferencesShell, type TabProps } from './shared';
 import { listBundledFonts } from '../../../lib/tauri';
 
@@ -19,6 +21,29 @@ export default function PreferencesWritingTab(_props: TabProps) {
     { value: '6', label: t('prefs.writing.firstDaySaturday') },
   ]);
 
+  const ITEM_LABELS = createMemo(
+    () =>
+      ({
+        headings: t('prefs.writing.toolbarItem.headings'),
+        underline: t('prefs.writing.toolbarItem.underline'),
+        strikethrough: t('prefs.writing.toolbarItem.strikethrough'),
+        textColor: t('prefs.writing.toolbarItem.textColor'),
+        highlightColor: t('prefs.writing.toolbarItem.highlightColor'),
+        blockquote: t('prefs.writing.toolbarItem.blockquote'),
+        inlineCode: t('prefs.writing.toolbarItem.inlineCode'),
+        bulletList: t('prefs.writing.toolbarItem.bulletList'),
+        orderedList: t('prefs.writing.toolbarItem.orderedList'),
+        horizontalRule: t('prefs.writing.toolbarItem.horizontalRule'),
+        insertImage: t('prefs.writing.toolbarItem.insertImage'),
+        importMarkdown: t('prefs.writing.toolbarItem.importMarkdown'),
+        insertTimestamp: t('prefs.writing.toolbarItem.insertTimestamp'),
+        textDirection: t('prefs.writing.toolbarItem.textDirection'),
+        alignment: t('prefs.writing.toolbarItem.alignment'),
+        fontFamily: t('prefs.writing.toolbarItem.fontFamily'),
+        fontSize: t('prefs.writing.toolbarItem.fontSize'),
+      }) satisfies Record<ToolbarItemKey, string>,
+  );
+
   const [localAllowFutureEntries, setLocalAllowFutureEntries] = createSignal(
     preferences().allowFutureEntries,
   );
@@ -29,8 +54,8 @@ export default function PreferencesWritingTab(_props: TabProps) {
   const [localEnableSpellcheck, setLocalEnableSpellcheck] = createSignal(
     preferences().enableSpellcheck,
   );
-  const [localAdvancedToolbar, setLocalAdvancedToolbar] = createSignal(
-    preferences().advancedToolbar,
+  const [localToolbarItems, setLocalToolbarItems] = createSignal<ToolbarItem[]>(
+    preferences().toolbarItems,
   );
   const [localEditorFontSize, setLocalEditorFontSize] = createSignal(preferences().editorFontSize);
   const [localEditorFontFamily, setLocalEditorFontFamily] = createSignal(
@@ -41,6 +66,29 @@ export default function PreferencesWritingTab(_props: TabProps) {
   );
 
   const [bundledFonts] = createResource(listBundledFonts);
+
+  const selectAll = () =>
+    setLocalToolbarItems((prev) => prev.map((item) => ({ ...item, enabled: true })));
+  const selectNone = () =>
+    setLocalToolbarItems((prev) => prev.map((item) => ({ ...item, enabled: false })));
+
+  const moveUp = (i: number) => {
+    const arr = [...localToolbarItems()];
+    [arr[i - 1], arr[i]] = [arr[i], arr[i - 1]];
+    setLocalToolbarItems(arr);
+  };
+
+  const moveDown = (i: number) => {
+    const arr = [...localToolbarItems()];
+    [arr[i], arr[i + 1]] = [arr[i + 1], arr[i]];
+    setLocalToolbarItems(arr);
+  };
+
+  const toggleItem = (i: number, enabled: boolean) => {
+    setLocalToolbarItems((prev) =>
+      prev.map((item, idx) => (idx === i ? { ...item, enabled } : item)),
+    );
+  };
 
   onMount(() => {
     const unregister = shell.registerCommit(
@@ -53,7 +101,7 @@ export default function PreferencesWritingTab(_props: TabProps) {
           firstDayOfWeek: localFirstDayOfWeek() === 'null' ? null : Number(localFirstDayOfWeek()),
           hideTitles: localHideTitles(),
           enableSpellcheck: localEnableSpellcheck(),
-          advancedToolbar: localAdvancedToolbar(),
+          toolbarItems: localToolbarItems(),
           editorFontSize: Math.min(24, Math.max(12, Number(localEditorFontSize()))),
           editorFontFamily: localEditorFontFamily() || null,
           showEntryTimestamps: localShowEntryTimestamps(),
@@ -164,23 +212,69 @@ export default function PreferencesWritingTab(_props: TabProps) {
         </p>
       </div>
 
-      {/* Show Advanced Toolbar */}
-      <div class="space-y-2">
-        <div class="flex items-center">
-          <input
-            type="checkbox"
-            id="advanced-toolbar"
-            checked={localAdvancedToolbar()}
-            onChange={(e) => setLocalAdvancedToolbar(e.currentTarget.checked)}
-            class="h-4 w-4 rounded border-primary text-blue-600 focus:ring-blue-500"
-          />
-          <label for="advanced-toolbar" class="ml-3 text-sm text-secondary">
-            {t('prefs.writing.advancedToolbarLabel')}
+      {/* Toolbar Items */}
+      <div>
+        <div class="flex items-center justify-between mb-1">
+          <label class="block text-sm font-medium text-secondary">
+            {t('prefs.writing.toolbarItemsLabel')}
           </label>
+          <div class="flex gap-3">
+            <button type="button" onClick={selectAll} class="text-xs text-blue-500 hover:underline">
+              {t('prefs.writing.toolbarItemSelectAll')}
+            </button>
+            <button
+              type="button"
+              onClick={selectNone}
+              class="text-xs text-blue-500 hover:underline"
+            >
+              {t('prefs.writing.toolbarItemSelectNone')}
+            </button>
+          </div>
         </div>
-        <p class="ml-7 text-xs text-tertiary leading-relaxed">
-          {t('prefs.writing.advancedToolbarHint')}
+        <p class="text-xs text-tertiary leading-relaxed mb-3">
+          {t('prefs.writing.toolbarItemsHint')}
         </p>
+        <div class="border border-primary rounded-md divide-y divide-primary">
+          <For each={localToolbarItems()}>
+            {(item, index) => (
+              <div class="flex items-center gap-2 px-3 py-2">
+                <div class="flex flex-col">
+                  <button
+                    type="button"
+                    disabled={index() === 0}
+                    onClick={() => moveUp(index())}
+                    class="p-0.5 text-tertiary hover:text-primary disabled:opacity-30 disabled:cursor-not-allowed"
+                    aria-label={t('prefs.writing.toolbarItemMoveUp')}
+                  >
+                    <ChevronUp size={12} />
+                  </button>
+                  <button
+                    type="button"
+                    disabled={index() === localToolbarItems().length - 1}
+                    onClick={() => moveDown(index())}
+                    class="p-0.5 text-tertiary hover:text-primary disabled:opacity-30 disabled:cursor-not-allowed"
+                    aria-label={t('prefs.writing.toolbarItemMoveDown')}
+                  >
+                    <ChevronDown size={12} />
+                  </button>
+                </div>
+                <input
+                  type="checkbox"
+                  id={`toolbar-item-${item.key}`}
+                  checked={item.enabled}
+                  onChange={(e) => toggleItem(index(), e.currentTarget.checked)}
+                  class="h-4 w-4 rounded border-primary text-blue-600 focus:ring-blue-500"
+                />
+                <label
+                  for={`toolbar-item-${item.key}`}
+                  class="ml-1 text-sm text-secondary cursor-pointer flex-1"
+                >
+                  {ITEM_LABELS()[item.key]}
+                </label>
+              </div>
+            )}
+          </For>
+        </div>
       </div>
 
       {/* Editor Font Size */}

@@ -4,6 +4,34 @@ Implementation detail and structured notes for specific TODO items in [`TODO.md`
 
 ---
 
+## TODO-0038-01: Legacy `require_all_auth` Config Removal
+
+Parent: [`TODO-0038: Remove legacy require_all_auth config migration`](TODO.md)
+
+**Approval gate**: requires maintainer sign-off on the release boundary before any code is deleted. Do not execute this task speculatively.
+
+**Background**: the `require_all_auth` setting was migrated from `config.json` (`JournalConfig.require_all_auth`) to `db_settings` in schema v6 (2026-05-settings-storage-taxonomy decision). The live DB-settings-backed path already works. The legacy config field and its migration function (`migrate_require_all_auth_to_db`) are kept until the release boundary is confirmed so users upgrading from older versions are not stranded.
+
+**Steps**:
+
+1. Get maintainer approval for the exact release boundary (which version this ships in) and the CHANGELOG wording.
+2. **Red**: add a regression test that loads a legacy `config.json` containing `require_all_auth: true`, performs an unlock, and asserts the value was migrated to `db_settings` — confirm this test passes *before* any deletion.
+3. Remove `JournalConfig.require_all_auth` and `JournalInfo.require_all_auth` from the Rust structs.
+4. Remove `set_journal_require_all_auth` and its call sites.
+5. Remove `migrate_require_all_auth_to_db` and its call sites (check all open paths in `schema/open.rs`).
+6. Remove the corresponding frontend type field from `src/lib/tauri.ts` and any reference in `JournalPicker.test.tsx`.
+7. Remove the temporary regression test from step 2 only if it is no longer meaningful after deletion; keep any replacement test that validates the DB-backed policy.
+8. Update CHANGELOG with the cleanup note.
+
+**Validation**:
+```
+cargo test auth
+bun run test:run
+bun run type-check
+```
+
+---
+
 ## TODO-0011-01: Deferred — Per-post OG Images (P4-F)
 
 Parent: [`TODO-0011: Website SEO/GEO follow-up backlog`](TODO.md)

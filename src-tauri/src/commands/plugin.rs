@@ -99,7 +99,7 @@ pub fn run_export_plugin(
         plugin_id, file_path
     );
 
-    let entries = {
+    let (entries, tags) = {
         let db_state = state
             .db
             .lock()
@@ -109,7 +109,9 @@ pub fn run_export_plugin(
             error!("{}", err);
             err.to_string()
         })?;
-        super::export::fetch_entries(db, date_from.as_deref(), date_to.as_deref())?
+        let entries = super::export::fetch_entries(db, date_from.as_deref(), date_to.as_deref())?;
+        let tags = crate::db::queries::tags::get_tags_names_map(db)?;
+        (entries, tags)
     };
     let entries_exported = entries.len();
     debug!(
@@ -126,7 +128,7 @@ pub fn run_export_plugin(
             .find_exporter(&plugin_id)
             .ok_or_else(|| format!("Export plugin '{}' not found", plugin_id))?;
 
-        plugin.export(entries).map_err(|e| {
+        plugin.export(entries, &tags).map_err(|e| {
             error!("Plugin export error: {}", e);
             e
         })?
@@ -217,7 +219,9 @@ mod tests {
             date_created: "2024-01-01T00:00:00Z".into(),
             date_updated: "2024-01-01T00:00:00Z".into(),
         }];
-        let output = plugin.export(entries).unwrap();
+        let output = plugin
+            .export(entries, &std::collections::HashMap::new())
+            .unwrap();
         assert!(output.content.contains("Test"));
         assert!(output.content.contains("2024-01-01"));
     }

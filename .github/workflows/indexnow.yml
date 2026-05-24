@@ -1,0 +1,32 @@
+name: IndexNow Submission
+
+permissions: {}
+
+on:
+  workflow_dispatch:
+    description: "Manually submit all sitemap URLs to IndexNow"
+  # push:
+  #   branches: [master]
+  #   paths:
+  #     - "website/**"
+  #     - "posts-src/**"
+  #     - "docs-src/**"
+  #     - "scripts/**"
+  #     - "package.json"
+  # TODO: Uncomment the push trigger above once Coolify auto-deployment is configured.
+  # Until then, use workflow_dispatch to submit after manually deploying the website.
+
+jobs:
+  submit:
+    name: Submit URLs to IndexNow
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Build website (regenerate sitemap)
+        run: bun run website:build-static
+
+      - name: Submit URLs to IndexNow
+        run: bun run website:submit-indexnow

@@ -3,7 +3,7 @@ title: Writing Entries
 slug: writing-entries
 description: How to create, edit, format, and delete journal entries using the rich text editor.
 order: 2
-updated: 2026-05-06
+updated: 2026-05-24
 tags: editor, formatting, entries, writing
 ---
 
@@ -47,13 +47,16 @@ A live word count is displayed below the editor and updates as you write.
 
 ## Inserting Images
 
-You can add images to your entries in three ways:
+You can add images to your entries in several ways:
 
-- **Drag and drop** an image file from your file manager into the editor.
+- **Drag and drop** from your file manager — the editor shows a blue border when you hover a draggable image over it.
+- **Drag from other desktop apps** — images from Electron-based editors (sent as inline `data:image/...` base64 payloads) and from apps like Typora that reference images via local `file://` paths are both supported.
 - **Paste** an image from the clipboard.
 - Use the **Insert Image** button in the advanced toolbar to pick a file.
 
-Images are embedded directly into the entry as base64 data and are stored encrypted alongside your text. Supported formats are JPG, PNG, GIF, WebP, and BMP. Images are automatically resized to a maximum of 1200×1200 pixels before embedding.
+All dropped or pasted images are resized to a maximum of 1200 px on either side and re-encoded as JPEG or PNG before being embedded. Images are stored as base64 data encrypted alongside your text. Supported source formats are JPG, PNG, GIF, WebP, and BMP.
+
+If you drag an image from a web browser, the editor will show a banner explaining that embedding is not possible — it would require a network request, which the app never makes. Use **right-click → Copy Image** and paste instead.
 
 ## Right-to-Left and Bidirectional Text
 
@@ -74,6 +77,28 @@ The advanced toolbar includes a **clock button** that inserts the current time a
 ## Editor Font
 
 You can change the font used in the editor body via **Preferences → Writing → Editor font**. Choose from five bundled open-source font families: Noto Sans, Source Sans 3, Noto Serif, JetBrains Mono, and Fira Mono. Fonts are loaded on demand and work fully offline — no network requests, no OS-level font enumeration.
+
+Font family and font size are also available as optional controls in the editor toolbar itself. Enable them in **Preferences → Writing → Toolbar items** — they appear as compact dropdowns directly in the toolbar and always stay in sync with the Preferences sliders.
+
+## Tags
+
+Each entry can have one or more tags. Tags appear as small chips below the editor body.
+
+- Click **+ Add tag** to open a dropdown. Type to filter existing tags or create a new one; press **Enter** or click **Create "…"** to save.
+- Click **×** on a chip to remove a tag from the current entry.
+- Click **Manage tags** (at the end of the tag row) to open the Tag Manager, where you can rename or delete tags globally across all entries.
+
+### Browsing entries by tag
+
+Click a tag chip's **name** (not the × button) to activate a tag filter. While a filter is active:
+
+- The sidebar opens automatically so the calendar is visible.
+- Calendar dot indicators narrow to show only dates that have entries tagged with that tag.
+- A banner above the calendar shows the active tag name and a `×` button to clear the filter.
+
+Click the same chip again, or press `×` in the banner, to return to the full unfiltered calendar. The filter persists across month navigation and is cleared automatically when you lock the journal or delete the filtered tag in Tag Manager.
+
+Tag names are encrypted with the same key as your diary entries — they are never stored as readable text in the database file.
 
 ## Importing a Markdown File
 

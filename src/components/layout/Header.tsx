@@ -63,6 +63,7 @@ export default function Header(props: HeaderProps) {
       {/* Right: About + Notifications + Lock */}
       <div class="flex items-center gap-1">
         <button
+          data-tour-target="about"
           onClick={() => setIsAboutOpen(true)}
           class="rounded p-2 hover:bg-hover text-tertiary transition-colors"
           aria-label={t('layout.header.about')}

@@ -1,6 +1,9 @@
-import { Show, createSignal, createEffect, onCleanup } from 'solid-js';
+import { Show, For, createSignal, createEffect, onCleanup, createResource } from 'solid-js';
+import type { JSX } from 'solid-js';
 import type { Editor } from '@tiptap/core';
-import { preferences } from '../../state/preferences';
+import { preferences, setPreferences } from '../../state/preferences';
+import type { ToolbarItemKey } from '../../state/preferences';
+import { listBundledFonts } from '../../lib/tauri';
 import { useI18n } from '../../i18n';
 import TimestampOverlay from './TimestampOverlay';
 import {
@@ -26,6 +29,8 @@ import {
   PilcrowRight,
 } from 'lucide-solid';
 
+const FONT_SIZES = [12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24] as const;
+
 interface EditorToolbarProps {
   editor: Editor | null;
   onInsertImage?: (file: File) => void;
@@ -34,6 +39,7 @@ interface EditorToolbarProps {
 
 export default function EditorToolbar(props: EditorToolbarProps) {
   const t = useI18n();
+  const [bundledFonts] = createResource(listBundledFonts);
 
   // Reactive signals for active states
   const [isBoldActive, setIsBoldActive] = createSignal(false);
@@ -141,28 +147,10 @@ export default function EditorToolbar(props: EditorToolbarProps) {
     ed.chain().focus().toggleHighlight({ color }).run();
   };
 
-  return (
-    <Show when={props.editor}>
-      <div
-        role="toolbar"
-        aria-label={t('editor.toolbar.aria')}
-        class="flex flex-wrap items-center gap-1 border-b border-primary bg-tertiary px-3 py-2"
-      >
-        {/* Hidden file input for image insertion — always rendered so ref is valid */}
-        <input
-          type="file"
-          accept="image/*"
-          class="hidden"
-          ref={fileInputRef}
-          onChange={(e) => {
-            const file = e.target.files?.[0];
-            if (file) props.onInsertImage?.(file);
-            e.target.value = '';
-          }}
-        />
-
-        {/* Heading selector + trailing divider — advanced only */}
-        <Show when={preferences().advancedToolbar}>
+  const renderItem = (key: ToolbarItemKey): JSX.Element => {
+    switch (key) {
+      case 'headings':
+        return (
           <select
             aria-label={t('editor.toolbar.textStyle')}
             value={String(activeHeadingLevel())}
@@ -185,44 +173,21 @@ export default function EditorToolbar(props: EditorToolbarProps) {
             <option value="2">{t('editor.toolbar.heading2')}</option>
             <option value="3">{t('editor.toolbar.heading3')}</option>
           </select>
-          <div aria-hidden="true" class="mx-1 h-6 w-px bg-primary" />
-        </Show>
-
-        {/* Bold — always */}
-        <button
-          onClick={() => props.editor?.chain().focus().toggleBold().run()}
-          class={btnClass(isBoldActive())}
-          title={t('editor.toolbar.boldTitle')}
-          aria-label={t('editor.toolbar.bold')}
-          aria-pressed={isBoldActive()}
-        >
-          <Bold size={18} />
-        </button>
-
-        {/* Italic — always */}
-        <button
-          onClick={() => props.editor?.chain().focus().toggleItalic().run()}
-          class={btnClass(isItalicActive())}
-          title={t('editor.toolbar.italicTitle')}
-          aria-label={t('editor.toolbar.italic')}
-          aria-pressed={isItalicActive()}
-        >
-          <Italic size={18} />
-        </button>
-
-        {/* Underline — always */}
-        <button
-          onClick={() => props.editor?.chain().focus().toggleUnderline().run()}
-          class={btnClass(isUnderlineActive())}
-          title={t('editor.toolbar.underline')}
-          aria-label={t('editor.toolbar.underline')}
-          aria-pressed={isUnderlineActive()}
-        >
-          <Underline size={18} />
-        </button>
-
-        {/* Strikethrough, Highlight, Text Color — advanced only */}
-        <Show when={preferences().advancedToolbar}>
+        );
+      case 'underline':
+        return (
+          <button
+            onClick={() => props.editor?.chain().focus().toggleUnderline().run()}
+            class={btnClass(isUnderlineActive())}
+            title={t('editor.toolbar.underline')}
+            aria-label={t('editor.toolbar.underline')}
+            aria-pressed={isUnderlineActive()}
+          >
+            <Underline size={18} />
+          </button>
+        );
+      case 'strikethrough':
+        return (
           <button
             onClick={() => props.editor?.chain().focus().toggleStrike().run()}
             class={btnClass(isStrikeActive())}
@@ -232,7 +197,9 @@ export default function EditorToolbar(props: EditorToolbarProps) {
           >
             <Strikethrough size={18} />
           </button>
-          {/* Text Color */}
+        );
+      case 'textColor':
+        return (
           <button
             onClick={() => textColorInputRef?.click()}
             class={btnClass(!!activeTextColor())}
@@ -250,15 +217,9 @@ export default function EditorToolbar(props: EditorToolbarProps) {
               />
             </span>
           </button>
-          <input
-            ref={textColorInputRef}
-            type="color"
-            class="sr-only"
-            value={activeTextColor() ?? DEFAULT_TEXT_COLOR}
-            onInput={(e) => handleTextColorChange(e.currentTarget.value)}
-            aria-hidden="true"
-          />
-          {/* Highlight Color */}
+        );
+      case 'highlightColor':
+        return (
           <button
             onClick={() => highlightColorInputRef?.click()}
             class={btnClass(isHighlightActive())}
@@ -276,21 +237,9 @@ export default function EditorToolbar(props: EditorToolbarProps) {
               />
             </span>
           </button>
-          <input
-            ref={highlightColorInputRef}
-            type="color"
-            class="sr-only"
-            value={activeHighlightColor() ?? DEFAULT_HIGHLIGHT_COLOR}
-            onInput={(e) => handleHighlightColorChange(e.currentTarget.value)}
-            aria-hidden="true"
-          />
-        </Show>
-
-        {/* Divider — always, between text-formatting group and list group */}
-        <div aria-hidden="true" class="mx-1 h-6 w-px bg-primary" />
-
-        {/* Blockquote, Inline Code + trailing divider — advanced only */}
-        <Show when={preferences().advancedToolbar}>
+        );
+      case 'blockquote':
+        return (
           <button
             onClick={() => props.editor?.chain().focus().toggleBlockquote().run()}
             class={btnClass(isBlockquoteActive())}
@@ -300,6 +249,9 @@ export default function EditorToolbar(props: EditorToolbarProps) {
           >
             <Quote size={18} />
           </button>
+        );
+      case 'inlineCode':
+        return (
           <button
             onClick={() => props.editor?.chain().focus().toggleCode().run()}
             class={btnClass(isCodeActive())}
@@ -309,34 +261,33 @@ export default function EditorToolbar(props: EditorToolbarProps) {
           >
             <Code size={18} />
           </button>
-          <div aria-hidden="true" class="mx-1 h-6 w-px bg-primary" />
-        </Show>
-
-        {/* Bullet List — always */}
-        <button
-          onClick={() => props.editor?.chain().focus().toggleBulletList().run()}
-          class={btnClass(isBulletListActive())}
-          title={t('editor.toolbar.bulletList')}
-          aria-label={t('editor.toolbar.bulletList')}
-          aria-pressed={isBulletListActive()}
-        >
-          <List size={18} />
-        </button>
-
-        {/* Ordered List — always */}
-        <button
-          onClick={() => props.editor?.chain().focus().toggleOrderedList().run()}
-          class={btnClass(isOrderedListActive())}
-          title={t('editor.toolbar.numberedList')}
-          aria-label={t('editor.toolbar.numberedList')}
-          aria-pressed={isOrderedListActive()}
-        >
-          <ListOrdered size={18} />
-        </button>
-
-        {/* Leading divider + Horizontal Rule — advanced only */}
-        <Show when={preferences().advancedToolbar}>
-          <div aria-hidden="true" class="mx-1 h-6 w-px bg-primary" />
+        );
+      case 'bulletList':
+        return (
+          <button
+            onClick={() => props.editor?.chain().focus().toggleBulletList().run()}
+            class={btnClass(isBulletListActive())}
+            title={t('editor.toolbar.bulletList')}
+            aria-label={t('editor.toolbar.bulletList')}
+            aria-pressed={isBulletListActive()}
+          >
+            <List size={18} />
+          </button>
+        );
+      case 'orderedList':
+        return (
+          <button
+            onClick={() => props.editor?.chain().focus().toggleOrderedList().run()}
+            class={btnClass(isOrderedListActive())}
+            title={t('editor.toolbar.numberedList')}
+            aria-label={t('editor.toolbar.numberedList')}
+            aria-pressed={isOrderedListActive()}
+          >
+            <ListOrdered size={18} />
+          </button>
+        );
+      case 'horizontalRule':
+        return (
           <button
             onClick={() => props.editor?.chain().focus().setHorizontalRule().run()}
             class={btnBase}
@@ -345,10 +296,9 @@ export default function EditorToolbar(props: EditorToolbarProps) {
           >
             <Minus size={18} />
           </button>
-        </Show>
-
-        {/* Insert Image — advanced only */}
-        <Show when={preferences().advancedToolbar}>
+        );
+      case 'insertImage':
+        return (
           <button
             onClick={() => fileInputRef.click()}
             class={btnBase}
@@ -357,10 +307,9 @@ export default function EditorToolbar(props: EditorToolbarProps) {
           >
             <ImagePlus size={18} />
           </button>
-        </Show>
-
-        {/* Import Markdown file — advanced only */}
-        <Show when={preferences().advancedToolbar}>
+        );
+      case 'importMarkdown':
+        return (
           <button
             onClick={() => props.onImportMarkdown?.()}
             class={btnBase}
@@ -369,10 +318,9 @@ export default function EditorToolbar(props: EditorToolbarProps) {
           >
             <FileInput size={18} />
           </button>
-        </Show>
-
-        {/* Insert Timestamp — advanced only */}
-        <Show when={preferences().advancedToolbar}>
+        );
+      case 'insertTimestamp':
+        return (
           <button
             onClick={() => setIsTimestampOpen(true)}
             class={btnBase}
@@ -382,12 +330,9 @@ export default function EditorToolbar(props: EditorToolbarProps) {
           >
             <Clock size={18} />
           </button>
-        </Show>
-
-        {/* Alignment controls — advanced only */}
-        <Show when={preferences().advancedToolbar}>
-          <div aria-hidden="true" class="mx-1 h-6 w-px bg-primary" />
-          {/* Text direction toggle — advanced only */}
+        );
+      case 'textDirection':
+        return (
           <button
             onClick={() => {
               const ed = props.editor;
@@ -405,43 +350,145 @@ export default function EditorToolbar(props: EditorToolbarProps) {
           >
             {isRtlActive() ? <PilcrowLeft size={18} /> : <PilcrowRight size={18} />}
           </button>
-          <button
-            onClick={() => props.editor?.chain().focus().setTextAlign('left').run()}
-            class={btnClass(activeAlignment() === 'left')}
-            title={t('editor.toolbar.alignLeft')}
-            aria-label={t('editor.toolbar.alignLeft')}
-            aria-pressed={activeAlignment() === 'left'}
+        );
+      case 'alignment':
+        return (
+          <>
+            <div aria-hidden="true" class="mx-1 h-6 w-px bg-primary" />
+            <button
+              onClick={() => props.editor?.chain().focus().setTextAlign('left').run()}
+              class={btnClass(activeAlignment() === 'left')}
+              title={t('editor.toolbar.alignLeft')}
+              aria-label={t('editor.toolbar.alignLeft')}
+              aria-pressed={activeAlignment() === 'left'}
+            >
+              <AlignLeft size={18} />
+            </button>
+            <button
+              onClick={() => props.editor?.chain().focus().setTextAlign('center').run()}
+              class={btnClass(activeAlignment() === 'center')}
+              title={t('editor.toolbar.alignCenter')}
+              aria-label={t('editor.toolbar.alignCenter')}
+              aria-pressed={activeAlignment() === 'center'}
+            >
+              <AlignCenter size={18} />
+            </button>
+            <button
+              onClick={() => props.editor?.chain().focus().setTextAlign('right').run()}
+              class={btnClass(activeAlignment() === 'right')}
+              title={t('editor.toolbar.alignRight')}
+              aria-label={t('editor.toolbar.alignRight')}
+              aria-pressed={activeAlignment() === 'right'}
+            >
+              <AlignRight size={18} />
+            </button>
+            <button
+              onClick={() => props.editor?.chain().focus().setTextAlign('justify').run()}
+              class={btnClass(activeAlignment() === 'justify')}
+              title={t('editor.toolbar.justify')}
+              aria-label={t('editor.toolbar.justify')}
+              aria-pressed={activeAlignment() === 'justify'}
+            >
+              <AlignJustify size={18} />
+            </button>
+          </>
+        );
+      case 'fontFamily':
+        return (
+          <select
+            aria-label={t('editor.toolbar.fontFamily')}
+            onChange={(e) => setPreferences({ editorFontFamily: e.target.value || null })}
+            class="h-8 rounded border border-primary bg-primary px-2 text-sm text-primary transition-colors hover:bg-tertiary focus:outline-none focus:ring-2 focus:ring-[var(--border-focus)]"
+            disabled={bundledFonts.loading}
           >
-            <AlignLeft size={18} />
-          </button>
-          <button
-            onClick={() => props.editor?.chain().focus().setTextAlign('center').run()}
-            class={btnClass(activeAlignment() === 'center')}
-            title={t('editor.toolbar.alignCenter')}
-            aria-label={t('editor.toolbar.alignCenter')}
-            aria-pressed={activeAlignment() === 'center'}
+            <option value="" selected={!preferences().editorFontFamily}>
+              {t('prefs.writing.fontFamilySystemDefault')}
+            </option>
+            <For each={bundledFonts() ?? []}>
+              {(font) => (
+                <option value={font} selected={preferences().editorFontFamily === font}>
+                  {font}
+                </option>
+              )}
+            </For>
+          </select>
+        );
+      case 'fontSize':
+        return (
+          <select
+            aria-label={t('editor.toolbar.fontSize')}
+            value={String(preferences().editorFontSize)}
+            onChange={(e) => setPreferences({ editorFontSize: Number(e.target.value) })}
+            class="h-8 rounded border border-primary bg-primary px-2 text-sm text-primary transition-colors hover:bg-tertiary focus:outline-none focus:ring-2 focus:ring-[var(--border-focus)]"
           >
-            <AlignCenter size={18} />
-          </button>
-          <button
-            onClick={() => props.editor?.chain().focus().setTextAlign('right').run()}
-            class={btnClass(activeAlignment() === 'right')}
-            title={t('editor.toolbar.alignRight')}
-            aria-label={t('editor.toolbar.alignRight')}
-            aria-pressed={activeAlignment() === 'right'}
-          >
-            <AlignRight size={18} />
-          </button>
-          <button
-            onClick={() => props.editor?.chain().focus().setTextAlign('justify').run()}
-            class={btnClass(activeAlignment() === 'justify')}
-            title={t('editor.toolbar.justify')}
-            aria-label={t('editor.toolbar.justify')}
-            aria-pressed={activeAlignment() === 'justify'}
-          >
-            <AlignJustify size={18} />
-          </button>
-        </Show>
+            <For each={FONT_SIZES}>{(s) => <option value={String(s)}>{s}</option>}</For>
+          </select>
+        );
+    }
+  };
+
+  return (
+    <Show when={props.editor}>
+      <div
+        role="toolbar"
+        data-tour-target="toolbar"
+        aria-label={t('editor.toolbar.aria')}
+        class="flex flex-wrap items-center gap-1 border-b border-primary bg-tertiary px-3 py-2 sticky top-0 z-10 rounded-t-lg"
+      >
+        {/* Hidden inputs — always rendered so refs are valid for click triggers */}
+        <input
+          type="file"
+          accept="image/*"
+          class="hidden"
+          ref={fileInputRef}
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) props.onInsertImage?.(file);
+            e.target.value = '';
+          }}
+        />
+        <input
+          ref={textColorInputRef}
+          type="color"
+          class="sr-only"
+          value={activeTextColor() ?? DEFAULT_TEXT_COLOR}
+          onInput={(e) => handleTextColorChange(e.currentTarget.value)}
+          aria-hidden="true"
+        />
+        <input
+          ref={highlightColorInputRef}
+          type="color"
+          class="sr-only"
+          value={activeHighlightColor() ?? DEFAULT_HIGHLIGHT_COLOR}
+          onInput={(e) => handleHighlightColorChange(e.currentTarget.value)}
+          aria-hidden="true"
+        />
+
+        {/* Fixed: Bold, Italic */}
+        <button
+          onClick={() => props.editor?.chain().focus().toggleBold().run()}
+          class={btnClass(isBoldActive())}
+          title={t('editor.toolbar.boldTitle')}
+          aria-label={t('editor.toolbar.bold')}
+          aria-pressed={isBoldActive()}
+        >
+          <Bold size={18} />
+        </button>
+        <button
+          onClick={() => props.editor?.chain().focus().toggleItalic().run()}
+          class={btnClass(isItalicActive())}
+          title={t('editor.toolbar.italicTitle')}
+          aria-label={t('editor.toolbar.italic')}
+          aria-pressed={isItalicActive()}
+        >
+          <Italic size={18} />
+        </button>
+        <div aria-hidden="true" class="mx-1 h-6 w-px bg-primary" />
+
+        {/* Configurable items in user-defined order */}
+        <For each={preferences().toolbarItems}>
+          {(item) => <Show when={item.enabled}>{renderItem(item.key)}</Show>}
+        </For>
 
         <TimestampOverlay
           editor={props.editor}

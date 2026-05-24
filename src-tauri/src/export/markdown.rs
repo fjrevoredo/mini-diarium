@@ -1,5 +1,6 @@
 use crate::db::queries::DiaryEntry;
 use base64::{engine::general_purpose, Engine as _};
+use std::collections::HashMap;
 
 /// Exports diary entries to a Markdown-formatted string
 ///
@@ -28,54 +29,11 @@ use base64::{engine::general_purpose, Engine as _};
 /// ```
 ///
 /// HTML content from TipTap is converted to Markdown.
-pub fn export_entries_to_markdown(entries: Vec<DiaryEntry>) -> String {
-    let mut output = String::from("# Mini Diarium\n");
-
-    // Group entries by date preserving order (entries should be ordered date ASC, id ASC)
-    // First, collect entries grouped by date to know how many per date
-    let mut date_groups: Vec<(&str, Vec<&DiaryEntry>)> = Vec::new();
-    for entry in &entries {
-        if let Some((last_date, group)) = date_groups.last_mut() {
-            if *last_date == entry.date.as_str() {
-                group.push(entry);
-                continue;
-            }
-        }
-        date_groups.push((entry.date.as_str(), vec![entry]));
-    }
-
-    for (date, group) in &date_groups {
-        output.push_str(&format!("\n## {}\n", date));
-        let multi = group.len() > 1;
-
-        for (i, entry) in group.iter().enumerate() {
-            if multi {
-                // Use title as sub-heading, or "Entry N" if title is empty
-                let heading = if entry.title.is_empty() {
-                    format!("Entry {}", i + 1)
-                } else {
-                    entry.title.clone()
-                };
-                output.push_str(&format!("### {}\n", heading));
-            } else if !entry.title.is_empty() {
-                output.push_str(&format!("**{}**\n", entry.title));
-            }
-
-            let text = html_to_markdown(&entry.text);
-            if !text.is_empty() {
-                output.push_str(&text);
-                if !text.ends_with('\n') {
-                    output.push('\n');
-                }
-            }
-
-            if multi && i + 1 < group.len() {
-                output.push('\n');
-            }
-        }
-    }
-
-    output
+pub fn export_entries_to_markdown(
+    entries: Vec<DiaryEntry>,
+    tags: &HashMap<i64, Vec<String>>,
+) -> String {
+    walk_date_groups(&entries, tags, |entry| html_to_markdown(&entry.text))
 }
 
 // Replacement tables for `html_to_markdown`.
@@ -350,6 +308,64 @@ fn strip_remaining_tags(input: &str) -> String {
     result
 }
 
+// --- Shared walker ---
+
+fn group_entries_by_date(entries: &[DiaryEntry]) -> Vec<(&str, Vec<&DiaryEntry>)> {
+    let mut date_groups: Vec<(&str, Vec<&DiaryEntry>)> = Vec::new();
+    for entry in entries {
+        if let Some((last_date, group)) = date_groups.last_mut() {
+            if *last_date == entry.date.as_str() {
+                group.push(entry);
+                continue;
+            }
+        }
+        date_groups.push((entry.date.as_str(), vec![entry]));
+    }
+    date_groups
+}
+
+fn walk_date_groups<F>(
+    entries: &[DiaryEntry],
+    tags: &HashMap<i64, Vec<String>>,
+    mut render_entry_text: F,
+) -> String
+where
+    F: FnMut(&DiaryEntry) -> String,
+{
+    let mut output = String::from("# Mini Diarium\n");
+    for (date, group) in group_entries_by_date(entries) {
+        output.push_str(&format!("\n## {}\n", date));
+        let multi = group.len() > 1;
+        for (i, entry) in group.iter().enumerate() {
+            if multi {
+                let heading = if entry.title.is_empty() {
+                    format!("Entry {}", i + 1)
+                } else {
+                    entry.title.clone()
+                };
+                output.push_str(&format!("### {}\n", heading));
+            } else if !entry.title.is_empty() {
+                output.push_str(&format!("**{}**\n", entry.title));
+            }
+            let entry_tags = tags.get(&entry.id).map(|t| t.as_slice()).unwrap_or(&[]);
+            if !entry_tags.is_empty() {
+                output.push_str(&format!("*Tags: {}*\n", entry_tags.join(", ")));
+            }
+            let text = render_entry_text(entry);
+            if !text.is_empty() {
+                output.push_str(&text);
+                if !text.ends_with('\n') {
+                    output.push('\n');
+                }
+            }
+            if multi && i + 1 < group.len() {
+                output.push('\n');
+            }
+        }
+    }
+    output
+}
+
 // --- Image-aware export variants ---
 
 /// Exports diary entries to Markdown, extracting embedded base64 images to
@@ -360,57 +376,17 @@ fn strip_remaining_tags(input: &str) -> String {
 /// Image references in the markdown use `![Image N](assets/image-N.ext)`.
 pub fn export_entries_to_markdown_with_assets(
     entries: Vec<DiaryEntry>,
+    tags: &HashMap<i64, Vec<String>>,
 ) -> (String, Vec<(String, Vec<u8>)>) {
-    let mut output = String::from("# Mini Diarium\n");
     let mut all_assets: Vec<(String, Vec<u8>)> = Vec::new();
     let mut image_counter: usize = 0;
-
-    let mut date_groups: Vec<(&str, Vec<&DiaryEntry>)> = Vec::new();
-    for entry in &entries {
-        if let Some((last_date, group)) = date_groups.last_mut() {
-            if *last_date == entry.date.as_str() {
-                group.push(entry);
-                continue;
-            }
-        }
-        date_groups.push((entry.date.as_str(), vec![entry]));
-    }
-
-    for (date, group) in &date_groups {
-        output.push_str(&format!("\n## {}\n", date));
-        let multi = group.len() > 1;
-
-        for (i, entry) in group.iter().enumerate() {
-            if multi {
-                let heading = if entry.title.is_empty() {
-                    format!("Entry {}", i + 1)
-                } else {
-                    entry.title.clone()
-                };
-                output.push_str(&format!("### {}\n", heading));
-            } else if !entry.title.is_empty() {
-                output.push_str(&format!("**{}**\n", entry.title));
-            }
-
-            let (processed_html, entry_assets) =
-                extract_and_replace_with_assets(&entry.text, &mut image_counter);
-            all_assets.extend(entry_assets);
-
-            let text = html_to_markdown(&processed_html);
-            if !text.is_empty() {
-                output.push_str(&text);
-                if !text.ends_with('\n') {
-                    output.push('\n');
-                }
-            }
-
-            if multi && i + 1 < group.len() {
-                output.push('\n');
-            }
-        }
-    }
-
-    (output, all_assets)
+    let markdown = walk_date_groups(&entries, tags, |entry| {
+        let (processed_html, entry_assets) =
+            extract_and_replace_with_assets(&entry.text, &mut image_counter);
+        all_assets.extend(entry_assets);
+        html_to_markdown(&processed_html)
+    });
+    (markdown, all_assets)
 }
 
 /// Exports diary entries to Markdown, embedding base64 images as inline data URIs.
@@ -419,53 +395,15 @@ pub fn export_entries_to_markdown_with_assets(
 /// `![Image N](data:image/TYPE;base64,DATA)` — readable by editors that support
 /// embedded data URIs (e.g. Obsidian, VS Code preview). Produces a single file
 /// with no external assets.
-pub fn export_entries_to_markdown_inline(entries: Vec<DiaryEntry>) -> String {
-    let mut output = String::from("# Mini Diarium\n");
+pub fn export_entries_to_markdown_inline(
+    entries: Vec<DiaryEntry>,
+    tags: &HashMap<i64, Vec<String>>,
+) -> String {
     let mut image_counter: usize = 0;
-
-    let mut date_groups: Vec<(&str, Vec<&DiaryEntry>)> = Vec::new();
-    for entry in &entries {
-        if let Some((last_date, group)) = date_groups.last_mut() {
-            if *last_date == entry.date.as_str() {
-                group.push(entry);
-                continue;
-            }
-        }
-        date_groups.push((entry.date.as_str(), vec![entry]));
-    }
-
-    for (date, group) in &date_groups {
-        output.push_str(&format!("\n## {}\n", date));
-        let multi = group.len() > 1;
-
-        for (i, entry) in group.iter().enumerate() {
-            if multi {
-                let heading = if entry.title.is_empty() {
-                    format!("Entry {}", i + 1)
-                } else {
-                    entry.title.clone()
-                };
-                output.push_str(&format!("### {}\n", heading));
-            } else if !entry.title.is_empty() {
-                output.push_str(&format!("**{}**\n", entry.title));
-            }
-
-            let processed_html = inline_replace_images(&entry.text, &mut image_counter);
-            let text = html_to_markdown(&processed_html);
-            if !text.is_empty() {
-                output.push_str(&text);
-                if !text.ends_with('\n') {
-                    output.push('\n');
-                }
-            }
-
-            if multi && i + 1 < group.len() {
-                output.push('\n');
-            }
-        }
-    }
-
-    output
+    walk_date_groups(&entries, tags, |entry| {
+        let processed_html = inline_replace_images(&entry.text, &mut image_counter);
+        html_to_markdown(&processed_html)
+    })
 }
 
 // --- Private image processing helpers ---
@@ -647,9 +585,20 @@ mod tests {
         }
     }
 
+    fn entry_with_id(id: i64, date: &str, title: &str, text: &str) -> DiaryEntry {
+        DiaryEntry {
+            id,
+            ..create_test_entry(date, title, text)
+        }
+    }
+
+    fn empty_tags() -> HashMap<i64, Vec<String>> {
+        HashMap::new()
+    }
+
     #[test]
     fn test_export_empty_list() {
-        let result = export_entries_to_markdown(vec![]);
+        let result = export_entries_to_markdown(vec![], &empty_tags());
         assert_eq!(result, "# Mini Diarium\n");
     }
 
@@ -657,7 +606,7 @@ mod tests {
     fn test_export_single_entry_plaintext() {
         let entries = vec![create_test_entry("2024-01-15", "My Entry", "Hello world")];
 
-        let result = export_entries_to_markdown(entries);
+        let result = export_entries_to_markdown(entries, &empty_tags());
         assert!(result.contains("# Mini Diarium"));
         assert!(result.contains("## 2024-01-15"));
         assert!(result.contains("**My Entry**"));
@@ -672,7 +621,7 @@ mod tests {
             create_test_entry("2024-01-03", "Third", "Content three"),
         ];
 
-        let result = export_entries_to_markdown(entries);
+        let result = export_entries_to_markdown(entries, &empty_tags());
         let first_pos = result.find("## 2024-01-01").unwrap();
         let second_pos = result.find("## 2024-01-02").unwrap();
         let third_pos = result.find("## 2024-01-03").unwrap();
@@ -685,10 +634,33 @@ mod tests {
     fn test_export_entry_without_title() {
         let entries = vec![create_test_entry("2024-01-15", "", "Just text")];
 
-        let result = export_entries_to_markdown(entries);
+        let result = export_entries_to_markdown(entries, &empty_tags());
         assert!(result.contains("## 2024-01-15"));
         assert!(!result.contains("****")); // No empty bold
         assert!(result.contains("Just text"));
+    }
+
+    #[test]
+    fn test_export_markdown_entry_with_tags_shows_tags_line() {
+        let entries = vec![entry_with_id(1, "2024-01-15", "My Entry", "<p>Content</p>")];
+        let tags = HashMap::from([(1i64, vec!["travel".to_string(), "work".to_string()])]);
+        let result = export_entries_to_markdown(entries, &tags);
+        assert!(result.contains("*Tags: travel, work*"), "got: {}", result);
+    }
+
+    #[test]
+    fn test_export_markdown_entry_without_tags_no_tags_line() {
+        let entries = vec![entry_with_id(1, "2024-01-15", "My Entry", "<p>Content</p>")];
+        let result = export_entries_to_markdown(entries, &empty_tags());
+        assert!(!result.contains("*Tags:"), "got: {}", result);
+    }
+
+    #[test]
+    fn test_export_markdown_with_assets_includes_tags() {
+        let entries = vec![entry_with_id(2, "2024-01-15", "Title", "<p>Hi</p>")];
+        let tags = HashMap::from([(2i64, vec!["journal".to_string()])]);
+        let (markdown, _) = export_entries_to_markdown_with_assets(entries, &tags);
+        assert!(markdown.contains("*Tags: journal*"), "got: {}", markdown);
     }
 
     #[test]
@@ -986,7 +958,7 @@ mod tests {
             "My Entry",
             &format!("<p>Hello</p>{}", img_tag),
         )];
-        let (markdown, assets) = export_entries_to_markdown_with_assets(entries);
+        let (markdown, assets) = export_entries_to_markdown_with_assets(entries, &empty_tags());
 
         assert!(markdown.contains("## 2024-01-15"));
         assert!(markdown.contains("![Image 1](assets/image-1.png)"));
@@ -997,7 +969,7 @@ mod tests {
     #[test]
     fn test_export_entries_with_assets_no_images() {
         let entries = vec![create_test_entry("2024-01-15", "Entry", "<p>Text only</p>")];
-        let (markdown, assets) = export_entries_to_markdown_with_assets(entries);
+        let (markdown, assets) = export_entries_to_markdown_with_assets(entries, &empty_tags());
 
         assert!(markdown.contains("Text only"));
         assert!(assets.is_empty());
@@ -1040,7 +1012,7 @@ mod tests {
             "",
             &format!("<p>Hi</p>{}", img_tag),
         )];
-        let markdown = export_entries_to_markdown_inline(entries);
+        let markdown = export_entries_to_markdown_inline(entries, &empty_tags());
 
         assert!(markdown.contains("## 2024-01-15"));
         assert!(
@@ -1056,7 +1028,7 @@ mod tests {
     #[test]
     fn test_export_entries_inline_no_images() {
         let entries = vec![create_test_entry("2024-01-15", "T", "<p>Text</p>")];
-        let markdown = export_entries_to_markdown_inline(entries);
+        let markdown = export_entries_to_markdown_inline(entries, &empty_tags());
         assert!(markdown.contains("Text"));
         // no data: URI in output
         assert!(!markdown.contains("data:"));

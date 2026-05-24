@@ -81,6 +81,7 @@
 
   /* Overlay & Shadow */
   --overlay-bg: rgba(0, 0, 0, 0.5);
+  --tour-overlay-bg: rgba(0, 0, 0, 0.45);
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1);
   --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1);
@@ -157,6 +158,7 @@
 
   /* Overlay & Shadow */
   --overlay-bg: rgba(0, 0, 0, 0.7);
+  --tour-overlay-bg: rgba(0, 0, 0, 0.82);
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.3);
   --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.3);
@@ -335,4 +337,64 @@ body {
 /* Interactive accent background (replaces: bg-blue-600 on non-button dots/indicators) */
 .bg-interactive {
   background-color: var(--btn-primary-bg);
+}
+
+/* Tag-filter-active dot — amber, clearly distinct from the default blue bg-interactive dot */
+.bg-filter-dot {
+  background-color: #f59e0b;
+}
+
+/* ============================================
+   UNLOCK TRANSITION ANIMATION
+   ============================================ */
+
+@keyframes unlock-backdrop-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+/* Fixed full-screen overlay rendered inside MainLayout on mount.
+   backdrop-filter blurs the content behind it; fading opacity out
+   produces the "encrypted fog lifting" decryption effect. */
+.unlock-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  pointer-events: none;
+  backdrop-filter: blur(16px);
+  animation: unlock-backdrop-out 1400ms ease forwards;
+}
+
+@keyframes lock-backdrop-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Fixed full-screen overlay rendered from App.tsx during the 'locking' transition.
+   Fades in over the still-mounted MainLayout, then the state flips to 'locked'. */
+.lock-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  pointer-events: all;
+  cursor: default;
+  backdrop-filter: blur(16px);
+  animation: lock-backdrop-in 700ms ease forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .unlock-backdrop {
+    display: none;
+  }
+  .lock-backdrop {
+    display: none;
+  }
 }

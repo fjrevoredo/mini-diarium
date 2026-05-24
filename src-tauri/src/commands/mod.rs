@@ -10,3 +10,4 @@ pub mod navigation;
 pub mod plugin;
 pub mod search;
 pub mod stats;
+pub mod tags;

@@ -1,4 +1,4 @@
-use crate::commands::auth::DiaryState;
+use crate::commands::auth::{with_unlocked_db, DiaryState};
 use crate::db::queries::{self, DiaryEntry};
 use log::debug;
 use tauri::State;
@@ -6,34 +6,50 @@ use tauri::State;
 /// Creates a new blank diary entry for the given date and returns it with its assigned id
 #[tauri::command]
 pub fn create_entry(date: String, state: State<DiaryState>) -> Result<DiaryEntry, String> {
-    let db_state = state
-        .db
-        .lock()
-        .map_err(|_| "State lock poisoned".to_string())?;
-    let db = db_state
-        .as_ref()
-        .ok_or("Journal must be unlocked to create entries")?;
+    with_unlocked_db(&state, |db| {
+        let now = chrono::Utc::now().to_rfc3339();
+        let entry = DiaryEntry {
+            id: 0,
+            date: date.clone(),
+            title: String::new(),
+            text: String::new(),
+            word_count: 0,
+            date_created: now.clone(),
+            date_updated: now,
+        };
+        queries::insert_entry(db, &entry)?;
+        let new_id = db.conn().last_insert_rowid();
+        debug!("Created entry id={} for {}", new_id, date);
+        let created = queries::get_entry_by_id(db, new_id)?
+            .ok_or_else(|| format!("Failed to retrieve newly created entry for {}", date))?;
+        Ok(created)
+    })
+}
 
-    let now = chrono::Utc::now().to_rfc3339();
+/// Pure inner of `save_entry` — takes `&DiaryState` so it can be tested without Tauri.
+pub(crate) fn save_entry_inner(
+    id: i64,
+    title: &str,
+    text: &str,
+    state: &DiaryState,
+) -> Result<(), String> {
+    with_unlocked_db(state, |db| {
+        let mut entry = queries::get_entry_by_id(db, id)?
+            .ok_or_else(|| format!("No entry found with id: {}", id))?;
 
-    let entry = DiaryEntry {
-        id: 0, // ignored on insert
-        date: date.clone(),
-        title: String::new(),
-        text: String::new(),
-        word_count: 0,
-        date_created: now.clone(),
-        date_updated: now,
-    };
+        let now = chrono::Utc::now().to_rfc3339();
+        let word_count = queries::count_words(text);
 
-    queries::insert_entry(db, &entry)?;
-    let new_id = db.conn().last_insert_rowid();
-    debug!("Created entry id={} for {}", new_id, date);
+        entry.title = title.to_string();
+        entry.text = text.to_string();
+        entry.word_count = word_count;
+        entry.date_updated = now;
 
-    // Return the entry with the assigned id
-    let created = queries::get_entry_by_id(db, new_id)?
-        .ok_or_else(|| format!("Failed to retrieve newly created entry for {}", date))?;
-    Ok(created)
+        queries::update_entry(db, &entry)?;
+        debug!("Saved entry id={}", id);
+
+        Ok(())
+    })
 }
 
 /// Saves (updates) a diary entry by id
@@ -44,30 +60,7 @@ pub fn save_entry(
     text: String,
     state: State<DiaryState>,
 ) -> Result<(), String> {
-    let db_state = state
-        .db
-        .lock()
-        .map_err(|_| "State lock poisoned".to_string())?;
-    let db = db_state
-        .as_ref()
-        .ok_or("Journal must be unlocked to save entries")?;
-
-    // Get current entry to preserve date and date_created
-    let mut entry = queries::get_entry_by_id(db, id)?
-        .ok_or_else(|| format!("No entry found with id: {}", id))?;
-
-    let now = chrono::Utc::now().to_rfc3339();
-    let word_count = queries::count_words(&text);
-
-    entry.title = title;
-    entry.text = text;
-    entry.word_count = word_count;
-    entry.date_updated = now;
-
-    queries::update_entry(db, &entry)?;
-    debug!("Saved entry id={}", id);
-
-    Ok(())
+    save_entry_inner(id, &title, &text, &state)
 }
 
 /// Gets all diary entries for a specific date, newest-first
@@ -76,15 +69,7 @@ pub fn get_entries_for_date(
     date: String,
     state: State<DiaryState>,
 ) -> Result<Vec<DiaryEntry>, String> {
-    let db_state = state
-        .db
-        .lock()
-        .map_err(|_| "State lock poisoned".to_string())?;
-    let db = db_state
-        .as_ref()
-        .ok_or("Journal must be unlocked to read entries")?;
-
-    queries::get_entries_by_date(db, &date)
+    with_unlocked_db(&state, |db| queries::get_entries_by_date(db, &date))
 }
 
 /// Deletes an entry by id if both title and text are empty/whitespace
@@ -97,42 +82,27 @@ pub fn delete_entry_if_empty(
     text: String,
     state: State<DiaryState>,
 ) -> Result<bool, String> {
-    let db_state = state
-        .db
-        .lock()
-        .map_err(|_| "State lock poisoned".to_string())?;
-    let db = db_state
-        .as_ref()
-        .ok_or("Journal must be unlocked to delete entries")?;
-
-    // Only delete if both title and text are empty/whitespace
-    if title.trim().is_empty() && text.trim().is_empty() {
-        debug!("Deleting empty entry id={}", id);
-        queries::delete_entry_by_id(db, id)
-    } else {
-        Ok(false)
-    }
+    with_unlocked_db(&state, |db| {
+        if title.trim().is_empty() && text.trim().is_empty() {
+            debug!("Deleting empty entry id={}", id);
+            queries::delete_entry_by_id(db, id)
+        } else {
+            Ok(false)
+        }
+    })
 }
 
 /// Deletes an entry by id
 #[tauri::command]
 pub fn delete_entry(id: i64, state: State<DiaryState>) -> Result<(), String> {
-    let db_state = state
-        .db
-        .lock()
-        .map_err(|_| "State lock poisoned".to_string())?;
-    let db = db_state
-        .as_ref()
-        .ok_or("Journal must be unlocked to delete entries")?;
-
-    let deleted = queries::delete_entry_by_id(db, id)
-        .map_err(|e| format!("Failed to delete entry: {}", e))?;
-
-    if !deleted {
-        return Err("Entry not found".to_string());
-    }
-
-    Ok(())
+    with_unlocked_db(&state, |db| {
+        let deleted = queries::delete_entry_by_id(db, id)
+            .map_err(|e| format!("Failed to delete entry: {}", e))?;
+        if !deleted {
+            return Err("Entry not found".to_string());
+        }
+        Ok(())
+    })
 }
 
 /// Gets all dates that have entries
@@ -140,15 +110,7 @@ pub fn delete_entry(id: i64, state: State<DiaryState>) -> Result<(), String> {
 /// Returns a sorted list of distinct dates in YYYY-MM-DD format
 #[tauri::command]
 pub fn get_all_entry_dates(state: State<DiaryState>) -> Result<Vec<String>, String> {
-    let db_state = state
-        .db
-        .lock()
-        .map_err(|_| "State lock poisoned".to_string())?;
-    let db = db_state
-        .as_ref()
-        .ok_or("Journal must be unlocked to read entry dates")?;
-
-    queries::get_all_entry_dates(db)
+    with_unlocked_db(&state, queries::get_all_entry_dates)
 }
 
 #[cfg(test)]
@@ -348,5 +310,52 @@ mod tests {
         // maps this to Err("Entry not found")
         let deleted = queries::delete_entry_by_id(&db, 9999).unwrap();
         assert!(!deleted);
+    }
+
+    #[test]
+    fn test_save_entry_locked_returns_error() {
+        use crate::commands::auth::DiaryState;
+        use std::path::PathBuf;
+        let state = DiaryState::new(
+            PathBuf::from("test_save_entry_locked.db"),
+            PathBuf::from("test_save_entry_locked_backups"),
+            PathBuf::from("."),
+        );
+        let err = save_entry_inner(1, "Title", "Text", &state).unwrap_err();
+        assert!(err.contains("Journal must be unlocked"), "got: {}", err);
+    }
+
+    #[test]
+    fn test_save_entry_unlocked_updates_content() {
+        use crate::commands::auth::DiaryState;
+        use std::path::PathBuf;
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+        let now = chrono::Utc::now().to_rfc3339();
+        let blank = DiaryEntry {
+            id: 0,
+            date: "2024-05-01".to_string(),
+            title: String::new(),
+            text: String::new(),
+            word_count: 0,
+            date_created: now.clone(),
+            date_updated: now,
+        };
+        queries::insert_entry(&db, &blank).unwrap();
+        let entry_id = db.conn().last_insert_rowid();
+        let state = DiaryState::new(
+            PathBuf::from("test_save_entry_unlocked.db"),
+            PathBuf::from("test_save_entry_unlocked_backups"),
+            PathBuf::from("."),
+        );
+        *state.db.lock().unwrap() = Some(db);
+        let result = save_entry_inner(entry_id, "My Title", "My content here", &state);
+        assert!(result.is_ok(), "err: {:?}", result.err());
+        let db_guard = state.db.lock().unwrap();
+        let retrieved = queries::get_entry_by_id(db_guard.as_ref().unwrap(), entry_id)
+            .unwrap()
+            .unwrap();
+        assert_eq!(retrieved.title, "My Title");
+        assert_eq!(retrieved.word_count, 3);
     }
 }
