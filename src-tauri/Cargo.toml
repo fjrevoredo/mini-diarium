@@ -84,7 +84,7 @@ windows-sys = { version = "0.61", features = [
 ] }
 # Direct deps for WebResourceRequested COM handler in lib.rs
 webview2-com = "0.38.2"
-windows = { version = "0.61" }
+windows = { version = "0.62" }
 
 [target.'cfg(target_os = "macos")'.dependencies]
 objc2-app-kit = { version = "0.3", features = ["NSWorkspace"] }
