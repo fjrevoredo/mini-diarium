@@ -25,6 +25,9 @@ jobs:
 
       - uses: oven-sh/setup-bun@v2
 
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
       - name: Build website (regenerate sitemap)
         run: bun run website:build-static
 
