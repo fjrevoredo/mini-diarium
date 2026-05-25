@@ -159,8 +159,7 @@ The following layers prevent the embedded WebView from making outbound network r
 4. **`on_new_window(Deny)`** (`lib.rs`) — blocks `window.open()` and `target="_blank"` popup creation on all platforms.
 5. **Windows `WebResourceRequested`** (`lib.rs` `#[cfg(target_os = "windows")]`) — COM event handler that returns a synthetic `403 Forbidden` response (`SetResponse`) for external HTTP(S) requests (non-localhost).
 6. **macOS `WKContentRuleList`** (`lib.rs` `#[cfg(target_os = "macos")]`) — compiled content-blocking rule that blocks all `https?://.*` requests to non-localhost domains at the WebKit engine level.
-7. **Windows Firewall rule** (NSIS installer — `nsis/installer.nsh`) — outbound block rule for `mini-diarium.exe`. Requires `perMachine` install mode (elevated installer). Does not cover WebView2 subprocess traffic (see `docs/network-isolation-plan.md` Task 4.1b).
-8. **Linux Flatpak** (`flatpak/io.github.fjrevoredo.mini-diarium.yml`) — no `--share=network` in `finish-args` → kernel namespace blocks all outbound sockets.
+7. **Linux Flatpak** (`flatpak/io.github.fjrevoredo.mini-diarium.yml`) — no `--share=network` in `finish-args` → kernel namespace blocks all outbound sockets.
 
 **Opener exception**: `tauri_plugin_opener` is retained. User-clicked help/docs links open in the system browser. This is documented in `PHILOSOPHY.md` and `SECURITY.md`.
 

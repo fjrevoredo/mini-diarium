@@ -38,8 +38,7 @@
     },
     "windows": {
       "nsis": {
-        "installMode": "perMachine",
-        "installerHooks": "nsis/installer.nsh"
+        "installMode": "perMachine"
       }
     },
     "linux": {
