@@ -116,13 +116,16 @@ describe('Core journal workflow', () => {
     if (TEST_DATE !== TODAY_DATE) {
       await $(`[data-testid="calendar-day-${TEST_DATE}"]`).waitForClickable({ timeout: 10000 });
       await $(`[data-testid="calendar-day-${TEST_DATE}"]`).click();
+      // Allow the editor to initialize and the async entry load + render cycle to complete.
+      // WebKitGTK (Linux CI) can be slower than WebView2/Chromium.
+      await browser.pause(500);
     }
 
     // Wait for the entry to load from the DB (async) before asserting the title.
     // waitForDisplayed only checks element visibility, not value readiness.
     await browser.waitUntil(
       async () => (await $('[data-testid="title-input"]').getValue()) === TEST_TITLE,
-      { timeout: 10000, timeoutMsg: `Title did not load "${TEST_TITLE}" within 10s` },
+      { timeout: 20000, timeoutMsg: `Title did not load "${TEST_TITLE}" within 20s` },
     );
   });
 });

@@ -65,7 +65,7 @@ async function submit(payload) {
   const status = response.status;
   const statusText = response.statusText;
 
-  if (status === 200) {
+  if (status === 200 || status === 202) {
     console.log(`Success: ${payload.urlList.length} URLs submitted to IndexNow (HTTP ${status} ${statusText})`);
     return;
   }

@@ -28,6 +28,8 @@ After loading this skill, the agent should follow these phases:
   `npm install --package-lock-only --legacy-peer-deps`
 - [ ] Verification: grep lockfiles for correct versions, run type-check + lint
   + test:run, verify `git diff --stat` shows exactly 3 files
+- [ ] Commit: stage changed files, create commit with user identity,
+  message format `Dependency Update: <short-summary>`, no push
 
 ## Gotchas
 
@@ -50,6 +52,39 @@ Read before starting.
   same package to different versions, take the highest version.
 - **All project commands need `cmd.exe /c`.** This repo is worked on from WSL
   over a Windows checkout. Bare `bun`/`npm` from WSL may fail.
+- **`windows`/`webview2-com` Cargo crates are tied to the Tauri version.**
+  Do not bump these independently. Tauri's transitive deps (wry, tao,
+  tauri-runtime-wry) own the `windows` and `webview2-com` types passed to
+  our code. A version mismatch causes type-level incompatibilities
+  (e.g. `PCWSTR`/`Interface`/`COREWEBVIEW2_WEB_RESOURCE_CONTEXT` from
+  different `windows-core` versions won't unify). Only bump these when
+  the Tauri upgrade dictates it.
+- **Check for pre-existing changes before starting.** Run `git status` and
+  `git diff --stat` before any edits. Dangling changes from prior work can
+  contaminate the final change set and must be addressed separately.
+- **`npm install --package-lock-only` can drop `resolved`/`integrity` fields.**
+  With `--legacy-peer-deps`, npm may write lockfile entries for some transitive
+  packages that lack `resolved` and `integrity` hashes. The Flatpak CI's
+  `generate-node-sources.mjs` (line 152: `if (!resolved || !integrity) continue`)
+  skips these entries, causing `npm ci --offline` to fail with
+  `npm error ... cache mode is 'only-if-cached' but no cached response is available`.
+  **Detection:** after `--package-lock-only`, check for missing fields
+  (see Phase 4 step 4). **Fix when detected:** delete `node_modules/`, run
+  a full `npm install --legacy-peer-deps` to regenerate the lockfile with
+  complete entries, then `bun install` to sync `bun.lock`. In the common
+  case where all entries are complete, `--package-lock-only` is preferred
+  — it's faster and leaves `node_modules/` untouched.
+- **`@tiptap/*` packages are a monorepo — all must be the same version.**
+  You cannot independently pin or downgrade one `@tiptap` package (e.g. pin
+  `@tiptap/core` to 3.23.5 while leaving `@tiptap/extensions` at 3.23.6).
+  The packages share internal TypeScript types (`Node`, `Mark`, `Editor`),
+  and a version mismatch creates duplicate copies in `node_modules` with
+  incompatible types — resulting in `TS2322: Two different types with this
+  name exist, but they are unrelated`. To pin, pin ALL `@tiptap/*` packages
+  to the same exact version. If the pinned version's `@tiptap/extensions`
+  tarball is missing `dist/` files (published incomplete), the pin is not
+  viable — revert and find a different fix for whatever the pin was meant
+  to address.
 
 ## Workflow
 
@@ -162,20 +197,49 @@ For each PR the user wants to apply:
    ```
    All three must exit with code 0.
 
-3. **Verify the file change set:**
-   ```bash
-   git diff --stat
-   ```
-   Should show exactly three files: `package.json`, `bun.lock`, and
-   `package-lock.json`. Investigate any additional files.
+ 3. **Verify the file change set:**
+    ```bash
+    git diff --stat
+    ```
+    Should show exactly three files: `package.json`, `bun.lock`, and
+    `package-lock.json`. Investigate any additional files.
 
-4. **Update the plan** to mark all tasks completed and plan status to
-   `COMPLETED`.
+ 4. **Verify Flatpak lockfile integrity.** The Flatpak CI build runs
+    `npm ci --offline` from a cache built by `generate-node-sources.mjs`,
+    which requires every `node_modules/` entry to have `resolved` and
+    `integrity` fields. Check for missing entries:
+    ```powershell
+    # Count entries with resolved+integrity vs total
+    $pkg = Get-Content package-lock.json | ConvertFrom-Json -AsHashtable | % packages
+    ($pkg.Keys | ? { $_ -like 'node_modules/*' } | % { $pkg[$_].resolved -and $pkg[$_].integrity }).Count
+    ```
+    If any entry lacks these fields, re-run a full `npm install --legacy-peer-deps`
+    (deleting `node_modules/` first) before committing.
+
+ 5. **Update the plan** to mark all tasks completed and plan status to
+    `COMPLETED`.
+
+ 6. **Commit the changes** with the user's git identity (no LLM user,
+    no co-author), no push:
+    ```bash
+    git commit -m "Dependency Update: <short-summary>"
+    ```
+    Use the author's real name/email from `git config user.name` / `git config user.email`
+    (set `GIT_AUTHOR_NAME`, `GIT_AUTHOR_EMAIL`, `GIT_COMMITTER_NAME`,
+    `GIT_COMMITTER_EMAIL` if needed). The commit message format is:
+    `Dependency Update: <list of bumped packages>`. Stage only the files
+    that were intentionally changed (typically `package.json`, `bun.lock`,
+    `package-lock.json`; for Cargo-only updates, `Cargo.lock`).
 
 ## Scope Boundaries
 
 - **Only npm/bun dependencies.** For Cargo/Rust dependency updates, use
   separate handling — this skill does not touch `Cargo.toml` or `Cargo.lock`.
+  When the user asks to merge a mixed batch of npm + Cargo PRs, apply the
+  npm PRs with this skill and handle the Cargo PRs separately with
+  `cargo update` for lock-only bumps and manual review for `Cargo.toml`
+  bumps (checking for diamond dependency conflicts against Tauri's transitive
+   deps). Note which PRs fall in each category in the plan.
 - **E2E tests are out of scope** for dependency bumps. Running
   `test:e2e` is not required unless the bumped dependency is a Tauri API or
   plugin that could affect IPC behavior.
