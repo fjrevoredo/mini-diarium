@@ -84,6 +84,25 @@ fn labels_for_locale(locale: &str) -> MenuLabels {
             #[cfg(not(target_os = "macos"))]
             help_menu: "Aiuto",
         },
+        "hi" => MenuLabels {
+            navigation_menu: "नेविगेशन",
+            diary_menu: "डायरी",
+            navigate_prev_day: "पिछला दिन",
+            navigate_next_day: "अगला दिन",
+            navigate_today: "आज पर जाएं",
+            go_to_date: "तारीख पर जाएं...",
+            navigate_prev_month: "पिछला महीना",
+            navigate_next_month: "अगला महीना",
+            statistics: "आँकड़े...",
+            import_item: "आयात करें...",
+            export_item: "निर्यात करें...",
+            preferences: "प्राथमिकताएं...",
+            about: "Mini Diarium के बारे में",
+            #[cfg(not(target_os = "macos"))]
+            file_menu: "फ़ाइल",
+            #[cfg(not(target_os = "macos"))]
+            help_menu: "सहायता",
+        },
         // Default / fallback — English for any unknown locale code
         _ => MenuLabels {
             navigation_menu: "Navigation",

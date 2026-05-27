@@ -160,7 +160,7 @@ export default function DiaryEditor(props: DiaryEditorProps) {
           },
         }),
         Placeholder.configure({
-          placeholder: props.placeholder || 'Start writing...',
+          placeholder: () => props.placeholder || 'Start writing...',
         }),
         Underline,
         Highlight.configure({ multicolor: true }),
@@ -292,19 +292,14 @@ export default function DiaryEditor(props: DiaryEditorProps) {
     }
   });
 
-  // Update TipTap Placeholder extension when props.placeholder changes (e.g. locale switch).
-  // The editor is created once in onMount with the initial placeholder value; after that,
-  // prop changes must be applied by mutating the extension options and dispatching a no-op
-  // transaction so ProseMirror re-runs its decoration pass.
+  // Dispatch a transaction whenever the placeholder prop changes so ProseMirror re-runs its
+  // decoration pass and picks up the new value from the placeholder callback above.
   createEffect(() => {
-    const newPlaceholder = props.placeholder;
+    const newPlaceholder = props.placeholder; // track reactive dep (locale change)
     const editorInstance = editor();
     if (!editorInstance || editorInstance.isDestroyed) return;
-    const ext = editorInstance.extensionManager.extensions.find((e) => e.name === 'placeholder');
-    if (ext) {
-      ext.options.placeholder = newPlaceholder;
-      editorInstance.view.dispatch(editorInstance.state.tr);
-    }
+    void newPlaceholder;
+    editorInstance.view.dispatch(editorInstance.state.tr);
   });
 
   onCleanup(() => {

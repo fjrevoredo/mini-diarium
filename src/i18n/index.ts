@@ -5,6 +5,7 @@ import esLocale from './locales/es.json';
 import deLocale from './locales/de.json';
 import itLocale from './locales/it.json';
 import frLocale from './locales/fr.json';
+import hiLocale from './locales/hi.json';
 
 // Pre-flatten the English dictionary once at module load time.
 // flatten() converts the nested object to dot-notation keys so the translator
@@ -23,6 +24,7 @@ const localeMap: Record<string, FlatEn> = {
   de: flatten(deLocale as unknown as typeof en) as FlatEn,
   it: flatten(itLocale as unknown as typeof en) as FlatEn,
   fr: flatten(frLocale as unknown as typeof en) as FlatEn,
+  hi: flatten(hiLocale as unknown as typeof en) as FlatEn,
 };
 
 // Switch the active locale. Falls back to English for unknown codes.

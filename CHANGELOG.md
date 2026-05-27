@@ -30,6 +30,14 @@ Template:
 
 # Versions
 
+## [0.5.2] - Unreleased
+
+### Added
+- **Hindi (हिन्दी) translation**: the app UI is now fully translated into Hindi, covering all 456 strings across every screen — auth, editor, preferences, import/export, stats, tags, onboarding, and error messages. The native OS menu bar (Navigation, Diary, File, Help) is also translated when Hindi is selected in Preferences → General → Language.
+
+### Fixed
+- **Editor placeholder updates on locale switch**: the body placeholder ("What's on your mind today?") now updates immediately and reliably when changing the language in Preferences, including when switching back to a previously used locale.
+
 ## [0.5.1] - 27-05-2026
 
 ### Removed

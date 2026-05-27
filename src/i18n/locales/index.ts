@@ -9,5 +9,6 @@ export const AVAILABLE_LOCALES: LocaleInfo[] = [
   { code: 'es', name: 'Spanish', nativeName: 'Español' },
   { code: 'de', name: 'German', nativeName: 'Deutsch' },
   { code: 'fr', name: 'French', nativeName: 'Français' },
+  { code: 'hi', name: 'Hindi', nativeName: 'हिन्दी' },
   { code: 'it', name: 'Italian', nativeName: 'Italiano' },
 ];

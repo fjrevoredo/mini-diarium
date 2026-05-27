@@ -189,6 +189,7 @@ Mini Diarium ships in the following languages:
 - Spanish (Español)
 - German (Deutsch)
 - French (Français)
+- Hindi (हिन्दी)
 - Italian (Italiano)
 <!-- supported-languages-end -->
 
