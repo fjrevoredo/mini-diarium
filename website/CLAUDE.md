@@ -216,9 +216,11 @@ HTTP→HTTPS redirect is handled by Coolify, not the local `website/nginx.conf`.
 
 **Key file:** A single hex key file lives at `website/indexnow-key-<HEX>.txt`. The script auto-discovers it by matching `website/indexnow-key-*.txt`. Exactly one key file must exist — the script errors if zero or multiple are found.
 
+**Endpoints:** The script submits to two endpoints in sequence — `api.indexnow.org` (propagates to Yandex, Seznam, etc.) and `https://www.bing.com/indexnow` directly. The direct Bing endpoint is required for submissions to appear in Bing Webmaster Tools; the generic endpoint alone does not register there.
+
 **Manual submission:**
 ```bash
-bun run website:submit-indexnow          # Submit all sitemap URLs to IndexNow
+bun run website:submit-indexnow          # Submit all sitemap URLs to both endpoints
 bun run website:submit-indexnow:dry-run  # Preview the payload without sending
 ```
 
