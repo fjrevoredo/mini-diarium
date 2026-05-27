@@ -298,7 +298,21 @@
       "fontSizeMax": "24 px",
       "fontFamilyLabel": "संपादक फ़ॉन्ट",
       "fontFamilySystemDefault": "सिस्टम डिफ़ॉल्ट",
-      "fontFamilyHint": "संपादक के लिए एक फ़ॉन्ट चुनें। फ़ॉन्ट ऐप के साथ बंडल हैं और ऑफलाइन काम करते हैं।"
+      "fontFamilyHint": "संपादक के लिए एक फ़ॉन्ट चुनें। फ़ॉन्ट ऐप के साथ बंडल हैं और ऑफलाइन काम करते हैं।",
+      "customFontsGroupLabel": "कस्टम",
+      "customFontsLabel": "कस्टम फ़ॉन्ट",
+      "customFontsHint": "कस्टम फ़ॉन्ट आपकी डायरी में संग्रहीत होते हैं, तुरंत आयात या हटाए जाते हैं, और डायरी के साथ अन्य उपकरणों पर भी उपलब्ध रहते हैं। ये आपकी डायरी फ़ाइल और बैकअप का आकार भी बढ़ाते हैं।",
+      "customFontBoldPairHint": "सही बोल्ड टेक्स्ट के लिए Regular और Bold दोनों वज़न की फ़ाइलें प्रदान करें।",
+      "customFontRegularLabel": "Regular वज़न (.ttf / .otf / .woff / .woff2)",
+      "customFontBoldLabel": "Bold वज़न (.ttf / .otf / .woff / .woff2)",
+      "customFontChooseFile": "फ़ाइल चुनें…",
+      "customFontFamilyLabel": "फ़ॉन्ट परिवार का नाम",
+      "customFontAddButton": "फ़ॉन्ट जोड़ें",
+      "customFontMissingBold": "Bold वज़न अनुपस्थित है — Mini Diarium ब्राउज़र को बोल्ड टेक्स्ट संश्लेषित करने देगा, जो गलत दिख सकता है।",
+      "customFontDeleteButton": "हटाएं",
+      "customFontDeleteAriaLabel": "{{ family }} कस्टम फ़ॉन्ट हटाएं",
+      "customFontFamilyRequired": "फ़ॉन्ट परिवार का नाम आवश्यक है।",
+      "customFontRegularRequired": "Regular वज़न की फ़ाइल आवश्यक है।"
     },
     "security": {
       "authMethodsTitle": "प्रमाणीकरण विधियाँ",

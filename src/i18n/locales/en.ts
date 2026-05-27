@@ -364,6 +364,23 @@ const en = {
       fontFamilySystemDefault: 'System Default',
       fontFamilyHint:
         'Select a font for the editor. Fonts are bundled with the app and work offline.',
+      customFontsGroupLabel: 'Custom',
+      customFontsLabel: 'Custom fonts',
+      customFontsHint:
+        'Custom fonts are stored inside your journal, imported or removed immediately, and travel with the journal to other devices. They also increase the size of your journal file and backups.',
+      customFontBoldPairHint:
+        'For correct bold text, provide both a Regular and a Bold weight file.',
+      customFontRegularLabel: 'Regular weight (.ttf / .otf / .woff / .woff2)',
+      customFontBoldLabel: 'Bold weight (.ttf / .otf / .woff / .woff2)',
+      customFontChooseFile: 'Choose file…',
+      customFontFamilyLabel: 'Font family name',
+      customFontAddButton: 'Add font',
+      customFontMissingBold:
+        'Bold weight missing — Mini Diarium will let the browser synthesize bold text, which may look incorrect.',
+      customFontDeleteButton: 'Remove',
+      customFontDeleteAriaLabel: 'Remove {{ family }} custom font',
+      customFontFamilyRequired: 'Font family name is required.',
+      customFontRegularRequired: 'Regular weight file is required.',
     },
     security: {
       authMethodsTitle: 'Authentication Methods',

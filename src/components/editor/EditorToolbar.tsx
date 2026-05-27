@@ -3,7 +3,7 @@ import type { JSX } from 'solid-js';
 import type { Editor } from '@tiptap/core';
 import { preferences, setPreferences } from '../../state/preferences';
 import type { ToolbarItemKey } from '../../state/preferences';
-import { listBundledFonts } from '../../lib/tauri';
+import { listBundledFonts, listCustomFonts } from '../../lib/tauri';
 import { useI18n } from '../../i18n';
 import TimestampOverlay from './TimestampOverlay';
 import {
@@ -40,6 +40,7 @@ interface EditorToolbarProps {
 export default function EditorToolbar(props: EditorToolbarProps) {
   const t = useI18n();
   const [bundledFonts] = createResource(listBundledFonts);
+  const [customFonts] = createResource(listCustomFonts);
 
   // Reactive signals for active states
   const [isBoldActive, setIsBoldActive] = createSignal(false);
@@ -411,6 +412,20 @@ export default function EditorToolbar(props: EditorToolbarProps) {
                 </option>
               )}
             </For>
+            <Show when={(customFonts() ?? []).some((f) => f.has_regular)}>
+              <optgroup label={t('prefs.writing.customFontsGroupLabel')}>
+                <For each={(customFonts() ?? []).filter((f) => f.has_regular)}>
+                  {(font) => (
+                    <option
+                      value={font.family}
+                      selected={preferences().editorFontFamily === font.family}
+                    >
+                      {font.family}
+                    </option>
+                  )}
+                </For>
+              </optgroup>
+            </Show>
           </select>
         );
       case 'fontSize':

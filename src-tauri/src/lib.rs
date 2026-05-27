@@ -355,6 +355,9 @@ pub fn run() {
             // Fonts
             commands::fonts::list_bundled_fonts,
             commands::fonts::get_font_data,
+            commands::fonts::list_custom_fonts,
+            commands::fonts::import_custom_font,
+            commands::fonts::delete_custom_font_family,
             // Tags
             commands::tags::create_tag,
             commands::tags::get_all_tags,

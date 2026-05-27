@@ -298,7 +298,21 @@
       "fontSizeMax": "24 px",
       "fontFamilyLabel": "Editor font",
       "fontFamilySystemDefault": "System Default",
-      "fontFamilyHint": "Select a font for the editor. Fonts are bundled with the app and work offline."
+      "fontFamilyHint": "Select a font for the editor. Fonts are bundled with the app and work offline.",
+      "customFontsGroupLabel": "Eigene",
+      "customFontsLabel": "Eigene Schriftarten",
+      "customFontsHint": "Eigene Schriftarten werden im Tagebuch gespeichert, sofort importiert oder entfernt und mit dem Tagebuch auf andere Geräte übertragen. Sie erhöhen auch die Größe der Tagebuchdatei und der Sicherungen.",
+      "customFontBoldPairHint": "Für korrekte Fettschrift bitte sowohl eine Datei für das reguläre als auch für das fette Gewicht angeben.",
+      "customFontRegularLabel": "Reguläres Gewicht (.ttf / .otf / .woff / .woff2)",
+      "customFontBoldLabel": "Fettes Gewicht (.ttf / .otf / .woff / .woff2)",
+      "customFontChooseFile": "Datei auswählen…",
+      "customFontFamilyLabel": "Name der Schriftfamilie",
+      "customFontAddButton": "Schrift hinzufügen",
+      "customFontMissingBold": "Fettes Gewicht fehlt — Mini Diarium lässt den Browser Fettschrift synthetisieren, was möglicherweise nicht korrekt aussieht.",
+      "customFontDeleteButton": "Entfernen",
+      "customFontDeleteAriaLabel": "Eigene Schrift {{ family }} entfernen",
+      "customFontFamilyRequired": "Der Name der Schriftfamilie ist erforderlich.",
+      "customFontRegularRequired": "Die Datei für das reguläre Gewicht ist erforderlich."
     },
     "security": {
       "authMethodsTitle": "Authentifizierungsmethoden",

@@ -125,20 +125,28 @@ export default function DiaryEditor(props: DiaryEditorProps) {
 
     const style = existing || document.createElement('style');
     style.id = 'editor-font-face';
-    style.textContent = [
+    const faces = [
       `@font-face {`,
       `  font-family: "${data.family}";`,
       `  src: url(${data.regular});`,
       `  font-weight: 400;`,
       `  font-style: normal;`,
       `}`,
-      `@font-face {`,
-      `  font-family: "${data.family}";`,
-      `  src: url(${data.bold});`,
-      `  font-weight: 700;`,
-      `  font-style: normal;`,
-      `}`,
-    ].join('\n');
+    ];
+    // When Bold is synthesized (Regular-only upload), omit the 700-weight face so
+    // the browser can synthesize bold. Registering a fake 700-weight face pointing
+    // at the Regular file would prevent browser synthesis.
+    if (!data.bold_synthesized) {
+      faces.push(
+        `@font-face {`,
+        `  font-family: "${data.family}";`,
+        `  src: url(${data.bold});`,
+        `  font-weight: 700;`,
+        `  font-style: normal;`,
+        `}`,
+      );
+    }
+    style.textContent = faces.join('\n');
 
     if (!existing) document.head.appendChild(style);
   });

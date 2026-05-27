@@ -1,10 +1,17 @@
-import { createSignal, createMemo, For, onCleanup, onMount, createResource } from 'solid-js';
+import { createSignal, createMemo, For, Show, onCleanup, onMount, createResource } from 'solid-js';
 import { ChevronUp, ChevronDown } from 'lucide-solid';
+import { open as openDialog } from '@tauri-apps/plugin-dialog';
 import { useI18n } from '../../../i18n';
 import { preferences, setPreferences } from '../../../state/preferences';
 import type { ToolbarItem, ToolbarItemKey } from '../../../state/preferences';
 import { usePreferencesShell, type TabProps } from './shared';
-import { listBundledFonts } from '../../../lib/tauri';
+import {
+  listBundledFonts,
+  listCustomFonts,
+  importCustomFont,
+  deleteCustomFontFamily,
+} from '../../../lib/tauri';
+import { mapTauriError } from '../../../lib/errors';
 
 export default function PreferencesWritingTab(_props: TabProps) {
   const t = useI18n();
@@ -66,6 +73,14 @@ export default function PreferencesWritingTab(_props: TabProps) {
   );
 
   const [bundledFonts] = createResource(listBundledFonts);
+  const [customFonts, { refetch: refetchCustomFonts }] = createResource(listCustomFonts);
+
+  // Custom font upload form state
+  const [uploadFamily, setUploadFamily] = createSignal('');
+  const [uploadRegularPath, setUploadRegularPath] = createSignal('');
+  const [uploadBoldPath, setUploadBoldPath] = createSignal('');
+  const [fontManagerError, setFontManagerError] = createSignal('');
+  const [isUploading, setIsUploading] = createSignal(false);
 
   const selectAll = () =>
     setLocalToolbarItems((prev) => prev.map((item) => ({ ...item, enabled: true })));
@@ -88,6 +103,93 @@ export default function PreferencesWritingTab(_props: TabProps) {
     setLocalToolbarItems((prev) =>
       prev.map((item, idx) => (idx === i ? { ...item, enabled } : item)),
     );
+  };
+
+  const pickRegular = async () => {
+    try {
+      const selected = await openDialog({
+        multiple: false,
+        filters: [{ name: 'Font files', extensions: ['ttf', 'otf', 'woff', 'woff2'] }],
+      });
+      if (typeof selected === 'string') {
+        setUploadRegularPath(selected);
+        // Auto-fill family name from filename if field is empty
+        if (!uploadFamily()) {
+          const stem =
+            selected
+              .split(/[\\/]/)
+              .pop()
+              ?.replace(/\.[^.]+$/, '') ?? '';
+          const name = stem
+            .replace(/[-_ ]?(regular|Regular)$/i, '')
+            .replace(/[-_]/g, ' ')
+            .trim();
+          if (name) setUploadFamily(name);
+        }
+      }
+    } catch (err) {
+      setFontManagerError(mapTauriError(err, t));
+    }
+  };
+
+  const pickBold = async () => {
+    try {
+      const selected = await openDialog({
+        multiple: false,
+        filters: [{ name: 'Font files', extensions: ['ttf', 'otf', 'woff', 'woff2'] }],
+      });
+      if (typeof selected === 'string') {
+        setUploadBoldPath(selected);
+      }
+    } catch (err) {
+      setFontManagerError(mapTauriError(err, t));
+    }
+  };
+
+  const handleAddFont = async () => {
+    const family = uploadFamily().trim();
+    const regularPath = uploadRegularPath();
+    setFontManagerError('');
+    if (!family) {
+      setFontManagerError(t('prefs.writing.customFontFamilyRequired'));
+      return;
+    }
+    if (!regularPath) {
+      setFontManagerError(t('prefs.writing.customFontRegularRequired'));
+      return;
+    }
+    setIsUploading(true);
+    try {
+      await importCustomFont(family, 'Regular', regularPath);
+      const boldPath = uploadBoldPath();
+      if (boldPath) {
+        await importCustomFont(family, 'Bold', boldPath);
+      }
+      setUploadFamily('');
+      setUploadRegularPath('');
+      setUploadBoldPath('');
+      refetchCustomFonts();
+    } catch (err) {
+      setFontManagerError(mapTauriError(err, t));
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleDeleteFont = async (family: string) => {
+    try {
+      await deleteCustomFontFamily(family);
+      refetchCustomFonts();
+      // Clear local selection and persisted preference immediately if this font was selected
+      if (localEditorFontFamily() === family) {
+        setLocalEditorFontFamily('');
+      }
+      if (preferences().editorFontFamily === family) {
+        setPreferences({ editorFontFamily: null });
+      }
+    } catch (err) {
+      setFontManagerError(mapTauriError(err, t));
+    }
   };
 
   onMount(() => {
@@ -325,10 +427,141 @@ export default function PreferencesWritingTab(_props: TabProps) {
               </option>
             )}
           </For>
+          <Show when={(customFonts() ?? []).some((f) => f.has_regular)}>
+            <optgroup label={t('prefs.writing.customFontsGroupLabel')}>
+              <For each={(customFonts() ?? []).filter((f) => f.has_regular)}>
+                {(font) => (
+                  <option value={font.family} selected={localEditorFontFamily() === font.family}>
+                    {font.family}
+                  </option>
+                )}
+              </For>
+            </optgroup>
+          </Show>
         </select>
         <p class="mt-1 text-xs text-tertiary leading-relaxed">
           {t('prefs.writing.fontFamilyHint')}
         </p>
+      </div>
+
+      {/* Custom Fonts Management */}
+      <div>
+        <h3 class="text-sm font-medium text-secondary mb-1">
+          {t('prefs.writing.customFontsLabel')}
+        </h3>
+        <p class="text-xs text-tertiary leading-relaxed mb-3">
+          {t('prefs.writing.customFontsHint')}
+        </p>
+
+        {/* Uploaded fonts list */}
+        <For each={customFonts() ?? []}>
+          {(font) => (
+            <div class="flex items-center justify-between py-2 border-b border-primary last:border-b-0">
+              <div class="flex flex-col gap-0.5">
+                <span class="text-sm text-primary">{font.family}</span>
+                {!font.has_bold && (
+                  <span
+                    class="text-xs text-yellow-600 dark:text-yellow-400"
+                    data-testid={`custom-font-missing-bold-${font.family}`}
+                  >
+                    {t('prefs.writing.customFontMissingBold')}
+                  </span>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => handleDeleteFont(font.family)}
+                aria-label={t('prefs.writing.customFontDeleteAriaLabel', {
+                  family: font.family,
+                })}
+                class="text-xs text-red-500 hover:text-red-700 ml-4 shrink-0"
+              >
+                {t('prefs.writing.customFontDeleteButton')}
+              </button>
+            </div>
+          )}
+        </For>
+
+        {/* Upload form */}
+        <div class="mt-4 space-y-3">
+          <p class="text-xs text-tertiary leading-relaxed">
+            {t('prefs.writing.customFontBoldPairHint')}
+          </p>
+
+          {/* Regular picker */}
+          <div class="flex items-center gap-2">
+            <span class="text-xs text-secondary w-48 shrink-0">
+              {t('prefs.writing.customFontRegularLabel')}
+            </span>
+            <button
+              type="button"
+              onClick={pickRegular}
+              class="text-xs px-2 py-1 border border-primary rounded bg-primary text-primary hover:bg-tertiary"
+            >
+              {t('prefs.writing.customFontChooseFile')}
+            </button>
+            {uploadRegularPath() && (
+              <span
+                class="text-xs text-tertiary truncate max-w-[160px]"
+                title={uploadRegularPath()}
+              >
+                {uploadRegularPath().split(/[\\/]/).pop()}
+              </span>
+            )}
+          </div>
+
+          {/* Bold picker */}
+          <div class="flex items-center gap-2">
+            <span class="text-xs text-secondary w-48 shrink-0">
+              {t('prefs.writing.customFontBoldLabel')}
+            </span>
+            <button
+              type="button"
+              onClick={pickBold}
+              class="text-xs px-2 py-1 border border-primary rounded bg-primary text-primary hover:bg-tertiary"
+            >
+              {t('prefs.writing.customFontChooseFile')}
+            </button>
+            {uploadBoldPath() && (
+              <span class="text-xs text-tertiary truncate max-w-[160px]" title={uploadBoldPath()}>
+                {uploadBoldPath().split(/[\\/]/).pop()}
+              </span>
+            )}
+          </div>
+
+          {/* Family name input */}
+          <div class="flex items-center gap-2">
+            <label for="custom-font-family-name" class="text-xs text-secondary w-48 shrink-0">
+              {t('prefs.writing.customFontFamilyLabel')}
+            </label>
+            <input
+              id="custom-font-family-name"
+              type="text"
+              value={uploadFamily()}
+              onInput={(e) => setUploadFamily(e.currentTarget.value)}
+              class="flex-1 px-2 py-1 border border-primary bg-primary text-primary text-xs rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+              data-testid="custom-font-family-input"
+            />
+          </div>
+
+          {/* Inline error */}
+          {fontManagerError() && (
+            <p class="text-xs text-red-600 dark:text-red-400" role="alert">
+              {fontManagerError()}
+            </p>
+          )}
+
+          {/* Upload button */}
+          <button
+            type="button"
+            onClick={handleAddFont}
+            disabled={isUploading()}
+            class="text-sm px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            data-testid="custom-font-add-button"
+          >
+            {t('prefs.writing.customFontAddButton')}
+          </button>
+        </div>
       </div>
     </div>
   );

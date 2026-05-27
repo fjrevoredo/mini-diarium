@@ -1,12 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { fireEvent } from '@solidjs/testing-library';
+import { fireEvent, waitFor } from '@solidjs/testing-library';
 import { renderWithI18n } from '../../test/i18n-test-utils';
 import EditorToolbar from './EditorToolbar';
 import { setPreferences, DEFAULT_TOOLBAR_ITEMS } from '../../state/preferences';
 import type { Editor } from '@tiptap/core';
 
-const { mockListBundledFonts } = vi.hoisted(() => ({
+const { mockListBundledFonts, mockListCustomFonts } = vi.hoisted(() => ({
   mockListBundledFonts: vi.fn<() => Promise<string[]>>().mockResolvedValue(['Font A', 'Font B']),
+  mockListCustomFonts: vi
+    .fn<() => Promise<import('../../lib/tauri').CustomFontSummary[]>>()
+    .mockResolvedValue([]),
 }));
 
 vi.mock('../../lib/tauri', async () => {
@@ -14,6 +17,7 @@ vi.mock('../../lib/tauri', async () => {
   return {
     ...actual,
     listBundledFonts: mockListBundledFonts,
+    listCustomFonts: mockListCustomFonts,
   };
 });
 
@@ -607,5 +611,80 @@ describe('EditorToolbar fontSize item — visibility', () => {
     expect(values).toHaveLength(13);
     expect(values[0]).toBe(12);
     expect(values[12]).toBe(24);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// fontFamily item — custom font options
+// ---------------------------------------------------------------------------
+
+describe('EditorToolbar fontFamily item — custom font options', () => {
+  it('shows custom font in the font-family selector alongside bundled fonts', async () => {
+    mockListBundledFonts.mockResolvedValue(['BundledFont']);
+    mockListCustomFonts.mockResolvedValue([
+      { family: 'MyCustomFont', has_regular: true, has_bold: false },
+    ]);
+    setPreferences({
+      toolbarItems: DEFAULT_TOOLBAR_ITEMS.map((i) => ({
+        ...i,
+        enabled: i.key === 'fontFamily',
+      })),
+    });
+    const { container } = renderWithI18n(() => <EditorToolbar editor={makeEditorMock()} />);
+
+    await waitFor(() => {
+      const select = container.querySelector('[aria-label="Font family"]') as HTMLSelectElement;
+      const values = Array.from(select.options).map((o) => o.value);
+      expect(values).toContain('BundledFont');
+      expect(values).toContain('MyCustomFont');
+    });
+  });
+
+  it('does not show custom fonts without a Regular weight', async () => {
+    mockListBundledFonts.mockResolvedValue([]);
+    mockListCustomFonts.mockResolvedValue([
+      { family: 'BoldOnly', has_regular: false, has_bold: true },
+    ]);
+    setPreferences({
+      toolbarItems: DEFAULT_TOOLBAR_ITEMS.map((i) => ({
+        ...i,
+        enabled: i.key === 'fontFamily',
+      })),
+    });
+    const { container } = renderWithI18n(() => <EditorToolbar editor={makeEditorMock()} />);
+
+    await waitFor(() => {
+      // Wait for resources to resolve
+      expect(container.querySelector('[aria-label="Font family"]')).not.toBeNull();
+    });
+
+    const select = container.querySelector('[aria-label="Font family"]') as HTMLSelectElement;
+    const values = Array.from(select.options).map((o) => o.value);
+    expect(values).not.toContain('BoldOnly');
+  });
+
+  it('shows a selected custom font correctly in the toolbar selector', async () => {
+    mockListBundledFonts.mockResolvedValue([]);
+    mockListCustomFonts.mockResolvedValue([
+      { family: 'SelectedCustom', has_regular: true, has_bold: true },
+    ]);
+    setPreferences({
+      toolbarItems: DEFAULT_TOOLBAR_ITEMS.map((i) => ({
+        ...i,
+        enabled: i.key === 'fontFamily',
+      })),
+      editorFontFamily: 'SelectedCustom',
+    });
+    const { container } = renderWithI18n(() => <EditorToolbar editor={makeEditorMock()} />);
+
+    await waitFor(() => {
+      const select = container.querySelector('[aria-label="Font family"]') as HTMLSelectElement;
+      const values = Array.from(select.options).map((o) => o.value);
+      expect(values).toContain('SelectedCustom');
+    });
+
+    const select = container.querySelector('[aria-label="Font family"]') as HTMLSelectElement;
+    const selected = Array.from(select.options).find((o) => o.selected);
+    expect(selected?.value).toBe('SelectedCustom');
   });
 });

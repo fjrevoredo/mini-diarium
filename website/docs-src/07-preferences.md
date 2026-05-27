@@ -3,7 +3,7 @@ title: Preferences
 slug: preferences
 description: How to configure Mini Diarium: themes, auto-lock, editor settings, and more.
 order: 8
-updated: 2026-05-24
+updated: 2026-05-28
 tags: preferences, settings, theme, auto-lock, configuration
 ---
 
@@ -29,7 +29,8 @@ Press `Ctrl+,` (or `Cmd+,` on macOS) to open the Preferences dialog, or use the 
 | Spellcheck | Toggle browser spellcheck in the editor |
 | Toolbar items | Configure which formatting controls appear in the editor toolbar and their order. Each of the 17 controls (Headings, Underline, Strikethrough, Text color, Highlight color, Blockquote, Inline code, Bullet list, Numbered list, Horizontal rule, Insert image, Import Markdown, Insert timestamp, Text direction, Alignment, Font family, Font size) can be enabled/disabled individually and reordered with ↑/↓ buttons. "Select all" and "Select none" toggle all controls at once. Bold and Italic are always present at the start of the toolbar and cannot be removed. Font family and Font size are disabled by default — enable them to get compact dropdown pickers directly in the toolbar, always in sync with the Preferences sliders. |
 | Editor font size | Adjust the body text size in the editor (12–24 px) |
-| Editor font | Choose a font family for the editor body from bundled options |
+| Editor font | Choose a font family for the editor body from bundled options or custom fonts you have uploaded |
+| Custom fonts | Upload `.ttf`, `.otf`, `.woff`, or `.woff2` font files (Regular and Bold separately). Fonts are stored inside the journal — they travel with it to other devices but also increase backup size. Add and remove actions are immediate; choosing the active font follows the normal Save/Cancel flow |
 | Show entry timestamps | Display creation and last-updated timestamps on each entry |
 | Timestamp format | Choose between 12-hour and 24-hour time display |
 | Timestamp precision | Choose between hours:minutes or hours:minutes:seconds |

@@ -6,8 +6,16 @@ import { PreferencesShellContext } from './shared';
 import * as prefState from '../../../state/preferences';
 import PreferencesWritingTab from './PreferencesWritingTab';
 
-const { mockListBundledFonts } = vi.hoisted(() => ({
+const {
+  mockListBundledFonts,
+  mockListCustomFonts,
+  mockImportCustomFont,
+  mockDeleteCustomFontFamily,
+} = vi.hoisted(() => ({
   mockListBundledFonts: vi.fn<() => Promise<string[]>>(),
+  mockListCustomFonts: vi.fn<() => Promise<import('../../../lib/tauri').CustomFontSummary[]>>(),
+  mockImportCustomFont: vi.fn<() => Promise<void>>(),
+  mockDeleteCustomFontFamily: vi.fn<() => Promise<void>>(),
 }));
 
 vi.mock('../../../lib/tauri', async () => {
@@ -15,8 +23,15 @@ vi.mock('../../../lib/tauri', async () => {
   return {
     ...actual,
     listBundledFonts: mockListBundledFonts,
+    listCustomFonts: mockListCustomFonts,
+    importCustomFont: mockImportCustomFont,
+    deleteCustomFontFamily: mockDeleteCustomFontFamily,
   };
 });
+
+vi.mock('@tauri-apps/plugin-dialog', () => ({
+  open: vi.fn().mockResolvedValue(null),
+}));
 
 describe('PreferencesWritingTab - font family', () => {
   let commitCallback: (() => void) | null = null;
@@ -45,6 +60,7 @@ describe('PreferencesWritingTab - font family', () => {
   beforeEach(() => {
     localStorage.clear();
     vi.clearAllMocks();
+    mockListCustomFonts.mockResolvedValue([]);
   });
 
   it('renders System Default only when no bundled fonts are available', async () => {
@@ -106,4 +122,97 @@ describe('PreferencesWritingTab - font family', () => {
 
     expect(spy).toHaveBeenCalledWith(expect.objectContaining({ editorFontFamily: 'FiraMono' }));
   });
+});
+
+describe('PreferencesWritingTab - custom fonts', () => {
+  let commitCallback: (() => void) | null = null;
+
+  function renderTab() {
+    const [isOpen] = createSignal(true);
+    const onClose = vi.fn();
+    commitCallback = null;
+
+    return renderWithI18n(() => (
+      <PreferencesShellContext.Provider
+        value={{
+          registerCommit: vi.fn((fn: () => void) => {
+            commitCallback = fn;
+            return () => {
+              commitCallback = null;
+            };
+          }),
+        }}
+      >
+        <PreferencesWritingTab isOpen={isOpen} onClose={onClose} />
+      </PreferencesShellContext.Provider>
+    ));
+  }
+
+  beforeEach(() => {
+    localStorage.clear();
+    vi.clearAllMocks();
+    mockListBundledFonts.mockResolvedValue([]);
+  });
+
+  it('renders the Custom Fonts section heading and hint', async () => {
+    mockListCustomFonts.mockResolvedValue([]);
+    renderTab();
+
+    await waitFor(() => {
+      expect(screen.getByText('Custom fonts')).toBeInTheDocument();
+    });
+    expect(screen.getByText(/Custom fonts are stored inside your journal/)).toBeInTheDocument();
+  });
+
+  it('shows missing-Bold warning when a custom font has no bold weight', async () => {
+    mockListCustomFonts.mockResolvedValue([
+      { family: 'TestFont', has_regular: true, has_bold: false },
+    ]);
+    renderTab();
+
+    await waitFor(() => {
+      expect(screen.getByTestId('custom-font-missing-bold-TestFont')).toBeInTheDocument();
+    });
+    expect(screen.getByTestId('custom-font-missing-bold-TestFont').textContent).toMatch(
+      /Bold weight missing/,
+    );
+  });
+
+  it('does not show missing-Bold warning when bold weight is present', async () => {
+    mockListCustomFonts.mockResolvedValue([
+      { family: 'TestFont', has_regular: true, has_bold: true },
+    ]);
+    renderTab();
+
+    await waitFor(() => {
+      expect(screen.getAllByText('TestFont').length).toBeGreaterThan(0);
+    });
+    expect(screen.queryByTestId('custom-font-missing-bold-TestFont')).not.toBeInTheDocument();
+  });
+
+  it('deleting the currently selected custom font clears the persisted preference immediately', async () => {
+    prefState.setPreferences({ editorFontFamily: 'TestFont' });
+    const spy = vi.spyOn(prefState, 'setPreferences');
+
+    mockListCustomFonts.mockResolvedValue([
+      { family: 'TestFont', has_regular: true, has_bold: false },
+    ]);
+    mockDeleteCustomFontFamily.mockResolvedValue(undefined);
+    renderTab();
+
+    await waitFor(() => {
+      expect(screen.getByTestId('custom-font-missing-bold-TestFont')).toBeInTheDocument();
+    });
+
+    const removeBtn = screen.getByRole('button', { name: /Remove TestFont custom font/i });
+    fireEvent.click(removeBtn);
+
+    await waitFor(() => {
+      expect(mockDeleteCustomFontFamily).toHaveBeenCalledWith('TestFont');
+    });
+
+    expect(spy).toHaveBeenCalledWith(expect.objectContaining({ editorFontFamily: null }));
+  });
+
+  void commitCallback;
 });

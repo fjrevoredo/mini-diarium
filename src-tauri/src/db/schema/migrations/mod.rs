@@ -4,13 +4,14 @@ mod v3_to_v4;
 mod v4_to_v5;
 mod v5_to_v6;
 mod v6_to_v7;
+mod v7_to_v8;
 
 pub(crate) use v1_to_v2::migrate_v1_to_v2;
 pub(crate) use v2_to_v3::migrate_v2_to_v3;
 
 use crate::db::schema::DatabaseConnection;
 
-/// Applies all pending DDL-only migrations (v3→v4 through v6→v7) in order.
+/// Applies all pending DDL-only migrations (v3→v4 through v7→v8) in order.
 ///
 /// This covers the idempotent, transactionally-safe migrations. The v1→v2 and
 /// v2→v3 migrations have different signatures (require paths and password) and
@@ -20,6 +21,7 @@ pub(crate) fn apply_pending(db: &DatabaseConnection) -> Result<(), String> {
     v4_to_v5::migrate_v4_to_v5(db)?;
     v5_to_v6::migrate_v5_to_v6(db)?;
     v6_to_v7::migrate_v6_to_v7(db)?;
+    v7_to_v8::migrate_v7_to_v8(db)?;
     Ok(())
 }
 
@@ -31,7 +33,7 @@ mod tests {
     use rusqlite::Connection;
 
     #[test]
-    fn test_apply_pending_advances_v3_to_v7() {
+    fn test_apply_pending_advances_v3_to_v8() {
         // Minimal v3 schema: schema_version=3, entries (old style), auth_slots
         // entries_fts is absent — migrate_v3_to_v4 uses DROP TABLE IF EXISTS
         let conn = Connection::open_in_memory().unwrap();
@@ -68,19 +70,19 @@ mod tests {
             .conn()
             .query_row("SELECT version FROM schema_version", [], |row| row.get(0))
             .unwrap();
-        assert_eq!(version, 7, "apply_pending must advance schema to v7");
+        assert_eq!(version, 8, "apply_pending must advance schema to v8");
 
         let table_count: i64 = db
             .conn()
             .query_row(
-                "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name IN ('db_settings','tags','entry_tags')",
+                "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name IN ('db_settings','tags','entry_tags','custom_fonts')",
                 [],
                 |row| row.get(0),
             )
             .unwrap();
         assert_eq!(
-            table_count, 3,
-            "db_settings, tags, and entry_tags must all exist after apply_pending"
+            table_count, 4,
+            "db_settings, tags, entry_tags, and custom_fonts must all exist after apply_pending"
         );
     }
 }

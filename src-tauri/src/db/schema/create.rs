@@ -143,6 +143,16 @@ fn create_schema(conn: &Connection) -> Result<(), String> {
             FOREIGN KEY (tag_id)   REFERENCES tags(id)    ON DELETE CASCADE
         );
         CREATE INDEX IF NOT EXISTS idx_entry_tags_tag_id ON entry_tags(tag_id);
+
+        -- Custom fonts (unencrypted BLOBs; font data is not sensitive)
+        CREATE TABLE IF NOT EXISTS custom_fonts (
+            id         INTEGER PRIMARY KEY AUTOINCREMENT,
+            family     TEXT NOT NULL,
+            weight     TEXT NOT NULL CHECK(weight IN ('Regular','Bold')),
+            data       BLOB NOT NULL,
+            created_at TEXT NOT NULL,
+            UNIQUE(family, weight)
+        );
         "#,
     )
     .map_err(|e| format!("Failed to create schema: {}", e))?;
