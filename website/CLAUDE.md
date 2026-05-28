@@ -79,7 +79,25 @@ That is the complete workflow. No further manual edits are needed.
 
 ### Step 3 — Verify
 
-Open `blog/<slug>/index.html` locally and confirm the rendered content looks correct before committing.
+After the build completes, run the following checks before committing:
+
+**Generated output (all of these must exist or be updated):**
+- `website/blog/<slug>/index.html` was created
+- `website/sitemap.xml` contains `https://mini-diarium.com/blog/<slug>/`
+- `website/llms.txt` contains a line for the new post under "Latest Articles"
+- `website/blog/feed.xml` has an `<item>` for the new post at the top
+- `website/blog/index.html` has an article card for the new post
+- `website/index.html` homepage teaser is updated (it reflects the 3 newest posts)
+
+**Content correctness:**
+- All internal links in the article (`/encrypted-journal/`, `/compare/`, `/blog/...`) resolve to existing files on disk
+- No em dashes (`—`) in the source Markdown (grep for `—` in the `.md` file)
+- `scripts/generate-website-blog.mjs` has entries for the new slug in both `DESCRIPTION_MAP` and `BLUF_MAP`
+
+**SEO fields:**
+- Title is ≤ 60 chars (count manually or check the `<title>` tag in the generated HTML)
+- Description is 140–160 chars (check the `<meta name="description">` tag)
+- `draft: false` is set in front matter
 
 ---
 
@@ -124,10 +142,10 @@ Every blog post should target at least one specific search query. Current keywor
 | `encrypted diary` | 26.7 | "What Is an Encrypted Diary" — foundational explainer |
 | `private journal app` | 57.5 | "How to Choose a Private Journal App" — buyer's checklist |
 | `encrypted journal` | 9.4 | Owned by `/encrypted-journal/` landing page |
-| `desktop diary app` | 49.0 | Not yet targeted — opportunity |
+| `desktop diary app` | 49.0 | Targeted by `desktop-diary-app` (2026-05-29) |
 | `private offline journal` | 8.0 | Owned by blog `private-diary-app-for-desktop` |
 
-When writing a new post, check the [SEO audit data](../docs/seo/) to avoid cannibalizing existing pages and to identify new keyword opportunities.
+When writing a new post, check the [SEO audit data](../docs/seo/) to avoid cannibalizing existing pages and to identify new keyword opportunities. If `docs/seo/` does not exist (CSV exports are added quarterly), use the keyword map above as the primary reference and verify the new post's primary keyword does not appear as the title or H1 of an existing post.
 
 ### Target topics
 

@@ -45,7 +45,7 @@ Commands verified to work from this shell via Windows:
 
 Commands with side effects:
 
-- `cmd.exe /c bun run website:build-static` rewrites generated files under `website/`
+- `bun run website:build-static` rewrites generated files under `website/` — use the **PowerShell tool** directly (not Bash + cmd.exe, which may return empty output for this command)
 - `cmd.exe /c bun run diagrams` regenerates SVG outputs
 
 ## Architecture
