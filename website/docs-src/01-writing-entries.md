@@ -1,9 +1,9 @@
 ---
 title: Writing Entries
 slug: writing-entries
-description: How to create, edit, format, and delete journal entries using the rich text editor.
+description: Mini Diarium's rich text editor supports formatting, images, tags, multiple entries per day, RTL languages, and auto-save. No manual saving needed.
 order: 2
-updated: 2026-05-28
+updated: 2026-05-29
 tags: editor, formatting, entries, writing
 ---
 

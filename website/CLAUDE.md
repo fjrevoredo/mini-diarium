@@ -266,6 +266,8 @@ Source files: `website/docs-src/*.md` — one file per section.
 
 Required front matter: `title`, `slug`, `description`, `order` (integer), `updated` (YYYY-MM-DD), `tags` (comma-separated). Optional: `draft: true` (excludes from build).
 
+**`description` must be 140–160 characters.** It maps directly to `<meta name="description">` and is used in search snippets. "One sentence" descriptions are too short — Bing and Google will either ignore them or generate their own. Write it to be specific about what the reader will find: name the actual features, options, or answers covered, not just the topic area.
+
 **Never edit `website/docs/` directly** — all HTML there is auto-generated.
 
 - Dev iteration: `bun run website:docs` (docs only)
