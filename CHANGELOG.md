@@ -30,7 +30,7 @@ Template:
 
 # Versions
 
-## [0.5.2] - Unreleased
+## [0.5.2] - 29-05-2026
 
 ### Added
 - **Custom font upload**: users can now upload their own `.ttf`, `.otf`, `.woff`, or `.woff2` font files from **Preferences → Advanced → Custom fonts** and use them as the editor font. Regular and Bold weights are uploaded separately; if only a Regular is provided, the browser synthesizes bold text and a warning is shown in the preferences list. Custom fonts are stored as blobs inside the journal (`diary.db`) so they travel to other devices automatically. Deleting the currently selected custom font reverts the editor to System Default immediately. Schema bumped to v8 (`custom_fonts` table).
