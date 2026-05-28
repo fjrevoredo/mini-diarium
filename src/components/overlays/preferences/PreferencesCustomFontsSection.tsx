@@ -109,7 +109,9 @@ export default function PreferencesCustomFontsSection(props: PreferencesCustomFo
 
   return (
     <div>
-      <h3 class="block text-sm font-medium text-secondary mb-2">{t('prefs.writing.customFontsLabel')}</h3>
+      <h3 class="block text-sm font-medium text-secondary mb-2">
+        {t('prefs.writing.customFontsLabel')}
+      </h3>
       <p class="text-xs text-tertiary leading-relaxed mb-3">{t('prefs.writing.customFontsHint')}</p>
 
       <For each={customFonts() ?? []}>

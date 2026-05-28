@@ -534,7 +534,7 @@ const en = {
     description: 'An encrypted, local-first desktop journaling app.',
     license: 'MIT License',
     copyright: 'Copyright © 2026 Francisco J. Revoredo',
-    githubLink: 'github.com/fjrevoredo/mini-diarium',
+    githubLink: 'GitHub',
     docsLink: 'Documentation',
     opensInBrowser: 'opens in system browser',
     showTour: 'Show Welcome Tour',

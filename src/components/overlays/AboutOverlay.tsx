@@ -3,7 +3,7 @@ import { Dialog } from '@kobalte/core/dialog';
 import { getVersion } from '@tauri-apps/api/app';
 import { openUrl } from '@tauri-apps/plugin-opener';
 import { useI18n } from '../../i18n';
-import { X } from 'lucide-solid';
+import { X, GitFork, BookOpen, Compass } from 'lucide-solid';
 import { replayOnboarding } from '../../state/onboarding';
 
 interface AboutOverlayProps {
@@ -73,18 +73,20 @@ export default function AboutOverlay(props: AboutOverlayProps) {
             </div>
 
             {/* GitHub + Documentation links */}
-            <div class="flex flex-col items-center gap-1 mb-6">
-              <div class="flex justify-center gap-4">
+            <div class="flex flex-col items-center gap-2 mb-6">
+              <div class="flex justify-center gap-3">
                 <button
                   onClick={() => openUrl('https://github.com/fjrevoredo/mini-diarium')}
-                  class="text-sm text-interactive hover:underline"
+                  class="flex items-center gap-2 rounded-full border border-primary px-4 py-2 text-sm text-secondary hover:bg-hover hover:text-primary transition-colors"
                 >
+                  <GitFork size={15} />
                   {t('about.githubLink')}
                 </button>
                 <button
                   onClick={() => openUrl('https://mini-diarium.com/docs/')}
-                  class="text-sm text-interactive hover:underline"
+                  class="flex items-center gap-2 rounded-full border border-primary px-4 py-2 text-sm text-secondary hover:bg-hover hover:text-primary transition-colors"
                 >
+                  <BookOpen size={15} />
                   {t('about.docsLink')}
                 </button>
               </div>
@@ -98,8 +100,9 @@ export default function AboutOverlay(props: AboutOverlayProps) {
                   props.onClose();
                   replayOnboarding();
                 }}
-                class="text-sm text-interactive hover:underline"
+                class="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm text-secondary hover:bg-hover hover:text-primary transition-colors"
               >
+                <Compass size={15} />
                 {t('about.showTour')}
               </button>
               <button

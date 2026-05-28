@@ -38,6 +38,7 @@ Template:
 
 ### Changed
 - **Preferences lifecycle**: the Preferences dialog is now close-only (no Save/Cancel footer). Reversible settings apply immediately across General, Writing, and Security auto-lock controls. Theme Overrides moved to **Preferences → Advanced** and now auto-apply as soon as JSON is valid; invalid JSON stays local with an inline error while the last valid saved overrides remain active. Explicit actions (password/auth operations, journal reset/move, debug dump export, and custom-font upload/delete) remain button-driven.
+- **About dialog link styling**: the GitHub and Documentation links are now pill-style buttons (icon + label, rounded border) and the "Show Welcome Tour" shortcut is a ghost button with a Compass icon, replacing the bare underlined text links.
 
 ### Fixed
 - **Editor placeholder updates on locale switch**: the body placeholder ("What's on your mind today?") now updates immediately and reliably when changing the language in Preferences, including when switching back to a previously used locale.
