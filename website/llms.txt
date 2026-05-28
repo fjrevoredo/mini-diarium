@@ -32,6 +32,7 @@
 
 ## Latest Articles
 
+- A desktop diary app should encrypt entries at rest, store the primary copy locally, work offline, and export to open formats. Storage model and exit path matter more than feature lists. (https://mini-diarium.com/blog/desktop-diary-app/)
 - A practical checklist for evaluating private journal apps: encryption at rest, local storage, offline use, open exports, and open source. (https://mini-diarium.com/blog/private-journal-app-how-to-choose/)
 - An encrypted diary encrypts entries before they touch disk. It's an architectural guarantee, not a login screen — here's what that means. (https://mini-diarium.com/blog/what-is-an-encrypted-diary/)
 - Explains why cloud architecture, not privacy settings, determines AI access to journal entries. (https://mini-diarium.com/blog/journal-app-ai-privacy/)

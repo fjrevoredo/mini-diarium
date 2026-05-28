@@ -13,7 +13,7 @@ TODO entry format:
 - After creating a new TODO, update the `Latest TODO ID` marker to reflect the new highest ID
 - Use the `todo-manager` skill (`.agents/skills/todo-manager/`) for creation, tracking, archival, and validation
 
-**Latest TODO ID: TODO-0040** — next new TODO should be TODO-0041
+**Latest TODO ID: TODO-0041** — next new TODO should be TODO-0042
 
 ---
 
@@ -38,6 +38,7 @@ TODO entry format:
 ## Medium Priority
 
 - [x] **TODO-0040: Unify preferences save/cancel lifecycle** — remove redundant Save/Cancel buttons from preferences overlays and replace with a single Close icon; ensure all preference changes apply immediately and are reversible where expected; audit every preference toggle/input for consistency with the new no-confirmation UX
+- [ ] **TODO-0041: Migrate native menu elements to main app layout** — move most menu actions from native OS menus into the app's main UI for consistent cross-platform behavior and improved E2E testability; audit current native menu items in menu.rs and identify which commands should have in-app equivalents (toolbar buttons, dropdown menus, or keyboard shortcuts); preserve critical platform-native items (app-level quit, window management) where expected by users; update E2E tests to interact with in-app controls instead of native menu automation
 
 ---
 
