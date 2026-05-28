@@ -86,7 +86,10 @@ mod tests {
                 |row| row.get(0),
             )
             .unwrap();
-        assert_eq!(exists, 1, "custom_fonts table must exist after v7→v8 migration");
+        assert_eq!(
+            exists, 1,
+            "custom_fonts table must exist after v7→v8 migration"
+        );
     }
 
     #[test]
@@ -100,6 +103,9 @@ mod tests {
             .conn()
             .query_row("SELECT version FROM schema_version", [], |row| row.get(0))
             .unwrap();
-        assert_eq!(version, 8, "version must remain 8 after second migration call");
+        assert_eq!(
+            version, 8,
+            "version must remain 8 after second migration call"
+        );
     }
 }

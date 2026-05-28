@@ -1,4 +1,12 @@
-import { Show, For, createSignal, createEffect, onCleanup, createResource } from 'solid-js';
+import {
+  Show,
+  For,
+  createSignal,
+  createEffect,
+  onCleanup,
+  createResource,
+  createMemo,
+} from 'solid-js';
 import type { JSX } from 'solid-js';
 import type { Editor } from '@tiptap/core';
 import { preferences, setPreferences } from '../../state/preferences';
@@ -41,6 +49,9 @@ export default function EditorToolbar(props: EditorToolbarProps) {
   const t = useI18n();
   const [bundledFonts] = createResource(listBundledFonts);
   const [customFonts] = createResource(listCustomFonts);
+  const selectableCustomFonts = createMemo(() =>
+    (customFonts() ?? []).filter((font) => font.has_regular),
+  );
 
   // Reactive signals for active states
   const [isBoldActive, setIsBoldActive] = createSignal(false);
@@ -400,7 +411,7 @@ export default function EditorToolbar(props: EditorToolbarProps) {
             aria-label={t('editor.toolbar.fontFamily')}
             onChange={(e) => setPreferences({ editorFontFamily: e.target.value || null })}
             class="h-8 rounded border border-primary bg-primary px-2 text-sm text-primary transition-colors hover:bg-tertiary focus:outline-none focus:ring-2 focus:ring-[var(--border-focus)]"
-            disabled={bundledFonts.loading}
+            disabled={bundledFonts.loading || customFonts.loading}
           >
             <option value="" selected={!preferences().editorFontFamily}>
               {t('prefs.writing.fontFamilySystemDefault')}
@@ -412,9 +423,9 @@ export default function EditorToolbar(props: EditorToolbarProps) {
                 </option>
               )}
             </For>
-            <Show when={(customFonts() ?? []).some((f) => f.has_regular)}>
+            <Show when={selectableCustomFonts().length > 0}>
               <optgroup label={t('prefs.writing.customFontsGroupLabel')}>
-                <For each={(customFonts() ?? []).filter((f) => f.has_regular)}>
+                <For each={selectableCustomFonts()}>
                   {(font) => (
                     <option
                       value={font.family}

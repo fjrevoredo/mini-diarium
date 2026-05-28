@@ -11,11 +11,13 @@ const {
   mockListCustomFonts,
   mockImportCustomFont,
   mockDeleteCustomFontFamily,
+  mockOpenDialog,
 } = vi.hoisted(() => ({
   mockListBundledFonts: vi.fn<() => Promise<string[]>>(),
   mockListCustomFonts: vi.fn<() => Promise<import('../../../lib/tauri').CustomFontSummary[]>>(),
   mockImportCustomFont: vi.fn<() => Promise<void>>(),
   mockDeleteCustomFontFamily: vi.fn<() => Promise<void>>(),
+  mockOpenDialog: vi.fn<() => Promise<string | null>>(),
 }));
 
 vi.mock('../../../lib/tauri', async () => {
@@ -30,7 +32,7 @@ vi.mock('../../../lib/tauri', async () => {
 });
 
 vi.mock('@tauri-apps/plugin-dialog', () => ({
-  open: vi.fn().mockResolvedValue(null),
+  open: mockOpenDialog,
 }));
 
 describe('PreferencesWritingTab - font family', () => {
@@ -152,6 +154,7 @@ describe('PreferencesWritingTab - custom fonts', () => {
     localStorage.clear();
     vi.clearAllMocks();
     mockListBundledFonts.mockResolvedValue([]);
+    mockOpenDialog.mockResolvedValue(null);
   });
 
   it('renders the Custom Fonts section heading and hint', async () => {
@@ -212,6 +215,72 @@ describe('PreferencesWritingTab - custom fonts', () => {
     });
 
     expect(spy).toHaveBeenCalledWith(expect.objectContaining({ editorFontFamily: null }));
+  });
+
+  it('sanitizes dialog picker failures before displaying them', async () => {
+    mockListCustomFonts.mockResolvedValue([]);
+    mockOpenDialog.mockRejectedValueOnce(
+      new Error('Failed to open D:\\secret\\fonts\\TestFont-Regular.ttf (os error 5)'),
+    );
+    renderTab();
+
+    const chooseButtons = await screen.findAllByRole('button', { name: /Choose file/ });
+    fireEvent.click(chooseButtons[0]);
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent(
+        'A file operation failed. Check that you have the necessary permissions.',
+      );
+    });
+    expect(screen.getByRole('alert')).not.toHaveTextContent('D:\\secret\\fonts');
+  });
+
+  it('sanitizes upload failures before displaying them', async () => {
+    mockListCustomFonts.mockResolvedValue([]);
+    mockOpenDialog.mockResolvedValueOnce('D:\\fonts\\TestFont-Regular.ttf');
+    mockImportCustomFont.mockRejectedValueOnce(
+      new Error('Cannot read font file: D:\\fonts\\TestFont-Regular.ttf (os error 2)'),
+    );
+    renderTab();
+
+    const chooseButtons = await screen.findAllByRole('button', { name: /Choose file/ });
+    fireEvent.click(chooseButtons[0]);
+
+    await waitFor(() => {
+      expect(screen.getByDisplayValue('TestFont')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByTestId('custom-font-add-button'));
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent(
+        'A file operation failed. Check that you have the necessary permissions.',
+      );
+    });
+    expect(screen.getByRole('alert')).not.toHaveTextContent('D:\\fonts\\TestFont-Regular.ttf');
+  });
+
+  it('sanitizes delete failures before displaying them', async () => {
+    mockListCustomFonts.mockResolvedValue([
+      { family: 'TestFont', has_regular: true, has_bold: false },
+    ]);
+    mockDeleteCustomFontFamily.mockRejectedValueOnce(
+      new Error("Failed to delete custom font 'TestFont': D:\\journals\\diary.db (os error 5)"),
+    );
+    renderTab();
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /Remove TestFont custom font/i })).toBeVisible();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /Remove TestFont custom font/i }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent(
+        'A file operation failed. Check that you have the necessary permissions.',
+      );
+    });
+    expect(screen.getByRole('alert')).not.toHaveTextContent('D:\\journals\\diary.db');
   });
 
   void commitCallback;
