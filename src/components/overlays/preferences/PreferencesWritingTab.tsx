@@ -1,11 +1,10 @@
-import { createSignal, createMemo, For, onCleanup, onMount } from 'solid-js';
+import { createSignal, createMemo, createEffect, For, onCleanup, onMount } from 'solid-js';
 import { ChevronUp, ChevronDown } from 'lucide-solid';
 import { useI18n } from '../../../i18n';
 import { preferences, setPreferences } from '../../../state/preferences';
 import type { ToolbarItem, ToolbarItemKey } from '../../../state/preferences';
 import { usePreferencesShell, type TabProps } from './shared';
 import PreferencesFontFamilyField from './PreferencesFontFamilyField';
-import PreferencesCustomFontsSection from './PreferencesCustomFontsSection';
 
 export default function PreferencesWritingTab(_props: TabProps) {
   const t = useI18n();
@@ -65,6 +64,12 @@ export default function PreferencesWritingTab(_props: TabProps) {
   const [localShowEntryTimestamps, setLocalShowEntryTimestamps] = createSignal(
     preferences().showEntryTimestamps,
   );
+
+  createEffect(() => {
+    if (preferences().editorFontFamily === null) {
+      setLocalEditorFontFamily('');
+    }
+  });
 
   const selectAll = () =>
     setLocalToolbarItems((prev) => prev.map((item) => ({ ...item, enabled: true })));
@@ -305,10 +310,6 @@ export default function PreferencesWritingTab(_props: TabProps) {
       <PreferencesFontFamilyField
         value={localEditorFontFamily()}
         onChange={setLocalEditorFontFamily}
-      />
-      <PreferencesCustomFontsSection
-        selectedFamily={localEditorFontFamily}
-        setSelectedFamily={setLocalEditorFontFamily}
       />
     </div>
   );

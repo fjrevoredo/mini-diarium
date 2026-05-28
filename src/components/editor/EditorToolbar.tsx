@@ -11,6 +11,7 @@ import type { JSX } from 'solid-js';
 import type { Editor } from '@tiptap/core';
 import { preferences, setPreferences } from '../../state/preferences';
 import type { ToolbarItemKey } from '../../state/preferences';
+import { customFontsVersion } from '../../state/fonts';
 import { listBundledFonts, listCustomFonts } from '../../lib/tauri';
 import { useI18n } from '../../i18n';
 import TimestampOverlay from './TimestampOverlay';
@@ -48,7 +49,7 @@ interface EditorToolbarProps {
 export default function EditorToolbar(props: EditorToolbarProps) {
   const t = useI18n();
   const [bundledFonts] = createResource(listBundledFonts);
-  const [customFonts] = createResource(listCustomFonts);
+  const [customFonts] = createResource(customFontsVersion, () => listCustomFonts());
   const selectableCustomFonts = createMemo(() =>
     (customFonts() ?? []).filter((font) => font.has_regular),
   );

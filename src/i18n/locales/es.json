@@ -299,6 +299,7 @@
       "fontFamilyLabel": "Editor font",
       "fontFamilySystemDefault": "System Default",
       "fontFamilyHint": "Select a font for the editor. Fonts are bundled with the app and work offline.",
+      "fontFamilyCustomFontsNote": "Para añadir fuentes personalizadas, ve a la pestaña Avanzado.",
       "customFontsGroupLabel": "Personalizadas",
       "customFontsLabel": "Fuentes personalizadas",
       "customFontsHint": "Las fuentes personalizadas se almacenan en tu diario, se importan o eliminan de inmediato y se transfieren con el diario a otros dispositivos. También aumentan el tamaño del archivo de diario y las copias de seguridad.",

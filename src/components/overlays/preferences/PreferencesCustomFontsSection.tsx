@@ -2,14 +2,15 @@ import { For, createResource, createSignal, type Accessor } from 'solid-js';
 import { open as openDialog } from '@tauri-apps/plugin-dialog';
 import { useI18n } from '../../../i18n';
 import { preferences, setPreferences } from '../../../state/preferences';
+import { customFontsVersion, incrementCustomFontsVersion } from '../../../state/fonts';
 import { deleteCustomFontFamily, importCustomFont, listCustomFonts } from '../../../lib/tauri';
 import { mapTauriError } from '../../../lib/errors';
 
 const FONT_FILE_FILTERS = [{ name: 'Font files', extensions: ['ttf', 'otf', 'woff', 'woff2'] }];
 
 interface PreferencesCustomFontsSectionProps {
-  selectedFamily: Accessor<string>;
-  setSelectedFamily: (value: string) => void;
+  selectedFamily?: Accessor<string>;
+  setSelectedFamily?: (value: string) => void;
 }
 
 function inferFamilyNameFromPath(path: string): string {
@@ -26,7 +27,7 @@ function inferFamilyNameFromPath(path: string): string {
 
 export default function PreferencesCustomFontsSection(props: PreferencesCustomFontsSectionProps) {
   const t = useI18n();
-  const [customFonts, { refetch: refetchCustomFonts }] = createResource(listCustomFonts);
+  const [customFonts] = createResource(customFontsVersion, () => listCustomFonts());
   const [uploadFamily, setUploadFamily] = createSignal('');
   const [uploadRegularPath, setUploadRegularPath] = createSignal('');
   const [uploadBoldPath, setUploadBoldPath] = createSignal('');
@@ -83,7 +84,7 @@ export default function PreferencesCustomFontsSection(props: PreferencesCustomFo
       setUploadFamily('');
       setUploadRegularPath('');
       setUploadBoldPath('');
-      refetchCustomFonts();
+      incrementCustomFontsVersion();
     } catch (err) {
       setFontManagerError(mapTauriError(err, t));
     } finally {
@@ -94,9 +95,9 @@ export default function PreferencesCustomFontsSection(props: PreferencesCustomFo
   const handleDeleteFont = async (family: string) => {
     try {
       await deleteCustomFontFamily(family);
-      refetchCustomFonts();
-      if (props.selectedFamily() === family) {
-        props.setSelectedFamily('');
+      incrementCustomFontsVersion();
+      if (props.selectedFamily?.() === family) {
+        props.setSelectedFamily?.('');
       }
       if (preferences().editorFontFamily === family) {
         setPreferences({ editorFontFamily: null });
@@ -149,7 +150,7 @@ export default function PreferencesCustomFontsSection(props: PreferencesCustomFo
           <button
             type="button"
             onClick={pickRegular}
-            class="text-xs px-2 py-1 border border-primary rounded bg-primary text-primary hover:bg-tertiary"
+            class="text-xs px-2 py-1 border border-primary rounded bg-secondary text-primary hover:bg-hover"
           >
             {t('prefs.writing.customFontChooseFile')}
           </button>
@@ -167,7 +168,7 @@ export default function PreferencesCustomFontsSection(props: PreferencesCustomFo
           <button
             type="button"
             onClick={pickBold}
-            class="text-xs px-2 py-1 border border-primary rounded bg-primary text-primary hover:bg-tertiary"
+            class="text-xs px-2 py-1 border border-primary rounded bg-secondary text-primary hover:bg-hover"
           >
             {t('prefs.writing.customFontChooseFile')}
           </button>

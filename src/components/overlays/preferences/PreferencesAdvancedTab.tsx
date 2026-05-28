@@ -14,6 +14,7 @@ import * as tauri from '../../../lib/tauri';
 import { mapTauriError } from '../../../lib/errors';
 import { useI18n } from '../../../i18n';
 import type { TabProps } from './shared';
+import PreferencesCustomFontsSection from './PreferencesCustomFontsSection';
 
 export default function PreferencesAdvancedTab(props: TabProps) {
   const t = useI18n();
@@ -163,6 +164,9 @@ export default function PreferencesAdvancedTab(props: TabProps) {
             <p class="text-sm text-error">{dumpError()}</p>
           </Show>
         </div>
+      </div>
+      <div class="border-t border-primary pt-4 mt-4">
+        <PreferencesCustomFontsSection />
       </div>
     </div>
   );

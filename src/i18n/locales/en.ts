@@ -364,6 +364,7 @@ const en = {
       fontFamilySystemDefault: 'System Default',
       fontFamilyHint:
         'Select a font for the editor. Fonts are bundled with the app and work offline.',
+      fontFamilyCustomFontsNote: 'To add custom fonts, go to the Advanced tab.',
       customFontsGroupLabel: 'Custom',
       customFontsLabel: 'Custom fonts',
       customFontsHint:

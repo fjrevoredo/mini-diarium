@@ -299,6 +299,7 @@
       "fontFamilyLabel": "Editor font",
       "fontFamilySystemDefault": "System Default",
       "fontFamilyHint": "Select a font for the editor. Fonts are bundled with the app and work offline.",
+      "fontFamilyCustomFontsNote": "Um eigene Schriftarten hinzuzufügen, gehen Sie zum Tab Erweitert.",
       "customFontsGroupLabel": "Eigene",
       "customFontsLabel": "Eigene Schriftarten",
       "customFontsHint": "Eigene Schriftarten werden im Tagebuch gespeichert, sofort importiert oder entfernt und mit dem Tagebuch auf andere Geräte übertragen. Sie erhöhen auch die Größe der Tagebuchdatei und der Sicherungen.",

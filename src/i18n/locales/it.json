@@ -299,6 +299,7 @@
       "fontFamilyLabel": "Editor font",
       "fontFamilySystemDefault": "System Default",
       "fontFamilyHint": "Select a font for the editor. Fonts are bundled with the app and work offline.",
+      "fontFamilyCustomFontsNote": "Per aggiungere caratteri personalizzati, vai alla scheda Avanzate.",
       "customFontsGroupLabel": "Personalizzati",
       "customFontsLabel": "Caratteri personalizzati",
       "customFontsHint": "I caratteri personalizzati sono archiviati nel diario, importati o rimossi immediatamente, e viaggiano con il diario su altri dispositivi. Aumentano anche la dimensione del file del diario e dei backup.",

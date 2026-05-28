@@ -1,5 +1,6 @@
 import { For, Show, createMemo, createResource } from 'solid-js';
 import { useI18n } from '../../../i18n';
+import { customFontsVersion } from '../../../state/fonts';
 import { listBundledFonts, listCustomFonts } from '../../../lib/tauri';
 
 interface PreferencesFontFamilyFieldProps {
@@ -10,7 +11,7 @@ interface PreferencesFontFamilyFieldProps {
 export default function PreferencesFontFamilyField(props: PreferencesFontFamilyFieldProps) {
   const t = useI18n();
   const [bundledFonts] = createResource(listBundledFonts);
-  const [customFonts] = createResource(listCustomFonts);
+  const [customFonts] = createResource(customFontsVersion, () => listCustomFonts());
   const selectableCustomFonts = createMemo(() =>
     (customFonts() ?? []).filter((font) => font.has_regular),
   );
@@ -50,6 +51,9 @@ export default function PreferencesFontFamilyField(props: PreferencesFontFamilyF
         </Show>
       </select>
       <p class="mt-1 text-xs text-tertiary leading-relaxed">{t('prefs.writing.fontFamilyHint')}</p>
+      <p class="mt-1 text-xs text-tertiary leading-relaxed">
+        {t('prefs.writing.fontFamilyCustomFontsNote')}
+      </p>
     </div>
   );
 }

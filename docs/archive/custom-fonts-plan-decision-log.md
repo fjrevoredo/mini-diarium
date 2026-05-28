@@ -9,6 +9,22 @@ Each entry records what was decided and why, for post-implementation review.
 
 *(entries added during implementation)*
 
+### Decision 5 — Custom fonts management moved to Advanced tab
+
+**When:** Post-launch bug fix  
+**What:** The custom fonts management UI (`PreferencesCustomFontsSection`) was removed from the Writing tab and placed in the Advanced tab. A note was added below the font-family selector in the Writing tab pointing users there.  
+**Decision:** The feature is intended for power users and adds unnecessary complexity to the Writing tab for typical users. The Writing tab should remain focused on day-to-day writing preferences.
+
+---
+
+### Decision 4 — Shared `customFontsVersion` counter signal for coordinated refetch
+
+**When:** Post-launch bug fix  
+**What:** Each of the three components that call `listCustomFonts` (`EditorToolbar`, `PreferencesFontFamilyField`, `PreferencesCustomFontsSection`) independently created a `createResource(listCustomFonts)` with no reactive source, so they each fetched exactly once on mount and never refetched when a sibling mutated the font list.  
+**Decision:** Introduced `src/state/fonts.ts` with a shared `customFontsVersion` counter signal. All three components use it as the `createResource` source; incrementing the counter triggers a coordinated refetch in all of them. The alternative (a single shared `createResource` in a context/store) was rejected as over-engineering for three components.
+
+---
+
 ### Decision 2 — `getByText('TestFont')` ambiguity in PreferencesWritingTab tests
 
 **When:** Milestone 3, Task 3.5  

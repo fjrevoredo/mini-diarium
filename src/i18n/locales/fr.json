@@ -299,6 +299,7 @@
       "fontFamilyLabel": "Police de l'éditeur",
       "fontFamilySystemDefault": "Par défaut du système",
       "fontFamilyHint": "Sélectionnez une police pour l'éditeur. Les polices sont regroupées avec l'application et fonctionnent hors ligne.",
+      "fontFamilyCustomFontsNote": "Pour ajouter des polices personnalisées, rendez-vous dans l'onglet Avancé.",
       "customFontsGroupLabel": "Personnalisées",
       "customFontsLabel": "Polices personnalisées",
       "customFontsHint": "Les polices personnalisées sont stockées dans votre journal, importées ou supprimées immédiatement, et voyagent avec le journal sur d'autres appareils. Elles augmentent également la taille du fichier journal et des sauvegardes.",
