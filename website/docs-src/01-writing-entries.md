@@ -1,9 +1,9 @@
 ---
 title: Writing Entries
 slug: writing-entries
-description: How to create, edit, format, and delete journal entries using the rich text editor.
+description: Mini Diarium's rich text editor supports formatting, images, tags, multiple entries per day, RTL languages, and auto-save. No manual saving needed.
 order: 2
-updated: 2026-05-24
+updated: 2026-05-29
 tags: editor, formatting, entries, writing
 ---
 
@@ -25,7 +25,7 @@ The toolbar above the editor provides buttons for each formatting option. Standa
 
 ## Titles
 
-Each entry can have an optional title. If you prefer a cleaner look without titles, hide them in **Preferences → General → Hide Titles**.
+Each entry can have an optional title. If you prefer a cleaner look without titles, hide them in **Preferences → Writing → Hide Titles**.
 
 ## Multiple Entries Per Day
 
@@ -76,9 +76,23 @@ The advanced toolbar includes a **clock button** that inserts the current time a
 
 ## Editor Font
 
-You can change the font used in the editor body via **Preferences → Writing → Editor font**. Choose from five bundled open-source font families: Noto Sans, Source Sans 3, Noto Serif, JetBrains Mono, and Fira Mono. Fonts are loaded on demand and work fully offline — no network requests, no OS-level font enumeration.
+You can change the font used in the editor body via **Preferences → Writing → Editor font**. The selector shows two groups:
+
+- **Bundled fonts** — five open-source families (Noto Sans, Source Sans 3, Noto Serif, JetBrains Mono, Fira Mono) bundled with the app. Loaded on demand and work fully offline.
+- **Custom fonts** — font files you have uploaded yourself (see below). Only families with at least a Regular weight appear here.
 
 Font family and font size are also available as optional controls in the editor toolbar itself. Enable them in **Preferences → Writing → Toolbar items** — they appear as compact dropdowns directly in the toolbar and always stay in sync with the Preferences sliders.
+
+### Custom Fonts
+
+You can upload your own `.ttf`, `.otf`, `.woff`, or `.woff2` font files from **Preferences → Advanced → Custom fonts**.
+
+- **Regular weight** (required) and **Bold weight** (optional) are uploaded separately. The Bold field is optional; if you skip it, the browser will synthesize bold text from the Regular file, which may look slightly different from a true bold variant.
+- A **Bold weight missing** warning appears in the custom fonts list whenever a family has only a Regular weight uploaded.
+- Custom fonts are stored inside your journal (`diary.db`) as unencrypted blobs. They travel with the journal to other devices automatically and do not require a separate installation step.
+- Because fonts are stored in the journal, they increase the size of your database file and backups.
+- Uploading a new Regular or Bold for an existing family **replaces** the previous file for that weight.
+- Deleting a custom font family removes **all weights** immediately and, if that font was selected, the editor reverts to System Default right away — no Save needed.
 
 ## Tags
 

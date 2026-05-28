@@ -6,9 +6,6 @@ import * as authModule from '../../../state/auth';
 import { setPreferences } from '../../../state/preferences';
 import PreferencesOverlay from './PreferencesOverlay';
 
-// Mock heavyweight tauri APIs so the real PreferencesOverlay + PreferencesSecurityTab
-// shell can mount end-to-end. Auth methods list is empty so the AddPasswordForm path
-// renders (we don't interact with it).
 vi.mock('../../../lib/tauri', async () => {
   const actual = await vi.importActual<typeof import('../../../lib/tauri')>('../../../lib/tauri');
   return {
@@ -17,6 +14,7 @@ vi.mock('../../../lib/tauri', async () => {
     listBundledFonts: vi.fn(() => Promise.resolve([])),
     listJournals: vi.fn(() => Promise.resolve([])),
     getActiveJournalId: vi.fn(() => Promise.resolve(null)),
+    listCustomFonts: vi.fn(() => Promise.resolve([])),
     changePassword: vi.fn(() => Promise.resolve()),
     verifyPassword: vi.fn(() => Promise.resolve()),
     generateKeypair: vi.fn(() =>
@@ -34,15 +32,13 @@ vi.mock('../../../state/journals', () => ({
   activeJournalId: vi.fn(() => null),
 }));
 
-describe('PreferencesOverlay — auto-lock save persists through shell', () => {
+describe('PreferencesOverlay — immediate persistence lifecycle', () => {
   beforeEach(() => {
     localStorage.clear();
-    // Reset the in-memory preferences signal to defaults; clearing localStorage
-    // alone does not reset the module-level signal, which would leak state
-    // between tests.
     setPreferences({
       autoLockEnabled: false,
       autoLockTimeout: 300,
+      hideTitles: false,
       language: 'en',
       escAction: 'none',
     });
@@ -65,107 +61,54 @@ describe('PreferencesOverlay — auto-lock save persists through shell', () => {
     localStorage.clear();
   });
 
-  it('persists autoLockEnabled to localStorage after Save', async () => {
-    const [isOpen, setIsOpen] = createSignal(true);
-    renderWithI18n(() => <PreferencesOverlay isOpen={isOpen()} onClose={() => setIsOpen(false)} />);
-
-    // Switch to the Security tab
-    fireEvent.click(screen.getByRole('tab', { name: 'Security' }));
-
-    const checkbox = screen.getByRole('checkbox', {
-      name: /lock after inactivity/i,
-    }) as HTMLInputElement;
-    expect(checkbox).not.toBeChecked();
-
-    fireEvent.click(checkbox);
-    expect(checkbox).toBeChecked();
-
-    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
-
-    const stored = JSON.parse(localStorage.getItem('preferences') ?? '{}');
-    expect(stored.autoLockEnabled).toBe(true);
-  });
-
-  it('reflects current autoLockEnabled in the preferences signal when the overlay opens', async () => {
-    setPreferences({ autoLockEnabled: true, autoLockTimeout: 120 });
-
-    const [isOpen, setIsOpen] = createSignal(true);
-    renderWithI18n(() => <PreferencesOverlay isOpen={isOpen()} onClose={() => setIsOpen(false)} />);
-
-    fireEvent.click(screen.getByRole('tab', { name: 'Security' }));
-
-    const checkbox = screen.getByRole('checkbox', {
-      name: /lock after inactivity/i,
-    }) as HTMLInputElement;
-    expect(checkbox).toBeChecked();
-  });
-
-  it('persists escAction from General tab alongside autoLock from Security tab', async () => {
+  it('persists General and Writing changes before the overlay is closed', () => {
     const [isOpen, setIsOpen] = createSignal(true);
     renderWithI18n(() => <PreferencesOverlay isOpen={isOpen()} onClose={() => setIsOpen(false)} />);
 
     const escSelect = screen.getByLabelText(/esc key action/i) as HTMLSelectElement;
     fireEvent.change(escSelect, { target: { value: 'quit' } });
-    expect(escSelect.value).toBe('quit');
 
-    fireEvent.click(screen.getByRole('tab', { name: 'Security' }));
-    const checkbox = screen.getByRole('checkbox', {
-      name: /lock after inactivity/i,
-    }) as HTMLInputElement;
-    fireEvent.click(checkbox);
-
-    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
-
-    const stored = JSON.parse(localStorage.getItem('preferences') ?? '{}');
+    let stored = JSON.parse(localStorage.getItem('preferences') ?? '{}');
     expect(stored.escAction).toBe('quit');
-    expect(stored.autoLockEnabled).toBe(true);
-  });
-
-  it('persists Writing tab settings (hideTitles) alongside other tabs', async () => {
-    const [isOpen, setIsOpen] = createSignal(true);
-    renderWithI18n(() => <PreferencesOverlay isOpen={isOpen()} onClose={() => setIsOpen(false)} />);
 
     fireEvent.click(screen.getByRole('tab', { name: 'Writing' }));
-    const hideTitlesCheckbox = screen.getByLabelText(/hide entry titles/i) as HTMLInputElement;
-    fireEvent.click(hideTitlesCheckbox);
-    expect(hideTitlesCheckbox).toBeChecked();
+    fireEvent.click(screen.getByLabelText(/hide entry titles/i));
 
-    fireEvent.click(screen.getByRole('tab', { name: 'Security' }));
-    const autoLockCheckbox = screen.getByRole('checkbox', {
-      name: /lock after inactivity/i,
-    }) as HTMLInputElement;
-    fireEvent.click(autoLockCheckbox);
-
-    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
-
-    const stored = JSON.parse(localStorage.getItem('preferences') ?? '{}');
+    stored = JSON.parse(localStorage.getItem('preferences') ?? '{}');
     expect(stored.hideTitles).toBe(true);
-    expect(stored.autoLockEnabled).toBe(true);
   });
 
-  it('persists autoLockEnabled when the user also modifies an earlier tab in the same Save', async () => {
+  it('persists Security auto-lock changes immediately and closes via close button only', () => {
+    const onClose = vi.fn();
     const [isOpen, setIsOpen] = createSignal(true);
-    renderWithI18n(() => <PreferencesOverlay isOpen={isOpen()} onClose={() => setIsOpen(false)} />);
+    renderWithI18n(() => (
+      <PreferencesOverlay
+        isOpen={isOpen()}
+        onClose={() => {
+          onClose();
+          setIsOpen(false);
+        }}
+      />
+    ));
 
-    // Modify the General tab (escAction). The General tab commits FIRST in the
-    // Save iteration order, so its setPreferences call updates the preferences
-    // signal before the Security tab's commit runs. This is the exact scenario
-    // that previously clobbered Security's pending autoLock draft.
-    const escSelect = screen.getByLabelText(/esc key action/i) as HTMLSelectElement;
-    fireEvent.change(escSelect, { target: { value: 'quit' } });
-
-    // Now switch to Security and toggle auto-lock.
     fireEvent.click(screen.getByRole('tab', { name: 'Security' }));
-    const checkbox = screen.getByRole('checkbox', {
-      name: /lock after inactivity/i,
-    }) as HTMLInputElement;
-    fireEvent.click(checkbox);
-    expect(checkbox).toBeChecked();
+    fireEvent.click(screen.getByRole('checkbox', { name: /lock after inactivity/i }));
 
-    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
-
-    const stored = JSON.parse(localStorage.getItem('preferences') ?? '{}');
+    let stored = JSON.parse(localStorage.getItem('preferences') ?? '{}');
     expect(stored.autoLockEnabled).toBe(true);
-    expect(stored.escAction).toBe('quit');
+
+    const timeoutInput = screen.getByRole('spinbutton') as HTMLInputElement;
+    fireEvent.input(timeoutInput, { target: { value: '120' } });
+    fireEvent.blur(timeoutInput, { target: { value: '120' } });
+
+    stored = JSON.parse(localStorage.getItem('preferences') ?? '{}');
+    expect(stored.autoLockTimeout).toBe(120);
+
+    expect(screen.queryByRole('button', { name: 'Save' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Cancel' })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Dismiss' }));
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole('heading', { name: 'Preferences' })).not.toBeInTheDocument();
   });
 });

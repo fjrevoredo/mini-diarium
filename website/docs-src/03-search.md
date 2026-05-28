@@ -1,9 +1,9 @@
 ---
 title: Search
 slug: search
-description: How to search your journal entries to find past writing quickly.
+description: Full-text search is not yet available in Mini Diarium due to its encryption model. Use the calendar, Go to Date shortcut, or export to find past entries.
 order: 4
-updated: 2026-04-16
+updated: 2026-05-29
 tags: search, find, full-text
 ---
 

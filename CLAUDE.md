@@ -45,7 +45,7 @@ Commands verified to work from this shell via Windows:
 
 Commands with side effects:
 
-- `cmd.exe /c bun run website:build-static` rewrites generated files under `website/`
+- `bun run website:build-static` rewrites generated files under `website/` — use the **PowerShell tool** directly (not Bash + cmd.exe, which may return empty output for this command)
 - `cmd.exe /c bun run diagrams` regenerates SVG outputs
 
 ## Architecture
@@ -102,7 +102,7 @@ Static marketing site — plain HTML/CSS/JS. Deploy via Coolify using `website/d
 
 ## Command Registry
 
-All 62 registered Tauri commands (source: `lib.rs`). Rust names use `snake_case`; frontend wrappers in `src/lib/tauri.ts` use `camelCase`.
+All 65 registered Tauri commands (source: `lib.rs`). Rust names use `snake_case`; frontend wrappers in `src/lib/tauri.ts` use `camelCase`.
 
 | Module | Rust Command | Frontend Wrapper | Description |
 |--------|-------------|-----------------|-------------|
@@ -159,7 +159,10 @@ All 62 registered Tauri commands (source: `lib.rs`). Rust names use `snake_case`
 | debug | `generate_debug_dump` | `generateDebugDump(filePath, preferencesJson)` | Write privacy-safe diagnostic JSON to file |
 | menu | `update_menu_locale` | `updateMenuLocale(locale)` | Update all native menu item texts to the given locale; falls back to English |
 | fonts | `list_bundled_fonts` | `listBundledFonts()` | List available bundled editor fonts |
-| fonts | `get_font_data` | `getFontData(fontId)` | Get a font's base64 data URL for on-demand loading |
+| fonts | `get_font_data` | `getFontData(fontId)` | Get a font's base64 data URL; checks custom DB fonts first, falls back to bundled; sets `bold_synthesized: true` when Bold weight is absent |
+| fonts | `list_custom_fonts` | `listCustomFonts()` | List all custom font families stored in the journal DB with per-weight flags |
+| fonts | `import_custom_font` | `importCustomFont(family, weight, path)` | Store a font file BLOB in `custom_fonts`; validates magic bytes, size (≤20 MB), and requires Regular before Bold |
+| fonts | `delete_custom_font_family` | `deleteCustomFontFamily(family)` | Remove all weight rows for a family from `custom_fonts` |
 | tags | `create_tag` | `createTag(name)` | Create encrypted tag; returns `Tag` (deduplicates by HKDF fingerprint) |
 | tags | `get_all_tags` | `getAllTags()` | Return all tags with decrypted names, sorted alphabetically |
 | tags | `rename_tag` | `renameTag(id, name)` | Re-encrypt tag name and update HKDF fingerprint |

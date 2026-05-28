@@ -5,7 +5,14 @@
     <link>https://mini-diarium.com/blog/</link>
     <description>Static articles about encrypted journals, private diary apps, offline journaling, and local-first software.</description>
     <language>en-us</language>
-    <lastBuildDate>Fri, 08 May 2026 00:00:00 GMT</lastBuildDate>
+    <lastBuildDate>Fri, 29 May 2026 00:00:00 GMT</lastBuildDate>
+  <item>
+    <title>Desktop Diary Apps: What to Look for in 2026</title>
+    <link>https://mini-diarium.com/blog/desktop-diary-app/</link>
+    <guid isPermaLink="true">https://mini-diarium.com/blog/desktop-diary-app/</guid>
+    <description>A desktop diary app should store entries locally, encrypt them at rest, and work without a network connection. Here is what matters and what to check.</description>
+    <pubDate>Fri, 29 May 2026 00:00:00 GMT</pubDate>
+  </item>
   <item>
     <title>How to Choose a Private Journal App in 2026</title>
     <link>https://mini-diarium.com/blog/private-journal-app-how-to-choose/</link>

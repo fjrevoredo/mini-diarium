@@ -44,6 +44,8 @@ const DESCRIPTION_MAP = {
     "An encrypted diary encrypts entries before they touch disk. It's an architectural guarantee, not a login screen — here's what that means.",
   "private-journal-app-how-to-choose":
     "A practical checklist for evaluating private journal apps: encryption at rest, local storage, offline use, open exports, and open source.",
+  "desktop-diary-app":
+    "A desktop diary app should encrypt entries at rest, store the primary copy locally, work offline, and export to open formats. Storage model and exit path matter more than feature lists.",
 };
 
 const BLUF_MAP = {
@@ -73,6 +75,8 @@ const BLUF_MAP = {
     '<p class="bluf"><strong>Short answer:</strong> An encrypted diary encrypts entries before they are written to disk using a key that only you control. It is not the same as a password-protected app — encryption at rest means the data files contain ciphertext, not readable entries.</p>',
   "private-journal-app-how-to-choose":
     '<p class="bluf"><strong>Short answer:</strong> A private journal app should encrypt entries at rest, store the primary copy on your device, work offline, export to open formats, and have public source code. These five criteria protect your writing regardless of what happens to the app or its publisher.</p>',
+  "desktop-diary-app":
+    '<p class="bluf"><strong>Short answer:</strong> A desktop diary app should store entries locally, encrypt them before writing to disk, work without a network connection, and export to JSON or Markdown. These four properties protect your writing regardless of what happens to the app or the company behind it.</p>',
 };
 
 const STATIC_PAGES = [

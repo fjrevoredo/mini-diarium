@@ -1,6 +1,11 @@
 use base64::{engine::general_purpose, Engine as _};
+use rusqlite::OptionalExtension;
+use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
-use tauri::{path::BaseDirectory, AppHandle, Manager};
+use tauri::{path::BaseDirectory, AppHandle, Manager, State};
+
+use crate::commands::auth::{with_unlocked_db, DiaryState};
+use crate::db::schema::DatabaseConnection;
 
 fn resolve_font_dir(app_handle: &AppHandle) -> Result<PathBuf, String> {
     #[cfg(target_os = "linux")]
@@ -124,10 +129,204 @@ pub struct FontFaceData {
     family: String,
     regular: String,
     bold: String,
+    bold_synthesized: bool,
+}
+
+#[derive(serde::Serialize)]
+pub struct CustomFontSummary {
+    family: String,
+    has_regular: bool,
+    has_bold: bool,
+}
+
+fn list_custom_fonts_impl(db: &DatabaseConnection) -> Result<Vec<CustomFontSummary>, String> {
+    let mut stmt = db
+        .conn()
+        .prepare("SELECT family, weight FROM custom_fonts ORDER BY family, weight")
+        .map_err(|e| format!("Failed to prepare list_custom_fonts query: {e}"))?;
+
+    let rows: Vec<(String, String)> = stmt
+        .query_map([], |row| Ok((row.get(0)?, row.get(1)?)))
+        .map_err(|e| format!("Failed to query custom_fonts: {e}"))?
+        .collect::<Result<_, _>>()
+        .map_err(|e| format!("Failed to read custom_fonts row: {e}"))?;
+
+    let mut map: BTreeMap<String, CustomFontSummary> = BTreeMap::new();
+    for (family, weight) in rows {
+        let entry = map.entry(family.clone()).or_insert(CustomFontSummary {
+            family,
+            has_regular: false,
+            has_bold: false,
+        });
+        match weight.as_str() {
+            "Regular" => entry.has_regular = true,
+            "Bold" => entry.has_bold = true,
+            _ => {}
+        }
+    }
+
+    Ok(map.into_values().collect())
 }
 
 #[tauri::command]
-pub fn get_font_data(family: String, app_handle: AppHandle) -> Result<FontFaceData, String> {
+pub fn list_custom_fonts(state: State<DiaryState>) -> Result<Vec<CustomFontSummary>, String> {
+    with_unlocked_db(&state, list_custom_fonts_impl)
+}
+
+const MAX_FONT_BYTES: usize = 20 * 1024 * 1024; // 20 MB
+
+fn validate_font_input(family: &str, weight: &str, bytes: &[u8]) -> Result<(), String> {
+    if weight != "Regular" && weight != "Bold" {
+        return Err(format!(
+            "Invalid weight '{}': must be 'Regular' or 'Bold'",
+            weight
+        ));
+    }
+    if family.is_empty() {
+        return Err("Font family name must not be empty".to_string());
+    }
+    if bytes.len() > MAX_FONT_BYTES {
+        return Err(format!(
+            "Font file is too large ({} MB). Maximum is 20 MB.",
+            bytes.len() / (1024 * 1024)
+        ));
+    }
+    if mime_from_bytes(bytes).is_none() {
+        return Err(
+            "Invalid font file. Only TTF, OTF, WOFF, and WOFF2 files are accepted.".to_string(),
+        );
+    }
+    Ok(())
+}
+
+fn import_custom_font_impl(
+    family: &str,
+    weight: &str,
+    bytes: &[u8],
+    now: &str,
+    db: &DatabaseConnection,
+) -> Result<(), String> {
+    if weight == "Bold" {
+        let has_regular: bool = db
+            .conn()
+            .query_row(
+                "SELECT 1 FROM custom_fonts WHERE family = ?1 AND weight = 'Regular' LIMIT 1",
+                rusqlite::params![family],
+                |_row| Ok(()),
+            )
+            .optional()
+            .map_err(|e| format!("Failed to verify existing Regular weight: {e}"))?
+            .is_some();
+        if !has_regular {
+            return Err("Import the Regular weight before importing Bold.".to_string());
+        }
+    }
+    db.conn()
+        .execute(
+            "INSERT OR REPLACE INTO custom_fonts (family, weight, data, created_at) VALUES (?1, ?2, ?3, ?4)",
+            rusqlite::params![family, weight, bytes, now],
+        )
+        .map(|_| ())
+        .map_err(|e| format!("Failed to store font: {e}"))
+}
+
+#[tauri::command]
+pub fn import_custom_font(
+    family: String,
+    weight: String,
+    path: String,
+    state: State<DiaryState>,
+) -> Result<(), String> {
+    let family = family.trim().to_string();
+    let bytes = std::fs::read(&path).map_err(|e| format!("Cannot read font file: {e}"))?;
+    validate_font_input(&family, &weight, &bytes)?;
+    let now = chrono::Utc::now().to_rfc3339();
+    with_unlocked_db(&state, |db| {
+        import_custom_font_impl(&family, &weight, &bytes, &now, db)
+    })
+}
+
+fn delete_custom_font_family_impl(family: &str, db: &DatabaseConnection) -> Result<(), String> {
+    db.conn()
+        .execute(
+            "DELETE FROM custom_fonts WHERE family = ?1",
+            rusqlite::params![family],
+        )
+        .map(|_| ())
+        .map_err(|e| format!("Failed to delete custom font '{}': {e}", family))
+}
+
+#[tauri::command]
+pub fn delete_custom_font_family(family: String, state: State<DiaryState>) -> Result<(), String> {
+    let family = family.trim().to_string();
+    if family.is_empty() {
+        return Err("Font family name must not be empty".to_string());
+    }
+    with_unlocked_db(&state, |db| delete_custom_font_family_impl(&family, db))
+}
+
+fn get_custom_font_data(
+    family: &str,
+    db: &DatabaseConnection,
+) -> Result<Option<FontFaceData>, String> {
+    let regular_blob = db
+        .conn()
+        .query_row(
+            "SELECT data FROM custom_fonts WHERE family = ?1 AND weight = 'Regular'",
+            rusqlite::params![family],
+            |row| row.get::<_, Vec<u8>>(0),
+        )
+        .optional()
+        .map_err(|e| format!("Failed to read custom Regular font: {e}"))?;
+
+    let Some(reg_bytes) = regular_blob else {
+        return Ok(None);
+    };
+
+    let bold_blob = db
+        .conn()
+        .query_row(
+            "SELECT data FROM custom_fonts WHERE family = ?1 AND weight = 'Bold'",
+            rusqlite::params![family],
+            |row| row.get::<_, Vec<u8>>(0),
+        )
+        .optional()
+        .map_err(|e| format!("Failed to read custom Bold font: {e}"))?;
+
+    let bold_synthesized = bold_blob.is_none();
+    let bold_bytes = bold_blob.unwrap_or_else(|| reg_bytes.clone());
+    let reg_mime = mime_from_bytes(&reg_bytes).unwrap_or("font/ttf");
+    let bold_mime = mime_from_bytes(&bold_bytes).unwrap_or("font/ttf");
+    let regular = format!(
+        "data:{};base64,{}",
+        reg_mime,
+        general_purpose::STANDARD.encode(&reg_bytes)
+    );
+    let bold = format!(
+        "data:{};base64,{}",
+        bold_mime,
+        general_purpose::STANDARD.encode(&bold_bytes)
+    );
+    Ok(Some(FontFaceData {
+        family: family.to_string(),
+        regular,
+        bold,
+        bold_synthesized,
+    }))
+}
+
+#[tauri::command]
+pub fn get_font_data(
+    family: String,
+    app_handle: AppHandle,
+    state: State<DiaryState>,
+) -> Result<FontFaceData, String> {
+    let custom = with_unlocked_db(&state, |db| get_custom_font_data(&family, db))?;
+
+    if let Some(data) = custom {
+        return Ok(data);
+    }
+
     let dir = resolve_font_dir(&app_handle)?;
     let stem = stem_from_family(&family);
 
@@ -138,6 +337,7 @@ pub fn get_font_data(family: String, app_handle: AppHandle) -> Result<FontFaceDa
         family,
         regular,
         bold,
+        bold_synthesized: false,
     })
 }
 
@@ -189,148 +389,4 @@ fn family_colon(stem: &str, weight: &str) -> String {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    // --- family_from_stem ---
-
-    #[test]
-    fn family_from_stem_regular() {
-        assert_eq!(family_from_stem("FiraMono-Regular"), "FiraMono");
-    }
-
-    #[test]
-    fn family_from_stem_bold() {
-        assert_eq!(family_from_stem("FiraMono-Bold"), "FiraMono");
-    }
-
-    #[test]
-    fn family_from_stem_no_hyphen_in_base() {
-        assert_eq!(family_from_stem("SourceSans3-Regular"), "SourceSans3");
-    }
-
-    #[test]
-    fn family_from_stem_bold_italic() {
-        assert_eq!(
-            family_from_stem("JetBrainsMono-BoldItalic"),
-            "JetBrainsMono"
-        );
-    }
-
-    #[test]
-    fn family_from_stem_no_known_suffix() {
-        assert_eq!(family_from_stem("NoStem"), "NoStem");
-    }
-
-    #[test]
-    fn family_from_stem_roman_suffix() {
-        assert_eq!(family_from_stem("SomeFont-Roman"), "SomeFont");
-    }
-
-    #[test]
-    fn family_from_stem_hyphenated_base() {
-        // Filename stems with internal hyphens: "Fira-Mono-Regular" -> "Fira Mono"
-        assert_eq!(family_from_stem("Fira-Mono-Regular"), "Fira Mono");
-    }
-
-    #[test]
-    fn family_from_stem_amiri() {
-        assert_eq!(family_from_stem("Amiri-Regular"), "Amiri");
-        assert_eq!(family_from_stem("Amiri-Bold"), "Amiri");
-    }
-
-    #[test]
-    fn family_from_stem_tajawal() {
-        assert_eq!(family_from_stem("Tajawal-Regular"), "Tajawal");
-        assert_eq!(family_from_stem("Tajawal-Bold"), "Tajawal");
-    }
-
-    // --- stem_from_family ---
-
-    #[test]
-    fn stem_from_family_basic() {
-        assert_eq!(stem_from_family("Fira Mono"), "FiraMono");
-    }
-
-    #[test]
-    fn stem_from_family_no_spaces() {
-        assert_eq!(stem_from_family("SourceSans3"), "SourceSans3");
-    }
-
-    #[test]
-    fn stem_from_family_brains_mono() {
-        assert_eq!(stem_from_family("JetBrains Mono"), "JetBrainsMono");
-    }
-
-    // --- mime_from_bytes ---
-
-    #[test]
-    fn mime_ttf() {
-        assert_eq!(mime_from_bytes(&[0x00, 0x01, 0x00, 0x00]), Some("font/ttf"));
-    }
-
-    #[test]
-    fn mime_otf() {
-        assert_eq!(mime_from_bytes(&[0x4F, 0x54, 0x54, 0x4F]), Some("font/otf"));
-    }
-
-    #[test]
-    fn mime_woff() {
-        assert_eq!(
-            mime_from_bytes(&[0x77, 0x4F, 0x46, 0x46]),
-            Some("font/woff")
-        );
-    }
-
-    #[test]
-    fn mime_woff2() {
-        assert_eq!(
-            mime_from_bytes(&[0x77, 0x4F, 0x46, 0x32]),
-            Some("font/woff2")
-        );
-    }
-
-    #[test]
-    fn mime_unknown_bytes() {
-        assert_eq!(mime_from_bytes(&[0xFF, 0xFF, 0xFF, 0xFF]), None);
-    }
-
-    #[test]
-    fn mime_short_input() {
-        assert_eq!(mime_from_bytes(&[0x00, 0x01]), None);
-    }
-
-    // --- list_fonts_in_dir ---
-
-    #[test]
-    fn list_fonts_in_dir_empty() {
-        let dir = tempfile::TempDir::new().expect("temp dir");
-        let result = list_fonts_in_dir(dir.path()).expect("list fonts");
-        assert!(result.is_empty());
-    }
-
-    #[test]
-    fn list_fonts_in_dir_nonexistent() {
-        let result = list_fonts_in_dir(Path::new("/nonexistent/fonts/dir"));
-        assert!(result.is_err());
-    }
-
-    #[test]
-    fn list_fonts_in_dir_ignores_non_font_files() {
-        let dir = tempfile::TempDir::new().expect("temp dir");
-        std::fs::write(dir.path().join("README.txt"), b"hello").expect("write txt");
-        std::fs::write(dir.path().join("FiraMono-Regular.ttf"), b"").expect("write ttf");
-        let result = list_fonts_in_dir(dir.path()).expect("list fonts");
-        assert_eq!(result, vec!["FiraMono"]);
-    }
-
-    #[test]
-    fn list_fonts_in_dir_sorts_and_deduplicates() {
-        let dir = tempfile::TempDir::new().expect("temp dir");
-        std::fs::write(dir.path().join("FiraMono-Bold.ttf"), b"").expect("write bold");
-        std::fs::write(dir.path().join("NotoSans-Regular.ttf"), b"").expect("write noto");
-        std::fs::write(dir.path().join("FiraMono-Regular.ttf"), b"").expect("write regular");
-        let result = list_fonts_in_dir(dir.path()).expect("list fonts");
-        assert_eq!(result, vec!["FiraMono", "NotoSans"]);
-    }
-}
+mod tests;

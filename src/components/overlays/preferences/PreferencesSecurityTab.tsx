@@ -1,4 +1,4 @@
-import { createSignal, createEffect, Show, onMount, onCleanup } from 'solid-js';
+import { createSignal, createEffect, Show, untrack } from 'solid-js';
 import { createLogger } from '../../../lib/logger';
 import { authState, authMethods, loadAuthMethods, setRequireAllAuth } from '../../../state/auth';
 import { journals, activeJournalId } from '../../../state/journals';
@@ -6,7 +6,7 @@ import { preferences, setPreferences } from '../../../state/preferences';
 import * as tauri from '../../../lib/tauri';
 import { mapTauriError } from '../../../lib/errors';
 import { useI18n } from '../../../i18n';
-import { usePreferencesShell, type TabProps } from './shared';
+import type { TabProps } from './shared';
 import { AuthMethodsList } from './AuthMethodsList';
 import { AddPasswordForm } from './AddPasswordForm';
 import { AddKeypairForm } from './AddKeypairForm';
@@ -16,7 +16,6 @@ const log = createLogger('Preferences');
 
 export default function PreferencesSecurityTab(props: TabProps) {
   const t = useI18n();
-  const shell = usePreferencesShell();
 
   const hasPasswordSlot = () => authMethods().some((m) => m.slot_type === 'password');
   const activeJournal = () => journals().find((j) => j.id === activeJournalId());
@@ -24,11 +23,7 @@ export default function PreferencesSecurityTab(props: TabProps) {
   const hasMultipleNonAutoMethods = () =>
     authMethods().filter((m) => m.slot_type !== 'auto').length >= 2;
 
-  // Buffered auto-lock fields — committed on Save
-  const [localAutoLockEnabled, setLocalAutoLockEnabled] = createSignal(
-    preferences().autoLockEnabled,
-  );
-  const [localAutoLockTimeout, setLocalAutoLockTimeout] = createSignal(
+  const [autoLockTimeoutDraft, setAutoLockTimeoutDraft] = createSignal(
     String(preferences().autoLockTimeout),
   );
 
@@ -37,16 +32,10 @@ export default function PreferencesSecurityTab(props: TabProps) {
   const [requireAllAuthError, setRequireAllAuthError] = createSignal<string | null>(null);
 
   // Reset transient state + reload auth-related data when the overlay opens.
-  // NOTE: do NOT resync `localAutoLockEnabled`/`localAutoLockTimeout` from
-  // `preferences()` here — the createSignal initializers above already capture
-  // the current values on mount (the dialog re-mounts on each open). Re-reading
-  // `preferences()` inside this effect would track it as a dependency, causing
-  // the effect to fire when an earlier tab's commit (General/Writing) calls
-  // setPreferences during the Save click, which would clobber the user's
-  // pending autoLock changes before the Security tab's own commit runs.
   createEffect(() => {
     if (props.isOpen()) {
       setRequireAllAuthError(null);
+      setAutoLockTimeoutDraft(String(untrack(() => preferences().autoLockTimeout)));
 
       if (authState() === 'unlocked') {
         loadAuthMethods().catch((err) => log.error('Failed to reload auth methods:', err));
@@ -58,20 +47,14 @@ export default function PreferencesSecurityTab(props: TabProps) {
     }
   });
 
-  onMount(() => {
-    const unregister = shell.registerCommit(
-      // Invoked imperatively from the shell's Save click handler (tracked scope);
-      // signal reads inside are intentional snapshots of the buffered draft.
-      // eslint-disable-next-line solid/reactivity
-      () => {
-        setPreferences({
-          autoLockEnabled: localAutoLockEnabled(),
-          autoLockTimeout: Math.min(999, Math.max(1, parseInt(localAutoLockTimeout(), 10) || 300)),
-        });
-      },
-    );
-    onCleanup(unregister);
-  });
+  const clampAutoLockTimeout = (value: string) =>
+    Math.min(999, Math.max(1, parseInt(value, 10) || 300));
+
+  const persistAutoLockTimeout = (value: string) => {
+    const clamped = clampAutoLockTimeout(value);
+    setAutoLockTimeoutDraft(String(clamped));
+    setPreferences({ autoLockTimeout: clamped });
+  };
 
   const handleToggleRequireAllAuth = async (checked: boolean) => {
     setRequireAllAuthError(null);
@@ -133,7 +116,7 @@ export default function PreferencesSecurityTab(props: TabProps) {
                 onChange={(e) => handleToggleRequireAllAuth(e.currentTarget.checked)}
                 class="h-4 w-4 rounded border-primary text-blue-600 focus:ring-blue-500"
               />
-              <span class="text-sm text-primary">{t('prefs.security.requireAllAuthLabel')}</span>
+              <span class="text-sm text-secondary">{t('prefs.security.requireAllAuthLabel')}</span>
             </label>
             <Show when={requireAllAuthError()}>
               <p class="mt-2 text-sm text-error">{requireAllAuthError()}</p>
@@ -154,13 +137,13 @@ export default function PreferencesSecurityTab(props: TabProps) {
           <label class="flex items-center gap-3">
             <input
               type="checkbox"
-              checked={localAutoLockEnabled()}
-              onChange={(e) => setLocalAutoLockEnabled(e.currentTarget.checked)}
+              checked={preferences().autoLockEnabled}
+              onChange={(e) => setPreferences({ autoLockEnabled: e.currentTarget.checked })}
               class="h-4 w-4 rounded border-primary text-blue-600 focus:ring-blue-500"
             />
-            <span class="text-sm text-primary">{t('prefs.security.autoLockLabel')}</span>
+            <span class="text-sm text-secondary">{t('prefs.security.autoLockLabel')}</span>
           </label>
-          <Show when={localAutoLockEnabled()}>
+          <Show when={preferences().autoLockEnabled}>
             <div class="flex items-center gap-2 pl-7">
               <label class="text-sm text-secondary whitespace-nowrap">
                 {t('prefs.security.autoLockTimeoutLabel')}
@@ -170,12 +153,18 @@ export default function PreferencesSecurityTab(props: TabProps) {
                 min="1"
                 max="999"
                 step="1"
-                value={localAutoLockTimeout()}
-                onInput={(e) => setLocalAutoLockTimeout(e.currentTarget.value)}
-                onBlur={(e) => {
-                  const v = Math.min(999, Math.max(1, parseInt(e.currentTarget.value, 10) || 300));
-                  setLocalAutoLockTimeout(String(v));
+                value={autoLockTimeoutDraft()}
+                onInput={(e) => {
+                  const next = e.currentTarget.value;
+                  setAutoLockTimeoutDraft(next);
+                  if (/^\d+$/.test(next)) {
+                    const parsed = Number(next);
+                    if (parsed >= 1 && parsed <= 999) {
+                      setPreferences({ autoLockTimeout: parsed });
+                    }
+                  }
                 }}
+                onBlur={(e) => persistAutoLockTimeout(e.currentTarget.value)}
                 class="w-20 px-2 py-1 text-sm border border-primary rounded-md bg-primary text-primary focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               <span class="text-xs text-tertiary">{t('prefs.security.autoLockRange')}</span>

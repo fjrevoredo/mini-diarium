@@ -1,9 +1,9 @@
 ---
 title: Getting Started
 slug: getting-started
-description: How to create your first journal, set a password, and start writing in Mini Diarium.
+description: Create your first journal, set a password, and start writing. Covers multiple journals, key file unlock, local-only mode, and the welcome tour.
 order: 1
-updated: 2026-05-15
+updated: 2026-05-29
 tags: setup, password, first launch
 ---
 

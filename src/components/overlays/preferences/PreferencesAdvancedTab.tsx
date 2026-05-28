@@ -14,6 +14,7 @@ import * as tauri from '../../../lib/tauri';
 import { mapTauriError } from '../../../lib/errors';
 import { useI18n } from '../../../i18n';
 import type { TabProps } from './shared';
+import PreferencesCustomFontsSection from './PreferencesCustomFontsSection';
 
 export default function PreferencesAdvancedTab(props: TabProps) {
   const t = useI18n();
@@ -21,7 +22,6 @@ export default function PreferencesAdvancedTab(props: TabProps) {
   // Theme overrides state
   const [localOverridesJson, setLocalOverridesJson] = createSignal('{}');
   const [overridesParseError, setOverridesParseError] = createSignal<string | null>(null);
-  const [overridesApplied, setOverridesApplied] = createSignal(false);
 
   // Debug dump state
   const [dumpGenerating, setDumpGenerating] = createSignal(false);
@@ -32,32 +32,28 @@ export default function PreferencesAdvancedTab(props: TabProps) {
     if (props.isOpen()) {
       setLocalOverridesJson(getThemeOverridesJson());
       setOverridesParseError(null);
-      setOverridesApplied(false);
       setDumpGenerating(false);
       setDumpStatus('idle');
       setDumpError('');
     }
   });
 
-  const handleApplyOverrides = () => {
-    const parsed = parseOverridesJson(localOverridesJson());
+  const handleOverridesInput = (nextJson: string) => {
+    setLocalOverridesJson(nextJson);
+    const parsed = parseOverridesJson(nextJson);
     if (parsed === null) {
       setOverridesParseError(t('prefs.advanced.overridesParseError'));
-      setOverridesApplied(false);
       return;
     }
     saveThemeOverrides(parsed);
     applyThemeOverrides(getActiveTheme());
-    setLocalOverridesJson(getThemeOverridesJson());
     setOverridesParseError(null);
-    setOverridesApplied(true);
   };
 
   const handleResetOverrides = () => {
     resetThemeOverrides();
     setLocalOverridesJson('{}');
     setOverridesParseError(null);
-    setOverridesApplied(false);
   };
 
   const handleGenerateDebugDump = async () => {
@@ -93,7 +89,7 @@ export default function PreferencesAdvancedTab(props: TabProps) {
     >
       {/* Theme Overrides */}
       <div>
-        <h3 class="text-sm font-medium text-primary mb-1">
+        <h3 class="text-sm font-medium text-primary mb-3">
           {t('prefs.advanced.themeOverridesTitle')}
         </h3>
         <p class="text-xs text-tertiary mb-3 leading-relaxed">
@@ -110,27 +106,13 @@ export default function PreferencesAdvancedTab(props: TabProps) {
           rows="6"
           class="w-full text-xs font-mono bg-tertiary text-primary border border-primary rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y"
           value={localOverridesJson()}
-          onInput={(e) => {
-            setLocalOverridesJson(e.currentTarget.value);
-            setOverridesApplied(false);
-            setOverridesParseError(null);
-          }}
+          onInput={(e) => handleOverridesInput(e.currentTarget.value)}
           spellcheck={false}
         />
         <Show when={overridesParseError() !== null}>
           <p class="text-xs text-error mt-1">{overridesParseError()}</p>
         </Show>
-        <Show when={overridesApplied()}>
-          <p class="text-xs text-success mt-1">{t('prefs.advanced.overridesApplied')}</p>
-        </Show>
         <div class="flex gap-2 mt-2">
-          <button
-            type="button"
-            onClick={handleApplyOverrides}
-            class="px-3 py-1.5 text-sm font-medium interactive-primary rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-          >
-            {t('prefs.advanced.applyOverrides')}
-          </button>
           <button
             type="button"
             onClick={handleResetOverrides}
@@ -141,7 +123,7 @@ export default function PreferencesAdvancedTab(props: TabProps) {
         </div>
       </div>
       <div class="border-t border-primary pt-4 mt-4">
-        <h3 class="text-sm font-medium text-primary mb-1">
+        <h3 class="text-sm font-medium text-primary mb-3">
           {t('prefs.advanced.diagnosticsTitle')}
         </h3>
         <p class="text-xs text-tertiary mb-3 leading-relaxed">
@@ -163,6 +145,9 @@ export default function PreferencesAdvancedTab(props: TabProps) {
             <p class="text-sm text-error">{dumpError()}</p>
           </Show>
         </div>
+      </div>
+      <div class="border-t border-primary pt-4 mt-4">
+        <PreferencesCustomFontsSection />
       </div>
     </div>
   );

@@ -298,7 +298,22 @@
       "fontSizeMax": "24 px",
       "fontFamilyLabel": "Police de l'éditeur",
       "fontFamilySystemDefault": "Par défaut du système",
-      "fontFamilyHint": "Sélectionnez une police pour l'éditeur. Les polices sont regroupées avec l'application et fonctionnent hors ligne."
+      "fontFamilyHint": "Sélectionnez une police pour l'éditeur. Les polices sont regroupées avec l'application et fonctionnent hors ligne.",
+      "fontFamilyCustomFontsNote": "Pour ajouter des polices personnalisées, rendez-vous dans l'onglet Avancé.",
+      "customFontsGroupLabel": "Personnalisées",
+      "customFontsLabel": "Polices personnalisées",
+      "customFontsHint": "Les polices personnalisées sont stockées dans votre journal, importées ou supprimées immédiatement, et voyagent avec le journal sur d'autres appareils. Elles augmentent également la taille du fichier journal et des sauvegardes.",
+      "customFontBoldPairHint": "Pour un texte en gras correct, fournissez à la fois un fichier de graisse Normale et un fichier Gras.",
+      "customFontRegularLabel": "Graisse Normale (.ttf / .otf / .woff / .woff2)",
+      "customFontBoldLabel": "Graisse Gras (.ttf / .otf / .woff / .woff2)",
+      "customFontChooseFile": "Choisir un fichier…",
+      "customFontFamilyLabel": "Nom de la famille de polices",
+      "customFontAddButton": "Ajouter la police",
+      "customFontMissingBold": "Graisse Gras manquante — Mini Diarium laissera le navigateur synthétiser le texte en gras, ce qui peut sembler incorrect.",
+      "customFontDeleteButton": "Supprimer",
+      "customFontDeleteAriaLabel": "Supprimer la police personnalisée {{ family }}",
+      "customFontFamilyRequired": "Le nom de la famille de polices est requis.",
+      "customFontRegularRequired": "Le fichier de graisse Normale est requis."
     },
     "security": {
       "authMethodsTitle": "Méthodes d'authentification",
@@ -435,7 +450,7 @@
     "description": "Une application de bureau de journalisation chiffrée et locale.",
     "license": "Licence MIT",
     "copyright": "Copyright © 2026 Francisco J. Revoredo",
-    "githubLink": "github.com/fjrevoredo/mini-diarium",
+    "githubLink": "GitHub",
     "docsLink": "Documentation",
     "opensInBrowser": "s'ouvre dans le navigateur système",
     "showTour": "Afficher le tour de bienvenue"

@@ -164,6 +164,144 @@ Get-ChildItem src -Recurse -Include *.ts,*.tsx |
   Sort-Object -Descending
 ```
 
+## Preferences Panel UI Patterns
+
+Every settings panel is a `<div class="space-y-6 focus:outline-none">` tab panel. The rules below define the exact class strings for each recurring element type. Use them verbatim — do not substitute raw hex colours, Tailwind palette shades, or `dark:` variants for theme tokens (`text-primary`, `text-secondary`, `text-tertiary`, `text-error`, `border-primary`, `bg-primary`, `bg-secondary`, `bg-tertiary`, `bg-hover`, `interactive-primary`, `interactive-destructive`).
+
+### Section heading (named group, no `for` target)
+
+Used when a tab section contains multiple related controls rather than a single labeled input.
+
+```tsx
+<h3 class="text-sm font-medium text-primary mb-3">{t('...')}</h3>
+```
+
+Followed immediately by a description paragraph when one exists:
+
+```tsx
+<p class="text-xs text-tertiary leading-relaxed mb-3">{t('...')}</p>
+```
+
+### Field label (directly above a single control)
+
+Used directly above a `<select>`, `<input>`, or read-only value block. Always a `<label>` with a matching `for` / `id` pair.
+
+```tsx
+<label for="input-id" class="block text-sm font-medium text-secondary mb-2">
+  {t('...')}
+</label>
+```
+
+Hint text that follows the control (below it) uses `mt-2`:
+
+```tsx
+<p class="mt-2 text-xs text-tertiary leading-relaxed">{t('...')}</p>
+```
+
+### Field label with inline actions (header + buttons row)
+
+When a section header sits on the same line as "Select all / Select none" or similar links:
+
+```tsx
+<div class="flex items-center justify-between mb-1">
+  <label class="block text-sm font-medium text-secondary">{t('...')}</label>
+  <div class="flex gap-3">
+    <button type="button" class="text-xs text-blue-500 hover:underline">{t('...')}</button>
+  </div>
+</div>
+<p class="text-xs text-tertiary leading-relaxed mb-3">{t('...')}</p>
+```
+
+### Select control
+
+```tsx
+<select
+  id="input-id"
+  class="w-full px-3 py-2 border border-primary bg-primary text-primary rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+>
+```
+
+### Text input (full-width)
+
+```tsx
+<input
+  type="text"
+  id="input-id"
+  class="w-full px-3 py-2 border border-primary bg-primary text-primary rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+/>
+```
+
+Compact inline variant (e.g. short number field inside a row):
+
+```tsx
+<input
+  type="number"
+  class="w-20 px-2 py-1 text-sm border border-primary rounded-md bg-primary text-primary focus:outline-none focus:ring-2 focus:ring-blue-500"
+/>
+```
+
+### Checkbox row
+
+Wrap both the input and its text label in one `<label>` so the entire row is a click target.
+
+```tsx
+<label class="flex items-center gap-3">
+  <input
+    type="checkbox"
+    class="h-4 w-4 rounded border-primary text-blue-600 focus:ring-blue-500"
+  />
+  <span class="text-sm text-secondary">{t('...')}</span>
+</label>
+```
+
+### Read-only value display
+
+```tsx
+<div class="px-3 py-3 bg-tertiary border border-primary rounded-md text-sm text-secondary font-mono break-all">
+  {value}
+</div>
+```
+
+### Primary action button
+
+```tsx
+<button
+  type="button"
+  class="px-4 py-2 text-sm font-medium interactive-primary rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+>
+```
+
+### Destructive action button
+
+```tsx
+<button
+  type="button"
+  class="px-4 py-2 text-sm font-medium interactive-destructive rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+>
+```
+
+### Error message
+
+Always use the `text-error` theme token and `role="alert"`.
+
+```tsx
+<p class="text-xs text-error" role="alert">{errorMessage()}</p>
+```
+
+### Section divider
+
+```tsx
+<div class="border-t border-primary pt-4 mt-4">
+```
+
+### Diagnostic check
+
+```powershell
+rg -n "text-red-[0-9]|text-green-[0-9]" src/components/overlays/preferences
+```
+
+Raw Tailwind palette colours in preferences panels are almost always a mistake — they should be theme tokens.
+
 ## Testing Rules
 
 ### Use The Project Test Harness

@@ -7,7 +7,12 @@ const rootDir = path.resolve(__dirname, "..");
 
 const DRY_RUN = process.argv.includes("--dry-run");
 const SITE = "mini-diarium.com";
-const INDEXNOW_API_URL = `https://api.indexnow.org/IndexNow`;
+// Submit to both the generic endpoint (propagates to Yandex, Seznam, etc.)
+// and Bing's direct endpoint (required for Bing Webmaster Tools to register submissions).
+const INDEXNOW_ENDPOINTS = [
+  "https://api.indexnow.org/IndexNow",
+  "https://www.bing.com/indexnow",
+];
 
 function findKeyFile() {
   const websiteDir = path.resolve(rootDir, "website");
@@ -55,8 +60,8 @@ function buildPayload(key, keyFile, urls) {
   };
 }
 
-async function submit(payload) {
-  const response = await fetch(INDEXNOW_API_URL, {
+async function submit(endpoint, payload) {
+  const response = await fetch(endpoint, {
     method: "POST",
     headers: { "Content-Type": "application/json; charset=utf-8" },
     body: JSON.stringify(payload),
@@ -66,29 +71,29 @@ async function submit(payload) {
   const statusText = response.statusText;
 
   if (status === 200 || status === 202) {
-    console.log(`Success: ${payload.urlList.length} URLs submitted to IndexNow (HTTP ${status} ${statusText})`);
+    console.log(`  OK: HTTP ${status} ${statusText}`);
     return;
   }
 
   const body = await response.text().catch(() => "");
-  console.error(`Error: IndexNow returned HTTP ${status} ${statusText}`);
-  if (body) console.error(`Response: ${body}`);
+  console.error(`  Error: HTTP ${status} ${statusText}`);
+  if (body) console.error(`  Response: ${body}`);
 
   switch (status) {
     case 400:
-      console.error("Bad request — invalid payload format.");
+      console.error("  Bad request — invalid payload format.");
       break;
     case 403:
-      console.error("Forbidden — key file not found on domain or key mismatch.");
+      console.error("  Forbidden — key file not found on domain or key mismatch.");
       break;
     case 422:
-      console.error("Unprocessable Entity — URLs do not match the declared host.");
+      console.error("  Unprocessable Entity — URLs do not match the declared host.");
       break;
     case 429:
-      console.error("Too Many Requests — rate limited. Try again later.");
+      console.error("  Too Many Requests — rate limited. Try again later.");
       break;
     default:
-      console.error(`Unexpected response code: ${status}`);
+      console.error(`  Unexpected response code: ${status}`);
   }
 
   process.exit(1);
@@ -114,13 +119,17 @@ async function main() {
   const payload = buildPayload(key, keyFile, urls);
 
   if (DRY_RUN) {
-    console.log(`[Dry Run] Would submit ${urls.length} URLs to IndexNow:`);
+    console.log(`[Dry Run] Would submit ${urls.length} URLs to ${INDEXNOW_ENDPOINTS.length} endpoints:`);
+    INDEXNOW_ENDPOINTS.forEach((ep) => console.log(`  - ${ep}`));
     console.log(JSON.stringify(payload, null, 2));
     return;
   }
 
-  console.log(`Submitting ${urls.length} URLs to IndexNow...`);
-  await submit(payload);
+  console.log(`Submitting ${urls.length} URLs to ${INDEXNOW_ENDPOINTS.length} endpoints...`);
+  for (const endpoint of INDEXNOW_ENDPOINTS) {
+    console.log(`→ ${endpoint}`);
+    await submit(endpoint, payload);
+  }
 }
 
 main().catch((err) => {

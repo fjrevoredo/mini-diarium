@@ -298,7 +298,22 @@
       "fontSizeMax": "24 px",
       "fontFamilyLabel": "Editor font",
       "fontFamilySystemDefault": "System Default",
-      "fontFamilyHint": "Select a font for the editor. Fonts are bundled with the app and work offline."
+      "fontFamilyHint": "Select a font for the editor. Fonts are bundled with the app and work offline.",
+      "fontFamilyCustomFontsNote": "Para añadir fuentes personalizadas, ve a la pestaña Avanzado.",
+      "customFontsGroupLabel": "Personalizadas",
+      "customFontsLabel": "Fuentes personalizadas",
+      "customFontsHint": "Las fuentes personalizadas se almacenan en tu diario, se importan o eliminan de inmediato y se transfieren con el diario a otros dispositivos. También aumentan el tamaño del archivo de diario y las copias de seguridad.",
+      "customFontBoldPairHint": "Para que el texto en negrita se muestre correctamente, proporciona un archivo de peso Regular y otro de peso Negrita.",
+      "customFontRegularLabel": "Peso Regular (.ttf / .otf / .woff / .woff2)",
+      "customFontBoldLabel": "Peso Negrita (.ttf / .otf / .woff / .woff2)",
+      "customFontChooseFile": "Elegir archivo…",
+      "customFontFamilyLabel": "Nombre de la familia tipográfica",
+      "customFontAddButton": "Añadir fuente",
+      "customFontMissingBold": "Falta el peso Negrita — Mini Diarium permitirá que el navegador sintetice el texto en negrita, lo que puede verse incorrecto.",
+      "customFontDeleteButton": "Eliminar",
+      "customFontDeleteAriaLabel": "Eliminar fuente personalizada {{ family }}",
+      "customFontFamilyRequired": "El nombre de la familia tipográfica es obligatorio.",
+      "customFontRegularRequired": "El archivo de peso Regular es obligatorio."
     },
     "security": {
       "authMethodsTitle": "Métodos de autenticación",
@@ -435,7 +450,7 @@
     "description": "Una aplicación de escritorio para llevar un diario cifrado y de almacenamiento local.",
     "license": "Licencia MIT",
     "copyright": "Copyright © 2026 Francisco J. Revoredo",
-    "githubLink": "github.com/fjrevoredo/mini-diarium",
+    "githubLink": "GitHub",
     "docsLink": "Documentación",
     "opensInBrowser": "se abre en el navegador del sistema",
     "showTour": "Mostrar tour de bienvenida"

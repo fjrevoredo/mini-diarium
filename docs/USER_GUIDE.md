@@ -203,15 +203,24 @@ fn format_entries(entries) {
 
 Open with `Ctrl+,`:
 
+Reversible settings apply immediately. The dialog is close-only (no Save/Cancel footer).
+
 | Setting | Description |
 |---------|-------------|
 | Theme | Light, dark, or follow system (auto) |
-| Theme Overrides | Advanced: override individual color tokens (see below) |
+| Language | Choose app language |
+| ESC key action | Do nothing or quit the app on Escape |
 | First day of week | Sunday, Monday, or auto-detect from locale |
 | Allow future entries | Write entries for dates that haven't happened yet |
 | Hide titles | Remove the title field for a minimal look |
 | Spellcheck | Toggle browser spellcheck in the editor |
+| Show entry timestamps | Show created/updated times below entry title |
+| Toolbar items | Enable/disable and reorder optional editor toolbar controls |
+| Editor font and size | Set editor body typography |
 | Auto-Lock | Lock automatically after a configurable idle timeout |
+| Theme Overrides | Advanced: override individual color tokens (see below) |
+| Custom fonts | Upload/remove editor font families |
+| Generate Debug Dump | Export a privacy-safe diagnostics JSON file |
 | Change password | Re-encrypt your journal with a new password |
 | Authentication Methods | View registered unlock methods; add a new key file or remove existing ones |
 | At least one method must remain | removing the last is blocked |
@@ -221,8 +230,8 @@ Open with `Ctrl+,`:
 
 Advanced users can customize the app's color palette by overriding individual theme tokens.
 
-Open **Preferences → General**, scroll to the **Theme Overrides** section. Enter a JSON
-object with `light` and/or `dark` keys, each mapping CSS variable names to color values:
+Open **Preferences → Advanced**, then edit the **Theme Overrides** JSON. Enter an object
+with `light` and/or `dark` keys, each mapping CSS variable names to color values:
 
 ```json
 {
@@ -237,9 +246,10 @@ object with `light` and/or `dark` keys, each mapping CSS variable names to color
 }
 ```
 
-Click **Apply Overrides** to apply immediately. Overrides are saved in `localStorage`
-and re-applied automatically every time you open the app. They layer on top of the
-selected built-in theme (light, dark, or auto-resolved).
+Valid JSON applies immediately and is saved in `localStorage`. Invalid JSON shows an inline
+error and keeps the last valid saved overrides active. Use **Reset to Default** to clear
+overrides immediately. Saved overrides are re-applied automatically every time you open the app
+and layer on top of the selected built-in theme (light, dark, or auto-resolved).
 
 **Supported tokens** — only CSS variable names from the documented token contract are
 accepted. Unrecognised names are silently ignored. The supported families are:

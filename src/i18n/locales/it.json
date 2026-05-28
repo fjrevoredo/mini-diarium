@@ -298,7 +298,22 @@
       "fontSizeMax": "24 px",
       "fontFamilyLabel": "Editor font",
       "fontFamilySystemDefault": "System Default",
-      "fontFamilyHint": "Select a font for the editor. Fonts are bundled with the app and work offline."
+      "fontFamilyHint": "Select a font for the editor. Fonts are bundled with the app and work offline.",
+      "fontFamilyCustomFontsNote": "Per aggiungere caratteri personalizzati, vai alla scheda Avanzate.",
+      "customFontsGroupLabel": "Personalizzati",
+      "customFontsLabel": "Caratteri personalizzati",
+      "customFontsHint": "I caratteri personalizzati sono archiviati nel diario, importati o rimossi immediatamente, e viaggiano con il diario su altri dispositivi. Aumentano anche la dimensione del file del diario e dei backup.",
+      "customFontBoldPairHint": "Per un testo in grassetto corretto, fornisci sia un file di peso Normale che uno Grassetto.",
+      "customFontRegularLabel": "Peso Normale (.ttf / .otf / .woff / .woff2)",
+      "customFontBoldLabel": "Peso Grassetto (.ttf / .otf / .woff / .woff2)",
+      "customFontChooseFile": "Scegli file…",
+      "customFontFamilyLabel": "Nome della famiglia di caratteri",
+      "customFontAddButton": "Aggiungi carattere",
+      "customFontMissingBold": "Peso Grassetto mancante — Mini Diarium lascerà che il browser sintetizzi il testo in grassetto, che potrebbe risultare non corretto.",
+      "customFontDeleteButton": "Rimuovi",
+      "customFontDeleteAriaLabel": "Rimuovi carattere personalizzato {{ family }}",
+      "customFontFamilyRequired": "Il nome della famiglia di caratteri è obbligatorio.",
+      "customFontRegularRequired": "Il file di peso Normale è obbligatorio."
     },
     "security": {
       "authMethodsTitle": "Metodi di autenticazione",
@@ -435,7 +450,7 @@
     "description": "Un'applicazione desktop per tenere un diario crittografato e archiviato localmente.",
     "license": "Licenza MIT",
     "copyright": "Copyright © 2026 Francisco J. Revoredo",
-    "githubLink": "github.com/fjrevoredo/mini-diarium",
+    "githubLink": "GitHub",
     "docsLink": "Documentazione",
     "opensInBrowser": "si apre nel browser di sistema",
     "showTour": "Mostra il tour di benvenuto"

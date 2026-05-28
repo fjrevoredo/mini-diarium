@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="How to create, edit, format, and delete journal entries using the rich text editor." />
+  <meta name="description" content="Mini Diarium&#39;s rich text editor supports formatting, images, tags, multiple entries per day, RTL languages, and auto-save. No manual saving needed." />
   <meta name="robots" content="index,follow,max-snippet:-1,max-image-preview:large,max-video-preview:-1" />
   <meta name="theme-color" content="#0e0e0e" />
   <meta name="author" content="Francisco J. Revoredo" />
@@ -12,7 +12,7 @@
   <meta property="og:locale" content="en_US" />
   <meta property="og:url" content="https://mini-diarium.com/docs/writing-entries/" />
   <meta property="og:title" content="Writing Entries — Mini Diarium Documentation" />
-  <meta property="og:description" content="How to create, edit, format, and delete journal entries using the rich text editor." />
+  <meta property="og:description" content="Mini Diarium&#39;s rich text editor supports formatting, images, tags, multiple entries per day, RTL languages, and auto-save. No manual saving needed." />
   <meta property="og:image" content="https://mini-diarium.com/assets/og-cover.png" />
   <meta property="og:image:type" content="image/png" />
   <meta property="og:image:width" content="1200" />
@@ -22,7 +22,7 @@
   <meta name="twitter:site" content="@MiniDiarium" />
   <meta name="twitter:creator" content="@MiniDiarium" />
   <meta name="twitter:title" content="Writing Entries — Mini Diarium Documentation" />
-  <meta name="twitter:description" content="How to create, edit, format, and delete journal entries using the rich text editor." />
+  <meta name="twitter:description" content="Mini Diarium&#39;s rich text editor supports formatting, images, tags, multiple entries per day, RTL languages, and auto-save. No manual saving needed." />
   <meta name="twitter:image" content="https://mini-diarium.com/assets/og-cover.png" />
   
   <title>Writing Entries — Mini Diarium Documentation</title>
@@ -234,8 +234,8 @@
       "@type": "TechArticle",
       "@id": "https://mini-diarium.com/docs/writing-entries/#article",
       "headline": "Writing Entries",
-      "description": "How to create, edit, format, and delete journal entries using the rich text editor.",
-      "dateModified": "2026-05-24T00:00:00Z",
+      "description": "Mini Diarium's rich text editor supports formatting, images, tags, multiple entries per day, RTL languages, and auto-save. No manual saving needed.",
+      "dateModified": "2026-05-29T00:00:00Z",
       "keywords": "editor, formatting, entries, writing",
       "publisher": {
         "@type": "Organization",
@@ -321,7 +321,7 @@
     <div class="post-header">
       <p class="hero-eyebrow">Mini Diarium documentation</p>
       <h1>Writing Entries</h1>
-      <p class="hero-sub">How to create, edit, format, and delete journal entries using the rich text editor.</p>
+      <p class="hero-sub">Mini Diarium&#39;s rich text editor supports formatting, images, tags, multiple entries per day, RTL languages, and auto-save. No manual saving needed.</p>
     </div>
   </div>
 </section>
@@ -390,7 +390,7 @@
         <li>Images (drag-drop, paste, or file picker)</li>
         </ul>
         <p>The toolbar above the editor provides buttons for each formatting option. Standard keyboard shortcuts also work — <code>Ctrl+B</code> for bold, <code>Ctrl+I</code> for italic, and so on. On macOS, use <code>Cmd</code> instead of <code>Ctrl</code>.</p>
-        <h2 id="titles">Titles</h2><p>Each entry can have an optional title. If you prefer a cleaner look without titles, hide them in <strong>Preferences → General → Hide Titles</strong>.</p>
+        <h2 id="titles">Titles</h2><p>Each entry can have an optional title. If you prefer a cleaner look without titles, hide them in <strong>Preferences → Writing → Hide Titles</strong>.</p>
         <h2 id="multiple-entries-per-day">Multiple Entries Per Day</h2><p>Each date can contain multiple separate entries. This is useful for writing at different times of day or keeping different threads of thought separate.</p>
         <ul>
         <li>When a date has more than one entry, an entry navigation bar appears above the editor.</li>
@@ -416,8 +416,21 @@
         <p><strong>Alignment toolbar</strong>: when the cursor is in an RTL paragraph, the alignment toolbar reflects the browser&#39;s actual rendering and shows <strong>Right</strong> as the active alignment (not Left). Clicking an alignment button writes an explicit <code>text-align</code> override as normal.</p>
         <p><strong>Persistence</strong>: the <code>dir</code> attribute is stored in the encrypted HTML content of each entry, so direction is preserved across save, export, and re-open cycles.</p>
         <h2 id="inserting-the-current-time">Inserting the Current Time</h2><p>The advanced toolbar includes a <strong>clock button</strong> that inserts the current time at the cursor position. Clicking the button opens a popup where you can choose between <strong>12-hour</strong> and <strong>24-hour</strong> format and select hours:minutes or hours:minutes:seconds precision. Both selections are remembered across sessions.</p>
-        <h2 id="editor-font">Editor Font</h2><p>You can change the font used in the editor body via <strong>Preferences → Writing → Editor font</strong>. Choose from five bundled open-source font families: Noto Sans, Source Sans 3, Noto Serif, JetBrains Mono, and Fira Mono. Fonts are loaded on demand and work fully offline — no network requests, no OS-level font enumeration.</p>
+        <h2 id="editor-font">Editor Font</h2><p>You can change the font used in the editor body via <strong>Preferences → Writing → Editor font</strong>. The selector shows two groups:</p>
+        <ul>
+        <li><strong>Bundled fonts</strong> — five open-source families (Noto Sans, Source Sans 3, Noto Serif, JetBrains Mono, Fira Mono) bundled with the app. Loaded on demand and work fully offline.</li>
+        <li><strong>Custom fonts</strong> — font files you have uploaded yourself (see below). Only families with at least a Regular weight appear here.</li>
+        </ul>
         <p>Font family and font size are also available as optional controls in the editor toolbar itself. Enable them in <strong>Preferences → Writing → Toolbar items</strong> — they appear as compact dropdowns directly in the toolbar and always stay in sync with the Preferences sliders.</p>
+        <h3 id="custom-fonts">Custom Fonts</h3><p>You can upload your own <code>.ttf</code>, <code>.otf</code>, <code>.woff</code>, or <code>.woff2</code> font files from <strong>Preferences → Advanced → Custom fonts</strong>.</p>
+        <ul>
+        <li><strong>Regular weight</strong> (required) and <strong>Bold weight</strong> (optional) are uploaded separately. The Bold field is optional; if you skip it, the browser will synthesize bold text from the Regular file, which may look slightly different from a true bold variant.</li>
+        <li>A <strong>Bold weight missing</strong> warning appears in the custom fonts list whenever a family has only a Regular weight uploaded.</li>
+        <li>Custom fonts are stored inside your journal (<code>diary.db</code>) as unencrypted blobs. They travel with the journal to other devices automatically and do not require a separate installation step.</li>
+        <li>Because fonts are stored in the journal, they increase the size of your database file and backups.</li>
+        <li>Uploading a new Regular or Bold for an existing family <strong>replaces</strong> the previous file for that weight.</li>
+        <li>Deleting a custom font family removes <strong>all weights</strong> immediately and, if that font was selected, the editor reverts to System Default right away — no Save needed.</li>
+        </ul>
         <h2 id="tags">Tags</h2><p>Each entry can have one or more tags. Tags appear as small chips below the editor body.</p>
         <ul>
         <li>Click <strong>+ Add tag</strong> to open a dropdown. Type to filter existing tags or create a new one; press <strong>Enter</strong> or click <strong>Create &quot;…&quot;</strong> to save.</li>
@@ -452,6 +465,7 @@
           <li class="docs-toc-h2"><a href="#right-to-left-and-bidirectional-text">Right-to-Left and Bidirectional Text</a></li>
           <li class="docs-toc-h2"><a href="#inserting-the-current-time">Inserting the Current Time</a></li>
           <li class="docs-toc-h2"><a href="#editor-font">Editor Font</a></li>
+          <li class="docs-toc-h3"><a href="#custom-fonts">Custom Fonts</a></li>
           <li class="docs-toc-h2"><a href="#tags">Tags</a></li>
           <li class="docs-toc-h3"><a href="#browsing-entries-by-tag">Browsing entries by tag</a></li>
           <li class="docs-toc-h2"><a href="#importing-a-markdown-file">Importing a Markdown File</a></li>

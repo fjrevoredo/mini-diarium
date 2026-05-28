@@ -235,7 +235,7 @@
       "@id": "https://mini-diarium.com/docs/preferences/#article",
       "headline": "Preferences",
       "description": "How to configure Mini Diarium: themes, auto-lock, editor settings, and more.",
-      "dateModified": "2026-05-24T00:00:00Z",
+      "dateModified": "2026-05-28T00:00:00Z",
       "keywords": "preferences, settings, theme, auto-lock, configuration",
       "publisher": {
         "@type": "Organization",
@@ -378,6 +378,7 @@
       </nav>
       <article class="blog-post prose" aria-label="Preferences">
         <h2 id="opening-preferences">Opening Preferences</h2><p>Press <code>Ctrl+,</code> (or <code>Cmd+,</code> on macOS) to open the Preferences dialog, or use the gear icon in the header.</p>
+        <p>Preferences are now <strong>close-only</strong>: there is no Save/Cancel footer. Reversible settings apply immediately as you change them.</p>
         <h2 id="general-settings">General Settings</h2><table>
         <thead>
         <tr>
@@ -391,11 +392,7 @@
         </tr>
         <tr>
         <td>Language</td>
-        <td>Interface language: English, Spanish, German, French, or Italian</td>
-        </tr>
-        <tr>
-        <td>First day of week</td>
-        <td>Sunday, Monday, or auto-detect from locale</td>
+        <td>Interface language: English, Spanish, German, French, Italian, or Hindi</td>
         </tr>
         <tr>
         <td>ESC key action</td>
@@ -410,6 +407,10 @@
         </tr>
         </thead>
         <tbody><tr>
+        <td>First day of week</td>
+        <td>Sunday, Monday, another weekday, or auto-detect from locale</td>
+        </tr>
+        <tr>
         <td>Allow future entries</td>
         <td>Write entries for dates that have not happened yet</td>
         </tr>
@@ -418,12 +419,16 @@
         <td>Remove the title field for a minimal, distraction-free look</td>
         </tr>
         <tr>
+        <td>Show entry timestamps</td>
+        <td>Display creation and last-updated timestamps on each entry</td>
+        </tr>
+        <tr>
         <td>Spellcheck</td>
         <td>Toggle browser spellcheck in the editor</td>
         </tr>
         <tr>
         <td>Toolbar items</td>
-        <td>Configure which formatting controls appear in the editor toolbar and their order. Each of the 17 controls (Headings, Underline, Strikethrough, Text color, Highlight color, Blockquote, Inline code, Bullet list, Numbered list, Horizontal rule, Insert image, Import Markdown, Insert timestamp, Text direction, Alignment, Font family, Font size) can be enabled/disabled individually and reordered with ↑/↓ buttons. &quot;Select all&quot; and &quot;Select none&quot; toggle all controls at once. Bold and Italic are always present at the start of the toolbar and cannot be removed. Font family and Font size are disabled by default — enable them to get compact dropdown pickers directly in the toolbar, always in sync with the Preferences sliders.</td>
+        <td>Configure which formatting controls appear in the editor toolbar and their order. Each of the 17 controls (Headings, Underline, Strikethrough, Text color, Highlight color, Blockquote, Inline code, Bullet list, Numbered list, Horizontal rule, Insert image, Import Markdown, Insert timestamp, Text direction, Alignment, Font family, Font size) can be enabled/disabled individually and reordered with ↑/↓ buttons. &quot;Select all&quot; and &quot;Select none&quot; toggle all controls at once. Bold and Italic are always present at the start of the toolbar and cannot be removed. Font family and Font size are disabled by default — enable them to get compact dropdown pickers directly in the toolbar, always in sync with these preferences.</td>
         </tr>
         <tr>
         <td>Editor font size</td>
@@ -431,21 +436,10 @@
         </tr>
         <tr>
         <td>Editor font</td>
-        <td>Choose a font family for the editor body from bundled options</td>
-        </tr>
-        <tr>
-        <td>Show entry timestamps</td>
-        <td>Display creation and last-updated timestamps on each entry</td>
-        </tr>
-        <tr>
-        <td>Timestamp format</td>
-        <td>Choose between 12-hour and 24-hour time display</td>
-        </tr>
-        <tr>
-        <td>Timestamp precision</td>
-        <td>Choose between hours:minutes or hours:minutes:seconds</td>
+        <td>Choose a font family for the editor body from bundled options or uploaded custom fonts</td>
         </tr>
         </tbody></table>
+        <p>Timestamp format and precision are configured from the editor timestamp popup (clock button), not from Preferences.</p>
         <h2 id="security-settings">Security Settings</h2><table>
         <thead>
         <tr>
@@ -467,9 +461,30 @@
         </tr>
         </tbody></table>
         <p>At least one authentication method must remain registered — removing the last one is blocked.</p>
-        <h2 id="storage-settings">Storage Settings</h2><p>You can change your journal&#39;s storage location from Preferences. The <code>diary.db</code> file will be physically moved to the new location, and future backups will go into <code>{new location}/backups/</code>.</p>
+        <h2 id="data-settings">Data Settings</h2><p>You can change your journal&#39;s storage location from Preferences. The <code>diary.db</code> file is moved to the new location, and future backups go into <code>{new location}/backups/</code>.</p>
+        <h2 id="advanced-settings">Advanced Settings</h2><table>
+        <thead>
+        <tr>
+        <th>Setting</th>
+        <th>Description</th>
+        </tr>
+        </thead>
+        <tbody><tr>
+        <td>Theme Overrides</td>
+        <td>Advanced JSON-based CSS token overrides (see below)</td>
+        </tr>
+        <tr>
+        <td>Custom fonts</td>
+        <td>Upload/remove custom <code>.ttf</code>, <code>.otf</code>, <code>.woff</code>, or <code>.woff2</code> font families used by the editor</td>
+        </tr>
+        <tr>
+        <td>Generate Debug Dump</td>
+        <td>Export a privacy-safe diagnostic JSON file</td>
+        </tr>
+        </tbody></table>
+        <p>Custom font upload and delete stay explicit button-driven actions. If you delete the currently selected custom font, the editor font falls back to System Default immediately.</p>
         <h2 id="theme-overrides-advanced">Theme Overrides (Advanced)</h2><p>Advanced users can customize the app&#39;s color palette by overriding individual CSS theme tokens.</p>
-        <p>Open <strong>Preferences → General</strong>, scroll to the <strong>Theme Overrides</strong> section. Enter a JSON object with <code>light</code> and/or <code>dark</code> keys, each mapping CSS variable names to color values:</p>
+        <p>Open <strong>Preferences → Advanced</strong>, then enter a JSON object with <code>light</code> and/or <code>dark</code> keys, each mapping CSS variable names to color values:</p>
         <pre><code class="language-json">{
           &quot;light&quot;: {
             &quot;--bg-primary&quot;: &quot;#fffde0&quot;,
@@ -481,8 +496,8 @@
           }
         }
         </code></pre>
-        <p>Click <strong>Apply Overrides</strong> to apply immediately. Click <strong>Reset to Default</strong> to remove all overrides and restore the built-in theme.</p>
-        <p>Overrides are saved and re-applied automatically every time you open the app. They layer on top of the selected built-in theme.</p>
+        <p>Valid JSON applies immediately and is saved automatically. If JSON is invalid, an inline error is shown and the last valid saved overrides remain active. <strong>Reset to Default</strong> clears overrides immediately.</p>
+        <p>Overrides are re-applied automatically every time you open the app. They layer on top of the selected built-in theme.</p>
         <h3 id="supported-token-families">Supported Token Families</h3><table>
         <thead>
         <tr>
@@ -520,7 +535,7 @@
         </tr>
         </tbody></table>
         <p>Only documented token names are accepted; unrecognized names are silently ignored. Auth and pre-unlock screens are not affected by theme overrides.</p>
-        <h2 id="reset-journal">Reset Journal</h2><p><strong>Preferences → Reset Journal</strong> deletes all entries and recreates the database. This is irreversible. Use export to make a backup before resetting.</p>
+        <h2 id="reset-journal">Reset Journal</h2><p><strong>Preferences → Data → Reset Journal</strong> deletes all entries and recreates the database. This is irreversible. Use export to make a backup before resetting.</p>
         
         
         <div class="docs-prevnext">
@@ -535,7 +550,8 @@
           <li class="docs-toc-h2"><a href="#general-settings">General Settings</a></li>
           <li class="docs-toc-h2"><a href="#writing-settings">Writing Settings</a></li>
           <li class="docs-toc-h2"><a href="#security-settings">Security Settings</a></li>
-          <li class="docs-toc-h2"><a href="#storage-settings">Storage Settings</a></li>
+          <li class="docs-toc-h2"><a href="#data-settings">Data Settings</a></li>
+          <li class="docs-toc-h2"><a href="#advanced-settings">Advanced Settings</a></li>
           <li class="docs-toc-h2"><a href="#theme-overrides-advanced">Theme Overrides (Advanced)</a></li>
           <li class="docs-toc-h3"><a href="#supported-token-families">Supported Token Families</a></li>
           <li class="docs-toc-h2"><a href="#reset-journal">Reset Journal</a></li>

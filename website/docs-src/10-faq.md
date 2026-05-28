@@ -1,9 +1,9 @@
 ---
 title: FAQ
 slug: faq
-description: Frequently asked questions about Mini Diarium, encryption, data privacy, and troubleshooting.
+description: Answers to common questions about Mini Diarium: password recovery, encryption model, cross-device sync, key files, authentication slots, and mobile support.
 order: 11
-updated: 2026-05-09
+updated: 2026-05-29
 tags: FAQ, troubleshooting, encryption, privacy, data
 ---
 
