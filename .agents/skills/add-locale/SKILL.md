@@ -19,7 +19,7 @@ description: |
 
 - Read `src/i18n/locales/en.ts` — canonical source of truth
 - Read `src/i18n/locales/es.json` as structural reference
-- Create `{code}.json` with **all 456 keys** translated
+- Create `{code}.json` with **all keys** translated (run `validate:locales` to confirm the exact count — it changes with each release)
 - Preserve exact key paths and nesting from en.ts
 - Keep `{{ name }}`, `{{ count }}` placeholders unchanged
 - Plural keys (`_one`/`_other`): locale-appropriate forms (e.g., French: `{{ count }} mot` / `{{ count }} mots`)
@@ -96,7 +96,7 @@ If `validate:locales` produces no output (known issue with `cmd.exe /c bun run .
 ```bash
 npx tsx scripts/validate-locales.ts
 ```
-Expected output: `validate-locales: [{code}.json] OK (456 keys)`
+Expected output: `validate-locales: [{code}.json] OK (N keys)` where N is the current key count.
 
 ## Critical Pitfalls (most common failures)
 
@@ -108,3 +108,4 @@ Expected output: `validate-locales: [{code}.json] OK (456 keys)`
 6. **Date formatting** — `preferences().language` is the 2-letter code (e.g., `'fr'`), NOT `'fr-FR'`; browser maps automatically
 7. **Missing Rust menu arm** — the most commonly forgotten step. `labels_for_locale()` in `src-tauri/src/commands/menu.rs` silently falls back to English if no arm is added for the new locale; there is no compile error or runtime warning.
 8. **Silent script output** — `bun run validate:locales` and `bun run sync-languages` may produce no visible output when run via `cmd.exe /c` in this WSL-over-Windows environment. Run `npx tsx scripts/validate-locales.ts` and `npx tsx scripts/sync-languages.ts` directly to confirm they executed and see their output.
+9. **ASCII double-quotes inside JSON string values** — JSON string delimiters are `"` (U+0022). If a translation value contains a `"` (U+0022) character, it will silently terminate the string and corrupt the JSON. When a language conventionally quotes terms with `„…"` or `"…"`, verify the inner characters are Unicode typographic quotes (U+201C `"`, U+201D `"`, U+201E `„`), not ASCII U+0022. Safest approach: avoid quoting UI terms in translation strings entirely (e.g., `gehen Sie zum Tab Erweitert` instead of `gehen Sie zum Tab „Erweitert"`). If the Edit tool produces JSON parse errors on a line you just wrote, use PowerShell to inspect the raw bytes: `sed -n 'Np' file.json | xxd | head` — ASCII `22` hex is the problem character.

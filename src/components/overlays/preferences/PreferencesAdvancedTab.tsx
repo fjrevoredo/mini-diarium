@@ -89,7 +89,7 @@ export default function PreferencesAdvancedTab(props: TabProps) {
     >
       {/* Theme Overrides */}
       <div>
-        <h3 class="text-sm font-medium text-primary mb-1">
+        <h3 class="text-sm font-medium text-primary mb-3">
           {t('prefs.advanced.themeOverridesTitle')}
         </h3>
         <p class="text-xs text-tertiary mb-3 leading-relaxed">
@@ -123,7 +123,7 @@ export default function PreferencesAdvancedTab(props: TabProps) {
         </div>
       </div>
       <div class="border-t border-primary pt-4 mt-4">
-        <h3 class="text-sm font-medium text-primary mb-1">
+        <h3 class="text-sm font-medium text-primary mb-3">
           {t('prefs.advanced.diagnosticsTitle')}
         </h3>
         <p class="text-xs text-tertiary mb-3 leading-relaxed">

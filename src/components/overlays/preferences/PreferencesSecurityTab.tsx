@@ -116,7 +116,7 @@ export default function PreferencesSecurityTab(props: TabProps) {
                 onChange={(e) => handleToggleRequireAllAuth(e.currentTarget.checked)}
                 class="h-4 w-4 rounded border-primary text-blue-600 focus:ring-blue-500"
               />
-              <span class="text-sm text-primary">{t('prefs.security.requireAllAuthLabel')}</span>
+              <span class="text-sm text-secondary">{t('prefs.security.requireAllAuthLabel')}</span>
             </label>
             <Show when={requireAllAuthError()}>
               <p class="mt-2 text-sm text-error">{requireAllAuthError()}</p>
@@ -141,7 +141,7 @@ export default function PreferencesSecurityTab(props: TabProps) {
               onChange={(e) => setPreferences({ autoLockEnabled: e.currentTarget.checked })}
               class="h-4 w-4 rounded border-primary text-blue-600 focus:ring-blue-500"
             />
-            <span class="text-sm text-primary">{t('prefs.security.autoLockLabel')}</span>
+            <span class="text-sm text-secondary">{t('prefs.security.autoLockLabel')}</span>
           </label>
           <Show when={preferences().autoLockEnabled}>
             <div class="flex items-center gap-2 pl-7">

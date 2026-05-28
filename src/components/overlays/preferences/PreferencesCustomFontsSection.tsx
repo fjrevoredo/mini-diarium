@@ -109,7 +109,7 @@ export default function PreferencesCustomFontsSection(props: PreferencesCustomFo
 
   return (
     <div>
-      <h3 class="text-sm font-medium text-secondary mb-1">{t('prefs.writing.customFontsLabel')}</h3>
+      <h3 class="block text-sm font-medium text-secondary mb-2">{t('prefs.writing.customFontsLabel')}</h3>
       <p class="text-xs text-tertiary leading-relaxed mb-3">{t('prefs.writing.customFontsHint')}</p>
 
       <For each={customFonts() ?? []}>
@@ -194,7 +194,7 @@ export default function PreferencesCustomFontsSection(props: PreferencesCustomFo
         </div>
 
         {fontManagerError() && (
-          <p class="text-xs text-red-600 dark:text-red-400" role="alert">
+          <p class="text-xs text-error" role="alert">
             {fontManagerError()}
           </p>
         )}
@@ -203,7 +203,7 @@ export default function PreferencesCustomFontsSection(props: PreferencesCustomFo
           type="button"
           onClick={handleAddFont}
           disabled={isUploading()}
-          class="text-sm px-3 py-1.5 bg-blue-600 text-white rounded hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          class="px-4 py-2 text-sm font-medium interactive-primary rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
           data-testid="custom-font-add-button"
         >
           {t('prefs.writing.customFontAddButton')}
