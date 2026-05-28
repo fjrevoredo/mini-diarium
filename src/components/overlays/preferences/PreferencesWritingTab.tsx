@@ -1,14 +1,13 @@
-import { createSignal, createMemo, createEffect, For, onCleanup, onMount } from 'solid-js';
+import { createMemo, For } from 'solid-js';
 import { ChevronUp, ChevronDown } from 'lucide-solid';
 import { useI18n } from '../../../i18n';
 import { preferences, setPreferences } from '../../../state/preferences';
 import type { ToolbarItem, ToolbarItemKey } from '../../../state/preferences';
-import { usePreferencesShell, type TabProps } from './shared';
+import type { TabProps } from './shared';
 import PreferencesFontFamilyField from './PreferencesFontFamilyField';
 
 export default function PreferencesWritingTab(_props: TabProps) {
   const t = useI18n();
-  const shell = usePreferencesShell();
 
   const FIRST_DAY_OPTIONS = createMemo(() => [
     { value: 'null', label: t('prefs.writing.firstDaySystem') },
@@ -44,76 +43,37 @@ export default function PreferencesWritingTab(_props: TabProps) {
       }) satisfies Record<ToolbarItemKey, string>,
   );
 
-  const [localAllowFutureEntries, setLocalAllowFutureEntries] = createSignal(
-    preferences().allowFutureEntries,
-  );
-  const [localFirstDayOfWeek, setLocalFirstDayOfWeek] = createSignal<string>(
-    preferences().firstDayOfWeek === null ? 'null' : String(preferences().firstDayOfWeek),
-  );
-  const [localHideTitles, setLocalHideTitles] = createSignal(preferences().hideTitles);
-  const [localEnableSpellcheck, setLocalEnableSpellcheck] = createSignal(
-    preferences().enableSpellcheck,
-  );
-  const [localToolbarItems, setLocalToolbarItems] = createSignal<ToolbarItem[]>(
-    preferences().toolbarItems,
-  );
-  const [localEditorFontSize, setLocalEditorFontSize] = createSignal(preferences().editorFontSize);
-  const [localEditorFontFamily, setLocalEditorFontFamily] = createSignal(
-    preferences().editorFontFamily ?? '',
-  );
-  const [localShowEntryTimestamps, setLocalShowEntryTimestamps] = createSignal(
-    preferences().showEntryTimestamps,
-  );
+  const toolbarItems = () => preferences().toolbarItems;
 
-  createEffect(() => {
-    if (preferences().editorFontFamily === null) {
-      setLocalEditorFontFamily('');
-    }
-  });
+  const setToolbarItems = (items: ToolbarItem[]) => {
+    setPreferences({ toolbarItems: items });
+  };
 
-  const selectAll = () =>
-    setLocalToolbarItems((prev) => prev.map((item) => ({ ...item, enabled: true })));
-  const selectNone = () =>
-    setLocalToolbarItems((prev) => prev.map((item) => ({ ...item, enabled: false })));
+  const selectAll = () => {
+    setToolbarItems(toolbarItems().map((item) => ({ ...item, enabled: true })));
+  };
+
+  const selectNone = () => {
+    setToolbarItems(toolbarItems().map((item) => ({ ...item, enabled: false })));
+  };
 
   const moveUp = (i: number) => {
-    const arr = [...localToolbarItems()];
+    if (i <= 0) return;
+    const arr = [...toolbarItems()];
     [arr[i - 1], arr[i]] = [arr[i], arr[i - 1]];
-    setLocalToolbarItems(arr);
+    setToolbarItems(arr);
   };
 
   const moveDown = (i: number) => {
-    const arr = [...localToolbarItems()];
+    if (i >= toolbarItems().length - 1) return;
+    const arr = [...toolbarItems()];
     [arr[i], arr[i + 1]] = [arr[i + 1], arr[i]];
-    setLocalToolbarItems(arr);
+    setToolbarItems(arr);
   };
 
   const toggleItem = (i: number, enabled: boolean) => {
-    setLocalToolbarItems((prev) =>
-      prev.map((item, idx) => (idx === i ? { ...item, enabled } : item)),
-    );
+    setToolbarItems(toolbarItems().map((item, idx) => (idx === i ? { ...item, enabled } : item)));
   };
-
-  onMount(() => {
-    const unregister = shell.registerCommit(
-      // Invoked imperatively from the shell's Save click handler (tracked scope);
-      // signal reads inside are intentional snapshots of the buffered draft.
-      // eslint-disable-next-line solid/reactivity
-      () => {
-        setPreferences({
-          allowFutureEntries: localAllowFutureEntries(),
-          firstDayOfWeek: localFirstDayOfWeek() === 'null' ? null : Number(localFirstDayOfWeek()),
-          hideTitles: localHideTitles(),
-          enableSpellcheck: localEnableSpellcheck(),
-          toolbarItems: localToolbarItems(),
-          editorFontSize: Math.min(24, Math.max(12, Number(localEditorFontSize()))),
-          editorFontFamily: localEditorFontFamily() || null,
-          showEntryTimestamps: localShowEntryTimestamps(),
-        });
-      },
-    );
-    onCleanup(unregister);
-  });
 
   return (
     <div
@@ -130,8 +90,15 @@ export default function PreferencesWritingTab(_props: TabProps) {
         </label>
         <select
           id="pref-first-day"
-          value={localFirstDayOfWeek()}
-          onChange={(e) => setLocalFirstDayOfWeek(e.currentTarget.value)}
+          value={
+            preferences().firstDayOfWeek === null ? 'null' : String(preferences().firstDayOfWeek)
+          }
+          onChange={(e) =>
+            setPreferences({
+              firstDayOfWeek:
+                e.currentTarget.value === 'null' ? null : Number(e.currentTarget.value),
+            })
+          }
           class="w-full px-3 py-2 border border-primary bg-primary text-primary rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
         >
           <For each={FIRST_DAY_OPTIONS()}>
@@ -146,8 +113,8 @@ export default function PreferencesWritingTab(_props: TabProps) {
           <input
             type="checkbox"
             id="allow-future"
-            checked={localAllowFutureEntries()}
-            onChange={(e) => setLocalAllowFutureEntries(e.currentTarget.checked)}
+            checked={preferences().allowFutureEntries}
+            onChange={(e) => setPreferences({ allowFutureEntries: e.currentTarget.checked })}
             class="h-4 w-4 rounded border-primary text-blue-600 focus:ring-blue-500"
           />
           <label for="allow-future" class="ml-3 text-sm text-secondary">
@@ -165,8 +132,8 @@ export default function PreferencesWritingTab(_props: TabProps) {
           <input
             type="checkbox"
             id="hide-titles"
-            checked={localHideTitles()}
-            onChange={(e) => setLocalHideTitles(e.currentTarget.checked)}
+            checked={preferences().hideTitles}
+            onChange={(e) => setPreferences({ hideTitles: e.currentTarget.checked })}
             class="h-4 w-4 rounded border-primary text-blue-600 focus:ring-blue-500"
           />
           <label for="hide-titles" class="ml-3 text-sm text-secondary">
@@ -184,8 +151,8 @@ export default function PreferencesWritingTab(_props: TabProps) {
           <input
             type="checkbox"
             id="show-timestamps"
-            checked={localShowEntryTimestamps()}
-            onChange={(e) => setLocalShowEntryTimestamps(e.currentTarget.checked)}
+            checked={preferences().showEntryTimestamps}
+            onChange={(e) => setPreferences({ showEntryTimestamps: e.currentTarget.checked })}
             class="h-4 w-4 rounded border-primary text-blue-600 focus:ring-blue-500"
           />
           <label for="show-timestamps" class="ml-3 text-sm text-secondary">
@@ -203,8 +170,8 @@ export default function PreferencesWritingTab(_props: TabProps) {
           <input
             type="checkbox"
             id="enable-spellcheck"
-            checked={localEnableSpellcheck()}
-            onChange={(e) => setLocalEnableSpellcheck(e.currentTarget.checked)}
+            checked={preferences().enableSpellcheck}
+            onChange={(e) => setPreferences({ enableSpellcheck: e.currentTarget.checked })}
             class="h-4 w-4 rounded border-primary text-blue-600 focus:ring-blue-500"
           />
           <label for="enable-spellcheck" class="ml-3 text-sm text-secondary">
@@ -239,7 +206,7 @@ export default function PreferencesWritingTab(_props: TabProps) {
           {t('prefs.writing.toolbarItemsHint')}
         </p>
         <div class="border border-primary rounded-md divide-y divide-primary">
-          <For each={localToolbarItems()}>
+          <For each={toolbarItems()}>
             {(item, index) => (
               <div class="flex items-center gap-2 px-3 py-2">
                 <div class="flex flex-col">
@@ -254,7 +221,7 @@ export default function PreferencesWritingTab(_props: TabProps) {
                   </button>
                   <button
                     type="button"
-                    disabled={index() === localToolbarItems().length - 1}
+                    disabled={index() === toolbarItems().length - 1}
                     onClick={() => moveDown(index())}
                     class="p-0.5 text-tertiary hover:text-primary disabled:opacity-30 disabled:cursor-not-allowed"
                     aria-label={t('prefs.writing.toolbarItemMoveDown')}
@@ -288,7 +255,7 @@ export default function PreferencesWritingTab(_props: TabProps) {
             {t('prefs.writing.fontSizeLabel')}
           </label>
           <span class="text-sm text-tertiary">
-            {localEditorFontSize()} {t('prefs.writing.fontSizePxSuffix')}
+            {preferences().editorFontSize} {t('prefs.writing.fontSizePxSuffix')}
           </span>
         </div>
         <input
@@ -297,8 +264,12 @@ export default function PreferencesWritingTab(_props: TabProps) {
           min="12"
           max="24"
           step="1"
-          value={localEditorFontSize()}
-          onInput={(e) => setLocalEditorFontSize(Number(e.currentTarget.value))}
+          value={preferences().editorFontSize}
+          onInput={(e) =>
+            setPreferences({
+              editorFontSize: Math.min(24, Math.max(12, Number(e.currentTarget.value))),
+            })
+          }
           class="w-full accent-blue-500"
         />
         <div class="flex justify-between mt-1">
@@ -308,8 +279,8 @@ export default function PreferencesWritingTab(_props: TabProps) {
       </div>
 
       <PreferencesFontFamilyField
-        value={localEditorFontFamily()}
-        onChange={setLocalEditorFontFamily}
+        value={preferences().editorFontFamily ?? ''}
+        onChange={(value) => setPreferences({ editorFontFamily: value || null })}
       />
     </div>
   );

@@ -46,7 +46,7 @@ src/
 │   ├── overlays/
 │   │   ├── GoToDateOverlay.tsx        # Date picker dialog
 │   │   ├── preferences/               # Settings dialog split by tab
-│   │   │   ├── PreferencesOverlay.tsx         # Shell: dialog + tab list + save/cancel footer
+│   │   │   ├── PreferencesOverlay.tsx         # Shell: dialog + tab list (close-only)
 │   │   │   ├── PreferencesGeneralTab.tsx      # Theme, language, ESC-key action
 │   │   │   ├── PreferencesWritingTab.tsx      # Calendar/editor writing preferences
 │   │   │   ├── PreferencesSecurityTab.tsx     # Auth methods shell + require-all-auth + auto-lock
@@ -55,8 +55,8 @@ src/
 │   │   │   ├── AddKeypairForm.tsx             # Generate + register keypair form
 │   │   │   ├── ChangePasswordForm.tsx         # Change password form (shown when password slot exists)
 │   │   │   ├── PreferencesDataTab.tsx         # Journal directory change, reset journal
-│   │   │   ├── PreferencesAdvancedTab.tsx     # Theme overrides editor, debug dump
-│   │   │   └── shared.ts                      # Tab type, TabProps, PreferencesShellContext
+│   │   │   ├── PreferencesAdvancedTab.tsx     # Theme overrides (auto-apply), custom fonts, debug dump
+│   │   │   └── shared.ts                      # Tab type + TabProps
 │   │   ├── StatsOverlay.tsx           # Statistics display
 │   │   ├── ImportOverlay.tsx          # Import format selector + file picker
 │   │   ├── ExportOverlay.tsx          # Export format selector + file picker

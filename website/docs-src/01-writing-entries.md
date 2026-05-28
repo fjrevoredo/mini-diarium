@@ -25,7 +25,7 @@ The toolbar above the editor provides buttons for each formatting option. Standa
 
 ## Titles
 
-Each entry can have an optional title. If you prefer a cleaner look without titles, hide them in **Preferences → General → Hide Titles**.
+Each entry can have an optional title. If you prefer a cleaner look without titles, hide them in **Preferences → Writing → Hide Titles**.
 
 ## Multiple Entries Per Day
 
@@ -85,7 +85,7 @@ Font family and font size are also available as optional controls in the editor 
 
 ### Custom Fonts
 
-You can upload your own `.ttf`, `.otf`, `.woff`, or `.woff2` font files from **Preferences → Writing → Custom fonts**.
+You can upload your own `.ttf`, `.otf`, `.woff`, or `.woff2` font files from **Preferences → Advanced → Custom fonts**.
 
 - **Regular weight** (required) and **Bold weight** (optional) are uploaded separately. The Bold field is optional; if you skip it, the browser will synthesize bold text from the Regular file, which may look slightly different from a true bold variant.
 - A **Bold weight missing** warning appears in the custom fonts list whenever a family has only a Regular weight uploaded.

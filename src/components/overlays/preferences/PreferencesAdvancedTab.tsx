@@ -22,7 +22,6 @@ export default function PreferencesAdvancedTab(props: TabProps) {
   // Theme overrides state
   const [localOverridesJson, setLocalOverridesJson] = createSignal('{}');
   const [overridesParseError, setOverridesParseError] = createSignal<string | null>(null);
-  const [overridesApplied, setOverridesApplied] = createSignal(false);
 
   // Debug dump state
   const [dumpGenerating, setDumpGenerating] = createSignal(false);
@@ -33,32 +32,28 @@ export default function PreferencesAdvancedTab(props: TabProps) {
     if (props.isOpen()) {
       setLocalOverridesJson(getThemeOverridesJson());
       setOverridesParseError(null);
-      setOverridesApplied(false);
       setDumpGenerating(false);
       setDumpStatus('idle');
       setDumpError('');
     }
   });
 
-  const handleApplyOverrides = () => {
-    const parsed = parseOverridesJson(localOverridesJson());
+  const handleOverridesInput = (nextJson: string) => {
+    setLocalOverridesJson(nextJson);
+    const parsed = parseOverridesJson(nextJson);
     if (parsed === null) {
       setOverridesParseError(t('prefs.advanced.overridesParseError'));
-      setOverridesApplied(false);
       return;
     }
     saveThemeOverrides(parsed);
     applyThemeOverrides(getActiveTheme());
-    setLocalOverridesJson(getThemeOverridesJson());
     setOverridesParseError(null);
-    setOverridesApplied(true);
   };
 
   const handleResetOverrides = () => {
     resetThemeOverrides();
     setLocalOverridesJson('{}');
     setOverridesParseError(null);
-    setOverridesApplied(false);
   };
 
   const handleGenerateDebugDump = async () => {
@@ -111,27 +106,13 @@ export default function PreferencesAdvancedTab(props: TabProps) {
           rows="6"
           class="w-full text-xs font-mono bg-tertiary text-primary border border-primary rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-y"
           value={localOverridesJson()}
-          onInput={(e) => {
-            setLocalOverridesJson(e.currentTarget.value);
-            setOverridesApplied(false);
-            setOverridesParseError(null);
-          }}
+          onInput={(e) => handleOverridesInput(e.currentTarget.value)}
           spellcheck={false}
         />
         <Show when={overridesParseError() !== null}>
           <p class="text-xs text-error mt-1">{overridesParseError()}</p>
         </Show>
-        <Show when={overridesApplied()}>
-          <p class="text-xs text-success mt-1">{t('prefs.advanced.overridesApplied')}</p>
-        </Show>
         <div class="flex gap-2 mt-2">
-          <button
-            type="button"
-            onClick={handleApplyOverrides}
-            class="px-3 py-1.5 text-sm font-medium interactive-primary rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-          >
-            {t('prefs.advanced.applyOverrides')}
-          </button>
           <button
             type="button"
             onClick={handleResetOverrides}

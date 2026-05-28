@@ -37,7 +37,7 @@ TODO entry format:
 
 ## Medium Priority
 
-- [ ] **TODO-0040: Unify preferences save/cancel lifecycle** — remove redundant Save/Cancel buttons from preferences overlays and replace with a single Close icon; ensure all preference changes apply immediately and are reversible where expected; audit every preference toggle/input for consistency with the new no-confirmation UX
+- [x] **TODO-0040: Unify preferences save/cancel lifecycle** — remove redundant Save/Cancel buttons from preferences overlays and replace with a single Close icon; ensure all preference changes apply immediately and are reversible where expected; audit every preference toggle/input for consistency with the new no-confirmation UX
 
 ---
 

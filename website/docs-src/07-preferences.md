@@ -11,29 +11,30 @@ tags: preferences, settings, theme, auto-lock, configuration
 
 Press `Ctrl+,` (or `Cmd+,` on macOS) to open the Preferences dialog, or use the gear icon in the header.
 
+Preferences are now **close-only**: there is no Save/Cancel footer. Reversible settings apply immediately as you change them.
+
 ## General Settings
 
 | Setting | Description |
 |---------|-------------|
 | Theme | Light, dark, or follow system (auto) |
-| Language | Interface language: English, Spanish, German, French, or Italian |
-| First day of week | Sunday, Monday, or auto-detect from locale |
+| Language | Interface language: English, Spanish, German, French, Italian, or Hindi |
 | ESC key action | Do nothing or quit the app when pressing Escape |
 
 ## Writing Settings
 
 | Setting | Description |
 |---------|-------------|
+| First day of week | Sunday, Monday, another weekday, or auto-detect from locale |
 | Allow future entries | Write entries for dates that have not happened yet |
 | Hide titles | Remove the title field for a minimal, distraction-free look |
-| Spellcheck | Toggle browser spellcheck in the editor |
-| Toolbar items | Configure which formatting controls appear in the editor toolbar and their order. Each of the 17 controls (Headings, Underline, Strikethrough, Text color, Highlight color, Blockquote, Inline code, Bullet list, Numbered list, Horizontal rule, Insert image, Import Markdown, Insert timestamp, Text direction, Alignment, Font family, Font size) can be enabled/disabled individually and reordered with ↑/↓ buttons. "Select all" and "Select none" toggle all controls at once. Bold and Italic are always present at the start of the toolbar and cannot be removed. Font family and Font size are disabled by default — enable them to get compact dropdown pickers directly in the toolbar, always in sync with the Preferences sliders. |
-| Editor font size | Adjust the body text size in the editor (12–24 px) |
-| Editor font | Choose a font family for the editor body from bundled options or custom fonts you have uploaded |
-| Custom fonts | Upload `.ttf`, `.otf`, `.woff`, or `.woff2` font files (Regular and Bold separately). Fonts are stored inside the journal — they travel with it to other devices but also increase backup size. Add and remove actions are immediate; choosing the active font follows the normal Save/Cancel flow |
 | Show entry timestamps | Display creation and last-updated timestamps on each entry |
-| Timestamp format | Choose between 12-hour and 24-hour time display |
-| Timestamp precision | Choose between hours:minutes or hours:minutes:seconds |
+| Spellcheck | Toggle browser spellcheck in the editor |
+| Toolbar items | Configure which formatting controls appear in the editor toolbar and their order. Each of the 17 controls (Headings, Underline, Strikethrough, Text color, Highlight color, Blockquote, Inline code, Bullet list, Numbered list, Horizontal rule, Insert image, Import Markdown, Insert timestamp, Text direction, Alignment, Font family, Font size) can be enabled/disabled individually and reordered with ↑/↓ buttons. "Select all" and "Select none" toggle all controls at once. Bold and Italic are always present at the start of the toolbar and cannot be removed. Font family and Font size are disabled by default — enable them to get compact dropdown pickers directly in the toolbar, always in sync with these preferences. |
+| Editor font size | Adjust the body text size in the editor (12–24 px) |
+| Editor font | Choose a font family for the editor body from bundled options or uploaded custom fonts |
+
+Timestamp format and precision are configured from the editor timestamp popup (clock button), not from Preferences.
 
 ## Security Settings
 
@@ -45,15 +46,25 @@ Press `Ctrl+,` (or `Cmd+,` on macOS) to open the Preferences dialog, or use the 
 
 At least one authentication method must remain registered — removing the last one is blocked.
 
-## Storage Settings
+## Data Settings
 
-You can change your journal's storage location from Preferences. The `diary.db` file will be physically moved to the new location, and future backups will go into `{new location}/backups/`.
+You can change your journal's storage location from Preferences. The `diary.db` file is moved to the new location, and future backups go into `{new location}/backups/`.
+
+## Advanced Settings
+
+| Setting | Description |
+|---------|-------------|
+| Theme Overrides | Advanced JSON-based CSS token overrides (see below) |
+| Custom fonts | Upload/remove custom `.ttf`, `.otf`, `.woff`, or `.woff2` font families used by the editor |
+| Generate Debug Dump | Export a privacy-safe diagnostic JSON file |
+
+Custom font upload and delete stay explicit button-driven actions. If you delete the currently selected custom font, the editor font falls back to System Default immediately.
 
 ## Theme Overrides (Advanced)
 
 Advanced users can customize the app's color palette by overriding individual CSS theme tokens.
 
-Open **Preferences → General**, scroll to the **Theme Overrides** section. Enter a JSON object with `light` and/or `dark` keys, each mapping CSS variable names to color values:
+Open **Preferences → Advanced**, then enter a JSON object with `light` and/or `dark` keys, each mapping CSS variable names to color values:
 
 ```json
 {
@@ -68,9 +79,9 @@ Open **Preferences → General**, scroll to the **Theme Overrides** section. Ent
 }
 ```
 
-Click **Apply Overrides** to apply immediately. Click **Reset to Default** to remove all overrides and restore the built-in theme.
+Valid JSON applies immediately and is saved automatically. If JSON is invalid, an inline error is shown and the last valid saved overrides remain active. **Reset to Default** clears overrides immediately.
 
-Overrides are saved and re-applied automatically every time you open the app. They layer on top of the selected built-in theme.
+Overrides are re-applied automatically every time you open the app. They layer on top of the selected built-in theme.
 
 ### Supported Token Families
 
@@ -88,4 +99,4 @@ Only documented token names are accepted; unrecognized names are silently ignore
 
 ## Reset Journal
 
-**Preferences → Reset Journal** deletes all entries and recreates the database. This is irreversible. Use export to make a backup before resetting.
+**Preferences → Data → Reset Journal** deletes all entries and recreates the database. This is irreversible. Use export to make a backup before resetting.

@@ -2,7 +2,6 @@ import { describe, it, expect, vi, afterEach } from 'vitest';
 import { screen, fireEvent } from '@solidjs/testing-library';
 import { renderWithI18n } from '../../../test/i18n-test-utils';
 import { createSignal } from 'solid-js';
-import { PreferencesShellContext } from './shared';
 import PreferencesSecurityTab from './PreferencesSecurityTab';
 
 const { mockPeekAuthSlotTypes } = vi.hoisted(() => ({
@@ -66,25 +65,9 @@ vi.mock('../../../state/preferences', () => ({
   setPreferences: mockSetPreferences,
 }));
 
-let capturedCommit: (() => void) | null = null;
-
 function renderTab() {
   const [isOpen] = createSignal(true);
-  capturedCommit = null;
-  return renderWithI18n(() => (
-    <PreferencesShellContext.Provider
-      value={{
-        registerCommit: vi.fn((fn: () => void) => {
-          capturedCommit = fn;
-          return () => {
-            capturedCommit = null;
-          };
-        }),
-      }}
-    >
-      <PreferencesSecurityTab isOpen={isOpen} onClose={vi.fn()} />
-    </PreferencesShellContext.Provider>
-  ));
+  return renderWithI18n(() => <PreferencesSecurityTab isOpen={isOpen} onClose={vi.fn()} />);
 }
 
 describe('PreferencesSecurityTab — conditional sections', () => {
@@ -189,7 +172,6 @@ describe('PreferencesSecurityTab — require-all-auth toggle', () => {
   });
 
   it('displays a sanitised error when setRequireAllAuth rejects', async () => {
-    // 'Journal must be unlocked' maps to errors.journalNotUnlocked → 'Please unlock your journal first.'
     mockJournals.mockReturnValue([]);
     mockActiveJournalId.mockReturnValue(null);
     mockSetRequireAllAuth.mockRejectedValueOnce(new Error('Journal must be unlocked'));
@@ -206,7 +188,7 @@ describe('PreferencesSecurityTab — require-all-auth toggle', () => {
   });
 });
 
-describe('PreferencesSecurityTab — auto-lock save flow', () => {
+describe('PreferencesSecurityTab — auto-lock immediate persistence', () => {
   afterEach(() => {
     vi.clearAllMocks();
     mockPreferences.mockReturnValue({ autoLockEnabled: false, autoLockTimeout: 300 });
@@ -226,41 +208,37 @@ describe('PreferencesSecurityTab — auto-lock save flow', () => {
     expect(checkbox).toBeChecked();
   });
 
-  it('toggling the auto-lock checkbox flips the local UI state immediately', () => {
-    renderTab();
-    const checkbox = screen.getByRole('checkbox', {
-      name: /lock after inactivity/i,
-    }) as HTMLInputElement;
-    expect(checkbox).not.toBeChecked();
-    fireEvent.click(checkbox);
-    expect(checkbox).toBeChecked();
-  });
-
-  it('commits autoLockEnabled: true after the user checks the box and Save is clicked', () => {
+  it('persists autoLockEnabled immediately when toggled', () => {
     renderTab();
     const checkbox = screen.getByRole('checkbox', { name: /lock after inactivity/i });
     fireEvent.click(checkbox);
-
-    expect(capturedCommit).not.toBeNull();
-    capturedCommit!();
-
     expect(mockSetPreferences).toHaveBeenCalledWith(
       expect.objectContaining({ autoLockEnabled: true }),
     );
   });
 
-  it('commits the updated autoLockTimeout when the user edits it', () => {
+  it('persists valid timeout input immediately', () => {
+    mockPreferences.mockReturnValue({ autoLockEnabled: true, autoLockTimeout: 300 });
     renderTab();
-    const checkbox = screen.getByRole('checkbox', { name: /lock after inactivity/i });
-    fireEvent.click(checkbox);
+
     const timeoutInput = screen.getByRole('spinbutton') as HTMLInputElement;
     fireEvent.input(timeoutInput, { target: { value: '120' } });
 
-    expect(capturedCommit).not.toBeNull();
-    capturedCommit!();
+    expect(mockSetPreferences).toHaveBeenCalledWith(
+      expect.objectContaining({ autoLockTimeout: 120 }),
+    );
+  });
+
+  it('clamps timeout to 999 on blur for out-of-range input', () => {
+    mockPreferences.mockReturnValue({ autoLockEnabled: true, autoLockTimeout: 300 });
+    renderTab();
+
+    const timeoutInput = screen.getByRole('spinbutton') as HTMLInputElement;
+    fireEvent.input(timeoutInput, { target: { value: '1000' } });
+    fireEvent.blur(timeoutInput, { target: { value: '1000' } });
 
     expect(mockSetPreferences).toHaveBeenCalledWith(
-      expect.objectContaining({ autoLockEnabled: true, autoLockTimeout: 120 }),
+      expect.objectContaining({ autoLockTimeout: 999 }),
     );
   });
 });

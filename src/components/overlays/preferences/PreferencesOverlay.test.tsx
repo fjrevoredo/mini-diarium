@@ -4,7 +4,7 @@ import { renderWithI18n } from '../../../test/i18n-test-utils';
 import * as authModule from '../../../state/auth';
 import PreferencesOverlay from './PreferencesOverlay';
 
-// Stub child tabs so tests focus on shell behaviour (tab list, save/cancel footer)
+// Stub child tabs so tests focus on shell behaviour.
 vi.mock('./PreferencesGeneralTab', () => ({ default: () => null }));
 vi.mock('./PreferencesWritingTab', () => ({ default: () => null }));
 vi.mock('./PreferencesSecurityTab', () => ({ default: () => null }));
@@ -53,17 +53,17 @@ describe('PreferencesOverlay', () => {
     expect(screen.getByRole('tab', { name: 'Advanced' })).not.toBeDisabled();
   });
 
-  it('clicking Save calls onClose', () => {
-    const onClose = vi.fn();
-    renderWithI18n(() => <PreferencesOverlay isOpen={true} onClose={onClose} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Save' }));
-    expect(onClose).toHaveBeenCalledTimes(1);
+  it('renders a close button and no Save/Cancel footer buttons', () => {
+    renderWithI18n(() => <PreferencesOverlay isOpen={true} onClose={vi.fn()} />);
+    expect(screen.getByRole('button', { name: 'Dismiss' })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Save' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'Cancel' })).not.toBeInTheDocument();
   });
 
-  it('clicking Cancel calls onClose', () => {
+  it('clicking the close button calls onClose', () => {
     const onClose = vi.fn();
     renderWithI18n(() => <PreferencesOverlay isOpen={true} onClose={onClose} />);
-    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Dismiss' }));
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 });
