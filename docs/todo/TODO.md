@@ -13,7 +13,7 @@ TODO entry format:
 - After creating a new TODO, update the `Latest TODO ID` marker to reflect the new highest ID
 - Use the `todo-manager` skill (`.agents/skills/todo-manager/`) for creation, tracking, archival, and validation
 
-**Latest TODO ID: TODO-0041** — next new TODO should be TODO-0042
+**Latest TODO ID: TODO-0042** — next new TODO should be TODO-0043
 
 ---
 
@@ -36,6 +36,8 @@ TODO entry format:
 ---
 
 ## Medium Priority
+
+- [ ] **TODO-0042: Rework font system with app default, per-entry, and inline overrides** — font configuration must follow standard text-editor UX: (1) an app-level default font family and size (already partially exists via `localStorage` preferences); (2) a per-entry override stored with the entry (e.g. in entry metadata or TipTap document attributes); (3) inline font family and size overrides on arbitrary text selections within the editor, matching how MS Word, LibreOffice, Notion, and similar editors behave; research what TipTap extensions (`FontFamily`, `TextStyle`, `FontSize`) already provide before designing anything custom; the solution must not invent novel UX — map directly to patterns users already expect from rich-text editors; note that custom font files (BLOBs) are already per-journal in `custom_fonts` DB table but the *selection* preference is currently global in `localStorage`
 
 - [ ] **TODO-0041: Migrate native menu elements to main app layout** — move most menu actions from native OS menus into the app's main UI for consistent cross-platform behavior and improved E2E testability; audit current native menu items in menu.rs and identify which commands should have in-app equivalents (toolbar buttons, dropdown menus, or keyboard shortcuts); preserve critical platform-native items (app-level quit, window management) where expected by users; update E2E tests to interact with in-app controls instead of native menu automation
 
