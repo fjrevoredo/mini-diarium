@@ -30,6 +30,12 @@ Template:
 
 # Versions
 
+## [Unreleased]
+
+### Fixed
+- **Duplicate editor extension warning**: the rich-text editor no longer registers `@tiptap/extension-underline` separately. TipTap StarterKit v3 already bundles the Underline extension, so the standalone registration produced a `Duplicate extension names found: ['underline']` console warning on every editor mount. Underline functionality is unchanged.
+- **Editor focus crash on lock/unlock**: fixed an unhandled `TypeError: null is not an object (evaluating 'this.commandManager.commands')` that could fire when locking and unlocking the journal in quick succession. The auto-focus effect schedules a `requestAnimationFrame`, but a lock could destroy the editor before that frame ran; the callback now re-checks that the editor is still alive (and still the current instance) before calling `focus()`. The title-bar Enter handler got the same `isDestroyed` guard.
+
 ## [0.5.2] - 29-05-2026
 
 ### Added
