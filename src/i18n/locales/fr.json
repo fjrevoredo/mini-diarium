@@ -168,6 +168,8 @@
       "highlightColor": "Couleur de surlignage",
       "blockquote": "Citation (Ctrl/Cmd+Shift+B)",
       "inlineCode": "Code en ligne (Ctrl/Cmd+E)",
+      "link": "Lien",
+      "linkTitle": "Lien (Ctrl/Cmd+K)",
       "bulletList": "Liste à puces",
       "numberedList": "Liste numérotée",
       "horizontalRule": "Insérer une ligne horizontale",
@@ -281,6 +283,7 @@
         "highlightColor": "Couleur de surlignage",
         "blockquote": "Citation",
         "inlineCode": "Code en ligne",
+        "link": "Lien",
         "bulletList": "Liste à puces",
         "orderedList": "Liste numérotée",
         "horizontalRule": "Ligne horizontale",
@@ -475,6 +478,18 @@
     "precisionHm": "HH:mm",
     "precisionHms": "HH:mm:ss",
     "insert": "Insérer"
+  },
+  "link": {
+    "insertTitle": "Insérer un lien",
+    "editTitle": "Modifier le lien",
+    "wrapSelectionTitle": "Ajouter un lien",
+    "urlLabel": "URL",
+    "urlPlaceholder": "https://exemple.com",
+    "insert": "Insérer",
+    "update": "Mettre à jour",
+    "apply": "Appliquer",
+    "remove": "Supprimer le lien",
+    "invalidUrlError": "Entrez une URL commençant par http://, https://, mailto: ou tel:."
   },
   "goToDate": {
     "title": "Aller à la date",

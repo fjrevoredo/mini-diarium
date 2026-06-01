@@ -590,4 +590,53 @@ fn parse(content) {
 
         assert_eq!(output.content, expected);
     }
+
+    #[test]
+    fn test_rhai_export_plugin_html_to_markdown_with_link() {
+        // Any Rhai export plugin that calls the `html_to_markdown` host function
+        // automatically gets the named-link → `[label](url)` conversion for free
+        // once the Rust converter understands `<a>` tags. This test locks in
+        // that contract so the host function never regresses.
+        let source = r#"
+// @name: Link Test Export
+// @type: export
+// @extensions: md
+
+fn format_entries(entries) {
+    let out = "";
+    for e in entries {
+        out += html_to_markdown(e.text) + "\n";
+    }
+    out
+}
+"#;
+        let engine = create_sandboxed_engine();
+        let ast = engine.compile(source).unwrap();
+        let plugin = RhaiExportPlugin {
+            info: PluginInfo {
+                id: "test:rhai-link".into(),
+                name: "Link Test Export".into(),
+                file_extensions: vec!["md".into()],
+                builtin: false,
+            },
+            script: ast,
+        };
+
+        let entries = vec![DiaryEntry {
+            id: 1,
+            date: "2024-06-15".into(),
+            title: "Title".into(),
+            text: r#"<p>See <a href="https://example.com">Visit site</a> please</p>"#.into(),
+            word_count: 4,
+            date_created: "2024-06-15T00:00:00Z".into(),
+            date_updated: "2024-06-15T00:00:00Z".into(),
+        }];
+
+        let result = plugin.export(entries, &HashMap::new()).unwrap();
+        assert!(
+            result.content.contains("[Visit site](https://example.com)"),
+            "expected link in Rhai plugin output: {}",
+            result.content
+        );
+    }
 }

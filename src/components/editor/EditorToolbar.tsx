@@ -15,6 +15,8 @@ import { customFontsVersion } from '../../state/fonts';
 import { listBundledFonts, listCustomFonts } from '../../lib/tauri';
 import { useI18n } from '../../i18n';
 import TimestampOverlay from './TimestampOverlay';
+import LinkOverlay from './LinkOverlay';
+import type { LinkWithDialogStorage } from './extensions/LinkWithDialog';
 import {
   Bold,
   Italic,
@@ -26,6 +28,7 @@ import {
   ListOrdered,
   Quote,
   Code,
+  Link as LinkIcon,
   Minus,
   ImagePlus,
   FileInput,
@@ -64,6 +67,7 @@ export default function EditorToolbar(props: EditorToolbarProps) {
   const [isBlockquoteActive, setIsBlockquoteActive] = createSignal(false);
   const [isCodeActive, setIsCodeActive] = createSignal(false);
   const [isHighlightActive, setIsHighlightActive] = createSignal(false);
+  const [isLinkActive, setIsLinkActive] = createSignal(false);
   const [activeTextColor, setActiveTextColor] = createSignal<string | null>(null);
   const [activeHighlightColor, setActiveHighlightColor] = createSignal<string | null>(null);
   const [activeHeadingLevel, setActiveHeadingLevel] = createSignal(0);
@@ -71,6 +75,7 @@ export default function EditorToolbar(props: EditorToolbarProps) {
     'left' | 'center' | 'right' | 'justify'
   >('left');
   const [isTimestampOpen, setIsTimestampOpen] = createSignal(false);
+  const [isLinkOpen, setIsLinkOpen] = createSignal(false);
   const [isRtlActive, setIsRtlActive] = createSignal(false);
 
   // Update active states when editor changes
@@ -88,6 +93,7 @@ export default function EditorToolbar(props: EditorToolbarProps) {
       setIsBlockquoteActive(editor.isActive('blockquote'));
       setIsCodeActive(editor.isActive('code'));
       setIsHighlightActive(editor.isActive('highlight'));
+      setIsLinkActive(editor.isActive('link'));
       setActiveTextColor(editor.getAttributes('textStyle').color ?? null);
       setActiveHighlightColor(editor.getAttributes('highlight').color ?? null);
       setActiveHeadingLevel(
@@ -126,6 +132,19 @@ export default function EditorToolbar(props: EditorToolbarProps) {
       editor.off('selectionUpdate', updateActiveStates);
       editor.off('transaction', updateActiveStates);
     });
+  });
+
+  // Wire the LinkWithDialog extension's Mod-k shortcut to open the LinkOverlay.
+  // The storage object is created by the extension and owned by the editor;
+  // overwriting the callback when the editor changes is safe — no manual cleanup
+  // is needed because the storage is destroyed with the editor instance.
+  createEffect(() => {
+    const editor = props.editor;
+    if (!editor) return;
+    const storage = (editor.storage as { link?: LinkWithDialogStorage } | undefined) ?? {};
+    if (storage.link) {
+      storage.link.openLinkDialog = () => setIsLinkOpen(true);
+    }
   });
 
   const btnBase =
@@ -273,6 +292,19 @@ export default function EditorToolbar(props: EditorToolbarProps) {
             aria-pressed={isCodeActive()}
           >
             <Code size={18} />
+          </button>
+        );
+      case 'link':
+        return (
+          <button
+            onClick={() => setIsLinkOpen(true)}
+            class={btnClass(isLinkActive())}
+            title={t('editor.toolbar.linkTitle')}
+            aria-label={t('editor.toolbar.link')}
+            aria-pressed={isLinkActive()}
+            data-testid="insert-link-button"
+          >
+            <LinkIcon size={18} />
           </button>
         );
       case 'bulletList':
@@ -521,6 +553,11 @@ export default function EditorToolbar(props: EditorToolbarProps) {
           editor={props.editor}
           isOpen={isTimestampOpen()}
           onClose={() => setIsTimestampOpen(false)}
+        />
+        <LinkOverlay
+          editor={props.editor}
+          isOpen={isLinkOpen()}
+          onClose={() => setIsLinkOpen(false)}
         />
       </div>
     </Show>

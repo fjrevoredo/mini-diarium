@@ -11,6 +11,7 @@ import EditorToolbar from './EditorToolbar';
 import { AlignableImage } from './extensions/AlignableImage';
 import { BidiExtension } from './extensions/BidiExtension';
 import { TimestampMark } from './extensions/TimestampMark';
+import { LinkWithDialog, handleEditorLinkClick } from './extensions/LinkWithDialog';
 import { preferences } from '../../state/preferences';
 import { readFileBytes, getFontData } from '../../lib/tauri';
 import { extractImageSourcesFromHtml, htmlHasImages } from '../../lib/image-drag';
@@ -166,6 +167,7 @@ export default function DiaryEditor(props: DiaryEditorProps) {
           heading: {
             levels: [1, 2, 3],
           },
+          link: false,
         }),
         Placeholder.configure({
           placeholder: () => props.placeholder || 'Start writing...',
@@ -178,6 +180,7 @@ export default function DiaryEditor(props: DiaryEditorProps) {
         TextAlign.configure({ types: ['heading', 'paragraph', 'image'] }),
         BidiExtension,
         TimestampMark,
+        LinkWithDialog,
       ],
       content: props.content,
       editorProps: {
@@ -185,6 +188,9 @@ export default function DiaryEditor(props: DiaryEditorProps) {
           class: 'journal-editor-content focus:outline-none max-w-none',
           spellcheck: String(props.spellCheck ?? true),
           dir: 'auto',
+        },
+        handleClick(_view, _pos, event) {
+          return handleEditorLinkClick(event as MouseEvent);
         },
         handleDrop(_view, event) {
           const dragEvent = event as DragEvent;

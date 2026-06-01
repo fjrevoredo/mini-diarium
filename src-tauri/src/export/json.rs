@@ -194,4 +194,35 @@ mod tests {
         let entry_tags = parsed["entries"][0]["tags"].as_array().unwrap();
         assert!(entry_tags.is_empty());
     }
+
+    #[test]
+    fn test_json_export_preserves_link_markup() {
+        // JSON export emits the raw HTML from the `text` column verbatim. A named
+        // link inserted via the editor (TipTap's Link mark) must survive serialization
+        // unchanged so re-import / re-render produces the original link.
+        let entries = vec![create_test_entry(
+            7,
+            "2024-01-15",
+            "Entry",
+            r#"<p>See <a href="https://example.com">Visit site</a> please</p>"#,
+        )];
+        let result = export_entries_to_json(entries, &empty_tags()).unwrap();
+
+        // The raw HTML appears verbatim in the JSON. The link's href and label
+        // are both present.
+        assert!(
+            result.contains(r#"<a href=\"https://example.com\">Visit site</a>"#),
+            "expected raw link HTML to survive serialization: {}",
+            result
+        );
+
+        // Round-trip parse confirms the link is intact in the `text` field.
+        let parsed: Value = serde_json::from_str(&result).unwrap();
+        let text = parsed["entries"][0]["text"].as_str().unwrap();
+        assert!(
+            text.contains(r#"<a href="https://example.com">Visit site</a>"#),
+            "expected link in parsed text: {}",
+            text
+        );
+    }
 }

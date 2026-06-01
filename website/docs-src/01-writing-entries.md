@@ -1,9 +1,9 @@
 ---
 title: Writing Entries
 slug: writing-entries
-description: Mini Diarium's rich text editor supports formatting, images, tags, multiple entries per day, RTL languages, and auto-save. No manual saving needed.
+description: Mini Diarium's rich text editor supports formatting, named links, images, tags, multiple entries per day, RTL languages, and auto-save. No manual saving needed.
 order: 2
-updated: 2026-05-29
+updated: 2026-06-01
 tags: editor, formatting, entries, writing
 ---
 
@@ -18,7 +18,7 @@ Mini Diarium uses a rich text editor with support for a full set of formatting o
 - Inline code and code blocks
 - Strikethrough and underline
 - Horizontal rules
-- Links
+- [Links](#links)
 - Images (drag-drop, paste, or file picker)
 
 The toolbar above the editor provides buttons for each formatting option. Standard keyboard shortcuts also work — `Ctrl+B` for bold, `Ctrl+I` for italic, and so on. On macOS, use `Cmd` instead of `Ctrl`.
@@ -57,6 +57,24 @@ You can add images to your entries in several ways:
 All dropped or pasted images are resized to a maximum of 1200 px on either side and re-encoded as JPEG or PNG before being embedded. Images are stored as base64 data encrypted alongside your text. Supported source formats are JPG, PNG, GIF, WebP, and BMP.
 
 If you drag an image from a web browser, the editor will show a banner explaining that embedding is not possible — it would require a network request, which the app never makes. Use **right-click → Copy Image** and paste instead.
+
+## Links
+
+You can insert hyperlinks with custom display text — the visible label and the underlying URL are independent (the `[label](url)` model used by Markdown and most modern editors).
+
+**Inserting a link**: click the **Link button** in the toolbar (chain-link icon) or press `Ctrl+K` (`Cmd+K` on macOS). What happens next depends on the current selection:
+
+- **No selection**: type a URL and confirm. A clickable link with the URL as its visible label is inserted at the cursor.
+- **Text selected**: type a URL and confirm. The selection becomes a clickable link with the original text as its label. Any inline formatting on the selection (bold, italic, etc.) is preserved.
+- **Cursor on an existing link**: the dialog opens pre-filled with the current URL. Edit the URL and click **Update** to change just the target. The label text is not editable in the dialog — to change a link's label, remove the link and re-insert it with new text. A **Remove link** button is shown only in this mode; it strips the link mark and leaves the underlying text untouched.
+
+The URL must start with `http://`, `https://`, `mailto:`, or `tel:`. Other schemes are rejected.
+
+**Opening a link**: a plain click inside a link places the cursor for editing (as in any other editable surface). To open a link in your default browser, hold `Ctrl` (`Cmd` on macOS) and click. The system's default browser opens the URL — the app itself never makes any network request.
+
+**Auto-linking**: typing a recognizable URL (for example `https://example.com`) and pressing space converts it to a clickable link automatically. Pasting a URL onto a text selection wraps the selection as a link to that URL.
+
+**Markdown round-trip**: links are exported as standard `[label](url)` syntax in Markdown exports, and re-imported back into clickable links when you import a Markdown file. JSON exports preserve the raw HTML, so the link survives round-trips through that format as well.
 
 ## Right-to-Left and Bidirectional Text
 

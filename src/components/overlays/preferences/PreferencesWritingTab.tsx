@@ -30,6 +30,7 @@ export default function PreferencesWritingTab(_props: TabProps) {
         highlightColor: t('prefs.writing.toolbarItem.highlightColor'),
         blockquote: t('prefs.writing.toolbarItem.blockquote'),
         inlineCode: t('prefs.writing.toolbarItem.inlineCode'),
+        link: t('prefs.writing.toolbarItem.link'),
         bulletList: t('prefs.writing.toolbarItem.bulletList'),
         orderedList: t('prefs.writing.toolbarItem.orderedList'),
         horizontalRule: t('prefs.writing.toolbarItem.horizontalRule'),

@@ -688,3 +688,57 @@ describe('EditorToolbar fontFamily item — custom font options', () => {
     expect(selected?.value).toBe('SelectedCustom');
   });
 });
+
+// ---------------------------------------------------------------------------
+// Link button — visibility and behavior
+// ---------------------------------------------------------------------------
+
+describe('EditorToolbar link button — visibility', () => {
+  it('hides the link button when link item is disabled', () => {
+    setPreferences({
+      toolbarItems: DEFAULT_TOOLBAR_ITEMS.map((i) => ({ ...i, enabled: false })),
+    });
+    const { container } = renderWithI18n(() => <EditorToolbar editor={makeEditorMock()} />);
+    expect(container.querySelector('[data-testid="insert-link-button"]')).toBeNull();
+  });
+
+  it('shows the link button when link item is enabled', () => {
+    setPreferences({
+      toolbarItems: DEFAULT_TOOLBAR_ITEMS.map((i) => ({
+        ...i,
+        enabled: i.key === 'link',
+      })),
+    });
+    const { container } = renderWithI18n(() => <EditorToolbar editor={makeEditorMock()} />);
+    expect(container.querySelector('[data-testid="insert-link-button"]')).not.toBeNull();
+  });
+
+  it('opens the LinkOverlay when the link button is clicked', () => {
+    setPreferences({
+      toolbarItems: DEFAULT_TOOLBAR_ITEMS.map((i) => ({
+        ...i,
+        enabled: i.key === 'link',
+      })),
+    });
+    const { container } = renderWithI18n(() => <EditorToolbar editor={makeEditorMock()} />);
+    const btn = container.querySelector('[data-testid="insert-link-button"]') as HTMLButtonElement;
+    fireEvent.click(btn);
+    // LinkOverlay renders its content through a Kobalte Portal at document root
+    expect(document.querySelector('[data-testid="link-url-input"]')).not.toBeNull();
+  });
+
+  it('marks the link button as active when isActive("link") is true', () => {
+    setPreferences({
+      toolbarItems: DEFAULT_TOOLBAR_ITEMS.map((i) => ({
+        ...i,
+        enabled: i.key === 'link',
+      })),
+    });
+    const editor = makeEditorMock({
+      isActive: (nameOrAttrs) => nameOrAttrs === 'link',
+    });
+    const { container } = renderWithI18n(() => <EditorToolbar editor={editor} />);
+    const btn = container.querySelector('[data-testid="insert-link-button"]') as HTMLButtonElement;
+    expect(btn.className).toContain('btn-active');
+  });
+});

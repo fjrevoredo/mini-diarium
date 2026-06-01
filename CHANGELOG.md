@@ -30,6 +30,11 @@ Template:
 
 # Versions
 
+## [Unreleased]
+
+### Added
+- **Named links in the editor**: insert a hyperlink with custom display text via the toolbar Insert Link button (or `Ctrl/Cmd+K`). The visible label and the URL are independent: with no selection, the URL becomes the label; with a selection, the selected text becomes the label. `Ctrl/Cmd`-click opens a link in the system browser. Links round-trip through Markdown export as `[label](url)`, through JSON export as raw HTML, and are preserved by user Rhai export plugins via the `html_to_markdown` host function.
+
 ## [0.5.2] - 29-05-2026
 
 ### Added

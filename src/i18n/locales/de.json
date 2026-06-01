@@ -168,6 +168,8 @@
       "highlightColor": "Markierungsfarbe",
       "blockquote": "Zitat (Strg/Cmd+Shift+B)",
       "inlineCode": "Inline-Code (Strg/Cmd+E)",
+      "link": "Link",
+      "linkTitle": "Link (Strg/Cmd+K)",
       "bulletList": "Aufzählung",
       "numberedList": "Nummerierte Liste",
       "horizontalRule": "Horizontale Linie einfügen",
@@ -281,6 +283,7 @@
         "highlightColor": "Markierungsfarbe",
         "blockquote": "Zitat",
         "inlineCode": "Inline-Code",
+        "link": "Link",
         "bulletList": "Aufzählung",
         "orderedList": "Nummerierte Liste",
         "horizontalRule": "Horizontale Linie",
@@ -475,6 +478,18 @@
     "precisionHm": "HH:mm",
     "precisionHms": "HH:mm:ss",
     "insert": "Einfügen"
+  },
+  "link": {
+    "insertTitle": "Link einfügen",
+    "editTitle": "Link bearbeiten",
+    "wrapSelectionTitle": "Link hinzufügen",
+    "urlLabel": "URL",
+    "urlPlaceholder": "https://beispiel.de",
+    "insert": "Einfügen",
+    "update": "Aktualisieren",
+    "apply": "Anwenden",
+    "remove": "Link entfernen",
+    "invalidUrlError": "Gib eine URL ein, die mit http://, https://, mailto: oder tel: beginnt."
   },
   "goToDate": {
     "title": "Gehe zu Datum",

@@ -168,6 +168,8 @@
       "highlightColor": "हाइलाइट रंग",
       "blockquote": "ब्लॉककोट (Ctrl/Cmd+Shift+B)",
       "inlineCode": "इनलाइन कोड (Ctrl/Cmd+E)",
+      "link": "लिंक",
+      "linkTitle": "लिंक (Ctrl/Cmd+K)",
       "bulletList": "बुलेट सूची",
       "numberedList": "क्रमांकित सूची",
       "horizontalRule": "क्षैतिज रेखा डालें",
@@ -281,6 +283,7 @@
         "highlightColor": "हाइलाइट रंग",
         "blockquote": "ब्लॉककोट",
         "inlineCode": "इनलाइन कोड",
+        "link": "लिंक",
         "bulletList": "बुलेट सूची",
         "orderedList": "क्रमांकित सूची",
         "horizontalRule": "क्षैतिज रेखा",
@@ -475,6 +478,18 @@
     "precisionHm": "HH:mm",
     "precisionHms": "HH:mm:ss",
     "insert": "डालें"
+  },
+  "link": {
+    "insertTitle": "लिंक डालें",
+    "editTitle": "लिंक संपादित करें",
+    "wrapSelectionTitle": "लिंक जोड़ें",
+    "urlLabel": "URL",
+    "urlPlaceholder": "https://example.com",
+    "insert": "डालें",
+    "update": "अपडेट करें",
+    "apply": "लागू करें",
+    "remove": "लिंक हटाएँ",
+    "invalidUrlError": "ऐसा URL दर्ज करें जो http://, https://, mailto: या tel: से शुरू हो।"
   },
   "goToDate": {
     "title": "तारीख पर जाएं",

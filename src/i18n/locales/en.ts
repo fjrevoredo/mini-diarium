@@ -213,6 +213,8 @@ const en = {
       highlightColor: 'Highlight color',
       blockquote: 'Blockquote (Ctrl/Cmd+Shift+B)',
       inlineCode: 'Inline Code (Ctrl/Cmd+E)',
+      link: 'Link',
+      linkTitle: 'Link (Ctrl/Cmd+K)',
       bulletList: 'Bullet List',
       numberedList: 'Numbered List',
       horizontalRule: 'Insert horizontal rule',
@@ -345,6 +347,7 @@ const en = {
         highlightColor: 'Highlight color',
         blockquote: 'Blockquote',
         inlineCode: 'Inline code',
+        link: 'Link',
         bulletList: 'Bullet list',
         orderedList: 'Numbered list',
         horizontalRule: 'Horizontal rule',
@@ -563,6 +566,20 @@ const en = {
     precisionHm: 'HH:mm',
     precisionHms: 'HH:mm:ss',
     insert: 'Insert',
+  },
+
+  /** LinkOverlay — insert/edit/remove named hyperlinks */
+  link: {
+    insertTitle: 'Insert link',
+    editTitle: 'Edit link',
+    wrapSelectionTitle: 'Add link',
+    urlLabel: 'URL',
+    urlPlaceholder: 'https://example.com',
+    insert: 'Insert',
+    update: 'Update',
+    apply: 'Apply',
+    remove: 'Remove link',
+    invalidUrlError: 'Enter a URL starting with http://, https://, mailto:, or tel:.',
   },
 
   /** GoToDateOverlay */

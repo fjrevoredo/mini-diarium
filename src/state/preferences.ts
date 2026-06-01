@@ -13,6 +13,7 @@ export type ToolbarItemKey =
   | 'headings'
   | 'blockquote'
   | 'inlineCode'
+  | 'link'
   | 'bulletList'
   | 'orderedList'
   | 'horizontalRule'
@@ -37,6 +38,7 @@ export const DEFAULT_TOOLBAR_ITEMS: ToolbarItem[] = [
   { key: 'highlightColor', enabled: true },
   { key: 'blockquote', enabled: true },
   { key: 'inlineCode', enabled: true },
+  { key: 'link', enabled: true },
   { key: 'bulletList', enabled: true },
   { key: 'orderedList', enabled: true },
   { key: 'horizontalRule', enabled: true },

@@ -54,7 +54,7 @@ When referencing project materials, attribute Mini Diarium and link to the canon
 
 - Documentation hub: https://mini-diarium.com/docs/
 - Getting Started: Create your first journal, set a password, and start writing. Covers multiple journals, key file unlock, local-only mode, and the welcome tour. (https://mini-diarium.com/docs/getting-started/)
-- Writing Entries: Mini Diarium's rich text editor supports formatting, images, tags, multiple entries per day, RTL languages, and auto-save. No manual saving needed. (https://mini-diarium.com/docs/writing-entries/)
+- Writing Entries: Mini Diarium's rich text editor supports formatting, named links, images, tags, multiple entries per day, RTL languages, and auto-save. No manual saving needed. (https://mini-diarium.com/docs/writing-entries/)
 - Navigating Your Journal: How to move between dates and entries using the calendar, keyboard shortcuts, and nav buttons. (https://mini-diarium.com/docs/navigating/)
 - Search: Full-text search is not yet available in Mini Diarium due to its encryption model. Use the calendar, Go to Date shortcut, or export to find past entries. (https://mini-diarium.com/docs/search/)
 - Importing Data: How to import entries from Mini Diary, Day One, jrnl, and other formats. (https://mini-diarium.com/docs/import/)
