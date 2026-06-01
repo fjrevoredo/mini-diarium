@@ -13,7 +13,7 @@ TODO entry format:
 - After creating a new TODO, update the `Latest TODO ID` marker to reflect the new highest ID
 - Use the `todo-manager` skill (`.agents/skills/todo-manager/`) for creation, tracking, archival, and validation
 
-**Latest TODO ID: TODO-0042** — next new TODO should be TODO-0043
+**Latest TODO ID: TODO-0046** — next new TODO should be TODO-0047
 
 ---
 
@@ -28,6 +28,8 @@ TODO entry format:
 
 ## Website Priority
 
+- [ ] **TODO-0045: Improve meta descriptions on docs pages** — 11 docs pages flagged by Bing Webmaster Tools (2026-05-31) have meta descriptions that are too short or missing; each page needs a well-crafted meta description of 150–160 characters; edit source files under `website/docs-src/` (never the generated HTML under `website/docs/`) and regenerate with `bun run website:build-static`; affected pages: `/docs/export/`, `/docs/getting-started/`, `/docs/search/`, `/docs/plugins/`, `/docs/writing-entries/`, `/docs/import/`, `/docs/faq/`, `/docs/statistics/`, `/docs/preferences/`, `/docs/backups/`, `/docs/navigating/`
+
 - [ ] **TODO-0011: Website SEO/GEO follow-up backlog** — remaining implementation items from the 2026 website SEO/GEO pass
   - **Fix:** replace `transition: all 0.2s` with explicit property lists that exclude layout properties — e.g. `transition: color 0.2s, background-color 0.2s, border-color 0.2s, opacity 0.2s, transform 0.2s`; edit `website/css/style.css` (the source file) and regenerate/copy the hashed output.
   - [ ] **Resolve Cloudflare-injected robots.txt Content-Signal directive** — Cloudflare automatically appends `Content-Signal: search=yes,ai-train=no` to the live robots.txt at the CDN layer; Lighthouse's robots.txt parser flags this as invalid (not part of RFC 9309), costing 8 SEO points (score 92 → 100); the repo `website/robots.txt` is clean — this is a Cloudflare dashboard setting (REPORT.md FIX 2.1)
@@ -37,7 +39,13 @@ TODO entry format:
 
 ## Medium Priority
 
+- [ ] **TODO-0046: Sustainable image storage — deduplicate and reuse images across entries** — currently every image embedded in an entry is stored as an independent blob, so inserting the same image into multiple entries duplicates it; the image model must be reworked to a content-addressed or reference-counted store (e.g. an `images` table keyed by hash, with entries referencing images by ID) so one physical copy is shared across entries; the editor UI must allow picking an already-stored image instead of re-importing it; migration must be non-breaking: images embedded before this feature ships remain intact and readable; all export formats (Markdown, JSON, plugin exporters) must correctly resolve image references at export time; tracked in GitHub issue #150
+
 - [ ] **TODO-0042: Rework font system with app default, per-entry, and inline overrides** — font configuration must follow standard text-editor UX: (1) an app-level default font family and size (already partially exists via `localStorage` preferences); (2) a per-entry override stored with the entry (e.g. in entry metadata or TipTap document attributes); (3) inline font family and size overrides on arbitrary text selections within the editor, matching how MS Word, LibreOffice, Notion, and similar editors behave; research what TipTap extensions (`FontFamily`, `TextStyle`, `FontSize`) already provide before designing anything custom; the solution must not invent novel UX — map directly to patterns users already expect from rich-text editors; note that custom font files (BLOBs) are already per-journal in `custom_fonts` DB table but the *selection* preference is currently global in `localStorage`
+
+- [ ] **TODO-0043: Named links (hyperlinks with custom display text)** — the editor must allow inserting a hyperlink where the visible label differs from the URL (e.g. `[Visit site](https://example.com)`); the feature must be correctly exported in all formats: Markdown (standard `[label](url)` syntax), JSON (TipTap mark with `href` and text), and any plugin-based exporters; the UI must allow creating, editing, and removing named links on a text selection
+
+- [ ] **TODO-0044: Audit text styling export coverage** — verify that every inline text style the editor supports (bold, italic, underline, strikethrough, inline code, and any others) is correctly round-tripped through all export paths (Markdown, JSON, plugin exporters); identify and fix any style that is visually rendered but silently dropped, collapsed, or malformed on export
 
 - [ ] **TODO-0041: Migrate native menu elements to main app layout** — move most menu actions from native OS menus into the app's main UI for consistent cross-platform behavior and improved E2E testability; audit current native menu items in menu.rs and identify which commands should have in-app equivalents (toolbar buttons, dropdown menus, or keyboard shortcuts); preserve critical platform-native items (app-level quit, window management) where expected by users; update E2E tests to interact with in-app controls instead of native menu automation
 
