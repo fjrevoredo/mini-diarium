@@ -49,7 +49,7 @@ function normalizeUrl(input: string): string {
   const protocolMatch = trimmed.match(/^([a-z][a-z0-9+.-]*):/i);
   if (protocolMatch) {
     const protocol = protocolMatch[1].toLowerCase();
-    if (['http', 'https', 'mailto', 'tel', 'ftp', 'ftps'].includes(protocol)) {
+    if (['http', 'https', 'mailto', 'tel'].includes(protocol)) {
       return trimmed;
     }
     // Unsafe protocol — reject.
@@ -72,6 +72,7 @@ export default function LinkOverlay(props: LinkOverlayProps) {
   const [labelInput, setLabelInput] = createSignal('');
   const [touched, setTouched] = createSignal(false);
   const [mode, setMode] = createSignal<LinkMode>('insert');
+  const [initialLabel, setInitialLabel] = createSignal('');
 
   // Snapshot mode + initial URL/label ONCE when the dialog opens. We do
   // NOT use a memo that re-reads editor.state on every render, because
@@ -85,6 +86,7 @@ export default function LinkOverlay(props: LinkOverlayProps) {
     setMode(snap.mode);
     setUrlInput(snap.initialHref);
     setLabelInput(snap.initialLabel);
+    setInitialLabel(snap.initialLabel);
     setTouched(false);
   });
 
@@ -137,32 +139,30 @@ export default function LinkOverlay(props: LinkOverlayProps) {
     const currentMode = mode();
 
     if (currentMode === 'edit') {
-      // Replace the link's text + href atomically: extend selection to
-      // cover the whole mark, delete it, insert new text carrying the
-      // updated link.
-      editor
-        .chain()
-        .focus()
-        .extendMarkRange('link')
-        .deleteSelection()
-        .insertContent({
-          type: 'text',
-          text: label,
-          marks: [{ type: 'link', attrs: { href } }],
-        })
-        .run();
+      if (trimmedLabel() === initialLabel()) {
+        // URL only changed: setLink preserves existing formatting inside the link text
+        editor.chain().focus().extendMarkRange('link').setLink({ href }).run();
+      } else {
+        editor
+          .chain()
+          .focus()
+          .extendMarkRange('link')
+          .deleteSelection()
+          .insertContent({ type: 'text', text: label, marks: [{ type: 'link', attrs: { href } }] })
+          .run();
+      }
     } else if (currentMode === 'wrap-selection') {
-      // Replace the selected range with new text carrying the link.
-      editor
-        .chain()
-        .focus()
-        .deleteSelection()
-        .insertContent({
-          type: 'text',
-          text: label,
-          marks: [{ type: 'link', attrs: { href } }],
-        })
-        .run();
+      if (trimmedLabel() === initialLabel()) {
+        // Text unchanged: apply the mark to the existing selection (preserves bold, etc.)
+        editor.chain().focus().extendMarkRange('link').setLink({ href }).run();
+      } else {
+        editor
+          .chain()
+          .focus()
+          .deleteSelection()
+          .insertContent({ type: 'text', text: label, marks: [{ type: 'link', attrs: { href } }] })
+          .run();
+      }
     } else {
       // Insert mode — no selection to replace.
       editor

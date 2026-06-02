@@ -196,19 +196,16 @@ describe('LinkOverlay — rendering', () => {
     fireEvent.input(url, { target: { value: 'https://example.com' } });
 
     // Now imagine the editor's selection collapsed (focus loss). The mode
-    // should still be wrap-selection, so the apply path uses
-    // deleteSelection + insertContent on the captured range.
+    // should still be wrap-selection. Since the label is unchanged, setLink
+    // is used (preserving any existing marks) rather than delete+insert.
     const confirm = document.querySelector(
       '[data-testid="link-confirm-button"]',
     ) as HTMLButtonElement;
     fireEvent.click(confirm);
 
-    expect(handle.deleteSelection).toHaveBeenCalled();
-    expect(handle.insertContent).toHaveBeenCalledWith({
-      type: 'text',
-      text: 'Hello', // falls back to selection text since label is empty
-      marks: [{ type: 'link', attrs: { href: 'https://example.com' } }],
-    });
+    expect(handle.setLink).toHaveBeenCalledWith({ href: 'https://example.com' });
+    expect(handle.deleteSelection).not.toHaveBeenCalled();
+    expect(handle.insertContent).not.toHaveBeenCalled();
   });
 });
 
@@ -271,13 +268,10 @@ describe('LinkOverlay — confirm behavior', () => {
     ) as HTMLButtonElement;
     fireEvent.click(confirm);
 
-    // Wrap mode: the selection is replaced with the label text + link mark.
-    expect(handle.deleteSelection).toHaveBeenCalled();
-    expect(handle.insertContent).toHaveBeenCalledWith({
-      type: 'text',
-      text: 'Hello', // label defaulted to the selected text
-      marks: [{ type: 'link', attrs: { href: 'https://example.com' } }],
-    });
+    // Wrap mode, unchanged label: setLink applies the mark without replacing text (preserves formatting).
+    expect(handle.setLink).toHaveBeenCalledWith({ href: 'https://example.com' });
+    expect(handle.deleteSelection).not.toHaveBeenCalled();
+    expect(handle.insertContent).not.toHaveBeenCalled();
     expect(onClose).toHaveBeenCalled();
   });
 
@@ -334,6 +328,33 @@ describe('LinkOverlay — confirm behavior', () => {
       text: 'New label',
       marks: [{ type: 'link', attrs: { href: 'https://new.com' } }],
     });
+    expect(onClose).toHaveBeenCalled();
+  });
+
+  it('preserves formatting when only the URL changes in edit mode (label unchanged)', () => {
+    const onClose = vi.fn();
+    const handle = makeEditorMock({
+      isLinkActive: true,
+      linkHref: 'https://old.com',
+      selectionFrom: 0,
+      selectionTo: 9,
+      selectionText: 'Old label',
+    });
+    renderWithI18n(() => <LinkOverlay editor={handle.editor} isOpen={true} onClose={onClose} />);
+
+    // User only changes the URL — label stays 'Old label'
+    const url = document.querySelector('[data-testid="link-url-input"]') as HTMLInputElement;
+    fireEvent.input(url, { target: { value: 'https://new.com' } });
+    const confirm = document.querySelector(
+      '[data-testid="link-confirm-button"]',
+    ) as HTMLButtonElement;
+    fireEvent.click(confirm);
+
+    // setLink preserves existing inline formatting; no delete+insert
+    expect(handle.extendMarkRange).toHaveBeenCalledWith('link');
+    expect(handle.setLink).toHaveBeenCalledWith({ href: 'https://new.com' });
+    expect(handle.deleteSelection).not.toHaveBeenCalled();
+    expect(handle.insertContent).not.toHaveBeenCalled();
     expect(onClose).toHaveBeenCalled();
   });
 

@@ -1047,7 +1047,7 @@ mod tests {
     }
 
     #[test]
-    fn test_html_to_markdown_link_with_space_in_url_wraps_in_angle_brackets() {
+    fn test_html_to_markdown_link_with_space_in_url_percent_encodes() {
         // CommonMark cannot place a literal space inside (...), so we percent-encode it.
         let html = r#"<p><a href="https://example.com/a b">spaced</a></p>"#;
         let result = html_to_markdown(html);
