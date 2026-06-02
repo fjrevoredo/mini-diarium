@@ -68,6 +68,8 @@
 - [ ] Cleanup and final verification are included.
 - [ ] The plan avoids vague actions without concrete targets.
 - [ ] The plan can be executed by a coding agent without reading the original conversation.
+- [ ] (If dialog/interaction feature) UX-GATE: each scenario listed and user confirmed against actual behavior, not just a description.
+- [ ] (If Tauri WebView behavior) PLATFORM-VERIFY step listed in exit criteria for each WebView interaction.
 
 ## Approval Gate
 

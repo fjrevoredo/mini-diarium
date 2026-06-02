@@ -107,6 +107,24 @@ Patterns:
 
 This gives meaningful unit coverage and keeps any Tauri harness focused on serialization, registration, and runtime behavior.
 
+### What jsdom Cannot Test
+
+These Tauri/WebView behaviors fire at the platform level before JavaScript and cannot be validated by Vitest or jsdom:
+
+- `target="_blank"` → WebView new-window handoff (fires before the JS event loop)
+- `on_navigation` / `on_new_window` guards
+- OS-level screen-lock / session events (Windows `WM_WTSSESSION_CHANGE`, macOS `com.apple.screenIsLocked`)
+- WebView2 `WebResourceRequested` handler
+- Any behavior that depends on the actual Tauri runtime rather than the mocked `@tauri-apps/api`
+
+For any test that covers code adjacent to these behaviors, add a comment explaining what requires manual in-app verification:
+
+```ts
+// PLATFORM-VERIFY: <describe what must be manually verified in the running app>
+```
+
+Include an explicit `PLATFORM-VERIFY` manual-verification step in the plan's exit criteria whenever a plan step touches Tauri WebView interactions (link clicks, navigation, new-window).
+
 ### Keep WebView Security Platform Code Isolated
 
 Platform WebView security handlers are part of the app's network-isolation defense.

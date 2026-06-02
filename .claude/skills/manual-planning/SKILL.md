@@ -159,6 +159,8 @@ Before asking for final approval, verify:
 - Scope, non-goals, and assumptions are explicit.
 - All open questions have been asked via the native question-asking tool (or chat fallback if no tool exists), answered by the user, and recorded in the plan
 - Zero unanswered questions remain
+- If the plan describes a dialog or multi-step user interaction: the plan is tagged `UX-GATE: REQUIRED`, and each interaction scenario is listed with expected user feedback confirmed against actual behavior (mockup, prototype walkthrough, or explicit per-scenario sign-off from the user — not just a description of behavior).
+- If the plan includes a Tauri WebView interaction (link clicks, navigation, new-window): an explicit `PLATFORM-VERIFY` manual-verification step is listed in the exit criteria for each such interaction.
 - Every task has concrete steps and validation.
 - More than 10 tasks are grouped into milestones.
 - Every milestone has exit criteria when milestones exist.
@@ -174,3 +176,16 @@ Copy and adapt one template into the target repository plan file:
 
 - `assets/simple-plan-template.md` for plans with 10 or fewer tasks.
 - `assets/milestoned-plan-template.md` for plans with more than 10 tasks.
+
+## Known Platform Traps (Tauri + TipTap)
+
+Before writing or approving a plan step that involves TipTap extensions or Tauri WebView behavior, check these known traps:
+
+| Trap | Risk | Rule |
+|------|------|------|
+| `target="_blank"` in TipTap Link extension | Triggers WebView new-window handoff, bypasses `openOnClick: false` | Override in `addAttributes()`, not `configure()` |
+| `configure({ HTMLAttributes: {...} })` | Deep merge — does not replace defaults | Read `addOptions()` in installed source first (see `FRONTEND_BEST_PRACTICES.md`) |
+| `openOnClick: false` vs WebView navigation | Stops JS click handler, not WebView platform routing | Requires `addAttributes()` default override |
+| Dialog + `autofocus` input | TipTap collapses selection on focus loss | Use snapshot pattern (see Gotcha #8 in `src/CLAUDE.md`) |
+
+For TipTap extension tasks, include this pre-implementation step in the plan: "Read installed extension source at `node_modules/@tiptap/<extension>/dist/index.js`. Confirm `addOptions()` defaults and `configure()` merge behavior before writing configuration code."
