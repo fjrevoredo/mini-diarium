@@ -63,7 +63,7 @@
     "@tiptap/extension-image": "^3.24.0",
     "@tiptap/extension-placeholder": "^3.24.0",
     "@tiptap/extension-text-align": "^3.24.0",
-    "@tiptap/extension-text-style": "^3.23.6",
+    "@tiptap/extension-text-style": "^3.24.0",
     "@tiptap/extension-underline": "^3.23.6",
     "@tiptap/pm": "^3.23.6",
     "@tiptap/starter-kit": "^3.24.0",
