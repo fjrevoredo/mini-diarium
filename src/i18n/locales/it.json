@@ -484,12 +484,17 @@
     "editTitle": "Modifica collegamento",
     "wrapSelectionTitle": "Aggiungi collegamento",
     "urlLabel": "URL",
-    "urlPlaceholder": "https://esempio.com",
+    "urlPlaceholder": "esempio.com oppure https://…",
+    "urlRequiredError": "Inserisci un URL.",
+    "labelLabel": "Testo visibile",
+    "labelPlaceholder": "Testo del collegamento (facoltativo)",
+    "labelHint": "Se vuoto, l'URL viene usato come testo visibile.",
+    "openInBrowserHint": "Cliccare su un collegamento posiziona il cursore per la modifica. Tieni premuto Ctrl (Cmd su macOS) e clicca per aprirlo nel browser.",
     "insert": "Inserisci",
     "update": "Aggiorna",
     "apply": "Applica",
     "remove": "Rimuovi collegamento",
-    "invalidUrlError": "Inserisci un URL che inizi con http://, https://, mailto: o tel:."
+    "open": "Apri collegamento"
   },
   "goToDate": {
     "title": "Vai a data",

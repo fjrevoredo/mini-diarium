@@ -35,6 +35,9 @@ Template:
 ### Added
 - **Named links in the editor**: insert a hyperlink with custom display text via the toolbar Insert Link button (or `Ctrl/Cmd+K`). The visible label and the URL are independent: with no selection, the URL becomes the label; with a selection, the selected text becomes the label. `Ctrl/Cmd`-click opens a link in the system browser. Links round-trip through Markdown export as `[label](url)`, through JSON export as raw HTML, and are preserved by user Rhai export plugins via the `html_to_markdown` host function.
 
+### Changed
+- **Link dialog now has a Display text field**: you can override the visible label of a link directly in the dialog (instead of the URL always being the label). Bare domains like `example.com` are auto-prefixed with `https://`, email addresses become `mailto:` links, and phone numbers become `tel:` links. The dialog also includes an "Open link" button so you can verify a URL before applying it.
+
 ## [0.5.2] - 29-05-2026
 
 ### Added

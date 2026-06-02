@@ -484,12 +484,17 @@
     "editTitle": "Modifier le lien",
     "wrapSelectionTitle": "Ajouter un lien",
     "urlLabel": "URL",
-    "urlPlaceholder": "https://exemple.com",
+    "urlPlaceholder": "exemple.com ou https://…",
+    "urlRequiredError": "Veuillez saisir une URL.",
+    "labelLabel": "Texte affiché",
+    "labelPlaceholder": "Texte du lien (facultatif)",
+    "labelHint": "Si laissé vide, l'URL est utilisée comme texte visible.",
+    "openInBrowserHint": "Cliquer sur un lien place le curseur pour le modifier. Maintenez Ctrl (Cmd sur macOS) et cliquez pour l'ouvrir dans votre navigateur.",
     "insert": "Insérer",
     "update": "Mettre à jour",
     "apply": "Appliquer",
     "remove": "Supprimer le lien",
-    "invalidUrlError": "Entrez une URL commençant par http://, https://, mailto: ou tel:."
+    "open": "Ouvrir le lien"
   },
   "goToDate": {
     "title": "Aller à la date",

@@ -1,6 +1,7 @@
-import { createEffect, createMemo, createSignal, Show } from 'solid-js';
+import { createEffect, createSignal, Show } from 'solid-js';
 import { Dialog } from '@kobalte/core/dialog';
 import type { Editor } from '@tiptap/core';
+import { openUrl } from '@tauri-apps/plugin-opener';
 import { useI18n } from '../../i18n';
 
 interface LinkOverlayProps {
@@ -11,45 +12,81 @@ interface LinkOverlayProps {
 
 type LinkMode = 'edit' | 'wrap-selection' | 'insert';
 
-const ALLOWED_SCHEMES = ['http://', 'https://', 'mailto:', 'tel:'];
+// Capture the link-relevant editor state at the moment the dialog opens.
+// Done as a plain (snapshot) function so the mode, URL, and label do not
+// drift while the user is typing in the dialog — the editor's selection
+// is unreliable after the input takes focus.
+function snapshotEditor(editor: Editor | null): {
+  mode: LinkMode;
+  initialHref: string;
+  initialLabel: string;
+} {
+  if (!editor) {
+    return { mode: 'insert', initialHref: '', initialLabel: '' };
+  }
+  if (editor.isActive('link')) {
+    const href = (editor.getAttributes('link').href as string | undefined) ?? '';
+    const { from, to } = editor.state.selection;
+    const initialLabel = editor.state.doc.textBetween(from, to, '\n', '\n');
+    return { mode: 'edit', initialHref: href, initialLabel };
+  }
+  const selection = editor.state?.selection;
+  if (selection && selection.from !== selection.to) {
+    const initialLabel = editor.state.doc.textBetween(selection.from, selection.to, '\n', '\n');
+    return { mode: 'wrap-selection', initialHref: '', initialLabel };
+  }
+  return { mode: 'insert', initialHref: '', initialLabel: '' };
+}
 
-const isAllowedUrl = (url: string): boolean => {
-  const trimmed = url.trim();
-  if (!trimmed) return false;
-  const lower = trimmed.toLowerCase();
-  return ALLOWED_SCHEMES.some((scheme) => lower.startsWith(scheme));
-};
+// Accept anything that looks plausibly URL-shaped. Bare domains are
+// auto-prefixed with https://. Emails → mailto:. Phone numbers → tel:.
+// Explicitly unsafe protocols (javascript:, data:, vbscript:, file:) are
+// rejected so they can never reach the editor.
+function normalizeUrl(input: string): string {
+  const trimmed = input.trim();
+  if (!trimmed) return '';
+
+  const protocolMatch = trimmed.match(/^([a-z][a-z0-9+.-]*):/i);
+  if (protocolMatch) {
+    const protocol = protocolMatch[1].toLowerCase();
+    if (['http', 'https', 'mailto', 'tel', 'ftp', 'ftps'].includes(protocol)) {
+      return trimmed;
+    }
+    // Unsafe protocol — reject.
+    return '';
+  }
+
+  if (trimmed.includes('@') && !/\s/.test(trimmed)) {
+    return `mailto:${trimmed}`;
+  }
+  if (/^\+?[\d\s().-]+$/.test(trimmed) && /\d/.test(trimmed)) {
+    const cleaned = trimmed.replace(/[\s().-]/g, '');
+    return `tel:${cleaned}`;
+  }
+  return `https://${trimmed}`;
+}
 
 export default function LinkOverlay(props: LinkOverlayProps) {
   const t = useI18n();
   const [urlInput, setUrlInput] = createSignal('');
+  const [labelInput, setLabelInput] = createSignal('');
   const [touched, setTouched] = createSignal(false);
+  const [mode, setMode] = createSignal<LinkMode>('insert');
 
-  const mode = createMemo<LinkMode>(() => {
-    const editor = props.editor;
-    if (!editor) return 'insert';
-    if (editor.isActive('link')) return 'edit';
-    // Defensive: editor.state may be undefined in mocked tests
-    const selection = editor.state?.selection;
-    if (selection && selection.from !== selection.to) return 'wrap-selection';
-    return 'insert';
-  });
-
-  // Reset URL input from the editor whenever the dialog opens.
+  // Snapshot mode + initial URL/label ONCE when the dialog opens. We do
+  // NOT use a memo that re-reads editor.state on every render, because
+  // the editor's selection can change as the user types in the dialog
+  // (autofocus steals focus, which TipTap may treat as a selection
+  // collapse). The mode, label, and edit-mode URL must stay stable for
+  // the lifetime of the dialog.
   createEffect(() => {
     if (!props.isOpen) return;
-    const editor = props.editor;
+    const snap = snapshotEditor(props.editor);
+    setMode(snap.mode);
+    setUrlInput(snap.initialHref);
+    setLabelInput(snap.initialLabel);
     setTouched(false);
-    if (editor && editor.isActive('link')) {
-      const href = (editor.getAttributes('link').href as string | undefined) ?? '';
-      setUrlInput(href);
-    } else {
-      setUrlInput('');
-    }
   });
-
-  const trimmedUrl = () => urlInput().trim();
-  const urlIsValid = () => isAllowedUrl(urlInput());
 
   const titleText = () => {
     switch (mode()) {
@@ -75,26 +112,68 @@ export default function LinkOverlay(props: LinkOverlayProps) {
     }
   };
 
-  const handleConfirm = () => {
+  const trimmedUrl = () => urlInput().trim();
+  const normalizedUrl = () => normalizeUrl(urlInput());
+  const trimmedLabel = () => labelInput().trim();
+
+  // URL is valid if the normalized form is non-empty. The normalized form
+  // is "" for empty input or for unsafe protocols (javascript:, data:,
+  // vbscript:, file:). For bare domains like "example.com", the normalized
+  // form is "https://example.com" — valid.
+  const urlIsValid = () => normalizedUrl().length > 0;
+
+  const applyLink = () => {
     const editor = props.editor;
     if (!editor) return;
     setTouched(true);
     if (!urlIsValid()) return;
 
-    const href = trimmedUrl();
+    const href = normalizedUrl();
+    // If the label is empty, fall back to what the user typed as the URL
+    // (not the auto-prefixed normalized form). This way a bare domain
+    // like "example.com" reads as "example.com" in the body, not the
+    // auto-prepended "https://example.com" that the user did not type.
+    const label = trimmedLabel() || trimmedUrl();
     const currentMode = mode();
-    if (currentMode === 'insert') {
+
+    if (currentMode === 'edit') {
+      // Replace the link's text + href atomically: extend selection to
+      // cover the whole mark, delete it, insert new text carrying the
+      // updated link.
+      editor
+        .chain()
+        .focus()
+        .extendMarkRange('link')
+        .deleteSelection()
+        .insertContent({
+          type: 'text',
+          text: label,
+          marks: [{ type: 'link', attrs: { href } }],
+        })
+        .run();
+    } else if (currentMode === 'wrap-selection') {
+      // Replace the selected range with new text carrying the link.
+      editor
+        .chain()
+        .focus()
+        .deleteSelection()
+        .insertContent({
+          type: 'text',
+          text: label,
+          marks: [{ type: 'link', attrs: { href } }],
+        })
+        .run();
+    } else {
+      // Insert mode — no selection to replace.
       editor
         .chain()
         .focus()
         .insertContent({
           type: 'text',
-          text: href,
+          text: label,
           marks: [{ type: 'link', attrs: { href } }],
         })
         .run();
-    } else {
-      editor.chain().focus().extendMarkRange('link').setLink({ href }).run();
     }
     props.onClose();
   };
@@ -106,12 +185,20 @@ export default function LinkOverlay(props: LinkOverlayProps) {
     props.onClose();
   };
 
+  const handleOpenLink = () => {
+    const href = normalizedUrl();
+    if (!href) return;
+    void openUrl(href).catch((err) => {
+      console.error('[mini-diarium] failed to open link in system browser:', err);
+    });
+  };
+
   const handleKeyDown = (e: KeyboardEvent) => {
     if (e.key === 'Escape') {
       props.onClose();
     } else if (e.key === 'Enter' && !e.shiftKey && e.target instanceof HTMLInputElement) {
       e.preventDefault();
-      handleConfirm();
+      applyLink();
     }
   };
 
@@ -139,7 +226,8 @@ export default function LinkOverlay(props: LinkOverlayProps) {
                 </label>
                 <input
                   id="link-url-input"
-                  type="url"
+                  type="text"
+                  inputmode="url"
                   value={urlInput()}
                   onInput={(e) => setUrlInput(e.currentTarget.value)}
                   placeholder={t('link.urlPlaceholder')}
@@ -150,12 +238,30 @@ export default function LinkOverlay(props: LinkOverlayProps) {
                 />
                 <Show when={touched() && !urlIsValid()}>
                   <p class="mt-2 text-xs text-error" role="alert">
-                    {t('link.invalidUrlError')}
+                    {t('link.urlRequiredError')}
                   </p>
                 </Show>
               </div>
 
-              <div class="flex justify-end gap-3">
+              <div>
+                <label for="link-label-input" class="block text-sm font-medium text-secondary mb-2">
+                  {t('link.labelLabel')}
+                </label>
+                <input
+                  id="link-label-input"
+                  type="text"
+                  value={labelInput()}
+                  onInput={(e) => setLabelInput(e.currentTarget.value)}
+                  placeholder={t('link.labelPlaceholder')}
+                  class="w-full px-3 py-2 border border-primary bg-primary text-primary rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  data-testid="link-label-input"
+                />
+                <p class="mt-1 text-xs text-tertiary">{t('link.labelHint')}</p>
+              </div>
+
+              <p class="text-xs text-tertiary">{t('link.openInBrowserHint')}</p>
+
+              <div class="flex flex-wrap items-center justify-end gap-2">
                 <Show when={mode() === 'edit'}>
                   <button
                     type="button"
@@ -164,6 +270,16 @@ export default function LinkOverlay(props: LinkOverlayProps) {
                     data-testid="link-remove-button"
                   >
                     {t('link.remove')}
+                  </button>
+                </Show>
+                <Show when={urlIsValid()}>
+                  <button
+                    type="button"
+                    onClick={handleOpenLink}
+                    class="px-4 py-2 text-sm font-medium text-secondary bg-primary border border-primary rounded-md hover:bg-hover focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                    data-testid="link-open-button"
+                  >
+                    {t('link.open')}
                   </button>
                 </Show>
                 <button
@@ -175,7 +291,7 @@ export default function LinkOverlay(props: LinkOverlayProps) {
                 </button>
                 <button
                   type="button"
-                  onClick={handleConfirm}
+                  onClick={applyLink}
                   disabled={!props.editor || !urlIsValid()}
                   class="px-4 py-2 text-sm font-medium interactive-primary rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
                   data-testid="link-confirm-button"

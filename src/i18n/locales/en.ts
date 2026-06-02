@@ -574,12 +574,18 @@ const en = {
     editTitle: 'Edit link',
     wrapSelectionTitle: 'Add link',
     urlLabel: 'URL',
-    urlPlaceholder: 'https://example.com',
+    urlPlaceholder: 'example.com or https://…',
+    urlRequiredError: 'Please enter a URL.',
+    labelLabel: 'Display text',
+    labelPlaceholder: 'Link text (optional)',
+    labelHint: 'If left empty, the URL is used as the visible text.',
+    openInBrowserHint:
+      'Hold Ctrl (Cmd on macOS) and click a link in the editor to open it in your browser. Plain click just places the cursor for editing.',
     insert: 'Insert',
     update: 'Update',
     apply: 'Apply',
     remove: 'Remove link',
-    invalidUrlError: 'Enter a URL starting with http://, https://, mailto:, or tel:.',
+    open: 'Open link',
   },
 
   /** GoToDateOverlay */
