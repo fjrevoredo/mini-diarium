@@ -184,7 +184,9 @@
       "textDirection": "Dirección del texto",
       "textDirectionTitle": "Alternar dirección del texto (Ctrl+Shift+D)",
       "fontFamily": "Tipo de letra",
-      "fontSize": "Tamaño de letra"
+      "fontSize": "Tamaño de letra",
+      "setEntryFontDefault": "Set as entry default",
+      "clearEntryFontDefault": "Clear entry default"
     },
     "wordCount_one": "{{ count }} palabra",
     "wordCount_other": "{{ count }} palabras",

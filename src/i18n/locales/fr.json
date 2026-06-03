@@ -184,7 +184,9 @@
       "textDirection": "Direction du texte",
       "textDirectionTitle": "Basculer la direction du texte (Ctrl+Shift+D)",
       "fontFamily": "Police",
-      "fontSize": "Taille de police"
+      "fontSize": "Taille de police",
+      "setEntryFontDefault": "Set as entry default",
+      "clearEntryFontDefault": "Clear entry default"
     },
     "wordCount_one": "{{ count }} mot",
     "wordCount_other": "{{ count }} mots",

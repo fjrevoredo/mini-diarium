@@ -1,4 +1,4 @@
-use crate::db::queries::DiaryEntry;
+use crate::db::queries::{DiaryEntry, EntryMetadata};
 use log::{debug, warn};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -34,40 +34,102 @@ pub struct Entry {
     pub text: String,
 }
 
-/// Parses Mini Diary JSON and converts to DiaryEntry structs
+/// Mini Diarium JSON export format (array-based, current format)
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct MiniDiariumJson {
+    #[serde(default)]
+    entries: Vec<MiniDiariumEntry>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct MiniDiariumEntry {
+    pub id: i64,
+    pub date: String,
+    pub title: String,
+    pub text: String,
+    #[serde(rename = "dateUpdated", default)]
+    pub date_updated: String,
+    #[serde(default)]
+    pub metadata: Option<EntryMetadata>,
+}
+
+/// Parses Mini Diary / Mini Diarium JSON and converts to DiaryEntry structs.
 ///
-/// # Arguments
-/// * `json_str` - The JSON string to parse
-///
-/// # Returns
-/// A vector of DiaryEntry structs ready for database insertion
+/// Supports both formats:
+/// - Legacy Mini Diary: `entries` is a date-keyed object
+/// - Current Mini Diarium: `entries` is an array of entry objects
 pub fn parse_minidiary_json(json_str: &str) -> Result<Vec<DiaryEntry>, String> {
-    // Parse JSON
-    let mini_diary: MiniDiaryJson =
+    // Detect format by inspecting the `entries` field type
+    let raw: serde_json::Value =
         serde_json::from_str(json_str).map_err(|e| format!("Failed to parse JSON: {}", e))?;
 
+    match raw.get("entries") {
+        Some(serde_json::Value::Array(_)) => parse_minidiary_array_format(json_str),
+        _ => {
+            // Fall back to Mini Diary date-keyed object format
+            let mini_diary: MiniDiaryJson = serde_json::from_str(json_str)
+                .map_err(|e| format!("Failed to parse JSON: {}", e))?;
+            parse_mini_diary_object_format(mini_diary)
+        }
+    }
+}
+
+fn parse_minidiary_array_format(json_str: &str) -> Result<Vec<DiaryEntry>, String> {
+    let doc: MiniDiariumJson = serde_json::from_str(json_str)
+        .map_err(|e| format!("Failed to parse Mini Diarium JSON: {}", e))?;
+
+    debug!(
+        "Parsed Mini Diarium array format with {} entries",
+        doc.entries.len()
+    );
+
+    let now = chrono::Utc::now().to_rfc3339();
+    let mut diary_entries = Vec::with_capacity(doc.entries.len());
+
+    for entry in doc.entries {
+        if !is_valid_date_format(&entry.date) {
+            warn!("Invalid date format '{}', skipping", entry.date);
+            continue;
+        }
+        let word_count = crate::db::queries::count_words(&entry.text);
+        let date_updated = if entry.date_updated.is_empty() {
+            now.clone()
+        } else {
+            entry.date_updated
+        };
+        diary_entries.push(DiaryEntry {
+            id: 0,
+            date: entry.date,
+            title: entry.title,
+            text: entry.text,
+            word_count,
+            date_created: now.clone(),
+            date_updated,
+            metadata: entry.metadata,
+        });
+    }
+
+    debug!("Successfully parsed {} valid entries", diary_entries.len());
+    Ok(diary_entries)
+}
+
+fn parse_mini_diary_object_format(mini_diary: MiniDiaryJson) -> Result<Vec<DiaryEntry>, String> {
     debug!(
         "Parsed Mini Diary format version: {}",
         mini_diary.metadata.version
     );
     debug!("Found {} entries", mini_diary.entries.len());
 
-    // Convert entries to DiaryEntry format
     let now = chrono::Utc::now().to_rfc3339();
     let mut diary_entries: Vec<DiaryEntry> = Vec::new();
 
     for (date, entry) in mini_diary.entries {
-        // Validate date format
         if !is_valid_date_format(&date) {
             warn!("Invalid date format '{}', skipping", date);
             continue;
         }
 
-        // Calculate word count
         let word_count = crate::db::queries::count_words(&entry.text);
-
-        // Convert human-readable timestamp to ISO 8601 if possible
-        // If conversion fails, use current timestamp
         let date_updated = parse_timestamp(&entry.date_updated).unwrap_or_else(|| now.clone());
 
         diary_entries.push(DiaryEntry {
@@ -76,8 +138,9 @@ pub fn parse_minidiary_json(json_str: &str) -> Result<Vec<DiaryEntry>, String> {
             title: entry.title,
             text: entry.text,
             word_count,
-            date_created: now.clone(), // We don't have this in the source, use import time
+            date_created: now.clone(),
             date_updated,
+            metadata: None,
         });
     }
 
@@ -292,5 +355,61 @@ mod tests {
         assert!(entries.iter().any(|e| e.date == "2024-01-01"));
         assert!(entries.iter().any(|e| e.date == "2024-01-02"));
         assert!(entries.iter().any(|e| e.date == "2024-01-03"));
+    }
+
+    #[test]
+    fn test_parse_minidiary_array_format_no_metadata() {
+        let json = r#"{
+            "metadata": { "application": "Mini Diarium", "version": "0.5.0", "exportedAt": "2024-01-10T12:00:00Z" },
+            "entries": [
+                { "id": 1, "date": "2024-01-01", "title": "Hello", "text": "<p>World</p>", "dateUpdated": "2024-01-01T00:00:00Z", "tags": [] }
+            ]
+        }"#;
+
+        let result = parse_minidiary_json(json).unwrap();
+        assert_eq!(result.len(), 1);
+        assert_eq!(result[0].date, "2024-01-01");
+        assert_eq!(result[0].title, "Hello");
+        assert_eq!(result[0].text, "<p>World</p>");
+        assert!(result[0].metadata.is_none());
+    }
+
+    #[test]
+    fn test_parse_minidiary_array_format_with_metadata() {
+        let json = r#"{
+            "metadata": { "application": "Mini Diarium", "version": "0.5.3", "exportedAt": "2024-01-10T12:00:00Z" },
+            "entries": [
+                {
+                    "id": 2,
+                    "date": "2024-02-01",
+                    "title": "Styled",
+                    "text": "<p>Styled content</p>",
+                    "dateUpdated": "2024-02-01T00:00:00Z",
+                    "tags": [],
+                    "metadata": { "fontFamily": "Merriweather", "fontSize": 18.0 }
+                }
+            ]
+        }"#;
+
+        let result = parse_minidiary_json(json).unwrap();
+        assert_eq!(result.len(), 1);
+        let meta = result[0].metadata.as_ref().unwrap();
+        assert_eq!(meta.font_family.as_deref(), Some("Merriweather"));
+        assert_eq!(meta.font_size, Some(18.0));
+    }
+
+    #[test]
+    fn test_parse_minidiary_array_format_backward_compat_no_metadata_field() {
+        // Old Mini Diarium exports without metadata field must still import cleanly
+        let json = r#"{
+            "metadata": { "application": "Mini Diarium", "version": "0.5.0", "exportedAt": "2024-01-10T12:00:00Z" },
+            "entries": [
+                { "id": 1, "date": "2024-01-05", "title": "Old", "text": "<p>Old entry</p>", "dateUpdated": "2024-01-05T00:00:00Z" }
+            ]
+        }"#;
+
+        let result = parse_minidiary_json(json).unwrap();
+        assert_eq!(result.len(), 1);
+        assert!(result[0].metadata.is_none());
     }
 }

@@ -97,14 +97,37 @@ Mini Diarium supports right-to-left (RTL) writing in Arabic, Hebrew, Syriac, and
 
 The advanced toolbar includes a **clock button** that inserts the current time at the cursor position. Clicking the button opens a popup where you can choose between **12-hour** and **24-hour** format and select hours:minutes or hours:minutes:seconds precision. Both selections are remembered across sessions.
 
-## Editor Font
+## Editor Font — Three-Level System
 
-You can change the font used in the editor body via **Preferences → Writing → Editor font**. The selector shows two groups:
+Mini Diarium uses a three-level font system so you can control fonts at multiple scopes:
+
+### 1. App Default (Preferences)
+
+You can change the font used app-wide via **Preferences → Writing → Editor font**. The selector shows two groups:
 
 - **Bundled fonts** — five open-source families (Noto Sans, Source Sans 3, Noto Serif, JetBrains Mono, Fira Mono) bundled with the app. Loaded on demand and work fully offline.
 - **Custom fonts** — font files you have uploaded yourself (see below). Only families with at least a Regular weight appear here.
 
-Font family and font size are also available as optional controls in the editor toolbar itself. Enable them in **Preferences → Writing → Toolbar items** — they appear as compact dropdowns directly in the toolbar and always stay in sync with the Preferences sliders.
+Font family and font size are also available as optional controls in the editor toolbar itself. Enable them in **Preferences → Writing → Toolbar items** — they appear as compact dropdowns directly in the toolbar, but they now apply inline formatting (see below) instead of changing the Preferences.
+
+### 2. Entry Default (Per-Entry Override)
+
+When you have the font dropdown enabled in the editor toolbar, two new buttons appear next to it:
+
+- **Set as entry default** — saves the current font family and size as the default for this entry only, overriding the app default. This is useful when a particular entry needs a different font than your usual preference.
+- **Clear entry default** — removes the entry default and reverts this entry to use the app default.
+
+Entry font defaults are stored encrypted inside the entry's metadata and survive save, lock/unlock, and navigation cycles.
+
+### 3. Inline Formatting (Selection)
+
+The font family and font size dropdowns in the editor toolbar apply **inline formatting** to selected text or the cursor. This is different from changing preferences — it wraps the selection in a styled span so different parts of the same entry can have different fonts.
+
+To apply inline formatting:
+1. Select the text you want to format (or place the cursor where you want inline formatting to start)
+2. Use the font family or font size dropdown to apply the style
+
+Inline formatting is stored in the encrypted HTML of your entry and exports to JSON with full formatting preserved.
 
 ### Custom Fonts
 

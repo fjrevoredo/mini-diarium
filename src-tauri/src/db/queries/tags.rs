@@ -241,6 +241,7 @@ mod tests {
             word_count: 8,
             date_created: now.clone(),
             date_updated: now,
+            metadata: None,
         }
     }
 

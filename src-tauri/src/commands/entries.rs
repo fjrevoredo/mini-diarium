@@ -1,5 +1,5 @@
 use crate::commands::auth::{with_unlocked_db, DiaryState};
-use crate::db::queries::{self, DiaryEntry};
+use crate::db::queries::{self, DiaryEntry, EntryMetadata};
 use log::debug;
 use tauri::State;
 
@@ -16,6 +16,7 @@ pub fn create_entry(date: String, state: State<DiaryState>) -> Result<DiaryEntry
             word_count: 0,
             date_created: now.clone(),
             date_updated: now,
+            metadata: None,
         };
         queries::insert_entry(db, &entry)?;
         let new_id = db.conn().last_insert_rowid();
@@ -31,6 +32,7 @@ pub(crate) fn save_entry_inner(
     id: i64,
     title: &str,
     text: &str,
+    metadata: Option<EntryMetadata>,
     state: &DiaryState,
 ) -> Result<(), String> {
     with_unlocked_db(state, |db| {
@@ -44,6 +46,7 @@ pub(crate) fn save_entry_inner(
         entry.text = text.to_string();
         entry.word_count = word_count;
         entry.date_updated = now;
+        entry.metadata = queries::normalize_metadata(metadata);
 
         queries::update_entry(db, &entry)?;
         debug!("Saved entry id={}", id);
@@ -58,9 +61,10 @@ pub fn save_entry(
     id: i64,
     title: String,
     text: String,
+    metadata: Option<EntryMetadata>,
     state: State<DiaryState>,
 ) -> Result<(), String> {
-    save_entry_inner(id, &title, &text, &state)
+    save_entry_inner(id, &title, &text, metadata, &state)
 }
 
 /// Gets all diary entries for a specific date, newest-first
@@ -136,6 +140,7 @@ mod tests {
             word_count: 0,
             date_created: now.clone(),
             date_updated: now,
+            metadata: None,
         };
         queries::insert_entry(&db, &entry).unwrap();
         let new_id = db.conn().last_insert_rowid();
@@ -165,6 +170,7 @@ mod tests {
             word_count: 1,
             date_created: now.clone(),
             date_updated: now,
+            metadata: None,
         };
         queries::insert_entry(&db, &entry).unwrap();
         let id = db.conn().last_insert_rowid();
@@ -195,6 +201,7 @@ mod tests {
             word_count: 1,
             date_created: now.clone(),
             date_updated: now.clone(),
+            metadata: None,
         };
 
         queries::insert_entry(&db, &make_entry("Morning")).unwrap();
@@ -224,6 +231,7 @@ mod tests {
             word_count: 0,
             date_created: now.clone(),
             date_updated: now,
+            metadata: None,
         };
         queries::insert_entry(&db, &entry).unwrap();
         let id = db.conn().last_insert_rowid();
@@ -251,6 +259,7 @@ mod tests {
             word_count: 1,
             date_created: now.clone(),
             date_updated: now.clone(),
+            metadata: None,
         };
 
         // Insert multiple entries, two on the same date
@@ -288,6 +297,7 @@ mod tests {
             word_count: 2,
             date_created: now.clone(),
             date_updated: now,
+            metadata: None,
         };
         queries::insert_entry(&db, &entry).unwrap();
         let id = db.conn().last_insert_rowid();
@@ -321,7 +331,7 @@ mod tests {
             PathBuf::from("test_save_entry_locked_backups"),
             PathBuf::from("."),
         );
-        let err = save_entry_inner(1, "Title", "Text", &state).unwrap_err();
+        let err = save_entry_inner(1, "Title", "Text", None, &state).unwrap_err();
         assert!(err.contains("Journal must be unlocked"), "got: {}", err);
     }
 
@@ -340,6 +350,7 @@ mod tests {
             word_count: 0,
             date_created: now.clone(),
             date_updated: now,
+            metadata: None,
         };
         queries::insert_entry(&db, &blank).unwrap();
         let entry_id = db.conn().last_insert_rowid();
@@ -349,7 +360,7 @@ mod tests {
             PathBuf::from("."),
         );
         *state.db.lock().unwrap() = Some(db);
-        let result = save_entry_inner(entry_id, "My Title", "My content here", &state);
+        let result = save_entry_inner(entry_id, "My Title", "My content here", None, &state);
         assert!(result.is_ok(), "err: {:?}", result.err());
         let db_guard = state.db.lock().unwrap();
         let retrieved = queries::get_entry_by_id(db_guard.as_ref().unwrap(), entry_id)

@@ -86,6 +86,7 @@ pub fn parse_dayone_json(json_str: &str) -> Result<Vec<DiaryEntry>, String> {
             word_count,
             date_created: timestamp.clone(),
             date_updated: timestamp,
+            metadata: None,
         });
     }
 

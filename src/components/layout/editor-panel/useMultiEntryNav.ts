@@ -1,7 +1,7 @@
 import { type Accessor, type Setter } from 'solid-js';
 import type { Editor } from '@tiptap/core';
 import { createEntry, deleteEntry, getEntriesForDate, getAllEntryDates } from '../../../lib/tauri';
-import type { DiaryEntry } from '../../../lib/tauri';
+import type { DiaryEntry, EntryMetadata } from '../../../lib/tauri';
 import { setEntryDates } from '../../../state/entries';
 import { countWordsInHtml } from '../../../lib/wordcount';
 import { createLogger } from '../../../lib/logger';
@@ -40,6 +40,8 @@ export interface UseMultiEntryNavOptions {
   setIsCreatingEntry: Setter<boolean>;
   emptyCheck: EditorEmptyCheckHook;
   lifecycle: EntryLifecycleHook;
+  entryMetadata: Accessor<EntryMetadata | null>;
+  setEntryMetadata: Setter<EntryMetadata | null>;
 }
 
 export interface MultiEntryNavHook {
@@ -85,6 +87,7 @@ export function useMultiEntryNav(opts: UseMultiEntryNavOptions): MultiEntryNavHo
       opts.setTitle(entry.title);
       opts.setContent(entry.text);
       opts.setWordCount(countWordsInHtml(entry.text));
+      opts.setEntryMetadata(entry.metadata ?? null);
     } catch (error) {
       log.error('Failed to navigate to entry:', error);
     }
@@ -125,6 +128,7 @@ export function useMultiEntryNav(opts: UseMultiEntryNavOptions): MultiEntryNavHo
       opts.setTitle('');
       opts.setContent('');
       opts.setWordCount(0);
+      opts.setEntryMetadata(null);
       // Cancel any previously queued debounced save from the current entry before
       // switching to the new blank entry — prevents saving the wrong entry data.
       opts.lifecycle.debouncedSave.cancel();

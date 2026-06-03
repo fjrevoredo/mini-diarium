@@ -1,10 +1,20 @@
-import { createEffect, onCleanup, onMount, createSignal, createResource, Show } from 'solid-js';
+import {
+  createEffect,
+  createMemo,
+  onCleanup,
+  onMount,
+  createSignal,
+  createResource,
+  Show,
+} from 'solid-js';
 import { Editor } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import Underline from '@tiptap/extension-underline';
 import Highlight from '@tiptap/extension-highlight';
 import { TextStyle } from '@tiptap/extension-text-style';
+import { FontFamily } from '@tiptap/extension-text-style/font-family';
+import { FontSize } from '@tiptap/extension-text-style/font-size';
 import Color from '@tiptap/extension-color';
 import TextAlign from '@tiptap/extension-text-align';
 import EditorToolbar from './EditorToolbar';
@@ -14,6 +24,9 @@ import { TimestampMark } from './extensions/TimestampMark';
 import { LinkWithDialog, handleEditorLinkClick } from './extensions/LinkWithDialog';
 import { preferences } from '../../state/preferences';
 import { readFileBytes, getFontData } from '../../lib/tauri';
+import { customFontsVersion } from '../../state/fonts';
+import { extractFontFamiliesFromHtml } from '../../lib/font-utils';
+import type { EntryMetadata } from '../../lib/tauri';
 import { extractImageSourcesFromHtml, htmlHasImages } from '../../lib/image-drag';
 import { useI18n } from '../../i18n';
 
@@ -26,6 +39,8 @@ interface DiaryEditorProps {
   onEditorReady?: (editor: Editor) => void;
   spellCheck?: boolean;
   onImportMarkdown?: () => void;
+  entryMetadata?: EntryMetadata | null;
+  onEntryMetadataChange?: (meta: EntryMetadata | null) => void;
 }
 
 // Core: resize a data URL via canvas and insert at the current cursor position.
@@ -110,45 +125,65 @@ export default function DiaryEditor(props: DiaryEditorProps) {
     dropHintTimer = setTimeout(() => setDropHint(false), 6000);
   };
 
-  // @font-face injection: loads the selected editor font from bundled TTF files
-  // as base64 data URLs so the browser can render it.
-  const fontFamily = () => preferences().editorFontFamily;
-  const [fontData] = createResource(fontFamily, getFontData);
+  // Collect unique font families needed: app default, entry default, and inline overrides.
+  // Also subscribe to customFontsVersion so custom font changes trigger a reload.
+  const fontFamiliesKey = createMemo(() => {
+    void customFontsVersion(); // subscribe to custom font changes
+    const families = new Set<string>();
+    const appFont = preferences().editorFontFamily;
+    if (appFont) families.add(appFont);
+    const entryFont = props.entryMetadata?.fontFamily;
+    if (entryFont) families.add(entryFont);
+    extractFontFamiliesFromHtml(props.content).forEach((f) => families.add(f));
+    return Array.from(families).sort().join('|');
+  });
+
+  const [allFontData] = createResource(fontFamiliesKey, async (key) => {
+    if (!key) return [];
+    const families = key.split('|');
+    const results = await Promise.all(families.map((f) => getFontData(f).catch(() => null)));
+    return results.filter(Boolean);
+  });
 
   createEffect(() => {
     const existing = document.getElementById('editor-font-face');
-    const data = fontData();
+    const dataList = allFontData();
 
-    if (!data) {
+    if (!dataList || dataList.length === 0) {
       existing?.remove();
       return;
     }
 
     const style = existing || document.createElement('style');
     style.id = 'editor-font-face';
-    const faces = [
-      `@font-face {`,
-      `  font-family: "${data.family}";`,
-      `  src: url(${data.regular});`,
-      `  font-weight: 400;`,
-      `  font-style: normal;`,
-      `}`,
-    ];
-    // When Bold is synthesized (Regular-only upload), omit the 700-weight face so
-    // the browser can synthesize bold. Registering a fake 700-weight face pointing
-    // at the Regular file would prevent browser synthesis.
-    if (!data.bold_synthesized) {
+    const faces: string[] = [];
+
+    for (const data of dataList) {
+      if (!data) continue;
       faces.push(
         `@font-face {`,
         `  font-family: "${data.family}";`,
-        `  src: url(${data.bold});`,
-        `  font-weight: 700;`,
+        `  src: url(${data.regular});`,
+        `  font-weight: 400;`,
         `  font-style: normal;`,
         `}`,
       );
+      // When Bold is synthesized (Regular-only upload), omit the 700-weight face so
+      // the browser can synthesize bold. Registering a fake 700-weight face pointing
+      // at the Regular file would prevent browser synthesis.
+      if (!data.bold_synthesized) {
+        faces.push(
+          `@font-face {`,
+          `  font-family: "${data.family}";`,
+          `  src: url(${data.bold});`,
+          `  font-weight: 700;`,
+          `  font-style: normal;`,
+          `}`,
+        );
+      }
     }
-    style.textContent = faces.join('\n');
 
+    style.textContent = faces.join('\n');
     if (!existing) document.head.appendChild(style);
   });
 
@@ -175,6 +210,8 @@ export default function DiaryEditor(props: DiaryEditorProps) {
         Underline,
         Highlight.configure({ multicolor: true }),
         TextStyle,
+        FontFamily,
+        FontSize,
         Color,
         AlignableImage.configure({ allowBase64: true, inline: false }),
         TextAlign.configure({ types: ['heading', 'paragraph', 'image'] }),
@@ -325,8 +362,9 @@ export default function DiaryEditor(props: DiaryEditorProps) {
     <div
       class={`rounded-lg border bg-primary transition-colors duration-150 ${isDragOver() ? 'editor-drag-over' : 'border-primary'}`}
       style={{
-        '--editor-font-size': `${preferences().editorFontSize}px`,
-        '--editor-font-family': preferences().editorFontFamily ?? 'inherit',
+        '--editor-font-size': `${props.entryMetadata?.fontSize ?? preferences().editorFontSize}px`,
+        '--editor-font-family':
+          props.entryMetadata?.fontFamily ?? preferences().editorFontFamily ?? 'inherit',
       }}
       onDragOver={(e) => {
         const types = Array.from(e.dataTransfer?.types ?? []);
@@ -358,6 +396,8 @@ export default function DiaryEditor(props: DiaryEditorProps) {
             );
         }}
         onImportMarkdown={props.onImportMarkdown}
+        entryMetadata={props.entryMetadata}
+        onEntryMetadataChange={props.onEntryMetadataChange}
       />
       <div class="p-4">
         <div ref={editorElement} />

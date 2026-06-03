@@ -239,7 +239,9 @@ These are used by E2E tests — **do not remove** from components.
 
 ## Gotchas and Pitfalls
 
-1. **Date format is always `YYYY-MM-DD`**: The `T00:00:00` suffix is appended in `dates.ts` functions (`new Date(dateStr + 'T00:00:00')`) to avoid timezone-related date shifts.
+1. **Three-level font model**: The editor supports fonts at three hierarchy levels, applied in order: app default (from `preferences.editorFontFamily` / `editorFontSize`), entry default (from encrypted `entry_metadata_encrypted` in the entry), and inline formatting (Tiptap `FontFamily` / `FontSize` marks applied to selections). The toolbar font dropdowns apply inline marks to the selection/cursor, not global preferences. Multi-font loading (@font-face rules) covers all three sources: app default + entry default + inline fonts referenced in the encrypted `text` HTML. Custom font changes refresh automatically across all three levels.
+
+2. **Date format is always `YYYY-MM-DD`**: The `T00:00:00` suffix is appended in `dates.ts` functions (`new Date(dateStr + 'T00:00:00')`) to avoid timezone-related date shifts.
 
 2. **TipTap stores HTML**: The editor content is stored as HTML strings, not Markdown. This is intentional — the `text` field in `DiaryEntry` is HTML.
 

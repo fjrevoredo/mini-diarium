@@ -9,7 +9,8 @@ import {
 } from 'solid-js';
 import type { JSX } from 'solid-js';
 import type { Editor } from '@tiptap/core';
-import { preferences, setPreferences } from '../../state/preferences';
+import { preferences } from '../../state/preferences';
+import type { EntryMetadata } from '../../lib/tauri';
 import type { ToolbarItemKey } from '../../state/preferences';
 import { customFontsVersion } from '../../state/fonts';
 import { listBundledFonts, listCustomFonts } from '../../lib/tauri';
@@ -47,6 +48,8 @@ interface EditorToolbarProps {
   editor: Editor | null;
   onInsertImage?: (file: File) => void;
   onImportMarkdown?: () => void;
+  entryMetadata?: EntryMetadata | null;
+  onEntryMetadataChange?: (meta: EntryMetadata | null) => void;
 }
 
 export default function EditorToolbar(props: EditorToolbarProps) {
@@ -77,6 +80,9 @@ export default function EditorToolbar(props: EditorToolbarProps) {
   const [isTimestampOpen, setIsTimestampOpen] = createSignal(false);
   const [isLinkOpen, setIsLinkOpen] = createSignal(false);
   const [isRtlActive, setIsRtlActive] = createSignal(false);
+  const [activeFontFamily, setActiveFontFamily] = createSignal<string>('');
+  // '' means no inline override; a number string like '16' means inline override active
+  const [activeFontSizeStr, setActiveFontSizeStr] = createSignal<string>('');
 
   // Update active states when editor changes
   createEffect(() => {
@@ -121,6 +127,12 @@ export default function EditorToolbar(props: EditorToolbarProps) {
                   ? 'right'
                   : 'left',
       );
+      setActiveFontFamily(
+        (editor.getAttributes('textStyle').fontFamily as string | undefined) ?? '',
+      );
+      const rawFontSize = editor.getAttributes('textStyle').fontSize as string | undefined;
+      // '' = no inline override; otherwise parse the px value
+      setActiveFontSizeStr(rawFontSize ? String(parseInt(rawFontSize)) : '');
     };
 
     updateActiveStates();
@@ -440,46 +452,87 @@ export default function EditorToolbar(props: EditorToolbarProps) {
         );
       case 'fontFamily':
         return (
-          <select
-            aria-label={t('editor.toolbar.fontFamily')}
-            onChange={(e) => setPreferences({ editorFontFamily: e.target.value || null })}
-            class="h-8 rounded border border-primary bg-primary px-2 text-sm text-primary transition-colors hover:bg-tertiary focus:outline-none focus:ring-2 focus:ring-[var(--border-focus)]"
-            disabled={bundledFonts.loading || customFonts.loading}
-          >
-            <option value="" selected={!preferences().editorFontFamily}>
-              {t('prefs.writing.fontFamilySystemDefault')}
-            </option>
-            <For each={bundledFonts() ?? []}>
-              {(font) => (
-                <option value={font} selected={preferences().editorFontFamily === font}>
-                  {font}
-                </option>
-              )}
-            </For>
-            <Show when={selectableCustomFonts().length > 0}>
-              <optgroup label={t('prefs.writing.customFontsGroupLabel')}>
-                <For each={selectableCustomFonts()}>
-                  {(font) => (
-                    <option
-                      value={font.family}
-                      selected={preferences().editorFontFamily === font.family}
-                    >
-                      {font.family}
-                    </option>
-                  )}
-                </For>
-              </optgroup>
+          <>
+            <select
+              aria-label={t('editor.toolbar.fontFamily')}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val) {
+                  props.editor?.chain().focus().setFontFamily(val).run();
+                } else {
+                  props.editor?.chain().focus().unsetFontFamily().run();
+                }
+              }}
+              class="h-8 rounded border border-primary bg-primary px-2 text-sm text-primary transition-colors hover:bg-tertiary focus:outline-none focus:ring-2 focus:ring-[var(--border-focus)]"
+              disabled={bundledFonts.loading || customFonts.loading}
+            >
+              <option value="" selected={!activeFontFamily()}>
+                {t('prefs.writing.fontFamilySystemDefault')}
+              </option>
+              <For each={bundledFonts() ?? []}>
+                {(font) => (
+                  <option value={font} selected={activeFontFamily() === font}>
+                    {font}
+                  </option>
+                )}
+              </For>
+              <Show when={selectableCustomFonts().length > 0}>
+                <optgroup label={t('prefs.writing.customFontsGroupLabel')}>
+                  <For each={selectableCustomFonts()}>
+                    {(font) => (
+                      <option value={font.family} selected={activeFontFamily() === font.family}>
+                        {font.family}
+                      </option>
+                    )}
+                  </For>
+                </optgroup>
+              </Show>
+            </select>
+            <Show when={props.onEntryMetadataChange}>
+              <button
+                onClick={() => {
+                  const family = activeFontFamily() || null;
+                  const sizeStr = activeFontSizeStr();
+                  const size = sizeStr ? parseInt(sizeStr) : preferences().editorFontSize;
+                  props.onEntryMetadataChange?.({ fontFamily: family, fontSize: size });
+                }}
+                class="h-8 rounded border border-primary bg-primary px-2 text-xs text-primary transition-colors hover:bg-tertiary focus:outline-none focus:ring-2 focus:ring-[var(--border-focus)]"
+                title={t('editor.toolbar.setEntryFontDefault')}
+                aria-label={t('editor.toolbar.setEntryFontDefault')}
+              >
+                {t('editor.toolbar.setEntryFontDefault')}
+              </button>
+              <Show when={props.entryMetadata}>
+                <button
+                  onClick={() => props.onEntryMetadataChange?.(null)}
+                  class="h-8 rounded border border-primary bg-primary px-2 text-xs text-primary transition-colors hover:bg-tertiary focus:outline-none focus:ring-2 focus:ring-[var(--border-focus)]"
+                  title={t('editor.toolbar.clearEntryFontDefault')}
+                  aria-label={t('editor.toolbar.clearEntryFontDefault')}
+                >
+                  {t('editor.toolbar.clearEntryFontDefault')}
+                </button>
+              </Show>
             </Show>
-          </select>
+          </>
         );
       case 'fontSize':
         return (
           <select
             aria-label={t('editor.toolbar.fontSize')}
-            value={String(preferences().editorFontSize)}
-            onChange={(e) => setPreferences({ editorFontSize: Number(e.target.value) })}
+            value={activeFontSizeStr()}
+            onChange={(e) => {
+              const val = e.target.value;
+              if (val) {
+                props.editor?.chain().focus().setFontSize(`${val}px`).run();
+              } else {
+                props.editor?.chain().focus().unsetFontSize().run();
+              }
+            }}
             class="h-8 rounded border border-primary bg-primary px-2 text-sm text-primary transition-colors hover:bg-tertiary focus:outline-none focus:ring-2 focus:ring-[var(--border-focus)]"
           >
+            <option value="" selected={!activeFontSizeStr()}>
+              {t('prefs.writing.fontFamilySystemDefault')}
+            </option>
             <For each={FONT_SIZES}>{(s) => <option value={String(s)}>{s}</option>}</For>
           </select>
         );

@@ -5,13 +5,14 @@ mod v4_to_v5;
 mod v5_to_v6;
 mod v6_to_v7;
 mod v7_to_v8;
+mod v8_to_v9;
 
 pub(crate) use v1_to_v2::migrate_v1_to_v2;
 pub(crate) use v2_to_v3::migrate_v2_to_v3;
 
 use crate::db::schema::DatabaseConnection;
 
-/// Applies all pending DDL-only migrations (v3→v4 through v7→v8) in order.
+/// Applies all pending DDL-only migrations (v3→v4 through v8→v9) in order.
 ///
 /// This covers the idempotent, transactionally-safe migrations. The v1→v2 and
 /// v2→v3 migrations have different signatures (require paths and password) and
@@ -22,6 +23,7 @@ pub(crate) fn apply_pending(db: &DatabaseConnection) -> Result<(), String> {
     v5_to_v6::migrate_v5_to_v6(db)?;
     v6_to_v7::migrate_v6_to_v7(db)?;
     v7_to_v8::migrate_v7_to_v8(db)?;
+    v8_to_v9::migrate_v8_to_v9(db)?;
     Ok(())
 }
 
@@ -33,7 +35,7 @@ mod tests {
     use rusqlite::Connection;
 
     #[test]
-    fn test_apply_pending_advances_v3_to_v8() {
+    fn test_apply_pending_advances_v3_to_v9() {
         // Minimal v3 schema: schema_version=3, entries (old style), auth_slots
         // entries_fts is absent — migrate_v3_to_v4 uses DROP TABLE IF EXISTS
         let conn = Connection::open_in_memory().unwrap();
@@ -70,7 +72,7 @@ mod tests {
             .conn()
             .query_row("SELECT version FROM schema_version", [], |row| row.get(0))
             .unwrap();
-        assert_eq!(version, 8, "apply_pending must advance schema to v8");
+        assert_eq!(version, 9, "apply_pending must advance schema to v9");
 
         let table_count: i64 = db
             .conn()
@@ -83,6 +85,19 @@ mod tests {
         assert_eq!(
             table_count, 4,
             "db_settings, tags, entry_tags, and custom_fonts must all exist after apply_pending"
+        );
+
+        let col_exists: i64 = db
+            .conn()
+            .query_row(
+                "SELECT COUNT(*) FROM pragma_table_info('entries') WHERE name='entry_metadata_encrypted'",
+                [],
+                |row| row.get(0),
+            )
+            .unwrap();
+        assert_eq!(
+            col_exists, 1,
+            "entry_metadata_encrypted must exist after apply_pending"
         );
     }
 }

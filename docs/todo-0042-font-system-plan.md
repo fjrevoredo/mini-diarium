@@ -2,11 +2,11 @@
 
 ## Metadata
 
-- Plan Status: READY FOR APPROVAL
+- Plan Status: COMPLETED
 - Created: 2026-06-01
-- Last Updated: 2026-06-01
+- Last Updated: 2026-06-03
 - Owner: Coding agent
-- Approval: PENDING
+- Approval: APPROVED
 - Source TODO: `docs/todo/TODO.md:44` (TODO-0042)
 
 ## Status Legend
@@ -79,7 +79,7 @@ The plan is ready for approval. Implementation has not started.
 
 ### Task 1: Define Entry Font Metadata
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Objective: A validated Rust representation exists for per-entry font defaults.
 - Steps:
   1. Add an `EntryMetadata` or `EntryFontMetadata` struct near `DiaryEntry`.
@@ -91,7 +91,7 @@ The plan is ready for approval. Implementation has not started.
 
 ### Task 2: Add Schema v9 And Encrypted Metadata Storage
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Objective: Existing and new journals can store entry metadata encrypted at rest.
 - Steps:
   1. Bump `SCHEMA_VERSION` from `8` to `9` in `src-tauri/src/db/schema/mod.rs`.
@@ -106,7 +106,7 @@ The plan is ready for approval. Implementation has not started.
 
 ### Task 3: Extend Entry IPC And Frontend State Flow
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Objective: The frontend can read and save per-entry font metadata through normal entry workflows.
 - Steps:
   1. Update `create_entry` to return default metadata.
@@ -120,7 +120,7 @@ The plan is ready for approval. Implementation has not started.
 
 ### Task 4: Preserve Metadata In JSON And Plugin Surfaces
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Objective: Full-fidelity JSON export/import and plugin APIs can carry font metadata without breaking old formats.
 - Steps:
   1. Add a `metadata` or `font` object to Mini Diarium JSON export entries when an entry has font overrides.
@@ -136,7 +136,7 @@ The plan is ready for approval. Implementation has not started.
 
 ### Task 5: Register Tiptap Font Extensions And Inline Commands
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Objective: Inline font family and size marks are supported and controlled by the toolbar.
 - Steps:
   1. Import and register `FontFamily` and `FontSize` from `@tiptap/extension-text-style` in `DiaryEditor`.
@@ -149,7 +149,7 @@ The plan is ready for approval. Implementation has not started.
 
 ### Task 6: Add Explicit Entry Default UX
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Objective: Users can set/clear the current entry's default font family and size as an explicit action.
 - Steps:
   1. Add `entryMetadata` and `onEntryMetadataChange` props to `DiaryEditor`.
@@ -162,7 +162,7 @@ The plan is ready for approval. Implementation has not started.
 
 ### Task 7: Implement Font Precedence And Multi-Font Loading
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Objective: The editor renders app defaults, entry defaults, and inline overrides with correct precedence and local font faces.
 - Steps:
   1. Compute wrapper CSS variables as `entry default ?? app default ?? system fallback`.
@@ -176,7 +176,7 @@ The plan is ready for approval. Implementation has not started.
 
 ### Task 8: Update Preferences, I18n, And Focused Tests
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Objective: App-default copy and all localized UI strings match the new model.
 - Steps:
   1. Rename preference labels/hints from generic editor font wording to default editor font wording where needed.
@@ -189,7 +189,7 @@ The plan is ready for approval. Implementation has not started.
 
 ### Task 9: Update Documentation And Changelog
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Objective: User-facing and agent-facing docs describe the new behavior and schema correctly.
 - Steps:
   1. Update `website/docs-src/01-writing-entries.md` with app default, entry default, inline override, and custom font fallback behavior.
@@ -205,7 +205,7 @@ The plan is ready for approval. Implementation has not started.
 
 ### Task 10: Cleanup And Final Verification
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Objective: Remove intermediate artifacts, mark TODO-0042 complete, and verify the integrated change.
 - Steps:
   1. Inspect `git status` for temporary files, scratch scripts, logs, and generated outputs.

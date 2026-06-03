@@ -3,15 +3,52 @@ use rusqlite::params;
 
 // Shared column projection for all entry queries.
 const ENTRY_SELECT: &str =
-    "SELECT id, date, title_encrypted, text_encrypted, word_count, date_created, date_updated \
-     FROM entries";
+    "SELECT id, date, title_encrypted, text_encrypted, word_count, date_created, date_updated, \
+     entry_metadata_encrypted FROM entries";
 
-type EntryRow = (i64, String, Vec<u8>, Vec<u8>, i32, String, String);
+type EntryRow = (
+    i64,
+    String,
+    Vec<u8>,
+    Vec<u8>,
+    i32,
+    String,
+    String,
+    Option<Vec<u8>>,
+);
+
+fn encrypt_metadata(
+    db: &DatabaseConnection,
+    metadata: &Option<EntryMetadata>,
+) -> Result<Option<Vec<u8>>, String> {
+    match metadata {
+        Some(m) => {
+            let json = serde_json::to_string(m)
+                .map_err(|e| format!("Failed to serialize entry metadata: {}", e))?;
+            Ok(Some(super::encrypt_for_storage(
+                db.key(),
+                json.as_bytes(),
+                "entry_metadata",
+            )?))
+        }
+        None => Ok(None),
+    }
+}
 
 fn row_to_entry(db: &DatabaseConnection, row: EntryRow) -> Result<DiaryEntry, String> {
-    let (id, date, title_enc, text_enc, word_count, date_created, date_updated) = row;
+    let (id, date, title_enc, text_enc, word_count, date_created, date_updated, metadata_enc) = row;
     let title = super::decrypt_utf8(db.key(), &title_enc, "title")?;
     let text = super::decrypt_utf8(db.key(), &text_enc, "text")?;
+    let metadata = match metadata_enc {
+        Some(enc) => {
+            let json = super::decrypt_utf8(db.key(), &enc, "entry_metadata")?;
+            Some(
+                serde_json::from_str::<EntryMetadata>(&json)
+                    .map_err(|e| format!("Failed to parse entry metadata: {}", e))?,
+            )
+        }
+        None => None,
+    };
     Ok(DiaryEntry {
         id,
         date,
@@ -20,7 +57,39 @@ fn row_to_entry(db: &DatabaseConnection, row: EntryRow) -> Result<DiaryEntry, St
         word_count,
         date_created,
         date_updated,
+        metadata,
     })
+}
+
+/// Per-entry font defaults (optional override of app-level defaults)
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+pub struct EntryMetadata {
+    #[serde(rename = "fontFamily", skip_serializing_if = "Option::is_none")]
+    pub font_family: Option<String>,
+    #[serde(rename = "fontSize", skip_serializing_if = "Option::is_none")]
+    pub font_size: Option<f64>,
+}
+
+/// Normalizes entry metadata: trims empty family strings to None, clamps font size to 12–24 px.
+/// Returns None when both fields are None (no override).
+pub fn normalize_metadata(meta: Option<EntryMetadata>) -> Option<EntryMetadata> {
+    let mut m = meta?;
+    if let Some(ref f) = m.font_family {
+        let trimmed = f.trim().to_string();
+        m.font_family = if trimmed.is_empty() {
+            None
+        } else {
+            Some(trimmed)
+        };
+    }
+    if let Some(size) = m.font_size {
+        m.font_size = Some(size.clamp(12.0, 24.0));
+    }
+    if m.font_family.is_none() && m.font_size.is_none() {
+        None
+    } else {
+        Some(m)
+    }
 }
 
 /// Represents a diary entry
@@ -33,6 +102,8 @@ pub struct DiaryEntry {
     pub word_count: i32,      // Word count
     pub date_created: String, // ISO 8601 timestamp
     pub date_updated: String, // ISO 8601 timestamp
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub metadata: Option<EntryMetadata>,
 }
 
 /// Inserts a new entry into the database
@@ -43,12 +114,13 @@ pub struct DiaryEntry {
 pub fn insert_entry(db: &DatabaseConnection, entry: &DiaryEntry) -> Result<(), String> {
     let title_encrypted = super::encrypt_for_storage(db.key(), entry.title.as_bytes(), "title")?;
     let text_encrypted = super::encrypt_for_storage(db.key(), entry.text.as_bytes(), "text")?;
+    let metadata_encrypted = encrypt_metadata(db, &entry.metadata)?;
 
     // Insert into database (id is handled by AUTOINCREMENT)
     db.conn()
         .execute(
-            "INSERT INTO entries (date, title_encrypted, text_encrypted, word_count, date_created, date_updated)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+            "INSERT INTO entries (date, title_encrypted, text_encrypted, word_count, date_created, date_updated, entry_metadata_encrypted)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
             params![
                 &entry.date,
                 &title_encrypted,
@@ -56,6 +128,7 @@ pub fn insert_entry(db: &DatabaseConnection, entry: &DiaryEntry) -> Result<(), S
                 entry.word_count,
                 &entry.date_created,
                 &entry.date_updated,
+                &metadata_encrypted,
             ],
         )
         .map_err(|e| format!("Failed to insert entry: {}", e))?;
@@ -92,6 +165,7 @@ pub fn get_entries_by_date(db: &DatabaseConnection, date: &str) -> Result<Vec<Di
                 row.get::<_, i32>(4)?,
                 row.get::<_, String>(5)?,
                 row.get::<_, String>(6)?,
+                row.get::<_, Option<Vec<u8>>>(7)?,
             ))
         })
         .map_err(|e| format!("Failed to query entries: {}", e))?
@@ -122,6 +196,7 @@ pub fn get_entry_by_id(db: &DatabaseConnection, id: i64) -> Result<Option<DiaryE
                 row.get::<_, i32>(4)?,
                 row.get::<_, String>(5)?,
                 row.get::<_, String>(6)?,
+                row.get::<_, Option<Vec<u8>>>(7)?,
             ))
         },
     );
@@ -141,19 +216,22 @@ pub fn get_entry_by_id(db: &DatabaseConnection, id: i64) -> Result<Option<DiaryE
 pub fn update_entry(db: &DatabaseConnection, entry: &DiaryEntry) -> Result<(), String> {
     let title_encrypted = super::encrypt_for_storage(db.key(), entry.title.as_bytes(), "title")?;
     let text_encrypted = super::encrypt_for_storage(db.key(), entry.text.as_bytes(), "text")?;
+    let metadata_encrypted = encrypt_metadata(db, &entry.metadata)?;
 
     // Update in database using id
     let rows_affected = db
         .conn()
         .execute(
             "UPDATE entries
-             SET title_encrypted = ?1, text_encrypted = ?2, word_count = ?3, date_updated = ?4
-             WHERE id = ?5",
+             SET title_encrypted = ?1, text_encrypted = ?2, word_count = ?3, date_updated = ?4,
+                 entry_metadata_encrypted = ?5
+             WHERE id = ?6",
             params![
                 &title_encrypted,
                 &text_encrypted,
                 entry.word_count,
                 &entry.date_updated,
+                &metadata_encrypted,
                 entry.id,
             ],
         )
@@ -232,6 +310,7 @@ pub fn get_all_entries(db: &DatabaseConnection) -> Result<Vec<DiaryEntry>, Strin
                 row.get::<_, i32>(4)?,
                 row.get::<_, String>(5)?,
                 row.get::<_, String>(6)?,
+                row.get::<_, Option<Vec<u8>>>(7)?,
             ))
         })
         .map_err(|e| format!("Failed to query entries: {}", e))?
@@ -286,6 +365,7 @@ pub fn get_entries_in_range(
                 row.get::<_, i32>(4)?,
                 row.get::<_, String>(5)?,
                 row.get::<_, String>(6)?,
+                row.get::<_, Option<Vec<u8>>>(7)?,
             ))
         })
         .map_err(|e| format!("Failed to query entries: {}", e))?
@@ -345,6 +425,7 @@ mod tests {
             word_count: 8,
             date_created: now.clone(),
             date_updated: now,
+            metadata: None,
         }
     }
 
@@ -462,6 +543,7 @@ mod tests {
             word_count: 2,
             date_created: "2024-03-20T00:00:00Z".to_string(),
             date_updated: "2024-03-20T00:00:00Z".to_string(),
+            metadata: None,
         };
         let result = update_entry(&db, &entry);
 
@@ -560,6 +642,7 @@ mod tests {
                 word_count: 1,
                 date_created: "2024-01-01T00:00:00Z".into(),
                 date_updated: "2024-01-01T00:00:00Z".into(),
+                metadata: None,
             },
         )
         .unwrap();
@@ -573,6 +656,7 @@ mod tests {
                 word_count: 1,
                 date_created: "2024-01-02T00:00:00Z".into(),
                 date_updated: "2024-01-02T00:00:00Z".into(),
+                metadata: None,
             },
         )
         .unwrap();
@@ -707,6 +791,7 @@ mod tests {
                 word_count: 1,
                 date_created: "2024-01-01T00:00:00Z".into(),
                 date_updated: "2024-01-01T00:00:00Z".into(),
+                metadata: None,
             },
         )
         .unwrap();
@@ -726,5 +811,112 @@ mod tests {
             "Expected Err when title_encrypted is corrupted, got Ok with entries: {:?}",
             result.ok()
         );
+    }
+
+    #[test]
+    fn test_normalize_metadata_none_stays_none() {
+        assert_eq!(normalize_metadata(None), None);
+    }
+
+    #[test]
+    fn test_normalize_metadata_both_none_collapses() {
+        let meta = EntryMetadata {
+            font_family: None,
+            font_size: None,
+        };
+        assert_eq!(normalize_metadata(Some(meta)), None);
+    }
+
+    #[test]
+    fn test_normalize_metadata_empty_family_collapses() {
+        let meta = EntryMetadata {
+            font_family: Some("  ".to_string()),
+            font_size: None,
+        };
+        assert_eq!(normalize_metadata(Some(meta)), None);
+    }
+
+    #[test]
+    fn test_normalize_metadata_trims_family() {
+        let meta = EntryMetadata {
+            font_family: Some("  Merriweather  ".to_string()),
+            font_size: None,
+        };
+        let result = normalize_metadata(Some(meta)).unwrap();
+        assert_eq!(result.font_family.as_deref(), Some("Merriweather"));
+    }
+
+    #[test]
+    fn test_normalize_metadata_clamps_size_low() {
+        let meta = EntryMetadata {
+            font_family: None,
+            font_size: Some(8.0),
+        };
+        let result = normalize_metadata(Some(meta)).unwrap();
+        assert_eq!(result.font_size, Some(12.0));
+    }
+
+    #[test]
+    fn test_normalize_metadata_clamps_size_high() {
+        let meta = EntryMetadata {
+            font_family: None,
+            font_size: Some(48.0),
+        };
+        let result = normalize_metadata(Some(meta)).unwrap();
+        assert_eq!(result.font_size, Some(24.0));
+    }
+
+    #[test]
+    fn test_normalize_metadata_valid_passthrough() {
+        let meta = EntryMetadata {
+            font_family: Some("Georgia".to_string()),
+            font_size: Some(16.0),
+        };
+        let result = normalize_metadata(Some(meta)).unwrap();
+        assert_eq!(result.font_family.as_deref(), Some("Georgia"));
+        assert_eq!(result.font_size, Some(16.0));
+    }
+
+    #[test]
+    fn test_metadata_encrypted_at_rest() {
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+
+        let secret_family = "SecretTestFontFamily";
+        let entry = DiaryEntry {
+            id: 0,
+            date: "2024-07-01".to_string(),
+            title: "Title".to_string(),
+            text: "Text".to_string(),
+            word_count: 1,
+            date_created: "2024-07-01T00:00:00Z".to_string(),
+            date_updated: "2024-07-01T00:00:00Z".to_string(),
+            metadata: Some(EntryMetadata {
+                font_family: Some(secret_family.to_string()),
+                font_size: Some(16.0),
+            }),
+        };
+        insert_entry(&db, &entry).unwrap();
+
+        let raw: Vec<u8> = db
+            .conn()
+            .query_row(
+                "SELECT entry_metadata_encrypted FROM entries WHERE date = '2024-07-01'",
+                [],
+                |row| row.get(0),
+            )
+            .unwrap();
+
+        let raw_str = String::from_utf8_lossy(&raw);
+        assert!(
+            !raw_str.contains(secret_family),
+            "raw metadata bytes must not contain plaintext font family"
+        );
+
+        // Round-trip decryption must recover the value
+        let retrieved = get_entries_by_date(&db, "2024-07-01").unwrap();
+        let meta = retrieved[0].metadata.as_ref().unwrap();
+        assert_eq!(meta.font_family.as_deref(), Some(secret_family));
+        assert_eq!(meta.font_size, Some(16.0));
     }
 }

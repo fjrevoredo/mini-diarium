@@ -205,10 +205,6 @@ pub fn run() {
             app.manage(lockable);
             app.manage(translatable);
 
-            if let Err(error) = screen_lock::init(app.handle()) {
-                warn!("Screen-lock listener initialization failed: {}", error);
-            }
-
             // Create the main window programmatically so we can configure two critical
             // security properties that are only available on the builder, not at runtime:
             //
@@ -276,6 +272,10 @@ pub fn run() {
             }
 
             let win = win_builder.build()?;
+
+            if let Err(error) = screen_lock::init(app.handle()) {
+                warn!("Screen-lock listener initialization failed: {}", error);
+            }
 
             // Install platform-specific engine-level request blockers (Windows/macOS).
             // Defense-in-depth alongside CSP and the JS init script.

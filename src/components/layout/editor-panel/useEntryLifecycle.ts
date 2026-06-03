@@ -1,7 +1,7 @@
 import { untrack, type Accessor, type Setter } from 'solid-js';
 import type { Editor } from '@tiptap/core';
 import { createEntry, saveEntry, deleteEntryIfEmpty, getAllEntryDates } from '../../../lib/tauri';
-import type { DiaryEntry } from '../../../lib/tauri';
+import type { DiaryEntry, EntryMetadata } from '../../../lib/tauri';
 import { debounce } from '../../../lib/debounce';
 import { setEntryDates, setIsSaving, registerCleanupCallback } from '../../../state/entries';
 import { countWordsInHtml } from '../../../lib/wordcount';
@@ -28,6 +28,8 @@ export interface UseEntryLifecycleOptions {
   isCreatingEntry: Accessor<boolean>;
   setIsCreatingEntry: Setter<boolean>;
   emptyCheck: EditorEmptyCheckHook;
+  entryMetadata: Accessor<EntryMetadata | null>;
+  setEntryMetadata: Setter<EntryMetadata | null>;
 }
 
 export type DebouncedSaveFn = ((entryId: number, titleArg: string, contentArg: string) => void) & {
@@ -101,7 +103,7 @@ export function useEntryLifecycle(opts: UseEntryLifecycleOptions): EntryLifecycl
 
     try {
       setIsSaving(true);
-      await saveEntry(entryId, currentTitle, currentContent);
+      await saveEntry(entryId, currentTitle, currentContent, opts.entryMetadata());
       if (isDisposed || requestId !== saveRequestId) return;
 
       const dates = await getAllEntryDates();
@@ -160,12 +162,14 @@ export function useEntryLifecycle(opts: UseEntryLifecycleOptions): EntryLifecycl
         opts.setTitle(entry.title);
         opts.setContent(entry.text);
         opts.setWordCount(countWordsInHtml(entry.text));
+        opts.setEntryMetadata(entry.metadata ?? null);
       } else {
         opts.setCurrentIndex(0);
         opts.setPendingEntryId(null);
         opts.setTitle('');
         opts.setContent('');
         opts.setWordCount(0);
+        opts.setEntryMetadata(null);
       }
     } catch (error) {
       log.error('Failed to load entries:', error);
@@ -225,7 +229,7 @@ export function useEntryLifecycle(opts: UseEntryLifecycleOptions): EntryLifecycl
             : capturedContent.trim() === '';
         if (capturedTitle.trim() !== '' || !isContentBlank) {
           log.info(`cleanup: saving entry id=${newEntry.id} created during lock-race`);
-          await saveEntry(newEntry.id, capturedTitle, capturedContent);
+          await saveEntry(newEntry.id, capturedTitle, capturedContent, opts.entryMetadata());
         } else {
           log.info(`cleanup: deleting blank ghost entry id=${newEntry.id} from lock-race`);
           await deleteEntryIfEmpty(newEntry.id, '', '');

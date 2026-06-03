@@ -678,6 +678,7 @@ mod tests {
             word_count: 2,
             date_created: "2024-01-01T00:00:00Z".to_string(),
             date_updated: "2024-01-01T00:00:00Z".to_string(),
+            metadata: None,
         };
         crate::db::queries::insert_entry(&db, &entry).unwrap();
 

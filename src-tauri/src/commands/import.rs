@@ -75,6 +75,7 @@ mod tests {
             word_count: crate::db::queries::count_words(text),
             date_created: now.clone(),
             date_updated: now,
+            metadata: None,
         }
     }
 

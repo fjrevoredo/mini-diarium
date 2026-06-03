@@ -29,14 +29,18 @@ pub fn export_entries_to_json(
     let entries_array: Vec<Value> = entries
         .iter()
         .map(|entry| {
-            json!({
+            let mut obj = json!({
                 "id": entry.id,
                 "date": entry.date,
                 "title": entry.title,
                 "text": entry.text,
                 "dateUpdated": entry.date_updated,
                 "tags": tags.get(&entry.id).cloned().unwrap_or_default(),
-            })
+            });
+            if let Some(ref meta) = entry.metadata {
+                obj["metadata"] = serde_json::to_value(meta).unwrap_or(Value::Null);
+            }
+            obj
         })
         .collect();
 
@@ -65,6 +69,7 @@ mod tests {
             word_count: crate::db::queries::count_words(text),
             date_created: "2024-01-01T12:00:00Z".to_string(),
             date_updated: "2024-01-01T12:00:00Z".to_string(),
+            metadata: None,
         }
     }
 
@@ -223,6 +228,34 @@ mod tests {
             text.contains(r#"<a href="https://example.com">Visit site</a>"#),
             "expected link in parsed text: {}",
             text
+        );
+    }
+
+    #[test]
+    fn test_export_entry_with_metadata_includes_font_fields() {
+        use crate::db::queries::EntryMetadata;
+        let mut entry = create_test_entry(1, "2024-01-01", "Styled", "<p>Hi</p>");
+        entry.metadata = Some(EntryMetadata {
+            font_family: Some("Merriweather".to_string()),
+            font_size: Some(18.0),
+        });
+
+        let result = export_entries_to_json(vec![entry], &empty_tags()).unwrap();
+        let parsed: Value = serde_json::from_str(&result).unwrap();
+        let meta = &parsed["entries"][0]["metadata"];
+        assert_eq!(meta["fontFamily"], "Merriweather");
+        assert_eq!(meta["fontSize"], 18.0);
+    }
+
+    #[test]
+    fn test_export_entry_without_metadata_omits_field() {
+        let entry = create_test_entry(1, "2024-01-01", "Plain", "<p>No font</p>");
+        let result = export_entries_to_json(vec![entry], &empty_tags()).unwrap();
+        let parsed: Value = serde_json::from_str(&result).unwrap();
+        assert!(
+            parsed["entries"][0]["metadata"].is_null()
+                || parsed["entries"][0].get("metadata").is_none(),
+            "metadata field should be absent when None"
         );
     }
 }

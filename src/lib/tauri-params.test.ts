@@ -104,6 +104,20 @@ describe('Tauri Entry Command Parameter Names', () => {
       id: 42,
       title: 'My Title',
       text: '<p>Content</p>',
+      metadata: null,
+    });
+  });
+
+  it('saveEntry should pass metadata when provided', async () => {
+    mockInvoke.mockResolvedValue(undefined);
+
+    await saveEntry(42, 'Title', '<p>Text</p>', { fontFamily: 'Merriweather', fontSize: 16 });
+
+    expect(mockInvoke).toHaveBeenCalledWith('save_entry', {
+      id: 42,
+      title: 'Title',
+      text: '<p>Text</p>',
+      metadata: { fontFamily: 'Merriweather', fontSize: 16 },
     });
   });
 

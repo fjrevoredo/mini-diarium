@@ -717,6 +717,7 @@ mod tests {
             word_count: crate::db::queries::count_words(text),
             date_created: "2024-01-01T12:00:00Z".to_string(),
             date_updated: "2024-01-01T12:00:00Z".to_string(),
+            metadata: None,
         }
     }
 
@@ -832,6 +833,23 @@ mod tests {
         let html = "<p>Text with <span class=\"custom\">span</span> inside</p>";
         let result = html_to_markdown(html);
         assert_eq!(result, "Text with span inside");
+    }
+
+    #[test]
+    fn test_html_to_markdown_strips_font_style_spans() {
+        // Font-family and font-size inline marks (added by Tiptap FontFamily/FontSize
+        // extensions) must be stripped from Markdown output — text is preserved.
+        let html = r#"<p><span style="font-family: Merriweather">Hello</span> <span style="font-size: 18px">world</span></p>"#;
+        let result = html_to_markdown(html);
+        assert_eq!(result, "Hello world");
+    }
+
+    #[test]
+    fn test_html_to_markdown_mixed_inline_and_font() {
+        // Bold marks inside font-styled spans must survive
+        let html = r#"<p><span style="font-family: Georgia"><strong>bold text</strong></span></p>"#;
+        let result = html_to_markdown(html);
+        assert_eq!(result, "**bold text**");
     }
 
     #[test]

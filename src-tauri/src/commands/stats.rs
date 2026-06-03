@@ -174,6 +174,7 @@ mod tests {
             word_count,
             date_created: now.clone(),
             date_updated: now,
+            metadata: None,
         }
     }
 

@@ -218,6 +218,7 @@ mod tests {
             word_count: 1,
             date_created: "2024-01-01T00:00:00Z".into(),
             date_updated: "2024-01-01T00:00:00Z".into(),
+            metadata: None,
         }];
         let output = plugin
             .export(entries, &std::collections::HashMap::new())

@@ -70,6 +70,7 @@ pub fn parse_dayone_txt(txt: &str) -> Result<Vec<DiaryEntry>, String> {
             word_count,
             date_created: now.clone(),
             date_updated: now.clone(),
+            metadata: None,
         });
     }
 

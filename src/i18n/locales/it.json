@@ -184,7 +184,9 @@
       "textDirection": "Direzione testo",
       "textDirectionTitle": "Inverti direzione testo (Ctrl+Shift+D)",
       "fontFamily": "Carattere",
-      "fontSize": "Dimensione carattere"
+      "fontSize": "Dimensione carattere",
+      "setEntryFontDefault": "Set as entry default",
+      "clearEntryFontDefault": "Clear entry default"
     },
     "wordCount_one": "{{ count }} parola",
     "wordCount_other": "{{ count }} parole",

@@ -169,6 +169,11 @@ export async function switchJournal(id: string): Promise<void> {
 }
 
 // Entry commands
+export interface EntryMetadata {
+  fontFamily?: string | null;
+  fontSize?: number | null;
+}
+
 export interface DiaryEntry {
   id: number;
   date: string;
@@ -177,14 +182,20 @@ export interface DiaryEntry {
   word_count: number;
   date_created: string;
   date_updated: string;
+  metadata?: EntryMetadata | null;
 }
 
 export async function createEntry(date: string): Promise<DiaryEntry> {
   return await invoke('create_entry', { date });
 }
 
-export async function saveEntry(id: number, title: string, text: string): Promise<void> {
-  await invoke('save_entry', { id, title, text });
+export async function saveEntry(
+  id: number,
+  title: string,
+  text: string,
+  metadata?: EntryMetadata | null,
+): Promise<void> {
+  await invoke('save_entry', { id, title, text, metadata: metadata ?? null });
 }
 
 export async function getEntriesForDate(date: string): Promise<DiaryEntry[]> {

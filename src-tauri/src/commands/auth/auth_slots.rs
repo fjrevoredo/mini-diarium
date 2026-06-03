@@ -261,6 +261,7 @@ mod tests {
             word_count: 5,
             date_created: "2024-03-15T00:00:00Z".to_string(),
             date_updated: "2024-03-15T00:00:00Z".to_string(),
+            metadata: None,
         };
         crate::db::queries::insert_entry(&db, &entry).unwrap();
 
@@ -304,7 +305,7 @@ mod tests {
             .conn()
             .query_row("SELECT version FROM schema_version", [], |r| r.get(0))
             .unwrap();
-        assert_eq!(version, 8);
+        assert_eq!(version, 9);
 
         // Verify entry is decryptable with the master key unwrapped via keypair
         let entries = crate::db::queries::get_entries_by_date(&db2, "2024-03-15").unwrap();
@@ -524,7 +525,7 @@ mod tests {
             .conn()
             .query_row("SELECT version FROM schema_version", [], |r| r.get(0))
             .unwrap();
-        assert_eq!(version, 8);
+        assert_eq!(version, 9);
 
         cleanup(&db_path, &backups_dir);
     }

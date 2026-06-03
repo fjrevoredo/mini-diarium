@@ -184,7 +184,9 @@
       "textDirection": "टेक्स्ट दिशा",
       "textDirectionTitle": "टेक्स्ट दिशा बदलें (Ctrl+Shift+D)",
       "fontFamily": "फ़ॉन्ट परिवार",
-      "fontSize": "फ़ॉन्ट आकार"
+      "fontSize": "फ़ॉन्ट आकार",
+      "setEntryFontDefault": "Set as entry default",
+      "clearEntryFontDefault": "Clear entry default"
     },
     "wordCount_one": "{{ count }} शब्द",
     "wordCount_other": "{{ count }} शब्द",
