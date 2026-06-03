@@ -132,13 +132,21 @@ When executing a manual plan:
 1. Set the plan status to `IN PROGRESS` before starting implementation.
 2. Before starting a task, update that task to `IN PROGRESS`.
 3. Complete the task.
-4. Run the task validation.
+4. Run the task validation. Before declaring the validation passed, check the task's **Steps** and **Validation** sections for any explicitly named tests (e.g. "add a test `test_foo_bar`"). A green test suite does not mean those tests were written — verify by name.
 5. Fix issues until validation passes or mark the task `BLOCKED` with a reason.
 6. Immediately update the task status to `COMPLETED` after validation passes.
 7. Update the milestone status when all tasks in the milestone satisfy its exit criteria.
 8. Start the next task only after the plan file reflects the current state.
 
 The plan file is the execution ledger. Keep it accurate before moving forward.
+
+**Discovered issues during implementation:** If a bug or unplanned problem is identified while working on a task, choose one path immediately — do not defer via a mental note:
+- Fix it in the current task if it is small and in-scope.
+- Create a new task in the plan with status `BLOCKED` if it is out of scope for the current task.
+
+A bug that is noticed but neither fixed nor recorded will be forgotten. There is no third option.
+
+**Decision logs:** If the user requested a decision log file alongside the plan, update it at the point of each deviation — not retrospectively at the end. A decision log entry must be written before moving to the next task whenever the implementation diverges from what the plan specified (different file location, different function signature, different approach). Log entries written after the fact are unreliable.
 
 ## Cleanup Phase
 
