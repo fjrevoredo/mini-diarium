@@ -423,3 +423,17 @@ export async function getTagsForEntry(entryId: number): Promise<Tag[]> {
 export async function getEntryDatesByTag(tagId: number): Promise<string[]> {
   return await invoke('get_entry_dates_by_tag', { tagId });
 }
+
+export interface ImageData {
+  id: number;
+  mime_type: string;
+  data_base64: string;
+}
+
+export async function getEntryImages(entryId: number): Promise<ImageData[]> {
+  return await invoke<ImageData[]>('get_entry_images', { entryId });
+}
+
+export async function listJournalImages(): Promise<ImageData[]> {
+  return await invoke<ImageData[]>('list_journal_images');
+}

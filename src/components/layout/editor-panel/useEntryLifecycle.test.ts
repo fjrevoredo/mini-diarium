@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import type { Editor } from '@tiptap/core';
 import { computeIsEmpty } from './useEditorEmptyCheck';
+import { hasImageRefs, resolveImageRefs } from '../../../lib/image-refs';
 
 /**
  * Tests for the save/create/delete branching logic owned by the
@@ -206,6 +207,43 @@ describe('justCreatedEntryId guard — onSetContent skips auto-delete debounce',
   it('never queues debounce when no entry is active (id is null)', () => {
     expect(shouldQueueAutoDeleteDebounce(null, null)).toBe(false);
     expect(shouldQueueAutoDeleteDebounce(null, 42)).toBe(false);
+  });
+
+  // ---------------------------------------------------------------------------
+  // Task 4.3 guard: legacy data-URL entries must not trigger getEntryImages
+  // ---------------------------------------------------------------------------
+
+  it('hasImageRefs returns false for a legacy data-URL entry (no getEntryImages call)', () => {
+    // An entry that still embeds images as data: URLs (before migration) must not
+    // be treated as having image-id:// refs. The hasImageRefs guard prevents the
+    // getEntryImages IPC call for such entries.
+    const legacyText = '<p>Journal</p><img src="data:image/jpeg;base64,/9j/AAAA" alt="">';
+    expect(hasImageRefs(legacyText)).toBe(false);
+    // If hasImageRefs returns false, the code path that calls getEntryImages is skipped.
+    // Content is passed to setContent verbatim — identical to the original HTML.
+  });
+
+  it('hasImageRefs returns true only for entries with image-id:// refs', () => {
+    expect(hasImageRefs('<p>text</p><img src="image-id://42" alt="">')).toBe(true);
+    expect(hasImageRefs('<p>no images</p>')).toBe(false);
+    expect(hasImageRefs('')).toBe(false);
+  });
+
+  it('resolveImageRefs substitutes image-id:// refs with data URLs', () => {
+    const html = '<p><img src="image-id://1" alt=""></p>';
+    const images = [{ id: 1, mime_type: 'image/png', data_base64: 'abc123' }];
+    const resolved = resolveImageRefs(html, images);
+    expect(resolved).toContain('data:image/png;base64,abc123');
+    expect(resolved).not.toContain('image-id://');
+  });
+
+  it('resolveImageRefs does not partially match image IDs (1 vs 10)', () => {
+    const html = '<p><img src="image-id://1" alt=""><img src="image-id://10" alt=""></p>';
+    const images = [{ id: 1, mime_type: 'image/png', data_base64: 'AAA' }];
+    const resolved = resolveImageRefs(html, images);
+    // ID 1 replaced, ID 10 unchanged (no image for id=10 provided)
+    expect(resolved).toContain('data:image/png;base64,AAA');
+    expect(resolved).toContain('image-id://10');
   });
 
   it('allows debounce after first keystroke clears justCreatedEntryId', () => {

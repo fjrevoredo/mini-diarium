@@ -53,8 +53,19 @@ You can add images to your entries in several ways:
 - **Drag from other desktop apps** — images from Electron-based editors (sent as inline `data:image/...` base64 payloads) and from apps like Typora that reference images via local `file://` paths are both supported.
 - **Paste** an image from the clipboard.
 - Use the **Insert Image** button in the advanced toolbar to pick a file.
+- Use the **Insert Existing Image** button to pick from images already stored in the journal (see below).
 
-All dropped or pasted images are resized to a maximum of 1200 px on either side and re-encoded as JPEG or PNG before being embedded. Images are stored as base64 data encrypted alongside your text. Supported source formats are JPG, PNG, GIF, WebP, and BMP.
+All dropped or pasted images are resized to a maximum of 1200 px on either side and re-encoded as JPEG or PNG before being embedded. Supported source formats are JPG, PNG, GIF, WebP, and BMP.
+
+### How images are stored
+
+Images are encrypted and stored in a dedicated content-addressed table inside the same `diary.db` database. Each unique image is stored exactly once — if you insert the same image into multiple entries (using the image picker), only one copy is kept. All image data is encrypted with your master key, the same as entry text.
+
+### Insert Existing Image
+
+The **Insert Existing Image** button (stack-of-photos icon) in the advanced toolbar opens a picker that shows thumbnails of all images you have previously saved in the journal. Click a thumbnail to insert that image at the current cursor position. The image is inserted without re-encoding, so the stored copy is reused with no duplication.
+
+Images added before this feature was introduced (prior to v0.5.3) continue to display correctly. They will be migrated to the new storage the next time their entry is saved.
 
 If you drag an image from a web browser, the editor will show a banner explaining that embedding is not possible — it would require a network request, which the app never makes. Use **right-click → Copy Image** and paste instead.
 

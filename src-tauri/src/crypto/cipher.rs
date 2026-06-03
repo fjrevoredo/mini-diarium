@@ -151,6 +151,21 @@ pub fn tag_name_fingerprint(key: &Key, name: &str) -> String {
     hex::encode(okm)
 }
 
+/// HKDF-SHA256 keyed fingerprint of raw image bytes.
+/// info = SHA-256(plaintext_bytes) so identical image bytes → same fingerprint.
+/// Keyed by the master key so offline attackers cannot test whether a given image is present.
+/// Returns a hex-encoded 32-byte output.
+pub fn image_fingerprint(key: &Key, plaintext_bytes: &[u8]) -> String {
+    use hkdf::Hkdf;
+    use sha2::{Digest, Sha256};
+    let digest = Sha256::digest(plaintext_bytes);
+    let hk = Hkdf::<Sha256>::new(None, key.as_bytes());
+    let mut okm = [0u8; 32];
+    hk.expand(&digest, &mut okm)
+        .expect("HKDF expand: 32 bytes always fits");
+    hex::encode(okm)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

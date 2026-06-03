@@ -29,6 +29,8 @@ import { extractFontFamiliesFromHtml } from '../../lib/font-utils';
 import type { EntryMetadata } from '../../lib/tauri';
 import { extractImageSourcesFromHtml, htmlHasImages } from '../../lib/image-drag';
 import { useI18n } from '../../i18n';
+import ImagePickerOverlay from '../overlays/ImagePickerOverlay';
+import { isImagePickerOpen, setIsImagePickerOpen } from '../../state/ui';
 
 /** Escapes a string for safe use as a CSS quoted value (e.g. inside font-family: "..."). */
 function cssString(value: string): string {
@@ -400,10 +402,20 @@ export default function DiaryEditor(props: DiaryEditorProps) {
               console.error('[mini-diarium] image embed failed:', err),
             );
         }}
+        onInsertExistingImage={() => setIsImagePickerOpen(true)}
         onImportMarkdown={props.onImportMarkdown}
         entryMetadata={props.entryMetadata}
         onEntryMetadataChange={props.onEntryMetadataChange}
       />
+      <Show when={isImagePickerOpen()}>
+        <ImagePickerOverlay
+          onInsert={(dataUrl) => {
+            // Insert verbatim — no canvas re-encode — so save preserves the original fingerprint.
+            editor()?.chain().focus().setImage({ src: dataUrl }).run();
+          }}
+          onClose={() => setIsImagePickerOpen(false)}
+        />
+      </Show>
       <div class="p-4">
         <div ref={editorElement} />
       </div>

@@ -170,3 +170,13 @@
   border-color: var(--border-focus);
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--border-focus) 25%, transparent);
 }
+
+/* ImagePickerOverlay grid */
+.image-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 8px;
+  max-height: 400px;
+  overflow-y: auto;
+  padding: 4px;
+}

@@ -1,6 +1,6 @@
 import { untrack, type Accessor, type Setter } from 'solid-js';
 import type { Editor } from '@tiptap/core';
-import { createEntry, saveEntry, deleteEntryIfEmpty, getAllEntryDates } from '../../../lib/tauri';
+import { createEntry, saveEntry, deleteEntryIfEmpty, getAllEntryDates, getEntryImages } from '../../../lib/tauri';
 import type { DiaryEntry, EntryMetadata } from '../../../lib/tauri';
 import { debounce } from '../../../lib/debounce';
 import { setEntryDates, setIsSaving, registerCleanupCallback } from '../../../state/entries';
@@ -8,6 +8,7 @@ import { countWordsInHtml } from '../../../lib/wordcount';
 import { createLogger } from '../../../lib/logger';
 import type { EditorEmptyCheckHook } from './useEditorEmptyCheck';
 import { fetchEntriesOrdered } from './useMultiEntryNav';
+import { hasImageRefs, resolveImageRefs } from '../../../lib/image-refs';
 
 const log = createLogger('Editor');
 
@@ -84,8 +85,19 @@ export function useEntryLifecycle(opts: UseEntryLifecycleOptions): EntryLifecycl
           opts.setCurrentIndex(newIdx);
           opts.setPendingEntryId(entry.id);
           opts.setTitle(entry.title);
-          opts.setContent(entry.text);
-          opts.setWordCount(countWordsInHtml(entry.text));
+          let remainingHtml = entry.text;
+          if (hasImageRefs(remainingHtml)) {
+            // entry.text is raw backend text — resolve image refs before showing.
+            try {
+              const imgs = await getEntryImages(entry.id);
+              if (isDisposed || requestId !== saveRequestId) return;
+              remainingHtml = resolveImageRefs(remainingHtml, imgs);
+            } catch {
+              // Non-fatal: display with unresolved refs rather than crashing.
+            }
+          }
+          opts.setContent(remainingHtml);
+          opts.setWordCount(countWordsInHtml(remainingHtml));
           opts.setEntryMetadata(entry.metadata ?? null);
           // Prevent the debounced save that setContent triggers via TipTap —
           // the remaining entry is already persisted and has not changed.
@@ -162,8 +174,14 @@ export function useEntryLifecycle(opts: UseEntryLifecycleOptions): EntryLifecycl
         const entry = entries[startIndex];
         opts.setPendingEntryId(entry.id);
         opts.setTitle(entry.title);
-        opts.setContent(entry.text);
-        opts.setWordCount(countWordsInHtml(entry.text));
+        let html = entry.text;
+        if (hasImageRefs(html)) {
+          const images = await getEntryImages(entry.id);
+          if (isDisposed || requestId !== loadRequestId) return;
+          html = resolveImageRefs(html, images);
+        }
+        opts.setContent(html);
+        opts.setWordCount(countWordsInHtml(html));
         opts.setEntryMetadata(entry.metadata ?? null);
       } else {
         opts.setCurrentIndex(0);

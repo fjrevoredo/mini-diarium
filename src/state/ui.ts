@@ -31,6 +31,9 @@ const [isNotificationsOpen, setIsNotificationsOpen] = createSignal(false);
 // Tag manager overlay state
 const [isTagManagerOpen, setIsTagManagerOpen] = createSignal(false);
 
+// Image picker overlay state
+const [isImagePickerOpen, setIsImagePickerOpen] = createSignal(false);
+
 export function resetUiState(): void {
   setSelectedDate(getTodayString());
   setIsSidebarCollapsed(true);
@@ -42,6 +45,7 @@ export function resetUiState(): void {
   setIsAboutOpen(false);
   setIsNotificationsOpen(false);
   setIsTagManagerOpen(false);
+  setIsImagePickerOpen(false);
 }
 
 export {
@@ -65,4 +69,6 @@ export {
   setIsNotificationsOpen,
   isTagManagerOpen,
   setIsTagManagerOpen,
+  isImagePickerOpen,
+  setIsImagePickerOpen,
 };

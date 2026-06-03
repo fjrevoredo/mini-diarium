@@ -174,6 +174,7 @@
       "numberedList": "Elenco numerato",
       "horizontalRule": "Inserisci linea orizzontale",
       "insertImage": "Inserisci immagine",
+      "insertExistingImage": "Insert existing image",
       "importMarkdown": "Importa file Markdown",
       "alignLeft": "Allinea a sinistra",
       "alignCenter": "Centra",
@@ -207,7 +208,12 @@
     "deleteConfirmMessage": "Sei sicuro di voler eliminare questa voce?",
     "deleteConfirmTitle": "Elimina voce",
     "importMarkdownNoEditor": "Nessun editor attivo in cui importare.",
-    "dropRejectedWebImage": "Questa immagine non può essere incorporata: richiederebbe una richiesta di rete, che questa app non effettua mai per proteggere la tua privacy. Clic destro sull'immagine → Copia immagine, poi incolla con Ctrl+V."
+    "dropRejectedWebImage": "Questa immagine non può essere incorporata: richiederebbe una richiesta di rete, che questa app non effettua mai per proteggere la tua privacy. Clic destro sull'immagine → Copia immagine, poi incolla con Ctrl+V.",
+    "imagePicker": {
+      "title": "Saved Images",
+      "noImages": "No saved images yet. Insert an image to save it here.",
+      "error": "Failed to load images."
+    }
   },
   "search": {
     "placeholder": "Cerca voci...",
@@ -290,6 +296,7 @@
         "orderedList": "Elenco numerato",
         "horizontalRule": "Linea orizzontale",
         "insertImage": "Inserisci immagine",
+        "insertExistingImage": "Insert existing image",
         "importMarkdown": "Importa Markdown",
         "insertTimestamp": "Inserisci timestamp",
         "textDirection": "Direzione testo",

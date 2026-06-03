@@ -35,6 +35,7 @@ pub fn export_json(
     info!("Starting JSON export to file: {}", file_path);
     with_unlocked_db(&state, |db| {
         let entries = fetch_entries(db, date_from.as_deref(), date_to.as_deref())?;
+        let entries = crate::db::queries::images::resolve_image_refs_in_entries(db, entries)?;
         let tags = crate::db::queries::tags::get_tags_names_map(db)?;
         let entries_exported = entries.len();
         debug!("Serializing {} entries to JSON...", entries_exported);
@@ -68,6 +69,7 @@ pub fn export_markdown(
     info!("Starting Markdown export to file: {}", file_path);
     with_unlocked_db(&state, |db| {
         let entries = fetch_entries(db, date_from.as_deref(), date_to.as_deref())?;
+        let entries = crate::db::queries::images::resolve_image_refs_in_entries(db, entries)?;
         let tags = crate::db::queries::tags::get_tags_names_map(db)?;
         let entries_exported = entries.len();
         debug!("Converting {} entries to Markdown...", entries_exported);

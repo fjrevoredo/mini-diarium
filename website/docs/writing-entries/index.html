@@ -407,8 +407,12 @@
         <li><strong>Drag from other desktop apps</strong> — images from Electron-based editors (sent as inline <code>data:image/...</code> base64 payloads) and from apps like Typora that reference images via local <code>file://</code> paths are both supported.</li>
         <li><strong>Paste</strong> an image from the clipboard.</li>
         <li>Use the <strong>Insert Image</strong> button in the advanced toolbar to pick a file.</li>
+        <li>Use the <strong>Insert Existing Image</strong> button to pick from images already stored in the journal (see below).</li>
         </ul>
-        <p>All dropped or pasted images are resized to a maximum of 1200 px on either side and re-encoded as JPEG or PNG before being embedded. Images are stored as base64 data encrypted alongside your text. Supported source formats are JPG, PNG, GIF, WebP, and BMP.</p>
+        <p>All dropped or pasted images are resized to a maximum of 1200 px on either side and re-encoded as JPEG or PNG before being embedded. Supported source formats are JPG, PNG, GIF, WebP, and BMP.</p>
+        <h3 id="how-images-are-stored">How images are stored</h3><p>Images are encrypted and stored in a dedicated content-addressed table inside the same <code>diary.db</code> database. Each unique image is stored exactly once — if you insert the same image into multiple entries (using the image picker), only one copy is kept. All image data is encrypted with your master key, the same as entry text.</p>
+        <h3 id="insert-existing-image">Insert Existing Image</h3><p>The <strong>Insert Existing Image</strong> button (stack-of-photos icon) in the advanced toolbar opens a picker that shows thumbnails of all images you have previously saved in the journal. Click a thumbnail to insert that image at the current cursor position. The image is inserted without re-encoding, so the stored copy is reused with no duplication.</p>
+        <p>Images added before this feature was introduced (prior to v0.5.3) continue to display correctly. They will be migrated to the new storage the next time their entry is saved.</p>
         <p>If you drag an image from a web browser, the editor will show a banner explaining that embedding is not possible — it would require a network request, which the app never makes. Use <strong>right-click → Copy Image</strong> and paste instead.</p>
         <h2 id="links">Links</h2><p>You can insert hyperlinks with custom display text — the visible label and the underlying URL are independent (the <code>[label](url)</code> model used by Markdown and most modern editors).</p>
         <p><strong>Inserting a link</strong>: click the <strong>Link button</strong> in the toolbar (chain-link icon) or press <code>Ctrl+K</code> (<code>Cmd+K</code> on macOS). The dialog has two fields:</p>
@@ -492,6 +496,8 @@
           <li class="docs-toc-h2"><a href="#auto-save">Auto-Save</a></li>
           <li class="docs-toc-h2"><a href="#word-count">Word Count</a></li>
           <li class="docs-toc-h2"><a href="#inserting-images">Inserting Images</a></li>
+          <li class="docs-toc-h3"><a href="#how-images-are-stored">How images are stored</a></li>
+          <li class="docs-toc-h3"><a href="#insert-existing-image">Insert Existing Image</a></li>
           <li class="docs-toc-h2"><a href="#links">Links</a></li>
           <li class="docs-toc-h2"><a href="#right-to-left-and-bidirectional-text">Right-to-Left and Bidirectional Text</a></li>
           <li class="docs-toc-h2"><a href="#inserting-the-current-time">Inserting the Current Time</a></li>

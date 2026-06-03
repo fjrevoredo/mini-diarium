@@ -36,21 +36,8 @@ pub(crate) fn save_entry_inner(
     state: &DiaryState,
 ) -> Result<(), String> {
     with_unlocked_db(state, |db| {
-        let mut entry = queries::get_entry_by_id(db, id)?
-            .ok_or_else(|| format!("No entry found with id: {}", id))?;
-
-        let now = chrono::Utc::now().to_rfc3339();
-        let word_count = queries::count_words(text);
-
-        entry.title = title.to_string();
-        entry.text = text.to_string();
-        entry.word_count = word_count;
-        entry.date_updated = now;
-        entry.metadata = metadata;
-
-        queries::update_entry(db, &entry)?;
+        queries::update_entry_with_images(db, id, title, text, metadata)?;
         debug!("Saved entry id={}", id);
-
         Ok(())
     })
 }

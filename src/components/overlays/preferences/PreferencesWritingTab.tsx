@@ -41,6 +41,7 @@ export default function PreferencesWritingTab(_props: TabProps) {
         alignment: t('prefs.writing.toolbarItem.alignment'),
         fontFamily: t('prefs.writing.toolbarItem.fontFamily'),
         fontSize: t('prefs.writing.toolbarItem.fontSize'),
+        insertExistingImage: t('prefs.writing.toolbarItem.insertExistingImage'),
       }) satisfies Record<ToolbarItemKey, string>,
   );
 

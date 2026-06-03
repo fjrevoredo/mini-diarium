@@ -305,7 +305,7 @@ mod tests {
             .conn()
             .query_row("SELECT version FROM schema_version", [], |r| r.get(0))
             .unwrap();
-        assert_eq!(version, 9);
+        assert_eq!(version, 10);
 
         // Verify entry is decryptable with the master key unwrapped via keypair
         let entries = crate::db::queries::get_entries_by_date(&db2, "2024-03-15").unwrap();
@@ -525,7 +525,7 @@ mod tests {
             .conn()
             .query_row("SELECT version FROM schema_version", [], |r| r.get(0))
             .unwrap();
-        assert_eq!(version, 9);
+        assert_eq!(version, 10);
 
         cleanup(&db_path, &backups_dir);
     }

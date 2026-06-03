@@ -174,6 +174,7 @@
       "numberedList": "क्रमांकित सूची",
       "horizontalRule": "क्षैतिज रेखा डालें",
       "insertImage": "छवि डालें",
+      "insertExistingImage": "Insert existing image",
       "importMarkdown": "Markdown फ़ाइल आयात करें",
       "alignLeft": "बाएं संरेखित करें",
       "alignCenter": "केंद्र में संरेखित करें",
@@ -207,7 +208,12 @@
     "deleteConfirmMessage": "क्या आप वाकई इस एंट्री को हटाना चाहते हैं?",
     "deleteConfirmTitle": "एंट्री हटाएं",
     "importMarkdownNoEditor": "आयात करने के लिए कोई सक्रिय संपादक नहीं है।",
-    "dropRejectedWebImage": "यह छवि एम्बेड नहीं की जा सकती: इसके लिए नेटवर्क अनुरोध की आवश्यकता होगी, जो यह ऐप आपकी गोपनीयता की रक्षा के लिए कभी नहीं करता। छवि पर राइट-क्लिक करें → छवि कॉपी करें, फिर Ctrl+V से पेस्ट करें।"
+    "dropRejectedWebImage": "यह छवि एम्बेड नहीं की जा सकती: इसके लिए नेटवर्क अनुरोध की आवश्यकता होगी, जो यह ऐप आपकी गोपनीयता की रक्षा के लिए कभी नहीं करता। छवि पर राइट-क्लिक करें → छवि कॉपी करें, फिर Ctrl+V से पेस्ट करें।",
+    "imagePicker": {
+      "title": "Saved Images",
+      "noImages": "No saved images yet. Insert an image to save it here.",
+      "error": "Failed to load images."
+    }
   },
   "search": {
     "placeholder": "एंट्री खोजें...",
@@ -290,6 +296,7 @@
         "orderedList": "क्रमांकित सूची",
         "horizontalRule": "क्षैतिज रेखा",
         "insertImage": "छवि डालें",
+        "insertExistingImage": "Insert existing image",
         "importMarkdown": "Markdown आयात करें",
         "insertTimestamp": "टाइमस्टैम्प डालें",
         "textDirection": "टेक्स्ट दिशा",

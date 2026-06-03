@@ -45,9 +45,10 @@ describe('preferences — loadPreferences migration', () => {
     expect(linkItem!.enabled).toBe(true);
   });
 
-  it('preserves the user-chosen order of pre-existing toolbar items when appending "link"', async () => {
+  it('preserves the user-chosen order of pre-existing toolbar items when appending new keys', async () => {
     // The user has reordered "underline" before "headings" — that custom
-    // order must be retained even though a new key is appended.
+    // order must be retained even though new keys are appended.
+    // This simulates a user who already has all keys up to 'link' but not 'insertExistingImage'.
     const reorderedToolbarItems: ToolbarItem[] = [
       { key: 'underline', enabled: true },
       { key: 'headings', enabled: false },
@@ -56,6 +57,7 @@ describe('preferences — loadPreferences migration', () => {
       { key: 'highlightColor', enabled: true },
       { key: 'blockquote', enabled: true },
       { key: 'inlineCode', enabled: true },
+      { key: 'link', enabled: true },
       { key: 'bulletList', enabled: true },
       { key: 'orderedList', enabled: true },
       { key: 'horizontalRule', enabled: true },
@@ -75,8 +77,8 @@ describe('preferences — loadPreferences migration', () => {
     const items = preferences().toolbarItems;
     expect(items[0].key).toBe('underline');
     expect(items[1].key).toBe('headings');
-    // The new 'link' key is appended at the end, after all pre-existing keys
-    expect(items[items.length - 1].key).toBe('link');
+    // The new 'insertExistingImage' key is appended at the end, after all pre-existing keys
+    expect(items[items.length - 1].key).toBe('insertExistingImage');
   });
 
   it('uses DEFAULT_TOOLBAR_ITEMS when localStorage is empty (includes link)', async () => {

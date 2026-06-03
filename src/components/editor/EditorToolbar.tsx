@@ -32,6 +32,7 @@ import {
   Link as LinkIcon,
   Minus,
   ImagePlus,
+  Images,
   FileInput,
   AlignLeft,
   AlignCenter,
@@ -47,6 +48,7 @@ const FONT_SIZES = [12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24] as const
 interface EditorToolbarProps {
   editor: Editor | null;
   onInsertImage?: (file: File) => void;
+  onInsertExistingImage?: () => void;
   onImportMarkdown?: () => void;
   entryMetadata?: EntryMetadata | null;
   onEntryMetadataChange?: (meta: EntryMetadata | null) => void;
@@ -363,6 +365,17 @@ export default function EditorToolbar(props: EditorToolbarProps) {
             aria-label={t('editor.toolbar.insertImage')}
           >
             <ImagePlus size={18} />
+          </button>
+        );
+      case 'insertExistingImage':
+        return (
+          <button
+            onClick={() => props.onInsertExistingImage?.()}
+            class={btnBase}
+            title={t('editor.toolbar.insertExistingImage')}
+            aria-label={t('editor.toolbar.insertExistingImage')}
+          >
+            <Images size={18} />
           </button>
         );
       case 'importMarkdown':

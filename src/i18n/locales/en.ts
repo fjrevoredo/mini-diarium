@@ -219,6 +219,7 @@ const en = {
       numberedList: 'Numbered List',
       horizontalRule: 'Insert horizontal rule',
       insertImage: 'Insert image',
+      insertExistingImage: 'Insert existing image',
       importMarkdown: 'Import Markdown file',
       alignLeft: 'Align left',
       alignCenter: 'Align center',
@@ -232,6 +233,12 @@ const en = {
       fontSize: 'Font size',
       setEntryFontDefault: 'Set as entry default',
       clearEntryFontDefault: 'Clear entry default',
+    },
+    /** ImagePickerOverlay */
+    imagePicker: {
+      title: 'Saved Images',
+      noImages: 'No saved images yet. Insert an image to save it here.',
+      error: 'Failed to load images.',
     },
     /** WordCount — plural pair */
     wordCount_one: '{{ count }} word',
@@ -354,6 +361,7 @@ const en = {
         orderedList: 'Numbered list',
         horizontalRule: 'Horizontal rule',
         insertImage: 'Insert image',
+        insertExistingImage: 'Insert existing image',
         importMarkdown: 'Import Markdown',
         insertTimestamp: 'Insert timestamp',
         textDirection: 'Text direction',

@@ -211,6 +211,52 @@ pub fn get_entry_by_id(db: &DatabaseConnection, id: i64) -> Result<Option<DiaryE
     }
 }
 
+/// Updates an entry and atomically extracts any embedded images.
+///
+/// Wraps the full update in `BEGIN IMMEDIATE / COMMIT` with an explicit `ROLLBACK`
+/// on any failure so the long-lived DiaryState connection is never left in a half-open
+/// transaction. `update_entry` is called internally (not a hand-rolled UPDATE) so
+/// `entry_metadata_encrypted` is preserved correctly.
+pub fn update_entry_with_images(
+    db: &DatabaseConnection,
+    id: i64,
+    title: &str,
+    text: &str,
+    metadata: Option<EntryMetadata>,
+) -> Result<(), String> {
+    let result: Result<(), String> = (|| {
+        db.conn()
+            .execute("BEGIN IMMEDIATE", [])
+            .map_err(|e| format!("BEGIN failed: {}", e))?;
+
+        let (rewritten, image_ids) =
+            crate::db::queries::images::extract_and_replace_image_refs(text, db)?;
+        crate::db::queries::images::replace_entry_image_links(db, id, &image_ids)?;
+        crate::db::queries::images::cleanup_orphaned_images(db)?;
+
+        let now = chrono::Utc::now().to_rfc3339();
+        let word_count = count_words(&rewritten);
+        let mut entry = get_entry_by_id(db, id)?
+            .ok_or_else(|| format!("No entry found with id: {}", id))?;
+        entry.title = title.to_string();
+        entry.text = rewritten;
+        entry.word_count = word_count;
+        entry.date_updated = now;
+        entry.metadata = metadata;
+        update_entry(db, &entry)?;
+
+        db.conn()
+            .execute("COMMIT", [])
+            .map_err(|e| format!("COMMIT failed: {}", e))?;
+        Ok(())
+    })();
+
+    if result.is_err() {
+        let _ = db.conn().execute("ROLLBACK", []);
+    }
+    result
+}
+
 /// Updates an existing entry in the database by id
 ///
 /// # Arguments
@@ -249,23 +295,42 @@ pub fn update_entry(db: &DatabaseConnection, entry: &DiaryEntry) -> Result<(), S
     Ok(())
 }
 
-/// Deletes an entry from the database by id
+/// Deletes an entry from the database by id, removing any now-orphaned images.
 ///
-/// # Arguments
-/// * `db` - Database connection with encryption key
-/// * `id` - The id of the entry to delete
+/// The `ON DELETE CASCADE` on `entry_images.entry_id` removes association rows when the
+/// entry is deleted (requires `PRAGMA foreign_keys = ON`, set by `configure_connection`).
+/// `cleanup_orphaned_images` then removes any images with no remaining associations.
+/// Both steps are wrapped in a `BEGIN IMMEDIATE / COMMIT` transaction.
 ///
 /// # Returns
 /// `Ok(true)` if deleted, `Ok(false)` if entry didn't exist
 pub fn delete_entry_by_id(db: &DatabaseConnection, id: i64) -> Result<bool, String> {
-    let rows_affected = db
-        .conn()
-        .execute("DELETE FROM entries WHERE id = ?1", params![id])
-        .map_err(|e| format!("Failed to delete entry: {}", e))?;
+    let result: Result<bool, String> = (|| {
+        db.conn()
+            .execute("BEGIN IMMEDIATE", [])
+            .map_err(|e| format!("BEGIN failed: {}", e))?;
 
-    // Search index hook: call search module's remove_entry() here when implemented.
+        let rows_affected = db
+            .conn()
+            .execute("DELETE FROM entries WHERE id = ?1", params![id])
+            .map_err(|e| format!("Failed to delete entry: {}", e))?;
 
-    Ok(rows_affected > 0)
+        // ON DELETE CASCADE removes entry_images rows; cleanup removes orphaned images.
+        crate::db::queries::images::cleanup_orphaned_images(db)?;
+
+        db.conn()
+            .execute("COMMIT", [])
+            .map_err(|e| format!("COMMIT failed: {}", e))?;
+
+        // Search index hook: call search module's remove_entry() here when implemented.
+
+        Ok(rows_affected > 0)
+    })();
+
+    if result.is_err() {
+        let _ = db.conn().execute("ROLLBACK", []);
+    }
+    result
 }
 
 /// Retrieves all dates that have entries (distinct)
@@ -998,5 +1063,212 @@ mod tests {
         let meta = retrieved[0].metadata.as_ref().unwrap();
         assert_eq!(meta.font_family.as_deref(), Some(secret_family));
         assert_eq!(meta.font_size, Some(16.0));
+    }
+
+    // A minimal valid 1×1 PNG as base64 for image-related tests.
+    const TINY_PNG_B64: &str =
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI6QAAAABJRU5ErkJggg==";
+
+    fn tiny_png_html() -> String {
+        format!(r#"<p>Hi</p><img src="data:image/png;base64,{}" alt="">"#, TINY_PNG_B64)
+    }
+
+    #[test]
+    fn test_save_entry_extracts_images_atomically() {
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+
+        let entry = create_test_entry("2024-09-01");
+        insert_entry(&db, &entry).unwrap();
+        let id = db.conn().last_insert_rowid();
+
+        let html = tiny_png_html();
+        update_entry_with_images(&db, id, "Title", &html, None).unwrap();
+
+        // Text must contain image-id:// and NOT data:
+        let saved = get_entry_by_id(&db, id).unwrap().unwrap();
+        assert!(
+            saved.text.contains("image-id://"),
+            "saved text must contain image-id:// ref"
+        );
+        assert!(
+            !saved.text.contains("data:image"),
+            "saved text must not contain data URL"
+        );
+
+        // images table must have 1 row
+        let img_count: i64 = db
+            .conn()
+            .query_row("SELECT COUNT(*) FROM images", [], |r| r.get(0))
+            .unwrap();
+        assert_eq!(img_count, 1, "one image row must exist");
+
+        // entry_images must have 1 row linked to the entry
+        let link_count: i64 = db
+            .conn()
+            .query_row(
+                "SELECT COUNT(*) FROM entry_images WHERE entry_id = ?1",
+                params![id],
+                |r| r.get(0),
+            )
+            .unwrap();
+        assert_eq!(link_count, 1, "one entry_images row must link to the entry");
+    }
+
+    #[test]
+    fn test_save_entry_no_images_unchanged() {
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+
+        let entry = create_test_entry("2024-09-02");
+        insert_entry(&db, &entry).unwrap();
+        let id = db.conn().last_insert_rowid();
+
+        let text = "<p>Just text, no images.</p>";
+        update_entry_with_images(&db, id, "Title", text, None).unwrap();
+
+        let saved = get_entry_by_id(&db, id).unwrap().unwrap();
+        assert_eq!(saved.text, text);
+
+        let img_count: i64 = db
+            .conn()
+            .query_row("SELECT COUNT(*) FROM images", [], |r| r.get(0))
+            .unwrap();
+        assert_eq!(img_count, 0, "no images should be stored for text-only entries");
+    }
+
+    #[test]
+    fn test_save_entry_idempotent_same_image() {
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+
+        let entry = create_test_entry("2024-09-03");
+        insert_entry(&db, &entry).unwrap();
+        let id = db.conn().last_insert_rowid();
+
+        let html = tiny_png_html();
+        update_entry_with_images(&db, id, "T", &html, None).unwrap();
+        update_entry_with_images(&db, id, "T", &html, None).unwrap();
+
+        let img_count: i64 = db
+            .conn()
+            .query_row("SELECT COUNT(*) FROM images", [], |r| r.get(0))
+            .unwrap();
+        assert_eq!(img_count, 1, "re-saving same image must not create a second row");
+    }
+
+    #[test]
+    fn test_save_entry_remove_image() {
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+
+        let entry = create_test_entry("2024-09-04");
+        insert_entry(&db, &entry).unwrap();
+        let id = db.conn().last_insert_rowid();
+
+        update_entry_with_images(&db, id, "T", &tiny_png_html(), None).unwrap();
+        let img_count_before: i64 = db
+            .conn()
+            .query_row("SELECT COUNT(*) FROM images", [], |r| r.get(0))
+            .unwrap();
+        assert_eq!(img_count_before, 1);
+
+        // Re-save without the image
+        update_entry_with_images(&db, id, "T", "<p>no image now</p>", None).unwrap();
+        let img_count_after: i64 = db
+            .conn()
+            .query_row("SELECT COUNT(*) FROM images", [], |r| r.get(0))
+            .unwrap();
+        assert_eq!(img_count_after, 0, "orphaned image must be deleted");
+    }
+
+    #[test]
+    fn test_save_entry_metadata_preserved() {
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+
+        let entry = create_test_entry("2024-09-05");
+        insert_entry(&db, &entry).unwrap();
+        let id = db.conn().last_insert_rowid();
+
+        let meta = Some(EntryMetadata {
+            font_family: Some("Merriweather".to_string()),
+            font_size: Some(16.0),
+        });
+        update_entry_with_images(&db, id, "T", "<p>text</p>", meta).unwrap();
+
+        let saved = get_entry_by_id(&db, id).unwrap().unwrap();
+        let m = saved.metadata.as_ref().expect("metadata must be preserved");
+        assert_eq!(m.font_family.as_deref(), Some("Merriweather"));
+        assert_eq!(m.font_size, Some(16.0));
+    }
+
+    #[test]
+    fn test_delete_entry_cleans_up_images() {
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+
+        let entry = create_test_entry("2024-09-06");
+        insert_entry(&db, &entry).unwrap();
+        let id = db.conn().last_insert_rowid();
+
+        update_entry_with_images(&db, id, "T", &tiny_png_html(), None).unwrap();
+        let img_count: i64 = db
+            .conn()
+            .query_row("SELECT COUNT(*) FROM images", [], |r| r.get(0))
+            .unwrap();
+        assert_eq!(img_count, 1);
+
+        delete_entry_by_id(&db, id).unwrap();
+
+        let img_after: i64 = db
+            .conn()
+            .query_row("SELECT COUNT(*) FROM images", [], |r| r.get(0))
+            .unwrap();
+        assert_eq!(img_after, 0, "images must be deleted after entry deletion");
+    }
+
+    #[test]
+    fn test_delete_entry_keeps_shared_images() {
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+
+        // Create two entries sharing the same image via the image store
+        let e1 = create_test_entry("2024-09-07");
+        insert_entry(&db, &e1).unwrap();
+        let id1 = db.conn().last_insert_rowid();
+
+        let e2 = DiaryEntry {
+            date: "2024-09-08".to_string(),
+            ..create_test_entry("2024-09-08")
+        };
+        insert_entry(&db, &e2).unwrap();
+        let id2 = db.conn().last_insert_rowid();
+
+        // Save the same image into both entries
+        let html = tiny_png_html();
+        update_entry_with_images(&db, id1, "T", &html, None).unwrap();
+        // Entry 2 simulates picker reuse: load the stored data URL and re-embed it verbatim
+        let images = crate::db::queries::images::get_images_for_entry(&db, id1).unwrap();
+        assert_eq!(images.len(), 1);
+        let img = &images[0];
+        let data_url = format!("data:{};base64,{}", img.mime_type, img.data_base64);
+        let html2 = format!(r#"<p>Entry B</p><img src="{}" alt="">"#, data_url);
+        update_entry_with_images(&db, id2, "T", &html2, None).unwrap();
+
+        // Both entries should share one physical image row
+        let img_count: i64 = db
+            .conn()
+            .query_row("SELECT COUNT(*) FROM images", [], |r| r.get(0))
+            .unwrap();
+        assert_eq!(img_count, 1, "picker reuse must share one physical image row");
+
+        // Delete entry 1 — image must still exist (entry 2 references it)
+        delete_entry_by_id(&db, id1).unwrap();
+        let img_after: i64 = db
+            .conn()
+            .query_row("SELECT COUNT(*) FROM images", [], |r| r.get(0))
+            .unwrap();
+        assert_eq!(img_after, 1, "shared image must survive deletion of one entry");
     }
 }

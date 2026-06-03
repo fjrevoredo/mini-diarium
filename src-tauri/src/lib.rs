@@ -367,6 +367,9 @@ pub fn run() {
             commands::tags::remove_tag_from_entry,
             commands::tags::get_tags_for_entry,
             commands::tags::get_entry_dates_by_tag,
+            // Images
+            commands::images::get_entry_images,
+            commands::images::list_journal_images,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

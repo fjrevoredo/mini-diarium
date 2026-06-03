@@ -174,6 +174,7 @@
       "numberedList": "Nummerierte Liste",
       "horizontalRule": "Horizontale Linie einfügen",
       "insertImage": "Bild einfügen",
+      "insertExistingImage": "Insert existing image",
       "importMarkdown": "Markdown-Datei importieren",
       "alignLeft": "Links ausrichten",
       "alignCenter": "Zentrieren",
@@ -207,7 +208,12 @@
     "deleteConfirmMessage": "Möchtest du diesen Eintrag wirklich löschen?",
     "deleteConfirmTitle": "Eintrag löschen",
     "importMarkdownNoEditor": "Kein aktiver Editor zum Importieren.",
-    "dropRejectedWebImage": "Dieses Bild kann nicht eingebettet werden: Dafür wäre eine Netzwerkanfrage nötig, die diese App zum Schutz deiner Privatsphäre nie durchführt. Rechtsklick auf das Bild → Bild kopieren, dann mit Strg+V einfügen."
+    "dropRejectedWebImage": "Dieses Bild kann nicht eingebettet werden: Dafür wäre eine Netzwerkanfrage nötig, die diese App zum Schutz deiner Privatsphäre nie durchführt. Rechtsklick auf das Bild → Bild kopieren, dann mit Strg+V einfügen.",
+    "imagePicker": {
+      "title": "Saved Images",
+      "noImages": "No saved images yet. Insert an image to save it here.",
+      "error": "Failed to load images."
+    }
   },
   "search": {
     "placeholder": "Einträge durchsuchen...",
@@ -290,6 +296,7 @@
         "orderedList": "Nummerierte Liste",
         "horizontalRule": "Horizontale Linie",
         "insertImage": "Bild einfügen",
+        "insertExistingImage": "Insert existing image",
         "importMarkdown": "Markdown importieren",
         "insertTimestamp": "Zeitstempel einfügen",
         "textDirection": "Textrichtung",
