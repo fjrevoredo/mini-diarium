@@ -46,7 +46,7 @@ pub(crate) fn save_entry_inner(
         entry.text = text.to_string();
         entry.word_count = word_count;
         entry.date_updated = now;
-        entry.metadata = queries::normalize_metadata(metadata);
+        entry.metadata = metadata;
 
         queries::update_entry(db, &entry)?;
         debug!("Saved entry id={}", id);

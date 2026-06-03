@@ -38,4 +38,29 @@ describe('extractFontFamiliesFromHtml', () => {
     const result = extractFontFamiliesFromHtml(html);
     expect(result.filter((f) => f === 'Georgia')).toHaveLength(2);
   });
+
+  // Contract-boundary tests — document actual behavior for formats outside the TipTap contract.
+
+  it('entity-encoded &quot; quotes: outside contract, returns no match', () => {
+    // TipTap never emits &quot; — this format is outside the contract.
+    const result = extractFontFamiliesFromHtml(
+      '<span style="font-family: &quot;Noto Serif&quot;">x</span>',
+    );
+    expect(result).toEqual([]);
+  });
+
+  it('comma-separated fallback stack: captures only the first name (stops at comma)', () => {
+    // TipTap FontFamily never emits stacks. The regex stops at the comma, so "Noto Serif" is captured.
+    const result = extractFontFamiliesFromHtml(
+      '<span style="font-family: Noto Serif, serif">x</span>',
+    );
+    expect(result).toEqual(['Noto Serif']);
+  });
+
+  it('multi-property style attribute with font-family last: extracts correctly', () => {
+    const result = extractFontFamiliesFromHtml(
+      '<span style="color: red; font-family: JetBrains Mono;">x</span>',
+    );
+    expect(result).toContain('JetBrains Mono');
+  });
 });

@@ -165,6 +165,7 @@ export function useMultiEntryNav(opts: UseMultiEntryNavOptions): MultiEntryNavHo
         opts.setTitle('');
         opts.setContent('');
         opts.setWordCount(0);
+        opts.setEntryMetadata(null);
         opts.setDayEntries([]);
         opts.setCurrentIndex(0);
       } else {
@@ -177,6 +178,7 @@ export function useMultiEntryNav(opts: UseMultiEntryNavOptions): MultiEntryNavHo
         opts.setTitle(entry.title);
         opts.setContent(entry.text);
         opts.setWordCount(countWordsInHtml(entry.text));
+        opts.setEntryMetadata(entry.metadata ?? null);
         opts.setDayEntries(refreshed);
         opts.setCurrentIndex(newIndex);
       }

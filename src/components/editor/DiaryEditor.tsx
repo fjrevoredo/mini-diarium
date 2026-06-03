@@ -30,6 +30,11 @@ import type { EntryMetadata } from '../../lib/tauri';
 import { extractImageSourcesFromHtml, htmlHasImages } from '../../lib/image-drag';
 import { useI18n } from '../../i18n';
 
+/** Escapes a string for safe use as a CSS quoted value (e.g. inside font-family: "..."). */
+function cssString(value: string): string {
+  return `"${value.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`;
+}
+
 interface DiaryEditorProps {
   content: string;
   onUpdate?: (content: string) => void;
@@ -162,7 +167,7 @@ export default function DiaryEditor(props: DiaryEditorProps) {
       if (!data) continue;
       faces.push(
         `@font-face {`,
-        `  font-family: "${data.family}";`,
+        `  font-family: ${cssString(data.family)};`,
         `  src: url(${data.regular});`,
         `  font-weight: 400;`,
         `  font-style: normal;`,
@@ -174,7 +179,7 @@ export default function DiaryEditor(props: DiaryEditorProps) {
       if (!data.bold_synthesized) {
         faces.push(
           `@font-face {`,
-          `  font-family: "${data.family}";`,
+          `  font-family: ${cssString(data.family)};`,
           `  src: url(${data.bold});`,
           `  font-weight: 700;`,
           `  font-style: normal;`,

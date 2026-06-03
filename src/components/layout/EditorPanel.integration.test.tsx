@@ -1,6 +1,6 @@
 /* eslint-disable solid/reactivity -- intentional test shim, not a reactive component */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { screen, waitFor } from '@solidjs/testing-library';
+import { screen, waitFor, fireEvent } from '@solidjs/testing-library';
 import { renderWithI18n } from '../../test/i18n-test-utils';
 import type { DiaryEntry } from '../../lib/tauri';
 
@@ -361,6 +361,42 @@ describe('EditorPanel integration', () => {
       fontFamily: 'Merriweather',
       fontSize: 18,
     });
+  });
+
+  it("metadata-cleared-on-delete: after deleting entry-with-metadata, the next save uses the remaining entry's own metadata (null)", async () => {
+    // entryWithMeta has higher id → newest; entryNoMeta is older.
+    // Backend returns newest-first → [entryWithMeta, entryNoMeta].
+    const entryWithMeta = makeEntry({
+      id: 20,
+      title: 'Styled',
+      text: '<p>Styled</p>',
+      metadata: { fontFamily: 'Merriweather', fontSize: 18 },
+    });
+    const entryNoMeta = makeEntry({ id: 10, title: 'Plain', text: '<p>Plain</p>' });
+
+    mocks.getEntriesForDate
+      .mockResolvedValueOnce([entryWithMeta, entryNoMeta]) // initial load
+      .mockResolvedValueOnce([entryNoMeta]); // refresh after delete
+    mocks.getAllEntryDates.mockResolvedValue(['2026-04-23']);
+
+    renderWithI18n(() => <EditorPanel />);
+    await waitFor(() => expect(mocks.getEntriesForDate).toHaveBeenCalledWith('2026-04-23'));
+    await flushMicrotasks();
+    // reversed → [entryNoMeta (idx 0), entryWithMeta (idx 1)]; startIndex = 1 → entryWithMeta active
+
+    // Click delete — EntryNavBar is visible because there are 2 entries.
+    const deleteBtn = screen.getByTestId('entry-delete-button');
+    fireEvent.click(deleteBtn);
+
+    await waitFor(() => expect(mocks.deleteEntry).toHaveBeenCalledWith(20));
+    await flushMicrotasks();
+    // entryNoMeta is now active; its metadata is null.
+
+    typeIntoEditor('<p>Plain edited</p>');
+    await vi.advanceTimersByTimeAsync(600);
+    await flushMicrotasks();
+
+    expect(mocks.saveEntry).toHaveBeenCalledWith(10, 'Plain', '<p>Plain edited</p>', null);
   });
 
   it('import-markdown: shows error banner when readTextFile fails', async () => {

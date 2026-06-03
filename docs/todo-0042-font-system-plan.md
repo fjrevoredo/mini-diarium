@@ -73,7 +73,14 @@ None.
 
 ## Current Status
 
-The plan is ready for approval. Implementation has not started.
+Implementation landed in commit `9eed9f34`. A follow-up review (`docs/todo-0042-font-system-review.md`) found remaining issues in metadata state reset (delete paths), import normalization, and generated website docs. All issues were resolved on 2026-06-04:
+
+- **Metadata leak on delete fixed**: `handleDeleteEntry` in `useMultiEntryNav.ts` now resets `entryMetadata` when another entry becomes active or no entries remain; same fix applied to the auto-delete path in `useEntryLifecycle.ts`.
+- **Normalization moved to storage boundary**: `encrypt_metadata` in `db/queries/entries.rs` now calls `normalize_metadata` before serializing, covering all writers (import, plugin, direct insert). The redundant call in `save_entry_inner` was removed.
+- **CSS injection escape**: `DiaryEditor.tsx` now escapes font-family names via `cssString()` before building `@font-face` rules.
+- **Font-utils contract documented**: `font-utils.ts` comment now states the narrow contract (TipTap FontFamily output only); contract-boundary tests added.
+- **Regression tests added**: `entries.rs` has three boundary-normalization tests; `EditorPanel.integration.test.tsx` has a metadata-cleared-on-delete test; `font-utils.test.ts` is new.
+- **Website docs regenerated**: `website/docs/*/index.html` files updated to reflect the three-level font model.
 
 ## Tasks
 

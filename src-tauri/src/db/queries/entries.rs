@@ -21,9 +21,12 @@ fn encrypt_metadata(
     db: &DatabaseConnection,
     metadata: &Option<EntryMetadata>,
 ) -> Result<Option<Vec<u8>>, String> {
+    // Normalize here so every writer (insert, update, import, plugin) gets the
+    // same validated invariants regardless of call site.
+    let metadata = normalize_metadata(metadata.clone());
     match metadata {
         Some(m) => {
-            let json = serde_json::to_string(m)
+            let json = serde_json::to_string(&m)
                 .map_err(|e| format!("Failed to serialize entry metadata: {}", e))?;
             Ok(Some(super::encrypt_for_storage(
                 db.key(),
@@ -810,6 +813,83 @@ mod tests {
             result.is_err(),
             "Expected Err when title_encrypted is corrupted, got Ok with entries: {:?}",
             result.ok()
+        );
+    }
+
+    // Storage-boundary normalization: insert_entry / update_entry must normalize via
+    // encrypt_metadata regardless of how the DiaryEntry was constructed (import, plugin, etc.)
+
+    #[test]
+    fn test_insert_normalizes_whitespace_family_to_none() {
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+        let entry = DiaryEntry {
+            id: 0,
+            date: "2024-08-01".to_string(),
+            title: "T".to_string(),
+            text: "T".to_string(),
+            word_count: 1,
+            date_created: "2024-08-01T00:00:00Z".to_string(),
+            date_updated: "2024-08-01T00:00:00Z".to_string(),
+            metadata: Some(EntryMetadata {
+                font_family: Some("   ".to_string()),
+                font_size: None,
+            }),
+        };
+        insert_entry(&db, &entry).unwrap();
+        let retrieved = get_entries_by_date(&db, "2024-08-01").unwrap();
+        assert_eq!(retrieved[0].metadata, None, "whitespace-only family must collapse to None");
+    }
+
+    #[test]
+    fn test_insert_normalizes_size_too_high() {
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+        let entry = DiaryEntry {
+            id: 0,
+            date: "2024-08-02".to_string(),
+            title: "T".to_string(),
+            text: "T".to_string(),
+            word_count: 1,
+            date_created: "2024-08-02T00:00:00Z".to_string(),
+            date_updated: "2024-08-02T00:00:00Z".to_string(),
+            metadata: Some(EntryMetadata {
+                font_family: None,
+                font_size: Some(99.0),
+            }),
+        };
+        insert_entry(&db, &entry).unwrap();
+        let retrieved = get_entries_by_date(&db, "2024-08-02").unwrap();
+        assert_eq!(
+            retrieved[0].metadata.as_ref().unwrap().font_size,
+            Some(24.0),
+            "font_size 99 must be clamped to 24"
+        );
+    }
+
+    #[test]
+    fn test_insert_normalizes_size_too_low() {
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+        let entry = DiaryEntry {
+            id: 0,
+            date: "2024-08-03".to_string(),
+            title: "T".to_string(),
+            text: "T".to_string(),
+            word_count: 1,
+            date_created: "2024-08-03T00:00:00Z".to_string(),
+            date_updated: "2024-08-03T00:00:00Z".to_string(),
+            metadata: Some(EntryMetadata {
+                font_family: None,
+                font_size: Some(4.0),
+            }),
+        };
+        insert_entry(&db, &entry).unwrap();
+        let retrieved = get_entries_by_date(&db, "2024-08-03").unwrap();
+        assert_eq!(
+            retrieved[0].metadata.as_ref().unwrap().font_size,
+            Some(12.0),
+            "font_size 4 must be clamped to 12"
         );
     }
 

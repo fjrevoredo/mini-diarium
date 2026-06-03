@@ -86,6 +86,7 @@ export function useEntryLifecycle(opts: UseEntryLifecycleOptions): EntryLifecycl
           opts.setTitle(entry.title);
           opts.setContent(entry.text);
           opts.setWordCount(countWordsInHtml(entry.text));
+          opts.setEntryMetadata(entry.metadata ?? null);
           // Prevent the debounced save that setContent triggers via TipTap —
           // the remaining entry is already persisted and has not changed.
           debouncedSave.cancel();
@@ -94,6 +95,7 @@ export function useEntryLifecycle(opts: UseEntryLifecycleOptions): EntryLifecycl
           opts.setPendingEntryId(null);
           opts.setCurrentIndex(0);
           opts.setWordCount(0);
+          opts.setEntryMetadata(null);
         }
       } catch (error) {
         log.error('Failed to delete empty entry:', error);

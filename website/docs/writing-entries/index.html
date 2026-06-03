@@ -432,12 +432,26 @@
         <p><strong>Alignment toolbar</strong>: when the cursor is in an RTL paragraph, the alignment toolbar reflects the browser&#39;s actual rendering and shows <strong>Right</strong> as the active alignment (not Left). Clicking an alignment button writes an explicit <code>text-align</code> override as normal.</p>
         <p><strong>Persistence</strong>: the <code>dir</code> attribute is stored in the encrypted HTML content of each entry, so direction is preserved across save, export, and re-open cycles.</p>
         <h2 id="inserting-the-current-time">Inserting the Current Time</h2><p>The advanced toolbar includes a <strong>clock button</strong> that inserts the current time at the cursor position. Clicking the button opens a popup where you can choose between <strong>12-hour</strong> and <strong>24-hour</strong> format and select hours:minutes or hours:minutes:seconds precision. Both selections are remembered across sessions.</p>
-        <h2 id="editor-font">Editor Font</h2><p>You can change the font used in the editor body via <strong>Preferences → Writing → Editor font</strong>. The selector shows two groups:</p>
+        <h2 id="editor-font-three-level-system">Editor Font — Three-Level System</h2><p>Mini Diarium uses a three-level font system so you can control fonts at multiple scopes:</p>
+        <h3 id="1-app-default-preferences">1. App Default (Preferences)</h3><p>You can change the font used app-wide via <strong>Preferences → Writing → Editor font</strong>. The selector shows two groups:</p>
         <ul>
         <li><strong>Bundled fonts</strong> — five open-source families (Noto Sans, Source Sans 3, Noto Serif, JetBrains Mono, Fira Mono) bundled with the app. Loaded on demand and work fully offline.</li>
         <li><strong>Custom fonts</strong> — font files you have uploaded yourself (see below). Only families with at least a Regular weight appear here.</li>
         </ul>
-        <p>Font family and font size are also available as optional controls in the editor toolbar itself. Enable them in <strong>Preferences → Writing → Toolbar items</strong> — they appear as compact dropdowns directly in the toolbar and always stay in sync with the Preferences sliders.</p>
+        <p>Font family and font size are also available as optional controls in the editor toolbar itself. Enable them in <strong>Preferences → Writing → Toolbar items</strong> — they appear as compact dropdowns directly in the toolbar, but they now apply inline formatting (see below) instead of changing the Preferences.</p>
+        <h3 id="2-entry-default-per-entry-override">2. Entry Default (Per-Entry Override)</h3><p>When you have the font dropdown enabled in the editor toolbar, two new buttons appear next to it:</p>
+        <ul>
+        <li><strong>Set as entry default</strong> — saves the current font family and size as the default for this entry only, overriding the app default. This is useful when a particular entry needs a different font than your usual preference.</li>
+        <li><strong>Clear entry default</strong> — removes the entry default and reverts this entry to use the app default.</li>
+        </ul>
+        <p>Entry font defaults are stored encrypted inside the entry&#39;s metadata and survive save, lock/unlock, and navigation cycles.</p>
+        <h3 id="3-inline-formatting-selection">3. Inline Formatting (Selection)</h3><p>The font family and font size dropdowns in the editor toolbar apply <strong>inline formatting</strong> to selected text or the cursor. This is different from changing preferences — it wraps the selection in a styled span so different parts of the same entry can have different fonts.</p>
+        <p>To apply inline formatting:</p>
+        <ol>
+        <li>Select the text you want to format (or place the cursor where you want inline formatting to start)</li>
+        <li>Use the font family or font size dropdown to apply the style</li>
+        </ol>
+        <p>Inline formatting is stored in the encrypted HTML of your entry and exports to JSON with full formatting preserved.</p>
         <h3 id="custom-fonts">Custom Fonts</h3><p>You can upload your own <code>.ttf</code>, <code>.otf</code>, <code>.woff</code>, or <code>.woff2</code> font files from <strong>Preferences → Advanced → Custom fonts</strong>.</p>
         <ul>
         <li><strong>Regular weight</strong> (required) and <strong>Bold weight</strong> (optional) are uploaded separately. The Bold field is optional; if you skip it, the browser will synthesize bold text from the Regular file, which may look slightly different from a true bold variant.</li>
@@ -481,7 +495,10 @@
           <li class="docs-toc-h2"><a href="#links">Links</a></li>
           <li class="docs-toc-h2"><a href="#right-to-left-and-bidirectional-text">Right-to-Left and Bidirectional Text</a></li>
           <li class="docs-toc-h2"><a href="#inserting-the-current-time">Inserting the Current Time</a></li>
-          <li class="docs-toc-h2"><a href="#editor-font">Editor Font</a></li>
+          <li class="docs-toc-h2"><a href="#editor-font-three-level-system">Editor Font — Three-Level System</a></li>
+          <li class="docs-toc-h3"><a href="#1-app-default-preferences">1. App Default (Preferences)</a></li>
+          <li class="docs-toc-h3"><a href="#2-entry-default-per-entry-override">2. Entry Default (Per-Entry Override)</a></li>
+          <li class="docs-toc-h3"><a href="#3-inline-formatting-selection">3. Inline Formatting (Selection)</a></li>
           <li class="docs-toc-h3"><a href="#custom-fonts">Custom Fonts</a></li>
           <li class="docs-toc-h2"><a href="#tags">Tags</a></li>
           <li class="docs-toc-h3"><a href="#browsing-entries-by-tag">Browsing entries by tag</a></li>
