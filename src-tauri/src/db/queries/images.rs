@@ -361,9 +361,14 @@ mod tests {
     use super::*;
     use crate::db::schema::create_database;
 
-    fn make_db() -> crate::db::schema::DatabaseConnection {
+    // Returns the NamedTempFile alongside the connection so the caller can keep it alive.
+    // On Linux the tempfile is unlinked when dropped, which makes SQLite return
+    // SQLITE_READONLY_DBMOVED on subsequent writes. Bind the returned value to `_tmp`
+    // in each test so the file persists for the test's lifetime.
+    fn make_db() -> (tempfile::NamedTempFile, crate::db::schema::DatabaseConnection) {
         let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
-        create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap()
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+        (tmp, db)
     }
 
     fn insert_blank_entry(db: &DatabaseConnection) -> i64 {
@@ -381,7 +386,7 @@ mod tests {
 
     #[test]
     fn test_upsert_image_returns_same_id_for_same_bytes() {
-        let db = make_db();
+        let (_tmp, db) = make_db();
         let bytes = b"fake-png-data";
         let id1 = upsert_image(&db, "image/png", bytes).unwrap();
         let id2 = upsert_image(&db, "image/png", bytes).unwrap();
@@ -396,7 +401,7 @@ mod tests {
 
     #[test]
     fn test_upsert_image_different_bytes_different_ids() {
-        let db = make_db();
+        let (_tmp, db) = make_db();
         let id1 = upsert_image(&db, "image/png", b"bytes-A").unwrap();
         let id2 = upsert_image(&db, "image/png", b"bytes-B").unwrap();
         assert_ne!(id1, id2, "different bytes must produce different ids");
@@ -404,7 +409,7 @@ mod tests {
 
     #[test]
     fn test_replace_entry_image_links_replaces_set() {
-        let db = make_db();
+        let (_tmp, db) = make_db();
         let entry_id = insert_blank_entry(&db);
         let id_a = upsert_image(&db, "image/png", b"A").unwrap();
         let id_b = upsert_image(&db, "image/png", b"B").unwrap();
@@ -428,7 +433,7 @@ mod tests {
 
     #[test]
     fn test_get_images_for_entry_returns_decrypted_data() {
-        let db = make_db();
+        let (_tmp, db) = make_db();
         let entry_id = insert_blank_entry(&db);
         let plaintext = b"hello-image-bytes";
         let img_id = upsert_image(&db, "image/jpeg", plaintext).unwrap();
@@ -443,7 +448,7 @@ mod tests {
 
     #[test]
     fn test_list_all_images_returns_all() {
-        let db = make_db();
+        let (_tmp, db) = make_db();
         upsert_image(&db, "image/png", b"img-1").unwrap();
         upsert_image(&db, "image/jpeg", b"img-2").unwrap();
 
@@ -453,7 +458,7 @@ mod tests {
 
     #[test]
     fn test_cleanup_orphaned_images_removes_unreferenced() {
-        let db = make_db();
+        let (_tmp, db) = make_db();
         upsert_image(&db, "image/png", b"orphan").unwrap();
 
         let count_before: i64 = db
@@ -473,7 +478,7 @@ mod tests {
 
     #[test]
     fn test_cleanup_orphaned_images_keeps_referenced() {
-        let db = make_db();
+        let (_tmp, db) = make_db();
         let entry_id = insert_blank_entry(&db);
         let img_id = upsert_image(&db, "image/png", b"referenced").unwrap();
         replace_entry_image_links(&db, entry_id, &[img_id]).unwrap();
@@ -491,7 +496,7 @@ mod tests {
 
     #[test]
     fn test_resolve_image_refs_single_quoted() {
-        let db = make_db();
+        let (_tmp, db) = make_db();
         let plaintext = b"png-bytes";
         let img_id = upsert_image(&db, "image/png", plaintext).unwrap();
         let entry_id = insert_blank_entry(&db);
@@ -523,7 +528,7 @@ mod tests {
 
     #[test]
     fn test_resolve_image_refs_double_quoted() {
-        let db = make_db();
+        let (_tmp, db) = make_db();
         let plaintext = b"png-bytes";
         let img_id = upsert_image(&db, "image/png", plaintext).unwrap();
         let entry_id = insert_blank_entry(&db);
@@ -553,7 +558,7 @@ mod tests {
 
     #[test]
     fn test_plain_text_image_id_ref_does_not_create_entry_images_row() {
-        let db = make_db();
+        let (_tmp, db) = make_db();
         let img_id = upsert_image(&db, "image/png", b"img").unwrap();
         let entry_id = insert_blank_entry(&db);
 
@@ -580,7 +585,7 @@ mod tests {
 
     #[test]
     fn test_invalid_img_src_image_id_ref_is_dropped() {
-        let db = make_db();
+        let (_tmp, db) = make_db();
         // No images in the database — image ID 99999 does not exist.
         let html = r#"<img src="image-id://99999" alt="">"#;
         let (rewritten, ids) = extract_and_replace_image_refs(html, &db).unwrap();
@@ -594,7 +599,7 @@ mod tests {
 
     #[test]
     fn test_resolve_image_refs_in_entries_replaces_stored_ref() {
-        let db = make_db();
+        let (_tmp, db) = make_db();
         let img_id = upsert_image(&db, "image/png", b"png-bytes").unwrap();
         let entry_id = insert_blank_entry(&db);
         replace_entry_image_links(&db, entry_id, &[img_id]).unwrap();

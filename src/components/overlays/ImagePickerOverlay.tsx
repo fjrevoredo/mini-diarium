@@ -11,6 +11,7 @@ interface ImagePickerOverlayProps {
 export default function ImagePickerOverlay(props: ImagePickerOverlayProps) {
   const t = useI18n();
   const [images] = createResource(listJournalImages);
+  // eslint-disable-next-line no-unassigned-vars -- SolidJS assigns via ref={dialogRef}; ESLint can't see the JSX assignment
   let dialogRef!: HTMLDivElement;
 
   onMount(() => dialogRef.focus());
