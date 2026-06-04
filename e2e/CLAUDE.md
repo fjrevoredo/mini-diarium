@@ -7,23 +7,9 @@
 cargo install tauri-driver   # install once
 ```
 
-## File Structure
-
-```
-e2e/
-├── specs/
-│   ├── diary-workflow.spec.ts  # Core workflow: create → write → lock → unlock → verify
-│   └── multi-entry.spec.ts    # Multi-entry persistence + nav bar edge cases
-└── tsconfig.json               # Separate TS config (node + webdriverio/async globals)
-wdio.conf.ts                    # WebdriverIO config (root level)
-```
-
 ## Specs
 
-| File | Description |
-|------|-------------|
-| `e2e/specs/diary-workflow.spec.ts` | 1 test: create diary → write entry → lock → unlock → verify persistence |
-| `e2e/specs/multi-entry.spec.ts` | 1 test (3 scenarios): (A) 2 entries persist after lock/unlock; (B) "+" enabled after "←" navigation from blank entry (v0.4.9 Variant 1); (C) "+" enabled after day-switch with blank entry (v0.4.9 Variant 2) |
+Specs live in `e2e/specs/`. Current suite covers: core diary workflow (create → write → lock → unlock → verify persistence) and multi-entry persistence with nav bar edge cases — including two v0.4.9 regressions: `+` button enabled state after `←` navigation from a blank entry, and after a day-switch with a blank entry open.
 
 ## Verification Commands
 
@@ -36,26 +22,7 @@ bun run test:e2e:stateful               # Stateful E2E mode (persistence-oriente
 
 ## data-testid Attributes
 
-The source of truth for these attributes is the frontend components in `src/`. Do not use selectors not listed here — add a `data-testid` to the component first.
-
-| Component | Element | data-testid |
-|-----------|---------|-------------|
-| `OnboardingOverlay.tsx` | Next / Done button in tour card | `onboarding-next-btn` |
-| `PasswordCreation.tsx` | Password input | `password-create-input` |
-| `PasswordCreation.tsx` | Confirm password input | `password-repeat-input` |
-| `PasswordCreation.tsx` | Create button | `create-journal-button` |
-| `PasswordPrompt.tsx` | Password input | `password-unlock-input` |
-| `PasswordPrompt.tsx` | Unlock submit button | `unlock-journal-button` |
-| `Header.tsx` | Sidebar toggle (hamburger) | `toggle-sidebar-button` |
-| `Header.tsx` | Lock button | `lock-journal-button` |
-| `TitleEditor.tsx` | Title input | `title-input` |
-| `Calendar.tsx` | Each day button | `calendar-day-YYYY-MM-DD` |
-| `EntryNavBar.tsx` | Nav bar container | `entry-nav-bar` |
-| `EntryNavBar.tsx` | Previous entry button (`←`) | `entry-prev-button` |
-| `EntryNavBar.tsx` | Entry number button N (1-based) | `entry-number-button-{N}` |
-| `EntryNavBar.tsx` | Next entry button (`→`) | `entry-next-button` |
-| `EntryNavBar.tsx` | Delete entry button (`−`) | `entry-delete-button` |
-| `EntryNavBar.tsx` | Add entry button (`+`) | `entry-add-button` |
+The canonical `data-testid` inventory lives in [`src/CLAUDE.md — data-testid Attributes`](../src/CLAUDE.md#data-testid-attributes). The E2E specs use a subset of those attributes. Do not add a new `data-testid` selector to a spec without first adding it to the canonical table.
 
 ## Gotchas and Pitfalls
 

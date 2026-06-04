@@ -137,13 +137,15 @@ Delete the `.md` file from `posts-src/` and run `bun run website:build-static`. 
 
 Every blog post should target at least one specific search query. Current keyword gaps and owned topics:
 
-| Query | Current Pos | Approach |
-|-------|-------------|----------|
-| `encrypted diary` | 26.7 | "What Is an Encrypted Diary" — foundational explainer |
-| `private journal app` | 57.5 | "How to Choose a Private Journal App" — buyer's checklist |
-| `encrypted journal` | 9.4 | Owned by `/encrypted-journal/` landing page |
-| `desktop diary app` | 49.0 | Targeted by `desktop-diary-app` (2026-05-29) |
-| `private offline journal` | 8.0 | Owned by blog `private-diary-app-for-desktop` |
+| Query | Approach |
+|-------|----------|
+| `encrypted diary` | "What Is an Encrypted Diary" — foundational explainer |
+| `private journal app` | "How to Choose a Private Journal App" — buyer's checklist |
+| `encrypted journal` | Owned by `/encrypted-journal/` landing page |
+| `desktop diary app` | Targeted by `desktop-diary-app` post |
+| `private offline journal` | Owned by `private-diary-app-for-desktop` post |
+
+> **Current positions:** Check [`docs/seo/Queries.csv`](../docs/seo/Queries.csv) (updated quarterly) for live ranking data before writing a new post. Do not rely on inline numbers here — they are stale within days.
 
 When writing a new post, check the [SEO audit data](../docs/seo/) to avoid cannibalizing existing pages and to identify new keyword opportunities. If `docs/seo/` does not exist (CSV exports are added quarterly), use the keyword map above as the primary reference and verify the new post's primary keyword does not appear as the title or H1 of an existing post.
 
@@ -216,11 +218,11 @@ Current nav order: Features → Security → Blog → Docs → Download
 ### Monitoring Cadence
 
 - Export Google Search Console data (3-month window) to `docs/seo/` quarterly
-- Compare against the [last audit baseline](../docs/seo/): ~120 clicks/month, ~2,200 impressions/month, 9.5% CTR, avg position 5.9
-- Key metrics to watch:
-  - `/encrypted-journal/` CTR (was 0.32% — target >2%)
-  - Blog post CTR on positions 6–10 (were 0% — target >1%)
-  - US market CTR (was 3.14% — target >5%)
+- Compare against the last baseline in [`docs/seo/`](../docs/seo/) (see the most recent `Pages.csv` and `Queries.csv` — do not inline numbers here).
+- Key metrics to watch (current baselines in `docs/seo/Pages.csv` and `Queries.csv`):
+  - `/encrypted-journal/` CTR — target >2%
+  - Blog post CTR on positions 6–10 — target >1%
+  - US market CTR — target >5%
   - New blog post positions as they get indexed
 - After each audit, create or update `docs/seo/seo-fix-plan.md` with prioritized actions
 
@@ -293,46 +295,17 @@ See `website/docs-src/_template.md` for the starter template.
 
 ## File Layout
 
-```
-website/
-├── posts-src/               # Blog Markdown sources — edit these
-│   ├── _template.md         # Blank post template
-│   └── YYYY-MM-DD-slug.md   # One file per post
-├── docs-src/                # Docs Markdown sources — edit these
-│   ├── _template.md         # Blank section template
-│   └── NN-slug.md           # One file per section (ordered by filename)
-├── blog/                    # Generated output — do not edit
-│   ├── index.html
-│   ├── feed.xml
-│   └── <slug>/index.html
-├── docs/                    # Generated output — do not edit
-│   ├── index.html
-│   └── <slug>/index.html
-├── encrypted-journal/       # Static guide page — edit directly
-│   └── index.html
-├── compare/                  # Static comparison page — edit directly
-│   └── index.html
-├── privacy/                  # Static privacy policy — edit directly
-│   └── index.html
-├── assets/                  # Images, logo, OG cover
-├── css/style.css            # Site stylesheet
-├── js/main.js               # Site JS
-├── index.html               # Homepage — edit directly; blog teaser is auto-updated
-├── sitemap.xml              # Generated — do not edit
-├── llms.txt                 # Generated — do not edit
-├── ai-crawlers.txt          # Static AI crawler policy — edit directly if policy changes
-├── robots.txt               # Static
-├── indexnow-key-*.txt       # IndexNow API key — auto-generated, do not edit manually
-├── nginx.conf               # Nginx config for local testing only
-│
-└── ../docs/seo/              # SEO audit data and strategy (not in website/ but referenced by it)
-    ├── Chart.csv             # GSC daily click/impression/CTR data
-    ├── Pages.csv             # GSC per-page performance
-    ├── Queries.csv           # GSC per-query performance
-    ├── Countries.csv         # GSC per-country breakdown
-    ├── faq-schema-investigation.md  # Rich Results Test outcomes
-    └── production-config-notes.md   # Coolify redirect requirements
-```
+| Path | Status | Purpose |
+|------|--------|---------|
+| `posts-src/` | Edit | Blog Markdown sources — one `.md` file per post |
+| `docs-src/` | Edit | Docs Markdown sources — one `.md` file per section (ordered by filename) |
+| `blog/`, `docs/` | Generated | Do not edit — overwritten on every build |
+| `sitemap.xml`, `llms.txt`, `feed.xml` | Generated | Do not edit — managed by the generator scripts |
+| `index.html` | Edit | Homepage — edit static sections directly; blog teaser block is auto-updated |
+| `encrypted-journal/`, `compare/`, `privacy/` | Edit | Static guide / comparison / policy pages |
+| `css/`, `js/` | Edit | Site stylesheet and scripts |
+| `nginx.conf` | Edit | Local Docker preview only — does not affect production |
+| `../docs/seo/` | Edit | SEO audit exports (outside `website/` but referenced by monitoring guidance above) |
 
 ---
 

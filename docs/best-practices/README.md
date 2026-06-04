@@ -8,6 +8,7 @@ Ownership rule: domain guides describe current structure, workflows, and feature
 - [Tauri Best Practices](TAURI_BEST_PRACTICES.md) - command registration, IPC validation, error sanitization, WebView security, capabilities, and frontend/backend responsibility boundaries.
 - [Frontend Best Practices](FRONTEND_BEST_PRACTICES.md) - SolidJS reactivity, state ownership, Tauri error UI, TipTap/editor flows, accessibility, testing, and E2E stability.
 - [CI Best Practices](CI_BEST_PRACTICES.md) - GitHub Actions structure, permissions, caching, release safeguards, artifacts, and failure diagnostics.
+- [Context File Best Practices](CONTEXT_FILES_BEST_PRACTICES.md) - authoring rules for CLAUDE.md / AGENTS.md files: what belongs, what doesn't, format guidelines, and an audit checklist.
 
 Use these together with the domain guides:
 

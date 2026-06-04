@@ -3,114 +3,28 @@
 > For project architecture, command registry, and cross-cutting conventions see the [root CLAUDE.md](../CLAUDE.md).
 > For durable frontend rules, use [Frontend best practices](../docs/best-practices/FRONTEND_BEST_PRACTICES.md) before changing SolidJS reactivity, state ownership, Tauri error UI, TipTap/editor behavior, accessibility, or E2E-visible UI.
 
-## File Structure
+## Key Directories
 
-```
-src/
-├── index.tsx                          # Entry point
-├── App.tsx                            # Auth routing (Switch/Match on authState)
-├── components/
-│   ├── auth/
-│   │   ├── JournalPicker.tsx          # Pre-auth journal selection + management (outermost layer)
-│   │   ├── JournalPicker.test.tsx
-│   │   ├── PasswordCreation.tsx       # New diary setup
-│   │   ├── PasswordCreation.test.tsx
-│   │   ├── PasswordPrompt.tsx         # Password + Key File unlock modes
-│   │   └── PasswordPrompt.test.tsx
-│   ├── calendar/
-│   │   └── Calendar.tsx               # Monthly calendar with entry indicators
-│   ├── editor/
-│   │   ├── DiaryEditor.tsx            # TipTap rich-text editor
-│   │   ├── EditorToolbar.tsx          # Formatting toolbar (Bold/Italic fixed; 15 configurable items via toolbarItems preference)
-│   │   ├── TitleEditor.tsx            # Entry title input
-│   │   ├── WordCount.tsx              # Live word count display
-│   │   ├── EntryNavBar.tsx            # Per-day entry counter/navigator (hidden when ≤1 entry)
-│   │   ├── TitleEditor.test.tsx
-│   │   ├── WordCount.test.tsx
-│   │   ├── EntryNavBar.test.tsx
-│   │   └── EditorToolbar.test.tsx
-│   ├── layout/
-│   │   ├── MainLayout.tsx             # App shell (sidebar + editor)
-│   │   ├── Header.tsx                 # Top bar
-│   │   ├── Sidebar.tsx                # Calendar panel (search removed; see "Implementing Search")
-│   │   ├── EditorPanel.tsx            # Editor shell — signals + effects + JSX (≤310 LOC)
-│   │   ├── EditorPanel.integration.test.tsx  # 4 end-to-end flows (load/switch/delete/create)
-│   │   ├── editor-panel/
-│   │   │   ├── useEditorEmptyCheck.ts       # editorIsEmpty signal + computeIsEmpty/editorHasImages
-│   │   │   ├── useEditorEmptyCheck.test.ts
-│   │   │   ├── useEntryLifecycle.ts         # load/save/create/delete + debouncedSave + lock-cleanup
-│   │   │   ├── useEntryLifecycle.test.ts
-│   │   │   ├── useMultiEntryNav.ts          # per-day navigate/add/delete + fetchEntriesOrdered
-│   │   │   └── useMultiEntryNav.test.ts
-│   │   └── MainLayout-event-listeners.test.tsx
-│   ├── overlays/
-│   │   ├── GoToDateOverlay.tsx        # Date picker dialog
-│   │   ├── preferences/               # Settings dialog split by tab
-│   │   │   ├── PreferencesOverlay.tsx         # Shell: dialog + tab list (close-only)
-│   │   │   ├── PreferencesGeneralTab.tsx      # Theme, language, ESC-key action
-│   │   │   ├── PreferencesWritingTab.tsx      # Calendar/editor writing preferences
-│   │   │   ├── PreferencesSecurityTab.tsx     # Auth methods shell + require-all-auth + auto-lock
-│   │   │   ├── AuthMethodsList.tsx            # Registered methods list + removal form
-│   │   │   ├── AddPasswordForm.tsx            # Add-password form (shown when no password slot)
-│   │   │   ├── AddKeypairForm.tsx             # Generate + register keypair form
-│   │   │   ├── ChangePasswordForm.tsx         # Change password form (shown when password slot exists)
-│   │   │   ├── PreferencesDataTab.tsx         # Journal directory change, reset journal
-│   │   │   ├── PreferencesAdvancedTab.tsx     # Theme overrides (auto-apply), custom fonts, debug dump
-│   │   │   └── shared.ts                      # Tab type + TabProps
-│   │   ├── StatsOverlay.tsx           # Statistics display
-│   │   ├── ImportOverlay.tsx          # Import format selector + file picker
-│   │   ├── ExportOverlay.tsx          # Export format selector + file picker
-│   │   └── AboutOverlay.tsx           # App info, version, license, GitHub link
-│   └── search/
-│       ├── SearchBar.tsx              # Search input (not rendered; reserved for future secure search)
-│       └── SearchResults.tsx          # Search result list
-├── state/
-│   ├── auth.ts                        # AuthState signal + authMethods + initializeAuth/create/unlock/lock/unlockWithKeypair/loadAuthMethods
-│   ├── entries.ts                     # entryDates, isSaving + resetEntriesState + cleanup-callback registry
-│   ├── journals.ts                    # journals, activeJournalId, isSwitching + loadJournals/switchJournal/addJournal/removeJournal/renameJournal
-│   ├── search.ts                      # searchQuery, searchResults, isSearching
-│   ├── session.ts                     # resetSessionState() — resets entries/search/UI/tags on journal lock
-│   ├── tags.ts                        # allTags signal + resetTagsState/loadAllTags; loaded on unlock, reset on lock
-│   ├── ui.ts                          # selectedDate, overlay open states (incl. isTagManagerOpen), sidebar state
-│   └── preferences.ts                 # Preferences interface, localStorage persistence
-├── lib/
-│   ├── tauri.ts                       # All Tauri invoke() wrappers (typed)
-│   ├── dates.ts                       # Date formatting/arithmetic helpers
-│   ├── debounce.ts                    # Generic debounce utility
-│   ├── shortcuts.ts                   # Keyboard shortcut + menu event listeners
-│   ├── logger.ts                      # createLogger(name) factory used throughout frontend
-│   ├── errors.ts                      # mapTauriError() for user-facing error message mapping
-│   ├── theme.ts                       # Theme signals + initializeTheme() / setTheme()
-│   ├── theme-overrides.ts             # User CSS token overrides per theme
-│   ├── dates.test.ts
-│   ├── import.test.ts
-│   ├── tauri-params.test.ts
-│   └── theme-overrides.test.ts
-├── test/
-│   └── setup.ts                       # Vitest setup: Tauri API mocks, cleanup
-├── styles/
-│   ├── critical-auth.css
-│   └── editor.css
-└── index.css
-```
+| Directory | Purpose |
+|-----------|---------|
+| `src/components/auth/` | Pre-auth unlock and journal creation screens |
+| `src/components/calendar/` | Monthly calendar with entry date indicators |
+| `src/components/editor/` | TipTap rich-text editor, toolbar, entry navigation, inline overlays |
+| `src/components/layout/` | App shell and editor panel; extracted hooks live in `editor-panel/` |
+| `src/components/overlays/` | All overlay dialogs — preferences (split by tab), stats, import/export, tags, notifications, onboarding, image picker |
+| `src/components/search/` | Search UI — not rendered; preserved for future secure search |
+| `src/state/` | Signal-based state modules, one per domain — see State Management below |
+| `src/lib/` | Tauri invoke wrappers (`tauri.ts`), utility helpers, shortcuts listener, theme management |
+| `src/i18n/` | Translation files (`locales/`) and i18n context wrapper |
+| `src/test/` | Vitest setup and `renderWithI18n` helper |
 
 ## State Management
 
-Nine signal-based state modules in `src/state/`:
+State modules live in `src/state/` — one file per domain, all SolidJS signals. See each file for current signals and exports.
 
-| Module | Signals | Key Functions |
-|--------|---------|---------------|
-| `auth.ts` | `authState: AuthState`, `error`, `authMethods: AuthMethodInfo[]` | `initializeAuth()`, `createJournal()`, `unlockJournal()`, `lockJournal()`, `unlockWithKeypair()`, `goToJournalPicker()`, `loadAuthMethods()` |
-| `entries.ts` | `entryDates`, `isSaving` | `resetEntriesState()`, `registerCleanupCallback()`, `executeCleanupCallbacks()`; setters exported directly |
-| `journals.ts` | `journals: JournalConfig[]`, `activeJournalId`, `isSwitching` | `loadJournals()`, `switchJournal()`, `addJournal()`, `removeJournal()`, `renameJournal()` |
-| `search.ts` | `searchQuery`, `searchResults`, `isSearching` | Setters exported directly |
-| `session.ts` | — | `resetSessionState()` — resets `entries`/`search`/`ui`/`tags` on journal lock |
-| `tags.ts` | `allTags: Tag[]` | `loadAllTags()` — fetches and decrypts all tags; `resetTagsState()` — clears to `[]` on lock |
-| `ui.ts` | `selectedDate`, `isSidebarCollapsed`, `isGoToDateOpen`, `isPreferencesOpen`, `isStatsOpen`, `isImportOpen`, `isExportOpen`, `isAboutOpen`, `isNotificationsOpen`, `isTagManagerOpen` | Setters exported directly; `resetUiState()` resets all |
-| `notifications.ts` | `allNotifications: NotificationEntry[]`, `readIds: Set<string>`, `isLoading` | `loadNotifications()`, `markAsRead(id)`, `markAllRead()`, `isRead(id)`, `unreadCount()`, `hasUnread()` |
-| `preferences.ts` | `preferences: Preferences` | `setPreferences(Partial<Preferences>)`, `resetPreferences()` |
+**Key invariant:** `session.ts:resetSessionState()` orchestrates lock cleanup — it calls reset functions from `entries`, `search`, `ui`, and `tags`. If you add a module that holds session-scoped data, add its reset call there.
 
-`Preferences` fields: `allowFutureEntries` (bool), `firstDayOfWeek` (number|null), `hideTitles` (bool), `enableSpellcheck` (bool), `escAction` (`'none'|'quit'`), `autoLockEnabled` (bool), `autoLockTimeout` (number, seconds), `toolbarItems` (`ToolbarItem[]` — 15 configurable toolbar actions with per-item `enabled` bool and display order; Bold/Italic are fixed and not in this list), `editorFontSize` (number, px), `editorFontFamily` (string|null), `showEntryTimestamps` (bool), `timestampFormat` (`'12h'|'24h'`), `timestampPrecision` (`'hm'|'hms'`), `language` (string). Stored in `localStorage`.
+The `Preferences` interface (fields, types, defaults) is the source of truth in `src/state/preferences.ts`. Stored in `localStorage`.
 
 > **Settings taxonomy:** When adding a new setting, see [`docs/decisions/2026-05-settings-storage-taxonomy.md`](../docs/decisions/2026-05-settings-storage-taxonomy.md) for the decision flowchart (`localStorage` vs. `config.json` vs. `db_settings` vs. in-memory).
 
@@ -203,14 +117,14 @@ The backend emits via `app.emit("menu-*", ())` in `menu.rs`. See root CLAUDE.md 
 ## Verification Commands
 
 ```bash
-bun run test:run           # All frontend tests (single run)
-bun run test               # Watch mode
-bun run test:coverage      # Coverage report
-bun run lint               # ESLint
-bun run lint:fix           # ESLint autofix
-bun run format:check       # Prettier check
-bun run format             # Prettier fix
-bun run type-check         # TypeScript type check
+cmd.exe /c bun run test:run           # All frontend tests (single run)
+cmd.exe /c bun run test               # Watch mode
+cmd.exe /c bun run test:coverage      # Coverage report
+cmd.exe /c bun run lint               # ESLint
+cmd.exe /c bun run lint:fix           # ESLint autofix
+cmd.exe /c bun run format:check       # Prettier check
+cmd.exe /c bun run format             # Prettier fix
+cmd.exe /c bun run type-check         # TypeScript type check
 ```
 
 ## data-testid Attributes
@@ -219,6 +133,7 @@ These are used by E2E tests — **do not remove** from components.
 
 | Component | Element | data-testid |
 |-----------|---------|-------------|
+| `OnboardingOverlay.tsx` | Next / Done button in tour card | `onboarding-next-btn` |
 | `PasswordCreation.tsx` | Password input | `password-create-input` |
 | `PasswordCreation.tsx` | Confirm password input | `password-repeat-input` |
 | `PasswordCreation.tsx` | Create button | `create-journal-button` |
@@ -230,9 +145,7 @@ These are used by E2E tests — **do not remove** from components.
 | `Calendar.tsx` | Each day button | `calendar-day-YYYY-MM-DD` |
 | `EntryNavBar.tsx` | Nav bar container | `entry-nav-bar` |
 | `EntryNavBar.tsx` | Previous entry button (`←`) | `entry-prev-button` |
-| `EntryNavBar.tsx` | Entry number button N (1-based) | `entry-number-button-{N}` |
-
-> **Note:** The active entry's number button has `aria-current="true"`.
+| `EntryNavBar.tsx` | Entry number button N (1-based); active entry has `aria-current="true"` | `entry-number-button-{N}` |
 | `EntryNavBar.tsx` | Next entry button (`→`) | `entry-next-button` |
 | `EntryNavBar.tsx` | Delete entry button (`−`) | `entry-delete-button` |
 | `EntryNavBar.tsx` | Add entry button (`+`) | `entry-add-button` |
@@ -243,33 +156,33 @@ These are used by E2E tests — **do not remove** from components.
 
 2. **Date format is always `YYYY-MM-DD`**: The `T00:00:00` suffix is appended in `dates.ts` functions (`new Date(dateStr + 'T00:00:00')`) to avoid timezone-related date shifts.
 
-2. **TipTap stores HTML**: The editor content is stored as HTML strings, not Markdown. This is intentional — the `text` field in `DiaryEntry` is HTML.
+3. **TipTap stores HTML**: The editor content is stored as HTML strings, not Markdown. This is intentional — the `text` field in `DiaryEntry` is HTML.
 
-3. **E2E breakpoint planning rule**: Default E2E clean mode runs at 800×660 px — below the `lg` breakpoint (1024 px). The sidebar uses `lg:relative lg:translate-x-0`, so it is always in mobile/overlay behavior in E2E. **When changing the default value of any UI visibility signal (`isSidebarCollapsed`, overlay open states, etc.), explicitly audit `e2e/specs/` for interactions that depend on the affected element being visible and update the test accordingly.**
+4. **E2E breakpoint planning rule**: Default E2E clean mode runs at 800×660 px — below the `lg` breakpoint (1024 px). The sidebar uses `lg:relative lg:translate-x-0`, so it is always in mobile/overlay behavior in E2E. **When changing the default value of any UI visibility signal (`isSidebarCollapsed`, overlay open states, etc.), explicitly audit `e2e/specs/` for interactions that depend on the affected element being visible and update the test accordingly.**
 
-4. **Block alignment uses a container model (not per-node)**: Alignment is applied via `TextAlign` on a wrapping container (`<figure>`, `<div>`), not on the content element itself. This means:
+5. **Block alignment uses a container model (not per-node)**: Alignment is applied via `TextAlign` on a wrapping container (`<figure>`, `<div>`), not on the content element itself. This means:
    - `ProseMirror-selectednode` is added to the **container**, not the inner element
    - CSS must use `display: inline-block` on the inner element for `text-align` to work
    - To align a new block type, extend its node to use a wrapper and add its name to the TextAlign `types` array — see "Adding an Alignable Editor Block Node" below
 
-5. **Images are stored as base64 in the encrypted HTML `text` field** — there is no separate media storage. Users can drag-drop, paste, or pick images; they are auto-resized to max 1200×1200 px and embedded as base64 data URLs. Backend `read_file_bytes()` reads disk images for drag-drop paths (Tauri drag-drop gives file paths, not `File` objects). Large images significantly increase encrypted entry size.
+6. **Images are stored as base64 in the encrypted HTML `text` field** — there is no separate media storage. Users can drag-drop, paste, or pick images; they are auto-resized to max 1200×1200 px and embedded as base64 data URLs. Backend `read_file_bytes()` reads disk images for drag-drop paths (Tauri drag-drop gives file paths, not `File` objects). Large images significantly increase encrypted entry size.
 
-6. **Theme preference and CSS token overrides are separate localStorage keys**, independent of the main `'preferences'` key. Any code that resets or exports user settings must handle all three keys:
+7. **Theme preference and CSS token overrides are separate localStorage keys**, independent of the main `'preferences'` key. Any code that resets or exports user settings must handle all three keys:
    - `'preferences'` — the `Preferences` interface (autoLockEnabled, hideTitles, etc.)
    - `'theme-preference'` — `'auto'|'light'|'dark'` (managed by `src/lib/theme.ts`)
    - `'theme-overrides'` — JSON object of CSS token overrides (managed by `src/lib/theme-overrides.ts`)
 
    See [`docs/decisions/2026-05-settings-storage-taxonomy.md`](../docs/decisions/2026-05-settings-storage-taxonomy.md) for the full taxonomy and decision guide.
 
-7. **TipTap inline styles require `dangerousDisableAssetCspModification: ["style-src"]`**: Tauri injects a random nonce into all CSP directives at runtime. Per the CSP spec, when a nonce is present in `style-src`, `'unsafe-inline'` is **ignored** — so TipTap's `style="text-align: X"` node-attribute rendering is silently blocked by the browser. The `tauri.conf.json` security section uses `"dangerousDisableAssetCspModification": ["style-src"]` to prevent nonce injection into `style-src` only (leaving `script-src` nonce-protected). **Do not remove this line or restructure the CSP string without verifying alignment still works** — the failure is silent (no console error in dev mode, only in production builds where the nonce is active). See issue #63.
+8. **TipTap inline styles require `dangerousDisableAssetCspModification: ["style-src"]`**: Tauri injects a random nonce into all CSP directives at runtime. Per the CSP spec, when a nonce is present in `style-src`, `'unsafe-inline'` is **ignored** — so TipTap's `style="text-align: X"` node-attribute rendering is silently blocked by the browser. The `tauri.conf.json` security section uses `"dangerousDisableAssetCspModification": ["style-src"]` to prevent nonce injection into `style-src` only (leaving `script-src` nonce-protected). **Do not remove this line or restructure the CSP string without verifying alignment still works** — the failure is silent (no console error in dev mode, only in production builds where the nonce is active). See issue #63.
 
-8. **TipTap dialog state capture — snapshot, not memo**: Never use `createMemo(() => editor.state.*)` inside a dialog component. TipTap collapses the selection when an `autofocus` input receives focus, making reactive reads of `editor.state.selection` unreliable after the dialog opens. Instead, capture editor state **once** when the dialog opens via a `createEffect` that fires when `isOpen` transitions to `true`. See `snapshotEditor()` in `src/components/editor/extensions/LinkOverlay.tsx` as the reference implementation.
+9. **TipTap dialog state capture — snapshot, not memo**: Never use `createMemo(() => editor.state.*)` inside a dialog component. TipTap collapses the selection when an `autofocus` input receives focus, making reactive reads of `editor.state.selection` unreliable after the dialog opens. Instead, capture editor state **once** when the dialog opens via a `createEffect` that fires when `isOpen` transitions to `true`. See `snapshotEditor()` in `src/components/editor/LinkOverlay.tsx` as the reference implementation.
 
 ## Common Task Checklists
 
 ### Adding an Alignable Editor Block Node
 
-Wrap the node in a `<figure class="X-container">` container, register it in `TextAlign.configure({ types: [..., 'yourNodeName'] })`, and add CSS: `figure.X-container { display: block }` + `.inner-element { display: inline-block }` (container's `text-align` propagates). `ProseMirror-selectednode` lands on the container, not the inner element. See Gotcha #4 above and `AlignableImage` in `DiaryEditor.tsx` as the reference implementation.
+Wrap the node in a `<figure class="X-container">` container, register it in `TextAlign.configure({ types: [..., 'yourNodeName'] })`, and add CSS: `figure.X-container { display: block }` + `.inner-element { display: inline-block }` (container's `text-align` propagates). `ProseMirror-selectednode` lands on the container, not the inner element. See Gotcha #5 above and `AlignableImage` in `DiaryEditor.tsx` as the reference implementation.
 
 ## Security
 

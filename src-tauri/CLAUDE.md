@@ -3,78 +3,21 @@
 > For project architecture, command registry, and cross-cutting conventions see the [root CLAUDE.md](../CLAUDE.md).
 > For durable backend rules, use [Rust best practices](../docs/best-practices/RUST_BEST_PRACTICES.md) and [Tauri best practices](../docs/best-practices/TAURI_BEST_PRACTICES.md) before changing commands, auth policy, migrations, encrypted storage, IPC, or WebView security.
 
-## File Structure
+## Key Modules
 
-```
-src-tauri/src/
-├── main.rs                            # Tauri bootstrap
-├── lib.rs                             # Plugin init, state setup, command registration
-├── menu.rs                            # App menu builder + event emitter
-├── config.rs                          # Journal + diary directory config persistence
-├── backup.rs                          # Automatic backups on unlock + rotation
-├── screen_lock.rs                     # OS-level auto-lock listener (Windows WM_WTSSESSION_CHANGE/WM_POWERBROADCAST; macOS screen-sleep/lock notifications)
-├── webview_security/
-│   ├── mod.rs                         # install_platform_handlers(&win) — dispatches to platform impl
-│   ├── windows.rs                     # WebView2 WebResourceRequested COM handler (blocks external HTTP(S))
-│   └── macos.rs                       # WKContentRuleList rule compiler (blocks external HTTP(S))
-├── auth/
-│   ├── mod.rs                             # AuthMethodInfo, KeypairFiles structs; re-exports
-│   ├── password.rs                        # PasswordMethod: Argon2id wrap/unwrap
-│   ├── keypair.rs                         # KeypairMethod: X25519 ECIES wrap/unwrap
-│   └── auto_key.rs                        # AutoKeyMethod: device-bound random key wrap/unwrap (local-only journals)
-├── commands/
-│   ├── mod.rs                         # Re-exports: auth, entries, search, navigation, stats, import, export, plugin, files
-│   ├── auth/
-│   │   ├── mod.rs                     # DiaryState struct; re-exports, auto_lock_diary_if_unlocked
-│   │   ├── auth_core.rs               # create/unlock/lock/reset/change_password
-│   │   ├── auth_directory.rs          # change_diary_directory with file move + sync to config
-│   │   ├── auth_identity.rs           # verify_password, list_auth_methods, peek_auth_slot_types + JournalPeek/AuthSlotPeek
-│   │   ├── auth_journals.rs           # list/add/remove/rename/switch journals, auto-lock guards
-│   │   ├── auth_policy.rs             # set_require_all_auth (db_settings flag + MAC)
-│   │   └── auth_slots.rs              # generate_keypair, write_key_file, register_password/keypair, remove_auth_method
-│   ├── entries.rs                     # CRUD + delete-if-empty + delete (unconditional)
-│   ├── search.rs                      # Search stub — returns empty results
-│   ├── navigation.rs                  # Day/month navigation
-│   ├── stats.rs                       # Aggregated statistics
-│   ├── import.rs                      # Shared import helpers (read_import_file, import_entries, ImportResult) — used by the plugin runner
-│   ├── export.rs                      # JSON + Markdown export commands
-│   ├── plugin.rs                      # Plugin list/run commands
-│   ├── debug.rs                       # Privacy-safe diagnostic dump
-│   └── files.rs                       # Image file reading (jpg/jpeg/png/gif/webp/bmp only)
-├── crypto/
-│   ├── mod.rs                         # Re-exports
-│   ├── password.rs                    # Argon2id hashing + verification
-│   └── cipher.rs                      # AES-256-GCM encrypt/decrypt
-├── db/
-│   ├── mod.rs                         # Re-exports
-│   ├── schema/
-│   │   ├── mod.rs                     # DatabaseConnection, SCHEMA_VERSION
-│   │   ├── create.rs                  # DB creation + schema DDL
-│   │   ├── open.rs                    # Password/keypair/auto open paths
-│   │   ├── legacy.rs                  # Legacy metadata/hash helpers
-│   │   └── migrations/                # v1_to_v2 … v6_to_v7 + apply_pending
-│   └── queries/
-│       ├── mod.rs                     # encrypt_for_storage, decrypt_utf8
-│       ├── entries.rs                 # ENTRY_SELECT, row_to_entry, CRUD
-│       ├── tags.rs                    # Tag CRUD + entry_tags associations
-│       ├── auth_slots.rs              # Auth slot CRUD + list
-│       └── db_settings.rs             # get/set/delete_db_setting, require_all_auth MAC
-├── export/
-│   ├── mod.rs                         # Re-exports
-│   ├── json.rs                        # Mini Diary-compatible JSON export
-│   └── markdown.rs                    # HTML-to-Markdown conversion + export
-├── plugin/
-│   ├── mod.rs                         # ImportPlugin/ExportPlugin traits, PluginInfo struct
-│   ├── builtins.rs                    # 6 unit structs wrapping built-in parsers/exporters
-│   ├── registry.rs                    # PluginRegistry: register/find/list
-│   └── rhai_loader.rs                 # Rhai engine, script discovery, sandbox, wrappers
-└── import/
-    ├── mod.rs                         # Re-exports + DiaryEntry conversion
-    ├── minidiary.rs                   # Mini Diary JSON parser
-    ├── dayone.rs                      # Day One JSON parser
-    ├── dayone_txt.rs                  # Day One TXT parser
-    └── jrnl.rs                        # jrnl JSON parser
-```
+| Path | Purpose |
+|------|---------|
+| `commands/` | One module per command group — all registered via `generate_handler![]` in `lib.rs`. Groups: `auth/` (multi-file), `entries`, `search`, `navigation`, `stats`, `import`, `export`, `plugin`, `debug`, `files`, `fonts`, `images`, `menu`, `tags` |
+| `db/schema/` | DB connection helpers (`open_connection*`), DDL, and schema migrations `v1_to_v2` … `v9_to_v10` via `apply_pending` |
+| `db/queries/` | Encrypted row helpers — shared format primitives in `mod.rs` (`encrypt_for_storage`, `decrypt_utf8`) |
+| `auth/` | Auth method implementations: password (Argon2id), keypair (X25519 ECIES), auto-key (device-bound) |
+| `crypto/` | AES-256-GCM cipher and Argon2id password hashing |
+| `import/` | Built-in diary format parsers (Mini Diary, Day One, jrnl) |
+| `export/` | JSON and Markdown export writers |
+| `plugin/` | Plugin trait, registry, Rhai script loader and sandbox |
+| `webview_security/` | Platform WebView handlers that block external HTTP(S) at the OS level |
+| `menu.rs` | Native menu builder and `menu-*` event emitter |
+| `screen_lock.rs` | OS session-lock listener → auto-lock trigger |
 
 ## Conventions
 
@@ -117,7 +60,7 @@ Emit events in `menu.rs`; the frontend listens in `shortcuts.ts` or overlay comp
 app.emit("menu-navigate-previous-day", ())
 ```
 
-All menu event names are prefixed `menu-`. See `menu.rs:78-107` for the full list. See root CLAUDE.md for the full cross-layer pattern.
+All menu event names are prefixed `menu-`. See `menu.rs` for the full list. See root CLAUDE.md for the full cross-layer pattern.
 
 ### Import Parser Pattern (Built-in)
 
@@ -133,10 +76,10 @@ For **user-scriptable** formats, users drop a `.rhai` file in `{app_data_dir}/pl
 ## Verification Commands
 
 ```bash
-cd src-tauri && cargo test                  # All backend tests
-cd src-tauri && cargo test <module>         # Specific module (e.g., cargo test navigation)
-cd src-tauri && cargo bench                       # All Rust benchmarks (criterion)
-cd src-tauri && cargo bench --bench cipher_bench  # Specific benchmark
+cargo test --manifest-path src-tauri/Cargo.toml                         # All backend tests
+cargo test --manifest-path src-tauri/Cargo.toml <module>                # Specific module
+cargo bench --manifest-path src-tauri/Cargo.toml                        # All Rust benchmarks (criterion)
+cargo bench --manifest-path src-tauri/Cargo.toml --bench cipher_bench   # Specific benchmark
 ```
 
 ## Security Rules
@@ -171,15 +114,15 @@ The following layers prevent the embedded WebView from making outbound network r
 
 3. **Command registration is two places**: New commands must be added to both `commands/mod.rs` (module declaration) and `generate_handler![]` in `lib.rs`. Missing either causes silent failures or compile errors.
 
-3. **Import behavior (no merge)**: Parsers in `import/*.rs` return `Vec<DiaryEntry>`. Imports always create new entries; there is no date-conflict merging. Re-importing the same file creates duplicate entries. The old merge path has been removed from the current codebase.
+4. **Import behavior (no merge)**: Parsers in `import/*.rs` return `Vec<DiaryEntry>`. Imports always create new entries; there is no date-conflict merging. Re-importing the same file creates duplicate entries. The old merge path has been removed from the current codebase.
 
-4. **Auth slots (v3 schema):** Each auth method stores its own wrapped copy of the master key in `auth_slots`. `remove_auth_method` refuses to delete the last slot (minimum one required). `change_password` re-wraps the master key in O(1) — no entry re-encryption needed. `verify_password` exists as a side-effect-free check used before multi-step operations. The `require_all_auth` flag (v6 schema) lives in the `db_settings` table inside `diary.db`, integrity-protected by an HKDF-SHA256 MAC derived from the master key — tampering with the row enforces the guard via a fail-safe. See [`docs/decisions/2026-05-settings-storage-taxonomy.md`](../docs/decisions/2026-05-settings-storage-taxonomy.md) for the full settings storage taxonomy and when to use `db_settings` vs. `config.json`.
+5. **Auth slots (v3 schema):** Each auth method stores its own wrapped copy of the master key in `auth_slots`. `remove_auth_method` refuses to delete the last slot (minimum one required). `change_password` re-wraps the master key in O(1) — no entry re-encryption needed. `verify_password` exists as a side-effect-free check used before multi-step operations. The `require_all_auth` flag (v6 schema) lives in the `db_settings` table inside `diary.db`, integrity-protected by an HKDF-SHA256 MAC derived from the master key — tampering with the row enforces the guard via a fail-safe. See [`docs/decisions/2026-05-settings-storage-taxonomy.md`](../docs/decisions/2026-05-settings-storage-taxonomy.md) for the full settings storage taxonomy and when to use `db_settings` vs. `config.json`.
 
-5. **Plugin registry is initialized once at startup** in `lib.rs` `.setup()`. It reads `{app_data_dir}/plugins/` for `.rhai` scripts (central location, shared across all journals). The registry is stored as `State<Mutex<PluginRegistry>>`.
+6. **Plugin registry is initialized once at startup** in `lib.rs` `.setup()`. It reads `{app_data_dir}/plugins/` for `.rhai` scripts (central location, shared across all journals). The registry is stored as `State<Mutex<PluginRegistry>>`.
 
-6. **Rhai's `export` keyword is reserved**: Export plugin scripts must use `fn format_entries(entries)` instead of `fn export(entries)`. The `RhaiExportPlugin` wrapper calls `"format_entries"` internally.
+7. **Rhai's `export` keyword is reserved**: Export plugin scripts must use `fn format_entries(entries)` instead of `fn export(entries)`. The `RhaiExportPlugin` wrapper calls `"format_entries"` internally.
 
-7. **Rhai AST requires `unsafe impl Send + Sync`**: The `rhai::AST` type does not implement `Send + Sync` in the current version. The `unsafe` impls on `RhaiImportPlugin` and `RhaiExportPlugin` are required and justified: AST is immutable after compilation, and Engine is created fresh per invocation.
+8. **Rhai AST requires `unsafe impl Send + Sync`**: The `rhai::AST` type does not implement `Send + Sync` in the current version. The `unsafe` impls on `RhaiImportPlugin` and `RhaiExportPlugin` are required and justified: AST is immutable after compilation, and Engine is created fresh per invocation.
 
 ## Common Task Checklists
 
