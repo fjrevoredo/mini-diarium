@@ -296,7 +296,10 @@ fn replace_data_src(tag: &str, image_id: i64) -> String {
             // find closing quote
             if let Some(end) = after_prefix.find(quote) {
                 let after_src = &after_prefix[end + 1..];
-                return format!("{}src={}image-id://{}{}{}", before, quote, image_id, quote, after_src);
+                return format!(
+                    "{}src={}image-id://{}{}{}",
+                    before, quote, image_id, quote, after_src
+                );
             }
         }
     }
@@ -365,7 +368,10 @@ mod tests {
     // On Linux the tempfile is unlinked when dropped, which makes SQLite return
     // SQLITE_READONLY_DBMOVED on subsequent writes. Bind the returned value to `_tmp`
     // in each test so the file persists for the test's lifetime.
-    fn make_db() -> (tempfile::NamedTempFile, crate::db::schema::DatabaseConnection) {
+    fn make_db() -> (
+        tempfile::NamedTempFile,
+        crate::db::schema::DatabaseConnection,
+    ) {
         let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
         let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
         (tmp, db)
@@ -382,7 +388,6 @@ mod tests {
             .unwrap();
         db.conn().last_insert_rowid()
     }
-
 
     #[test]
     fn test_upsert_image_returns_same_id_for_same_bytes() {
@@ -442,7 +447,9 @@ mod tests {
         let images = get_images_for_entry(&db, entry_id).unwrap();
         assert_eq!(images.len(), 1);
         assert_eq!(images[0].mime_type, "image/jpeg");
-        let decoded = general_purpose::STANDARD.decode(&images[0].data_base64).unwrap();
+        let decoded = general_purpose::STANDARD
+            .decode(&images[0].data_base64)
+            .unwrap();
         assert_eq!(decoded, plaintext);
     }
 
@@ -580,7 +587,10 @@ mod tests {
                 |r| r.get(0),
             )
             .unwrap();
-        assert_eq!(count, 0, "no entry_images row must be created for plain-text ref");
+        assert_eq!(
+            count, 0,
+            "no entry_images row must be created for plain-text ref"
+        );
     }
 
     #[test]
@@ -590,9 +600,15 @@ mod tests {
         let html = r#"<img src="image-id://99999" alt="">"#;
         let (rewritten, ids) = extract_and_replace_image_refs(html, &db).unwrap();
 
-        assert!(ids.is_empty(), "nonexistent image ID must be dropped from the id list");
+        assert!(
+            ids.is_empty(),
+            "nonexistent image ID must be dropped from the id list"
+        );
         // The tag must be preserved as-is (not corrupted).
-        assert!(rewritten.contains("image-id://99999"), "tag must pass through unchanged");
+        assert!(
+            rewritten.contains("image-id://99999"),
+            "tag must pass through unchanged"
+        );
     }
 
     // --- Fix 3: export resolution tests ---

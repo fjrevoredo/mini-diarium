@@ -145,11 +145,11 @@ pub(crate) mod test_helpers {
     use std::fs;
 
     pub fn temp_db_path(name: &str) -> PathBuf {
-        PathBuf::from(format!("test_auth_cmd_{}.db", name))
+        std::env::temp_dir().join(format!("mini_diarium_test_{}.db", name))
     }
 
     pub fn temp_backups_dir(name: &str) -> PathBuf {
-        PathBuf::from(format!("test_auth_cmd_backups_{}", name))
+        std::env::temp_dir().join(format!("mini_diarium_test_backups_{}", name))
     }
 
     pub fn cleanup(db_path: &PathBuf, backups_dir: &PathBuf) {

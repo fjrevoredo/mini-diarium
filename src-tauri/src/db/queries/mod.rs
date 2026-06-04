@@ -29,6 +29,5 @@ fn decrypt_utf8(key: &cipher::Key, ciphertext: &[u8], label: &str) -> Result<Str
 }
 
 fn decrypt_bytes(key: &cipher::Key, ciphertext: &[u8], label: &str) -> Result<Vec<u8>, String> {
-    cipher::decrypt(key, ciphertext)
-        .map_err(|e| format!("Failed to decrypt {}: {}", label, e))
+    cipher::decrypt(key, ciphertext).map_err(|e| format!("Failed to decrypt {}: {}", label, e))
 }

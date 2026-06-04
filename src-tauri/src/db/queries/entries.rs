@@ -236,8 +236,8 @@ pub fn update_entry_with_images(
 
         let now = chrono::Utc::now().to_rfc3339();
         let word_count = count_words(&rewritten);
-        let mut entry = get_entry_by_id(db, id)?
-            .ok_or_else(|| format!("No entry found with id: {}", id))?;
+        let mut entry =
+            get_entry_by_id(db, id)?.ok_or_else(|| format!("No entry found with id: {}", id))?;
         entry.title = title.to_string();
         entry.text = rewritten;
         entry.word_count = word_count;
@@ -903,7 +903,10 @@ mod tests {
         };
         insert_entry(&db, &entry).unwrap();
         let retrieved = get_entries_by_date(&db, "2024-08-01").unwrap();
-        assert_eq!(retrieved[0].metadata, None, "whitespace-only family must collapse to None");
+        assert_eq!(
+            retrieved[0].metadata, None,
+            "whitespace-only family must collapse to None"
+        );
     }
 
     #[test]
@@ -1070,7 +1073,10 @@ mod tests {
         "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI6QAAAABJRU5ErkJggg==";
 
     fn tiny_png_html() -> String {
-        format!(r#"<p>Hi</p><img src="data:image/png;base64,{}" alt="">"#, TINY_PNG_B64)
+        format!(
+            r#"<p>Hi</p><img src="data:image/png;base64,{}" alt="">"#,
+            TINY_PNG_B64
+        )
     }
 
     #[test]
@@ -1134,7 +1140,10 @@ mod tests {
             .conn()
             .query_row("SELECT COUNT(*) FROM images", [], |r| r.get(0))
             .unwrap();
-        assert_eq!(img_count, 0, "no images should be stored for text-only entries");
+        assert_eq!(
+            img_count, 0,
+            "no images should be stored for text-only entries"
+        );
     }
 
     #[test]
@@ -1154,7 +1163,10 @@ mod tests {
             .conn()
             .query_row("SELECT COUNT(*) FROM images", [], |r| r.get(0))
             .unwrap();
-        assert_eq!(img_count, 1, "re-saving same image must not create a second row");
+        assert_eq!(
+            img_count, 1,
+            "re-saving same image must not create a second row"
+        );
     }
 
     #[test]
@@ -1261,7 +1273,10 @@ mod tests {
             .conn()
             .query_row("SELECT COUNT(*) FROM images", [], |r| r.get(0))
             .unwrap();
-        assert_eq!(img_count, 1, "picker reuse must share one physical image row");
+        assert_eq!(
+            img_count, 1,
+            "picker reuse must share one physical image row"
+        );
 
         // Delete entry 1 — image must still exist (entry 2 references it)
         delete_entry_by_id(&db, id1).unwrap();
@@ -1269,6 +1284,9 @@ mod tests {
             .conn()
             .query_row("SELECT COUNT(*) FROM images", [], |r| r.get(0))
             .unwrap();
-        assert_eq!(img_after, 1, "shared image must survive deletion of one entry");
+        assert_eq!(
+            img_after, 1,
+            "shared image must survive deletion of one entry"
+        );
     }
 }
