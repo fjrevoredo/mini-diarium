@@ -13,5 +13,5 @@ pub fn get_entry_images(entry_id: i64, state: State<DiaryState>) -> Result<Vec<I
 /// Returns all decrypted images stored in the journal, newest-first.
 #[tauri::command]
 pub fn list_journal_images(state: State<DiaryState>) -> Result<Vec<ImageData>, String> {
-    with_unlocked_db(&state, |db| crate::db::queries::images::list_all_images(db))
+    with_unlocked_db(&state, crate::db::queries::images::list_all_images)
 }

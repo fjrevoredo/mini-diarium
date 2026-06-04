@@ -13,7 +13,7 @@ TODO entry format:
 - After creating a new TODO, update the `Latest TODO ID` marker to reflect the new highest ID
 - Use the `todo-manager` skill (`.agents/skills/todo-manager/`) for creation, tracking, archival, and validation
 
-**Latest TODO ID: TODO-0046** — next new TODO should be TODO-0047
+**Latest TODO ID: TODO-0048** — next new TODO should be TODO-0049
 
 ---
 
@@ -27,6 +27,10 @@ TODO entry format:
 ---
 
 ## Website Priority
+
+- [ ] **TODO-0048: Verify and document local dev Docker for website** — verify that the local development Docker setup (`website/docker-compose.yml` and related files) still works correctly for building and previewing the website; document the exact steps in `website/CLAUDE.md` (or the most specific agent-facing docs file) so any agent can reliably spin up the local dev environment to verify meaningful website changes; include commands for build, serve, and common troubleshooting if the container fails to start
+
+- [ ] **TODO-0047: Website docs layout and visual audit** — the internal docs pages (`website/docs/`) render with an overly narrow content column that wastes horizontal screen space on desktop viewports; audit the CSS layout (source in `website/css/style.css` and generated output) to increase the max content width or adjust the container so text and code blocks use a reasonable portion of the viewport; simultaneously review every docs page under `website/docs-src/` to determine where screenshots or inline images would improve clarity, and decide which pages actually need visuals versus which are fine as text-only; tracked in GitHub issue #153
 
 - [ ] **TODO-0045: Improve meta descriptions on docs pages** — 11 docs pages flagged by Bing Webmaster Tools (2026-05-31) have meta descriptions that are too short or missing; each page needs a well-crafted meta description of 150–160 characters; edit source files under `website/docs-src/` (never the generated HTML under `website/docs/`) and regenerate with `bun run website:build-static`; affected pages: `/docs/export/`, `/docs/getting-started/`, `/docs/search/`, `/docs/plugins/`, `/docs/writing-entries/`, `/docs/import/`, `/docs/faq/`, `/docs/statistics/`, `/docs/preferences/`, `/docs/backups/`, `/docs/navigating/`
 
