@@ -1,6 +1,16 @@
 {
   "entries": [
     {
+      "id": "v0.5.3-release",
+      "type": "release",
+      "version": "0.5.3",
+      "title": "What's new in 0.5.3",
+      "body": "Thank you for using Mini Diarium. We hope you're enjoying it so far. If you are, please consider starring the project on GitHub or leaving a review on Flathub. It takes just a moment and it genuinely helps more people discover the app. (This release brings image deduplication, a visual media picker, per-entry fonts, and named links. Details in the full notes below.)",
+      "date": "2026-06-04",
+      "linkUrl": "https://github.com/fjrevoredo/mini-diarium/releases/tag/v0.5.3",
+      "linkLabel": "Full release notes"
+    },
+    {
       "id": "v0.5.0-release",
       "type": "release",
       "version": "0.5.0",

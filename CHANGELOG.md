@@ -30,7 +30,7 @@ Template:
 
 # Versions
 
-## [0.5.3] - [Unreleased]
+## [0.5.3] - 05-06-2026
 
 ### Added
 - **Image deduplication**: images are now stored once in a content-addressed encrypted store inside `diary.db` and referenced by ID. Inserting the same image into multiple entries shares one encrypted copy. All export paths (JSON, Markdown, Rhai plugins) resolve image references back to data URLs before exporting, preserving full compatibility. Legacy entries that still embed data URLs continue to display and export correctly; existing saved entries migrate on their next save, and Mini Diarium JSON imports now normalize embedded `data:image/...` content into the encrypted image store during import.
