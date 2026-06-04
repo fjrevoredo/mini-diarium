@@ -2,7 +2,7 @@
 
 ## Metadata
 
-- Plan Status: READY FOR APPROVAL
+- Plan Status: COMPLETED
 - Created: 2026-06-04
 - Last Updated: 2026-06-04
 - Owner: Coding agent
@@ -55,7 +55,7 @@ None.
 
 ### Task 1: Update meta descriptions for all 11 docs pages
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Objective: All 11 `website/docs-src/*.md` files have a `description:` front matter value that is 150–160 characters, specific about page content, and suitable as a Bing/Google search snippet.
 - Steps:
   1. Edit each source file listed below: replace the `description:` value with the exact text in the table, and update the `updated:` field to `2026-06-04`. No other front matter or content should change.
@@ -93,7 +93,7 @@ None.
 
 ### Task 2: Widen the docs content column
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Objective: Docs pages display a noticeably wider content column on desktop viewports (≥1400px), giving text and code blocks approximately 800px of width instead of the current ~500px.
 - Steps:
   1. Open `scripts/generate-website-docs.mjs`. Locate the template literal that contains the inline `<style>` block (around line 315). The block starts with `.docs-layout {`.
@@ -121,7 +121,7 @@ None.
 
 ### Task 3: Docs page visual content audit
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Objective: `website/CLAUDE.md` contains a new `## Docs Page Visual Content Audit` section with an 11-row decision table recording which pages need screenshots and which are fine as text-only.
 - Steps:
   1. Read all 11 `website/docs-src/*.md` files in full.
@@ -168,7 +168,7 @@ None.
 
 ### Task 4: Verify and document local Docker dev setup
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Objective: The local Docker dev workflow is verified to produce HTTP 200, and the commands and troubleshooting steps are documented in `website/CLAUDE.md` under a `## Local Docker Dev` section.
 - Steps:
   1. Verify Docker is available: run `docker --version` in PowerShell. If the command fails, mark this task BLOCKED with reason "Docker not available in execution environment" and skip to Task 5.
@@ -265,7 +265,7 @@ None.
 
 ### Task 5: Cleanup and mark TODOs done
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Objective: TODO-0045, TODO-0047, and TODO-0048 are marked complete; a changelog entry is added; no intermediate artifacts remain.
 - Steps:
   1. In `docs/todo/TODO.md`, change `[ ]` to `[x]` for each of the three TODOs:

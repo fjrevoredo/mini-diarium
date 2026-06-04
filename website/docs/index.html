@@ -37,6 +37,7 @@
   <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
   <link rel="stylesheet" href="/css/style.b7a59d6a.css" />
   <style>
+    .container { max-width: 1400px; }
     .docs-layout {
       display: grid;
       grid-template-columns: 240px 1fr 200px;
@@ -237,7 +238,7 @@
       "name": "Mini Diarium Documentation",
       "description": "User guide and documentation for Mini Diarium — encrypted local-first desktop journal.",
       "inLanguage": "en-US",
-      "dateModified": "2026-06-01",
+      "dateModified": "2026-06-04",
       "isPartOf": {
         "@id": "https://mini-diarium.com/#website"
       },
@@ -310,17 +311,17 @@
         <a class="docs-card" href="/docs/getting-started/">
           <span class="docs-card-icon">📖</span>
           <h2>Getting Started</h2>
-          <p>Create your first journal, set a password, and start writing. Covers multiple journals, key file unlock, local-only mode, and the welcome tour.</p>
+          <p>Create your first encrypted journal, set a password, and start writing. Covers the welcome tour, multiple journals, key file auth, and local-only mode.</p>
         </a>
         <a class="docs-card" href="/docs/writing-entries/">
           <span class="docs-card-icon">📖</span>
           <h2>Writing Entries</h2>
-          <p>Mini Diarium&#39;s rich text editor supports formatting, named links, images, tags, multiple entries per day, RTL languages, and auto-save. No manual saving needed.</p>
+          <p>Mini Diarium&#39;s rich text editor supports formatting, images, named links, tags, and multiple entries per day. Auto-save and RTL language support are built in.</p>
         </a>
         <a class="docs-card" href="/docs/navigating/">
           <span class="docs-card-icon">📖</span>
           <h2>Navigating Your Journal</h2>
-          <p>How to move between dates and entries using the calendar, keyboard shortcuts, and nav buttons.</p>
+          <p>Navigate your journal using the sidebar calendar, keyboard shortcuts, and day-navigation buttons. Jump to any date, go to today, and browse your entry history.</p>
         </a>
       </div>
     </div>
@@ -340,12 +341,12 @@
         <a class="docs-card" href="/docs/import/">
           <span class="docs-card-icon">📁</span>
           <h2>Importing Data</h2>
-          <p>How to import entries from Mini Diary, Day One, jrnl, and other formats.</p>
+          <p>Import journal entries from Mini Diary, Day One, jrnl, or plain text files. Mini Diarium includes built-in importers and supports custom Rhai import plugins.</p>
         </a>
         <a class="docs-card" href="/docs/export/">
           <span class="docs-card-icon">📁</span>
           <h2>Exporting Data</h2>
-          <p>Export your journal as JSON or Markdown from the Export menu. JSON preserves entry IDs and tags; Markdown is human-readable. Exported files are not encrypted.</p>
+          <p>Export your journal as JSON or Markdown. JSON preserves entry IDs, tags, and font metadata; Markdown is human-readable. Exported files are not encrypted.</p>
         </a>
         <a class="docs-card" href="/docs/plugins/">
           <span class="docs-card-icon">📁</span>
@@ -360,17 +361,17 @@
         <a class="docs-card" href="/docs/preferences/">
           <span class="docs-card-icon">⚙️</span>
           <h2>Preferences</h2>
-          <p>How to configure Mini Diarium: themes, auto-lock, editor settings, and more.</p>
+          <p>Configure Mini Diarium from the Preferences panel: choose a theme, set auto-lock timeout, adjust editor font and size, manage authentication methods, and more.</p>
         </a>
         <a class="docs-card" href="/docs/statistics/">
           <span class="docs-card-icon">⚙️</span>
           <h2>Statistics</h2>
-          <p>How to view your writing statistics including entry counts, word counts, and streaks.</p>
+          <p>View your writing statistics: total entry and word counts, current and longest streaks, and a breakdown of your most active writing days, months, and years.</p>
         </a>
         <a class="docs-card" href="/docs/backups/">
           <span class="docs-card-icon">⚙️</span>
           <h2>Backups</h2>
-          <p>Mini Diarium backs up your encrypted journal automatically on every unlock. Keeps the 30 most recent copies in a backups folder next to your diary.db.</p>
+          <p>Mini Diarium automatically backs up your encrypted journal on every unlock and keeps the 30 most recent copies in a backups folder next to your diary.db.</p>
         </a>
       </div>
     </div>

@@ -3,7 +3,7 @@ title: Plugins
 slug: plugins
 description: Extend Mini Diarium with Rhai script plugins for custom import and export formats. Covers the plugins folder, writing your first plugin, and API helpers.
 order: 7
-updated: 2026-05-29
+updated: 2026-06-04
 tags: plugins, Rhai, import, export, customization
 ---
 

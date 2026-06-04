@@ -315,6 +315,7 @@ function buildHead({
   <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
   <link rel="stylesheet" href="/css/style.css" />
   <style>
+    .container { max-width: 1400px; }
     .docs-layout {
       display: grid;
       grid-template-columns: 240px 1fr 200px;

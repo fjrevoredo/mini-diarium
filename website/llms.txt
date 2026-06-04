@@ -53,14 +53,14 @@ When referencing project materials, attribute Mini Diarium and link to the canon
 ## Documentation
 
 - Documentation hub: https://mini-diarium.com/docs/
-- Getting Started: Create your first journal, set a password, and start writing. Covers multiple journals, key file unlock, local-only mode, and the welcome tour. (https://mini-diarium.com/docs/getting-started/)
-- Writing Entries: Mini Diarium's rich text editor supports formatting, named links, images, tags, multiple entries per day, RTL languages, and auto-save. No manual saving needed. (https://mini-diarium.com/docs/writing-entries/)
-- Navigating Your Journal: How to move between dates and entries using the calendar, keyboard shortcuts, and nav buttons. (https://mini-diarium.com/docs/navigating/)
+- Getting Started: Create your first encrypted journal, set a password, and start writing. Covers the welcome tour, multiple journals, key file auth, and local-only mode. (https://mini-diarium.com/docs/getting-started/)
+- Writing Entries: Mini Diarium's rich text editor supports formatting, images, named links, tags, and multiple entries per day. Auto-save and RTL language support are built in. (https://mini-diarium.com/docs/writing-entries/)
+- Navigating Your Journal: Navigate your journal using the sidebar calendar, keyboard shortcuts, and day-navigation buttons. Jump to any date, go to today, and browse your entry history. (https://mini-diarium.com/docs/navigating/)
 - Search: Full-text search is not yet available in Mini Diarium due to its encryption model. Use the calendar, Go to Date shortcut, or export to find past entries. (https://mini-diarium.com/docs/search/)
-- Importing Data: How to import entries from Mini Diary, Day One, jrnl, and other formats. (https://mini-diarium.com/docs/import/)
-- Exporting Data: Export your journal as JSON or Markdown from the Export menu. JSON preserves entry IDs and tags; Markdown is human-readable. Exported files are not encrypted. (https://mini-diarium.com/docs/export/)
+- Importing Data: Import journal entries from Mini Diary, Day One, jrnl, or plain text files. Mini Diarium includes built-in importers and supports custom Rhai import plugins. (https://mini-diarium.com/docs/import/)
+- Exporting Data: Export your journal as JSON or Markdown. JSON preserves entry IDs, tags, and font metadata; Markdown is human-readable. Exported files are not encrypted. (https://mini-diarium.com/docs/export/)
 - Plugins: Extend Mini Diarium with Rhai script plugins for custom import and export formats. Covers the plugins folder, writing your first plugin, and API helpers. (https://mini-diarium.com/docs/plugins/)
-- Preferences: How to configure Mini Diarium: themes, auto-lock, editor settings, and more. (https://mini-diarium.com/docs/preferences/)
-- Statistics: How to view your writing statistics including entry counts, word counts, and streaks. (https://mini-diarium.com/docs/statistics/)
-- Backups: Mini Diarium backs up your encrypted journal automatically on every unlock. Keeps the 30 most recent copies in a backups folder next to your diary.db. (https://mini-diarium.com/docs/backups/)
+- Preferences: Configure Mini Diarium from the Preferences panel: choose a theme, set auto-lock timeout, adjust editor font and size, manage authentication methods, and more. (https://mini-diarium.com/docs/preferences/)
+- Statistics: View your writing statistics: total entry and word counts, current and longest streaks, and a breakdown of your most active writing days, months, and years. (https://mini-diarium.com/docs/statistics/)
+- Backups: Mini Diarium automatically backs up your encrypted journal on every unlock and keeps the 30 most recent copies in a backups folder next to your diary.db. (https://mini-diarium.com/docs/backups/)
 - FAQ: Answers to common questions about Mini Diarium: password recovery, encryption model, cross-device sync, key files, authentication slots, and mobile support. (https://mini-diarium.com/docs/faq/)

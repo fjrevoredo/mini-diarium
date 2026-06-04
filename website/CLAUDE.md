@@ -333,3 +333,51 @@ website/
     ├── faq-schema-investigation.md  # Rich Results Test outcomes
     └── production-config-notes.md   # Coolify redirect requirements
 ```
+
+---
+
+## Local Docker Dev
+
+Use the Docker Compose setup in `website/` to build and preview the site locally before committing or deploying.
+
+### Prerequisites
+
+Docker Desktop must be installed and its daemon must be running.
+
+### Commands (run from `website/` directory)
+
+```bash
+# Build the Docker image
+docker compose build
+
+# Start the container (serves at http://localhost:80)
+docker compose up -d
+
+# Stop the container
+docker compose down
+```
+
+### Verifying the site
+
+The nginx config uses `server_name mini-diarium.com`. Browsers and curl reject requests to `localhost` unless you either:
+
+- Pass the `Host` header explicitly:
+  ```bash
+  curl -H "Host: mini-diarium.com" http://localhost:80/
+  ```
+  On Windows PowerShell:
+  ```powershell
+  Invoke-WebRequest -Uri "http://localhost:80/" -Headers @{"Host"="mini-diarium.com"} -UseBasicParsing
+  ```
+- Or add `127.0.0.1 mini-diarium.com` to your hosts file (`C:\Windows\System32\drivers\etc\hosts` on Windows, `/etc/hosts` on Linux/macOS) for full browser testing.
+
+### Troubleshooting
+
+| Symptom | Fix |
+|---------|-----|
+| Port 80 already in use | Change `"80:80"` to `"8080:80"` in `docker-compose.yml` (local testing only; revert before committing) |
+| Stale cached layers | `docker compose build --no-cache` |
+| Container starts but returns 404 | Check that `bun run website:build-static` ran and `website/docs/` and `website/blog/` are populated |
+| `www.mini-diarium.com` redirects | The nginx config redirects `www.*` to the non-www host — expected behavior |
+
+> **Note:** This compose file is for local preview only. Production runs through Coolify with separate TLS, redirect, and caching configuration. Changes to `nginx.conf` here do not affect production.

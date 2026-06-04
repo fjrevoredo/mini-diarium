@@ -1,9 +1,9 @@
 ---
 title: Getting Started
 slug: getting-started
-description: Create your first journal, set a password, and start writing. Covers multiple journals, key file unlock, local-only mode, and the welcome tour.
+description: Create your first encrypted journal, set a password, and start writing. Covers the welcome tour, multiple journals, key file auth, and local-only mode.
 order: 1
-updated: 2026-05-29
+updated: 2026-06-04
 tags: setup, password, first launch
 ---
 

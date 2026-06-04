@@ -1,9 +1,9 @@
 ---
 title: Preferences
 slug: preferences
-description: How to configure Mini Diarium: themes, auto-lock, editor settings, and more.
+description: Configure Mini Diarium from the Preferences panel: choose a theme, set auto-lock timeout, adjust editor font and size, manage authentication methods, and more.
 order: 8
-updated: 2026-05-28
+updated: 2026-06-04
 tags: preferences, settings, theme, auto-lock, configuration
 ---
 

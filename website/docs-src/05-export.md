@@ -1,9 +1,9 @@
 ---
 title: Exporting Data
 slug: export
-description: Export your journal as JSON or Markdown from the Export menu. JSON preserves entry IDs and tags; Markdown is human-readable. Exported files are not encrypted.
+description: Export your journal as JSON or Markdown. JSON preserves entry IDs, tags, and font metadata; Markdown is human-readable. Exported files are not encrypted.
 order: 6
-updated: 2026-05-29
+updated: 2026-06-04
 tags: export, backup, JSON, Markdown, portability, tags
 ---
 

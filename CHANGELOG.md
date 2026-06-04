@@ -42,6 +42,10 @@ Template:
 ### Internal
 - Schema v10: added `images` and `entry_images` tables for content-addressed encrypted image storage.
 - Enabled `PRAGMA foreign_keys = ON` on all database connections (fixes silently-inert `ON DELETE CASCADE` on `entry_tags` and `entry_images`).
+- **Website docs**: Improved meta descriptions on all 11 docs pages to 150–160 characters to resolve Bing Webmaster Tools flags (TODO-0045)
+- **Website docs**: Widened docs content column from ~500px to ~800px on desktop viewports by increasing the docs-page container max-width to 1400px (TODO-0047)
+- **Website**: Documented local Docker dev workflow in `website/CLAUDE.md` with build, serve, troubleshooting steps, and Host header note (TODO-0048)
+- **Website**: Added visual content audit decision table to `website/CLAUDE.md` recording which docs pages need screenshots (TODO-0047)
 
 - **Three-level font system**: control entry fonts at three levels simultaneously: app-wide defaults (Preferences → Writing → Editor font), per-entry defaults (new "Set as entry default" / "Clear entry default" toolbar buttons next to the font dropdown), and inline formatting applied to selected text via the toolbar font dropdowns. Entries with font metadata export to JSON with a `"metadata": {"fontFamily": "...", "fontSize": 18.0}` object. The JSON importer handles both old (Mini Diary date-keyed) and new (array format with optional metadata) export formats for backward compatibility. Schema v9: new nullable `entry_metadata_encrypted BLOB` column stores encrypted entry metadata (font family/size) per entry.
 - **Named links in the editor**: insert a hyperlink with custom display text via the toolbar Insert Link button (or `Ctrl/Cmd+K`). The visible label and the URL are independent: with no selection, the URL becomes the label; with a selection, the selected text becomes the label. `Ctrl/Cmd`-click opens a link in the system browser. Links round-trip through Markdown export as `[label](url)`, through JSON export as raw HTML, and are preserved by user Rhai export plugins via the `html_to_markdown` host function.

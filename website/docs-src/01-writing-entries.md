@@ -1,9 +1,9 @@
 ---
 title: Writing Entries
 slug: writing-entries
-description: Mini Diarium's rich text editor supports formatting, named links, images, tags, multiple entries per day, RTL languages, and auto-save. No manual saving needed.
+description: Mini Diarium's rich text editor supports formatting, images, named links, tags, and multiple entries per day. Auto-save and RTL language support are built in.
 order: 2
-updated: 2026-06-01
+updated: 2026-06-04
 tags: editor, formatting, entries, writing
 ---
 
