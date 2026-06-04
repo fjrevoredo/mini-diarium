@@ -78,6 +78,7 @@ Every plan must include:
 - Validation command/check for every task.
 - Cleanup phase after implementation.
 - Final verification section.
+- Decision Log section with execution protocol (milestoned plans only, and only when a decision log companion file was requested; omit for simple plans and when no companion file was requested).
 - Approval gate.
 
 Use exactly these task statuses:
@@ -158,6 +159,23 @@ If the plan originated from a TODO item in `docs/todo/TODO.md`, the cleanup phas
 
 If the plan delivers a user-facing feature, bug fix, or behavior change, the cleanup phase must create or update a changelog entry (e.g. append to `CHANGELOG.md` or the project's latest-changelog file) summarizing what changed.
 
+## Decision Log Section Rules
+
+Decision logs apply to **milestoned plans only**. Simple plans (10 or fewer tasks) are by definition small enough that deviations can be noted inline in task notes; a companion file adds overhead without benefit.
+
+Include `## Decision Log` in a milestoned plan only when the user also requests a decision log companion file. When included, the section must contain all four of the following — a bare link to the companion file is not enough:
+
+1. **Link** to the companion file by name.
+2. **Timing rule**: entries must be written **before moving to the next task**, not retrospectively at the end of the plan.
+3. **What qualifies**: a different file path, CSS rule, function signature, or approach than what the plan specified; a validation failure that forces a plan adaptation; a step skipped for a reason not already covered by the task's BLOCKED handling.
+4. **What does not qualify**: execution that matches the plan exactly; trivial wording differences that don't change meaning or outcome.
+
+A Decision Log section that only links to the companion file without this protocol gives an executing agent no guidance on when to write entries, so deviations go unrecorded.
+
+Also add a one-line reminder to the plan's `## Execution Notes` that cross-references the Decision Log section, so the protocol is visible at the point of execution:
+
+> If implementation diverges from the plan, write a new entry in the decision log file **before starting the next task** (see Decision Log section for what qualifies).
+
 ## Self-Check Before Approval
 
 Before asking for final approval, verify:
@@ -175,6 +193,7 @@ Before asking for final approval, verify:
 - Cleanup and final verification are included.
 - The plan avoids vague actions like "improve", "handle errors", or "write tests" without concrete targets.
 - The plan can be executed by a coding agent without reading the original conversation.
+- If this is a milestoned plan and a decision log was requested: the `## Decision Log` section exists, links to the companion file, states entries must be written before the next task (not retrospectively), and lists qualifying deviations and non-qualifying cases. The `## Execution Notes` section contains a cross-reference bullet pointing back to it. (Simple plans never include a Decision Log section.)
 
 Record the self-check result inside the plan before asking for approval. If any item fails, keep the plan out of `READY FOR APPROVAL`.
 
