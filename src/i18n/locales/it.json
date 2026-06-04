@@ -526,8 +526,7 @@
     "insert": "Inserisci",
     "update": "Aggiorna",
     "apply": "Applica",
-    "remove": "Rimuovi collegamento",
-    "open": "Apri collegamento"
+    "remove": "Rimuovi collegamento"
   },
   "goToDate": {
     "title": "Vai a data",

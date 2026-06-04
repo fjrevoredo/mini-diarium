@@ -619,7 +619,6 @@ const en = {
     update: 'Update',
     apply: 'Apply',
     remove: 'Remove link',
-    open: 'Open link',
   },
 
   /** GoToDateOverlay */

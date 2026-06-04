@@ -1,7 +1,6 @@
 import { createEffect, createSignal, Show } from 'solid-js';
 import { Dialog } from '@kobalte/core/dialog';
 import type { Editor } from '@tiptap/core';
-import { openUrl } from '@tauri-apps/plugin-opener';
 import { useI18n } from '../../i18n';
 import { normalizeSafeLink } from '../../lib/safe-links';
 
@@ -159,14 +158,6 @@ export default function LinkOverlay(props: LinkOverlayProps) {
     props.onClose();
   };
 
-  const handleOpenLink = () => {
-    const href = normalizedUrl();
-    if (!href) return;
-    void openUrl(href).catch((err) => {
-      console.error('[mini-diarium] failed to open link in system browser:', err);
-    });
-  };
-
   const handleKeyDown = (e: KeyboardEvent) => {
     if (e.key === 'Escape') {
       props.onClose();
@@ -244,16 +235,6 @@ export default function LinkOverlay(props: LinkOverlayProps) {
                     data-testid="link-remove-button"
                   >
                     {t('link.remove')}
-                  </button>
-                </Show>
-                <Show when={urlIsValid()}>
-                  <button
-                    type="button"
-                    onClick={handleOpenLink}
-                    class="px-4 py-2 text-sm font-medium text-secondary bg-primary border border-primary rounded-md hover:bg-hover focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                    data-testid="link-open-button"
-                  >
-                    {t('link.open')}
                   </button>
                 </Show>
                 <button

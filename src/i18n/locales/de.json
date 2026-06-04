@@ -526,8 +526,7 @@
     "insert": "Einfügen",
     "update": "Aktualisieren",
     "apply": "Anwenden",
-    "remove": "Link entfernen",
-    "open": "Link öffnen"
+    "remove": "Link entfernen"
   },
   "goToDate": {
     "title": "Gehe zu Datum",
