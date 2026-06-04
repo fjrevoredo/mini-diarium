@@ -213,9 +213,7 @@ function buildNav(activePage = "") {
       <li><a href="/#security">Security</a></li>
       <li><a href="/blog/"${blogActive}>Blog</a></li>
       <li><a href="/docs/"${docsActive}>Docs</a></li>
-      <li><a href="/#facts">FAQ</a></li>
       <li><a href="/#platforms">Download</a></li>
-      <li><a href="/#about">About</a></li>
       <li>
         <a class="nav-github" href="https://github.com/fjrevoredo/mini-diarium" target="_blank" rel="noopener noreferrer" aria-label="View on GitHub">
           <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">

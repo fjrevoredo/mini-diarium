@@ -203,7 +203,7 @@ The main navigation lives in four places that must stay in sync:
 - `scripts/generate-website-blog.mjs` → `buildNav()` (uses `/#fragment` links for blog pages)
 - `scripts/generate-website-docs.mjs` → (uses `/#fragment` links for docs pages)
 
-Current nav order: Features → Security → Blog → Compare → How It Works → Docs → FAQ → Download → About
+Current nav order: Features → Security → Blog → Docs → Download
 
 ### Generator Map Synchronization
 
