@@ -35,18 +35,13 @@ pub struct ImageSummaryPage {
     pub has_more: bool,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[derive(Default, Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum ImageSummarySort {
+    #[default]
     Newest,
     Oldest,
     MostUsed,
-}
-
-impl Default for ImageSummarySort {
-    fn default() -> Self {
-        Self::Newest
-    }
 }
 
 const MAX_STORED_IMAGE_BYTES: usize = 20 * 1024 * 1024;

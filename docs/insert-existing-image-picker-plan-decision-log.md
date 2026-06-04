@@ -56,3 +56,21 @@ Why:
 Implementation consequence:
 - Manual verification notes should describe the seeded sandbox workflow and list the real-app scenarios that were exercised directly.
 - Error-state confidence continues to come from the automated coverage added in `db::queries::images` tests and `ImagePickerOverlay` tests.
+
+## D-04: Narrow picker layout uses mutually exclusive library and preview panels
+
+Date: 2026-06-04
+
+Plan step affected: Task 2.2 (`use a wider responsive dialog with a toolbar row, thumbnail grid, and preview/details pane`)
+
+Decision: On narrow viewports, do not keep the library grid and preview pane stacked in one vertical flow. Render a mobile-specific overlay mode with two tabs, `Library` and `Preview`, and show only one panel at a time below the shared controls.
+
+Why:
+- The original responsive interpretation of Task 2.2 kept both panels visible by collapsing the desktop side-by-side layout into a vertical stack.
+- In the real Tauri WebView at narrow widths, that layout became cramped and visually unstable because the grid, preview metadata, and footer all competed for the same vertical space.
+- The mobile-tab approach keeps the dialog usable on small windows without changing the desktop interaction model.
+
+Implementation consequence:
+- Desktop (`>= lg`) still renders the grid and preview together.
+- Narrow viewports render the shared sort/month controls plus a `Library` / `Preview` tab switcher.
+- Only one panel is mounted at a time in the mobile layout, which also avoids duplicate DOM content in component tests.

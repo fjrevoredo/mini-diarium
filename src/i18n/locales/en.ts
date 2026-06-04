@@ -239,6 +239,7 @@ const en = {
       title: 'Saved Images',
       description: 'Choose a saved image to insert.',
       sortLabel: 'Sort',
+      libraryTab: 'Library',
       sortNewest: 'Newest',
       sortOldest: 'Oldest',
       sortMostUsed: 'Most used',

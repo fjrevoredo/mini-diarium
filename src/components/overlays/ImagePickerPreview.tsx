@@ -24,14 +24,14 @@ export default function ImagePickerPreview(props: ImagePickerPreviewProps) {
       <Show
         when={props.image}
         fallback={
-          <div class="flex h-[20rem] items-center justify-center text-sm text-secondary">
+          <div class="flex h-40 items-center justify-center text-sm text-secondary sm:h-[20rem]">
             {props.t('editor.imagePicker.previewEmpty')}
           </div>
         }
       >
         {(image) => (
           <div class="flex flex-col gap-3">
-            <div class="aspect-square overflow-hidden rounded-md bg-secondary flex items-center justify-center">
+            <div class="aspect-[4/3] overflow-hidden rounded-md bg-secondary flex items-center justify-center sm:aspect-square">
               <Show
                 when={thumbnailSrc(image())}
                 fallback={

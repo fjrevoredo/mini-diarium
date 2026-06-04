@@ -1,6 +1,6 @@
 import { Dialog } from '@kobalte/core/dialog';
 import { Check, LoaderCircle, X } from 'lucide-solid';
-import { createEffect, createMemo, createSignal, on, onMount, Show } from 'solid-js';
+import { createEffect, createMemo, createSignal, on, onCleanup, onMount, Show } from 'solid-js';
 import {
   getImageData,
   listJournalImageSummaries,
@@ -21,7 +21,11 @@ const PAGE_SIZE = 24;
 export default function ImagePickerOverlay(props: ImagePickerOverlayProps) {
   const t = useI18n();
   const [items, setItems] = createSignal<ImageSummary[]>([]);
+  const [isDesktopLayout, setIsDesktopLayout] = createSignal(
+    typeof window !== 'undefined' ? window.innerWidth >= 1024 : true,
+  );
   const [selectedId, setSelectedId] = createSignal<number | null>(null);
+  const [mobilePanel, setMobilePanel] = createSignal<'library' | 'preview'>('library');
   const [sort, setSort] = createSignal<ImageSummarySort>('newest');
   const [month, setMonth] = createSignal('');
   const [hasMore, setHasMore] = createSignal(false);
@@ -122,6 +126,11 @@ export default function ImagePickerOverlay(props: ImagePickerOverlayProps) {
   };
 
   onMount(() => {
+    const syncViewport = () => setIsDesktopLayout(window.innerWidth >= 1024);
+    syncViewport();
+    window.addEventListener('resize', syncViewport);
+    onCleanup(() => window.removeEventListener('resize', syncViewport));
+
     void loadPage(true);
   });
 
@@ -135,6 +144,29 @@ export default function ImagePickerOverlay(props: ImagePickerOverlayProps) {
     ),
   );
 
+  const libraryPanel = () => (
+    <section class="min-h-[18rem] min-w-0 rounded-md border border-primary p-3 sm:min-h-[24rem] lg:min-h-0 lg:overflow-y-auto">
+      <ImagePickerGrid
+        hasMore={hasMore()}
+        inserting={inserting()}
+        items={items()}
+        loading={loading()}
+        loadingMore={loadingMore()}
+        onInsert={(imageId) => void handleInsert(imageId)}
+        onLoadMore={() => void loadPage(false)}
+        onSelect={handleSelect}
+        selectedId={selectedId()}
+        t={t}
+      />
+    </section>
+  );
+
+  const previewPanel = () => (
+    <aside class="min-w-0 rounded-md border border-primary p-3 lg:overflow-y-auto">
+      <ImagePickerPreview image={selectedImage()} t={t} />
+    </aside>
+  );
+
   return (
     <Dialog open onOpenChange={handleOpenChange}>
       <Dialog.Portal>
@@ -142,9 +174,9 @@ export default function ImagePickerOverlay(props: ImagePickerOverlayProps) {
           class="fixed inset-0 z-50"
           style={{ 'background-color': 'var(--overlay-bg)' }}
         />
-        <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div class="fixed inset-0 z-50 flex items-stretch justify-center p-0 sm:items-center sm:p-4">
           <Dialog.Content
-            class="w-full max-w-6xl rounded-lg bg-primary p-6 data-[expanded]:animate-in data-[closed]:animate-out data-[closed]:fade-out-0 data-[expanded]:fade-in-0 data-[closed]:zoom-out-95 data-[expanded]:zoom-in-95"
+            class="flex h-full w-full flex-col overflow-hidden bg-primary p-4 data-[expanded]:animate-in data-[closed]:animate-out data-[closed]:fade-out-0 data-[expanded]:fade-in-0 data-[closed]:zoom-out-95 data-[expanded]:zoom-in-95 sm:max-h-[calc(100dvh-2rem)] sm:max-w-6xl sm:rounded-lg sm:p-6"
             style={{ 'box-shadow': 'var(--shadow-lg)' }}
             onKeyDown={handleKeyDown}
           >
@@ -202,28 +234,51 @@ export default function ImagePickerOverlay(props: ImagePickerOverlayProps) {
               </div>
             </Show>
 
-            <div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_18rem]">
-              <section class="min-h-[28rem] rounded-md border border-primary p-3">
-                <ImagePickerGrid
-                  hasMore={hasMore()}
-                  inserting={inserting()}
-                  items={items()}
-                  loading={loading()}
-                  loadingMore={loadingMore()}
-                  onInsert={(imageId) => void handleInsert(imageId)}
-                  onLoadMore={() => void loadPage(false)}
-                  onSelect={handleSelect}
-                  selectedId={selectedId()}
-                  t={t}
-                />
-              </section>
+            <Show
+              when={isDesktopLayout()}
+              fallback={
+                <>
+                  <div class="mb-4 grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      class="rounded-md border px-3 py-2 text-sm font-medium transition-colors"
+                      classList={{
+                        'border-blue-500 bg-secondary text-primary': mobilePanel() === 'library',
+                        'border-primary text-secondary hover:bg-hover': mobilePanel() !== 'library',
+                      }}
+                      onClick={() => setMobilePanel('library')}
+                    >
+                      {t('editor.imagePicker.libraryTab')}
+                    </button>
+                    <button
+                      type="button"
+                      class="rounded-md border px-3 py-2 text-sm font-medium transition-colors disabled:opacity-60"
+                      classList={{
+                        'border-blue-500 bg-secondary text-primary': mobilePanel() === 'preview',
+                        'border-primary text-secondary hover:bg-hover': mobilePanel() !== 'preview',
+                      }}
+                      onClick={() => setMobilePanel('preview')}
+                      disabled={selectedId() === null && items().length === 0}
+                    >
+                      {t('editor.imagePicker.previewTitle')}
+                    </button>
+                  </div>
 
-              <aside class="rounded-md border border-primary p-3">
-                <ImagePickerPreview image={selectedImage()} t={t} />
-              </aside>
-            </div>
+                  <div class="flex min-h-0 flex-1 flex-col overflow-y-auto">
+                    <Show when={mobilePanel() === 'library'} fallback={previewPanel()}>
+                      {libraryPanel()}
+                    </Show>
+                  </div>
+                </>
+              }
+            >
+              <div class="grid min-h-0 flex-1 gap-4 lg:grid-cols-[minmax(0,1fr)_18rem] lg:overflow-hidden">
+                {libraryPanel()}
+                {previewPanel()}
+              </div>
+            </Show>
 
-            <div class="mt-4 flex items-center justify-end gap-3">
+            <div class="mt-4 flex shrink-0 items-center justify-end gap-3 border-t border-primary pt-4">
               <Dialog.CloseButton
                 class="rounded-md border border-primary px-3 py-2 text-sm text-primary hover:bg-hover disabled:opacity-60"
                 disabled={inserting()}
