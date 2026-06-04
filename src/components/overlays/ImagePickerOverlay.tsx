@@ -1,132 +1,250 @@
-import { createResource, createSignal, For, onMount, Show } from 'solid-js';
-import { Image as ImageIcon, X } from 'lucide-solid';
-import { getImageData, listJournalImageSummaries } from '../../lib/tauri';
+import { Dialog } from '@kobalte/core/dialog';
+import { Check, LoaderCircle, X } from 'lucide-solid';
+import { createEffect, createMemo, createSignal, on, onMount, Show } from 'solid-js';
+import {
+  getImageData,
+  listJournalImageSummaries,
+  type ImageSummarySort,
+  type ImageSummary,
+} from '../../lib/tauri';
 import { useI18n } from '../../i18n';
+import ImagePickerGrid from './ImagePickerGrid';
+import ImagePickerPreview from './ImagePickerPreview';
 
 interface ImagePickerOverlayProps {
   onInsert: (dataUrl: string) => void;
   onClose: () => void;
 }
 
+const PAGE_SIZE = 24;
+
 export default function ImagePickerOverlay(props: ImagePickerOverlayProps) {
   const t = useI18n();
-  const [images] = createResource(async () => listJournalImageSummaries());
-  const [loadingImageId, setLoadingImageId] = createSignal<number | null>(null);
-  const [insertError, setInsertError] = createSignal(false);
-  let dialogRef: HTMLDivElement | undefined;
+  const [items, setItems] = createSignal<ImageSummary[]>([]);
+  const [selectedId, setSelectedId] = createSignal<number | null>(null);
+  const [sort, setSort] = createSignal<ImageSummarySort>('newest');
+  const [month, setMonth] = createSignal('');
+  const [hasMore, setHasMore] = createSignal(false);
+  const [loading, setLoading] = createSignal(true);
+  const [loadingMore, setLoadingMore] = createSignal(false);
+  const [loadError, setLoadError] = createSignal<string | null>(null);
+  const [insertError, setInsertError] = createSignal<string | null>(null);
+  const [inserting, setInserting] = createSignal(false);
 
-  onMount(() => dialogRef?.focus());
+  let requestId = 0;
 
-  const handleKeyDown = (e: KeyboardEvent) => {
-    if (e.key === 'Escape') props.onClose();
-  };
+  const selectedImage = createMemo(
+    () => items().find((image) => image.id === selectedId()) ?? null,
+  );
 
-  const formatCreatedAt = (createdAt: string) => {
-    const parsed = new Date(createdAt);
-    return Number.isNaN(parsed.getTime()) ? createdAt : parsed.toLocaleString();
-  };
-
-  const handleInsert = async (imageId: number) => {
-    setInsertError(false);
-    setLoadingImageId(imageId);
+  const loadPage = async (reset: boolean) => {
+    const currentRequestId = ++requestId;
+    if (reset) {
+      setLoading(true);
+    } else {
+      setLoadingMore(true);
+    }
+    setLoadError(null);
 
     try {
-      const image = await getImageData(imageId);
-      const dataUrl = `data:${image.mime_type};base64,${image.data_base64}`;
-      props.onInsert(dataUrl);
-      props.onClose();
+      const page = await listJournalImageSummaries({
+        limit: PAGE_SIZE,
+        offset: reset ? 0 : items().length,
+        sort: sort(),
+        month: month() || null,
+      });
+
+      if (currentRequestId !== requestId) return;
+
+      setItems((current) => {
+        const next = reset ? page.items : [...current, ...page.items];
+        setSelectedId((selected) => (next.some((item) => item.id === selected) ? selected : null));
+        return next;
+      });
+      setHasMore(page.has_more);
     } catch {
-      setInsertError(true);
+      if (currentRequestId !== requestId) return;
+      if (reset) setItems([]);
+      setHasMore(false);
+      setLoadError(t('editor.imagePicker.loadError'));
     } finally {
-      setLoadingImageId(null);
+      if (currentRequestId === requestId) {
+        setLoading(false);
+        setLoadingMore(false);
+      }
     }
   };
 
+  const handleSelect = (imageId: number) => {
+    setInsertError(null);
+    setSelectedId(imageId);
+  };
+
+  const handleInsert = async (explicitImageId?: number) => {
+    const imageId = explicitImageId ?? selectedId();
+    if (imageId === null) return;
+
+    setInsertError(null);
+    setInserting(true);
+
+    try {
+      const image = await getImageData(imageId);
+      props.onInsert(`data:${image.mime_type};base64,${image.data_base64}`);
+      props.onClose();
+    } catch {
+      setInsertError(t('editor.imagePicker.insertError'));
+    } finally {
+      setInserting(false);
+    }
+  };
+
+  const handleOpenChange = (open: boolean) => {
+    if (!open && !inserting()) {
+      props.onClose();
+    }
+  };
+
+  const handleKeyDown = (event: KeyboardEvent) => {
+    if (event.key === 'Escape' && !inserting()) {
+      event.preventDefault();
+      event.stopPropagation();
+      props.onClose();
+      return;
+    }
+    if (event.key !== 'Enter' || selectedId() === null || inserting()) return;
+
+    const target = event.target as HTMLElement | null;
+    const tagName = target?.tagName;
+    if (tagName === 'SELECT' || tagName === 'INPUT' || tagName === 'TEXTAREA') return;
+
+    event.preventDefault();
+    void handleInsert();
+  };
+
+  onMount(() => {
+    void loadPage(true);
+  });
+
+  createEffect(
+    on(
+      [sort, month],
+      () => {
+        void loadPage(true);
+      },
+      { defer: true },
+    ),
+  );
+
   return (
-    <div
-      class="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ 'background-color': 'var(--overlay-bg)' }}
-      onClick={(e) => {
-        if (e.target === e.currentTarget) props.onClose();
-      }}
-    >
-      <div
-        ref={(el) => {
-          dialogRef = el;
-        }}
-        tabIndex={-1}
-        role="dialog"
-        aria-modal="true"
-        aria-label={t('editor.imagePicker.title')}
-        onKeyDown={handleKeyDown}
-        class="w-full max-w-xl rounded-lg bg-primary p-6 flex flex-col gap-3 focus:outline-none"
-        style={{ 'box-shadow': 'var(--shadow-lg)' }}
-      >
-        <div class="flex items-center justify-between">
-          <span class="font-medium text-sm">{t('editor.imagePicker.title')}</span>
-          <button
-            type="button"
-            class="text-secondary hover:text-primary"
-            aria-label={t('common.close')}
-            onClick={() => props.onClose()}
+    <Dialog open onOpenChange={handleOpenChange}>
+      <Dialog.Portal>
+        <Dialog.Overlay
+          class="fixed inset-0 z-50"
+          style={{ 'background-color': 'var(--overlay-bg)' }}
+        />
+        <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <Dialog.Content
+            class="w-full max-w-6xl rounded-lg bg-primary p-6 data-[expanded]:animate-in data-[closed]:animate-out data-[closed]:fade-out-0 data-[expanded]:fade-in-0 data-[closed]:zoom-out-95 data-[expanded]:zoom-in-95"
+            style={{ 'box-shadow': 'var(--shadow-lg)' }}
+            onKeyDown={handleKeyDown}
           >
-            <X size={16} />
-          </button>
-        </div>
-
-        <Show when={images.error || insertError()}>
-          <p class="text-xs text-error" role="alert">
-            {t('editor.imagePicker.error')}
-          </p>
-        </Show>
-
-        <Show when={!images.loading && !images.error}>
-          <Show
-            when={(images() ?? []).length > 0}
-            fallback={
-              <p class="text-xs text-secondary py-6 text-center">
-                {t('editor.imagePicker.noImages')}
-              </p>
-            }
-          >
-            <div class="image-picker-grid">
-              <For each={images()}>
-                {(img) => {
-                  const isLoading = () => loadingImageId() === img.id;
-                  return (
-                    <button
-                      type="button"
-                      disabled={loadingImageId() !== null}
-                      class="rounded border border-border hover:border-primary focus:outline-none focus:ring-2 focus:ring-primary text-left p-3 flex items-start gap-3 disabled:opacity-60 disabled:cursor-wait"
-                      onClick={() => void handleInsert(img.id)}
-                      title={img.mime_type}
-                    >
-                      <span class="mt-0.5 text-secondary">
-                        <ImageIcon size={18} />
-                      </span>
-                      <span class="min-w-0 flex-1">
-                        <span class="block text-sm font-medium text-primary break-all">
-                          {img.mime_type}
-                        </span>
-                        <span class="block text-xs text-secondary mt-1">
-                          {formatCreatedAt(img.created_at)}
-                        </span>
-                        <Show when={isLoading()}>
-                          <span class="block text-xs text-secondary mt-2">…</span>
-                        </Show>
-                      </span>
-                    </button>
-                  );
-                }}
-              </For>
+            <div class="flex items-start justify-between gap-4 mb-4">
+              <div>
+                <Dialog.Title class="text-lg font-semibold text-primary">
+                  {t('editor.imagePicker.title')}
+                </Dialog.Title>
+                <Dialog.Description class="text-sm text-secondary mt-1">
+                  {t('editor.imagePicker.description')}
+                </Dialog.Description>
+              </div>
+              <Dialog.CloseButton
+                class="rounded-md p-1 hover:bg-hover transition-colors disabled:opacity-60"
+                aria-label={t('common.close')}
+                disabled={inserting()}
+              >
+                <X size={20} class="text-tertiary" />
+              </Dialog.CloseButton>
             </div>
-          </Show>
-        </Show>
 
-        <Show when={images.loading}>
-          <p class="text-xs text-secondary py-4 text-center">…</p>
-        </Show>
-      </div>
-    </div>
+            <div class="flex flex-col gap-3 mb-4 sm:flex-row sm:items-end sm:justify-between">
+              <div class="flex flex-col gap-3 sm:flex-row sm:items-end">
+                <label class="flex flex-col gap-1 text-sm text-secondary">
+                  <span>{t('editor.imagePicker.sortLabel')}</span>
+                  <select
+                    value={sort()}
+                    onChange={(event) => setSort(event.currentTarget.value as ImageSummarySort)}
+                    class="min-w-40 rounded-md border border-primary bg-primary px-3 py-2 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="newest">{t('editor.imagePicker.sortNewest')}</option>
+                    <option value="oldest">{t('editor.imagePicker.sortOldest')}</option>
+                    <option value="most_used">{t('editor.imagePicker.sortMostUsed')}</option>
+                  </select>
+                </label>
+
+                <label class="flex flex-col gap-1 text-sm text-secondary">
+                  <span>{t('editor.imagePicker.monthLabel')}</span>
+                  <input
+                    type="month"
+                    value={month()}
+                    onInput={(event) => setMonth(event.currentTarget.value)}
+                    class="min-w-40 rounded-md border border-primary bg-primary px-3 py-2 text-sm text-primary focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </label>
+              </div>
+            </div>
+
+            <Show when={loadError() || insertError()}>
+              <div
+                class="mb-4 rounded-md border border-red-300/60 bg-red-500/10 px-3 py-2 text-sm text-error"
+                role="alert"
+              >
+                {loadError() ?? insertError()}
+              </div>
+            </Show>
+
+            <div class="grid gap-4 lg:grid-cols-[minmax(0,1fr)_18rem]">
+              <section class="min-h-[28rem] rounded-md border border-primary p-3">
+                <ImagePickerGrid
+                  hasMore={hasMore()}
+                  inserting={inserting()}
+                  items={items()}
+                  loading={loading()}
+                  loadingMore={loadingMore()}
+                  onInsert={(imageId) => void handleInsert(imageId)}
+                  onLoadMore={() => void loadPage(false)}
+                  onSelect={handleSelect}
+                  selectedId={selectedId()}
+                  t={t}
+                />
+              </section>
+
+              <aside class="rounded-md border border-primary p-3">
+                <ImagePickerPreview image={selectedImage()} t={t} />
+              </aside>
+            </div>
+
+            <div class="mt-4 flex items-center justify-end gap-3">
+              <Dialog.CloseButton
+                class="rounded-md border border-primary px-3 py-2 text-sm text-primary hover:bg-hover disabled:opacity-60"
+                disabled={inserting()}
+              >
+                {t('common.close')}
+              </Dialog.CloseButton>
+              <button
+                type="button"
+                class="inline-flex items-center gap-2 rounded-md bg-secondary px-3 py-2 text-sm font-medium text-primary hover:bg-hover disabled:cursor-not-allowed disabled:opacity-60"
+                onClick={() => void handleInsert()}
+                disabled={selectedId() === null || inserting()}
+              >
+                <Show when={inserting()} fallback={<Check size={16} />}>
+                  <LoaderCircle size={16} class="animate-spin" />
+                </Show>
+                {t('editor.imagePicker.insertButton')}
+              </button>
+            </div>
+          </Dialog.Content>
+        </div>
+      </Dialog.Portal>
+    </Dialog>
   );
 }

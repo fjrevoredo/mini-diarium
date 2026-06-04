@@ -190,11 +190,17 @@ fn create_schema(conn: &Connection) -> Result<(), String> {
 
         -- Images: content-addressed encrypted store; one physical copy per unique image
         CREATE TABLE IF NOT EXISTS images (
-            id          INTEGER PRIMARY KEY AUTOINCREMENT,
-            fingerprint TEXT    NOT NULL UNIQUE,
-            mime_type   TEXT    NOT NULL,
-            data        BLOB    NOT NULL,
-            created_at  TEXT    NOT NULL
+            id                INTEGER PRIMARY KEY AUTOINCREMENT,
+            fingerprint       TEXT    NOT NULL UNIQUE,
+            mime_type         TEXT    NOT NULL,
+            data              BLOB    NOT NULL,
+            created_at        TEXT    NOT NULL,
+            thumbnail_data    BLOB,
+            thumbnail_mime_type TEXT,
+            width             INTEGER,
+            height            INTEGER,
+            byte_size         INTEGER,
+            thumbnail_version INTEGER
         );
 
         -- Entry-image associations (reference counting via junction table)

@@ -211,8 +211,30 @@
     "dropRejectedWebImage": "Questa immagine non può essere incorporata: richiederebbe una richiesta di rete, che questa app non effettua mai per proteggere la tua privacy. Clic destro sull'immagine → Copia immagine, poi incolla con Ctrl+V.",
     "imagePicker": {
       "title": "Saved Images",
+      "description": "Choose a saved image to insert.",
+      "sortLabel": "Sort",
+      "sortNewest": "Newest",
+      "sortOldest": "Oldest",
+      "sortMostUsed": "Most used",
+      "monthLabel": "Month",
+      "loading": "Loading saved images...",
+      "loadMore": "Load more",
+      "insertButton": "Insert",
+      "loadError": "Failed to load saved images.",
+      "insertError": "Failed to insert image.",
       "noImages": "No saved images yet. Insert an image to save it here.",
-      "error": "Failed to load images."
+      "error": "Failed to load images.",
+      "previewTitle": "Preview",
+      "previewEmpty": "Select an image to preview it.",
+      "createdLabel": "Created",
+      "dimensionsLabel": "Dimensions",
+      "formatLabel": "Format",
+      "sizeLabel": "Size",
+      "usageLabel": "Used in entries",
+      "linkedDatesLabel": "Linked dates",
+      "thumbnailUnavailable": "Preview unavailable",
+      "linkedDateSingle": "{{ date }}",
+      "linkedDateRange": "{{ from }} to {{ to }}"
     }
   },
   "search": {

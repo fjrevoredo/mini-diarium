@@ -211,8 +211,30 @@
     "dropRejectedWebImage": "यह छवि एम्बेड नहीं की जा सकती: इसके लिए नेटवर्क अनुरोध की आवश्यकता होगी, जो यह ऐप आपकी गोपनीयता की रक्षा के लिए कभी नहीं करता। छवि पर राइट-क्लिक करें → छवि कॉपी करें, फिर Ctrl+V से पेस्ट करें।",
     "imagePicker": {
       "title": "Saved Images",
+      "description": "Choose a saved image to insert.",
+      "sortLabel": "Sort",
+      "sortNewest": "Newest",
+      "sortOldest": "Oldest",
+      "sortMostUsed": "Most used",
+      "monthLabel": "Month",
+      "loading": "Loading saved images...",
+      "loadMore": "Load more",
+      "insertButton": "Insert",
+      "loadError": "Failed to load saved images.",
+      "insertError": "Failed to insert image.",
       "noImages": "No saved images yet. Insert an image to save it here.",
-      "error": "Failed to load images."
+      "error": "Failed to load images.",
+      "previewTitle": "Preview",
+      "previewEmpty": "Select an image to preview it.",
+      "createdLabel": "Created",
+      "dimensionsLabel": "Dimensions",
+      "formatLabel": "Format",
+      "sizeLabel": "Size",
+      "usageLabel": "Used in entries",
+      "linkedDatesLabel": "Linked dates",
+      "thumbnailUnavailable": "Preview unavailable",
+      "linkedDateSingle": "{{ date }}",
+      "linkedDateRange": "{{ from }} to {{ to }}"
     }
   },
   "search": {

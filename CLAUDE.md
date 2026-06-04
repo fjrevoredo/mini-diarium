@@ -172,7 +172,7 @@ All 68 registered Tauri commands (source: `lib.rs`). Rust names use `snake_case`
 | tags | `get_tags_for_entry` | `getTagsForEntry(entryId)` | Return all tags on a specific entry (decrypted) |
 | tags | `get_entry_dates_by_tag` | `getEntryDatesByTag(tagId)` | Return all entry dates (`YYYY-MM-DD`) associated with a tag |
 | images | `get_entry_images` | `getEntryImages(entryId)` | Fetch decrypted images for one entry |
-| images | `list_journal_image_summaries` | `listJournalImageSummaries(limit?, offset?)` | List lightweight journal image summaries (`id`, `mime_type`, `created_at`) without returning image bytes |
+| images | `list_journal_image_summaries` | `listJournalImageSummaries(options?)` | List paginated image summaries with thumbnail data, dimensions, byte size, usage count, linked dates, sort, month filter, and `has_more` |
 | images | `get_image_data` | `getImageData(imageId)` | Fetch one decrypted image payload by image ID |
 
 ## Conventions

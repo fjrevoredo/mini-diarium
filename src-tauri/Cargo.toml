@@ -44,6 +44,7 @@ chrono = "0.4"
 rhai = { version = "1", features = ["serde"] }
 log = "0.4"
 env_logger = "0.11.10"
+image = { version = "0.25", default-features = false, features = ["png", "jpeg", "gif", "webp", "bmp"] }
 
 [profile.release]
 opt-level = 3

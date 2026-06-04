@@ -1,5 +1,5 @@
 use crate::commands::auth::{with_unlocked_db, DiaryState};
-use crate::db::queries::images::{ImageData, ImageSummary};
+use crate::db::queries::images::{ImageData, ImageSummaryPage, ImageSummarySort};
 use tauri::State;
 
 /// Returns all decrypted images associated with a specific entry.
@@ -15,10 +15,18 @@ pub fn get_entry_images(entry_id: i64, state: State<DiaryState>) -> Result<Vec<I
 pub fn list_journal_image_summaries(
     limit: Option<i64>,
     offset: Option<i64>,
+    sort: Option<ImageSummarySort>,
+    month: Option<String>,
     state: State<DiaryState>,
-) -> Result<Vec<ImageSummary>, String> {
+) -> Result<ImageSummaryPage, String> {
     with_unlocked_db(&state, |db| {
-        crate::db::queries::images::list_image_summaries(db, limit, offset)
+        crate::db::queries::images::list_image_summaries_filtered(
+            db,
+            limit,
+            offset,
+            sort,
+            month.as_deref(),
+        )
     })
 }
 

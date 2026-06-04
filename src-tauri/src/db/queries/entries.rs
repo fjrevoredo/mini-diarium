@@ -526,6 +526,9 @@ pub fn count_words(text: &str) -> i32 {
 mod tests {
     use super::*;
     use crate::db::schema::create_database;
+    use base64::{engine::general_purpose, Engine as _};
+    use image::{DynamicImage, ImageFormat, Rgba, RgbaImage};
+    use std::io::Cursor;
 
     fn create_test_entry(date: &str) -> DiaryEntry {
         let now = "2024-01-01T12:00:00Z".to_string();
@@ -1112,14 +1115,17 @@ mod tests {
         assert_eq!(meta.font_size, Some(16.0));
     }
 
-    // A minimal valid 1×1 PNG as base64 for image-related tests.
-    const TINY_PNG_B64: &str =
-        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI6QAAAABJRU5ErkJggg==";
+    fn tiny_png_base64() -> String {
+        let image = DynamicImage::ImageRgba8(RgbaImage::from_pixel(1, 1, Rgba([16, 32, 64, 255])));
+        let mut cursor = Cursor::new(Vec::new());
+        image.write_to(&mut cursor, ImageFormat::Png).unwrap();
+        general_purpose::STANDARD.encode(cursor.into_inner())
+    }
 
     fn tiny_png_html() -> String {
         format!(
             r#"<p>Hi</p><img src="data:image/png;base64,{}" alt="">"#,
-            TINY_PNG_B64
+            tiny_png_base64()
         )
     }
 

@@ -63,7 +63,15 @@ Images are encrypted and stored in a dedicated content-addressed table inside th
 
 ### Insert Existing Image
 
-The **Insert Existing Image** button (stack-of-photos icon) in the advanced toolbar opens a picker that lists images already stored in the journal. Each item shows lightweight metadata such as the file type and saved date; click an item to insert that image at the current cursor position. The image is inserted without re-encoding, so the stored copy is reused with no duplication.
+The **Insert Existing Image** button (stack-of-photos icon) in the advanced toolbar opens a visual picker for images already stored in the journal.
+
+- The picker shows encrypted thumbnails in a grid so you can recognize saved images at a glance.
+- Use the **Sort** control to switch between newest, oldest, and most-used images.
+- Use the **Month** filter to narrow the grid to one month when your journal contains many images.
+- A single click selects an image and shows a larger preview with saved date, dimensions, format, size, usage count, and linked entry dates.
+- Double-click an image, or select it and press **Insert**, to place it at the current cursor position.
+
+The selected image is inserted without re-encoding, so the stored copy is reused with no duplication.
 
 Images added before this feature was introduced (prior to v0.5.3) continue to display correctly. Existing saved entries that still embed image data directly are migrated to the new storage the next time their entry is saved. JSON imports that contain embedded `data:image/...` content are normalized into the encrypted image store immediately during import.
 

@@ -34,7 +34,7 @@ Template:
 
 ### Added
 - **Image deduplication**: images are now stored once in a content-addressed encrypted store inside `diary.db` and referenced by ID. Inserting the same image into multiple entries shares one encrypted copy. All export paths (JSON, Markdown, Rhai plugins) resolve image references back to data URLs before exporting, preserving full compatibility. Legacy entries that still embed data URLs continue to display and export correctly; existing saved entries migrate on their next save, and Mini Diarium JSON imports now normalize embedded `data:image/...` content into the encrypted image store during import.
-- **"Insert existing image" toolbar button**: browse and reuse any image previously saved in the journal without re-importing. The picker now loads lightweight stored-image summaries first and decrypts full image data only for the selected image before insertion. Inserted images are reused verbatim (no canvas re-encode), ensuring the stored copy is deduplicated correctly.
+- **"Insert existing image" media picker**: browse and reuse any image previously saved in the journal through a visual thumbnail picker with sort, month filter, preview metadata, load-more pagination, explicit Insert action, and double-click insertion. The picker loads encrypted thumbnail summaries first and decrypts full image data only for the image being inserted. Inserted images are reused verbatim (no canvas re-encode), ensuring the stored copy is deduplicated correctly.
 
 ### Changed
 - `save_entry` now extracts embedded data-URL images atomically into the image store on each save, reducing stored entry size for entries with images. All writes (image extraction, link update, entry text rewrite) are committed in a single database transaction.
