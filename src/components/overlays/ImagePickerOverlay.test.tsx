@@ -1,5 +1,5 @@
 import { fireEvent, screen, waitFor } from '@solidjs/testing-library';
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { renderWithI18n } from '../../test/i18n-test-utils';
 import ImagePickerOverlay from './ImagePickerOverlay';
 
@@ -31,6 +31,15 @@ const summary = (id: number, overrides: Record<string, unknown> = {}) => ({
 beforeEach(() => {
   mockListJournalImageSummaries.mockReset();
   mockGetImageData.mockReset();
+});
+
+afterEach(() => {
+  Object.defineProperty(window, 'innerWidth', {
+    configurable: true,
+    writable: true,
+    value: 1024,
+  });
+  window.dispatchEvent(new Event('resize'));
 });
 
 describe('ImagePickerOverlay', () => {
@@ -221,5 +230,36 @@ describe('ImagePickerOverlay', () => {
         month: '2026-06',
       });
     });
+  });
+
+  it('renders the mobile library and preview flow below the lg breakpoint', async () => {
+    Object.defineProperty(window, 'innerWidth', {
+      configurable: true,
+      writable: true,
+      value: 390,
+    });
+
+    mockListJournalImageSummaries.mockResolvedValue({
+      items: [summary(7)],
+      has_more: false,
+    });
+
+    renderWithI18n(() => <ImagePickerOverlay onInsert={() => {}} onClose={() => {}} />);
+
+    const tile = (await screen.findByText('PNG')).closest('button') as HTMLButtonElement;
+    expect(screen.getAllByText('Preview')).toHaveLength(1);
+    expect(screen.queryByText('320 × 180')).toBeNull();
+
+    fireEvent.click(tile);
+    fireEvent.click(screen.getByRole('button', { name: 'Preview' }));
+
+    expect(await screen.findByText('320 × 180')).toBeTruthy();
+    expect(screen.queryByText('PNG')).toBeNull();
+    expect(screen.getByRole('button', { name: 'Insert' })).toBeEnabled();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Library' }));
+
+    expect(await screen.findByText('PNG')).toBeTruthy();
+    expect(screen.queryByText('320 × 180')).toBeNull();
   });
 });
