@@ -241,14 +241,12 @@ pub fn remove_auth_method(
 mod tests {
     use super::super::test_helpers::*;
     use crate::db::schema::create_database;
-    use std::path::PathBuf;
-
     #[test]
     fn test_register_keypair_and_unlock() {
         use crate::auth::keypair::generate_keypair;
         use crate::db::schema::open_database_with_keypair;
 
-        let (_, db_path, backups_dir) = make_state("register_kp");
+        let (_fixture, _, db_path, backups_dir) = make_state("register_kp");
 
         let db = create_database(&db_path, "password".to_string()).unwrap();
 
@@ -313,24 +311,18 @@ mod tests {
         let retrieved = &entries[0];
         assert_eq!(retrieved.title, "Keypair Test");
         assert_eq!(retrieved.text, "Content unlocked via key file");
-
-        cleanup(&db_path, &backups_dir);
     }
 
     #[test]
     fn test_remove_auth_method_locked_returns_error() {
-        let state = super::super::DiaryState::new(
-            PathBuf::from("test_rm_locked.db"),
-            PathBuf::from("test_rm_locked_backups"),
-            PathBuf::from("."),
-        );
+        let (_fixture, state, _, _) = make_state("rm_locked");
         let err = super::remove_auth_method_inner(1, None, &state).unwrap_err();
         assert!(err.contains("unlocked"), "got: {}", err);
     }
 
     #[test]
     fn test_remove_auth_method_last_slot_guard() {
-        let (state, db_path, backups_dir) = make_state("rm_last_slot");
+        let (_fixture, state, db_path, _backups_dir) = make_state("rm_last_slot");
         let db = create_database(&db_path, "password".to_string()).unwrap();
         // One slot exists (password). Put db into state.
         *state.db.lock().unwrap() = Some(db);
@@ -347,13 +339,11 @@ mod tests {
         let err = super::remove_auth_method_inner(slot_id, Some("password".to_string()), &state)
             .unwrap_err();
         assert!(err.contains("Cannot remove the last"), "got: {}", err);
-
-        cleanup(&db_path, &backups_dir);
     }
 
     #[test]
     fn test_register_password_when_none_exists() {
-        let (_, db_path, backups_dir) = make_state("reg_pw_none");
+        let (_fixture, _, db_path, _backups_dir) = make_state("reg_pw_none");
 
         let db = create_database(&db_path, "original".to_string()).unwrap();
 
@@ -376,13 +366,11 @@ mod tests {
         assert!(crate::db::queries::get_password_slot(&db)
             .unwrap()
             .is_some());
-
-        cleanup(&db_path, &backups_dir);
     }
 
     #[test]
     fn test_register_password_and_unlock() {
-        let (_, db_path, backups_dir) = make_state("reg_pw_unlock");
+        let (_fixture, _, db_path, backups_dir) = make_state("reg_pw_unlock");
 
         let db = create_database(&db_path, "original".to_string()).unwrap();
 
@@ -426,13 +414,11 @@ mod tests {
             .query_row("SELECT COUNT(*) FROM auth_slots", [], |r| r.get(0))
             .unwrap();
         assert_eq!(count, 2); // keypair + new password
-
-        cleanup(&db_path, &backups_dir);
     }
 
     #[test]
     fn test_register_password_rejects_duplicate() {
-        let (_, db_path, backups_dir) = make_state("reg_pw_dup");
+        let (_fixture, _, db_path, _backups_dir) = make_state("reg_pw_dup");
 
         let db = create_database(&db_path, "existing".to_string()).unwrap();
 
@@ -448,8 +434,6 @@ mod tests {
         };
         assert!(result.is_err());
         assert!(result.unwrap_err().contains("already exists"));
-
-        cleanup(&db_path, &backups_dir);
     }
 
     #[test]
@@ -479,7 +463,7 @@ mod tests {
         use crate::auth::keypair::generate_keypair;
         use crate::db::schema::open_database_with_keypair;
 
-        let (_, db_path, backups_dir) = make_state("reg_kp_no_pw");
+        let (_fixture, _, db_path, backups_dir) = make_state("reg_kp_no_pw");
 
         let db = create_database(&db_path, "password".to_string()).unwrap();
 
@@ -526,15 +510,13 @@ mod tests {
             .query_row("SELECT version FROM schema_version", [], |r| r.get(0))
             .unwrap();
         assert_eq!(version, 10);
-
-        cleanup(&db_path, &backups_dir);
     }
 
     #[test]
     fn test_remove_auth_method_no_password_slot() {
         use crate::auth::keypair::generate_keypair;
 
-        let (_, db_path, backups_dir) = make_state("rm_no_pw");
+        let (_fixture, _, db_path, _backups_dir) = make_state("rm_no_pw");
 
         let db = create_database(&db_path, "password".to_string()).unwrap();
 
@@ -581,7 +563,5 @@ mod tests {
 
         let count_after = crate::db::queries::count_auth_slots(&db).unwrap();
         assert_eq!(count_after, 1, "Should have one keypair slot remaining");
-
-        cleanup(&db_path, &backups_dir);
     }
 }

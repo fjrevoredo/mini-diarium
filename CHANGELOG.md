@@ -33,8 +33,8 @@ Template:
 ## [0.5.3] - [Unreleased]
 
 ### Added
-- **Image deduplication**: images are now stored once in a content-addressed encrypted store inside `diary.db` and referenced by ID. Inserting the same image into multiple entries shares one encrypted copy. All export paths (JSON, Markdown, Rhai plugins) resolve image references back to data URLs before exporting, preserving full compatibility. Legacy entries that still embed data URLs continue to display and export correctly; their images are extracted automatically the next time the entry is saved.
-- **"Insert existing image" toolbar button**: browse and reuse any image previously saved in the journal without re-importing. The picker inserts the image verbatim (no canvas re-encode), ensuring the stored copy is deduplicated correctly.
+- **Image deduplication**: images are now stored once in a content-addressed encrypted store inside `diary.db` and referenced by ID. Inserting the same image into multiple entries shares one encrypted copy. All export paths (JSON, Markdown, Rhai plugins) resolve image references back to data URLs before exporting, preserving full compatibility. Legacy entries that still embed data URLs continue to display and export correctly; existing saved entries migrate on their next save, and Mini Diarium JSON imports now normalize embedded `data:image/...` content into the encrypted image store during import.
+- **"Insert existing image" toolbar button**: browse and reuse any image previously saved in the journal without re-importing. The picker now loads lightweight stored-image summaries first and decrypts full image data only for the selected image before insertion. Inserted images are reused verbatim (no canvas re-encode), ensuring the stored copy is deduplicated correctly.
 
 ### Changed
 - `save_entry` now extracts embedded data-URL images atomically into the image store on each save, reducing stored entry size for entries with images. All writes (image extraction, link update, entry text rewrite) are committed in a single database transaction.
@@ -53,6 +53,9 @@ Template:
 ### Changed
 - **Link dialog now has a Display text field**: you can override the visible label of a link directly in the dialog (instead of the URL always being the label). Bare domains like `example.com` are auto-prefixed with `https://`, email addresses become `mailto:` links, and phone numbers become `tel:` links. The dialog also includes an "Open link" button so you can verify a URL before applying it.
 - **Editor toolbar font controls apply inline formatting**: the font family and font size dropdowns in the toolbar now apply inline marks to the selected text, instead of changing the global preference. Preferences still controls the app-wide defaults that appear when an entry has no entry default and no inline formatting on the selection.
+
+### Fixed
+- **External link opening now enforces safe protocols consistently**: editor link opening paths now normalize and allow only `http`, `https`, `mailto`, and `tel` targets. Unsafe stored or imported protocols are ignored instead of being passed to the opener plugin.
 
 ## [0.5.2] - 29-05-2026
 

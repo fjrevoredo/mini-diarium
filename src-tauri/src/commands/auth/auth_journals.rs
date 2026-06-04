@@ -205,147 +205,146 @@ mod tests {
     use super::*;
     use std::fs;
 
-    fn make_test_env(name: &str) -> (DiaryState, PathBuf) {
-        let app_data_dir = PathBuf::from(format!("test_journals_cmd_{}", name));
-        let _ = fs::remove_dir_all(&app_data_dir);
-        fs::create_dir_all(&app_data_dir).unwrap();
-        let db_path = app_data_dir.join("diary.db");
-        let backups_dir = app_data_dir.join("backups").join("diary");
-        let state = DiaryState::new(db_path, backups_dir, app_data_dir.clone());
-        (state, app_data_dir)
+    struct TestEnv {
+        temp_dir: tempfile::TempDir,
+        state: DiaryState,
+        app_dir: PathBuf,
     }
 
-    fn cleanup(dir: &PathBuf) {
-        let _ = fs::remove_dir_all(dir);
+    fn make_test_env(name: &str) -> TestEnv {
+        let temp_dir = tempfile::Builder::new()
+            .prefix(&format!("mini-diarium-auth-journals-{name}-"))
+            .tempdir()
+            .unwrap();
+        let app_data_dir = temp_dir.path().join("app-data");
+        fs::create_dir_all(&app_data_dir).unwrap();
+        let db_path = temp_dir.path().join("diary.db");
+        let backups_dir = temp_dir.path().join("backups").join("diary");
+        let state = DiaryState::new(db_path, backups_dir, app_data_dir.clone());
+
+        TestEnv {
+            temp_dir,
+            state,
+            app_dir: app_data_dir,
+        }
+    }
+
+    fn make_journal_dir(env: &TestEnv, name: &str) -> PathBuf {
+        let dir = env.temp_dir.path().join(name);
+        fs::create_dir_all(&dir).unwrap();
+        dir
     }
 
     #[test]
     fn test_add_journal_inner() {
-        let (_state, app_dir) = make_test_env("add");
-        let journal_dir = std::env::temp_dir();
+        let env = make_test_env("add");
+        let journal_dir = make_journal_dir(&env, "journal");
 
         let result = add_journal_inner(
             "Test Journal".to_string(),
             journal_dir.to_str().unwrap().to_string(),
             None,
-            &app_dir,
+            &env.app_dir,
         );
         assert!(result.is_ok());
         let journal = result.unwrap();
         assert_eq!(journal.name, "Test Journal");
         assert_eq!(journal.id.len(), 16);
 
-        let journals = config::load_journals(&app_dir);
+        let journals = config::load_journals(&env.app_dir);
         assert_eq!(journals.len(), 1);
-
-        cleanup(&app_dir);
     }
 
     #[test]
     fn test_add_journal_rejects_relative_path() {
-        let (_state, app_dir) = make_test_env("add_relative");
+        let env = make_test_env("add_relative");
 
         let result = add_journal_inner(
             "Bad".to_string(),
             "relative/path".to_string(),
             None,
-            &app_dir,
+            &env.app_dir,
         );
         assert!(result.is_err());
         assert!(result.unwrap_err().contains("absolute"));
-
-        cleanup(&app_dir);
     }
 
     #[test]
     fn test_rename_journal_inner() {
-        let (_state, app_dir) = make_test_env("rename");
-        let journal_dir = std::env::temp_dir();
+        let env = make_test_env("rename");
+        let journal_dir = make_journal_dir(&env, "journal");
 
         let journal = add_journal_inner(
             "Original".to_string(),
             journal_dir.to_str().unwrap().to_string(),
             None,
-            &app_dir,
+            &env.app_dir,
         )
         .unwrap();
 
-        rename_journal_inner(journal.id.clone(), "Renamed".to_string(), &app_dir).unwrap();
+        rename_journal_inner(journal.id.clone(), "Renamed".to_string(), &env.app_dir).unwrap();
 
-        let journals = config::load_journals(&app_dir);
+        let journals = config::load_journals(&env.app_dir);
         assert_eq!(journals[0].name, "Renamed");
-
-        cleanup(&app_dir);
     }
 
     #[test]
     fn test_switch_journal_updates_paths() {
-        let dir_a = std::env::temp_dir().join("journal_switch_a");
-        let dir_b = std::env::temp_dir().join("journal_switch_b");
-        fs::create_dir_all(&dir_a).unwrap();
-        fs::create_dir_all(&dir_b).unwrap();
-
-        let (state, app_dir) = make_test_env("switch");
+        let env = make_test_env("switch");
+        let dir_a = make_journal_dir(&env, "journal-a");
+        let dir_b = make_journal_dir(&env, "journal-b");
 
         let ja = add_journal_inner(
             "A".to_string(),
             dir_a.to_str().unwrap().to_string(),
             None,
-            &app_dir,
+            &env.app_dir,
         )
         .unwrap();
         let jb = add_journal_inner(
             "B".to_string(),
             dir_b.to_str().unwrap().to_string(),
             None,
-            &app_dir,
+            &env.app_dir,
         )
         .unwrap();
 
         // Switch to B
-        switch_journal_inner(jb.id.clone(), &state).unwrap();
+        switch_journal_inner(jb.id.clone(), &env.state).unwrap();
 
-        let db_path = state.db_path.lock().unwrap().clone();
+        let db_path = env.state.db_path.lock().unwrap().clone();
         assert_eq!(db_path, dir_b.join("diary.db"));
 
-        let backups = state.backups_dir.lock().unwrap().clone();
+        let backups = env.state.backups_dir.lock().unwrap().clone();
         assert_eq!(backups, dir_b.join("backups").join("diary"));
 
-        let active = config::load_active_journal_id(&app_dir);
+        let active = config::load_active_journal_id(&env.app_dir);
         assert_eq!(active, Some(jb.id));
 
         let _ = ja;
-        let _ = fs::remove_dir_all(&dir_a);
-        let _ = fs::remove_dir_all(&dir_b);
-        cleanup(&app_dir);
     }
 
     #[test]
     fn test_remove_only_journal_succeeds_leaving_empty_list() {
-        let dir = std::env::temp_dir().join("journal_rm_only");
-        fs::create_dir_all(&dir).unwrap();
-
-        let (state, app_dir) = make_test_env("remove_only");
+        let env = make_test_env("remove_only");
+        let dir = make_journal_dir(&env, "journal");
 
         add_journal_inner(
             "Solo".to_string(),
             dir.to_str().unwrap().to_string(),
             None,
-            &app_dir,
+            &env.app_dir,
         )
         .unwrap();
 
-        let journals = config::load_journals(&app_dir);
-        let result = remove_journal_inner(journals[0].id.clone(), &state);
+        let journals = config::load_journals(&env.app_dir);
+        let result = remove_journal_inner(journals[0].id.clone(), &env.state);
         assert!(result.is_ok(), "Removing last journal should succeed");
 
-        let remaining = config::load_journals(&app_dir);
+        let remaining = config::load_journals(&env.app_dir);
         assert!(
             remaining.is_empty(),
             "Journal list should be empty after removing last"
         );
-
-        let _ = fs::remove_dir_all(&dir);
-        cleanup(&app_dir);
     }
 }

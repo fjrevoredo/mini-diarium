@@ -43,7 +43,7 @@ The JSON format is the primary structural export. It outputs a `metadata` block 
 
 Every entry includes a `"tags"` array (empty `[]` if the entry has no tags; tags are listed in alphabetical order). Entries with font metadata include a `"metadata"` object containing `fontFamily` and `fontSize`; entries without entry-level font defaults have no `metadata` field.
 
-This format preserves entry IDs, timestamps, tags, and font metadata. It can be re-imported back into Mini Diarium — the JSON importer automatically handles both the old Mini Diary date-keyed format and the new array format with optional metadata for backward compatibility.
+This format preserves entry IDs, timestamps, tags, and font metadata. It can be re-imported back into Mini Diarium — the JSON importer automatically handles both the old Mini Diary date-keyed format and the new array format with optional metadata for backward compatibility. If the JSON contains embedded `data:image/...` content, Mini Diarium normalizes those images into its encrypted image store during import while preserving the visible content of the entry.
 
 ### Markdown Export
 

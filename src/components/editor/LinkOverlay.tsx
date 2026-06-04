@@ -3,6 +3,7 @@ import { Dialog } from '@kobalte/core/dialog';
 import type { Editor } from '@tiptap/core';
 import { openUrl } from '@tauri-apps/plugin-opener';
 import { useI18n } from '../../i18n';
+import { normalizeSafeLink } from '../../lib/safe-links';
 
 interface LinkOverlayProps {
   editor: Editor | null;
@@ -36,34 +37,6 @@ function snapshotEditor(editor: Editor | null): {
     return { mode: 'wrap-selection', initialHref: '', initialLabel };
   }
   return { mode: 'insert', initialHref: '', initialLabel: '' };
-}
-
-// Accept anything that looks plausibly URL-shaped. Bare domains are
-// auto-prefixed with https://. Emails → mailto:. Phone numbers → tel:.
-// Explicitly unsafe protocols (javascript:, data:, vbscript:, file:) are
-// rejected so they can never reach the editor.
-function normalizeUrl(input: string): string {
-  const trimmed = input.trim();
-  if (!trimmed) return '';
-
-  const protocolMatch = trimmed.match(/^([a-z][a-z0-9+.-]*):/i);
-  if (protocolMatch) {
-    const protocol = protocolMatch[1].toLowerCase();
-    if (['http', 'https', 'mailto', 'tel'].includes(protocol)) {
-      return trimmed;
-    }
-    // Unsafe protocol — reject.
-    return '';
-  }
-
-  if (trimmed.includes('@') && !/\s/.test(trimmed)) {
-    return `mailto:${trimmed}`;
-  }
-  if (/^\+?[\d\s().-]+$/.test(trimmed) && /\d/.test(trimmed)) {
-    const cleaned = trimmed.replace(/[\s().-]/g, '');
-    return `tel:${cleaned}`;
-  }
-  return `https://${trimmed}`;
 }
 
 export default function LinkOverlay(props: LinkOverlayProps) {
@@ -115,14 +88,14 @@ export default function LinkOverlay(props: LinkOverlayProps) {
   };
 
   const trimmedUrl = () => urlInput().trim();
-  const normalizedUrl = () => normalizeUrl(urlInput());
+  const normalizedUrl = () => normalizeSafeLink(urlInput());
   const trimmedLabel = () => labelInput().trim();
 
   // URL is valid if the normalized form is non-empty. The normalized form
   // is "" for empty input or for unsafe protocols (javascript:, data:,
   // vbscript:, file:). For bare domains like "example.com", the normalized
   // form is "https://example.com" — valid.
-  const urlIsValid = () => normalizedUrl().length > 0;
+  const urlIsValid = () => normalizedUrl() !== null;
 
   const applyLink = () => {
     const editor = props.editor;
@@ -131,6 +104,7 @@ export default function LinkOverlay(props: LinkOverlayProps) {
     if (!urlIsValid()) return;
 
     const href = normalizedUrl();
+    if (!href) return;
     // If the label is empty, fall back to what the user typed as the URL
     // (not the auto-prefixed normalized form). This way a bare domain
     // like "example.com" reads as "example.com" in the body, not the

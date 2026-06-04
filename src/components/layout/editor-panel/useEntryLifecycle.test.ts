@@ -227,6 +227,8 @@ describe('justCreatedEntryId guard — onSetContent skips auto-delete debounce',
     expect(hasImageRefs('<p>text</p><img src="image-id://42" alt="">')).toBe(true);
     expect(hasImageRefs('<p>no images</p>')).toBe(false);
     expect(hasImageRefs('')).toBe(false);
+    expect(hasImageRefs('<p>See image-id://42 later</p>')).toBe(false);
+    expect(hasImageRefs('<a href="image-id://42">not an image ref</a>')).toBe(false);
   });
 
   it('resolveImageRefs substitutes image-id:// refs with data URLs', () => {

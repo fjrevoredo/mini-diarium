@@ -430,10 +430,23 @@ export interface ImageData {
   data_base64: string;
 }
 
+export interface ImageSummary {
+  id: number;
+  mime_type: string;
+  created_at: string;
+}
+
 export async function getEntryImages(entryId: number): Promise<ImageData[]> {
   return await invoke<ImageData[]>('get_entry_images', { entryId });
 }
 
-export async function listJournalImages(): Promise<ImageData[]> {
-  return await invoke<ImageData[]>('list_journal_images');
+export async function listJournalImageSummaries(
+  limit?: number,
+  offset?: number,
+): Promise<ImageSummary[]> {
+  return await invoke<ImageSummary[]>('list_journal_image_summaries', { limit, offset });
+}
+
+export async function getImageData(imageId: number): Promise<ImageData> {
+  return await invoke<ImageData>('get_image_data', { imageId });
 }

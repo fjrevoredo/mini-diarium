@@ -154,6 +154,17 @@ describe('handleEditorLinkClick — modifier click on an anchor', () => {
     expect(mockOpenUrl).not.toHaveBeenCalled();
     document.body.removeChild(anchor);
   });
+
+  it('does not call openUrl for an unsafe stored href', () => {
+    const anchor = makeAnchor('javascript:alert(1)');
+    const event = buildEvent({ target: anchor, ctrlKey: true });
+    const result = handleEditorLinkClick(event as unknown as MouseEvent);
+
+    expect(event.preventDefault).toHaveBeenCalledOnce();
+    expect(result).toBe(true);
+    expect(mockOpenUrl).not.toHaveBeenCalled();
+    document.body.removeChild(anchor);
+  });
 });
 
 describe('handleEditorLinkClick — non-anchor clicks', () => {

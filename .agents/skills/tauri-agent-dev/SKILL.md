@@ -215,6 +215,8 @@ cmd.exe /c bun run agent:dev:stop -- --keep-sandbox
 
 Stopping is not optional cleanup. It kills both long-lived Windows process roots and removes sandbox state unless told otherwise.
 
+If `agent:dev:stop` fails during sandbox deletion with a transient WebView file lock (`EBUSY` on a file under `.agent-dev/sandbox/webview/EBWebView/...`), immediately retry with `--keep-sandbox`. Treat that as the normal fallback: the important part is stopping the managed processes and closing the CDP port, not forcing one last WebView cache file to be deleted in the same step.
+
 ## Sandbox Semantics
 
 - Default mode is sandboxed.
@@ -234,6 +236,7 @@ Stopping is not optional cleanup. It kills both long-lived Windows process roots
 - If probe says `cdp unreachable`, inspect `.agent-dev/dev.log`.
 - If probe says the managed PIDs are not alive, the dev session is gone. Start a new one.
 - If a stop attempt fails, do not delete `.agent-dev/state.json` by hand until you understand which root is still alive.
+- If `agent:dev:stop` fails with `EBUSY` while deleting a WebView cache file, rerun `cmd.exe /c bun run agent:dev:stop -- --keep-sandbox`. Verify that the reported port is closed; if it is, the session shutdown is good enough for task cleanup.
 - **Journal locks repeatedly during session**: If the app is configured with a short `autoLockTimeout` (< 30 s), the idle timer fires between CDP roundtrips. `eval` calls do not count as user activity. Patch `autoLockTimeout` to 600 in localStorage immediately after the first unlock (see "Read Or Verify Preferences" recipe above).
 
 ## What This Skill Does Not Do

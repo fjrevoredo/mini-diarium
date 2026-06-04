@@ -102,7 +102,7 @@ Static marketing site — plain HTML/CSS/JS. Deploy via Coolify using `website/d
 
 ## Command Registry
 
-All 67 registered Tauri commands (source: `lib.rs`). Rust names use `snake_case`; frontend wrappers in `src/lib/tauri.ts` use `camelCase`.
+All 68 registered Tauri commands (source: `lib.rs`). Rust names use `snake_case`; frontend wrappers in `src/lib/tauri.ts` use `camelCase`.
 
 | Module | Rust Command | Frontend Wrapper | Description |
 |--------|-------------|-----------------|-------------|
@@ -172,7 +172,8 @@ All 67 registered Tauri commands (source: `lib.rs`). Rust names use `snake_case`
 | tags | `get_tags_for_entry` | `getTagsForEntry(entryId)` | Return all tags on a specific entry (decrypted) |
 | tags | `get_entry_dates_by_tag` | `getEntryDatesByTag(tagId)` | Return all entry dates (`YYYY-MM-DD`) associated with a tag |
 | images | `get_entry_images` | `getEntryImages(entryId)` | Fetch decrypted images for one entry |
-| images | `list_journal_images` | `listJournalImages()` | List all images in the journal (newest-first) |
+| images | `list_journal_image_summaries` | `listJournalImageSummaries(limit?, offset?)` | List lightweight journal image summaries (`id`, `mime_type`, `created_at`) without returning image bytes |
+| images | `get_image_data` | `getImageData(imageId)` | Fetch one decrypted image payload by image ID |
 
 ## Conventions
 

@@ -7,16 +7,12 @@ use log::info;
 /// keyed by an HKDF-SHA256 fingerprint. `entry_images` is a junction table that
 /// associates entries with images (reference counting for orphan cleanup).
 pub(super) fn migrate_v9_to_v10(db: &DatabaseConnection) -> Result<(), String> {
-    let version: i32 = db
-        .conn()
-        .query_row("SELECT version FROM schema_version", [], |row| row.get(0))
-        .unwrap_or(9);
+    let version = super::read_schema_version(db)?;
 
     if version < 10 {
-        db.conn()
-            .execute_batch(
-                "BEGIN IMMEDIATE;
-                 CREATE TABLE IF NOT EXISTS images (
+        super::run_migration_transaction(db, "Migration v9→v10", |conn| {
+            conn.execute_batch(
+                "CREATE TABLE IF NOT EXISTS images (
                      id          INTEGER PRIMARY KEY AUTOINCREMENT,
                      fingerprint TEXT    NOT NULL UNIQUE,
                      mime_type   TEXT    NOT NULL,
@@ -30,11 +26,13 @@ pub(super) fn migrate_v9_to_v10(db: &DatabaseConnection) -> Result<(), String> {
                      FOREIGN KEY (entry_id) REFERENCES entries(id)  ON DELETE CASCADE,
                      FOREIGN KEY (image_id) REFERENCES images(id)   ON DELETE RESTRICT
                  );
-                 CREATE INDEX IF NOT EXISTS idx_entry_images_image_id ON entry_images(image_id);
-                 UPDATE schema_version SET version = 10;
-                 COMMIT;",
+                 CREATE INDEX IF NOT EXISTS idx_entry_images_image_id ON entry_images(image_id);",
             )
             .map_err(|e| format!("Migration v9→v10 failed: {}", e))?;
+            conn.execute("UPDATE schema_version SET version = 10", [])
+                .map_err(|e| format!("Migration v9→v10 failed: {}", e))?;
+            Ok(())
+        })?;
         info!("Migrated database from v9 to v10 (added images and entry_images tables)");
     }
     Ok(())
@@ -126,6 +124,58 @@ mod tests {
         assert_eq!(
             version, 10,
             "version must remain 10 after second migration call"
+        );
+    }
+
+    #[test]
+    fn test_migrate_v9_to_v10_rolls_back_after_statement_failure() {
+        let db = setup_v9_db();
+        db.conn()
+            .execute(
+                "CREATE TABLE idx_entry_images_image_id (id INTEGER PRIMARY KEY)",
+                [],
+            )
+            .unwrap();
+
+        let err = migrate_v9_to_v10(&db).unwrap_err();
+        assert!(err.contains("Migration v9→v10 failed"), "got: {}", err);
+
+        let version: i32 = db
+            .conn()
+            .query_row("SELECT version FROM schema_version", [], |row| row.get(0))
+            .unwrap();
+        assert_eq!(
+            version, 9,
+            "schema version must remain unchanged on rollback"
+        );
+
+        db.conn().execute("BEGIN IMMEDIATE", []).unwrap();
+        db.conn().execute("ROLLBACK", []).unwrap();
+    }
+
+    #[test]
+    fn test_migrate_v9_to_v10_errors_on_malformed_schema_version() {
+        let conn = open_connection_in_memory().unwrap();
+        conn.execute_batch(
+            "CREATE TABLE schema_version (version TEXT PRIMARY KEY);
+             INSERT INTO schema_version (version) VALUES ('oops');
+             CREATE TABLE entries (id INTEGER PRIMARY KEY AUTOINCREMENT, date TEXT NOT NULL,
+                 title_encrypted BLOB, text_encrypted BLOB, word_count INTEGER DEFAULT 0,
+                 date_created TEXT NOT NULL, date_updated TEXT NOT NULL,
+                 entry_metadata_encrypted BLOB);",
+        )
+        .unwrap();
+
+        let db = DatabaseConnection {
+            conn,
+            encryption_key: cipher::Key::from_slice(&[0u8; 32]).unwrap(),
+        };
+
+        let err = migrate_v9_to_v10(&db).unwrap_err();
+        assert!(
+            err.contains("Failed to read schema version"),
+            "got: {}",
+            err
         );
     }
 }

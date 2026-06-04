@@ -139,6 +139,8 @@ When executing a manual plan:
 7. Update the milestone status when all tasks in the milestone satisfy its exit criteria.
 8. Start the next task only after the plan file reflects the current state.
 
+If validation was intentionally deferred earlier in execution, reconcile the plan text after the deferred checks actually run. Do not leave stale phrases like "validation pending" or self-check statements that describe an earlier plan state once the plan has moved forward.
+
 The plan file is the execution ledger. Keep it accurate before moving forward.
 
 **Discovered issues during implementation:** If a bug or unplanned problem is identified while working on a task, choose one path immediately — do not defer via a mental note:

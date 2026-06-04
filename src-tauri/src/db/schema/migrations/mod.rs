@@ -12,6 +12,7 @@ pub(crate) use v1_to_v2::migrate_v1_to_v2;
 pub(crate) use v2_to_v3::migrate_v2_to_v3;
 
 use crate::db::schema::DatabaseConnection;
+use rusqlite::Connection;
 
 /// Applies all pending DDL-only migrations (v3→v4 through v9→v10) in order.
 ///
@@ -27,6 +28,41 @@ pub(crate) fn apply_pending(db: &DatabaseConnection) -> Result<(), String> {
     v8_to_v9::migrate_v8_to_v9(db)?;
     v9_to_v10::migrate_v9_to_v10(db)?;
     Ok(())
+}
+
+pub(super) fn read_schema_version(db: &DatabaseConnection) -> Result<i32, String> {
+    db.conn()
+        .query_row("SELECT version FROM schema_version", [], |row| row.get(0))
+        .map_err(|e| format!("Failed to read schema version: {}", e))
+}
+
+pub(super) fn run_migration_transaction<T, F>(
+    db: &DatabaseConnection,
+    label: &str,
+    action: F,
+) -> Result<T, String>
+where
+    F: FnOnce(&Connection) -> Result<T, String>,
+{
+    let result = (|| {
+        db.conn()
+            .execute("BEGIN IMMEDIATE", [])
+            .map_err(|e| format!("{} BEGIN failed: {}", label, e))?;
+
+        let value = action(db.conn())?;
+
+        db.conn()
+            .execute("COMMIT", [])
+            .map_err(|e| format!("{} COMMIT failed: {}", label, e))?;
+
+        Ok(value)
+    })();
+
+    if result.is_err() {
+        let _ = db.conn().execute("ROLLBACK", []);
+    }
+
+    result
 }
 
 #[cfg(test)]

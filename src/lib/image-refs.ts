@@ -1,17 +1,22 @@
 import type { ImageData } from './tauri';
 
+const IMAGE_REF_SRC_PATTERN = /(<img\b[^>]*\bsrc=)(["'])image-id:\/\/(\d+)\2/gi;
+
 export function hasImageRefs(html: string): boolean {
-  return /image-id:\/\/\d+/.test(html);
+  IMAGE_REF_SRC_PATTERN.lastIndex = 0;
+  return IMAGE_REF_SRC_PATTERN.test(html);
 }
 
 export function resolveImageRefs(html: string, images: ImageData[]): string {
-  let resolved = html;
-  for (const img of images) {
-    // Require the closing quote after the ID so `image-id://5` does not match
-    // inside `image-id://50`. Accept both double and single quotes.
-    const pattern = new RegExp(`image-id://${img.id}(?=["'])`, 'g');
+  if (images.length === 0) return html;
+
+  const imagesById = new Map(images.map((img) => [String(img.id), img]));
+
+  return html.replace(IMAGE_REF_SRC_PATTERN, (match, prefix: string, quote: string, id: string) => {
+    const img = imagesById.get(id);
+    if (!img) return match;
+
     const dataUrl = `data:${img.mime_type};base64,${img.data_base64}`;
-    resolved = resolved.replace(pattern, dataUrl);
-  }
-  return resolved;
+    return `${prefix}${quote}${dataUrl}${quote}`;
+  });
 }

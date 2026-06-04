@@ -141,6 +141,50 @@ pub fn insert_entry(db: &DatabaseConnection, entry: &DiaryEntry) -> Result<(), S
     Ok(())
 }
 
+/// Inserts a new entry and normalizes any embedded or referenced images atomically.
+///
+/// This preserves the low-level `insert_entry()` helper for tests and fixtures while giving
+/// user-facing import paths the same image-store invariant as normal editor saves.
+pub fn insert_entry_with_images(
+    db: &DatabaseConnection,
+    entry: &DiaryEntry,
+) -> Result<i64, String> {
+    let result: Result<i64, String> = (|| {
+        db.conn()
+            .execute("BEGIN IMMEDIATE", [])
+            .map_err(|e| format!("BEGIN failed: {}", e))?;
+
+        insert_entry(db, entry)?;
+        let entry_id = db.conn().last_insert_rowid();
+
+        let (rewritten, image_ids) =
+            crate::db::queries::images::extract_and_replace_image_refs(&entry.text, db)?;
+
+        if rewritten != entry.text || !image_ids.is_empty() {
+            let mut stored = get_entry_by_id(db, entry_id)?
+                .ok_or_else(|| format!("No entry found with id: {}", entry_id))?;
+            stored.text = rewritten;
+            stored.word_count = count_words(&stored.text);
+            stored.metadata = entry.metadata.clone();
+            update_entry(db, &stored)?;
+            crate::db::queries::images::replace_entry_image_links(db, entry_id, &image_ids)?;
+            crate::db::queries::images::cleanup_orphaned_images(db)?;
+        }
+
+        db.conn()
+            .execute("COMMIT", [])
+            .map_err(|e| format!("COMMIT failed: {}", e))?;
+
+        Ok(entry_id)
+    })();
+
+    if result.is_err() {
+        let _ = db.conn().execute("ROLLBACK", []);
+    }
+
+    result
+}
+
 /// Retrieves all entries for a given date, newest-first (ORDER BY id DESC)
 ///
 /// # Arguments

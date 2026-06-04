@@ -1,8 +1,20 @@
-import { describe, it, expect, vi } from 'vitest';
+import { beforeEach, describe, it, expect, vi } from 'vitest';
 import { fireEvent } from '@solidjs/testing-library';
 import { renderWithI18n } from '../../test/i18n-test-utils';
 import LinkOverlay from './LinkOverlay';
 import type { Editor } from '@tiptap/core';
+
+const { mockOpenUrl } = vi.hoisted(() => ({
+  mockOpenUrl: vi.fn<() => Promise<void>>().mockResolvedValue(),
+}));
+
+vi.mock('@tauri-apps/plugin-opener', () => ({
+  openUrl: mockOpenUrl,
+}));
+
+beforeEach(() => {
+  mockOpenUrl.mockClear();
+});
 
 // ---------------------------------------------------------------------------
 // Editor mock — TipTap cannot run in jsdom. We build a minimal shape covering
@@ -478,6 +490,18 @@ describe('LinkOverlay — URL normalization', () => {
 });
 
 describe('LinkOverlay — Open link button', () => {
+  it('opens a normalized safe URL in the system browser', () => {
+    const { editor } = makeEditorMock();
+    renderWithI18n(() => <LinkOverlay editor={editor} isOpen={true} onClose={() => {}} />);
+    const url = document.querySelector('[data-testid="link-url-input"]') as HTMLInputElement;
+    fireEvent.input(url, { target: { value: 'example.com' } });
+
+    const open = document.querySelector('[data-testid="link-open-button"]') as HTMLButtonElement;
+    fireEvent.click(open);
+
+    expect(mockOpenUrl).toHaveBeenCalledWith('https://example.com');
+  });
+
   it('does not render the Open link button when the URL is empty or invalid', () => {
     const { editor } = makeEditorMock();
     renderWithI18n(() => <LinkOverlay editor={editor} isOpen={true} onClose={() => {}} />);

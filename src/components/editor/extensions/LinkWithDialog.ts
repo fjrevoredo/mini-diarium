@@ -1,5 +1,6 @@
 import { Link } from '@tiptap/extension-link';
 import { openUrl } from '@tauri-apps/plugin-opener';
+import { normalizeSafeLink } from '../../../lib/safe-links';
 
 export interface LinkWithDialogStorage {
   openLinkDialog: () => void;
@@ -88,7 +89,7 @@ export function handleEditorLinkClick(event: MouseEvent): boolean {
   event.preventDefault();
 
   if (event.metaKey || event.ctrlKey) {
-    const href = anchor.getAttribute('href');
+    const href = normalizeSafeLink(anchor.getAttribute('href') ?? '');
     if (href) {
       void openUrl(href).catch((err) => {
         console.error('[mini-diarium] failed to open link in system browser:', err);

@@ -354,6 +354,21 @@ rg -n "data-testid|isSidebarCollapsed|is[A-Za-z]+Open" src e2e
 - Dialogs and overlays must have a clear close path and must not leave stale draft state in a later session.
 - Keep layout behavior stable at the E2E viewport and common desktop widths before refining visual polish.
 
+### Use The Standard Overlay Surface Pattern
+
+Dialog and overlay surfaces should follow the existing tokenized pattern used by `ImportOverlay`, `ExportOverlay`, `PreferencesOverlay`, `LinkOverlay`, and other working dialogs:
+
+- Backdrop: `style={{ 'background-color': 'var(--overlay-bg)' }}`
+- Dialog surface: `bg-primary`
+- Dialog elevation: `style={{ 'box-shadow': 'var(--shadow-lg)' }}`
+
+Do not introduce ad hoc surface tokens such as `bg-surface` unless the token is already defined in `src/index.css`. Overlay/dialog regressions can look fine in JSX review but render transparent at runtime if a non-existent class token is used.
+
+When touching dialog styling:
+
+- compare the changed dialog with an existing working overlay before changing broader theme code
+- add or update a focused regression test if the surface token, backdrop token, or elevation token changes
+
 ## Diagnostics
 
 Use these checks when reviewing frontend work:

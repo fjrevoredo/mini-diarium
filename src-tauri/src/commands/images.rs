@@ -1,5 +1,5 @@
 use crate::commands::auth::{with_unlocked_db, DiaryState};
-use crate::db::queries::images::ImageData;
+use crate::db::queries::images::{ImageData, ImageSummary};
 use tauri::State;
 
 /// Returns all decrypted images associated with a specific entry.
@@ -10,8 +10,23 @@ pub fn get_entry_images(entry_id: i64, state: State<DiaryState>) -> Result<Vec<I
     })
 }
 
-/// Returns all decrypted images stored in the journal, newest-first.
+/// Returns metadata-only image summaries stored in the journal, newest-first.
 #[tauri::command]
-pub fn list_journal_images(state: State<DiaryState>) -> Result<Vec<ImageData>, String> {
-    with_unlocked_db(&state, crate::db::queries::images::list_all_images)
+pub fn list_journal_image_summaries(
+    limit: Option<i64>,
+    offset: Option<i64>,
+    state: State<DiaryState>,
+) -> Result<Vec<ImageSummary>, String> {
+    with_unlocked_db(&state, |db| {
+        crate::db::queries::images::list_image_summaries(db, limit, offset)
+    })
+}
+
+/// Returns one decrypted image by id.
+#[tauri::command]
+pub fn get_image_data(image_id: i64, state: State<DiaryState>) -> Result<ImageData, String> {
+    with_unlocked_db(&state, |db| {
+        crate::db::queries::images::get_image_by_id(db, image_id)?
+            .ok_or_else(|| format!("No image found with id: {}", image_id))
+    })
 }

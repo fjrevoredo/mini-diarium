@@ -11,6 +11,80 @@ pub struct ImageData {
     pub data_base64: String,
 }
 
+/// Metadata-only image summary for picker/list UIs.
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct ImageSummary {
+    pub id: i64,
+    pub mime_type: String,
+    pub created_at: String,
+}
+
+const MAX_STORED_IMAGE_BYTES: usize = 20 * 1024 * 1024;
+
+fn validate_image_for_storage(mime_type: &str, plaintext_bytes: &[u8]) -> Result<(), String> {
+    if plaintext_bytes.is_empty() {
+        return Err("Image data is empty".to_string());
+    }
+
+    if plaintext_bytes.len() > MAX_STORED_IMAGE_BYTES {
+        return Err(format!(
+            "Image is too large. Maximum supported size is {} MB.",
+            MAX_STORED_IMAGE_BYTES / 1_048_576
+        ));
+    }
+
+    let detected_mime = detect_image_mime_type(plaintext_bytes).ok_or_else(|| {
+        "Image data is not a valid supported PNG, JPEG, GIF, WebP, or BMP file".to_string()
+    })?;
+
+    if !matches!(
+        mime_type,
+        "image/png" | "image/jpeg" | "image/gif" | "image/webp" | "image/bmp"
+    ) {
+        return Err(
+            "Unsupported image MIME type. Supported formats are PNG, JPEG, GIF, WebP, and BMP."
+                .to_string(),
+        );
+    }
+
+    if mime_type != detected_mime {
+        return Err("Image data does not match its declared MIME type".to_string());
+    }
+
+    Ok(())
+}
+
+fn detect_image_mime_type(plaintext_bytes: &[u8]) -> Option<&'static str> {
+    if plaintext_bytes.starts_with(&[0x89, b'P', b'N', b'G', 0x0D, 0x0A, 0x1A, 0x0A]) {
+        return Some("image/png");
+    }
+
+    if plaintext_bytes.len() >= 3
+        && plaintext_bytes[0] == 0xFF
+        && plaintext_bytes[1] == 0xD8
+        && plaintext_bytes[2] == 0xFF
+    {
+        return Some("image/jpeg");
+    }
+
+    if plaintext_bytes.starts_with(b"GIF87a") || plaintext_bytes.starts_with(b"GIF89a") {
+        return Some("image/gif");
+    }
+
+    if plaintext_bytes.len() >= 12
+        && &plaintext_bytes[0..4] == b"RIFF"
+        && &plaintext_bytes[8..12] == b"WEBP"
+    {
+        return Some("image/webp");
+    }
+
+    if plaintext_bytes.starts_with(b"BM") {
+        return Some("image/bmp");
+    }
+
+    None
+}
+
 /// Stores a new image (or returns the existing one if an identical image is already stored).
 ///
 /// Computes an HKDF-SHA256 fingerprint of the plaintext bytes, encrypts the bytes,
@@ -20,6 +94,8 @@ pub fn upsert_image(
     mime_type: &str,
     plaintext_bytes: &[u8],
 ) -> Result<i64, String> {
+    validate_image_for_storage(mime_type, plaintext_bytes)?;
+
     let fingerprint = cipher::image_fingerprint(db.key(), plaintext_bytes);
     let encrypted = super::encrypt_for_storage(db.key(), plaintext_bytes, "image")?;
     let now = chrono::Utc::now().to_rfc3339();
@@ -112,36 +188,80 @@ pub fn get_images_for_entry(
         .collect()
 }
 
-/// Returns all decrypted images in the journal, newest-first.
-pub fn list_all_images(db: &DatabaseConnection) -> Result<Vec<ImageData>, String> {
-    let mut stmt = db
-        .conn()
-        .prepare("SELECT id, mime_type, data FROM images ORDER BY created_at DESC")
-        .map_err(|e| format!("Failed to prepare list_all_images: {}", e))?;
-
-    let rows: Vec<(i64, String, Vec<u8>)> = stmt
-        .query_map([], |row| {
+/// Returns one decrypted image by id.
+pub fn get_image_by_id(
+    db: &DatabaseConnection,
+    image_id: i64,
+) -> Result<Option<ImageData>, String> {
+    let result = db.conn().query_row(
+        "SELECT id, mime_type, data FROM images WHERE id = ?1",
+        params![image_id],
+        |row| {
             Ok((
                 row.get::<_, i64>(0)?,
                 row.get::<_, String>(1)?,
                 row.get::<_, Vec<u8>>(2)?,
             ))
-        })
-        .map_err(|e| format!("Failed to query all images: {}", e))?
-        .collect::<Result<Vec<_>, _>>()
-        .map_err(|e| format!("Failed to read image row: {}", e))?;
+        },
+    );
 
-    rows.into_iter()
-        .map(|(id, mime_type, encrypted)| {
+    match result {
+        Ok((id, mime_type, encrypted)) => {
             let plaintext = super::decrypt_bytes(db.key(), &encrypted, "image")?;
             let data_base64 = general_purpose::STANDARD.encode(&plaintext);
-            Ok(ImageData {
+            Ok(Some(ImageData {
                 id,
                 mime_type,
                 data_base64,
-            })
+            }))
+        }
+        Err(rusqlite::Error::QueryReturnedNoRows) => Ok(None),
+        Err(e) => Err(format!("Failed to fetch image by id: {}", e)),
+    }
+}
+
+/// Returns metadata-only image summaries in the journal, newest-first.
+pub fn list_image_summaries(
+    db: &DatabaseConnection,
+    limit: Option<i64>,
+    offset: Option<i64>,
+) -> Result<Vec<ImageSummary>, String> {
+    let mut stmt = db
+        .conn()
+        .prepare(match limit {
+            Some(_) => {
+                "SELECT id, mime_type, created_at FROM images ORDER BY created_at DESC LIMIT ?1 OFFSET ?2"
+            }
+            None => "SELECT id, mime_type, created_at FROM images ORDER BY created_at DESC",
         })
-        .collect()
+        .map_err(|e| format!("Failed to prepare list_image_summaries: {}", e))?;
+
+    let rows: Vec<ImageSummary> = match limit {
+        Some(limit) => stmt
+            .query_map(params![limit, offset.unwrap_or(0)], |row| {
+                Ok(ImageSummary {
+                    id: row.get(0)?,
+                    mime_type: row.get(1)?,
+                    created_at: row.get(2)?,
+                })
+            })
+            .map_err(|e| format!("Failed to query image summaries: {}", e))?
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|e| format!("Failed to read image summary row: {}", e))?,
+        None => stmt
+            .query_map([], |row| {
+                Ok(ImageSummary {
+                    id: row.get(0)?,
+                    mime_type: row.get(1)?,
+                    created_at: row.get(2)?,
+                })
+            })
+            .map_err(|e| format!("Failed to query image summaries: {}", e))?
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|e| format!("Failed to read image summary row: {}", e))?,
+    };
+
+    Ok(rows)
 }
 
 /// Substitutes `image-id://N` references with data URLs in a batch of entries.
@@ -212,21 +332,17 @@ pub fn extract_and_replace_image_refs(
                 remaining = &remaining[end..];
 
                 if let Some((mime, b64_data)) = extract_src_data_uri(tag) {
-                    match general_purpose::STANDARD.decode(&b64_data) {
-                        Ok(bytes) => {
-                            let image_id = upsert_image(db, &mime, &bytes)?;
-                            if !image_ids.contains(&image_id) {
-                                image_ids.push(image_id);
-                            }
-                            // Replace the entire src="data:..." attribute with image-id ref.
-                            let new_tag = replace_data_src(tag, image_id);
-                            result.push_str(&new_tag);
-                        }
-                        Err(_) => {
-                            // Corrupted base64 — keep the tag as-is, don't break the entry.
-                            result.push_str(tag);
-                        }
+                    let bytes = general_purpose::STANDARD
+                        .decode(&b64_data)
+                        .map_err(|_| "Invalid embedded image data".to_string())?;
+
+                    let image_id = upsert_image(db, &mime, &bytes)?;
+                    if !image_ids.contains(&image_id) {
+                        image_ids.push(image_id);
                     }
+                    // Replace the entire src="data:..." attribute with image-id ref.
+                    let new_tag = replace_data_src(tag, image_id);
+                    result.push_str(&new_tag);
                 } else {
                     // Non-data-URI src. If it's an image-id:// ref collect it, but only
                     // if the image actually exists (prevents FK failures on invalid refs).
@@ -364,6 +480,9 @@ mod tests {
     use super::*;
     use crate::db::schema::create_database;
 
+    const TINY_PNG_B64: &str =
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
+
     // Returns the NamedTempFile alongside the connection so the caller can keep it alive.
     // On Linux the tempfile is unlinked when dropped, which makes SQLite return
     // SQLITE_READONLY_DBMOVED on subsequent writes. Bind the returned value to `_tmp`
@@ -389,12 +508,32 @@ mod tests {
         db.conn().last_insert_rowid()
     }
 
+    fn valid_png_bytes() -> Vec<u8> {
+        general_purpose::STANDARD.decode(TINY_PNG_B64).unwrap()
+    }
+
+    fn valid_jpeg_bytes() -> Vec<u8> {
+        vec![0xFF, 0xD8, 0xFF, 0xDB, 0x00]
+    }
+
+    fn valid_gif_bytes() -> Vec<u8> {
+        b"GIF89a\x01\x00".to_vec()
+    }
+
+    fn valid_webp_bytes() -> Vec<u8> {
+        b"RIFF\x00\x00\x00\x00WEBPVP8 ".to_vec()
+    }
+
+    fn valid_bmp_bytes() -> Vec<u8> {
+        b"BM\x00\x00\x00\x00".to_vec()
+    }
+
     #[test]
     fn test_upsert_image_returns_same_id_for_same_bytes() {
         let (_tmp, db) = make_db();
-        let bytes = b"fake-png-data";
-        let id1 = upsert_image(&db, "image/png", bytes).unwrap();
-        let id2 = upsert_image(&db, "image/png", bytes).unwrap();
+        let bytes = valid_png_bytes();
+        let id1 = upsert_image(&db, "image/png", &bytes).unwrap();
+        let id2 = upsert_image(&db, "image/png", &bytes).unwrap();
         assert_eq!(id1, id2, "identical bytes must return the same image id");
 
         let count: i64 = db
@@ -407,18 +546,62 @@ mod tests {
     #[test]
     fn test_upsert_image_different_bytes_different_ids() {
         let (_tmp, db) = make_db();
-        let id1 = upsert_image(&db, "image/png", b"bytes-A").unwrap();
-        let id2 = upsert_image(&db, "image/png", b"bytes-B").unwrap();
+        let bytes_a = valid_png_bytes();
+        let mut bytes_b = valid_png_bytes();
+        bytes_b.push(0x01);
+        let id1 = upsert_image(&db, "image/png", &bytes_a).unwrap();
+        let id2 = upsert_image(&db, "image/png", &bytes_b).unwrap();
         assert_ne!(id1, id2, "different bytes must produce different ids");
+    }
+
+    #[test]
+    fn test_upsert_image_accepts_supported_formats() {
+        let (_tmp, db) = make_db();
+
+        let cases = [
+            ("image/png", valid_png_bytes()),
+            ("image/jpeg", valid_jpeg_bytes()),
+            ("image/gif", valid_gif_bytes()),
+            ("image/webp", valid_webp_bytes()),
+            ("image/bmp", valid_bmp_bytes()),
+        ];
+
+        for (mime, bytes) in cases {
+            let id = upsert_image(&db, mime, &bytes).unwrap();
+            assert!(id > 0, "expected a stored image id for {}", mime);
+        }
+    }
+
+    #[test]
+    fn test_upsert_image_rejects_svg_mime() {
+        let (_tmp, db) = make_db();
+        let err = upsert_image(&db, "image/svg+xml", &valid_png_bytes()).unwrap_err();
+        assert!(err.contains("Unsupported image MIME type"), "got: {}", err);
+    }
+
+    #[test]
+    fn test_upsert_image_rejects_mime_mismatch() {
+        let (_tmp, db) = make_db();
+        let err = upsert_image(&db, "image/png", &valid_jpeg_bytes()).unwrap_err();
+        assert!(err.contains("does not match"), "got: {}", err);
+    }
+
+    #[test]
+    fn test_upsert_image_rejects_oversized_bytes() {
+        let (_tmp, db) = make_db();
+        let mut bytes = valid_png_bytes();
+        bytes.resize(MAX_STORED_IMAGE_BYTES + 1, 0);
+        let err = upsert_image(&db, "image/png", &bytes).unwrap_err();
+        assert!(err.contains("too large"), "got: {}", err);
     }
 
     #[test]
     fn test_replace_entry_image_links_replaces_set() {
         let (_tmp, db) = make_db();
         let entry_id = insert_blank_entry(&db);
-        let id_a = upsert_image(&db, "image/png", b"A").unwrap();
-        let id_b = upsert_image(&db, "image/png", b"B").unwrap();
-        let id_c = upsert_image(&db, "image/png", b"C").unwrap();
+        let id_a = upsert_image(&db, "image/png", &valid_png_bytes()).unwrap();
+        let id_b = upsert_image(&db, "image/jpeg", &valid_jpeg_bytes()).unwrap();
+        let id_c = upsert_image(&db, "image/gif", &valid_gif_bytes()).unwrap();
 
         replace_entry_image_links(&db, entry_id, &[id_a, id_b]).unwrap();
         replace_entry_image_links(&db, entry_id, &[id_b, id_c]).unwrap();
@@ -440,8 +623,8 @@ mod tests {
     fn test_get_images_for_entry_returns_decrypted_data() {
         let (_tmp, db) = make_db();
         let entry_id = insert_blank_entry(&db);
-        let plaintext = b"hello-image-bytes";
-        let img_id = upsert_image(&db, "image/jpeg", plaintext).unwrap();
+        let plaintext = valid_jpeg_bytes();
+        let img_id = upsert_image(&db, "image/jpeg", &plaintext).unwrap();
         replace_entry_image_links(&db, entry_id, &[img_id]).unwrap();
 
         let images = get_images_for_entry(&db, entry_id).unwrap();
@@ -454,19 +637,31 @@ mod tests {
     }
 
     #[test]
-    fn test_list_all_images_returns_all() {
+    fn test_get_image_by_id_returns_decrypted_image() {
         let (_tmp, db) = make_db();
-        upsert_image(&db, "image/png", b"img-1").unwrap();
-        upsert_image(&db, "image/jpeg", b"img-2").unwrap();
+        let bytes = valid_png_bytes();
+        let image_id = upsert_image(&db, "image/png", &bytes).unwrap();
 
-        let images = list_all_images(&db).unwrap();
+        let image = get_image_by_id(&db, image_id).unwrap().unwrap();
+        assert_eq!(image.id, image_id);
+        assert_eq!(image.mime_type, "image/png");
+    }
+
+    #[test]
+    fn test_list_image_summaries_returns_all() {
+        let (_tmp, db) = make_db();
+        upsert_image(&db, "image/png", &valid_png_bytes()).unwrap();
+        upsert_image(&db, "image/jpeg", &valid_jpeg_bytes()).unwrap();
+
+        let images = list_image_summaries(&db, None, None).unwrap();
         assert_eq!(images.len(), 2);
+        assert!(images.iter().all(|img| !img.created_at.is_empty()));
     }
 
     #[test]
     fn test_cleanup_orphaned_images_removes_unreferenced() {
         let (_tmp, db) = make_db();
-        upsert_image(&db, "image/png", b"orphan").unwrap();
+        upsert_image(&db, "image/png", &valid_png_bytes()).unwrap();
 
         let count_before: i64 = db
             .conn()
@@ -487,7 +682,7 @@ mod tests {
     fn test_cleanup_orphaned_images_keeps_referenced() {
         let (_tmp, db) = make_db();
         let entry_id = insert_blank_entry(&db);
-        let img_id = upsert_image(&db, "image/png", b"referenced").unwrap();
+        let img_id = upsert_image(&db, "image/png", &valid_png_bytes()).unwrap();
         replace_entry_image_links(&db, entry_id, &[img_id]).unwrap();
 
         cleanup_orphaned_images(&db).unwrap();
@@ -504,8 +699,8 @@ mod tests {
     #[test]
     fn test_resolve_image_refs_single_quoted() {
         let (_tmp, db) = make_db();
-        let plaintext = b"png-bytes";
-        let img_id = upsert_image(&db, "image/png", plaintext).unwrap();
+        let plaintext = valid_png_bytes();
+        let img_id = upsert_image(&db, "image/png", &plaintext).unwrap();
         let entry_id = insert_blank_entry(&db);
         replace_entry_image_links(&db, entry_id, &[img_id]).unwrap();
 
@@ -536,8 +731,8 @@ mod tests {
     #[test]
     fn test_resolve_image_refs_double_quoted() {
         let (_tmp, db) = make_db();
-        let plaintext = b"png-bytes";
-        let img_id = upsert_image(&db, "image/png", plaintext).unwrap();
+        let plaintext = valid_png_bytes();
+        let img_id = upsert_image(&db, "image/png", &plaintext).unwrap();
         let entry_id = insert_blank_entry(&db);
         replace_entry_image_links(&db, entry_id, &[img_id]).unwrap();
 
@@ -566,7 +761,7 @@ mod tests {
     #[test]
     fn test_plain_text_image_id_ref_does_not_create_entry_images_row() {
         let (_tmp, db) = make_db();
-        let img_id = upsert_image(&db, "image/png", b"img").unwrap();
+        let img_id = upsert_image(&db, "image/png", &valid_png_bytes()).unwrap();
         let entry_id = insert_blank_entry(&db);
 
         // Plain text mention of image-id:// — not inside an <img src=...> attribute.
@@ -616,7 +811,7 @@ mod tests {
     #[test]
     fn test_resolve_image_refs_in_entries_replaces_stored_ref() {
         let (_tmp, db) = make_db();
-        let img_id = upsert_image(&db, "image/png", b"png-bytes").unwrap();
+        let img_id = upsert_image(&db, "image/png", &valid_png_bytes()).unwrap();
         let entry_id = insert_blank_entry(&db);
         replace_entry_image_links(&db, entry_id, &[img_id]).unwrap();
 

@@ -16,6 +16,14 @@ describe('hasImageRefs', () => {
   it('returns false when no image-id:// refs are present', () => {
     expect(hasImageRefs('<img src="data:image/png;base64,abc">')).toBe(false);
   });
+
+  it('returns false for plain-text image-id:// mentions', () => {
+    expect(hasImageRefs('<p>See image-id://1 for details</p>')).toBe(false);
+  });
+
+  it('returns false for non-img tags that contain image-id:// in src', () => {
+    expect(hasImageRefs('<a src="image-id://1">bad html but not an image</a>')).toBe(false);
+  });
 });
 
 describe('resolveImageRefs', () => {
@@ -44,6 +52,11 @@ describe('resolveImageRefs', () => {
     const result = resolveImageRefs(html, [fakeImage(1), fakeImage(2)]);
     expect(result).not.toContain('image-id://');
     expect(result.split('data:image/png;base64,abc123').length - 1).toBe(2);
+  });
+
+  it('does not replace plain-text image-id:// mentions', () => {
+    const html = '<p>See image-id://1 for details</p>';
+    expect(resolveImageRefs(html, [fakeImage(1)])).toBe(html);
   });
 
   it('leaves HTML unchanged when images array is empty', () => {

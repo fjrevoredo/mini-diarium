@@ -6,20 +6,19 @@ use log::info;
 /// This column stores per-entry font defaults (family and size) encrypted with the
 /// journal master key using context `"entry_metadata"`. NULL means no entry override.
 pub(super) fn migrate_v8_to_v9(db: &DatabaseConnection) -> Result<(), String> {
-    let version: i32 = db
-        .conn()
-        .query_row("SELECT version FROM schema_version", [], |row| row.get(0))
-        .unwrap_or(8);
+    let version = super::read_schema_version(db)?;
 
     if version < 9 {
-        db.conn()
-            .execute_batch(
-                "BEGIN IMMEDIATE;
-                 ALTER TABLE entries ADD COLUMN entry_metadata_encrypted BLOB;
-                 UPDATE schema_version SET version = 9;
-                 COMMIT;",
+        super::run_migration_transaction(db, "Migration v8→v9", |conn| {
+            conn.execute(
+                "ALTER TABLE entries ADD COLUMN entry_metadata_encrypted BLOB",
+                [],
             )
             .map_err(|e| format!("Migration v8→v9 failed: {}", e))?;
+            conn.execute("UPDATE schema_version SET version = 9", [])
+                .map_err(|e| format!("Migration v8→v9 failed: {}", e))?;
+            Ok(())
+        })?;
         info!("Migrated database from v8 to v9 (added entry_metadata_encrypted column)");
     }
     Ok(())
@@ -125,6 +124,48 @@ mod tests {
         assert_eq!(
             version, 9,
             "version must remain 9 after second migration call"
+        );
+    }
+
+    #[test]
+    fn test_migrate_v8_to_v9_rolls_back_after_statement_failure() {
+        let db = setup_v8_db();
+        db.conn()
+            .execute(
+                "ALTER TABLE entries ADD COLUMN entry_metadata_encrypted BLOB",
+                [],
+            )
+            .unwrap();
+
+        let err = migrate_v8_to_v9(&db).unwrap_err();
+        assert!(err.contains("Migration v8→v9 failed"), "got: {}", err);
+
+        db.conn().execute("BEGIN IMMEDIATE", []).unwrap();
+        db.conn().execute("ROLLBACK", []).unwrap();
+    }
+
+    #[test]
+    fn test_migrate_v8_to_v9_errors_on_malformed_schema_version() {
+        let conn = Connection::open_in_memory().unwrap();
+        conn.execute_batch(
+            "CREATE TABLE schema_version (version TEXT PRIMARY KEY);
+             INSERT INTO schema_version (version) VALUES ('oops');
+             CREATE TABLE entries (id INTEGER PRIMARY KEY AUTOINCREMENT, date TEXT NOT NULL,
+                 title_encrypted BLOB, text_encrypted BLOB, word_count INTEGER DEFAULT 0,
+                 date_created TEXT NOT NULL, date_updated TEXT NOT NULL);",
+        )
+        .unwrap();
+
+        let db = DatabaseConnection {
+            conn,
+            encryption_key: cipher::Key::from_slice(&[0u8; 32]).unwrap(),
+        };
+
+        let err = migrate_v8_to_v9(&db).unwrap_err();
+        assert!(
+            err.contains("Failed to read schema version"),
+            "got: {}",
+            err
         );
     }
 }

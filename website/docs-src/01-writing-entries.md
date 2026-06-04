@@ -63,9 +63,9 @@ Images are encrypted and stored in a dedicated content-addressed table inside th
 
 ### Insert Existing Image
 
-The **Insert Existing Image** button (stack-of-photos icon) in the advanced toolbar opens a picker that shows thumbnails of all images you have previously saved in the journal. Click a thumbnail to insert that image at the current cursor position. The image is inserted without re-encoding, so the stored copy is reused with no duplication.
+The **Insert Existing Image** button (stack-of-photos icon) in the advanced toolbar opens a picker that lists images already stored in the journal. Each item shows lightweight metadata such as the file type and saved date; click an item to insert that image at the current cursor position. The image is inserted without re-encoding, so the stored copy is reused with no duplication.
 
-Images added before this feature was introduced (prior to v0.5.3) continue to display correctly. They will be migrated to the new storage the next time their entry is saved.
+Images added before this feature was introduced (prior to v0.5.3) continue to display correctly. Existing saved entries that still embed image data directly are migrated to the new storage the next time their entry is saved. JSON imports that contain embedded `data:image/...` content are normalized into the encrypted image store immediately during import.
 
 If you drag an image from a web browser, the editor will show a banner explaining that embedding is not possible — it would require a network request, which the app never makes. Use **right-click → Copy Image** and paste instead.
 
@@ -87,6 +87,8 @@ You can insert hyperlinks with custom display text — the visible label and the
 A confirmation message below the fields reminds you of the click-to-open behavior (see below).
 
 **Opening a link**: a plain click inside a link places the cursor for editing (as in any other editable surface). To open a link in your default browser, hold `Ctrl` (`Cmd` on macOS) and click. You can also click the **Open link** button in the dialog after typing a URL — useful when you want to verify a link before applying it.
+
+Only standard external targets are opened: `http`, `https`, `mailto`, and `tel`. Unsupported or unsafe protocols are ignored and are not passed to the operating system.
 
 **Auto-linking**: typing a recognizable URL (for example `https://example.com`) and pressing space converts it to a clickable link automatically. Pasting a URL onto a text selection wraps the selection as a link to that URL.
 

@@ -111,28 +111,18 @@ pub use auth_slots::*;
 mod tests {
     use super::*;
     use crate::db::schema::create_database;
-    use std::path::PathBuf;
 
     #[test]
     fn test_with_unlocked_db_locked_returns_error() {
-        let state = DiaryState::new(
-            PathBuf::from("test_wudb_locked.db"),
-            PathBuf::from("test_wudb_locked_backups"),
-            PathBuf::from("."),
-        );
+        let (_fixture, state, _, _) = test_helpers::make_state("wudb_locked");
         let err = with_unlocked_db(&state, |_db| Ok(())).unwrap_err();
         assert!(err.contains("Journal must be unlocked"), "got: {}", err);
     }
 
     #[test]
     fn test_with_unlocked_db_unlocked_returns_inner_result() {
-        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
-        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
-        let state = DiaryState::new(
-            PathBuf::from("test_wudb_unlocked.db"),
-            PathBuf::from("test_wudb_unlocked_backups"),
-            PathBuf::from("."),
-        );
+        let (_fixture, state, db_path, _) = test_helpers::make_state("wudb_unlocked");
+        let db = create_database(&db_path, "test".to_string()).unwrap();
         *state.db.lock().unwrap() = Some(db);
         let result: Result<i32, String> = with_unlocked_db(&state, |_db| Ok(42));
         assert_eq!(result.unwrap(), 42);
@@ -142,27 +132,29 @@ mod tests {
 #[cfg(test)]
 pub(crate) mod test_helpers {
     use super::*;
-    use std::fs;
 
-    pub fn temp_db_path(name: &str) -> PathBuf {
-        std::env::temp_dir().join(format!("mini_diarium_test_{}.db", name))
+    pub struct TestFixture {
+        _temp_dir: tempfile::TempDir,
     }
 
-    pub fn temp_backups_dir(name: &str) -> PathBuf {
-        std::env::temp_dir().join(format!("mini_diarium_test_backups_{}", name))
+    impl TestFixture {
+        pub fn path(&self) -> &std::path::Path {
+            self._temp_dir.path()
+        }
     }
 
-    pub fn cleanup(db_path: &PathBuf, backups_dir: &PathBuf) {
-        let _ = fs::remove_file(db_path);
-        let _ = fs::remove_dir_all(backups_dir);
-    }
-
-    pub fn make_state(name: &str) -> (DiaryState, PathBuf, PathBuf) {
-        let db_path = temp_db_path(name);
-        let backups_dir = temp_backups_dir(name);
-        let _ = fs::remove_file(&db_path);
-        let _ = fs::remove_dir_all(&backups_dir);
-        let state = DiaryState::new(db_path.clone(), backups_dir.clone(), PathBuf::from("."));
-        (state, db_path, backups_dir)
+    pub fn make_state(name: &str) -> (TestFixture, DiaryState, PathBuf, PathBuf) {
+        let temp_dir = tempfile::Builder::new()
+            .prefix(&format!("mini-diarium-auth-{name}-"))
+            .tempdir()
+            .unwrap();
+        let db_path = temp_dir.path().join("diary.db");
+        let backups_dir = temp_dir.path().join("backups");
+        let app_data_dir = temp_dir.path().join("app-data");
+        let state = DiaryState::new(db_path.clone(), backups_dir.clone(), app_data_dir.clone());
+        let fixture = TestFixture {
+            _temp_dir: temp_dir,
+        };
+        (fixture, state, db_path, backups_dir)
     }
 }
