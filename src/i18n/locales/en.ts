@@ -614,6 +614,7 @@ const en = {
     labelHint: 'If left empty, the URL is used as the visible text.',
     openInBrowserHint:
       'Hold Ctrl (Cmd on macOS) and click a link in the editor to open it in your browser. Plain click just places the cursor for editing.',
+    tooltipOpen: '{{ shortcut }} to open',
     insert: 'Insert',
     update: 'Update',
     apply: 'Apply',

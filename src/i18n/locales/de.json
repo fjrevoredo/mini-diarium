@@ -522,6 +522,7 @@
     "labelPlaceholder": "Linktext (optional)",
     "labelHint": "Wenn leer, wird die URL als sichtbarer Text verwendet.",
     "openInBrowserHint": "Klick auf einen Link setzt den Cursor zum Bearbeiten. Halte Strg (Cmd auf macOS) und klicke, um den Link im Browser zu öffnen.",
+    "tooltipOpen": "{{ shortcut }} to open",
     "insert": "Einfügen",
     "update": "Aktualisieren",
     "apply": "Anwenden",

@@ -522,6 +522,7 @@
     "labelPlaceholder": "Texto del enlace (opcional)",
     "labelHint": "Si lo dejas vacío, la URL se usa como texto visible.",
     "openInBrowserHint": "Hacer clic en un enlace coloca el cursor para editarlo. Mantén Ctrl (Cmd en macOS) y haz clic para abrirlo en tu navegador.",
+    "tooltipOpen": "{{ shortcut }} to open",
     "insert": "Insertar",
     "update": "Actualizar",
     "apply": "Aplicar",

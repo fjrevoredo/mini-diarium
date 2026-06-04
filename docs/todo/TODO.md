@@ -13,7 +13,7 @@ TODO entry format:
 - After creating a new TODO, update the `Latest TODO ID` marker to reflect the new highest ID
 - Use the `todo-manager` skill (`.agents/skills/todo-manager/`) for creation, tracking, archival, and validation
 
-**Latest TODO ID: TODO-0048** — next new TODO should be TODO-0049
+**Latest TODO ID: TODO-0049** — next new TODO should be TODO-0050
 
 ---
 
@@ -54,4 +54,5 @@ TODO entry format:
 - [ ] **TODO-0019: Mobile version** — Tauri v2 supports iOS and Android targets; evaluate porting the app to mobile: adapt the SolidJS UI for touch (larger tap targets, bottom navigation, swipe gestures for day navigation), handle mobile file-system sandboxing for the journal location, and assess whether the Argon2id parameters need tuning for mobile CPU/memory constraints
 - [ ] **TODO-0028: Evaluate Markdown editor migration** — evaluate replacing the current TipTap HTML-based editor with a Markdown-based editor to simplify formatting support and reduce bundle size; research available Markdown editor libraries or consider building a custom one; this is a large architectural change and should only be pursued if the current editor limitations become a significant blocker
 - [ ] **TODO-0038: Remove legacy `require_all_auth` config migration** — once the release boundary is agreed, remove the legacy `JournalConfig.require_all_auth` field, its migration function `migrate_require_all_auth_to_db`, and all call sites from backend and frontend; the DB-settings-backed implementation that replaced it stays untouched; requires maintainer approval before execution; see TODO-0038-01 for full steps
+- [ ] **TODO-0049: Replace `navigator.platform` with `navigator.userAgentData`** — `navigator.platform` is deprecated; replace with `(navigator.userAgentData?.platform ?? navigator.platform ?? '').toLowerCase()` and update the `isMac` check accordingly; one call site: `src/components/editor/extensions/LinkWithDialog.ts` (`getLinkOpenShortcutLabel`); no behavioral change expected — Tauri WebViews support both APIs
 - [ ] **TODO-0039: Re-evaluate `glib` Dependabot alert when Tauri upgrades webkit2gtk bindings** — Dependabot alert #6 (`glib 0.18.5`, medium) was dismissed as a tolerated risk: the vulnerability is in `glib::VariantStrIter` (Linux-only, UB via unsound iterator impl), the app has zero direct `glib` usage, and upgrading requires `gtk 0.20` + `webkit2gtk 2.1.x` Rust bindings that do not yet exist in a Tauri-compatible release; re-evaluate when Tauri ships a `wry` version that pulls in `gtk-rs 0.20`-based webkit2gtk bindings

@@ -61,6 +61,16 @@ export const LinkWithDialog = Link.extend({
   },
 });
 
+// If the modifier for opening links ever changes, update these two exports only.
+export function isLinkOpenModifier(e: { ctrlKey: boolean; metaKey: boolean }): boolean {
+  return e.ctrlKey || e.metaKey;
+}
+
+export function getLinkOpenShortcutLabel(): string {
+  const isMac = typeof navigator !== 'undefined' && /Mac/i.test(navigator.platform);
+  return isMac ? 'Cmd+Click' : 'Ctrl+Click';
+}
+
 // Intercepts clicks on `<a>` elements inside the editor.
 //
 // Why this is needed even though `openOnClick: false` is set on the Link
@@ -88,7 +98,7 @@ export function handleEditorLinkClick(event: MouseEvent): boolean {
   // dismiss) would cause the WebView to navigate.
   event.preventDefault();
 
-  if (event.metaKey || event.ctrlKey) {
+  if (isLinkOpenModifier(event)) {
     const href = normalizeSafeLink(anchor.getAttribute('href') ?? '');
     if (href) {
       void openUrl(href).catch((err) => {

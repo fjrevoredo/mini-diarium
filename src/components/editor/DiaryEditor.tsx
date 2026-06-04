@@ -21,7 +21,12 @@ import EditorToolbar from './EditorToolbar';
 import { AlignableImage } from './extensions/AlignableImage';
 import { BidiExtension } from './extensions/BidiExtension';
 import { TimestampMark } from './extensions/TimestampMark';
-import { LinkWithDialog, handleEditorLinkClick } from './extensions/LinkWithDialog';
+import {
+  LinkWithDialog,
+  handleEditorLinkClick,
+  getLinkOpenShortcutLabel,
+} from './extensions/LinkWithDialog';
+import { FloatingTooltip } from '../ui/FloatingTooltip';
 import { preferences } from '../../state/preferences';
 import { readFileBytes, getFontData } from '../../lib/tauri';
 import { customFontsVersion } from '../../state/fonts';
@@ -124,6 +129,9 @@ export default function DiaryEditor(props: DiaryEditorProps) {
   const [editor, setEditor] = createSignal<Editor | null>(null);
   const [isDragOver, setIsDragOver] = createSignal(false);
   const [dropHint, setDropHint] = createSignal(false);
+  const [linkTooltip, setLinkTooltip] = createSignal<{ href: string; x: number; y: number } | null>(
+    null,
+  );
   let dropHintTimer: ReturnType<typeof setTimeout> | undefined;
 
   const showDropHint = () => {
@@ -416,9 +424,35 @@ export default function DiaryEditor(props: DiaryEditorProps) {
           onClose={() => setIsImagePickerOpen(false)}
         />
       </Show>
-      <div class="p-4">
+      <div
+        class="p-4"
+        onMouseOver={(e) => {
+          const anchor = (e.target as HTMLElement).closest('a') as HTMLAnchorElement | null;
+          if (anchor) {
+            const rect = anchor.getBoundingClientRect();
+            setLinkTooltip({
+              href: anchor.getAttribute('href') ?? '',
+              x: rect.left,
+              y: rect.bottom,
+            });
+          } else {
+            setLinkTooltip(null);
+          }
+        }}
+        onMouseLeave={() => setLinkTooltip(null)}
+      >
         <div ref={editorElement} />
       </div>
+      <Show when={linkTooltip()}>
+        {(tooltip) => (
+          <FloatingTooltip x={tooltip().x} y={tooltip().y}>
+            <div class="font-mono text-primary break-all max-w-xs">{tooltip().href}</div>
+            <div class="text-tertiary">
+              {t('link.tooltipOpen', { shortcut: getLinkOpenShortcutLabel() })}
+            </div>
+          </FloatingTooltip>
+        )}
+      </Show>
       <Show when={dropHint()}>
         <div class="mx-4 mb-3 rounded-md border border-primary bg-secondary p-2.5 flex items-start justify-between gap-2">
           <p class="text-xs text-secondary">{t('editor.dropRejectedWebImage')}</p>
