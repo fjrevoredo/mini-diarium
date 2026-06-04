@@ -158,9 +158,12 @@ pub fn resolve_image_refs_in_entries(
             if entry.text.contains("image-id://") {
                 let images = get_images_for_entry(db, entry.id)?;
                 for img in &images {
-                    let pattern = format!(r#"image-id://{}""#, img.id);
-                    let replacement = format!(r#"data:{};base64,{}""#, img.mime_type, img.data_base64);
-                    entry.text = entry.text.replace(&pattern, &replacement);
+                    for quote in ['"', '\''] {
+                        let pattern = format!("image-id://{}{}", img.id, quote);
+                        let replacement =
+                            format!("data:{};base64,{}{}", img.mime_type, img.data_base64, quote);
+                        entry.text = entry.text.replace(&pattern, &replacement);
+                    }
                 }
             }
             Ok(entry)
@@ -175,7 +178,9 @@ pub fn resolve_image_refs_in_entries(
 /// - calls `upsert_image` to store/deduplicate
 /// - replaces the src with `image-id://ID`
 ///
-/// Existing `image-id://N` refs (from prior saves) are preserved and collected.
+/// Existing `image-id://N` refs are collected only from `<img src=...>` attributes,
+/// never from arbitrary text. Invalid refs (nonexistent image IDs) are silently dropped
+/// rather than passed to `replace_entry_image_links` where they would trigger a FK error.
 /// Returns `(rewritten_html, all_image_ids)`.
 pub fn extract_and_replace_image_refs(
     html: &str,
@@ -187,24 +192,6 @@ pub fn extract_and_replace_image_refs(
     let mut image_ids: Vec<i64> = Vec::new();
     let mut remaining = html;
 
-    // First collect existing image-id:// refs so they survive re-save unchanged.
-    let mut existing_ids: Vec<i64> = Vec::new();
-    {
-        let mut scan = html;
-        while let Some(pos) = scan.find("image-id://") {
-            let after = &scan[pos + 11..];
-            let id_str: String = after.chars().take_while(|c| c.is_ascii_digit()).collect();
-            if let Ok(id) = id_str.parse::<i64>() {
-                if !existing_ids.contains(&id) {
-                    existing_ids.push(id);
-                }
-            }
-            scan = &scan[pos + 11..];
-        }
-    }
-    image_ids.extend_from_slice(&existing_ids);
-
-    // Now process the HTML, replacing data-URL srcs with image-id:// refs.
     while let Some(img_start) = remaining.find("<img") {
         let after_name = &remaining[img_start + 4..];
         match after_name.chars().next() {
@@ -241,7 +228,13 @@ pub fn extract_and_replace_image_refs(
                         }
                     }
                 } else {
-                    // Non-data-URI or already image-id:// src — keep tag as-is.
+                    // Non-data-URI src. If it's an image-id:// ref collect it, but only
+                    // if the image actually exists (prevents FK failures on invalid refs).
+                    if let Some(id) = extract_src_image_ref(tag) {
+                        if !image_ids.contains(&id) && image_exists(db, id)? {
+                            image_ids.push(id);
+                        }
+                    }
                     result.push_str(tag);
                 }
             }
@@ -254,6 +247,43 @@ pub fn extract_and_replace_image_refs(
     result.push_str(remaining);
 
     Ok((result, image_ids))
+}
+
+/// Checks whether a row with the given `id` exists in the `images` table.
+fn image_exists(db: &DatabaseConnection, id: i64) -> Result<bool, String> {
+    let count: i64 = db
+        .conn()
+        .query_row(
+            "SELECT COUNT(*) FROM images WHERE id = ?1",
+            params![id],
+            |row| row.get(0),
+        )
+        .map_err(|e| format!("Failed to check image existence: {}", e))?;
+    Ok(count > 0)
+}
+
+/// Extracts an `image-id://N` image ID from the `src` attribute of an `<img>` tag.
+///
+/// Returns `None` if the tag has no `src=` matching this pattern (e.g. data-URI or
+/// plain URL). Handles both single and double quotes.
+fn extract_src_image_ref(tag: &str) -> Option<i64> {
+    for quote in ['"', '\''] {
+        let pattern = format!("src={}image-id://", quote);
+        let Some(pos) = tag.find(&pattern) else {
+            continue;
+        };
+        let after = &tag[pos + pattern.len()..];
+        let id_str: String = after.chars().take_while(|c| c.is_ascii_digit()).collect();
+        if id_str.is_empty() {
+            continue;
+        }
+        // Ensure the closing character is the same quote (guards against partial matches).
+        if !matches!(after[id_str.len()..].chars().next(), Some(q) if q == quote) {
+            continue;
+        }
+        return id_str.parse::<i64>().ok();
+    }
+    None
 }
 
 /// Replaces `src="data:image/..."` with `src="image-id://ID"` inside an `<img>` tag.
@@ -347,6 +377,7 @@ mod tests {
             .unwrap();
         db.conn().last_insert_rowid()
     }
+
 
     #[test]
     fn test_upsert_image_returns_same_id_for_same_bytes() {
@@ -454,5 +485,161 @@ mod tests {
             .query_row("SELECT COUNT(*) FROM images", [], |r| r.get(0))
             .unwrap();
         assert_eq!(count, 1, "referenced image must be kept");
+    }
+
+    // --- Fix 1: single-quoted image-id:// refs must resolve ---
+
+    #[test]
+    fn test_resolve_image_refs_single_quoted() {
+        let db = make_db();
+        let plaintext = b"png-bytes";
+        let img_id = upsert_image(&db, "image/png", plaintext).unwrap();
+        let entry_id = insert_blank_entry(&db);
+        replace_entry_image_links(&db, entry_id, &[img_id]).unwrap();
+
+        // Simulate HTML stored with single-quoted attribute.
+        let raw_text = format!("<img src='image-id://{}' alt=''>", img_id);
+        let entry = crate::db::queries::DiaryEntry {
+            id: entry_id,
+            date: "2024-01-01".to_string(),
+            title: String::new(),
+            text: raw_text,
+            word_count: 0,
+            date_created: String::new(),
+            date_updated: String::new(),
+            metadata: None,
+        };
+
+        let resolved = resolve_image_refs_in_entries(&db, vec![entry]).unwrap();
+        assert!(
+            resolved[0].text.contains("data:image/png;base64,"),
+            "single-quoted ref must resolve to data URL"
+        );
+        assert!(
+            !resolved[0].text.contains("image-id://"),
+            "no unresolved image-id:// refs must remain"
+        );
+    }
+
+    #[test]
+    fn test_resolve_image_refs_double_quoted() {
+        let db = make_db();
+        let plaintext = b"png-bytes";
+        let img_id = upsert_image(&db, "image/png", plaintext).unwrap();
+        let entry_id = insert_blank_entry(&db);
+        replace_entry_image_links(&db, entry_id, &[img_id]).unwrap();
+
+        let raw_text = format!(r#"<img src="image-id://{}" alt="">"#, img_id);
+        let entry = crate::db::queries::DiaryEntry {
+            id: entry_id,
+            date: "2024-01-01".to_string(),
+            title: String::new(),
+            text: raw_text,
+            word_count: 0,
+            date_created: String::new(),
+            date_updated: String::new(),
+            metadata: None,
+        };
+
+        let resolved = resolve_image_refs_in_entries(&db, vec![entry]).unwrap();
+        assert!(
+            resolved[0].text.contains("data:image/png;base64,"),
+            "double-quoted ref must resolve to data URL"
+        );
+        assert!(!resolved[0].text.contains("image-id://"));
+    }
+
+    // --- Fix 2: existing image refs must only be collected from <img src=...> ---
+
+    #[test]
+    fn test_plain_text_image_id_ref_does_not_create_entry_images_row() {
+        let db = make_db();
+        let img_id = upsert_image(&db, "image/png", b"img").unwrap();
+        let entry_id = insert_blank_entry(&db);
+
+        // Plain text mention of image-id:// — not inside an <img src=...> attribute.
+        let html = format!("See image-id://{} for details", img_id);
+        let (_, ids) = extract_and_replace_image_refs(&html, &db).unwrap();
+
+        assert!(
+            ids.is_empty(),
+            "plain-text image-id:// must not be collected as an image reference"
+        );
+        // Simulate what save_entry does: only the returned ids become entry_images rows.
+        replace_entry_image_links(&db, entry_id, &ids).unwrap();
+        let count: i64 = db
+            .conn()
+            .query_row(
+                "SELECT COUNT(*) FROM entry_images WHERE entry_id = ?1",
+                params![entry_id],
+                |r| r.get(0),
+            )
+            .unwrap();
+        assert_eq!(count, 0, "no entry_images row must be created for plain-text ref");
+    }
+
+    #[test]
+    fn test_invalid_img_src_image_id_ref_is_dropped() {
+        let db = make_db();
+        // No images in the database — image ID 99999 does not exist.
+        let html = r#"<img src="image-id://99999" alt="">"#;
+        let (rewritten, ids) = extract_and_replace_image_refs(html, &db).unwrap();
+
+        assert!(ids.is_empty(), "nonexistent image ID must be dropped from the id list");
+        // The tag must be preserved as-is (not corrupted).
+        assert!(rewritten.contains("image-id://99999"), "tag must pass through unchanged");
+    }
+
+    // --- Fix 3: export resolution tests ---
+
+    #[test]
+    fn test_resolve_image_refs_in_entries_replaces_stored_ref() {
+        let db = make_db();
+        let img_id = upsert_image(&db, "image/png", b"png-bytes").unwrap();
+        let entry_id = insert_blank_entry(&db);
+        replace_entry_image_links(&db, entry_id, &[img_id]).unwrap();
+
+        let raw_text = format!(r#"<p><img src="image-id://{}" alt=""></p>"#, img_id);
+        let entry = crate::db::queries::DiaryEntry {
+            id: entry_id,
+            date: "2024-01-01".to_string(),
+            title: String::new(),
+            text: raw_text,
+            word_count: 0,
+            date_created: String::new(),
+            date_updated: String::new(),
+            metadata: None,
+        };
+
+        let resolved = resolve_image_refs_in_entries(&db, vec![entry]).unwrap();
+        assert!(
+            resolved[0].text.contains("data:image/png;base64,"),
+            "stored ref must be resolved to a data URL"
+        );
+        assert!(
+            !resolved[0].text.contains("image-id://"),
+            "no unresolved refs must remain in exported text"
+        );
+    }
+
+    #[test]
+    fn test_extract_src_image_ref_parses_double_and_single_quotes() {
+        assert_eq!(
+            extract_src_image_ref(r#"<img src="image-id://42" alt="">"#),
+            Some(42)
+        );
+        assert_eq!(
+            extract_src_image_ref("<img src='image-id://7' alt=''>"),
+            Some(7)
+        );
+        assert_eq!(
+            extract_src_image_ref(r#"<img src="data:image/png;base64,abc" alt="">"#),
+            None
+        );
+        assert_eq!(
+            extract_src_image_ref(r#"<img alt="image-id://5">"#),
+            None,
+            "must not match image-id:// outside src attribute"
+        );
     }
 }

@@ -79,6 +79,19 @@ the save path.
 
 ---
 
+## DL-006: `insertExistingImage` toolbar button always visible
+
+**Decision:** The toolbar button for the image picker (`insertExistingImage`) is always
+rendered in `EditorToolbar.tsx`, regardless of whether the journal contains stored images.
+The plan stated the button should be hidden until at least one image exists.
+
+**Rationale:** Hiding the button requires tracking a "journal has images" signal (a new
+resource + state plumbing through `EditorToolbar`). The empty picker state already shows a
+clear "No images" placeholder message, so users are not left confused when no images exist.
+Keeping the button always visible avoids the extra complexity with no material UX cost.
+
+---
+
 ## DL-005: `saveCurrentById` shouldDelete branch — image resolution added
 
 **Decision:** Added `hasImageRefs`/`getEntryImages`/`resolveImageRefs` to the

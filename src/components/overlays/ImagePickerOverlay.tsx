@@ -1,4 +1,5 @@
-import { createResource, For, Show } from 'solid-js';
+import { createResource, For, onMount, Show } from 'solid-js';
+import { X } from 'lucide-solid';
 import { listJournalImages } from '../../lib/tauri';
 import { useI18n } from '../../i18n';
 
@@ -10,6 +11,9 @@ interface ImagePickerOverlayProps {
 export default function ImagePickerOverlay(props: ImagePickerOverlayProps) {
   const t = useI18n();
   const [images] = createResource(listJournalImages);
+  let dialogRef!: HTMLDivElement;
+
+  onMount(() => dialogRef.focus());
 
   const handleKeyDown = (e: KeyboardEvent) => {
     if (e.key === 'Escape') props.onClose();
@@ -26,20 +30,32 @@ export default function ImagePickerOverlay(props: ImagePickerOverlayProps) {
       onClick={(e) => {
         if (e.target === e.currentTarget) props.onClose();
       }}
-      onKeyDown={handleKeyDown}
-      role="dialog"
-      aria-label={t('editor.imagePicker.title')}
     >
-      <div class="bg-surface rounded-lg shadow-xl w-[90vw] max-w-xl p-4 flex flex-col gap-3">
+      <div
+        ref={dialogRef}
+        tabIndex={-1}
+        role="dialog"
+        aria-modal="true"
+        aria-label={t('editor.imagePicker.title')}
+        onKeyDown={handleKeyDown}
+        class="bg-surface rounded-lg shadow-xl w-[90vw] max-w-xl p-4 flex flex-col gap-3 focus:outline-none"
+      >
         <div class="flex items-center justify-between">
           <span class="font-medium text-sm">{t('editor.imagePicker.title')}</span>
-          <button class="text-secondary hover:text-primary text-xs" onClick={() => props.onClose()}>
-            ✕
+          <button
+            type="button"
+            class="text-secondary hover:text-primary"
+            aria-label={t('common.close')}
+            onClick={() => props.onClose()}
+          >
+            <X size={16} />
           </button>
         </div>
 
         <Show when={images.error}>
-          <p class="text-xs text-red-500">{t('editor.imagePicker.error')}</p>
+          <p class="text-xs text-error" role="alert">
+            {t('editor.imagePicker.error')}
+          </p>
         </Show>
 
         <Show when={!images.loading && !images.error}>
@@ -61,11 +77,7 @@ export default function ImagePickerOverlay(props: ImagePickerOverlayProps) {
                       onClick={() => handleInsert(dataUrl)}
                       title={img.mime_type}
                     >
-                      <img
-                        src={dataUrl}
-                        alt=""
-                        class="w-full h-[120px] object-cover block"
-                      />
+                      <img src={dataUrl} alt="" class="w-full h-[120px] object-cover block" />
                     </button>
                   );
                 }}

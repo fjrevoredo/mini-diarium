@@ -1,6 +1,12 @@
 import { untrack, type Accessor, type Setter } from 'solid-js';
 import type { Editor } from '@tiptap/core';
-import { createEntry, saveEntry, deleteEntryIfEmpty, getAllEntryDates, getEntryImages } from '../../../lib/tauri';
+import {
+  createEntry,
+  saveEntry,
+  deleteEntryIfEmpty,
+  getAllEntryDates,
+  getEntryImages,
+} from '../../../lib/tauri';
 import type { DiaryEntry, EntryMetadata } from '../../../lib/tauri';
 import { debounce } from '../../../lib/debounce';
 import { setEntryDates, setIsSaving, registerCleanupCallback } from '../../../state/entries';

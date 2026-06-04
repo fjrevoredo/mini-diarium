@@ -1,6 +1,12 @@
 import { type Accessor, type Setter } from 'solid-js';
 import type { Editor } from '@tiptap/core';
-import { createEntry, deleteEntry, getEntriesForDate, getAllEntryDates, getEntryImages } from '../../../lib/tauri';
+import {
+  createEntry,
+  deleteEntry,
+  getEntriesForDate,
+  getAllEntryDates,
+  getEntryImages,
+} from '../../../lib/tauri';
 import type { DiaryEntry, EntryMetadata } from '../../../lib/tauri';
 import { setEntryDates } from '../../../state/entries';
 import { countWordsInHtml } from '../../../lib/wordcount';

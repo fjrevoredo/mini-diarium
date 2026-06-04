@@ -21,6 +21,7 @@ pub(crate) fn open_connection<P: AsRef<std::path::Path>>(path: P) -> Result<Conn
 ///
 /// Use this in tests instead of `Connection::open_in_memory()` whenever the test
 /// exercises foreign-key behavior (cascades, restrict checks).
+#[cfg(test)]
 pub(crate) fn open_connection_in_memory() -> Result<Connection, String> {
     let conn = Connection::open_in_memory()
         .map_err(|e| format!("Failed to open in-memory database: {}", e))?;
