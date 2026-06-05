@@ -289,7 +289,7 @@ for (const [pkgPath, pkg] of Object.entries(packages)) {
 
   // Scoped packages use lowercase %2f in the packument URL (e.g. @vitest%2fcoverage-v8).
   const encodedName = packageName.startsWith('@')
-    ? packageName.replace('/', '%2f')
+    ? packageName.replaceAll('/', '%2f')
     : packageName;
   const packumentUrl = `https://registry.npmjs.org/${encodedName}`;
 
