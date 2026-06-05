@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1780682311500,
+  "lastUpdate": 1780693296954,
   "repoUrl": "https://github.com/fjrevoredo/mini-diarium",
   "entries": {
     "Benchmark": [
@@ -11908,6 +11908,144 @@ window.BENCHMARK_DATA = {
           {
             "name": "ci_pipeline_duration",
             "value": 465000000000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "39350477+fjrevoredo@users.noreply.github.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "0269ccf495623793a8ab7138238f39a8c34d11c7",
+          "message": "Add code coverage and security badges to README",
+          "timestamp": "2026-06-05T22:53:25+02:00",
+          "tree_id": "7784f930932f057bddc1fe1903f1f9dc5d5b54b8",
+          "url": "https://github.com/fjrevoredo/mini-diarium/commit/0269ccf495623793a8ab7138238f39a8c34d11c7"
+        },
+        "date": 1780693296401,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "auth_argon2/wrap_master_key",
+            "value": 114506442,
+            "range": "± 1729062",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "auth_argon2/unwrap_master_key",
+            "value": 118815673,
+            "range": "± 1610291",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_encrypt/1024",
+            "value": 1817,
+            "range": "± 18",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_encrypt/10240",
+            "value": 12923,
+            "range": "± 22",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_encrypt/102400",
+            "value": 127631,
+            "range": "± 464",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_decrypt/1024",
+            "value": 1468,
+            "range": "± 2",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_decrypt/10240",
+            "value": 12549,
+            "range": "± 19",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_decrypt/102400",
+            "value": 125589,
+            "range": "± 929",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_insert_entry",
+            "value": 1094867,
+            "range": "± 770843",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_update_entry",
+            "value": 1195653,
+            "range": "± 436766",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_delete_entry",
+            "value": 1461394,
+            "range": "± 799154",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_entries_by_date",
+            "value": 10249,
+            "range": "± 42",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_all_entry_dates/100",
+            "value": 26151,
+            "range": "± 106",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_all_entry_dates/500",
+            "value": 104185,
+            "range": "± 526",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_all_entries/100",
+            "value": 128724,
+            "range": "± 1701",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_all_entries/500",
+            "value": 598211,
+            "range": "± 2117",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "count_words_plain_500w",
+            "value": 4668,
+            "range": "± 59",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "count_words_html_500w",
+            "value": 6158,
+            "range": "± 26",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "ci_pipeline_duration",
+            "value": 483000000000,
             "range": "± 0",
             "unit": "ns/iter"
           }
