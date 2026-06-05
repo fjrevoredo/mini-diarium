@@ -154,6 +154,23 @@ function buildMinimalPackument(packageName, pkg) {
   });
 }
 
+// Builds one line of a cacache index-v5 bucket file for a given accept header.
+// cacache hashes the cache key with SHA-256 to derive the bucket file path, then
+// each line in that file is: <sha1-of-json>\t<json>.
+// npm/pacote fetches packuments with two distinct accept headers depending on the
+// caller (corgiDoc for install/ci, fullDoc for view/audit), so we pre-populate
+// both to ensure the entry satisfies whichever request npm makes.
+function buildPackumentIndexLine(key, packumentUrl, integrity, byteLength, acceptHeader) {
+  const json = JSON.stringify({
+    key,
+    integrity,
+    time: 0,
+    size: byteLength,
+    metadata: { url: packumentUrl, reqHeaders: { accept: acceptHeader }, resHeaders: {} },
+  });
+  return `${crypto.createHash('sha1').update(json).digest('hex')}\t${json}`;
+}
+
 const lock = JSON.parse(fs.readFileSync(lockfilePath, 'utf8'));
 const packages = lock.packages ?? {};
 
@@ -284,14 +301,22 @@ for (const [pkgPath, pkg] of Object.entries(packages)) {
     dest: `flatpak-node/npm-cache/_cacache/content-v2/sha512/${sha512Hex.slice(0, 2)}/${sha512Hex.slice(2, 4)}`,
   });
 
-  // Index entry — make-fetch-happen cache record for this packument URL
+  // Index entry — one cacache bucket file containing two lines: one per accept
+  // header variant. cacache uses SHA-256 of the cache key for the bucket path.
   const key = `make-fetch-happen:request-cache:${packumentUrl}`;
-  const index = getIndexRecord(npmCachePath, key, packumentUrl, packumentIntegrity, packumentJson.length);
+  const keyHash = crypto.createHash('sha256').update(key).digest('hex');
+  const byteLength = Buffer.byteLength(packumentJson);
+  const CORGI = 'application/vnd.npm.install-v1+json; q=1.0, application/json; q=0.8, */*';
+  const FULL = 'application/json';
+  const indexContents = [
+    buildPackumentIndexLine(key, packumentUrl, packumentIntegrity, byteLength, CORGI),
+    buildPackumentIndexLine(key, packumentUrl, packumentIntegrity, byteLength, FULL),
+  ].join('\n');
   sources.push({
     type: 'inline',
-    contents: index.contents,
-    'dest-filename': index.sha1.slice(4),
-    dest: `flatpak-node/npm-cache/_cacache/index-v5/${index.sha1.slice(0, 2)}/${index.sha1.slice(2, 4)}`,
+    contents: indexContents,
+    'dest-filename': keyHash.slice(4),
+    dest: `flatpak-node/npm-cache/_cacache/index-v5/${keyHash.slice(0, 2)}/${keyHash.slice(2, 4)}`,
   });
 }
 
