@@ -136,6 +136,24 @@ async function getContentSize(item, contentFilePath, sizeCache) {
   return sizeCache.get(item.resolved);
 }
 
+function buildMinimalPackument(packageName, pkg) {
+  const versionData = {
+    name: packageName,
+    version: pkg.version,
+    dist: { tarball: pkg.resolved, integrity: pkg.integrity },
+  };
+  if (pkg.dependencies) versionData.dependencies = pkg.dependencies;
+  if (pkg.peerDependencies) versionData.peerDependencies = pkg.peerDependencies;
+  if (pkg.peerDependenciesMeta) versionData.peerDependenciesMeta = pkg.peerDependenciesMeta;
+  if (pkg.optionalDependencies) versionData.optionalDependencies = pkg.optionalDependencies;
+
+  return JSON.stringify({
+    name: packageName,
+    'dist-tags': { latest: pkg.version },
+    versions: { [pkg.version]: versionData },
+  });
+}
+
 const lock = JSON.parse(fs.readFileSync(lockfilePath, 'utf8'));
 const packages = lock.packages ?? {};
 
@@ -220,6 +238,55 @@ for (const item of normalEntries.values()) {
     dest: `flatpak-node/npm-cache/_cacache/content-v2/sha512/${decoded.hex.slice(0, 2)}/${decoded.hex.slice(2, 4)}`,
   });
 
+  sources.push({
+    type: 'inline',
+    contents: index.contents,
+    'dest-filename': index.sha1.slice(4),
+    dest: `flatpak-node/npm-cache/_cacache/index-v5/${index.sha1.slice(0, 2)}/${index.sha1.slice(2, 4)}`,
+  });
+}
+
+// Build set of all installed package names (for unresolved-optional-peer detection)
+const installedPackageNames = new Set(
+  Object.keys(packages)
+    .filter((p) => p.startsWith('node_modules/'))
+    .map((p) => p.slice('node_modules/'.length)),
+);
+
+for (const [pkgPath, pkg] of Object.entries(packages)) {
+  if (!pkgPath.startsWith('node_modules/')) continue;
+  if (!pkg.peerDependenciesMeta) continue;
+  if (!pkg.resolved || !pkg.version) continue;
+
+  // Only cache packuments for packages that have at least one optional peer dep
+  // that is NOT present in the lockfile's node_modules tree.
+  const hasUnresolvedOptional = Object.entries(pkg.peerDependenciesMeta).some(
+    ([peer, meta]) => meta.optional && !installedPackageNames.has(peer),
+  );
+  if (!hasUnresolvedOptional) continue;
+
+  const packageName = pkgPath.slice('node_modules/'.length);
+  const packumentJson = buildMinimalPackument(packageName, pkg);
+  const sha512Hex = crypto.createHash('sha512').update(packumentJson).digest('hex');
+  const packumentIntegrity = `sha512-${Buffer.from(sha512Hex, 'hex').toString('base64')}`;
+
+  // Scoped packages use lowercase %2f in the packument URL (e.g. @vitest%2fcoverage-v8).
+  const encodedName = packageName.startsWith('@')
+    ? packageName.replace('/', '%2f')
+    : packageName;
+  const packumentUrl = `https://registry.npmjs.org/${encodedName}`;
+
+  // Content entry — synthetic packument JSON stored by its sha512 hash
+  sources.push({
+    type: 'inline',
+    contents: packumentJson,
+    'dest-filename': sha512Hex.slice(4),
+    dest: `flatpak-node/npm-cache/_cacache/content-v2/sha512/${sha512Hex.slice(0, 2)}/${sha512Hex.slice(2, 4)}`,
+  });
+
+  // Index entry — make-fetch-happen cache record for this packument URL
+  const key = `make-fetch-happen:request-cache:${packumentUrl}`;
+  const index = getIndexRecord(npmCachePath, key, packumentUrl, packumentIntegrity, packumentJson.length);
   sources.push({
     type: 'inline',
     contents: index.contents,
