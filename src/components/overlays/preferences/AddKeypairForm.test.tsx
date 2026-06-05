@@ -93,7 +93,7 @@ describe('AddKeypairForm', () => {
   });
 
   it('does not write key file to disk when registerKeypair fails', async () => {
-    vi.mocked(save).mockResolvedValueOnce('/tmp/test.key');
+    vi.mocked(save).mockResolvedValueOnce('/home/testuser/.config/test.key');
     mockRegisterKeypair.mockRejectedValueOnce(new Error('DB write failed'));
     renderForm();
     fireEvent.input(screen.getByPlaceholderText('e.g. My YubiKey'), {
@@ -122,7 +122,7 @@ describe('AddKeypairForm', () => {
     });
     vi.mocked(save).mockImplementation(async () => {
       callOrder.push('save');
-      return '/tmp/test.key';
+      return '/home/testuser/.config/test.key';
     });
     mockRegisterKeypair.mockImplementation(async () => {
       callOrder.push('registerKeypair');

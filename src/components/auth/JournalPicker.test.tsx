@@ -55,7 +55,7 @@ describe('JournalPicker component', () => {
     mocks.addJournal.mockResolvedValue({
       id: 'new',
       name: 'New',
-      path: '/tmp/new',
+      path: '/home/testuser/journals/new',
       auto_protected: false,
       require_all_auth: false,
       db_filename: 'diary.db',
@@ -99,7 +99,7 @@ describe('JournalPicker component', () => {
       {
         id: 'j1',
         name: 'Work Journal',
-        path: '/tmp/work',
+        path: '/home/testuser/journals/work',
         auto_protected: false,
         require_all_auth: false,
         db_filename: 'diary.db',
@@ -142,7 +142,7 @@ describe('JournalPicker component', () => {
     const manyJournals: JournalConfig[] = Array.from({ length: 6 }, (_, i) => ({
       id: `j${i}`,
       name: `Journal ${i}`,
-      path: `/tmp/journal-${i}`,
+      path: `/home/testuser/journals/journal-${i}`,
       auto_protected: false,
       require_all_auth: false,
       db_filename: 'diary.db',
@@ -159,7 +159,7 @@ describe('JournalPicker component', () => {
     const fewJournals: JournalConfig[] = Array.from({ length: 3 }, (_, i) => ({
       id: `j${i}`,
       name: `Journal ${i}`,
-      path: `/tmp/journal-${i}`,
+      path: `/home/testuser/journals/journal-${i}`,
       auto_protected: false,
       require_all_auth: false,
       db_filename: 'diary.db',
