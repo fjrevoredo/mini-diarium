@@ -103,6 +103,8 @@ jobs:
           bun-version: 1.2
 
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: llvm-tools-preview
 
       - name: Cache bun dependencies
         uses: actions/cache@v5
@@ -136,12 +138,37 @@ jobs:
         if: steps.cache-nextest.outputs.cache-hit != 'true'
         run: cargo install cargo-nextest --locked
 
+      - name: Cache llvm-cov binary
+        id: cache-llvm-cov
+        uses: actions/cache@v5
+        with:
+          path: ~/.cargo/bin/cargo-llvm-cov
+          key: llvm-cov-Linux-v0.6  # bump when upgrading llvm-cov
+
+      - name: Install cargo-llvm-cov
+        if: steps.cache-llvm-cov.outputs.cache-hit != 'true'
+        run: cargo install cargo-llvm-cov --locked
+
       - name: Frontend tests
-        run: bun run test:run
+        run: bun run test:coverage
 
       - name: Backend tests
         working-directory: src-tauri
-        run: cargo nextest run
+        run: cargo llvm-cov nextest --lcov --output-path lcov.info
+
+      - name: Upload frontend coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./coverage/lcov.info
+          flags: frontend
+
+      - name: Upload backend coverage to Codecov
+        uses: codecov/codecov-action@v5
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: ./src-tauri/lcov.info
+          flags: backend
 
   build-linux:
     name: Build (Linux)

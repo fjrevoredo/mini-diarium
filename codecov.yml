@@ -1,0 +1,17 @@
+codecov:
+  notify:
+    after_n_builds: 2   # wait for both frontend + backend before posting PR status
+
+coverage:
+  status:
+    project:
+      default:
+        target: auto   # compare against previous build
+
+flags:
+  frontend:
+    paths:
+      - src/
+  backend:
+    paths:
+      - src-tauri/src/

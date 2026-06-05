@@ -83,6 +83,7 @@
     "@types/node": "^25.9.1",
     "@unocss/reset": "^66.7.0",
     "@unocss/vite": "^66.7.0",
+    "@vitest/coverage-v8": "^4.1.8",
     "@vitest/ui": "^4.1.8",
     "@wdio/cli": "^9.27.2",
     "@wdio/local-runner": "^9.27.2",
