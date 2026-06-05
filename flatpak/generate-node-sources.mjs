@@ -168,7 +168,9 @@ function buildPackumentIndexLine(key, packumentUrl, integrity, byteLength, accep
     size: byteLength,
     metadata: { url: packumentUrl, reqHeaders: { accept: acceptHeader }, resHeaders: {} },
   });
-  return `${crypto.createHash('sha1').update(json).digest('hex')}\t${json}`;
+  // SHA-1 is required by the cacache index-v5 format: each line is <sha1-of-json>\t<json>.
+  // This is not a security hash — it is the cacache integrity marker for index line parsing.
+  return `${crypto.createHash('sha1').update(json).digest('hex')}\t${json}`; // NOSONAR (S4790) — cacache internal format, not cryptographic security
 }
 
 const lock = JSON.parse(fs.readFileSync(lockfilePath, 'utf8'));
