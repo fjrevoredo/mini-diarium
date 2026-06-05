@@ -153,20 +153,19 @@ pub fn change_diary_directory(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::fs;
 
     #[test]
     fn test_change_diary_directory_same_dir_is_noop() {
-        let cur_dir = std::env::current_dir().unwrap();
-        let db_path = cur_dir.join("test_chdir_same.db");
-        fs::write(&db_path, b"fake db").unwrap();
+        let dir = tempfile::tempdir().unwrap();
+        let db_path = dir.path().join("diary.db");
+        std::fs::write(&db_path, b"fake db").unwrap();
 
         let db_path_mutex = Mutex::new(db_path.clone());
-        let backups_mutex = Mutex::new(cur_dir.join("test_chdir_same_backups"));
-        let cfg_dir = PathBuf::from(".");
+        let backups_mutex = Mutex::new(dir.path().join("backups"));
+        let cfg_dir = dir.path().to_path_buf();
 
         let result = change_diary_directory_inner(
-            cur_dir.clone(),
+            dir.path().to_path_buf(),
             db_path.clone(),
             "diary.db",
             &db_path_mutex,
@@ -174,131 +173,104 @@ mod tests {
             &cfg_dir,
         );
         assert!(result.is_ok());
-        // File should still exist at original location
         assert!(db_path.exists());
-
-        let _ = fs::remove_file(&db_path);
     }
 
     #[test]
     fn test_change_diary_directory_moves_file() {
-        let src_dir = PathBuf::from("test_chdir_src");
-        let dst_dir = PathBuf::from("test_chdir_dst");
-        fs::create_dir_all(&src_dir).unwrap();
-        fs::create_dir_all(&dst_dir).unwrap();
+        let src = tempfile::tempdir().unwrap();
+        let dst = tempfile::tempdir().unwrap();
+        let cfg = tempfile::tempdir().unwrap();
 
-        let src_db = src_dir.join("diary.db");
-        fs::write(&src_db, b"fake db content").unwrap();
-
-        let cfg_dir = PathBuf::from("test_chdir_cfg");
-        fs::create_dir_all(&cfg_dir).unwrap();
+        let src_db = src.path().join("diary.db");
+        std::fs::write(&src_db, b"fake db content").unwrap();
 
         let db_path_mutex = Mutex::new(src_db.clone());
-        let backups_mutex = Mutex::new(src_dir.join("backups"));
+        let backups_mutex = Mutex::new(src.path().join("backups"));
 
-        let dst_abs = fs::canonicalize(&dst_dir).unwrap();
         let result = change_diary_directory_inner(
-            dst_abs.clone(),
+            dst.path().to_path_buf(),
             src_db.clone(),
             "diary.db",
             &db_path_mutex,
             &backups_mutex,
-            &cfg_dir,
+            cfg.path(),
         );
         assert!(result.is_ok(), "Expected Ok, got: {:?}", result);
         assert!(!src_db.exists(), "Source file should be removed");
         assert!(
-            dst_abs.join("diary.db").exists(),
+            dst.path().join("diary.db").exists(),
             "Destination file should exist"
         );
-
-        let _ = fs::remove_dir_all(&src_dir);
-        let _ = fs::remove_dir_all(&dst_dir);
-        let _ = fs::remove_dir_all(&cfg_dir);
     }
 
     #[test]
     fn test_change_diary_directory_both_have_diary_returns_err() {
-        let src_dir = PathBuf::from("test_chdir_both_src");
-        let dst_dir = PathBuf::from("test_chdir_both_dst");
-        fs::create_dir_all(&src_dir).unwrap();
-        fs::create_dir_all(&dst_dir).unwrap();
+        let src = tempfile::tempdir().unwrap();
+        let dst = tempfile::tempdir().unwrap();
+        let cfg = tempfile::tempdir().unwrap();
 
-        fs::write(src_dir.join("diary.db"), b"src db").unwrap();
-        fs::write(dst_dir.join("diary.db"), b"dst db").unwrap();
+        std::fs::write(src.path().join("diary.db"), b"src db").unwrap();
+        std::fs::write(dst.path().join("diary.db"), b"dst db").unwrap();
 
-        let cfg_dir = PathBuf::from("test_chdir_both_cfg");
-        fs::create_dir_all(&cfg_dir).unwrap();
+        let db_path_mutex = Mutex::new(src.path().join("diary.db"));
+        let backups_mutex = Mutex::new(src.path().join("backups"));
 
-        let db_path_mutex = Mutex::new(src_dir.join("diary.db"));
-        let backups_mutex = Mutex::new(src_dir.join("backups"));
-
-        let dst_abs = fs::canonicalize(&dst_dir).unwrap();
         let result = change_diary_directory_inner(
-            dst_abs,
-            src_dir.join("diary.db"),
+            dst.path().to_path_buf(),
+            src.path().join("diary.db"),
             "diary.db",
             &db_path_mutex,
             &backups_mutex,
-            &cfg_dir,
+            cfg.path(),
         );
         assert!(result.is_err());
         assert!(result.unwrap_err().contains("already exists"));
-
-        let _ = fs::remove_dir_all(&src_dir);
-        let _ = fs::remove_dir_all(&dst_dir);
-        let _ = fs::remove_dir_all(&cfg_dir);
     }
 
     #[test]
     fn test_change_diary_directory_no_diary_yet_updates_path() {
-        let dst_dir = PathBuf::from("test_chdir_nodiary_dst");
-        fs::create_dir_all(&dst_dir).unwrap();
-
-        let cfg_dir = PathBuf::from("test_chdir_nodiary_cfg");
-        fs::create_dir_all(&cfg_dir).unwrap();
+        let dst = tempfile::tempdir().unwrap();
+        let cfg = tempfile::tempdir().unwrap();
 
         // db_path doesn't exist yet (fresh install scenario)
-        let db_path_mutex = Mutex::new(PathBuf::from("test_chdir_nodiary_src/diary.db"));
-        let backups_mutex = Mutex::new(PathBuf::from("test_chdir_nodiary_src/backups"));
+        let nonexistent = dst.path().join("nonexistent/diary.db");
+        let db_path_mutex = Mutex::new(nonexistent.clone());
+        let backups_mutex = Mutex::new(dst.path().join("nonexistent/backups"));
 
-        let dst_abs = fs::canonicalize(&dst_dir).unwrap();
         let result = change_diary_directory_inner(
-            dst_abs.clone(),
-            PathBuf::from("test_chdir_nodiary_src/diary.db"),
+            dst.path().to_path_buf(),
+            nonexistent,
             "diary.db",
             &db_path_mutex,
             &backups_mutex,
-            &cfg_dir,
+            cfg.path(),
         );
         assert!(result.is_ok(), "Expected Ok, got: {:?}", result);
-        // db_path slot should be updated to new location
-        assert_eq!(*db_path_mutex.lock().unwrap(), dst_abs.join("diary.db"));
-
-        let _ = fs::remove_dir_all(&dst_dir);
-        let _ = fs::remove_dir_all(&cfg_dir);
+        assert_eq!(*db_path_mutex.lock().unwrap(), dst.path().join("diary.db"));
     }
 
     #[test]
     fn test_change_diary_directory_auto_locks_and_moves_file() {
         use crate::db::schema::create_database;
 
-        let src_dir = PathBuf::from("test_autolock_src");
-        let dst_dir = PathBuf::from("test_autolock_dst");
-        let cfg_dir = PathBuf::from("test_autolock_cfg");
-        fs::create_dir_all(&src_dir).unwrap();
-        fs::create_dir_all(&dst_dir).unwrap();
-        fs::create_dir_all(&cfg_dir).unwrap();
+        let src = tempfile::tempdir().unwrap();
+        let dst = tempfile::tempdir().unwrap();
+        let cfg = tempfile::tempdir().unwrap();
 
-        let src_db = src_dir.join("diary.db");
+        let src_db = src.path().join("diary.db");
         let db = create_database(src_db.to_str().unwrap(), "test".to_string()).unwrap();
-        let dst_abs = fs::canonicalize(&dst_dir).unwrap();
 
-        let state = DiaryState::new(src_db.clone(), src_dir.join("backups"), cfg_dir.clone());
+        let state = DiaryState::new(
+            src_db.clone(),
+            src.path().join("backups"),
+            cfg.path().to_path_buf(),
+        );
         *state.db.lock().unwrap() = Some(db);
         assert!(state.db.lock().unwrap().is_some(), "should start unlocked");
 
-        let result = change_diary_directory_with_auto_lock_inner(dst_abs.to_str().unwrap(), &state);
+        let result =
+            change_diary_directory_with_auto_lock_inner(dst.path().to_str().unwrap(), &state);
         assert!(result.is_ok(), "Expected Ok, got: {:?}", result);
 
         assert!(
@@ -307,12 +279,8 @@ mod tests {
         );
         assert!(!src_db.exists(), "source file should be gone");
         assert!(
-            dst_abs.join("diary.db").exists(),
+            dst.path().join("diary.db").exists(),
             "file should be at destination"
         );
-
-        let _ = fs::remove_dir_all(&src_dir);
-        let _ = fs::remove_dir_all(&dst_dir);
-        let _ = fs::remove_dir_all(&cfg_dir);
     }
 }

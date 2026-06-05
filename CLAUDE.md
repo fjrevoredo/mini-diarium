@@ -20,14 +20,14 @@ For domain-specific conventions, gotchas, and checklists, see:
 
 ## Execution Environment
 
-This repo is commonly worked on from a WSL shell over a Windows checkout (`/mnt/d/Repos/mini-diarium` <-> `D:\Repos\mini-diarium`). In that setup, the reliable path is the Windows toolchain, not the WSL one.
+This repo is commonly worked on from a WSL shell over a Windows checkout. In that setup, the reliable path is the Windows toolchain, not the WSL one.
 
 Operational rule for agents in this environment:
 
 - Prefer `cmd.exe /c ...` for project commands unless you have explicitly verified a Linux-native setup.
-- Do not start with bare `bun`, `cargo`, `vite`, `vitest`, or `tauri` from WSL in this repo.
-- For Rust commands under `src-tauri`, switch drives explicitly:
-  - `cmd.exe /c "cd /d D:\Repos\mini-diarium\src-tauri && cargo test"`
+- Do not start with bare `bun`, `vite`, `vitest`, or `tauri` from WSL in this repo. (`cargo` is fine bare — use `--manifest-path src-tauri/Cargo.toml` from the repo root.)
+- For Rust commands under `src-tauri`, use `--manifest-path` to run from the repo root:
+  - `cargo test --manifest-path src-tauri/Cargo.toml`
 - Use repo-local Tauri CLI through `cmd.exe /c bun run tauri ...`; do not assume `cargo tauri` is globally installed.
 - Treat generic shell snippets in docs as human-oriented unless they already say "Run from this Codex shell".
 
@@ -37,7 +37,7 @@ Commands verified to work from this shell via Windows:
 - `cmd.exe /c bun run lint`
 - `cmd.exe /c bun run test:run`
 - `cmd.exe /c bun run build`
-- `cmd.exe /c "cd /d D:\Repos\mini-diarium\src-tauri && cargo test"`
+- `cargo test --manifest-path src-tauri/Cargo.toml`
 - `cmd.exe /c bun run test:e2e`
 - `cmd.exe /c bun run tauri info`
 - `cmd.exe /c bun run diagrams:check`
@@ -71,7 +71,7 @@ Quick reference (ASCII art):
                              │ Reactive Signals
 ┌────────────────────────────┴────────────────────────────────────┐
 │                       STATE LAYER                               │
-│ auth.ts · entries.ts · journals.ts · search.ts · ui.ts · preferences.ts │
+│              Signal-based state modules (src/state/ — one module per domain)              │
 └────────────────────────────┬────────────────────────────────────┘
                              │ invoke() / listen()
 ┌────────────────────────────┴────────────────────────────────────┐
@@ -102,75 +102,9 @@ Static marketing site — plain HTML/CSS/JS. Deploy via Coolify using `website/d
 
 ## Command Registry
 
-All 65 registered Tauri commands (source: `lib.rs`). Rust names use `snake_case`; frontend wrappers in `src/lib/tauri.ts` use `camelCase`.
+All Tauri commands are registered in `src-tauri/src/lib.rs` (`generate_handler![]`). Frontend wrappers with typed signatures live in `src/lib/tauri.ts`. Rust names use `snake_case`; wrappers use `camelCase`.
 
-| Module | Rust Command | Frontend Wrapper | Description |
-|--------|-------------|-----------------|-------------|
-| auth | `create_diary` | `createJournal(password)` | Create new encrypted DB |
-| auth | `create_diary_auto` | `createJournalAuto()` | Create local-only journal (no password) |
-| auth | `unlock_diary_auto` | `unlockJournalAuto()` | Auto-unlock local-only journal from config key |
-| auth | `unlock_diary` | `unlockJournal(password)` | Decrypt and open DB |
-| auth | `lock_diary` | `lockJournal()` | Close DB connection |
-| auth | `diary_exists` | `journalExists()` | Check if DB file exists |
-| auth | `check_diary_path` | `checkJournalPath(dir)` | Stateless check: true if `{dir}/diary.db` exists |
-| auth | `is_diary_unlocked` | `isJournalUnlocked()` | Check unlock state |
-| auth | `get_diary_path` | `getJournalPath()` | Return journal file path |
-| auth | `change_diary_directory` | `changeJournalDirectory(newDir)` | Change journal directory (locked state only) |
-| auth | `change_password` | `changePassword(old, new)` | Re-encrypt with new password |
-| auth | `reset_diary` | `resetJournal()` | Delete and recreate DB |
-| auth | `verify_password` | `verifyPassword(password)` | Validate password without side effects |
-| auth | `unlock_diary_with_keypair` | `unlockJournalWithKeypair(keyPath)` | Open DB via private key file |
-| auth | `list_auth_methods` | `listAuthMethods()` | List all registered auth slots |
-| auth | `generate_keypair` | `generateKeypair()` | Generate X25519 keypair, return hex |
-| auth | `write_key_file` | `writeKeyFile(path, privateKeyHex)` | Write private key hex to file |
-| auth | `register_password` | `registerPassword(newPassword)` | Register a password auth slot (requires journal unlocked) |
-| auth | `register_keypair` | `registerKeypair(currentPassword, publicKeyHex, label)` | Add keypair auth slot |
-| auth | `remove_auth_method` | `removeAuthMethod(slotId, currentPassword)` | Remove auth slot (guards last) |
-| auth | `unlock_diary_all_methods` | `unlockJournalAllMethods(credentials)` | Unlock with all auth methods simultaneously (multi-auth) |
-| auth | `set_require_all_auth` | `setRequireAllAuth(enabled)` | Enable/disable require-all-auth for the active journal |
-| auth | `peek_auth_slot_types` | `peekAuthSlotTypes()` | Read auth slot types from locked DB (no unlock required); used by multi-auth unlock form |
-| auth | `list_journals` | `listJournals()` | List configured journals from config.json |
-| auth | `get_active_journal_id` | `getActiveJournalId()` | Get active journal ID |
-| auth | `add_journal` | `addJournal(name, path)` | Add a new journal entry to config |
-| auth | `remove_journal` | `removeJournal(id)` | Remove journal (guards last); auto-locks if active |
-| auth | `rename_journal` | `renameJournal(id, name)` | Rename a journal |
-| auth | `switch_journal` | `switchJournal(id)` | Auto-lock, switch db_path/backups_dir, persist active |
-| entries | `create_entry` | `createEntry(date)` | Create blank entry, returns DiaryEntry with assigned id |
-| entries | `save_entry` | `saveEntry(id, title, text)` | Update entry by id (encrypts) |
-| entries | `get_entries_for_date` | `getEntriesForDate(date)` | Fetch all entries for a date (newest-first) |
-| entries | `delete_entry_if_empty` | `deleteEntryIfEmpty(id, title, text)` | Remove entry by id if content is empty |
-| entries | `delete_entry` | `deleteEntry(id)` | Delete entry by id unconditionally |
-| entries | `get_all_entry_dates` | `getAllEntryDates()` | List all dates with entries |
-| files | `read_file_bytes` | `readFileBytes(path)` | Read local image file bytes (jpg/jpeg/png/gif/webp/bmp) |
-| files | `read_text_file` | `readTextFile(path)` | Read local Markdown file as UTF-8 text (.md only, 1 MiB cap) |
-| search | `search_entries` | `searchEntries(query)` | Stub — always returns `[]`; interface preserved for future secure search |
-| nav | `navigate_previous_day` | `navigatePreviousDay(currentDate)` | Previous day with entry |
-| nav | `navigate_next_day` | `navigateNextDay(currentDate)` | Next day with entry |
-| nav | `navigate_to_today` | `navigateToToday()` | Today's date string |
-| nav | `navigate_previous_month` | `navigatePreviousMonth(currentDate)` | Same day, previous month |
-| nav | `navigate_next_month` | `navigateNextMonth(currentDate)` | Same day, next month |
-| stats | `get_statistics` | `getStatistics()` | Aggregate stats (streaks, counts, words) |
-| export | `export_json` | `exportJson(filePath)` | Export all entries as JSON |
-| export | `export_markdown` | `exportMarkdown(filePath)` | Export all entries as Markdown |
-| plugin | `list_import_plugins` | `listImportPlugins()` | List all import plugins (built-in + Rhai) |
-| plugin | `list_export_plugins` | `listExportPlugins()` | List all export plugins (built-in + Rhai) |
-| plugin | `run_import_plugin` | `runImportPlugin(pluginId, filePath)` | Run import via plugin registry |
-| plugin | `run_export_plugin` | `runExportPlugin(pluginId, filePath)` | Run export via plugin registry |
-| debug | `generate_debug_dump` | `generateDebugDump(filePath, preferencesJson)` | Write privacy-safe diagnostic JSON to file |
-| menu | `update_menu_locale` | `updateMenuLocale(locale)` | Update all native menu item texts to the given locale; falls back to English |
-| fonts | `list_bundled_fonts` | `listBundledFonts()` | List available bundled editor fonts |
-| fonts | `get_font_data` | `getFontData(fontId)` | Get a font's base64 data URL; checks custom DB fonts first, falls back to bundled; sets `bold_synthesized: true` when Bold weight is absent |
-| fonts | `list_custom_fonts` | `listCustomFonts()` | List all custom font families stored in the journal DB with per-weight flags |
-| fonts | `import_custom_font` | `importCustomFont(family, weight, path)` | Store a font file BLOB in `custom_fonts`; validates magic bytes, size (≤20 MB), and requires Regular before Bold |
-| fonts | `delete_custom_font_family` | `deleteCustomFontFamily(family)` | Remove all weight rows for a family from `custom_fonts` |
-| tags | `create_tag` | `createTag(name)` | Create encrypted tag; returns `Tag` (deduplicates by HKDF fingerprint) |
-| tags | `get_all_tags` | `getAllTags()` | Return all tags with decrypted names, sorted alphabetically |
-| tags | `rename_tag` | `renameTag(id, name)` | Re-encrypt tag name and update HKDF fingerprint |
-| tags | `delete_tag` | `deleteTag(id)` | Delete tag; cascades to remove all `entry_tags` associations |
-| tags | `add_tag_to_entry` | `addTagToEntry(entryId, tagId)` | Associate an existing tag with an entry (idempotent) |
-| tags | `remove_tag_from_entry` | `removeTagFromEntry(entryId, tagId)` | Remove tag association from an entry |
-| tags | `get_tags_for_entry` | `getTagsForEntry(entryId)` | Return all tags on a specific entry (decrypted) |
-| tags | `get_entry_dates_by_tag` | `getEntryDatesByTag(tagId)` | Return all entry dates (`YYYY-MM-DD`) associated with a tag |
+Command groups: `auth` (journal lifecycle, auth slots, multi-auth), `entries`, `files`, `search` (stub — see Gotcha #1), `nav`, `stats`, `export`, `plugin`, `debug`, `menu`, `fonts`, `tags`, `images`.
 
 ## Conventions
 
@@ -194,14 +128,14 @@ Rust emits → frontend listens (cross-layer coordination):
 menu.rs:      app.emit("menu-navigate-previous-day", ())
 shortcuts.ts: listen("menu-navigate-previous-day", handler)
 ```
-All menu event names are prefixed `menu-`. See `menu.rs:78-107` for the full list.
+All menu event names are prefixed `menu-`. See `menu.rs` for the full list.
 
 ## Verification Commands
 
 ```bash
 # Backend
-cmd.exe /c "cd /d D:\Repos\mini-diarium\src-tauri && cargo test"
-cmd.exe /c "cd /d D:\Repos\mini-diarium\src-tauri && cargo test <module>"
+cargo test --manifest-path src-tauri/Cargo.toml
+cargo test --manifest-path src-tauri/Cargo.toml <module>
 
 # Frontend
 cmd.exe /c bun run test:run
@@ -219,7 +153,7 @@ cmd.exe /c bun run diagrams:check       # Verification-only
 cmd.exe /c bun run diagrams             # Regenerate all docs/diagrams/ SVGs
 
 # Benchmarks
-cmd.exe /c "cd /d D:\Repos\mini-diarium\src-tauri && cargo bench"
+cargo bench --manifest-path src-tauri/Cargo.toml
 cmd.exe /c bun run bench
 ```
 
@@ -260,41 +194,23 @@ See [Backend guide](src-tauri/CLAUDE.md) for the full auth architecture and per-
 2. **Format after changes.** Use `cmd.exe /c bun run format`. Prettier is configured for the full `src/` tree and only modifies files with style violations.
 3. **Use `manual-planning` skill for any plan.** When asked to create a plan, roadmap, implementation checklist, or planning document, load the `manual-planning` skill and follow its template.
 4. **Use `todo-manager` skill for TODO operations.** When adding, tracking, archiving, or validating TODO items in `docs/todo/TODO.md`, load the `todo-manager` skill. Never manually assign TODO IDs.
+5. **Before implementing any plan step that configures a third-party extension, framework, or WebView behavior, open the installed source or relevant backend source to verify the step's assumptions.** If the source contradicts the plan, halt and surface the discrepancy before proceeding.
+6. **Keep implementation commits scoped.** Each commit should contain one logical change. If a task touches unrelated files (e.g. an opportunistic refactor during a feature task), put those changes in a separate commit.
+7. **Follow [`docs/best-practices/CONTEXT_FILES_BEST_PRACTICES.md`](docs/best-practices/CONTEXT_FILES_BEST_PRACTICES.md) when editing any CLAUDE.md.** Prefer pointers over copies; update gotchas, security rules, and conventions when behavior changes; do not reintroduce file trees or command tables. Specific triggers:
+   - New `data-testid` used by E2E tests → add to the canonical table in `src/CLAUDE.md`.
+   - New schema migration → bump schema version description in `src-tauri/CLAUDE.md` Gotcha #1 and update the migration range comment.
+   - New Tauri command group → add the group name to the Command Registry paragraph in root `CLAUDE.md`.
 
 ## Common Task Checklists
 
 ### Updating the App Logo / Icons
 
-The source logo lives at `public/logo-transparent.svg` (1024×1024, dark background). It is used in two places:
-
-**1. Frontend auth screens** — referenced as `/logo-transparent.svg` in:
-- `src/components/auth/PasswordPrompt.tsx`
-- `src/components/auth/PasswordCreation.tsx`
-
-Replace the file and the change takes effect immediately on the next build.
-
-**2. Tauri app icons** — all platform icon sizes in `src-tauri/icons/` are derived from the same SVG. Regenerate them with:
-```bash
-cmd.exe /c bun run tauri icon public/logo-transparent.svg
-```
-This overwrites every icon variant (ICO, ICNS, PNG at all sizes, Windows AppX, iOS, Android) in one command. Commit the updated `src-tauri/icons/` directory alongside any change to the source SVG.
+Use the `update-app-icons` skill. Source SVG: `public/logo-transparent.svg` (1024×1024).
 
 ### Updating Dependencies (npm/bun)
 
-When bumping versions in `package.json`, two lockfiles must both be updated:
-
-1. **`bun.lock`** — used by the dev workflow. Regenerate with:
-   ```bash
-   cmd.exe /c bun install
-   ```
-
-2. **`package-lock.json`** — required by Flathub's `flatpak-node-generator` to resolve npm dependencies at build time. Regenerate with:
-   ```bash
-   cmd.exe /c npm install --package-lock-only --legacy-peer-deps
-   ```
-   The `--legacy-peer-deps` flag is required because `eslint-plugin-solid` declares a peer of `eslint@^9` but the project uses `eslint@10`; bun resolves this silently, npm does not.
-
-Both files are committed to the repo. Always commit them together after any `package.json` change.
+Use the `sync-lockfiles` skill. Both `bun.lock` and `package-lock.json` must be committed
+together after any `package.json` change.
 
 ### Creating a Release
 

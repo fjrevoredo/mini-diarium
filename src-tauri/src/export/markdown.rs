@@ -168,6 +168,14 @@ pub fn html_to_markdown(html: &str) -> String {
     // 9. Unordered list wrappers, list items, paragraphs
     result = apply_replacements(result, BLOCK_TAGS);
 
+    // 9.5. Links — emit `[label](url)` for `<a href="...">label</a>`.
+    // Must run after stages 1-9 so inline formatting inside the label is already
+    // converted (e.g. `<strong>` → `**`) and `<p>` wrappers around the link are
+    // stripped. Must run BEFORE strip_remaining_tags so the `<a>` tag is still
+    // parseable. Entity decoding is applied inside process_links itself rather
+    // than relying on stage 11.
+    result = process_links(&result);
+
     // 10. Strip any remaining HTML tags (handles <u>, <a>, etc.)
     result = strip_remaining_tags(&result);
 
@@ -268,8 +276,10 @@ fn process_blockquotes(input: &str) -> String {
             result.push('\n');
             // Split on </p> to get individual paragraph segments
             for segment in inner.split("</p>") {
-                // Strip <p> and any remaining tags, then trim
-                let text = strip_remaining_tags(&segment.replace("<p>", ""));
+                // Convert links to markdown first so they survive the strip_remaining_tags
+                // pass below (otherwise `<a>` tags would be silently stripped here).
+                let with_links = process_links(&segment.replace("<p>", ""));
+                let text = strip_remaining_tags(&with_links);
                 let trimmed = text.trim();
                 if !trimmed.is_empty() {
                     result.push_str("> ");
@@ -281,6 +291,131 @@ fn process_blockquotes(input: &str) -> String {
     }
     result.push_str(remaining);
     result
+}
+
+/// Converts `<a href="URL">LABEL</a>` regions to `[LABEL](URL)` Markdown.
+///
+/// Runs after stages 1-9 in `html_to_markdown` so the LABEL has already had
+/// inline formatting converted to Markdown syntax (`**bold**`, `*italic*`,
+/// `` `code` `` etc.). Runs before `strip_remaining_tags` so the `<a>` tag is
+/// still present.
+///
+/// Behavior:
+/// - `<a href="https://example.com">Visit</a>` -> `[Visit](https://example.com)`
+/// - Empty label: the entire link is dropped.
+/// - Missing href: the label is kept as plain text.
+/// - Characters that CommonMark cannot place inside the bare `(url)` form
+///   (space, `(`, `)`, `<`, `>`) are percent-encoded so the output is valid
+///   markdown without using the angle-bracket wrap form (which would collide
+///   with `strip_remaining_tags`).
+/// - HTML entities in URL and LABEL are decoded via the same table used by
+///   stage 11 so entity decoding is consistent.
+fn process_links(input: &str) -> String {
+    let mut result = String::new();
+    let mut remaining = input;
+
+    while let Some(a_start) = remaining.find("<a ") {
+        result.push_str(&remaining[..a_start]);
+        remaining = &remaining[a_start..];
+
+        // Find the end of the opening tag, respecting quoted attribute values.
+        let Some(open_end) = find_attr_aware_tag_end(remaining) else {
+            // Malformed open tag — emit '<' and continue past it.
+            result.push('<');
+            remaining = &remaining[1..];
+            continue;
+        };
+
+        let open_tag = &remaining[..open_end];
+        let href = extract_href_attr(open_tag);
+        let after_open = &remaining[open_end..];
+
+        // Find the matching </a>. If absent, drop the tag and continue.
+        let Some(close_rel) = after_open.find("</a>") else {
+            // No closing tag — drop the open tag and continue past it.
+            remaining = after_open;
+            continue;
+        };
+
+        let label = &after_open[..close_rel];
+        remaining = &after_open[close_rel + 4..]; // skip "</a>"
+
+        let trimmed_label = label.trim_end();
+        let decoded_label = apply_replacements(trimmed_label.to_string(), HTML_ENTITIES);
+
+        match href {
+            Some(raw_href) if !raw_href.is_empty() => {
+                let decoded_href = apply_replacements(raw_href, HTML_ENTITIES);
+                if decoded_label.is_empty() {
+                    // No label → drop the link entirely; emit nothing.
+                    continue;
+                }
+                let escaped_href = encode_url_for_markdown(&decoded_href);
+                result.push_str(&format!("[{}]({})", decoded_label, escaped_href));
+            }
+            _ => {
+                // No href or empty href → keep the label as plain text.
+                result.push_str(&decoded_label);
+            }
+        }
+    }
+    result.push_str(remaining);
+    result
+}
+
+/// Percent-encodes the characters that cannot appear inside a bare `(url)` form
+/// in CommonMark (space, `(`, `)`, `<`, `>`). Already-encoded sequences (`%XX`)
+/// are preserved unchanged.
+fn encode_url_for_markdown(url: &str) -> String {
+    let mut out = String::with_capacity(url.len());
+    for ch in url.chars() {
+        match ch {
+            ' ' => out.push_str("%20"),
+            '(' => out.push_str("%28"),
+            ')' => out.push_str("%29"),
+            '<' => out.push_str("%3C"),
+            '>' => out.push_str("%3E"),
+            other => out.push(other),
+        }
+    }
+    out
+}
+
+/// Returns the index one past the closing `>` of an HTML tag starting at `s`,
+/// respecting quoted attribute values. Shared helper for `<a ...>` open tags
+/// (and any other tag whose attribute values may legitimately contain `>`).
+fn find_attr_aware_tag_end(s: &str) -> Option<usize> {
+    let mut in_quote = false;
+    let mut quote_char = '"';
+
+    for (i, ch) in s.char_indices() {
+        match ch {
+            '"' | '\'' if !in_quote => {
+                in_quote = true;
+                quote_char = ch;
+            }
+            c if in_quote && c == quote_char => {
+                in_quote = false;
+            }
+            '>' if !in_quote => return Some(i + 1),
+            _ => {}
+        }
+    }
+    None
+}
+
+/// Extracts the `href` attribute value from an `<a ...>` open tag. Supports
+/// both `"` and `'` quoting. Returns `None` if the attribute is missing.
+fn extract_href_attr(open_tag: &str) -> Option<String> {
+    for &quote in &['"', '\''] {
+        let pattern = format!("href={}", quote);
+        if let Some(pos) = open_tag.find(&pattern) {
+            let after = &open_tag[pos + pattern.len()..];
+            let end = after.find(quote)?;
+            return Some(after[..end].to_string());
+        }
+    }
+    None
 }
 
 /// Strips any remaining HTML tags from the string.
@@ -582,6 +717,7 @@ mod tests {
             word_count: crate::db::queries::count_words(text),
             date_created: "2024-01-01T12:00:00Z".to_string(),
             date_updated: "2024-01-01T12:00:00Z".to_string(),
+            metadata: None,
         }
     }
 
@@ -697,6 +833,23 @@ mod tests {
         let html = "<p>Text with <span class=\"custom\">span</span> inside</p>";
         let result = html_to_markdown(html);
         assert_eq!(result, "Text with span inside");
+    }
+
+    #[test]
+    fn test_html_to_markdown_strips_font_style_spans() {
+        // Font-family and font-size inline marks (added by Tiptap FontFamily/FontSize
+        // extensions) must be stripped from Markdown output — text is preserved.
+        let html = r#"<p><span style="font-family: Merriweather">Hello</span> <span style="font-size: 18px">world</span></p>"#;
+        let result = html_to_markdown(html);
+        assert_eq!(result, "Hello world");
+    }
+
+    #[test]
+    fn test_html_to_markdown_mixed_inline_and_font() {
+        // Bold marks inside font-styled spans must survive
+        let html = r#"<p><span style="font-family: Georgia"><strong>bold text</strong></span></p>"#;
+        let result = html_to_markdown(html);
+        assert_eq!(result, "**bold text**");
     }
 
     #[test]
@@ -827,6 +980,194 @@ mod tests {
             result
         );
         assert!(result.contains("After"), "expected 'After' in: {}", result);
+    }
+
+    // --- Named link tests ---
+
+    #[test]
+    fn test_html_to_markdown_link_basic() {
+        let html = r#"<p>See <a href="https://example.com">Visit site</a> please</p>"#;
+        let result = html_to_markdown(html);
+        assert_eq!(result, "See [Visit site](https://example.com) please");
+    }
+
+    #[test]
+    fn test_html_to_markdown_link_with_formatting() {
+        let html = r#"<p><a href="https://example.com"><strong>bold</strong> label</a></p>"#;
+        let result = html_to_markdown(html);
+        assert_eq!(result, "[**bold** label](https://example.com)");
+    }
+
+    #[test]
+    fn test_html_to_markdown_link_with_italic_in_label() {
+        let html = r#"<p><a href="https://example.com">a <em>fancy</em> link</a></p>"#;
+        let result = html_to_markdown(html);
+        assert_eq!(result, "[a *fancy* link](https://example.com)");
+    }
+
+    #[test]
+    fn test_html_to_markdown_link_with_inline_code_in_label() {
+        let html = r#"<p><a href="https://example.com">use <code>println!</code></a></p>"#;
+        let result = html_to_markdown(html);
+        assert_eq!(result, "[use `println!`](https://example.com)");
+    }
+
+    #[test]
+    fn test_html_to_markdown_link_in_heading() {
+        let html = r#"<h2>See <a href="https://example.com">docs</a> here</h2>"#;
+        let result = html_to_markdown(html);
+        assert!(
+            result.contains("[docs](https://example.com)"),
+            "expected link in heading: {}",
+            result
+        );
+        assert!(
+            result.contains("#### "),
+            "expected heading prefix in: {}",
+            result
+        );
+    }
+
+    #[test]
+    fn test_html_to_markdown_link_in_list() {
+        let html = r#"<ul><li>See <a href="https://example.com">docs</a></li><li>And <a href="https://other.com">more</a></li></ul>"#;
+        let result = html_to_markdown(html);
+        assert!(
+            result.contains("- See [docs](https://example.com)"),
+            "expected first link in list: {}",
+            result
+        );
+        assert!(
+            result.contains("- And [more](https://other.com)"),
+            "expected second link in list: {}",
+            result
+        );
+    }
+
+    #[test]
+    fn test_html_to_markdown_link_in_blockquote() {
+        let html =
+            r#"<blockquote><p>See <a href="https://example.com">docs</a> please</p></blockquote>"#;
+        let result = html_to_markdown(html);
+        assert!(
+            result.contains("> See [docs](https://example.com) please"),
+            "expected link inside blockquote prefix: {}",
+            result
+        );
+    }
+
+    #[test]
+    fn test_html_to_markdown_link_with_special_chars_in_url() {
+        // Pre-encoded query string survives unchanged
+        let html = r#"<p><a href="https://example.com/?q=hello%20world">search</a></p>"#;
+        let result = html_to_markdown(html);
+        assert_eq!(result, "[search](https://example.com/?q=hello%20world)");
+    }
+
+    #[test]
+    fn test_html_to_markdown_link_with_space_in_url_percent_encodes() {
+        // CommonMark cannot place a literal space inside (...), so we percent-encode it.
+        let html = r#"<p><a href="https://example.com/a b">spaced</a></p>"#;
+        let result = html_to_markdown(html);
+        assert_eq!(result, "[spaced](https://example.com/a%20b)");
+    }
+
+    #[test]
+    fn test_html_to_markdown_link_without_href() {
+        // Missing href -> the link is dropped, label text is kept
+        let html = r#"<p><a>some text</a></p>"#;
+        let result = html_to_markdown(html);
+        assert_eq!(result, "some text");
+    }
+
+    #[test]
+    fn test_html_to_markdown_link_with_empty_label() {
+        // Empty label -> the link is dropped entirely
+        let html = r#"<p>Before <a href="https://example.com"></a> after</p>"#;
+        let result = html_to_markdown(html);
+        assert_eq!(result, "Before  after");
+    }
+
+    #[test]
+    fn test_html_to_markdown_link_with_attributes() {
+        // TipTap typically emits rel/target/class — must not break parsing
+        let html = r#"<p><a href="https://example.com" rel="noopener noreferrer nofollow" target="_blank">label</a></p>"#;
+        let result = html_to_markdown(html);
+        assert_eq!(result, "[label](https://example.com)");
+    }
+
+    #[test]
+    fn test_html_to_markdown_link_single_quoted_href() {
+        let html = r#"<p><a href='https://example.com'>label</a></p>"#;
+        let result = html_to_markdown(html);
+        assert_eq!(result, "[label](https://example.com)");
+    }
+
+    #[test]
+    fn test_html_to_markdown_link_mailto() {
+        let html = r#"<p>Email <a href="mailto:user@example.com">me</a></p>"#;
+        let result = html_to_markdown(html);
+        assert_eq!(result, "Email [me](mailto:user@example.com)");
+    }
+
+    #[test]
+    fn test_html_to_markdown_link_with_entity_in_url() {
+        // `&amp;` inside the href is decoded to `&`
+        let html = r#"<p><a href="https://example.com/?a=1&amp;b=2">link</a></p>"#;
+        let result = html_to_markdown(html);
+        assert_eq!(result, "[link](https://example.com/?a=1&b=2)");
+    }
+
+    #[test]
+    fn test_html_to_markdown_link_with_cjk_label() {
+        // Non-ASCII label (CJK) — per the project's durability rule
+        let html = r#"<p><a href="https://example.com">中文链接</a></p>"#;
+        let result = html_to_markdown(html);
+        assert_eq!(result, "[中文链接](https://example.com)");
+    }
+
+    #[test]
+    fn test_html_to_markdown_link_with_rtl_label() {
+        // Non-ASCII label (Arabic, RTL) — per the project's durability rule
+        let html = r#"<p><a href="https://example.com">رابط</a></p>"#;
+        let result = html_to_markdown(html);
+        assert_eq!(result, "[رابط](https://example.com)");
+    }
+
+    #[test]
+    fn test_html_to_markdown_multiple_links_in_paragraph() {
+        let html = r#"<p>See <a href="https://a.com">A</a> and <a href="https://b.com">B</a>.</p>"#;
+        let result = html_to_markdown(html);
+        assert_eq!(result, "See [A](https://a.com) and [B](https://b.com).");
+    }
+
+    #[test]
+    fn test_html_to_markdown_link_does_not_match_aside() {
+        // <aside> starts with "<a" but our parser requires "<a " (space) so it
+        // must not be mis-parsed as a link.
+        let html = r#"<p>Hello</p><aside>note</aside>"#;
+        let result = html_to_markdown(html);
+        assert!(result.contains("Hello"), "expected paragraph text");
+        assert!(
+            result.contains("note"),
+            "expected aside text to survive strip"
+        );
+    }
+
+    #[test]
+    fn test_export_entries_markdown_with_link_round_trip() {
+        let entries = vec![create_test_entry(
+            "2024-01-15",
+            "Title",
+            r#"<p>See <a href="https://example.com">Visit site</a> please</p>"#,
+        )];
+        let result = export_entries_to_markdown(entries, &empty_tags());
+        assert!(
+            result.contains("[Visit site](https://example.com)"),
+            "expected link in exported markdown: {}",
+            result
+        );
+        assert!(result.contains("**Title**"), "expected entry title");
     }
 
     // --- Image extraction tests ---

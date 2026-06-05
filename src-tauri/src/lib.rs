@@ -205,10 +205,6 @@ pub fn run() {
             app.manage(lockable);
             app.manage(translatable);
 
-            if let Err(error) = screen_lock::init(app.handle()) {
-                warn!("Screen-lock listener initialization failed: {}", error);
-            }
-
             // Create the main window programmatically so we can configure two critical
             // security properties that are only available on the builder, not at runtime:
             //
@@ -276,6 +272,10 @@ pub fn run() {
             }
 
             let win = win_builder.build()?;
+
+            if let Err(error) = screen_lock::init(app.handle()) {
+                warn!("Screen-lock listener initialization failed: {}", error);
+            }
 
             // Install platform-specific engine-level request blockers (Windows/macOS).
             // Defense-in-depth alongside CSP and the JS init script.
@@ -367,6 +367,10 @@ pub fn run() {
             commands::tags::remove_tag_from_entry,
             commands::tags::get_tags_for_entry,
             commands::tags::get_entry_dates_by_tag,
+            // Images
+            commands::images::get_entry_images,
+            commands::images::list_journal_image_summaries,
+            commands::images::get_image_data,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

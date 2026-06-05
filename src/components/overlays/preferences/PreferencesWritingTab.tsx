@@ -30,6 +30,7 @@ export default function PreferencesWritingTab(_props: TabProps) {
         highlightColor: t('prefs.writing.toolbarItem.highlightColor'),
         blockquote: t('prefs.writing.toolbarItem.blockquote'),
         inlineCode: t('prefs.writing.toolbarItem.inlineCode'),
+        link: t('prefs.writing.toolbarItem.link'),
         bulletList: t('prefs.writing.toolbarItem.bulletList'),
         orderedList: t('prefs.writing.toolbarItem.orderedList'),
         horizontalRule: t('prefs.writing.toolbarItem.horizontalRule'),
@@ -40,6 +41,7 @@ export default function PreferencesWritingTab(_props: TabProps) {
         alignment: t('prefs.writing.toolbarItem.alignment'),
         fontFamily: t('prefs.writing.toolbarItem.fontFamily'),
         fontSize: t('prefs.writing.toolbarItem.fontSize'),
+        insertExistingImage: t('prefs.writing.toolbarItem.insertExistingImage'),
       }) satisfies Record<ToolbarItemKey, string>,
   );
 

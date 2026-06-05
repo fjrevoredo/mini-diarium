@@ -30,6 +30,33 @@ Template:
 
 # Versions
 
+## [0.5.3] - 05-06-2026
+
+### Added
+- **Image deduplication**: images are now stored once in a content-addressed encrypted store inside `diary.db` and referenced by ID. Inserting the same image into multiple entries shares one encrypted copy. All export paths (JSON, Markdown, Rhai plugins) resolve image references back to data URLs before exporting, preserving full compatibility. Legacy entries that still embed data URLs continue to display and export correctly; existing saved entries migrate on their next save, and Mini Diarium JSON imports now normalize embedded `data:image/...` content into the encrypted image store during import.
+- **"Insert existing image" media picker**: browse and reuse any image previously saved in the journal through a visual thumbnail picker with sort, month filter, preview metadata, load-more pagination, explicit Insert action, and double-click insertion. The picker loads encrypted thumbnail summaries first and decrypts full image data only for the image being inserted. Inserted images are reused verbatim (no canvas re-encode), ensuring the stored copy is deduplicated correctly.
+
+### Changed
+- `save_entry` now extracts embedded data-URL images atomically into the image store on each save, reducing stored entry size for entries with images. All writes (image extraction, link update, entry text rewrite) are committed in a single database transaction.
+
+### Internal
+- Schema v10: added `images` and `entry_images` tables for content-addressed encrypted image storage.
+- Enabled `PRAGMA foreign_keys = ON` on all database connections (fixes silently-inert `ON DELETE CASCADE` on `entry_tags` and `entry_images`).
+- **Website docs**: Improved meta descriptions on all 11 docs pages to 150–160 characters to resolve Bing Webmaster Tools flags (TODO-0045)
+- **Website docs**: Widened docs content column from ~500px to ~800px on desktop viewports by increasing the docs-page container max-width to 1400px (TODO-0047)
+- **Website**: Documented local Docker dev workflow in `website/CLAUDE.md` with build, serve, troubleshooting steps, and Host header note (TODO-0048)
+- **Website**: Added visual content audit decision table to `website/CLAUDE.md` recording which docs pages need screenshots (TODO-0047)
+
+- **Three-level font system**: control entry fonts at three levels simultaneously: app-wide defaults (Preferences → Writing → Editor font), per-entry defaults (new "Set as entry default" / "Clear entry default" toolbar buttons next to the font dropdown), and inline formatting applied to selected text via the toolbar font dropdowns. Entries with font metadata export to JSON with a `"metadata": {"fontFamily": "...", "fontSize": 18.0}` object. The JSON importer handles both old (Mini Diary date-keyed) and new (array format with optional metadata) export formats for backward compatibility. Schema v9: new nullable `entry_metadata_encrypted BLOB` column stores encrypted entry metadata (font family/size) per entry.
+- **Named links in the editor**: insert a hyperlink with custom display text via the toolbar Insert Link button (or `Ctrl/Cmd+K`). The visible label and the URL are independent: with no selection, the URL becomes the label; with a selection, the selected text becomes the label. `Ctrl/Cmd`-click opens a link in the system browser. Links round-trip through Markdown export as `[label](url)`, through JSON export as raw HTML, and are preserved by user Rhai export plugins via the `html_to_markdown` host function.
+
+### Changed
+- **Link dialog now has a Display text field**: you can override the visible label of a link directly in the dialog (instead of the URL always being the label). Bare domains like `example.com` are auto-prefixed with `https://`, email addresses become `mailto:` links, and phone numbers become `tel:` links. The dialog also includes an "Open link" button so you can verify a URL before applying it.
+- **Editor toolbar font controls apply inline formatting**: the font family and font size dropdowns in the toolbar now apply inline marks to the selected text, instead of changing the global preference. Preferences still controls the app-wide defaults that appear when an entry has no entry default and no inline formatting on the selection.
+
+### Fixed
+- **External link opening now enforces safe protocols consistently**: editor link opening paths now normalize and allow only `http`, `https`, `mailto`, and `tel` targets. Unsafe stored or imported protocols are ignored instead of being passed to the opener plugin.
+
 ## [0.5.2] - 29-05-2026
 
 ### Added

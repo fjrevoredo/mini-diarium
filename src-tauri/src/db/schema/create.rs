@@ -4,6 +4,41 @@ use aes_gcm::aead::rand_core::RngCore;
 use rusqlite::Connection;
 use zeroize::Zeroize;
 
+/// Opens a database file and enables foreign-key enforcement in one step.
+///
+/// **Always use this instead of `Connection::open` directly.** SQLite pragmas are
+/// per-connection and are not persisted to the file, so every new connection must
+/// have `PRAGMA foreign_keys = ON` applied before any statement runs. Without it,
+/// all `ON DELETE CASCADE` and `ON DELETE RESTRICT` declarations are silently inert,
+/// which causes orphan rows and breaks referential integrity.
+pub(crate) fn open_connection<P: AsRef<std::path::Path>>(path: P) -> Result<Connection, String> {
+    let conn = Connection::open(path).map_err(|e| format!("Failed to open database: {}", e))?;
+    configure_connection(&conn)?;
+    Ok(conn)
+}
+
+/// Opens an in-memory database and enables foreign-key enforcement.
+///
+/// Use this in tests instead of `Connection::open_in_memory()` whenever the test
+/// exercises foreign-key behavior (cascades, restrict checks).
+#[cfg(test)]
+pub(crate) fn open_connection_in_memory() -> Result<Connection, String> {
+    let conn = Connection::open_in_memory()
+        .map_err(|e| format!("Failed to open in-memory database: {}", e))?;
+    configure_connection(&conn)?;
+    Ok(conn)
+}
+
+/// Enables foreign-key enforcement on an already-open connection.
+///
+/// Prefer [`open_connection`] / [`open_connection_in_memory`] over calling this
+/// directly. Use this only when you receive a connection that was opened externally
+/// and must be configured before use.
+pub(crate) fn configure_connection(conn: &Connection) -> Result<(), String> {
+    conn.pragma_update(None, "foreign_keys", true)
+        .map_err(|e| format!("Failed to enable foreign_keys: {}", e))
+}
+
 /// Creates a new encrypted diary database (schema v5)
 ///
 /// Generates a random master key, wraps it with the password, and stores the
@@ -17,8 +52,7 @@ pub fn create_database<P: AsRef<std::path::Path>>(
     let encryption_key =
         cipher::Key::from_slice(&master_key_bytes).ok_or("Invalid master key size")?;
 
-    let conn =
-        Connection::open(&db_path).map_err(|e| format!("Failed to create database: {}", e))?;
+    let conn = open_connection(&db_path)?;
 
     create_schema(&conn)?;
 
@@ -55,8 +89,7 @@ pub fn create_database_auto<P: AsRef<std::path::Path>>(
     let encryption_key =
         cipher::Key::from_slice(&master_key_bytes).ok_or("Invalid master key size")?;
 
-    let conn = Connection::open(db_path.as_ref())
-        .map_err(|e| format!("Failed to create database: {}", e))?;
+    let conn = open_connection(db_path.as_ref())?;
 
     create_schema(&conn)?;
 
@@ -102,7 +135,8 @@ fn create_schema(conn: &Connection) -> Result<(), String> {
             text_encrypted BLOB,
             word_count INTEGER DEFAULT 0,
             date_created TEXT NOT NULL,
-            date_updated TEXT NOT NULL
+            date_updated TEXT NOT NULL,
+            entry_metadata_encrypted BLOB
         );
         CREATE INDEX IF NOT EXISTS idx_entries_date ON entries(date);
 
@@ -153,6 +187,31 @@ fn create_schema(conn: &Connection) -> Result<(), String> {
             created_at TEXT NOT NULL,
             UNIQUE(family, weight)
         );
+
+        -- Images: content-addressed encrypted store; one physical copy per unique image
+        CREATE TABLE IF NOT EXISTS images (
+            id                INTEGER PRIMARY KEY AUTOINCREMENT,
+            fingerprint       TEXT    NOT NULL UNIQUE,
+            mime_type         TEXT    NOT NULL,
+            data              BLOB    NOT NULL,
+            created_at        TEXT    NOT NULL,
+            thumbnail_data    BLOB,
+            thumbnail_mime_type TEXT,
+            width             INTEGER,
+            height            INTEGER,
+            byte_size         INTEGER,
+            thumbnail_version INTEGER
+        );
+
+        -- Entry-image associations (reference counting via junction table)
+        CREATE TABLE IF NOT EXISTS entry_images (
+            entry_id  INTEGER NOT NULL,
+            image_id  INTEGER NOT NULL,
+            PRIMARY KEY (entry_id, image_id),
+            FOREIGN KEY (entry_id) REFERENCES entries(id)  ON DELETE CASCADE,
+            FOREIGN KEY (image_id) REFERENCES images(id)   ON DELETE RESTRICT
+        );
+        CREATE INDEX IF NOT EXISTS idx_entry_images_image_id ON entry_images(image_id);
         "#,
     )
     .map_err(|e| format!("Failed to create schema: {}", e))?;

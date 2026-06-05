@@ -9,7 +9,7 @@ import { EntryNavBar } from '../editor/EntryNavBar';
 import { selectedDate } from '../../state/ui';
 import { readTextFile } from '../../lib/tauri';
 import EntryTags from '../editor/EntryTags';
-import type { DiaryEntry } from '../../lib/tauri';
+import type { DiaryEntry, EntryMetadata } from '../../lib/tauri';
 import { formatTimestamp } from '../../lib/dates';
 import { isSaving } from '../../state/entries';
 import { preferences } from '../../state/preferences';
@@ -42,6 +42,7 @@ export default function EditorPanel() {
   const [isCreatingEntry, setIsCreatingEntry] = createSignal(false);
 
   const [importError, setImportError] = createSignal<string | null>(null);
+  const [entryMetadata, setEntryMetadata] = createSignal<EntryMetadata | null>(null);
 
   const emptyCheck = useEditorEmptyCheck({ editorInstance, content });
 
@@ -62,6 +63,8 @@ export default function EditorPanel() {
     isCreatingEntry,
     setIsCreatingEntry,
     emptyCheck,
+    entryMetadata,
+    setEntryMetadata,
   });
 
   const nav = useMultiEntryNav({
@@ -83,6 +86,8 @@ export default function EditorPanel() {
     setIsCreatingEntry,
     emptyCheck,
     lifecycle,
+    entryMetadata,
+    setEntryMetadata,
   });
 
   createEffect(() => {
@@ -271,6 +276,14 @@ export default function EditorPanel() {
             </Show>
             <DiaryEditor
               content={content()}
+              entryMetadata={entryMetadata()}
+              onEntryMetadataChange={(meta) => {
+                setEntryMetadata(meta);
+                const id = pendingEntryId();
+                if (id !== null) {
+                  lifecycle.debouncedSave(id, title(), content());
+                }
+              }}
               onUpdate={handleContentUpdate}
               onSetContent={(isEmpty) => {
                 emptyCheck.setEditorIsEmpty(isEmpty);

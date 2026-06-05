@@ -110,6 +110,7 @@ pub fn run_export_plugin(
             err.to_string()
         })?;
         let entries = super::export::fetch_entries(db, date_from.as_deref(), date_to.as_deref())?;
+        let entries = crate::db::queries::images::resolve_image_refs_in_entries(db, entries)?;
         let tags = crate::db::queries::tags::get_tags_names_map(db)?;
         (entries, tags)
     };
@@ -218,6 +219,7 @@ mod tests {
             word_count: 1,
             date_created: "2024-01-01T00:00:00Z".into(),
             date_updated: "2024-01-01T00:00:00Z".into(),
+            metadata: None,
         }];
         let output = plugin
             .export(entries, &std::collections::HashMap::new())

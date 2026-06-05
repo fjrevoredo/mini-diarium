@@ -1,7 +1,13 @@
 import { type Accessor, type Setter } from 'solid-js';
 import type { Editor } from '@tiptap/core';
-import { createEntry, deleteEntry, getEntriesForDate, getAllEntryDates } from '../../../lib/tauri';
-import type { DiaryEntry } from '../../../lib/tauri';
+import {
+  createEntry,
+  deleteEntry,
+  getEntriesForDate,
+  getAllEntryDates,
+  getEntryImages,
+} from '../../../lib/tauri';
+import type { DiaryEntry, EntryMetadata } from '../../../lib/tauri';
 import { setEntryDates } from '../../../state/entries';
 import { countWordsInHtml } from '../../../lib/wordcount';
 import { createLogger } from '../../../lib/logger';
@@ -9,6 +15,7 @@ import { confirm } from '@tauri-apps/plugin-dialog';
 import { useI18n } from '../../../i18n';
 import type { EditorEmptyCheckHook } from './useEditorEmptyCheck';
 import type { EntryLifecycleHook } from './useEntryLifecycle';
+import { hasImageRefs, resolveImageRefs } from '../../../lib/image-refs';
 
 const log = createLogger('Editor');
 
@@ -40,6 +47,8 @@ export interface UseMultiEntryNavOptions {
   setIsCreatingEntry: Setter<boolean>;
   emptyCheck: EditorEmptyCheckHook;
   lifecycle: EntryLifecycleHook;
+  entryMetadata: Accessor<EntryMetadata | null>;
+  setEntryMetadata: Setter<EntryMetadata | null>;
 }
 
 export interface MultiEntryNavHook {
@@ -49,7 +58,10 @@ export interface MultiEntryNavHook {
 }
 
 export function useMultiEntryNav(opts: UseMultiEntryNavOptions): MultiEntryNavHook {
+  let navToken = 0;
+
   const navigateToEntry = async (newIndex: number) => {
+    const token = ++navToken;
     // Save current first — read from editor directly to capture alignment transactions
     // that may not have propagated to the content() signal yet.
     const currentId = opts.pendingEntryId();
@@ -65,7 +77,7 @@ export function useMultiEntryNav(opts: UseMultiEntryNavOptions): MultiEntryNavHo
 
     try {
       const refreshed = await fetchEntriesOrdered(opts.selectedDate());
-      if (opts.lifecycle.isDisposed()) return;
+      if (opts.lifecycle.isDisposed() || token !== navToken) return;
       opts.setDayEntries(refreshed);
 
       // Filter to entries that still exist
@@ -83,8 +95,15 @@ export function useMultiEntryNav(opts: UseMultiEntryNavOptions): MultiEntryNavHo
       const entry = refreshed[validIndex];
       opts.setPendingEntryId(entry.id);
       opts.setTitle(entry.title);
-      opts.setContent(entry.text);
-      opts.setWordCount(countWordsInHtml(entry.text));
+      let html = entry.text;
+      if (hasImageRefs(html)) {
+        const images = await getEntryImages(entry.id);
+        if (opts.lifecycle.isDisposed() || token !== navToken) return;
+        html = resolveImageRefs(html, images);
+      }
+      opts.setContent(html);
+      opts.setWordCount(countWordsInHtml(html));
+      opts.setEntryMetadata(entry.metadata ?? null);
     } catch (error) {
       log.error('Failed to navigate to entry:', error);
     }
@@ -125,6 +144,7 @@ export function useMultiEntryNav(opts: UseMultiEntryNavOptions): MultiEntryNavHo
       opts.setTitle('');
       opts.setContent('');
       opts.setWordCount(0);
+      opts.setEntryMetadata(null);
       // Cancel any previously queued debounced save from the current entry before
       // switching to the new blank entry — prevents saving the wrong entry data.
       opts.lifecycle.debouncedSave.cancel();
@@ -161,6 +181,7 @@ export function useMultiEntryNav(opts: UseMultiEntryNavOptions): MultiEntryNavHo
         opts.setTitle('');
         opts.setContent('');
         opts.setWordCount(0);
+        opts.setEntryMetadata(null);
         opts.setDayEntries([]);
         opts.setCurrentIndex(0);
       } else {
@@ -171,8 +192,15 @@ export function useMultiEntryNav(opts: UseMultiEntryNavOptions): MultiEntryNavHo
         const entry = refreshed[newIndex];
         opts.setPendingEntryId(entry.id);
         opts.setTitle(entry.title);
-        opts.setContent(entry.text);
-        opts.setWordCount(countWordsInHtml(entry.text));
+        let html = entry.text;
+        if (hasImageRefs(html)) {
+          const images = await getEntryImages(entry.id);
+          if (opts.lifecycle.isDisposed()) return;
+          html = resolveImageRefs(html, images);
+        }
+        opts.setContent(html);
+        opts.setWordCount(countWordsInHtml(html));
+        opts.setEntryMetadata(entry.metadata ?? null);
         opts.setDayEntries(refreshed);
         opts.setCurrentIndex(newIndex);
       }

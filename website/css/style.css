@@ -1190,6 +1190,7 @@ section {
 .footer-right {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 1rem;
   font-size: 0.8rem;
 }
@@ -1249,7 +1250,8 @@ section {
 
   .story-grid,
   .blog-preview-header,
-  .blog-index-header {
+  .blog-index-header,
+  .article-grid {
     grid-template-columns: 1fr;
   }
 

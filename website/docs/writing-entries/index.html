@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Mini Diarium&#39;s rich text editor supports formatting, images, tags, multiple entries per day, RTL languages, and auto-save. No manual saving needed." />
+  <meta name="description" content="Mini Diarium&#39;s rich text editor supports formatting, images, named links, tags, and multiple entries per day. Auto-save and RTL language support are built in." />
   <meta name="robots" content="index,follow,max-snippet:-1,max-image-preview:large,max-video-preview:-1" />
   <meta name="theme-color" content="#0e0e0e" />
   <meta name="author" content="Francisco J. Revoredo" />
@@ -12,7 +12,7 @@
   <meta property="og:locale" content="en_US" />
   <meta property="og:url" content="https://mini-diarium.com/docs/writing-entries/" />
   <meta property="og:title" content="Writing Entries — Mini Diarium Documentation" />
-  <meta property="og:description" content="Mini Diarium&#39;s rich text editor supports formatting, images, tags, multiple entries per day, RTL languages, and auto-save. No manual saving needed." />
+  <meta property="og:description" content="Mini Diarium&#39;s rich text editor supports formatting, images, named links, tags, and multiple entries per day. Auto-save and RTL language support are built in." />
   <meta property="og:image" content="https://mini-diarium.com/assets/og-cover.png" />
   <meta property="og:image:type" content="image/png" />
   <meta property="og:image:width" content="1200" />
@@ -22,7 +22,7 @@
   <meta name="twitter:site" content="@MiniDiarium" />
   <meta name="twitter:creator" content="@MiniDiarium" />
   <meta name="twitter:title" content="Writing Entries — Mini Diarium Documentation" />
-  <meta name="twitter:description" content="Mini Diarium&#39;s rich text editor supports formatting, images, tags, multiple entries per day, RTL languages, and auto-save. No manual saving needed." />
+  <meta name="twitter:description" content="Mini Diarium&#39;s rich text editor supports formatting, images, named links, tags, and multiple entries per day. Auto-save and RTL language support are built in." />
   <meta name="twitter:image" content="https://mini-diarium.com/assets/og-cover.png" />
   
   <title>Writing Entries — Mini Diarium Documentation</title>
@@ -35,8 +35,9 @@
   <link rel="icon" href="/favicon-32x32.png" type="image/png" sizes="32x32" />
   <link rel="icon" href="/favicon-128x128.png" type="image/png" sizes="128x128" />
   <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
-  <link rel="stylesheet" href="/css/style.b7a59d6a.css" />
+  <link rel="stylesheet" href="/css/style.d7005d4f.css" />
   <style>
+    .container { max-width: 1400px; }
     .docs-layout {
       display: grid;
       grid-template-columns: 240px 1fr 200px;
@@ -234,8 +235,8 @@
       "@type": "TechArticle",
       "@id": "https://mini-diarium.com/docs/writing-entries/#article",
       "headline": "Writing Entries",
-      "description": "Mini Diarium's rich text editor supports formatting, images, tags, multiple entries per day, RTL languages, and auto-save. No manual saving needed.",
-      "dateModified": "2026-05-29T00:00:00Z",
+      "description": "Mini Diarium's rich text editor supports formatting, images, named links, tags, and multiple entries per day. Auto-save and RTL language support are built in.",
+      "dateModified": "2026-06-04T00:00:00Z",
       "keywords": "editor, formatting, entries, writing",
       "publisher": {
         "@type": "Organization",
@@ -285,9 +286,7 @@
       <li><a href="/#security">Security</a></li>
       <li><a href="/blog/">Blog</a></li>
       <li><a href="/docs/" aria-current="page">Docs</a></li>
-      <li><a href="/#facts">FAQ</a></li>
       <li><a href="/#platforms">Download</a></li>
-      <li><a href="/#about">About</a></li>
       <li>
         <a class="nav-github" href="https://github.com/fjrevoredo/mini-diarium" target="_blank" rel="noopener noreferrer" aria-label="View on GitHub">
           <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -321,7 +320,7 @@
     <div class="post-header">
       <p class="hero-eyebrow">Mini Diarium documentation</p>
       <h1>Writing Entries</h1>
-      <p class="hero-sub">Mini Diarium&#39;s rich text editor supports formatting, images, tags, multiple entries per day, RTL languages, and auto-save. No manual saving needed.</p>
+      <p class="hero-sub">Mini Diarium&#39;s rich text editor supports formatting, images, named links, tags, and multiple entries per day. Auto-save and RTL language support are built in.</p>
     </div>
   </div>
 </section>
@@ -386,7 +385,7 @@
         <li>Inline code and code blocks</li>
         <li>Strikethrough and underline</li>
         <li>Horizontal rules</li>
-        <li>Links</li>
+        <li><a href="#links">Links</a></li>
         <li>Images (drag-drop, paste, or file picker)</li>
         </ul>
         <p>The toolbar above the editor provides buttons for each formatting option. Standard keyboard shortcuts also work — <code>Ctrl+B</code> for bold, <code>Ctrl+I</code> for italic, and so on. On macOS, use <code>Cmd</code> instead of <code>Ctrl</code>.</p>
@@ -407,21 +406,64 @@
         <li><strong>Drag from other desktop apps</strong> — images from Electron-based editors (sent as inline <code>data:image/...</code> base64 payloads) and from apps like Typora that reference images via local <code>file://</code> paths are both supported.</li>
         <li><strong>Paste</strong> an image from the clipboard.</li>
         <li>Use the <strong>Insert Image</strong> button in the advanced toolbar to pick a file.</li>
+        <li>Use the <strong>Insert Existing Image</strong> button to pick from images already stored in the journal (see below).</li>
         </ul>
-        <p>All dropped or pasted images are resized to a maximum of 1200 px on either side and re-encoded as JPEG or PNG before being embedded. Images are stored as base64 data encrypted alongside your text. Supported source formats are JPG, PNG, GIF, WebP, and BMP.</p>
+        <p>All dropped or pasted images are resized to a maximum of 1200 px on either side and re-encoded as JPEG or PNG before being embedded. Supported source formats are JPG, PNG, GIF, WebP, and BMP.</p>
+        <h3 id="how-images-are-stored">How images are stored</h3><p>Images are encrypted and stored in a dedicated content-addressed table inside the same <code>diary.db</code> database. Each unique image is stored exactly once — if you insert the same image into multiple entries (using the image picker), only one copy is kept. All image data is encrypted with your master key, the same as entry text.</p>
+        <h3 id="insert-existing-image">Insert Existing Image</h3><p>The <strong>Insert Existing Image</strong> button (stack-of-photos icon) in the advanced toolbar opens a visual picker for images already stored in the journal.</p>
+        <ul>
+        <li>The picker shows encrypted thumbnails in a grid so you can recognize saved images at a glance.</li>
+        <li>Use the <strong>Sort</strong> control to switch between newest, oldest, and most-used images.</li>
+        <li>Use the <strong>Month</strong> filter to narrow the grid to one month when your journal contains many images.</li>
+        <li>A single click selects an image and shows a larger preview with saved date, dimensions, format, size, usage count, and linked entry dates.</li>
+        <li>Double-click an image, or select it and press <strong>Insert</strong>, to place it at the current cursor position.</li>
+        </ul>
+        <p>The selected image is inserted without re-encoding, so the stored copy is reused with no duplication.</p>
+        <p>Images added before this feature was introduced (prior to v0.5.3) continue to display correctly. Existing saved entries that still embed image data directly are migrated to the new storage the next time their entry is saved. JSON imports that contain embedded <code>data:image/...</code> content are normalized into the encrypted image store immediately during import.</p>
         <p>If you drag an image from a web browser, the editor will show a banner explaining that embedding is not possible — it would require a network request, which the app never makes. Use <strong>right-click → Copy Image</strong> and paste instead.</p>
+        <h2 id="links">Links</h2><p>You can insert hyperlinks with custom display text — the visible label and the underlying URL are independent (the <code>[label](url)</code> model used by Markdown and most modern editors).</p>
+        <p><strong>Inserting a link</strong>: click the <strong>Link button</strong> in the toolbar (chain-link icon) or press <code>Ctrl+K</code> (<code>Cmd+K</code> on macOS). The dialog has two fields:</p>
+        <ul>
+        <li><strong>URL</strong> — the link&#39;s target. You can paste a full URL (<code>https://example.com</code>) or just a bare domain (<code>example.com</code>); the editor auto-prepends <code>https://</code> for you. Email addresses become <code>mailto:</code> links and phone numbers become <code>tel:</code> links automatically.</li>
+        <li><strong>Display text</strong> (optional) — the visible text. Leave empty to use the URL itself as the visible text; the user will see <code>example.com</code> (not <code>https://example.com</code>) when the domain was typed bare.</li>
+        </ul>
+        <p><strong>What gets inserted depends on what you have selected:</strong></p>
+        <ul>
+        <li><strong>No selection</strong>: the dialog inserts new text at the cursor. If you left the Display text field empty, the URL is used as the visible text; if you typed a Display text, that&#39;s used instead.</li>
+        <li><strong>Text selected</strong>: the dialog replaces the selected text with the link. The Display text field is pre-filled with the selected text — you can keep it as-is (the selection becomes the link label) or change it.</li>
+        <li><strong>Cursor on an existing link</strong>: the dialog opens with the current URL and Display text pre-filled. You can change either, or click <strong>Remove link</strong> to strip the link mark and leave the underlying text untouched.</li>
+        </ul>
+        <p>A confirmation message below the fields reminds you of the click-to-open behavior (see below).</p>
+        <p><strong>Opening a link</strong>: a plain click inside a link places the cursor for editing (as in any other editable surface). To open a link in your default browser, hold <code>Ctrl</code> (<code>Cmd</code> on macOS) and click. You can also click the <strong>Open link</strong> button in the dialog after typing a URL — useful when you want to verify a link before applying it.</p>
+        <p>Only standard external targets are opened: <code>http</code>, <code>https</code>, <code>mailto</code>, and <code>tel</code>. Unsupported or unsafe protocols are ignored and are not passed to the operating system.</p>
+        <p><strong>Auto-linking</strong>: typing a recognizable URL (for example <code>https://example.com</code>) and pressing space converts it to a clickable link automatically. Pasting a URL onto a text selection wraps the selection as a link to that URL.</p>
+        <p><strong>Markdown round-trip</strong>: links are exported as standard <code>[label](url)</code> syntax in Markdown exports, and re-imported back into clickable links when you import a Markdown file. JSON exports preserve the raw HTML, so the link survives round-trips through that format as well.</p>
         <h2 id="right-to-left-and-bidirectional-text">Right-to-Left and Bidirectional Text</h2><p>Mini Diarium supports right-to-left (RTL) writing in Arabic, Hebrew, Syriac, and other RTL scripts. Direction is handled per block — each paragraph and heading carries its own <code>dir</code> attribute — so you can freely mix RTL and LTR content in the same entry.</p>
         <p><strong>Auto-detection</strong>: as you type, the editor reads the first strongly-directional character in each paragraph or heading and sets the direction automatically. Arabic and Hebrew script trigger <code>dir=&quot;rtl&quot;</code>; Latin script triggers <code>dir=&quot;ltr&quot;</code>. Once a block&#39;s direction is set it is locked and will not change if you later add neutral characters (numbers, punctuation, emoji) to the same block.</p>
         <p><strong>Manual override</strong>: press <code>Ctrl+Shift+D</code> (or <code>Cmd+Shift+D</code> on macOS) to toggle the current block between RTL and LTR, or use the <strong>¶R / ¶L toggle button</strong> (pilcrow icon with directional arrow) in the advanced formatting toolbar. This is useful for paragraphs that start with neutral characters such as numbers or quotation marks that the auto-detector cannot classify. The button icon shows the current direction and the direction you will switch to when clicked.</p>
         <p><strong>Alignment toolbar</strong>: when the cursor is in an RTL paragraph, the alignment toolbar reflects the browser&#39;s actual rendering and shows <strong>Right</strong> as the active alignment (not Left). Clicking an alignment button writes an explicit <code>text-align</code> override as normal.</p>
         <p><strong>Persistence</strong>: the <code>dir</code> attribute is stored in the encrypted HTML content of each entry, so direction is preserved across save, export, and re-open cycles.</p>
         <h2 id="inserting-the-current-time">Inserting the Current Time</h2><p>The advanced toolbar includes a <strong>clock button</strong> that inserts the current time at the cursor position. Clicking the button opens a popup where you can choose between <strong>12-hour</strong> and <strong>24-hour</strong> format and select hours:minutes or hours:minutes:seconds precision. Both selections are remembered across sessions.</p>
-        <h2 id="editor-font">Editor Font</h2><p>You can change the font used in the editor body via <strong>Preferences → Writing → Editor font</strong>. The selector shows two groups:</p>
+        <h2 id="editor-font-three-level-system">Editor Font — Three-Level System</h2><p>Mini Diarium uses a three-level font system so you can control fonts at multiple scopes:</p>
+        <h3 id="1-app-default-preferences">1. App Default (Preferences)</h3><p>You can change the font used app-wide via <strong>Preferences → Writing → Editor font</strong>. The selector shows two groups:</p>
         <ul>
         <li><strong>Bundled fonts</strong> — five open-source families (Noto Sans, Source Sans 3, Noto Serif, JetBrains Mono, Fira Mono) bundled with the app. Loaded on demand and work fully offline.</li>
         <li><strong>Custom fonts</strong> — font files you have uploaded yourself (see below). Only families with at least a Regular weight appear here.</li>
         </ul>
-        <p>Font family and font size are also available as optional controls in the editor toolbar itself. Enable them in <strong>Preferences → Writing → Toolbar items</strong> — they appear as compact dropdowns directly in the toolbar and always stay in sync with the Preferences sliders.</p>
+        <p>Font family and font size are also available as optional controls in the editor toolbar itself. Enable them in <strong>Preferences → Writing → Toolbar items</strong> — they appear as compact dropdowns directly in the toolbar, but they now apply inline formatting (see below) instead of changing the Preferences.</p>
+        <h3 id="2-entry-default-per-entry-override">2. Entry Default (Per-Entry Override)</h3><p>When you have the font dropdown enabled in the editor toolbar, two new buttons appear next to it:</p>
+        <ul>
+        <li><strong>Set as entry default</strong> — saves the current font family and size as the default for this entry only, overriding the app default. This is useful when a particular entry needs a different font than your usual preference.</li>
+        <li><strong>Clear entry default</strong> — removes the entry default and reverts this entry to use the app default.</li>
+        </ul>
+        <p>Entry font defaults are stored encrypted inside the entry&#39;s metadata and survive save, lock/unlock, and navigation cycles.</p>
+        <h3 id="3-inline-formatting-selection">3. Inline Formatting (Selection)</h3><p>The font family and font size dropdowns in the editor toolbar apply <strong>inline formatting</strong> to selected text or the cursor. This is different from changing preferences — it wraps the selection in a styled span so different parts of the same entry can have different fonts.</p>
+        <p>To apply inline formatting:</p>
+        <ol>
+        <li>Select the text you want to format (or place the cursor where you want inline formatting to start)</li>
+        <li>Use the font family or font size dropdown to apply the style</li>
+        </ol>
+        <p>Inline formatting is stored in the encrypted HTML of your entry and exports to JSON with full formatting preserved.</p>
         <h3 id="custom-fonts">Custom Fonts</h3><p>You can upload your own <code>.ttf</code>, <code>.otf</code>, <code>.woff</code>, or <code>.woff2</code> font files from <strong>Preferences → Advanced → Custom fonts</strong>.</p>
         <ul>
         <li><strong>Regular weight</strong> (required) and <strong>Bold weight</strong> (optional) are uploaded separately. The Bold field is optional; if you skip it, the browser will synthesize bold text from the Regular file, which may look slightly different from a true bold variant.</li>
@@ -462,9 +504,15 @@
           <li class="docs-toc-h2"><a href="#auto-save">Auto-Save</a></li>
           <li class="docs-toc-h2"><a href="#word-count">Word Count</a></li>
           <li class="docs-toc-h2"><a href="#inserting-images">Inserting Images</a></li>
+          <li class="docs-toc-h3"><a href="#how-images-are-stored">How images are stored</a></li>
+          <li class="docs-toc-h3"><a href="#insert-existing-image">Insert Existing Image</a></li>
+          <li class="docs-toc-h2"><a href="#links">Links</a></li>
           <li class="docs-toc-h2"><a href="#right-to-left-and-bidirectional-text">Right-to-Left and Bidirectional Text</a></li>
           <li class="docs-toc-h2"><a href="#inserting-the-current-time">Inserting the Current Time</a></li>
-          <li class="docs-toc-h2"><a href="#editor-font">Editor Font</a></li>
+          <li class="docs-toc-h2"><a href="#editor-font-three-level-system">Editor Font — Three-Level System</a></li>
+          <li class="docs-toc-h3"><a href="#1-app-default-preferences">1. App Default (Preferences)</a></li>
+          <li class="docs-toc-h3"><a href="#2-entry-default-per-entry-override">2. Entry Default (Per-Entry Override)</a></li>
+          <li class="docs-toc-h3"><a href="#3-inline-formatting-selection">3. Inline Formatting (Selection)</a></li>
           <li class="docs-toc-h3"><a href="#custom-fonts">Custom Fonts</a></li>
           <li class="docs-toc-h2"><a href="#tags">Tags</a></li>
           <li class="docs-toc-h3"><a href="#browsing-entries-by-tag">Browsing entries by tag</a></li>

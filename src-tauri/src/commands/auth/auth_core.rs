@@ -582,20 +582,19 @@ mod tests {
 
     #[test]
     fn test_check_diary_path() {
-        let tmp = std::env::temp_dir();
+        let temp_dir = tempfile::tempdir().unwrap();
         // Temp dir exists but is a directory, not a file -- expect false
-        assert!(!super::check_diary_path(tmp.to_str().unwrap().to_string()).unwrap());
+        assert!(!super::check_diary_path(temp_dir.path().to_str().unwrap().to_string()).unwrap());
 
         // Create a temp file -- expect true
-        let file_path = tmp.join("check_diary_test.db");
+        let file_path = temp_dir.path().join("check_diary_test.db");
         std::fs::write(&file_path, b"test").unwrap();
         assert!(super::check_diary_path(file_path.to_str().unwrap().to_string()).unwrap());
-        let _ = std::fs::remove_file(&file_path);
     }
 
     #[test]
     fn test_create_and_unlock() {
-        let (state, db_path, backups_dir) = make_state("create_unlock");
+        let (_fixture, state, db_path, backups_dir) = make_state("create_unlock");
 
         let db_conn = create_database(&db_path, "password".to_string()).unwrap();
         {
@@ -619,13 +618,11 @@ mod tests {
         let db = state.db.lock().unwrap();
         assert!(db.is_some());
         drop(db);
-
-        cleanup(&db_path, &backups_dir);
     }
 
     #[test]
     fn test_lock_diary_inner_locks_when_unlocked() {
-        let (state, db_path, backups_dir) = make_state("lock_inner_unlocked");
+        let (_fixture, state, db_path, _backups_dir) = make_state("lock_inner_unlocked");
         let db_conn = create_database(&db_path, "password".to_string()).unwrap();
         {
             let mut db = state.db.lock().unwrap();
@@ -635,36 +632,30 @@ mod tests {
         let did_lock = super::super::lock_diary_inner(&state).unwrap();
         assert!(did_lock);
         assert!(state.db.lock().unwrap().is_none());
-
-        cleanup(&db_path, &backups_dir);
     }
 
     #[test]
     fn test_lock_diary_inner_noop_when_already_locked() {
-        let (state, db_path, backups_dir) = make_state("lock_inner_locked");
+        let (_fixture, state, _db_path, _backups_dir) = make_state("lock_inner_locked");
 
         let did_lock = super::super::lock_diary_inner(&state).unwrap();
         assert!(!did_lock);
-
-        cleanup(&db_path, &backups_dir);
     }
 
     #[test]
     fn test_wrong_password() {
-        let (_, db_path, backups_dir) = make_state("wrong_pw");
+        let (_fixture, _, db_path, backups_dir) = make_state("wrong_pw");
 
         create_database(&db_path, "correct".to_string()).unwrap();
 
         let result = open_database(&db_path, "wrong".to_string(), &backups_dir);
         assert!(result.is_err());
         assert!(result.unwrap_err().contains("Incorrect password"));
-
-        cleanup(&db_path, &backups_dir);
     }
 
     #[test]
     fn test_change_password_v3() {
-        let (_, db_path, backups_dir) = make_state("change_pw_v3");
+        let (_fixture, _, db_path, backups_dir) = make_state("change_pw_v3");
 
         // Create database
         let db = create_database(&db_path, "old_password".to_string()).unwrap();
@@ -678,6 +669,7 @@ mod tests {
             word_count: 2,
             date_created: "2024-01-01T00:00:00Z".to_string(),
             date_updated: "2024-01-01T00:00:00Z".to_string(),
+            metadata: None,
         };
         crate::db::queries::insert_entry(&db, &entry).unwrap();
 
@@ -701,8 +693,6 @@ mod tests {
         // Old password should no longer work
         let fail = open_database(&db_path, "old_password".to_string(), &backups_dir);
         assert!(fail.is_err());
-
-        cleanup(&db_path, &backups_dir);
     }
 
     #[test]
@@ -711,7 +701,7 @@ mod tests {
         // and (b) open_database_auto doesn't check the require_all_auth flag.
         use crate::db::schema::{create_database_auto, open_database_auto};
 
-        let (_, db_path, backups_dir) = make_state("auto_bypass_req_all");
+        let (_fixture, _, db_path, backups_dir) = make_state("auto_bypass_req_all");
         let auto_key = [0x2au8; 32]; // arbitrary fixed key
 
         let db = create_database_auto(&db_path, &auto_key).unwrap();
@@ -724,8 +714,6 @@ mod tests {
             "auto unlock must not be blocked by require_all_auth: {:?}",
             result.err()
         );
-
-        cleanup(&db_path, &backups_dir);
     }
 
     #[test]
@@ -733,7 +721,7 @@ mod tests {
         use crate::auth::keypair::generate_keypair;
         use crate::db::schema::open_database;
 
-        let (_, db_path, backups_dir) = make_state("req_all_multi_guard");
+        let (_fixture, _, db_path, backups_dir) = make_state("req_all_multi_guard");
 
         let db = create_database(&db_path, "password".to_string()).unwrap();
 
@@ -775,13 +763,11 @@ mod tests {
 
         // 2 credentials == 2 non-auto slots → must pass
         super::check_require_all_auth_credential_count(2, &db2).unwrap();
-
-        cleanup(&db_path, &backups_dir);
     }
 
     #[test]
     fn test_require_all_auth_in_db_blocks_single_unlock() {
-        let (_, db_path, backups_dir) = make_state("req_all_auth_guard");
+        let (_fixture, _, db_path, backups_dir) = make_state("req_all_auth_guard");
 
         let db = create_database(&db_path, "password".to_string()).unwrap();
 
@@ -805,8 +791,6 @@ mod tests {
             Some("true"),
             "require_all_auth must persist in db_settings"
         );
-
-        cleanup(&db_path, &backups_dir);
     }
 
     #[test]
@@ -814,7 +798,7 @@ mod tests {
         use crate::auth::keypair::{generate_keypair, KeypairMethod};
         use crate::db::schema::{create_database, open_database};
 
-        let (_, db_path, backups_dir) = make_state("dup_pw_cred");
+        let (_fixture, _, db_path, backups_dir) = make_state("dup_pw_cred");
         let db = create_database(&db_path, "password".to_string()).unwrap();
 
         let kp = generate_keypair().unwrap();
@@ -850,8 +834,6 @@ mod tests {
         ];
         let err = super::verify_credentials_and_collect_slots(&creds, &db2).unwrap_err();
         assert!(err.contains("Duplicate credential"), "got: {}", err);
-
-        cleanup(&db_path, &backups_dir);
     }
 
     #[test]
@@ -859,7 +841,7 @@ mod tests {
         use crate::auth::keypair::{generate_keypair, KeypairMethod};
         use crate::db::schema::{create_database, open_database};
 
-        let (_, db_path, backups_dir) = make_state("dup_kp_cred");
+        let (fixture, _, db_path, backups_dir) = make_state("dup_kp_cred");
         let db = create_database(&db_path, "password".to_string()).unwrap();
 
         let kp = generate_keypair().unwrap();
@@ -884,7 +866,7 @@ mod tests {
         crate::db::queries::write_require_all_auth_mac(db.conn(), db.key().as_bytes()).unwrap();
         drop(db);
 
-        let key_file = std::env::temp_dir().join("test_dup_kp_cred.key");
+        let key_file = fixture.path().join("dup-kp-cred.key");
         std::fs::write(&key_file, &kp.private_key_hex).unwrap();
 
         let db2 = open_database(&db_path, "password".to_string(), &backups_dir).unwrap();
@@ -899,9 +881,6 @@ mod tests {
         ];
         let err = super::verify_credentials_and_collect_slots(&creds, &db2).unwrap_err();
         assert!(err.contains("Duplicate credential"), "got: {}", err);
-
-        let _ = std::fs::remove_file(&key_file);
-        cleanup(&db_path, &backups_dir);
     }
 
     #[test]
@@ -909,7 +888,7 @@ mod tests {
         use crate::auth::keypair::{generate_keypair, KeypairMethod};
         use crate::db::schema::{create_database, open_database};
 
-        let (_, db_path, backups_dir) = make_state("valid_pw_kp_creds");
+        let (fixture, _, db_path, backups_dir) = make_state("valid_pw_kp_creds");
         let db = create_database(&db_path, "password".to_string()).unwrap();
 
         let kp = generate_keypair().unwrap();
@@ -935,7 +914,7 @@ mod tests {
         crate::db::queries::write_require_all_auth_mac(db.conn(), db.key().as_bytes()).unwrap();
         drop(db);
 
-        let key_file = std::env::temp_dir().join("test_valid_pw_kp.key");
+        let key_file = fixture.path().join("valid-pw-kp.key");
         std::fs::write(&key_file, &kp.private_key_hex).unwrap();
 
         let db2 = open_database(&db_path, "password".to_string(), &backups_dir).unwrap();
@@ -951,8 +930,5 @@ mod tests {
         assert_eq!(satisfied.len(), 2);
         assert!(satisfied.contains(&pw_slot_id));
         assert!(satisfied.contains(&kp_slot_id));
-
-        let _ = std::fs::remove_file(&key_file);
-        cleanup(&db_path, &backups_dir);
     }
 }

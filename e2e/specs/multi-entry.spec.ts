@@ -196,7 +196,7 @@ describe('Multi-entry workflow', () => {
     // Navigate to a fresh date with no prior entries.
     // Scenario A's last calendar click (MULTI_DATE_1) auto-closed the sidebar via handleDayClick;
     // reopen it before accessing the calendar (required in mobile/overlay mode at 800 px).
-    await clickCalendarDay(MULTI_DATE_2, 'displayed');
+    await clickCalendarDay(MULTI_DATE_2);
     await $('[data-testid="title-input"]').waitForDisplayed({ timeout: 5000 });
 
     // Write a first entry

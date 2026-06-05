@@ -27,4 +27,21 @@ describe('parseMarkdownToHtml', () => {
     expect(html).not.toContain('<script>');
     expect(html).not.toContain('alert(1)');
   });
+
+  it('converts a named link [label](url) to <a href="...">label</a>', () => {
+    const html = parseMarkdownToHtml('See [Visit site](https://example.com) please');
+    expect(html).toContain('<a href="https://example.com">Visit site</a>');
+  });
+
+  it('preserves the link href against DOMPurify sanitization', () => {
+    const html = parseMarkdownToHtml('[label](https://example.com)');
+    // The anchor element survives sanitization with its href intact
+    expect(html).toMatch(/<a[^>]*href="https:\/\/example\.com"[^>]*>label<\/a>/);
+  });
+
+  it('strips javascript: URLs from links (security)', () => {
+    const html = parseMarkdownToHtml('[click](javascript:alert(1))');
+    // DOMPurify removes the unsafe href; the label text remains.
+    expect(html).not.toContain('javascript:');
+  });
 });

@@ -13,6 +13,7 @@ export type ToolbarItemKey =
   | 'headings'
   | 'blockquote'
   | 'inlineCode'
+  | 'link'
   | 'bulletList'
   | 'orderedList'
   | 'horizontalRule'
@@ -22,7 +23,8 @@ export type ToolbarItemKey =
   | 'textDirection'
   | 'alignment'
   | 'fontFamily'
-  | 'fontSize';
+  | 'fontSize'
+  | 'insertExistingImage';
 
 export interface ToolbarItem {
   key: ToolbarItemKey;
@@ -37,6 +39,7 @@ export const DEFAULT_TOOLBAR_ITEMS: ToolbarItem[] = [
   { key: 'highlightColor', enabled: true },
   { key: 'blockquote', enabled: true },
   { key: 'inlineCode', enabled: true },
+  { key: 'link', enabled: true },
   { key: 'bulletList', enabled: true },
   { key: 'orderedList', enabled: true },
   { key: 'horizontalRule', enabled: true },
@@ -47,6 +50,7 @@ export const DEFAULT_TOOLBAR_ITEMS: ToolbarItem[] = [
   { key: 'alignment', enabled: true },
   { key: 'fontFamily', enabled: false },
   { key: 'fontSize', enabled: false },
+  { key: 'insertExistingImage', enabled: true },
 ];
 
 export interface Preferences {

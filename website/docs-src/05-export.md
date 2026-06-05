@@ -1,9 +1,9 @@
 ---
 title: Exporting Data
 slug: export
-description: Export your journal as JSON or Markdown from the Export menu. JSON preserves entry IDs and tags; Markdown is human-readable. Exported files are not encrypted.
+description: Export your journal as JSON or Markdown. JSON preserves entry IDs, tags, and font metadata; Markdown is human-readable. Exported files are not encrypted.
 order: 6
-updated: 2026-05-29
+updated: 2026-06-04
 tags: export, backup, JSON, Markdown, portability, tags
 ---
 
@@ -31,15 +31,19 @@ The JSON format is the primary structural export. It outputs a `metadata` block 
       "title": "My Entry",
       "text": "<p>Entry content as HTML...</p>",
       "dateUpdated": "2024-01-15T10:05:00Z",
-      "tags": ["travel", "work"]
+      "tags": ["travel", "work"],
+      "metadata": {
+        "fontFamily": "Noto Serif",
+        "fontSize": 16.0
+      }
     }
   ]
 }
 ```
 
-Every entry includes a `"tags"` array. If the entry has no tags the array is empty (`[]`). Tags are listed in alphabetical order.
+Every entry includes a `"tags"` array (empty `[]` if the entry has no tags; tags are listed in alphabetical order). Entries with font metadata include a `"metadata"` object containing `fontFamily` and `fontSize`; entries without entry-level font defaults have no `metadata` field.
 
-This format preserves entry IDs and timestamps and can be re-imported back into Mini Diarium.
+This format preserves entry IDs, timestamps, tags, and font metadata. It can be re-imported back into Mini Diarium — the JSON importer automatically handles both the old Mini Diary date-keyed format and the new array format with optional metadata for backward compatibility. If the JSON contains embedded `data:image/...` content, Mini Diarium normalizes those images into its encrypted image store during import while preserving the visible content of the entry.
 
 ### Markdown Export
 
@@ -57,7 +61,7 @@ Entry content here...
 
 Entries with no tags have no tags line. Tags appear in alphabetical order.
 
-Markdown is a best-effort conversion of the stored HTML editor content. Complex formatting (tables, images) may not convert perfectly, but the text is always readable.
+Markdown is a best-effort, text-focused conversion of the stored HTML editor content. Inline font formatting is not preserved in Markdown — all text exports using the default Markdown rendering. Complex formatting (tables, images) may not convert perfectly, but the text is always readable. **For full-fidelity export including font metadata, use JSON instead.**
 
 ## Why Export?
 

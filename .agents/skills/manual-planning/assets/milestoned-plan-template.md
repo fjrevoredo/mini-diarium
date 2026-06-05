@@ -86,6 +86,25 @@
 - Validation: [Final command or inspection that validates the whole change.]
 - Notes: [Known limitations or `None`.]
 
+## Decision Log
+
+<!-- CONDITIONAL: Include this section only when the user requested a decision log companion file. Delete it otherwise. -->
+
+Pre-implementation decisions are recorded in [`<plan-name>-decisions.md`](<plan-name>-decisions.md).
+
+**During execution:** write a new entry in that file **before moving to the next task** whenever implementation diverges from what this plan specifies. Do not log deviations retrospectively.
+
+A log entry is required when:
+- A different file path, rule, function signature, or approach was used than what the plan specified.
+- A validation step reveals the plan's approach is incorrect and you adapt.
+- A step is skipped for a reason not already covered by the task's BLOCKED handling.
+
+A log entry is **not** required for:
+- Execution that matches the plan exactly.
+- Trivial wording differences that don't change meaning or outcome.
+
+---
+
 ## Approval Gate
 
 Implementation must not start until the user approves this plan.
@@ -116,9 +135,12 @@ Fix all failures before proceeding.
 - [ ] Cleanup and final verification are included.
 - [ ] The plan avoids vague actions without concrete targets.
 - [ ] The plan can be executed by a coding agent without reading the original conversation.
+- [ ] (If dialog/interaction feature) UX-GATE: each scenario listed and user confirmed against actual behavior, not just a description.
+- [ ] (If Tauri WebView behavior) PLATFORM-VERIFY step listed in exit criteria for each WebView interaction.
 
 ## Execution Notes
 
 - Update milestone and task status before starting and after validation.
 - Update each task to COMPLETED immediately after its validation passes.
 - Mark tasks or milestones BLOCKED with a short reason when progress cannot continue.
+- If implementation diverges from the plan, write a new entry in the decision log file **before starting the next task** (see Decision Log section above for what qualifies).

@@ -61,11 +61,9 @@ flatpak/cargo-sources.json
 flatpak/node-sources.json
 
 # Internal development documentation
-*-PLAN.md
 *-STATUS.md
 *-AUDIT.md
 *-VERIFICATION*.md
-Current-implementation-plan.md
 
 .reference/
 

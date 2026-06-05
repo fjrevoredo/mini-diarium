@@ -1,4 +1,4 @@
-import { createSignal } from 'solid-js';
+import { createSignal, untrack } from 'solid-js';
 import { listen, UnlistenFn } from '@tauri-apps/api/event';
 import * as tauri from '../lib/tauri';
 import { setEntryDates, executeCleanupCallbacks } from './entries';
@@ -281,7 +281,7 @@ export async function setupAuthEventListeners(): Promise<() => void> {
       const reason = event.payload?.reason ?? 'unknown';
       // If already in 'locking', the animation timer in lockJournal() owns the transition.
       // Only force-transition for OS-initiated locks (screen lock, suspend) where authState is 'unlocked'.
-      if (authState() !== 'locking') {
+      if (untrack(authState) !== 'locking') {
         resetForLockedSession();
       }
       log.info(`Journal locked by backend (${reason})`);

@@ -105,15 +105,9 @@ pub struct AuthSlotPeek {
 mod tests {
     use super::super::test_helpers::*;
     use crate::db::schema::create_database;
-    use std::path::PathBuf;
-
     #[test]
     fn test_list_auth_methods_locked_returns_error() {
-        let state = super::super::DiaryState::new(
-            PathBuf::from("test_list_methods_locked.db"),
-            PathBuf::from("test_list_methods_locked_backups"),
-            PathBuf::from("."),
-        );
+        let (_fixture, state, _, _) = make_state("list_methods_locked");
         let err = super::list_auth_methods_inner(&state).unwrap_err();
         assert!(err.contains("unlocked"), "got: {}", err);
     }
@@ -122,7 +116,7 @@ mod tests {
     fn test_list_auth_methods() {
         use crate::auth::keypair::generate_keypair;
 
-        let (_, db_path, _) = make_state("list_methods");
+        let (_fixture, _, db_path, _) = make_state("list_methods");
 
         let db = create_database(&db_path, "password".to_string()).unwrap();
 
@@ -153,10 +147,5 @@ mod tests {
             // AuthMethodInfo doesn't have wrapped_key field
             let _ = &slot.id;
         }
-
-        cleanup(
-            &db_path,
-            &PathBuf::from(format!("test_auth_cmd_backups_{}", "list_methods")),
-        );
     }
 }

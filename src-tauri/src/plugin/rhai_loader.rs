@@ -1,6 +1,6 @@
 use super::registry::PluginRegistry;
 use super::{ExportOutput, ExportPlugin, ImportPlugin, PluginInfo};
-use crate::db::queries::DiaryEntry;
+use crate::db::queries::{DiaryEntry, EntryMetadata};
 use log::{info, warn};
 use rhai::{Array, Dynamic, Engine, Map, Scope, AST};
 use std::collections::HashMap;
@@ -107,6 +107,20 @@ fn convert_to_entries(arr: Array) -> Result<Vec<DiaryEntry>, String> {
             .get("text")
             .and_then(|v| v.clone().into_string().ok())
             .unwrap_or_default();
+        let font_family = map
+            .get("font_family")
+            .and_then(|v| v.clone().into_string().ok());
+        let font_size = map
+            .get("font_size")
+            .and_then(|v| v.clone().try_cast::<f64>());
+        let metadata = if font_family.is_some() || font_size.is_some() {
+            Some(EntryMetadata {
+                font_family,
+                font_size,
+            })
+        } else {
+            None
+        };
 
         entries.push(DiaryEntry {
             id: 0,
@@ -116,6 +130,7 @@ fn convert_to_entries(arr: Array) -> Result<Vec<DiaryEntry>, String> {
             date,
             title,
             text,
+            metadata,
         });
     }
     Ok(entries)
@@ -133,6 +148,14 @@ fn entries_to_rhai_array(entries: Vec<DiaryEntry>) -> Array {
             map.insert("word_count".into(), Dynamic::from(e.word_count as i64));
             map.insert("date_created".into(), Dynamic::from(e.date_created));
             map.insert("date_updated".into(), Dynamic::from(e.date_updated));
+            if let Some(ref meta) = e.metadata {
+                if let Some(ref ff) = meta.font_family {
+                    map.insert("font_family".into(), Dynamic::from(ff.clone()));
+                }
+                if let Some(fs) = meta.font_size {
+                    map.insert("font_size".into(), Dynamic::from(fs));
+                }
+            }
             Dynamic::from(map)
         })
         .collect()
@@ -360,6 +383,7 @@ mod tests {
                 word_count: 2,
                 date_created: "2024-01-01T00:00:00Z".into(),
                 date_updated: "2024-01-01T00:00:00Z".into(),
+                metadata: None,
             },
             DiaryEntry {
                 id: 2,
@@ -369,6 +393,7 @@ mod tests {
                 word_count: 2,
                 date_created: "2024-01-02T00:00:00Z".into(),
                 date_updated: "2024-01-02T00:00:00Z".into(),
+                metadata: None,
             },
         ]
     }
@@ -482,6 +507,7 @@ fn format_entries(entries) {
             word_count: 1,
             date_created: "2024-06-15T00:00:00Z".into(),
             date_updated: "2024-06-15T00:00:00Z".into(),
+            metadata: None,
         }];
 
         let result = plugin.export(entries, &HashMap::new()).unwrap();
@@ -589,5 +615,115 @@ fn parse(content) {
         );
 
         assert_eq!(output.content, expected);
+    }
+
+    #[test]
+    fn test_rhai_export_plugin_html_to_markdown_with_link() {
+        // Any Rhai export plugin that calls the `html_to_markdown` host function
+        // automatically gets the named-link → `[label](url)` conversion for free
+        // once the Rust converter understands `<a>` tags. This test locks in
+        // that contract so the host function never regresses.
+        let source = r#"
+// @name: Link Test Export
+// @type: export
+// @extensions: md
+
+fn format_entries(entries) {
+    let out = "";
+    for e in entries {
+        out += html_to_markdown(e.text) + "\n";
+    }
+    out
+}
+"#;
+        let engine = create_sandboxed_engine();
+        let ast = engine.compile(source).unwrap();
+        let plugin = RhaiExportPlugin {
+            info: PluginInfo {
+                id: "test:rhai-link".into(),
+                name: "Link Test Export".into(),
+                file_extensions: vec!["md".into()],
+                builtin: false,
+            },
+            script: ast,
+        };
+
+        let entries = vec![DiaryEntry {
+            id: 1,
+            date: "2024-06-15".into(),
+            title: "Title".into(),
+            text: r#"<p>See <a href="https://example.com">Visit site</a> please</p>"#.into(),
+            word_count: 4,
+            date_created: "2024-06-15T00:00:00Z".into(),
+            date_updated: "2024-06-15T00:00:00Z".into(),
+            metadata: None,
+        }];
+
+        let result = plugin.export(entries, &HashMap::new()).unwrap();
+        assert!(
+            result.content.contains("[Visit site](https://example.com)"),
+            "expected link in Rhai plugin output: {}",
+            result.content
+        );
+    }
+
+    #[test]
+    fn test_entries_to_rhai_array_includes_metadata_fields() {
+        let entries = vec![DiaryEntry {
+            id: 1,
+            date: "2024-01-01".into(),
+            title: "Styled".into(),
+            text: "<p>Content</p>".into(),
+            word_count: 1,
+            date_created: "2024-01-01T00:00:00Z".into(),
+            date_updated: "2024-01-01T00:00:00Z".into(),
+            metadata: Some(crate::db::queries::EntryMetadata {
+                font_family: Some("Georgia".to_string()),
+                font_size: Some(16.0),
+            }),
+        }];
+        let arr = entries_to_rhai_array(entries);
+        let map = arr[0].clone().try_cast::<Map>().unwrap();
+        assert_eq!(
+            map.get("font_family")
+                .and_then(|v| v.clone().into_string().ok())
+                .as_deref(),
+            Some("Georgia")
+        );
+        assert_eq!(
+            map.get("font_size")
+                .and_then(|v| v.clone().try_cast::<f64>()),
+            Some(16.0)
+        );
+    }
+
+    #[test]
+    fn test_convert_to_entries_reads_metadata_fields() {
+        let mut map = Map::new();
+        map.insert("date".into(), Dynamic::from("2024-01-01".to_string()));
+        map.insert("title".into(), Dynamic::from("T".to_string()));
+        map.insert("text".into(), Dynamic::from("<p>X</p>".to_string()));
+        map.insert(
+            "font_family".into(),
+            Dynamic::from("Times New Roman".to_string()),
+        );
+        map.insert("font_size".into(), Dynamic::from(14.0f64));
+        let arr: Array = vec![Dynamic::from(map)];
+
+        let entries = convert_to_entries(arr).unwrap();
+        let meta = entries[0].metadata.as_ref().unwrap();
+        assert_eq!(meta.font_family.as_deref(), Some("Times New Roman"));
+        assert_eq!(meta.font_size, Some(14.0));
+    }
+
+    #[test]
+    fn test_convert_to_entries_without_metadata_is_none() {
+        let mut map = Map::new();
+        map.insert("date".into(), Dynamic::from("2024-01-01".to_string()));
+        map.insert("text".into(), Dynamic::from("<p>X</p>".to_string()));
+        let arr: Array = vec![Dynamic::from(map)];
+
+        let entries = convert_to_entries(arr).unwrap();
+        assert!(entries[0].metadata.is_none());
     }
 }

@@ -3,7 +3,7 @@ title: Search
 slug: search
 description: Full-text search is not yet available in Mini Diarium due to its encryption model. Use the calendar, Go to Date shortcut, or export to find past entries.
 order: 4
-updated: 2026-05-29
+updated: 2026-06-04
 tags: search, find, full-text
 ---
 

@@ -78,6 +78,7 @@ Every plan must include:
 - Validation command/check for every task.
 - Cleanup phase after implementation.
 - Final verification section.
+- Decision Log section with execution protocol (milestoned plans only, and only when a decision log companion file was requested; omit for simple plans and when no companion file was requested).
 - Approval gate.
 
 Use exactly these task statuses:
@@ -132,13 +133,23 @@ When executing a manual plan:
 1. Set the plan status to `IN PROGRESS` before starting implementation.
 2. Before starting a task, update that task to `IN PROGRESS`.
 3. Complete the task.
-4. Run the task validation.
+4. Run the task validation. Before declaring the validation passed, check the task's **Steps** and **Validation** sections for any explicitly named tests (e.g. "add a test `test_foo_bar`"). A green test suite does not mean those tests were written — verify by name.
 5. Fix issues until validation passes or mark the task `BLOCKED` with a reason.
 6. Immediately update the task status to `COMPLETED` after validation passes.
 7. Update the milestone status when all tasks in the milestone satisfy its exit criteria.
 8. Start the next task only after the plan file reflects the current state.
 
+If validation was intentionally deferred earlier in execution, reconcile the plan text after the deferred checks actually run. Do not leave stale phrases like "validation pending" or self-check statements that describe an earlier plan state once the plan has moved forward.
+
 The plan file is the execution ledger. Keep it accurate before moving forward.
+
+**Discovered issues during implementation:** If a bug or unplanned problem is identified while working on a task, choose one path immediately — do not defer via a mental note:
+- Fix it in the current task if it is small and in-scope.
+- Create a new task in the plan with status `BLOCKED` if it is out of scope for the current task.
+
+A bug that is noticed but neither fixed nor recorded will be forgotten. There is no third option.
+
+**Decision logs:** If the user requested a decision log file alongside the plan, update it at the point of each deviation — not retrospectively at the end. A decision log entry must be written before moving to the next task whenever the implementation diverges from what the plan specified (different file location, different function signature, different approach). Log entries written after the fact are unreliable.
 
 ## Cleanup Phase
 
@@ -150,6 +161,23 @@ If the plan originated from a TODO item in `docs/todo/TODO.md`, the cleanup phas
 
 If the plan delivers a user-facing feature, bug fix, or behavior change, the cleanup phase must create or update a changelog entry (e.g. append to `CHANGELOG.md` or the project's latest-changelog file) summarizing what changed.
 
+## Decision Log Section Rules
+
+Decision logs apply to **milestoned plans only**. Simple plans (10 or fewer tasks) are by definition small enough that deviations can be noted inline in task notes; a companion file adds overhead without benefit.
+
+Include `## Decision Log` in a milestoned plan only when the user also requests a decision log companion file. When included, the section must contain all four of the following — a bare link to the companion file is not enough:
+
+1. **Link** to the companion file by name.
+2. **Timing rule**: entries must be written **before moving to the next task**, not retrospectively at the end of the plan.
+3. **What qualifies**: a different file path, CSS rule, function signature, or approach than what the plan specified; a validation failure that forces a plan adaptation; a step skipped for a reason not already covered by the task's BLOCKED handling.
+4. **What does not qualify**: execution that matches the plan exactly; trivial wording differences that don't change meaning or outcome.
+
+A Decision Log section that only links to the companion file without this protocol gives an executing agent no guidance on when to write entries, so deviations go unrecorded.
+
+Also add a one-line reminder to the plan's `## Execution Notes` that cross-references the Decision Log section, so the protocol is visible at the point of execution:
+
+> If implementation diverges from the plan, write a new entry in the decision log file **before starting the next task** (see Decision Log section for what qualifies).
+
 ## Self-Check Before Approval
 
 Before asking for final approval, verify:
@@ -159,12 +187,15 @@ Before asking for final approval, verify:
 - Scope, non-goals, and assumptions are explicit.
 - All open questions have been asked via the native question-asking tool (or chat fallback if no tool exists), answered by the user, and recorded in the plan
 - Zero unanswered questions remain
+- If the plan describes a dialog or multi-step user interaction: the plan is tagged `UX-GATE: REQUIRED`, and each interaction scenario is listed with expected user feedback confirmed against actual behavior (mockup, prototype walkthrough, or explicit per-scenario sign-off from the user — not just a description of behavior).
+- If the plan includes a Tauri WebView interaction (link clicks, navigation, new-window): an explicit `PLATFORM-VERIFY` manual-verification step is listed in the exit criteria for each such interaction.
 - Every task has concrete steps and validation.
 - More than 10 tasks are grouped into milestones.
 - Every milestone has exit criteria when milestones exist.
 - Cleanup and final verification are included.
 - The plan avoids vague actions like "improve", "handle errors", or "write tests" without concrete targets.
 - The plan can be executed by a coding agent without reading the original conversation.
+- If this is a milestoned plan and a decision log was requested: the `## Decision Log` section exists, links to the companion file, states entries must be written before the next task (not retrospectively), and lists qualifying deviations and non-qualifying cases. The `## Execution Notes` section contains a cross-reference bullet pointing back to it. (Simple plans never include a Decision Log section.)
 
 Record the self-check result inside the plan before asking for approval. If any item fails, keep the plan out of `READY FOR APPROVAL`.
 
@@ -174,3 +205,16 @@ Copy and adapt one template into the target repository plan file:
 
 - `assets/simple-plan-template.md` for plans with 10 or fewer tasks.
 - `assets/milestoned-plan-template.md` for plans with more than 10 tasks.
+
+## Known Platform Traps (Tauri + TipTap)
+
+Before writing or approving a plan step that involves TipTap extensions or Tauri WebView behavior, check these known traps:
+
+| Trap | Risk | Rule |
+|------|------|------|
+| `target="_blank"` in TipTap Link extension | Triggers WebView new-window handoff, bypasses `openOnClick: false` | Override in `addAttributes()`, not `configure()` |
+| `configure({ HTMLAttributes: {...} })` | Deep merge — does not replace defaults | Read `addOptions()` in installed source first (see `FRONTEND_BEST_PRACTICES.md`) |
+| `openOnClick: false` vs WebView navigation | Stops JS click handler, not WebView platform routing | Requires `addAttributes()` default override |
+| Dialog + `autofocus` input | TipTap collapses selection on focus loss | Use snapshot pattern (see Gotcha #8 in `src/CLAUDE.md`) |
+
+For TipTap extension tasks, include this pre-implementation step in the plan: "Read installed extension source at `node_modules/@tiptap/<extension>/dist/index.js`. Confirm `addOptions()` defaults and `configure()` merge behavior before writing configuration code."

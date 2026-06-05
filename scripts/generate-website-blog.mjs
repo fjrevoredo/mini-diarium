@@ -260,12 +260,8 @@ function buildNav() {
       <li><a href="/#features">Features</a></li>
       <li><a href="/#security">Security</a></li>
       <li><a href="/blog/" aria-current="page">Blog</a></li>
-      <li><a href="/compare/">Compare</a></li>
-      <li><a href="/encrypted-journal/">How It Works</a></li>
       <li><a href="/docs/">Docs</a></li>
-      <li><a href="/#facts">FAQ</a></li>
       <li><a href="/#platforms">Download</a></li>
-      <li><a href="/#about">About</a></li>
       <li>
         <a class="nav-github" href="https://github.com/fjrevoredo/mini-diarium" target="_blank" rel="noopener noreferrer" aria-label="View on GitHub">
           <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">

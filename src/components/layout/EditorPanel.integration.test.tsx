@@ -1,6 +1,6 @@
 /* eslint-disable solid/reactivity -- intentional test shim, not a reactive component */
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { screen, waitFor } from '@solidjs/testing-library';
+import { screen, waitFor, fireEvent } from '@solidjs/testing-library';
 import { renderWithI18n } from '../../test/i18n-test-utils';
 import type { DiaryEntry } from '../../lib/tauri';
 
@@ -77,6 +77,8 @@ vi.mock('../editor/DiaryEditor', () => {
       onSetContent?: (isEmpty: boolean) => void;
       onEditorReady?: (editor: unknown) => void;
       onImportMarkdown?: () => void;
+      entryMetadata?: import('../../lib/tauri').EntryMetadata | null;
+      onEntryMetadataChange?: (meta: import('../../lib/tauri').EntryMetadata | null) => void;
     }) => {
       bus.onUpdate = props.onUpdate ?? null;
       bus.onSetContent = props.onSetContent ?? null;
@@ -133,6 +135,7 @@ function makeEntry(overrides: Partial<DiaryEntry>): DiaryEntry {
     word_count: overrides.word_count ?? 0,
     date_created: overrides.date_created ?? '2026-04-23T10:00:00Z',
     date_updated: overrides.date_updated ?? '2026-04-23T10:00:00Z',
+    metadata: overrides.metadata,
   };
 }
 
@@ -193,7 +196,7 @@ describe('EditorPanel integration', () => {
     await vi.advanceTimersByTimeAsync(600);
     await flushMicrotasks();
 
-    expect(mocks.saveEntry).toHaveBeenCalledWith(42, 'Morning', '<p>Hello world</p>');
+    expect(mocks.saveEntry).toHaveBeenCalledWith(42, 'Morning', '<p>Hello world</p>', null);
     // Must not have treated the typed content as empty (no delete).
     expect(mocks.deleteEntryIfEmpty).not.toHaveBeenCalled();
   });
@@ -230,7 +233,7 @@ describe('EditorPanel integration', () => {
 
     // The synchronous pre-load flush path should call saveEntry(7, …) with the latest content.
     await waitFor(() => {
-      expect(mocks.saveEntry).toHaveBeenCalledWith(7, 'Day 1', '<p>Day 1 edited</p>');
+      expect(mocks.saveEntry).toHaveBeenCalledWith(7, 'Day 1', '<p>Day 1 edited</p>', null);
     });
     await flushMicrotasks();
     expect(mocks.getEntriesForDate).toHaveBeenCalledWith('2026-04-24');
@@ -296,7 +299,7 @@ describe('EditorPanel integration', () => {
     await vi.advanceTimersByTimeAsync(600);
     await flushMicrotasks();
 
-    expect(mocks.saveEntry).toHaveBeenCalledWith(99, '', '<p>H</p>');
+    expect(mocks.saveEntry).toHaveBeenCalledWith(99, '', '<p>H</p>', null);
     // Interface sanity: the shim rendered.
     expect(screen.getByTestId('diary-editor-shim')).toBeInTheDocument();
   });
@@ -330,6 +333,70 @@ describe('EditorPanel integration', () => {
 
     setIsSaving(false);
     await waitFor(() => expect(screen.queryByText('Saving...')).not.toBeInTheDocument());
+  });
+
+  it('entry-metadata-preserved: metadata survives a debounced keystroke save', async () => {
+    // Entry has a font default already set
+    const existing = makeEntry({
+      id: 42,
+      title: 'Styled',
+      text: '<p>Old content</p>',
+      metadata: { fontFamily: 'Merriweather', fontSize: 18 },
+    });
+    mocks.getEntriesForDate.mockResolvedValue([existing]);
+    mocks.saveEntry.mockResolvedValue(undefined);
+    mocks.getAllEntryDates.mockResolvedValue(['2026-04-23']);
+
+    renderWithI18n(() => <EditorPanel />);
+    await waitFor(() => expect(mocks.getEntriesForDate).toHaveBeenCalledWith('2026-04-23'));
+    await flushMicrotasks();
+
+    // Simulate a keystroke (no metadata change — just content edit)
+    typeIntoEditor('<p>New content</p>');
+    await vi.advanceTimersByTimeAsync(600);
+    await flushMicrotasks();
+
+    // saveEntry must carry the existing metadata through
+    expect(mocks.saveEntry).toHaveBeenCalledWith(42, 'Styled', '<p>New content</p>', {
+      fontFamily: 'Merriweather',
+      fontSize: 18,
+    });
+  });
+
+  it("metadata-cleared-on-delete: after deleting entry-with-metadata, the next save uses the remaining entry's own metadata (null)", async () => {
+    // entryWithMeta has higher id → newest; entryNoMeta is older.
+    // Backend returns newest-first → [entryWithMeta, entryNoMeta].
+    const entryWithMeta = makeEntry({
+      id: 20,
+      title: 'Styled',
+      text: '<p>Styled</p>',
+      metadata: { fontFamily: 'Merriweather', fontSize: 18 },
+    });
+    const entryNoMeta = makeEntry({ id: 10, title: 'Plain', text: '<p>Plain</p>' });
+
+    mocks.getEntriesForDate
+      .mockResolvedValueOnce([entryWithMeta, entryNoMeta]) // initial load
+      .mockResolvedValueOnce([entryNoMeta]); // refresh after delete
+    mocks.getAllEntryDates.mockResolvedValue(['2026-04-23']);
+
+    renderWithI18n(() => <EditorPanel />);
+    await waitFor(() => expect(mocks.getEntriesForDate).toHaveBeenCalledWith('2026-04-23'));
+    await flushMicrotasks();
+    // reversed → [entryNoMeta (idx 0), entryWithMeta (idx 1)]; startIndex = 1 → entryWithMeta active
+
+    // Click delete — EntryNavBar is visible because there are 2 entries.
+    const deleteBtn = screen.getByTestId('entry-delete-button');
+    fireEvent.click(deleteBtn);
+
+    await waitFor(() => expect(mocks.deleteEntry).toHaveBeenCalledWith(20));
+    await flushMicrotasks();
+    // entryNoMeta is now active; its metadata is null.
+
+    typeIntoEditor('<p>Plain edited</p>');
+    await vi.advanceTimersByTimeAsync(600);
+    await flushMicrotasks();
+
+    expect(mocks.saveEntry).toHaveBeenCalledWith(10, 'Plain', '<p>Plain edited</p>', null);
   });
 
   it('import-markdown: shows error banner when readTextFile fails', async () => {

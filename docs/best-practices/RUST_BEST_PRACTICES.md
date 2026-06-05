@@ -202,16 +202,16 @@ Current example: legacy `require_all_auth` config migration into `db_settings`.
 Run these before accepting Rust backend refactors:
 
 ```powershell
-cmd.exe /c "cd /d D:\Repos\mini-diarium\src-tauri && cargo test"
+cargo test --manifest-path src-tauri/Cargo.toml
 cmd.exe /c bun run check
 ```
 
 For focused diagnosis:
 
 ```powershell
-cmd.exe /c "cd /d D:\Repos\mini-diarium\src-tauri && cargo test auth"
-cmd.exe /c "cd /d D:\Repos\mini-diarium\src-tauri && cargo test queries"
-cmd.exe /c "cd /d D:\Repos\mini-diarium\src-tauri && cargo test schema"
+cargo test --manifest-path src-tauri/Cargo.toml auth
+cargo test --manifest-path src-tauri/Cargo.toml queries
+cargo test --manifest-path src-tauri/Cargo.toml schema
 ```
 
 ## Review Questions

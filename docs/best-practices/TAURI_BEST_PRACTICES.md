@@ -107,6 +107,24 @@ Patterns:
 
 This gives meaningful unit coverage and keeps any Tauri harness focused on serialization, registration, and runtime behavior.
 
+### What jsdom Cannot Test
+
+These Tauri/WebView behaviors fire at the platform level before JavaScript and cannot be validated by Vitest or jsdom:
+
+- `target="_blank"` → WebView new-window handoff (fires before the JS event loop)
+- `on_navigation` / `on_new_window` guards
+- OS-level screen-lock / session events (Windows `WM_WTSSESSION_CHANGE`, macOS `com.apple.screenIsLocked`)
+- WebView2 `WebResourceRequested` handler
+- Any behavior that depends on the actual Tauri runtime rather than the mocked `@tauri-apps/api`
+
+For any test that covers code adjacent to these behaviors, add a comment explaining what requires manual in-app verification:
+
+```ts
+// PLATFORM-VERIFY: <describe what must be manually verified in the running app>
+```
+
+Include an explicit `PLATFORM-VERIFY` manual-verification step in the plan's exit criteria whenever a plan step touches Tauri WebView interactions (link clicks, navigation, new-window).
+
 ### Keep WebView Security Platform Code Isolated
 
 Platform WebView security handlers are part of the app's network-isolation defense.
@@ -211,7 +229,7 @@ Generated files and platform-specific WebView security code may exceed these lim
 5. Run focused auth tests:
 
    ```powershell
-   cmd.exe /c "cd /d D:\Repos\mini-diarium\src-tauri && cargo test auth"
+   cargo test --manifest-path src-tauri/Cargo.toml auth
    ```
 
 ### WebView Security Regression
@@ -230,7 +248,7 @@ cmd.exe /c bun run type-check
 cmd.exe /c bun run lint
 cmd.exe /c bun run check:ui-errors
 cmd.exe /c bun run test:run
-cmd.exe /c "cd /d D:\Repos\mini-diarium\src-tauri && cargo test"
+cargo test --manifest-path src-tauri/Cargo.toml
 cmd.exe /c bun run build
 ```
 

@@ -3,15 +3,55 @@ use rusqlite::params;
 
 // Shared column projection for all entry queries.
 const ENTRY_SELECT: &str =
-    "SELECT id, date, title_encrypted, text_encrypted, word_count, date_created, date_updated \
-     FROM entries";
+    "SELECT id, date, title_encrypted, text_encrypted, word_count, date_created, date_updated, \
+     entry_metadata_encrypted FROM entries";
 
-type EntryRow = (i64, String, Vec<u8>, Vec<u8>, i32, String, String);
+type EntryRow = (
+    i64,
+    String,
+    Vec<u8>,
+    Vec<u8>,
+    i32,
+    String,
+    String,
+    Option<Vec<u8>>,
+);
+
+fn encrypt_metadata(
+    db: &DatabaseConnection,
+    metadata: &Option<EntryMetadata>,
+) -> Result<Option<Vec<u8>>, String> {
+    // Normalize here so every writer (insert, update, import, plugin) gets the
+    // same validated invariants regardless of call site.
+    let metadata = normalize_metadata(metadata.clone());
+    match metadata {
+        Some(m) => {
+            let json = serde_json::to_string(&m)
+                .map_err(|e| format!("Failed to serialize entry metadata: {}", e))?;
+            Ok(Some(super::encrypt_for_storage(
+                db.key(),
+                json.as_bytes(),
+                "entry_metadata",
+            )?))
+        }
+        None => Ok(None),
+    }
+}
 
 fn row_to_entry(db: &DatabaseConnection, row: EntryRow) -> Result<DiaryEntry, String> {
-    let (id, date, title_enc, text_enc, word_count, date_created, date_updated) = row;
+    let (id, date, title_enc, text_enc, word_count, date_created, date_updated, metadata_enc) = row;
     let title = super::decrypt_utf8(db.key(), &title_enc, "title")?;
     let text = super::decrypt_utf8(db.key(), &text_enc, "text")?;
+    let metadata = match metadata_enc {
+        Some(enc) => {
+            let json = super::decrypt_utf8(db.key(), &enc, "entry_metadata")?;
+            Some(
+                serde_json::from_str::<EntryMetadata>(&json)
+                    .map_err(|e| format!("Failed to parse entry metadata: {}", e))?,
+            )
+        }
+        None => None,
+    };
     Ok(DiaryEntry {
         id,
         date,
@@ -20,7 +60,39 @@ fn row_to_entry(db: &DatabaseConnection, row: EntryRow) -> Result<DiaryEntry, St
         word_count,
         date_created,
         date_updated,
+        metadata,
     })
+}
+
+/// Per-entry font defaults (optional override of app-level defaults)
+#[derive(Debug, Clone, PartialEq, serde::Serialize, serde::Deserialize)]
+pub struct EntryMetadata {
+    #[serde(rename = "fontFamily", skip_serializing_if = "Option::is_none")]
+    pub font_family: Option<String>,
+    #[serde(rename = "fontSize", skip_serializing_if = "Option::is_none")]
+    pub font_size: Option<f64>,
+}
+
+/// Normalizes entry metadata: trims empty family strings to None, clamps font size to 12–24 px.
+/// Returns None when both fields are None (no override).
+pub fn normalize_metadata(meta: Option<EntryMetadata>) -> Option<EntryMetadata> {
+    let mut m = meta?;
+    if let Some(ref f) = m.font_family {
+        let trimmed = f.trim().to_string();
+        m.font_family = if trimmed.is_empty() {
+            None
+        } else {
+            Some(trimmed)
+        };
+    }
+    if let Some(size) = m.font_size {
+        m.font_size = Some(size.clamp(12.0, 24.0));
+    }
+    if m.font_family.is_none() && m.font_size.is_none() {
+        None
+    } else {
+        Some(m)
+    }
 }
 
 /// Represents a diary entry
@@ -33,6 +105,8 @@ pub struct DiaryEntry {
     pub word_count: i32,      // Word count
     pub date_created: String, // ISO 8601 timestamp
     pub date_updated: String, // ISO 8601 timestamp
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub metadata: Option<EntryMetadata>,
 }
 
 /// Inserts a new entry into the database
@@ -43,12 +117,13 @@ pub struct DiaryEntry {
 pub fn insert_entry(db: &DatabaseConnection, entry: &DiaryEntry) -> Result<(), String> {
     let title_encrypted = super::encrypt_for_storage(db.key(), entry.title.as_bytes(), "title")?;
     let text_encrypted = super::encrypt_for_storage(db.key(), entry.text.as_bytes(), "text")?;
+    let metadata_encrypted = encrypt_metadata(db, &entry.metadata)?;
 
     // Insert into database (id is handled by AUTOINCREMENT)
     db.conn()
         .execute(
-            "INSERT INTO entries (date, title_encrypted, text_encrypted, word_count, date_created, date_updated)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+            "INSERT INTO entries (date, title_encrypted, text_encrypted, word_count, date_created, date_updated, entry_metadata_encrypted)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
             params![
                 &entry.date,
                 &title_encrypted,
@@ -56,6 +131,7 @@ pub fn insert_entry(db: &DatabaseConnection, entry: &DiaryEntry) -> Result<(), S
                 entry.word_count,
                 &entry.date_created,
                 &entry.date_updated,
+                &metadata_encrypted,
             ],
         )
         .map_err(|e| format!("Failed to insert entry: {}", e))?;
@@ -63,6 +139,50 @@ pub fn insert_entry(db: &DatabaseConnection, entry: &DiaryEntry) -> Result<(), S
     // Search index hook: call search module's index_entry() here when implemented.
 
     Ok(())
+}
+
+/// Inserts a new entry and normalizes any embedded or referenced images atomically.
+///
+/// This preserves the low-level `insert_entry()` helper for tests and fixtures while giving
+/// user-facing import paths the same image-store invariant as normal editor saves.
+pub fn insert_entry_with_images(
+    db: &DatabaseConnection,
+    entry: &DiaryEntry,
+) -> Result<i64, String> {
+    let result: Result<i64, String> = (|| {
+        db.conn()
+            .execute("BEGIN IMMEDIATE", [])
+            .map_err(|e| format!("BEGIN failed: {}", e))?;
+
+        insert_entry(db, entry)?;
+        let entry_id = db.conn().last_insert_rowid();
+
+        let (rewritten, image_ids) =
+            crate::db::queries::images::extract_and_replace_image_refs(&entry.text, db)?;
+
+        if rewritten != entry.text || !image_ids.is_empty() {
+            let mut stored = get_entry_by_id(db, entry_id)?
+                .ok_or_else(|| format!("No entry found with id: {}", entry_id))?;
+            stored.text = rewritten;
+            stored.word_count = count_words(&stored.text);
+            stored.metadata = entry.metadata.clone();
+            update_entry(db, &stored)?;
+            crate::db::queries::images::replace_entry_image_links(db, entry_id, &image_ids)?;
+            crate::db::queries::images::cleanup_orphaned_images(db)?;
+        }
+
+        db.conn()
+            .execute("COMMIT", [])
+            .map_err(|e| format!("COMMIT failed: {}", e))?;
+
+        Ok(entry_id)
+    })();
+
+    if result.is_err() {
+        let _ = db.conn().execute("ROLLBACK", []);
+    }
+
+    result
 }
 
 /// Retrieves all entries for a given date, newest-first (ORDER BY id DESC)
@@ -92,6 +212,7 @@ pub fn get_entries_by_date(db: &DatabaseConnection, date: &str) -> Result<Vec<Di
                 row.get::<_, i32>(4)?,
                 row.get::<_, String>(5)?,
                 row.get::<_, String>(6)?,
+                row.get::<_, Option<Vec<u8>>>(7)?,
             ))
         })
         .map_err(|e| format!("Failed to query entries: {}", e))?
@@ -122,6 +243,7 @@ pub fn get_entry_by_id(db: &DatabaseConnection, id: i64) -> Result<Option<DiaryE
                 row.get::<_, i32>(4)?,
                 row.get::<_, String>(5)?,
                 row.get::<_, String>(6)?,
+                row.get::<_, Option<Vec<u8>>>(7)?,
             ))
         },
     );
@@ -133,6 +255,52 @@ pub fn get_entry_by_id(db: &DatabaseConnection, id: i64) -> Result<Option<DiaryE
     }
 }
 
+/// Updates an entry and atomically extracts any embedded images.
+///
+/// Wraps the full update in `BEGIN IMMEDIATE / COMMIT` with an explicit `ROLLBACK`
+/// on any failure so the long-lived DiaryState connection is never left in a half-open
+/// transaction. `update_entry` is called internally (not a hand-rolled UPDATE) so
+/// `entry_metadata_encrypted` is preserved correctly.
+pub fn update_entry_with_images(
+    db: &DatabaseConnection,
+    id: i64,
+    title: &str,
+    text: &str,
+    metadata: Option<EntryMetadata>,
+) -> Result<(), String> {
+    let result: Result<(), String> = (|| {
+        db.conn()
+            .execute("BEGIN IMMEDIATE", [])
+            .map_err(|e| format!("BEGIN failed: {}", e))?;
+
+        let (rewritten, image_ids) =
+            crate::db::queries::images::extract_and_replace_image_refs(text, db)?;
+        crate::db::queries::images::replace_entry_image_links(db, id, &image_ids)?;
+        crate::db::queries::images::cleanup_orphaned_images(db)?;
+
+        let now = chrono::Utc::now().to_rfc3339();
+        let word_count = count_words(&rewritten);
+        let mut entry =
+            get_entry_by_id(db, id)?.ok_or_else(|| format!("No entry found with id: {}", id))?;
+        entry.title = title.to_string();
+        entry.text = rewritten;
+        entry.word_count = word_count;
+        entry.date_updated = now;
+        entry.metadata = metadata;
+        update_entry(db, &entry)?;
+
+        db.conn()
+            .execute("COMMIT", [])
+            .map_err(|e| format!("COMMIT failed: {}", e))?;
+        Ok(())
+    })();
+
+    if result.is_err() {
+        let _ = db.conn().execute("ROLLBACK", []);
+    }
+    result
+}
+
 /// Updates an existing entry in the database by id
 ///
 /// # Arguments
@@ -141,19 +309,22 @@ pub fn get_entry_by_id(db: &DatabaseConnection, id: i64) -> Result<Option<DiaryE
 pub fn update_entry(db: &DatabaseConnection, entry: &DiaryEntry) -> Result<(), String> {
     let title_encrypted = super::encrypt_for_storage(db.key(), entry.title.as_bytes(), "title")?;
     let text_encrypted = super::encrypt_for_storage(db.key(), entry.text.as_bytes(), "text")?;
+    let metadata_encrypted = encrypt_metadata(db, &entry.metadata)?;
 
     // Update in database using id
     let rows_affected = db
         .conn()
         .execute(
             "UPDATE entries
-             SET title_encrypted = ?1, text_encrypted = ?2, word_count = ?3, date_updated = ?4
-             WHERE id = ?5",
+             SET title_encrypted = ?1, text_encrypted = ?2, word_count = ?3, date_updated = ?4,
+                 entry_metadata_encrypted = ?5
+             WHERE id = ?6",
             params![
                 &title_encrypted,
                 &text_encrypted,
                 entry.word_count,
                 &entry.date_updated,
+                &metadata_encrypted,
                 entry.id,
             ],
         )
@@ -168,23 +339,42 @@ pub fn update_entry(db: &DatabaseConnection, entry: &DiaryEntry) -> Result<(), S
     Ok(())
 }
 
-/// Deletes an entry from the database by id
+/// Deletes an entry from the database by id, removing any now-orphaned images.
 ///
-/// # Arguments
-/// * `db` - Database connection with encryption key
-/// * `id` - The id of the entry to delete
+/// The `ON DELETE CASCADE` on `entry_images.entry_id` removes association rows when the
+/// entry is deleted (requires `PRAGMA foreign_keys = ON`, set by `configure_connection`).
+/// `cleanup_orphaned_images` then removes any images with no remaining associations.
+/// Both steps are wrapped in a `BEGIN IMMEDIATE / COMMIT` transaction.
 ///
 /// # Returns
 /// `Ok(true)` if deleted, `Ok(false)` if entry didn't exist
 pub fn delete_entry_by_id(db: &DatabaseConnection, id: i64) -> Result<bool, String> {
-    let rows_affected = db
-        .conn()
-        .execute("DELETE FROM entries WHERE id = ?1", params![id])
-        .map_err(|e| format!("Failed to delete entry: {}", e))?;
+    let result: Result<bool, String> = (|| {
+        db.conn()
+            .execute("BEGIN IMMEDIATE", [])
+            .map_err(|e| format!("BEGIN failed: {}", e))?;
 
-    // Search index hook: call search module's remove_entry() here when implemented.
+        let rows_affected = db
+            .conn()
+            .execute("DELETE FROM entries WHERE id = ?1", params![id])
+            .map_err(|e| format!("Failed to delete entry: {}", e))?;
 
-    Ok(rows_affected > 0)
+        // ON DELETE CASCADE removes entry_images rows; cleanup removes orphaned images.
+        crate::db::queries::images::cleanup_orphaned_images(db)?;
+
+        db.conn()
+            .execute("COMMIT", [])
+            .map_err(|e| format!("COMMIT failed: {}", e))?;
+
+        // Search index hook: call search module's remove_entry() here when implemented.
+
+        Ok(rows_affected > 0)
+    })();
+
+    if result.is_err() {
+        let _ = db.conn().execute("ROLLBACK", []);
+    }
+    result
 }
 
 /// Retrieves all dates that have entries (distinct)
@@ -232,6 +422,7 @@ pub fn get_all_entries(db: &DatabaseConnection) -> Result<Vec<DiaryEntry>, Strin
                 row.get::<_, i32>(4)?,
                 row.get::<_, String>(5)?,
                 row.get::<_, String>(6)?,
+                row.get::<_, Option<Vec<u8>>>(7)?,
             ))
         })
         .map_err(|e| format!("Failed to query entries: {}", e))?
@@ -286,6 +477,7 @@ pub fn get_entries_in_range(
                 row.get::<_, i32>(4)?,
                 row.get::<_, String>(5)?,
                 row.get::<_, String>(6)?,
+                row.get::<_, Option<Vec<u8>>>(7)?,
             ))
         })
         .map_err(|e| format!("Failed to query entries: {}", e))?
@@ -334,6 +526,9 @@ pub fn count_words(text: &str) -> i32 {
 mod tests {
     use super::*;
     use crate::db::schema::create_database;
+    use base64::{engine::general_purpose, Engine as _};
+    use image::{DynamicImage, ImageFormat, Rgba, RgbaImage};
+    use std::io::Cursor;
 
     fn create_test_entry(date: &str) -> DiaryEntry {
         let now = "2024-01-01T12:00:00Z".to_string();
@@ -345,6 +540,7 @@ mod tests {
             word_count: 8,
             date_created: now.clone(),
             date_updated: now,
+            metadata: None,
         }
     }
 
@@ -462,6 +658,7 @@ mod tests {
             word_count: 2,
             date_created: "2024-03-20T00:00:00Z".to_string(),
             date_updated: "2024-03-20T00:00:00Z".to_string(),
+            metadata: None,
         };
         let result = update_entry(&db, &entry);
 
@@ -560,6 +757,7 @@ mod tests {
                 word_count: 1,
                 date_created: "2024-01-01T00:00:00Z".into(),
                 date_updated: "2024-01-01T00:00:00Z".into(),
+                metadata: None,
             },
         )
         .unwrap();
@@ -573,6 +771,7 @@ mod tests {
                 word_count: 1,
                 date_created: "2024-01-02T00:00:00Z".into(),
                 date_updated: "2024-01-02T00:00:00Z".into(),
+                metadata: None,
             },
         )
         .unwrap();
@@ -707,6 +906,7 @@ mod tests {
                 word_count: 1,
                 date_created: "2024-01-01T00:00:00Z".into(),
                 date_updated: "2024-01-01T00:00:00Z".into(),
+                metadata: None,
             },
         )
         .unwrap();
@@ -725,6 +925,418 @@ mod tests {
             result.is_err(),
             "Expected Err when title_encrypted is corrupted, got Ok with entries: {:?}",
             result.ok()
+        );
+    }
+
+    // Storage-boundary normalization: insert_entry / update_entry must normalize via
+    // encrypt_metadata regardless of how the DiaryEntry was constructed (import, plugin, etc.)
+
+    #[test]
+    fn test_insert_normalizes_whitespace_family_to_none() {
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+        let entry = DiaryEntry {
+            id: 0,
+            date: "2024-08-01".to_string(),
+            title: "T".to_string(),
+            text: "T".to_string(),
+            word_count: 1,
+            date_created: "2024-08-01T00:00:00Z".to_string(),
+            date_updated: "2024-08-01T00:00:00Z".to_string(),
+            metadata: Some(EntryMetadata {
+                font_family: Some("   ".to_string()),
+                font_size: None,
+            }),
+        };
+        insert_entry(&db, &entry).unwrap();
+        let retrieved = get_entries_by_date(&db, "2024-08-01").unwrap();
+        assert_eq!(
+            retrieved[0].metadata, None,
+            "whitespace-only family must collapse to None"
+        );
+    }
+
+    #[test]
+    fn test_insert_normalizes_size_too_high() {
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+        let entry = DiaryEntry {
+            id: 0,
+            date: "2024-08-02".to_string(),
+            title: "T".to_string(),
+            text: "T".to_string(),
+            word_count: 1,
+            date_created: "2024-08-02T00:00:00Z".to_string(),
+            date_updated: "2024-08-02T00:00:00Z".to_string(),
+            metadata: Some(EntryMetadata {
+                font_family: None,
+                font_size: Some(99.0),
+            }),
+        };
+        insert_entry(&db, &entry).unwrap();
+        let retrieved = get_entries_by_date(&db, "2024-08-02").unwrap();
+        assert_eq!(
+            retrieved[0].metadata.as_ref().unwrap().font_size,
+            Some(24.0),
+            "font_size 99 must be clamped to 24"
+        );
+    }
+
+    #[test]
+    fn test_insert_normalizes_size_too_low() {
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+        let entry = DiaryEntry {
+            id: 0,
+            date: "2024-08-03".to_string(),
+            title: "T".to_string(),
+            text: "T".to_string(),
+            word_count: 1,
+            date_created: "2024-08-03T00:00:00Z".to_string(),
+            date_updated: "2024-08-03T00:00:00Z".to_string(),
+            metadata: Some(EntryMetadata {
+                font_family: None,
+                font_size: Some(4.0),
+            }),
+        };
+        insert_entry(&db, &entry).unwrap();
+        let retrieved = get_entries_by_date(&db, "2024-08-03").unwrap();
+        assert_eq!(
+            retrieved[0].metadata.as_ref().unwrap().font_size,
+            Some(12.0),
+            "font_size 4 must be clamped to 12"
+        );
+    }
+
+    #[test]
+    fn test_normalize_metadata_none_stays_none() {
+        assert_eq!(normalize_metadata(None), None);
+    }
+
+    #[test]
+    fn test_normalize_metadata_both_none_collapses() {
+        let meta = EntryMetadata {
+            font_family: None,
+            font_size: None,
+        };
+        assert_eq!(normalize_metadata(Some(meta)), None);
+    }
+
+    #[test]
+    fn test_normalize_metadata_empty_family_collapses() {
+        let meta = EntryMetadata {
+            font_family: Some("  ".to_string()),
+            font_size: None,
+        };
+        assert_eq!(normalize_metadata(Some(meta)), None);
+    }
+
+    #[test]
+    fn test_normalize_metadata_trims_family() {
+        let meta = EntryMetadata {
+            font_family: Some("  Merriweather  ".to_string()),
+            font_size: None,
+        };
+        let result = normalize_metadata(Some(meta)).unwrap();
+        assert_eq!(result.font_family.as_deref(), Some("Merriweather"));
+    }
+
+    #[test]
+    fn test_normalize_metadata_clamps_size_low() {
+        let meta = EntryMetadata {
+            font_family: None,
+            font_size: Some(8.0),
+        };
+        let result = normalize_metadata(Some(meta)).unwrap();
+        assert_eq!(result.font_size, Some(12.0));
+    }
+
+    #[test]
+    fn test_normalize_metadata_clamps_size_high() {
+        let meta = EntryMetadata {
+            font_family: None,
+            font_size: Some(48.0),
+        };
+        let result = normalize_metadata(Some(meta)).unwrap();
+        assert_eq!(result.font_size, Some(24.0));
+    }
+
+    #[test]
+    fn test_normalize_metadata_valid_passthrough() {
+        let meta = EntryMetadata {
+            font_family: Some("Georgia".to_string()),
+            font_size: Some(16.0),
+        };
+        let result = normalize_metadata(Some(meta)).unwrap();
+        assert_eq!(result.font_family.as_deref(), Some("Georgia"));
+        assert_eq!(result.font_size, Some(16.0));
+    }
+
+    #[test]
+    fn test_metadata_encrypted_at_rest() {
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+
+        let secret_family = "SecretTestFontFamily";
+        let entry = DiaryEntry {
+            id: 0,
+            date: "2024-07-01".to_string(),
+            title: "Title".to_string(),
+            text: "Text".to_string(),
+            word_count: 1,
+            date_created: "2024-07-01T00:00:00Z".to_string(),
+            date_updated: "2024-07-01T00:00:00Z".to_string(),
+            metadata: Some(EntryMetadata {
+                font_family: Some(secret_family.to_string()),
+                font_size: Some(16.0),
+            }),
+        };
+        insert_entry(&db, &entry).unwrap();
+
+        let raw: Vec<u8> = db
+            .conn()
+            .query_row(
+                "SELECT entry_metadata_encrypted FROM entries WHERE date = '2024-07-01'",
+                [],
+                |row| row.get(0),
+            )
+            .unwrap();
+
+        let raw_str = String::from_utf8_lossy(&raw);
+        assert!(
+            !raw_str.contains(secret_family),
+            "raw metadata bytes must not contain plaintext font family"
+        );
+
+        // Round-trip decryption must recover the value
+        let retrieved = get_entries_by_date(&db, "2024-07-01").unwrap();
+        let meta = retrieved[0].metadata.as_ref().unwrap();
+        assert_eq!(meta.font_family.as_deref(), Some(secret_family));
+        assert_eq!(meta.font_size, Some(16.0));
+    }
+
+    fn tiny_png_base64() -> String {
+        let image = DynamicImage::ImageRgba8(RgbaImage::from_pixel(1, 1, Rgba([16, 32, 64, 255])));
+        let mut cursor = Cursor::new(Vec::new());
+        image.write_to(&mut cursor, ImageFormat::Png).unwrap();
+        general_purpose::STANDARD.encode(cursor.into_inner())
+    }
+
+    fn tiny_png_html() -> String {
+        format!(
+            r#"<p>Hi</p><img src="data:image/png;base64,{}" alt="">"#,
+            tiny_png_base64()
+        )
+    }
+
+    #[test]
+    fn test_save_entry_extracts_images_atomically() {
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+
+        let entry = create_test_entry("2024-09-01");
+        insert_entry(&db, &entry).unwrap();
+        let id = db.conn().last_insert_rowid();
+
+        let html = tiny_png_html();
+        update_entry_with_images(&db, id, "Title", &html, None).unwrap();
+
+        // Text must contain image-id:// and NOT data:
+        let saved = get_entry_by_id(&db, id).unwrap().unwrap();
+        assert!(
+            saved.text.contains("image-id://"),
+            "saved text must contain image-id:// ref"
+        );
+        assert!(
+            !saved.text.contains("data:image"),
+            "saved text must not contain data URL"
+        );
+
+        // images table must have 1 row
+        let img_count: i64 = db
+            .conn()
+            .query_row("SELECT COUNT(*) FROM images", [], |r| r.get(0))
+            .unwrap();
+        assert_eq!(img_count, 1, "one image row must exist");
+
+        // entry_images must have 1 row linked to the entry
+        let link_count: i64 = db
+            .conn()
+            .query_row(
+                "SELECT COUNT(*) FROM entry_images WHERE entry_id = ?1",
+                params![id],
+                |r| r.get(0),
+            )
+            .unwrap();
+        assert_eq!(link_count, 1, "one entry_images row must link to the entry");
+    }
+
+    #[test]
+    fn test_save_entry_no_images_unchanged() {
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+
+        let entry = create_test_entry("2024-09-02");
+        insert_entry(&db, &entry).unwrap();
+        let id = db.conn().last_insert_rowid();
+
+        let text = "<p>Just text, no images.</p>";
+        update_entry_with_images(&db, id, "Title", text, None).unwrap();
+
+        let saved = get_entry_by_id(&db, id).unwrap().unwrap();
+        assert_eq!(saved.text, text);
+
+        let img_count: i64 = db
+            .conn()
+            .query_row("SELECT COUNT(*) FROM images", [], |r| r.get(0))
+            .unwrap();
+        assert_eq!(
+            img_count, 0,
+            "no images should be stored for text-only entries"
+        );
+    }
+
+    #[test]
+    fn test_save_entry_idempotent_same_image() {
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+
+        let entry = create_test_entry("2024-09-03");
+        insert_entry(&db, &entry).unwrap();
+        let id = db.conn().last_insert_rowid();
+
+        let html = tiny_png_html();
+        update_entry_with_images(&db, id, "T", &html, None).unwrap();
+        update_entry_with_images(&db, id, "T", &html, None).unwrap();
+
+        let img_count: i64 = db
+            .conn()
+            .query_row("SELECT COUNT(*) FROM images", [], |r| r.get(0))
+            .unwrap();
+        assert_eq!(
+            img_count, 1,
+            "re-saving same image must not create a second row"
+        );
+    }
+
+    #[test]
+    fn test_save_entry_remove_image() {
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+
+        let entry = create_test_entry("2024-09-04");
+        insert_entry(&db, &entry).unwrap();
+        let id = db.conn().last_insert_rowid();
+
+        update_entry_with_images(&db, id, "T", &tiny_png_html(), None).unwrap();
+        let img_count_before: i64 = db
+            .conn()
+            .query_row("SELECT COUNT(*) FROM images", [], |r| r.get(0))
+            .unwrap();
+        assert_eq!(img_count_before, 1);
+
+        // Re-save without the image
+        update_entry_with_images(&db, id, "T", "<p>no image now</p>", None).unwrap();
+        let img_count_after: i64 = db
+            .conn()
+            .query_row("SELECT COUNT(*) FROM images", [], |r| r.get(0))
+            .unwrap();
+        assert_eq!(img_count_after, 0, "orphaned image must be deleted");
+    }
+
+    #[test]
+    fn test_save_entry_metadata_preserved() {
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+
+        let entry = create_test_entry("2024-09-05");
+        insert_entry(&db, &entry).unwrap();
+        let id = db.conn().last_insert_rowid();
+
+        let meta = Some(EntryMetadata {
+            font_family: Some("Merriweather".to_string()),
+            font_size: Some(16.0),
+        });
+        update_entry_with_images(&db, id, "T", "<p>text</p>", meta).unwrap();
+
+        let saved = get_entry_by_id(&db, id).unwrap().unwrap();
+        let m = saved.metadata.as_ref().expect("metadata must be preserved");
+        assert_eq!(m.font_family.as_deref(), Some("Merriweather"));
+        assert_eq!(m.font_size, Some(16.0));
+    }
+
+    #[test]
+    fn test_delete_entry_cleans_up_images() {
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+
+        let entry = create_test_entry("2024-09-06");
+        insert_entry(&db, &entry).unwrap();
+        let id = db.conn().last_insert_rowid();
+
+        update_entry_with_images(&db, id, "T", &tiny_png_html(), None).unwrap();
+        let img_count: i64 = db
+            .conn()
+            .query_row("SELECT COUNT(*) FROM images", [], |r| r.get(0))
+            .unwrap();
+        assert_eq!(img_count, 1);
+
+        delete_entry_by_id(&db, id).unwrap();
+
+        let img_after: i64 = db
+            .conn()
+            .query_row("SELECT COUNT(*) FROM images", [], |r| r.get(0))
+            .unwrap();
+        assert_eq!(img_after, 0, "images must be deleted after entry deletion");
+    }
+
+    #[test]
+    fn test_delete_entry_keeps_shared_images() {
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+
+        // Create two entries sharing the same image via the image store
+        let e1 = create_test_entry("2024-09-07");
+        insert_entry(&db, &e1).unwrap();
+        let id1 = db.conn().last_insert_rowid();
+
+        let e2 = DiaryEntry {
+            date: "2024-09-08".to_string(),
+            ..create_test_entry("2024-09-08")
+        };
+        insert_entry(&db, &e2).unwrap();
+        let id2 = db.conn().last_insert_rowid();
+
+        // Save the same image into both entries
+        let html = tiny_png_html();
+        update_entry_with_images(&db, id1, "T", &html, None).unwrap();
+        // Entry 2 simulates picker reuse: load the stored data URL and re-embed it verbatim
+        let images = crate::db::queries::images::get_images_for_entry(&db, id1).unwrap();
+        assert_eq!(images.len(), 1);
+        let img = &images[0];
+        let data_url = format!("data:{};base64,{}", img.mime_type, img.data_base64);
+        let html2 = format!(r#"<p>Entry B</p><img src="{}" alt="">"#, data_url);
+        update_entry_with_images(&db, id2, "T", &html2, None).unwrap();
+
+        // Both entries should share one physical image row
+        let img_count: i64 = db
+            .conn()
+            .query_row("SELECT COUNT(*) FROM images", [], |r| r.get(0))
+            .unwrap();
+        assert_eq!(
+            img_count, 1,
+            "picker reuse must share one physical image row"
+        );
+
+        // Delete entry 1 — image must still exist (entry 2 references it)
+        delete_entry_by_id(&db, id1).unwrap();
+        let img_after: i64 = db
+            .conn()
+            .query_row("SELECT COUNT(*) FROM images", [], |r| r.get(0))
+            .unwrap();
+        assert_eq!(
+            img_after, 1,
+            "shared image must survive deletion of one entry"
         );
     }
 }

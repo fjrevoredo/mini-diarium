@@ -213,9 +213,7 @@ function buildNav(activePage = "") {
       <li><a href="/#security">Security</a></li>
       <li><a href="/blog/"${blogActive}>Blog</a></li>
       <li><a href="/docs/"${docsActive}>Docs</a></li>
-      <li><a href="/#facts">FAQ</a></li>
       <li><a href="/#platforms">Download</a></li>
-      <li><a href="/#about">About</a></li>
       <li>
         <a class="nav-github" href="https://github.com/fjrevoredo/mini-diarium" target="_blank" rel="noopener noreferrer" aria-label="View on GitHub">
           <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
@@ -315,6 +313,7 @@ function buildHead({
   <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
   <link rel="stylesheet" href="/css/style.css" />
   <style>
+    .container { max-width: 1400px; }
     .docs-layout {
       display: grid;
       grid-template-columns: 240px 1fr 200px;

@@ -1,3 +1,4 @@
+use super::create::open_connection;
 use super::legacy::{derive_key_from_hash, get_metadata};
 use super::migrations::{apply_pending, migrate_v1_to_v2, migrate_v2_to_v3};
 use super::DatabaseConnection;
@@ -22,8 +23,7 @@ pub fn open_database<P1: AsRef<Path>, P2: AsRef<Path>>(
 ) -> Result<DatabaseConnection, String> {
     let db_path_ref = db_path.as_ref();
 
-    let conn =
-        Connection::open(db_path_ref).map_err(|e| format!("Failed to open database: {}", e))?;
+    let conn = open_connection(db_path_ref)?;
 
     let current_version: i32 = conn
         .query_row("SELECT version FROM schema_version", [], |row| row.get(0))
@@ -69,8 +69,7 @@ pub fn open_database_with_keypair<P1: AsRef<Path>, P2: AsRef<Path>>(
 ) -> Result<DatabaseConnection, String> {
     let db_path_ref = db_path.as_ref();
 
-    let conn =
-        Connection::open(db_path_ref).map_err(|e| format!("Failed to open database: {}", e))?;
+    let conn = open_connection(db_path_ref)?;
 
     let current_version: i32 = conn
         .query_row("SELECT version FROM schema_version", [], |row| row.get(0))
@@ -131,8 +130,7 @@ pub fn open_database_auto<P1: AsRef<Path>, P2: AsRef<Path>>(
     auto_key_bytes: &[u8; 32],
     backups_dir: P2,
 ) -> Result<DatabaseConnection, String> {
-    let conn = Connection::open(db_path.as_ref())
-        .map_err(|e| format!("Failed to open database: {}", e))?;
+    let conn = open_connection(db_path.as_ref())?;
 
     let current_version: i32 = conn
         .query_row("SELECT version FROM schema_version", [], |row| row.get(0))

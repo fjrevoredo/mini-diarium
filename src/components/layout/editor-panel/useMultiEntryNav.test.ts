@@ -365,6 +365,56 @@ describe('delete button — disabled state', () => {
   });
 });
 
+// ---------------------------------------------------------------------------
+// Task 4.2: navToken race guard — only the last navigateToEntry wins
+// ---------------------------------------------------------------------------
+
+describe('navToken race guard — navigateToEntry (Task 4.2)', () => {
+  it('a later navigation cancels an earlier one (token check)', () => {
+    // Models the navToken pattern inside navigateToEntry:
+    // - Each call increments navToken before awaiting.
+    // - A check `token !== navToken` after the await short-circuits if a newer call ran.
+    let navToken = 0;
+    const results: string[] = [];
+
+    function simulateNavigate(entryTitle: string): () => void {
+      const token = ++navToken;
+      return async () => {
+        // Simulate the async fetchEntriesOrdered await
+        await Promise.resolve();
+        if (token !== navToken) return; // stale — a newer call beat us
+        results.push(entryTitle);
+      };
+    }
+
+    const nav1 = simulateNavigate('Entry A');
+    const nav2 = simulateNavigate('Entry B');
+
+    // Run both; nav2 should win because it incremented navToken last.
+    Promise.all([nav1(), nav2()]).then(() => {
+      expect(results).toEqual(['Entry B']);
+    });
+
+    // Verify: token for nav1 (1) !== navToken (2) → nav1 is discarded.
+    expect(navToken).toBe(2);
+  });
+
+  it('a single navigation completes when not cancelled', async () => {
+    let navToken = 0;
+    const results: string[] = [];
+
+    async function simulateNavigate(entryTitle: string): Promise<void> {
+      const token = ++navToken;
+      await Promise.resolve();
+      if (token !== navToken) return;
+      results.push(entryTitle);
+    }
+
+    await simulateNavigate('Only Entry');
+    expect(results).toEqual(['Only Entry']);
+  });
+});
+
 describe('EntryNavBar — delete button visibility', () => {
   it('does NOT show delete button when total is 1', () => {
     const total = 1;

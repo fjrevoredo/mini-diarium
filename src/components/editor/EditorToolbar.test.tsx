@@ -40,12 +40,17 @@ function makeEditorMock(
   const getAttributes = overrides.getAttributes ?? ((_name: string) => ({}));
 
   const run = vi.fn();
-  const setTextAlign = vi.fn(() => ({ run }));
-  const focus = vi.fn(() => ({
-    setTextAlign,
-    toggleBold: vi.fn(() => ({ run })),
-    toggleItalic: vi.fn(() => ({ run })),
-  }));
+  const chainResult = {
+    run,
+    setTextAlign: vi.fn(() => chainResult),
+    toggleBold: vi.fn(() => chainResult),
+    toggleItalic: vi.fn(() => chainResult),
+    setFontFamily: vi.fn(() => chainResult),
+    unsetFontFamily: vi.fn(() => chainResult),
+    setFontSize: vi.fn(() => chainResult),
+    unsetFontSize: vi.fn(() => chainResult),
+  };
+  const focus = vi.fn(() => chainResult);
   const chain = vi.fn(() => ({ focus }));
 
   return {
@@ -598,7 +603,7 @@ describe('EditorToolbar fontSize item — visibility', () => {
     expect(container.querySelector('[aria-label="Font size"]')).not.toBeNull();
   });
 
-  it('has all 13 size options (12–24) when fontSize item is enabled', () => {
+  it('has all 13 size options (12–24) plus a default unset option when fontSize item is enabled', () => {
     setPreferences({
       toolbarItems: DEFAULT_TOOLBAR_ITEMS.map((i) => ({
         ...i,
@@ -607,10 +612,43 @@ describe('EditorToolbar fontSize item — visibility', () => {
     });
     const { container } = renderWithI18n(() => <EditorToolbar editor={makeEditorMock()} />);
     const select = container.querySelector('[aria-label="Font size"]') as HTMLSelectElement;
-    const values = Array.from(select.options).map((o) => Number(o.value));
-    expect(values).toHaveLength(13);
-    expect(values[0]).toBe(12);
-    expect(values[12]).toBe(24);
+    const allOptions = Array.from(select.options);
+    // First option is the "Default" unset option (value = '')
+    expect(allOptions[0].value).toBe('');
+    // Remaining 13 are the fixed sizes 12–24
+    const sizeValues = allOptions.slice(1).map((o) => Number(o.value));
+    expect(sizeValues).toHaveLength(13);
+    expect(sizeValues[0]).toBe(12);
+    expect(sizeValues[12]).toBe(24);
+  });
+
+  it('shows "Default" as selected when no inline font size is active', () => {
+    setPreferences({
+      toolbarItems: DEFAULT_TOOLBAR_ITEMS.map((i) => ({
+        ...i,
+        enabled: i.key === 'fontSize',
+      })),
+    });
+    const { container } = renderWithI18n(() => <EditorToolbar editor={makeEditorMock()} />);
+    const select = container.querySelector('[aria-label="Font size"]') as HTMLSelectElement;
+    const selected = Array.from(select.options).find((o) => o.selected);
+    expect(selected?.value).toBe('');
+  });
+
+  it('shows inline font size as selected when active', () => {
+    setPreferences({
+      toolbarItems: DEFAULT_TOOLBAR_ITEMS.map((i) => ({
+        ...i,
+        enabled: i.key === 'fontSize',
+      })),
+    });
+    const editorWith18px = makeEditorMock({
+      getAttributes: (name: string) => (name === 'textStyle' ? { fontSize: '18px' } : {}),
+    });
+    const { container } = renderWithI18n(() => <EditorToolbar editor={editorWith18px} />);
+    const select = container.querySelector('[aria-label="Font size"]') as HTMLSelectElement;
+    const selected = Array.from(select.options).find((o) => o.selected);
+    expect(selected?.value).toBe('18');
   });
 });
 
@@ -663,7 +701,7 @@ describe('EditorToolbar fontFamily item — custom font options', () => {
     expect(values).not.toContain('BoldOnly');
   });
 
-  it('shows a selected custom font correctly in the toolbar selector', async () => {
+  it('shows inline active font family as selected in the toolbar selector', async () => {
     mockListBundledFonts.mockResolvedValue([]);
     mockListCustomFonts.mockResolvedValue([
       { family: 'SelectedCustom', has_regular: true, has_bold: true },
@@ -673,9 +711,12 @@ describe('EditorToolbar fontFamily item — custom font options', () => {
         ...i,
         enabled: i.key === 'fontFamily',
       })),
-      editorFontFamily: 'SelectedCustom',
     });
-    const { container } = renderWithI18n(() => <EditorToolbar editor={makeEditorMock()} />);
+    const editorWithFont = makeEditorMock({
+      getAttributes: (name: string) =>
+        name === 'textStyle' ? { fontFamily: 'SelectedCustom' } : {},
+    });
+    const { container } = renderWithI18n(() => <EditorToolbar editor={editorWithFont} />);
 
     await waitFor(() => {
       const select = container.querySelector('[aria-label="Font family"]') as HTMLSelectElement;
@@ -686,5 +727,79 @@ describe('EditorToolbar fontFamily item — custom font options', () => {
     const select = container.querySelector('[aria-label="Font family"]') as HTMLSelectElement;
     const selected = Array.from(select.options).find((o) => o.selected);
     expect(selected?.value).toBe('SelectedCustom');
+  });
+
+  it('shows empty option when no inline font family is active', async () => {
+    mockListBundledFonts.mockResolvedValue(['Font A']);
+    mockListCustomFonts.mockResolvedValue([]);
+    setPreferences({
+      toolbarItems: DEFAULT_TOOLBAR_ITEMS.map((i) => ({
+        ...i,
+        enabled: i.key === 'fontFamily',
+      })),
+    });
+    const { container } = renderWithI18n(() => <EditorToolbar editor={makeEditorMock()} />);
+
+    await waitFor(() => {
+      expect(container.querySelector('[aria-label="Font family"]')).not.toBeNull();
+    });
+
+    const select = container.querySelector('[aria-label="Font family"]') as HTMLSelectElement;
+    const selected = Array.from(select.options).find((o) => o.selected);
+    expect(selected?.value).toBe('');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Link button — visibility and behavior
+// ---------------------------------------------------------------------------
+
+describe('EditorToolbar link button — visibility', () => {
+  it('hides the link button when link item is disabled', () => {
+    setPreferences({
+      toolbarItems: DEFAULT_TOOLBAR_ITEMS.map((i) => ({ ...i, enabled: false })),
+    });
+    const { container } = renderWithI18n(() => <EditorToolbar editor={makeEditorMock()} />);
+    expect(container.querySelector('[data-testid="insert-link-button"]')).toBeNull();
+  });
+
+  it('shows the link button when link item is enabled', () => {
+    setPreferences({
+      toolbarItems: DEFAULT_TOOLBAR_ITEMS.map((i) => ({
+        ...i,
+        enabled: i.key === 'link',
+      })),
+    });
+    const { container } = renderWithI18n(() => <EditorToolbar editor={makeEditorMock()} />);
+    expect(container.querySelector('[data-testid="insert-link-button"]')).not.toBeNull();
+  });
+
+  it('opens the LinkOverlay when the link button is clicked', () => {
+    setPreferences({
+      toolbarItems: DEFAULT_TOOLBAR_ITEMS.map((i) => ({
+        ...i,
+        enabled: i.key === 'link',
+      })),
+    });
+    const { container } = renderWithI18n(() => <EditorToolbar editor={makeEditorMock()} />);
+    const btn = container.querySelector('[data-testid="insert-link-button"]') as HTMLButtonElement;
+    fireEvent.click(btn);
+    // LinkOverlay renders its content through a Kobalte Portal at document root
+    expect(document.querySelector('[data-testid="link-url-input"]')).not.toBeNull();
+  });
+
+  it('marks the link button as active when isActive("link") is true', () => {
+    setPreferences({
+      toolbarItems: DEFAULT_TOOLBAR_ITEMS.map((i) => ({
+        ...i,
+        enabled: i.key === 'link',
+      })),
+    });
+    const editor = makeEditorMock({
+      isActive: (nameOrAttrs) => nameOrAttrs === 'link',
+    });
+    const { container } = renderWithI18n(() => <EditorToolbar editor={editor} />);
+    const btn = container.querySelector('[data-testid="insert-link-button"]') as HTMLButtonElement;
+    expect(btn.className).toContain('btn-active');
   });
 });

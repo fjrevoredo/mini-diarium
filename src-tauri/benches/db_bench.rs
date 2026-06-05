@@ -40,6 +40,7 @@ fn make_entry(date: &str) -> DiaryEntry {
         word_count: 9,
         date_created: ts.clone(),
         date_updated: ts,
+        metadata: None,
     }
 }
 

@@ -2,27 +2,15 @@
 
 Performance benchmarks for Mini Diarium. Two layers: Rust hot-path benchmarks (criterion 0.5) and frontend render benchmarks (Vitest bench).
 
-## File Structure
-
-```
-benchmarks/
-  CLAUDE.md              ← this file
-  index.html             ← custom report page (served from gh-pages; loaded by CI after each run)
-src-tauri/benches/
-  cipher_bench.rs        ← AES-256-GCM encrypt/decrypt at 1 KB / 10 KB / 100 KB
-  db_bench.rs            ← insert, update, delete, read-by-date, read-all on 100/500-entry corpus
-  word_count_bench.rs    ← plain text and HTML word counting
-src/lib/
-  markdown.bench.ts      ← parseMarkdownToHtml short and long entry
-```
+Rust benchmarks live in `src-tauri/benches/` (four criterion files: auth, cipher, db, word count). Frontend benchmark: `src/lib/markdown.bench.ts`. Dashboard report page: `benchmarks/index.html` (served from gh-pages).
 
 ## Verification Commands
 
 | Command | What it does |
 |---------|-------------|
-| `cd src-tauri && cargo bench` | Run all Rust benchmarks |
-| `cd src-tauri && cargo bench --bench cipher_bench` | Run cipher benchmarks only |
-| `cd src-tauri && cargo bench -- --output-format html` | HTML report → `src-tauri/target/criterion/` |
+| `cargo bench --manifest-path src-tauri/Cargo.toml` | Run all Rust benchmarks |
+| `cargo bench --manifest-path src-tauri/Cargo.toml --bench cipher_bench` | Run cipher benchmarks only |
+| `cargo bench --manifest-path src-tauri/Cargo.toml -- --output-format html` | HTML report → `src-tauri/target/criterion/` |
 | `bun run bench` | Run frontend Vitest benchmarks |
 
 ## Benchmarks Covered
@@ -60,7 +48,7 @@ The custom report page is a single static HTML file served from the `gh-pages` b
 
 ### `THRESHOLDS` constant
 
-All threshold values are stored in nanoseconds inside `index.html` as a `THRESHOLDS` object keyed by benchmark name. All 19 benchmarks (18 Rust + the synthetic `ci_pipeline_duration`) that appear in `data.js` have thresholds. The `warning` level is not stored — it is derived as `target * 1.5` at render time.
+All threshold values are stored in nanoseconds inside `index.html` as a `THRESHOLDS` object keyed by benchmark name. All benchmarks that appear in `data.js` have thresholds (Rust benchmarks + the synthetic `ci_pipeline_duration`). The `warning` level is not stored — it is derived as `target * 1.5` at render time.
 
 When adding a new benchmark:
 1. Add it to the `SECTIONS` array (for grouping).

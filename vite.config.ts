@@ -29,7 +29,7 @@ export default defineConfig(async () => ({
 
   // Optimize dependencies
   optimizeDeps: {
-    include: ['solid-js', '@tiptap/core', '@kobalte/core/dialog', 'lucide-solid'],
+    include: ['solid-js', '@tiptap/core'],
   },
 
   // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`

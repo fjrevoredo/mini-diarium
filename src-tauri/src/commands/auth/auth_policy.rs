@@ -53,7 +53,7 @@ mod tests {
 
     #[test]
     fn test_set_require_all_auth_true_writes_valid_mac() {
-        let (state, db_path, backups_dir) = make_state("require_all_auth_enable");
+        let (_fixture, state, db_path, _backups_dir) = make_state("require_all_auth_enable");
 
         let db = create_database(&db_path, "password".to_string()).unwrap();
 
@@ -110,12 +110,11 @@ mod tests {
         ));
 
         drop(db_guard);
-        cleanup(&db_path, &backups_dir);
     }
 
     #[test]
     fn test_set_require_all_auth_false_deletes_both_rows() {
-        let (state, db_path, backups_dir) = make_state("require_all_auth_disable");
+        let (_fixture, state, db_path, _backups_dir) = make_state("require_all_auth_disable");
 
         let db = create_database(&db_path, "password".to_string()).unwrap();
 
@@ -179,7 +178,5 @@ mod tests {
             crate::db::queries::get_db_setting(db_ref.conn(), "require_all_auth_mac").is_none()
         );
         drop(db_guard);
-
-        cleanup(&db_path, &backups_dir);
     }
 }

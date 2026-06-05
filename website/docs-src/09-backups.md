@@ -1,9 +1,9 @@
 ---
 title: Backups
 slug: backups
-description: Mini Diarium backs up your encrypted journal automatically on every unlock. Keeps the 30 most recent copies in a backups folder next to your diary.db.
+description: Mini Diarium automatically backs up your encrypted journal on every unlock and keeps the 30 most recent copies in a backups folder next to your diary.db.
 order: 10
-updated: 2026-05-29
+updated: 2026-06-04
 tags: backups, data safety, backup rotation, storage
 ---
 
