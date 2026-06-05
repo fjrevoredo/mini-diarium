@@ -41,8 +41,11 @@ jobs:
       - name: Determine version and asset
         id: prep
         shell: pwsh
+        env:
+          INPUT_TAG: ${{ inputs.tag }}
+          EVENT_TAG: ${{ github.event.release.tag_name || github.ref_name }}
         run: |
-          $tag = if ("${{ inputs.tag }}") { "${{ inputs.tag }}" } else { "${{ github.event.release.tag_name || github.ref_name }}" }
+          $tag = if ($env:INPUT_TAG) { $env:INPUT_TAG } else { $env:EVENT_TAG }
           $version = $tag -replace '^v', ''
           $assetName = "Mini-Diarium-$version-windows.exe"
           $url = "https://github.com/fjrevoredo/mini-diarium/releases/download/$tag/$assetName"

@@ -5,10 +5,7 @@ on:
     tags:
       - 'v*.*.*'
 
-permissions:
-  contents: write
-  pull-requests: write
-  actions: write
+permissions: {}
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
@@ -22,6 +19,8 @@ jobs:
   create-release:
     name: Create Release Draft
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     outputs:
       version: ${{ steps.get_version.outputs.version }}
     steps:
@@ -75,6 +74,8 @@ jobs:
     name: Build Release (${{ matrix.platform }})
     needs: create-release
     runs-on: ${{ matrix.os }}
+    permissions:
+      contents: write
     strategy:
       fail-fast: false
       matrix:
@@ -220,6 +221,10 @@ jobs:
       - create-release
       - build-release
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: write
     steps:
       - name: Verify expected release assets exist
         env:
