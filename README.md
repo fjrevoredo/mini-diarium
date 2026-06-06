@@ -45,8 +45,57 @@ Quick install:
 - Windows (WinGet): `winget install fjrevoredo.MiniDiarium`
 - macOS (Homebrew): `brew tap fjrevoredo/mini-diarium` then `brew install --cask mini-diarium`
 - Linux (Flatpak): `flatpak install flathub io.github.fjrevoredo.mini-diarium`
+- NixOS / Nix (Flakes): see [Install with Nix](#install-with-nix-flakes)
 
 For package formats, first-run notes (Gatekeeper / SmartScreen), and checksum verification, see [docs/INSTALLATION.md](docs/INSTALLATION.md).
+
+### Install with Nix (Flakes)
+
+Mini Diarium ships a flake that builds it straight from this repository (Linux only: `x86_64-linux`, `aarch64-linux`). Flakes must be enabled (`experimental-features = nix-command flakes`).
+
+Try it without installing:
+
+```bash
+nix run github:fjrevoredo/mini-diarium
+```
+
+Add the flake as an input, then choose one of the three integration styles:
+
+```nix
+{
+  inputs.mini-diarium.url = "github:fjrevoredo/mini-diarium";
+  # Optional: avoid a second nixpkgs copy.
+  inputs.mini-diarium.inputs.nixpkgs.follows = "nixpkgs";
+}
+```
+
+**1. Bare package** — add it to any package list:
+
+```nix
+environment.systemPackages = [ inputs.mini-diarium.packages.${pkgs.system}.default ]; # NixOS
+# or, for Home Manager:
+home.packages = [ inputs.mini-diarium.packages.${pkgs.system}.default ];
+```
+
+**2. NixOS module:**
+
+```nix
+{
+  imports = [ inputs.mini-diarium.nixosModules.default ];
+  programs.mini-diarium.enable = true;
+}
+```
+
+**3. Home Manager module:**
+
+```nix
+{
+  imports = [ inputs.mini-diarium.homeModules.default ];
+  programs.mini-diarium.enable = true;
+}
+```
+
+An overlay is also exported as `mini-diarium.overlays.default` (adds `pkgs.mini-diarium`).
 
 ## Quick Start
 

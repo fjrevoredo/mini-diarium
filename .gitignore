@@ -69,3 +69,6 @@ flatpak/node-sources.json
 
 # tauri-agent-dev runtime state + sandbox
 .agent-dev/
+
+.direnv/
+result
