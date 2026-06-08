@@ -7,6 +7,9 @@ updates:
       interval: weekly
       day: monday
     open-pull-requests-limit: 10
+    # Prevent PRs for npm packages newer than 7 days
+    cooldown:
+      default-days: 7
     groups:
       dev-dependencies:
         dependency-type: development
@@ -19,6 +22,9 @@ updates:
       interval: weekly
       day: monday
     open-pull-requests-limit: 10
+    # Prevent PRs for Rust crates newer than 7 days
+    cooldown:
+      default-days: 7
     groups:
       minor-and-patch:
         update-types:
@@ -31,3 +37,6 @@ updates:
       interval: weekly
       day: monday
     open-pull-requests-limit: 5
+    # Prevent PRs for Actions newer than 7 days
+    cooldown:
+      default-days: 7
