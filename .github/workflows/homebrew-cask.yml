@@ -18,7 +18,7 @@ jobs:
 
     steps:
       - name: Checkout app repo
-        uses: actions/checkout@v6
+        uses: actions/checkout@v6.0.2
 
       - name: Determine version and asset
         id: info
