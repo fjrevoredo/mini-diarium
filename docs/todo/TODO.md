@@ -13,7 +13,7 @@ TODO entry format:
 - After creating a new TODO, update the `Latest TODO ID` marker to reflect the new highest ID
 - Use the `todo-manager` skill (`.agents/skills/todo-manager/`) for creation, tracking, archival, and validation
 
-**Latest TODO ID: TODO-0049** — next new TODO should be TODO-0050
+**Latest TODO ID: TODO-0050** — next new TODO should be TODO-0051
 
 ---
 
@@ -38,6 +38,8 @@ TODO entry format:
 ## Medium Priority
 
 - [ ] **TODO-0044: Audit text styling export coverage** — verify that every inline text style the editor supports (bold, italic, underline, strikethrough, inline code, and any others) is correctly round-tripped through all export paths (Markdown, JSON, plugin exporters); identify and fix any style that is visually rendered but silently dropped, collapsed, or malformed on export
+
+- [ ] **TODO-0050: Update dep-update skills and CI for Nix npmDepsHash** — after PR #159 (Nix flake) merges, update `sync-lockfiles` and `apply-dependency-prs` skills to include the `npmDepsHash` refresh step in `nix/package.nix`, and consider adding a path-filtered CI job to catch stale hashes from contributors who bypass the skills; see [TODO-0050-01](TODO_EXTRA.md#todo-0050-01-skill-and-ci-updates-for-nix-npmdepshash-maintenance) for exact changes
 
 - [ ] **TODO-0041: Migrate native menu elements to main app layout** — move most menu actions from native OS menus into the app's main UI for consistent cross-platform behavior and improved E2E testability; audit current native menu items in menu.rs and identify which commands should have in-app equivalents (toolbar buttons, dropdown menus, or keyboard shortcuts); preserve critical platform-native items (app-level quit, window management) where expected by users; update E2E tests to interact with in-app controls instead of native menu automation
 

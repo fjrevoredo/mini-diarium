@@ -30,6 +30,11 @@ Template:
 
 # Versions
 
+## [Unreleased]
+
+### Fixed
+- **Bullet and numbered lists now display markers in the editor**: the Tailwind CSS reset (`list-style: none`) was stripping bullet dots and ordinal numbers from all list elements. The editor stylesheet now explicitly restores `list-style-type: disc` for unordered lists and `list-style-type: decimal` for ordered lists inside the ProseMirror container. Most noticeable on Linux where the WebKit renderer enforces the reset strictly (issue #163).
+
 ## [0.5.3] - 05-06-2026
 
 ### Added
