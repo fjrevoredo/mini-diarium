@@ -157,8 +157,14 @@ mod tests {
         // CSS lives in index.css; the HTML fragment must not embed a <style> block.
         let entries = vec![make_entry(1, "2024-01-15", "Test", "<p>Hello</p>")];
         let html = generate_print_html(entries, &HashMap::new(), "2024-03-01", &make_labels());
-        assert!(!html.contains("<style>"), "HTML fragment must not embed a <style> block");
-        assert!(!html.contains("@page"), "@page belongs in index.css, not in the fragment");
+        assert!(
+            !html.contains("<style>"),
+            "HTML fragment must not embed a <style> block"
+        );
+        assert!(
+            !html.contains("@page"),
+            "@page belongs in index.css, not in the fragment"
+        );
     }
 
     #[test]
@@ -231,6 +237,60 @@ mod tests {
         assert!(
             !html.contains(r#"<div class="md-print-day">"#),
             "Empty diary should have no day divs"
+        );
+    }
+
+    #[test]
+    fn test_two_entries_same_date_generate_one_day_div() {
+        let entries = vec![
+            make_entry(1, "2024-01-15", "Entry A", "<p>Content A</p>"),
+            make_entry(2, "2024-01-15", "Entry B", "<p>Content B</p>"),
+        ];
+        let html = generate_print_html(entries, &HashMap::new(), "2024-03-01", &make_labels());
+        let count = html.matches(r#"<div class="md-print-day">"#).count();
+        assert_eq!(
+            count, 1,
+            "Two entries on the same date should produce exactly 1 day div, got {}",
+            count
+        );
+    }
+
+    #[test]
+    fn test_day_divs_are_ordered_chronologically() {
+        let entries = vec![
+            make_entry(1, "2024-03-10", "Later", "<p>Later content</p>"),
+            make_entry(2, "2024-01-05", "Earlier", "<p>Earlier content</p>"),
+        ];
+        let html = generate_print_html(entries, &HashMap::new(), "2024-03-01", &make_labels());
+        let pos_earlier = html
+            .find("January 5, 2024")
+            .expect("Earlier date not found");
+        let pos_later = html.find("March 10, 2024").expect("Later date not found");
+        assert!(
+            pos_earlier < pos_later,
+            "Earlier date should appear before later date in output"
+        );
+    }
+
+    #[test]
+    fn test_tags_sorted_alphabetically() {
+        let entries = vec![make_entry(1, "2024-01-15", "T", "<p>c</p>")];
+        let mut tags = HashMap::new();
+        tags.insert(1i64, vec!["zebra".to_string(), "apple".to_string()]);
+        let html = generate_print_html(entries, &tags, "2024-03-01", &make_labels());
+        assert!(
+            html.contains("apple, zebra"),
+            "Tags should be sorted alphabetically: expected 'apple, zebra'"
+        );
+    }
+
+    #[test]
+    fn test_empty_title_omits_title_div() {
+        let entries = vec![make_entry(1, "2024-01-15", "", "<p>Content</p>")];
+        let html = generate_print_html(entries, &HashMap::new(), "2024-03-01", &make_labels());
+        assert!(
+            !html.contains(r#"<div class="md-print-entry-title">"#),
+            "Empty title should not emit a title div"
         );
     }
 }

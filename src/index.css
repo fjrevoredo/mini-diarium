@@ -411,6 +411,14 @@ body {
 }
 
 @media print {
+  html {
+    height: auto !important;
+  }
+  body,
+  #root {
+    height: auto !important;
+    overflow: visible !important;
+  }
   body > *:not(#mini-diarium-print-layer) {
     display: none !important;
   }
@@ -441,6 +449,7 @@ body {
   }
   .md-print-day + .md-print-day {
     page-break-before: always;
+    break-before: page;
   }
   .md-print-day-date {
     font-size: 14pt;
@@ -451,7 +460,6 @@ body {
   }
   .md-print-entry {
     margin-bottom: 2em;
-    page-break-inside: avoid;
   }
   .md-print-entry-title {
     font-size: 13pt;

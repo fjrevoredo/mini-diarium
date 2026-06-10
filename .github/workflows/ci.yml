@@ -127,6 +127,18 @@ jobs:
       - name: Install frontend dependencies
         run: bun install --frozen-lockfile
 
+      - name: Cache Playwright Chromium
+        id: cache-playwright
+        uses: actions/cache@v5
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-chromium-${{ hashFiles('bun.lock') }}
+          restore-keys: playwright-chromium-
+
+      - name: Install Playwright Chromium
+        if: steps.cache-playwright.outputs.cache-hit != 'true'
+        run: bunx playwright install --with-deps chromium
+
       - name: Cache nextest binary
         id: cache-nextest
         uses: actions/cache@v5
@@ -155,6 +167,9 @@ jobs:
       - name: Backend tests
         working-directory: src-tauri
         run: cargo llvm-cov nextest --lcov --output-path lcov.info
+
+      - name: Print layout tests
+        run: bun run test:print
 
       - name: Upload frontend coverage to Codecov
         uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6.0.1
