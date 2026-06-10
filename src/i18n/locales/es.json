@@ -458,7 +458,12 @@
     "filterMonth": "Un solo mes",
     "dateFromLabel": "Desde",
     "dateToLabel": "Hasta",
-    "monthLabel": "Mes"
+    "monthLabel": "Mes",
+    "printFormat": "Imprimir / PDF",
+    "print": "Imprimir",
+    "printing": "Imprimiendo...",
+    "printGeneratedLabel": "Generado:",
+    "printTagsLabel": "Etiquetas:"
   },
   "import": {
     "title": "Importar entradas",

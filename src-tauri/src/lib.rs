@@ -343,6 +343,7 @@ pub fn run() {
             // Export
             commands::export::export_json,
             commands::export::export_markdown,
+            commands::export::print_entries,
             // Plugins
             commands::plugin::list_import_plugins,
             commands::plugin::list_export_plugins,

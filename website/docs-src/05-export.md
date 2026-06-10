@@ -1,10 +1,10 @@
 ---
 title: Exporting Data
 slug: export
-description: Export your journal as JSON or Markdown. JSON preserves entry IDs, tags, and font metadata; Markdown is human-readable. Exported files are not encrypted.
+description: Export your journal as JSON, Markdown, or PDF. JSON preserves IDs, tags, and metadata; Markdown is human-readable; Print / PDF opens the system print dialog.
 order: 6
-updated: 2026-06-04
-tags: export, backup, JSON, Markdown, portability, tags
+updated: 2026-06-10
+tags: export, backup, JSON, Markdown, PDF, print, portability, tags
 ---
 
 ## Opening the Export Dialog
@@ -62,6 +62,20 @@ Entry content here...
 Entries with no tags have no tags line. Tags appear in alphabetical order.
 
 Markdown is a best-effort, text-focused conversion of the stored HTML editor content. Inline font formatting is not preserved in Markdown — all text exports using the default Markdown rendering. Complex formatting (tables, images) may not convert perfectly, but the text is always readable. **For full-fidelity export including font metadata, use JSON instead.**
+
+### Print / PDF
+
+The **Print / PDF** option opens the system print dialog directly. No file is saved by Mini Diarium — the OS print dialog gives you full control: print to a physical printer, or choose **Save as PDF** (available on all supported platforms) to export a formatted PDF file.
+
+The print output uses a clean, readable layout with:
+- A "Mini Diarium" header and the generation date
+- Entries grouped by date, with each date on its own page
+- Entry titles, tags (when present), and the full entry content
+- Standard formatting for headings, lists, blockquotes, and code blocks
+
+Date range filtering works the same as for file exports — select "All entries", a custom date range, or a specific month before clicking **Print**.
+
+After the system print dialog opens, if you cancel without printing, no files are written and no data leaves the app.
 
 ## Why Export?
 

@@ -32,6 +32,9 @@ Template:
 
 ## [Unreleased]
 
+### Added
+- **Print / PDF export**: journal entries can now be printed or saved as PDF via the OS system print dialog. In the Export dialog, select **Print / PDF** from the format dropdown and optionally filter by date range or month; clicking **Print** opens the native print dialog, which includes "Save as PDF" on all supported platforms. Output is formatted A4 with 2 cm margins, entries grouped by date with titles, tags, and full formatted content. Implemented as a new `print_entries` Tauri command; CSS lives in the app stylesheet (loaded at startup) for reliable cross-platform rendering (TODO-0012).
+
 ### Fixed
 - **Bullet and numbered lists now display markers in the editor**: the Tailwind CSS reset (`list-style: none`) was stripping bullet dots and ordinal numbers from all list elements. The editor stylesheet now explicitly restores `list-style-type: disc` for unordered lists and `list-style-type: decimal` for ordered lists inside the ProseMirror container. Most noticeable on Linux where the WebKit renderer enforces the reset strictly (issue #163).
 

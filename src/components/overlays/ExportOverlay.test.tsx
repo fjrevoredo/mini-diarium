@@ -20,6 +20,11 @@ const mockExportResult = {
   file_path: '/home/user/mini-diarium-export.md',
 };
 
+const mockPrintResult = {
+  entries_exported: 5,
+  html: '<p>Test HTML</p>',
+};
+
 function renderOverlay() {
   return renderWithI18n(() => <ExportOverlay isOpen={true} onClose={() => {}} />);
 }
@@ -28,6 +33,9 @@ async function waitForPlugins() {
   await waitFor(() => {
     expect(screen.getByText('Markdown')).toBeInTheDocument();
   });
+  // Switch to file export format so tests that test the export flow find "Start Export"
+  const formatSelect = screen.getByLabelText('Format') as HTMLSelectElement;
+  fireEvent.change(formatSelect, { target: { value: 'builtin:markdown' } });
 }
 
 async function clickExport() {
@@ -39,6 +47,7 @@ describe('ExportOverlay', () => {
   beforeEach(() => {
     vi.spyOn(tauri, 'listExportPlugins').mockResolvedValue(mockPlugins);
     vi.spyOn(tauri, 'runExportPlugin').mockResolvedValue(mockExportResult);
+    vi.spyOn(tauri, 'printEntries').mockResolvedValue(mockPrintResult);
     vi.mocked(saveDialog).mockResolvedValue('/test/export.md');
   });
 
@@ -209,5 +218,24 @@ describe('ExportOverlay', () => {
 
     const exportButton = screen.getByRole('button', { name: /Start Export/ });
     expect(exportButton).toBeDisabled();
+  });
+
+  it('shows Print / PDF as first format option and defaults to it', async () => {
+    renderOverlay();
+    await waitFor(() => {
+      expect(screen.getByText('Print / PDF')).toBeInTheDocument();
+    });
+    const formatSelect = screen.getByLabelText('Format') as HTMLSelectElement;
+    expect(formatSelect.options[0].value).toBe('print');
+    expect(formatSelect.options[0].text).toBe('Print / PDF');
+  });
+
+  it('shows Print button when print format is selected', async () => {
+    renderOverlay();
+    await waitFor(() => {
+      expect(screen.getByText('Print / PDF')).toBeInTheDocument();
+    });
+    const printButton = screen.getByRole('button', { name: /^Print$/ });
+    expect(printButton).toBeInTheDocument();
   });
 });

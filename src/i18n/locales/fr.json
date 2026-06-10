@@ -458,7 +458,12 @@
     "filterMonth": "Un seul mois",
     "dateFromLabel": "De",
     "dateToLabel": "À",
-    "monthLabel": "Mois"
+    "monthLabel": "Mois",
+    "printFormat": "Imprimer / PDF",
+    "print": "Imprimer",
+    "printing": "Impression...",
+    "printGeneratedLabel": "Généré :",
+    "printTagsLabel": "Tags :"
   },
   "import": {
     "title": "Importer des entrées",

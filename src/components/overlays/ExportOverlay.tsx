@@ -5,14 +5,16 @@ import { createLogger } from '../../lib/logger';
 import {
   listExportPlugins,
   runExportPlugin,
+  printEntries,
   type PluginInfo,
   type ExportResult,
+  type PrintLabels,
 } from '../../lib/tauri';
 import { mapTauriError } from '../../lib/errors';
 import { useI18n } from '../../i18n';
 import { preferences } from '../../state/preferences';
 import { isValidDate, addMonths, addDays } from '../../lib/dates';
-import { X, FileDown, CheckCircle, AlertCircle } from 'lucide-solid';
+import { X, FileDown, CheckCircle, AlertCircle, Printer } from 'lucide-solid';
 
 interface ExportOverlayProps {
   isOpen: boolean;
@@ -34,16 +36,33 @@ export default function ExportOverlay(props: ExportOverlayProps) {
   const [dateTo, setDateTo] = createSignal('');
   const [selectedMonth, setSelectedMonth] = createSignal('');
 
+  const isPrint = () => selectedPluginId() === 'print';
+
+  const buildPrintLabels = (): PrintLabels => ({
+    generated_label: t('export.printGeneratedLabel'),
+    tags_label: t('export.printTagsLabel'),
+    months: Array.from({ length: 12 }, (_, i) =>
+      new Intl.DateTimeFormat(preferences().language, { month: 'long' }).format(
+        new Date(2024, i, 1),
+      ),
+    ),
+  });
+
   onMount(async () => {
+    const printOption: PluginInfo = {
+      id: 'print',
+      name: t('export.printFormat'),
+      file_extensions: [],
+      builtin: true,
+    };
     try {
       const list = await listExportPlugins();
-      setPlugins(list);
-      if (list.length > 0) {
-        setSelectedPluginId(list[0].id);
-      }
+      setPlugins([printOption, ...list]);
     } catch (err) {
       log.error('Failed to load export plugins:', err);
+      setPlugins([printOption]);
     }
+    setSelectedPluginId('print');
   });
 
   const selectedPlugin = () => plugins().find((p) => p.id === selectedPluginId());
@@ -105,6 +124,26 @@ export default function ExportOverlay(props: ExportOverlayProps) {
       setResult(null);
       resetFilterState();
       props.onClose();
+    }
+  };
+
+  const handlePrint = async () => {
+    setExporting(true);
+    setError(null);
+    try {
+      const result = await printEntries(buildPrintLabels(), computedExportOptions());
+      props.onClose();
+      const layer = document.createElement('div');
+      layer.id = 'mini-diarium-print-layer';
+      layer.innerHTML = result.html;
+      document.body.appendChild(layer);
+      window.addEventListener('afterprint', () => document.body.removeChild(layer), { once: true });
+      window.print();
+    } catch (err) {
+      log.error('Print failed:', err);
+      setError(mapTauriError(err, t) || t('export.exportFailed'));
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -334,7 +373,7 @@ export default function ExportOverlay(props: ExportOverlayProps) {
                   aria-hidden="true"
                 />
                 <span class="ml-3 text-sm text-secondary" role="status">
-                  {t('export.exporting')}
+                  {isPrint() ? t('export.printing') : t('export.exporting')}
                 </span>
               </div>
             </Show>
@@ -350,12 +389,14 @@ export default function ExportOverlay(props: ExportOverlayProps) {
               </button>
               <Show when={!result()}>
                 <button
-                  onClick={handleExport}
+                  onClick={isPrint() ? handlePrint : handleExport}
                   disabled={isExportDisabled()}
                   class="px-4 py-2 interactive-primary rounded-md transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
-                  <FileDown size={16} />
-                  {t('export.startExport')}
+                  <Show when={isPrint()} fallback={<FileDown size={16} />}>
+                    <Printer size={16} />
+                  </Show>
+                  {isPrint() ? t('export.print') : t('export.startExport')}
                 </button>
               </Show>
             </div>
