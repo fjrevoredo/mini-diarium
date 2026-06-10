@@ -241,6 +241,18 @@ mod tests {
     }
 
     #[test]
+    fn test_format_date_malformed_falls_back_to_raw_string() {
+        // format_date returns the raw string when the date isn't YYYY-MM-DD
+        // "invalid" has no '-', so split('-') produces 1 part — triggers the early return
+        let entries = vec![make_entry(1, "invalid", "Title", "<p>c</p>")];
+        let html = generate_print_html(entries, &HashMap::new(), "2024-03-01", &make_labels());
+        assert!(
+            html.contains("invalid"),
+            "Malformed date should appear verbatim in output"
+        );
+    }
+
+    #[test]
     fn test_two_entries_same_date_generate_one_day_div() {
         let entries = vec![
             make_entry(1, "2024-01-15", "Entry A", "<p>Content A</p>"),

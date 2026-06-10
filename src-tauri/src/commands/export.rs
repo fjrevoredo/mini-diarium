@@ -180,6 +180,35 @@ mod tests {
     }
 
     #[test]
+    fn test_fetch_entries_returns_all_when_no_dates() {
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+        crate::db::queries::insert_entry(&db, &create_test_entry("2024-01-01", "A", "text a"))
+            .unwrap();
+        crate::db::queries::insert_entry(&db, &create_test_entry("2024-06-15", "B", "text b"))
+            .unwrap();
+
+        let result = super::fetch_entries(&db, None, None).unwrap();
+        assert_eq!(result.len(), 2);
+    }
+
+    #[test]
+    fn test_fetch_entries_filters_by_date_range() {
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+        crate::db::queries::insert_entry(&db, &create_test_entry("2024-01-01", "Jan", "text"))
+            .unwrap();
+        crate::db::queries::insert_entry(&db, &create_test_entry("2024-06-15", "Jun", "text"))
+            .unwrap();
+        crate::db::queries::insert_entry(&db, &create_test_entry("2024-12-31", "Dec", "text"))
+            .unwrap();
+
+        let result =
+            super::fetch_entries(&db, Some("2024-01-01"), Some("2024-06-30")).unwrap();
+        assert_eq!(result.len(), 2);
+    }
+
+    #[test]
     fn test_export_json_writes_file() {
         let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
         let export_path = "test_export_output.json";

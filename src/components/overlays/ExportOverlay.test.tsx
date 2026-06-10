@@ -220,6 +220,54 @@ describe('ExportOverlay', () => {
     expect(exportButton).toBeDisabled();
   });
 
+  it('calls printEntries and globalThis.print on success', async () => {
+    const onClose = vi.fn();
+    const printSpy = vi.spyOn(globalThis, 'print').mockImplementation(() => {});
+    renderWithI18n(() => <ExportOverlay isOpen={true} onClose={onClose} />);
+
+    await waitFor(() => expect(screen.getByRole('button', { name: /^Print$/ })).toBeInTheDocument());
+    fireEvent.click(screen.getByRole('button', { name: /^Print$/ }));
+
+    await waitFor(() => {
+      expect(tauri.printEntries).toHaveBeenCalled();
+      expect(printSpy).toHaveBeenCalled();
+      expect(onClose).toHaveBeenCalled();
+    });
+
+    printSpy.mockRestore();
+  });
+
+  it('shows error when printEntries rejects', async () => {
+    vi.spyOn(tauri, 'printEntries').mockRejectedValueOnce(new Error('network error'));
+    renderOverlay();
+
+    await waitFor(() => expect(screen.getByRole('button', { name: /^Print$/ })).toBeInTheDocument());
+    fireEvent.click(screen.getByRole('button', { name: /^Print$/ }));
+
+    await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument());
+  });
+
+  it('does not call runExportPlugin when save dialog is cancelled', async () => {
+    vi.mocked(saveDialog).mockResolvedValueOnce(null);
+    renderOverlay();
+    await waitForPlugins();
+    fireEvent.click(screen.getByRole('button', { name: /Start Export/ }));
+
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: /Start Export/ })).not.toBeDisabled(),
+    );
+    expect(tauri.runExportPlugin).not.toHaveBeenCalled();
+  });
+
+  it('shows error when export plugin fails', async () => {
+    vi.spyOn(tauri, 'runExportPlugin').mockRejectedValueOnce(new Error('Export failed'));
+    renderOverlay();
+    await waitForPlugins();
+    await clickExport();
+
+    await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument());
+  });
+
   it('shows Print / PDF as first format option and defaults to it', async () => {
     renderOverlay();
     await waitFor(() => {
