@@ -137,8 +137,8 @@ export default function ExportOverlay(props: ExportOverlayProps) {
       layer.id = 'mini-diarium-print-layer';
       layer.innerHTML = result.html;
       document.body.appendChild(layer);
-      window.addEventListener('afterprint', () => document.body.removeChild(layer), { once: true });
-      window.print();
+      globalThis.addEventListener('afterprint', () => layer.remove(), { once: true });
+      globalThis.print();
     } catch (err) {
       log.error('Print failed:', err);
       setError(mapTauriError(err, t) || t('export.exportFailed'));

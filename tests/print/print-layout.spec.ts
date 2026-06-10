@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
-import { readFileSync } from 'fs';
-import { resolve } from 'path';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 
 const CSS = readFileSync(resolve(process.cwd(), 'src/index.css'), 'utf-8');
 
@@ -12,7 +12,7 @@ function buildPage(fragment: string): string {
 }
 
 function makeDay(date: string, title: string, lines: number): string {
-  const content = Array(lines).fill('<p>Line of text for this entry.</p>').join('');
+  const content = new Array(lines).fill('<p>Line of text for this entry.</p>').join('');
   return (
     `<div class="md-print-day">` +
     `<div class="md-print-day-date">${date}</div>` +

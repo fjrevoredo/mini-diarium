@@ -1,6 +1,6 @@
 /// <reference types="node" />
-import { readFileSync } from 'fs';
-import { resolve } from 'path';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { describe, it, expect } from 'vitest';
 
 // Regression guard for https://github.com/your-org/mini-diarium/issues/163
