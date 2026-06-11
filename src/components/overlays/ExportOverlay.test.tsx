@@ -225,7 +225,9 @@ describe('ExportOverlay', () => {
     const printSpy = vi.spyOn(globalThis, 'print').mockImplementation(() => {});
     renderWithI18n(() => <ExportOverlay isOpen={true} onClose={onClose} />);
 
-    await waitFor(() => expect(screen.getByRole('button', { name: /^Print$/ })).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: /^Print$/ })).toBeInTheDocument(),
+    );
     fireEvent.click(screen.getByRole('button', { name: /^Print$/ }));
 
     await waitFor(() => {
@@ -241,7 +243,9 @@ describe('ExportOverlay', () => {
     vi.spyOn(tauri, 'printEntries').mockRejectedValueOnce(new Error('network error'));
     renderOverlay();
 
-    await waitFor(() => expect(screen.getByRole('button', { name: /^Print$/ })).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: /^Print$/ })).toBeInTheDocument(),
+    );
     fireEvent.click(screen.getByRole('button', { name: /^Print$/ }));
 
     await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument());
