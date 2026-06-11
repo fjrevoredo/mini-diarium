@@ -203,8 +203,7 @@ mod tests {
         crate::db::queries::insert_entry(&db, &create_test_entry("2024-12-31", "Dec", "text"))
             .unwrap();
 
-        let result =
-            super::fetch_entries(&db, Some("2024-01-01"), Some("2024-06-30")).unwrap();
+        let result = super::fetch_entries(&db, Some("2024-01-01"), Some("2024-06-30")).unwrap();
         assert_eq!(result.len(), 2);
     }
 
