@@ -417,7 +417,6 @@ body {
   body,
   #root {
     height: auto !important;
-    overflow: visible !important;
   }
   body > *:not(#mini-diarium-print-layer) {
     display: none !important;

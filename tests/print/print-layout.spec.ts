@@ -50,3 +50,26 @@ test('long entry spans multiple pages', async ({ page }) => {
   expect(pdf.byteLength).toBeGreaterThan(10_000);
   expect(pageCount(pdf)).toBeGreaterThanOrEqual(2);
 });
+
+test('print CSS hides app shell and shows only the print layer', async ({ page }) => {
+  // Simulate the real app body: #root present alongside the print layer
+  const html =
+    `<!DOCTYPE html><html><head><style>${CSS}</style></head>` +
+    `<body>` +
+    `<div id="root"><p>App content</p></div>` +
+    `<div id="mini-diarium-print-layer">${makeDay('January 1, 2024', 'Entry', 3)}</div>` +
+    `</body></html>`;
+
+  await page.setContent(html);
+  // page.pdf() activates @media print automatically
+  const pdf = Buffer.from(await page.pdf({ format: 'A4' }));
+
+  // PDF must be valid
+  expect(pdf.toString('ascii', 0, 4)).toBe('%PDF');
+  expect(pdf.byteLength).toBeGreaterThan(5_000);
+
+  // Verify CSS isolation via print-media emulation
+  await page.emulateMedia({ media: 'print' });
+  await expect(page.locator('#root')).toBeHidden();
+  await expect(page.locator('#mini-diarium-print-layer')).toBeVisible();
+});

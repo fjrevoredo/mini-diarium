@@ -239,6 +239,46 @@ describe('ExportOverlay', () => {
     printSpy.mockRestore();
   });
 
+  it('appends print layer with correct HTML before calling print()', async () => {
+    let capturedHtml: string | null = null;
+    const printSpy = vi.spyOn(globalThis, 'print').mockImplementation(() => {
+      const layer = document.getElementById('mini-diarium-print-layer');
+      capturedHtml = layer ? layer.innerHTML : null;
+    });
+
+    const onClose = vi.fn();
+    renderWithI18n(() => <ExportOverlay isOpen={true} onClose={onClose} />);
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: /^Print$/ })).toBeInTheDocument(),
+    );
+    fireEvent.click(screen.getByRole('button', { name: /^Print$/ }));
+
+    await waitFor(() => {
+      expect(printSpy).toHaveBeenCalled();
+      expect(capturedHtml).toBe('<p>Test HTML</p>'); // matches mockPrintResult.html
+    });
+
+    printSpy.mockRestore();
+  });
+
+  it('removes print layer from DOM after afterprint event fires', async () => {
+    const printSpy = vi.spyOn(globalThis, 'print').mockImplementation(() => {});
+
+    renderWithI18n(() => <ExportOverlay isOpen={true} onClose={vi.fn()} />);
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: /^Print$/ })).toBeInTheDocument(),
+    );
+    fireEvent.click(screen.getByRole('button', { name: /^Print$/ }));
+
+    await waitFor(() => expect(printSpy).toHaveBeenCalled());
+    expect(document.getElementById('mini-diarium-print-layer')).not.toBeNull();
+
+    globalThis.dispatchEvent(new Event('afterprint'));
+    expect(document.getElementById('mini-diarium-print-layer')).toBeNull();
+
+    printSpy.mockRestore();
+  });
+
   it('shows error when printEntries rejects', async () => {
     vi.spyOn(tauri, 'printEntries').mockRejectedValueOnce(new Error('network error'));
     renderOverlay();
