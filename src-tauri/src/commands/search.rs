@@ -107,7 +107,9 @@ fn lower_with_map(src: &str) -> (String, Vec<usize>) {
     (lowered, map)
 }
 
-/// Build a `<mark>`-highlighted, HTML-escaped snippet around the earliest term hit.
+/// Build an HTML-escaped snippet around the earliest term hit, wrapping that match in
+/// `<mark>`. With multiple (AND-matched) terms only the earliest occurrence is
+/// highlighted; the other terms are still present in the surrounding text.
 fn build_snippet(
     orig: &str,
     lowered: &str,
@@ -120,7 +122,19 @@ fn build_snippet(
         .min_by_key(|&(b, _)| b)?;
 
     let m_start = map[match_byte];
-    let m_end = map[match_byte + match_len];
+    // End of the *source* char containing the last matched lowered byte. Reading
+    // `map[match_byte + match_len]` can land mid-expansion when a char's lowercase is
+    // longer than the char (e.g. 'İ' → "i" + combining dot), collapsing the highlight
+    // to an empty `<mark></mark>`; advancing one full source char avoids that.
+    let m_end = {
+        let last = match_byte + match_len - 1;
+        let src_start = map[last];
+        orig[src_start..]
+            .char_indices()
+            .nth(1)
+            .map(|(off, _)| src_start + off)
+            .unwrap_or(orig.len())
+    };
 
     let win_start = snap_floor(orig, m_start.saturating_sub(SNIPPET_RADIUS));
     let win_end = snap_ceil(orig, (m_end + SNIPPET_RADIUS).min(orig.len()));
@@ -229,6 +243,17 @@ mod tests {
         let terms = normalize_terms("rust");
         let snip = build_snippet(&text, &lc, &map, &terms).unwrap(); // must not panic
         assert!(snip.contains("<mark>rust</mark>"));
+    }
+
+    #[test]
+    fn snippet_highlights_when_lowercase_expands() {
+        // 'İ' (U+0130) lowercases to "i" + combining dot — longer than the source char.
+        // The highlight must still wrap a non-empty region, not emit <mark></mark>.
+        let (lc, map) = lower_with_map("İstanbul trip");
+        let terms = normalize_terms("i");
+        let snip = build_snippet("İstanbul trip", &lc, &map, &terms).unwrap();
+        assert!(snip.contains("<mark>İ</mark>"));
+        assert!(!snip.contains("<mark></mark>"));
     }
 
     #[test]
