@@ -79,6 +79,16 @@
   margin: 0.75rem 0;
 }
 
+/* The global reset (@unocss/reset/tailwind.css) sets `list-style: none` on
+   ul/ol, so markers must be restored explicitly inside the editor. */
+.ProseMirror ul {
+  list-style: disc;
+}
+
+.ProseMirror ol {
+  list-style: decimal;
+}
+
 .ProseMirror code {
   background-color: var(--editor-code-bg);
   border-radius: 0.25rem;
