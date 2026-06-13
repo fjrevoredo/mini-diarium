@@ -2,10 +2,12 @@ import { createSignal, onMount, Show, For } from 'solid-js';
 import { Dialog } from '@kobalte/core/dialog';
 import { save as saveDialog } from '@tauri-apps/plugin-dialog';
 import { createLogger } from '../../lib/logger';
+import { generatePdfFromElement } from '../../lib/pdf';
 import {
   listExportPlugins,
   runExportPlugin,
   printEntries,
+  writePdfFile,
   type PluginInfo,
   type ExportResult,
   type PrintLabels,
@@ -131,24 +133,48 @@ export default function ExportOverlay(props: ExportOverlayProps) {
   const handlePrint = async () => {
     setExporting(true);
     setError(null);
+    setResult(null);
+
     try {
-      const result = await printEntries(buildPrintLabels(), computedExportOptions());
-      props.onClose();
+      const printResult = await printEntries(buildPrintLabels(), computedExportOptions());
+
+      const filePath = await saveDialog({
+        defaultPath: 'mini-diarium-export.pdf',
+        filters: [{ name: 'PDF', extensions: ['pdf'] }],
+      });
+      if (!filePath) {
+        return; // finally handles setExporting(false)
+      }
+
       const layer = document.createElement('div');
       layer.id = 'mini-diarium-print-layer';
-      layer.innerHTML = result.html;
+      // position: fixed at 0,0 so Blink paints it (off-screen elements are culled
+      // and html2canvas captures a blank canvas). z-index 0 keeps it under the
+      // dialog overlay (z-50 = 50) so the user never sees the layer flash.
+      layer.style.display = 'block';
+      layer.style.position = 'fixed';
+      layer.style.top = '0';
+      layer.style.left = '0';
+      layer.style.zIndex = '0';
+      layer.style.pointerEvents = 'none';
+      layer.innerHTML = printResult.html;
       document.body.appendChild(layer);
-      globalThis.addEventListener('afterprint', () => layer.remove(), { once: true });
-      // Images in a display:none layer are not decoded; wait for all to be ready
-      // before the print snapshot fires, otherwise only cached images appear.
-      await Promise.all(
-        [...layer.querySelectorAll<HTMLImageElement>('img')].map((img) =>
-          img.decode().catch(() => {}),
-        ),
-      );
-      globalThis.print();
+
+      try {
+        // Ensure images are fully decoded before html2canvas captures the layer
+        await Promise.all(
+          [...layer.querySelectorAll<HTMLImageElement>('img')].map((img) =>
+            img.decode().catch(() => {}),
+          ),
+        );
+        const bytes = await generatePdfFromElement(layer);
+        await writePdfFile(filePath, bytes);
+        setResult({ entries_exported: printResult.entries_exported, file_path: filePath });
+      } finally {
+        layer.remove();
+      }
     } catch (err) {
-      log.error('Print failed:', err);
+      log.error('PDF export failed:', err);
       setError(mapTauriError(err, t) || t('export.exportFailed'));
     } finally {
       setExporting(false);

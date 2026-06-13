@@ -399,7 +399,7 @@ body {
   }
 }
 
-/* Print layer — hidden by default; revealed for window.print() only */
+/* Print layer — hidden by default; revealed only for PDF export rendering */
 #mini-diarium-print-layer {
   display: none;
 }

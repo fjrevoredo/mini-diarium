@@ -4,6 +4,7 @@ import { save as saveDialog } from '@tauri-apps/plugin-dialog';
 import { renderWithI18n } from '../../test/i18n-test-utils';
 
 import * as tauri from '../../lib/tauri';
+import * as pdfLib from '../../lib/pdf';
 import ExportOverlay from './ExportOverlay';
 
 const mockPlugins = [
@@ -48,6 +49,8 @@ describe('ExportOverlay', () => {
     vi.spyOn(tauri, 'listExportPlugins').mockResolvedValue(mockPlugins);
     vi.spyOn(tauri, 'runExportPlugin').mockResolvedValue(mockExportResult);
     vi.spyOn(tauri, 'printEntries').mockResolvedValue(mockPrintResult);
+    vi.spyOn(tauri, 'writePdfFile').mockResolvedValue(undefined);
+    vi.spyOn(pdfLib, 'generatePdfFromElement').mockResolvedValue([0x25, 0x50, 0x44, 0x46]);
     vi.mocked(saveDialog).mockResolvedValue('/test/export.md');
   });
 
@@ -220,63 +223,40 @@ describe('ExportOverlay', () => {
     expect(exportButton).toBeDisabled();
   });
 
-  it('calls printEntries and globalThis.print on success', async () => {
-    const onClose = vi.fn();
-    const printSpy = vi.spyOn(globalThis, 'print').mockImplementation(() => {});
-    renderWithI18n(() => <ExportOverlay isOpen={true} onClose={onClose} />);
-
-    await waitFor(() =>
-      expect(screen.getByRole('button', { name: /^Print$/ })).toBeInTheDocument(),
-    );
-    fireEvent.click(screen.getByRole('button', { name: /^Print$/ }));
-
-    await waitFor(() => {
-      expect(tauri.printEntries).toHaveBeenCalled();
-      expect(printSpy).toHaveBeenCalled();
-      expect(onClose).toHaveBeenCalled();
-    });
-
-    printSpy.mockRestore();
-  });
-
-  it('appends print layer with correct HTML before calling print()', async () => {
-    let capturedHtml: string | null = null;
-    const printSpy = vi.spyOn(globalThis, 'print').mockImplementation(() => {
-      const layer = document.getElementById('mini-diarium-print-layer');
-      capturedHtml = layer ? layer.innerHTML : null;
-    });
-
-    const onClose = vi.fn();
-    renderWithI18n(() => <ExportOverlay isOpen={true} onClose={onClose} />);
-    await waitFor(() =>
-      expect(screen.getByRole('button', { name: /^Print$/ })).toBeInTheDocument(),
-    );
-    fireEvent.click(screen.getByRole('button', { name: /^Print$/ }));
-
-    await waitFor(() => {
-      expect(printSpy).toHaveBeenCalled();
-      expect(capturedHtml).toBe('<p>Test HTML</p>'); // matches mockPrintResult.html
-    });
-
-    printSpy.mockRestore();
-  });
-
-  it('removes print layer from DOM after afterprint event fires', async () => {
-    const printSpy = vi.spyOn(globalThis, 'print').mockImplementation(() => {});
-
+  it('generates PDF and writes to the file chosen by save dialog', async () => {
+    vi.mocked(saveDialog).mockResolvedValueOnce('/test/export.pdf');
     renderWithI18n(() => <ExportOverlay isOpen={true} onClose={vi.fn()} />);
     await waitFor(() =>
       expect(screen.getByRole('button', { name: /^Print$/ })).toBeInTheDocument(),
     );
     fireEvent.click(screen.getByRole('button', { name: /^Print$/ }));
+    await waitFor(() => {
+      expect(tauri.printEntries).toHaveBeenCalled();
+      expect(pdfLib.generatePdfFromElement).toHaveBeenCalled();
+      expect(tauri.writePdfFile).toHaveBeenCalledWith('/test/export.pdf', expect.any(Array));
+    });
+  });
 
-    await waitFor(() => expect(printSpy).toHaveBeenCalled());
-    expect(document.getElementById('mini-diarium-print-layer')).not.toBeNull();
+  it('shows success panel after PDF is saved', async () => {
+    vi.mocked(saveDialog).mockResolvedValueOnce('/test/export.pdf');
+    renderWithI18n(() => <ExportOverlay isOpen={true} onClose={vi.fn()} />);
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: /^Print$/ })).toBeInTheDocument(),
+    );
+    fireEvent.click(screen.getByRole('button', { name: /^Print$/ }));
+    await waitFor(() => expect(screen.getByRole('status')).toBeInTheDocument());
+  });
 
-    globalThis.dispatchEvent(new Event('afterprint'));
-    expect(document.getElementById('mini-diarium-print-layer')).toBeNull();
-
-    printSpy.mockRestore();
+  it('does not generate PDF when save dialog is cancelled', async () => {
+    vi.mocked(saveDialog).mockResolvedValueOnce(null);
+    renderWithI18n(() => <ExportOverlay isOpen={true} onClose={vi.fn()} />);
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: /^Print$/ })).toBeInTheDocument(),
+    );
+    fireEvent.click(screen.getByRole('button', { name: /^Print$/ }));
+    await waitFor(() => expect(screen.getByRole('button', { name: /^Print$/ })).not.toBeDisabled());
+    expect(pdfLib.generatePdfFromElement).not.toHaveBeenCalled();
+    expect(tauri.writePdfFile).not.toHaveBeenCalled();
   });
 
   it('shows error when printEntries rejects', async () => {

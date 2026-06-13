@@ -348,6 +348,10 @@ export async function readTextFile(path: string): Promise<string> {
   return await invoke('read_text_file', { path });
 }
 
+export async function writePdfFile(filePath: string, bytes: number[]): Promise<void> {
+  await invoke('write_pdf_file', { filePath, bytes });
+}
+
 // Debug commands
 export interface DebugDumpResult {
   file_path: string;
