@@ -1,9 +1,9 @@
 ---
 title: FAQ
 slug: faq
-description: Answers to common questions about Mini Diarium: password recovery, encryption model, cross-device sync, key files, authentication slots, and mobile support.
+description: Answers to common questions about Mini Diarium: password recovery, encryption model, cross-device sync, Docker runtime, key files, authentication slots, and mobile support.
 order: 11
-updated: 2026-06-04
+updated: 2026-06-13
 tags: FAQ, troubleshooting, encryption, privacy, data
 ---
 
@@ -17,13 +17,19 @@ Locally on your machine in an SQLite database. See the [Backups](../backups/) se
 
 ## Does Mini Diarium connect to the internet?
 
-Never. Mini Diarium makes no network requests, collects no analytics, sends no telemetry, and does not check for updates automatically. All data stays on your device.
+Never. Mini Diarium makes no network requests, collects no analytics, sends no telemetry, and does not check for updates automatically. All data stays on your device. If you choose the Docker runtime, the container accepts a localhost-only GUI connection from your browser, but the Mini Diarium process still makes no outbound network requests.
 
 Release notes for each version are bundled with the app itself and displayed in the **notification center** (bell icon in the header). No network call is made — the notes ship as a local file inside the application bundle.
 
 ## Can I sync across devices?
 
 Not directly. Mini Diarium is local-only by design. You could manually copy the `diary.db` file to another device, but simultaneous access from multiple devices is not supported and could corrupt the database. If you want cloud backup, place your journal directory inside a synced folder (Dropbox, OneDrive, iCloud Drive) and only open it from one device at a time.
+
+## Can I run Mini Diarium in Docker?
+
+Yes. The supported Docker runtime runs the native Linux desktop build inside a container and renders it in your browser at `http://127.0.0.1:6080`. It is still the same encrypted local-first app, not a web rewrite.
+
+Use Docker only if you specifically want a containerized runtime. Flatpak remains the simpler Linux desktop install. In Docker mode, enable idle auto-lock and keep the runtime bound to `127.0.0.1` only.
 
 ## I used Mini Diary before. Can I migrate?
 

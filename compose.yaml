@@ -1,0 +1,73 @@
+services:
+  init:
+    image: ${MINI_DIARIUM_IMAGE_NAME:-ghcr.io/fjrevoredo/mini-diarium}:${MINI_DIARIUM_IMAGE_TAG:-local}
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    entrypoint: ["/opt/mini-diarium/docker/init.sh"]
+    user: root
+    environment:
+      MINI_DIARIUM_APP_UID: "10001"
+      MINI_DIARIUM_APP_GID: "10001"
+    volumes:
+      - mini-diarium-data:/data
+
+  app:
+    image: ${MINI_DIARIUM_IMAGE_NAME:-ghcr.io/fjrevoredo/mini-diarium}:${MINI_DIARIUM_IMAGE_TAG:-local}
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    depends_on:
+      init:
+        condition: service_completed_successfully
+    ports:
+      - "127.0.0.1:${MINI_DIARIUM_PORT:-6080}:6080"
+    environment:
+      MINI_DIARIUM_APP_UID: "10001"
+      MINI_DIARIUM_APP_GID: "10001"
+      MINI_DIARIUM_VNC_GEOMETRY: "${MINI_DIARIUM_VNC_GEOMETRY:-1440x900}"
+      MINI_DIARIUM_VNC_DEPTH: "${MINI_DIARIUM_VNC_DEPTH:-24}"
+    read_only: true
+    restart: unless-stopped
+    stop_grace_period: 20s
+    shm_size: 256m
+    tmpfs:
+      - /tmp
+      - /run
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - NET_ADMIN
+      - SETUID
+      - SETGID
+    healthcheck:
+      test: ["CMD", "/opt/mini-diarium/docker/healthcheck.sh"]
+      interval: 30s
+      timeout: 10s
+      start_period: 60s
+      retries: 5
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+    secrets:
+      - source: gui_password
+        target: gui_password
+    volumes:
+      - mini-diarium-data:/data
+      - type: bind
+        source: ${MINI_DIARIUM_EXCHANGE_DIR:-./docker/exchange}
+        target: /exchange
+        bind:
+          create_host_path: true
+
+volumes:
+  mini-diarium-data:
+
+secrets:
+  gui_password:
+    file: ./docker/secrets/gui-password.txt
+

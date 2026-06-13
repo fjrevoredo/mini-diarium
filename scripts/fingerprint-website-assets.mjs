@@ -33,6 +33,32 @@ const ASSETS = [
   },
 ];
 
+const RETRYABLE_WRITE_CODES = new Set(["EBUSY", "EPERM", "UNKNOWN"]);
+
+function sleepMs(ms) {
+  Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, ms);
+}
+
+function writeFileWithRetry(filePath, content, encoding = "utf8") {
+  let lastError;
+
+  for (let attempt = 0; attempt < 8; attempt += 1) {
+    try {
+      writeFileSync(filePath, content, encoding);
+      return;
+    } catch (error) {
+      if (!RETRYABLE_WRITE_CODES.has(error?.code) || attempt === 7) {
+        throw error;
+      }
+
+      lastError = error;
+      sleepMs(50 * (attempt + 1));
+    }
+  }
+
+  throw lastError;
+}
+
 function shortHash(buffer) {
   return createHash("sha256").update(buffer).digest("hex").slice(0, 8);
 }
@@ -109,6 +135,6 @@ for (const htmlPath of htmlFiles) {
     );
   }
 
-  writeFileSync(htmlPath, html);
+  writeFileWithRetry(htmlPath, html);
   console.log(`Updated asset references: ${path.relative(WEBSITE_DIR, htmlPath)}`);
 }

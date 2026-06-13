@@ -47,6 +47,12 @@ test_*.db
 *.temp
 .cache/
 
+# Docker runtime local state
+docker/secrets/*.txt
+docker/exchange/*
+!docker/exchange/.gitignore
+!docker/secrets/.gitignore
+
 # E2E test artifacts
 .drivers/
 .wdio/

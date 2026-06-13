@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Answers to common questions about Mini Diarium: password recovery, encryption model, cross-device sync, key files, authentication slots, and mobile support." />
+  <meta name="description" content="Answers to common questions about Mini Diarium: password recovery, encryption model, cross-device sync, Docker runtime, key files, authentication slots, and mobile support." />
   <meta name="robots" content="index,follow,max-snippet:-1,max-image-preview:large,max-video-preview:-1" />
   <meta name="theme-color" content="#0e0e0e" />
   <meta name="author" content="Francisco J. Revoredo" />
@@ -12,7 +12,7 @@
   <meta property="og:locale" content="en_US" />
   <meta property="og:url" content="https://mini-diarium.com/docs/faq/" />
   <meta property="og:title" content="FAQ — Mini Diarium Documentation" />
-  <meta property="og:description" content="Answers to common questions about Mini Diarium: password recovery, encryption model, cross-device sync, key files, authentication slots, and mobile support." />
+  <meta property="og:description" content="Answers to common questions about Mini Diarium: password recovery, encryption model, cross-device sync, Docker runtime, key files, authentication slots, and mobile support." />
   <meta property="og:image" content="https://mini-diarium.com/assets/og-cover.png" />
   <meta property="og:image:type" content="image/png" />
   <meta property="og:image:width" content="1200" />
@@ -22,7 +22,7 @@
   <meta name="twitter:site" content="@MiniDiarium" />
   <meta name="twitter:creator" content="@MiniDiarium" />
   <meta name="twitter:title" content="FAQ — Mini Diarium Documentation" />
-  <meta name="twitter:description" content="Answers to common questions about Mini Diarium: password recovery, encryption model, cross-device sync, key files, authentication slots, and mobile support." />
+  <meta name="twitter:description" content="Answers to common questions about Mini Diarium: password recovery, encryption model, cross-device sync, Docker runtime, key files, authentication slots, and mobile support." />
   <meta name="twitter:image" content="https://mini-diarium.com/assets/og-cover.png" />
   
   <title>FAQ — Mini Diarium Documentation</title>
@@ -235,8 +235,8 @@
       "@type": "TechArticle",
       "@id": "https://mini-diarium.com/docs/faq/#article",
       "headline": "FAQ",
-      "description": "Answers to common questions about Mini Diarium: password recovery, encryption model, cross-device sync, key files, authentication slots, and mobile support.",
-      "dateModified": "2026-06-04T00:00:00Z",
+      "description": "Answers to common questions about Mini Diarium: password recovery, encryption model, cross-device sync, Docker runtime, key files, authentication slots, and mobile support.",
+      "dateModified": "2026-06-13T00:00:00Z",
       "keywords": "FAQ, troubleshooting, encryption, privacy, data",
       "publisher": {
         "@type": "Organization",
@@ -320,7 +320,7 @@
     <div class="post-header">
       <p class="hero-eyebrow">Mini Diarium documentation</p>
       <h1>FAQ</h1>
-      <p class="hero-sub">Answers to common questions about Mini Diarium: password recovery, encryption model, cross-device sync, key files, authentication slots, and mobile support.</p>
+      <p class="hero-sub">Answers to common questions about Mini Diarium: password recovery, encryption model, cross-device sync, Docker runtime, key files, authentication slots, and mobile support.</p>
     </div>
   </div>
 </section>
@@ -378,9 +378,11 @@
       <article class="blog-post prose" aria-label="FAQ">
         <h2 id="i-forgot-my-password-can-i-recover-my-entries">I forgot my password. Can I recover my entries?</h2><p>No — unless you registered a key file as an authentication method. If you have a key file, you can still unlock your journal using the &quot;Key File&quot; tab on the unlock screen. If you have neither your password nor your key file, your entries cannot be recovered. This is by design: the encryption key is derived from your password, and no backup of it is stored anywhere.</p>
         <h2 id="where-is-my-data-stored">Where is my data stored?</h2><p>Locally on your machine in an SQLite database. See the <a href="../backups/">Backups</a> section for the exact default path on your operating system.</p>
-        <h2 id="does-mini-diarium-connect-to-the-internet">Does Mini Diarium connect to the internet?</h2><p>Never. Mini Diarium makes no network requests, collects no analytics, sends no telemetry, and does not check for updates automatically. All data stays on your device.</p>
+        <h2 id="does-mini-diarium-connect-to-the-internet">Does Mini Diarium connect to the internet?</h2><p>Never. Mini Diarium makes no network requests, collects no analytics, sends no telemetry, and does not check for updates automatically. All data stays on your device. If you choose the Docker runtime, the container accepts a localhost-only GUI connection from your browser, but the Mini Diarium process still makes no outbound network requests.</p>
         <p>Release notes for each version are bundled with the app itself and displayed in the <strong>notification center</strong> (bell icon in the header). No network call is made — the notes ship as a local file inside the application bundle.</p>
         <h2 id="can-i-sync-across-devices">Can I sync across devices?</h2><p>Not directly. Mini Diarium is local-only by design. You could manually copy the <code>diary.db</code> file to another device, but simultaneous access from multiple devices is not supported and could corrupt the database. If you want cloud backup, place your journal directory inside a synced folder (Dropbox, OneDrive, iCloud Drive) and only open it from one device at a time.</p>
+        <h2 id="can-i-run-mini-diarium-in-docker">Can I run Mini Diarium in Docker?</h2><p>Yes. The supported Docker runtime runs the native Linux desktop build inside a container and renders it in your browser at <code>http://127.0.0.1:6080</code>. It is still the same encrypted local-first app, not a web rewrite.</p>
+        <p>Use Docker only if you specifically want a containerized runtime. Flatpak remains the simpler Linux desktop install. In Docker mode, enable idle auto-lock and keep the runtime bound to <code>127.0.0.1</code> only.</p>
         <h2 id="i-used-mini-diary-before-can-i-migrate">I used Mini Diary before. Can I migrate?</h2><p>Yes. Export your journal from Mini Diary as JSON, then import it in Mini Diarium from <strong>Journal → Import...</strong> using the Mini Diary JSON format. All entries are imported with their original dates.</p>
         <h2 id="how-does-the-encryption-work">How does the encryption work?</h2><p>Mini Diarium encrypts each journal entry using AES-256-GCM with a random master key. The master key is never stored in plaintext — it is wrapped (encrypted) by a key derived from your password using Argon2id, and only the wrapped version is saved to disk. When you unlock, your password re-derives the wrapping key, which decrypts the master key in memory. The master key is held only in RAM and discarded when you lock.</p>
         <h2 id="can-i-use-multiple-passwords-or-unlock-methods">Can I use multiple passwords or unlock methods?</h2><p>Yes. Mini Diarium supports multiple authentication slots. You can register a password and one or more key files. Each method independently wraps the same master key. You can add or remove methods in <strong>Preferences → Authentication Methods</strong> without re-encrypting your entries. At least one method must remain active.</p>
@@ -403,6 +405,7 @@
           <li class="docs-toc-h2"><a href="#where-is-my-data-stored">Where is my data stored?</a></li>
           <li class="docs-toc-h2"><a href="#does-mini-diarium-connect-to-the-internet">Does Mini Diarium connect to the internet?</a></li>
           <li class="docs-toc-h2"><a href="#can-i-sync-across-devices">Can I sync across devices?</a></li>
+          <li class="docs-toc-h2"><a href="#can-i-run-mini-diarium-in-docker">Can I run Mini Diarium in Docker?</a></li>
           <li class="docs-toc-h2"><a href="#i-used-mini-diary-before-can-i-migrate">I used Mini Diary before. Can I migrate?</a></li>
           <li class="docs-toc-h2"><a href="#how-does-the-encryption-work">How does the encryption work?</a></li>
           <li class="docs-toc-h2"><a href="#can-i-use-multiple-passwords-or-unlock-methods">Can I use multiple passwords or unlock methods?</a></li>

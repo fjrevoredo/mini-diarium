@@ -236,7 +236,7 @@
       "@id": "https://mini-diarium.com/docs/getting-started/#article",
       "headline": "Getting Started",
       "description": "Create your first encrypted journal, set a password, and start writing. Covers the welcome tour, multiple journals, key file auth, and local-only mode.",
-      "dateModified": "2026-06-04T00:00:00Z",
+      "dateModified": "2026-06-13T00:00:00Z",
       "keywords": "setup, password, first launch",
       "publisher": {
         "@type": "Organization",
@@ -424,6 +424,14 @@
         <h2 id="local-only-journals-no-password">Local-Only Journals (No Password)</h2><p>When creating a new journal, you can choose the <strong>Local-only</strong> mode. Instead of a user-chosen password, the app generates a random key at creation time and stores it in the OS-managed app data directory. The journal auto-unlocks on each open without a password prompt.</p>
         <p>This mode still encrypts your entries with AES-256-GCM. The protection trade-off is important to understand: copying only the <code>diary.db</code> file to another machine will not be readable there, but anyone with access to your OS account can open the journal without any additional authentication. A risk acknowledgment checkbox is shown before creation to confirm you understand this.</p>
         <p>You can upgrade a local-only journal to password protection at any time using <strong>Preferences → Authentication Methods</strong>.</p>
+        <h2 id="docker-runtime">Docker Runtime</h2><p>Mini Diarium can also run in the <strong>Docker Runtime (Linux container, browser-rendered desktop)</strong>. In that mode, you open the app at <code>http://127.0.0.1:6080</code> in your browser, authenticate to the local GUI, and then unlock your journal normally with your journal password or key file.</p>
+        <p>The important behavior differences are:</p>
+        <ol>
+        <li><strong>Persistence lives in the <code>/data</code> Docker volume</strong> — journals, backups, preferences, plugins, and app config survive container replacement as long as you keep the named volume.</li>
+        <li><strong>Host file exchange is limited to <code>/exchange</code></strong> — use it for imports, exports, and key files when you need files to cross the host/container boundary.</li>
+        <li><strong>Enable idle auto-lock</strong> — Linux container mode does not have OS session-lock auto-lock today, so the inactivity timer is the main automatic lock mechanism.</li>
+        <li><strong>Keep it local</strong> — the supported Docker runtime binds only to <code>127.0.0.1</code>. Do not expose it publicly or to your LAN.</li>
+        </ol>
         
         
         <div class="docs-prevnext">
@@ -439,6 +447,7 @@
           <li class="docs-toc-h2"><a href="#locking-and-unlocking">Locking and Unlocking</a></li>
           <li class="docs-toc-h2"><a href="#multiple-journals">Multiple Journals</a></li>
           <li class="docs-toc-h2"><a href="#local-only-journals-no-password">Local-Only Journals (No Password)</a></li>
+          <li class="docs-toc-h2"><a href="#docker-runtime">Docker Runtime</a></li>
         </ul>
       </aside>
     </div>

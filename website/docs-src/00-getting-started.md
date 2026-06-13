@@ -3,7 +3,7 @@ title: Getting Started
 slug: getting-started
 description: Create your first encrypted journal, set a password, and start writing. Covers the welcome tour, multiple journals, key file auth, and local-only mode.
 order: 1
-updated: 2026-06-04
+updated: 2026-06-13
 tags: setup, password, first launch
 ---
 
@@ -56,3 +56,14 @@ When creating a new journal, you can choose the **Local-only** mode. Instead of 
 This mode still encrypts your entries with AES-256-GCM. The protection trade-off is important to understand: copying only the `diary.db` file to another machine will not be readable there, but anyone with access to your OS account can open the journal without any additional authentication. A risk acknowledgment checkbox is shown before creation to confirm you understand this.
 
 You can upgrade a local-only journal to password protection at any time using **Preferences → Authentication Methods**.
+
+## Docker Runtime
+
+Mini Diarium can also run in the **Docker Runtime (Linux container, browser-rendered desktop)**. In that mode, you open the app at `http://127.0.0.1:6080` in your browser, authenticate to the local GUI, and then unlock your journal normally with your journal password or key file.
+
+The important behavior differences are:
+
+1. **Persistence lives in the `/data` Docker volume** — journals, backups, preferences, plugins, and app config survive container replacement as long as you keep the named volume.
+2. **Host file exchange is limited to `/exchange`** — use it for imports, exports, and key files when you need files to cross the host/container boundary.
+3. **Enable idle auto-lock** — Linux container mode does not have OS session-lock auto-lock today, so the inactivity timer is the main automatic lock mechanism.
+4. **Keep it local** — the supported Docker runtime binds only to `127.0.0.1`. Do not expose it publicly or to your LAN.

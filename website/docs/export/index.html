@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Export your journal as JSON or Markdown. JSON preserves entry IDs, tags, and font metadata; Markdown is human-readable. Exported files are not encrypted." />
+  <meta name="description" content="Export your journal as JSON, Markdown, or PDF. JSON preserves IDs, tags, and metadata; Markdown is human-readable; Print / PDF opens the system print dialog." />
   <meta name="robots" content="index,follow,max-snippet:-1,max-image-preview:large,max-video-preview:-1" />
   <meta name="theme-color" content="#0e0e0e" />
   <meta name="author" content="Francisco J. Revoredo" />
@@ -12,7 +12,7 @@
   <meta property="og:locale" content="en_US" />
   <meta property="og:url" content="https://mini-diarium.com/docs/export/" />
   <meta property="og:title" content="Exporting Data — Mini Diarium Documentation" />
-  <meta property="og:description" content="Export your journal as JSON or Markdown. JSON preserves entry IDs, tags, and font metadata; Markdown is human-readable. Exported files are not encrypted." />
+  <meta property="og:description" content="Export your journal as JSON, Markdown, or PDF. JSON preserves IDs, tags, and metadata; Markdown is human-readable; Print / PDF opens the system print dialog." />
   <meta property="og:image" content="https://mini-diarium.com/assets/og-cover.png" />
   <meta property="og:image:type" content="image/png" />
   <meta property="og:image:width" content="1200" />
@@ -22,7 +22,7 @@
   <meta name="twitter:site" content="@MiniDiarium" />
   <meta name="twitter:creator" content="@MiniDiarium" />
   <meta name="twitter:title" content="Exporting Data — Mini Diarium Documentation" />
-  <meta name="twitter:description" content="Export your journal as JSON or Markdown. JSON preserves entry IDs, tags, and font metadata; Markdown is human-readable. Exported files are not encrypted." />
+  <meta name="twitter:description" content="Export your journal as JSON, Markdown, or PDF. JSON preserves IDs, tags, and metadata; Markdown is human-readable; Print / PDF opens the system print dialog." />
   <meta name="twitter:image" content="https://mini-diarium.com/assets/og-cover.png" />
   
   <title>Exporting Data — Mini Diarium Documentation</title>
@@ -235,9 +235,9 @@
       "@type": "TechArticle",
       "@id": "https://mini-diarium.com/docs/export/#article",
       "headline": "Exporting Data",
-      "description": "Export your journal as JSON or Markdown. JSON preserves entry IDs, tags, and font metadata; Markdown is human-readable. Exported files are not encrypted.",
-      "dateModified": "2026-06-04T00:00:00Z",
-      "keywords": "export, backup, JSON, Markdown, portability, tags",
+      "description": "Export your journal as JSON, Markdown, or PDF. JSON preserves IDs, tags, and metadata; Markdown is human-readable; Print / PDF opens the system print dialog.",
+      "dateModified": "2026-06-10T00:00:00Z",
+      "keywords": "export, backup, JSON, Markdown, PDF, print, portability, tags",
       "publisher": {
         "@type": "Organization",
         "name": "Mini Diarium",
@@ -345,7 +345,7 @@
     <div class="post-header">
       <p class="hero-eyebrow">Mini Diarium documentation</p>
       <h1>Exporting Data</h1>
-      <p class="hero-sub">Export your journal as JSON or Markdown. JSON preserves entry IDs, tags, and font metadata; Markdown is human-readable. Exported files are not encrypted.</p>
+      <p class="hero-sub">Export your journal as JSON, Markdown, or PDF. JSON preserves IDs, tags, and metadata; Markdown is human-readable; Print / PDF opens the system print dialog.</p>
     </div>
   </div>
 </section>
@@ -437,6 +437,16 @@
         </code></pre>
         <p>Entries with no tags have no tags line. Tags appear in alphabetical order.</p>
         <p>Markdown is a best-effort, text-focused conversion of the stored HTML editor content. Inline font formatting is not preserved in Markdown — all text exports using the default Markdown rendering. Complex formatting (tables, images) may not convert perfectly, but the text is always readable. <strong>For full-fidelity export including font metadata, use JSON instead.</strong></p>
+        <h3 id="print-pdf">Print / PDF</h3><p>The <strong>Print / PDF</strong> option opens the system print dialog directly. No file is saved by Mini Diarium — the OS print dialog gives you full control: print to a physical printer, or choose <strong>Save as PDF</strong> (available on all supported platforms) to export a formatted PDF file.</p>
+        <p>The print output uses a clean, readable layout with:</p>
+        <ul>
+        <li>A &quot;Mini Diarium&quot; header and the generation date</li>
+        <li>Entries grouped by date, with each date on its own page</li>
+        <li>Entry titles, tags (when present), and the full entry content</li>
+        <li>Standard formatting for headings, lists, blockquotes, and code blocks</li>
+        </ul>
+        <p>Date range filtering works the same as for file exports — select &quot;All entries&quot;, a custom date range, or a specific month before clicking <strong>Print</strong>.</p>
+        <p>After the system print dialog opens, if you cancel without printing, no files are written and no data leaves the app.</p>
         <h2 id="why-export">Why Export?</h2><ul>
         <li><strong>Backup</strong>: Export a copy of your entries for safekeeping before changing devices or reinstalling.</li>
         <li><strong>Migration</strong>: Move your writing to another app or format.</li>
@@ -459,6 +469,7 @@
           <li class="docs-toc-h2"><a href="#built-in-export-formats">Built-In Export Formats</a></li>
           <li class="docs-toc-h3"><a href="#json-export">JSON Export</a></li>
           <li class="docs-toc-h3"><a href="#markdown-export">Markdown Export</a></li>
+          <li class="docs-toc-h3"><a href="#print-pdf">Print / PDF</a></li>
           <li class="docs-toc-h2"><a href="#why-export">Why Export?</a></li>
           <li class="docs-toc-h2"><a href="#custom-export-formats-via-plugins">Custom Export Formats via Plugins</a></li>
         </ul>

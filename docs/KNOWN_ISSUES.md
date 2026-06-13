@@ -88,6 +88,20 @@ Automatic backups are created by copying the SQLite file at unlock time. SQLite'
 
 ---
 
+### KI-10 — Docker runtime is browser-rendered and does not behave exactly like a native desktop install.
+**Status:** Known limitation.
+
+The Docker runtime runs the real Linux desktop app inside a container and renders it through a browser session. Core journaling, encryption, backups, imports, exports, and GTK file dialogs work, but some desktop behaviors are weaker or intentionally unsupported:
+
+- OS session-lock auto-lock is not available on Linux container hosts; rely on idle auto-lock and manual lock.
+- Clipboard, printing, and browser-mediated file handling may behave differently from a native desktop install.
+- Drag-and-drop from the host desktop into the browser-rendered session is not a supported workflow; use `/exchange` and the file picker instead.
+- Remote or public exposure is unsupported. The runtime is designed for `127.0.0.1` only.
+
+**Recommendation:** Prefer Flatpak for the most native Linux desktop experience. Use Docker when containerization is the priority.
+
+---
+
 ## For Developers
 
 ### AT-1 — Single database connection; no concurrent read access
@@ -250,4 +264,4 @@ The app data directory resolution (`resolve_app_data_dir`) and legacy config det
 
 ---
 
-*Last updated: 2026-05-09. For the security threat model, see [SECURITY.md](../SECURITY.md). For open features and enhancements, see [OPEN_TASKS.md](OPEN_TASKS.md). For the full backend architectural assessment conducted at v0.4.9, see [BACKEND_ASSESSMENT_2026-03.md](BACKEND_ASSESSMENT_2026-03.md).*
+*Last updated: 2026-06-13. For the security threat model, see [SECURITY.md](../SECURITY.md). For open features and enhancements, see [OPEN_TASKS.md](OPEN_TASKS.md). For the full backend architectural assessment conducted at v0.4.9, see [BACKEND_ASSESSMENT_2026-03.md](BACKEND_ASSESSMENT_2026-03.md).*

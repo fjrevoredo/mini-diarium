@@ -260,6 +260,20 @@ jobs:
 
       - uses: dtolnay/rust-toolchain@stable
 
+      - name: Verify Windows Docker secret helper
+        if: runner.os == 'Windows'
+        shell: powershell
+        run: |
+          $path = Join-Path $env:RUNNER_TEMP "gui-password.txt"
+          powershell -ExecutionPolicy Bypass -File .\docker\init-secret.ps1 -Path $path
+          if (!(Test-Path $path -PathType Leaf)) {
+            throw "Secret helper did not create $path"
+          }
+          $content = Get-Content $path -Raw
+          if ([string]::IsNullOrWhiteSpace($content)) {
+            throw "Secret helper created an empty secret file"
+          }
+
       - name: Fix cargo PATH (macOS arm64 workaround)
         if: runner.os == 'macOS'
         run: |
@@ -341,6 +355,89 @@ jobs:
           build-bundle: false
           arch: x86_64
           verbose: true
+
+  docker-runtime:
+    name: Docker Runtime
+    needs: [lint, test]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6.0.2
+
+      - name: Prepare GUI password secret
+        shell: bash
+        run: |
+          set -euo pipefail
+          install -d -m 700 docker/secrets docker/exchange
+          openssl rand -base64 48 | tr -d '\n' > docker/secrets/gui-password.txt
+          chmod 600 docker/secrets/gui-password.txt
+
+      - name: Build Docker runtime
+        run: docker compose build
+
+      - name: Initialize Docker data volume
+        run: docker compose run --rm init
+
+      - name: Start Docker runtime
+        run: docker compose up -d
+
+      - name: Wait for healthy runtime
+        shell: bash
+        run: |
+          set -euo pipefail
+          cid="$(docker compose ps -q app)"
+          for _ in $(seq 1 90); do
+            status="$(docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}starting{{end}}' "$cid")"
+            if [ "$status" = "healthy" ]; then
+              exit 0
+            fi
+            sleep 2
+          done
+          docker compose logs app
+          exit 1
+
+      - name: Verify localhost GUI authentication
+        shell: bash
+        run: |
+          set -euo pipefail
+          unauth_code="$(curl -sS -o /dev/null -w '%{http_code}' http://127.0.0.1:6080/)"
+          [ "$unauth_code" = "401" ]
+
+          gui_password="$(tr -d '\r\n' < docker/secrets/gui-password.txt)"
+          auth_code="$(curl -sS -o /dev/null -w '%{http_code}' -u "mini:${gui_password}" http://127.0.0.1:6080/)"
+          [ "$auth_code" = "200" ] || [ "$auth_code" = "302" ]
+
+      - name: Verify runtime invariants
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker compose exec -T app /opt/mini-diarium/docker/healthcheck.sh
+          docker compose exec -T app sh -lc '! nc -z -w 2 1.1.1.1 80'
+          docker compose exec -T app sh -lc 'printf ok > /data/home/persistence-check.txt'
+
+      - name: Restart Docker runtime and verify persistence
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker compose restart app
+
+          cid="$(docker compose ps -q app)"
+          for _ in $(seq 1 90); do
+            status="$(docker inspect --format '{{if .State.Health}}{{.State.Health.Status}}{{else}}starting{{end}}' "$cid")"
+            if [ "$status" = "healthy" ]; then
+              break
+            fi
+            sleep 2
+          done
+
+          docker compose exec -T app test -f /data/home/persistence-check.txt
+
+      - name: Dump Docker runtime logs on failure
+        if: failure()
+        run: docker compose logs
+
+      - name: Tear down Docker runtime
+        if: always()
+        run: docker compose down --volumes --remove-orphans
 
   e2e:
     name: E2E Tests
