@@ -138,6 +138,13 @@ export default function ExportOverlay(props: ExportOverlayProps) {
       layer.innerHTML = result.html;
       document.body.appendChild(layer);
       globalThis.addEventListener('afterprint', () => layer.remove(), { once: true });
+      // Images in a display:none layer are not decoded; wait for all to be ready
+      // before the print snapshot fires, otherwise only cached images appear.
+      await Promise.all(
+        [...layer.querySelectorAll<HTMLImageElement>('img')].map((img) =>
+          img.decode().catch(() => {}),
+        ),
+      );
       globalThis.print();
     } catch (err) {
       log.error('Print failed:', err);
