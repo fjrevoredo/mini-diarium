@@ -463,7 +463,8 @@
     "print": "Stampa",
     "printing": "Stampa in corso...",
     "printGeneratedLabel": "Generato:",
-    "printTagsLabel": "Tag:"
+    "printTagsLabel": "Tag:",
+    "printNoEntries": "Nessuna voce trovata."
   },
   "import": {
     "title": "Importa voci",

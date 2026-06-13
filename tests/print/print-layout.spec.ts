@@ -2,15 +2,6 @@ import { test, expect } from '@playwright/test';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-const EDITOR_CSS = readFileSync(resolve(process.cwd(), 'src/styles/editor.css'), 'utf-8');
-
-// Replicates the inline <style> block in index.html that constrains the app shell
-const INDEX_HTML_STYLES = `
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  html, body { width: 100%; height: 100%; overflow: hidden; }
-  #root { width: 100%; height: 100%; position: relative; }
-`;
-
 const CSS = readFileSync(resolve(process.cwd(), 'src/index.css'), 'utf-8');
 
 function buildPage(fragment: string): string {
@@ -84,6 +75,14 @@ test('print CSS hides app shell and shows only the print layer', async ({ page }
 });
 
 test('both images in a multi-image entry are visible in print mode', async ({ page }) => {
+  const EDITOR_CSS = readFileSync(resolve(process.cwd(), 'src/styles/editor.css'), 'utf-8');
+  // Replicates the inline <style> block in index.html that constrains the app shell
+  const INDEX_HTML_STYLES = `
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { width: 100%; height: 100%; overflow: hidden; }
+  #root { width: 100%; height: 100%; position: relative; }
+`;
+
   // Generate large SVG images (1000×1400 each) so two of them push content height well
   // past one A4 page — necessary to expose any overflow/height clipping in print layout.
   const makeImgSrc = (fill: string) => {

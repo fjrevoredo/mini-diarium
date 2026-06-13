@@ -463,7 +463,8 @@
     "print": "Imprimer",
     "printing": "Impression...",
     "printGeneratedLabel": "Généré :",
-    "printTagsLabel": "Tags :"
+    "printTagsLabel": "Tags :",
+    "printNoEntries": "Aucune entrée trouvée."
   },
   "import": {
     "title": "Importer des entrées",

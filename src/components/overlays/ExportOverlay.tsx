@@ -41,6 +41,7 @@ export default function ExportOverlay(props: ExportOverlayProps) {
   const buildPrintLabels = (): PrintLabels => ({
     generated_label: t('export.printGeneratedLabel'),
     tags_label: t('export.printTagsLabel'),
+    no_entries_label: t('export.printNoEntries'),
     months: Array.from({ length: 12 }, (_, i) =>
       new Intl.DateTimeFormat(preferences().language, { month: 'long' }).format(
         new Date(2024, i, 1),

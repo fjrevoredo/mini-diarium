@@ -295,6 +295,7 @@ export async function exportMarkdown(
 export interface PrintLabels {
   generated_label: string;
   tags_label: string;
+  no_entries_label: string;
   months: string[];
 }
 

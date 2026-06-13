@@ -545,6 +545,7 @@ const en = {
     printing: 'Printing...',
     printGeneratedLabel: 'Generated:',
     printTagsLabel: 'Tags:',
+    printNoEntries: 'No entries found.',
   },
 
   /** ImportOverlay */

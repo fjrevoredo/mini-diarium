@@ -1,9 +1,11 @@
 use crate::db::queries::DiaryEntry;
 use std::collections::{BTreeMap, HashMap};
 
+#[derive(Debug, Clone, serde::Deserialize)]
 pub struct PrintLabels {
     pub generated_label: String,
     pub tags_label: String,
+    pub no_entries_label: String,
     pub months: Vec<String>,
 }
 
@@ -46,7 +48,7 @@ pub fn generate_print_html(
     ));
 
     if entries.is_empty() {
-        html.push_str("<p>No entries found.</p>");
+        html.push_str(&format!("<p>{}</p>", escape_html(&labels.no_entries_label)));
         return html;
     }
 
@@ -109,6 +111,7 @@ mod tests {
         PrintLabels {
             generated_label: "Generated:".to_string(),
             tags_label: "Tags:".to_string(),
+            no_entries_label: "No entries found.".to_string(),
             months: vec![
                 "January".to_string(),
                 "February".to_string(),

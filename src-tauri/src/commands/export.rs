@@ -1,6 +1,7 @@
 use crate::commands::auth::{with_unlocked_db, DiaryState};
 use crate::db::queries::{self, DiaryEntry};
 use crate::db::schema::DatabaseConnection;
+pub use crate::export::html::PrintLabels;
 use crate::export::{html, json, markdown};
 use log::{debug, error, info};
 use tauri::State;
@@ -10,13 +11,6 @@ use tauri::State;
 pub struct ExportResult {
     pub entries_exported: usize,
     pub file_path: String,
-}
-
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
-pub struct PrintLabels {
-    pub generated_label: String,
-    pub tags_label: String,
-    pub months: Vec<String>,
 }
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
@@ -139,12 +133,7 @@ pub fn print_entries(
         let entries_exported = entries.len();
         let generated_at = chrono::Utc::now().format("%Y-%m-%d").to_string();
         debug!("Generating print HTML for {} entries", entries_exported);
-        let print_labels = html::PrintLabels {
-            generated_label: labels.generated_label,
-            tags_label: labels.tags_label,
-            months: labels.months,
-        };
-        let html_output = html::generate_print_html(entries, &tags, &generated_at, &print_labels);
+        let html_output = html::generate_print_html(entries, &tags, &generated_at, &labels);
         info!("Print HTML generated: {} entries", entries_exported);
         Ok(PrintResult {
             entries_exported,

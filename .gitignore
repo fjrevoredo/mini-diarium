@@ -56,6 +56,9 @@ e2e/screenshots/
 e2e/*.log
 .e2e-stateful/
 
+# Playwright test artifacts
+test-results/
+
 # Flatpak generated source lists (regenerated per release)
 flatpak/cargo-sources.json
 flatpak/node-sources.json
