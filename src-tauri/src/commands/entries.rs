@@ -42,13 +42,15 @@ fn preview_from_html(html: &str) -> String {
         }
     }
 
+    // Decode `&amp;` LAST so a literally-typed entity (stored as e.g. "&amp;lt;") is not
+    // double-decoded into "<" — it must round-trip back to "&lt;".
     let decoded = out
         .replace("&nbsp;", " ")
-        .replace("&amp;", "&")
         .replace("&lt;", "<")
         .replace("&gt;", ">")
         .replace("&quot;", "\"")
-        .replace("&#39;", "'");
+        .replace("&#39;", "'")
+        .replace("&amp;", "&");
 
     // Collapse runs of whitespace into single spaces and trim.
     let collapsed = decoded.split_whitespace().collect::<Vec<_>>().join(" ");
@@ -354,6 +356,14 @@ mod tests {
     fn test_preview_decodes_entities() {
         let html = "<p>Tom &amp; Jerry &lt;3</p>";
         assert_eq!(preview_from_html(html), "Tom & Jerry <3");
+    }
+
+    #[test]
+    fn test_preview_does_not_double_decode_entities() {
+        // A literally-typed "&lt;" is stored as "&amp;lt;"; it must round-trip back to
+        // "&lt;", not be decoded twice into "<".
+        let html = "<p>a &amp;lt; b</p>";
+        assert_eq!(preview_from_html(html), "a &lt; b");
     }
 
     #[test]

@@ -52,7 +52,7 @@ export default function Timeline() {
                         date: formatDate(entry.date, preferences().language),
                       })}
                     >
-                      <span class="w-28 flex-shrink-0 pt-0.5 text-sm font-medium text-tertiary">
+                      <span class="flex-shrink-0 whitespace-nowrap pt-0.5 text-sm font-medium text-tertiary">
                         {formatDate(entry.date, preferences().language)}
                       </span>
                       <span class="min-w-0 flex-1">
