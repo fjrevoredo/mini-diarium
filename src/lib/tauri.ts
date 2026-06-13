@@ -218,6 +218,19 @@ export async function getAllEntryDates(): Promise<string[]> {
   return await invoke('get_all_entry_dates');
 }
 
+// Timeline view — lightweight list of all entries (date, title, short preview).
+// The full decrypted text never crosses this boundary; preview is built in Rust.
+export interface TimelineEntry {
+  id: number;
+  date: string;
+  title: string;
+  preview: string;
+}
+
+export async function getTimelineEntries(): Promise<TimelineEntry[]> {
+  return await invoke('get_timeline_entries');
+}
+
 // Search commands
 export interface SearchResult {
   date: string;

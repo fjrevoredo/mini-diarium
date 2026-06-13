@@ -38,6 +38,8 @@ const en = {
       lockJournal: 'Lock journal',
       notificationsNone: 'Notifications',
       notificationsUnread: 'Notifications, {{ count }} unread',
+      showTimeline: 'Show timeline',
+      showEditor: 'Show editor',
     },
     sidebar: {
       navigation: 'Navigation',
@@ -45,6 +47,14 @@ const en = {
       closeMenu: 'Close menu',
       goToToday: 'Go to Today',
     },
+  },
+
+  /** Timeline list view */
+  timeline: {
+    title: 'Timeline',
+    empty: 'No entries yet.',
+    untitled: 'Untitled',
+    openEntry: 'Open entry from {{ date }}',
   },
 
   /** Calendar widget */
