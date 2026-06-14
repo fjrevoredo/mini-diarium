@@ -169,6 +169,20 @@ cmd.exe /c bun run bench
    - **Frontend idle timer** (`App.tsx`): tracks user activity events (mousemove, keydown, click, scroll, touchstart). After `autoLockTimeout` seconds of inactivity, calls `lockJournal()`. Controlled by `autoLockEnabled` + `autoLockTimeout` preferences.
    - **Backend OS events** (`screen_lock.rs`): listens for OS-level session lock, logoff, or system suspend (Windows: `WM_WTSSESSION_CHANGE`, `WM_POWERBROADCAST`; macOS: screen-sleep and `com.apple.screenIsLocked` notifications). Immediately calls `auto_lock_diary_if_unlocked()` and emits `'journal-locked'` event. Fires even when the app is in the background.
 
+5. **SonarCloud quality gate failure — read the API, don't guess**: When the "SonarCloud Code Analysis" check fails on a PR, the PR comment gives only a summary. To find which files are responsible, use the public API directly — no login required:
+
+   ```bash
+   # Which condition failed and by how much
+   curl -s "https://sonarcloud.io/api/qualitygates/project_status?projectKey=fjrevoredo_mini-diarium&pullRequest=<PR>" | jq .
+
+   # Per-file breakdown (replace metric key as needed: new_duplicated_lines_density, new_coverage, etc.)
+   curl -s "https://sonarcloud.io/api/measures/component_tree?component=fjrevoredo_mini-diarium&pullRequest=<PR>&metricKeys=new_duplicated_lines_density,new_duplicated_lines&strategy=leaves&ps=50" | jq '.components[] | select(.measures[].value != "0.0") | {name: .name, measures: .measures}'
+   ```
+
+   Common failures and their usual causes:
+   - **`new_duplicated_lines_density` > 3%**: copy-pasted test helpers or fixture objects — extract to a shared constant/function in the same file.
+   - **`new_coverage` < threshold**: new logic in a file that `generatePdfFromElement`-style functions (html2canvas/jsPDF) can't be tested in JSDOM — mock the module boundary instead.
+
 ## Security Rules
 
 - **Never** log, print, or serialize passwords or encryption keys

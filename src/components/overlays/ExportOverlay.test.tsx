@@ -45,6 +45,21 @@ async function clickExport() {
   await fireEvent.click(exportButton);
 }
 
+function ToggleWrapper() {
+  const [open, setOpen] = createSignal(true);
+  return (
+    <>
+      <button data-testid="close-ctrl" onClick={() => setOpen(false)}>
+        close
+      </button>
+      <button data-testid="open-ctrl" onClick={() => setOpen(true)}>
+        open
+      </button>
+      <ExportOverlay isOpen={open()} onClose={() => setOpen(false)} />
+    </>
+  );
+}
+
 describe('ExportOverlay', () => {
   beforeEach(() => {
     vi.spyOn(tauri, 'listExportPlugins').mockResolvedValue(mockPlugins);
@@ -313,20 +328,6 @@ describe('ExportOverlay', () => {
   });
 
   it('clears error state when the overlay is reopened', async () => {
-    function ToggleWrapper() {
-      const [open, setOpen] = createSignal(true);
-      return (
-        <>
-          <button data-testid="close-ctrl" onClick={() => setOpen(false)}>
-            close
-          </button>
-          <button data-testid="open-ctrl" onClick={() => setOpen(true)}>
-            open
-          </button>
-          <ExportOverlay isOpen={open()} onClose={() => setOpen(false)} />
-        </>
-      );
-    }
     vi.spyOn(tauri, 'printEntries').mockRejectedValueOnce(new Error('fail'));
     renderWithI18n(() => <ToggleWrapper />);
     await waitFor(() =>
@@ -347,20 +348,6 @@ describe('ExportOverlay', () => {
   });
 
   it('clears success result when the overlay is reopened', async () => {
-    function ToggleWrapper() {
-      const [open, setOpen] = createSignal(true);
-      return (
-        <>
-          <button data-testid="close-ctrl" onClick={() => setOpen(false)}>
-            close
-          </button>
-          <button data-testid="open-ctrl" onClick={() => setOpen(true)}>
-            open
-          </button>
-          <ExportOverlay isOpen={open()} onClose={() => setOpen(false)} />
-        </>
-      );
-    }
     vi.mocked(saveDialog).mockResolvedValueOnce('/test/export.pdf');
     renderWithI18n(() => <ToggleWrapper />);
     await waitFor(() =>
