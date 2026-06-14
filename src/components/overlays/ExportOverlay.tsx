@@ -136,6 +136,12 @@ export default function ExportOverlay(props: ExportOverlayProps) {
     if (!open) handleClose();
   };
 
+  const exportTimestamp = () => {
+    const now = new Date();
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}`;
+  };
+
   const handleKeyDown = (e: KeyboardEvent) => {
     if (e.key === 'Escape') handleClose();
   };
@@ -148,11 +154,8 @@ export default function ExportOverlay(props: ExportOverlayProps) {
     try {
       const printResult = await printEntries(buildPrintLabels(), computedExportOptions());
 
-      const now = new Date();
-      const pad = (n: number) => String(n).padStart(2, '0');
-      const ts = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}`;
       const filePath = await saveDialog({
-        defaultPath: `mini-diarium-export-${ts}.pdf`,
+        defaultPath: `mini-diarium-export-${exportTimestamp()}.pdf`,
         filters: [{ name: 'PDF', extensions: ['pdf'] }],
       });
       if (!filePath) {
@@ -204,7 +207,7 @@ export default function ExportOverlay(props: ExportOverlayProps) {
 
     try {
       const ext = plugin.file_extensions[0] ?? 'txt';
-      const defaultPath = `mini-diarium-export.${ext}`;
+      const defaultPath = `mini-diarium-export-${exportTimestamp()}.${ext}`;
 
       const filePath = await saveDialog({
         defaultPath,
