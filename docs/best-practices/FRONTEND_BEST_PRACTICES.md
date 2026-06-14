@@ -107,6 +107,71 @@ Current references:
 - `src/components/layout/EditorPanel.tsx`
 - `src/components/layout/editor-panel/`
 
+### Controlled Dialog Lifecycle — Reset On Open
+
+All overlay dialogs in this project use Kobalte's **controlled** `Dialog` (`<Dialog open={props.isOpen}>`). Kobalte's controlled Dialog does **not** fire `onOpenChange` when the parent externally sets `open={false}`. This means cleanup on close is unreliable — avoid it.
+
+**The correct pattern:**
+
+```tsx
+// 1. Reset transient state when the overlay becomes visible.
+//    This is the single authoritative reset path.
+createEffect(() => {
+  if (props.isOpen) {
+    setError(null);
+    setResult(null);
+    // reset any other transient form/filter state
+  }
+});
+
+// 2. Single close handler — the only code path that calls props.onClose().
+//    Centralises the exporting-guard and prevents duplicate calls.
+const handleClose = () => {
+  if (exporting()) return;
+  props.onClose();
+};
+
+// 3. Wire all close triggers through handleClose.
+const handleOpenChange = (open: boolean) => { if (!open) handleClose(); };
+const handleKeyDown   = (e: KeyboardEvent) => { if (e.key === 'Escape') handleClose(); };
+// JSX: <button onClick={handleClose}>Cancel</button>
+// JSX: <Dialog.CloseButton ...> (fires onOpenChange, already handled above)
+```
+
+**Why reset on open, not on close:**
+
+- "On close" is unreliable in controlled dialogs because `onOpenChange` is only fired for user-initiated closes (X button, Escape via Kobalte internals), not when the parent sets `open={false}`.
+- "On open" fires every time the dialog becomes visible, regardless of how it was previously hidden.
+- A single `createEffect` that depends on `props.isOpen` re-runs whenever the prop goes `false → true`.
+
+**Testing the lifecycle:**
+
+To assert that state is cleared on reopen, render a `ToggleWrapper` that controls `isOpen` via a `createSignal`, trigger the state change (error or success), then close and reopen:
+
+```tsx
+it('clears result when reopened', async () => {
+  function ToggleWrapper() {
+    const [open, setOpen] = createSignal(true);
+    return (
+      <>
+        <button data-testid="close" onClick={() => setOpen(false)}>close</button>
+        <button data-testid="open"  onClick={() => setOpen(true)}>open</button>
+        <MyOverlay isOpen={open()} onClose={() => setOpen(false)} />
+      </>
+    );
+  }
+  // ... trigger the state ...
+  fireEvent.click(screen.getByTestId('close'));
+  fireEvent.click(screen.getByTestId('open'));
+  // Use a positive assertion that can only pass when state was cleared:
+  await waitFor(() => expect(screen.getByRole('button', { name: /^Submit$/ })).toBeInTheDocument());
+});
+```
+
+Prefer **positive assertions** (an element that ONLY appears when state is clean) over negative assertions (`not.toBeInDocument`) when testing state-after-reopen, because negative assertions can pass spuriously when the portal content is temporarily hidden by Kobalte rather than removed.
+
+Reference implementation: `src/components/overlays/ExportOverlay.tsx`.
+
 ### Keep Component Boundaries Boring
 
 Large components should be split by responsibility, not by arbitrary line count.

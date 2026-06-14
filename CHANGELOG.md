@@ -33,10 +33,13 @@ Template:
 ## [Unreleased]
 
 ### Added
-- **Print / PDF export**: journal entries can now be printed or saved as PDF via the OS system print dialog. In the Export dialog, select **Print / PDF** from the format dropdown and optionally filter by date range or month; clicking **Print** opens the native print dialog, which includes "Save as PDF" on all supported platforms. Output is formatted A4 with 2 cm margins, entries grouped by date with titles, tags, and full formatted content. Implemented as a new `print_entries` Tauri command; CSS lives in the app stylesheet (loaded at startup) for reliable cross-platform rendering (TODO-0012).
+- **Print / PDF export**: journal entries can now be exported as a PDF file directly from the app. In the Export dialog, select **Print / PDF** from the format dropdown and optionally filter by date range or month; clicking **Print** opens a native save dialog, the PDF is generated in-browser via jsPDF + html2canvas, and written to the chosen path. Output is A4 portrait with 2 cm margins, entries grouped by date with titles, tags, and full formatted content including images. Implemented as a new `print_entries` Tauri command (generates HTML) + `write_pdf_file` command (writes bytes to disk); print styles are applied programmatically so html2canvas captures the correct layout (TODO-0012).
 
 ### Fixed
 - **Bullet and numbered lists now display markers in the editor**: the Tailwind CSS reset (`list-style: none`) was stripping bullet dots and ordinal numbers from all list elements. The editor stylesheet now explicitly restores `list-style-type: disc` for unordered lists and `list-style-type: decimal` for ordered lists inside the ProseMirror container. Most noticeable on Linux where the WebKit renderer enforces the reset strictly (issue #163).
+- **PDF export: images no longer cut in half across page boundaries**: replaced `doc.html()` / `autoPaging` (which rasterizes the whole element as a flat bitmap before slicing it at fixed intervals, making CSS `page-break-inside` irrelevant) with a manual canvas-slicing approach — html2canvas renders the entire content to a single canvas, image positions are measured via `getBoundingClientRect`, and each page-cut is retreated to just before the nearest image boundary so no image is bisected.
+- **PDF export default filename includes date and time**: the save dialog now suggests `mini-diarium-export-YYYY-MM-DD_HH-MM.pdf` instead of a plain `mini-diarium-export.pdf`.
+- **Export dialog state clears when reopened**: error and success messages now reset whenever the dialog becomes visible, so reopening after a failed or successful export always shows a clean state.
 
 ## [0.5.3] - 05-06-2026
 

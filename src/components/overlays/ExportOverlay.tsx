@@ -1,4 +1,4 @@
-import { createSignal, onMount, Show, For } from 'solid-js';
+import { createSignal, createEffect, onMount, Show, For } from 'solid-js';
 import { Dialog } from '@kobalte/core/dialog';
 import { save as saveDialog } from '@tauri-apps/plugin-dialog';
 import { createLogger } from '../../lib/logger';
@@ -112,22 +112,32 @@ export default function ExportOverlay(props: ExportOverlayProps) {
     setSelectedMonth('');
   };
 
-  const handleOpenChange = (open: boolean) => {
-    if (!open) {
+  // Reset transient state each time the overlay becomes visible.
+  // Kobalte's controlled Dialog does not fire onOpenChange when the parent
+  // sets open={false} externally, so cleanup on close is unreliable.
+  // Resetting on open is the single authoritative reset path.
+  createEffect(() => {
+    if (props.isOpen) {
       setError(null);
       setResult(null);
       resetFilterState();
-      props.onClose();
     }
+  });
+
+  // Single close handler — the only code path that calls props.onClose().
+  // All close triggers (X button, Escape, Cancel/Close button) delegate here
+  // so the exporting guard and the call are never duplicated.
+  const handleClose = () => {
+    if (exporting()) return;
+    props.onClose();
+  };
+
+  const handleOpenChange = (open: boolean) => {
+    if (!open) handleClose();
   };
 
   const handleKeyDown = (e: KeyboardEvent) => {
-    if (e.key === 'Escape' && !exporting()) {
-      setError(null);
-      setResult(null);
-      resetFilterState();
-      props.onClose();
-    }
+    if (e.key === 'Escape') handleClose();
   };
 
   const handlePrint = async () => {
@@ -138,8 +148,11 @@ export default function ExportOverlay(props: ExportOverlayProps) {
     try {
       const printResult = await printEntries(buildPrintLabels(), computedExportOptions());
 
+      const now = new Date();
+      const pad = (n: number) => String(n).padStart(2, '0');
+      const ts = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}`;
       const filePath = await saveDialog({
-        defaultPath: 'mini-diarium-export.pdf',
+        defaultPath: `mini-diarium-export-${ts}.pdf`,
         filters: [{ name: 'PDF', extensions: ['pdf'] }],
       });
       if (!filePath) {
@@ -415,7 +428,7 @@ export default function ExportOverlay(props: ExportOverlayProps) {
             {/* Action Buttons */}
             <div class="flex justify-end gap-3">
               <button
-                onClick={() => props.onClose()}
+                onClick={handleClose}
                 disabled={exporting()}
                 class="px-4 py-2 text-sm font-medium text-secondary hover:bg-hover rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >

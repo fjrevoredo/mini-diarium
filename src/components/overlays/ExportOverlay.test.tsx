@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
+import { createSignal } from 'solid-js';
 import { screen, fireEvent, waitFor } from '@solidjs/testing-library';
 import { save as saveDialog } from '@tauri-apps/plugin-dialog';
 import { renderWithI18n } from '../../test/i18n-test-utils';
@@ -309,5 +310,86 @@ describe('ExportOverlay', () => {
     });
     const printButton = screen.getByRole('button', { name: /^Print$/ });
     expect(printButton).toBeInTheDocument();
+  });
+
+  it('clears error state when the overlay is reopened', async () => {
+    function ToggleWrapper() {
+      const [open, setOpen] = createSignal(true);
+      return (
+        <>
+          <button data-testid="close-ctrl" onClick={() => setOpen(false)}>
+            close
+          </button>
+          <button data-testid="open-ctrl" onClick={() => setOpen(true)}>
+            open
+          </button>
+          <ExportOverlay isOpen={open()} onClose={() => setOpen(false)} />
+        </>
+      );
+    }
+    vi.spyOn(tauri, 'printEntries').mockRejectedValueOnce(new Error('fail'));
+    renderWithI18n(() => <ToggleWrapper />);
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: /^Print$/ })).toBeInTheDocument(),
+    );
+    fireEvent.click(screen.getByRole('button', { name: /^Print$/ }));
+    await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument());
+
+    // Close and wait for portal to fully unmount before reopening.
+    fireEvent.click(screen.getByTestId('close-ctrl'));
+    await waitFor(() => expect(screen.queryByRole('alert')).not.toBeInTheDocument());
+
+    fireEvent.click(screen.getByTestId('open-ctrl'));
+    await waitFor(() => {
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /^Print$/ })).toBeInTheDocument();
+    });
+  });
+
+  it('clears success result when the overlay is reopened', async () => {
+    function ToggleWrapper() {
+      const [open, setOpen] = createSignal(true);
+      return (
+        <>
+          <button data-testid="close-ctrl" onClick={() => setOpen(false)}>
+            close
+          </button>
+          <button data-testid="open-ctrl" onClick={() => setOpen(true)}>
+            open
+          </button>
+          <ExportOverlay isOpen={open()} onClose={() => setOpen(false)} />
+        </>
+      );
+    }
+    vi.mocked(saveDialog).mockResolvedValueOnce('/test/export.pdf');
+    renderWithI18n(() => <ToggleWrapper />);
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: /^Print$/ })).toBeInTheDocument(),
+    );
+    fireEvent.click(screen.getByRole('button', { name: /^Print$/ }));
+    // After a successful export the Print button is hidden by <Show when={!result()}>.
+    await waitFor(() =>
+      expect(screen.queryByRole('button', { name: /^Print$/ })).not.toBeInTheDocument(),
+    );
+
+    // Close and reopen.
+    fireEvent.click(screen.getByTestId('close-ctrl'));
+    fireEvent.click(screen.getByTestId('open-ctrl'));
+
+    // Print button reappearing proves createEffect cleared result() on reopen,
+    // because Print is only rendered when result() is null.
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: /^Print$/ })).toBeInTheDocument(),
+    );
+  });
+
+  it('Cancel button calls onClose', async () => {
+    const onClose = vi.fn();
+    renderWithI18n(() => <ExportOverlay isOpen={true} onClose={onClose} />);
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: /^Cancel$/ })).toBeInTheDocument(),
+    );
+    fireEvent.click(screen.getByRole('button', { name: /^Cancel$/ }));
+    expect(onClose).toHaveBeenCalled();
   });
 });
