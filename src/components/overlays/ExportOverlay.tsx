@@ -164,9 +164,7 @@ export default function ExportOverlay(props: ExportOverlayProps) {
 
       const layer = document.createElement('div');
       layer.id = 'mini-diarium-print-layer';
-      // position: fixed at 0,0 so Blink paints it (off-screen elements are culled
-      // and html2canvas captures a blank canvas). z-index 0 keeps it under the
-      // dialog overlay (z-50 = 50) so the user never sees the layer flash.
+      // Keep the temporary layer under the dialog so it never flashes over the UI.
       layer.style.display = 'block';
       layer.style.position = 'fixed';
       layer.style.top = '0';

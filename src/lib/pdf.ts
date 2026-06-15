@@ -45,14 +45,179 @@ const CONTENT_HEIGHT_MM = 257; // 297 - 20 - 20
 const MARGIN_LEFT_MM = 15;
 const MARGIN_TOP_MM = 20;
 
-// Explicit CSS width of the print layer element (matches SCREEN_PRINT_STYLES above).
-const CSS_LAYER_WIDTH_PX = 650;
-
 // Render scale for html2canvas. At 2×, the canvas is 1300px wide → ~183 DPI on A4.
-// Blink's canvas height cap is 16 384px per side, so at 2× the max content height
-// before truncation is ~8 192 CSS pixels (~320 lines at 12pt/1.6). Exports spanning
-// many years may exceed this; use date-range filtering for very large exports.
 const CANVAS_SCALE = 2;
+
+type ImageBounds = { topMm: number; bottomMm: number };
+type RenderLayout = {
+  elementHeightPx: number;
+  elementWidthPx: number;
+  imageBoundsMm: ImageBounds[];
+};
+
+const BLOCK_SELECTOR =
+  '.md-print-entry-content p,' +
+  '.md-print-entry-content h1,.md-print-entry-content h2,.md-print-entry-content h3,' +
+  '.md-print-entry-content h4,.md-print-entry-content h5,.md-print-entry-content h6,' +
+  '.md-print-entry-content li,' +
+  '.md-print-entry-content blockquote,' +
+  '.md-print-entry-content pre,' +
+  '.md-print-entry-title,' +
+  '.md-print-entry-tags,' +
+  '.md-print-day-date';
+
+type LineBounds = { top: number; bottom: number };
+
+function collectBetweenLinePoints(lineRects: DOMRectList, elementTopPx: number): number[] {
+  const lines: LineBounds[] = [];
+  const rects = [...lineRects]
+    .filter((rect) => rect.height > 0)
+    .sort((a, b) => a.top - b.top || a.left - b.left);
+
+  for (const rect of rects) {
+    const current = lines[lines.length - 1];
+    if (current && rect.top < current.bottom && rect.bottom > current.top) {
+      current.top = Math.min(current.top, rect.top);
+      current.bottom = Math.max(current.bottom, rect.bottom);
+    } else {
+      lines.push({ top: rect.top, bottom: rect.bottom });
+    }
+  }
+
+  const points: number[] = [];
+  for (let i = 0; i < lines.length - 1; i++) {
+    const current = lines[i];
+    const next = lines[i + 1];
+    if (next.top > current.bottom) {
+      points.push((current.bottom + next.top) / 2 - elementTopPx);
+    }
+  }
+  return points;
+}
+
+// Collects safe page-cut positions (mm from elementTopPx) for every block element.
+// Range rects describe inline fragments, so overlapping fragments must first be grouped
+// into visual lines. Only whitespace between those lines is safe to cut.
+export function collectSnapPoints(
+  element: HTMLElement,
+  elementTopPx: number,
+  cssToMm: number,
+): number[] {
+  const points: number[] = [];
+  const range = document.createRange();
+  for (const el of element.querySelectorAll<HTMLElement>(BLOCK_SELECTOR)) {
+    const rect = el.getBoundingClientRect();
+    const topPx = rect.top - elementTopPx;
+    const heightPx = rect.height > 0 ? rect.height : el.offsetHeight;
+    const bottomPx = topPx + heightPx;
+    if (bottomPx <= 0) continue;
+    points.push(bottomPx * cssToMm);
+    range.selectNodeContents(el);
+    const lineRects = range.getClientRects();
+    if (lineRects.length > 0 && rect.height > 0) {
+      for (const linePointPx of collectBetweenLinePoints(lineRects, elementTopPx)) {
+        if (linePointPx > 0) points.push(linePointPx * cssToMm);
+      }
+    } else if (heightPx > 0) {
+      const style = window.getComputedStyle(el);
+      const lhPx = parseFloat(style.lineHeight);
+      const paddingTopPx = parseFloat(style.paddingTop) || 0;
+      const paddingBottomPx = parseFloat(style.paddingBottom) || 0;
+      const contentBottomPx = bottomPx - paddingBottomPx;
+      if (!isNaN(lhPx) && lhPx > 0) {
+        for (let y = topPx + paddingTopPx + lhPx; y < contentBottomPx; y += lhPx) {
+          points.push(y * cssToMm);
+        }
+      }
+    }
+  }
+  return [...new Set(points.filter((point) => point > 0))].sort((a, b) => a - b);
+}
+
+// Calculates page-split positions (mm from content top) that never bisect an image or
+// text line. doc.html() + autoPaging slices at fixed intervals ignoring CSS
+// page-break-inside, so we do the geometry ourselves here.
+export function computePageSplits(
+  totalHeightMm: number,
+  imageBoundsMm: ImageBounds[],
+  snapPointsMm: number[],
+): number[] {
+  const splits = [0];
+  let cursor = 0;
+  while (cursor < totalHeightMm) {
+    let next = cursor + CONTENT_HEIGHT_MM;
+    if (next >= totalHeightMm) break;
+
+    const straddling = imageBoundsMm.find((img) => img.topMm < next && img.bottomMm > next);
+    if (straddling) next = straddling.topMm;
+
+    // Image taller than a full page — can't avoid cutting it; advance normally.
+    if (next <= cursor) next = cursor + CONTENT_HEIGHT_MM;
+
+    // Snap to the last safe cut point that fits before `next` (avoids mid-line cuts).
+    let snapped = -1;
+    for (const sp of snapPointsMm) {
+      if (sp > cursor && sp <= next) snapped = sp;
+      else if (sp > next) break;
+    }
+    if (snapped > cursor) next = snapped;
+
+    splits.push(next);
+    cursor = next;
+  }
+  splits.push(totalHeightMm);
+  return splits;
+}
+
+function measureRenderLayout(element: HTMLElement): RenderLayout {
+  const elementRect = element.getBoundingClientRect();
+  const cssToMm = CONTENT_WIDTH_MM / elementRect.width;
+  const imageBoundsMm = [...element.querySelectorAll<HTMLElement>('img, figure')].map((el) => {
+    const rect = el.getBoundingClientRect();
+    return {
+      topMm: (rect.top - elementRect.top) * cssToMm,
+      bottomMm: (rect.bottom - elementRect.top) * cssToMm,
+    };
+  });
+
+  return {
+    elementHeightPx: elementRect.height,
+    elementWidthPx: elementRect.width,
+    imageBoundsMm,
+  };
+}
+
+export function findSafeRasterSplit(
+  pixels: Uint8ClampedArray,
+  width: number,
+  height: number,
+  minRow: number,
+  forbiddenRows: Array<{ top: number; bottom: number }>,
+): number | undefined {
+  const isForbidden = (row: number) =>
+    forbiddenRows.some(({ top, bottom }) => row >= top && row <= bottom);
+  const isBlank = (row: number) => {
+    const start = row * width * 4;
+    const end = start + width * 4;
+    for (let i = start; i < end; i += 4) {
+      if (pixels[i + 3] > 0 && (pixels[i] < 245 || pixels[i + 1] < 245 || pixels[i + 2] < 245)) {
+        return false;
+      }
+    }
+    return true;
+  };
+
+  let blankRunEnd: number | undefined;
+  for (let row = height - 1; row >= Math.max(0, minRow); row--) {
+    if (!isForbidden(row) && isBlank(row)) {
+      blankRunEnd ??= row;
+      continue;
+    }
+    if (blankRunEnd !== undefined) return Math.floor((row + 1 + blankRunEnd) / 2);
+  }
+  if (blankRunEnd !== undefined) return Math.floor((Math.max(0, minRow) + blankRunEnd) / 2);
+  return undefined;
+}
 
 export async function generatePdfFromElement(element: HTMLElement): Promise<number[]> {
   const tempStyle = document.createElement('style');
@@ -63,98 +228,116 @@ export async function generatePdfFromElement(element: HTMLElement): Promise<numb
     const { default: jsPDF } = await import('jspdf');
     const { default: html2canvas } = await import('html2canvas');
 
-    // Measure image/figure positions NOW — getBoundingClientRect forces a layout
-    // flush so the values reflect the injected print styles above.
-    const elementRect = element.getBoundingClientRect();
-    // 1 CSS pixel → mm conversion (element is CSS_LAYER_WIDTH_PX wide → CONTENT_WIDTH_MM mm).
-    const cssToMm = CONTENT_WIDTH_MM / CSS_LAYER_WIDTH_PX;
+    const windowWidth = Math.max(1, Math.ceil(element.scrollWidth));
+    const windowHeight = Math.max(1, Math.ceil(element.scrollHeight));
+    const prepareClone = (clonedElement: HTMLElement) => {
+      clonedElement.style.position = 'absolute';
+      clonedElement.style.top = '0';
+      clonedElement.style.left = '0';
+    };
 
-    // Capture top/bottom of every image and figure in mm relative to element top.
-    // These are used to find safe page-split points that don't bisect an image.
-    const imageBoundsMm = [...element.querySelectorAll<HTMLElement>('img, figure')].map((el) => {
-      const r = el.getBoundingClientRect();
-      return {
-        topMm: (r.top - elementRect.top) * cssToMm,
-        bottomMm: (r.bottom - elementRect.top) * cssToMm,
-      };
-    });
-
-    // Render the entire element to a single canvas.
-    const canvas = await html2canvas(element, {
-      scale: CANVAS_SCALE,
+    let renderLayout: RenderLayout | undefined;
+    // html2canvas's documented onclone hook runs after clone fonts/images are ready
+    // and before that clone is parsed. Render only a 1px measurement canvas here;
+    // each PDF page is rendered separately below to avoid browser canvas-size limits.
+    await html2canvas(element, {
+      scale: 1,
       useCORS: true,
       logging: false,
-      windowWidth: CSS_LAYER_WIDTH_PX,
+      windowWidth,
+      windowHeight,
+      scrollX: 0,
+      scrollY: 0,
+      width: 1,
+      height: 1,
+      onclone: (_document, clonedElement) => {
+        prepareClone(clonedElement);
+        renderLayout = measureRenderLayout(clonedElement);
+      },
     });
+    if (!renderLayout) throw new Error('Unable to measure PDF render layout');
 
-    // canvas pixels → mm (canvas is CANVAS_SCALE× the CSS pixel dimensions).
-    const canvasToMm = CONTENT_WIDTH_MM / canvas.width;
-    const totalHeightMm = canvas.height * canvasToMm;
+    const cssToMm = CONTENT_WIDTH_MM / renderLayout.elementWidthPx;
 
-    // Build page split positions (in mm) that avoid bisecting any image.
-    // doc.html() + autoPaging rasterizes the content THEN slices at fixed intervals,
-    // so CSS page-break-inside is never consulted. We replicate the split logic here.
-    const splitsMm: number[] = [0];
-    let cursor = 0;
-    while (cursor < totalHeightMm) {
-      let nextSplit = cursor + CONTENT_HEIGHT_MM;
-      if (nextSplit >= totalHeightMm) break;
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+    const contentHeightPx = CONTENT_HEIGHT_MM / cssToMm;
+    let pageTopPx = 0;
+    let pageIndex = 0;
 
-      // If an image straddles the proposed cut, retreat the cut to just before it.
-      for (const img of imageBoundsMm) {
-        if (img.topMm < nextSplit && img.bottomMm > nextSplit) {
-          nextSplit = img.topMm;
-          break;
+    while (pageTopPx < renderLayout.elementHeightPx) {
+      const nominalBottomPx = Math.min(pageTopPx + contentHeightPx, renderLayout.elementHeightPx);
+      const renderHeightPx = nominalBottomPx - pageTopPx;
+      if (renderHeightPx <= 0) break;
+
+      const candidateCanvas = await html2canvas(element, {
+        scale: CANVAS_SCALE,
+        useCORS: true,
+        logging: false,
+        windowWidth,
+        windowHeight,
+        scrollX: 0,
+        scrollY: 0,
+        x: 0,
+        y: pageTopPx,
+        width: renderLayout.elementWidthPx,
+        height: renderHeightPx,
+        onclone: (_document, clonedElement) => prepareClone(clonedElement),
+      });
+      const isLastPage = nominalBottomPx >= renderLayout.elementHeightPx;
+      let pageBottomPx = nominalBottomPx;
+      let outputCanvas = candidateCanvas;
+
+      if (!isLastPage) {
+        const forbiddenRows = renderLayout.imageBoundsMm
+          .map(({ topMm, bottomMm }) => ({
+            top: Math.floor((topMm / cssToMm - pageTopPx) * CANVAS_SCALE),
+            bottom: Math.ceil((bottomMm / cssToMm - pageTopPx) * CANVAS_SCALE),
+          }))
+          .filter(({ top, bottom }) => bottom >= 0 && top < candidateCanvas.height);
+        const context = candidateCanvas.getContext('2d')!;
+        const safeRow = findSafeRasterSplit(
+          context.getImageData(0, 0, candidateCanvas.width, candidateCanvas.height).data,
+          candidateCanvas.width,
+          candidateCanvas.height,
+          Math.floor(candidateCanvas.height / 2),
+          forbiddenRows,
+        );
+
+        if (safeRow !== undefined) {
+          pageBottomPx = pageTopPx + safeRow / CANVAS_SCALE;
+          const croppedCanvas = document.createElement('canvas');
+          croppedCanvas.width = candidateCanvas.width;
+          croppedCanvas.height = safeRow;
+          croppedCanvas
+            .getContext('2d')!
+            .drawImage(
+              candidateCanvas,
+              0,
+              0,
+              candidateCanvas.width,
+              safeRow,
+              0,
+              0,
+              candidateCanvas.width,
+              safeRow,
+            );
+          outputCanvas = croppedCanvas;
         }
       }
 
-      // Safety: if an image is taller than a full page we cannot avoid cutting it;
-      // proceed at the normal page boundary so we don't loop forever.
-      if (nextSplit <= cursor) nextSplit = cursor + CONTENT_HEIGHT_MM;
-
-      splitsMm.push(nextSplit);
-      cursor = nextSplit;
-    }
-    splitsMm.push(totalHeightMm);
-
-    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-
-    for (let i = 0; i < splitsMm.length - 1; i++) {
-      if (i > 0) doc.addPage();
-
-      const pageTopMm = splitsMm[i];
-      const pageHeightMm = splitsMm[i + 1] - pageTopMm;
-      if (pageHeightMm <= 0) continue;
-
-      // Slice the full canvas to a page-sized strip.
-      const sliceTopPx = Math.round(pageTopMm / canvasToMm);
-      const sliceHeightPx = Math.round(pageHeightMm / canvasToMm);
-
-      const sliceCanvas = document.createElement('canvas');
-      sliceCanvas.width = canvas.width;
-      sliceCanvas.height = sliceHeightPx;
-      sliceCanvas
-        .getContext('2d')!
-        .drawImage(
-          canvas,
-          0,
-          sliceTopPx,
-          canvas.width,
-          sliceHeightPx,
-          0,
-          0,
-          canvas.width,
-          sliceHeightPx,
-        );
+      if (pageIndex > 0) doc.addPage();
+      const pageHeightMm = (pageBottomPx - pageTopPx) * cssToMm;
 
       doc.addImage(
-        sliceCanvas.toDataURL('image/jpeg', 0.92),
+        outputCanvas.toDataURL('image/jpeg', 0.92),
         'JPEG',
         MARGIN_LEFT_MM,
         MARGIN_TOP_MM,
         CONTENT_WIDTH_MM,
         pageHeightMm,
       );
+      pageTopPx = pageBottomPx;
+      pageIndex++;
     }
 
     return Array.from(new Uint8Array(doc.output('arraybuffer')));
