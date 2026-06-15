@@ -57,9 +57,7 @@ type RenderLayout = {
 
 function measureRenderLayout(element: HTMLElement): RenderLayout {
   const elementRect = element.getBoundingClientRect();
-  const imageBounds = [
-    ...element.querySelectorAll<HTMLElement>("img, figure"),
-  ].map((el) => {
+  const imageBounds = [...element.querySelectorAll<HTMLElement>('img, figure')].map((el) => {
     const rect = el.getBoundingClientRect();
     return {
       topPx: rect.top - elementRect.top,
@@ -87,10 +85,7 @@ export function findSafeRasterSplit(
     const start = row * width * 4;
     const end = start + width * 4;
     for (let i = start; i < end; i += 4) {
-      if (
-        pixels[i + 3] > 0 &&
-        (pixels[i] < 245 || pixels[i + 1] < 245 || pixels[i + 2] < 245)
-      ) {
+      if (pixels[i + 3] > 0 && (pixels[i] < 245 || pixels[i + 1] < 245 || pixels[i + 2] < 245)) {
         return false;
       }
     }
@@ -103,31 +98,27 @@ export function findSafeRasterSplit(
       blankRunEnd ??= row;
       continue;
     }
-    if (blankRunEnd !== undefined)
-      return Math.ceil((row + 2 + blankRunEnd) / 2);
+    if (blankRunEnd !== undefined) return Math.ceil((row + 2 + blankRunEnd) / 2);
   }
-  if (blankRunEnd !== undefined)
-    return Math.ceil((Math.max(0, minRow) + blankRunEnd + 1) / 2);
+  if (blankRunEnd !== undefined) return Math.ceil((Math.max(0, minRow) + blankRunEnd + 1) / 2);
   return undefined;
 }
 
-export async function generatePdfFromElement(
-  element: HTMLElement,
-): Promise<number[]> {
-  const tempStyle = document.createElement("style");
+export async function generatePdfFromElement(element: HTMLElement): Promise<number[]> {
+  const tempStyle = document.createElement('style');
   tempStyle.textContent = SCREEN_PRINT_STYLES;
   document.head.appendChild(tempStyle);
 
   try {
-    const { default: jsPDF } = await import("jspdf");
-    const { default: html2canvas } = await import("html2canvas");
+    const { default: jsPDF } = await import('jspdf');
+    const { default: html2canvas } = await import('html2canvas');
 
     const windowWidth = Math.max(1, Math.ceil(element.scrollWidth));
     const windowHeight = Math.max(1, Math.ceil(element.scrollHeight));
     const prepareClone = (clonedElement: HTMLElement) => {
-      clonedElement.style.position = "absolute";
-      clonedElement.style.top = "0";
-      clonedElement.style.left = "0";
+      clonedElement.style.position = 'absolute';
+      clonedElement.style.top = '0';
+      clonedElement.style.left = '0';
     };
 
     let renderLayout: RenderLayout | undefined;
@@ -149,24 +140,21 @@ export async function generatePdfFromElement(
         renderLayout = measureRenderLayout(clonedElement);
       },
     });
-    if (!renderLayout) throw new Error("Unable to measure PDF render layout");
+    if (!renderLayout) throw new Error('Unable to measure PDF render layout');
 
     const cssToMm = CONTENT_WIDTH_MM / renderLayout.elementWidthPx;
 
     const doc = new jsPDF({
-      orientation: "portrait",
-      unit: "mm",
-      format: "a4",
+      orientation: 'portrait',
+      unit: 'mm',
+      format: 'a4',
     });
     const contentHeightPx = CONTENT_HEIGHT_MM / cssToMm;
     let pageTopPx = 0;
     let pageIndex = 0;
 
     while (pageTopPx < renderLayout.elementHeightPx) {
-      const nominalBottomPx = Math.min(
-        pageTopPx + contentHeightPx,
-        renderLayout.elementHeightPx,
-      );
+      const nominalBottomPx = Math.min(pageTopPx + contentHeightPx, renderLayout.elementHeightPx);
       const renderHeightPx = nominalBottomPx - pageTopPx;
       if (renderHeightPx <= 0) break;
 
@@ -194,17 +182,10 @@ export async function generatePdfFromElement(
             top: Math.floor((topPx - pageTopPx) * CANVAS_SCALE),
             bottom: Math.ceil((bottomPx - pageTopPx) * CANVAS_SCALE),
           }))
-          .filter(
-            ({ top, bottom }) => bottom >= 0 && top < candidateCanvas.height,
-          );
-        const context = candidateCanvas.getContext("2d")!;
+          .filter(({ top, bottom }) => bottom >= 0 && top < candidateCanvas.height);
+        const context = candidateCanvas.getContext('2d')!;
         const safeRow = findSafeRasterSplit(
-          context.getImageData(
-            0,
-            0,
-            candidateCanvas.width,
-            candidateCanvas.height,
-          ).data,
+          context.getImageData(0, 0, candidateCanvas.width, candidateCanvas.height).data,
           candidateCanvas.width,
           candidateCanvas.height,
           0,
@@ -213,11 +194,11 @@ export async function generatePdfFromElement(
 
         if (safeRow !== undefined) {
           pageBottomPx = pageTopPx + safeRow / CANVAS_SCALE;
-          const croppedCanvas = document.createElement("canvas");
+          const croppedCanvas = document.createElement('canvas');
           croppedCanvas.width = candidateCanvas.width;
           croppedCanvas.height = safeRow;
           croppedCanvas
-            .getContext("2d")!
+            .getContext('2d')!
             .drawImage(
               candidateCanvas,
               0,
@@ -237,8 +218,8 @@ export async function generatePdfFromElement(
       const pageHeightMm = (pageBottomPx - pageTopPx) * cssToMm;
 
       doc.addImage(
-        outputCanvas.toDataURL("image/jpeg", 0.92),
-        "JPEG",
+        outputCanvas.toDataURL('image/jpeg', 0.92),
+        'JPEG',
         MARGIN_LEFT_MM,
         MARGIN_TOP_MM,
         CONTENT_WIDTH_MM,
@@ -248,7 +229,7 @@ export async function generatePdfFromElement(
       pageIndex++;
     }
 
-    return Array.from(new Uint8Array(doc.output("arraybuffer")));
+    return Array.from(new Uint8Array(doc.output('arraybuffer')));
   } finally {
     tempStyle.remove();
   }
