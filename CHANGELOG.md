@@ -30,7 +30,7 @@ Template:
 
 # Versions
 
-## [0.5.4] - Unreleased
+## [0.5.4] - 17-06-2026
 
 ### Added
 - **Print / PDF export**: journal entries can now be exported as a PDF file directly from the app. In the Export dialog, select **Print / PDF** from the format dropdown and optionally filter by date range or month; clicking **Print** opens a native save dialog and writes a formatted PDF to the chosen path. Output is A4 portrait with 2 cm margins, entries grouped by date with titles, tags, and full formatted content including images.
