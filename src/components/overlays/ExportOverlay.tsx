@@ -170,6 +170,7 @@ export default function ExportOverlay(props: ExportOverlayProps) {
       layer.style.top = '0';
       layer.style.left = '0';
       layer.style.zIndex = '0';
+      layer.style.visibility = 'hidden';
       layer.style.pointerEvents = 'none';
       layer.innerHTML = printResult.html;
       document.body.appendChild(layer);

@@ -42,7 +42,8 @@ Template:
 - **Export dialog state clears when reopened**: error and success messages now reset whenever the dialog becomes visible, so reopening after a failed or successful export always shows a clean state.
 
 ### Internal
-- PDF export uses jsPDF + html2canvas in-browser; two new Tauri commands (`print_entries` generates HTML, `write_pdf_file` writes bytes to disk); print styles are applied programmatically so html2canvas captures the correct layout; page-boundary detection scans html2canvas's raster output for blank rows (TODO-0012).
+- **PDF export uses jsPDF + html2canvas in-browser**; two new Tauri commands (`print_entries` generates HTML, `write_pdf_file` writes bytes to disk); print styles are applied programmatically so html2canvas captures the correct layout; page-boundary detection scans html2canvas's raster output for blank rows (TODO-0012).
+- **PDF export: print layer no longer flashes during generation**: the temporary render div (`#mini-diarium-print-layer`) is now created with `visibility: hidden`, hiding it from users while keeping it in the render tree so html2canvas can capture it. The html2canvas clone restores `visibility: visible` via `prepareClone`.
 
 ## [0.5.3] - 05-06-2026
 

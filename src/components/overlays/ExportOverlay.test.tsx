@@ -287,6 +287,27 @@ describe('ExportOverlay', () => {
     await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument());
   });
 
+  it('hides the print layer from users during PDF generation', async () => {
+    let layerVisibility: string | null = null;
+    vi.mocked(pdfLib.generatePdfFromElement).mockImplementationOnce(async (el) => {
+      layerVisibility = (el as HTMLElement).style.visibility;
+      return [0x25, 0x50, 0x44, 0x46];
+    });
+
+    vi.mocked(saveDialog).mockResolvedValueOnce('/test/export.pdf');
+    renderWithI18n(() => <ExportOverlay isOpen={true} onClose={vi.fn()} />);
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: /^Print$/ })).toBeInTheDocument(),
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /^Print$/ }));
+
+    await waitFor(() => {
+      expect(pdfLib.generatePdfFromElement).toHaveBeenCalled();
+      expect(layerVisibility).toBe('hidden');
+    });
+  });
+
   it('does not call runExportPlugin when save dialog is cancelled', async () => {
     vi.mocked(saveDialog).mockResolvedValueOnce(null);
     renderOverlay();

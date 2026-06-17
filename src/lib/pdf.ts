@@ -119,6 +119,7 @@ export async function generatePdfFromElement(element: HTMLElement): Promise<numb
       clonedElement.style.position = 'absolute';
       clonedElement.style.top = '0';
       clonedElement.style.left = '0';
+      clonedElement.style.visibility = 'visible';
     };
 
     let renderLayout: RenderLayout | undefined;
