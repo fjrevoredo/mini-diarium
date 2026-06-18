@@ -123,15 +123,29 @@ function escapeHtml(value) {
     .replaceAll("'", '&#39;');
 }
 
+function trimEdgeChar(value, char) {
+  let start = 0;
+  let end = value.length;
+
+  while (start < end && value[start] === char) {
+    start += 1;
+  }
+
+  while (end > start && value[end - 1] === char) {
+    end -= 1;
+  }
+
+  return value.slice(start, end);
+}
+
 function slugify(value) {
-  return value
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
+  const normalized = value.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+
+  return trimEdgeChar(normalized, '-');
 }
 
 function parseFrontMatter(filePath) {
-  const raw = readFileSync(filePath, 'utf8').replace(/\r\n/g, '\n');
+  const raw = readFileSync(filePath, 'utf8').replaceAll('\r\n', '\n');
   if (!raw.startsWith('---\n')) {
     throw new Error(`${filePath}: expected front matter opening ---`);
   }
@@ -689,10 +703,8 @@ function updateHomePage(posts) {
 
 function writeSitemap(posts) {
   const latestHomeUpdate = posts[0]?.updated ?? '2026-03-06';
-  const homeLastmod =
-    fileLastModified(INDEX_PATH) > latestHomeUpdate
-      ? fileLastModified(INDEX_PATH)
-      : latestHomeUpdate;
+  const indexLastModified = fileLastModified(INDEX_PATH);
+  const homeLastmod = [indexLastModified, latestHomeUpdate].sort().at(-1);
   const urls = [
     { loc: `${SITE_URL}/`, lastmod: homeLastmod },
     ...STATIC_PAGES.map((page) => ({

@@ -124,15 +124,81 @@ function escapeHtml(value) {
     .replaceAll("'", '&#39;');
 }
 
+function trimEdgeChar(value, char) {
+  let start = 0;
+  let end = value.length;
+
+  while (start < end && value[start] === char) {
+    start += 1;
+  }
+
+  while (end > start && value[end - 1] === char) {
+    end -= 1;
+  }
+
+  return value.slice(start, end);
+}
+
 function slugify(value) {
-  return value
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '');
+  const normalized = value.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+
+  return trimEdgeChar(normalized, '-');
+}
+
+function removeDocsUrlEntries(xml) {
+  const startTag = '  <url>';
+  const endTag = '</url>';
+  const docsLoc = `<loc>${SITE_URL}/docs/`;
+  let result = '';
+  let cursor = 0;
+
+  while (cursor < xml.length) {
+    const blockStart = xml.indexOf(startTag, cursor);
+    if (blockStart === -1) {
+      result += xml.slice(cursor);
+      break;
+    }
+
+    result += xml.slice(cursor, blockStart);
+
+    const blockEnd = xml.indexOf(endTag, blockStart);
+    if (blockEnd === -1) {
+      result += xml.slice(blockStart);
+      break;
+    }
+
+    const afterBlock = blockEnd + endTag.length;
+    const block = xml.slice(blockStart, afterBlock);
+    if (!block.includes(docsLoc)) {
+      result += block;
+    }
+
+    cursor = xml[afterBlock] === '\n' ? afterBlock + 1 : afterBlock;
+  }
+
+  return result;
+}
+
+function removeDocumentationBlock(content) {
+  const leadingHeading = '## Documentation\n';
+  const inlineHeading = '\n## Documentation\n';
+  const headingIndex = content.startsWith(leadingHeading) ? 0 : content.indexOf(inlineHeading);
+
+  if (headingIndex === -1) {
+    return content;
+  }
+
+  const nextHeadingIndex = content.indexOf('\n## ', headingIndex + leadingHeading.length);
+
+  if (nextHeadingIndex === -1) {
+    return content.slice(0, headingIndex);
+  }
+
+  return content.slice(0, headingIndex) + content.slice(nextHeadingIndex);
 }
 
 function parseFrontMatter(filePath) {
-  const raw = readFileSync(filePath, 'utf8').replace(/\r\n/g, '\n');
+  const raw = readFileSync(filePath, 'utf8').replaceAll('\r\n', '\n');
   if (!raw.startsWith('---\n')) {
     throw new Error(`${filePath}: expected front matter opening ---`);
   }
@@ -792,14 +858,20 @@ function renderSectionPage(section, sections) {
     structuredData,
   });
 
-  const prevNextHtml =
-    prevSection || nextSection
-      ? `
-<div class="docs-prevnext">
-  ${prevSection ? `<a href="/docs/${escapeHtml(prevSection.slug)}/" class="prev">← ${escapeHtml(prevSection.title)}</a>` : '<span></span>'}
-  ${nextSection ? `<a href="/docs/${escapeHtml(nextSection.slug)}/" class="next">${escapeHtml(nextSection.title)} →</a>` : '<span></span>'}
-</div>`
-      : '';
+  let prevNextHtml = '';
+  if (prevSection || nextSection) {
+    const prevLink = prevSection
+      ? `<a href="/docs/${escapeHtml(prevSection.slug)}/" class="prev">← ${escapeHtml(prevSection.title)}</a>`
+      : '<span></span>';
+    const nextLink = nextSection
+      ? `<a href="/docs/${escapeHtml(nextSection.slug)}/" class="next">${escapeHtml(nextSection.title)} →</a>`
+      : '<span></span>';
+    prevNextHtml = `
+        <div class="docs-prevnext">
+          ${prevLink}
+          ${nextLink}
+        </div>`;
+  }
 
   const layoutClass = hasToc ? 'docs-layout' : 'docs-layout no-toc';
 
@@ -909,8 +981,8 @@ function updateSitemap(sections) {
     )
     .join('\n');
 
-  // Remove existing docs entries to avoid duplicates on re-run
-  xml = xml.replace(/  <url>\s*<loc>[^<]*\/docs\/[^<]*<\/loc>[\s\S]*?<\/url>\n?/g, '');
+  // Remove existing docs entries to avoid duplicates on re-run.
+  xml = removeDocsUrlEntries(xml);
 
   const insertIndex = xml.indexOf(endTag);
   const before = xml.slice(0, insertIndex);
@@ -925,8 +997,8 @@ function updateLlms(sections) {
 
   let content = readFileSync(LLMS_PATH, 'utf8');
 
-  // Remove existing Documentation block to avoid duplicates on re-run
-  content = content.replace(/\n## Documentation\n[\s\S]*?(?=\n## |\s*$)/, '');
+  // Remove existing Documentation block to avoid duplicates on re-run.
+  content = removeDocumentationBlock(content);
   content = content.trimEnd();
 
   const docsBlock = [
