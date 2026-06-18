@@ -41,10 +41,12 @@ jobs:
           workspaces: src-tauri -> target
           cache-on-failure: true
 
-      - name: Install Linux system dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+      - name: Cache and install Linux system dependencies
+        uses: awalsh128/cache-apt-pkgs-action@681749ae568c81c2037cb9185e38b709b261bd2f # v1.6.1
+        with:
+          packages: libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+          version: 1.0
+          execute_install_scripts: true
 
       - name: Install frontend dependencies
         run: bun install --frozen-lockfile
@@ -83,7 +85,11 @@ jobs:
         if: steps.cache-d2.outputs.cache-hit != 'true'
         run: |
           set -euo pipefail
-          curl -fsSL https://d2lang.com/install.sh | sh -s -- --version v0.7.1 || D2_VERSION=v0.7.1 curl -fsSL https://d2lang.com/install.sh | sh -s --
+          curl -fsSL -o /tmp/d2.tar.gz \
+            "https://github.com/terrastruct/d2/releases/download/v0.7.1/d2-v0.7.1-linux-amd64.tar.gz"
+          tar -xzf /tmp/d2.tar.gz -C /tmp
+          mkdir -p ~/.local/bin
+          install /tmp/d2-v0.7.1/bin/d2 ~/.local/bin/d2
           ~/.local/bin/d2 --version | grep -Eq '0\.7\.1'
 
       - name: Add D2 to PATH
@@ -119,10 +125,12 @@ jobs:
           workspaces: src-tauri -> target
           cache-on-failure: true
 
-      - name: Install Linux system dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+      - name: Cache and install Linux system dependencies
+        uses: awalsh128/cache-apt-pkgs-action@681749ae568c81c2037cb9185e38b709b261bd2f # v1.6.1
+        with:
+          packages: libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+          version: 1.0
+          execute_install_scripts: true
 
       - name: Install frontend dependencies
         run: bun install --frozen-lockfile
@@ -209,10 +217,19 @@ jobs:
           cache-targets: false   # release+LTO artifacts too large; not incrementally reusable
           cache-on-failure: false
 
-      - name: Install Linux system dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+      - name: Cache bun dependencies
+        uses: actions/cache@v5
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
+          restore-keys: ${{ runner.os }}-bun-
+
+      - name: Cache and install Linux system dependencies
+        uses: awalsh128/cache-apt-pkgs-action@681749ae568c81c2037cb9185e38b709b261bd2f # v1.6.1
+        with:
+          packages: libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+          version: 1.0
+          execute_install_scripts: true
 
       - name: Install frontend dependencies
         run: bun install --frozen-lockfile
@@ -274,6 +291,13 @@ jobs:
           cache-targets: false   # release+LTO artifacts too large; not incrementally reusable
           cache-on-failure: false
 
+      - name: Cache bun dependencies
+        uses: actions/cache@v5
+        with:
+          path: ~/.bun/install/cache
+          key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
+          restore-keys: ${{ runner.os }}-bun-
+
       - name: Install frontend dependencies
         run: bun install --frozen-lockfile
 
@@ -316,7 +340,15 @@ jobs:
     steps:
       - uses: actions/checkout@v6.0.3
 
+      - name: Cache flatpak-builder-tools
+        id: cache-fbt
+        uses: actions/cache@v5
+        with:
+          path: /tmp/flatpak-builder-tools
+          key: flatpak-builder-tools-v1  # bump when you need to refresh the clone
+
       - name: Clone flatpak-builder-tools
+        if: steps.cache-fbt.outputs.cache-hit != 'true'
         run: git clone --depth=1 https://github.com/flatpak/flatpak-builder-tools.git /tmp/flatpak-builder-tools
 
       - name: Install Python dependencies for cargo generator
@@ -337,7 +369,7 @@ jobs:
       - uses: flatpak/flatpak-github-actions/flatpak-builder@v6
         with:
           manifest-path: flatpak/io.github.fjrevoredo.mini-diarium.yml
-          cache-key: flatpak-builder-${{ github.sha }}
+          cache-key: flatpak-builder-${{ hashFiles('flatpak/**', 'src-tauri/Cargo.lock', 'bun.lock') }}
           build-bundle: false
           arch: x86_64
           verbose: true
@@ -369,15 +401,12 @@ jobs:
         if: steps.cache-tauri-driver.outputs.cache-hit != 'true'
         run: cargo install tauri-driver
 
-      - name: Install Linux system dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            libwebkit2gtk-4.1-dev \
-            webkit2gtk-driver \
-            xvfb \
-            libappindicator3-dev \
-            librsvg2-dev
+      - name: Cache and install Linux system dependencies
+        uses: awalsh128/cache-apt-pkgs-action@681749ae568c81c2037cb9185e38b709b261bd2f # v1.6.1
+        with:
+          packages: libwebkit2gtk-4.1-dev webkit2gtk-driver xvfb libappindicator3-dev librsvg2-dev
+          version: 1.0
+          execute_install_scripts: true
 
       - name: Download Linux binary
         uses: actions/download-artifact@v8
