@@ -5,7 +5,14 @@
     <link>https://mini-diarium.com/blog/</link>
     <description>Static articles about encrypted journals, private diary apps, offline journaling, and local-first software.</description>
     <language>en-us</language>
-    <lastBuildDate>Fri, 29 May 2026 00:00:00 GMT</lastBuildDate>
+    <lastBuildDate>Thu, 18 Jun 2026 00:00:00 GMT</lastBuildDate>
+  <item>
+    <title>Standard Notes Alternative for Encrypted Journaling</title>
+    <link>https://mini-diarium.com/blog/standard-notes-alternative/</link>
+    <guid isPermaLink="true">https://mini-diarium.com/blog/standard-notes-alternative/</guid>
+    <description>Looking for a Standard Notes alternative for private journaling? Mini Diarium stores everything locally with AES-256-GCM and no sync service or server dependency.</description>
+    <pubDate>Thu, 18 Jun 2026 00:00:00 GMT</pubDate>
+  </item>
   <item>
     <title>Desktop Diary Apps: What to Look for in 2026</title>
     <link>https://mini-diarium.com/blog/desktop-diary-app/</link>

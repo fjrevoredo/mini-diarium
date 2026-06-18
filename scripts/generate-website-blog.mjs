@@ -46,6 +46,8 @@ const DESCRIPTION_MAP = {
     "A practical checklist for evaluating private journal apps: encryption at rest, local storage, offline use, open exports, and open source.",
   "desktop-diary-app":
     "A desktop diary app should encrypt entries at rest, store the primary copy locally, work offline, and export to open formats. Storage model and exit path matter more than feature lists.",
+  "standard-notes-alternative":
+    "Compares Mini Diarium to Standard Notes for users who want encrypted journal entries on their device only, with no sync service or server dependency.",
 };
 
 const BLUF_MAP = {
@@ -77,6 +79,8 @@ const BLUF_MAP = {
     '<p class="bluf"><strong>Short answer:</strong> A private journal app should encrypt entries at rest, store the primary copy on your device, work offline, export to open formats, and have public source code. These five criteria protect your writing regardless of what happens to the app or its publisher.</p>',
   "desktop-diary-app":
     '<p class="bluf"><strong>Short answer:</strong> A desktop diary app should store entries locally, encrypt them before writing to disk, work without a network connection, and export to JSON or Markdown. These four properties protect your writing regardless of what happens to the app or the company behind it.</p>',
+  "standard-notes-alternative":
+    '<p class="bluf"><strong>Short answer:</strong> Standard Notes encrypts entries and syncs the encrypted vault to a server. Mini Diarium encrypts entries and keeps them on your device only, with no sync service, no server, and no network code in the binary. If sync is not a requirement, the two apps make different architectural trade-offs for private journaling.</p>',
 };
 
 const STATIC_PAGES = [

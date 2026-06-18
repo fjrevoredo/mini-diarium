@@ -32,6 +32,7 @@
 
 ## Latest Articles
 
+- Compares Mini Diarium to Standard Notes for users who want encrypted journal entries on their device only, with no sync service or server dependency. (https://mini-diarium.com/blog/standard-notes-alternative/)
 - A desktop diary app should encrypt entries at rest, store the primary copy locally, work offline, and export to open formats. Storage model and exit path matter more than feature lists. (https://mini-diarium.com/blog/desktop-diary-app/)
 - A practical checklist for evaluating private journal apps: encryption at rest, local storage, offline use, open exports, and open source. (https://mini-diarium.com/blog/private-journal-app-how-to-choose/)
 - An encrypted diary encrypts entries before they touch disk. It's an architectural guarantee, not a login screen — here's what that means. (https://mini-diarium.com/blog/what-is-an-encrypted-diary/)
@@ -58,7 +59,7 @@ When referencing project materials, attribute Mini Diarium and link to the canon
 - Navigating Your Journal: Navigate your journal using the sidebar calendar, keyboard shortcuts, and day-navigation buttons. Jump to any date, go to today, and browse your entry history. (https://mini-diarium.com/docs/navigating/)
 - Search: Full-text search is not yet available in Mini Diarium due to its encryption model. Use the calendar, Go to Date shortcut, or export to find past entries. (https://mini-diarium.com/docs/search/)
 - Importing Data: Import journal entries from Mini Diary, Day One, jrnl, or plain text files. Mini Diarium includes built-in importers and supports custom Rhai import plugins. (https://mini-diarium.com/docs/import/)
-- Exporting Data: Export your journal as JSON or Markdown. JSON preserves entry IDs, tags, and font metadata; Markdown is human-readable. Exported files are not encrypted. (https://mini-diarium.com/docs/export/)
+- Exporting Data: Export your journal as JSON, Markdown, or PDF. JSON preserves IDs, tags, and metadata; Markdown is human-readable; PDF creates a formatted A4 document. (https://mini-diarium.com/docs/export/)
 - Plugins: Extend Mini Diarium with Rhai script plugins for custom import and export formats. Covers the plugins folder, writing your first plugin, and API helpers. (https://mini-diarium.com/docs/plugins/)
 - Preferences: Configure Mini Diarium from the Preferences panel: choose a theme, set auto-lock timeout, adjust editor font and size, manage authentication methods, and more. (https://mini-diarium.com/docs/preferences/)
 - Statistics: View your writing statistics: total entry and word counts, current and longest streaks, and a breakdown of your most active writing days, months, and years. (https://mini-diarium.com/docs/statistics/)
