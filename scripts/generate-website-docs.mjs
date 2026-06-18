@@ -2,6 +2,7 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { marked } from 'marked';
+import { escapeHtml, slugify } from './website-generator-utils.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -113,36 +114,6 @@ function ensureDate(value, fieldName, filePath) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
     throw new Error(`${filePath}: ${fieldName} must use YYYY-MM-DD`);
   }
-}
-
-function escapeHtml(value) {
-  return value
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;');
-}
-
-function trimEdgeChar(value, char) {
-  let start = 0;
-  let end = value.length;
-
-  while (start < end && value[start] === char) {
-    start += 1;
-  }
-
-  while (end > start && value[end - 1] === char) {
-    end -= 1;
-  }
-
-  return value.slice(start, end);
-}
-
-function slugify(value) {
-  const normalized = value.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-
-  return trimEdgeChar(normalized, '-');
 }
 
 function removeDocsUrlEntries(xml) {

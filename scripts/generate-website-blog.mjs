@@ -2,6 +2,7 @@ import { mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync }
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { marked } from 'marked';
+import { escapeHtml, slugify } from './website-generator-utils.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -112,36 +113,6 @@ function ensureDate(value, fieldName, filePath) {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
     throw new Error(`${filePath}: ${fieldName} must use YYYY-MM-DD`);
   }
-}
-
-function escapeHtml(value) {
-  return value
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;');
-}
-
-function trimEdgeChar(value, char) {
-  let start = 0;
-  let end = value.length;
-
-  while (start < end && value[start] === char) {
-    start += 1;
-  }
-
-  while (end > start && value[end - 1] === char) {
-    end -= 1;
-  }
-
-  return value.slice(start, end);
-}
-
-function slugify(value) {
-  const normalized = value.toLowerCase().replace(/[^a-z0-9]+/g, '-');
-
-  return trimEdgeChar(normalized, '-');
 }
 
 function parseFrontMatter(filePath) {
@@ -704,7 +675,8 @@ function updateHomePage(posts) {
 function writeSitemap(posts) {
   const latestHomeUpdate = posts[0]?.updated ?? '2026-03-06';
   const indexLastModified = fileLastModified(INDEX_PATH);
-  const homeLastmod = [indexLastModified, latestHomeUpdate].sort().at(-1);
+  const homeLastmod =
+    indexLastModified.localeCompare(latestHomeUpdate) > 0 ? indexLastModified : latestHomeUpdate;
   const urls = [
     { loc: `${SITE_URL}/`, lastmod: homeLastmod },
     ...STATIC_PAGES.map((page) => ({
