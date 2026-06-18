@@ -4,6 +4,92 @@ Implementation detail and structured notes for specific TODO items in [`TODO.md`
 
 ---
 
+## TODO-0050-01: Skill and CI updates for Nix npmDepsHash maintenance
+
+Parent: [`TODO-0050: Update dep-update skills for Nix npmDepsHash step`](TODO.md)
+
+**Context**: PR #159 added a Nix flake (`flake.nix`, `nix/package.nix`). The `npmDepsHash` field in the `frontend = buildNpmPackage { ... }` block of `nix/package.nix` is a SHA-256 hash of the npm dependency tree. It must be kept in sync with `package-lock.json` or `nix build .#default` fails with a hash mismatch. This can only be done on Linux with Nix installed — not from the Windows/WSL environment this project normally uses.
+
+**Refresh command** (Linux+Nix only):
+```bash
+nix run nixpkgs#prefetch-npm-deps -- package-lock.json
+# Or: copy the "got:" hash from the error output of a failing nix build .#default
+```
+
+---
+
+### Part 1 — Update `sync-lockfiles` skill
+
+File: `.agents/skills/sync-lockfiles/SKILL.md`
+
+Add `nix/package.nix` as a fourth row to the lockfiles table:
+
+| File | Used by |
+|------|---------|
+| `bun.lock` | Dev workflow |
+| `package-lock.json` | Flathub `flatpak-node-generator` (offline Linux build) |
+| `nix/package.nix` (`npmDepsHash`) | Nix flake build — Linux+Nix required to refresh |
+
+Add a step 4 after the existing steps:
+
+> **4. Refresh `npmDepsHash` in `nix/package.nix`** (Linux+Nix only): run `nix run nixpkgs#prefetch-npm-deps -- package-lock.json` and update the hash in the `frontend = buildNpmPackage { ... }` block. If working on Windows/WSL, note in the commit message that the Nix hash needs a follow-up from a Linux environment.
+
+Add to the Gotcha section:
+
+> If `package-lock.json` changes and `npmDepsHash` is not updated, `nix build .#default` will fail with a hash mismatch. This step cannot be done from Windows/WSL.
+
+---
+
+### Part 2 — Update `apply-dependency-prs` skill
+
+File: `.agents/skills/apply-dependency-prs/SKILL.md`
+
+**Phase 3 — add step after `npm install`:**
+
+> **4. Refresh `npmDepsHash` in `nix/package.nix`** (Linux+Nix only): run `nix run nixpkgs#prefetch-npm-deps -- package-lock.json` and update the `npmDepsHash` field in the `frontend = buildNpmPackage { ... }` block. If in a Windows/WSL environment, skip and note in the commit message that the hash needs a Linux follow-up.
+
+**Phase 4 Step 3 — change the file count assertion:**
+
+Old: "Should show exactly three files: `package.json`, `bun.lock`, and `package-lock.json`."
+
+New: "Should show 3 or 4 files: `package.json`, `bun.lock`, `package-lock.json`, and optionally `nix/package.nix` if the Nix hash was refreshed. Investigate any other additional files."
+
+**Gotchas section — add:**
+
+> **`npmDepsHash` in `nix/package.nix` must be refreshed on Linux.** Whenever `package-lock.json` changes, the `npmDepsHash` field in `nix/package.nix` (inside the `frontend = buildNpmPackage { ... }` block) must also be updated or the Nix build breaks. This requires Linux+Nix — it cannot be done from Windows/WSL. If operating on Windows, note the omission in the commit message so a Linux-capable maintainer can follow up.
+
+---
+
+### Part 3 — CI (optional but recommended)
+
+Add a path-filtered GitHub Actions job that only runs when `package-lock.json` or `nix/package.nix` changes. This catches stale hashes from human contributors who bypass the skills.
+
+Suggested workflow addition to `.github/workflows/ci.yml` or a new `nix.yml`:
+
+```yaml
+nix-build:
+  name: Nix build check
+  runs-on: ubuntu-latest
+  if: github.event_name == 'push' || github.event_name == 'pull_request'
+  steps:
+    - uses: actions/checkout@v4
+    - uses: cachix/install-nix-action@v27
+      with:
+        nix_path: nixpkgs=channel:nixos-unstable
+    - name: Check flake and build
+      run: nix build .#default --no-link
+```
+
+Add a path filter so it only triggers on:
+- `package-lock.json`
+- `nix/**`
+- `flake.nix`
+- `flake.lock`
+
+Without a Cachix cache, this job will be slow (10–20 min) on first run. Consider adding `cachix/cachix-action` if build times become a problem. `nix flake check` alone is not sufficient — it evaluates the flake but does not verify the `npmDepsHash` against the actual deps.
+
+---
+
 ## TODO-0038-01: Legacy `require_all_auth` Config Removal
 
 Parent: [`TODO-0038: Remove legacy require_all_auth config migration`](TODO.md)

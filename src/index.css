@@ -398,3 +398,8 @@ body {
     display: none;
   }
 }
+
+/* Print layer — hidden by default; revealed only for PDF export rendering */
+#mini-diarium-print-layer {
+  display: none;
+}

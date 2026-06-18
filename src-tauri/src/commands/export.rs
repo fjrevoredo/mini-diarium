@@ -1,7 +1,8 @@
 use crate::commands::auth::{with_unlocked_db, DiaryState};
 use crate::db::queries::{self, DiaryEntry};
 use crate::db::schema::DatabaseConnection;
-use crate::export::{json, markdown};
+pub use crate::export::html::PrintLabels;
+use crate::export::{html, json, markdown};
 use log::{debug, error, info};
 use tauri::State;
 
@@ -10,6 +11,12 @@ use tauri::State;
 pub struct ExportResult {
     pub entries_exported: usize,
     pub file_path: String,
+}
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+pub struct PrintResult {
+    pub entries_exported: usize,
+    pub html: String,
 }
 
 pub(crate) fn fetch_entries(
@@ -107,6 +114,34 @@ pub fn export_markdown(
     })
 }
 
+/// Generates print-optimized HTML for one or more entries; caller triggers window.print()
+#[tauri::command]
+pub fn print_entries(
+    date_from: Option<String>,
+    date_to: Option<String>,
+    labels: PrintLabels,
+    state: State<DiaryState>,
+) -> Result<PrintResult, String> {
+    if labels.months.len() != 12 {
+        return Err("labels.months must have exactly 12 entries".to_string());
+    }
+    info!("Starting print export");
+    with_unlocked_db(&state, |db| {
+        let entries = fetch_entries(db, date_from.as_deref(), date_to.as_deref())?;
+        let entries = crate::db::queries::images::resolve_image_refs_in_entries(db, entries)?;
+        let tags = crate::db::queries::tags::get_tags_names_map(db)?;
+        let entries_exported = entries.len();
+        let generated_at = chrono::Utc::now().format("%Y-%m-%d").to_string();
+        debug!("Generating print HTML for {} entries", entries_exported);
+        let html_output = html::generate_print_html(entries, &tags, &generated_at, &labels);
+        info!("Print HTML generated: {} entries", entries_exported);
+        Ok(PrintResult {
+            entries_exported,
+            html: html_output,
+        })
+    })
+}
+
 #[cfg(test)]
 mod tests {
     use crate::db::queries::DiaryEntry;
@@ -131,6 +166,34 @@ mod tests {
             date_updated: now,
             metadata: None,
         }
+    }
+
+    #[test]
+    fn test_fetch_entries_returns_all_when_no_dates() {
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+        crate::db::queries::insert_entry(&db, &create_test_entry("2024-01-01", "A", "text a"))
+            .unwrap();
+        crate::db::queries::insert_entry(&db, &create_test_entry("2024-06-15", "B", "text b"))
+            .unwrap();
+
+        let result = super::fetch_entries(&db, None, None).unwrap();
+        assert_eq!(result.len(), 2);
+    }
+
+    #[test]
+    fn test_fetch_entries_filters_by_date_range() {
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+        crate::db::queries::insert_entry(&db, &create_test_entry("2024-01-01", "Jan", "text"))
+            .unwrap();
+        crate::db::queries::insert_entry(&db, &create_test_entry("2024-06-15", "Jun", "text"))
+            .unwrap();
+        crate::db::queries::insert_entry(&db, &create_test_entry("2024-12-31", "Dec", "text"))
+            .unwrap();
+
+        let result = super::fetch_entries(&db, Some("2024-01-01"), Some("2024-06-30")).unwrap();
+        assert_eq!(result.len(), 2);
     }
 
     #[test]

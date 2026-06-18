@@ -7,6 +7,15 @@
 cargo install tauri-driver   # install once
 ```
 
+## Test Runners
+
+Two test runners coexist with distinct responsibilities:
+
+- **WebdriverIO** (`e2e/specs/`) — Full-app E2E tests. Launches the real Tauri binary via `tauri-driver`. Use for all end-to-end feature and regression tests.
+- **Playwright** (`tests/print/`) — Print-CSS and PDF-layout tests. Loads static HTML pages in a headless Chromium browser; does **not** launch the Tauri binary. Use only for print-media and PDF rendering verification.
+
+When adding new tests, use WebdriverIO for app behavior and Playwright for print/PDF layout.
+
 ## Specs
 
 Specs live in `e2e/specs/`. Current suite covers: core diary workflow (create → write → lock → unlock → verify persistence) and multi-entry persistence with nav bar edge cases — including two v0.4.9 regressions: `+` button enabled state after `←` navigation from a blank entry, and after a day-switch with a blank entry open.

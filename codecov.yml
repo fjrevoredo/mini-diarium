@@ -6,7 +6,10 @@ coverage:
   status:
     project:
       default:
-        target: auto   # compare against previous build
+        target: auto
+    patch:
+      default:
+        target: 80%
 
 flags:
   frontend:

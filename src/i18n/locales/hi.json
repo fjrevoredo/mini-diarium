@@ -458,7 +458,13 @@
     "filterMonth": "एकल माह",
     "dateFromLabel": "से",
     "dateToLabel": "तक",
-    "monthLabel": "माह"
+    "monthLabel": "माह",
+    "printFormat": "प्रिंट / PDF",
+    "print": "प्रिंट करें",
+    "printing": "प्रिंट हो रहा है...",
+    "printGeneratedLabel": "बनाया गया:",
+    "printTagsLabel": "टैग:",
+    "printNoEntries": "कोई प्रविष्टि नहीं मिली."
   },
   "import": {
     "title": "एंट्री आयात करें",

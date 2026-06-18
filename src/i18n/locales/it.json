@@ -458,7 +458,13 @@
     "filterMonth": "Singolo mese",
     "dateFromLabel": "Da",
     "dateToLabel": "A",
-    "monthLabel": "Mese"
+    "monthLabel": "Mese",
+    "printFormat": "Stampa / PDF",
+    "print": "Stampa",
+    "printing": "Stampa in corso...",
+    "printGeneratedLabel": "Generato:",
+    "printTagsLabel": "Tag:",
+    "printNoEntries": "Nessuna voce trovata."
   },
   "import": {
     "title": "Importa voci",

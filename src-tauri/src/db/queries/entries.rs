@@ -1290,6 +1290,117 @@ mod tests {
         assert_eq!(img_after, 0, "images must be deleted after entry deletion");
     }
 
+    fn tiny_png_base64_other() -> String {
+        // Different pixel color → different fingerprint → different image id
+        let image = DynamicImage::ImageRgba8(RgbaImage::from_pixel(2, 2, Rgba([128, 64, 32, 255])));
+        let mut cursor = Cursor::new(Vec::new());
+        image.write_to(&mut cursor, ImageFormat::Png).unwrap();
+        general_purpose::STANDARD.encode(cursor.into_inner())
+    }
+
+    /// Two distinct images in one entry must both end up in entry_images and both be
+    /// resolved to data URLs by resolve_image_refs_in_entries.
+    #[test]
+    fn test_entry_with_two_images_both_resolved_in_print() {
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+
+        let entry = create_test_entry("2025-01-01");
+        insert_entry(&db, &entry).unwrap();
+        let id = db.conn().last_insert_rowid();
+
+        // HTML with two different images embedded as data URLs (simulates editor save)
+        let b1 = tiny_png_base64();
+        let b2 = tiny_png_base64_other();
+        let html = format!(
+            r#"<p>Text</p><img src="data:image/png;base64,{}" alt=""><img src="data:image/png;base64,{}" alt="">"#,
+            b1, b2
+        );
+        update_entry_with_images(&db, id, "T", &html, None).unwrap();
+
+        // entry_images must have 2 rows
+        let link_count: i64 = db
+            .conn()
+            .query_row(
+                "SELECT COUNT(*) FROM entry_images WHERE entry_id = ?1",
+                params![id],
+                |r| r.get(0),
+            )
+            .unwrap();
+        assert_eq!(link_count, 2, "both images must be linked in entry_images");
+
+        // resolve_image_refs_in_entries must replace both refs with data URLs
+        let saved = get_entry_by_id(&db, id).unwrap().unwrap();
+        assert!(
+            saved.text.contains("image-id://"),
+            "saved text must use image-id:// refs before resolution"
+        );
+        let resolved_entries =
+            crate::db::queries::images::resolve_image_refs_in_entries(&db, vec![saved]).unwrap();
+        let resolved_text = &resolved_entries[0].text;
+
+        assert!(
+            !resolved_text.contains("image-id://"),
+            "after resolution, no image-id:// refs must remain: {}",
+            resolved_text
+        );
+        let data_url_count = resolved_text.matches("data:image/png;base64,").count();
+        assert_eq!(
+            data_url_count, 2,
+            "both images must be resolved to data URLs; resolved HTML: {}",
+            resolved_text
+        );
+    }
+
+    /// Two images wrapped in <figure class="image-container"> (TipTap AlignableImage format)
+    /// must both resolve correctly after being stored and retrieved.
+    #[test]
+    fn test_two_figure_wrapped_images_both_resolved() {
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+
+        let entry = create_test_entry("2025-02-01");
+        insert_entry(&db, &entry).unwrap();
+        let id = db.conn().last_insert_rowid();
+
+        let b1 = tiny_png_base64();
+        let b2 = tiny_png_base64_other();
+        // AlignableImage wraps each <img> in <figure class="image-container">
+        let html = format!(
+            r#"<p>Text</p><figure class="image-container" style="text-align: left;"><img src="data:image/png;base64,{}" alt=""></figure><figure class="image-container"><img src="data:image/png;base64,{}" alt=""></figure>"#,
+            b1, b2
+        );
+        update_entry_with_images(&db, id, "T", &html, None).unwrap();
+
+        let link_count: i64 = db
+            .conn()
+            .query_row(
+                "SELECT COUNT(*) FROM entry_images WHERE entry_id = ?1",
+                params![id],
+                |r| r.get(0),
+            )
+            .unwrap();
+        assert_eq!(
+            link_count, 2,
+            "both figure-wrapped images must be linked in entry_images"
+        );
+
+        let saved = get_entry_by_id(&db, id).unwrap().unwrap();
+        let resolved =
+            crate::db::queries::images::resolve_image_refs_in_entries(&db, vec![saved]).unwrap();
+        let text = &resolved[0].text;
+
+        assert!(
+            !text.contains("image-id://"),
+            "no image-id:// refs must remain after resolution"
+        );
+        assert_eq!(
+            text.matches("data:image/png;base64,").count(),
+            2,
+            "both images must be resolved to data URLs"
+        );
+    }
+
     #[test]
     fn test_delete_entry_keeps_shared_images() {
         let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();

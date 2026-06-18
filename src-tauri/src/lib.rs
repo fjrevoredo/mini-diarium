@@ -340,9 +340,11 @@ pub fn run() {
             // Files (image embedding support + markdown import)
             commands::files::read_file_bytes,
             commands::files::read_text_file,
+            commands::files::write_pdf_file,
             // Export
             commands::export::export_json,
             commands::export::export_markdown,
+            commands::export::print_entries,
             // Plugins
             commands::plugin::list_import_plugins,
             commands::plugin::list_export_plugins,

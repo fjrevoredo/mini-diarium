@@ -30,6 +30,21 @@ Template:
 
 # Versions
 
+## [0.5.4] - 17-06-2026
+
+### Added
+- **Print / PDF export**: journal entries can now be exported as a PDF file directly from the app. In the Export dialog, select **Print / PDF** from the format dropdown and optionally filter by date range or month; clicking **Print** opens a native save dialog and writes a formatted PDF to the chosen path. Output is A4 portrait with 2 cm margins, entries grouped by date with titles, tags, and full formatted content including images.
+    - **Page breaks**: each page break is placed at natural blank rows so text lines are never cut in half, and images stay intact without splitting across page boundaries.
+    - **Default filename**: the save dialog suggests `mini-diarium-export-YYYY-MM-DD_HH-MM.pdf` instead of a plain `mini-diarium-export.pdf`.
+
+### Fixed
+- **Bullet and numbered lists now display markers in the editor**: the Tailwind CSS reset (`list-style: none`) was stripping bullet dots and ordinal numbers from all list elements. The editor stylesheet now explicitly restores `list-style-type: disc` for unordered lists and `list-style-type: decimal` for ordered lists inside the ProseMirror container. Most noticeable on Linux where the WebKit renderer enforces the reset strictly (issue #163).
+- **Export dialog state clears when reopened**: error and success messages now reset whenever the dialog becomes visible, so reopening after a failed or successful export always shows a clean state.
+
+### Internal
+- **PDF export uses jsPDF + html2canvas in-browser**; two new Tauri commands (`print_entries` generates HTML, `write_pdf_file` writes bytes to disk); print styles are applied programmatically so html2canvas captures the correct layout; page-boundary detection scans html2canvas's raster output for blank rows (TODO-0012).
+- **PDF export: print layer no longer flashes during generation**: the temporary render div (`#mini-diarium-print-layer`) is now created with `visibility: hidden`, hiding it from users while keeping it in the render tree so html2canvas can capture it. The html2canvas clone restores `visibility: visible` via `prepareClone`.
+
 ## [0.5.3] - 05-06-2026
 
 ### Added

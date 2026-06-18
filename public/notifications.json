@@ -1,6 +1,16 @@
 {
   "entries": [
     {
+      "id": "v0.5.4-release",
+      "type": "release",
+      "version": "0.5.4",
+      "title": "What's new in 0.5.4",
+      "body": "You can now export your journal as a PDF. Bullet points and numbered lists are properly visible in the editor again, and the export dialog no longer carries over old errors when reopened.",
+      "date": "2026-06-17",
+      "linkUrl": "https://github.com/fjrevoredo/mini-diarium/releases/tag/v0.5.4",
+      "linkLabel": "Full release notes"
+    },
+    {
       "id": "v0.5.3-release",
       "type": "release",
       "version": "0.5.3",

@@ -18,7 +18,7 @@ jobs:
     name: Lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6.0.2
+      - uses: actions/checkout@v6.0.3
 
       - uses: oven-sh/setup-bun@v2
         with:
@@ -96,7 +96,7 @@ jobs:
     name: Test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6.0.2
+      - uses: actions/checkout@v6.0.3
 
       - uses: oven-sh/setup-bun@v2
         with:
@@ -127,6 +127,18 @@ jobs:
       - name: Install frontend dependencies
         run: bun install --frozen-lockfile
 
+      - name: Cache Playwright Chromium
+        id: cache-playwright
+        uses: actions/cache@v5
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-chromium-${{ hashFiles('bun.lock') }}
+          restore-keys: playwright-chromium-
+
+      - name: Install Playwright Chromium
+        if: steps.cache-playwright.outputs.cache-hit != 'true'
+        run: bunx playwright install --with-deps chromium
+
       - name: Cache nextest binary
         id: cache-nextest
         uses: actions/cache@v5
@@ -156,6 +168,9 @@ jobs:
         working-directory: src-tauri
         run: cargo llvm-cov nextest --lcov --output-path lcov.info
 
+      - name: Print layout tests
+        run: bun run test:print
+
       - name: Upload frontend coverage to Codecov
         uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6.0.1
         with:
@@ -175,7 +190,7 @@ jobs:
     needs: [lint, test]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6.0.2
+      - uses: actions/checkout@v6.0.3
 
       - uses: oven-sh/setup-bun@v2
         with:
@@ -233,7 +248,7 @@ jobs:
       matrix:
         os: [macos-latest, windows-latest]
     steps:
-      - uses: actions/checkout@v6.0.2
+      - uses: actions/checkout@v6.0.3
 
       - uses: oven-sh/setup-bun@v2
         with:
@@ -299,7 +314,7 @@ jobs:
       image: ghcr.io/flathub-infra/flatpak-github-actions:gnome-50
       options: --privileged
     steps:
-      - uses: actions/checkout@v6.0.2
+      - uses: actions/checkout@v6.0.3
 
       - name: Clone flatpak-builder-tools
         run: git clone --depth=1 https://github.com/flatpak/flatpak-builder-tools.git /tmp/flatpak-builder-tools
@@ -332,7 +347,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: build-linux   # only needs Linux binary; decoupled from slow macOS/Windows builds
     steps:
-      - uses: actions/checkout@v6.0.2
+      - uses: actions/checkout@v6.0.3
 
       - uses: oven-sh/setup-bun@v2
         with:

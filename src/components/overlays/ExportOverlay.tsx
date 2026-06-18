@@ -1,18 +1,22 @@
-import { createSignal, onMount, Show, For } from 'solid-js';
+import { createSignal, createEffect, onMount, Show, For } from 'solid-js';
 import { Dialog } from '@kobalte/core/dialog';
 import { save as saveDialog } from '@tauri-apps/plugin-dialog';
 import { createLogger } from '../../lib/logger';
+import { generatePdfFromElement } from '../../lib/pdf';
 import {
   listExportPlugins,
   runExportPlugin,
+  printEntries,
+  writePdfFile,
   type PluginInfo,
   type ExportResult,
+  type PrintLabels,
 } from '../../lib/tauri';
 import { mapTauriError } from '../../lib/errors';
 import { useI18n } from '../../i18n';
 import { preferences } from '../../state/preferences';
 import { isValidDate, addMonths, addDays } from '../../lib/dates';
-import { X, FileDown, CheckCircle, AlertCircle } from 'lucide-solid';
+import { X, FileDown, CheckCircle, AlertCircle, Printer } from 'lucide-solid';
 
 interface ExportOverlayProps {
   isOpen: boolean;
@@ -34,16 +38,34 @@ export default function ExportOverlay(props: ExportOverlayProps) {
   const [dateTo, setDateTo] = createSignal('');
   const [selectedMonth, setSelectedMonth] = createSignal('');
 
+  const isPrint = () => selectedPluginId() === 'print';
+
+  const buildPrintLabels = (): PrintLabels => ({
+    generated_label: t('export.printGeneratedLabel'),
+    tags_label: t('export.printTagsLabel'),
+    no_entries_label: t('export.printNoEntries'),
+    months: Array.from({ length: 12 }, (_, i) =>
+      new Intl.DateTimeFormat(preferences().language, { month: 'long' }).format(
+        new Date(2024, i, 1),
+      ),
+    ),
+  });
+
   onMount(async () => {
+    const printOption: PluginInfo = {
+      id: 'print',
+      name: t('export.printFormat'),
+      file_extensions: [],
+      builtin: true,
+    };
     try {
       const list = await listExportPlugins();
-      setPlugins(list);
-      if (list.length > 0) {
-        setSelectedPluginId(list[0].id);
-      }
+      setPlugins([printOption, ...list]);
     } catch (err) {
       log.error('Failed to load export plugins:', err);
+      setPlugins([printOption]);
     }
+    setSelectedPluginId('print');
   });
 
   const selectedPlugin = () => plugins().find((p) => p.id === selectedPluginId());
@@ -90,21 +112,87 @@ export default function ExportOverlay(props: ExportOverlayProps) {
     setSelectedMonth('');
   };
 
-  const handleOpenChange = (open: boolean) => {
-    if (!open) {
+  // Reset transient state each time the overlay becomes visible.
+  // Kobalte's controlled Dialog does not fire onOpenChange when the parent
+  // sets open={false} externally, so cleanup on close is unreliable.
+  // Resetting on open is the single authoritative reset path.
+  createEffect(() => {
+    if (props.isOpen) {
       setError(null);
       setResult(null);
       resetFilterState();
-      props.onClose();
     }
+  });
+
+  // Single close handler — the only code path that calls props.onClose().
+  // All close triggers (X button, Escape, Cancel/Close button) delegate here
+  // so the exporting guard and the call are never duplicated.
+  const handleClose = () => {
+    if (exporting()) return;
+    props.onClose();
+  };
+
+  const handleOpenChange = (open: boolean) => {
+    if (!open) handleClose();
+  };
+
+  const exportTimestamp = () => {
+    const now = new Date();
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}`;
   };
 
   const handleKeyDown = (e: KeyboardEvent) => {
-    if (e.key === 'Escape' && !exporting()) {
-      setError(null);
-      setResult(null);
-      resetFilterState();
-      props.onClose();
+    if (e.key === 'Escape') handleClose();
+  };
+
+  const handlePrint = async () => {
+    setExporting(true);
+    setError(null);
+    setResult(null);
+
+    try {
+      const printResult = await printEntries(buildPrintLabels(), computedExportOptions());
+
+      const filePath = await saveDialog({
+        defaultPath: `mini-diarium-export-${exportTimestamp()}.pdf`,
+        filters: [{ name: 'PDF', extensions: ['pdf'] }],
+      });
+      if (!filePath) {
+        return; // finally handles setExporting(false)
+      }
+
+      const layer = document.createElement('div');
+      layer.id = 'mini-diarium-print-layer';
+      // Keep the temporary layer under the dialog so it never flashes over the UI.
+      layer.style.display = 'block';
+      layer.style.position = 'fixed';
+      layer.style.top = '0';
+      layer.style.left = '0';
+      layer.style.zIndex = '0';
+      layer.style.visibility = 'hidden';
+      layer.style.pointerEvents = 'none';
+      layer.innerHTML = printResult.html;
+      document.body.appendChild(layer);
+
+      try {
+        // Ensure images are fully decoded before html2canvas captures the layer
+        await Promise.all(
+          [...layer.querySelectorAll<HTMLImageElement>('img')].map((img) =>
+            img.decode().catch(() => {}),
+          ),
+        );
+        const bytes = await generatePdfFromElement(layer);
+        await writePdfFile(filePath, bytes);
+        setResult({ entries_exported: printResult.entries_exported, file_path: filePath });
+      } finally {
+        layer.remove();
+      }
+    } catch (err) {
+      log.error('PDF export failed:', err);
+      setError(mapTauriError(err, t) || t('export.exportFailed'));
+    } finally {
+      setExporting(false);
     }
   };
 
@@ -118,7 +206,7 @@ export default function ExportOverlay(props: ExportOverlayProps) {
 
     try {
       const ext = plugin.file_extensions[0] ?? 'txt';
-      const defaultPath = `mini-diarium-export.${ext}`;
+      const defaultPath = `mini-diarium-export-${exportTimestamp()}.${ext}`;
 
       const filePath = await saveDialog({
         defaultPath,
@@ -334,7 +422,7 @@ export default function ExportOverlay(props: ExportOverlayProps) {
                   aria-hidden="true"
                 />
                 <span class="ml-3 text-sm text-secondary" role="status">
-                  {t('export.exporting')}
+                  {isPrint() ? t('export.printing') : t('export.exporting')}
                 </span>
               </div>
             </Show>
@@ -342,7 +430,7 @@ export default function ExportOverlay(props: ExportOverlayProps) {
             {/* Action Buttons */}
             <div class="flex justify-end gap-3">
               <button
-                onClick={() => props.onClose()}
+                onClick={handleClose}
                 disabled={exporting()}
                 class="px-4 py-2 text-sm font-medium text-secondary hover:bg-hover rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
@@ -350,12 +438,14 @@ export default function ExportOverlay(props: ExportOverlayProps) {
               </button>
               <Show when={!result()}>
                 <button
-                  onClick={handleExport}
+                  onClick={isPrint() ? handlePrint : handleExport}
                   disabled={isExportDisabled()}
                   class="px-4 py-2 interactive-primary rounded-md transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >
-                  <FileDown size={16} />
-                  {t('export.startExport')}
+                  <Show when={isPrint()} fallback={<FileDown size={16} />}>
+                    <Printer size={16} />
+                  </Show>
+                  {isPrint() ? t('export.print') : t('export.startExport')}
                 </button>
               </Show>
             </div>
