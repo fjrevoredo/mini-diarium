@@ -1,72 +1,111 @@
-import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-import { marked } from "marked";
+import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+import { marked } from 'marked';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-const ROOT_DIR = path.resolve(__dirname, "..");
-const WEBSITE_DIR = path.join(ROOT_DIR, "website");
-const DOCS_SRC_DIR = path.join(WEBSITE_DIR, "docs-src");
-const DOCS_DIR = path.join(WEBSITE_DIR, "docs");
-const SITEMAP_PATH = path.join(WEBSITE_DIR, "sitemap.xml");
-const LLMS_PATH = path.join(WEBSITE_DIR, "llms.txt");
-const SITE_URL = "https://mini-diarium.com";
-const DEFAULT_AUTHOR = "Francisco J. Revoredo";
+const ROOT_DIR = path.resolve(__dirname, '..');
+const WEBSITE_DIR = path.join(ROOT_DIR, 'website');
+const DOCS_SRC_DIR = path.join(WEBSITE_DIR, 'docs-src');
+const DOCS_DIR = path.join(WEBSITE_DIR, 'docs');
+const SITEMAP_PATH = path.join(WEBSITE_DIR, 'sitemap.xml');
+const LLMS_PATH = path.join(WEBSITE_DIR, 'llms.txt');
+const SITE_URL = 'https://mini-diarium.com';
+const DEFAULT_AUTHOR = 'Francisco J. Revoredo';
 const DEFAULT_OG_IMAGE = `${SITE_URL}/assets/og-cover.png`;
 
-const REQUIRED_FIELDS = ["title", "slug", "description", "order", "updated", "tags"];
+const REQUIRED_FIELDS = ['title', 'slug', 'description', 'order', 'updated', 'tags'];
 
 const SIDEBAR_GROUPS = [
-  { label: "Basics", slugs: ["getting-started", "writing-entries", "navigating"] },
-  { label: "Discovery", slugs: ["search"] },
-  { label: "Your Data", slugs: ["import", "export", "plugins"] },
-  { label: "Settings & More", slugs: ["preferences", "statistics", "backups"] },
-  { label: "Help", slugs: ["faq"] },
+  { label: 'Basics', slugs: ['getting-started', 'writing-entries', 'navigating'] },
+  { label: 'Discovery', slugs: ['search'] },
+  { label: 'Your Data', slugs: ['import', 'export', 'plugins'] },
+  { label: 'Settings & More', slugs: ['preferences', 'statistics', 'backups'] },
+  { label: 'Help', slugs: ['faq'] },
 ];
 
 const HUB_GROUPS = [
-  { label: "Basics", icon: "📖", slugs: ["getting-started", "writing-entries", "navigating"] },
-  { label: "Discovery", icon: "🔍", slugs: ["search"] },
-  { label: "Your Data", icon: "📁", slugs: ["import", "export", "plugins"] },
-  { label: "Settings & More", icon: "⚙️", slugs: ["preferences", "statistics", "backups"] },
-  { label: "Help", icon: "💬", slugs: ["faq"] },
+  { label: 'Basics', icon: '📖', slugs: ['getting-started', 'writing-entries', 'navigating'] },
+  { label: 'Discovery', icon: '🔍', slugs: ['search'] },
+  { label: 'Your Data', icon: '📁', slugs: ['import', 'export', 'plugins'] },
+  { label: 'Settings & More', icon: '⚙️', slugs: ['preferences', 'statistics', 'backups'] },
+  { label: 'Help', icon: '💬', slugs: ['faq'] },
 ];
 
 const HOWTO_NAME_MAP = {
-  "getting-started": "Getting Started with Mini Diarium",
-  import: "Import Journal Entries into Mini Diarium",
-  export: "Export Journal Entries from Mini Diarium",
-  backups: "Restore a Journal Backup in Mini Diarium",
+  'getting-started': 'Getting Started with Mini Diarium',
+  import: 'Import Journal Entries into Mini Diarium',
+  export: 'Export Journal Entries from Mini Diarium',
+  backups: 'Restore a Journal Backup in Mini Diarium',
 };
 
 const HOWTO_DESC_MAP = {
-  "getting-started": "Step-by-step guide to download, install, create your first journal, and write your first entry in Mini Diarium.",
-  import: "Step-by-step guide to importing journal entries from Mini Diary, Day One, or jrnl into Mini Diarium.",
-  export: "Step-by-step guide to exporting all journal entries as JSON or Markdown from Mini Diarium.",
-  backups: "Step-by-step guide to locating and restoring from a Mini Diarium encrypted backup.",
+  'getting-started':
+    'Step-by-step guide to download, install, create your first journal, and write your first entry in Mini Diarium.',
+  import:
+    'Step-by-step guide to importing journal entries from Mini Diary, Day One, or jrnl into Mini Diarium.',
+  export:
+    'Step-by-step guide to exporting all journal entries as JSON or Markdown from Mini Diarium.',
+  backups: 'Step-by-step guide to locating and restoring from a Mini Diarium encrypted backup.',
 };
 
 const HOWTO_STEPS_MAP = {
-  "getting-started": [
-    { name: "Download Mini Diarium", text: "Download the installer for your platform (Windows, macOS, or Linux) from the GitHub releases page. Run the installer and launch Mini Diarium." },
-    { name: "Create your first journal", text: "Click 'Create journal'. Set a journal name, choose a password (or password + key file), and confirm. Your encrypted journal is created in your user data directory." },
-    { name: "Write your first entry", text: "Navigate to today's date using the calendar. Click the editor and start writing. Entries are auto-saved and encrypted with AES-256-GCM before they reach disk." },
+  'getting-started': [
+    {
+      name: 'Download Mini Diarium',
+      text: 'Download the installer for your platform (Windows, macOS, or Linux) from the GitHub releases page. Run the installer and launch Mini Diarium.',
+    },
+    {
+      name: 'Create your first journal',
+      text: "Click 'Create journal'. Set a journal name, choose a password (or password + key file), and confirm. Your encrypted journal is created in your user data directory.",
+    },
+    {
+      name: 'Write your first entry',
+      text: "Navigate to today's date using the calendar. Click the editor and start writing. Entries are auto-saved and encrypted with AES-256-GCM before they reach disk.",
+    },
   ],
   import: [
-    { name: "Open the import dialog", text: "In Mini Diarium, open the menu (three-line icon or File menu) and select 'Import entries'. The import dialog will open." },
-    { name: "Select the format", text: "Choose the source format: Mini Diary JSON, Day One JSON, Day One TXT, or jrnl JSON. Mini Diarium detects the format automatically for Mini Diary and jrnl." },
-    { name: "Choose the file and confirm", text: "Select the exported file from your device. Review the preview of entries to be imported and confirm. Imported entries are encrypted and added to your journal." },
+    {
+      name: 'Open the import dialog',
+      text: "In Mini Diarium, open the menu (three-line icon or File menu) and select 'Import entries'. The import dialog will open.",
+    },
+    {
+      name: 'Select the format',
+      text: 'Choose the source format: Mini Diary JSON, Day One JSON, Day One TXT, or jrnl JSON. Mini Diarium detects the format automatically for Mini Diary and jrnl.',
+    },
+    {
+      name: 'Choose the file and confirm',
+      text: 'Select the exported file from your device. Review the preview of entries to be imported and confirm. Imported entries are encrypted and added to your journal.',
+    },
   ],
   export: [
-    { name: "Open the export dialog", text: "In Mini Diarium, open the menu and select 'Export entries'. The export dialog will open." },
-    { name: "Select the format", text: "Choose between JSON (structured, machine-readable) or Markdown (human-readable, one file per entry)." },
-    { name: "Choose the destination", text: "Pick a location on your device to save the exported file(s). The export runs locally with no network involvement." },
+    {
+      name: 'Open the export dialog',
+      text: "In Mini Diarium, open the menu and select 'Export entries'. The export dialog will open.",
+    },
+    {
+      name: 'Select the format',
+      text: 'Choose between JSON (structured, machine-readable) or Markdown (human-readable, one file per entry).',
+    },
+    {
+      name: 'Choose the destination',
+      text: 'Pick a location on your device to save the exported file(s). The export runs locally with no network involvement.',
+    },
   ],
   backups: [
-    { name: "Locate the backups directory", text: "Backups are stored in your journal's 'backups' subdirectory. You can navigate to it from the app via the menu or find it manually in your user data directory." },
-    { name: "Restore from a backup", text: "Open Mini Diarium and use 'Restore from backup' in the app menu. Select the backup file you want to restore. The encrypted backup is loaded and replaces the current journal state." },
-    { name: "Open your journal", text: "After restoring, unlock your journal with your password or key file. Your entries from the backup are now available." },
+    {
+      name: 'Locate the backups directory',
+      text: "Backups are stored in your journal's 'backups' subdirectory. You can navigate to it from the app via the menu or find it manually in your user data directory.",
+    },
+    {
+      name: 'Restore from a backup',
+      text: "Open Mini Diarium and use 'Restore from backup' in the app menu. Select the backup file you want to restore. The encrypted backup is loaded and replaces the current journal state.",
+    },
+    {
+      name: 'Open your journal',
+      text: 'After restoring, unlock your journal with your password or key file. Your entries from the backup are now available.',
+    },
   ],
 };
 
@@ -78,27 +117,27 @@ function ensureDate(value, fieldName, filePath) {
 
 function escapeHtml(value) {
   return value
-    .replaceAll("&", "&amp;")
-    .replaceAll("<", "&lt;")
-    .replaceAll(">", "&gt;")
-    .replaceAll('"', "&quot;")
-    .replaceAll("'", "&#39;");
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#39;');
 }
 
 function slugify(value) {
   return value
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
 }
 
 function parseFrontMatter(filePath) {
-  const raw = readFileSync(filePath, "utf8").replace(/\r\n/g, "\n");
-  if (!raw.startsWith("---\n")) {
+  const raw = readFileSync(filePath, 'utf8').replace(/\r\n/g, '\n');
+  if (!raw.startsWith('---\n')) {
     throw new Error(`${filePath}: expected front matter opening ---`);
   }
 
-  const end = raw.indexOf("\n---\n", 4);
+  const end = raw.indexOf('\n---\n', 4);
   if (end === -1) {
     throw new Error(`${filePath}: expected front matter closing ---`);
   }
@@ -107,19 +146,19 @@ function parseFrontMatter(filePath) {
   const body = raw.slice(end + 5).trim();
   const meta = {};
 
-  for (const line of frontMatter.split("\n")) {
+  for (const line of frontMatter.split('\n')) {
     if (!line.trim()) {
       continue;
     }
 
-    const separatorIndex = line.indexOf(":");
+    const separatorIndex = line.indexOf(':');
     if (separatorIndex === -1) {
       throw new Error(`${filePath}: invalid front matter line "${line}"`);
     }
 
     const key = line.slice(0, separatorIndex).trim();
     const rawValue = line.slice(separatorIndex + 1).trim();
-    meta[key] = rawValue.replace(/^"(.*)"$/, "$1");
+    meta[key] = rawValue.replace(/^"(.*)"$/, '$1');
   }
 
   for (const field of REQUIRED_FIELDS) {
@@ -128,7 +167,7 @@ function parseFrontMatter(filePath) {
     }
   }
 
-  ensureDate(meta.updated, "updated", filePath);
+  ensureDate(meta.updated, 'updated', filePath);
 
   meta.order = parseInt(meta.order, 10);
   if (Number.isNaN(meta.order)) {
@@ -136,7 +175,7 @@ function parseFrontMatter(filePath) {
   }
 
   meta.tags = meta.tags
-    .split(",")
+    .split(',')
     .map((tag) => tag.trim())
     .filter(Boolean);
 
@@ -144,7 +183,7 @@ function parseFrontMatter(filePath) {
     throw new Error(`${filePath}: tags must contain at least one value`);
   }
 
-  meta.draft = meta.draft === "true";
+  meta.draft = meta.draft === 'true';
   meta.canonical = `${SITE_URL}/docs/${meta.slug}/`;
   meta.body = body;
 
@@ -164,10 +203,10 @@ renderer.heading = function heading(token) {
 };
 renderer.link = function link(token) {
   const text = this.parser.parseInline(token.tokens);
-  const href = token.href ?? "";
-  const titleAttribute = token.title ? ` title="${escapeHtml(token.title)}"` : "";
+  const href = token.href ?? '';
+  const titleAttribute = token.title ? ` title="${escapeHtml(token.title)}"` : '';
   const isExternal = /^https?:\/\//.test(href);
-  const targetAttributes = isExternal ? ' target="_blank" rel="noopener noreferrer"' : "";
+  const targetAttributes = isExternal ? ' target="_blank" rel="noopener noreferrer"' : '';
   return `<a href="${escapeHtml(href)}"${titleAttribute}${targetAttributes}>${text}</a>`;
 };
 
@@ -179,7 +218,7 @@ function isoDate(value) {
 
 function readSections() {
   const files = readdirSync(DOCS_SRC_DIR)
-    .filter((fileName) => fileName.endsWith(".md") && !fileName.startsWith("_"))
+    .filter((fileName) => fileName.endsWith('.md') && !fileName.startsWith('_'))
     .sort();
 
   const sections = files.map((fileName) => parseFrontMatter(path.join(DOCS_SRC_DIR, fileName)));
@@ -196,9 +235,9 @@ function readSections() {
   return publishedSections.sort((a, b) => a.order - b.order);
 }
 
-function buildNav(activePage = "") {
-  const docsActive = activePage === "docs" ? ' aria-current="page"' : "";
-  const blogActive = activePage === "blog" ? ' aria-current="page"' : "";
+function buildNav(activePage = '') {
+  const docsActive = activePage === 'docs' ? ' aria-current="page"' : '';
+  const blogActive = activePage === 'blog' ? ' aria-current="page"' : '';
 
   return `
 <nav class="nav" aria-label="Main navigation">
@@ -208,14 +247,14 @@ function buildNav(activePage = "") {
       Mini Diarium
     </a>
 
-    <ul class="nav-links" id="nav-links" role="list">
+    <ul class="nav-links" id="nav-links">
       <li><a href="/#features">Features</a></li>
       <li><a href="/#security">Security</a></li>
       <li><a href="/blog/"${blogActive}>Blog</a></li>
       <li><a href="/docs/"${docsActive}>Docs</a></li>
       <li><a href="/#platforms">Download</a></li>
       <li>
-        <a class="nav-github" href="https://github.com/fjrevoredo/mini-diarium" target="_blank" rel="noopener noreferrer" aria-label="View on GitHub">
+        <a class="nav-github" href="https://github.com/fjrevoredo/mini-diarium" target="_blank" rel="noopener noreferrer">
           <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
             <path d="M12 .3a12 12 0 0 0-3.8 23.38c.6.12.83-.26.83-.57L9 21.07c-3.34.72-4.04-1.61-4.04-1.61-.55-1.39-1.34-1.76-1.34-1.76-1.08-.74.09-.73.09-.73 1.2.09 1.83 1.24 1.83 1.24 1.07 1.83 2.81 1.3 3.5 1 .1-.78.42-1.31.76-1.61-2.67-.3-5.47-1.33-5.47-5.93 0-1.31.47-2.38 1.24-3.22-.14-.3-.54-1.52.1-3.18 0 0 1-.32 3.3 1.23a11.5 11.5 0 0 1 6 0c2.28-1.55 3.29-1.23 3.29-1.23.64 1.66.24 2.88.12 3.18a4.65 4.65 0 0 1 1.23 3.22c0 4.61-2.8 5.63-5.48 5.92.43.37.81 1.1.81 2.22l-.01 3.29c0 .31.2.69.82.57A12 12 0 0 0 12 .3z"/>
           </svg>
@@ -272,7 +311,7 @@ function buildHead({
   ogType,
   ogImage = DEFAULT_OG_IMAGE,
   structuredData,
-  extraMeta = "",
+  extraMeta = '',
 }) {
   return `<!DOCTYPE html>
 <html lang="en">
@@ -512,7 +551,7 @@ ${JSON.stringify(structuredData, null, 2)}
 function buildShell({ head, content }) {
   return `${head}
 <body>
-${buildNav("docs")}
+${buildNav('docs')}
 <main class="blog-shell">
 ${content}
 </main>
@@ -530,14 +569,14 @@ function buildSidebar(sections, activeSlug) {
     const items = group.slugs
       .map((slug) => {
         const section = slugToSection.get(slug);
-        if (!section) return "";
+        if (!section) return '';
         const isActive = slug === activeSlug;
-        return `      <li${isActive ? ' class="active"' : ""}><a href="/docs/${escapeHtml(slug)}/">${escapeHtml(section.title)}</a></li>`;
+        return `      <li${isActive ? ' class="active"' : ''}><a href="/docs/${escapeHtml(slug)}/">${escapeHtml(section.title)}</a></li>`;
       })
       .filter(Boolean)
-      .join("\n");
+      .join('\n');
 
-    if (!items) return "";
+    if (!items) return '';
 
     return `  <div class="docs-sidebar-group">
     <span class="docs-sidebar-group-label">${escapeHtml(group.label)}</span>
@@ -547,7 +586,7 @@ ${items}
   </div>`;
   })
     .filter(Boolean)
-    .join("\n");
+    .join('\n');
 
   return `<nav class="docs-sidebar" aria-label="Documentation sections">
   <p class="docs-sidebar-header">Documentation</p>
@@ -563,17 +602,17 @@ function buildToc(htmlBody) {
     headings.push({
       level: match[1],
       id: match[2],
-      title: match[3].replace(/[<>]/g, ""),
+      title: match[3].replace(/[<>]/g, ''),
     });
   }
-  if (headings.length < 2) return "";
+  if (headings.length < 2) return '';
 
   const items = headings
     .map(
       (h) =>
         `    <li class="docs-toc-h${h.level}"><a href="#${escapeHtml(h.id)}">${escapeHtml(h.title)}</a></li>`,
     )
-    .join("\n");
+    .join('\n');
 
   return `<aside class="docs-toc" aria-label="On this page">
   <p class="docs-toc-label">On this page</p>
@@ -586,25 +625,26 @@ ${items}
 function renderDocsHub(sections) {
   const latestUpdated = sections.reduce((current, section) => {
     return section.updated > current ? section.updated : current;
-  }, sections[0]?.updated ?? "2026-04-16");
+  }, sections[0]?.updated ?? '2026-04-16');
 
   const structuredData = {
-    "@context": "https://schema.org",
-    "@graph": [
+    '@context': 'https://schema.org',
+    '@graph': [
       {
-        "@type": "CollectionPage",
-        "@id": `${SITE_URL}/docs/#page`,
+        '@type': 'CollectionPage',
+        '@id': `${SITE_URL}/docs/#page`,
         url: `${SITE_URL}/docs/`,
-        name: "Mini Diarium Documentation",
-        description: "User guide and documentation for Mini Diarium — encrypted local-first desktop journal.",
-        inLanguage: "en-US",
+        name: 'Mini Diarium Documentation',
+        description:
+          'User guide and documentation for Mini Diarium — encrypted local-first desktop journal.',
+        inLanguage: 'en-US',
         dateModified: latestUpdated,
         isPartOf: {
-          "@id": `${SITE_URL}/#website`,
+          '@id': `${SITE_URL}/#website`,
         },
         publisher: {
-          "@type": "Organization",
-          name: "Mini Diarium",
+          '@type': 'Organization',
+          name: 'Mini Diarium',
           url: SITE_URL,
         },
       },
@@ -612,11 +652,11 @@ function renderDocsHub(sections) {
   };
 
   const head = buildHead({
-    pageTitle: "Mini Diarium Documentation — User Guide",
+    pageTitle: 'Mini Diarium Documentation — User Guide',
     description:
-      "Complete user guide for Mini Diarium: getting started, writing entries, navigation, import, export, plugins, preferences, backups, and more.",
+      'Complete user guide for Mini Diarium: getting started, writing entries, navigation, import, export, plugins, preferences, backups, and more.',
     canonical: `${SITE_URL}/docs/`,
-    ogType: "website",
+    ogType: 'website',
     structuredData,
   });
 
@@ -626,7 +666,7 @@ function renderDocsHub(sections) {
     const cards = group.slugs
       .map((slug) => {
         const section = slugToSection.get(slug);
-        if (!section) return "";
+        if (!section) return '';
         return `<a class="docs-card" href="/docs/${escapeHtml(slug)}/">
   <span class="docs-card-icon">${group.icon}</span>
   <h2>${escapeHtml(section.title)}</h2>
@@ -634,22 +674,22 @@ function renderDocsHub(sections) {
 </a>`;
       })
       .filter(Boolean)
-      .join("\n");
+      .join('\n');
 
-    if (!cards) return "";
+    if (!cards) return '';
 
     return `<div class="docs-hub-group">
   <p class="docs-hub-group-label">${escapeHtml(group.label)}</p>
   <div class="docs-hub-grid">
 ${cards
-  .split("\n")
+  .split('\n')
   .map((line) => `    ${line}`)
-  .join("\n")}
+  .join('\n')}
   </div>
 </div>`;
   })
     .filter(Boolean)
-    .join("\n");
+    .join('\n');
 
   const content = `
 <section class="blog-hero">
@@ -668,13 +708,13 @@ ${cards
       New here? <a href="/docs/getting-started/">Jump in: Getting Started →</a>
     </p>
 ${groupsHtml
-  .split("\n")
+  .split('\n')
   .map((line) => `    ${line}`)
-  .join("\n")}
+  .join('\n')}
   </div>
 </section>`;
 
-  writeFileSync(path.join(DOCS_DIR, "index.html"), buildShell({ head, content }));
+  writeFileSync(path.join(DOCS_DIR, 'index.html'), buildShell({ head, content }));
 }
 
 function renderSectionPage(section, sections) {
@@ -684,42 +724,42 @@ function renderSectionPage(section, sections) {
 
   const htmlBody = marked.parse(section.body);
   const tocHtml = buildToc(htmlBody);
-  const hasToc = tocHtml !== "";
+  const hasToc = tocHtml !== '';
 
   const structuredData = {
-    "@context": "https://schema.org",
-    "@graph": [
+    '@context': 'https://schema.org',
+    '@graph': [
       {
-        "@type": "TechArticle",
-        "@id": `${SITE_URL}/docs/${section.slug}/#article`,
+        '@type': 'TechArticle',
+        '@id': `${SITE_URL}/docs/${section.slug}/#article`,
         headline: section.title,
         description: section.description,
         dateModified: isoDate(section.updated),
-        keywords: section.tags.join(", "),
+        keywords: section.tags.join(', '),
         publisher: {
-          "@type": "Organization",
-          name: "Mini Diarium",
+          '@type': 'Organization',
+          name: 'Mini Diarium',
           url: SITE_URL,
         },
         mainEntityOfPage: section.canonical,
       },
       {
-        "@type": "BreadcrumbList",
+        '@type': 'BreadcrumbList',
         itemListElement: [
           {
-            "@type": "ListItem",
+            '@type': 'ListItem',
             position: 1,
-            name: "Home",
+            name: 'Home',
             item: SITE_URL,
           },
           {
-            "@type": "ListItem",
+            '@type': 'ListItem',
             position: 2,
-            name: "Documentation",
+            name: 'Documentation',
             item: `${SITE_URL}/docs/`,
           },
           {
-            "@type": "ListItem",
+            '@type': 'ListItem',
             position: 3,
             name: section.title,
             item: section.canonical,
@@ -729,11 +769,11 @@ function renderSectionPage(section, sections) {
       ...(HOWTO_NAME_MAP[section.slug]
         ? [
             {
-              "@type": "HowTo",
+              '@type': 'HowTo',
               name: HOWTO_NAME_MAP[section.slug],
               description: HOWTO_DESC_MAP[section.slug],
               step: HOWTO_STEPS_MAP[section.slug].map((step, i) => ({
-                "@type": "HowToStep",
+                '@type': 'HowToStep',
                 position: i + 1,
                 name: step.name,
                 text: step.text,
@@ -748,7 +788,7 @@ function renderSectionPage(section, sections) {
     pageTitle: `${section.title} — Mini Diarium Documentation`,
     description: section.description,
     canonical: section.canonical,
-    ogType: "article",
+    ogType: 'article',
     structuredData,
   });
 
@@ -756,19 +796,19 @@ function renderSectionPage(section, sections) {
     prevSection || nextSection
       ? `
 <div class="docs-prevnext">
-  ${prevSection ? `<a href="/docs/${escapeHtml(prevSection.slug)}/" class="prev">← ${escapeHtml(prevSection.title)}</a>` : "<span></span>"}
-  ${nextSection ? `<a href="/docs/${escapeHtml(nextSection.slug)}/" class="next">${escapeHtml(nextSection.title)} →</a>` : "<span></span>"}
+  ${prevSection ? `<a href="/docs/${escapeHtml(prevSection.slug)}/" class="prev">← ${escapeHtml(prevSection.title)}</a>` : '<span></span>'}
+  ${nextSection ? `<a href="/docs/${escapeHtml(nextSection.slug)}/" class="next">${escapeHtml(nextSection.title)} →</a>` : '<span></span>'}
 </div>`
-      : "";
+      : '';
 
-  const layoutClass = hasToc ? "docs-layout" : "docs-layout no-toc";
+  const layoutClass = hasToc ? 'docs-layout' : 'docs-layout no-toc';
 
   const tocBlock = hasToc
     ? `\n${tocHtml
-        .split("\n")
+        .split('\n')
         .map((line) => `      ${line}`)
-        .join("\n")}`
-    : "";
+        .join('\n')}`
+    : '';
 
   const content = `
 <section class="blog-post-hero">
@@ -800,18 +840,18 @@ function renderSectionPage(section, sections) {
     </button>
     <div class="${layoutClass}">
 ${buildSidebar(sections, section.slug)
-  .split("\n")
+  .split('\n')
   .map((line) => `      ${line}`)
-  .join("\n")}
+  .join('\n')}
       <article class="blog-post prose" aria-label="${escapeHtml(section.title)}">
 ${htmlBody
-  .split("\n")
+  .split('\n')
   .map((line) => `        ${line}`)
-  .join("\n")}
+  .join('\n')}
 ${prevNextHtml
-  .split("\n")
+  .split('\n')
   .map((line) => `        ${line}`)
-  .join("\n")}
+  .join('\n')}
       </article>${tocBlock}
     </div>
   </div>
@@ -819,14 +859,14 @@ ${prevNextHtml
 
   const sectionDir = path.join(DOCS_DIR, section.slug);
   mkdirSync(sectionDir, { recursive: true });
-  writeFileSync(path.join(sectionDir, "index.html"), buildShell({ head, content }));
+  writeFileSync(path.join(sectionDir, 'index.html'), buildShell({ head, content }));
 }
 
 function ensureDirectories() {
   mkdirSync(DOCS_DIR, { recursive: true });
 
   for (const entry of readdirSync(DOCS_DIR, { withFileTypes: true })) {
-    if (entry.name === "index.html") {
+    if (entry.name === 'index.html') {
       continue;
     }
 
@@ -841,8 +881,8 @@ function updateSitemap(sections) {
     return;
   }
 
-  let xml = readFileSync(SITEMAP_PATH, "utf8");
-  const endTag = "</urlset>";
+  let xml = readFileSync(SITEMAP_PATH, 'utf8');
+  const endTag = '</urlset>';
   const endIndex = xml.indexOf(endTag);
   if (endIndex === -1) {
     return;
@@ -850,7 +890,7 @@ function updateSitemap(sections) {
 
   const latestUpdated = sections.reduce((current, section) => {
     return section.updated > current ? section.updated : current;
-  }, sections[0]?.updated ?? "2026-04-16");
+  }, sections[0]?.updated ?? '2026-04-16');
 
   const docsUrls = [
     { loc: `${SITE_URL}/docs/`, lastmod: latestUpdated },
@@ -867,10 +907,10 @@ function updateSitemap(sections) {
     <lastmod>${escapeHtml(url.lastmod)}</lastmod>
   </url>`,
     )
-    .join("\n");
+    .join('\n');
 
   // Remove existing docs entries to avoid duplicates on re-run
-  xml = xml.replace(/  <url>\s*<loc>[^<]*\/docs\/[^<]*<\/loc>[\s\S]*?<\/url>\n?/g, "");
+  xml = xml.replace(/  <url>\s*<loc>[^<]*\/docs\/[^<]*<\/loc>[\s\S]*?<\/url>\n?/g, '');
 
   const insertIndex = xml.indexOf(endTag);
   const before = xml.slice(0, insertIndex);
@@ -883,23 +923,22 @@ function updateLlms(sections) {
     return;
   }
 
-  let content = readFileSync(LLMS_PATH, "utf8");
+  let content = readFileSync(LLMS_PATH, 'utf8');
 
   // Remove existing Documentation block to avoid duplicates on re-run
-  content = content.replace(/\n## Documentation\n[\s\S]*?(?=\n## |\s*$)/, "");
+  content = content.replace(/\n## Documentation\n[\s\S]*?(?=\n## |\s*$)/, '');
   content = content.trimEnd();
 
   const docsBlock = [
-    "",
-    "",
-    "## Documentation",
-    "",
+    '',
+    '',
+    '## Documentation',
+    '',
     `- Documentation hub: ${SITE_URL}/docs/`,
     ...sections.map(
-      (section) =>
-        `- ${section.title}: ${section.description} (${SITE_URL}/docs/${section.slug}/)`,
+      (section) => `- ${section.title}: ${section.description} (${SITE_URL}/docs/${section.slug}/)`,
     ),
-  ].join("\n");
+  ].join('\n');
 
   writeFileSync(LLMS_PATH, `${content}${docsBlock}\n`);
 }
