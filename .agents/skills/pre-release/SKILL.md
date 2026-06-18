@@ -26,8 +26,8 @@ Read `CHANGELOG.md`. Locate the first `## [X.Y.Z]` heading under `# Versions`.
 
 Run: `git rev-parse --abbrev-ref HEAD`
 
-- The current branch name must contain `RELEASE_VERSION` as a substring.
-  - Example: branch `feature-v0.4.14` contains `0.4.14` ✓
+- The current branch must be `master` OR its name must contain `RELEASE_VERSION` as a substring.
+  - Examples: branch `master` ✓; branch `release-v0.5.4` contains `0.5.4` ✓
 - If not → **STOP** and ask the user to confirm they are on the correct branch.
 
 ---
@@ -213,7 +213,7 @@ Also remind the user to:
 | Situation | Behaviour |
 |-----------|-----------|
 | CHANGELOG top entry already has a date | STOP — ask user |
-| Branch doesn't contain RELEASE_VERSION | STOP — ask user |
+| Branch is not `master` and doesn't contain RELEASE_VERSION | STOP — ask user |
 | Any version file mismatch | STOP — report all, suggest bump-version |
 | No checked TODO items | Note it, continue |
 | `latest-changelog.md` already exists | Overwrite silently |

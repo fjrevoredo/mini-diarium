@@ -195,6 +195,7 @@ See [Backend guide](src-tauri/CLAUDE.md) for the full auth architecture and per-
 
 - [`docs/decisions/2026-04-passwordless-journal.md`](docs/decisions/2026-04-passwordless-journal.md) — Local-only (passwordless) journals: why Option B-prime (device-bound key in `config.json`) shipped over Option C (OS keychain), threat model, and the migration path if keychain support is ever built.
 - [`docs/decisions/2026-05-settings-storage-taxonomy.md`](docs/decisions/2026-05-settings-storage-taxonomy.md) — Settings storage taxonomy: decision flowchart for where each type of setting belongs (`localStorage` vs. `config.json` vs. `db_settings` vs. in-memory), full inventory of current settings, and why `require_all_auth` was migrated from `config.json` to `db_settings` in schema v6.
+- [`docs/decisions/2026-06-feature-flags.md`](docs/decisions/2026-06-feature-flags.md) — Feature flag strategy: two-tier model (build-time `experimental` Cargo feature + `VITE_EXPERIMENTAL` Vite define vs. deferred runtime opt-in), why Tier 2 is not built speculatively, worked example with `search_entries`, and the `generate_handler!` inner-attribute discovery.
 
 ## Known Issues / Technical Debt
 
