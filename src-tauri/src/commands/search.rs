@@ -110,12 +110,7 @@ fn lower_with_map(src: &str) -> (String, Vec<usize>) {
 /// Build an HTML-escaped snippet around the earliest term hit, wrapping that match in
 /// `<mark>`. With multiple (AND-matched) terms only the earliest occurrence is
 /// highlighted; the other terms are still present in the surrounding text.
-fn build_snippet(
-    orig: &str,
-    lowered: &str,
-    map: &[usize],
-    terms: &[String],
-) -> Option<String> {
+fn build_snippet(orig: &str, lowered: &str, map: &[usize], terms: &[String]) -> Option<String> {
     let (match_byte, match_len) = terms
         .iter()
         .filter_map(|t| lowered.find(t.as_str()).map(|b| (b, t.len())))
