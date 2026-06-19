@@ -1,21 +1,16 @@
-import { expect, test } from "@playwright/test";
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
-import ts from "typescript";
+import { expect, test } from '@playwright/test';
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import ts from 'typescript';
 
-const pdfModule = ts.transpileModule(
-  readFileSync(resolve("src/lib/pdf.ts"), "utf8"),
-  {
-    compilerOptions: {
-      module: ts.ModuleKind.ESNext,
-      target: ts.ScriptTarget.ES2022,
-    },
+const pdfModule = ts.transpileModule(readFileSync(resolve('src/lib/pdf.ts'), 'utf8'), {
+  compilerOptions: {
+    module: ts.ModuleKind.ESNext,
+    target: ts.ScriptTarget.ES2022,
   },
-).outputText;
+}).outputText;
 
-test("raster-derived PDF boundary does not intersect rendered text", async ({
-  page,
-}) => {
+test('raster-derived PDF boundary does not intersect rendered text', async ({ page }) => {
   await page.setContent(`
     <style>
       * { box-sizing: border-box; }
@@ -30,23 +25,22 @@ test("raster-derived PDF boundary does not intersect rendered text", async ({
     <div id="content">
       ${Array.from(
         { length: 30 },
-        (_, index) =>
-          `<p>Paragraph ${index}: ${"rendered words ".repeat(35)}</p>`,
-      ).join("")}
+        (_, index) => `<p>Paragraph ${index}: ${'rendered words '.repeat(35)}</p>`,
+      ).join('')}
     </div>
   `);
   await page.addScriptTag({
-    type: "module",
-    content: `${pdfModule}\nwindow.__findSafeRasterSplit = findSafeRasterSplit;`,
+    type: 'module',
+    content: `${pdfModule}\nglobalThis.__findSafeRasterSplit = findSafeRasterSplit;`,
   });
   await page.addScriptTag({
-    path: resolve("node_modules/html2canvas/dist/html2canvas.min.js"),
+    path: resolve('node_modules/html2canvas/dist/html2canvas.min.js'),
   });
 
   const result = await page.evaluate(async () => {
-    const content = document.querySelector<HTMLElement>("#content")!;
+    const content = document.querySelector<HTMLElement>('#content')!;
     const candidate = await (
-      window as typeof window & {
+      globalThis as typeof globalThis & {
         html2canvas: (
           element: HTMLElement,
           options: Record<string, unknown>,
@@ -58,9 +52,9 @@ test("raster-derived PDF boundary does not intersect rendered text", async ({
       width: 650,
       height: 930,
     });
-    const context = candidate.getContext("2d")!;
+    const context = candidate.getContext('2d')!;
     const findSafeRasterSplit = (
-      window as typeof window & {
+      globalThis as typeof globalThis & {
         __findSafeRasterSplit: (
           pixels: Uint8ClampedArray,
           width: number,
@@ -77,19 +71,12 @@ test("raster-derived PDF boundary does not intersect rendered text", async ({
       candidate.height / 2,
       [],
     )!;
-    const boundaryPixels = context.getImageData(
-      0,
-      splitRow,
-      candidate.width,
-      1,
-    ).data;
+    const boundaryPixels = context.getImageData(0, splitRow, candidate.width, 1).data;
     let darkBoundaryPixels = 0;
     for (let i = 0; i < boundaryPixels.length; i += 4) {
       if (
         boundaryPixels[i + 3] > 0 &&
-        (boundaryPixels[i] < 245 ||
-          boundaryPixels[i + 1] < 245 ||
-          boundaryPixels[i + 2] < 245)
+        (boundaryPixels[i] < 245 || boundaryPixels[i + 1] < 245 || boundaryPixels[i + 2] < 245)
       ) {
         darkBoundaryPixels++;
       }

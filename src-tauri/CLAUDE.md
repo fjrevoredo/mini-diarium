@@ -132,6 +132,31 @@ The following layers prevent the embedded WebView from making outbound network r
 2. Register in `lib.rs` `generate_handler![]` macro
 3. Add typed wrapper in `src/lib/tauri.ts`
 
+**If the command is not yet ready to ship**, gate it behind the `experimental` feature instead of blocking the PR:
+
+```rust
+// In commands/your_module.rs — gate consumer-only imports too, or clippy -D warnings fails
+#[cfg(feature = "experimental")]
+use crate::commands::auth::DiaryState;
+#[cfg(feature = "experimental")]
+use tauri::State;
+
+#[cfg(feature = "experimental")]
+#[tauri::command]
+pub fn your_command(_state: State<DiaryState>) -> Result<(), String> {
+    todo!()
+}
+```
+
+```rust
+// In lib.rs generate_handler![] — Tauri's macro parses outer attributes before each path,
+// so #[cfg] here compiles out both the match arm and all references inside it.
+#[cfg(feature = "experimental")]
+commands::your_module::your_command,
+```
+
+Activate during development: `cargo build --features experimental`. See `docs/decisions/2026-06-feature-flags.md` for the full strategy.
+
 ### Adding a New Import/Export Format
 
 **Option A: Built-in (compiled Rust)**

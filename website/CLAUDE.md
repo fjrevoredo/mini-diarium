@@ -166,13 +166,38 @@ Posts should address real search intent around:
 - The title and H1 will appear in the SERP snippet — optimize for click-through, not comprehensiveness
 - **After changing a post's title or description, update the corresponding entry in `DESCRIPTION_MAP` and `BLUF_MAP`** in `scripts/generate-website-blog.mjs` or the OG/Twitter cards and "Short answer" blurb will go stale
 
-### Style rules
+### Voice and Style
 
-- Lead with the user's problem, not the product.
-- Be concrete. Avoid unsupported superlatives and vague marketing language.
-- Every post should include a "Where Mini Diarium fits" section with factual product claims only.
-- Always link to `/encrypted-journal/`, `/compare/`, or a related post — internal linking is part of the SEO/GEO strategy.
-- The tone across posts should be consistent: direct, clear, no fluff.
+**Post structure template** — every blog post should follow this section order:
+
+1. Opening paragraph — the reader's problem or question, not the product
+2. Two to four H2 sections — each with a clear, distinct purpose
+3. "Where Mini Diarium fits" — factual product claims only (AES-256-GCM, no HTTP client, MIT license, key-file auth, etc.)
+4. "The practical takeaway" — one or two clear if/then recommendations plus 2–3 internal links
+
+**Prohibited patterns** — these signal LLM-generated copy and must not appear in any post:
+
+- Em dashes (`—`). Use a comma, period, or restructured sentence instead.
+- Emojis anywhere in the post body, headings, or frontmatter.
+- Filler phrases: "it is worth noting", "this is crucial", "at the end of the day", "in essence", "to be clear", "deep dive", "dive deep", "delve into".
+- Three or more consecutive sentences with identical grammatical structure.
+- Bullet lists that restate what the preceding sentence already said.
+- Abstract claims without a specific technical fact behind them. Write "encrypts each entry with AES-256-GCM before writing to disk", not "prioritizes security".
+
+**Sentence rhythm and voice:**
+
+- Vary length. Short declarative sentences alongside medium compound ones.
+- Active voice by default: "the app stores entries locally" not "entries are stored locally by the app". Passive is fine when the subject is genuinely unknown.
+- No exclamation points. No marketing-copy energy.
+- Honest about trade-offs. If Mini Diarium lacks a feature the alternative has, say so plainly.
+
+**GEO (BLUF) rule:**
+
+The `BLUF_MAP` entry for each post must be a single self-contained answer that an LLM can quote verbatim without needing surrounding context. It should name the specific products, the specific trade-off, and the specific constraint.
+
+**Internal linking:**
+
+Always link to at least two of `/encrypted-journal/`, `/compare/`, or a related blog post. Internal linking is load-bearing for the SEO/GEO strategy.
 
 ### GEO (Generative Engine Optimization)
 

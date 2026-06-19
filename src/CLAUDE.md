@@ -79,6 +79,27 @@ See `docs/TRANSLATIONS.md` for the community translator guide.
 
 ## Conventions
 
+### Gating Incomplete UI Behind a Feature Flag
+
+If a component or feature is not yet ready to ship, gate its render site with `import.meta.env.VITE_EXPERIMENTAL` rather than leaving it unreachable by convention:
+
+```tsx
+import { Show } from 'solid-js';
+
+// Wrap the entry point only — not every sub-component.
+<Show when={import.meta.env.VITE_EXPERIMENTAL}>
+  <SearchBar />
+</Show>
+```
+
+`import.meta.env.VITE_EXPERIMENTAL` is a compile-time `boolean` injected by the `define` block in `vite.config.ts`. When `false` (all production and CI builds), the bundler tree-shakes the guarded subtree entirely. Activate for local development:
+
+```bash
+VITE_EXPERIMENTAL=true bun run tauri dev
+```
+
+The matching Rust backend command must also be gated with `#[cfg(feature = "experimental")]` — see `src-tauri/CLAUDE.md` for the backend checklist. Both gates must move together. See `docs/decisions/2026-06-feature-flags.md` for the full strategy.
+
 ### SolidJS Reactivity Gotchas
 
 The durable SolidJS reactivity rules and diagnostic `rg` commands live in [`docs/best-practices/FRONTEND_BEST_PRACTICES.md`](../docs/best-practices/FRONTEND_BEST_PRACTICES.md). This domain guide keeps local examples and inventories.

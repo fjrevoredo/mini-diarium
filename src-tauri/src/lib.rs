@@ -327,7 +327,8 @@ pub fn run() {
             commands::entries::delete_entry_if_empty,
             commands::entries::delete_entry,
             commands::entries::get_all_entry_dates,
-            // Search
+            // Search (gated: compile-out of production binaries; active with --features experimental)
+            #[cfg(feature = "experimental")]
             commands::search::search_entries,
             // Navigation
             commands::navigation::navigate_previous_day,

@@ -9,6 +9,14 @@ const host = process.env.TAURI_DEV_HOST;
 export default defineConfig(async () => ({
   plugins: [solid(), UnoCSS()],
 
+  // Feature flags: build-time constants tree-shaken by the bundler.
+  // Gate unfinished UI with: <Show when={import.meta.env.VITE_EXPERIMENTAL}>
+  // Production builds never set VITE_EXPERIMENTAL. Dev/canary: VITE_EXPERIMENTAL=true bun run tauri dev
+  define: {
+    // @ts-expect-error process is a nodejs global
+    'import.meta.env.VITE_EXPERIMENTAL': JSON.stringify(process.env.VITE_EXPERIMENTAL === 'true'),
+  },
+
   // Build optimizations
   build: {
     target: 'esnext',
