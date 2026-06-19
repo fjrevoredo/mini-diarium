@@ -225,10 +225,10 @@ in which case use the "Scope concern response" section.
 
 #### Style rules for both artifacts
 
-- No commit-style prefixes anywhere (`fix(editor):`, `feat(auth):`).
-- No em-dashes as sentence connectors. Use a period or rewrite.
-- No emoji.
-- No generic openers ("Thanks for this PR!"). Say something specific about what it fixes.
+Follow [`docs/best-practices/WRITING_STYLE.md`](../../docs/best-practices/WRITING_STYLE.md) for shared rules (em dashes, emojis, filler phrases, voice). PR responses add these conventions:
+
+- No commit-style prefixes (`fix(editor):`, `feat(auth):`).
+- No generic openers ("Thanks for this PR!"). Say something specific about what the PR fixes or adds.
 - No "I've reviewed / I found X issues" constructions. State findings directly.
 - Prefer prose over bullet lists for fewer than four items.
 - Be direct about blockers: "This can't merge without X" not "It would be ideal to also X."

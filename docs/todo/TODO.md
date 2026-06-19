@@ -13,7 +13,7 @@ TODO entry format:
 - After creating a new TODO, update the `Latest TODO ID` marker to reflect the new highest ID
 - Use the `todo-manager` skill (`.agents/skills/todo-manager/`) for creation, tracking, archival, and validation
 
-**Latest TODO ID: TODO-0052** — next new TODO should be TODO-0053
+**Latest TODO ID: TODO-0053** — next new TODO should be TODO-0054
 
 ---
 
@@ -22,7 +22,6 @@ TODO entry format:
 ---
 
 - [ ] **TODO-0008: Cursor height too tall after Shift+Enter on macOS (#118)** — the text caret (cursor) height becomes extra long starting on the second line, but only when inserting a soft line break with Shift+Enter (Enter alone works fine); macOS-only (v0.4.20); likely a `line-height` or `font-family` mismatch in ProseMirror's `<br>` handling introduced with new editor fonts in v0.4.20; audit soft-break styling in `src/styles/editor.css` and the `--editor-font-family` / `--editor-font-size` CSS custom properties
-- [ ] **TODO-0026: Full-text search across diary entries** — implement a secure, performant full-text search that scans all diary entries for words or phrases without storing plaintext on disk or loading all entries into memory; the old SQLite FTS approach was removed because it exposed plaintext; design a solution that preserves encryption at rest while providing reasonable search performance
 - [ ] **TODO-0031: Port todo-manager skill to agent-skills repo** — create a repo-agnostic version of the todo-manager skill in `D:\Repos\agent-skills\todo-manager\SKILL.md`; remove Mini Diarium-specific file paths and conventions; match the structure and patterns of the existing `manual-planning` skill in that repo
 ---
 
@@ -36,6 +35,8 @@ TODO entry format:
 ---
 
 ## Medium Priority
+
+- [ ] **TODO-0053: Wire search UI into the app shell** — `SearchBar` and `SearchResults` components exist and the backend `search_entries` command is implemented (PR #171); decide on a placement (sidebar, overlay, or command palette), mount the components behind `VITE_EXPERIMENTAL`, then promote both the Rust `#[cfg(feature = "experimental")]` gate in `lib.rs` and the frontend `<Show when={import.meta.env.VITE_EXPERIMENTAL}>` guard to production in the same PR once the UI is ready
 
 - [ ] **TODO-0044: Audit text styling export coverage** — verify that every inline text style the editor supports (bold, italic, underline, strikethrough, inline code, and any others) is correctly round-tripped through all export paths (Markdown, JSON, plugin exporters); identify and fix any style that is visually rendered but silently dropped, collapsed, or malformed on export
 
