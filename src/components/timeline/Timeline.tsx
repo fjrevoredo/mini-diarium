@@ -33,9 +33,7 @@ export default function Timeline() {
       <div class="pt-6 mx-auto w-full max-w-3xl xl:max-w-5xl 2xl:max-w-6xl">
         <h2 class="mb-4 text-xl font-bold text-primary">{t('timeline.title')}</h2>
 
-        <Suspense
-          fallback={<p class="text-sm text-tertiary">{t('layout.loading')}</p>}
-        >
+        <Suspense fallback={<p class="text-sm text-tertiary">{t('layout.loading')}</p>}>
           <Show
             when={(entries() ?? []).length > 0}
             fallback={<p class="text-sm text-tertiary">{t('timeline.empty')}</p>}
