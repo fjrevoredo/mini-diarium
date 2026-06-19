@@ -401,12 +401,17 @@ jobs:
         if: steps.cache-tauri-driver.outputs.cache-hit != 'true'
         run: cargo install tauri-driver
 
-      - name: Cache and install Linux system dependencies
-        uses: awalsh128/cache-apt-pkgs-action@681749ae568c81c2037cb9185e38b709b261bd2f # v1.6.1
-        with:
-          packages: libwebkit2gtk-4.1-dev webkit2gtk-driver xvfb libappindicator3-dev librsvg2-dev
-          version: 1.0
-          execute_install_scripts: true
+      - name: Install Linux system dependencies
+        # Using raw apt-get (not cache-apt-pkgs-action) — webkit2gtk-driver post-install
+        # scripts must run via apt to properly register the WebKitWebDriver binary for tauri-driver.
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            webkit2gtk-driver \
+            xvfb \
+            libappindicator3-dev \
+            librsvg2-dev
 
       - name: Download Linux binary
         uses: actions/download-artifact@v8
