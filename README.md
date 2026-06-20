@@ -223,3 +223,13 @@ Thanks to everyone who has contributed code, translations, or improvements to Mi
 <a href="https://github.com/albanobattistella"><img src="https://github.com/albanobattistella.png?size=40" width="40" height="40" alt="albanobattistella" /></a>
 <a href="https://github.com/tyler274"><img src="https://github.com/tyler274.png?size=40" width="40" height="40" alt="tyler274" /></a>
 <a href="https://github.com/bronty13"><img src="https://github.com/bronty13.png?size=40" width="40" height="40" alt="bronty13" /></a>
+
+## Star History
+
+<a href="https://www.star-history.com/?repos=fjrevoredo%2Fmini-diarium&type=date&legend=top-left">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=fjrevoredo/mini-diarium&type=date&theme=dark&legend=top-left" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=fjrevoredo/mini-diarium&type=date&legend=top-left" />
+   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=fjrevoredo/mini-diarium&type=date&legend=top-left" />
+ </picture>
+</a>
