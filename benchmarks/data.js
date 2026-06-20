@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1781958338000,
+  "lastUpdate": 1781959398199,
   "repoUrl": "https://github.com/fjrevoredo/mini-diarium",
   "entries": {
     "Benchmark": [
@@ -13973,6 +13973,144 @@ window.BENCHMARK_DATA = {
             "name": "count_words_html_500w",
             "value": 5682,
             "range": "± 91",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "ci_pipeline_duration",
+            "value": 437000000000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "committer": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "distinct": true,
+          "id": "3207fe93966e9c2feadbee6177ee0216558eb243",
+          "message": "Dependency Update: dompurify 3.4.10 to 3.4.11",
+          "timestamp": "2026-06-20T14:31:50+02:00",
+          "tree_id": "b51bc134323c5eadc83908adf84bf8f36ffa3274",
+          "url": "https://github.com/fjrevoredo/mini-diarium/commit/3207fe93966e9c2feadbee6177ee0216558eb243"
+        },
+        "date": 1781959397541,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "auth_argon2/wrap_master_key",
+            "value": 89995572,
+            "range": "± 1087545",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "auth_argon2/unwrap_master_key",
+            "value": 90051467,
+            "range": "± 471770",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_encrypt/1024",
+            "value": 2123,
+            "range": "± 4",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_encrypt/10240",
+            "value": 14163,
+            "range": "± 10",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_encrypt/102400",
+            "value": 168402,
+            "range": "± 347",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_decrypt/1024",
+            "value": 1618,
+            "range": "± 11",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_decrypt/10240",
+            "value": 13521,
+            "range": "± 227",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_decrypt/102400",
+            "value": 132809,
+            "range": "± 249",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_insert_entry",
+            "value": 1033711,
+            "range": "± 316952",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_update_entry",
+            "value": 838575,
+            "range": "± 43427",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_delete_entry",
+            "value": 1011105,
+            "range": "± 266911",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_entries_by_date",
+            "value": 15062,
+            "range": "± 424",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_all_entry_dates/100",
+            "value": 32942,
+            "range": "± 201",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_all_entry_dates/500",
+            "value": 121502,
+            "range": "± 3284",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_all_entries/100",
+            "value": 157826,
+            "range": "± 626",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_all_entries/500",
+            "value": 720681,
+            "range": "± 7942",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "count_words_plain_500w",
+            "value": 6012,
+            "range": "± 113",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "count_words_html_500w",
+            "value": 6612,
+            "range": "± 84",
             "unit": "ns/iter"
           },
           {
