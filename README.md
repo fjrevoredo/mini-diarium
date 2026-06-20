@@ -218,7 +218,8 @@ Made with love by [Francisco J. Revoredo](https://github.com/fjrevoredo) (with a
 
 Thanks to everyone who has contributed code, translations, or improvements to Mini Diarium:
 
-<a href="https://github.com/jottyfan"><img src="https://github.com/jottyfan.png?size=80" width="80" height="80" alt="jottyfan" /></a>
-<a href="https://github.com/Yujonpradhananga"><img src="https://github.com/Yujonpradhananga.png?size=80" width="80" height="80" alt="Yujonpradhananga" /></a>
-<a href="https://github.com/albanobattistella"><img src="https://github.com/albanobattistella.png?size=80" width="80" height="80" alt="albanobattistella" /></a>
-<a href="https://github.com/tyler274"><img src="https://github.com/tyler274.png?size=80" width="80" height="80" alt="tyler274" /></a>
+<a href="https://github.com/jottyfan"><img src="https://github.com/jottyfan.png?size=40" width="40" height="40" alt="jottyfan" /></a>
+<a href="https://github.com/Yujonpradhananga"><img src="https://github.com/Yujonpradhananga.png?size=40" width="40" height="40" alt="Yujonpradhananga" /></a>
+<a href="https://github.com/albanobattistella"><img src="https://github.com/albanobattistella.png?size=40" width="40" height="40" alt="albanobattistella" /></a>
+<a href="https://github.com/tyler274"><img src="https://github.com/tyler274.png?size=40" width="40" height="40" alt="tyler274" /></a>
+<a href="https://github.com/bronty13"><img src="https://github.com/bronty13.png?size=40" width="40" height="40" alt="bronty13" /></a>
