@@ -68,7 +68,7 @@
     "@tiptap/extension-underline": "^3.23.6",
     "@tiptap/pm": "^3.23.6",
     "@tiptap/starter-kit": "^3.26.0",
-    "dompurify": "^3.4.8",
+    "dompurify": "^3.4.11",
     "html2canvas": "^1.4.1",
     "jspdf": "^4.2.1",
     "lucide-solid": "^1.17.0",
