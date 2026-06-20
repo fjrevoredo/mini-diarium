@@ -225,7 +225,10 @@ Use the `update-app-icons` skill. Source SVG: `public/logo-transparent.svg` (102
 ### Updating Dependencies (npm/bun)
 
 Use the `sync-lockfiles` skill. Both `bun.lock` and `package-lock.json` must be committed
-together after any `package.json` change.
+together after any `package.json` change. Also refresh `npmDepsHash` in
+[nix/package.nix](nix/package.nix) whenever `package-lock.json` changes — compute it with
+`nix run nixpkgs#prefetch-npm-deps -- package-lock.json` (or copy the `got:` hash from a
+failing `nix build .#default`).
 
 ### Creating a Release
 

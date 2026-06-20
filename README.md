@@ -45,6 +45,7 @@ Quick install:
 - Windows (WinGet): `winget install fjrevoredo.MiniDiarium`
 - macOS (Homebrew): `brew tap fjrevoredo/mini-diarium` then `brew install --cask mini-diarium`
 - Linux (Flatpak): `flatpak install flathub io.github.fjrevoredo.mini-diarium`
+- NixOS / Nix (Flakes): `nix run github:fjrevoredo/mini-diarium`
 
 For package formats, first-run notes (Gatekeeper / SmartScreen), and checksum verification, see [docs/INSTALLATION.md](docs/INSTALLATION.md).
 

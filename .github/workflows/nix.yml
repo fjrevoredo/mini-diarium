@@ -1,0 +1,39 @@
+name: Nix
+
+permissions:
+  contents: read
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'package-lock.json'
+      - 'nix/**'
+      - 'flake.nix'
+      - 'flake.lock'
+  pull_request:
+    branches: [master]
+    paths:
+      - 'package-lock.json'
+      - 'nix/**'
+      - 'flake.nix'
+      - 'flake.lock'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  nix-build:
+    name: Nix build
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v6.0.3
+
+      - uses: cachix/install-nix-action@v31
+        with:
+          nix_path: nixpkgs=channel:nixos-unstable
+
+      - name: Build
+        run: nix build .#default --no-link

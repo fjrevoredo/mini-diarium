@@ -233,6 +233,14 @@ Follow [`docs/best-practices/WRITING_STYLE.md`](../../docs/best-practices/WRITIN
 - Prefer prose over bullet lists for fewer than four items.
 - Be direct about blockers: "This can't merge without X" not "It would be ideal to also X."
 
+#### Pre-save style scan (required before writing the file)
+
+Before writing `docs/pr-{number}-response-draft.md`:
+
+1. Read [`docs/best-practices/WRITING_STYLE.md`](../../docs/best-practices/WRITING_STYLE.md) in full.
+2. Re-read the draft against every rule in that file.
+3. Fix all violations before saving.
+
 ---
 
 ## Completion

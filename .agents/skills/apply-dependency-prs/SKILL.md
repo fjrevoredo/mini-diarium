@@ -204,6 +204,11 @@ For each PR the user wants to apply:
     Should show exactly three files: `package.json`, `bun.lock`, and
     `package-lock.json`. Investigate any additional files.
 
+    Note: `nix/package.nix` is **not** expected to change here — `npmDepsHash`
+    requires Nix tooling unavailable on Windows. The Nix CI workflow will catch
+    hash drift on the next PR; the hash can be updated then by copying the
+    `got:` value from the failing `nix build .#default` output.
+
  4. **Verify Flatpak lockfile integrity.** The Flatpak CI build runs
     `npm ci --offline` from a cache built by `generate-node-sources.mjs`,
     which requires every `node_modules/` entry to have `resolved` and

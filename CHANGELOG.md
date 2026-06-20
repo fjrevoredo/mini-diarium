@@ -30,6 +30,11 @@ Template:
 
 # Versions
 
+## [Unreleased]
+
+### Added
+- **Nix flake packaging**: Mini Diarium can now be built and installed directly from this repository on NixOS and any Linux system with Nix Flakes enabled (`x86_64-linux`, `aarch64-linux`). Supports three integration styles: bare package, NixOS module (`programs.mini-diarium.enable = true`), and Home Manager module. An overlay (`overlays.default`) is also exported for custom configurations. Try it without installing with `nix run github:fjrevoredo/mini-diarium`.
+
 ## [0.5.4] - 17-06-2026
 
 ### Added
