@@ -58,7 +58,7 @@ let
 
     # Refresh this whenever package-lock.json changes:
     #   nix build .#default  (copy the "got:" hash on mismatch)
-    npmDepsHash = "sha256-apHQDmn10ROPUkmhiKjz+PWeI6+k3RMqbrpVahqNmys=";
+    npmDepsHash = "sha256-j/R5j1QAbXiuz9yFB8YuaOL2LR+q+Gf5NXRioL1q5pE=";
 
     # The repo pins peer-dependency overrides; npm needs the legacy resolver.
     npmFlags = [ "--legacy-peer-deps" ];
