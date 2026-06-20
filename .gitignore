@@ -74,3 +74,6 @@ flatpak/node-sources.json
 .agent-dev/
 
 *.stackdump
+
+.direnv/
+result

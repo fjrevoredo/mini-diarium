@@ -175,21 +175,7 @@ Posts should address real search intent around:
 3. "Where Mini Diarium fits" — factual product claims only (AES-256-GCM, no HTTP client, MIT license, key-file auth, etc.)
 4. "The practical takeaway" — one or two clear if/then recommendations plus 2–3 internal links
 
-**Prohibited patterns** — these signal LLM-generated copy and must not appear in any post:
-
-- Em dashes (`—`). Use a comma, period, or restructured sentence instead.
-- Emojis anywhere in the post body, headings, or frontmatter.
-- Filler phrases: "it is worth noting", "this is crucial", "at the end of the day", "in essence", "to be clear", "deep dive", "dive deep", "delve into".
-- Three or more consecutive sentences with identical grammatical structure.
-- Bullet lists that restate what the preceding sentence already said.
-- Abstract claims without a specific technical fact behind them. Write "encrypts each entry with AES-256-GCM before writing to disk", not "prioritizes security".
-
-**Sentence rhythm and voice:**
-
-- Vary length. Short declarative sentences alongside medium compound ones.
-- Active voice by default: "the app stores entries locally" not "entries are stored locally by the app". Passive is fine when the subject is genuinely unknown.
-- No exclamation points. No marketing-copy energy.
-- Honest about trade-offs. If Mini Diarium lacks a feature the alternative has, say so plainly.
+**Prohibited patterns and voice:** Follow [`docs/best-practices/WRITING_STYLE.md`](../docs/best-practices/WRITING_STYLE.md) for all shared rules (em dashes, emojis, filler phrases, sentence rhythm, active voice). Blog posts add one further constraint: every claim about Mini Diarium must be backed by a specific technical fact. Write "encrypts each entry with AES-256-GCM before writing to disk", not "prioritizes security". If Mini Diarium lacks a feature the alternative has, say so plainly.
 
 **GEO (BLUF) rule:**
 

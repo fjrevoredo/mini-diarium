@@ -1,0 +1,57 @@
+name: Nix
+
+permissions:
+  contents: write
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'package-lock.json'
+      - 'nix/**'
+      - 'flake.nix'
+      - 'flake.lock'
+  pull_request:
+    branches: [master]
+    paths:
+      - 'package-lock.json'
+      - 'nix/**'
+      - 'flake.nix'
+      - 'flake.lock'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  nix-build:
+    name: Nix build
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v6.0.3
+
+      - uses: cachix/install-nix-action@8aa03977d8d733052d78f4e008a241fd1dbf36b3 # v31
+        with:
+          nix_path: nixpkgs=channel:nixos-unstable
+
+      - name: Build
+        run: |
+          set +e
+          nix build .#default --no-link 2>&1 | tee /tmp/nix-build.log
+          BUILD_EXIT=${PIPESTATUS[0]}
+
+          if [ $BUILD_EXIT -ne 0 ] && [ "${{ github.event_name }}" = "push" ]; then
+            GOT=$(grep '^\s*got:' /tmp/nix-build.log | awk '{print $NF}' | head -1)
+            if [ -n "$GOT" ]; then
+              sed -i "s|npmDepsHash = \"sha256-[^\"]*\"|npmDepsHash = \"$GOT\"|" nix/package.nix
+              git config user.name "github-actions[bot]"
+              git config user.email "github-actions[bot]@users.noreply.github.com"
+              git add nix/package.nix
+              git commit -m "chore(nix): refresh npmDepsHash [skip ci]"
+              git push
+              exit 0
+            fi
+          fi
+
+          exit $BUILD_EXIT
