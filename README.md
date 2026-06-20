@@ -214,7 +214,11 @@ Mini Diarium is licensed under the MIT License. See [LICENSE](LICENSE).
 
 Made with love by [Francisco J. Revoredo](https://github.com/fjrevoredo) (with a little help from Claude Code).
 
-## Website crawler policy artifacts
+## Contributors
 
-- [https://mini-diarium.com/ai-crawlers.txt](https://mini-diarium.com/ai-crawlers.txt)
-- [https://mini-diarium.com/llms.txt](https://mini-diarium.com/llms.txt)
+Thanks to everyone who has contributed code, translations, or improvements to Mini Diarium:
+
+<a href="https://github.com/jottyfan"><img src="https://github.com/jottyfan.png?size=80" width="80" height="80" alt="jottyfan" /></a>
+<a href="https://github.com/Yujonpradhananga"><img src="https://github.com/Yujonpradhananga.png?size=80" width="80" height="80" alt="Yujonpradhananga" /></a>
+<a href="https://github.com/albanobattistella"><img src="https://github.com/albanobattistella.png?size=80" width="80" height="80" alt="albanobattistella" /></a>
+<a href="https://github.com/tyler274"><img src="https://github.com/tyler274.png?size=80" width="80" height="80" alt="tyler274" /></a>
