@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1781895866342,
+  "lastUpdate": 1781955791287,
   "repoUrl": "https://github.com/fjrevoredo/mini-diarium",
   "entries": {
     "Benchmark": [
@@ -13559,6 +13559,144 @@ window.BENCHMARK_DATA = {
             "name": "count_words_html_500w",
             "value": 6097,
             "range": "± 86",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "ci_pipeline_duration",
+            "value": 433000000000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "committer": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "distinct": true,
+          "id": "e462221a77f3e1b53c086a7f7b34f17a1e19f611",
+          "message": "Add Nix flake packaging",
+          "timestamp": "2026-06-20T13:35:42+02:00",
+          "tree_id": "bb4e84a092f85a7289590b439550e90c9a1ee1ab",
+          "url": "https://github.com/fjrevoredo/mini-diarium/commit/e462221a77f3e1b53c086a7f7b34f17a1e19f611"
+        },
+        "date": 1781955790251,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "auth_argon2/wrap_master_key",
+            "value": 71501591,
+            "range": "± 290784",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "auth_argon2/unwrap_master_key",
+            "value": 77627062,
+            "range": "± 2044974",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_encrypt/1024",
+            "value": 1462,
+            "range": "± 123",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_encrypt/10240",
+            "value": 9728,
+            "range": "± 983",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_encrypt/102400",
+            "value": 88601,
+            "range": "± 2105",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_decrypt/1024",
+            "value": 1081,
+            "range": "± 82",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_decrypt/10240",
+            "value": 9191,
+            "range": "± 398",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_decrypt/102400",
+            "value": 88569,
+            "range": "± 4900",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_insert_entry",
+            "value": 1484955,
+            "range": "± 23671934",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_update_entry",
+            "value": 1438966,
+            "range": "± 4620879",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_delete_entry",
+            "value": 1199329,
+            "range": "± 10082180",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_entries_by_date",
+            "value": 9136,
+            "range": "± 982",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_all_entry_dates/100",
+            "value": 18583,
+            "range": "± 466",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_all_entry_dates/500",
+            "value": 65965,
+            "range": "± 3972",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_all_entries/100",
+            "value": 92636,
+            "range": "± 3148",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_all_entries/500",
+            "value": 418779,
+            "range": "± 9406",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "count_words_plain_500w",
+            "value": 2356,
+            "range": "± 125",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "count_words_html_500w",
+            "value": 3239,
+            "range": "± 299",
             "unit": "ns/iter"
           },
           {
