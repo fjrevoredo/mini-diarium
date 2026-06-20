@@ -123,6 +123,7 @@ vi.mock('../editor/DiaryEditor', () => {
 import EditorPanel from './EditorPanel';
 import { setSelectedDate } from '../../state/ui';
 import { setIsSaving } from '../../state/entries';
+import { setHasFocusedEditorOnUnlock } from '../../state/session';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -170,6 +171,8 @@ describe('EditorPanel integration', () => {
     mocks.deleteEntry.mockResolvedValue(undefined);
     mocks.confirm.mockResolvedValue(true);
     setSelectedDate('2026-04-23');
+    // Session flag is module-global; reset so each test starts pre-focus.
+    setHasFocusedEditorOnUnlock(false);
     vi.useFakeTimers({ shouldAdvanceTime: true });
   });
 
@@ -413,5 +416,52 @@ describe('EditorPanel integration', () => {
     await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument());
     expect(screen.getByText('permission denied')).toBeInTheDocument();
     expect(mocks.saveEntry).not.toHaveBeenCalled();
+  });
+
+  it('focus-on-unlock: does not focus an editor destroyed between scheduling and the frame', async () => {
+    // Regression: the auto-focus effect schedules a requestAnimationFrame, but a lock
+    // can tear the editor down before the frame fires (resetting hasFocusedEditorOnUnlock
+    // re-runs the effect, then the teardown nulls TipTap's commandManager). Calling
+    // ed.commands.focus() on that destroyed editor threw
+    // "null is not an object (evaluating 'this.commandManager.commands')".
+    const rafQueue: FrameRequestCallback[] = [];
+    const realRaf = globalThis.requestAnimationFrame;
+    globalThis.requestAnimationFrame = ((cb: FrameRequestCallback) => {
+      rafQueue.push(cb);
+      return rafQueue.length;
+    }) as typeof globalThis.requestAnimationFrame;
+    const flushFrames = () => {
+      const pending = rafQueue.splice(0);
+      pending.forEach((cb) => cb(0));
+    };
+
+    try {
+      mocks.getEntriesForDate.mockResolvedValue([]);
+      renderWithI18n(() => <EditorPanel />);
+      await waitFor(() => expect(mocks.getEntriesForDate).toHaveBeenCalledWith('2026-04-23'));
+      await flushMicrotasks();
+
+      // The first (legitimate) auto-focus frame fires while the editor is alive.
+      flushFrames();
+      await flushMicrotasks();
+      expect(bus.mockEditor.isDestroyed).toBe(false);
+
+      // Swap in a spy and simulate a lock: the flag reset re-runs the effect, which
+      // passes the synchronous guard (editor still alive) and schedules a frame.
+      const focusSpy = vi.fn();
+      bus.mockEditor.commands.focus = focusSpy;
+      setHasFocusedEditorOnUnlock(false);
+      await flushMicrotasks();
+      expect(rafQueue.length).toBeGreaterThan(0);
+
+      // Teardown happens after the frame is queued but before it runs.
+      bus.mockEditor.isDestroyed = true;
+      flushFrames();
+
+      // The re-check inside the frame must skip focus on the destroyed editor.
+      expect(focusSpy).not.toHaveBeenCalled();
+    } finally {
+      globalThis.requestAnimationFrame = realRaf;
+    }
   });
 });

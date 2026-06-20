@@ -10,7 +10,6 @@ import {
 import { Editor } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
-import Underline from '@tiptap/extension-underline';
 import Highlight from '@tiptap/extension-highlight';
 import { TextStyle } from '@tiptap/extension-text-style';
 import { FontFamily } from '@tiptap/extension-text-style/font-family';
@@ -222,7 +221,8 @@ export default function DiaryEditor(props: DiaryEditorProps) {
         Placeholder.configure({
           placeholder: () => props.placeholder || 'Start writing...',
         }),
-        Underline,
+        // Underline ships with StarterKit v3 — do not register @tiptap/extension-underline
+        // separately or TipTap warns about a duplicate extension name.
         Highlight.configure({ multicolor: true }),
         TextStyle,
         FontFamily,

@@ -35,6 +35,10 @@ Template:
 ### Added
 - **Nix flake packaging**: Mini Diarium can now be built and installed directly from this repository on NixOS and any Linux system with Nix Flakes enabled (`x86_64-linux`, `aarch64-linux`). Supports three integration styles: bare package, NixOS module (`programs.mini-diarium.enable = true`), and Home Manager module. An overlay (`overlays.default`) is also exported for custom configurations. Try it without installing with `nix run github:fjrevoredo/mini-diarium`. Contributed by [@tyler274](https://github.com/tyler274) via [#159](https://github.com/fjrevoredo/mini-diarium/pull/159) (integrated manually).
 
+### Fixed
+- **Duplicate editor extension warning**: the rich-text editor no longer registers `@tiptap/extension-underline` separately. TipTap StarterKit v3 already bundles the Underline extension, so the standalone registration produced a `Duplicate extension names found: ['underline']` console warning on every editor mount. Underline functionality is unchanged.
+- **Editor focus crash on lock/unlock**: fixed an unhandled `TypeError: null is not an object (evaluating 'this.commandManager.commands')` that could fire when locking and unlocking the journal in quick succession. The auto-focus effect schedules a `requestAnimationFrame`, but a lock could destroy the editor before that frame ran; the callback now re-checks that the editor is still alive (and still the current instance) before calling `focus()`. The title-bar Enter handler got the same `isDestroyed` guard. Contributed by [@bronty13](https://github.com/bronty13) via [#148](https://github.com/fjrevoredo/mini-diarium/pull/148) (integrated manually).
+
 ## [0.5.4] - 17-06-2026
 
 ### Added
