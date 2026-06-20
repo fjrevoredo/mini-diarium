@@ -6,6 +6,14 @@ This is not a full SolidJS or TypeScript style guide. Use TypeScript strict mode
 
 ## Core Rules
 
+### Sort Strings With localeCompare
+
+Never call `Array.sort()` on string arrays without a comparator. The default sort uses Unicode code points and produces incorrect results for non-ASCII characters (font family names, titles, tags). Always pass an explicit comparator:
+
+```typescript
+families.sort((a, b) => a.localeCompare(b))
+```
+
 ### Keep Solid Reactivity Explicit
 
 Solid components execute once. Reactive updates happen through signal reads inside tracked scopes, JSX, memos, effects, resources, and control-flow components.
@@ -416,6 +424,7 @@ rg -n "data-testid|isSidebarCollapsed|is[A-Za-z]+Open" src e2e
 - Every input needs a visible label or an accessible label.
 - Error banners and validation messages that need announcement should use `role="alert"` or an equivalent existing pattern.
 - Icon-only buttons need an accessible name.
+- Every `onMouseOver` that updates visible UI state must be accompanied by `onFocus`; every `onMouseLeave` by `onBlur`. Extract the shared logic to a helper that accepts `EventTarget | null`, then pass `e.target` from each inline lambda so each handler retains its precise SolidJS event type.
 - Dialogs and overlays must have a clear close path and must not leave stale draft state in a later session.
 - Keep layout behavior stable at the E2E viewport and common desktop widths before refining visual polish.
 

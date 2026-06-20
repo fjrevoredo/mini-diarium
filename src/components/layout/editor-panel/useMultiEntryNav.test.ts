@@ -377,7 +377,7 @@ describe('navToken race guard — navigateToEntry (Task 4.2)', () => {
     let navToken = 0;
     const results: string[] = [];
 
-    function simulateNavigate(entryTitle: string): () => void {
+    function simulateNavigate(entryTitle: string): () => Promise<void> {
       const token = ++navToken;
       return async () => {
         // Simulate the async fetchEntriesOrdered await
