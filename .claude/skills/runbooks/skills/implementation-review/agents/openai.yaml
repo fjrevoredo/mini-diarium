@@ -1,0 +1,4 @@
+interface:
+  display_name: "Implementation Review"
+  short_description: "Review implementation quality and fixes"
+  default_prompt: "Use $runbooks implementation-review to assess a completed implementation and write a report with actionable fixes."

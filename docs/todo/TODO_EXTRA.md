@@ -42,7 +42,7 @@ Add to the Gotcha section:
 
 ### Part 2 — Update `apply-dependency-prs` skill
 
-File: `.agents/skills/apply-dependency-prs/SKILL.md`
+File: `.agents/skills/runbooks/skills/apply-dependency-prs/ENTRY.md`
 
 **Phase 3 — add step after `npm install`:**
 

@@ -38,7 +38,7 @@ Run the `pre-release` skill directly on `master`, commit the version bump to `ma
 Use this path when branch protection allows direct pushes to `master` (e.g., single-maintainer repository).
 
 ```bash
-# 1. Run pre-release skill on master (see .agents/skills/pre-release/SKILL.md)
+# 1. Run `$runbooks pre-release` on master (canonical entry: `.agents/skills/runbooks/skills/pre-release/ENTRY.md`)
 # 2. Commit version bump
 git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock \
   website/index.html README.md data/linux/io.github.fjrevoredo.mini-diarium.metainfo.xml \

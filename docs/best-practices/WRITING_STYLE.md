@@ -38,4 +38,4 @@ This, and all the documentation of the project, is public and we are not intend 
 Context-specific extensions of these rules:
 
 - Blog posts and docs: see [Voice and Style in website/CLAUDE.md](../../website/CLAUDE.md) for post structure, SEO fields, and GEO rules.
-- PR responses: see [Style rules in the review-external-pr skill](../../.claude/skills/review-external-pr/SKILL.md) for review-specific conventions.
+- PR responses: see [Style rules in the review-external-pr runbook](../../.agents/skills/runbooks/skills/review-external-pr/ENTRY.md) for review-specific conventions.

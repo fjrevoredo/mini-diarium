@@ -1,0 +1,4 @@
+interface:
+  display_name: "Runbooks"
+  short_description: "Route low-frequency Mini Diarium workflows"
+  default_prompt: "Use $runbooks <entry> to load one manual Mini Diarium runbook from the project skill library."

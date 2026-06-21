@@ -164,6 +164,7 @@ cmd.exe /c bun run bench
 2. **JSON export format (breaking change in v0.5.0)**: JSON export now outputs an array under the `"entries"` key with each entry including its `id` field, instead of a date-keyed object. Example: `{ "entries": [{ "id": 1, "date": "2024-01-15", "title": "...", "text": "...", "word_count": 0, "date_created": "...", "date_updated": "..." }] }`.
 
 3. **Skill sync requires plugin exclusion list**: Project skills live in `.agents/skills/` and are linked into `.claude/skills/` via `cmd.exe /c bun run sync-skills`. Skills already provided by a Claude Code plugin must be listed in `PLUGIN_SKILLS` inside `scripts/sync-skills.js` — otherwise duplicates appear and trigger ambiguity arises. **When installing a new plugin that ships skills, check its skill names and add them to that list.**
+   Low-frequency manual workflows now live under the `runbooks` dispatcher. Mirror only `.agents/skills/runbooks` into `.claude/skills/runbooks`; its nested library entries load from `ENTRY.md` and are not mirrored as standalone top-level skills.
 
 4. **Auto-lock fires from two independent paths** — any change to the lock/unlock flow must account for both:
    - **Frontend idle timer** (`App.tsx`): tracks user activity events (mousemove, keydown, click, scroll, touchstart). After `autoLockTimeout` seconds of inactivity, calls `lockJournal()`. Controlled by `autoLockEnabled` + `autoLockTimeout` preferences.
@@ -220,7 +221,7 @@ See [Backend guide](src-tauri/CLAUDE.md) for the full auth architecture and per-
 
 ### Updating the App Logo / Icons
 
-Use the `update-app-icons` skill. Source SVG: `public/logo-transparent.svg` (1024×1024).
+Use `$runbooks update-app-icons` in Codex or `/runbooks update-app-icons` in Claude Code. Source SVG: `public/logo-transparent.svg` (1024×1024).
 
 ### Updating Dependencies (npm/bun)
 
@@ -229,10 +230,11 @@ together after any `package.json` change. Also refresh `npmDepsHash` in
 [nix/package.nix](nix/package.nix) whenever `package-lock.json` changes — compute it with
 `nix run nixpkgs#prefetch-npm-deps -- package-lock.json` (or copy the `got:` hash from a
 failing `nix build .#default`).
+For applying GitHub dependency PRs, use `$runbooks apply-dependency-prs` in Codex or `/runbooks apply-dependency-prs` in Claude Code.
 
 ### Creating a Release
 
-See [docs/RELEASING.md](docs/RELEASING.md) for the full process. From this shell, route project commands through `cmd.exe /c ...`. Version bump script: `./bump-version.sh X.Y.Z`.
+Use `$runbooks pre-release` in Codex or `/runbooks pre-release` in Claude Code, then follow [docs/RELEASING.md](docs/RELEASING.md) for the full process. From this shell, route project commands through `cmd.exe /c ...`. Version bump script: `./bump-version.sh X.Y.Z`.
 
 ## Docs Maintenance
 
