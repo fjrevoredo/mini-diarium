@@ -17,7 +17,9 @@
       "about": "Acerca de",
       "lockJournal": "Bloquear diario",
       "notificationsNone": "Notificaciones",
-      "notificationsUnread": "Notificaciones, {{ count }} sin leer"
+      "notificationsUnread": "Notificaciones, {{ count }} sin leer",
+      "showTimeline": "Mostrar cronología",
+      "showEditor": "Mostrar editor"
     },
     "sidebar": {
       "navigation": "Navegación",
@@ -25,6 +27,12 @@
       "closeMenu": "Cerrar menú",
       "goToToday": "Ir a hoy"
     }
+  },
+  "timeline": {
+    "title": "Cronología",
+    "empty": "Aún no hay entradas.",
+    "untitled": "Sin título",
+    "openEntry": "Abrir la entrada del {{ date }}"
   },
   "calendar": {
     "jan": "Ene",

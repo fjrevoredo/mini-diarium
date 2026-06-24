@@ -17,7 +17,9 @@
       "about": "Über",
       "lockJournal": "Tagebuch sperren",
       "notificationsNone": "Benachrichtigungen",
-      "notificationsUnread": "Benachrichtigungen, {{ count }} ungelesen"
+      "notificationsUnread": "Benachrichtigungen, {{ count }} ungelesen",
+      "showTimeline": "Zeitleiste anzeigen",
+      "showEditor": "Editor anzeigen"
     },
     "sidebar": {
       "navigation": "Navigation",
@@ -25,6 +27,12 @@
       "closeMenu": "Menü schließen",
       "goToToday": "Zu heute gehen"
     }
+  },
+  "timeline": {
+    "title": "Zeitleiste",
+    "empty": "Noch keine Einträge.",
+    "untitled": "Ohne Titel",
+    "openEntry": "Eintrag vom {{ date }} öffnen"
   },
   "calendar": {
     "jan": "Jan",
