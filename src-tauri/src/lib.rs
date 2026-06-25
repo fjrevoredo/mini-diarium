@@ -327,6 +327,7 @@ pub fn run() {
             commands::entries::delete_entry_if_empty,
             commands::entries::delete_entry,
             commands::entries::get_all_entry_dates,
+            commands::entries::get_timeline_entries,
             // Search (gated: compile-out of production binaries; active with --features experimental)
             #[cfg(feature = "experimental")]
             commands::search::search_entries,

@@ -1,7 +1,67 @@
 use crate::commands::auth::{with_unlocked_db, DiaryState};
 use crate::db::queries::{self, DiaryEntry, EntryMetadata};
 use log::debug;
+use serde::Serialize;
 use tauri::State;
+
+/// Maximum number of characters kept in a timeline preview. Keeps full plaintext
+/// off the IPC boundary — only enough to render the first lines of an entry.
+const TIMELINE_PREVIEW_CHARS: usize = 200;
+
+/// A lightweight, read-only row for the timeline list view.
+///
+/// Carries only the date, title, and a short plaintext preview — never the full
+/// decrypted entry text. Built in memory from decrypted entries and dropped after
+/// serialization (nothing is persisted).
+#[derive(Debug, Clone, Serialize)]
+pub struct TimelineEntry {
+    pub id: i64,
+    pub date: String,
+    pub title: String,
+    pub preview: String,
+}
+
+/// Builds a short plaintext preview from an entry's stored HTML text.
+///
+/// Strips HTML tags, decodes the handful of common entities the editor emits,
+/// collapses whitespace, and truncates to `TIMELINE_PREVIEW_CHARS` characters so
+/// only the first lines reach the frontend.
+fn preview_from_html(html: &str) -> String {
+    let mut out = String::with_capacity(html.len());
+    let mut in_tag = false;
+    for ch in html.chars() {
+        match ch {
+            '<' => in_tag = true,
+            '>' => {
+                in_tag = false;
+                // Treat block boundaries as spaces so words don't run together.
+                out.push(' ');
+            }
+            _ if in_tag => {}
+            _ => out.push(ch),
+        }
+    }
+
+    // Decode `&amp;` LAST so a literally-typed entity (stored as e.g. "&amp;lt;") is not
+    // double-decoded into "<" — it must round-trip back to "&lt;".
+    let decoded = out
+        .replace("&nbsp;", " ")
+        .replace("&lt;", "<")
+        .replace("&gt;", ">")
+        .replace("&quot;", "\"")
+        .replace("&#39;", "'")
+        .replace("&amp;", "&");
+
+    // Collapse runs of whitespace into single spaces and trim.
+    let collapsed = decoded.split_whitespace().collect::<Vec<_>>().join(" ");
+
+    if collapsed.chars().count() > TIMELINE_PREVIEW_CHARS {
+        let truncated: String = collapsed.chars().take(TIMELINE_PREVIEW_CHARS).collect();
+        format!("{}…", truncated.trim_end())
+    } else {
+        collapsed
+    }
+}
 
 /// Creates a new blank diary entry for the given date and returns it with its assigned id
 #[tauri::command]
@@ -102,6 +162,30 @@ pub fn delete_entry(id: i64, state: State<DiaryState>) -> Result<(), String> {
 #[tauri::command]
 pub fn get_all_entry_dates(state: State<DiaryState>) -> Result<Vec<String>, String> {
     with_unlocked_db(&state, queries::get_all_entry_dates)
+}
+
+/// Gets a lightweight, newest-first list of all entries for the timeline view.
+///
+/// Decrypts every entry in memory via `queries::get_all_entries`, then keeps only
+/// the date, title, and a short plaintext preview. The full decrypted text is
+/// dropped here and never sent to the frontend or persisted.
+#[tauri::command]
+pub fn get_timeline_entries(state: State<DiaryState>) -> Result<Vec<TimelineEntry>, String> {
+    with_unlocked_db(&state, |db| {
+        let mut entries = queries::get_all_entries(db)?;
+        // get_all_entries returns date ASC, id ASC; the timeline shows newest first.
+        entries.reverse();
+        let timeline = entries
+            .into_iter()
+            .map(|entry| TimelineEntry {
+                id: entry.id,
+                date: entry.date,
+                title: entry.title,
+                preview: preview_from_html(&entry.text),
+            })
+            .collect();
+        Ok(timeline)
+    })
 }
 
 #[cfg(test)]
@@ -260,6 +344,39 @@ mod tests {
         assert_eq!(dates.len(), 3);
         assert_eq!(dates[0], "2024-01-01");
         assert_eq!(dates[2], "2024-02-01");
+    }
+
+    #[test]
+    fn test_preview_strips_html_and_collapses_whitespace() {
+        let html = "<h1>Title</h1><p>Hello   <strong>world</strong></p>";
+        assert_eq!(preview_from_html(html), "Title Hello world");
+    }
+
+    #[test]
+    fn test_preview_decodes_entities() {
+        let html = "<p>Tom &amp; Jerry &lt;3</p>";
+        assert_eq!(preview_from_html(html), "Tom & Jerry <3");
+    }
+
+    #[test]
+    fn test_preview_does_not_double_decode_entities() {
+        // A literally-typed "&lt;" is stored as "&amp;lt;"; it must round-trip back to
+        // "&lt;", not be decoded twice into "<".
+        let html = "<p>a &amp;lt; b</p>";
+        assert_eq!(preview_from_html(html), "a &lt; b");
+    }
+
+    #[test]
+    fn test_preview_truncates_long_text() {
+        let long = "word ".repeat(100);
+        let html = format!("<p>{}</p>", long);
+        let preview = preview_from_html(&html);
+        assert!(preview.ends_with('…'));
+        // At most TIMELINE_PREVIEW_CHARS content chars plus the ellipsis. A trailing
+        // space at the truncation boundary is trimmed, so the result may be shorter.
+        assert!(preview.chars().count() <= TIMELINE_PREVIEW_CHARS + 1);
+        // It must actually be shorter than the source content.
+        assert!(preview.chars().count() < long.chars().count());
     }
 
     #[test]

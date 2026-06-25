@@ -17,7 +17,9 @@
       "about": "À propos",
       "lockJournal": "Verrouiller le journal",
       "notificationsNone": "Notifications",
-      "notificationsUnread": "Notifications, {{ count }} non lues"
+      "notificationsUnread": "Notifications, {{ count }} non lues",
+      "showTimeline": "Afficher la chronologie",
+      "showEditor": "Afficher l'éditeur"
     },
     "sidebar": {
       "navigation": "Navigation",
@@ -25,6 +27,12 @@
       "closeMenu": "Fermer le menu",
       "goToToday": "Aller à aujourd'hui"
     }
+  },
+  "timeline": {
+    "title": "Chronologie",
+    "empty": "Aucune entrée pour le moment.",
+    "untitled": "Sans titre",
+    "openEntry": "Ouvrir l'entrée du {{ date }}"
   },
   "calendar": {
     "jan": "Jan",

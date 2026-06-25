@@ -4,6 +4,10 @@ import { getTodayString } from '../lib/dates';
 // Selected date (YYYY-MM-DD format)
 const [selectedDate, setSelectedDate] = createSignal<string>(getTodayString());
 
+// Main content view: the editor (default) or the timeline list of all entries
+export type MainView = 'editor' | 'timeline';
+const [mainView, setMainView] = createSignal<MainView>('editor');
+
 // Sidebar collapsed state — starts collapsed so the editor is visible immediately on launch/unlock
 const [isSidebarCollapsed, setIsSidebarCollapsed] = createSignal(true);
 
@@ -36,6 +40,7 @@ const [isImagePickerOpen, setIsImagePickerOpen] = createSignal(false);
 
 export function resetUiState(): void {
   setSelectedDate(getTodayString());
+  setMainView('editor');
   setIsSidebarCollapsed(true);
   setIsGoToDateOpen(false);
   setIsPreferencesOpen(false);
@@ -51,6 +56,8 @@ export function resetUiState(): void {
 export {
   selectedDate,
   setSelectedDate,
+  mainView,
+  setMainView,
   isSidebarCollapsed,
   setIsSidebarCollapsed,
   isGoToDateOpen,
