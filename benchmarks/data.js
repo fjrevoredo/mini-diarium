@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1781986673197,
+  "lastUpdate": 1782424763470,
   "repoUrl": "https://github.com/fjrevoredo/mini-diarium",
   "entries": {
     "Benchmark": [
@@ -14806,6 +14806,144 @@ window.BENCHMARK_DATA = {
           {
             "name": "ci_pipeline_duration",
             "value": 482000000000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "53909268+kenlacroix@users.noreply.github.com",
+            "name": "Kenneth LaCroix",
+            "username": "kenlacroix"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "d78775dbc9619ff2ab277298102c2371bfbef4b5",
+          "message": "feat(timeline): add timeline list view of entries (#161) (#173)\n\nImplements #161 — a timeline list view alongside the calendar: every\nentry, newest-first, shown as `date | title + preview`.\n\n## What's added\n\n- **`get_timeline_entries` command**\n(`src-tauri/src/commands/entries.rs`): decrypts entries in memory via\nthe existing `queries::get_all_entries`, then returns only `{ id, date,\ntitle, preview }`. The preview is built server-side\n(`preview_from_html`: strips tags, decodes common entities, collapses\nwhitespace, truncates to 200 chars). The full decrypted `text` is\ndropped here — it never crosses the IPC boundary or gets persisted. Runs\nunder the existing `with_unlocked_db` guard like every other entries\ncommand.\n- **Frontend** (SolidJS + UnoCSS): a `Timeline` component, a header\ntoggle (List ⇄ PenLine), a `mainView` UI signal, the\n`getTimelineEntries` wrapper + `TimelineEntry` type, and i18n strings.\nClicking a row jumps to that date in the editor.\n\n## Security\n\nConsistent with the project's field-level-encryption model: decryption\nstays in memory, and only date/title/short-preview reach the frontend —\nnot full entry text.\n\n## Tests / verification\n\n- `cargo test commands::entries` — 13 pass, including 3 new\n`preview_from_html` tests (tag strip, entity decode, truncation).\n- `bun run build` — clean production build (frontend compiles and\nbundles, UnoCSS classes resolve).\n\n## Notes / limitations\n\n- The list re-fetches when the set of entry dates changes (add/remove).\nEdits to an existing day's title that don't change the date set won't\nauto-refresh an open timeline; toggling away and back refetches. This\nmirrors the calendar's reactivity and keeps the change minimal.\n- `preview_from_html` is a lightweight tag stripper (no DOM in Rust),\nsufficient for previews; it decodes the common entities the editor emits\nrather than being a full HTML parser.\n- Scoped backend-first + UI; happy to adjust styling or placement to\nyour preference.\n\n---------\n\nCo-authored-by: Claude Opus 4.8 (1M context) <noreply@anthropic.com>\nCo-authored-by: Francisco J. Revoredo <39350477+fjrevoredo@users.noreply.github.com>",
+          "timestamp": "2026-06-25T23:52:00+02:00",
+          "tree_id": "d78ee5da63b4acc6e2e782241ab4bf37bfb99273",
+          "url": "https://github.com/fjrevoredo/mini-diarium/commit/d78775dbc9619ff2ab277298102c2371bfbef4b5"
+        },
+        "date": 1782424762153,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "auth_argon2/wrap_master_key",
+            "value": 79294265,
+            "range": "± 693648",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "auth_argon2/unwrap_master_key",
+            "value": 81340694,
+            "range": "± 1145653",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_encrypt/1024",
+            "value": 1458,
+            "range": "± 54",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_encrypt/10240",
+            "value": 8265,
+            "range": "± 23",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_encrypt/102400",
+            "value": 77997,
+            "range": "± 93",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_decrypt/1024",
+            "value": 975,
+            "range": "± 11",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_decrypt/10240",
+            "value": 7638,
+            "range": "± 52",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_decrypt/102400",
+            "value": 75284,
+            "range": "± 120",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_insert_entry",
+            "value": 1351971,
+            "range": "± 49127468",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_update_entry",
+            "value": 1251448,
+            "range": "± 7223746",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_delete_entry",
+            "value": 1175370,
+            "range": "± 35000247",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_entries_by_date",
+            "value": 12051,
+            "range": "± 99",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_all_entry_dates/100",
+            "value": 23975,
+            "range": "± 111",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_all_entry_dates/500",
+            "value": 87430,
+            "range": "± 1395",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_all_entries/100",
+            "value": 119960,
+            "range": "± 564",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_all_entries/500",
+            "value": 545884,
+            "range": "± 2181",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "count_words_plain_500w",
+            "value": 4092,
+            "range": "± 144",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "count_words_html_500w",
+            "value": 4416,
+            "range": "± 79",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "ci_pipeline_duration",
+            "value": 430000000000,
             "range": "± 0",
             "unit": "ns/iter"
           }
