@@ -1,10 +1,12 @@
 import { createSignal, Show } from 'solid-js';
-import { Menu, Lock, Info, Bell } from 'lucide-solid';
+import { Menu, Lock, Info, Bell, List, PenLine } from 'lucide-solid';
 import {
   selectedDate,
   setIsAboutOpen,
   isSidebarCollapsed,
   setIsNotificationsOpen,
+  mainView,
+  setMainView,
 } from '../../state/ui';
 import { lockJournal } from '../../state/auth';
 import { preferences } from '../../state/preferences';
@@ -60,8 +62,23 @@ export default function Header(props: HeaderProps) {
         <h1 class="text-lg font-semibold text-primary">{formattedDate()}</h1>
       </div>
 
-      {/* Right: About + Notifications + Lock */}
+      {/* Right: Timeline toggle + About + Notifications + Lock */}
       <div class="flex items-center gap-1">
+        <button
+          onClick={() => setMainView(mainView() === 'timeline' ? 'editor' : 'timeline')}
+          class="rounded p-2 hover:bg-hover text-tertiary transition-colors"
+          aria-label={
+            mainView() === 'timeline'
+              ? t('layout.header.showEditor')
+              : t('layout.header.showTimeline')
+          }
+          aria-pressed={mainView() === 'timeline'}
+          data-testid="timeline-toggle-button"
+        >
+          <Show when={mainView() === 'timeline'} fallback={<List size={20} />}>
+            <PenLine size={20} />
+          </Show>
+        </button>
         <button
           data-tour-target="about"
           onClick={() => setIsAboutOpen(true)}

@@ -17,7 +17,9 @@
       "about": "के बारे में",
       "lockJournal": "जर्नल लॉक करें",
       "notificationsNone": "सूचनाएं",
-      "notificationsUnread": "सूचनाएं, {{ count }} अपठित"
+      "notificationsUnread": "सूचनाएं, {{ count }} अपठित",
+      "showTimeline": "टाइमलाइन दिखाएँ",
+      "showEditor": "संपादक दिखाएँ"
     },
     "sidebar": {
       "navigation": "नेविगेशन",
@@ -25,6 +27,12 @@
       "closeMenu": "मेनू बंद करें",
       "goToToday": "आज पर जाएं"
     }
+  },
+  "timeline": {
+    "title": "टाइमलाइन",
+    "empty": "अभी तक कोई प्रविष्टि नहीं।",
+    "untitled": "शीर्षकहीन",
+    "openEntry": "{{ date }} की प्रविष्टि खोलें"
   },
   "calendar": {
     "jan": "जन",

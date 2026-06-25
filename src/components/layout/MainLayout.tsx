@@ -1,10 +1,11 @@
-import { onMount, onCleanup } from 'solid-js';
+import { onMount, onCleanup, Show } from 'solid-js';
 import { listen, UnlistenFn } from '@tauri-apps/api/event';
 import { getCurrentWindow } from '@tauri-apps/api/window';
 import { createLogger } from '../../lib/logger';
 import Header from './Header';
 import Sidebar from './Sidebar';
 import EditorPanel from './EditorPanel';
+import Timeline from '../timeline/Timeline';
 import GoToDateOverlay from '../overlays/GoToDateOverlay';
 import PreferencesOverlay from '../overlays/preferences/PreferencesOverlay';
 import StatsOverlay from '../overlays/StatsOverlay';
@@ -16,6 +17,7 @@ import OnboardingTour from '../overlays/OnboardingOverlay';
 import {
   selectedDate,
   setSelectedDate,
+  mainView,
   isSidebarCollapsed,
   setIsSidebarCollapsed,
   isGoToDateOpen,
@@ -200,9 +202,11 @@ export default function MainLayout() {
         {/* Header */}
         <Header showMenu onMenuClick={() => setIsSidebarCollapsed(!isSidebarCollapsed())} />
 
-        {/* Editor panel */}
+        {/* Main panel: editor or timeline list */}
         <main class="flex-1 overflow-hidden">
-          <EditorPanel />
+          <Show when={mainView() === 'timeline'} fallback={<EditorPanel />}>
+            <Timeline />
+          </Show>
         </main>
       </div>
 
