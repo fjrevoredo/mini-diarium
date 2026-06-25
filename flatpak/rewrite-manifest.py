@@ -8,6 +8,8 @@ from pathlib import Path
 commit = os.environ.get("COMMIT") or (sys.argv[1] if len(sys.argv) > 1 else "")
 if not commit:
     sys.exit("Usage: COMMIT=<sha> rewrite-manifest.py  (or pass sha as first arg)")
+if not re.match(r'^[0-9a-f]{40}$', commit):
+    sys.exit(f"Invalid commit SHA (expected 40 hex chars): {commit!r}")
 
 manifest = Path("flatpak/io.github.fjrevoredo.mini-diarium.yml")
 text = manifest.read_text()

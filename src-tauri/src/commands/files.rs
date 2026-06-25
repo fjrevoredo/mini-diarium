@@ -16,6 +16,24 @@ pub fn read_file_bytes(path: String) -> Result<Vec<u8>, String> {
     std::fs::read(&path).map_err(|e| format!("Failed to read '{}': {}", path, e))
 }
 
+/// Writes raw bytes to a `.pdf` file. Path must come from the frontend save dialog.
+/// Extension is validated to limit blast radius of this command.
+#[tauri::command]
+pub fn write_pdf_file(file_path: String, bytes: Vec<u8>) -> Result<(), String> {
+    let ext = std::path::Path::new(&file_path)
+        .extension()
+        .and_then(|e| e.to_str())
+        .map(|e| e.to_lowercase())
+        .unwrap_or_default();
+    if ext != "pdf" {
+        return Err(format!(
+            "'{}' is not an allowed extension for PDF export",
+            ext
+        ));
+    }
+    std::fs::write(&file_path, bytes).map_err(|e| format!("Failed to write PDF: {}", e))
+}
+
 const MAX_TEXT_FILE_BYTES: u64 = 1_048_576; // 1 MiB
 
 /// Returns the UTF-8 contents of a local Markdown file.
@@ -44,6 +62,23 @@ pub fn read_text_file(path: String) -> Result<String, String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn write_pdf_file_rejects_non_pdf_extensions() {
+        assert!(write_pdf_file("/tmp/test.txt".to_string(), vec![]).is_err());
+        assert!(write_pdf_file("/tmp/test.json".to_string(), vec![]).is_err());
+        assert!(write_pdf_file("/tmp/test".to_string(), vec![]).is_err());
+    }
+
+    #[test]
+    fn write_pdf_file_roundtrip() {
+        let tmp = tempfile::Builder::new().suffix(".pdf").tempfile().unwrap();
+        let path = tmp.path().to_string_lossy().to_string();
+        let data = vec![0x25u8, 0x50, 0x44, 0x46]; // %PDF
+        write_pdf_file(path.clone(), data.clone()).unwrap();
+        let read_back = std::fs::read(&path).unwrap();
+        assert_eq!(read_back, data);
+    }
+
     #[test]
     fn rejects_non_image_extensions() {
         assert!(read_file_bytes("diary.db".to_string()).is_err());

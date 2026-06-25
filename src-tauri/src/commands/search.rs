@@ -1,5 +1,8 @@
-use crate::commands::auth::DiaryState;
 use serde::Serialize;
+
+#[cfg(feature = "experimental")]
+use crate::commands::auth::DiaryState;
+#[cfg(feature = "experimental")]
 use tauri::State;
 
 #[derive(Debug, Clone, Serialize)]
@@ -15,6 +18,9 @@ pub struct SearchResult {
 /// Full-text search is not yet implemented. This stub preserves the command interface so
 /// that a future search module can be added here without frontend changes.
 /// To implement: add a secure search index in `db/` and call it from this function.
+/// Gated behind the `experimental` feature so it compiles out of production binaries
+/// until a secure implementation is ready.
+#[cfg(feature = "experimental")]
 #[tauri::command]
 pub fn search_entries(
     _query: String,

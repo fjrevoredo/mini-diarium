@@ -550,6 +550,12 @@ const en = {
     dateFromLabel: 'From',
     dateToLabel: 'To',
     monthLabel: 'Month',
+    printFormat: 'Print / PDF',
+    print: 'Print',
+    printing: 'Printing...',
+    printGeneratedLabel: 'Generated:',
+    printTagsLabel: 'Tags:',
+    printNoEntries: 'No entries found.',
   },
 
   /** ImportOverlay */

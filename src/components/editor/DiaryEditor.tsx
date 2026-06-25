@@ -10,7 +10,6 @@ import {
 import { Editor } from '@tiptap/core';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
-import Underline from '@tiptap/extension-underline';
 import Highlight from '@tiptap/extension-highlight';
 import { TextStyle } from '@tiptap/extension-text-style';
 import { FontFamily } from '@tiptap/extension-text-style/font-family';
@@ -132,6 +131,15 @@ export default function DiaryEditor(props: DiaryEditorProps) {
   const [linkTooltip, setLinkTooltip] = createSignal<{ href: string; x: number; y: number } | null>(
     null,
   );
+  const handleAnchorActivate = (target: EventTarget | null) => {
+    const anchor = (target as HTMLElement).closest('a') as HTMLAnchorElement | null;
+    if (anchor) {
+      const rect = anchor.getBoundingClientRect();
+      setLinkTooltip({ href: anchor.getAttribute('href') ?? '', x: rect.left, y: rect.bottom });
+    } else {
+      setLinkTooltip(null);
+    }
+  };
   let dropHintTimer: ReturnType<typeof setTimeout> | undefined;
 
   const showDropHint = () => {
@@ -150,7 +158,9 @@ export default function DiaryEditor(props: DiaryEditorProps) {
     const entryFont = props.entryMetadata?.fontFamily;
     if (entryFont) families.add(entryFont);
     extractFontFamiliesFromHtml(props.content).forEach((f) => families.add(f));
-    return Array.from(families).sort().join('|');
+    return Array.from(families)
+      .sort((a, b) => a.localeCompare(b))
+      .join('|');
   });
 
   const [allFontData] = createResource(fontFamiliesKey, async (key) => {
@@ -222,7 +232,8 @@ export default function DiaryEditor(props: DiaryEditorProps) {
         Placeholder.configure({
           placeholder: () => props.placeholder || 'Start writing...',
         }),
-        Underline,
+        // Underline ships with StarterKit v3 — do not register @tiptap/extension-underline
+        // separately or TipTap warns about a duplicate extension name.
         Highlight.configure({ multicolor: true }),
         TextStyle,
         FontFamily,
@@ -426,20 +437,10 @@ export default function DiaryEditor(props: DiaryEditorProps) {
       </Show>
       <div
         class="p-4"
-        onMouseOver={(e) => {
-          const anchor = (e.target as HTMLElement).closest('a') as HTMLAnchorElement | null;
-          if (anchor) {
-            const rect = anchor.getBoundingClientRect();
-            setLinkTooltip({
-              href: anchor.getAttribute('href') ?? '',
-              x: rect.left,
-              y: rect.bottom,
-            });
-          } else {
-            setLinkTooltip(null);
-          }
-        }}
+        onMouseOver={(e) => handleAnchorActivate(e.target)}
+        onFocus={(e) => handleAnchorActivate(e.target)}
         onMouseLeave={() => setLinkTooltip(null)}
+        onBlur={() => setLinkTooltip(null)}
       >
         <div ref={editorElement} />
       </div>

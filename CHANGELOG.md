@@ -30,6 +30,33 @@ Template:
 
 # Versions
 
+## [Unreleased]
+
+### Added
+- **Nix flake packaging**: Mini Diarium can now be built and installed directly from this repository on NixOS and any Linux system with Nix Flakes enabled (`x86_64-linux`, `aarch64-linux`). Supports three integration styles: bare package, NixOS module (`programs.mini-diarium.enable = true`), and Home Manager module. An overlay (`overlays.default`) is also exported for custom configurations. Try it without installing with `nix run github:fjrevoredo/mini-diarium`. Contributed by [@tyler274](https://github.com/tyler274) via [#159](https://github.com/fjrevoredo/mini-diarium/pull/159) (integrated manually).
+
+### Fixed
+- **Locale-aware font family sort**: font family names are now sorted with `localeCompare` instead of the default Unicode code-point order, which produced incorrect results for non-ASCII family names.
+- **Keyboard accessibility for link tooltip**: the link tooltip in the editor now appears and disappears on keyboard focus and blur in addition to mouse hover, making hyperlink previews reachable without a pointer device.
+- **Flatpak manifest script validates commit SHA**: `flatpak/rewrite-manifest.py` now rejects any `COMMIT` argument that is not a 40-character lowercase hex SHA before writing it to the manifest file.
+- **Duplicate editor extension warning**: the rich-text editor no longer registers `@tiptap/extension-underline` separately. TipTap StarterKit v3 already bundles the Underline extension, so the standalone registration produced a `Duplicate extension names found: ['underline']` console warning on every editor mount. Underline functionality is unchanged.
+- **Editor focus crash on lock/unlock**: fixed an unhandled `TypeError: null is not an object (evaluating 'this.commandManager.commands')` that could fire when locking and unlocking the journal in quick succession. The auto-focus effect schedules a `requestAnimationFrame`, but a lock could destroy the editor before that frame ran; the callback now re-checks that the editor is still alive (and still the current instance) before calling `focus()`. The title-bar Enter handler got the same `isDestroyed` guard. Contributed by [@bronty13](https://github.com/bronty13) via [#148](https://github.com/fjrevoredo/mini-diarium/pull/148) (integrated manually).
+
+## [0.5.4] - 17-06-2026
+
+### Added
+- **Print / PDF export**: journal entries can now be exported as a PDF file directly from the app. In the Export dialog, select **Print / PDF** from the format dropdown and optionally filter by date range or month; clicking **Print** opens a native save dialog and writes a formatted PDF to the chosen path. Output is A4 portrait with 2 cm margins, entries grouped by date with titles, tags, and full formatted content including images.
+    - **Page breaks**: each page break is placed at natural blank rows so text lines are never cut in half, and images stay intact without splitting across page boundaries.
+    - **Default filename**: the save dialog suggests `mini-diarium-export-YYYY-MM-DD_HH-MM.pdf` instead of a plain `mini-diarium-export.pdf`.
+
+### Fixed
+- **Bullet and numbered lists now display markers in the editor**: the Tailwind CSS reset (`list-style: none`) was stripping bullet dots and ordinal numbers from all list elements. The editor stylesheet now explicitly restores `list-style-type: disc` for unordered lists and `list-style-type: decimal` for ordered lists inside the ProseMirror container. Most noticeable on Linux where the WebKit renderer enforces the reset strictly (issue #163).
+- **Export dialog state clears when reopened**: error and success messages now reset whenever the dialog becomes visible, so reopening after a failed or successful export always shows a clean state.
+
+### Internal
+- **PDF export uses jsPDF + html2canvas in-browser**; two new Tauri commands (`print_entries` generates HTML, `write_pdf_file` writes bytes to disk); print styles are applied programmatically so html2canvas captures the correct layout; page-boundary detection scans html2canvas's raster output for blank rows (TODO-0012).
+- **PDF export: print layer no longer flashes during generation**: the temporary render div (`#mini-diarium-print-layer`) is now created with `visibility: hidden`, hiding it from users while keeping it in the render tree so html2canvas can capture it. The html2canvas clone restores `visibility: visible` via `prepareClone`.
+
 ## [0.5.3] - 05-06-2026
 
 ### Added

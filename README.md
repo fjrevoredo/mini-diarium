@@ -12,7 +12,7 @@ Free, open source, and never touches the internet.
 [![Security Rating](https://sonarcloud.io/api/project_badges/measure?project=fjrevoredo_mini-diarium&metric=security_rating)](https://sonarcloud.io/summary/new_code?id=fjrevoredo_mini-diarium)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Version](https://img.shields.io/badge/version-0.5.3-blue)](https://github.com/fjrevoredo/mini-diarium/releases)
+[![Version](https://img.shields.io/badge/version-0.5.4-blue)](https://github.com/fjrevoredo/mini-diarium/releases)
 [![Platform](https://img.shields.io/badge/platform-Windows_%7C_macOS_%7C_Linux-lightgrey)](https://github.com/fjrevoredo/mini-diarium#download)
 [![Follow @MiniDiarium](https://img.shields.io/badge/Follow-%40MiniDiarium-000?logo=x&logoColor=white)](https://x.com/MiniDiarium)
 [![Ko-fi](https://img.shields.io/badge/Ko--fi-Buy_me_a_coffee-ff5f5f?logo=kofi&logoColor=white)](https://ko-fi.com/fjrevoredo)
@@ -45,6 +45,7 @@ Quick install:
 - Windows (WinGet): `winget install fjrevoredo.MiniDiarium`
 - macOS (Homebrew): `brew tap fjrevoredo/mini-diarium` then `brew install --cask mini-diarium`
 - Linux (Flatpak): `flatpak install flathub io.github.fjrevoredo.mini-diarium`
+- NixOS / Nix (Flakes): `nix run github:fjrevoredo/mini-diarium`
 
 For package formats, first-run notes (Gatekeeper / SmartScreen), and checksum verification, see [docs/INSTALLATION.md](docs/INSTALLATION.md).
 
@@ -213,7 +214,22 @@ Mini Diarium is licensed under the MIT License. See [LICENSE](LICENSE).
 
 Made with love by [Francisco J. Revoredo](https://github.com/fjrevoredo) (with a little help from Claude Code).
 
-## Website crawler policy artifacts
+## Contributors
 
-- [https://mini-diarium.com/ai-crawlers.txt](https://mini-diarium.com/ai-crawlers.txt)
-- [https://mini-diarium.com/llms.txt](https://mini-diarium.com/llms.txt)
+Thanks to everyone who has contributed code, translations, or improvements to Mini Diarium:
+
+<a href="https://github.com/jottyfan"><img src="https://github.com/jottyfan.png?size=40" width="40" height="40" alt="jottyfan" /></a>
+<a href="https://github.com/Yujonpradhananga"><img src="https://github.com/Yujonpradhananga.png?size=40" width="40" height="40" alt="Yujonpradhananga" /></a>
+<a href="https://github.com/albanobattistella"><img src="https://github.com/albanobattistella.png?size=40" width="40" height="40" alt="albanobattistella" /></a>
+<a href="https://github.com/tyler274"><img src="https://github.com/tyler274.png?size=40" width="40" height="40" alt="tyler274" /></a>
+<a href="https://github.com/bronty13"><img src="https://github.com/bronty13.png?size=40" width="40" height="40" alt="bronty13" /></a>
+
+## Star History
+
+<a href="https://www.star-history.com/?repos=fjrevoredo%2Fmini-diarium&type=date&legend=top-left">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/chart?repos=fjrevoredo/mini-diarium&type=date&theme=dark&legend=top-left" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/chart?repos=fjrevoredo/mini-diarium&type=date&legend=top-left" />
+   <img alt="Star History Chart" src="https://api.star-history.com/chart?repos=fjrevoredo/mini-diarium&type=date&legend=top-left" />
+ </picture>
+</a>

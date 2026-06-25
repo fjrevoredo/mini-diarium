@@ -166,13 +166,24 @@ Posts should address real search intent around:
 - The title and H1 will appear in the SERP snippet — optimize for click-through, not comprehensiveness
 - **After changing a post's title or description, update the corresponding entry in `DESCRIPTION_MAP` and `BLUF_MAP`** in `scripts/generate-website-blog.mjs` or the OG/Twitter cards and "Short answer" blurb will go stale
 
-### Style rules
+### Voice and Style
 
-- Lead with the user's problem, not the product.
-- Be concrete. Avoid unsupported superlatives and vague marketing language.
-- Every post should include a "Where Mini Diarium fits" section with factual product claims only.
-- Always link to `/encrypted-journal/`, `/compare/`, or a related post — internal linking is part of the SEO/GEO strategy.
-- The tone across posts should be consistent: direct, clear, no fluff.
+**Post structure template** — every blog post should follow this section order:
+
+1. Opening paragraph — the reader's problem or question, not the product
+2. Two to four H2 sections — each with a clear, distinct purpose
+3. "Where Mini Diarium fits" — factual product claims only (AES-256-GCM, no HTTP client, MIT license, key-file auth, etc.)
+4. "The practical takeaway" — one or two clear if/then recommendations plus 2–3 internal links
+
+**Prohibited patterns and voice:** Follow [`docs/best-practices/WRITING_STYLE.md`](../docs/best-practices/WRITING_STYLE.md) for all shared rules (em dashes, emojis, filler phrases, sentence rhythm, active voice). Blog posts add one further constraint: every claim about Mini Diarium must be backed by a specific technical fact. Write "encrypts each entry with AES-256-GCM before writing to disk", not "prioritizes security". If Mini Diarium lacks a feature the alternative has, say so plainly.
+
+**GEO (BLUF) rule:**
+
+The `BLUF_MAP` entry for each post must be a single self-contained answer that an LLM can quote verbatim without needing surrounding context. It should name the specific products, the specific trade-off, and the specific constraint.
+
+**Internal linking:**
+
+Always link to at least two of `/encrypted-journal/`, `/compare/`, or a related blog post. Internal linking is load-bearing for the SEO/GEO strategy.
 
 ### GEO (Generative Engine Optimization)
 

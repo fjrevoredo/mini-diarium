@@ -48,10 +48,21 @@ bun run tauri dev
 
 ## Development Workflow
 
-1. Fork the repository and create a feature branch from `master`
+Mini Diarium follows **trunk-based development**: all changes target `master` and feature branches should be short-lived (one to two days). Long-lived branches are a smell.
+
+1. Fork the repository and create a short-lived feature branch from `master`
 2. Make your changes
 3. Run the full check suite (see below)
 4. Open a pull request against `master`
+
+### Incomplete features
+
+If your feature is not ready to ship but you want to land it on `master`, gate it behind a compile-time flag before opening the PR:
+
+- **Backend (Rust):** Add `#[cfg(feature = "experimental")]` to the command function and its `generate_handler![]` entry. Gate consumer-only imports (`use tauri::State`, `use crate::commands::auth::DiaryState`) the same way so they don't produce unused-import warnings in the default build.
+- **Frontend (Vite/SolidJS):** Wrap the component render site in `<Show when={import.meta.env.VITE_EXPERIMENTAL}>`.
+
+The `experimental` Cargo feature (`--features experimental`) and `VITE_EXPERIMENTAL=true` Vite define are the standard gates. Production builds never set either. See `docs/decisions/2026-06-feature-flags.md` for the full strategy and `src-tauri/src/commands/search.rs` for a worked example.
 
 ## Check Suite
 
@@ -70,8 +81,8 @@ These scripts check:
 - ✓ TypeScript type checking
 - ✓ ESLint (no errors)
 - ✓ Prettier formatting
-- ✓ Frontend tests (23 tests)
-- ✓ Backend tests (160 Rust tests)
+- ✓ Frontend tests (Vitest)
+- ✓ Backend tests (Rust)
 - ✓ Rust Clippy (warnings as errors)
 - ✓ Rust formatting
 
@@ -121,8 +132,8 @@ See `CLAUDE.md` for the full architecture diagram, file map, and command registr
 This is a privacy-focused app. When contributing, please:
 
 - Never log, print, or serialize passwords or encryption keys
-- Never store plaintext diary content outside the FTS index
+- Never store plaintext diary content in any unencrypted form on disk
 - Never add network requests of any kind (no analytics, telemetry, or update checks)
-- Ensure any new entry operations update both the encrypted `entries` table and the `entries_fts` index
+- Entry operations write only to the encrypted `entries` table; there is no FTS index (it was removed in schema v4 because it stored plaintext)
 
 See [SECURITY.md](SECURITY.md) for vulnerability reporting.

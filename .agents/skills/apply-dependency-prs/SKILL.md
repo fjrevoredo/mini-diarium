@@ -204,6 +204,10 @@ For each PR the user wants to apply:
     Should show exactly three files: `package.json`, `bun.lock`, and
     `package-lock.json`. Investigate any additional files.
 
+    Note: `nix/package.nix` is **not** expected to change here — `npmDepsHash`
+    cannot be computed on Windows. The Nix CI workflow catches the drift; see
+    Phase 5 below for the required follow-up once the user pushes.
+
  4. **Verify Flatpak lockfile integrity.** The Flatpak CI build runs
     `npm ci --offline` from a cache built by `generate-node-sources.mjs`,
     which requires every `node_modules/` entry to have `resolved` and
@@ -230,6 +234,18 @@ For each PR the user wants to apply:
     `Dependency Update: <list of bumped packages>`. Stage only the files
     that were intentionally changed (typically `package.json`, `bun.lock`,
     `package-lock.json`; for Cargo-only updates, `Cargo.lock`).
+
+### Phase 5: Nix hash after push
+
+`package-lock.json` changed, so `npmDepsHash` in `nix/package.nix` is stale.
+The Nix CI workflow handles this automatically on pushes to master: if the build
+detects a hash mismatch it patches `nix/package.nix` and pushes a
+`chore(nix): refresh npmDepsHash [skip ci]` commit by itself.
+
+No manual action is needed. If the Nix CI job fails for a reason other than
+hash mismatch (genuine build error), investigate that separately.
+
+---
 
 ## Scope Boundaries
 

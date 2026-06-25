@@ -305,6 +305,25 @@ export async function exportMarkdown(
   return await invoke('export_markdown', { filePath, ...options });
 }
 
+export interface PrintLabels {
+  generated_label: string;
+  tags_label: string;
+  no_entries_label: string;
+  months: string[];
+}
+
+export interface PrintResult {
+  entries_exported: number;
+  html: string;
+}
+
+export async function printEntries(
+  labels: PrintLabels,
+  options?: ExportOptions,
+): Promise<PrintResult> {
+  return await invoke<PrintResult>('print_entries', { labels, ...options });
+}
+
 // Plugin commands
 export interface PluginInfo {
   id: string;
@@ -340,6 +359,10 @@ export async function readFileBytes(path: string): Promise<number[]> {
 
 export async function readTextFile(path: string): Promise<string> {
   return await invoke('read_text_file', { path });
+}
+
+export async function writePdfFile(filePath: string, bytes: number[]): Promise<void> {
+  await invoke('write_pdf_file', { filePath, bytes });
 }
 
 // Debug commands

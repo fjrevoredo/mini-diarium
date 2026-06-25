@@ -1,6 +1,6 @@
 [package]
 name = "mini-diarium"
-version = "0.5.3"
+version = "0.5.4"
 description = "A modern, encrypted, local-first desktop journaling application"
 authors = ["you"]
 edition = "2021"
@@ -55,6 +55,10 @@ lto = true
 # embedded frontend assets instead of trying the dev server URL.
 default = []
 custom-protocol = ["tauri/custom-protocol"]
+# Compile and register commands that are not yet ready for production.
+# Never set in default builds; CI and releases always use the default feature set.
+# Enable during development with: cargo build --features experimental
+experimental = []
 
 [dev-dependencies]
 tempfile = "3"

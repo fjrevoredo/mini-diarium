@@ -169,6 +169,20 @@ cmd.exe /c bun run bench
    - **Frontend idle timer** (`App.tsx`): tracks user activity events (mousemove, keydown, click, scroll, touchstart). After `autoLockTimeout` seconds of inactivity, calls `lockJournal()`. Controlled by `autoLockEnabled` + `autoLockTimeout` preferences.
    - **Backend OS events** (`screen_lock.rs`): listens for OS-level session lock, logoff, or system suspend (Windows: `WM_WTSSESSION_CHANGE`, `WM_POWERBROADCAST`; macOS: screen-sleep and `com.apple.screenIsLocked` notifications). Immediately calls `auto_lock_diary_if_unlocked()` and emits `'journal-locked'` event. Fires even when the app is in the background.
 
+5. **SonarCloud quality gate failure — read the API, don't guess**: When the "SonarCloud Code Analysis" check fails on a PR, the PR comment gives only a summary. To find which files are responsible, use the public API directly — no login required:
+
+   ```bash
+   # Which condition failed and by how much
+   curl -s "https://sonarcloud.io/api/qualitygates/project_status?projectKey=fjrevoredo_mini-diarium&pullRequest=<PR>" | jq .
+
+   # Per-file breakdown (replace metric key as needed: new_duplicated_lines_density, new_coverage, etc.)
+   curl -s "https://sonarcloud.io/api/measures/component_tree?component=fjrevoredo_mini-diarium&pullRequest=<PR>&metricKeys=new_duplicated_lines_density,new_duplicated_lines&strategy=leaves&ps=50" | jq '.components[] | select(.measures[].value != "0.0") | {name: .name, measures: .measures}'
+   ```
+
+   Common failures and their usual causes:
+   - **`new_duplicated_lines_density` > 3%**: copy-pasted test helpers or fixture objects — extract to a shared constant/function in the same file.
+   - **`new_coverage` < threshold**: new logic in a file that `generatePdfFromElement`-style functions (html2canvas/jsPDF) can't be tested in JSDOM — mock the module boundary instead.
+
 ## Security Rules
 
 - **Never** log, print, or serialize passwords or encryption keys
@@ -181,6 +195,7 @@ See [Backend guide](src-tauri/CLAUDE.md) for the full auth architecture and per-
 
 - [`docs/decisions/2026-04-passwordless-journal.md`](docs/decisions/2026-04-passwordless-journal.md) — Local-only (passwordless) journals: why Option B-prime (device-bound key in `config.json`) shipped over Option C (OS keychain), threat model, and the migration path if keychain support is ever built.
 - [`docs/decisions/2026-05-settings-storage-taxonomy.md`](docs/decisions/2026-05-settings-storage-taxonomy.md) — Settings storage taxonomy: decision flowchart for where each type of setting belongs (`localStorage` vs. `config.json` vs. `db_settings` vs. in-memory), full inventory of current settings, and why `require_all_auth` was migrated from `config.json` to `db_settings` in schema v6.
+- [`docs/decisions/2026-06-feature-flags.md`](docs/decisions/2026-06-feature-flags.md) — Feature flag strategy: two-tier model (build-time `experimental` Cargo feature + `VITE_EXPERIMENTAL` Vite define vs. deferred runtime opt-in), why Tier 2 is not built speculatively, worked example with `search_entries`, and the `generate_handler!` inner-attribute discovery.
 
 ## Known Issues / Technical Debt
 
@@ -210,7 +225,10 @@ Use the `update-app-icons` skill. Source SVG: `public/logo-transparent.svg` (102
 ### Updating Dependencies (npm/bun)
 
 Use the `sync-lockfiles` skill. Both `bun.lock` and `package-lock.json` must be committed
-together after any `package.json` change.
+together after any `package.json` change. Also refresh `npmDepsHash` in
+[nix/package.nix](nix/package.nix) whenever `package-lock.json` changes — compute it with
+`nix run nixpkgs#prefetch-npm-deps -- package-lock.json` (or copy the `got:` hash from a
+failing `nix build .#default`).
 
 ### Creating a Release
 

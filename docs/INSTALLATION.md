@@ -4,11 +4,11 @@ Download the latest release for your platform from [GitHub Releases](https://git
 
 ## Package formats
 
-| Platform | Format                                               |
-| -------- | ---------------------------------------------------- |
-| Windows  | `.msi` or `.exe` (NSIS installer, no admin required) |
-| macOS    | `.dmg`                                               |
-| Linux    | `.AppImage`, `.deb`, or Flatpak via Flathub          |
+| Platform | Format                                                        |
+| -------- | ------------------------------------------------------------- |
+| Windows  | `.msi` or `.exe` (NSIS installer, no admin required)          |
+| macOS    | `.dmg`                                                        |
+| Linux    | `.AppImage`, `.deb`, Flatpak via Flathub, or Nix Flake        |
 
 ## Windows (WinGet)
 
@@ -58,6 +58,54 @@ To update:
 ```bash
 flatpak update io.github.fjrevoredo.mini-diarium
 ```
+
+## Nix Flake (Linux)
+
+Mini Diarium ships a flake for `x86_64-linux` and `aarch64-linux`. Flakes must be enabled (`experimental-features = nix-command flakes`).
+
+Try it without installing:
+
+```bash
+nix run github:fjrevoredo/mini-diarium
+```
+
+For a persistent installation, add the flake as an input and choose one of the three integration styles:
+
+```nix
+{
+  inputs.mini-diarium.url = "github:fjrevoredo/mini-diarium";
+  # Optional: avoid a second nixpkgs copy.
+  inputs.mini-diarium.inputs.nixpkgs.follows = "nixpkgs";
+}
+```
+
+**1. Bare package** — add to any package list:
+
+```nix
+environment.systemPackages = [ inputs.mini-diarium.packages.${pkgs.system}.default ]; # NixOS
+# or, for Home Manager:
+home.packages = [ inputs.mini-diarium.packages.${pkgs.system}.default ];
+```
+
+**2. NixOS module:**
+
+```nix
+{
+  imports = [ inputs.mini-diarium.nixosModules.default ];
+  programs.mini-diarium.enable = true;
+}
+```
+
+**3. Home Manager module:**
+
+```nix
+{
+  imports = [ inputs.mini-diarium.homeModules.default ];
+  programs.mini-diarium.enable = true;
+}
+```
+
+An overlay is also exported as `mini-diarium.overlays.default` (adds `pkgs.mini-diarium`).
 
 ## First-run notes
 

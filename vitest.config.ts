@@ -13,7 +13,7 @@ export default defineConfig({
     environment: 'jsdom',
     globals: true,
     setupFiles: ['./src/test/setup.ts'],
-    exclude: [...configDefaults.exclude, 'e2e/**', '.reference/**', '.claude/**'],
+    exclude: [...configDefaults.exclude, 'e2e/**', '.reference/**', '.claude/**', 'tests/**'],
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'html', 'lcov'],
@@ -25,6 +25,14 @@ export default defineConfig({
         '**/*.config.*',
         '**/mockData.ts',
       ],
+      // Backstop thresholds ~5 pts below measured values (2026-06-18: stmt 73%, branch 60%, fn 76%, line 73%).
+      // These guard against regressions; raise them as coverage improves.
+      thresholds: {
+        statements: 70,
+        branches: 55,
+        functions: 72,
+        lines: 70,
+      },
     },
   },
   resolve: {

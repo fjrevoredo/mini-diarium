@@ -27,6 +27,67 @@ Before starting the release process:
 
 ---
 
+## Release Paths
+
+Two equivalent paths lead to a published release. Both are trunk-based: the tag is always created on `master`.
+
+### Path A — Trunk-pure (preferred)
+
+Run the `pre-release` skill directly on `master`, commit the version bump to `master`, then push the tag.
+
+Use this path when branch protection allows direct pushes to `master` (e.g., single-maintainer repository).
+
+```bash
+# 1. Run pre-release skill on master (see .agents/skills/pre-release/SKILL.md)
+# 2. Commit version bump
+git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock \
+  website/index.html README.md data/linux/io.github.fjrevoredo.mini-diarium.metainfo.xml \
+  latest-changelog.md
+git commit -m "chore: bump version to X.Y.Z"
+git push origin master
+# 3. Tag on master
+git tag -a vX.Y.Z -m "Release vX.Y.Z"
+git push origin vX.Y.Z
+```
+
+### Path B — Short-lived release branch (when a PR is required)
+
+Create a `release-vX.Y.Z` branch from `master`, run the pre-release skill there, open a same-day PR, merge, then tag on `master`. The branch is deleted after merge.
+
+Use this path when branch protection requires a PR before merging to `master`.
+
+```bash
+git checkout master && git pull
+git checkout -b release-vX.Y.Z
+# Run pre-release skill, commit version bump (see existing Release Process steps below)
+git push origin release-vX.Y.Z
+# Open PR: release-vX.Y.Z → master; merge same day
+git checkout master && git pull
+git tag -a vX.Y.Z -m "Release vX.Y.Z"
+git push origin vX.Y.Z
+# Delete the release branch
+git push origin --delete release-vX.Y.Z
+```
+
+**Branch naming convention:** `release-vX.Y.Z` (with `v` prefix). The `pre-release` skill's branch guard accepts either `master` or any branch whose name contains the version string.
+
+---
+
+## CI Gate Policy
+
+| Gate | Required | Duration |
+|---|---|---|
+| Lint (`bun run lint`) | Yes — all PRs | ~1 min |
+| Type-check + Vitest (`bun run type-check && bun run test:run`) | Yes — all PRs | ~2 min |
+| Rust tests + Clippy | Yes — all PRs | ~5 min |
+| E2E (Linux WebKit build + WebdriverIO suite) | Yes — all PRs | ~50 min total |
+
+**Merge queue:** Not yet enabled. Enable it when the project has two or more active committers — it serializes merges at the E2E bottleneck without requiring every contributor to wait on their own machine.
+
+**E2E on nightly-only:** Not recommended. The E2E suite covers core workflow and unlock/lock regressions; losing daily signal means bugs ship until the next nightly run.
+
+---
+
 ## Release Process
 
 ### Step 1: Create Release Branch
@@ -35,7 +96,7 @@ Before starting the release process:
 # Create a new branch from master
 git checkout master
 git pull
-git checkout -b release-0.1.1
+git checkout -b release-v0.1.1
 ```
 
 ### Step 2: Bump Version
@@ -81,14 +142,14 @@ git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Ca
 git commit -m "chore: bump version to 0.1.1"
 
 # Push branch
-git push origin release-0.1.1
+git push origin release-v0.1.1
 ```
 
 ### Step 5: Create Pull Request
 
 1. Go to: https://github.com/fjrevoredo/mini-diarium/pulls
 2. Click "New pull request"
-3. Base: `master` ← Compare: `release-0.1.1`
+3. Base: `master` ← Compare: `release-v0.1.1`
 4. Title: "Release v0.1.1"
 5. Add release notes in description
 6. Create and merge the PR

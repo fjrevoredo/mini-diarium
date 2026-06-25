@@ -1,9 +1,11 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
+import { createSignal } from 'solid-js';
 import { screen, fireEvent, waitFor } from '@solidjs/testing-library';
 import { save as saveDialog } from '@tauri-apps/plugin-dialog';
 import { renderWithI18n } from '../../test/i18n-test-utils';
 
 import * as tauri from '../../lib/tauri';
+import * as pdfLib from '../../lib/pdf';
 import ExportOverlay from './ExportOverlay';
 
 const mockPlugins = [
@@ -20,6 +22,11 @@ const mockExportResult = {
   file_path: '/home/user/mini-diarium-export.md',
 };
 
+const mockPrintResult = {
+  entries_exported: 5,
+  html: '<p>Test HTML</p>',
+};
+
 function renderOverlay() {
   return renderWithI18n(() => <ExportOverlay isOpen={true} onClose={() => {}} />);
 }
@@ -28,6 +35,9 @@ async function waitForPlugins() {
   await waitFor(() => {
     expect(screen.getByText('Markdown')).toBeInTheDocument();
   });
+  // Switch to file export format so tests that test the export flow find "Start Export"
+  const formatSelect = screen.getByLabelText('Format') as HTMLSelectElement;
+  fireEvent.change(formatSelect, { target: { value: 'builtin:markdown' } });
 }
 
 async function clickExport() {
@@ -35,10 +45,28 @@ async function clickExport() {
   await fireEvent.click(exportButton);
 }
 
+function ToggleWrapper() {
+  const [open, setOpen] = createSignal(true);
+  return (
+    <>
+      <button data-testid="close-ctrl" onClick={() => setOpen(false)}>
+        close
+      </button>
+      <button data-testid="open-ctrl" onClick={() => setOpen(true)}>
+        open
+      </button>
+      <ExportOverlay isOpen={open()} onClose={() => setOpen(false)} />
+    </>
+  );
+}
+
 describe('ExportOverlay', () => {
   beforeEach(() => {
     vi.spyOn(tauri, 'listExportPlugins').mockResolvedValue(mockPlugins);
     vi.spyOn(tauri, 'runExportPlugin').mockResolvedValue(mockExportResult);
+    vi.spyOn(tauri, 'printEntries').mockResolvedValue(mockPrintResult);
+    vi.spyOn(tauri, 'writePdfFile').mockResolvedValue(undefined);
+    vi.spyOn(pdfLib, 'generatePdfFromElement').mockResolvedValue([0x25, 0x50, 0x44, 0x46]);
     vi.mocked(saveDialog).mockResolvedValue('/test/export.md');
   });
 
@@ -209,5 +237,167 @@ describe('ExportOverlay', () => {
 
     const exportButton = screen.getByRole('button', { name: /Start Export/ });
     expect(exportButton).toBeDisabled();
+  });
+
+  it('generates PDF and writes to the file chosen by save dialog', async () => {
+    vi.mocked(saveDialog).mockResolvedValueOnce('/test/export.pdf');
+    renderWithI18n(() => <ExportOverlay isOpen={true} onClose={vi.fn()} />);
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: /^Print$/ })).toBeInTheDocument(),
+    );
+    fireEvent.click(screen.getByRole('button', { name: /^Print$/ }));
+    await waitFor(() => {
+      expect(tauri.printEntries).toHaveBeenCalled();
+      expect(pdfLib.generatePdfFromElement).toHaveBeenCalled();
+      expect(tauri.writePdfFile).toHaveBeenCalledWith('/test/export.pdf', expect.any(Array));
+    });
+  });
+
+  it('shows success panel after PDF is saved', async () => {
+    vi.mocked(saveDialog).mockResolvedValueOnce('/test/export.pdf');
+    renderWithI18n(() => <ExportOverlay isOpen={true} onClose={vi.fn()} />);
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: /^Print$/ })).toBeInTheDocument(),
+    );
+    fireEvent.click(screen.getByRole('button', { name: /^Print$/ }));
+    await waitFor(() => expect(screen.getByRole('status')).toBeInTheDocument());
+  });
+
+  it('does not generate PDF when save dialog is cancelled', async () => {
+    vi.mocked(saveDialog).mockResolvedValueOnce(null);
+    renderWithI18n(() => <ExportOverlay isOpen={true} onClose={vi.fn()} />);
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: /^Print$/ })).toBeInTheDocument(),
+    );
+    fireEvent.click(screen.getByRole('button', { name: /^Print$/ }));
+    await waitFor(() => expect(screen.getByRole('button', { name: /^Print$/ })).not.toBeDisabled());
+    expect(pdfLib.generatePdfFromElement).not.toHaveBeenCalled();
+    expect(tauri.writePdfFile).not.toHaveBeenCalled();
+  });
+
+  it('shows error when printEntries rejects', async () => {
+    vi.spyOn(tauri, 'printEntries').mockRejectedValueOnce(new Error('network error'));
+    renderOverlay();
+
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: /^Print$/ })).toBeInTheDocument(),
+    );
+    fireEvent.click(screen.getByRole('button', { name: /^Print$/ }));
+
+    await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument());
+  });
+
+  it('hides the print layer from users during PDF generation', async () => {
+    let layerVisibility: string | null = null;
+    vi.mocked(pdfLib.generatePdfFromElement).mockImplementationOnce(async (el) => {
+      layerVisibility = (el as HTMLElement).style.visibility;
+      return [0x25, 0x50, 0x44, 0x46];
+    });
+
+    vi.mocked(saveDialog).mockResolvedValueOnce('/test/export.pdf');
+    renderWithI18n(() => <ExportOverlay isOpen={true} onClose={vi.fn()} />);
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: /^Print$/ })).toBeInTheDocument(),
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /^Print$/ }));
+
+    await waitFor(() => {
+      expect(pdfLib.generatePdfFromElement).toHaveBeenCalled();
+      expect(layerVisibility).toBe('hidden');
+    });
+  });
+
+  it('does not call runExportPlugin when save dialog is cancelled', async () => {
+    vi.mocked(saveDialog).mockResolvedValueOnce(null);
+    renderOverlay();
+    await waitForPlugins();
+    fireEvent.click(screen.getByRole('button', { name: /Start Export/ }));
+
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: /Start Export/ })).not.toBeDisabled(),
+    );
+    expect(tauri.runExportPlugin).not.toHaveBeenCalled();
+  });
+
+  it('shows error when export plugin fails', async () => {
+    vi.spyOn(tauri, 'runExportPlugin').mockRejectedValueOnce(new Error('Export failed'));
+    renderOverlay();
+    await waitForPlugins();
+    await clickExport();
+
+    await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument());
+  });
+
+  it('shows Print / PDF as first format option and defaults to it', async () => {
+    renderOverlay();
+    await waitFor(() => {
+      expect(screen.getByText('Print / PDF')).toBeInTheDocument();
+    });
+    const formatSelect = screen.getByLabelText('Format') as HTMLSelectElement;
+    expect(formatSelect.options[0].value).toBe('print');
+    expect(formatSelect.options[0].text).toBe('Print / PDF');
+  });
+
+  it('shows Print button when print format is selected', async () => {
+    renderOverlay();
+    await waitFor(() => {
+      expect(screen.getByText('Print / PDF')).toBeInTheDocument();
+    });
+    const printButton = screen.getByRole('button', { name: /^Print$/ });
+    expect(printButton).toBeInTheDocument();
+  });
+
+  it('clears error state when the overlay is reopened', async () => {
+    vi.spyOn(tauri, 'printEntries').mockRejectedValueOnce(new Error('fail'));
+    renderWithI18n(() => <ToggleWrapper />);
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: /^Print$/ })).toBeInTheDocument(),
+    );
+    fireEvent.click(screen.getByRole('button', { name: /^Print$/ }));
+    await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument());
+
+    // Close and wait for portal to fully unmount before reopening.
+    fireEvent.click(screen.getByTestId('close-ctrl'));
+    await waitFor(() => expect(screen.queryByRole('alert')).not.toBeInTheDocument());
+
+    fireEvent.click(screen.getByTestId('open-ctrl'));
+    await waitFor(() => {
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /^Print$/ })).toBeInTheDocument();
+    });
+  });
+
+  it('clears success result when the overlay is reopened', async () => {
+    vi.mocked(saveDialog).mockResolvedValueOnce('/test/export.pdf');
+    renderWithI18n(() => <ToggleWrapper />);
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: /^Print$/ })).toBeInTheDocument(),
+    );
+    fireEvent.click(screen.getByRole('button', { name: /^Print$/ }));
+    // After a successful export the Print button is hidden by <Show when={!result()}>.
+    await waitFor(() =>
+      expect(screen.queryByRole('button', { name: /^Print$/ })).not.toBeInTheDocument(),
+    );
+
+    // Close and reopen.
+    fireEvent.click(screen.getByTestId('close-ctrl'));
+    fireEvent.click(screen.getByTestId('open-ctrl'));
+
+    // Print button reappearing proves createEffect cleared result() on reopen,
+    // because Print is only rendered when result() is null.
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: /^Print$/ })).toBeInTheDocument(),
+    );
+  });
+
+  it('Cancel button calls onClose', async () => {
+    const onClose = vi.fn();
+    renderWithI18n(() => <ExportOverlay isOpen={true} onClose={onClose} />);
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: /^Cancel$/ })).toBeInTheDocument(),
+    );
+    fireEvent.click(screen.getByRole('button', { name: /^Cancel$/ }));
+    expect(onClose).toHaveBeenCalled();
   });
 });

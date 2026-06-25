@@ -102,6 +102,11 @@ export default function EditorPanel() {
     const ed = editorInstance();
     if (!ed || ed.isDestroyed || hasFocusedEditorOnUnlock()) return;
     requestAnimationFrame(() => {
+      // Re-check teardown state: the editor can be destroyed between scheduling and
+      // firing this callback (e.g. a lock resets hasFocusedEditorOnUnlock, re-running
+      // this effect, then tears the editor down before the frame runs). A destroyed
+      // editor has commandManager === null, so ed.commands.focus() would throw.
+      if (ed.isDestroyed || editorInstance() !== ed) return;
       if (!hasFocusedEditorOnUnlock()) {
         ed.commands.focus('end');
         setHasFocusedEditorOnUnlock(true);
@@ -152,7 +157,7 @@ export default function EditorPanel() {
 
   const handleTitleEnter = () => {
     const editor = editorInstance();
-    if (editor) {
+    if (editor && !editor.isDestroyed) {
       editor.commands.focus('end');
     }
   };

@@ -3,6 +3,10 @@
 Archived completed items moved out of [TODO.md](TODO.md). This keeps the active backlog focused on open work while preserving the original task notes.
 
 ## Completed
+- [x] **TODO-0026: Full-text search across diary entries** (2026-06-19) — implement a secure, performant full-text search that scans all diary entries for words or phrases without storing plaintext on disk or loading all entries into memory; the old SQLite FTS approach was removed because it exposed plaintext; design a solution that preserves encryption at rest while providing reasonable search performance
+
+- [x] **TODO-0012: PDF export** (2026-06-10) — convert journal entries to PDF (A4); likely via Tauri webview printing
+
 - [x] **TODO-0048: Verify and document local dev Docker for website** (2026-06-04) — verify that the local development Docker setup (`website/docker-compose.yml` and related files) still works correctly for building and previewing the website; document the exact steps in `website/CLAUDE.md` (or the most specific agent-facing docs file) so any agent can reliably spin up the local dev environment to verify meaningful website changes; include commands for build, serve, and common troubleshooting if the container fails to start
 
 - [x] **TODO-0047: Website docs layout and visual audit** (2026-06-04) — the internal docs pages (`website/docs/`) render with an overly narrow content column that wastes horizontal screen space on desktop viewports; audit the CSS layout (source in `website/css/style.css` and generated output) to increase the max content width or adjust the container so text and code blocks use a reasonable portion of the viewport; simultaneously review every docs page under `website/docs-src/` to determine where screenshots or inline images would improve clarity, and decide which pages actually need visuals versus which are text-only; tracked in GitHub issue #153
