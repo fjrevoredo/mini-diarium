@@ -136,7 +136,8 @@ fn create_schema(conn: &Connection) -> Result<(), String> {
             word_count INTEGER DEFAULT 0,
             date_created TEXT NOT NULL,
             date_updated TEXT NOT NULL,
-            entry_metadata_encrypted BLOB
+            entry_metadata_encrypted BLOB,
+            preview_enc BLOB
         );
         CREATE INDEX IF NOT EXISTS idx_entries_date ON entries(date);
 

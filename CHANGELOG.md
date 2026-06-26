@@ -35,6 +35,11 @@ Template:
 ### Added
 - **Nix flake packaging**: Mini Diarium can now be built and installed directly from this repository on NixOS and any Linux system with Nix Flakes enabled (`x86_64-linux`, `aarch64-linux`). Supports three integration styles: bare package, NixOS module (`programs.mini-diarium.enable = true`), and Home Manager module. An overlay (`overlays.default`) is also exported for custom configurations. Try it without installing with `nix run github:fjrevoredo/mini-diarium`. Contributed by [@tyler274](https://github.com/tyler274) via [#159](https://github.com/fjrevoredo/mini-diarium/pull/159) (integrated manually).
 
+### Internal
+- **Schema v12 — encrypted timeline previews**: added `preview_enc BLOB` (nullable, AES-256-GCM) to the `entries` table; `insert_entry` and `update_entry` now store an encrypted 200-character plaintext preview (HTML-stripped, entity-decoded) using a dedicated `"entry_preview"` key context. `get_entries_for_timeline` reads only `title_encrypted` and `preview_enc` per row; a `CASE WHEN preview_enc IS NOT NULL THEN NULL ELSE text_encrypted END` expression avoids transferring full entry bodies from SQLite on every timeline open. Legacy entries (`preview_enc IS NULL`) fall back to full-text decryption until the next save.
+- **Timeline test coverage**: added `scripts/**` to vitest `test.exclude` and `coverage.exclude` (fixes `bun run test:coverage` failing due to `node:test` in `sync-skills.js`); added `Timeline` component tests for the entry-click navigation handler and the untitled-title fallback branch.
+- **Testid doc**: recorded `timeline-toggle-button` in the canonical `data-testid` attribute table in `src/CLAUDE.md`.
+
 ### Fixed
 - **Locale-aware font family sort**: font family names are now sorted with `localeCompare` instead of the default Unicode code-point order, which produced incorrect results for non-ASCII family names.
 - **Keyboard accessibility for link tooltip**: the link tooltip in the editor now appears and disappears on keyboard focus and blur in addition to mouse hover, making hyperlink previews reachable without a pointer device.

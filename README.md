@@ -223,6 +223,7 @@ Thanks to everyone who has contributed code, translations, or improvements to Mi
 <a href="https://github.com/albanobattistella"><img src="https://github.com/albanobattistella.png?size=40" width="40" height="40" alt="albanobattistella" /></a>
 <a href="https://github.com/tyler274"><img src="https://github.com/tyler274.png?size=40" width="40" height="40" alt="tyler274" /></a>
 <a href="https://github.com/bronty13"><img src="https://github.com/bronty13.png?size=40" width="40" height="40" alt="bronty13" /></a>
+<a href="https://github.com/kenlacroix"><img src="https://github.com/kenlacroix.png?size=40" width="40" height="40" alt="kenlacroix" /></a>
 
 ## Star History
 

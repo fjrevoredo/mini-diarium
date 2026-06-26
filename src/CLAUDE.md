@@ -162,6 +162,7 @@ These are used by E2E tests — **do not remove** from components.
 | `PasswordPrompt.tsx` | Unlock submit button | `unlock-journal-button` |
 | `Header.tsx` | Sidebar toggle (hamburger) | `toggle-sidebar-button` |
 | `Header.tsx` | Lock button | `lock-journal-button` |
+| `Header.tsx` | Timeline toggle button | `timeline-toggle-button` |
 | `TitleEditor.tsx` | Title input | `title-input` |
 | `Calendar.tsx` | Each day button | `calendar-day-YYYY-MM-DD` |
 | `EntryNavBar.tsx` | Nav bar container | `entry-nav-bar` |

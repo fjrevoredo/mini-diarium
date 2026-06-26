@@ -1,4 +1,5 @@
 mod v10_to_v11;
+mod v11_to_v12;
 mod v1_to_v2;
 mod v2_to_v3;
 mod v3_to_v4;
@@ -15,7 +16,7 @@ pub(crate) use v2_to_v3::migrate_v2_to_v3;
 use crate::db::schema::DatabaseConnection;
 use rusqlite::Connection;
 
-/// Applies all pending DDL-only migrations (v3→v4 through v9→v10) in order.
+/// Applies all pending DDL-only migrations (v3→v4 through v11→v12) in order.
 ///
 /// This covers the idempotent, transactionally-safe migrations. The v1→v2 and
 /// v2→v3 migrations have different signatures (require paths and password) and
@@ -29,6 +30,7 @@ pub(crate) fn apply_pending(db: &DatabaseConnection) -> Result<(), String> {
     v8_to_v9::migrate_v8_to_v9(db)?;
     v9_to_v10::migrate_v9_to_v10(db)?;
     v10_to_v11::migrate_v10_to_v11(db)?;
+    v11_to_v12::migrate_v11_to_v12(db)?;
     Ok(())
 }
 
@@ -75,7 +77,7 @@ mod tests {
     use rusqlite::Connection;
 
     #[test]
-    fn test_apply_pending_advances_v3_to_v11() {
+    fn test_apply_pending_advances_v3_to_v12() {
         // Minimal v3 schema: schema_version=3, entries (old style), auth_slots
         // entries_fts is absent — migrate_v3_to_v4 uses DROP TABLE IF EXISTS
         let conn = Connection::open_in_memory().unwrap();
@@ -112,7 +114,7 @@ mod tests {
             .conn()
             .query_row("SELECT version FROM schema_version", [], |row| row.get(0))
             .unwrap();
-        assert_eq!(version, 11, "apply_pending must advance schema to v11");
+        assert_eq!(version, 12, "apply_pending must advance schema to v12");
 
         let table_count: i64 = db
             .conn()
@@ -153,6 +155,19 @@ mod tests {
         assert_eq!(
             thumb_col_count, 6,
             "all thumbnail metadata columns must exist after apply_pending"
+        );
+
+        let preview_col_exists: i64 = db
+            .conn()
+            .query_row(
+                "SELECT COUNT(*) FROM pragma_table_info('entries') WHERE name='preview_enc'",
+                [],
+                |row| row.get(0),
+            )
+            .unwrap();
+        assert_eq!(
+            preview_col_exists, 1,
+            "preview_enc must exist on entries after apply_pending"
         );
     }
 }

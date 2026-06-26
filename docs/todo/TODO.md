@@ -13,7 +13,7 @@ TODO entry format:
 - After creating a new TODO, update the `Latest TODO ID` marker to reflect the new highest ID
 - Use the `todo-manager` skill (`.agents/skills/todo-manager/`) for creation, tracking, archival, and validation
 
-**Latest TODO ID: TODO-0053** — next new TODO should be TODO-0054
+**Latest TODO ID: TODO-0057** — next new TODO should be TODO-0058
 
 ---
 
@@ -60,3 +60,5 @@ TODO entry format:
 - [ ] **TODO-0052: ExportOverlay: unit test for `img.decode()` timing before `print()`** — the current unit tests for `handlePrint` use a mock that returns HTML with no `<img>` tags, so the `img.decode()` await path is never exercised; add a test that injects mock images into the print HTML, stubs `HTMLImageElement.prototype.decode`, and asserts decode is awaited before `globalThis.print()` is called
 - [ ] **TODO-0049: Replace `navigator.platform` with `navigator.userAgentData`** — `navigator.platform` is deprecated; replace with `(navigator.userAgentData?.platform ?? navigator.platform ?? '').toLowerCase()` and update the `isMac` check accordingly; one call site: `src/components/editor/extensions/LinkWithDialog.ts` (`getLinkOpenShortcutLabel`); no behavioral change expected — Tauri WebViews support both APIs
 - [ ] **TODO-0039: Re-evaluate `glib` Dependabot alert when Tauri upgrades webkit2gtk bindings** — Dependabot alert #6 (`glib 0.18.5`, medium) was dismissed as a tolerated risk: the vulnerability is in `glib::VariantStrIter` (Linux-only, UB via unsound iterator impl), the app has zero direct `glib` usage, and upgrading requires `gtk 0.20` + `webkit2gtk 2.1.x` Rust bindings that do not yet exist in a Tauri-compatible release; re-evaluate when Tauri ships a `wry` version that pulls in `gtk-rs 0.20`-based webkit2gtk bindings
+- [ ] **TODO-0056: Split `db/queries/entries.rs` into submodules** — the file is at ~1700 lines, exceeding the 650-line hard limit for query modules; extract timeline-specific code (`TIMELINE_PREVIEW_CHARS`, `preview_from_html`, `TimelineRow`, `get_entries_for_timeline`) into `db/queries/entries/timeline.rs` as a first step, then plan a full split of CRUD operations and their tests across `insert`, `update`, `delete`, and `read` submodules to bring the main module below the limit
+- [ ] **TODO-0057: Split `src/lib/tauri.ts` below the 500-line hard limit** — file is at ~510 lines, 10 lines over the hard limit for Tauri boundary files; extract the largest command groups (entries, auth, export) into namespaced sub-files re-exported from a barrel, or trim enough of the largest groups to bring the single file below the limit

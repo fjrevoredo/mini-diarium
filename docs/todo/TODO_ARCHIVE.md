@@ -3,6 +3,10 @@
 Archived completed items moved out of [TODO.md](TODO.md). This keeps the active backlog focused on open work while preserving the original task notes.
 
 ## Completed
+- [x] **TODO-0055: Optimize `get_timeline_entries` to avoid full-text decryption** (2026-06-26) — the current implementation calls `get_all_entries` (full in-memory decryption of every entry's `text` field) to build 200-char previews; for large journals this is O(n) decryptions on every timeline open and on every add/delete; investigate storing or caching a pre-computed preview that does not require re-decrypting the full entry on each request, without writing any plaintext to disk
+
+- [x] **TODO-0054: Add `timeline-toggle-button` testid to `src/CLAUDE.md` E2E table** (2026-06-26) — the `data-testid="timeline-toggle-button"` attribute added to `Header.tsx` in PR #173 is not yet listed in the canonical testid table in `src/CLAUDE.md`; add the entry so E2E tests do not have to hunt for it when timeline E2E coverage is written
+
 - [x] **TODO-0026: Full-text search across diary entries** (2026-06-19) — implement a secure, performant full-text search that scans all diary entries for words or phrases without storing plaintext on disk or loading all entries into memory; the old SQLite FTS approach was removed because it exposed plaintext; design a solution that preserves encryption at rest while providing reasonable search performance
 
 - [x] **TODO-0012: PDF export** (2026-06-10) — convert journal entries to PDF (A4); likely via Tauri webview printing
