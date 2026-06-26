@@ -6,6 +6,18 @@ use crate::commands::auth::{with_unlocked_db, DiaryState};
 use crate::db::queries;
 #[cfg(feature = "experimental")]
 use tauri::State;
+#[cfg(feature = "experimental")]
+use unicode_normalization::char::is_combining_mark;
+#[cfg(feature = "experimental")]
+use unicode_normalization::UnicodeNormalization;
+
+/// Case- and accent-fold one char: lowercase, NFD-decompose, drop combining marks.
+/// Per-char NFD is sufficient for accent stripping — we discard all combining marks,
+/// so canonical reordering across chars is irrelevant.
+#[cfg(feature = "experimental")]
+fn fold_char(ch: char) -> impl Iterator<Item = char> {
+    ch.to_lowercase().nfd().filter(|c| !is_combining_mark(*c))
+}
 
 #[derive(Debug, Clone, Serialize)]
 pub struct SearchResult {
@@ -90,12 +102,12 @@ fn matches_all(title_lc: &str, text_lc: &str, terms: &[String]) -> bool {
         .all(|t| title_lc.contains(t.as_str()) || text_lc.contains(t.as_str()))
 }
 
-/// Split a query into deduped, case-folded terms.
+/// Split a query into deduped, case- and accent-folded terms.
 #[cfg(feature = "experimental")]
 fn normalize_terms(query: &str) -> Vec<String> {
     let mut terms: Vec<String> = Vec::new();
     for raw in query.split_whitespace() {
-        let folded: String = raw.chars().flat_map(|c| c.to_lowercase()).collect();
+        let folded: String = raw.chars().flat_map(fold_char).collect();
         if !folded.is_empty() && !terms.contains(&folded) {
             terms.push(folded);
         }
@@ -122,19 +134,21 @@ fn strip_html(s: &str) -> String {
     out
 }
 
-/// Lowercase a string while recording, for each byte of the lowered output, the byte
-/// offset of the originating char in the source. A trailing sentinel maps `lowered.len()`
-/// back to `src.len()` so a match end never indexes out of range.
+/// Case- and accent-fold a string while recording, for each byte of the folded output,
+/// the byte offset of the originating char in the source. A trailing sentinel maps
+/// `folded.len()` back to `src.len()` so a match end never indexes out of range.
 ///
-/// This is what makes snippet offsets correct: `char::to_lowercase()` can change byte
-/// length (e.g. 'İ'), so a `find()` offset in the lowered string is not a valid index
-/// into the original without this map.
+/// This is what makes snippet offsets correct: folding (lowercasing + NFD accent
+/// stripping) can change byte length (e.g. 'İ', or 'é' → 'e'), so a `find()` offset in
+/// the folded string is not a valid index into the original without this map. Each folded
+/// byte still maps to its originating source char's start offset, so `build_snippet` can
+/// slice the original (accented) text around a match.
 #[cfg(feature = "experimental")]
 fn lower_with_map(src: &str) -> (String, Vec<usize>) {
     let mut lowered = String::with_capacity(src.len());
     let mut map: Vec<usize> = Vec::with_capacity(src.len() + 1);
     for (idx, ch) in src.char_indices() {
-        for lc in ch.to_lowercase() {
+        for lc in fold_char(ch) {
             let mut buf = [0u8; 4];
             let encoded = lc.encode_utf8(&mut buf);
             for _ in 0..encoded.len() {
@@ -299,5 +313,31 @@ mod impl_tests {
         let (lc, map) = lower_with_map("nothing here");
         let terms = normalize_terms("rust");
         assert!(build_snippet("nothing here", &lc, &map, &terms).is_none());
+    }
+
+    #[test]
+    fn normalize_terms_folds_accents() {
+        // Case + accent folding collapse all three spellings into one deduped term.
+        assert_eq!(normalize_terms("Café CAFÉ cafe"), vec!["cafe".to_string()]);
+    }
+
+    #[test]
+    fn lower_with_map_strips_accents_and_keeps_map() {
+        // 'é' is 2 bytes at source idx 3; it folds to the 1-byte 'e' mapping back to 3.
+        // Sentinel == src.len() == 5.
+        let (lc, map) = lower_with_map("Café");
+        assert_eq!(lc, "cafe");
+        assert_eq!(map, vec![0, 1, 2, 3, 5]);
+    }
+
+    #[test]
+    fn snippet_matches_and_highlights_accented_original() {
+        // An unaccented query matches accented text, and the snippet preserves the
+        // original accented characters inside the <mark> (must not panic).
+        let text = "I love Café au lait";
+        let (lc, map) = lower_with_map(text);
+        let terms = normalize_terms("cafe");
+        let snip = build_snippet(text, &lc, &map, &terms).unwrap();
+        assert!(snip.contains("<mark>Café</mark>"));
     }
 }

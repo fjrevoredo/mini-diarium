@@ -121,7 +121,7 @@ vi.mock('../editor/DiaryEditor', () => {
 // ── Import-after-mock ─────────────────────────────────────────────────────────
 
 import EditorPanel from './EditorPanel';
-import { setSelectedDate } from '../../state/ui';
+import { setSelectedDate, selectedEntryId, setSelectedEntryId } from '../../state/ui';
 import { setIsSaving } from '../../state/entries';
 import { setHasFocusedEditorOnUnlock } from '../../state/session';
 
@@ -179,6 +179,8 @@ describe('EditorPanel integration', () => {
   afterEach(() => {
     vi.useRealTimers();
     setIsSaving(false);
+    // Deep-link target is a module-global signal; clear it between tests.
+    setSelectedEntryId(null);
   });
 
   it('load-then-type: loads existing entry and debounced-saves a keystroke edit', async () => {
@@ -416,6 +418,98 @@ describe('EditorPanel integration', () => {
     await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument());
     expect(screen.getByText('permission denied')).toBeInTheDocument();
     expect(mocks.saveEntry).not.toHaveBeenCalled();
+  });
+
+  it('deep-link-found: opens the requested entry within the day, not the newest, and clears the target', async () => {
+    // Backend returns newest-first: [id 20 'Newest', id 10 'Older'].
+    // fetchEntriesOrdered reverses → [id 10 (idx 0, button 1), id 20 (idx 1, button 2, newest)].
+    const newest = makeEntry({ id: 20, title: 'Newest', text: '<p>Newest</p>' });
+    const older = makeEntry({ id: 10, title: 'Older', text: '<p>Older</p>' });
+    mocks.getEntriesForDate.mockResolvedValue([newest, older]);
+
+    // Deep-link to the non-newest entry BEFORE mount so loadEntriesForDate consumes it.
+    setSelectedEntryId(10);
+
+    renderWithI18n(() => <EditorPanel />);
+    await waitFor(() => expect(mocks.getEntriesForDate).toHaveBeenCalledWith('2026-04-23'));
+    await flushMicrotasks();
+
+    // Editor landed on the deep-linked entry (idx 0 / button 1), not the day's newest.
+    await waitFor(() =>
+      expect((screen.getByTestId('title-input') as HTMLInputElement).value).toBe('Older'),
+    );
+    expect(screen.getByTestId('entry-number-button-1').getAttribute('aria-current')).toBe('true');
+    expect(screen.getByTestId('entry-number-button-2').getAttribute('aria-current')).toBeNull();
+    // One-shot: the target was cleared once consumed.
+    expect(selectedEntryId()).toBeNull();
+  });
+
+  it('deep-link-not-found: falls back to the day newest when the target id is absent', async () => {
+    const newest = makeEntry({ id: 20, title: 'Newest', text: '<p>Newest</p>' });
+    const older = makeEntry({ id: 10, title: 'Older', text: '<p>Older</p>' });
+    mocks.getEntriesForDate.mockResolvedValue([newest, older]);
+
+    // Target id not present in this day → fallback to the newest (idx length-1).
+    setSelectedEntryId(999);
+
+    renderWithI18n(() => <EditorPanel />);
+    await waitFor(() => expect(mocks.getEntriesForDate).toHaveBeenCalledWith('2026-04-23'));
+    await flushMicrotasks();
+
+    await waitFor(() =>
+      expect((screen.getByTestId('title-input') as HTMLInputElement).value).toBe('Newest'),
+    );
+    expect(screen.getByTestId('entry-number-button-2').getAttribute('aria-current')).toBe('true');
+    // Still cleared even though there was no match.
+    expect(selectedEntryId()).toBeNull();
+  });
+
+  it('same-day deep-link: navigates within the already-open date and clears the target', async () => {
+    // Two entries on the open date; initial load settles on the newest (id 20).
+    const newest = makeEntry({ id: 20, title: 'Newest', text: '<p>Newest</p>' });
+    const older = makeEntry({ id: 10, title: 'Older', text: '<p>Older</p>' });
+    mocks.getEntriesForDate.mockResolvedValue([newest, older]);
+
+    renderWithI18n(() => <EditorPanel />);
+    await waitFor(() => expect(mocks.getEntriesForDate).toHaveBeenCalledWith('2026-04-23'));
+    await flushMicrotasks();
+    // Settled on the newest (button 2).
+    await waitFor(() =>
+      expect((screen.getByTestId('title-input') as HTMLInputElement).value).toBe('Newest'),
+    );
+
+    // Deep-link to another entry on the SAME date — the date effect won't re-fire, so the
+    // same-day effect (EditorPanel.tsx:103) drives navigation via nav.navigateToEntry.
+    setSelectedEntryId(10);
+    await flushMicrotasks();
+
+    await waitFor(() =>
+      expect((screen.getByTestId('title-input') as HTMLInputElement).value).toBe('Older'),
+    );
+    expect(screen.getByTestId('entry-number-button-1').getAttribute('aria-current')).toBe('true');
+    expect(selectedEntryId()).toBeNull();
+  });
+
+  it('same-day deep-link: a cross-date id no-ops and is left for loadEntriesForDate', async () => {
+    const newest = makeEntry({ id: 20, title: 'Newest', text: '<p>Newest</p>' });
+    const older = makeEntry({ id: 10, title: 'Older', text: '<p>Older</p>' });
+    mocks.getEntriesForDate.mockResolvedValue([newest, older]);
+
+    renderWithI18n(() => <EditorPanel />);
+    await waitFor(() => expect(mocks.getEntriesForDate).toHaveBeenCalledWith('2026-04-23'));
+    await flushMicrotasks();
+    await waitFor(() =>
+      expect((screen.getByTestId('title-input') as HTMLInputElement).value).toBe('Newest'),
+    );
+
+    // An id not in the current day's entries: the same-day effect finds idx < 0 and no-ops,
+    // leaving the signal set for a future loadEntriesForDate to consume.
+    setSelectedEntryId(777);
+    await flushMicrotasks();
+
+    // Still on the newest; the target was NOT cleared by the same-day effect.
+    expect((screen.getByTestId('title-input') as HTMLInputElement).value).toBe('Newest');
+    expect(selectedEntryId()).toBe(777);
   });
 
   it('focus-on-unlock: does not focus an editor destroyed between scheduling and the frame', async () => {
