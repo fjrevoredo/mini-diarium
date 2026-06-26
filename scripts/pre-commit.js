@@ -106,9 +106,9 @@ async function main() {
     results.failed.push('UI Error Sanitization');
   }
 
-  // 5. Frontend Tests
+  // 5. Frontend Tests (with coverage)
   header('Frontend Tests');
-  const frontendTest = run('bun run test:run', 'Running tests');
+  const frontendTest = run('bun run test:coverage', 'Running tests with coverage');
   if (frontendTest.success) {
     success('All frontend tests passed');
     results.passed.push('Frontend Tests');
@@ -117,17 +117,35 @@ async function main() {
     results.failed.push('Frontend Tests');
   }
 
-  // 6. Backend Tests (Rust)
+  // 6. Backend Tests (Rust) — with coverage when cargo-llvm-cov is available
   header('Backend Tests (Rust)');
   const cargoPath = 'src-tauri';
   if (existsSync(cargoPath)) {
-    const backendTest = run('cargo test --quiet', 'Running Rust tests', { cwd: cargoPath });
-    if (backendTest.success) {
-      success('All backend tests passed');
-      results.passed.push('Backend Tests');
+    const hasCov = run('cargo llvm-cov --version', 'Checking cargo-llvm-cov', { silent: true });
+    if (hasCov.success) {
+      const backendCov = run(
+        'cargo llvm-cov nextest --lcov --output-path lcov.info',
+        'Running Rust tests with coverage',
+        { cwd: cargoPath },
+      );
+      if (backendCov.success) {
+        success('All backend tests passed (coverage written)');
+        results.passed.push('Backend Tests');
+      } else {
+        error('Backend tests failed');
+        results.failed.push('Backend Tests');
+      }
     } else {
-      error('Backend tests failed');
-      results.failed.push('Backend Tests');
+      warning('cargo-llvm-cov not installed — running plain cargo test (backend coverage skipped)');
+      results.warnings.push('Backend coverage skipped (install cargo-llvm-cov for patch gating)');
+      const backendTest = run('cargo test --quiet', 'Running Rust tests', { cwd: cargoPath });
+      if (backendTest.success) {
+        success('All backend tests passed');
+        results.passed.push('Backend Tests');
+      } else {
+        error('Backend tests failed');
+        results.failed.push('Backend Tests');
+      }
     }
   } else {
     warning('Backend directory not found, skipping');
@@ -171,6 +189,24 @@ async function main() {
   //   error('Build failed');
   //   results.failed.push('Build');
   // }
+
+  // 9. Patch Coverage (local Codecov mirror — fails if <80% of new/changed lines)
+  header('Patch Coverage (Codecov mirror)');
+  const hasFrontendCov = existsSync('coverage/lcov.info');
+  const hasBackendCov = existsSync('src-tauri/lcov.info');
+  if (!hasFrontendCov && !hasBackendCov) {
+    warning('No lcov files found — skipping patch coverage gate');
+    results.warnings.push('Patch coverage skipped (no lcov)');
+  } else {
+    const gate = run('node scripts/check-diff-coverage.mjs --working-tree', 'Diff coverage >= 80%');
+    if (gate.success) {
+      success('Patch coverage meets 80% threshold');
+      results.passed.push('Patch Coverage');
+    } else {
+      error('Patch coverage below 80% — add tests for the uncovered new lines listed above');
+      results.failed.push('Patch Coverage');
+    }
+  }
 
   // Summary
   console.log();

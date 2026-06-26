@@ -30,6 +30,7 @@ Thumbs.db
 
 # Coverage
 coverage/
+lcov.info
 
 # Test artifacts
 *.db

@@ -155,6 +155,12 @@ cmd.exe /c bun run diagrams             # Regenerate all docs/diagrams/ SVGs
 # Benchmarks
 cargo bench --manifest-path src-tauri/Cargo.toml
 cmd.exe /c bun run bench
+
+# Coverage — local mirror of Codecov's patch check (≥80% of new/changed lines vs origin/master)
+cmd.exe /c bun run coverage:diff            # gate existing lcov files (see Gotcha #6)
+cmd.exe /c bun run coverage:check           # generate coverage (--generate), then gate
+cmd.exe /c bun run coverage:self-test       # parser self-test
+# `bun run pre-commit` runs the gate too (step 9, --working-tree) after generating both lcov files.
 ```
 
 ## Gotchas and Pitfalls
@@ -183,6 +189,8 @@ cmd.exe /c bun run bench
    Common failures and their usual causes:
    - **`new_duplicated_lines_density` > 3%**: copy-pasted test helpers or fixture objects — extract to a shared constant/function in the same file.
    - **`new_coverage` < threshold**: new logic in a file that `generatePdfFromElement`-style functions (html2canvas/jsPDF) can't be tested in JSDOM — mock the module boundary instead.
+
+6. **Codecov patch check — mirror it locally before pushing**: CI uploads `coverage/lcov.info` (frontend) and `src-tauri/lcov.info` (backend) to Codecov, which enforces `patch ≥ 80%` (new/changed lines) and `project: auto` (no total regression) per `codecov.yml`. The Vitest thresholds in `vitest.config.ts` are a coarse frontend-only global floor and do **not** catch patch/project failures — you can pass locally and still fail Codecov. Run the local mirror: `cmd.exe /c bun run coverage:diff` (`scripts/check-diff-coverage.mjs`) consumes the same lcov files + `git diff origin/master`, fails below 80%, and lists every uncovered new line as `file:line`. This mirrors the **patch** check (the most common CI failure); the **project** total-regression check needs a base-branch coverage baseline and is not replicated locally. The gate now also runs as step 9 of `bun run pre-commit` (via `--working-tree`, so it checks not-yet-committed changes against `origin/master`); that run generates both lcov files by running the frontend/backend tests with coverage. Frontend lcov comes from `bun run test:coverage`; backend lcov requires `cargo-llvm-cov` + `cargo-nextest` (`cargo install cargo-llvm-cov cargo-nextest --locked`) via `cargo llvm-cov nextest --lcov --output-path lcov.info` from `src-tauri/`. Flags: `--generate` (run both), `--base <ref>`, `--fail-under <pct>`, `--no-fail`, `--frontend`/`--backend`. See [CI Best Practices → Coverage Gating](docs/best-practices/CI_BEST_PRACTICES.md#coverage-gating).
 
 ## Security Rules
 

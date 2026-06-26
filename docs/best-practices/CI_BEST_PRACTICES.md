@@ -304,6 +304,29 @@ Run all static checks in a **single `lint` job** to share toolchain and cache ov
 
 ---
 
+## Coverage Gating
+
+Don't discover coverage failures only on CI. A global coverage threshold (e.g. "≥70% overall") catches gross regressions but misses the two checks coverage services actually enforce on PRs:
+
+- **Patch coverage** — new/modified lines in the diff must be ≥ N% covered (typically 80%).
+- **Project regression** — total coverage must not drop vs the base branch.
+
+Both are computed from the diff against the base branch, so a suite that passes a global floor can still fail them. Mirror them locally with the same coverage artifact CI uploads (lcov) plus the diff against the merge-base:
+
+```bash
+# Compute patch coverage over new/changed lines, fail below threshold
+diff-cover coverage/lcov.info --compare-branch=origin/main --fail-under=80
+```
+
+- **Reuse the exact lcov CI uploads** — local and CI numbers then match
+- **Compare against the merge-base**, not `HEAD`, so only PR-side changes count
+- **Run it as a pre-push gate**, not every commit — full coverage runs are slow
+- **Surface uncovered new lines as `file:line`** so the fix is actionable, not just a percentage
+
+> Mini Diarium: `bun run coverage:diff` (`scripts/check-diff-coverage.mjs`) implements this gate dependency-free over both `coverage/lcov.info` and `src-tauri/lcov.info`; threshold defaults to 80 to match `codecov.yml`. See root `CLAUDE.md` Gotcha #6.
+
+---
+
 ## CI vs Release Build Profiles
 
 Use environment variables to tune build behavior — don't maintain separate config files:
