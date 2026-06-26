@@ -162,7 +162,7 @@ For the full list of known limitations, deliberate tradeoffs, and technical debt
 
 - Concurrent access to the same journal file is not supported (by design)
 - No password recovery — losing all credentials is permanent (by design)
-- Full-text search is not available — removed in v0.2.0 because the FTS index stored plaintext, defeating encryption
+- Full-text search runs as an in-memory scan over decrypted entries (added back after the v0.2.0 FTS removal); nothing searchable is written to disk
 - Importing the same file twice creates duplicate entries (no deduplication)
 - Plugin changes require an app restart to take effect
 

@@ -29,12 +29,14 @@ If you lose all registered credentials (password forgotten and key file deleted)
 
 ---
 
-### KI-3 — No full-text search
+### KI-3 — Search is an in-memory scan (no persistent index)
 **Status:** By design (security tradeoff)
 
-Full-text search was removed in v0.2.0 (schema v4) because the SQLite FTS5 table stored entry content in plaintext, creating an unencrypted copy of diary content alongside the encrypted entries. This defeated the AES-256-GCM encryption for the purpose of local file access protection.
+Full-text search was originally a SQLite FTS5 table, removed in v0.2.0 (schema v4) because it stored entry content in plaintext, creating an unencrypted copy of diary content alongside the encrypted entries. This defeated the AES-256-GCM encryption for the purpose of local file access protection.
 
-Search infrastructure is preserved (stub command, frontend state, components) for a future implementation that operates without plaintext on disk. Any future implementation must encrypt the index or rebuild it in memory at unlock time. See CLAUDE.md "Implementing Search" for the full design constraints.
+Search was reintroduced as an in-memory scan: each query decrypts entries (via the same decrypt path used by export/stats), matches case- and accent-folded terms, and discards everything — no plaintext is ever written to disk. The tradeoff is that the scan is O(n) over all entries per query (debounced 500 ms on the client, capped at 200 results), which is acceptable for the personal-journal scale this app targets but is not a constant-time indexed lookup.
+
+The `// Search index hook:` comments in `db/queries/entries/{insert,update,delete}.rs` and `commands/import.rs` mark where a future encrypted index would plug in if performance ever demands it. See `src-tauri/CLAUDE.md` "Search" for the full design constraints.
 
 ---
 

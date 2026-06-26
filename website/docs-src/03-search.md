@@ -1,24 +1,31 @@
 ---
 title: Search
 slug: search
-description: Full-text search is not yet available in Mini Diarium due to its encryption model. Use the calendar, Go to Date shortcut, or export to find past entries.
+description: Mini Diarium has full-text search across all encrypted entries. Learn how to find past entries with the search overlay and keyboard shortcut, and how searching stays fully encrypted and offline.
 order: 4
-updated: 2026-06-04
-tags: search, find, full-text
+updated: 2026-06-26
+tags: search, find, full-text, encrypted
 ---
 
-## Current Status
+## Search Your Entries
 
-Full-text search is not available in the current version of Mini Diarium. It will be added in a future release.
+Mini Diarium includes full-text search across every entry in the current journal. Open the search overlay from the magnifier button in the header, or press **Ctrl+F** (Cmd+F on macOS). Type a few words and matching entries appear, newest first, with the matching text highlighted in a short snippet.
 
-## Why Search Is Not Yet Available
+Clicking a result jumps straight to that entry in the editor, even on a day that holds several entries.
 
-Mini Diarium stores all entries encrypted at rest using AES-256-GCM. Building a search index that works without decrypting entries on disk requires a different architectural approach — one that is being designed carefully to avoid storing any searchable plaintext that could be read without your password.
+## How Search Works Without Compromising Encryption
 
-The search interface (including the search bar and result display components) is already present in the UI and will be populated when the feature is complete.
+Mini Diarium stores every entry encrypted at rest with AES-256-GCM. Search does **not** keep a separate plaintext index on disk, because that would expose your writing to anyone with access to the file.
 
-## Finding Entries in the Meantime
+Instead, when you run a search the app decrypts your entries in memory, scans them, and discards everything when it is done. Nothing searchable is ever written to disk, and the search never makes a network request. It is as private as reading the entries yourself.
 
-Until full-text search is available, you can navigate to a specific date using the calendar or the **Go to Date** dialog (`Ctrl+G`). If you remember roughly when you wrote something, browsing the calendar is often sufficient.
+Search is case- and accent-insensitive: typing "cafe" will match "Café", and "RUST" will match "rust". Multiple words use AND semantics, so every word must appear in the title or body of an entry for it to match.
 
-You can also export your journal to Markdown or JSON and use your operating system's file search tools on the exported files. Exported files are not encrypted.
+## Other Ways to Find Entries
+
+Search is fastest when you remember specific words. When you only remember roughly when you wrote something, these alternatives help:
+
+- **Calendar** in the sidebar, for browsing by date.
+- **Go to Date** dialog with Ctrl+G (Cmd+G on macOS), to jump to a known date.
+- **Timeline** view (toggled from the header), a chronological list of every entry with previews.
+- **Export** to Markdown or JSON and use your operating system's file search. Exported files are not encrypted, so do this only on a trusted device.

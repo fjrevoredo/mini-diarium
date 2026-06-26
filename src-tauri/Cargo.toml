@@ -45,7 +45,7 @@ rhai = { version = "1", features = ["serde"] }
 log = "0.4"
 env_logger = "0.11.10"
 image = { version = "0.25", default-features = false, features = ["png", "jpeg", "gif", "webp", "bmp"] }
-unicode-normalization = { version = "0.1", optional = true }
+unicode-normalization = "0.1"
 
 [profile.release]
 opt-level = 3
@@ -59,7 +59,9 @@ custom-protocol = ["tauri/custom-protocol"]
 # Compile and register commands that are not yet ready for production.
 # Never set in default builds; CI and releases always use the default feature set.
 # Enable during development with: cargo build --features experimental
-experimental = ["dep:unicode-normalization"]
+# (Currently empty — search graduated to production. Kept as the standard gate for the
+#  next experimental feature; see docs/decisions/2026-06-feature-flags.md.)
+experimental = []
 
 [dev-dependencies]
 tempfile = "3"

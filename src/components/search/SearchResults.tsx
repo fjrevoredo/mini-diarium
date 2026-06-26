@@ -1,6 +1,6 @@
 import { For, Show } from 'solid-js';
 import { searchQuery, searchResults, isSearching } from '../../state/search';
-import { setSelectedDate, setSelectedEntryId } from '../../state/ui';
+import { setSelectedDate, setSelectedEntryId, setMainView, setIsSearchOpen } from '../../state/ui';
 import { preferences } from '../../state/preferences';
 import { useI18n } from '../../i18n';
 
@@ -12,6 +12,10 @@ export default function SearchResults() {
     // entry (a day can hold multiple entries) rather than the day's newest.
     setSelectedEntryId(id);
     setSelectedDate(date);
+    // Switch to the editor (the user may have clicked from the Timeline view) and close
+    // the overlay so the entry is visible underneath.
+    setMainView('editor');
+    setIsSearchOpen(false);
   };
 
   const formatDate = (dateStr: string) => {
@@ -51,7 +55,8 @@ export default function SearchResults() {
                     </div>
                     <div class="mt-1 text-xs text-tertiary">{formatDate(result.date)}</div>
                     <Show when={result.snippet}>
-                      {/* Safe: snippet comes from our own FTS5 backend with controlled <mark> tags */}
+                      {/* Safe: snippet comes from our own backend search with controlled <mark>
+                          tags and HTML-escaped surrounding text (see escape_html in search.rs). */}
                       <div
                         class="mt-2 text-sm text-secondary"
                         // eslint-disable-next-line solid/no-innerhtml

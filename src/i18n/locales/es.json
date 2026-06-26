@@ -19,7 +19,8 @@
       "notificationsNone": "Notificaciones",
       "notificationsUnread": "Notificaciones, {{ count }} sin leer",
       "showTimeline": "Mostrar cronología",
-      "showEditor": "Mostrar editor"
+      "showEditor": "Mostrar editor",
+      "search": "Search"
     },
     "sidebar": {
       "navigation": "Navegación",
@@ -247,6 +248,7 @@
     }
   },
   "search": {
+    "title": "Search",
     "placeholder": "Buscar entradas...",
     "clearAria": "Limpiar búsqueda",
     "searching": "Buscando...",

@@ -44,6 +44,9 @@ const [isTagManagerOpen, setIsTagManagerOpen] = createSignal(false);
 // Image picker overlay state
 const [isImagePickerOpen, setIsImagePickerOpen] = createSignal(false);
 
+// Search overlay state
+const [isSearchOpen, setIsSearchOpen] = createSignal(false);
+
 export function resetUiState(): void {
   setSelectedDate(getTodayString());
   setSelectedEntryId(null);
@@ -58,6 +61,7 @@ export function resetUiState(): void {
   setIsNotificationsOpen(false);
   setIsTagManagerOpen(false);
   setIsImagePickerOpen(false);
+  setIsSearchOpen(false);
 }
 
 export {
@@ -87,4 +91,6 @@ export {
   setIsTagManagerOpen,
   isImagePickerOpen,
   setIsImagePickerOpen,
+  isSearchOpen,
+  setIsSearchOpen,
 };

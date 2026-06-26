@@ -62,7 +62,7 @@ If your feature is not ready to ship but you want to land it on `master`, gate i
 - **Backend (Rust):** Add `#[cfg(feature = "experimental")]` to the command function and its `generate_handler![]` entry. Gate consumer-only imports (`use tauri::State`, `use crate::commands::auth::DiaryState`) the same way so they don't produce unused-import warnings in the default build.
 - **Frontend (Vite/SolidJS):** Wrap the component render site in `<Show when={import.meta.env.VITE_EXPERIMENTAL}>`.
 
-The `experimental` Cargo feature (`--features experimental`) and `VITE_EXPERIMENTAL=true` Vite define are the standard gates. Production builds never set either. See `docs/decisions/2026-06-feature-flags.md` for the full strategy and `src-tauri/src/commands/search.rs` for a worked example.
+The `experimental` Cargo feature (`--features experimental`) and `VITE_EXPERIMENTAL=true` Vite define are the standard gates. Production builds never set either. See `docs/decisions/2026-06-feature-flags.md` for the full strategy. (Search was the first feature to graduate from this gate to production — its history is visible in `git log` for `src-tauri/src/commands/search.rs`.)
 
 ## Check Suite
 

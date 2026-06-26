@@ -94,7 +94,7 @@ Do not add this infrastructure until a concrete use case is in scope.
 
 ## Worked Example
 
-`commands/search.rs` is the first use of Tier 1. The `SearchResult` struct is NOT gated — it is the preserved interface contract for future secure search (CLAUDE.md GOTCHA #1) and must always compile. Only the Tauri command function and its consumer imports are gated. The search frontend components (`SearchBar.tsx`, `SearchResults.tsx`) are not currently wired up anywhere; their entry point would be wrapped in `<Show when={import.meta.env.VITE_EXPERIMENTAL}>` when a render site is added.
+`commands/search.rs` was the first use of Tier 1: it landed in-tree gated behind `#[cfg(feature = "experimental")]` / `<Show when={import.meta.env.VITE_EXPERIMENTAL}>` while the UI was unwired, then graduated to production once the search overlay was mounted (both gates removed in the same PR, and `experimental` is now an empty shell awaiting its next use). The `SearchResult` struct was never gated — it is the preserved interface contract (CLAUDE.md GOTCHA #1) and must always compile. The graduation pattern (gate lands → UI mounts → both gates move together in one PR) is the model for future Tier 1 features.
 
 ## Consequences
 

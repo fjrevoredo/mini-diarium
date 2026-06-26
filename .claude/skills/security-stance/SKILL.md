@@ -205,17 +205,17 @@ The non-negotiable from `PHILOSOPHY.md:166` is about *diary content*, not wrappi
 
 ---
 
-## 9. Search: the frozen interface contract
+## 9. Search: in-memory scan (no plaintext on disk)
 
-FTS was removed in v0.2.0 (schema v4) because the plaintext `entries_fts` table defeated encryption at rest. The **interface** is preserved so search can return without mass refactoring. **Do not delete any of these:**
+FTS was removed in v0.2.0 (schema v4) because the plaintext `entries_fts` table defeated encryption at rest. Search was reintroduced as an in-memory scan: each query decrypts entries (same decrypt path as export/stats), matches case- and accent-folded terms, builds HTML-escaped `<mark>` snippets, and discards everything. Nothing searchable is written to disk. **Do not delete any of these:**
 
 | Layer | Path | Purpose |
 |---|---|---|
-| Rust command | `src-tauri/src/commands/search.rs` | `SearchResult` struct + `search_entries` stub returning `[]` |
+| Rust command | `src-tauri/src/commands/search.rs` | `SearchResult` struct + `search_entries` (in-memory decrypt + scan) |
 | TS wrapper | `src/lib/tauri/search.ts` | `SearchResult` interface + `searchEntries(query)` |
 | State | `src/state/search.ts` | `searchQuery`, `searchResults`, `isSearching` signals |
-| UI (not rendered) | `src/components/search/SearchBar.tsx`, `SearchResults.tsx` | Reserved input + results list |
-| Reindex anchors | `// Search index hook:` comments in `src-tauri/src/db/queries/entries.rs` (insert/update/delete) and `src-tauri/src/commands/import.rs` (bulk) | Where a future search module plugs in |
+| UI | `src/components/search/SearchOverlay.tsx` (+ `SearchBar.tsx`, `SearchResults.tsx`) | Palette-style dialog mounted in `MainLayout` |
+| Reindex anchors | `// Search index hook:` comments in `src-tauri/src/db/queries/entries.rs` (insert/update/delete) and `src-tauri/src/commands/import.rs` (bulk) | Unused today (in-memory scan needs no index); mark where a future encrypted index would plug in |
 
 **Constraints for any future implementation (non-negotiable):**
 

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Full-text search is not yet available in Mini Diarium due to its encryption model. Use the calendar, Go to Date shortcut, or export to find past entries." />
+  <meta name="description" content="Mini Diarium has full-text search across all encrypted entries. Learn how to find past entries with the search overlay and keyboard shortcut, and how searching stays fully encrypted and offline." />
   <meta name="robots" content="index,follow,max-snippet:-1,max-image-preview:large,max-video-preview:-1" />
   <meta name="theme-color" content="#0e0e0e" />
   <meta name="author" content="Francisco J. Revoredo" />
@@ -12,7 +12,7 @@
   <meta property="og:locale" content="en_US" />
   <meta property="og:url" content="https://mini-diarium.com/docs/search/" />
   <meta property="og:title" content="Search — Mini Diarium Documentation" />
-  <meta property="og:description" content="Full-text search is not yet available in Mini Diarium due to its encryption model. Use the calendar, Go to Date shortcut, or export to find past entries." />
+  <meta property="og:description" content="Mini Diarium has full-text search across all encrypted entries. Learn how to find past entries with the search overlay and keyboard shortcut, and how searching stays fully encrypted and offline." />
   <meta property="og:image" content="https://mini-diarium.com/assets/og-cover.png" />
   <meta property="og:image:type" content="image/png" />
   <meta property="og:image:width" content="1200" />
@@ -22,7 +22,7 @@
   <meta name="twitter:site" content="@MiniDiarium" />
   <meta name="twitter:creator" content="@MiniDiarium" />
   <meta name="twitter:title" content="Search — Mini Diarium Documentation" />
-  <meta name="twitter:description" content="Full-text search is not yet available in Mini Diarium due to its encryption model. Use the calendar, Go to Date shortcut, or export to find past entries." />
+  <meta name="twitter:description" content="Mini Diarium has full-text search across all encrypted entries. Learn how to find past entries with the search overlay and keyboard shortcut, and how searching stays fully encrypted and offline." />
   <meta name="twitter:image" content="https://mini-diarium.com/assets/og-cover.png" />
   
   <title>Search — Mini Diarium Documentation</title>
@@ -235,9 +235,9 @@
       "@type": "TechArticle",
       "@id": "https://mini-diarium.com/docs/search/#article",
       "headline": "Search",
-      "description": "Full-text search is not yet available in Mini Diarium due to its encryption model. Use the calendar, Go to Date shortcut, or export to find past entries.",
-      "dateModified": "2026-06-04T00:00:00Z",
-      "keywords": "search, find, full-text",
+      "description": "Mini Diarium has full-text search across all encrypted entries. Learn how to find past entries with the search overlay and keyboard shortcut, and how searching stays fully encrypted and offline.",
+      "dateModified": "2026-06-26T00:00:00Z",
+      "keywords": "search, find, full-text, encrypted",
       "publisher": {
         "@type": "Organization",
         "name": "Mini Diarium",
@@ -320,7 +320,7 @@
     <div class="post-header">
       <p class="hero-eyebrow">Mini Diarium documentation</p>
       <h1>Search</h1>
-      <p class="hero-sub">Full-text search is not yet available in Mini Diarium due to its encryption model. Use the calendar, Go to Date shortcut, or export to find past entries.</p>
+      <p class="hero-sub">Mini Diarium has full-text search across all encrypted entries. Learn how to find past entries with the search overlay and keyboard shortcut, and how searching stays fully encrypted and offline.</p>
     </div>
   </div>
 </section>
@@ -376,11 +376,18 @@
         </div>
       </nav>
       <article class="blog-post prose" aria-label="Search">
-        <h2 id="current-status">Current Status</h2><p>Full-text search is not available in the current version of Mini Diarium. It will be added in a future release.</p>
-        <h2 id="why-search-is-not-yet-available">Why Search Is Not Yet Available</h2><p>Mini Diarium stores all entries encrypted at rest using AES-256-GCM. Building a search index that works without decrypting entries on disk requires a different architectural approach — one that is being designed carefully to avoid storing any searchable plaintext that could be read without your password.</p>
-        <p>The search interface (including the search bar and result display components) is already present in the UI and will be populated when the feature is complete.</p>
-        <h2 id="finding-entries-in-the-meantime">Finding Entries in the Meantime</h2><p>Until full-text search is available, you can navigate to a specific date using the calendar or the <strong>Go to Date</strong> dialog (<code>Ctrl+G</code>). If you remember roughly when you wrote something, browsing the calendar is often sufficient.</p>
-        <p>You can also export your journal to Markdown or JSON and use your operating system&#39;s file search tools on the exported files. Exported files are not encrypted.</p>
+        <h2 id="search-your-entries">Search Your Entries</h2><p>Mini Diarium includes full-text search across every entry in the current journal. Open the search overlay from the magnifier button in the header, or press <strong>Ctrl+F</strong> (Cmd+F on macOS). Type a few words and matching entries appear, newest first, with the matching text highlighted in a short snippet.</p>
+        <p>Clicking a result jumps straight to that entry in the editor, even on a day that holds several entries.</p>
+        <h2 id="how-search-works-without-compromising-encryption">How Search Works Without Compromising Encryption</h2><p>Mini Diarium stores every entry encrypted at rest with AES-256-GCM. Search does <strong>not</strong> keep a separate plaintext index on disk, because that would expose your writing to anyone with access to the file.</p>
+        <p>Instead, when you run a search the app decrypts your entries in memory, scans them, and discards everything when it is done. Nothing searchable is ever written to disk, and the search never makes a network request. It is as private as reading the entries yourself.</p>
+        <p>Search is case- and accent-insensitive: typing &quot;cafe&quot; will match &quot;Café&quot;, and &quot;RUST&quot; will match &quot;rust&quot;. Multiple words use AND semantics, so every word must appear in the title or body of an entry for it to match.</p>
+        <h2 id="other-ways-to-find-entries">Other Ways to Find Entries</h2><p>Search is fastest when you remember specific words. When you only remember roughly when you wrote something, these alternatives help:</p>
+        <ul>
+        <li><strong>Calendar</strong> in the sidebar, for browsing by date.</li>
+        <li><strong>Go to Date</strong> dialog with Ctrl+G (Cmd+G on macOS), to jump to a known date.</li>
+        <li><strong>Timeline</strong> view (toggled from the header), a chronological list of every entry with previews.</li>
+        <li><strong>Export</strong> to Markdown or JSON and use your operating system&#39;s file search. Exported files are not encrypted, so do this only on a trusted device.</li>
+        </ul>
         
         
                 <div class="docs-prevnext">
@@ -391,9 +398,9 @@
       <aside class="docs-toc" aria-label="On this page">
         <p class="docs-toc-label">On this page</p>
         <ul>
-          <li class="docs-toc-h2"><a href="#current-status">Current Status</a></li>
-          <li class="docs-toc-h2"><a href="#why-search-is-not-yet-available">Why Search Is Not Yet Available</a></li>
-          <li class="docs-toc-h2"><a href="#finding-entries-in-the-meantime">Finding Entries in the Meantime</a></li>
+          <li class="docs-toc-h2"><a href="#search-your-entries">Search Your Entries</a></li>
+          <li class="docs-toc-h2"><a href="#how-search-works-without-compromising-encryption">How Search Works Without Compromising Encryption</a></li>
+          <li class="docs-toc-h2"><a href="#other-ways-to-find-entries">Other Ways to Find Entries</a></li>
         </ul>
       </aside>
     </div>

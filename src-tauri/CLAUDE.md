@@ -171,31 +171,40 @@ The plugin runner (`run_import_plugin` / `run_export_plugin`) dispatches to the 
 
 Users drop a `.rhai` file in `{diary_dir}/plugins/`. The file must have a `// @name`, `// @type`, and optionally `// @extensions` comment header. Import scripts define `fn parse(content)` returning an array of entry maps; export scripts define `fn format_entries(entries)` returning a string. See `docs/user-plugins/USER_PLUGIN_GUIDE.md` for templates and `plugin/rhai_loader.rs` for the runtime.
 
-### Implementing Search
+### Search
 
-Full-text search was removed in schema v4 (v0.2.0) because the SQLite FTS5 table stored
-diary content in plaintext, defeating the AES-256-GCM encryption. The backend stub and the
-complete frontend/backend interface are preserved so search can be re-added without mass
-refactoring.
-
-**What is already in place (do not remove):**
+Full-text search was originally provided by a SQLite FTS5 table, removed in schema v4
+(v0.2.0) because it stored diary content in plaintext, defeating the AES-256-GCM
+encryption. Search was reintroduced as an in-memory scan over decrypted entries: each
+query decrypts the journal entries (reusing `queries::get_all_entries`, the same decrypt
+path used by export/stats), matches case- and accent-folded terms with AND semantics,
+builds HTML-escaped `<mark>` snippets, and discards everything — nothing searchable is
+ever written to disk.
 
 | Layer | File | What it provides |
 |-------|------|-----------------|
-| Rust command | `src-tauri/src/commands/search.rs` | `SearchResult` struct + `search_entries` command (stub returning `[]`) |
+| Rust command | `src-tauri/src/commands/search.rs` | `SearchResult` struct + `search_entries` command (in-memory scan) |
 | Frontend wrapper | `src/lib/tauri/search.ts` | `SearchResult` interface + `searchEntries(query)` async function |
 | Frontend state | `src/state/search.ts` | `searchQuery`, `searchResults`, `isSearching` signals |
-| Frontend components | `src/components/search/SearchBar.tsx` | Search input component (not rendered) |
-| | `src/components/search/SearchResults.tsx` | Results list component (not rendered) |
+| Frontend components | `src/components/search/SearchOverlay.tsx` | Palette-style dialog mounting `SearchBar` + `SearchResults` (in `MainLayout`) |
+| | `src/components/search/SearchBar.tsx` | Debounced input with a monotonic latest-wins guard |
+| | `src/components/search/SearchResults.tsx` | Results list; click deep-links the entry via `setSelectedEntryId` |
 
-**Hook points in the backend (search for `// Search index hook:`):**
+**Trigger:** Header search button + Cmd/Ctrl+F (`MainLayout` keydown handler). A result
+click sets the entry deep-link before the date so the editor opens the exact entry (a day
+can hold multiple entries), then switches `mainView` to `editor` and closes the overlay.
 
-- `db/queries/entries/insert.rs` — `insert_entry()`; `db/queries/entries/update.rs` — `update_entry()`; `db/queries/entries/delete.rs` — `delete_entry_by_id()` — index/remove individual entries
-- `commands/import.rs` — `import_entries()` helper — bulk reindex after import (reached via `run_import_plugin`)
+**Indexing hook points** (`// Search index hook:` comments) remain in
+`db/queries/entries/{insert,update,delete}.rs` and `commands/import.rs`. They are unused
+today because the in-memory scan needs no persistent index, but mark where a future index
+would plug in.
 
-**Design constraints for any future implementation:**
+**Performance:** the scan is O(n) over all entries per query, debounced 500 ms on the
+client and capped at 200 results. This is acceptable for the personal-journal scale this
+app targets. If a future index is added, it must satisfy the original constraint:
 
-1. **No plaintext on disk** — the index must be encrypted or derived in a way that does not expose entry content to raw file access. Options to evaluate: encrypted FTS (e.g. SQLCipher), client-side trigram index stored encrypted alongside entries, or an in-memory index rebuilt at unlock time.
-2. **Schema migration required** — bump `SCHEMA_VERSION` in `db/schema/mod.rs` and add a migration step in `db/schema/migrations/`.
-3. **UI placement is undecided** — `SearchBar` and `SearchResults` exist but where they appear (sidebar, overlay, command palette, etc.) should be designed fresh. Wire them into `Sidebar.tsx` or a new component; do not assume the old sidebar layout.
-4. **State is ready** — `src/state/search.ts` signals can be used as-is or extended.
+1. **No plaintext on disk** — the index must be encrypted or derived in a way that does
+   not expose entry content to raw file access (e.g. encrypted FTS / SQLCipher, an
+   encrypted trigram index, or an in-memory index rebuilt at unlock time).
+2. **Schema migration** — bump `SCHEMA_VERSION` in `db/schema/mod.rs` and add a migration
+   step in `db/schema/migrations/`.

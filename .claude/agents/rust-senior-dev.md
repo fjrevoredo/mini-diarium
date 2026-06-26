@@ -98,9 +98,9 @@ When reviewing recently written Rust code (default behavior unless asked to revi
 - Add migration step in `open_database` migration logic
 - Test the migration path
 
-**Search (not yet implemented):**
-- The `search_entries` command is a stub returning `[]` — do not remove the interface
-- Any future implementation must NOT store plaintext on disk
+**Search (in-memory scan):**
+- The `search_entries` command decrypts entries in memory per query and never persists plaintext — do not remove the interface
+- Any future index must NOT store plaintext on disk
 - `// Search index hook:` comments mark where a search module should be plugged in
 
 ### 4. Security Absolute Rules

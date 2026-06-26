@@ -40,6 +40,7 @@ const en = {
       notificationsUnread: 'Notifications, {{ count }} unread',
       showTimeline: 'Show timeline',
       showEditor: 'Show editor',
+      search: 'Search',
     },
     sidebar: {
       navigation: 'Navigation',
@@ -308,6 +309,7 @@ const en = {
 
   /** Search components */
   search: {
+    title: 'Search',
     placeholder: 'Search entries...',
     clearAria: 'Clear search',
     searching: 'Searching...',

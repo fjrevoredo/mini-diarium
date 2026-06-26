@@ -1,5 +1,5 @@
 import { createSignal, Show } from 'solid-js';
-import { Menu, Lock, Info, Bell, List, PenLine } from 'lucide-solid';
+import { Menu, Lock, Info, Bell, List, PenLine, Search } from 'lucide-solid';
 import {
   selectedDate,
   setIsAboutOpen,
@@ -7,6 +7,7 @@ import {
   setIsNotificationsOpen,
   mainView,
   setMainView,
+  setIsSearchOpen,
 } from '../../state/ui';
 import { lockJournal } from '../../state/auth';
 import { preferences } from '../../state/preferences';
@@ -45,7 +46,7 @@ export default function Header(props: HeaderProps) {
 
   return (
     <header class="flex h-16 items-center justify-between border-b border-primary bg-primary px-4">
-      {/* Left: hamburger + date */}
+      {/* Left: hamburger + search + date */}
       <div class="flex items-center gap-3">
         <Show when={props.showMenu}>
           <button
@@ -59,6 +60,14 @@ export default function Header(props: HeaderProps) {
             <Menu size={24} />
           </button>
         </Show>
+        <button
+          onClick={() => setIsSearchOpen(true)}
+          data-testid="search-button"
+          class="rounded p-2 hover:bg-hover text-tertiary transition-colors"
+          aria-label={t('layout.header.search')}
+        >
+          <Search size={20} />
+        </button>
         <h1 class="text-lg font-semibold text-primary">{formattedDate()}</h1>
       </div>
 

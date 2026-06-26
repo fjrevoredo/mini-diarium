@@ -12,7 +12,7 @@
 | `src/components/editor/` | TipTap rich-text editor, toolbar, entry navigation, inline overlays |
 | `src/components/layout/` | App shell and editor panel; extracted hooks live in `editor-panel/` |
 | `src/components/overlays/` | All overlay dialogs — preferences (split by tab), stats, import/export, tags, notifications, onboarding, image picker |
-| `src/components/search/` | Search UI — not rendered; preserved for future secure search |
+| `src/components/search/` | Search UI — `SearchOverlay` (mounted in `MainLayout`), `SearchBar`, `SearchResults` |
 | `src/state/` | Signal-based state modules, one per domain — see State Management below |
 | `src/lib/` | Tauri invoke wrappers (`tauri/` — one sub-file per command category, barrel `index.ts`), utility helpers, shortcuts listener, theme management |
 | `src/i18n/` | Translation files (`locales/`) and i18n context wrapper |
@@ -88,7 +88,7 @@ import { Show } from 'solid-js';
 
 // Wrap the entry point only — not every sub-component.
 <Show when={import.meta.env.VITE_EXPERIMENTAL}>
-  <SearchBar />
+  <YourInprogressFeature />
 </Show>
 ```
 
@@ -161,6 +161,8 @@ These are used by E2E tests — **do not remove** from components.
 | `PasswordPrompt.tsx` | Password input | `password-unlock-input` |
 | `PasswordPrompt.tsx` | Unlock submit button | `unlock-journal-button` |
 | `Header.tsx` | Sidebar toggle (hamburger) | `toggle-sidebar-button` |
+| `Header.tsx` | Search button (opens `SearchOverlay`) | `search-button` |
+| `SearchOverlay.tsx` | Search dialog content | `search-overlay` |
 | `Header.tsx` | Lock button | `lock-journal-button` |
 | `Header.tsx` | Timeline toggle button | `timeline-toggle-button` |
 | `TitleEditor.tsx` | Title input | `title-input` |

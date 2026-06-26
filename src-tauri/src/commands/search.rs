@@ -1,20 +1,14 @@
 use serde::Serialize;
 
-#[cfg(feature = "experimental")]
 use crate::commands::auth::{with_unlocked_db, DiaryState};
-#[cfg(feature = "experimental")]
 use crate::db::queries;
-#[cfg(feature = "experimental")]
 use tauri::State;
-#[cfg(feature = "experimental")]
 use unicode_normalization::char::is_combining_mark;
-#[cfg(feature = "experimental")]
 use unicode_normalization::UnicodeNormalization;
 
 /// Case- and accent-fold one char: lowercase, NFD-decompose, drop combining marks.
 /// Per-char NFD is sufficient for accent stripping — we discard all combining marks,
 /// so canonical reordering across chars is irrelevant.
-#[cfg(feature = "experimental")]
 fn fold_char(ch: char) -> impl Iterator<Item = char> {
     ch.to_lowercase().nfd().filter(|c| !is_combining_mark(*c))
 }
@@ -28,10 +22,8 @@ pub struct SearchResult {
 }
 
 /// Max matches returned to the UI; newest-first.
-#[cfg(feature = "experimental")]
 const MAX_RESULTS: usize = 200;
 /// Bytes of context shown on each side of a match (snapped to char boundaries).
-#[cfg(feature = "experimental")]
 const SNIPPET_RADIUS: usize = 48;
 
 /// Full-text search across decrypted entries.
@@ -43,11 +35,9 @@ const SNIPPET_RADIUS: usize = 48;
 /// plaintext on disk. This reuses `queries::get_all_entries` (the same decrypt path
 /// used by export/stats) rather than touching the crypto layer directly.
 ///
-/// Gated behind the `experimental` feature so it compiles out of production binaries
-/// until the search UI is wired up (see `docs/decisions/2026-06-feature-flags.md`).
-/// `SearchResult` stays ungated — it is the preserved interface contract (CLAUDE.md
-/// GOTCHA #1).
-#[cfg(feature = "experimental")]
+/// This is an in-memory linear scan (no FTS/index), which is acceptable for the
+/// personal-journal scale this app targets: the cost is paid per query, debounced on
+/// the client, and nothing sensitive is written to disk.
 #[tauri::command]
 pub fn search_entries(
     query: String,
@@ -95,7 +85,6 @@ pub fn search_entries(
 }
 
 /// AND semantics: every term must appear in the (folded) title or body.
-#[cfg(feature = "experimental")]
 fn matches_all(title_lc: &str, text_lc: &str, terms: &[String]) -> bool {
     terms
         .iter()
@@ -103,7 +92,6 @@ fn matches_all(title_lc: &str, text_lc: &str, terms: &[String]) -> bool {
 }
 
 /// Split a query into deduped, case- and accent-folded terms.
-#[cfg(feature = "experimental")]
 fn normalize_terms(query: &str) -> Vec<String> {
     let mut terms: Vec<String> = Vec::new();
     for raw in query.split_whitespace() {
@@ -119,7 +107,6 @@ fn normalize_terms(query: &str) -> Vec<String> {
 /// markup. Not a full HTML parser — a lightweight tag remover, sufficient for the editor's
 /// own serialized output (no DOM in Rust). Entity decoding is intentionally left out; the
 /// few entities the editor emits render as literal text in a snippet, which is acceptable.
-#[cfg(feature = "experimental")]
 fn strip_html(s: &str) -> String {
     let mut out = String::with_capacity(s.len());
     let mut in_tag = false;
@@ -143,7 +130,6 @@ fn strip_html(s: &str) -> String {
 /// the folded string is not a valid index into the original without this map. Each folded
 /// byte still maps to its originating source char's start offset, so `build_snippet` can
 /// slice the original (accented) text around a match.
-#[cfg(feature = "experimental")]
 fn lower_with_map(src: &str) -> (String, Vec<usize>) {
     let mut lowered = String::with_capacity(src.len());
     let mut map: Vec<usize> = Vec::with_capacity(src.len() + 1);
@@ -162,7 +148,6 @@ fn lower_with_map(src: &str) -> (String, Vec<usize>) {
 }
 
 /// Build a `<mark>`-highlighted, HTML-escaped snippet around the earliest term hit.
-#[cfg(feature = "experimental")]
 fn build_snippet(orig: &str, lowered: &str, map: &[usize], terms: &[String]) -> Option<String> {
     let (match_byte, match_len) = terms
         .iter()
@@ -190,7 +175,6 @@ fn build_snippet(orig: &str, lowered: &str, map: &[usize], terms: &[String]) -> 
     Some(out)
 }
 
-#[cfg(feature = "experimental")]
 fn snap_floor(s: &str, mut i: usize) -> usize {
     while i > 0 && !s.is_char_boundary(i) {
         i -= 1;
@@ -198,7 +182,6 @@ fn snap_floor(s: &str, mut i: usize) -> usize {
     i
 }
 
-#[cfg(feature = "experimental")]
 fn snap_ceil(s: &str, mut i: usize) -> usize {
     while i < s.len() && !s.is_char_boundary(i) {
         i += 1;
@@ -208,7 +191,6 @@ fn snap_ceil(s: &str, mut i: usize) -> usize {
 
 /// Escape text destined for the `<mark>`-bearing snippet so entry content can't inject
 /// markup. `&` first so existing characters aren't double-escaped.
-#[cfg(feature = "experimental")]
 fn escape_html(s: &str) -> String {
     s.replace('&', "&amp;")
         .replace('<', "&lt;")
@@ -236,10 +218,9 @@ mod tests {
     }
 }
 
-// The implementation and its helpers are gated behind `experimental`, so their tests are
-// too — under the default feature set CI compiles them out (the search command is not in
-// production builds). Exercise them with `--features experimental`.
-#[cfg(all(test, feature = "experimental"))]
+// The implementation helpers run under the default feature set now that search is part
+// of production builds.
+#[cfg(test)]
 mod impl_tests {
     use super::*;
 

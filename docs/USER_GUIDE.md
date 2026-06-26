@@ -96,7 +96,9 @@ Press `Ctrl+G` to open the date picker and jump directly to any date.
 
 ## Searching
 
-Full-text search is not available in this version. It will be added in a future release.
+Open the search overlay from the magnifier button in the header, or press **Ctrl+F** (Cmd+F on macOS). Type a few words; matching entries appear newest-first with the matching text highlighted in a short snippet. Search is case- and accent-insensitive (typing "cafe" matches "Café") and uses AND semantics across words. Clicking a result opens that entry in the editor.
+
+Search decrypts entries in memory to run each query and never writes a plaintext index to disk.
 
 ## Import
 

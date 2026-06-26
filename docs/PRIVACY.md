@@ -14,7 +14,7 @@ None. The app makes zero network requests. There is no telemetry, no analytics, 
 
 All journal entries are encrypted with AES-256-GCM before being written to a local SQLite database on your machine. A random 256-bit master key is generated when the journal is created and never stored in plaintext. Each authentication method stores its own encrypted copy of the master key in the `auth_slots` table: password slots use Argon2id + AES-256-GCM wrapping; key file slots use X25519 ECIES.
 
-Full-text search is not yet available in this version. No plaintext copy of your entries is stored outside the encrypted entries table.
+Full-text search decrypts entries in memory to run a query and discards them immediately — no plaintext copy of your entries is ever stored outside the encrypted entries table.
 
 User preferences (theme, first day of week, etc.) are stored in the Tauri WebView's localStorage. These contain no sensitive data.
 

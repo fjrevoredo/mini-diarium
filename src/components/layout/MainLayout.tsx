@@ -14,6 +14,7 @@ import ExportOverlay from '../overlays/ExportOverlay';
 import NotificationsOverlay from '../overlays/NotificationsOverlay';
 import TagManager from '../overlays/TagManager';
 import OnboardingTour from '../overlays/OnboardingOverlay';
+import SearchOverlay from '../search/SearchOverlay';
 import {
   selectedDate,
   setSelectedDate,
@@ -34,6 +35,8 @@ import {
   isNotificationsOpen,
   isTagManagerOpen,
   setIsTagManagerOpen,
+  isSearchOpen,
+  setIsSearchOpen,
 } from '../../state/ui';
 import {
   navigatePreviousDay,
@@ -68,7 +71,8 @@ export default function MainLayout() {
       isExportOpen() ||
       isAboutOpen() ||
       isNotificationsOpen() ||
-      isTagManagerOpen()
+      isTagManagerOpen() ||
+      isSearchOpen()
     )
       return;
     if (preferences().escAction === 'quit') {
@@ -78,9 +82,30 @@ export default function MainLayout() {
     }
   };
 
+  // Open the search overlay on Cmd/Ctrl+F. The webview has no native find-in-page, and
+  // no editor command uses this combo, so it is safe to claim app-wide. Suppress default
+  // to stop any platform find behavior, and bail when another overlay is already open.
+  const handleSearchShortcut = (e: KeyboardEvent) => {
+    if (!(e.metaKey || e.ctrlKey) || e.key.toLowerCase() !== 'f') return;
+    if (
+      isGoToDateOpen() ||
+      isPreferencesOpen() ||
+      isStatsOpen() ||
+      isImportOpen() ||
+      isExportOpen() ||
+      isAboutOpen() ||
+      isNotificationsOpen() ||
+      isTagManagerOpen()
+    )
+      return;
+    e.preventDefault();
+    setIsSearchOpen(true);
+  };
+
   // Setup menu event listeners
   onMount(async () => {
     document.addEventListener('keydown', handleGlobalEsc);
+    document.addEventListener('keydown', handleSearchShortcut);
     // Previous Day menu item
     unlisteners.push(
       await listen('menu-navigate-previous-day', async () => {
@@ -187,6 +212,7 @@ export default function MainLayout() {
   onCleanup(() => {
     unlisteners.forEach((unlisten) => unlisten());
     document.removeEventListener('keydown', handleGlobalEsc);
+    document.removeEventListener('keydown', handleSearchShortcut);
   });
 
   return (
@@ -229,6 +255,7 @@ export default function MainLayout() {
       <NotificationsOverlay />
       <TagManager isOpen={isTagManagerOpen()} onClose={() => setIsTagManagerOpen(false)} />
       <OnboardingTour />
+      <SearchOverlay />
     </div>
   );
 }
