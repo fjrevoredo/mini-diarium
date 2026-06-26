@@ -199,8 +199,9 @@ pub fn get_entries_for_timeline(db: &DatabaseConnection) -> Result<Vec<TimelineR
             let preview = match preview_enc_opt {
                 Some(enc) => super::decrypt_utf8(db.key(), &enc, "preview")?,
                 None => {
-                    let text_enc = text_enc_opt
-                        .ok_or_else(|| "text_encrypted unexpectedly NULL for legacy entry".to_string())?;
+                    let text_enc = text_enc_opt.ok_or_else(|| {
+                        "text_encrypted unexpectedly NULL for legacy entry".to_string()
+                    })?;
                     preview_from_html(&super::decrypt_utf8(db.key(), &text_enc, "text")?)
                 }
             };
