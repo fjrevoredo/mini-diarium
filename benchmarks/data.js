@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1782489925119,
+  "lastUpdate": 1782492264333,
   "repoUrl": "https://github.com/fjrevoredo/mini-diarium",
   "entries": {
     "Benchmark": [
@@ -15358,6 +15358,144 @@ window.BENCHMARK_DATA = {
           {
             "name": "ci_pipeline_duration",
             "value": 438000000000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "53909268+kenlacroix@users.noreply.github.com",
+            "name": "Kenneth LaCroix",
+            "username": "kenlacroix"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "8e8a90ce1777e4fe46e86e24631105a3fa87910b",
+          "message": "feat(search): full-text search over decrypted entries (#160) (#171)\n\nImplements the `search_entries` command that has been a reserved stub.\nCloses #160.\n\nSearch runs entirely in memory against decrypted entries and **persists\nno plaintext index**, honoring the project's stated rule\n(`.claude/agents/rust-senior-dev.md`: *\"Any future implementation must\nNOT store plaintext on disk\"*).\n\n## Why not FTS5\n\nEntries are field-level encrypted (`title_encrypted` / `text_encrypted`)\nbut the SQLite file itself is plaintext at rest (no SQLCipher). A normal\nFTS5 content table would write decrypted text into that unencrypted file\n— quietly breaking the local-only encryption guarantee. So the index\nmust never hit disk.\n\n## Approach\n\nDecrypt-and-scan: `search_entries` reuses the existing\n`queries::get_all_entries` (the same decrypt path used by export/stats),\nfilters in memory, and builds a highlighted snippet. No new schema, no\nmigration, no new crypto code in the command, no new attack surface.\n\n- **Matching:** whitespace-split, case-folded terms with AND semantics\nacross title + body.\n- **Snippets:** `<mark>`-highlighted window around the earliest hit,\nHTML-escaped so entry content can't inject markup. Matches the existing\n`SearchResult { date, title, snippet }` contract (incl. the `<mark>`\nshape the existing unit test expected) — no change to the frontend\ninterface or `tauri.ts`.\n- **Ordering:** newest-first, capped at `MAX_RESULTS` (200).\n\n## Correctness note\n\n`char::to_lowercase()` can change byte length, so a `find()` offset in\nthe folded string isn't a valid index into the original.\n`lower_with_map` records a byte→byte offset map (with a trailing\nsentinel) so snippet boundaries are always valid and char-boundary-safe\non multibyte text. Covered by tests.\n\n## Tests\n\n8 unit tests pass (`cargo test commands::search`): term\nnormalization/dedup, AND semantics across fields, offset mapping,\ncase-insensitive highlighting, HTML escaping of surrounding content,\nmultibyte char-boundary safety, and no-match behavior. The pre-existing\n`test_search_result_serialization` is retained.\n\n## Scope / limitations (intentional for v1)\n\n- **Case-insensitive but not accent-insensitive** (\"café\" ≠ \"cafe\").\nAccent folding would add a `unicode-normalization` dependency — happy to\nadd as a follow-up if you'd like, but didn't want to slip a dep in here.\n- Only the first matched term is `<mark>`-boxed per snippet (all\nAND-matched terms are present in the result).\n- `get_all_entries` decrypts every entry per query — O(n), fine for a\npersonal journal. A title/text-only scan query is the obvious\noptimization if profiling ever calls for it.\n\n## One scope question\n\nThis PR is **backend-only**: it implements the command and returns\nresults. The TS wrapper (`searchEntries`) and search state already\nexist; `SearchBar`/`SearchResults` are present but currently unmounted.\nWould you prefer this PR also mount the search UI, or keep it\nbackend-first with the UI wiring as a separate change? I scoped it\nbackend-first to keep the diff small and reviewable. Also happy to align\non result ordering / case-folding behavior before you merge.\n\n---------\n\nCo-authored-by: Francisco J. Revoredo <39350477+fjrevoredo@users.noreply.github.com>",
+          "timestamp": "2026-06-26T18:36:51+02:00",
+          "tree_id": "f90d74cba8dcf1ee2e5320c629753ad729528d44",
+          "url": "https://github.com/fjrevoredo/mini-diarium/commit/8e8a90ce1777e4fe46e86e24631105a3fa87910b"
+        },
+        "date": 1782492263215,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "auth_argon2/wrap_master_key",
+            "value": 95988664,
+            "range": "± 3178635",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "auth_argon2/unwrap_master_key",
+            "value": 93891656,
+            "range": "± 833492",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_encrypt/1024",
+            "value": 1692,
+            "range": "± 4",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_encrypt/10240",
+            "value": 10230,
+            "range": "± 26",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_encrypt/102400",
+            "value": 128519,
+            "range": "± 988",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_decrypt/1024",
+            "value": 1174,
+            "range": "± 6",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_decrypt/10240",
+            "value": 9407,
+            "range": "± 164",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_decrypt/102400",
+            "value": 92516,
+            "range": "± 306",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_insert_entry",
+            "value": 1158319,
+            "range": "± 599825",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_update_entry",
+            "value": 957185,
+            "range": "± 130165",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_delete_entry",
+            "value": 1217575,
+            "range": "± 851672",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_entries_by_date",
+            "value": 14607,
+            "range": "± 67",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_all_entry_dates/100",
+            "value": 32276,
+            "range": "± 279",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_all_entry_dates/500",
+            "value": 116487,
+            "range": "± 575",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_all_entries/100",
+            "value": 148126,
+            "range": "± 917",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_all_entries/500",
+            "value": 676492,
+            "range": "± 3228",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "count_words_plain_500w",
+            "value": 6001,
+            "range": "± 359",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "count_words_html_500w",
+            "value": 6618,
+            "range": "± 138",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "ci_pipeline_duration",
+            "value": 440000000000,
             "range": "± 0",
             "unit": "ns/iter"
           }
