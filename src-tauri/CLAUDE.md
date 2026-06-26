@@ -190,7 +190,7 @@ refactoring.
 
 **Hook points in the backend (search for `// Search index hook:`):**
 
-- `db/queries/entries.rs` — `insert_entry()`, `update_entry()`, `delete_entry()` — index/remove individual entries
+- `db/queries/entries/insert.rs` — `insert_entry()`; `db/queries/entries/update.rs` — `update_entry()`; `db/queries/entries/delete.rs` — `delete_entry_by_id()` — index/remove individual entries
 - `commands/import.rs` — `import_entries()` helper — bulk reindex after import (reached via `run_import_plugin`)
 
 **Design constraints for any future implementation:**

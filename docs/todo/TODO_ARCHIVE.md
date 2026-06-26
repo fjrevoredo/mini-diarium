@@ -3,6 +3,8 @@
 Archived completed items moved out of [TODO.md](TODO.md). This keeps the active backlog focused on open work while preserving the original task notes.
 
 ## Completed
+- [x] **TODO-0056: Split `db/queries/entries.rs` into submodules** (2026-06-26) — the file is at ~1700 lines, exceeding the 650-line hard limit for query modules; extract timeline-specific code (`TIMELINE_PREVIEW_CHARS`, `preview_from_html`, `TimelineRow`, `get_entries_for_timeline`) into `db/queries/entries/timeline.rs` as a first step, then plan a full split of CRUD operations and their tests across `insert`, `update`, `delete`, and `read` submodules to bring the main module below the limit
+
 - [x] **TODO-0055: Optimize `get_timeline_entries` to avoid full-text decryption** (2026-06-26) — the current implementation calls `get_all_entries` (full in-memory decryption of every entry's `text` field) to build 200-char previews; for large journals this is O(n) decryptions on every timeline open and on every add/delete; investigate storing or caching a pre-computed preview that does not require re-decrypting the full entry on each request, without writing any plaintext to disk
 
 - [x] **TODO-0054: Add `timeline-toggle-button` testid to `src/CLAUDE.md` E2E table** (2026-06-26) — the `data-testid="timeline-toggle-button"` attribute added to `Header.tsx` in PR #173 is not yet listed in the canonical testid table in `src/CLAUDE.md`; add the entry so E2E tests do not have to hunt for it when timeline E2E coverage is written
