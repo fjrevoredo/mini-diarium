@@ -11,7 +11,7 @@
  *   - Run via: `bun run test:e2e`
  */
 
-const TEST_PASSWORD = 'e2e-search-password-123';
+const TEST_PASSWORD = 'e2e-test-password-123'; // same journal DB as diary-workflow.spec.ts
 const TEST_TITLE = 'Sunset picnic at the reservoir';
 const SEARCH_TERM = 'Sunset';
 
@@ -59,6 +59,7 @@ describe('Search overlay', () => {
       }
       await nextBtn.waitForExist({ timeout: 5000, reverse: true });
     }
+    await $('[data-testid="search-button"]').waitForClickable({ timeout: 10000 });
 
     // 3. Write a searchable entry. The editor is the default view after unlock.
     await $('[data-testid="title-input"]').waitForDisplayed({ timeout: 10000 });

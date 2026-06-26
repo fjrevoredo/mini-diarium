@@ -438,7 +438,7 @@ export default function ExportOverlay(props: ExportOverlayProps) {
               </button>
               <Show when={!result()}>
                 <button
-                  onClick={isPrint() ? handlePrint : handleExport}
+                  onClick={() => (isPrint() ? handlePrint() : handleExport())}
                   disabled={isExportDisabled()}
                   class="px-4 py-2 interactive-primary rounded-md transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                 >

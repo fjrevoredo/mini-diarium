@@ -20,7 +20,7 @@ function paint(color, msg) {
 }
 
 function git(args, opts = {}) {
-  const res = spawnSync('git', args, { encoding: 'utf8', ...opts });
+  const res = spawnSync('git', args, { encoding: 'utf8', ...opts }); // NOSONAR — developer-controlled PATH: known toolchain executable
   if (res.status !== 0) {
     const err = (res.stderr || res.stdout || '').trim();
     throw new Error(err || `git ${args.join(' ')} failed (exit ${res.status})`);
@@ -171,7 +171,7 @@ export function computePatch(byFile, addedByFile) {
     for (const ln of missing) uncovered.push(`${rel}:${ln}`);
   }
   perFile.sort((a, b) => a.path.localeCompare(b.path));
-  uncovered.sort();
+  uncovered.sort((a, b) => a.localeCompare(b));
   return {
     perFile,
     totalCovered,
@@ -204,16 +204,16 @@ function resolveBase(base) {
 function generateCoverage() {
   const errors = [];
   console.log(paint('cyan', 'Generating coverage (this runs the full test suites)...'));
-  const fe = spawnSync('bun', ['run', 'test:coverage'], { stdio: 'inherit' });
+  const fe = spawnSync('bun', ['run', 'test:coverage'], { stdio: 'inherit' }); // NOSONAR — developer-controlled PATH: known toolchain executable
   if (fe.status !== 0) errors.push('frontend coverage generation failed (tests failed or lcov not written)');
-  const covCheck = spawnSync('cargo', ['llvm-cov', '--version'], { encoding: 'utf8' });
+  const covCheck = spawnSync('cargo', ['llvm-cov', '--version'], { encoding: 'utf8' }); // NOSONAR — developer-controlled PATH: known toolchain executable
   if (covCheck.status !== 0) {
     console.log(
       paint('yellow', '  ⚠ cargo-llvm-cov not installed — skipping backend coverage.'),
     );
     console.log(paint('dim', '    Install with: cargo install cargo-llvm-cov --locked'));
   } else {
-    const res = spawnSync(
+    const res = spawnSync( // NOSONAR — developer-controlled PATH: known toolchain executable
       'cargo',
       ['llvm-cov', 'nextest', '--lcov', '--output-path', 'lcov.info'],
       { cwd: path.join(process.cwd(), 'src-tauri'), stdio: 'inherit' },
