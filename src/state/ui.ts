@@ -4,6 +4,12 @@ import { getTodayString } from '../lib/dates';
 // Selected date (YYYY-MM-DD format)
 const [selectedDate, setSelectedDate] = createSignal<string>(getTodayString());
 
+// Deep-link target: the specific entry id to open within its day. A date can hold
+// multiple entries (schema v6), so search results set this alongside the date and the
+// editor lands on the matching entry instead of the day's newest. One-shot: the editor
+// clears it once consumed.
+const [selectedEntryId, setSelectedEntryId] = createSignal<number | null>(null);
+
 // Main content view: the editor (default) or the timeline list of all entries
 export type MainView = 'editor' | 'timeline';
 const [mainView, setMainView] = createSignal<MainView>('editor');
@@ -40,6 +46,7 @@ const [isImagePickerOpen, setIsImagePickerOpen] = createSignal(false);
 
 export function resetUiState(): void {
   setSelectedDate(getTodayString());
+  setSelectedEntryId(null);
   setMainView('editor');
   setIsSidebarCollapsed(true);
   setIsGoToDateOpen(false);
@@ -56,6 +63,8 @@ export function resetUiState(): void {
 export {
   selectedDate,
   setSelectedDate,
+  selectedEntryId,
+  setSelectedEntryId,
   mainView,
   setMainView,
   isSidebarCollapsed,

@@ -233,6 +233,7 @@ export async function getTimelineEntries(): Promise<TimelineEntry[]> {
 
 // Search commands
 export interface SearchResult {
+  id: number;
   date: string;
   title: string;
   snippet: string;

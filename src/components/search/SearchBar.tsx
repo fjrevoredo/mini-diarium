@@ -14,6 +14,10 @@ export default function SearchBar() {
   // eslint-disable-next-line no-unassigned-vars
   let inputRef: HTMLInputElement | undefined;
 
+  // Monotonic token so a slow query can't overwrite a newer query's results: only the
+  // latest invocation is allowed to commit to the result/loading signals.
+  let searchSeq = 0;
+
   // Debounced search function
   const performSearch = async (query: string) => {
     if (!query.trim()) {
@@ -21,15 +25,18 @@ export default function SearchBar() {
       return;
     }
 
+    const seq = ++searchSeq;
     try {
       setIsSearching(true);
       const results = await searchEntries(query);
+      if (seq !== searchSeq) return;
       setSearchResults(results);
     } catch (error) {
+      if (seq !== searchSeq) return;
       log.error('Search failed:', error);
       setSearchResults([]);
     } finally {
-      setIsSearching(false);
+      if (seq === searchSeq) setIsSearching(false);
     }
   };
 

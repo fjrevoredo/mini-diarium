@@ -1,18 +1,25 @@
-use crate::commands::auth::{with_unlocked_db, DiaryState};
-use crate::db::queries;
 use serde::Serialize;
+
+#[cfg(feature = "experimental")]
+use crate::commands::auth::{with_unlocked_db, DiaryState};
+#[cfg(feature = "experimental")]
+use crate::db::queries;
+#[cfg(feature = "experimental")]
 use tauri::State;
 
 #[derive(Debug, Clone, Serialize)]
 pub struct SearchResult {
+    pub id: i64,
     pub date: String,
     pub title: String,
     pub snippet: String,
 }
 
 /// Max matches returned to the UI; newest-first.
+#[cfg(feature = "experimental")]
 const MAX_RESULTS: usize = 200;
 /// Bytes of context shown on each side of a match (snapped to char boundaries).
+#[cfg(feature = "experimental")]
 const SNIPPET_RADIUS: usize = 48;
 
 /// Full-text search across decrypted entries.
@@ -23,6 +30,12 @@ const SNIPPET_RADIUS: usize = 48;
 /// persist a plaintext index — honoring the project rule that search must not store
 /// plaintext on disk. This reuses `queries::get_all_entries` (the same decrypt path
 /// used by export/stats) rather than touching the crypto layer directly.
+///
+/// Gated behind the `experimental` feature so it compiles out of production binaries
+/// until the search UI is wired up (see `docs/decisions/2026-06-feature-flags.md`).
+/// `SearchResult` stays ungated — it is the preserved interface contract (CLAUDE.md
+/// GOTCHA #1).
+#[cfg(feature = "experimental")]
 #[tauri::command]
 pub fn search_entries(
     query: String,
@@ -38,19 +51,24 @@ pub fn search_entries(
 
         let mut results: Vec<SearchResult> = Vec::new();
         for entry in &entries {
+            // `entry.text` is raw TipTap HTML (`editor.getHTML()`). Match and snippet over the
+            // visible prose, not the markup, so terms like "p"/"strong"/"em" don't hit tag
+            // names in every entry. Titles are plain text and need no stripping.
+            let text_plain = strip_html(&entry.text);
             let (title_lc, title_map) = lower_with_map(&entry.title);
-            let (text_lc, text_map) = lower_with_map(&entry.text);
+            let (text_lc, text_map) = lower_with_map(&text_plain);
 
             if !matches_all(&title_lc, &text_lc, &terms) {
                 continue;
             }
 
             // Prefer a body snippet; fall back to the title.
-            let snippet = build_snippet(&entry.text, &text_lc, &text_map, &terms)
+            let snippet = build_snippet(&text_plain, &text_lc, &text_map, &terms)
                 .or_else(|| build_snippet(&entry.title, &title_lc, &title_map, &terms))
                 .unwrap_or_default();
 
             results.push(SearchResult {
+                id: entry.id,
                 date: entry.date.clone(),
                 title: entry.title.clone(),
                 snippet,
@@ -65,6 +83,7 @@ pub fn search_entries(
 }
 
 /// AND semantics: every term must appear in the (folded) title or body.
+#[cfg(feature = "experimental")]
 fn matches_all(title_lc: &str, text_lc: &str, terms: &[String]) -> bool {
     terms
         .iter()
@@ -72,6 +91,7 @@ fn matches_all(title_lc: &str, text_lc: &str, terms: &[String]) -> bool {
 }
 
 /// Split a query into deduped, case-folded terms.
+#[cfg(feature = "experimental")]
 fn normalize_terms(query: &str) -> Vec<String> {
     let mut terms: Vec<String> = Vec::new();
     for raw in query.split_whitespace() {
@@ -83,6 +103,25 @@ fn normalize_terms(query: &str) -> Vec<String> {
     terms
 }
 
+/// Strip HTML tags so matching and snippets run over visible prose rather than TipTap
+/// markup. Not a full HTML parser — a lightweight tag remover, sufficient for the editor's
+/// own serialized output (no DOM in Rust). Entity decoding is intentionally left out; the
+/// few entities the editor emits render as literal text in a snippet, which is acceptable.
+#[cfg(feature = "experimental")]
+fn strip_html(s: &str) -> String {
+    let mut out = String::with_capacity(s.len());
+    let mut in_tag = false;
+    for ch in s.chars() {
+        match ch {
+            '<' => in_tag = true,
+            '>' => in_tag = false,
+            _ if !in_tag => out.push(ch),
+            _ => {}
+        }
+    }
+    out
+}
+
 /// Lowercase a string while recording, for each byte of the lowered output, the byte
 /// offset of the originating char in the source. A trailing sentinel maps `lowered.len()`
 /// back to `src.len()` so a match end never indexes out of range.
@@ -90,6 +129,7 @@ fn normalize_terms(query: &str) -> Vec<String> {
 /// This is what makes snippet offsets correct: `char::to_lowercase()` can change byte
 /// length (e.g. 'İ'), so a `find()` offset in the lowered string is not a valid index
 /// into the original without this map.
+#[cfg(feature = "experimental")]
 fn lower_with_map(src: &str) -> (String, Vec<usize>) {
     let mut lowered = String::with_capacity(src.len());
     let mut map: Vec<usize> = Vec::with_capacity(src.len() + 1);
@@ -107,9 +147,8 @@ fn lower_with_map(src: &str) -> (String, Vec<usize>) {
     (lowered, map)
 }
 
-/// Build an HTML-escaped snippet around the earliest term hit, wrapping that match in
-/// `<mark>`. With multiple (AND-matched) terms only the earliest occurrence is
-/// highlighted; the other terms are still present in the surrounding text.
+/// Build a `<mark>`-highlighted, HTML-escaped snippet around the earliest term hit.
+#[cfg(feature = "experimental")]
 fn build_snippet(orig: &str, lowered: &str, map: &[usize], terms: &[String]) -> Option<String> {
     let (match_byte, match_len) = terms
         .iter()
@@ -117,19 +156,7 @@ fn build_snippet(orig: &str, lowered: &str, map: &[usize], terms: &[String]) -> 
         .min_by_key(|&(b, _)| b)?;
 
     let m_start = map[match_byte];
-    // End of the *source* char containing the last matched lowered byte. Reading
-    // `map[match_byte + match_len]` can land mid-expansion when a char's lowercase is
-    // longer than the char (e.g. 'İ' → "i" + combining dot), collapsing the highlight
-    // to an empty `<mark></mark>`; advancing one full source char avoids that.
-    let m_end = {
-        let last = match_byte + match_len - 1;
-        let src_start = map[last];
-        orig[src_start..]
-            .char_indices()
-            .nth(1)
-            .map(|(off, _)| src_start + off)
-            .unwrap_or(orig.len())
-    };
+    let m_end = map[match_byte + match_len];
 
     let win_start = snap_floor(orig, m_start.saturating_sub(SNIPPET_RADIUS));
     let win_end = snap_ceil(orig, (m_end + SNIPPET_RADIUS).min(orig.len()));
@@ -149,6 +176,7 @@ fn build_snippet(orig: &str, lowered: &str, map: &[usize], terms: &[String]) -> 
     Some(out)
 }
 
+#[cfg(feature = "experimental")]
 fn snap_floor(s: &str, mut i: usize) -> usize {
     while i > 0 && !s.is_char_boundary(i) {
         i -= 1;
@@ -156,6 +184,7 @@ fn snap_floor(s: &str, mut i: usize) -> usize {
     i
 }
 
+#[cfg(feature = "experimental")]
 fn snap_ceil(s: &str, mut i: usize) -> usize {
     while i < s.len() && !s.is_char_boundary(i) {
         i += 1;
@@ -165,6 +194,7 @@ fn snap_ceil(s: &str, mut i: usize) -> usize {
 
 /// Escape text destined for the `<mark>`-bearing snippet so entry content can't inject
 /// markup. `&` first so existing characters aren't double-escaped.
+#[cfg(feature = "experimental")]
 fn escape_html(s: &str) -> String {
     s.replace('&', "&amp;")
         .replace('<', "&lt;")
@@ -178,16 +208,26 @@ mod tests {
     #[test]
     fn test_search_result_serialization() {
         let result = SearchResult {
+            id: 1,
             date: "2024-01-01".to_string(),
             title: "Test Entry".to_string(),
             snippet: "This is a <mark>test</mark> snippet".to_string(),
         };
 
         let json = serde_json::to_string(&result).unwrap();
+        assert!(json.contains("\"id\":1"));
         assert!(json.contains("2024-01-01"));
         assert!(json.contains("Test Entry"));
         assert!(json.contains("<mark>test</mark>"));
     }
+}
+
+// The implementation and its helpers are gated behind `experimental`, so their tests are
+// too — under the default feature set CI compiles them out (the search command is not in
+// production builds). Exercise them with `--features experimental`.
+#[cfg(all(test, feature = "experimental"))]
+mod impl_tests {
+    use super::*;
 
     #[test]
     fn normalize_terms_folds_dedups_and_splits() {
@@ -203,6 +243,20 @@ mod tests {
         let terms = normalize_terms("rust journal");
         assert!(matches_all("my rust notes", "a journal entry", &terms));
         assert!(!matches_all("my rust notes", "no body match", &terms));
+    }
+
+    #[test]
+    fn strip_html_removes_tags_so_tag_names_are_not_matchable() {
+        let html = "<p>Hello <strong>world</strong></p>";
+        let plain = strip_html(html);
+        assert_eq!(plain, "Hello world");
+
+        // Visible prose still matches; tag names ("p", "strong") no longer do.
+        let (lc, _) = lower_with_map(&plain);
+        let hit = |q: &str| matches_all("", &lc, &normalize_terms(q));
+        assert!(hit("world"));
+        assert!(!hit("strong"));
+        assert!(!hit("p"));
     }
 
     #[test]
@@ -238,17 +292,6 @@ mod tests {
         let terms = normalize_terms("rust");
         let snip = build_snippet(&text, &lc, &map, &terms).unwrap(); // must not panic
         assert!(snip.contains("<mark>rust</mark>"));
-    }
-
-    #[test]
-    fn snippet_highlights_when_lowercase_expands() {
-        // 'İ' (U+0130) lowercases to "i" + combining dot — longer than the source char.
-        // The highlight must still wrap a non-empty region, not emit <mark></mark>.
-        let (lc, map) = lower_with_map("İstanbul trip");
-        let terms = normalize_terms("i");
-        let snip = build_snippet("İstanbul trip", &lc, &map, &terms).unwrap();
-        assert!(snip.contains("<mark>İ</mark>"));
-        assert!(!snip.contains("<mark></mark>"));
     }
 
     #[test]

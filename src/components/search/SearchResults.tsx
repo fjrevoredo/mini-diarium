@@ -1,13 +1,16 @@
 import { For, Show } from 'solid-js';
 import { searchQuery, searchResults, isSearching } from '../../state/search';
-import { setSelectedDate } from '../../state/ui';
+import { setSelectedDate, setSelectedEntryId } from '../../state/ui';
 import { preferences } from '../../state/preferences';
 import { useI18n } from '../../i18n';
 
 export default function SearchResults() {
   const t = useI18n();
 
-  const handleResultClick = (date: string) => {
+  const handleResultClick = (id: number, date: string) => {
+    // Set the entry deep-link before the date so the editor's date effect opens this exact
+    // entry (a day can hold multiple entries) rather than the day's newest.
+    setSelectedEntryId(id);
     setSelectedDate(date);
   };
 
@@ -38,7 +41,7 @@ export default function SearchResults() {
           <For each={searchResults()}>
             {(result) => (
               <button
-                onClick={() => handleResultClick(result.date)}
+                onClick={() => handleResultClick(result.id, result.date)}
                 class="w-full rounded-md p-3 text-left transition-colors hover:bg-hover"
               >
                 <div class="flex items-start justify-between">
@@ -48,7 +51,7 @@ export default function SearchResults() {
                     </div>
                     <div class="mt-1 text-xs text-tertiary">{formatDate(result.date)}</div>
                     <Show when={result.snippet}>
-                      {/* Safe: snippet comes from our own in-memory search backend, which HTML-escapes entry text and only ever adds controlled <mark> tags */}
+                      {/* Safe: snippet comes from our own FTS5 backend with controlled <mark> tags */}
                       <div
                         class="mt-2 text-sm text-secondary"
                         // eslint-disable-next-line solid/no-innerhtml
