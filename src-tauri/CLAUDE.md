@@ -130,7 +130,7 @@ The following layers prevent the embedded WebView from making outbound network r
 
 1. Write the function in the appropriate `src-tauri/src/commands/*.rs` file (or create a new module and add it to `commands/mod.rs`)
 2. Register in `lib.rs` `generate_handler![]` macro
-3. Add typed wrapper in `src/lib/tauri.ts`
+3. Add typed wrapper in the matching command-category sub-file under `src/lib/tauri/`
 
 **If the command is not yet ready to ship**, gate it behind the `experimental` feature instead of blocking the PR:
 
@@ -183,7 +183,7 @@ refactoring.
 | Layer | File | What it provides |
 |-------|------|-----------------|
 | Rust command | `src-tauri/src/commands/search.rs` | `SearchResult` struct + `search_entries` command (stub returning `[]`) |
-| Frontend wrapper | `src/lib/tauri.ts` | `SearchResult` interface + `searchEntries(query)` async function |
+| Frontend wrapper | `src/lib/tauri/search.ts` | `SearchResult` interface + `searchEntries(query)` async function |
 | Frontend state | `src/state/search.ts` | `searchQuery`, `searchResults`, `isSearching` signals |
 | Frontend components | `src/components/search/SearchBar.tsx` | Search input component (not rendered) |
 | | `src/components/search/SearchResults.tsx` | Results list component (not rendered) |

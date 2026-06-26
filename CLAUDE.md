@@ -102,7 +102,7 @@ Static marketing site — plain HTML/CSS/JS. Deploy via Coolify using `website/d
 
 ## Command Registry
 
-All Tauri commands are registered in `src-tauri/src/lib.rs` (`generate_handler![]`). Frontend wrappers with typed signatures live in `src/lib/tauri.ts`. Rust names use `snake_case`; wrappers use `camelCase`.
+All Tauri commands are registered in `src-tauri/src/lib.rs` (`generate_handler![]`). Frontend wrappers with typed signatures live in `src/lib/tauri/` (one sub-file per command category, re-exported from the barrel `index.ts`). Rust names use `snake_case`; wrappers use `camelCase`.
 
 Command groups: `auth` (journal lifecycle, auth slots, multi-auth), `entries`, `files`, `search` (stub — see Gotcha #1), `nav`, `stats`, `export`, `plugin`, `debug`, `menu`, `fonts`, `tags`, `images`.
 

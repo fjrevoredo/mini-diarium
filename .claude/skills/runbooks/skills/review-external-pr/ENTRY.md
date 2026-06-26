@@ -155,7 +155,7 @@ inside the callback. Flag as a suggestion if it applies.
 *State* — Session-sensitive state resets on lock (`src/state/session.ts`). Module-level
 signals in test files reset in `beforeEach`.
 
-*IPC* — No raw `invoke()` outside `src/lib/tauri.ts`. User-facing backend errors through
+*IPC* — No raw `invoke()` outside `src/lib/tauri/`. User-facing backend errors through
 `mapTauriError()`.
 
 *Editor* — TipTap content stays HTML in all save paths. No load/save loops in editor

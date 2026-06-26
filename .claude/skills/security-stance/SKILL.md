@@ -18,7 +18,7 @@ Load when work touches any of:
 
 - Crypto: `src-tauri/src/crypto/cipher.rs`, `src-tauri/src/crypto/password.rs`
 - Auth: `src-tauri/src/auth/{mod,password,keypair,auto_key}.rs`, `src-tauri/src/commands/auth/`
-- IPC contract: `src/lib/tauri.ts`, `src/lib/errors.ts`, any new `#[tauri::command]`
+- IPC contract: `src/lib/tauri/`, `src/lib/errors.ts`, any new `#[tauri::command]`
 - Auto-lock paths: `src/App.tsx` idle timer, `src-tauri/src/screen_lock.rs`
 - DB schema / migrations: `src-tauri/src/db/schema/mod.rs` (`SCHEMA_VERSION` at line 32), `src-tauri/src/db/schema/migrations/`
 - Backups & rotation: `src-tauri/src/backup.rs`
@@ -212,7 +212,7 @@ FTS was removed in v0.2.0 (schema v4) because the plaintext `entries_fts` table 
 | Layer | Path | Purpose |
 |---|---|---|
 | Rust command | `src-tauri/src/commands/search.rs` | `SearchResult` struct + `search_entries` stub returning `[]` |
-| TS wrapper | `src/lib/tauri.ts` | `SearchResult` interface + `searchEntries(query)` |
+| TS wrapper | `src/lib/tauri/search.ts` | `SearchResult` interface + `searchEntries(query)` |
 | State | `src/state/search.ts` | `searchQuery`, `searchResults`, `isSearching` signals |
 | UI (not rendered) | `src/components/search/SearchBar.tsx`, `SearchResults.tsx` | Reserved input + results list |
 | Reindex anchors | `// Search index hook:` comments in `src-tauri/src/db/queries/entries.rs` (insert/update/delete) and `src-tauri/src/commands/import.rs` (bulk) | Where a future search module plugs in |
@@ -309,7 +309,7 @@ window-state:default
   (This exact string — or one matched by `errors.ts:23` `journal (must be|is not) unlocked` — so `mapTauriError` can route it to `errors.journalNotUnlocked`.)
 - **Mutex poisoning must not panic.** Commands must propagate a string error rather than letting a panic escape the Tauri boundary (a panic in a command aborts the process). For DB-only commands, use `with_unlocked_db` (canonical errors: `"Journal state lock failed"` / `"Journal must be unlocked"`). For commands that must open-code the preamble, use `.map_err(|_| "Journal state lock failed".to_string())`. **Do not** use `.unwrap()` on a Mutex — that converts a poisoned lock into a process abort.
 - **Schema migrations** (`db/schema/migrations/`) must be idempotent and wrapped in a transaction. Historical v3→v4 and v4→v5 followed this; new migrations must too. Bump `SCHEMA_VERSION` (`db/schema/mod.rs:32`) and document the migration step inline.
-- New commands must be registered in **two** places: `src-tauri/src/commands/mod.rs` (module) and `lib.rs` `generate_handler![]`. Missing either causes silent failure or compile error. Add the typed wrapper in `src/lib/tauri.ts`. See `src-tauri/CLAUDE.md` "Adding a New Tauri Command".
+- New commands must be registered in **two** places: `src-tauri/src/commands/mod.rs` (module) and `lib.rs` `generate_handler![]`. Missing either causes silent failure or compile error. Add the typed wrapper in the matching command-category sub-file under `src/lib/tauri/`. See `src-tauri/CLAUDE.md` "Adding a New Tauri Command".
 - `unsafe` blocks outside crypto crates appear in four places: `screen_lock.rs` (Win32 subclass / WTS APIs), the two Rhai wrapper `Send + Sync` impls in `rhai_loader.rs:149-174`, and the two network-isolation platform handlers in `lib.rs` — `install_webresource_requested_handler` (Windows COM, `lib.rs:373+`) and `install_content_rule_list` (macOS ObjC2, `lib.rs:448+`). Each `unsafe` block has a `// SAFETY:` comment justifying it. **Any new `unsafe` block elsewhere requires explicit security review and a `SAFETY:` block matching that pattern.**
 
 ---
@@ -322,7 +322,7 @@ Run these before merging anything that touched a Section 1 surface. A surprising
 |---|---|
 | Network crates snuck into Cargo.toml | `grep -nE 'reqwest\|hyper\|socket2\|ureq' src-tauri/Cargo.toml` |
 | Raw error display without sanitization (frontend) | `grep -rnE "setError\((err\.toString\(\)\|err\.message\|String\(err\))" src/` |
-| `invoke()` call sites that may need `mapTauriError` review | `grep -rn "invoke(" src/lib/tauri.ts` and audit downstream callers |
+| `invoke()` call sites that may need `mapTauriError` review | `grep -rn "invoke(" src/lib/tauri/` and audit downstream callers |
 | `MINI_DIARIUM_E2E*` env vars leaking outside `lib.rs` | `grep -rn "MINI_DIARIUM_E2E\|MINI_DIARIUM_APP_DIR\|MINI_DIARIUM_DATA_DIR" src-tauri/src/` (must show `lib.rs` only) |
 | `unwrap()` on the diary mutex (Mutex-poison panic risk) | `grep -rn "state.db.lock().unwrap" src-tauri/src/` |
 | New `unsafe impl` blocks | `grep -rn "unsafe impl" src-tauri/src/` (expect: 4 in `rhai_loader.rs` — `Send`/`Sync` for `RhaiImportPlugin` and `RhaiExportPlugin`; zero in `lib.rs` — the platform handlers use `unsafe {}` blocks, not `unsafe impl`) |

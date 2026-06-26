@@ -375,7 +375,7 @@ New "Text Input" section with fields:
 - API Key (password input, optional, leave empty for Ollama)
 - System prompt (textarea, optional)
 
-### 9.7 `src/lib/tauri.ts` — new wrappers
+### 9.7 `src/lib/tauri/` — new wrappers
 
 ```typescript
 export interface TextInputContext {
@@ -444,7 +444,7 @@ When implementing:
 | `src/components/editor/EditorPanel.tsx` | Modify | Wire overlay + insert handler |
 | `src/components/overlays/PreferencesOverlay.tsx` | Modify | Add LLM config section |
 | `src/lib/textInputPlugins.ts` | **New** | Frontend plugin registry + built-ins |
-| `src/lib/tauri.ts` | Modify | Add `listTextInputPlugins`, `runTextInputPlugin` wrappers |
+| `src/lib/tauri/plugins.ts` | Modify | Add `listTextInputPlugins`, `runTextInputPlugin` wrappers |
 | `src/state/ui.ts` | Modify | Add `isTextInputOpen` signal |
 | `src/state/preferences.ts` | Modify | Add LLM config fields |
 | `docs/user-plugins/USER_PLUGIN_GUIDE.md` | Modify | Add text-input section |

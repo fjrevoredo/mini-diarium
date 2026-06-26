@@ -22,7 +22,7 @@ Test every section: *Would this mislead an agent if it were three months stale?*
 | **Operational environment rules** | Outside the codebase itself | `cmd.exe /c bun run ...` for WSL; `cargo --manifest-path` from repo root |
 | **Architectural decisions and WHY** | Context that prevents re-opening closed debates | Schema version history; why FTS was removed; why `h-full` not `h-screen` |
 | **Verification commands** | Saves lookup; stable and short | `bun run type-check`, `cargo test --manifest-path` |
-| **Pointers to key files** | Navigation help — one line each | "Commands: `lib.rs` → `generate_handler![]`. Wrappers: `src/lib/tauri.ts`." |
+| **Pointers to key files** | Navigation help — one line each | "Commands: `lib.rs` → `generate_handler![]`. Wrappers: `src/lib/tauri/`." |
 | **Purpose-only directory / module tables** | Orient an agent to an unfamiliar codebase without enumerating files | See format rule below |
 | **Short reminder checklists** | Brief "don't forget X when doing Y" reminders that apply broadly | "When updating icons, also regenerate `src-tauri/icons/` with `bun run tauri icon`" — a one-liner reminder, not a step-by-step procedure |
 

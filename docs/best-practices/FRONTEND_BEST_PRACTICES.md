@@ -50,7 +50,7 @@ Current references:
 
 ### Use Typed Tauri Wrappers
 
-Components and hooks should call typed wrappers from `src/lib/tauri.ts` or higher-level state helpers, not raw `invoke()` calls.
+Components and hooks should call typed wrappers from `src/lib/tauri/` or higher-level state helpers, not raw `invoke()` calls.
 
 - Add a wrapper when adding a new backend command.
 - Keep wrapper argument names and shapes aligned with the Rust command.
@@ -63,7 +63,7 @@ Diagnostic check:
 rg -n "invoke\\(" src
 ```
 
-Most command invocations should be in `src/lib/tauri.ts` or focused tests.
+Most command invocations should be in `src/lib/tauri/` or focused tests.
 
 ### Sanitize User-Facing Backend Errors
 

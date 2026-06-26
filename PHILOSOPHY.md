@@ -259,7 +259,7 @@ Imports preserve source entries as separate records. If imported data lands on a
 - JSON: structured export with entry IDs
 - Markdown: HTML-to-Markdown conversion for readable export
 
-**Adding a new format** follows the Import Parser Pattern in `CLAUDE.md`: one `*.rs` parser module, one command in `commands/import.rs`, register in `lib.rs`, add wrapper in `src/lib/tauri.ts`. The UI (`ImportOverlay.tsx`) picks it up automatically via `listImportPlugins`; no UI change needed.
+**Adding a new format** follows the Import Parser Pattern in `CLAUDE.md`: one `*.rs` parser module, one command in `commands/import.rs`, register in `lib.rs`, add wrapper in `src/lib/tauri/`. The UI (`ImportOverlay.tsx`) picks it up automatically via `listImportPlugins`; no UI change needed.
 
 **Schema**: documented in `src-tauri/src/db/schema/` (mod.rs, create.rs, open.rs, legacy.rs, migrations/) with full migration history. Current version: v7 (tags and entry_tags tables added). Entries use stable integer IDs and support multiple entries per day. AES-256-GCM with standard key derivation; decryptable with any standard crypto toolkit given the password.
 

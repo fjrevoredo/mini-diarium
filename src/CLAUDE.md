@@ -14,7 +14,7 @@
 | `src/components/overlays/` | All overlay dialogs — preferences (split by tab), stats, import/export, tags, notifications, onboarding, image picker |
 | `src/components/search/` | Search UI — not rendered; preserved for future secure search |
 | `src/state/` | Signal-based state modules, one per domain — see State Management below |
-| `src/lib/` | Tauri invoke wrappers (`tauri.ts`), utility helpers, shortcuts listener, theme management |
+| `src/lib/` | Tauri invoke wrappers (`tauri/` — one sub-file per command category, barrel `index.ts`), utility helpers, shortcuts listener, theme management |
 | `src/i18n/` | Translation files (`locales/`) and i18n context wrapper |
 | `src/test/` | Vitest setup and `renderWithI18n` helper |
 

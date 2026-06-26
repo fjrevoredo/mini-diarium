@@ -12,14 +12,14 @@ New commands need registration and a typed frontend wrapper:
 
 - module export/declaration under `src-tauri/src/commands/` when a new module or public command is added
 - `tauri::generate_handler![]` in `src-tauri/src/lib.rs`
-- wrapper in `src/lib/tauri.ts`
+- wrapper in the matching command-category sub-file under `src/lib/tauri/`
 
 Frontend wrappers must use the exact command name and argument shape expected by Tauri. Prefer owned Rust argument types (`String`, `Vec<T>`, structs) for command input, especially for async commands.
 
 Diagnostic checks:
 
 ```powershell
-rg -n "generate_handler|tauri::command|invoke\\(" src-tauri/src src/lib/tauri.ts
+rg -n "generate_handler|tauri::command|invoke\\(" src-tauri/src src/lib/tauri/
 ```
 
 If frontend invocation fails with "command not found," inspect `generate_handler![]` first.
@@ -180,21 +180,21 @@ Soft limits trigger a split review:
 
 - `src-tauri/src/lib.rs`: 350 lines
 - individual command modules: 400 lines
-- frontend Tauri wrapper file `src/lib/tauri.ts`: 350 lines
+- each frontend Tauri wrapper sub-file under `src/lib/tauri/` (one per command category): 350 lines
 - capability files: 250 lines
 
 Hard limits require an explicit justification in the PR or a split plan:
 
 - `src-tauri/src/lib.rs`: 500 lines
 - individual command modules: 650 lines
-- frontend Tauri wrapper file `src/lib/tauri.ts`: 500 lines
+- each frontend Tauri wrapper sub-file under `src/lib/tauri/`: 500 lines (the barrel `index.ts` stays trivially small — just `export *` lines)
 - capability files: 400 lines
 
 Prefer splits that preserve diagnosis:
 
 - keep `lib.rs` as setup and command registration, not business logic
 - split command modules by user workflow or security boundary
-- keep typed frontend wrappers grouped by command category when `tauri.ts` grows
+- keep typed frontend wrappers grouped by command category as sub-files under `src/lib/tauri/`, re-exported from the barrel `index.ts`
 - split large capability files by feature only when the resulting permission model stays obvious
 
 Generated files and platform-specific WebView security code may exceed these limits when splitting would make platform behavior harder to audit. Document that exception near the file or PR.
@@ -205,7 +205,7 @@ Generated files and platform-specific WebView security code may exceed these lim
 
 1. Check `src-tauri/src/lib.rs` `generate_handler![]`.
 2. Check command module exports in `src-tauri/src/commands/`.
-3. Check wrapper name and argument casing in `src/lib/tauri.ts`.
+3. Check wrapper name and argument casing in `src/lib/tauri/` (the matching command-category sub-file).
 
 ### Raw Error Appears In UI
 

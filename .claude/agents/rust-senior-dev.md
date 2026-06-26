@@ -33,7 +33,7 @@ All diary plaintext MUST stay off disk. The master key is wrapped per auth slot 
   }
   ```
 - Register new commands in BOTH `commands/mod.rs` AND `generate_handler![]` in `lib.rs` — missing either causes silent failures
-- Add typed frontend wrappers in `src/lib/tauri.ts` for every new command
+- Add typed frontend wrappers in the matching command-category sub-file under `src/lib/tauri/` for every new command
 - Follow naming conventions: `snake_case` for functions/vars, `PascalCase` for types/structs
 - All commands return `Result<T, String>`; map errors with `.map_err(|e| format!(...))`
 
