@@ -86,7 +86,7 @@ Application code should not know ciphertext blob layout or encryption error mapp
 Current references:
 
 - `src-tauri/src/db/queries/mod.rs`
-- `src-tauri/src/db/queries/entries.rs`
+- `src-tauri/src/db/queries/entries/` (split into `insert.rs`, `update.rs`, `read.rs`, `timeline.rs`)
 - `src-tauri/src/db/queries/tags.rs`
 
 ### Keep Migrations Linear And Auditable

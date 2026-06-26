@@ -121,7 +121,7 @@ A future media storage layer would require: a separate table or file system stor
 ### AT-4 — Search index does not exist; stub is intentionally preserved
 **Status:** Open (security tradeoff; future implementation required)
 
-`commands/search.rs` is a stub that always returns `[]`. The FTS5 table was dropped in schema v4 because it stored plaintext. `// Search index hook:` comments in `db/queries/entries.rs` and `commands/import.rs` mark the exact integration points.
+`commands/search.rs` is a stub that always returns `[]`. The FTS5 table was dropped in schema v4 because it stored plaintext. `// Search index hook:` comments in `db/queries/entries/{insert,update,delete}.rs` and `commands/import.rs` mark the exact integration points.
 
 Any implementation must satisfy: (1) no plaintext on disk, (2) schema migration (bump `SCHEMA_VERSION`), (3) UI placement is unspecified — the existing `SearchBar.tsx` / `SearchResults.tsx` / `state/search.ts` are preserved as interface contracts but their placement is not decided.
 
