@@ -6,7 +6,7 @@ import TitleEditor from '../editor/TitleEditor';
 import DiaryEditor from '../editor/DiaryEditor';
 import WordCount from '../editor/WordCount';
 import { EntryNavBar } from '../editor/EntryNavBar';
-import { selectedDate } from '../../state/ui';
+import { selectedDate, selectedEntryId, setSelectedEntryId } from '../../state/ui';
 import { readTextFile } from '../../lib/tauri';
 import EntryTags from '../editor/EntryTags';
 import type { DiaryEntry, EntryMetadata } from '../../lib/tauri';
@@ -92,6 +92,22 @@ export default function EditorPanel() {
 
   createEffect(() => {
     void lifecycle.loadEntriesForDate(selectedDate());
+  });
+
+  // Same-day deep-link from search: when the target entry is on the already-open date the
+  // date effect above doesn't re-fire (selectedDate is unchanged), so navigate within the
+  // current day here. Cross-date targets are consumed by loadEntriesForDate when the new
+  // day loads; for those this no-ops (the id isn't in the current day's entries) and then
+  // clears when that load nulls the signal. dayEntries is read untracked so only a change
+  // to selectedEntryId drives this effect.
+  createEffect(() => {
+    const targetId = selectedEntryId();
+    if (targetId === null) return;
+    const idx = untrack(() => dayEntries().findIndex((e) => e.id === targetId));
+    if (idx >= 0) {
+      setSelectedEntryId(null);
+      void nav.navigateToEntry(idx);
+    }
   });
 
   // Auto-focus the editor once after initial unlock so the user can start typing immediately.

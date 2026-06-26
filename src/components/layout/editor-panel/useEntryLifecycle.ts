@@ -10,6 +10,7 @@ import {
 import type { DiaryEntry, EntryMetadata } from '../../../lib/tauri';
 import { debounce } from '../../../lib/debounce';
 import { setEntryDates, setIsSaving, registerCleanupCallback } from '../../../state/entries';
+import { selectedEntryId, setSelectedEntryId } from '../../../state/ui';
 import { countWordsInHtml } from '../../../lib/wordcount';
 import { createLogger } from '../../../lib/logger';
 import type { EditorEmptyCheckHook } from './useEditorEmptyCheck';
@@ -174,8 +175,17 @@ export function useEntryLifecycle(opts: UseEntryLifecycleOptions): EntryLifecycl
 
       opts.setDayEntries(entries);
 
+      // One-shot deep-link from search: open the requested entry within the day rather
+      // than the day's newest. Read+clear under untrack (we are still in the calling
+      // effect's tracking scope before the first await above has rerun this block).
+      const targetEntryId = untrack(selectedEntryId);
+      if (targetEntryId !== null) setSelectedEntryId(null);
+
       if (entries.length > 0) {
-        const startIndex = entries.length - 1; // newest entry is last in chronological order
+        const targetIndex =
+          targetEntryId !== null ? entries.findIndex((e) => e.id === targetEntryId) : -1;
+        // newest entry is last in chronological order; fall back to it when no deep-link match
+        const startIndex = targetIndex >= 0 ? targetIndex : entries.length - 1;
         opts.setCurrentIndex(startIndex);
         const entry = entries[startIndex];
         opts.setPendingEntryId(entry.id);

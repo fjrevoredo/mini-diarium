@@ -72,7 +72,7 @@ function primeTransientState(): void {
   setEntryDates(['2024-01-15']);
   setIsSaving(true);
   setSearchQuery('query');
-  setSearchResults([{ date: '2024-01-15', title: 'Title', snippet: 'Body' }]);
+  setSearchResults([{ id: 1, date: '2024-01-15', title: 'Title', snippet: 'Body' }]);
   setIsSearching(true);
   setAuthMethods([
     {
@@ -158,7 +158,7 @@ describe('auth session boundary reset', () => {
   it('starts unlock sessions from today baseline', async () => {
     setSelectedDate('1999-12-31');
     setSearchQuery('old');
-    setSearchResults([{ date: '1999-12-31', title: 'Old', snippet: 'Old' }]);
+    setSearchResults([{ id: 1, date: '1999-12-31', title: 'Old', snippet: 'Old' }]);
     mocks.tauri.getAllEntryDates.mockResolvedValue(['2024-01-15']);
 
     await unlockJournal('secret');
