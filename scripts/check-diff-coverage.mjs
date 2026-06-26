@@ -213,8 +213,8 @@ function generateCoverage() {
     );
     console.log(paint('dim', '    Install with: cargo install cargo-llvm-cov --locked'));
   } else {
-    const res = spawnSync( // NOSONAR — developer-controlled PATH: known toolchain executable
-      'cargo',
+    const res = spawnSync(
+      'cargo', // NOSONAR — developer-controlled PATH: known toolchain executable
       ['llvm-cov', 'nextest', '--lcov', '--output-path', 'lcov.info'],
       { cwd: path.join(process.cwd(), 'src-tauri'), stdio: 'inherit' },
     );
