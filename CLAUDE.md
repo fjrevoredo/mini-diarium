@@ -215,7 +215,7 @@ See [Backend guide](src-tauri/CLAUDE.md) for the full auth architecture and per-
 ## Agent Workflow Rules
 
 1. **Validate after each completed task.** Run the relevant test/type-check/lint command immediately after finishing a task, before moving to the next one. This catches bugs at the point of introduction and keeps diagnosis trivial.
-2. **Format after changes.** Use `cmd.exe /c bun run format`. Prettier is configured for the full `src/` tree and only modifies files with style violations.
+2. **Format after changes.** A Git pre-commit hook (`.githooks/pre-commit`, installed automatically by `bun install` via the `postinstall` lifecycle) runs Prettier on staged `src/**/*.{ts,tsx,css}` files and `cargo fmt` on staged `src-tauri/**/*.rs` files before every commit, so style violations never reach the repository. Manual `cmd.exe /c bun run format` is still available for full-tree sweeps after refactors. Bypass the hook with `git commit --no-verify` when needed.
 3. **Use `manual-planning` skill for any plan.** When asked to create a plan, roadmap, implementation checklist, or planning document, load the `manual-planning` skill and follow its template.
 4. **Use `todo-manager` skill for TODO operations.** When adding, tracking, archiving, or validating TODO items in `docs/todo/TODO.md`, load the `todo-manager` skill. Never manually assign TODO IDs.
 5. **Before implementing any plan step that configures a third-party extension, framework, or WebView behavior, open the installed source or relevant backend source to verify the step's assumptions.** If the source contradicts the plan, halt and surface the discrepancy before proceeding.

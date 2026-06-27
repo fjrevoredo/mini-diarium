@@ -291,7 +291,7 @@ Run all static checks in a **single `lint` job** to share toolchain and cache ov
   run: prettier --check .         # or: black --check, gofmt -l, etc.
 
 - name: Lint
-  run: eslint . --max-warnings 0  # or: flake8, golangci-lint, etc.
+  run: eslint . --max-warnings 0  # or: flake8, golint-ci run, etc.
 
 - name: Type check
   run: tsc --noEmit               # or equivalent
@@ -301,6 +301,16 @@ Run all static checks in a **single `lint` job** to share toolchain and cache ov
     make generate
     git diff --exit-code          # fails if generated output changed
 ```
+
+---
+
+## Local Pre-commit Hook
+
+CI is the safety net, but a fast local hook catches style violations on the developer's machine before they ever push. The hook must stay **fast** (sub-second-to-low-seconds, scoped to staged files only) so it doesn't slow the commit cycle. Anything heavier (type-check, lint, tests, coverage) belongs in CI or a manual `pre-commit` script, not in the hook.
+
+In this repo, `.githooks/pre-commit` runs Prettier on staged `src/**/*.{ts,tsx,css}` files and `cargo fmt` on staged `src-tauri/**/*.rs` files. It is activated automatically by setting `git config core.hooksPath .githooks`, which `scripts/install-hooks.js` does as the `postinstall` step of `bun install`. Manual install: `bun run hooks:install`. Bypass for a single commit: `git commit --no-verify`.
+
+The hook is a complement to CI, not a replacement: it runs `--write`/auto-fix locally, while CI uses `--check` to fail on drift.
 
 ---
 

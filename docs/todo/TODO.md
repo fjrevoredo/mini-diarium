@@ -48,7 +48,7 @@ TODO entry format:
 
 - [ ] **TODO-0041: Migrate native menu elements to main app layout** — move most menu actions from native OS menus into the app's main UI for consistent cross-platform behavior and improved E2E testability; audit current native menu items in menu.rs and identify which commands should have in-app equivalents (toolbar buttons, dropdown menus, or keyboard shortcuts); preserve critical platform-native items (app-level quit, window management) where expected by users; update E2E tests to interact with in-app controls instead of native menu automation
 
-- [ ] **TODO-0058: Pre-commit hook for frontend and backend formatting** — a Git pre-commit hook must run the project's formatting tools automatically so style violations never reach the repository: Prettier (`bun run format`) for staged `src/` files and `cargo fmt` for staged `src-tauri/` Rust files; the hook must install without manual setup (wired into the existing `bun install` lifecycle or a project-local hooks directory via `core.hooksPath`), be scoped to staged files only to keep commits fast, and be documented in the "Format after changes" rule and relevant best-practices docs
+- [x] **TODO-0058: Pre-commit hook for frontend and backend formatting** — a Git pre-commit hook must run the project's formatting tools automatically so style violations never reach the repository: Prettier (`bun run format`) for staged `src/` files and `cargo fmt` for staged `src-tauri/` Rust files; the hook must install without manual setup (wired into the existing `bun install` lifecycle or a project-local hooks directory via `core.hooksPath`), be scoped to staged files only to keep commits fast, and be documented in the "Format after changes" rule and relevant best-practices docs
 
 ---
 

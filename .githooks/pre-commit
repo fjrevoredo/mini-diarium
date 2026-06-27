@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# Auto-installed by scripts/install-hooks.js (via `bun install` → postinstall).
+# Formats staged frontend and backend files so style violations never reach the repo.
+# Bypass with: git commit --no-verify
+set -e
+
+STAGED=$(git diff --cached --name-only --diff-filter=ACMR) || exit 0
+[ -z "$STAGED" ] && exit 0
+
+FRONTEND_FILES=$(echo "$STAGED" | grep -E '^src/.*\.(ts|tsx|css)$' || true)
+if [ -n "$FRONTEND_FILES" ]; then
+  echo "pre-commit: formatting staged frontend files with Prettier..."
+  bunx prettier --write $FRONTEND_FILES
+  git add $FRONTEND_FILES
+fi
+
+BACKEND_FILES=$(echo "$STAGED" | grep -E '^src-tauri/.*\.rs$' || true)
+if [ -n "$BACKEND_FILES" ]; then
+  if command -v cargo >/dev/null 2>&1; then
+    echo "pre-commit: formatting src-tauri/ with cargo fmt..."
+    (cd src-tauri && cargo fmt)
+    git add $BACKEND_FILES
+  else
+    echo "pre-commit: cargo not in PATH; skipping rust formatting (run: cd src-tauri && cargo fmt)" >&2
+  fi
+fi
+
+exit 0

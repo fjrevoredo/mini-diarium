@@ -22,6 +22,7 @@
     "coverage:check": "node scripts/check-diff-coverage.mjs --generate",
     "coverage:self-test": "node scripts/check-diff-coverage.mjs --self-test",
     "pre-commit": "node scripts/pre-commit.js",
+    "hooks:install": "node scripts/install-hooks.js",
     "check": "node scripts/quick-check.js",
     "diagrams": "node scripts/render-diagrams.mjs",
     "diagrams:check": "node scripts/verify-diagrams.mjs",
@@ -42,7 +43,8 @@
     "bench": "vitest bench",
     "sync-skills": "node scripts/sync-skills.js",
     "check:ui-errors": "node scripts/check-ui-error-sanitization.js",
-    "test:print": "playwright test --config playwright.config.ts"
+    "test:print": "playwright test --config playwright.config.ts",
+    "postinstall": "node scripts/install-hooks.js"
   },
   "license": "MIT",
   "puppeteer": {

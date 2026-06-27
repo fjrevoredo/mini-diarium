@@ -38,6 +38,27 @@ bun run pre-commit
 
 ---
 
+## Local Git Hook (auto-installed)
+
+`scripts/install-hooks.js` runs as the `postinstall` step of `bun install` and sets `core.hooksPath` to `.githooks/`. This activates `.githooks/pre-commit`, which on every commit:
+
+- Runs `bunx prettier --write` on staged `src/**/*.{ts,tsx,css}` files, then re-stages them.
+- Runs `cargo fmt` in `src-tauri/` when any `src-tauri/**/*.rs` file is staged, then re-stages them.
+- Skips silently when no relevant files are staged.
+- Skips Rust formatting with a warning if `cargo` is not in `PATH`.
+
+The hook is intentionally fast (formatting only, scoped to staged files). The full check suite (type-check, lint, tests, clippy, patch coverage) lives in `bun run pre-commit` and is meant to run before pushing.
+
+**Manual install** (escape hatch): `bun run hooks:install` (or `node scripts/install-hooks.js`).
+
+**Bypass** for a single commit: `git commit --no-verify`.
+
+**CI behavior**: GitHub Actions does not run the hook; `.github/workflows/ci.yml` already runs `bun run format:check` and `cargo fmt --check` on every push and PR.
+
+**Reinstall**: run `bun install` again, or `git config core.hooksPath .githooks` manually.
+
+---
+
 ## Quick Fix Commands
 
 If checks fail, use these commands to auto-fix common issues:

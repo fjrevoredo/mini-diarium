@@ -6,3 +6,6 @@ docs/diagrams/*.d2   text eol=lf
 # Linux packaging files must use LF so sed/shell scripts can edit them on Windows
 data/linux/*.xml     text eol=lf
 data/linux/*.desktop text eol=lf
+
+# Git hooks must use LF (shebang + `set -e` break on Windows CRLF)
+.githooks/*          text eol=lf

@@ -66,7 +66,9 @@ The `experimental` Cargo feature (`--features experimental`) and `VITE_EXPERIMEN
 
 ## Check Suite
 
-Before committing, run the pre-commit script to verify everything passes:
+A Git pre-commit hook auto-installs on `bun install` (via the `postinstall` lifecycle) and runs Prettier on staged `src/**/*.{ts,tsx,css}` files plus `cargo fmt` on staged `src-tauri/**/*.rs` files before every commit. This keeps the commit cycle fast (<2s typical) and prevents style violations from reaching the repo. Bypass with `git commit --no-verify` when needed.
+
+For everything beyond formatting, run the pre-commit script before pushing:
 
 ```bash
 # Recommended: Full check suite (runs all tests)

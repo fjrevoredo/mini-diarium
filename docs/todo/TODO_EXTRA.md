@@ -173,3 +173,48 @@ Allow users to augment text entry with pluggable text-generation sources: LLM en
 - 2 new Tauri commands: `list_text_input_plugins`, `run_text_input_plugin`
 
 **Testing**: Rhai unit tests; frontend overlay tests; LLM tier mock tests; dictation manual-only
+
+---
+
+## TODO-0058-01: Pre-commit hook design
+
+Parent: [`TODO-0058: Pre-commit hook for frontend and backend formatting`](TODO.md)
+
+**File layout**
+
+- `.githooks/pre-commit` — bash hook, executable. Activated by `core.hooksPath .githooks` (set by the install script).
+- `scripts/install-hooks.js` — idempotent installer (no-op on CI or non-git context). Exposes a pure `computeInstallActions({ isCI, hasGitDir, hasHookFile, platform })` helper for tests.
+- `scripts/install-hooks.test.js` — `node:test` unit tests for `computeInstallActions`.
+- `package.json` — `postinstall` runs the installer; `hooks:install` is the manual escape hatch.
+
+**Hook behavior** (`.githooks/pre-commit`)
+
+- Reads staged paths via `git diff --cached --name-only --diff-filter=ACMR` (added, copied, modified, renamed — not deleted).
+- **Frontend**: filters to `src/.*\.(ts|tsx|css)$`, runs `bunx prettier --write <files>`, then `git add <files>`.
+- **Backend**: filters to `src-tauri/.*\.rs$`. When any match, runs `(cd src-tauri && cargo fmt)` and re-stages the Rust files. Cargo is invoked with `command -v` guard; missing cargo prints a warning to stderr and skips (commit still succeeds).
+- Skips silently when no relevant files are staged.
+- Always exits 0 on success; formatting failures propagate via `set -e`.
+
+**Scoped-to-staged decision**
+
+Prettier operates on working-tree files (not the staged blob) and re-stages via `git add`. If a file has both staged and unstaged changes, Prettier may format the entire file and the unstaged changes appear in the re-staged diff. This matches the behavior of husky/lefthook and is acceptable: the dev sees the diff before the commit completes. Stashing the unstaged changes was rejected as too complex for the speed budget.
+
+**Cargo fmt scope**
+
+`cargo fmt` formats the entire `src-tauri/` crate, even when only one staged file triggers it. Stable `cargo fmt -- <file>` is a no-op, so partial-scope formatting is not achievable without nightly. Whole-crate format takes ~1-2s and is acceptable.
+
+**Auto-install via postinstall**
+
+`scripts/install-hooks.js` runs on every `bun install` via `package.json#postinstall`. It sets `git config core.hooksPath .githooks` (writes to per-clone `.git/config`) and chmods the hook to `0o755` on non-Windows. CI is detected via `process.env.CI === 'true'` and skips all side effects; missing `.git` directory is detected via `existsSync('.git')` and skips too. Manual reinstall: `bun run hooks:install`.
+
+**Bypass**
+
+`git commit --no-verify` skips the hook for a single commit (standard Git behavior). Documented in `CLAUDE.md`, `CONTRIBUTING.md`, and `scripts/README.md`.
+
+**Cross-platform**
+
+The hook is a bash script. Git for Windows bundles bash and uses it for hook execution regardless of the developer's preferred shell. `chmodSync` is skipped on Windows because Git Bash executes hook scripts via shebang even without the executable bit.
+
+**CI**
+
+GitHub Actions does **not** run the local hook. `.github/workflows/ci.yml` already runs `bun run format:check` and `cargo fmt --check` on every push and PR — same checks, but read-only / fail-on-drift mode.
