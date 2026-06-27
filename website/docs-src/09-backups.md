@@ -3,13 +3,13 @@ title: Backups
 slug: backups
 description: Mini Diarium automatically backs up your encrypted journal on every unlock and keeps the 30 most recent copies in a backups folder next to your diary.db.
 order: 10
-updated: 2026-06-04
+updated: 2026-06-27
 tags: backups, data safety, backup rotation, storage
 ---
 
 ## When Backups Are Created
 
-A backup is created automatically each time you successfully unlock your journal, whether by password or key file. If the unlock fails — wrong password, missing key file — no backup is taken.
+A backup is created automatically each time you successfully unlock your journal, whether by password or key file. If the unlock fails (wrong password, missing key file), no backup is taken.
 
 ## Backup Location
 
@@ -37,7 +37,7 @@ When you move your journal to a different folder via Preferences, `diary.db` is 
 
 ## Cloud-Synced Locations
 
-If you place your journal directory inside a cloud-synced folder — Dropbox, OneDrive, iCloud Drive, and so on — both `diary.db` and the `backups/` subfolder will be included in the sync, giving you off-site backup on top of local rotation.
+If you place your journal directory inside a cloud-synced folder (Dropbox, OneDrive, iCloud Drive, and so on), both `diary.db` and the `backups/` subfolder will be included in the sync, giving you off-site backup on top of local rotation.
 
 Keep in mind that Mini Diarium does not coordinate concurrent access. **Do not open the same journal from two devices at the same time.** The encrypted database file is not designed for simultaneous multi-device write access.
 

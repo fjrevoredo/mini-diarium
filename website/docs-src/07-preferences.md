@@ -3,7 +3,7 @@ title: Preferences
 slug: preferences
 description: Configure Mini Diarium from the Preferences panel: choose a theme, set auto-lock timeout, adjust editor font and size, manage authentication methods, and more.
 order: 8
-updated: 2026-06-04
+updated: 2026-06-27
 tags: preferences, settings, theme, auto-lock, configuration
 ---
 
@@ -30,7 +30,7 @@ Preferences are now **close-only**: there is no Save/Cancel footer. Reversible s
 | Hide titles | Remove the title field for a minimal, distraction-free look |
 | Show entry timestamps | Display creation and last-updated timestamps on each entry |
 | Spellcheck | Toggle browser spellcheck in the editor |
-| Toolbar items | Configure which formatting controls appear in the editor toolbar and their order. Each of the 17 controls (Headings, Underline, Strikethrough, Text color, Highlight color, Blockquote, Inline code, Bullet list, Numbered list, Horizontal rule, Insert image, Import Markdown, Insert timestamp, Text direction, Alignment, Font family, Font size) can be enabled/disabled individually and reordered with ↑/↓ buttons. "Select all" and "Select none" toggle all controls at once. Bold and Italic are always present at the start of the toolbar and cannot be removed. Font family and Font size are disabled by default — enable them to get compact dropdown pickers directly in the toolbar. Note: when enabled, these dropdowns apply inline formatting to selected text (not changing this preference). To change the app-wide font default, use the "Editor font" setting below. |
+| Toolbar items | Configure which formatting controls appear in the editor toolbar and their order. Each of the 17 controls (Headings, Underline, Strikethrough, Text color, Highlight color, Blockquote, Inline code, Bullet list, Numbered list, Horizontal rule, Insert image, Import Markdown, Insert timestamp, Text direction, Alignment, Font family, Font size) can be enabled/disabled individually and reordered with ↑/↓ buttons. "Select all" and "Select none" toggle all controls at once. Bold and Italic are always present at the start of the toolbar and cannot be removed. Font family and Font size are disabled by default; enable them to get compact dropdown pickers directly in the toolbar. Note: when enabled, these dropdowns apply inline formatting to selected text (not changing this preference). To change the app-wide font default, use the "Editor font" setting below. |
 | Editor font size | Adjust the app-wide default body text size in the editor (12–24 px). When an entry has an entry-specific font default or inline font formatting applied to the selection, those take precedence over this app default. |
 | Editor font | Choose an app-wide default font family for the editor body from bundled options or uploaded custom fonts. When an entry has an entry-specific font default or inline font formatting applied to the selection, those take precedence over this app default. See Writing Entries for the full three-level font system. |
 
@@ -44,7 +44,7 @@ Timestamp format and precision are configured from the editor timestamp popup (c
 | Change password | Re-encrypt your journal with a new password |
 | Authentication Methods | View registered unlock methods; add a new key file or remove existing ones |
 
-At least one authentication method must remain registered — removing the last one is blocked.
+At least one authentication method must remain registered. Removing the last one is blocked.
 
 ## Data Settings
 

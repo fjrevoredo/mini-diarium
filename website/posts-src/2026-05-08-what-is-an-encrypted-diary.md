@@ -6,7 +6,7 @@ date: 2026-05-08
 updated: 2026-05-08
 author: Francisco J. Revoredo
 tags: encrypted diary, encrypted journal, private diary app, AES-256-GCM
-excerpt: An encrypted diary encrypts entries before they touch disk — it's an architectural guarantee, not a login screen. Here's what that means in practice.
+excerpt: An encrypted diary encrypts entries before they touch disk. It's an architectural guarantee, not a login screen. Here's what that means in practice.
 ---
 
 If you have searched for "encrypted diary" you are probably trying to answer a practical question: will my writing stay private, not just while I use the app but as long as the files exist on my machine?
@@ -23,7 +23,7 @@ The critical detail is *when* encryption happens. If an app encrypts entries bef
 
 A password lock screen is not encryption. Apps that ask for a password when you open them but store entries as plaintext inside an unprotected database are not encrypted diaries. The password protects launch access, not the data files themselves. Anyone who can locate the database file on your disk or on a cloud server can read every entry without knowing the password.
 
-This is not a subtle distinction. A password screen can be bypassed by reading the underlying file. Encryption cannot — the file contains ciphertext, and without the key that ciphertext is mathematically meaningless.
+This is not a subtle distinction. A password screen can be bypassed by reading the underlying file. Encryption cannot. The file contains ciphertext, and without the key that ciphertext is mathematically meaningless.
 
 ## Encryption at rest vs. encryption in transit
 
@@ -35,7 +35,7 @@ Encryption at rest means the data is encrypted in storage regardless of how it g
 
 Mini Diarium generates a random 256-bit master key when you create a journal. That key never changes and never leaves your device. Every entry is encrypted with AES-256-GCM using that master key before the bytes are written to the local SQLite database.
 
-The master key itself is not stored in plaintext either. Each authentication method — password or key file — holds its own wrapped copy of the master key. Password slots use Argon2id key derivation plus AES-GCM wrapping. Key file slots use X25519 ECIES. Adding or removing an auth method never requires re-encrypting the entries themselves. Only the wrapped key is recreated.
+The master key itself is not stored in plaintext either. Each authentication method, either a password or key file, holds its own wrapped copy of the master key. Password slots use Argon2id key derivation plus AES-GCM wrapping. Key file slots use X25519 ECIES. Adding or removing an auth method never requires re-encrypting the entries themselves. Only the wrapped key is recreated.
 
 This means that even with unrestricted access to your diary.db file, an attacker faces AES-256-GCM ciphertext with no path to the key without your password or physical key file. There is no cloud backend to subpoena, no server operator to compromise, and no sync service to leak plaintext. The app has no HTTP client, so it literally cannot send entries anywhere.
 

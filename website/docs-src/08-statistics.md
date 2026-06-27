@@ -3,7 +3,7 @@ title: Statistics
 slug: statistics
 description: View your writing statistics: total entry and word counts, current and longest streaks, and a breakdown of your most active writing days, months, and years.
 order: 9
-updated: 2026-06-04
+updated: 2026-06-27
 tags: statistics, streaks, word count, writing habits
 ---
 
@@ -26,7 +26,7 @@ Mini Diarium calculates the following statistics from your journal:
 
 ## Streaks
 
-A streak is a consecutive sequence of calendar days where you have at least one journal entry. Gaps — days with no entries — break a streak.
+A streak is a consecutive sequence of calendar days where you have at least one journal entry. Gaps (days with no entries) break a streak.
 
 - **Current streak** counts backwards from today. If you have not written anything today, the streak may already show as broken even if you wrote yesterday.
 - **Longest streak** is the maximum consecutive-day run found anywhere in your history.

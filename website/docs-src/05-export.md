@@ -3,7 +3,7 @@ title: Exporting Data
 slug: export
 description: Export your journal as JSON, Markdown, or PDF. JSON preserves IDs, tags, and metadata; Markdown is human-readable; PDF creates a formatted A4 document.
 order: 6
-updated: 2026-06-10
+updated: 2026-06-27
 tags: export, backup, JSON, Markdown, PDF, print, portability, tags
 ---
 
@@ -43,7 +43,7 @@ The JSON format is the primary structural export. It outputs a `metadata` block 
 
 Every entry includes a `"tags"` array (empty `[]` if the entry has no tags; tags are listed in alphabetical order). Entries with font metadata include a `"metadata"` object containing `fontFamily` and `fontSize`; entries without entry-level font defaults have no `metadata` field.
 
-This format preserves entry IDs, timestamps, tags, and font metadata. It can be re-imported back into Mini Diarium — the JSON importer automatically handles both the old Mini Diary date-keyed format and the new array format with optional metadata for backward compatibility. If the JSON contains embedded `data:image/...` content, Mini Diarium normalizes those images into its encrypted image store during import while preserving the visible content of the entry.
+This format preserves entry IDs, timestamps, tags, and font metadata. It can be re-imported into Mini Diarium. The JSON importer automatically handles both the old Mini Diary date-keyed format and the new array format with optional metadata for backward compatibility. If the JSON contains embedded `data:image/...` content, Mini Diarium normalizes those images into its encrypted image store during import while preserving the visible content of the entry.
 
 ### Markdown Export
 
@@ -61,7 +61,7 @@ Entry content here...
 
 Entries with no tags have no tags line. Tags appear in alphabetical order.
 
-Markdown is a best-effort, text-focused conversion of the stored HTML editor content. Inline font formatting is not preserved in Markdown — all text exports using the default Markdown rendering. Complex formatting (tables, images) may not convert perfectly, but the text is always readable. **For full-fidelity export including font metadata, use JSON instead.**
+Markdown is a best-effort, text-focused conversion of the stored HTML editor content. Inline font formatting is not preserved in Markdown. All text exports use the default Markdown rendering. Complex formatting (tables, images) may not convert perfectly, but the text is always readable. **For full-fidelity export including font metadata, use JSON instead.**
 
 ### Print / PDF
 
@@ -73,7 +73,7 @@ The print output uses a clean, readable layout with:
 - Entry titles, tags (when present), and the full entry content
 - Standard formatting for headings, lists, blockquotes, and code blocks
 
-Date range filtering works the same as for file exports — select "All entries", a custom date range, or a specific month before clicking **Print**.
+Date range filtering works the same as for file exports. Select "All entries", a custom date range, or a specific month before clicking **Print**.
 
 If you cancel the save dialog, no file is written. PDF generation happens locally and no data leaves the app.
 

@@ -3,7 +3,7 @@ title: Getting Started
 slug: getting-started
 description: Create your first encrypted journal, set a password, and start writing. Covers the welcome tour, multiple journals, key file auth, and local-only mode.
 order: 1
-updated: 2026-06-04
+updated: 2026-06-27
 tags: setup, password, first launch
 ---
 
@@ -19,13 +19,13 @@ If you create a new journal, you will be asked to create a password. This passwo
 
 The first time you create a journal, a **three-step overlay tour** appears to highlight key features:
 
-1. **Enable the advanced toolbar** — turn on extra formatting controls in **Preferences → Writing**.
-2. **Import your entries** — bring in content from Day One, Obsidian, or plain text files via the Import panel.
-3. **Read the documentation** — links to the online guides and keyboard shortcut reference.
+1. **Enable the advanced toolbar**: turn on extra formatting controls in **Preferences → Writing**.
+2. **Import your entries**: bring in content from Day One, Obsidian, or plain text files via the Import panel.
+3. **Read the documentation**: links to the online guides and keyboard shortcut reference.
 
 Each step shows a callout card with a direct action link. You can navigate with **Back** and **Next**, or click the **Minimize** (`⊟`) button in the card header to collapse the tour into a floating help icon (`?`) at the bottom-right of the window. Pressing **Escape** while the tour is open minimizes it rather than closing the app.
 
-To resume or permanently dismiss the tour, click the `?` icon and choose **Resume Tour** or **Dismiss**. Completing all three steps also dismisses it automatically. The tour only ever appears once per app profile — it does not repeat on subsequent launches or when adding new journals.
+To resume or permanently dismiss the tour, click the `?` icon and choose **Resume Tour** or **Dismiss**. Completing all three steps also dismisses it automatically. The tour only ever appears once per app profile. It does not repeat on subsequent launches or when adding new journals.
 
 ## Locking and Unlocking
 
@@ -39,7 +39,7 @@ You can also enable **idle auto-lock** in **Preferences → Security → Auto-Lo
 
 ## Multiple Journals
 
-You can maintain separate journals for different purposes — personal, work, travel, and so on. Each journal is an independent encrypted file in its own folder.
+You can maintain separate journals for different purposes: personal, work, travel, and so on. Each journal is an independent encrypted file in its own folder.
 
 **Adding a journal:** Use the Journal Picker's add actions. You can create a new journal in a chosen folder or add an existing `diary.db`.
 

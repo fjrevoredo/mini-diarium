@@ -3,7 +3,7 @@ title: Writing Entries
 slug: writing-entries
 description: Mini Diarium's rich text editor supports formatting, images, named links, tags, and multiple entries per day. Auto-save and RTL language support are built in.
 order: 2
-updated: 2026-06-04
+updated: 2026-06-27
 tags: editor, formatting, entries, writing
 ---
 
@@ -21,7 +21,7 @@ Mini Diarium uses a rich text editor with support for a full set of formatting o
 - [Links](#links)
 - Images (drag-drop, paste, or file picker)
 
-The toolbar above the editor provides buttons for each formatting option. Standard keyboard shortcuts also work — `Ctrl+B` for bold, `Ctrl+I` for italic, and so on. On macOS, use `Cmd` instead of `Ctrl`.
+The toolbar above the editor provides buttons for each formatting option. Standard keyboard shortcuts also work: `Ctrl+B` for bold, `Ctrl+I` for italic, and so on. On macOS, use `Cmd` instead of `Ctrl`.
 
 ## Titles
 
@@ -39,7 +39,7 @@ Each date can contain multiple separate entries. This is useful for writing at d
 
 ## Auto-Save
 
-Entries save automatically as you type with a short debounce delay. You do not need to manually save anything. If you clear out an entry completely — emptying both the title and the body — it is automatically deleted after the debounce completes.
+Entries save automatically as you type with a short debounce delay. You do not need to manually save anything. If you clear out an entry completely (emptying both the title and the body), it is automatically deleted after the debounce completes.
 
 ## Word Count
 
@@ -49,8 +49,8 @@ A live word count is displayed below the editor and updates as you write.
 
 You can add images to your entries in several ways:
 
-- **Drag and drop** from your file manager — the editor shows a blue border when you hover a draggable image over it.
-- **Drag from other desktop apps** — images from Electron-based editors (sent as inline `data:image/...` base64 payloads) and from apps like Typora that reference images via local `file://` paths are both supported.
+- **Drag and drop** from your file manager. The editor shows a blue border when you hover a draggable image over it.
+- **Drag from other desktop apps**: images from Electron-based editors (sent as inline `data:image/...` base64 payloads) and from apps like Typora that reference images via local `file://` paths are both supported.
 - **Paste** an image from the clipboard.
 - Use the **Insert Image** button in the advanced toolbar to pick a file.
 - Use the **Insert Existing Image** button to pick from images already stored in the journal (see below).
@@ -59,7 +59,7 @@ All dropped or pasted images are resized to a maximum of 1200 px on either side 
 
 ### How images are stored
 
-Images are encrypted and stored in a dedicated content-addressed table inside the same `diary.db` database. Each unique image is stored exactly once — if you insert the same image into multiple entries (using the image picker), only one copy is kept. All image data is encrypted with your master key, the same as entry text.
+Images are encrypted and stored in a dedicated content-addressed table inside the same `diary.db` database. Each unique image is stored exactly once. If you insert the same image into multiple entries (using the image picker), only one copy is kept. All image data is encrypted with your master key, the same as entry text.
 
 ### Insert Existing Image
 
@@ -75,26 +75,26 @@ The selected image is inserted without re-encoding, so the stored copy is reused
 
 Images added before this feature was introduced (prior to v0.5.3) continue to display correctly. Existing saved entries that still embed image data directly are migrated to the new storage the next time their entry is saved. JSON imports that contain embedded `data:image/...` content are normalized into the encrypted image store immediately during import.
 
-If you drag an image from a web browser, the editor will show a banner explaining that embedding is not possible — it would require a network request, which the app never makes. Use **right-click → Copy Image** and paste instead.
+If you drag an image from a web browser, the editor will show a banner explaining that embedding is not possible, because it would require a network request, which the app never makes. Use **right-click → Copy Image** and paste instead.
 
 ## Links
 
-You can insert hyperlinks with custom display text — the visible label and the underlying URL are independent (the `[label](url)` model used by Markdown and most modern editors).
+You can insert hyperlinks with custom display text. The visible label and the underlying URL are independent (the `[label](url)` model used by Markdown and most modern editors).
 
 **Inserting a link**: click the **Link button** in the toolbar (chain-link icon) or press `Ctrl+K` (`Cmd+K` on macOS). The dialog has two fields:
 
-- **URL** — the link's target. You can paste a full URL (`https://example.com`) or just a bare domain (`example.com`); the editor auto-prepends `https://` for you. Email addresses become `mailto:` links and phone numbers become `tel:` links automatically.
-- **Display text** (optional) — the visible text. Leave empty to use the URL itself as the visible text; the user will see `example.com` (not `https://example.com`) when the domain was typed bare.
+- **URL**: the link's target. You can paste a full URL (`https://example.com`) or just a bare domain (`example.com`); the editor auto-prepends `https://` for you. Email addresses become `mailto:` links and phone numbers become `tel:` links automatically.
+- **Display text** (optional): the visible text. Leave empty to use the URL itself as the visible text; the user will see `example.com` (not `https://example.com`) when the domain was typed bare.
 
 **What gets inserted depends on what you have selected:**
 
 - **No selection**: the dialog inserts new text at the cursor. If you left the Display text field empty, the URL is used as the visible text; if you typed a Display text, that's used instead.
-- **Text selected**: the dialog replaces the selected text with the link. The Display text field is pre-filled with the selected text — you can keep it as-is (the selection becomes the link label) or change it.
+- **Text selected**: the dialog replaces the selected text with the link. The Display text field is pre-filled with the selected text. You can keep it as-is (the selection becomes the link label) or change it.
 - **Cursor on an existing link**: the dialog opens with the current URL and Display text pre-filled. You can change either, or click **Remove link** to strip the link mark and leave the underlying text untouched.
 
 A confirmation message below the fields reminds you of the click-to-open behavior (see below).
 
-**Opening a link**: a plain click inside a link places the cursor for editing (as in any other editable surface). To open a link in your default browser, hold `Ctrl` (`Cmd` on macOS) and click. You can also click the **Open link** button in the dialog after typing a URL — useful when you want to verify a link before applying it.
+**Opening a link**: a plain click inside a link places the cursor for editing (as in any other editable surface). To open a link in your default browser, hold `Ctrl` (`Cmd` on macOS) and click. You can also click the **Open link** button in the dialog after typing a URL, useful when you want to verify a link before applying it.
 
 Only standard external targets are opened: `http`, `https`, `mailto`, and `tel`. Unsupported or unsafe protocols are ignored and are not passed to the operating system.
 
@@ -104,7 +104,7 @@ Only standard external targets are opened: `http`, `https`, `mailto`, and `tel`.
 
 ## Right-to-Left and Bidirectional Text
 
-Mini Diarium supports right-to-left (RTL) writing in Arabic, Hebrew, Syriac, and other RTL scripts. Direction is handled per block — each paragraph and heading carries its own `dir` attribute — so you can freely mix RTL and LTR content in the same entry.
+Mini Diarium supports right-to-left (RTL) writing in Arabic, Hebrew, Syriac, and other RTL scripts. Direction is handled per block: each paragraph and heading carries its own `dir` attribute, so you can freely mix RTL and LTR content in the same entry.
 
 **Auto-detection**: as you type, the editor reads the first strongly-directional character in each paragraph or heading and sets the direction automatically. Arabic and Hebrew script trigger `dir="rtl"`; Latin script triggers `dir="ltr"`. Once a block's direction is set it is locked and will not change if you later add neutral characters (numbers, punctuation, emoji) to the same block.
 
@@ -118,7 +118,7 @@ Mini Diarium supports right-to-left (RTL) writing in Arabic, Hebrew, Syriac, and
 
 The advanced toolbar includes a **clock button** that inserts the current time at the cursor position. Clicking the button opens a popup where you can choose between **12-hour** and **24-hour** format and select hours:minutes or hours:minutes:seconds precision. Both selections are remembered across sessions.
 
-## Editor Font — Three-Level System
+## Editor Font: Three-Level System
 
 Mini Diarium uses a three-level font system so you can control fonts at multiple scopes:
 
@@ -126,23 +126,23 @@ Mini Diarium uses a three-level font system so you can control fonts at multiple
 
 You can change the font used app-wide via **Preferences → Writing → Editor font**. The selector shows two groups:
 
-- **Bundled fonts** — five open-source families (Noto Sans, Source Sans 3, Noto Serif, JetBrains Mono, Fira Mono) bundled with the app. Loaded on demand and work fully offline.
-- **Custom fonts** — font files you have uploaded yourself (see below). Only families with at least a Regular weight appear here.
+- **Bundled fonts**: five open-source families (Noto Sans, Source Sans 3, Noto Serif, JetBrains Mono, Fira Mono) bundled with the app. Loaded on demand and work fully offline.
+- **Custom fonts**: font files you have uploaded yourself (see below). Only families with at least a Regular weight appear here.
 
-Font family and font size are also available as optional controls in the editor toolbar itself. Enable them in **Preferences → Writing → Toolbar items** — they appear as compact dropdowns directly in the toolbar, but they now apply inline formatting (see below) instead of changing the Preferences.
+Font family and font size are also available as optional controls in the editor toolbar itself. Enable them in **Preferences → Writing → Toolbar items**. They appear as compact dropdowns directly in the toolbar, but they now apply inline formatting (see below) instead of changing the Preferences.
 
 ### 2. Entry Default (Per-Entry Override)
 
 When you have the font dropdown enabled in the editor toolbar, two new buttons appear next to it:
 
-- **Set as entry default** — saves the current font family and size as the default for this entry only, overriding the app default. This is useful when a particular entry needs a different font than your usual preference.
-- **Clear entry default** — removes the entry default and reverts this entry to use the app default.
+- **Set as entry default**: saves the current font family and size as the default for this entry only, overriding the app default. This is useful when a particular entry needs a different font than your usual preference.
+- **Clear entry default**: removes the entry default and reverts this entry to use the app default.
 
 Entry font defaults are stored encrypted inside the entry's metadata and survive save, lock/unlock, and navigation cycles.
 
 ### 3. Inline Formatting (Selection)
 
-The font family and font size dropdowns in the editor toolbar apply **inline formatting** to selected text or the cursor. This is different from changing preferences — it wraps the selection in a styled span so different parts of the same entry can have different fonts.
+The font family and font size dropdowns in the editor toolbar apply **inline formatting** to selected text or the cursor. This is different from changing preferences. It wraps the selection in a styled span so different parts of the same entry can have different fonts.
 
 To apply inline formatting:
 1. Select the text you want to format (or place the cursor where you want inline formatting to start)
@@ -159,7 +159,7 @@ You can upload your own `.ttf`, `.otf`, `.woff`, or `.woff2` font files from **P
 - Custom fonts are stored inside your journal (`diary.db`) as unencrypted blobs. They travel with the journal to other devices automatically and do not require a separate installation step.
 - Because fonts are stored in the journal, they increase the size of your database file and backups.
 - Uploading a new Regular or Bold for an existing family **replaces** the previous file for that weight.
-- Deleting a custom font family removes **all weights** immediately and, if that font was selected, the editor reverts to System Default right away — no Save needed.
+- Deleting a custom font family removes **all weights** immediately. If that font was selected, the editor reverts to System Default right away with no Save required.
 
 ## Tags
 
@@ -179,7 +179,7 @@ Click a tag chip's **name** (not the × button) to activate a tag filter. While 
 
 Click the same chip again, or press `×` in the banner, to return to the full unfiltered calendar. The filter persists across month navigation and is cleared automatically when you lock the journal or delete the filtered tag in Tag Manager.
 
-Tag names are encrypted with the same key as your diary entries — they are never stored as readable text in the database file.
+Tag names are encrypted with the same key as your diary entries. They are never stored as readable text in the database file.
 
 ## Importing a Markdown File
 

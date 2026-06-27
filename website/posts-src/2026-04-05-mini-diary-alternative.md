@@ -1,17 +1,17 @@
 ---
 title: Mini Diary Alternative in 2026: A Maintained, Encrypted Successor
 slug: mini-diary-alternative
-description: Mini Diary went unmaintained. Mini Diarium is its successor — rebuilt with AES-256-GCM encryption, key file auth, and direct import from Mini Diary JSON. Same philosophy, stronger guarantees.
+description: Mini Diary went unmaintained. Mini Diarium is its successor, rebuilt with AES-256-GCM encryption, key file auth, and direct import from Mini Diary JSON. Same philosophy, stronger guarantees.
 date: 2026-04-05
 updated: 2026-04-05
 author: Francisco J. Revoredo
 tags: mini diary alternative, offline journal, private diary app
-excerpt: Mini Diary was simple, local, and private. Mini Diarium is its maintained successor — with direct import from Mini Diary JSON and a stronger encryption model.
+excerpt: Mini Diary was simple, local, and private. Mini Diarium is its maintained successor, with direct import from Mini Diary JSON and a stronger encryption model.
 ---
 
 If you are searching for a Mini Diary alternative, you already know what you liked: a simple desktop journal that stayed local, required no account, and got out of the way.
 
-The original [Mini Diary](https://github.com/samuelmeuli/mini-diary) became unmaintained over time and its dependency base aged out. Finding a replacement that keeps the same philosophy — private, offline, no service layer — is harder than it sounds. Most alternatives add something you did not ask for.
+The original [Mini Diary](https://github.com/samuelmeuli/mini-diary) became unmaintained over time and its dependency base aged out. Finding a replacement that keeps the same philosophy (private, offline, no service layer) is harder than it sounds. Most alternatives add something you did not ask for.
 
 ## What most alternatives get wrong
 
@@ -47,7 +47,7 @@ After import, entries are re-encrypted at rest using AES-256-GCM. The plaintext 
 
 The design is deliberately narrow. It is a journal, not a knowledge base or a general notes workspace. That is the same call Mini Diary made, and it is still the right one for this use case.
 
-Beyond Mini Diary imports, it also supports imports from Day One JSON, Day One TXT, and jrnl JSON — in case your writing history is spread across more than one tool. Export is available in JSON and Markdown, so the data path stays open regardless of what comes next.
+Beyond Mini Diary imports, it also supports imports from Day One JSON, Day One TXT, and jrnl JSON, in case your writing history is spread across more than one tool. Export is available in JSON and Markdown, so the data path stays open regardless of what comes next.
 
 For the full product overview, read the [encrypted journal guide](/encrypted-journal/). If you are comparing this to a cloud-based replacement, the post on [encrypted journal apps vs cloud notes apps](/blog/encrypted-journal-vs-cloud-notes-app/) covers the architecture differences directly.
 
@@ -55,4 +55,4 @@ For the full product overview, read the [encrypted journal guide](/encrypted-jou
 
 Mini Diary set a clear standard: local storage, no account, simple interface, private by default. Most alternatives do not meet that standard because they were not built with the same constraints.
 
-Mini Diarium is built from the same constraints. If you have a Mini Diary export and want to keep writing in the same vein — local, private, encrypted — the [download is available for all three major platforms](/#platforms) and the import takes one step.
+Mini Diarium is built from the same constraints. If you have a Mini Diary export and want to keep writing in the same vein (local, private, encrypted), the [download is available for all three major platforms](/#platforms) and the import takes one step.

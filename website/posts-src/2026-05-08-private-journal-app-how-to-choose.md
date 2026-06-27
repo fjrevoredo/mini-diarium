@@ -31,7 +31,7 @@ For long-form private writing, local-first is almost always the better default. 
 
 ## 3. Does it require a network connection?
 
-A private journal app should work without internet access. If the app stops functioning when you disconnect, it is not truly offline. An app that sends your entries to a server — even encrypted — creates a dependency on that server's continued operation and trustworthiness.
+A private journal app should work without internet access. If the app stops functioning when you disconnect, it is not truly offline. An app that sends your entries to a server, even encrypted, creates a dependency on that server's continued operation and trustworthiness.
 
 The stronger guarantee is an app that has no HTTP client at all. No network code means no telemetry, no sync service, and no update pings. It also means the app cannot change its data-sharing behavior in a future update, because the transport layer does not exist.
 
@@ -59,7 +59,7 @@ When evaluating a private journal app, ask:
 - Can I export to JSON and Markdown?
 - Is the source code public?
 
-If an app answers yes to all five, it meets the structural baseline for private journaling. Everything else — rich text, calendar views, statistics, themes — is secondary. Those features matter for daily use, but they do not protect your writing. The storage model does.
+If an app answers yes to all five, it meets the structural baseline for private journaling. Everything else (rich text, calendar views, statistics, themes) is secondary. Those features matter for daily use, but they do not protect your writing. The storage model does.
 
 ## Where Mini Diarium fits
 

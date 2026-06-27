@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Mini Diary went unmaintained. Mini Diarium is its successor — rebuilt with AES-256-GCM encryption, key file auth, and direct import from Mini Diary JSON. Same philosophy, stronger guarantees." />
+  <meta name="description" content="Mini Diary went unmaintained. Mini Diarium is its successor, rebuilt with AES-256-GCM encryption, key file auth, and direct import from Mini Diary JSON. Same philosophy, stronger guarantees." />
   <meta name="robots" content="index,follow,max-snippet:-1,max-image-preview:large,max-video-preview:-1" />
   <meta name="theme-color" content="#0e0e0e" />
   <meta name="author" content="Francisco J. Revoredo" />
@@ -12,7 +12,7 @@
   <meta property="og:locale" content="en_US" />
   <meta property="og:url" content="https://mini-diarium.com/blog/mini-diary-alternative/" />
   <meta property="og:title" content="Mini Diary Alternative in 2026: A Maintained, Encrypted Successor | Mini Diarium Blog" />
-  <meta property="og:description" content="Mini Diary went unmaintained. Mini Diarium is its successor — rebuilt with AES-256-GCM encryption, key file auth, and direct import from Mini Diary JSON. Same philosophy, stronger guarantees." />
+  <meta property="og:description" content="Mini Diary went unmaintained. Mini Diarium is its successor, rebuilt with AES-256-GCM encryption, key file auth, and direct import from Mini Diary JSON. Same philosophy, stronger guarantees." />
   <meta property="og:image" content="https://mini-diarium.com/assets/og-cover.png" />
   <meta property="og:image:type" content="image/png" />
   <meta property="og:image:width" content="1200" />
@@ -22,7 +22,7 @@
   <meta name="twitter:site" content="@MiniDiarium" />
   <meta name="twitter:creator" content="@MiniDiarium" />
   <meta name="twitter:title" content="Mini Diary Alternative in 2026: A Maintained, Encrypted Successor | Mini Diarium Blog" />
-  <meta name="twitter:description" content="Mini Diary went unmaintained. Mini Diarium is its successor — rebuilt with AES-256-GCM encryption, key file auth, and direct import from Mini Diary JSON. Same philosophy, stronger guarantees." />
+  <meta name="twitter:description" content="Mini Diary went unmaintained. Mini Diarium is its successor, rebuilt with AES-256-GCM encryption, key file auth, and direct import from Mini Diary JSON. Same philosophy, stronger guarantees." />
   <meta name="twitter:image" content="https://mini-diarium.com/assets/og-cover.png" />
   <meta property="article:published_time" content="2026-04-05T00:00:00Z" />
   <meta property="article:modified_time" content="2026-04-05T00:00:00Z" />
@@ -50,7 +50,7 @@
       "@type": "BlogPosting",
       "@id": "https://mini-diarium.com/blog/mini-diary-alternative/#article",
       "headline": "Mini Diary Alternative in 2026: A Maintained, Encrypted Successor",
-      "description": "Mini Diary went unmaintained. Mini Diarium is its successor — rebuilt with AES-256-GCM encryption, key file auth, and direct import from Mini Diary JSON. Same philosophy, stronger guarantees.",
+      "description": "Mini Diary went unmaintained. Mini Diarium is its successor, rebuilt with AES-256-GCM encryption, key file auth, and direct import from Mini Diary JSON. Same philosophy, stronger guarantees.",
       "datePublished": "2026-04-05T00:00:00Z",
       "dateModified": "2026-04-05T00:00:00Z",
       "author": {
@@ -142,7 +142,7 @@
     <div class="post-header">
       <p class="hero-eyebrow">Mini Diarium blog</p>
       <h1>Mini Diary Alternative in 2026: A Maintained, Encrypted Successor</h1>
-      <p class="hero-sub">Mini Diary went unmaintained. Mini Diarium is its successor — rebuilt with AES-256-GCM encryption, key file auth, and direct import from Mini Diary JSON. Same philosophy, stronger guarantees.</p>
+      <p class="hero-sub">Mini Diary went unmaintained. Mini Diarium is its successor, rebuilt with AES-256-GCM encryption, key file auth, and direct import from Mini Diary JSON. Same philosophy, stronger guarantees.</p>
       <div class="post-meta">
         <span>April 5, 2026</span>
         <span>Updated April 5, 2026</span>
@@ -162,7 +162,7 @@
     <article class="blog-post prose" aria-label="Mini Diary Alternative in 2026: A Maintained, Encrypted Successor">
 <p class="bluf"><strong>Short answer:</strong> Mini Diary went unmaintained. Mini Diarium is the direct successor, rebuilt from scratch in a modern stack (Tauri 2, SolidJS, Rust) with AES-256-GCM encryption, key file authentication, and direct import from Mini Diary JSON. Same philosophy, stronger guarantees.</p>
       <p>If you are searching for a Mini Diary alternative, you already know what you liked: a simple desktop journal that stayed local, required no account, and got out of the way.</p>
-      <p>The original <a href="https://github.com/samuelmeuli/mini-diary" target="_blank" rel="noopener noreferrer">Mini Diary</a> became unmaintained over time and its dependency base aged out. Finding a replacement that keeps the same philosophy — private, offline, no service layer — is harder than it sounds. Most alternatives add something you did not ask for.</p>
+      <p>The original <a href="https://github.com/samuelmeuli/mini-diary" target="_blank" rel="noopener noreferrer">Mini Diary</a> became unmaintained over time and its dependency base aged out. Finding a replacement that keeps the same philosophy (private, offline, no service layer) is harder than it sounds. Most alternatives add something you did not ask for.</p>
       <h2 id="what-most-alternatives-get-wrong">What most alternatives get wrong</h2><p>The usual substitutes fall into one of two patterns.</p>
       <p>The first is a cloud notes app with a dark mode and a &quot;private&quot; label. It still requires an account, still syncs to a server, and still turns your writing into data that lives somewhere else. The local story is an afterthought.</p>
       <p>The second is a general-purpose tool that technically supports daily journaling but is built around collaboration, linking, and workspace features. The privacy model is shallow because the primary use case is not private.</p>
@@ -180,10 +180,10 @@
       <p>After import, entries are re-encrypted at rest using AES-256-GCM. The plaintext that Mini Diary stored locally is not preserved in the new database. The encryption happens as part of the import, not as a later step.</p>
       <h2 id="where-mini-diarium-fits">Where Mini Diarium fits</h2><p><a href="/">Mini Diarium</a> was built specifically because the Mini Diary gap was real. It runs on Windows, macOS, and Linux. Entries are stored in a local SQLite database, each one encrypted with AES-256-GCM before it is written to disk. There is no HTTP client, no telemetry, and no account requirement.</p>
       <p>The design is deliberately narrow. It is a journal, not a knowledge base or a general notes workspace. That is the same call Mini Diary made, and it is still the right one for this use case.</p>
-      <p>Beyond Mini Diary imports, it also supports imports from Day One JSON, Day One TXT, and jrnl JSON — in case your writing history is spread across more than one tool. Export is available in JSON and Markdown, so the data path stays open regardless of what comes next.</p>
+      <p>Beyond Mini Diary imports, it also supports imports from Day One JSON, Day One TXT, and jrnl JSON, in case your writing history is spread across more than one tool. Export is available in JSON and Markdown, so the data path stays open regardless of what comes next.</p>
       <p>For the full product overview, read the <a href="/encrypted-journal/">encrypted journal guide</a>. If you are comparing this to a cloud-based replacement, the post on <a href="/blog/encrypted-journal-vs-cloud-notes-app/">encrypted journal apps vs cloud notes apps</a> covers the architecture differences directly.</p>
       <h2 id="the-practical-takeaway">The practical takeaway</h2><p>Mini Diary set a clear standard: local storage, no account, simple interface, private by default. Most alternatives do not meet that standard because they were not built with the same constraints.</p>
-      <p>Mini Diarium is built from the same constraints. If you have a Mini Diary export and want to keep writing in the same vein — local, private, encrypted — the <a href="/#platforms">download is available for all three major platforms</a> and the import takes one step.</p>
+      <p>Mini Diarium is built from the same constraints. If you have a Mini Diary export and want to keep writing in the same vein (local, private, encrypted), the <a href="/#platforms">download is available for all three major platforms</a> and the import takes one step.</p>
       
     </article>
     <aside class="blog-sidebar">

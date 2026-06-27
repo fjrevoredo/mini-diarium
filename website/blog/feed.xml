@@ -45,7 +45,7 @@
     <title>Mini Diary Alternative in 2026: A Maintained, Encrypted Successor</title>
     <link>https://mini-diarium.com/blog/mini-diary-alternative/</link>
     <guid isPermaLink="true">https://mini-diarium.com/blog/mini-diary-alternative/</guid>
-    <description>Mini Diary went unmaintained. Mini Diarium is its successor — rebuilt with AES-256-GCM encryption, key file auth, and direct import from Mini Diary JSON. Same philosophy, stronger guarantees.</description>
+    <description>Mini Diary went unmaintained. Mini Diarium is its successor, rebuilt with AES-256-GCM encryption, key file auth, and direct import from Mini Diary JSON. Same philosophy, stronger guarantees.</description>
     <pubDate>Sun, 05 Apr 2026 00:00:00 GMT</pubDate>
   </item>
   <item>
@@ -66,7 +66,7 @@
     <title>Encrypted Journal vs. Cloud Notes: Why Architecture Decides Who Owns Your Writing</title>
     <link>https://mini-diarium.com/blog/encrypted-journal-vs-cloud-notes-app/</link>
     <guid isPermaLink="true">https://mini-diarium.com/blog/encrypted-journal-vs-cloud-notes-app/</guid>
-    <description>An encrypted journal app stores entries locally and encrypts before disk. Cloud apps store plaintext on servers. The architecture — not a privacy setting — decides who can read your writing.</description>
+    <description>An encrypted journal app stores entries locally and encrypts before disk. Cloud apps store plaintext on servers. The architecture, not a privacy setting, decides who can read your writing.</description>
     <pubDate>Thu, 12 Mar 2026 00:00:00 GMT</pubDate>
   </item>
   <item>
@@ -94,7 +94,7 @@
     <title>Why an Offline Journal Protects More Than Just Your Privacy</title>
     <link>https://mini-diarium.com/blog/why-an-offline-journal-is-different/</link>
     <guid isPermaLink="true">https://mini-diarium.com/blog/why-an-offline-journal-is-different/</guid>
-    <description>An offline journal can&#39;t sync your entries to a server or share them with AI. That&#39;s not a setting — it&#39;s the absence of network code. Here&#39;s why architecture outlasts privacy policies.</description>
+    <description>An offline journal can&#39;t sync your entries to a server or share them with AI. That&#39;s not a setting. It&#39;s the absence of network code. Here&#39;s why architecture outlasts privacy policies.</description>
     <pubDate>Fri, 06 Mar 2026 00:00:00 GMT</pubDate>
   </item>
   <item>

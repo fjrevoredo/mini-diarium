@@ -3,7 +3,7 @@ title: Navigating Your Journal
 slug: navigating
 description: Navigate your journal using the sidebar calendar, keyboard shortcuts, and day-navigation buttons. Jump to any date, go to today, and browse your entry history.
 order: 3
-updated: 2026-06-04
+updated: 2026-06-27
 tags: navigation, calendar, keyboard shortcuts, dates
 ---
 
@@ -11,7 +11,7 @@ tags: navigation, calendar, keyboard shortcuts, dates
 
 The sidebar shows a monthly calendar. Days that have at least one entry are marked with a dot indicator. Click any date to jump to that day's entries.
 
-You can narrow the dot indicators to a specific tag by clicking a tag chip's name on any entry — see [Browsing entries by tag](writing-entries#browsing-entries-by-tag) for details.
+You can narrow the dot indicators to a specific tag by clicking a tag chip's name on any entry. See [Browsing entries by tag](writing-entries#browsing-entries-by-tag) for details.
 
 ## Keyboard Navigation
 

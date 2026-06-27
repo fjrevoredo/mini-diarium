@@ -30,19 +30,19 @@ const DESCRIPTION_MAP = {
   'day-one-alternative-for-private-offline-journaling':
     'Compares Mini Diarium to Day One for users who want local-only storage and no sync service.',
   'encrypted-journal-vs-cloud-notes-app':
-    'An encrypted journal stores entries locally and encrypts before disk. Cloud apps store plaintext on servers — architecture decides who can read your writing.',
+    'An encrypted journal stores entries locally and encrypts before disk. Cloud apps store plaintext on servers. Architecture decides who can read your writing.',
   'offline-journal-that-you-own':
     'Owning your journal means keeping entries local, exporting in open formats, and never depending on a service for access.',
   'private-diary-app-for-desktop':
-    "A private diary app for desktop should encrypt entries at rest, work fully offline, and give you an exit path — here's the checklist.",
+    "A private diary app for desktop should encrypt entries at rest, work fully offline, and give you an exit path. Here is the checklist.",
   'local-first-journaling-and-ownership':
     'Argues that local-first design is primarily about portability and long-term data control.',
   'why-an-offline-journal-is-different':
-    "An offline journal can't send your entries to a server or share them with AI — that's architecture, not a setting.",
+    "An offline journal can't send your entries to a server or share them with AI. That's architecture, not a setting.",
   'why-mini-diarium-exists':
-    'The origin story of Mini Diarium — why an unmaintained predecessor led to building from scratch.',
+    'The origin story of Mini Diarium: why an unmaintained predecessor led to building from scratch.',
   'what-is-an-encrypted-diary':
-    "An encrypted diary encrypts entries before they touch disk. It's an architectural guarantee, not a login screen — here's what that means.",
+    "An encrypted diary encrypts entries before they touch disk. It's an architectural guarantee, not a login screen. Here is what that means.",
   'private-journal-app-how-to-choose':
     'A practical checklist for evaluating private journal apps: encryption at rest, local storage, offline use, open exports, and open source.',
   'desktop-diary-app':
@@ -53,7 +53,7 @@ const DESCRIPTION_MAP = {
 
 const BLUF_MAP = {
   'journal-app-ai-privacy':
-    '<p class="bluf"><strong>Short answer:</strong> Yes — if your journal is stored on a server, that server\'s operator controls when and how your entries can be processed by AI systems. A local-first encrypted journal changes this by keeping plaintext off the server entirely.</p>',
+    '<p class="bluf"><strong>Short answer:</strong> Yes. If your journal is stored on a server, that server\'s operator controls when and how your entries can be processed by AI systems. A local-first encrypted journal changes this by keeping plaintext off the server entirely.</p>',
   'mini-diary-alternative':
     '<p class="bluf"><strong>Short answer:</strong> Mini Diary went unmaintained. Mini Diarium is the direct successor, rebuilt from scratch in a modern stack (Tauri 2, SolidJS, Rust) with AES-256-GCM encryption, key file authentication, and direct import from Mini Diary JSON. Same philosophy, stronger guarantees.</p>',
   'journal-app-without-cloud':
@@ -63,19 +63,19 @@ const BLUF_MAP = {
   'day-one-alternative-for-private-offline-journaling':
     '<p class="bluf"><strong>Short answer:</strong> Mini Diarium and Day One both support rich text and calendar views, but Mini Diarium stores entries locally with AES-256-GCM encryption and has no sync service. Day One\'s cloud sync is optional but enabled by default.</p>',
   'encrypted-journal-vs-cloud-notes-app':
-    '<p class="bluf"><strong>Short answer:</strong> An encrypted journal app encrypts entries before they reach storage. A cloud notes app stores plaintext on a server and may share it with AI partners. The architecture — not a privacy setting — determines who can access your writing.</p>',
+    '<p class="bluf"><strong>Short answer:</strong> An encrypted journal app encrypts entries before they reach storage. A cloud notes app stores plaintext on a server and may share it with AI partners. The architecture, not a privacy setting, determines who can access your writing.</p>',
   'offline-journal-that-you-own':
-    '<p class="bluf"><strong>Short answer:</strong> Owning your journal means having a local copy in an open format that you can export anytime, with no cloud service involved in storage or sync. Portability and privacy are linked — you can\'t have one without the other.</p>',
+    '<p class="bluf"><strong>Short answer:</strong> Owning your journal means having a local copy in an open format that you can export anytime, with no cloud service involved in storage or sync. Portability and privacy are linked. You can\'t have one without the other.</p>',
   'private-diary-app-for-desktop':
-    '<p class="bluf"><strong>Short answer:</strong> A private diary app for desktop should encrypt entries before they reach disk, run fully offline, avoid telemetry, and export to open formats. These aren\'t optional features — they\'re the checklist for genuine ownership.</p>',
+    '<p class="bluf"><strong>Short answer:</strong> A private diary app for desktop should encrypt entries before they reach disk, run fully offline, avoid telemetry, and export to open formats. These aren\'t optional features. They\'re the checklist for genuine ownership.</p>',
   'local-first-journaling-and-ownership':
-    '<p class="bluf"><strong>Short answer:</strong> Local-first journaling keeps the primary copy on your own device. Ownership goes further — it means the export format is open, your backup is under your control, and no service can revoke access.</p>',
+    '<p class="bluf"><strong>Short answer:</strong> Local-first journaling keeps the primary copy on your own device. Ownership goes further. It means the export format is open, your backup is under your control, and no service can revoke access.</p>',
   'why-an-offline-journal-is-different':
-    '<p class="bluf"><strong>Short answer:</strong> An offline journal cannot send your entries to a server, a sync service, or an AI partner — not because of a policy, but because the network code literally does not exist. This architectural constraint outlasts any privacy policy.</p>',
+    '<p class="bluf"><strong>Short answer:</strong> An offline journal cannot send your entries to a server, a sync service, or an AI partner, not because of a policy, but because the network code literally does not exist. This architectural constraint outlasts any privacy policy.</p>',
   'why-mini-diarium-exists':
     '<p class="bluf"><strong>Short answer:</strong> Mini Diary was a clean, simple journal app that went unmaintained. Its dependencies aged and a fork was impractical. Mini Diarium was built from scratch keeping the same philosophy while adopting a modern stack with stronger security guarantees.</p>',
   'what-is-an-encrypted-diary':
-    '<p class="bluf"><strong>Short answer:</strong> An encrypted diary encrypts entries before they are written to disk using a key that only you control. It is not the same as a password-protected app — encryption at rest means the data files contain ciphertext, not readable entries.</p>',
+    '<p class="bluf"><strong>Short answer:</strong> An encrypted diary encrypts entries before they are written to disk using a key that only you control. It is not the same as a password-protected app. Encryption at rest means the data files contain ciphertext, not readable entries.</p>',
   'private-journal-app-how-to-choose':
     '<p class="bluf"><strong>Short answer:</strong> A private journal app should encrypt entries at rest, store the primary copy on your device, work offline, export to open formats, and have public source code. These five criteria protect your writing regardless of what happens to the app or its publisher.</p>',
   'desktop-diary-app':

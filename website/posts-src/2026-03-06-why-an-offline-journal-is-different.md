@@ -1,7 +1,7 @@
 ---
 title: Why an Offline Journal Protects More Than Just Your Privacy
 slug: why-an-offline-journal-is-different
-description: An offline journal can't sync your entries to a server or share them with AI. That's not a setting — it's the absence of network code. Here's why architecture outlasts privacy policies.
+description: An offline journal can't sync your entries to a server or share them with AI. That's not a setting. It's the absence of network code. Here's why architecture outlasts privacy policies.
 date: 2026-03-06
 updated: 2026-03-06
 author: Francisco J. Revoredo

@@ -236,7 +236,7 @@
       "@id": "https://mini-diarium.com/docs/backups/#article",
       "headline": "Backups",
       "description": "Mini Diarium automatically backs up your encrypted journal on every unlock and keeps the 30 most recent copies in a backups folder next to your diary.db.",
-      "dateModified": "2026-06-04T00:00:00Z",
+      "dateModified": "2026-06-27T00:00:00Z",
       "keywords": "backups, data safety, backup rotation, storage",
       "publisher": {
         "@type": "Organization",
@@ -401,7 +401,7 @@
         </div>
       </nav>
       <article class="blog-post prose" aria-label="Backups">
-        <h2 id="when-backups-are-created">When Backups Are Created</h2><p>A backup is created automatically each time you successfully unlock your journal, whether by password or key file. If the unlock fails — wrong password, missing key file — no backup is taken.</p>
+        <h2 id="when-backups-are-created">When Backups Are Created</h2><p>A backup is created automatically each time you successfully unlock your journal, whether by password or key file. If the unlock fails (wrong password, missing key file), no backup is taken.</p>
         <h2 id="backup-location">Backup Location</h2><p>Backups are stored in a <code>backups/</code> subfolder inside the same directory as your <code>diary.db</code>. Default journal directories by operating system:</p>
         <ul>
         <li><strong>Windows</strong>: <code>%APPDATA%\com.minidiarium\backups\</code></li>
@@ -413,7 +413,7 @@
         <h2 id="rotation">Rotation</h2><p>Mini Diarium keeps the <strong>30 most recent backups</strong>. When a new backup would push the count above 30, the oldest backup is deleted automatically. Only files matching the <code>backup-*.db</code> naming pattern are counted; any other files you place in the <code>backups/</code> folder are left untouched.</p>
         <h2 id="custom-journal-locations">Custom Journal Locations</h2><p>When you move your journal to a different folder via Preferences, <code>diary.db</code> is physically moved to the new location and all future backups will go into <code>{new location}/backups/</code>.</p>
         <p><strong>Existing backups in the old folder are not moved automatically.</strong> If you want to keep your backup history, copy the old <code>backups/</code> folder to the new journal directory before or after the move.</p>
-        <h2 id="cloud-synced-locations">Cloud-Synced Locations</h2><p>If you place your journal directory inside a cloud-synced folder — Dropbox, OneDrive, iCloud Drive, and so on — both <code>diary.db</code> and the <code>backups/</code> subfolder will be included in the sync, giving you off-site backup on top of local rotation.</p>
+        <h2 id="cloud-synced-locations">Cloud-Synced Locations</h2><p>If you place your journal directory inside a cloud-synced folder (Dropbox, OneDrive, iCloud Drive, and so on), both <code>diary.db</code> and the <code>backups/</code> subfolder will be included in the sync, giving you off-site backup on top of local rotation.</p>
         <p>Keep in mind that Mini Diarium does not coordinate concurrent access. <strong>Do not open the same journal from two devices at the same time.</strong> The encrypted database file is not designed for simultaneous multi-device write access.</p>
         <h2 id="backups-are-encrypted">Backups Are Encrypted</h2><p>Backup files are exact copies of <code>diary.db</code> at the moment of unlock. They are fully encrypted with the same password and key as your live journal. A backup without your password is unreadable.</p>
         

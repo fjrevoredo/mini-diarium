@@ -236,7 +236,7 @@
       "@id": "https://mini-diarium.com/docs/export/#article",
       "headline": "Exporting Data",
       "description": "Export your journal as JSON, Markdown, or PDF. JSON preserves IDs, tags, and metadata; Markdown is human-readable; PDF creates a formatted A4 document.",
-      "dateModified": "2026-06-10T00:00:00Z",
+      "dateModified": "2026-06-27T00:00:00Z",
       "keywords": "export, backup, JSON, Markdown, PDF, print, portability, tags",
       "publisher": {
         "@type": "Organization",
@@ -426,7 +426,7 @@
         }
         </code></pre>
         <p>Every entry includes a <code>&quot;tags&quot;</code> array (empty <code>[]</code> if the entry has no tags; tags are listed in alphabetical order). Entries with font metadata include a <code>&quot;metadata&quot;</code> object containing <code>fontFamily</code> and <code>fontSize</code>; entries without entry-level font defaults have no <code>metadata</code> field.</p>
-        <p>This format preserves entry IDs, timestamps, tags, and font metadata. It can be re-imported back into Mini Diarium — the JSON importer automatically handles both the old Mini Diary date-keyed format and the new array format with optional metadata for backward compatibility. If the JSON contains embedded <code>data:image/...</code> content, Mini Diarium normalizes those images into its encrypted image store during import while preserving the visible content of the entry.</p>
+        <p>This format preserves entry IDs, timestamps, tags, and font metadata. It can be re-imported into Mini Diarium. The JSON importer automatically handles both the old Mini Diary date-keyed format and the new array format with optional metadata for backward compatibility. If the JSON contains embedded <code>data:image/...</code> content, Mini Diarium normalizes those images into its encrypted image store during import while preserving the visible content of the entry.</p>
         <h3 id="markdown-export">Markdown Export</h3><p>The Markdown export produces a human-readable text file, grouped by date. If a day has multiple entries, each appears under its own sub-heading.</p>
         <p>If an entry has tags, a <code>*Tags: …*</code> line is written immediately after the title (or date heading when there is no title) and before the entry body:</p>
         <pre><code class="language-markdown">## 2024-01-15
@@ -436,7 +436,7 @@
         Entry content here...
         </code></pre>
         <p>Entries with no tags have no tags line. Tags appear in alphabetical order.</p>
-        <p>Markdown is a best-effort, text-focused conversion of the stored HTML editor content. Inline font formatting is not preserved in Markdown — all text exports using the default Markdown rendering. Complex formatting (tables, images) may not convert perfectly, but the text is always readable. <strong>For full-fidelity export including font metadata, use JSON instead.</strong></p>
+        <p>Markdown is a best-effort, text-focused conversion of the stored HTML editor content. Inline font formatting is not preserved in Markdown. All text exports use the default Markdown rendering. Complex formatting (tables, images) may not convert perfectly, but the text is always readable. <strong>For full-fidelity export including font metadata, use JSON instead.</strong></p>
         <h3 id="print-pdf">Print / PDF</h3><p>The <strong>Print / PDF</strong> option opens a save dialog and creates a formatted A4 PDF directly at the path you choose.</p>
         <p>The print output uses a clean, readable layout with:</p>
         <ul>
@@ -445,7 +445,7 @@
         <li>Entry titles, tags (when present), and the full entry content</li>
         <li>Standard formatting for headings, lists, blockquotes, and code blocks</li>
         </ul>
-        <p>Date range filtering works the same as for file exports — select &quot;All entries&quot;, a custom date range, or a specific month before clicking <strong>Print</strong>.</p>
+        <p>Date range filtering works the same as for file exports. Select &quot;All entries&quot;, a custom date range, or a specific month before clicking <strong>Print</strong>.</p>
         <p>If you cancel the save dialog, no file is written. PDF generation happens locally and no data leaves the app.</p>
         <h2 id="why-export">Why Export?</h2><ul>
         <li><strong>Backup</strong>: Export a copy of your entries for safekeeping before changing devices or reinstalling.</li>
