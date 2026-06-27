@@ -520,8 +520,9 @@ const META = {
       "Worst-case search across a decade of daily entries. " +
       "Decision threshold: if this exceeds 150 ms, a backend architecture change (snapshot + Mutex release) is needed.",
     interpretation:
-      "The 150 ms threshold is the architecture decision gate from the implementation plan. " +
-      "These thresholds are initial estimates — calibrate once real CI data is available.",
+      "Measured at ~108 ms on first CI run — comfortably under the 150 ms architecture gate. " +
+      "Scales linearly: 500→1000 entries doubles cost as expected. " +
+      "Target is set at 150 ms (the gate); critical at 250 ms allows for CI runner variability without false alerts.",
   },
   "count_words_plain_500w": {
     title: "Word Count — Plain Text",
@@ -553,8 +554,8 @@ const META = {
 // Covers the 23 Rust benchmarks plus the synthetic ci_pipeline_duration metric.
 // Frontend Vitest benchmarks (parseMarkdownToHtml) are NOT run in CI and do not
 // appear in data.js.
-// Search and large-corpus db thresholds are initial estimates — calibrate once
-// real CI data is available (see benchmarks/CLAUDE.md gotcha #10).
+// Search thresholds calibrated from first CI run (500→14 ms, 1000→29 ms, 3650→108 ms).
+// Large-corpus db_get_all_entries thresholds are still initial estimates — calibrate once CI data arrives.
 const THRESHOLDS = {
   "auth_argon2/wrap_master_key":    { target: 300_000_000, critical: 600_000_000 },
   "auth_argon2/unwrap_master_key":  { target: 300_000_000, critical: 600_000_000 },
@@ -574,9 +575,9 @@ const THRESHOLDS = {
   "db_get_all_entries/500":         { target: 50_000_000,  critical: 100_000_000 },
   "db_get_all_entries/1000":        { target: 100_000_000, critical: 200_000_000 },
   "db_get_all_entries/3650":        { target: 365_000_000, critical: 730_000_000 },
-  "db_search_entries/500":          { target: 75_000_000,  critical: 150_000_000 },
-  "db_search_entries/1000":         { target: 150_000_000, critical: 300_000_000 },
-  "db_search_entries/3650":         { target: 400_000_000, critical: 800_000_000 },
+  "db_search_entries/500":          { target: 25_000_000,  critical: 50_000_000 },
+  "db_search_entries/1000":         { target: 50_000_000,  critical: 100_000_000 },
+  "db_search_entries/3650":         { target: 150_000_000, critical: 250_000_000 },
   "count_words_plain_500w":         { target: 1_000,       critical: 2_000 },
   "count_words_html_500w":          { target: 5_000,       critical: 10_000 },
   // CI pipeline duration is measured in seconds but stored as nanoseconds for dashboard compatibility.
