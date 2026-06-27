@@ -30,7 +30,7 @@ Template:
 
 # Versions
 
-## [0.6.0] - [Unreleased]
+## [0.6.0] - 27-06-2026
 
 ### Added
 - **Timeline view** ([#161](https://github.com/fjrevoredo/mini-diarium/issues/161)): a chronological list of every entry, newest-first, that complements the calendar with a flat `date | title + 200-char preview` overview. Open it from the new header toggle (List ⇄ PenLine, `timeline-toggle-button` testid); clicking a row jumps straight to that entry in the editor. The list re-fetches automatically when entries are added or removed, so it stays in sync without a manual refresh. Previews are generated server-side by `preview_from_html` (strips HTML tags, decodes common entities, collapses whitespace, truncates to 200 chars). Only `{ id, date, title, preview }` crosses the IPC boundary; the full decrypted entry body never leaves the backend, consistent with the project's field-level encryption model. The component ships with localized strings, empty/untitled fallbacks, a `<Suspense>` loading state, and Vitest coverage for row-click navigation. Contributed by [@kenlacroix](https://github.com/kenlacroix) via [#173](https://github.com/fjrevoredo/mini-diarium/pull/173).
