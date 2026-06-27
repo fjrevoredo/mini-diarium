@@ -65,3 +65,11 @@ if (typeof window.matchMedia !== 'function') {
     })),
   });
 }
+
+// Kobalte Dialog uses solid-prevent-scroll, which restores the previous scroll
+// position via window.scrollTo() on cleanup. jsdom exposes the API but logs a
+// noisy "Not implemented" warning for it.
+Object.defineProperty(window, 'scrollTo', {
+  writable: true,
+  value: vi.fn(),
+});
