@@ -1,6 +1,16 @@
 import { createEffect, onCleanup } from 'solid-js';
 import { X } from 'lucide-solid';
-import { searchQuery, setSearchQuery, setSearchResults, setIsSearching } from '../../state/search';
+import {
+  searchQuery,
+  setSearchQuery,
+  searchResults,
+  setSearchResults,
+  setIsSearching,
+  setTotalMatches,
+  focusedResultIndex,
+  setFocusedResultIndex,
+  MIN_QUERY_LENGTH,
+} from '../../state/search';
 import { searchEntries } from '../../lib/tauri';
 import { debounce } from '../../lib/debounce';
 import { createLogger } from '../../lib/logger';
@@ -18,23 +28,20 @@ export default function SearchBar() {
   // latest invocation is allowed to commit to the result/loading signals.
   let searchSeq = 0;
 
-  // Debounced search function
+  // Debounced search function — only called from the createEffect when query is non-empty.
   const performSearch = async (query: string) => {
-    if (!query.trim()) {
-      setSearchResults([]);
-      return;
-    }
-
     const seq = ++searchSeq;
     try {
       setIsSearching(true);
-      const results = await searchEntries(query);
+      const { results, totalMatches } = await searchEntries(query);
       if (seq !== searchSeq) return;
       setSearchResults(results);
+      setTotalMatches(totalMatches);
     } catch (error) {
       if (seq !== searchSeq) return;
       log.error('Search failed:', error);
       setSearchResults([]);
+      setTotalMatches(0);
     } finally {
       if (seq === searchSeq) setIsSearching(false);
     }
@@ -42,25 +49,42 @@ export default function SearchBar() {
 
   const debouncedSearch = debounce(performSearch, 500);
 
-  // Search when query changes
+  // Search when query meets the minimum length; clear immediately when it drops below.
   createEffect(() => {
     const query = searchQuery();
-    if (query.trim()) {
+    if (query.trim().length >= MIN_QUERY_LENGTH) {
       debouncedSearch(query);
     } else {
-      // Clear immediately when query is empty
       setSearchResults([]);
+      setTotalMatches(0);
+    }
+  });
+
+  // When keyboard focus returns to the input (index -1), actually focus the element.
+  createEffect(() => {
+    if (focusedResultIndex() === -1) {
+      inputRef?.focus();
     }
   });
 
   const handleInput = (e: InputEvent) => {
     const target = e.target as HTMLInputElement;
+    setFocusedResultIndex(-1);
     setSearchQuery(target.value);
+  };
+
+  const handleKeyDown = (e: KeyboardEvent) => {
+    if (e.key === 'ArrowDown' && searchResults().length > 0) {
+      e.preventDefault();
+      setFocusedResultIndex(0);
+    }
   };
 
   const handleClear = () => {
     setSearchQuery('');
     setSearchResults([]);
+    setTotalMatches(0);
+    setFocusedResultIndex(-1);
     inputRef?.focus();
   };
 
@@ -68,6 +92,8 @@ export default function SearchBar() {
   onCleanup(() => {
     setSearchQuery('');
     setSearchResults([]);
+    setTotalMatches(0);
+    setFocusedResultIndex(-1);
   });
 
   return (
@@ -78,6 +104,7 @@ export default function SearchBar() {
           type="text"
           value={searchQuery()}
           onInput={handleInput}
+          onKeyDown={handleKeyDown}
           placeholder={t('search.placeholder')}
           class="w-full rounded-md border border-primary bg-primary text-primary px-3 py-2 pr-8 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 placeholder-tertiary"
         />

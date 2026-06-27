@@ -236,7 +236,7 @@
       "@id": "https://mini-diarium.com/docs/search/#article",
       "headline": "Search",
       "description": "Mini Diarium has full-text search across all encrypted entries. Learn how to find past entries with the search overlay and keyboard shortcut, and how searching stays fully encrypted and offline.",
-      "dateModified": "2026-06-26T00:00:00Z",
+      "dateModified": "2026-06-27T00:00:00Z",
       "keywords": "search, find, full-text, encrypted",
       "publisher": {
         "@type": "Organization",
@@ -376,8 +376,10 @@
         </div>
       </nav>
       <article class="blog-post prose" aria-label="Search">
-        <h2 id="search-your-entries">Search Your Entries</h2><p>Mini Diarium includes full-text search across every entry in the current journal. Open the search overlay from the magnifier button in the header, or press <strong>Ctrl+F</strong> (Cmd+F on macOS). Type a few words and matching entries appear, newest first, with the matching text highlighted in a short snippet.</p>
+        <h2 id="search-your-entries">Search Your Entries</h2><p>Mini Diarium includes full-text search across every entry in the current journal. Open the search overlay from the magnifier button in the header, or press <strong>Ctrl+F</strong> (Cmd+F on macOS). Type at least three characters and matching entries appear, newest first, with the matching text highlighted in a short snippet. Nothing is searched until the query reaches that minimum — no results appear for one or two characters.</p>
         <p>Clicking a result jumps straight to that entry in the editor, even on a day that holds several entries.</p>
+        <p>The overlay displays the total number of results found (&quot;12 results found&quot;). When results exceed 200, a truncation notice appears: &quot;Showing first 200 — refine your query to see more&quot;. This cap keeps search responsive on large journals; refining with additional keywords narrows results.</p>
+        <p>Navigate results with your keyboard: <strong>ArrowDown</strong> and <strong>ArrowUp</strong> move between results, and pressing <strong>ArrowDown</strong> from the search input focuses the first result.</p>
         <h2 id="how-search-works-without-compromising-encryption">How Search Works Without Compromising Encryption</h2><p>Mini Diarium stores every entry encrypted at rest with AES-256-GCM. Search does <strong>not</strong> keep a separate plaintext index on disk, because that would expose your writing to anyone with access to the file.</p>
         <p>Instead, when you run a search the app decrypts your entries in memory, scans them, and discards everything when it is done. Nothing searchable is ever written to disk, and the search never makes a network request. It is as private as reading the entries yourself.</p>
         <p>Search is case- and accent-insensitive: typing &quot;cafe&quot; will match &quot;Café&quot;, and &quot;RUST&quot; will match &quot;rust&quot;. Multiple words use AND semantics, so every word must appear in the title or body of an entry for it to match.</p>

@@ -1,4 +1,5 @@
 use criterion::{criterion_group, criterion_main, BatchSize, BenchmarkId, Criterion};
+use mini_diarium_lib::commands::search::search_entries_impl;
 use mini_diarium_lib::db::{
     queries::{
         count_words, delete_entry_by_id, get_all_entries, get_all_entry_dates, get_entries_by_date,
@@ -45,8 +46,10 @@ fn make_entry(date: &str) -> DiaryEntry {
 }
 
 fn make_date(i: usize) -> String {
-    // Produces unique date-like strings for i in 0..500:
-    // years 2020–2021, months 1–12, days 1–31
+    // Produces date-like strings in "YYYY-MM-DD" format for any i.
+    // Dates are unique within each 366-slot year window; identical (month, day)
+    // repeats across years, which is fine — multi-entry per date is allowed.
+    // Year range for i in 0..3650: 2020–2029.
     let year = 2020 + i / 366;
     let remainder = i % 366;
     let month = (remainder / 31) + 1;
@@ -121,7 +124,7 @@ fn bench_get_all_entry_dates(c: &mut Criterion) {
 
 fn bench_get_all(c: &mut Criterion) {
     let mut group = c.benchmark_group("db_get_all_entries");
-    for count in [100usize, 500] {
+    for count in [100usize, 500, 1000, 3650] {
         let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
         let db = create_database(tmp.path().to_str().unwrap(), BENCH_PASSWORD.to_string()).unwrap();
         for i in 0..count {
@@ -129,6 +132,40 @@ fn bench_get_all(c: &mut Criterion) {
         }
         group.bench_with_input(BenchmarkId::from_parameter(count), &db, |b, db| {
             b.iter(|| get_all_entries(db).unwrap());
+        });
+        drop(tmp);
+    }
+    group.finish();
+}
+
+/// Search latency at target scale. Uses REALISTIC_HTML so most entries match — the
+/// worst-case path: full scan + snippet-building + sort + truncate.
+///
+/// Decision rule: 3650-entry result < 150 ms → no backend arch change needed.
+fn bench_search_entries(c: &mut Criterion) {
+    let mut group = c.benchmark_group("db_search_entries");
+    for count in [500usize, 1000, 3650] {
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), BENCH_PASSWORD.to_string()).unwrap();
+        for i in 0..count {
+            // Seed every entry with REALISTIC_HTML so the search hits all entries —
+            // this is the worst case (all matches → all snippets built + sort + truncate).
+            let ts = "2024-01-01T00:00:00Z".to_string();
+            let entry = DiaryEntry {
+                id: 0,
+                date: make_date(i),
+                title: "Bench entry".to_string(),
+                text: REALISTIC_HTML.to_string(),
+                word_count: count_words(REALISTIC_HTML),
+                date_created: ts.clone(),
+                date_updated: ts,
+                metadata: None,
+            };
+            insert_entry(&db, &entry).unwrap();
+        }
+        // "authentication" appears in REALISTIC_HTML — matches all entries.
+        group.bench_with_input(BenchmarkId::from_parameter(count), &db, |b, db| {
+            b.iter(|| search_entries_impl(db, "authentication").unwrap());
         });
         drop(tmp);
     }
@@ -162,6 +199,7 @@ criterion_group!(
     bench_delete,
     bench_get_by_date,
     bench_get_all_entry_dates,
-    bench_get_all
+    bench_get_all,
+    bench_search_entries
 );
 criterion_main!(benches);

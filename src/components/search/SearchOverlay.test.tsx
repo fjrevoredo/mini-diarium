@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { screen, fireEvent } from '@solidjs/testing-library';
 import { renderWithI18n } from '../../test/i18n-test-utils';
-import type { SearchResult } from '../../lib/tauri';
+import type { SearchResult, SearchResponse } from '../../lib/tauri';
 
 /**
  * SearchOverlay mounts the existing SearchBar + SearchResults inside a Kobalte Dialog.
@@ -19,9 +19,11 @@ const mockResult: SearchResult = {
   snippet: '<mark>Picnic</mark> plans',
 };
 
+const mockResponse: SearchResponse = { results: [mockResult], totalMatches: 1 };
+
 vi.mock('../../lib/tauri', async () => {
   const actual = await vi.importActual<typeof import('../../lib/tauri')>('../../lib/tauri');
-  return { ...actual, searchEntries: vi.fn(async () => [mockResult]) };
+  return { ...actual, searchEntries: vi.fn(async () => mockResponse) };
 });
 
 // Pass-through debounce so performSearch fires synchronously (debounce itself is not

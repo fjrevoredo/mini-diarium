@@ -253,7 +253,10 @@
     "clearAria": "खोज साफ करें",
     "searching": "खोज रहे हैं...",
     "noResults": "\"{{ query }}\" के लिए कोई परिणाम नहीं मिला",
-    "noTitle": "कोई शीर्षक नहीं"
+    "noTitle": "कोई शीर्षक नहीं",
+    "resultCount_one": "{{ count }} परिणाम मिला",
+    "resultCount_other": "{{ count }} परिणाम मिले",
+    "truncated": "पहले {{ max }} दिखाए जा रहे हैं — अधिक देखने के लिए खोज परिशोधित करें"
   },
   "stats": {
     "title": "आँकड़े",

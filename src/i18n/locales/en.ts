@@ -315,6 +315,9 @@ const en = {
     searching: 'Searching...',
     noResults: 'No results found for "{{ query }}"',
     noTitle: 'No title',
+    resultCount_one: '{{ count }} result found',
+    resultCount_other: '{{ count }} results found',
+    truncated: 'Showing first {{ max }} — refine your query to see more',
   },
 
   /** StatsOverlay */

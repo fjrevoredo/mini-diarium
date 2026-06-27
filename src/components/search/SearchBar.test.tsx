@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { fireEvent } from '@solidjs/testing-library';
 import { renderWithI18n } from '../../test/i18n-test-utils';
-import type { SearchResult } from '../../lib/tauri';
+import type { SearchResult, SearchResponse } from '../../lib/tauri';
 
 /**
  * Tests for the monotonic latest-wins guard in SearchBar's performSearch
@@ -13,16 +14,16 @@ import type { SearchResult } from '../../lib/tauri';
 
 const harness = vi.hoisted(() => {
   type Deferred = {
-    resolve: (value: SearchResult[]) => void;
+    resolve: (value: SearchResponse) => void;
     reject: (reason?: unknown) => void;
   };
   const deferreds: Deferred[] = [];
   // Each searchEntries() call returns a fresh deferred promise so the test can
   // resolve/reject them in any order.
   const searchEntries = vi.fn(() => {
-    let resolve!: (value: SearchResult[]) => void;
+    let resolve!: (value: SearchResponse) => void;
     let reject!: (reason?: unknown) => void;
-    const promise = new Promise<SearchResult[]>((res, rej) => {
+    const promise = new Promise<SearchResponse>((res, rej) => {
       resolve = res;
       reject = rej;
     });
@@ -47,7 +48,17 @@ vi.mock('../../lib/debounce', () => ({
 // ── Import-after-mock ─────────────────────────────────────────────────────────
 
 import SearchBar from './SearchBar';
-import { setSearchQuery, searchResults, isSearching, resetSearchState } from '../../state/search';
+import {
+  setSearchQuery,
+  setSearchResults,
+  setTotalMatches,
+  searchResults,
+  totalMatches,
+  isSearching,
+  focusedResultIndex,
+  setFocusedResultIndex,
+  resetSearchState,
+} from '../../state/search';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -92,10 +103,10 @@ describe('SearchBar stale-response guard', () => {
     const resultsA = [makeResult(1, 'alpha')];
 
     // Resolve B (newest) first — it commits.
-    deferredB.resolve(resultsB);
+    deferredB.resolve({ results: resultsB, totalMatches: resultsB.length });
     await flushMicrotasks();
     // Then resolve A (stale) — must be ignored.
-    deferredA.resolve(resultsA);
+    deferredA.resolve({ results: resultsA, totalMatches: resultsA.length });
     await flushMicrotasks();
 
     expect(searchResults()).toEqual(resultsB);
@@ -117,7 +128,7 @@ describe('SearchBar stale-response guard', () => {
     const resultsB = [makeResult(2, 'beta')];
 
     // Newer query B succeeds and commits.
-    deferredB.resolve(resultsB);
+    deferredB.resolve({ results: resultsB, totalMatches: resultsB.length });
     await flushMicrotasks();
     // Older query A rejects afterwards — its catch must bail before setSearchResults([]).
     deferredA.reject(new Error('stale failure'));
@@ -125,5 +136,85 @@ describe('SearchBar stale-response guard', () => {
 
     expect(searchResults()).toEqual(resultsB);
     expect(isSearching()).toBe(false);
+  });
+
+  it('clears results and totalMatches on a non-stale rejection', async () => {
+    renderWithI18n(() => <SearchBar />);
+    await flushMicrotasks();
+
+    // Pre-populate so we can verify they are cleared on rejection.
+    setSearchResults([makeResult(1, 'old result')]);
+    setTotalMatches(1);
+
+    setSearchQuery('alpha');
+    await flushMicrotasks();
+
+    expect(harness.deferreds).toHaveLength(1);
+    harness.deferreds[0].reject(new Error('server error'));
+    await flushMicrotasks();
+
+    expect(searchResults()).toEqual([]);
+    expect(totalMatches()).toBe(0);
+    expect(isSearching()).toBe(false);
+  });
+});
+
+describe('SearchBar keyboard navigation', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    harness.deferreds.length = 0;
+    resetSearchState();
+  });
+
+  afterEach(() => {
+    resetSearchState();
+  });
+
+  it('ArrowDown on the input sets focusedResultIndex to 0 when results exist', () => {
+    const { container } = renderWithI18n(() => <SearchBar />);
+    // Set results AFTER mount so the component's initial clear-on-empty-query effect
+    // doesn't overwrite them before we dispatch the keydown.
+    setSearchResults([makeResult(1, 'alpha'), makeResult(2, 'beta')]);
+    setTotalMatches(2);
+    const input = container.querySelector('input')!;
+    fireEvent.keyDown(input, { key: 'ArrowDown' });
+    expect(focusedResultIndex()).toBe(0);
+  });
+
+  it('ArrowDown on the input does nothing when there are no results', () => {
+    const { container } = renderWithI18n(() => <SearchBar />);
+    const input = container.querySelector('input')!;
+    fireEvent.keyDown(input, { key: 'ArrowDown' });
+    expect(focusedResultIndex()).toBe(-1);
+  });
+
+  it('handleInput resets focusedResultIndex to -1', () => {
+    const { container } = renderWithI18n(() => <SearchBar />);
+    setFocusedResultIndex(1);
+    const input = container.querySelector('input')!;
+    fireEvent.input(input, { target: { value: 'hello' } });
+    expect(focusedResultIndex()).toBe(-1);
+  });
+
+  it('handleClear resets totalMatches and focusedResultIndex', () => {
+    const { container } = renderWithI18n(() => <SearchBar />);
+    setSearchQuery('alpha');
+    setTotalMatches(5);
+    setFocusedResultIndex(2);
+    const clearButton = container.querySelector('button')!;
+    fireEvent.click(clearButton);
+    expect(totalMatches()).toBe(0);
+    expect(focusedResultIndex()).toBe(-1);
+  });
+
+  it('query shorter than MIN_QUERY_LENGTH does not trigger a search', async () => {
+    renderWithI18n(() => <SearchBar />);
+    await flushMicrotasks();
+
+    setSearchQuery('ab');
+    await flushMicrotasks();
+
+    expect(harness.deferreds).toHaveLength(0);
+    expect(searchResults()).toEqual([]);
   });
 });

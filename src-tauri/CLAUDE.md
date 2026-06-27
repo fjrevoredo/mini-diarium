@@ -183,8 +183,8 @@ ever written to disk.
 
 | Layer | File | What it provides |
 |-------|------|-----------------|
-| Rust command | `src-tauri/src/commands/search.rs` | `SearchResult` struct + `search_entries` command (in-memory scan) |
-| Frontend wrapper | `src/lib/tauri/search.ts` | `SearchResult` interface + `searchEntries(query)` async function |
+| Rust command | `src-tauri/src/commands/search.rs` | `SearchResult` + `SearchResponse` structs, `search_entries` command, `search_entries_impl(db, query)` pub scan core |
+| Frontend wrapper | `src/lib/tauri/search.ts` | `SearchResult` interface + `searchEntries(query)` async function returning `SearchResponse` |
 | Frontend state | `src/state/search.ts` | `searchQuery`, `searchResults`, `isSearching` signals |
 | Frontend components | `src/components/search/SearchOverlay.tsx` | Palette-style dialog mounting `SearchBar` + `SearchResults` (in `MainLayout`) |
 | | `src/components/search/SearchBar.tsx` | Debounced input with a monotonic latest-wins guard |
@@ -200,8 +200,9 @@ today because the in-memory scan needs no persistent index, but mark where a fut
 would plug in.
 
 **Performance:** the scan is O(n) over all entries per query, debounced 500 ms on the
-client and capped at 200 results. This is acceptable for the personal-journal scale this
-app targets. If a future index is added, it must satisfy the original constraint:
+client and capped at 200 results displayed to the UI; the backend returns `total_matches` 
+(pre-truncation count) so the UI can report "Showing first 200 of 1200" when results exceed the cap.
+This is acceptable for the personal-journal scale this app targets. If a future index is added, it must satisfy the original constraint:
 
 1. **No plaintext on disk** — the index must be encrypted or derived in a way that does
    not expose entry content to raw file access (e.g. encrypted FTS / SQLCipher, an

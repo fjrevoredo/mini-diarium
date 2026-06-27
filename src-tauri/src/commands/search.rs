@@ -2,6 +2,7 @@ use serde::Serialize;
 
 use crate::commands::auth::{with_unlocked_db, DiaryState};
 use crate::db::queries;
+use crate::db::schema::DatabaseConnection;
 use tauri::State;
 use unicode_normalization::char::is_combining_mark;
 use unicode_normalization::UnicodeNormalization;
@@ -21,10 +22,68 @@ pub struct SearchResult {
     pub snippet: String,
 }
 
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SearchResponse {
+    pub results: Vec<SearchResult>,
+    /// Count of matching entries BEFORE truncation to MAX_RESULTS.
+    pub total_matches: usize,
+}
+
 /// Max matches returned to the UI; newest-first.
-const MAX_RESULTS: usize = 200;
+pub const MAX_RESULTS: usize = 200;
 /// Bytes of context shown on each side of a match (snapped to char boundaries).
 const SNIPPET_RADIUS: usize = 48;
+
+/// Pure scan logic extracted so criterion benchmarks can call it directly.
+///
+/// Benchmarks live in a separate crate and can only reach `pub` items.
+pub fn search_entries_impl(db: &DatabaseConnection, query: &str) -> Result<SearchResponse, String> {
+    let terms = normalize_terms(query);
+    if terms.is_empty() {
+        return Ok(SearchResponse {
+            results: vec![],
+            total_matches: 0,
+        });
+    }
+
+    let entries = queries::get_all_entries(db)?;
+
+    let mut results: Vec<SearchResult> = Vec::new();
+    for entry in &entries {
+        // `entry.text` is raw TipTap HTML (`editor.getHTML()`). Match and snippet over the
+        // visible prose, not the markup, so terms like "p"/"strong"/"em" don't hit tag
+        // names in every entry. Titles are plain text and need no stripping.
+        let text_plain = strip_html(&entry.text);
+        let (title_lc, title_map) = lower_with_map(&entry.title);
+        let (text_lc, text_map) = lower_with_map(&text_plain);
+
+        if !matches_all(&title_lc, &text_lc, &terms) {
+            continue;
+        }
+
+        // Prefer a body snippet; fall back to the title.
+        let snippet = build_snippet(&text_plain, &text_lc, &text_map, &terms)
+            .or_else(|| build_snippet(&entry.title, &title_lc, &title_map, &terms))
+            .unwrap_or_default();
+
+        results.push(SearchResult {
+            id: entry.id,
+            date: entry.date.clone(),
+            title: entry.title.clone(),
+            snippet,
+        });
+    }
+
+    // ISO dates → lexicographic == chronological; newest first.
+    results.sort_by(|a, b| b.date.cmp(&a.date));
+    let total_matches = results.len();
+    results.truncate(MAX_RESULTS);
+    Ok(SearchResponse {
+        results,
+        total_matches,
+    })
+}
 
 /// Full-text search across decrypted entries.
 ///
@@ -39,49 +98,8 @@ const SNIPPET_RADIUS: usize = 48;
 /// personal-journal scale this app targets: the cost is paid per query, debounced on
 /// the client, and nothing sensitive is written to disk.
 #[tauri::command]
-pub fn search_entries(
-    query: String,
-    state: State<DiaryState>,
-) -> Result<Vec<SearchResult>, String> {
-    let terms = normalize_terms(&query);
-    if terms.is_empty() {
-        return Ok(vec![]);
-    }
-
-    with_unlocked_db(&state, |db| {
-        let entries = queries::get_all_entries(db)?;
-
-        let mut results: Vec<SearchResult> = Vec::new();
-        for entry in &entries {
-            // `entry.text` is raw TipTap HTML (`editor.getHTML()`). Match and snippet over the
-            // visible prose, not the markup, so terms like "p"/"strong"/"em" don't hit tag
-            // names in every entry. Titles are plain text and need no stripping.
-            let text_plain = strip_html(&entry.text);
-            let (title_lc, title_map) = lower_with_map(&entry.title);
-            let (text_lc, text_map) = lower_with_map(&text_plain);
-
-            if !matches_all(&title_lc, &text_lc, &terms) {
-                continue;
-            }
-
-            // Prefer a body snippet; fall back to the title.
-            let snippet = build_snippet(&text_plain, &text_lc, &text_map, &terms)
-                .or_else(|| build_snippet(&entry.title, &title_lc, &title_map, &terms))
-                .unwrap_or_default();
-
-            results.push(SearchResult {
-                id: entry.id,
-                date: entry.date.clone(),
-                title: entry.title.clone(),
-                snippet,
-            });
-        }
-
-        // ISO dates → lexicographic == chronological; newest first.
-        results.sort_by(|a, b| b.date.cmp(&a.date));
-        results.truncate(MAX_RESULTS);
-        Ok(results)
-    })
+pub fn search_entries(query: String, state: State<DiaryState>) -> Result<SearchResponse, String> {
+    with_unlocked_db(&state, |db| search_entries_impl(db, &query))
 }
 
 /// AND semantics: every term must appear in the (folded) title or body.
@@ -215,6 +233,111 @@ mod tests {
         assert!(json.contains("2024-01-01"));
         assert!(json.contains("Test Entry"));
         assert!(json.contains("<mark>test</mark>"));
+    }
+}
+
+/// Integration tests: call `search_entries_impl` with a real (temp-file) database so the
+/// full scan path — get_all_entries decryption, snippet building, sort, truncation — is
+/// exercised under coverage.
+#[cfg(test)]
+mod db_tests {
+    use super::*;
+    use crate::db::{
+        queries::{insert_entry, DiaryEntry},
+        schema::create_database,
+    };
+
+    fn make_entry(date: &str, title: &str, text: &str) -> DiaryEntry {
+        let ts = "2024-01-01T00:00:00Z".to_string();
+        DiaryEntry {
+            id: 0,
+            date: date.to_string(),
+            title: title.to_string(),
+            text: text.to_string(),
+            word_count: 1,
+            date_created: ts.clone(),
+            date_updated: ts,
+            metadata: None,
+        }
+    }
+
+    #[test]
+    fn empty_query_returns_empty_results() {
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "pass".to_string()).unwrap();
+        let resp = search_entries_impl(&db, "").unwrap();
+        assert!(resp.results.is_empty());
+        assert_eq!(resp.total_matches, 0);
+    }
+
+    #[test]
+    fn whitespace_only_query_returns_empty_results() {
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "pass".to_string()).unwrap();
+        let resp = search_entries_impl(&db, "   ").unwrap();
+        assert!(resp.results.is_empty());
+        assert_eq!(resp.total_matches, 0);
+    }
+
+    #[test]
+    fn returns_matching_entries_with_correct_total_and_snippet() {
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "pass".to_string()).unwrap();
+        insert_entry(
+            &db,
+            &make_entry(
+                "2024-01-01",
+                "Rust notes",
+                "<p>Rust is fast and memory safe.</p>",
+            ),
+        )
+        .unwrap();
+        insert_entry(
+            &db,
+            &make_entry(
+                "2024-01-02",
+                "Python notes",
+                "<p>Python is easy to learn.</p>",
+            ),
+        )
+        .unwrap();
+
+        let resp = search_entries_impl(&db, "rust").unwrap();
+
+        assert_eq!(resp.total_matches, 1);
+        assert_eq!(resp.results.len(), 1);
+        assert_eq!(resp.results[0].title, "Rust notes");
+        assert!(resp.results[0].snippet.contains("<mark>"));
+    }
+
+    #[test]
+    fn results_are_sorted_newest_first() {
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "pass".to_string()).unwrap();
+        insert_entry(&db, &make_entry("2024-01-01", "Old", "<p>needle</p>")).unwrap();
+        insert_entry(&db, &make_entry("2024-12-31", "New", "<p>needle</p>")).unwrap();
+
+        let resp = search_entries_impl(&db, "needle").unwrap();
+
+        assert_eq!(resp.results.len(), 2);
+        assert_eq!(resp.results[0].date, "2024-12-31");
+        assert_eq!(resp.results[1].date, "2024-01-01");
+    }
+
+    #[test]
+    fn total_matches_counts_before_truncation() {
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "pass".to_string()).unwrap();
+        let count = MAX_RESULTS + 5;
+        for i in 0..count {
+            let date = format!("2024-{:02}-{:02}", (i % 12) + 1, (i % 28) + 1);
+            insert_entry(&db, &make_entry(&date, "Entry", "<p>needle</p>")).unwrap();
+        }
+
+        let resp = search_entries_impl(&db, "needle").unwrap();
+
+        assert_eq!(resp.total_matches, count);
+        assert_eq!(resp.results.len(), MAX_RESULTS);
     }
 }
 

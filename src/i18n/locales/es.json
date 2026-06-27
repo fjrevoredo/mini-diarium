@@ -253,7 +253,10 @@
     "clearAria": "Limpiar búsqueda",
     "searching": "Buscando...",
     "noResults": "No se encontraron resultados para \"{{ query }}\"",
-    "noTitle": "Sin título"
+    "noTitle": "Sin título",
+    "resultCount_one": "{{ count }} resultado encontrado",
+    "resultCount_other": "{{ count }} resultados encontrados",
+    "truncated": "Mostrando los primeros {{ max }} — refina tu búsqueda para ver más"
   },
   "stats": {
     "title": "Estadísticas",

@@ -8,6 +8,12 @@ export interface SearchResult {
   snippet: string;
 }
 
-export async function searchEntries(query: string): Promise<SearchResult[]> {
+export interface SearchResponse {
+  results: SearchResult[];
+  /** Count of matching entries BEFORE truncation to MAX_RESULTS (200). */
+  totalMatches: number;
+}
+
+export async function searchEntries(query: string): Promise<SearchResponse> {
   return await invoke('search_entries', { query });
 }
