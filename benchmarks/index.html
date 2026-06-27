@@ -327,8 +327,8 @@ const SECTIONS = [
     description:
       "SQLite operations on the encrypted diary database. " +
       "<code>db_update_entry</code> is the most latency-critical — it runs every ~500 ms while the user types. " +
-      "Date enumeration and full-scan benchmarks are parameterised at 100 and 500 entries to expose " +
-      "scaling behaviour for large journals.",
+      "Date enumeration and full-scan benchmarks are parameterised at 100, 500, 1000, and 3650 entries to expose " +
+      "scaling behaviour across journal sizes from small to decade-scale.",
     benchmarks: [
       "db_insert_entry",
       "db_update_entry",
@@ -338,6 +338,23 @@ const SECTIONS = [
       "db_get_all_entry_dates/500",
       "db_get_all_entries/100",
       "db_get_all_entries/500",
+      "db_get_all_entries/1000",
+      "db_get_all_entries/3650",
+    ],
+  },
+  {
+    id: "search",
+    title: "Search",
+    badge: "in-memory scan",
+    description:
+      "Full-text search decrypts all entries in memory and scans them — no plaintext index is ever written to disk. " +
+      "Benchmarked at 500, 1000, and 3650 entries with every entry matching (worst case: all entries trigger " +
+      "snippet-building, sort, and truncation). " +
+      "Decision rule from the implementation plan: 3650-entry result under 150 ms means no backend architecture change is needed.",
+    benchmarks: [
+      "db_search_entries/500",
+      "db_search_entries/1000",
+      "db_search_entries/3650",
     ],
   },
   {
@@ -470,6 +487,42 @@ const META = {
     interpretation:
       "Should scale approximately linearly with entry count. Crypto overhead dominates DB I/O here.",
   },
+  "db_get_all_entries/1000": {
+    title: "Full Scan (1000 entries)",
+    description: "Fetches and decrypts all 1000 entries — roughly 2.7 years of daily journalling.",
+    interpretation:
+      "Should be ~2× the 500-entry cost. A super-linear jump signals per-entry overhead, not DB scaling.",
+  },
+  "db_get_all_entries/3650": {
+    title: "Full Scan (3650 entries)",
+    description: "Fetches and decrypts 3650 entries — a decade of daily entries. Upper bound for realistic journal size.",
+    interpretation:
+      "Crypto overhead scales linearly with entry count. This is the export worst-case; interactive paths never read all entries.",
+  },
+  "db_search_entries/500": {
+    title: "Search (500 entries)",
+    description:
+      "In-memory full-text search across 500 entries. All entries use realistic HTML so every entry matches — worst-case path.",
+    interpretation:
+      "Includes get_all_entries decryption cost plus scan, snippet building, sort, and truncation. " +
+      "Should be within 50% of the db_get_all_entries/500 cost.",
+  },
+  "db_search_entries/1000": {
+    title: "Search (1000 entries)",
+    description: "Same worst-case search over a 1000-entry corpus.",
+    interpretation:
+      "Should scale approximately linearly with db_search_entries/500. " +
+      "A super-linear jump signals O(n²) behaviour in snippet building or sorting.",
+  },
+  "db_search_entries/3650": {
+    title: "Search (3650 entries)",
+    description:
+      "Worst-case search across a decade of daily entries. " +
+      "Decision threshold: if this exceeds 150 ms, a backend architecture change (snapshot + Mutex release) is needed.",
+    interpretation:
+      "The 150 ms threshold is the architecture decision gate from the implementation plan. " +
+      "These thresholds are initial estimates — calibrate once real CI data is available.",
+  },
   "count_words_plain_500w": {
     title: "Word Count — Plain Text",
     description:
@@ -497,9 +550,11 @@ const META = {
 };
 
 // ─── Thresholds (all values in nanoseconds) ──────────────────────────────────
-// Covers the 18 Rust benchmarks plus the synthetic ci_pipeline_duration metric.
+// Covers the 23 Rust benchmarks plus the synthetic ci_pipeline_duration metric.
 // Frontend Vitest benchmarks (parseMarkdownToHtml) are NOT run in CI and do not
 // appear in data.js.
+// Search and large-corpus db thresholds are initial estimates — calibrate once
+// real CI data is available (see benchmarks/CLAUDE.md gotcha #10).
 const THRESHOLDS = {
   "auth_argon2/wrap_master_key":    { target: 300_000_000, critical: 600_000_000 },
   "auth_argon2/unwrap_master_key":  { target: 300_000_000, critical: 600_000_000 },
@@ -517,6 +572,11 @@ const THRESHOLDS = {
   "db_get_all_entry_dates/500":     { target: 10_000_000,  critical: 20_000_000 },
   "db_get_all_entries/100":         { target: 10_000_000,  critical: 20_000_000 },
   "db_get_all_entries/500":         { target: 50_000_000,  critical: 100_000_000 },
+  "db_get_all_entries/1000":        { target: 100_000_000, critical: 200_000_000 },
+  "db_get_all_entries/3650":        { target: 365_000_000, critical: 730_000_000 },
+  "db_search_entries/500":          { target: 75_000_000,  critical: 150_000_000 },
+  "db_search_entries/1000":         { target: 150_000_000, critical: 300_000_000 },
+  "db_search_entries/3650":         { target: 400_000_000, critical: 800_000_000 },
   "count_words_plain_500w":         { target: 1_000,       critical: 2_000 },
   "count_words_html_500w":          { target: 5_000,       critical: 10_000 },
   // CI pipeline duration is measured in seconds but stored as nanoseconds for dashboard compatibility.

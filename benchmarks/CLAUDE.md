@@ -27,6 +27,11 @@ Rust benchmarks live in `src-tauri/benches/` (four criterion files: auth, cipher
 | `db_get_all_entry_dates/500` | `db_bench.rs` | Distinct date list — 500-entry journal |
 | `db_get_all_entries/100` | `db_bench.rs` | Full scan — 100-entry journal |
 | `db_get_all_entries/500` | `db_bench.rs` | Full scan — 500-entry journal |
+| `db_get_all_entries/1000` | `db_bench.rs` | Full scan — 1000-entry journal |
+| `db_get_all_entries/3650` | `db_bench.rs` | Full scan — 3650-entry journal (decade scale) |
+| `db_search_entries/500` | `db_bench.rs` | In-memory full-text search — 500-entry worst case (all match) |
+| `db_search_entries/1000` | `db_bench.rs` | In-memory full-text search — 1000-entry worst case |
+| `db_search_entries/3650` | `db_bench.rs` | In-memory full-text search — 3650-entry worst case; 150 ms is the architecture decision gate |
 | `auth_argon2/wrap_master_key` | `auth_bench.rs` | Argon2id hash + AES-GCM wrap (unlock cost) |
 | `auth_argon2/unwrap_master_key` | `auth_bench.rs` | Argon2id verify + AES-GCM unwrap (unlock cost) |
 | `count_words_plain_500w` | `word_count_bench.rs` | Word count on ~500-word plain prose |
