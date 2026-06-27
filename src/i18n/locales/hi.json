@@ -20,7 +20,7 @@
       "notificationsUnread": "सूचनाएं, {{ count }} अपठित",
       "showTimeline": "टाइमलाइन दिखाएँ",
       "showEditor": "संपादक दिखाएँ",
-      "search": "Search"
+      "search": "खोज"
     },
     "sidebar": {
       "navigation": "नेविगेशन",
@@ -248,7 +248,7 @@
     }
   },
   "search": {
-    "title": "Search",
+    "title": "खोज",
     "placeholder": "एंट्री खोजें...",
     "clearAria": "खोज साफ करें",
     "searching": "खोज रहे हैं...",

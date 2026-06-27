@@ -20,7 +20,7 @@
       "notificationsUnread": "Notificaciones, {{ count }} sin leer",
       "showTimeline": "Mostrar cronología",
       "showEditor": "Mostrar editor",
-      "search": "Search"
+      "search": "Buscar"
     },
     "sidebar": {
       "navigation": "Navegación",
@@ -248,7 +248,7 @@
     }
   },
   "search": {
-    "title": "Search",
+    "title": "Buscar",
     "placeholder": "Buscar entradas...",
     "clearAria": "Limpiar búsqueda",
     "searching": "Buscando...",

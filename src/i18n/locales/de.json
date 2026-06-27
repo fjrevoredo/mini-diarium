@@ -20,7 +20,7 @@
       "notificationsUnread": "Benachrichtigungen, {{ count }} ungelesen",
       "showTimeline": "Zeitleiste anzeigen",
       "showEditor": "Editor anzeigen",
-      "search": "Search"
+      "search": "Suche"
     },
     "sidebar": {
       "navigation": "Navigation",
@@ -248,11 +248,11 @@
     }
   },
   "search": {
-    "title": "Search",
+    "title": "Suche",
     "placeholder": "Einträge durchsuchen...",
     "clearAria": "Suche löschen",
     "searching": "Suche läuft...",
-    "noResults": "Für \"{{query}}\" wurden keine Ergebnisse gefunden",
+    "noResults": "Für \"{{ query }}\" wurden keine Ergebnisse gefunden",
     "noTitle": "Ohne Titel"
   },
   "stats": {
