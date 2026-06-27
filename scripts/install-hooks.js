@@ -24,7 +24,8 @@ function main() {
     return;
   }
 
-  const result = spawnSync('git', ['config', 'core.hooksPath', '.githooks'], { stdio: 'inherit' });
+  // All args are hardcoded literals — no user input involved.
+  const result = spawnSync('git', ['config', 'core.hooksPath', '.githooks'], { stdio: 'inherit' }); // NOSONAR
   if (result.error || result.status !== 0) {
     return;
   }
