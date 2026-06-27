@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { execSync } from 'node:child_process';
+import { spawnSync } from 'node:child_process';
 import { existsSync, chmodSync } from 'node:fs';
 import { platform } from 'node:process';
 import { fileURLToPath } from 'node:url';
@@ -24,12 +24,11 @@ function main() {
     return;
   }
 
-  try {
-    execSync('git config core.hooksPath .githooks', { stdio: 'inherit' });
-    console.log('install-hooks: core.hooksPath = .githooks');
-  } catch {
+  const result = spawnSync('git', ['config', 'core.hooksPath', '.githooks'], { stdio: 'inherit' });
+  if (result.error || result.status !== 0) {
     return;
   }
+  console.log('install-hooks: core.hooksPath = .githooks');
 
   if (actions.chmodHook) {
     try {
