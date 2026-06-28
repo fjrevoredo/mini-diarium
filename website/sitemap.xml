@@ -2,7 +2,7 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://mini-diarium.com/</loc>
-    <lastmod>2026-06-27</lastmod>
+    <lastmod>2026-06-28</lastmod>
   </url>  <url>
     <loc>https://mini-diarium.com/compare/</loc>
     <lastmod>2026-06-27</lastmod>
@@ -14,7 +14,10 @@
     <lastmod>2026-06-27</lastmod>
   </url>  <url>
     <loc>https://mini-diarium.com/blog/</loc>
-    <lastmod>2026-06-18</lastmod>
+    <lastmod>2026-06-28</lastmod>
+  </url>  <url>
+    <loc>https://mini-diarium.com/blog/obsidian-alternative-for-journaling/</loc>
+    <lastmod>2026-06-28</lastmod>
   </url>  <url>
     <loc>https://mini-diarium.com/blog/standard-notes-alternative/</loc>
     <lastmod>2026-06-18</lastmod>

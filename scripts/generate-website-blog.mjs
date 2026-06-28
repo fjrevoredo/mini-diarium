@@ -49,6 +49,8 @@ const DESCRIPTION_MAP = {
     'A desktop diary app should encrypt entries at rest, store the primary copy locally, work offline, and export to open formats. Storage model and exit path matter more than feature lists.',
   'standard-notes-alternative':
     'Compares Mini Diarium to Standard Notes for users who want encrypted journal entries on their device only, with no sync service or server dependency.',
+  'obsidian-alternative-for-journaling':
+    'Compares Mini Diarium to Obsidian for journal writing: Obsidian stores vault files as unencrypted Markdown on disk; Mini Diarium encrypts each entry with AES-256-GCM at the storage layer.',
 };
 
 const BLUF_MAP = {
@@ -82,6 +84,8 @@ const BLUF_MAP = {
     '<p class="bluf"><strong>Short answer:</strong> A desktop diary app should store entries locally, encrypt them before writing to disk, work without a network connection, and export to JSON or Markdown. These four properties protect your writing regardless of what happens to the app or the company behind it.</p>',
   'standard-notes-alternative':
     '<p class="bluf"><strong>Short answer:</strong> Standard Notes encrypts entries and syncs the encrypted vault to a server. Mini Diarium encrypts entries and keeps them on your device only, with no sync service, no server, and no network code in the binary. If sync is not a requirement, the two apps make different architectural trade-offs for private journaling.</p>',
+  'obsidian-alternative-for-journaling':
+    '<p class="bluf"><strong>Short answer:</strong> Obsidian stores vault files as plain Markdown on disk with no built-in encryption. Mini Diarium encrypts each entry with AES-256-GCM before writing to a local SQLite database and has no network client. If you journal in Obsidian and want encryption at the storage layer without relying on a community plugin, Mini Diarium is a purpose-built alternative for Windows, macOS, and Linux.</p>',
 };
 
 const STATIC_PAGES = [
