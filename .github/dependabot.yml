@@ -40,3 +40,13 @@ updates:
     # Prevent PRs for Actions newer than 7 days
     cooldown:
       default-days: 7
+    ignore:
+      # awalsh128/cache-apt-pkgs-action v1.6.2 has an upstream regression:
+      # pre_cache_action.sh switched from `${@:6}` (array slice) to `${*:6}`
+      # (string slice), which yields garbage for the packages arg. The
+      # action aborts with "Packages argument is empty" on every invocation.
+      # Tracked in this repo's CI failures from 2026-06-29; re-enable when
+      # upstream ships a fix.
+      - dependency-name: awalsh128/cache-apt-pkgs-action
+        versions:
+          - ">= 1.6.2, < 1.7"
