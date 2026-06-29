@@ -42,7 +42,7 @@ jobs:
           cache-on-failure: true
 
       - name: Cache and install Linux system dependencies
-        uses: awalsh128/cache-apt-pkgs-action@681749ae568c81c2037cb9185e38b709b261bd2f # v1.6.1
+        uses: awalsh128/cache-apt-pkgs-action@5513791f75b039e2a79653b1a92238d3fb8d99b4 # v1.6.2
         with:
           packages: libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
           version: 1.0
@@ -126,7 +126,7 @@ jobs:
           cache-on-failure: true
 
       - name: Cache and install Linux system dependencies
-        uses: awalsh128/cache-apt-pkgs-action@681749ae568c81c2037cb9185e38b709b261bd2f # v1.6.1
+        uses: awalsh128/cache-apt-pkgs-action@5513791f75b039e2a79653b1a92238d3fb8d99b4 # v1.6.2
         with:
           packages: libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
           version: 1.0
@@ -225,7 +225,7 @@ jobs:
           restore-keys: ${{ runner.os }}-bun-
 
       - name: Cache and install Linux system dependencies
-        uses: awalsh128/cache-apt-pkgs-action@681749ae568c81c2037cb9185e38b709b261bd2f # v1.6.1
+        uses: awalsh128/cache-apt-pkgs-action@5513791f75b039e2a79653b1a92238d3fb8d99b4 # v1.6.2
         with:
           packages: libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
           version: 1.0
