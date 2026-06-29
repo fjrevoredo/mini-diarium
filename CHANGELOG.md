@@ -29,14 +29,15 @@ Template:
 ...
 ```
 
-
-
 # Versions
 
 ## [0.6.1] - Unreleased
 
 ### Added
 - **Brazilian Portuguese (pt-BR) translation**: full Brazilian Portuguese localisation covering all 536 UI strings and the native OS menu, with Brazilian conventions throughout (3-letter month/day abbreviations `Jan`–`Dez` / `Dom`–`Sáb`, gerund in `-ando`/`-endo`, "você" form). Selectable from Preferences → General → Language.
+
+### Internal
+- **Refactored `apply-dependency-prs` runbook** into a triage router + per-ecosystem procedures. `ENTRY.md` is now a short triage document that dispatches to `procedures/npm.md`, `procedures/cargo.md`, and `procedures/actions.md` based on PR labels → `headRefName` prefix → file paths. The previously-pending TODO-0050-01 Part 2 (Nix `npmDepsHash` refresh step) is included in the new `procedures/npm.md`.
 
 
 ## [0.6.0] - 27-06-2026

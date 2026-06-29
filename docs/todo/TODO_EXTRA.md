@@ -42,7 +42,12 @@ Add to the Gotcha section:
 
 ### Part 2 — Update `apply-dependency-prs` skill
 
-File: `.agents/skills/runbooks/skills/apply-dependency-prs/ENTRY.md`
+File: `.agents/skills/runbooks/skills/apply-dependency-prs/procedures/npm.md`
+
+**Status (2026-06-29):** Completed during the runbook refactor that moved the
+npm procedure into `procedures/npm.md` (see
+`docs/apply-dependency-prs-refactor-plan.md`). The three changes below were
+applied to that file in the same commit.
 
 **Phase 3 — add step after `npm install`:**
 
