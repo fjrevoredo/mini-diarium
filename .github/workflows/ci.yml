@@ -29,7 +29,7 @@ jobs:
           components: clippy, rustfmt
 
       - name: Cache bun dependencies
-        uses: actions/cache@v5
+        uses: actions/cache@v5.0.5
         with:
           path: ~/.bun/install/cache
           key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
@@ -76,7 +76,7 @@ jobs:
 
       - name: Cache D2 binary
         id: cache-d2
-        uses: actions/cache@v5
+        uses: actions/cache@v5.0.5
         with:
           path: ~/.local/bin/d2
           key: d2-v0.7.1-linux  # bump this key when upgrading D2
@@ -113,7 +113,7 @@ jobs:
           components: llvm-tools-preview
 
       - name: Cache bun dependencies
-        uses: actions/cache@v5
+        uses: actions/cache@v5.0.5
         with:
           path: ~/.bun/install/cache
           key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
@@ -137,7 +137,7 @@ jobs:
 
       - name: Cache Playwright Chromium
         id: cache-playwright
-        uses: actions/cache@v5
+        uses: actions/cache@v5.0.5
         with:
           path: ~/.cache/ms-playwright
           key: playwright-chromium-${{ hashFiles('bun.lock') }}
@@ -149,7 +149,7 @@ jobs:
 
       - name: Cache nextest binary
         id: cache-nextest
-        uses: actions/cache@v5
+        uses: actions/cache@v5.0.5
         with:
           path: ~/.cargo/bin/cargo-nextest
           key: nextest-Linux-v0.9  # bump this key when upgrading nextest
@@ -160,7 +160,7 @@ jobs:
 
       - name: Cache llvm-cov binary
         id: cache-llvm-cov
-        uses: actions/cache@v5
+        uses: actions/cache@v5.0.5
         with:
           path: ~/.cargo/bin/cargo-llvm-cov
           key: llvm-cov-Linux-v0.6  # bump when upgrading llvm-cov
@@ -218,7 +218,7 @@ jobs:
           cache-on-failure: false
 
       - name: Cache bun dependencies
-        uses: actions/cache@v5
+        uses: actions/cache@v5.0.5
         with:
           path: ~/.bun/install/cache
           key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
@@ -292,7 +292,7 @@ jobs:
           cache-on-failure: false
 
       - name: Cache bun dependencies
-        uses: actions/cache@v5
+        uses: actions/cache@v5.0.5
         with:
           path: ~/.bun/install/cache
           key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
@@ -342,7 +342,7 @@ jobs:
 
       - name: Cache flatpak-builder-tools
         id: cache-fbt
-        uses: actions/cache@v5
+        uses: actions/cache@v5.0.5
         with:
           path: /tmp/flatpak-builder-tools
           key: flatpak-builder-tools-v1  # bump when you need to refresh the clone
@@ -387,7 +387,7 @@ jobs:
 
       - name: Cache tauri-driver binary
         id: cache-tauri-driver
-        uses: actions/cache@v5
+        uses: actions/cache@v5.0.5
         with:
           path: ~/.cargo/bin/tauri-driver
           key: tauri-driver-Linux-v0.1   # bump this key when upgrading tauri-driver
