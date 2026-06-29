@@ -24,7 +24,7 @@ jobs:
     outputs:
       version: ${{ steps.get_version.outputs.version }}
     steps:
-      - uses: actions/checkout@v6.0.3
+      - uses: actions/checkout@v7.0.0
 
       - name: Get version from tag
         id: get_version
@@ -91,7 +91,7 @@ jobs:
             arch: x86_64
 
     steps:
-      - uses: actions/checkout@v6.0.3
+      - uses: actions/checkout@v7.0.0
 
       - uses: oven-sh/setup-bun@v2
         with:
@@ -104,7 +104,7 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
 
       - name: Cache cargo dependencies
-        uses: actions/cache@v5
+        uses: actions/cache@v5.0.5
         with:
           path: |
             ~/.cargo/bin/
@@ -283,7 +283,7 @@ jobs:
             --field tag="$GITHUB_REF_NAME"
 
       - name: Check out master for changelog cleanup
-        uses: actions/checkout@v6.0.3
+        uses: actions/checkout@v7.0.0
         with:
           ref: master
           fetch-depth: 0

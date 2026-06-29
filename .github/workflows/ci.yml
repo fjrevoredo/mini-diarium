@@ -18,7 +18,7 @@ jobs:
     name: Lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6.0.3
+      - uses: actions/checkout@v7.0.0
 
       - uses: oven-sh/setup-bun@v2
         with:
@@ -29,7 +29,7 @@ jobs:
           components: clippy, rustfmt
 
       - name: Cache bun dependencies
-        uses: actions/cache@v5
+        uses: actions/cache@v5.0.5
         with:
           path: ~/.bun/install/cache
           key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
@@ -42,7 +42,7 @@ jobs:
           cache-on-failure: true
 
       - name: Cache and install Linux system dependencies
-        uses: awalsh128/cache-apt-pkgs-action@681749ae568c81c2037cb9185e38b709b261bd2f # v1.6.1
+        uses: awalsh128/cache-apt-pkgs-action@5513791f75b039e2a79653b1a92238d3fb8d99b4 # v1.6.2
         with:
           packages: libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
           version: 1.0
@@ -76,7 +76,7 @@ jobs:
 
       - name: Cache D2 binary
         id: cache-d2
-        uses: actions/cache@v5
+        uses: actions/cache@v5.0.5
         with:
           path: ~/.local/bin/d2
           key: d2-v0.7.1-linux  # bump this key when upgrading D2
@@ -102,7 +102,7 @@ jobs:
     name: Test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6.0.3
+      - uses: actions/checkout@v7.0.0
 
       - uses: oven-sh/setup-bun@v2
         with:
@@ -113,7 +113,7 @@ jobs:
           components: llvm-tools-preview
 
       - name: Cache bun dependencies
-        uses: actions/cache@v5
+        uses: actions/cache@v5.0.5
         with:
           path: ~/.bun/install/cache
           key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
@@ -126,7 +126,7 @@ jobs:
           cache-on-failure: true
 
       - name: Cache and install Linux system dependencies
-        uses: awalsh128/cache-apt-pkgs-action@681749ae568c81c2037cb9185e38b709b261bd2f # v1.6.1
+        uses: awalsh128/cache-apt-pkgs-action@5513791f75b039e2a79653b1a92238d3fb8d99b4 # v1.6.2
         with:
           packages: libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
           version: 1.0
@@ -137,7 +137,7 @@ jobs:
 
       - name: Cache Playwright Chromium
         id: cache-playwright
-        uses: actions/cache@v5
+        uses: actions/cache@v5.0.5
         with:
           path: ~/.cache/ms-playwright
           key: playwright-chromium-${{ hashFiles('bun.lock') }}
@@ -149,7 +149,7 @@ jobs:
 
       - name: Cache nextest binary
         id: cache-nextest
-        uses: actions/cache@v5
+        uses: actions/cache@v5.0.5
         with:
           path: ~/.cargo/bin/cargo-nextest
           key: nextest-Linux-v0.9  # bump this key when upgrading nextest
@@ -160,7 +160,7 @@ jobs:
 
       - name: Cache llvm-cov binary
         id: cache-llvm-cov
-        uses: actions/cache@v5
+        uses: actions/cache@v5.0.5
         with:
           path: ~/.cargo/bin/cargo-llvm-cov
           key: llvm-cov-Linux-v0.6  # bump when upgrading llvm-cov
@@ -198,7 +198,7 @@ jobs:
     needs: [lint, test]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6.0.3
+      - uses: actions/checkout@v7.0.0
 
       - uses: oven-sh/setup-bun@v2
         with:
@@ -218,14 +218,14 @@ jobs:
           cache-on-failure: false
 
       - name: Cache bun dependencies
-        uses: actions/cache@v5
+        uses: actions/cache@v5.0.5
         with:
           path: ~/.bun/install/cache
           key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
           restore-keys: ${{ runner.os }}-bun-
 
       - name: Cache and install Linux system dependencies
-        uses: awalsh128/cache-apt-pkgs-action@681749ae568c81c2037cb9185e38b709b261bd2f # v1.6.1
+        uses: awalsh128/cache-apt-pkgs-action@5513791f75b039e2a79653b1a92238d3fb8d99b4 # v1.6.2
         with:
           packages: libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
           version: 1.0
@@ -265,7 +265,7 @@ jobs:
       matrix:
         os: [macos-latest, windows-latest]
     steps:
-      - uses: actions/checkout@v6.0.3
+      - uses: actions/checkout@v7.0.0
 
       - uses: oven-sh/setup-bun@v2
         with:
@@ -292,7 +292,7 @@ jobs:
           cache-on-failure: false
 
       - name: Cache bun dependencies
-        uses: actions/cache@v5
+        uses: actions/cache@v5.0.5
         with:
           path: ~/.bun/install/cache
           key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
@@ -338,11 +338,11 @@ jobs:
       image: ghcr.io/flathub-infra/flatpak-github-actions:gnome-50
       options: --privileged
     steps:
-      - uses: actions/checkout@v6.0.3
+      - uses: actions/checkout@v7.0.0
 
       - name: Cache flatpak-builder-tools
         id: cache-fbt
-        uses: actions/cache@v5
+        uses: actions/cache@v5.0.5
         with:
           path: /tmp/flatpak-builder-tools
           key: flatpak-builder-tools-v1  # bump when you need to refresh the clone
@@ -379,7 +379,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: build-linux   # only needs Linux binary; decoupled from slow macOS/Windows builds
     steps:
-      - uses: actions/checkout@v6.0.3
+      - uses: actions/checkout@v7.0.0
 
       - uses: oven-sh/setup-bun@v2
         with:
@@ -387,7 +387,7 @@ jobs:
 
       - name: Cache tauri-driver binary
         id: cache-tauri-driver
-        uses: actions/cache@v5
+        uses: actions/cache@v5.0.5
         with:
           path: ~/.cargo/bin/tauri-driver
           key: tauri-driver-Linux-v0.1   # bump this key when upgrading tauri-driver
