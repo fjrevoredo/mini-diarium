@@ -19,7 +19,7 @@ jobs:
       - name: Record job start time
         run: echo "JOB_STARTED_EPOCH=$(date -u +%s)" >> "$GITHUB_ENV"
 
-      - uses: actions/checkout@v6.0.3
+      - uses: actions/checkout@v7.0.0
 
       - uses: dtolnay/rust-toolchain@stable
 
