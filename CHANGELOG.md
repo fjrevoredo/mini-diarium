@@ -20,6 +20,9 @@ Template:
 ### Removed
 - **Removal X**: Removal X description
 
+### Internal
+- **Internal X**: Internal change X description
+
 
 ## [X.Y.Z-1] - dd-mm-YYYY
 
@@ -29,6 +32,12 @@ Template:
 
 
 # Versions
+
+## [0.6.1] - Unreleased
+
+### Added
+- **Brazilian Portuguese (pt-BR) translation**: full Brazilian Portuguese localisation covering all 536 UI strings and the native OS menu, with Brazilian conventions throughout (3-letter month/day abbreviations `Jan`–`Dez` / `Dom`–`Sáb`, gerund in `-ando`/`-endo`, "você" form). Selectable from Preferences → General → Language.
+
 
 ## [0.6.0] - 27-06-2026
 

@@ -6,9 +6,10 @@ export interface LocaleInfo {
 
 export const AVAILABLE_LOCALES: LocaleInfo[] = [
   { code: 'en', name: 'English', nativeName: 'English' },
-  { code: 'es', name: 'Spanish', nativeName: 'Español' },
-  { code: 'de', name: 'German', nativeName: 'Deutsch' },
   { code: 'fr', name: 'French', nativeName: 'Français' },
+  { code: 'de', name: 'German', nativeName: 'Deutsch' },
   { code: 'hi', name: 'Hindi', nativeName: 'हिन्दी' },
   { code: 'it', name: 'Italian', nativeName: 'Italiano' },
+  { code: 'pt-BR', name: 'Portuguese (Brazil)', nativeName: 'Português (Brasil)' },
+  { code: 'es', name: 'Spanish', nativeName: 'Español' },
 ];

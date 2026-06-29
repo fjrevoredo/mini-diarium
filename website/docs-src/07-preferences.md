@@ -18,7 +18,7 @@ Preferences are now **close-only**: there is no Save/Cancel footer. Reversible s
 | Setting | Description |
 |---------|-------------|
 | Theme | Light, dark, or follow system (auto) |
-| Language | Interface language: English, Spanish, German, French, Italian, or Hindi |
+| Language | Interface language: English, French, German, Hindi, Italian, Portuguese (Brazil), or Spanish |
 | ESC key action | Do nothing or quit the app when pressing Escape |
 
 ## Writing Settings

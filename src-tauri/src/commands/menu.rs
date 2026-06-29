@@ -103,6 +103,25 @@ fn labels_for_locale(locale: &str) -> MenuLabels {
             #[cfg(not(target_os = "macos"))]
             help_menu: "सहायता",
         },
+        "pt-BR" => MenuLabels {
+            navigation_menu: "Navegação",
+            diary_menu: "Diário",
+            navigate_prev_day: "Dia anterior",
+            navigate_next_day: "Próximo dia",
+            navigate_today: "Ir para hoje",
+            go_to_date: "Ir para data...",
+            navigate_prev_month: "Mês anterior",
+            navigate_next_month: "Próximo mês",
+            statistics: "Estatísticas...",
+            import_item: "Importar...",
+            export_item: "Exportar...",
+            preferences: "Preferências...",
+            about: "Sobre o Mini Diarium",
+            #[cfg(not(target_os = "macos"))]
+            file_menu: "Arquivo",
+            #[cfg(not(target_os = "macos"))]
+            help_menu: "Ajuda",
+        },
         // Default / fallback — English for any unknown locale code
         _ => MenuLabels {
             navigation_menu: "Navigation",
@@ -198,4 +217,39 @@ pub fn update_menu_locale(
     }
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::labels_for_locale;
+
+    #[test]
+    fn pt_br_arm_returns_brazilian_portuguese_labels() {
+        let l = labels_for_locale("pt-BR");
+        assert_eq!(l.navigation_menu, "Navegação");
+        assert_eq!(l.diary_menu, "Diário");
+        assert_eq!(l.navigate_prev_day, "Dia anterior");
+        assert_eq!(l.navigate_next_day, "Próximo dia");
+        assert_eq!(l.navigate_today, "Ir para hoje");
+        assert_eq!(l.go_to_date, "Ir para data...");
+        assert_eq!(l.navigate_prev_month, "Mês anterior");
+        assert_eq!(l.navigate_next_month, "Próximo mês");
+        assert_eq!(l.statistics, "Estatísticas...");
+        assert_eq!(l.import_item, "Importar...");
+        assert_eq!(l.export_item, "Exportar...");
+        assert_eq!(l.preferences, "Preferências...");
+        assert_eq!(l.about, "Sobre o Mini Diarium");
+        #[cfg(not(target_os = "macos"))]
+        {
+            assert_eq!(l.file_menu, "Arquivo");
+            assert_eq!(l.help_menu, "Ajuda");
+        }
+    }
+
+    #[test]
+    fn unknown_locale_falls_back_to_english() {
+        let l = labels_for_locale("xx");
+        assert_eq!(l.navigation_menu, "Navigation");
+        assert_eq!(l.diary_menu, "Diary");
+    }
 }

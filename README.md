@@ -189,11 +189,12 @@ Mini Diarium ships in the following languages:
 
 <!-- supported-languages-start -->
 - English
-- Spanish (Español)
-- German (Deutsch)
 - French (Français)
+- German (Deutsch)
 - Hindi (हिन्दी)
 - Italian (Italiano)
+- Portuguese (Brazil) (Português (Brasil))
+- Spanish (Español)
 <!-- supported-languages-end -->
 
 If you'd like to add support for another language, see [docs/TRANSLATIONS.md](docs/TRANSLATIONS.md) for instructions on creating a locale file and submitting a PR.
