@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1782758658443,
+  "lastUpdate": 1782768290923,
   "repoUrl": "https://github.com/fjrevoredo/mini-diarium",
   "entries": {
     "Benchmark": [
@@ -18664,6 +18664,174 @@ window.BENCHMARK_DATA = {
           {
             "name": "ci_pipeline_duration",
             "value": 507000000000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "committer": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "distinct": true,
+          "id": "455e47004dc02685aa70f38c65e9d9c68da30e9a",
+          "message": "Dependency Update: revert awalsh128/cache-apt-pkgs-action to v1.6.1 (#187 revert)\n\nThe v1.6.2 bump from PR #187 breaks every CI invocation:\n- Lint and Test jobs abort in \"Cache and install Linux system\n  dependencies\" with exit 3 (\"Packages argument is empty\").\n- v1.6.2 of the upstream action itself changed\n  `pre_cache_action.sh` from `${@:6}` (correct bash array slice) to\n  `${*:6}` (broken — slices the IFS-joined `$*` string), so the\n  `packages` argument never reaches the action's normalizer. Confirmed\n  by inspecting the v1.6.2 source on GitHub; upstreams `master` has\n  not yet fixed it.\n\nThis reverts all 4 occurrences of the action (benchmark.yml + 3 in\nci.yml) to the v1.6.1 SHA + tag comment.\n\nTo prevent Dependabot from re-opening a similar PR, an `ignore` block\nis added to `.github/dependabot.yml` for awalsh128/cache-apt-pkgs-action\n>= 1.6.2 and < 1.7. Remove the ignore once upstream ships a fix.\n\nPRs #184 (#actions/setup-python), #186 (actions/cache), #185\n(actions/checkout) are unaffected and remain at their bumped versions.",
+          "timestamp": "2026-06-29T23:12:19+02:00",
+          "tree_id": "5e7b93cd52c3148f33c6324c5d71d98629f0ba4a",
+          "url": "https://github.com/fjrevoredo/mini-diarium/commit/455e47004dc02685aa70f38c65e9d9c68da30e9a"
+        },
+        "date": 1782768290401,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "auth_argon2/wrap_master_key",
+            "value": 99641473,
+            "range": "± 1481980",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "auth_argon2/unwrap_master_key",
+            "value": 98238137,
+            "range": "± 555915",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_encrypt/1024",
+            "value": 2300,
+            "range": "± 27",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_encrypt/10240",
+            "value": 14640,
+            "range": "± 93",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_encrypt/102400",
+            "value": 140249,
+            "range": "± 392",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_decrypt/1024",
+            "value": 1657,
+            "range": "± 4",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_decrypt/10240",
+            "value": 13813,
+            "range": "± 18",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_decrypt/102400",
+            "value": 136777,
+            "range": "± 1297",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_insert_entry",
+            "value": 913893,
+            "range": "± 77712",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_update_entry",
+            "value": 671964,
+            "range": "± 20615",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_delete_entry",
+            "value": 883737,
+            "range": "± 52638",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_entries_by_date",
+            "value": 15527,
+            "range": "± 32",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_all_entry_dates/100",
+            "value": 31728,
+            "range": "± 314",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_all_entry_dates/500",
+            "value": 116894,
+            "range": "± 353",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_all_entries/100",
+            "value": 162736,
+            "range": "± 839",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_all_entries/500",
+            "value": 746371,
+            "range": "± 8495",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_all_entries/1000",
+            "value": 1486586,
+            "range": "± 26351",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_all_entries/3650",
+            "value": 5404058,
+            "range": "± 77910",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_search_entries/500",
+            "value": 15698694,
+            "range": "± 64045",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_search_entries/1000",
+            "value": 32138641,
+            "range": "± 1034755",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_search_entries/3650",
+            "value": 117820428,
+            "range": "± 396462",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "count_words_plain_500w",
+            "value": 6038,
+            "range": "± 86",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "count_words_html_500w",
+            "value": 8003,
+            "range": "± 88",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "ci_pipeline_duration",
+            "value": 541000000000,
             "range": "± 0",
             "unit": "ns/iter"
           }
