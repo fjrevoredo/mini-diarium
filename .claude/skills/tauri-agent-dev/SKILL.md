@@ -13,19 +13,27 @@ description: |
 
 ## Start A Session
 
-Run everything from the repo root with the Windows toolchain:
+Run everything from the repo root with the Windows toolchain.
+
+**Use the PowerShell tool, not Bash + `cmd.exe`, for every command in this skill.** `agent:dev:start`,
+`agent:dev:probe`, `agent:dev:stop`, and `agent-browser connect` are exactly the kind of
+background-spawning / long-running commands where Bash piped through `cmd.exe` reliably returns
+only the `cmd.exe` banner with no real output — the same failure mode root `CLAUDE.md` calls out
+for `website:build-static`, but it is not specific to that one script. If a command run this way
+returns nothing but the banner, that is the signature of this issue, not a sign the command failed
+— retry it through the PowerShell tool before concluding anything is wrong.
 
 ```bash
-cmd.exe /c bun run agent:dev:start
-cmd.exe /c bun run agent:dev:probe
+bun run agent:dev:start
+bun run agent:dev:probe
 ```
 
 Useful flags:
 
 ```bash
-cmd.exe /c bun run agent:dev:start -- --port 9223
-cmd.exe /c bun run agent:dev:start -- --timeout 180
-cmd.exe /c bun run agent:dev:start -- --use-real-config
+bun run agent:dev:start -- --port 9223
+bun run agent:dev:start -- --timeout 180
+bun run agent:dev:start -- --use-real-config
 ```
 
 What start does:
@@ -37,6 +45,22 @@ What start does:
 - isolates WebView storage under `.agent-dev/sandbox/webview/` so `localStorage` does not leak across runs
 - writes runtime state to `.agent-dev/state.json`
 - writes logs to `.agent-dev/dev.log`
+
+**Detecting readiness:** don't grep the raw `start` output for guessed keywords ("ready", "listening",
+etc.) — `agent:dev:start` is a backgrounded long-running process and its stdout is not a reliable
+readiness signal through this tool chain. `agent:dev:probe` is the purpose-built readiness check and
+returns structured JSON (`{"running":true,...}`) the moment the CDP target is live. Poll it directly
+instead of building an ad hoc log-watcher:
+
+```bash
+# Poll probe every few seconds until it reports running, instead of waiting on a fixed
+# timer or grepping dev.log for inferred markers.
+until bun run agent:dev:probe 2>&1 | grep -q '"running":true'; do sleep 3; done
+```
+
+Cold builds take 30-90 seconds; pass `--timeout 180` if a Rust rebuild is expected. If the app window
+is already visibly open (the user can see it), trust that over a probe/log timeout — the window
+appearing means the session is up even if a polling loop hasn't caught up yet.
 
 After start succeeds, connect the separate browser-driving layer:
 
@@ -65,6 +89,17 @@ scroll, dialog open/close) can reassign refs so an old ref silently targets a di
 For controls inside scrollable panels or dialogs, prefer CSS selectors or JS eval with label-text
 matching over bare `@eNNN` refs. Always re-snapshot after a meaningful transition before clicking
 a ref from a previous snapshot.
+
+**`type` requires the selector and text in the same call**: `agent-browser type <sel> <text>` takes
+both arguments together — e.g. `agent-browser type '@e15' 'some text'`. Calling `click '@e15'` and
+then `type` with only the text string (no selector) is a **silent no-op**: it returns success but
+nothing is typed, and there is no error to signal the mistake. If `eval`'d editor/input content comes
+back empty after a `type` call, check this first before assuming a focus or timing problem.
+
+**Don't burn a full wakeup/turn-cycle on a sub-second wait**: known short timers (e.g. the 500ms
+autosave debounce) don't need `ScheduleWakeup` or a minute-long pause — that wastes a conversation
+turn per check. Use a short shell-level wait (`sleep 1-2` inline before the next command, or a tight
+`Monitor` poll loop) so the verification stays in the same turn.
 
 ## Stable Selectors
 
@@ -201,16 +236,16 @@ Use agent-browser's screenshot flow after the app is in the exact state the user
 
 ## End The Session
 
-Always stop the dev session before finishing the task:
+Always stop the dev session before finishing the task (PowerShell tool, see note in "Start A Session"):
 
 ```bash
-cmd.exe /c bun run agent:dev:stop
+bun run agent:dev:stop
 ```
 
 Optional:
 
 ```bash
-cmd.exe /c bun run agent:dev:stop -- --keep-sandbox
+bun run agent:dev:stop -- --keep-sandbox
 ```
 
 Stopping is not optional cleanup. It kills both long-lived Windows process roots and removes sandbox state unless told otherwise.
@@ -232,11 +267,11 @@ If `agent:dev:stop` fails during sandbox deletion with a transient WebView file 
 
 - Start can take 30-90 seconds on a cold build. Use `--timeout 180` if Rust rebuilds are expected.
 - If port `9222` is already taken, restart with `--port 9223` and connect agent-browser to that port.
-- If start succeeds but the page target is not immediately recorded, run `cmd.exe /c bun run agent:dev:probe`. Probe resolves the current page target from the live `/json` list.
+- If start succeeds but the page target is not immediately recorded, run `bun run agent:dev:probe` (poll it — see "Detecting readiness" above). Probe resolves the current page target from the live `/json` list.
 - If probe says `cdp unreachable`, inspect `.agent-dev/dev.log`.
 - If probe says the managed PIDs are not alive, the dev session is gone. Start a new one.
 - If a stop attempt fails, do not delete `.agent-dev/state.json` by hand until you understand which root is still alive.
-- If `agent:dev:stop` fails with `EBUSY` while deleting a WebView cache file, rerun `cmd.exe /c bun run agent:dev:stop -- --keep-sandbox`. Verify that the reported port is closed; if it is, the session shutdown is good enough for task cleanup.
+- If `agent:dev:stop` fails with `EBUSY` while deleting a WebView cache file, rerun `bun run agent:dev:stop -- --keep-sandbox`. Verify that the reported port is closed; if it is, the session shutdown is good enough for task cleanup.
 - **Journal locks repeatedly during session**: If the app is configured with a short `autoLockTimeout` (< 30 s), the idle timer fires between CDP roundtrips. `eval` calls do not count as user activity. Patch `autoLockTimeout` to 600 in localStorage immediately after the first unlock (see "Read Or Verify Preferences" recipe above).
 
 ## What This Skill Does Not Do
