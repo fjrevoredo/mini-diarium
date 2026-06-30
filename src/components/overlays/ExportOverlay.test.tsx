@@ -308,6 +308,67 @@ describe('ExportOverlay', () => {
     });
   });
 
+  describe('print: img.decode() timing', () => {
+    let decodeMock: ReturnType<typeof vi.fn>;
+
+    beforeEach(() => {
+      decodeMock = vi.fn();
+      // jsdom does not implement HTMLImageElement.prototype.decode; vi.spyOn
+      // requires the property to pre-exist, so assign it directly.
+      (HTMLImageElement.prototype as unknown as { decode: typeof decodeMock }).decode = decodeMock;
+    });
+
+    afterEach(() => {
+      delete (HTMLImageElement.prototype as { decode?: unknown }).decode;
+    });
+
+    it('does not generate the PDF until every image has finished decoding', async () => {
+      const resolveDecodes: Array<() => void> = [];
+      decodeMock.mockImplementation(
+        () =>
+          new Promise<void>((resolve) => {
+            resolveDecodes.push(resolve);
+          }),
+      );
+
+      vi.spyOn(tauri, 'printEntries').mockResolvedValueOnce({
+        entries_exported: 1,
+        html: '<img src="one.png" /><img src="two.png" />',
+      });
+      vi.mocked(saveDialog).mockResolvedValueOnce('/test/export.pdf');
+
+      renderWithI18n(() => <ExportOverlay isOpen={true} onClose={vi.fn()} />);
+      await waitFor(() =>
+        expect(screen.getByRole('button', { name: /^Print$/ })).toBeInTheDocument(),
+      );
+      fireEvent.click(screen.getByRole('button', { name: /^Print$/ }));
+
+      await waitFor(() => expect(decodeMock).toHaveBeenCalledTimes(2));
+      expect(pdfLib.generatePdfFromElement).not.toHaveBeenCalled();
+
+      resolveDecodes.forEach((resolve) => resolve());
+      await waitFor(() => expect(pdfLib.generatePdfFromElement).toHaveBeenCalled());
+    });
+
+    it('still generates the PDF when decode() rejects for a broken image', async () => {
+      decodeMock.mockRejectedValue(new Error('decode failed'));
+
+      vi.spyOn(tauri, 'printEntries').mockResolvedValueOnce({
+        entries_exported: 1,
+        html: '<img src="broken.png" />',
+      });
+      vi.mocked(saveDialog).mockResolvedValueOnce('/test/export.pdf');
+
+      renderWithI18n(() => <ExportOverlay isOpen={true} onClose={vi.fn()} />);
+      await waitFor(() =>
+        expect(screen.getByRole('button', { name: /^Print$/ })).toBeInTheDocument(),
+      );
+      fireEvent.click(screen.getByRole('button', { name: /^Print$/ }));
+
+      await waitFor(() => expect(pdfLib.generatePdfFromElement).toHaveBeenCalled());
+    });
+  });
+
   it('does not call runExportPlugin when save dialog is cancelled', async () => {
     vi.mocked(saveDialog).mockResolvedValueOnce(null);
     renderOverlay();
