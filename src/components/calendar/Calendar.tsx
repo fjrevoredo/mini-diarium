@@ -12,9 +12,6 @@ interface CalendarDay {
   day: number;
   isCurrentMonth: boolean;
   isToday: boolean;
-  isSelected: boolean;
-  hasEntry: boolean;
-  filterActive: boolean;
   isFuture: boolean;
   isDisabled: boolean;
 }
@@ -89,12 +86,6 @@ export default function Calendar() {
     // null means use system default (Sunday in US locale)
     const preferredFirstDay = preferences().firstDayOfWeek ?? 0;
 
-    // Resolve entry dates once — narrowed to tag-filtered dates when a filter is active.
-    // Reading tagFilteredDates() here (inside the memo) keeps signal tracking out of
-    // per-cell <For> render scopes, preventing competing reactive update paths.
-    const dates = tagFilteredDates() ?? entryDates();
-    const filterActive = tagFilteredDates() !== null;
-
     // Calculate how many days from previous month to show
     // We need to show days until we reach the preferred first day of week
     const daysFromPrevMonth = (firstDayOfMonth - preferredFirstDay + 7) % 7;
@@ -114,9 +105,6 @@ export default function Calendar() {
         day,
         isCurrentMonth: false,
         isToday: false,
-        isSelected: false,
-        hasEntry: dates.includes(dateStr),
-        filterActive,
         isFuture,
         isDisabled: !allowFuture && isFuture,
       });
@@ -124,7 +112,6 @@ export default function Calendar() {
 
     // Days of current month
     const currentMonthDays: CalendarDay[] = [];
-    const selected = selectedDate();
 
     for (let day = 1; day <= lastDay.getDate(); day++) {
       const dateStr = `${year}-${String(monthIndex + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
@@ -134,9 +121,6 @@ export default function Calendar() {
         day,
         isCurrentMonth: true,
         isToday: dateStr === today,
-        isSelected: dateStr === selected,
-        hasEntry: dates.includes(dateStr),
-        filterActive,
         isFuture,
         isDisabled: !allowFuture && isFuture,
       });
@@ -157,9 +141,6 @@ export default function Calendar() {
         day,
         isCurrentMonth: false,
         isToday: false,
-        isSelected: false,
-        hasEntry: dates.includes(dateStr),
-        filterActive,
         isFuture,
         isDisabled: !allowFuture && isFuture,
       });
@@ -415,34 +396,40 @@ export default function Calendar() {
                 {(week) => (
                   <div role="row" class="contents">
                     <For each={week}>
-                      {(day) => (
-                        <div role="gridcell">
-                          <button
-                            data-testid={`calendar-day-${day.date}`}
-                            onClick={() => handleDayClick(day)}
-                            tabIndex={focusedDate() === day.date ? 0 : -1}
-                            aria-selected={day.isSelected}
-                            aria-current={day.isToday ? 'date' : undefined}
-                            aria-label={`${formatDateLabel(day.date, preferences().language)}${day.hasEntry ? t('calendar.hasEntry') : ''}`}
-                            class={`
+                      {(day) => {
+                        const hasEntry = createMemo(() =>
+                          (tagFilteredDates() ?? entryDates()).includes(day.date),
+                        );
+                        const isSelected = () => day.date === selectedDate();
+                        return (
+                          <div role="gridcell">
+                            <button
+                              data-testid={`calendar-day-${day.date}`}
+                              onClick={() => handleDayClick(day)}
+                              tabIndex={focusedDate() === day.date ? 0 : -1}
+                              aria-selected={isSelected()}
+                              aria-current={day.isToday ? 'date' : undefined}
+                              aria-label={`${formatDateLabel(day.date, preferences().language)}${hasEntry() ? t('calendar.hasEntry') : ''}`}
+                              class={`
                             relative h-8 w-full rounded text-sm flex flex-col items-center justify-center
                             ${day.isCurrentMonth ? 'text-primary' : 'text-muted'}
                             ${day.isToday ? 'font-bold' : ''}
-                            ${day.isSelected ? 'interactive-primary' : !day.isDisabled ? 'hover:bg-hover' : ''}
+                            ${isSelected() ? 'interactive-primary' : !day.isDisabled ? 'hover:bg-hover' : ''}
                             ${day.isDisabled ? 'cursor-not-allowed opacity-40' : 'cursor-pointer'}
                           `}
-                            disabled={day.isDisabled}
-                          >
-                            <span aria-hidden="true">{day.day}</span>
-                            {day.hasEntry && (
-                              <span
-                                aria-hidden="true"
-                                class={`mt-0.5 h-1 w-1 rounded-full ${day.isSelected ? 'bg-white' : day.filterActive ? 'bg-filter-dot' : 'bg-interactive'}`}
-                              />
-                            )}
-                          </button>
-                        </div>
-                      )}
+                              disabled={day.isDisabled}
+                            >
+                              <span aria-hidden="true">{day.day}</span>
+                              <Show when={hasEntry()}>
+                                <span
+                                  aria-hidden="true"
+                                  class={`mt-0.5 h-1 w-1 rounded-full ${isSelected() ? 'bg-white' : tagFilteredDates() !== null ? 'bg-filter-dot' : 'bg-interactive'}`}
+                                />
+                              </Show>
+                            </button>
+                          </div>
+                        );
+                      }}
                     </For>
                   </div>
                 )}

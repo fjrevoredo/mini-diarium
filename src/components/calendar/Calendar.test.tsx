@@ -79,4 +79,35 @@ describe('Calendar', () => {
     // May 18, 2026 is the day after today ('2026-05-17')
     expect(screen.getByTestId('calendar-day-2026-05-18')).toBeDisabled();
   });
+
+  it('updating entryDates after mount shows the entry dot without remounting day buttons', async () => {
+    renderWithI18n(() => <Calendar />);
+    const btnBefore = screen.getByTestId('calendar-day-2026-05-10');
+    expect(btnBefore.querySelector('[aria-hidden="true"].rounded-full')).toBeNull();
+
+    entriesState.setEntryDates(['2026-05-10']);
+    await Promise.resolve();
+
+    const btnAfter = screen.getByTestId('calendar-day-2026-05-10');
+    // Same DOM node identity — proves the <For> grid did not tear down/remount on data change.
+    expect(btnAfter).toBe(btnBefore);
+    expect(btnAfter.querySelector('[aria-hidden="true"].rounded-full')).not.toBeNull();
+  });
+
+  it('selection highlight follows clicks without remounting day buttons (same month)', () => {
+    renderWithI18n(() => <Calendar />);
+    const oldSelected = screen.getByTestId('calendar-day-2026-05-17');
+    const newSelected = screen.getByTestId('calendar-day-2026-05-01');
+    expect(oldSelected).toHaveAttribute('aria-selected', 'true');
+    expect(newSelected).toHaveAttribute('aria-selected', 'false');
+
+    fireEvent.click(newSelected);
+
+    // Same DOM nodes — the highlight moved via the inline-reactive isSelected() read,
+    // not via a <For> remount.
+    expect(screen.getByTestId('calendar-day-2026-05-17')).toBe(oldSelected);
+    expect(screen.getByTestId('calendar-day-2026-05-01')).toBe(newSelected);
+    expect(oldSelected).toHaveAttribute('aria-selected', 'false');
+    expect(newSelected).toHaveAttribute('aria-selected', 'true');
+  });
 });
