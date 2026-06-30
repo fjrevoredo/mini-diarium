@@ -813,6 +813,45 @@ mod tests {
         assert_eq!(result, "This is **bold** and *italic*");
     }
 
+    // --- Adjacent delimiter tests ---
+    //
+    // INLINE_FORMATTING/INLINE_CODE replace each tag independently, so two
+    // different marks with no whitespace between them (e.g.
+    // `<strong>A</strong><em>B</em>`) can produce delimiter runs that look
+    // ambiguous to a human (e.g. `**A***B*`, three asterisks in a row). Each
+    // case below was verified against `marked` (the project's installed
+    // CommonMark/GFM parser, also used elsewhere in the codebase) to confirm
+    // the literal output round-trips to the intended two marks with no
+    // bleed-through; no code fix was needed.
+
+    #[test]
+    fn test_html_to_markdown_adjacent_bold_italic() {
+        let html = "<strong>A</strong><em>B</em>";
+        let result = html_to_markdown(html);
+        assert_eq!(result, "**A***B*");
+    }
+
+    #[test]
+    fn test_html_to_markdown_adjacent_code_strike() {
+        let html = "<code>A</code><s>B</s>";
+        let result = html_to_markdown(html);
+        assert_eq!(result, "`A`~~B~~");
+    }
+
+    #[test]
+    fn test_html_to_markdown_adjacent_bold_code() {
+        let html = "<strong>A</strong><code>B</code>";
+        let result = html_to_markdown(html);
+        assert_eq!(result, "**A**`B`");
+    }
+
+    #[test]
+    fn test_html_to_markdown_adjacent_strike_bold() {
+        let html = "<s>A</s><strong>B</strong>";
+        let result = html_to_markdown(html);
+        assert_eq!(result, "~~A~~**B**");
+    }
+
     #[test]
     fn test_html_to_markdown_list() {
         let html = "<ul><li>Item one</li><li>Item two</li></ul>";
@@ -963,6 +1002,34 @@ mod tests {
     }
 
     #[test]
+    fn test_html_to_markdown_underline_stripped() {
+        // No native Markdown underline — tag is dropped, text is kept (see
+        // html_to_markdown doc comment).
+        let html = "<p>This is <u>underlined</u> text.</p>";
+        let result = html_to_markdown(html);
+        assert_eq!(result, "This is underlined text.");
+    }
+
+    #[test]
+    fn test_html_to_markdown_color_span_stripped() {
+        // TipTap Color/TextStyle marks render as `<span style="color: ...">` —
+        // no Markdown equivalent, tag stripped, text kept.
+        let html = r#"<p><span style="color: #ff0000">red text</span></p>"#;
+        let result = html_to_markdown(html);
+        assert_eq!(result, "red text");
+    }
+
+    #[test]
+    fn test_html_to_markdown_timestamp_mark_stripped() {
+        // Custom TimestampMark renders as `<span class="timestamp">` with no
+        // attributes — the display text carries all the information, so the
+        // span should strip cleanly with correct surrounding spacing.
+        let html = r#"<p>Woke up at <span class="timestamp">10:30 AM</span> today.</p>"#;
+        let result = html_to_markdown(html);
+        assert_eq!(result, "Woke up at 10:30 AM today.");
+    }
+
+    #[test]
     fn test_html_to_markdown_highlight_with_bold() {
         let html = "<p><mark><strong>bold highlight</strong></mark></p>";
         let result = html_to_markdown(html);
@@ -996,6 +1063,17 @@ mod tests {
         let html = r#"<p><a href="https://example.com"><strong>bold</strong> label</a></p>"#;
         let result = html_to_markdown(html);
         assert_eq!(result, "[**bold** label](https://example.com)");
+    }
+
+    #[test]
+    fn test_html_to_markdown_link_with_fully_bold_label() {
+        // Whole-label bold (distinct from a partially-bold label, already
+        // covered by test_html_to_markdown_link_with_formatting): the <a> tag
+        // must still be parsed correctly with no stray characters from the
+        // nested <strong>.
+        let html = r#"<p><a href="https://example.com"><strong>Label</strong></a></p>"#;
+        let result = html_to_markdown(html);
+        assert_eq!(result, "[**Label**](https://example.com)");
     }
 
     #[test]

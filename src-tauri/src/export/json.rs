@@ -232,6 +232,33 @@ mod tests {
     }
 
     #[test]
+    fn test_json_export_preserves_inline_marks_verbatim() {
+        // JSON export emits `entry.text` verbatim — every inline mark the editor
+        // supports (bold, italic, underline, strikethrough, inline code,
+        // highlight, text color) must survive serialization byte-for-byte.
+        let cases: &[(&str, &str)] = &[
+            ("bold", "<p><strong>bold</strong></p>"),
+            ("italic", "<p><em>italic</em></p>"),
+            ("underline", "<p><u>underlined</u></p>"),
+            ("strikethrough", "<p><s>struck</s></p>"),
+            ("inline code", "<p><code>code</code></p>"),
+            ("highlight", "<p><mark>highlighted</mark></p>"),
+            (
+                "text color",
+                r#"<p><span style="color: #ff0000">red</span></p>"#,
+            ),
+        ];
+
+        for (name, html) in cases {
+            let entries = vec![create_test_entry(1, "2024-01-15", "Entry", html)];
+            let result = export_entries_to_json(entries, &empty_tags()).unwrap();
+            let parsed: Value = serde_json::from_str(&result).unwrap();
+            let text = parsed["entries"][0]["text"].as_str().unwrap();
+            assert_eq!(text, *html, "mark '{}' did not survive verbatim", name);
+        }
+    }
+
+    #[test]
     fn test_export_entry_with_metadata_includes_font_fields() {
         use crate::db::queries::EntryMetadata;
         let mut entry = create_test_entry(1, "2024-01-01", "Styled", "<p>Hi</p>");

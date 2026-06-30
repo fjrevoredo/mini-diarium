@@ -38,6 +38,8 @@ Template:
 
 ### Internal
 - **Refactored `apply-dependency-prs` runbook** into a triage router + per-ecosystem procedures. `ENTRY.md` is now a short triage document that dispatches to `procedures/npm.md`, `procedures/cargo.md`, and `procedures/actions.md` based on PR labels → `headRefName` prefix → file paths. The previously-pending TODO-0050-01 Part 2 (Nix `npmDepsHash` refresh step) is included in the new `procedures/npm.md`.
+- **Text styling export coverage audit** (TODO-0044): added backend tests confirming every inline text style (bold, italic, underline, strikethrough, code, highlight, text color, timestamp mark) round-trips through JSON, Markdown, and Print/PDF export. JSON/PDF were already lossless; Markdown's "strip tag, keep text" fallback for styles with no Markdown equivalent is unchanged, now with adjacent-delimiter regression tests verified against `marked`. Tightened `website/docs-src/05-export.md` to list exactly what converts vs. is dropped.
+- **Fixed a time-dependent test in `notifications.test.ts`**: two tests used fixed dates against the module's 90-day staleness cutoff, which compares to the real wall-clock date, so they broke as time passed. Now pins system time via `vi.useFakeTimers()`/`vi.setSystemTime()`.
 
 
 ## [0.6.0] - 27-06-2026

@@ -61,7 +61,7 @@ Entry content here...
 
 Entries with no tags have no tags line. Tags appear in alphabetical order.
 
-Markdown is a best-effort, text-focused conversion of the stored HTML editor content. Inline font formatting is not preserved in Markdown. All text exports use the default Markdown rendering. Complex formatting (tables, images) may not convert perfectly, but the text is always readable. **For full-fidelity export including font metadata, use JSON instead.**
+Markdown is a best-effort, text-focused conversion of the stored HTML editor content. Bold, italic, strikethrough, inline code, and links convert to native Markdown syntax. Underline, highlighted/background color, text color, and font family/size have no standard Markdown equivalent, so the formatting is dropped while the text itself is always kept. Complex formatting (tables, images) may not convert perfectly, but the text is always readable. **For full-fidelity export including font metadata, use JSON instead.**
 
 ### Print / PDF
 

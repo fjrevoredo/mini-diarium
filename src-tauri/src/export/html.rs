@@ -201,6 +201,28 @@ mod tests {
     }
 
     #[test]
+    fn test_entry_content_preserves_underline_highlight_and_color_verbatim() {
+        // The print/PDF path embeds entry.text verbatim and rasterizes the live
+        // DOM, so every CSS-renderable mark survives visually as long as the
+        // source HTML is untouched. Only <strong> was covered previously.
+        let cases: &[&str] = &[
+            "<p><u>underlined</u></p>",
+            "<p><mark>highlighted</mark></p>",
+            r#"<p><span style="color: #ff0000">red</span></p>"#,
+        ];
+        for raw_html in cases {
+            let entries = vec![make_entry(1, "2024-01-15", "Title", raw_html)];
+            let html = generate_print_html(entries, &HashMap::new(), "2024-03-01", &make_labels());
+            assert!(
+                html.contains(raw_html),
+                "expected '{}' embedded verbatim in: {}",
+                raw_html,
+                html
+            );
+        }
+    }
+
+    #[test]
     fn test_tags_section_only_when_tags_exist() {
         let entries = vec![
             make_entry(1, "2024-01-15", "With Tags", "<p>A</p>"),

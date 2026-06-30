@@ -3,6 +3,22 @@ import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 // Module is re-imported per test group that needs fresh module state.
 // For tests that rely on module-level signals we use vi.resetModules().
 
+// Several tests below seed notifications with fixed dates (e.g. '2026-04-01')
+// and rely on the 90-day staleness cutoff in `autoMarkStale` *not* tripping.
+// That cutoff compares against the real wall-clock `new Date()`, so without
+// pinning "now" these tests silently break once enough real time passes.
+// Anchor "now" for the whole file so the cutoff math stays deterministic.
+const FIXED_NOW = new Date('2026-04-20T12:00:00Z');
+
+beforeEach(() => {
+  vi.useFakeTimers();
+  vi.setSystemTime(FIXED_NOW);
+});
+
+afterEach(() => {
+  vi.useRealTimers();
+});
+
 describe('loadReadIds / saveReadIds (via module init)', () => {
   beforeEach(() => {
     localStorage.clear();
