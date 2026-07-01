@@ -31,7 +31,7 @@ Template:
 
 # Versions
 
-## [0.6.1] - Unreleased
+## [0.6.1] - 01-07-2026
 
 ### Added
 - **Brazilian Portuguese (pt-BR) translation**: full Brazilian Portuguese localisation covering all 536 UI strings and the native OS menu, with Brazilian conventions throughout (3-letter month/day abbreviations `Jan`–`Dez` / `Dom`–`Sáb`, gerund in `-ando`/`-endo`, "você" form). Selectable from Preferences → General → Language.
