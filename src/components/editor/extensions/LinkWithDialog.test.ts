@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { handleEditorLinkClick } from './LinkWithDialog';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { handleEditorLinkClick, getLinkOpenShortcutLabel } from './LinkWithDialog';
 
 const { mockOpenUrl } = vi.hoisted(() => ({
   mockOpenUrl: vi.fn<() => Promise<void>>().mockResolvedValue(),
@@ -179,6 +179,37 @@ describe('handleEditorLinkClick — non-anchor clicks', () => {
     expect(result).toBe(false);
     expect(mockOpenUrl).not.toHaveBeenCalled();
     document.body.removeChild(span);
+  });
+});
+
+describe('getLinkOpenShortcutLabel', () => {
+  afterEach(() => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    delete (navigator as any).userAgentData;
+  });
+
+  it('returns "Cmd+Click" when userAgentData.platform is "macOS"', () => {
+    Object.defineProperty(navigator, 'userAgentData', {
+      value: { platform: 'macOS' },
+      configurable: true,
+    });
+    expect(getLinkOpenShortcutLabel()).toBe('Cmd+Click');
+  });
+
+  it('falls back to navigator.platform when userAgentData is absent', () => {
+    vi.spyOn(navigator, 'platform', 'get').mockReturnValue('Win32');
+    expect(getLinkOpenShortcutLabel()).toBe('Ctrl+Click');
+    vi.restoreAllMocks();
+  });
+
+  it('prefers userAgentData.platform over navigator.platform when both disagree', () => {
+    vi.spyOn(navigator, 'platform', 'get').mockReturnValue('Win32');
+    Object.defineProperty(navigator, 'userAgentData', {
+      value: { platform: 'macOS' },
+      configurable: true,
+    });
+    expect(getLinkOpenShortcutLabel()).toBe('Cmd+Click');
+    vi.restoreAllMocks();
   });
 });
 

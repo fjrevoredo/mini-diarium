@@ -67,7 +67,11 @@ export function isLinkOpenModifier(e: { ctrlKey: boolean; metaKey: boolean }): b
 }
 
 export function getLinkOpenShortcutLabel(): string {
-  const isMac = typeof navigator !== 'undefined' && /Mac/i.test(navigator.platform);
+  const platform =
+    (typeof navigator !== 'undefined'
+      ? (navigator.userAgentData?.platform ?? navigator.platform)
+      : '') ?? '';
+  const isMac = /Mac/i.test(platform);
   return isMac ? 'Cmd+Click' : 'Ctrl+Click';
 }
 
