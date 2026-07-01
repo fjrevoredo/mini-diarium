@@ -36,6 +36,9 @@ Template:
 ### Added
 - **Brazilian Portuguese (pt-BR) translation**: full Brazilian Portuguese localisation covering all 536 UI strings and the native OS menu, with Brazilian conventions throughout (3-letter month/day abbreviations `Jan`–`Dez` / `Dom`–`Sáb`, gerund in `-ando`/`-endo`, "você" form). Selectable from Preferences → General → Language.
 
+### Fixed
+- **AppImage GLIBC compatibility with Debian 12 (bookworm)** (TODO-0051): the Linux release build ran on `ubuntu-latest` (resolves to Ubuntu 24.04, glibc 2.39), so the AppImage refused to launch on any distro with an older glibc, including Debian 12 bookworm (glibc 2.36). The Linux leg of `.github/workflows/release.yml` now builds on `ubuntu-22.04` (glibc 2.35), so the AppImage now runs on Debian 12 and other distros with glibc ≥2.35, previously ≥2.38/2.39.
+
 ### Internal
 - **Replaced deprecated `navigator.platform`** (TODO-0049): `getLinkOpenShortcutLabel()` (link tooltip's "Cmd+Click"/"Ctrl+Click" text) now prefers `navigator.userAgentData.platform`, falling back to `navigator.platform` for WebViews that don't support the newer API. Added a minimal ambient `Navigator.userAgentData` type in `src/vite-env.d.ts` (not present in the project's TypeScript DOM lib) and unit test coverage for both APIs and their precedence. No behavioral change.
 - **Refactored `apply-dependency-prs` runbook** into a triage router + per-ecosystem procedures. `ENTRY.md` is now a short triage document that dispatches to `procedures/npm.md`, `procedures/cargo.md`, and `procedures/actions.md` based on PR labels → `headRefName` prefix → file paths. The previously-pending TODO-0050-01 Part 2 (Nix `npmDepsHash` refresh step) is included in the new `procedures/npm.md`.

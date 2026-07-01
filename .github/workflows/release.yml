@@ -4,6 +4,7 @@ on:
   push:
     tags:
       - 'v*.*.*'
+  workflow_dispatch:
 
 permissions: {}
 
@@ -18,6 +19,7 @@ env:
 jobs:
   create-release:
     name: Create Release Draft
+    if: github.event_name == 'push'
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -73,6 +75,7 @@ jobs:
   build-release:
     name: Build Release (${{ matrix.platform }})
     needs: create-release
+    if: (!cancelled()) && (needs.create-release.result == 'success' || needs.create-release.result == 'skipped')
     runs-on: ${{ matrix.os }}
     permissions:
       contents: write
@@ -80,7 +83,7 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: ubuntu-latest
+          - os: ubuntu-22.04
             platform: linux
             arch: x86_64
           - os: macos-latest
@@ -157,6 +160,7 @@ jobs:
         run: |
           mkdir -p release-artifacts
           VERSION="${{ needs.create-release.outputs.version }}"
+          VERSION="${VERSION:-dev-${GITHUB_SHA::7}}"
 
           find src-tauri/target/release/bundle -name "*.AppImage" -exec cp {} release-artifacts/Mini-Diarium-${VERSION}-linux.AppImage \;
           find src-tauri/target/release/bundle -name "*.deb" -exec cp {} release-artifacts/Mini-Diarium-${VERSION}-linux.deb \;
@@ -170,6 +174,7 @@ jobs:
         run: |
           mkdir -p release-artifacts
           VERSION="${{ needs.create-release.outputs.version }}"
+          VERSION="${VERSION:-dev-${GITHUB_SHA::7}}"
 
           find src-tauri/target/universal-apple-darwin/release/bundle -name "*.dmg" -exec cp {} release-artifacts/Mini-Diarium-${VERSION}-macos.dmg \;
 
@@ -183,6 +188,7 @@ jobs:
         run: |
           mkdir -p release-artifacts
           VERSION="${{ needs.create-release.outputs.version }}"
+          VERSION="${VERSION:-dev-${GITHUB_SHA::7}}"
 
           find src-tauri/target/release/bundle -name "*.msi" -exec cp {} release-artifacts/Mini-Diarium-${VERSION}-windows.msi \;
           find src-tauri/target/release/bundle/nsis -name "*.exe" -exec cp {} release-artifacts/Mini-Diarium-${VERSION}-windows.exe \; || true
@@ -207,6 +213,7 @@ jobs:
           fi
 
       - name: Upload release artifacts
+        if: github.event_name == 'push'
         uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ github.ref_name }}
@@ -215,8 +222,17 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Upload build artifacts for manual inspection
+        if: github.event_name == 'workflow_dispatch'
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-artifacts-${{ matrix.platform }}
+          path: release-artifacts/*
+          retention-days: 7
+
   publish-release:
     name: Publish Release
+    if: github.event_name == 'push'
     needs:
       - create-release
       - build-release
