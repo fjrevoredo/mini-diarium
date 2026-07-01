@@ -5,7 +5,14 @@
     <link>https://mini-diarium.com/blog/</link>
     <description>Static articles about encrypted journals, private diary apps, offline journaling, and local-first software.</description>
     <language>en-us</language>
-    <lastBuildDate>Sun, 28 Jun 2026 00:00:00 GMT</lastBuildDate>
+    <lastBuildDate>Wed, 01 Jul 2026 00:00:00 GMT</lastBuildDate>
+  <item>
+    <title>Notion Alternative for Private Journaling</title>
+    <link>https://mini-diarium.com/blog/notion-alternative-for-journaling/</link>
+    <guid isPermaLink="true">https://mini-diarium.com/blog/notion-alternative-for-journaling/</guid>
+    <description>Notion stores journal entries on its servers, where AI features can read them. Here is what changes moving journaling to an encrypted, local-only app instead.</description>
+    <pubDate>Wed, 01 Jul 2026 00:00:00 GMT</pubDate>
+  </item>
   <item>
     <title>Obsidian Alternative for Journal Writing</title>
     <link>https://mini-diarium.com/blog/obsidian-alternative-for-journaling/</link>

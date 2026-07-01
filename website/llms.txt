@@ -32,6 +32,7 @@
 
 ## Latest Articles
 
+- Notion stores journal entries on its servers, where AI features can read them. Mini Diarium encrypts each entry locally with AES-256-GCM, with no account and no server. (https://mini-diarium.com/blog/notion-alternative-for-journaling/)
 - Compares Mini Diarium to Obsidian for journal writing: Obsidian stores vault files as unencrypted Markdown on disk; Mini Diarium encrypts each entry with AES-256-GCM at the storage layer. (https://mini-diarium.com/blog/obsidian-alternative-for-journaling/)
 - Compares Mini Diarium to Standard Notes for users who want encrypted journal entries on their device only, with no sync service or server dependency. (https://mini-diarium.com/blog/standard-notes-alternative/)
 - A desktop diary app should encrypt entries at rest, store the primary copy locally, work offline, and export to open formats. Storage model and exit path matter more than feature lists. (https://mini-diarium.com/blog/desktop-diary-app/)
