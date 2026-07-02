@@ -223,3 +223,81 @@ The hook is a bash script. Git for Windows bundles bash and uses it for hook exe
 **CI**
 
 GitHub Actions does **not** run the local hook. `.github/workflows/ci.yml` already runs `bun run format:check` and `cargo fmt --check` on every push and PR — same checks, but read-only / fail-on-drift mode.
+
+---
+
+## TODO-0061-01: Header overflow menu foundation
+
+Parent: [`TODO-0061: Add header overflow menu with in-app Preferences access`](TODO.md)
+
+**Context**: `TODO-0041` was split into TODO-0061–0065 because it was one broad, unshippable item. Investigation of `src-tauri/src/menu.rs` and the frontend (`Header.tsx`, `Sidebar.tsx`, `MainLayout.tsx`) found that Preferences, Statistics, Import, and Export have **zero in-app entry point** today — reachable only through the native OS menu bar (or `Cmd/Ctrl+,` for Preferences).
+
+**Header right cluster today** (`src/components/layout/Header.tsx:74-129`): four icon buttons in order — Timeline toggle (`timeline-toggle-button`, lines 76-90), About (`data-tour-target="about"`, lines 91-98), Notifications (`notifications-button`, lines 99-119), Lock (`lock-journal-button`, lines 120-128). All use the same class pattern: `rounded p-2 hover:bg-hover text-tertiary transition-colors`.
+
+**Target layout**: insert a new `⋮` icon button between Notifications and Lock (or wherever visually balanced), opening a new `HeaderMoreMenu` component (e.g. `src/components/layout/HeaderMoreMenu.tsx`) built on Kobalte's `DropdownMenu` primitive (`@kobalte/core` `^0.13.11`, already a dependency — `package.json:60` — but its `DropdownMenu` export is currently unused anywhere in the codebase).
+
+**Animation class reference**: every existing overlay uses the same Kobalte `Dialog` fade/zoom pattern — see `src/components/overlays/StatsOverlay.tsx:78`: `data-[expanded]:animate-in data-[closed]:animate-out data-[closed]:fade-out-0 data-[expanded]:fade-in-0 data-[closed]:zoom-out-95 data-[expanded]:zoom-in-95`. Reuse the same `data-[expanded]`/`data-[closed]` attribute-selector convention for the new `DropdownMenu.Content`, since Kobalte's `DropdownMenu` exposes the same open/closed data attributes as `Dialog`.
+
+**First item — Preferences**: wire the menu item's `onSelect` to `setIsPreferencesOpen(true)`, the exact setter already called by the `menu-preferences` listener in `src/components/layout/MainLayout.tsx` (state import at line 27, listener around line 158). No new business logic — purely a new trigger. Preferences stays **always-enabled** regardless of lock state (it has always-available tabs — General, Data) — do not gate it with the lockable-disabled logic that TODO-0062 adds for the other three items.
+
+**data-testid**: add entries for the new `⋮` trigger button and the dropdown content/items to the canonical table in `src/CLAUDE.md` ("data-testid Attributes" section) in the same commit — that table is E2E-authoritative and out of sync is treated as a bug per root `CLAUDE.md` Docs Maintenance rules.
+
+---
+
+## TODO-0062-01: Statistics, Import, Export menu items
+
+Parent: [`TODO-0062: Add Statistics, Import, Export to the header overflow menu`](TODO.md)
+
+**Extend `HeaderMoreMenu`** (from TODO-0061-01) with three more `DropdownMenu.Item`s, each calling the same setter its native-menu listener already calls in `src/components/layout/MainLayout.tsx`:
+- Statistics → `setIsStatsOpen(true)` (listener ~line 165, mount `<StatsOverlay isOpen={isStatsOpen()} onClose={() => setIsStatsOpen(false)} />` at line 245)
+- Import → `setIsImportOpen(true)` (listener ~line 172, mount around line 248)
+- Export → `setIsExportOpen(true)` (listener ~line 179, mount `<ExportOverlay isOpen={isExportOpen()} onClose={() => setIsExportOpen(false)} />` at line 254)
+
+**Lockable disabled state**: `src-tauri/src/menu.rs:104-114` defines the `lockable` vec — `navigate_prev_day`, `navigate_next_day`, `navigate_today`, `go_to_date`, `navigate_prev_month`, `navigate_next_month`, `statistics`, `import_item`, `export_item` — all disabled while the journal is locked (see `set_lockable_items_enabled` around line 266-268). Preferences (`menu.rs:98-100`, "Always enabled" comment) is explicitly excluded from this vec. Mirror this grouping in `HeaderMoreMenu`: Statistics/Import/Export items get `disabled={!isUnlocked()}` (or equivalent existing lock-state signal), Preferences does not.
+
+**Onboarding tour fix**: `src/components/overlays/OnboardingOverlay.tsx:193-202` — the Import tour step currently has `targetSelector: null` and an `edgeHint: { side: 'top', offset: 125 }` with the comment `"Import" lives in the native menu bar just above the webview's top edge`. Once the in-app Import trigger exists, change this step to `targetSelector: '[data-tour-target="import"]'` (add that attribute to the new menu item or its trigger button) matching the pattern already used by the toolbar step (`targetSelector: '[data-tour-target="toolbar"]'`, line 191) and the about step (line 208). This removes the `edgeHint` branch usage for this step — check whether `edgeHint`/`computeEdgeHintPosition` (used at line 234-241) is still needed elsewhere before considering removal of that code path (out of scope for this TODO, just a note for whoever does it).
+
+---
+
+## TODO-0063-01: Day-navigation and go-to-date controls
+
+Parent: [`TODO-0063: Add in-app day-navigation and go-to-date controls to the Header`](TODO.md)
+
+**Existing logic to extract**: `src/components/layout/MainLayout.tsx` imports `navigatePreviousDay`/`navigateNextDay` (lines 42-43) and currently only calls them from native-menu listeners:
+```
+listen('menu-navigate-previous-day', ...)  // line 111, calls navigatePreviousDay(selectedDate()) at line 113
+listen('menu-navigate-next-day', ...)      // line 123, calls navigateNextDay(selectedDate()) at line 125
+```
+Extract the body of each listener into a shared function (e.g. `handlePreviousDay`/`handleNextDay` or a single `handleDayNavigation(direction)`), call it from both the `listen(...)` handler and the new Header button `onClick`, so there is exactly one source of truth — do not duplicate the date-fetch/set logic.
+
+**Go-to-date trigger**: `MainLayout.tsx` already calls `setIsGoToDateOpen(true)` from the `menu-go-to-date` listener (~line 151); `GoToDateOverlay` is mounted at line 240. Clicking the Header date title should call the same setter.
+
+**Header changes**: `src/components/layout/Header.tsx:71` currently renders `<h1 class="text-lg font-semibold text-primary">{formattedDate()}</h1>` with no click handler, inside the left cluster (`div class="flex items-center gap-3"`, line 50) alongside the hamburger (line 51-62) and search button (line 63-70). Add `◀`/`▶` icon buttons flanking the date title, and make the title itself a clickable button/element (`onClick={() => setIsGoToDateOpen(true)}`).
+
+**Viewport risk**: default E2E clean mode runs at 800×660 px, below the `lg` (1024px) breakpoint — the hamburger menu button is visible at this width (`src/CLAUDE.md` gotcha #4). Adding 2 new icon buttons plus a click affordance to the left cluster at this width needs a manual/E2E check for wrapping or overflow; see `e2e/CLAUDE.md` gotchas #2–3 for the existing viewport constraints this must not break.
+
+---
+
+## TODO-0065-01: Native menu removal scope
+
+Parent: [`TODO-0065: Remove redundant native menu items once in-app equivalents ship`](TODO.md)
+
+**Items to remove** from `src-tauri/src/menu.rs` once TODO-0061–0064 ship: `navigate_prev_day`, `navigate_next_day`, `go_to_date`, `statistics`, `import_item`, `export_item` — all currently built in the `build_menu`-equivalent function (`menu.rs:53-263`) and wired into the `navigation_menu` (lines 117-126) and `diary_menu` (lines 128-133) submenus, with event handling in the `on_menu_event` match block (lines 200-238).
+
+**Items to explicitly keep untouched**: `navigate_today` (already has a Sidebar equivalent), `navigate_prev_month`/`navigate_next_month` (already have Calendar chevron equivalents), `preferences` (macOS convention expects `Cmd+,` under the App menu regardless of in-app access — `menu.rs:98-100`), `about`, all macOS `PredefinedMenuItem`s (Services/Hide/Show All/Quit at lines 142-148, Edit menu Undo/Redo/Cut/Copy/Paste/Select All at lines 150-159, Window menu at lines 160-165) — these back standard OS behavior including right-click text-editing context menus and must not be removed.
+
+**Accelerator preservation pattern**: the existing `Cmd/Ctrl+F` search shortcut is handled as a JS-level `keydown` listener in `MainLayout.handleSearchShortcut` (`src/components/layout/MainLayout.tsx:88`, registered at line 108), not through the native menu — use this as the reference pattern when converting `CmdOrCtrl+[`/`]` (day nav) and other removed items' accelerators to JS-level listeners so power users keep the shortcuts after the native menu items are removed.
+
+**Gate**: requires maintainer approval before execution, same pattern as `TODO-0038` (see `TODO-0038-01` above) — file as Medium/Low priority, explicitly blocked on TODO-0061–0064 landing first.
+
+---
+
+## TODO-0064-01: E2E coverage for newly in-app-reachable actions
+
+Parent: [`TODO-0064: E2E coverage for newly in-app-reachable actions`](TODO.md)
+
+**Why these actions have no E2E coverage today**: Preferences, Statistics, Import, Export, Previous/Next Day, and Go to Date are currently reachable only through the native OS menu bar (menu items defined in `src-tauri/src/menu.rs`). WebdriverIO drives the app via `tauri-driver` at the WebView level (`e2e/CLAUDE.md` "Test Runners") — it cannot interact with OS-native menu bars, so no spec exercises this menu today. This is the concrete "improved E2E testability" payoff named in the original TODO-0041.
+
+**Dependency**: this TODO is gated on TODO-0061–0063 landing their `data-testid` hooks first — the new `⋮` overflow menu trigger/items (TODO-0061-01, TODO-0062-01) and the new day-navigation/date-title controls (TODO-0063-01) all need `data-testid` entries in the canonical table (`src/CLAUDE.md` "data-testid Attributes") before specs can select them; `e2e/CLAUDE.md` gotcha #(data-testid section) forbids adding a spec selector that isn't in that table first.
+
+**Suggested spec scope**: add to `e2e/specs/` — open the overflow menu and assert each overlay opens (Preferences, Statistics, Import, Export); click the day-nav arrows and assert the Header date title updates; click the date title and assert `GoToDateOverlay` opens. Follow the existing viewport constraints (`e2e/CLAUDE.md` gotchas #2–3, 800×660 clean-mode default) — no new `browser.setWindowSize()` calls.
