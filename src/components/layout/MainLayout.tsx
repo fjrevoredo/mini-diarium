@@ -37,6 +37,7 @@ import {
   setIsTagManagerOpen,
   isSearchOpen,
   setIsSearchOpen,
+  isMoreMenuOpen,
 } from '../../state/ui';
 import {
   navigatePreviousDay,
@@ -72,7 +73,8 @@ export default function MainLayout() {
       isAboutOpen() ||
       isNotificationsOpen() ||
       isTagManagerOpen() ||
-      isSearchOpen()
+      isSearchOpen() ||
+      isMoreMenuOpen()
     )
       return;
     if (preferences().escAction === 'quit') {
@@ -95,7 +97,8 @@ export default function MainLayout() {
       isExportOpen() ||
       isAboutOpen() ||
       isNotificationsOpen() ||
-      isTagManagerOpen()
+      isTagManagerOpen() ||
+      isMoreMenuOpen()
     )
       return;
     e.preventDefault();

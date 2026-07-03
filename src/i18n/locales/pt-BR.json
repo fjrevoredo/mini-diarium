@@ -20,7 +20,8 @@
       "notificationsUnread": "Notificações, {{ count }} não lidas",
       "showTimeline": "Mostrar linha do tempo",
       "showEditor": "Mostrar editor",
-      "search": "Pesquisar"
+      "search": "Pesquisar",
+      "moreOptions": "Mais opções"
     },
     "sidebar": {
       "navigation": "Navegação",

@@ -41,6 +41,7 @@ const en = {
       showTimeline: 'Show timeline',
       showEditor: 'Show editor',
       search: 'Search',
+      moreOptions: 'More options',
     },
     sidebar: {
       navigation: 'Navigation',

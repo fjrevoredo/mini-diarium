@@ -226,24 +226,6 @@ GitHub Actions does **not** run the local hook. `.github/workflows/ci.yml` alrea
 
 ---
 
-## TODO-0061-01: Header overflow menu foundation
-
-Parent: [`TODO-0061: Add header overflow menu with in-app Preferences access`](TODO.md)
-
-**Context**: `TODO-0041` was split into TODO-0061–0065 because it was one broad, unshippable item. Investigation of `src-tauri/src/menu.rs` and the frontend (`Header.tsx`, `Sidebar.tsx`, `MainLayout.tsx`) found that Preferences, Statistics, Import, and Export have **zero in-app entry point** today — reachable only through the native OS menu bar (or `Cmd/Ctrl+,` for Preferences).
-
-**Header right cluster today** (`src/components/layout/Header.tsx:74-129`): four icon buttons in order — Timeline toggle (`timeline-toggle-button`, lines 76-90), About (`data-tour-target="about"`, lines 91-98), Notifications (`notifications-button`, lines 99-119), Lock (`lock-journal-button`, lines 120-128). All use the same class pattern: `rounded p-2 hover:bg-hover text-tertiary transition-colors`.
-
-**Target layout**: insert a new `⋮` icon button between Notifications and Lock (or wherever visually balanced), opening a new `HeaderMoreMenu` component (e.g. `src/components/layout/HeaderMoreMenu.tsx`) built on Kobalte's `DropdownMenu` primitive (`@kobalte/core` `^0.13.11`, already a dependency — `package.json:60` — but its `DropdownMenu` export is currently unused anywhere in the codebase).
-
-**Animation class reference**: every existing overlay uses the same Kobalte `Dialog` fade/zoom pattern — see `src/components/overlays/StatsOverlay.tsx:78`: `data-[expanded]:animate-in data-[closed]:animate-out data-[closed]:fade-out-0 data-[expanded]:fade-in-0 data-[closed]:zoom-out-95 data-[expanded]:zoom-in-95`. Reuse the same `data-[expanded]`/`data-[closed]` attribute-selector convention for the new `DropdownMenu.Content`, since Kobalte's `DropdownMenu` exposes the same open/closed data attributes as `Dialog`.
-
-**First item — Preferences**: wire the menu item's `onSelect` to `setIsPreferencesOpen(true)`, the exact setter already called by the `menu-preferences` listener in `src/components/layout/MainLayout.tsx` (state import at line 27, listener around line 158). No new business logic — purely a new trigger. Preferences stays **always-enabled** regardless of lock state (it has always-available tabs — General, Data) — do not gate it with the lockable-disabled logic that TODO-0062 adds for the other three items.
-
-**data-testid**: add entries for the new `⋮` trigger button and the dropdown content/items to the canonical table in `src/CLAUDE.md` ("data-testid Attributes" section) in the same commit — that table is E2E-authoritative and out of sync is treated as a bug per root `CLAUDE.md` Docs Maintenance rules.
-
----
-
 ## TODO-0062-01: Statistics, Import, Export menu items
 
 Parent: [`TODO-0062: Add Statistics, Import, Export to the header overflow menu`](TODO.md)
@@ -301,3 +283,25 @@ Parent: [`TODO-0064: E2E coverage for newly in-app-reachable actions`](TODO.md)
 **Dependency**: this TODO is gated on TODO-0061–0063 landing their `data-testid` hooks first — the new `⋮` overflow menu trigger/items (TODO-0061-01, TODO-0062-01) and the new day-navigation/date-title controls (TODO-0063-01) all need `data-testid` entries in the canonical table (`src/CLAUDE.md` "data-testid Attributes") before specs can select them; `e2e/CLAUDE.md` gotcha #(data-testid section) forbids adding a spec selector that isn't in that table first.
 
 **Suggested spec scope**: add to `e2e/specs/` — open the overflow menu and assert each overlay opens (Preferences, Statistics, Import, Export); click the day-nav arrows and assert the Header date title updates; click the date title and assert `GoToDateOverlay` opens. Follow the existing viewport constraints (`e2e/CLAUDE.md` gotchas #2–3, 800×660 clean-mode default) — no new `browser.setWindowSize()` calls.
+
+---
+
+## TODO-0066-01: `hover:bg-hover` UnoCSS fix
+
+Parent: [`TODO-0066: Fix hover:bg-hover UnoCSS utility never compiling`](TODO.md)
+
+**How this was found**: while implementing `TODO-0061` (`HeaderMoreMenu`), a Kobalte `DropdownMenu.Item` styled with `hover:bg-hover` (matching every existing `Header.tsx` icon button's class string) showed no visible hover feedback at all, even though `Header.tsx`'s pre-existing buttons appeared to hover correctly.
+
+**Root cause, confirmed via live DOM/CSSOM inspection** (`agent-browser eval` against the running dev app, recursively scanning `document.styleSheets` including nested `@media` blocks): there is exactly one compiled rule referencing `--bg-hover` anywhere in the app's stylesheets — `.bg-hover { background-color: var(--bg-hover); }` (unprefixed, hand-authored in the theme CSS, not part of `uno.config.ts`). No `.hover\:bg-hover:hover` rule exists anywhere. `uno.config.ts`'s `theme.colors` only defines a `primary` palette — `bg-hover` is not registered as a UnoCSS theme utility, so UnoCSS's JIT compiler does not know how to combine the `hover:` variant with it and silently emits nothing for that class token.
+
+**Why it "looked fine" on existing buttons**: a separate, unrelated global rule — `button:hover { background-color: rgb(37, 99, 235); }` (exact selector, confirmed via CSSOM scan) — matches every native `<button>` element in the app by tag name and gives it a blue hover background regardless of its own classes. This is almost certainly a Preflight/reset default meant as a generic fallback. Buttons using genuinely UnoCSS-recognized utilities (e.g. `hover:bg-gray-100`, which does compile — confirmed present in the stylesheet) correctly override this fallback via higher specificity (class selector beats type selector). Buttons using only `hover:bg-hover` have no such override, so the accidental blue `button:hover` fallback is the *only* thing providing visual feedback — not the intended subtle `--bg-hover` gray/dark-gray tint (`#f3f4f6` light / `#374151` dark).
+
+**Why non-button elements break visibly**: Kobalte's `DropdownMenu.Item` (and other Kobalte item/content primitives) render as `<div>` by default, so they never match the generic `button:hover` fallback either. With `hover:bg-hover` also silently not compiling, these elements get **zero** hover feedback — which is what surfaced this bug. (The `HeaderMoreMenu` Preferences item was worked around for TODO-0061 by rendering it `as="button"` via Kobalte's polymorphic `as` prop, intentionally trading correctness of styling intent for the accidental blue button:hover parity with the rest of the header. That workaround should be revisited once this TODO lands the real fix.)
+
+**Affected surface**: `rg -n "hover:bg-hover" src` for the full list; at minimum `src/components/layout/Header.tsx` (Search, Timeline toggle, About, Notifications, Lock buttons) and `src/components/layout/HeaderMoreMenu.tsx`.
+
+**Suggested fix directions** (pick one, do not build both):
+- **(a)** Register `bg-hover` (and any sibling tokens like `bg-active`) as proper UnoCSS theme colors/shortcuts in `uno.config.ts` so `hover:`, `focus:`, `data-[highlighted]:`, etc. variants compile correctly against them.
+- **(b)** Replace `hover:bg-hover` usages with an already-working UnoCSS-recognized equivalent (e.g. an arbitrary-value utility UnoCSS does understand), keeping the same `--bg-hover` CSS variable as the source of truth for light/dark theming.
+
+**Required follow-up regardless of direction chosen**: once `hover:bg-hover` actually compiles, every button currently relying on the accidental blue `button:hover` fallback will visually change (blue → intended subtle gray token) — this needs a visual pass across the whole app (Header, toolbar, overlays, Sidebar, Calendar day buttons, etc.), not just the two files above, since the same accidental-fallback pattern likely affects other `hover:bg-hover` usages found by the `rg` search.

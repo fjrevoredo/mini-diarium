@@ -20,7 +20,8 @@
       "notificationsUnread": "Benachrichtigungen, {{ count }} ungelesen",
       "showTimeline": "Zeitleiste anzeigen",
       "showEditor": "Editor anzeigen",
-      "search": "Suche"
+      "search": "Suche",
+      "moreOptions": "Weitere Optionen"
     },
     "sidebar": {
       "navigation": "Navigation",

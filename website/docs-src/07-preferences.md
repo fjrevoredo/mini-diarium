@@ -3,13 +3,13 @@ title: Preferences
 slug: preferences
 description: Configure Mini Diarium from the Preferences panel: choose a theme, set auto-lock timeout, adjust editor font and size, manage authentication methods, and more.
 order: 8
-updated: 2026-06-27
+updated: 2026-07-02
 tags: preferences, settings, theme, auto-lock, configuration
 ---
 
 ## Opening Preferences
 
-Press `Ctrl+,` (or `Cmd+,` on macOS) to open the Preferences dialog, or use the gear icon in the header.
+Press `Ctrl+,` (or `Cmd+,` on macOS) to open the Preferences dialog, or click the **⋮** menu in the header and select Preferences.
 
 Preferences are now **close-only**: there is no Save/Cancel footer. Reversible settings apply immediately as you change them.
 

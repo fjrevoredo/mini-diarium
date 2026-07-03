@@ -47,6 +47,10 @@ const [isImagePickerOpen, setIsImagePickerOpen] = createSignal(false);
 // Search overlay state
 const [isSearchOpen, setIsSearchOpen] = createSignal(false);
 
+// Header overflow ("more options") menu state — controlled so MainLayout's global
+// Escape/search-shortcut guards can detect it and avoid firing underneath it.
+const [isMoreMenuOpen, setIsMoreMenuOpen] = createSignal(false);
+
 export function resetUiState(): void {
   setSelectedDate(getTodayString());
   setSelectedEntryId(null);
@@ -62,6 +66,7 @@ export function resetUiState(): void {
   setIsTagManagerOpen(false);
   setIsImagePickerOpen(false);
   setIsSearchOpen(false);
+  setIsMoreMenuOpen(false);
 }
 
 export {
@@ -93,4 +98,6 @@ export {
   setIsImagePickerOpen,
   isSearchOpen,
   setIsSearchOpen,
+  isMoreMenuOpen,
+  setIsMoreMenuOpen,
 };

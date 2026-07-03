@@ -13,6 +13,7 @@ import { lockJournal } from '../../state/auth';
 import { preferences } from '../../state/preferences';
 import { useI18n } from '../../i18n';
 import { hasUnread, unreadCount } from '../../state/notifications';
+import HeaderMoreMenu from './HeaderMoreMenu';
 
 interface HeaderProps {
   onMenuClick?: () => void;
@@ -126,6 +127,7 @@ export default function Header(props: HeaderProps) {
         >
           <Lock size={20} />
         </button>
+        <HeaderMoreMenu />
       </div>
     </header>
   );

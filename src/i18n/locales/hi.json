@@ -20,7 +20,8 @@
       "notificationsUnread": "सूचनाएं, {{ count }} अपठित",
       "showTimeline": "टाइमलाइन दिखाएँ",
       "showEditor": "संपादक दिखाएँ",
-      "search": "खोज"
+      "search": "खोज",
+      "moreOptions": "और विकल्प"
     },
     "sidebar": {
       "navigation": "नेविगेशन",

@@ -1,7 +1,8 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { screen, fireEvent } from '@solidjs/testing-library';
+import { screen, fireEvent, waitFor } from '@solidjs/testing-library';
+import userEvent from '@testing-library/user-event';
 import { renderWithI18n } from '../../test/i18n-test-utils';
-import { mainView, resetUiState } from '../../state/ui';
+import { mainView, resetUiState, isPreferencesOpen } from '../../state/ui';
 
 import Header from './Header';
 
@@ -31,5 +32,27 @@ describe('Header timeline toggle', () => {
 
     expect(mainView()).toBe('editor');
     expect(toggle).toHaveAttribute('aria-pressed', 'false');
+  });
+});
+
+describe('Header more menu', () => {
+  beforeEach(() => {
+    resetUiState();
+  });
+
+  it('opens Preferences via the overflow menu', async () => {
+    const user = userEvent.setup();
+    renderWithI18n(() => <Header />);
+
+    expect(isPreferencesOpen()).toBe(false);
+
+    await user.click(screen.getByTestId('header-more-menu-trigger'));
+
+    const preferencesItem = await waitFor(() =>
+      screen.getByTestId('header-more-menu-preferences-item'),
+    );
+    await user.click(preferencesItem);
+
+    await waitFor(() => expect(isPreferencesOpen()).toBe(true));
   });
 });

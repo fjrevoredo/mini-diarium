@@ -31,6 +31,21 @@ Template:
 
 # Versions
 
+## [0.6.2] - Unreleased
+
+### Added
+- **Header overflow menu for in-app Preferences access** (TODO-0061): a new `⋮` menu at the right end of the header opens Preferences directly, without needing the native OS menu bar or the `Ctrl+,`/`Cmd+,` shortcut. Statistics, Import, and Export access follow in a later release.
+    - **Closed a menu/shortcut interaction gap found while building this**: the global Escape-to-quit and Ctrl/Cmd+F search shortcuts now correctly ignore keypresses while the overflow menu is open, matching how they already behave for every other overlay in the app.
+
+### Fixed
+
+### Changed
+
+### Removed
+
+### Internal
+
+
 ## [0.6.1] - 01-07-2026
 
 ### Added
