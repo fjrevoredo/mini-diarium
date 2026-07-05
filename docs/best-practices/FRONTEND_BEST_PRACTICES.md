@@ -242,6 +242,10 @@ Get-ChildItem src -Recurse -Include *.ts,*.tsx |
 
 Every settings panel is a `<div class="space-y-6 focus:outline-none">` tab panel. The rules below define the exact class strings for each recurring element type. Use them verbatim — do not substitute raw hex colours, Tailwind palette shades, or `dark:` variants for theme tokens (`text-primary`, `text-secondary`, `text-tertiary`, `text-error`, `border-primary`, `bg-primary`, `bg-secondary`, `bg-tertiary`, `bg-hover`, `interactive-primary`, `interactive-destructive`).
 
+### Registering a new semantic theme token
+
+These tokens (`bg-primary/secondary/tertiary/hover/active`, `text-primary/secondary/tertiary/muted`, `border-primary/secondary`, and the `bg/border/text-{success,error,warning,info}` status colors) are backed by CSS custom properties defined once in `src/index.css`'s `:root`/`.dark` blocks. They must also be registered as static entries in `uno.config.ts`'s `rules` array (e.g. `['bg-hover', { 'background-color': 'var(--bg-hover)' }]`) — **not** left as a bare class in `src/index.css` and **not** added to `theme.colors`. `theme.colors` shares one value across `bg-`/`text-`/`border-` for a given key, but here `--bg-primary`/`--text-primary`/`--border-primary` are three different vars with different values under the same semantic name, which `theme.colors` can't represent. A token only present as a plain CSS class compiles fine on its own but silently produces **no CSS at all** when combined with any UnoCSS variant (`hover:`, `focus:`, `disabled:`, `data-[...]:`, `group-hover:`) — no build error, just a missing rule (see TODO_ARCHIVE.md's `TODO-0066` for the incident this caused).
+
 ### Section heading (named group, no `for` target)
 
 Used when a tab section contains multiple related controls rather than a single labeled input.

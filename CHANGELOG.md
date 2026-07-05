@@ -44,6 +44,7 @@ Template:
 ### Removed
 
 ### Internal
+- **Fixed `hover:bg-hover` and sibling theme tokens never compiling** (TODO-0066): `bg-hover`, `bg-active`, `bg-primary/secondary/tertiary`, `text-primary/secondary/tertiary/muted`, `border-primary/secondary`, and the status colors were hand-authored plain CSS classes never registered with UnoCSS, so any `hover:`/`focus:`/`disabled:`/`data-[...]:`-prefixed combination against them silently compiled to nothing. Native `<button>`s appeared to hover correctly only by accident, via an unrelated generic `button:hover` fallback rule in `index.html`; non-button elements (e.g. Kobalte dropdown items) got no hover feedback at all. Registered all affected tokens as static UnoCSS rules in `uno.config.ts` so variants compile correctly against them, removed the now-redundant plain classes from `src/index.css`, and removed the `as="button"` workaround this had forced in `HeaderMoreMenu.tsx`. Buttons across the app now show the intended subtle gray/dark-gray hover tint instead of the accidental blue. Added a regression test (`uno.config.test.ts`) asserting the compiled CSS contains the expected variant selectors. Filed TODO-0067 to separately decide whether to scope or remove the now-redundant `index.html` fallback rule.
 
 
 ## [0.6.1] - 01-07-2026

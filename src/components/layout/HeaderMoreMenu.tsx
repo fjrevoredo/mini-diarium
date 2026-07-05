@@ -21,7 +21,6 @@ export default function HeaderMoreMenu() {
           style={{ 'box-shadow': 'var(--shadow-lg)' }}
         >
           <DropdownMenu.Item
-            as="button"
             data-testid="header-more-menu-preferences-item"
             class="flex w-full items-center gap-2 rounded px-3 py-2 text-left text-sm text-primary hover:bg-hover cursor-pointer outline-none"
             onSelect={() => setIsPreferencesOpen(true)}

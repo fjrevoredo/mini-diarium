@@ -285,23 +285,3 @@ Parent: [`TODO-0064: E2E coverage for newly in-app-reachable actions`](TODO.md)
 **Suggested spec scope**: add to `e2e/specs/` — open the overflow menu and assert each overlay opens (Preferences, Statistics, Import, Export); click the day-nav arrows and assert the Header date title updates; click the date title and assert `GoToDateOverlay` opens. Follow the existing viewport constraints (`e2e/CLAUDE.md` gotchas #2–3, 800×660 clean-mode default) — no new `browser.setWindowSize()` calls.
 
 ---
-
-## TODO-0066-01: `hover:bg-hover` UnoCSS fix
-
-Parent: [`TODO-0066: Fix hover:bg-hover UnoCSS utility never compiling`](TODO.md)
-
-**How this was found**: while implementing `TODO-0061` (`HeaderMoreMenu`), a Kobalte `DropdownMenu.Item` styled with `hover:bg-hover` (matching every existing `Header.tsx` icon button's class string) showed no visible hover feedback at all, even though `Header.tsx`'s pre-existing buttons appeared to hover correctly.
-
-**Root cause, confirmed via live DOM/CSSOM inspection** (`agent-browser eval` against the running dev app, recursively scanning `document.styleSheets` including nested `@media` blocks): there is exactly one compiled rule referencing `--bg-hover` anywhere in the app's stylesheets — `.bg-hover { background-color: var(--bg-hover); }` (unprefixed, hand-authored in the theme CSS, not part of `uno.config.ts`). No `.hover\:bg-hover:hover` rule exists anywhere. `uno.config.ts`'s `theme.colors` only defines a `primary` palette — `bg-hover` is not registered as a UnoCSS theme utility, so UnoCSS's JIT compiler does not know how to combine the `hover:` variant with it and silently emits nothing for that class token.
-
-**Why it "looked fine" on existing buttons**: a separate, unrelated global rule — `button:hover { background-color: rgb(37, 99, 235); }` (exact selector, confirmed via CSSOM scan) — matches every native `<button>` element in the app by tag name and gives it a blue hover background regardless of its own classes. This is almost certainly a Preflight/reset default meant as a generic fallback. Buttons using genuinely UnoCSS-recognized utilities (e.g. `hover:bg-gray-100`, which does compile — confirmed present in the stylesheet) correctly override this fallback via higher specificity (class selector beats type selector). Buttons using only `hover:bg-hover` have no such override, so the accidental blue `button:hover` fallback is the *only* thing providing visual feedback — not the intended subtle `--bg-hover` gray/dark-gray tint (`#f3f4f6` light / `#374151` dark).
-
-**Why non-button elements break visibly**: Kobalte's `DropdownMenu.Item` (and other Kobalte item/content primitives) render as `<div>` by default, so they never match the generic `button:hover` fallback either. With `hover:bg-hover` also silently not compiling, these elements get **zero** hover feedback — which is what surfaced this bug. (The `HeaderMoreMenu` Preferences item was worked around for TODO-0061 by rendering it `as="button"` via Kobalte's polymorphic `as` prop, intentionally trading correctness of styling intent for the accidental blue button:hover parity with the rest of the header. That workaround should be revisited once this TODO lands the real fix.)
-
-**Affected surface**: `rg -n "hover:bg-hover" src` for the full list; at minimum `src/components/layout/Header.tsx` (Search, Timeline toggle, About, Notifications, Lock buttons) and `src/components/layout/HeaderMoreMenu.tsx`.
-
-**Suggested fix directions** (pick one, do not build both):
-- **(a)** Register `bg-hover` (and any sibling tokens like `bg-active`) as proper UnoCSS theme colors/shortcuts in `uno.config.ts` so `hover:`, `focus:`, `data-[highlighted]:`, etc. variants compile correctly against them.
-- **(b)** Replace `hover:bg-hover` usages with an already-working UnoCSS-recognized equivalent (e.g. an arbitrary-value utility UnoCSS does understand), keeping the same `--bg-hover` CSS variable as the source of truth for light/dark theming.
-
-**Required follow-up regardless of direction chosen**: once `hover:bg-hover` actually compiles, every button currently relying on the accidental blue `button:hover` fallback will visually change (blue → intended subtle gray token) — this needs a visual pass across the whole app (Header, toolbar, overlays, Sidebar, Calendar day buttons, etc.), not just the two files above, since the same accidental-fallback pattern likely affects other `hover:bg-hover` usages found by the `rg` search.

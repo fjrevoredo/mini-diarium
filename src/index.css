@@ -176,84 +176,9 @@ body {
   color: var(--text-primary);
 }
 
-/* Utility Classes Using CSS Variables */
-.bg-primary {
-  background-color: var(--bg-primary);
-}
-.bg-secondary {
-  background-color: var(--bg-secondary);
-}
-.bg-tertiary {
-  background-color: var(--bg-tertiary);
-}
-.bg-hover {
-  background-color: var(--bg-hover);
-}
-.bg-active {
-  background-color: var(--bg-active);
-}
-
-.text-primary {
-  color: var(--text-primary);
-}
-.text-secondary {
-  color: var(--text-secondary);
-}
-.text-tertiary {
-  color: var(--text-tertiary);
-}
-.text-muted {
-  color: var(--text-muted);
-}
-
-.border-primary {
-  border-color: var(--border-primary);
-}
-.border-secondary {
-  border-color: var(--border-secondary);
-}
-
-/* Status Backgrounds */
-.bg-success {
-  background-color: var(--status-success-bg);
-}
-.bg-error {
-  background-color: var(--status-error-bg);
-}
-.bg-warning {
-  background-color: var(--status-warning-bg);
-}
-.bg-info {
-  background-color: var(--status-info-bg);
-}
-
-/* Status Borders */
-.border-success {
-  border-color: var(--status-success-border);
-}
-.border-error {
-  border-color: var(--status-error-border);
-}
-.border-warning {
-  border-color: var(--status-warning-border);
-}
-.border-info {
-  border-color: var(--status-info-border);
-}
-
-/* Status Text */
-.text-success {
-  color: var(--status-success-text);
-}
-.text-error {
-  color: var(--status-error-text);
-}
-.text-warning {
-  color: var(--status-warning-text);
-}
-.text-info {
-  color: var(--status-info-text);
-}
+/* bg-*, text-*, border-* (primary/secondary/tertiary/hover/active/success/error/warning/info)
+   are registered as UnoCSS static rules in uno.config.ts, not hand-authored here, so that
+   hover:/focus:/disabled:/data-[...]:/group-hover: variants compile against them. */
 
 /* Placeholder Text Colors */
 .placeholder-primary::placeholder {

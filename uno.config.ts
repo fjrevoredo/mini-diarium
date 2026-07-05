@@ -74,4 +74,40 @@ export default defineConfig({
       },
     },
   },
+
+  // Semantic theme tokens backed by CSS custom properties (src/index.css :root/.dark).
+  // Registered as static rules (not theme.colors) because bg-/text-/border- share a
+  // name (e.g. "primary") but resolve to different CSS vars with different values.
+  // Static rules make UnoCSS's variant engine (hover:, focus:, disabled:, data-[...]:,
+  // group-hover:) compile against them — see docs/best-practices/FRONTEND_BEST_PRACTICES.md.
+  rules: [
+    ['bg-primary', { 'background-color': 'var(--bg-primary)' }],
+    ['bg-secondary', { 'background-color': 'var(--bg-secondary)' }],
+    ['bg-tertiary', { 'background-color': 'var(--bg-tertiary)' }],
+    ['bg-hover', { 'background-color': 'var(--bg-hover)' }],
+    ['bg-active', { 'background-color': 'var(--bg-active)' }],
+
+    ['text-primary', { color: 'var(--text-primary)' }],
+    ['text-secondary', { color: 'var(--text-secondary)' }],
+    ['text-tertiary', { color: 'var(--text-tertiary)' }],
+    ['text-muted', { color: 'var(--text-muted)' }],
+
+    ['border-primary', { 'border-color': 'var(--border-primary)' }],
+    ['border-secondary', { 'border-color': 'var(--border-secondary)' }],
+
+    ['bg-success', { 'background-color': 'var(--status-success-bg)' }],
+    ['bg-error', { 'background-color': 'var(--status-error-bg)' }],
+    ['bg-warning', { 'background-color': 'var(--status-warning-bg)' }],
+    ['bg-info', { 'background-color': 'var(--status-info-bg)' }],
+
+    ['border-success', { 'border-color': 'var(--status-success-border)' }],
+    ['border-error', { 'border-color': 'var(--status-error-border)' }],
+    ['border-warning', { 'border-color': 'var(--status-warning-border)' }],
+    ['border-info', { 'border-color': 'var(--status-info-border)' }],
+
+    ['text-success', { color: 'var(--status-success-text)' }],
+    ['text-error', { color: 'var(--status-error-text)' }],
+    ['text-warning', { color: 'var(--status-warning-text)' }],
+    ['text-info', { color: 'var(--status-info-text)' }],
+  ],
 });
