@@ -481,7 +481,9 @@ const en = {
       autoLockTitle: 'Auto-Lock',
       autoLockLabel: 'Lock after inactivity',
       autoLockTimeoutLabel: 'Timeout (seconds)',
-      autoLockRange: '(1–999)',
+      autoLockRange: '(5–999)',
+      autoLockTimeoutTooLow:
+        'Minimum is {{ min }} seconds. The value will be raised when you leave the field.',
       allFieldsRequired: 'All fields are required',
       passwordsMismatch: 'New passwords do not match',
       keypairPasswordRequired: 'Current password is required',

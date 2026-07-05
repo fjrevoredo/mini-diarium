@@ -409,6 +409,7 @@
       "autoLockLabel": "Bloquear após inatividade",
       "autoLockTimeoutLabel": "Tempo limite (segundos)",
       "autoLockRange": "(1–999)",
+      "autoLockTimeoutTooLow": "O mínimo é de {{ min }} segundos. O valor será aumentado ao sair do campo.",
       "allFieldsRequired": "Todos os campos são obrigatórios",
       "passwordsMismatch": "As novas senhas não coincidem",
       "keypairPasswordRequired": "A senha atual é obrigatória",

@@ -31,6 +31,11 @@ export interface ToolbarItem {
   enabled: boolean;
 }
 
+/** Minimum autoLockTimeout in seconds. Below this, the UI would relock before a user could navigate to Preferences and raise it (TODO-0069). */
+export const MIN_AUTO_LOCK_TIMEOUT = 5;
+/** Maximum autoLockTimeout in seconds, matching the input's upper bound in the preferences UI. */
+export const MAX_AUTO_LOCK_TIMEOUT = 999;
+
 export const DEFAULT_TOOLBAR_ITEMS: ToolbarItem[] = [
   { key: 'headings', enabled: true },
   { key: 'underline', enabled: true },
@@ -60,7 +65,7 @@ export interface Preferences {
   enableSpellcheck: boolean;
   escAction: EscAction;
   autoLockEnabled: boolean;
-  autoLockTimeout: number; // seconds, 1–999
+  autoLockTimeout: number; // seconds, 5–999
   toolbarItems: ToolbarItem[];
   editorFontSize: number; // px, 12–24
   editorFontFamily: string | null; // null means system default
@@ -114,6 +119,14 @@ function loadPreferences(): Preferences {
         if (missing.length > 0) {
           parsed.toolbarItems = [...(parsed.toolbarItems as ToolbarItem[]), ...missing];
         }
+      }
+
+      // Self-heal any pre-existing stored value outside the valid range (TODO-0069)
+      if (typeof parsed.autoLockTimeout === 'number') {
+        parsed.autoLockTimeout = Math.min(
+          MAX_AUTO_LOCK_TIMEOUT,
+          Math.max(MIN_AUTO_LOCK_TIMEOUT, parsed.autoLockTimeout),
+        );
       }
 
       return { ...DEFAULT_PREFERENCES, ...(parsed as Partial<Preferences>) };

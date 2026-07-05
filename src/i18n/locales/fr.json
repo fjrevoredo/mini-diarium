@@ -409,6 +409,7 @@
       "autoLockLabel": "Verrouiller après inactivité",
       "autoLockTimeoutLabel": "Délai d'expiration (secondes)",
       "autoLockRange": "(1–999)",
+      "autoLockTimeoutTooLow": "Le minimum est de {{ min }} secondes. La valeur sera augmentée en quittant le champ.",
       "allFieldsRequired": "Tous les champs sont requis",
       "passwordsMismatch": "Les nouveaux mots de passe ne correspondent pas",
       "keypairPasswordRequired": "Le mot de passe actuel est requis",

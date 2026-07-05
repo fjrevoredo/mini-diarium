@@ -2,7 +2,12 @@ import { createSignal, createEffect, Show, untrack } from 'solid-js';
 import { createLogger } from '../../../lib/logger';
 import { authState, authMethods, loadAuthMethods, setRequireAllAuth } from '../../../state/auth';
 import { journals, activeJournalId } from '../../../state/journals';
-import { preferences, setPreferences } from '../../../state/preferences';
+import {
+  preferences,
+  setPreferences,
+  MIN_AUTO_LOCK_TIMEOUT,
+  MAX_AUTO_LOCK_TIMEOUT,
+} from '../../../state/preferences';
 import * as tauri from '../../../lib/tauri';
 import { mapTauriError } from '../../../lib/errors';
 import { useI18n } from '../../../i18n';
@@ -48,7 +53,10 @@ export default function PreferencesSecurityTab(props: TabProps) {
   });
 
   const clampAutoLockTimeout = (value: string) =>
-    Math.min(999, Math.max(1, parseInt(value, 10) || 300));
+    Math.min(MAX_AUTO_LOCK_TIMEOUT, Math.max(MIN_AUTO_LOCK_TIMEOUT, parseInt(value, 10) || 300));
+
+  const isTimeoutBelowMinimum = () =>
+    /^\d+$/.test(autoLockTimeoutDraft()) && Number(autoLockTimeoutDraft()) < MIN_AUTO_LOCK_TIMEOUT;
 
   const persistAutoLockTimeout = (value: string) => {
     const clamped = clampAutoLockTimeout(value);
@@ -150,8 +158,8 @@ export default function PreferencesSecurityTab(props: TabProps) {
               </label>
               <input
                 type="number"
-                min="1"
-                max="999"
+                min={MIN_AUTO_LOCK_TIMEOUT}
+                max={MAX_AUTO_LOCK_TIMEOUT}
                 step="1"
                 value={autoLockTimeoutDraft()}
                 onInput={(e) => {
@@ -159,7 +167,7 @@ export default function PreferencesSecurityTab(props: TabProps) {
                   setAutoLockTimeoutDraft(next);
                   if (/^\d+$/.test(next)) {
                     const parsed = Number(next);
-                    if (parsed >= 1 && parsed <= 999) {
+                    if (parsed >= MIN_AUTO_LOCK_TIMEOUT && parsed <= MAX_AUTO_LOCK_TIMEOUT) {
                       setPreferences({ autoLockTimeout: parsed });
                     }
                   }
@@ -168,6 +176,11 @@ export default function PreferencesSecurityTab(props: TabProps) {
                 class="w-20 px-2 py-1 text-sm border border-primary rounded-md bg-primary text-primary focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
               <span class="text-xs text-tertiary">{t('prefs.security.autoLockRange')}</span>
+              <Show when={isTimeoutBelowMinimum()}>
+                <p class="text-xs text-error" role="alert">
+                  {t('prefs.security.autoLockTimeoutTooLow', { min: MIN_AUTO_LOCK_TIMEOUT })}
+                </p>
+              </Show>
             </div>
           </Show>
         </div>

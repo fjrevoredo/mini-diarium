@@ -409,6 +409,7 @@
       "autoLockLabel": "निष्क्रियता के बाद लॉक करें",
       "autoLockTimeoutLabel": "समयसीमा (सेकंड)",
       "autoLockRange": "(1–999)",
+      "autoLockTimeoutTooLow": "न्यूनतम {{ min }} सेकंड है। फ़ील्ड से बाहर जाने पर मान बढ़ा दिया जाएगा।",
       "allFieldsRequired": "सभी फ़ील्ड आवश्यक हैं",
       "passwordsMismatch": "नए पासवर्ड मेल नहीं खाते",
       "keypairPasswordRequired": "वर्तमान पासवर्ड आवश्यक है",

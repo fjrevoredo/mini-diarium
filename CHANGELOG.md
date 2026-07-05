@@ -38,6 +38,7 @@ Template:
     - **Closed a menu/shortcut interaction gap found while building this**: the global Escape-to-quit and Ctrl/Cmd+F search shortcuts now correctly ignore keypresses while the overflow menu is open, matching how they already behave for every other overlay in the app.
 
 ### Fixed
+- **Auto-lock timeout floor** (TODO-0069): the auto-lock timeout preference can no longer be set below 5 seconds. Any pre-existing stored value outside the 5–999 range is corrected automatically on next load. Addresses [#194](https://github.com/fjrevoredo/mini-diarium/issues/194).
 
 ### Changed
 

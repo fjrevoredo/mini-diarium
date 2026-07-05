@@ -81,6 +81,30 @@ describe('preferences — loadPreferences migration', () => {
     expect(items[items.length - 1].key).toBe('insertExistingImage');
   });
 
+  it('raises a stored autoLockTimeout below the minimum to MIN_AUTO_LOCK_TIMEOUT (TODO-0069)', async () => {
+    localStorage.setItem('preferences', JSON.stringify({ autoLockTimeout: 1 }));
+
+    const { preferences, MIN_AUTO_LOCK_TIMEOUT } = await import('./preferences');
+
+    expect(preferences().autoLockTimeout).toBe(MIN_AUTO_LOCK_TIMEOUT);
+  });
+
+  it('leaves a stored autoLockTimeout already at or above the minimum unchanged', async () => {
+    localStorage.setItem('preferences', JSON.stringify({ autoLockTimeout: 120 }));
+
+    const { preferences } = await import('./preferences');
+
+    expect(preferences().autoLockTimeout).toBe(120);
+  });
+
+  it('lowers a stored autoLockTimeout above the maximum to MAX_AUTO_LOCK_TIMEOUT (TODO-0069)', async () => {
+    localStorage.setItem('preferences', JSON.stringify({ autoLockTimeout: 5000 }));
+
+    const { preferences, MAX_AUTO_LOCK_TIMEOUT } = await import('./preferences');
+
+    expect(preferences().autoLockTimeout).toBe(MAX_AUTO_LOCK_TIMEOUT);
+  });
+
   it('uses DEFAULT_TOOLBAR_ITEMS when localStorage is empty (includes link)', async () => {
     const { preferences } = await import('./preferences');
     const items = preferences().toolbarItems;

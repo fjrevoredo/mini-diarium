@@ -63,6 +63,8 @@ const { mockPreferences, mockSetPreferences } = vi.hoisted(() => ({
 vi.mock('../../../state/preferences', () => ({
   preferences: mockPreferences,
   setPreferences: mockSetPreferences,
+  MIN_AUTO_LOCK_TIMEOUT: 5,
+  MAX_AUTO_LOCK_TIMEOUT: 999,
 }));
 
 function renderTab() {
@@ -240,5 +242,30 @@ describe('PreferencesSecurityTab — auto-lock immediate persistence', () => {
     expect(mockSetPreferences).toHaveBeenCalledWith(
       expect.objectContaining({ autoLockTimeout: 999 }),
     );
+  });
+
+  it('clamps timeout to 5 on blur for below-minimum input', () => {
+    mockPreferences.mockReturnValue({ autoLockEnabled: true, autoLockTimeout: 300 });
+    renderTab();
+
+    const timeoutInput = screen.getByRole('spinbutton') as HTMLInputElement;
+    fireEvent.input(timeoutInput, { target: { value: '2' } });
+    fireEvent.blur(timeoutInput, { target: { value: '2' } });
+
+    expect(mockSetPreferences).toHaveBeenCalledWith(
+      expect.objectContaining({ autoLockTimeout: 5 }),
+    );
+  });
+
+  it('shows an inline warning while typing a below-minimum value and clears it after blur', () => {
+    mockPreferences.mockReturnValue({ autoLockEnabled: true, autoLockTimeout: 300 });
+    renderTab();
+
+    const timeoutInput = screen.getByRole('spinbutton') as HTMLInputElement;
+    fireEvent.input(timeoutInput, { target: { value: '2' } });
+    expect(screen.getByRole('alert')).toBeInTheDocument();
+
+    fireEvent.blur(timeoutInput, { target: { value: '2' } });
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
   });
 });

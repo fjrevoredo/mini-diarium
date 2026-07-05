@@ -409,6 +409,7 @@
       "autoLockLabel": "Nach Inaktivität sperren",
       "autoLockTimeoutLabel": "Zeitlimit (Sekunden)",
       "autoLockRange": "(1–999)",
+      "autoLockTimeoutTooLow": "Minimum ist {{ min }} Sekunden. Der Wert wird beim Verlassen des Feldes angehoben.",
       "allFieldsRequired": "Alle Felder sind erforderlich",
       "passwordsMismatch": "Die neuen Passwörter stimmen nicht überein",
       "keypairPasswordRequired": "Das aktuelle Passwort ist erforderlich",
