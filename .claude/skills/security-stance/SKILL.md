@@ -19,7 +19,7 @@ Load when work touches any of:
 - Crypto: `src-tauri/src/crypto/cipher.rs`, `src-tauri/src/crypto/password.rs`
 - Auth: `src-tauri/src/auth/{mod,password,keypair,auto_key}.rs`, `src-tauri/src/commands/auth/`
 - IPC contract: `src/lib/tauri/`, `src/lib/errors.ts`, any new `#[tauri::command]`
-- Auto-lock paths: `src/App.tsx` idle timer, `src-tauri/src/screen_lock.rs`
+- Auto-lock paths: `src/App.tsx` idle timer, `src-tauri/src/screen_lock.rs`, `src/lib/focus-lock.ts`, `src-tauri/src/window_focus.rs`, `src/lib/dialog.ts`
 - DB schema / migrations: `src-tauri/src/db/schema/mod.rs` (`SCHEMA_VERSION` at line 32), `src-tauri/src/db/schema/migrations/`
 - Backups & rotation: `src-tauri/src/backup.rs`
 - Journal config: `src-tauri/src/config.rs` (`JournalConfig`, `auto_key`, `require_all_auth`)
@@ -129,15 +129,15 @@ Hard rules:
 
 ---
 
-## 6. Auto-lock: both paths must fire
+## 6. Auto-lock: all three paths must fire
 
-Auto-lock is a dual-path mechanism. **A change to one path is implicitly a change to both** — the agent must verify the other still works.
+Auto-lock is a triple-path mechanism. **A change to one path is implicitly a change to all three** — the agent must verify the other two still work.
 
-### Path A — Frontend idle timer (`src/App.tsx:19-54`)
+### Path A — Frontend idle timer (`src/App.tsx:20-55`)
 
-- Tracks user activity events: `mousemove`, `keydown`, `click`, `touchstart`, `scroll` (`App.tsx:21`).
-- After `autoLockTimeout` seconds of inactivity, calls `lockJournal()` (`App.tsx:41`).
-- Cleanup in `onCleanup` removes listeners and clears the timer (`App.tsx:47-53`).
+- Tracks user activity events: `mousemove`, `keydown`, `click`, `touchstart`, `scroll` (`App.tsx:22`).
+- After `autoLockTimeout` seconds of inactivity, calls `lockJournal()` (`App.tsx:42`).
+- Cleanup in `onCleanup` removes listeners and clears the timer (`App.tsx:48-54`).
 - Controlled by `autoLockEnabled` + `autoLockTimeout` preferences.
 
 ### Path B — Backend OS events (`src-tauri/src/screen_lock.rs`)
@@ -147,16 +147,30 @@ Auto-lock is a dual-path mechanism. **A change to one path is implicitly a chang
 - Both call `commands::auth::auto_lock_diary_if_unlocked(...)` (`screen_lock.rs:79`, `:208`) and emit `'journal-locked'`.
 - **Fires even when the app is in the background.**
 
+### Path C — Frontend focus-loss lock (`src/lib/focus-lock.ts` + `src-tauri/src/window_focus.rs`, wired in `App.tsx`)
+
+- **Not** DOM `visibilitychange` — the original design, disproven by manual testing (TODO-0068): WebView2 does not reliably update `document.visibilityState` on window minimize (confirmed with the CDP debugger fully detached, ruling out an automation-tooling confound).
+- Detection lives in Rust (`window_focus.rs`): `on_window_event` on `WindowEvent::Focused`, emitting `"window-unfocused"` (false) / `"window-focused"` (true). A single push-based event pair covers minimize, Alt+Tab/Cmd+Tab away, clicking another app's window, and (on macOS) Cmd+H "Hide" — all of these resign/regain the window's key/active status at the OS level: `WM_KILLFOCUS`/`WM_NCACTIVATE` (Windows), `windowDidResignKey` (macOS — its own doc comment in tao explicitly calls out the Cmd+Tab case), GTK `focus-out-event` (Linux, forwarded as a genuine `WindowEvent` unlike minimize/iconify, which GTK only tracks internally). No polling needed — this superseded an earlier `is_minimized()`-polling design once source inspection confirmed `Focused` is reliably forwarded on all three platforms.
+- **Debounced, not immediate** (`FOCUS_LOSS_DEBOUNCE_MS`, `focus-lock.ts`, default 3000ms, parametrized as an `options.debounceMs` field so it's overridable in tests and easy to retune): user feedback after shipping the immediate-lock version reported that a misclick outside the window locked the journal instantly, which was too aggressive. `window-unfocused` now starts a `setTimeout` instead of locking; `window-focused` clears it. `isDialogOpen()` and `isUnlocked()` are (re-)checked when the timer actually fires, not at the initial event, since either can change during the debounce window.
+- **Design iteration history**: (1) frontend-only `visibilitychange`/`blur` — disproven, WebView2 doesn't fire it reliably on minimize; (2) Rust `is_minimized()` polling + a macOS-specific `NSApplication.isHidden` poll for Cmd+H — replaced because it missed alt-tab/click-away entirely, which the user confirmed was undesired (intent is "lock on any focus loss"); (3) `WindowEvent::Focused(false)`-only, immediate lock — replaced after the user reported it was too aggressive (locks on a misclick); (4) current: `Focused(false)`/`Focused(true)` pair + debounce.
+- Native dialogs (export/import/key-file save) also resign the main window's focus the same way real focus-loss does. `src/lib/dialog.ts` wraps `open`/`save`/`confirm` from `@tauri-apps/plugin-dialog` with a shared open-dialog counter (`isDialogOpen()`); `focus-lock.ts` checks it when the debounce fires. **Every dialog call site must import from `dialog.ts`, never the plugin directly** — src/CLAUDE.md gotcha #10 — or it reopens the false-positive gap. A dialog that closes within the debounce window also self-cancels via the `window-focused` event when focus returns to the main window.
+- **Known gap**: the dialog guard only covers the app's own dialogs. It does not cover the native menu bar, OS notifications, or other focus-stealers outside the app's own dialog call sites. Closing that fully would need a "does the newly-focused window belong to our own process" check, which is unreliable on Linux/Wayland — the same class of problem that broke the `visibilitychange` design. Not attempted; flagged as a known limitation instead.
+- Frontend (`focus-lock.ts`) listens for `"window-unfocused"`/`"window-focused"` via `@tauri-apps/api/event`'s `listen()` and calls `lockJournal()` when the debounce timer fires, `autoLockOnFocusLoss` is enabled (`preferences.ts`, default `false`), the journal is still unlocked, and `isDialogOpen()` is false.
+- Guarded multiple ways: the wiring `createEffect` only registers both listeners while `enabled() && isUnlocked()` (cleaning up both unlisten fns and any pending debounce timer — including handling the case where disposal races the pending `listen()` promise — when either goes false); `window-focused` cancels a pending debounce as the primary "don't lock" path; `isDialogOpen()`/`isUnlocked()` are re-checked at fire time as defense-in-depth.
+- The Rust handler runs for the app's lifetime regardless of the preference — it only emits events; the frontend decides whether to act on them. Keeps Rust free of preference/lock-state/timing awareness, consistent with `preferences.ts` being frontend/localStorage-only.
+
 ### Frontend listener (`src/state/auth.ts:240-263`)
 
 - `setupAuthEventListeners()` listens for `'journal-locking'` (pre-lock cleanup) and `'journal-locked'` (post-lock state reset).
 - Wired in `App.tsx` on mount.
 
 **Checklist for any change here:**
-- [ ] If you touched `App.tsx`, did backend OS lock still result in a clean UI lock?
-- [ ] If you touched `screen_lock.rs`, did the idle-timer path still call `lockJournal` cleanly?
+- [ ] If you touched `App.tsx`, did backend OS lock (Path B) and the focus-loss lock (Path C) still result in a clean UI lock?
+- [ ] If you touched `screen_lock.rs`, did the idle-timer path (Path A) and the focus-loss lock (Path C) still call `lockJournal` cleanly?
+- [ ] If you touched `focus-lock.ts`, did the idle-timer path (Path A) and backend OS lock (Path B) still fire independently?
 - [ ] Did the `'journal-locked'` event still propagate?
 - [ ] Were the platform-specific Win32 / macOS code paths preserved?
+- [ ] If you added a new native dialog call site, does it import `open`/`save`/`confirm` from `src/lib/dialog.ts` (not `@tauri-apps/plugin-dialog` directly)? A direct import reopens the false-positive-lock gap Path C's dialog guard exists to close.
 
 ---
 

@@ -3,7 +3,7 @@ title: Preferences
 slug: preferences
 description: Configure Mini Diarium from the Preferences panel: choose a theme, set auto-lock timeout, adjust editor font and size, manage authentication methods, and more.
 order: 8
-updated: 2026-07-02
+updated: 2026-07-06
 tags: preferences, settings, theme, auto-lock, configuration
 ---
 
@@ -41,6 +41,7 @@ Timestamp format and precision are configured from the editor timestamp popup (c
 | Setting | Description |
 |---------|-------------|
 | Auto-Lock | Lock automatically after a configurable idle timeout |
+| Lock when the window loses focus | Lock the journal a few seconds after the window loses focus — minimizing, switching to another app, or clicking another window — independent of the idle timeout. Off by default. A brief misclick outside the window doesn't trigger it if focus returns quickly, and opening a native file dialog from within Mini Diarium (export/import/key file) does not trigger this. |
 | Change password | Re-encrypt your journal with a new password |
 | Authentication Methods | View registered unlock methods; add a new key file or remove existing ones |
 

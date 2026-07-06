@@ -1,6 +1,6 @@
 import { createSignal, createEffect, Show } from 'solid-js';
 import type { Accessor } from 'solid-js';
-import { save } from '@tauri-apps/plugin-dialog';
+import { save } from '../../../lib/dialog';
 import { authMethods, loadAuthMethods } from '../../../state/auth';
 import * as tauri from '../../../lib/tauri';
 import { mapTauriError } from '../../../lib/errors';

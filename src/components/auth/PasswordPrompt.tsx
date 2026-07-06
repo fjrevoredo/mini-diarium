@@ -7,7 +7,7 @@ import {
   unlockJournalAutoProtected,
 } from '../../state/auth';
 import { journals, activeJournalId } from '../../state/journals';
-import { open } from '@tauri-apps/plugin-dialog';
+import { open } from '../../lib/dialog';
 import { useI18n } from '../../i18n';
 import { peekAuthSlotTypes, type JournalPeek, type MultiAuthCredential } from '../../lib/tauri';
 import { mapTauriError } from '../../lib/errors';

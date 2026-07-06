@@ -11,7 +11,7 @@ import type { DiaryEntry, EntryMetadata } from '../../../lib/tauri';
 import { setEntryDates } from '../../../state/entries';
 import { countWordsInHtml } from '../../../lib/wordcount';
 import { createLogger } from '../../../lib/logger';
-import { confirm } from '@tauri-apps/plugin-dialog';
+import { confirm } from '../../../lib/dialog';
 import { useI18n } from '../../../i18n';
 import type { EditorEmptyCheckHook } from './useEditorEmptyCheck';
 import type { EntryLifecycleHook } from './useEntryLifecycle';

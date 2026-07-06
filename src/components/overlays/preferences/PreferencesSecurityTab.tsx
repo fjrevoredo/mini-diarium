@@ -151,6 +151,17 @@ export default function PreferencesSecurityTab(props: TabProps) {
             />
             <span class="text-sm text-secondary">{t('prefs.security.autoLockLabel')}</span>
           </label>
+          <label class="flex items-center gap-3">
+            <input
+              type="checkbox"
+              checked={preferences().autoLockOnFocusLoss}
+              onChange={(e) => setPreferences({ autoLockOnFocusLoss: e.currentTarget.checked })}
+              class="h-4 w-4 rounded border-primary text-blue-600 focus:ring-blue-500"
+            />
+            <span class="text-sm text-secondary">
+              {t('prefs.security.autoLockOnFocusLossLabel')}
+            </span>
+          </label>
           <Show when={preferences().autoLockEnabled}>
             <div class="flex items-center gap-2 pl-7">
               <label class="text-sm text-secondary whitespace-nowrap">

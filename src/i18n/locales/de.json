@@ -410,6 +410,7 @@
       "autoLockTimeoutLabel": "Zeitlimit (Sekunden)",
       "autoLockRange": "(1–999)",
       "autoLockTimeoutTooLow": "Minimum ist {{ min }} Sekunden. Der Wert wird beim Verlassen des Feldes angehoben.",
+      "autoLockOnFocusLossLabel": "Lock when the window loses focus",
       "allFieldsRequired": "Alle Felder sind erforderlich",
       "passwordsMismatch": "Die neuen Passwörter stimmen nicht überein",
       "keypairPasswordRequired": "Das aktuelle Passwort ist erforderlich",

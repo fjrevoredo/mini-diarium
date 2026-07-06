@@ -484,6 +484,7 @@ const en = {
       autoLockRange: '(5–999)',
       autoLockTimeoutTooLow:
         'Minimum is {{ min }} seconds. The value will be raised when you leave the field.',
+      autoLockOnFocusLossLabel: 'Lock when the window loses focus',
       allFieldsRequired: 'All fields are required',
       passwordsMismatch: 'New passwords do not match',
       keypairPasswordRequired: 'Current password is required',

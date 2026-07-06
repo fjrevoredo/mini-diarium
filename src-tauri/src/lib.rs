@@ -10,6 +10,7 @@ pub mod menu;
 pub mod plugin;
 pub mod screen_lock;
 mod webview_security;
+mod window_focus;
 
 use commands::auth::DiaryState;
 use log::{info, warn};
@@ -276,6 +277,8 @@ pub fn run() {
             if let Err(error) = screen_lock::init(app.handle()) {
                 warn!("Screen-lock listener initialization failed: {}", error);
             }
+
+            window_focus::init(app.handle().clone());
 
             // Install platform-specific engine-level request blockers (Windows/macOS).
             // Defense-in-depth alongside CSP and the JS init script.

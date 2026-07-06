@@ -66,6 +66,7 @@ export interface Preferences {
   escAction: EscAction;
   autoLockEnabled: boolean;
   autoLockTimeout: number; // seconds, 5–999
+  autoLockOnFocusLoss: boolean;
   toolbarItems: ToolbarItem[];
   editorFontSize: number; // px, 12–24
   editorFontFamily: string | null; // null means system default
@@ -83,6 +84,7 @@ const DEFAULT_PREFERENCES: Preferences = {
   escAction: 'none',
   autoLockEnabled: false,
   autoLockTimeout: 300,
+  autoLockOnFocusLoss: false,
   toolbarItems: DEFAULT_TOOLBAR_ITEMS,
   editorFontSize: 16,
   editorFontFamily: null,

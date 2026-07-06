@@ -1,6 +1,6 @@
 import { createSignal, createEffect, onMount, Show, For } from 'solid-js';
 import { Dialog } from '@kobalte/core/dialog';
-import { save as saveDialog } from '@tauri-apps/plugin-dialog';
+import { save as saveDialog } from '../../lib/dialog';
 import { createLogger } from '../../lib/logger';
 import { generatePdfFromElement } from '../../lib/pdf';
 import {

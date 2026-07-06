@@ -42,7 +42,13 @@ describe('PreferencesCustomFontsSection', () => {
     renderWithI18n(() => <PreferencesCustomFontsSection />);
 
     fireEvent.click(screen.getAllByRole('button', { name: /choose file/i })[0]);
-    await waitFor(() => expect(mockOpenDialog).toHaveBeenCalledTimes(1));
+    // Wait for the resolved path to actually land in component state (not just
+    // for the dialog mock to have been called) — the dialog wrapper in
+    // src/lib/dialog.ts adds its own microtask hop around the call, so
+    // asserting only on the mock call count can race ahead of the state update.
+    await waitFor(() =>
+      expect(screen.getByTitle('C:\\fonts\\MyFont-Regular.ttf')).toBeInTheDocument(),
+    );
 
     fireEvent.input(screen.getByTestId('custom-font-family-input'), {
       target: { value: 'My Font' },

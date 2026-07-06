@@ -56,7 +56,11 @@ vi.mock('../../../state/journals', () => ({
 }));
 
 const { mockPreferences, mockSetPreferences } = vi.hoisted(() => ({
-  mockPreferences: vi.fn(() => ({ autoLockEnabled: false, autoLockTimeout: 300 })),
+  mockPreferences: vi.fn(() => ({
+    autoLockEnabled: false,
+    autoLockTimeout: 300,
+    autoLockOnFocusLoss: false,
+  })),
   mockSetPreferences: vi.fn(),
 }));
 
@@ -193,18 +197,30 @@ describe('PreferencesSecurityTab — require-all-auth toggle', () => {
 describe('PreferencesSecurityTab — auto-lock immediate persistence', () => {
   afterEach(() => {
     vi.clearAllMocks();
-    mockPreferences.mockReturnValue({ autoLockEnabled: false, autoLockTimeout: 300 });
+    mockPreferences.mockReturnValue({
+      autoLockEnabled: false,
+      autoLockTimeout: 300,
+      autoLockOnFocusLoss: false,
+    });
   });
 
   it('renders the auto-lock checkbox unchecked by default', () => {
-    mockPreferences.mockReturnValue({ autoLockEnabled: false, autoLockTimeout: 300 });
+    mockPreferences.mockReturnValue({
+      autoLockEnabled: false,
+      autoLockTimeout: 300,
+      autoLockOnFocusLoss: false,
+    });
     renderTab();
     const checkbox = screen.getByRole('checkbox', { name: /lock after inactivity/i });
     expect(checkbox).not.toBeChecked();
   });
 
   it('renders the auto-lock checkbox checked when preferences.autoLockEnabled is true', () => {
-    mockPreferences.mockReturnValue({ autoLockEnabled: true, autoLockTimeout: 60 });
+    mockPreferences.mockReturnValue({
+      autoLockEnabled: true,
+      autoLockTimeout: 60,
+      autoLockOnFocusLoss: false,
+    });
     renderTab();
     const checkbox = screen.getByRole('checkbox', { name: /lock after inactivity/i });
     expect(checkbox).toBeChecked();
@@ -220,7 +236,11 @@ describe('PreferencesSecurityTab — auto-lock immediate persistence', () => {
   });
 
   it('persists valid timeout input immediately', () => {
-    mockPreferences.mockReturnValue({ autoLockEnabled: true, autoLockTimeout: 300 });
+    mockPreferences.mockReturnValue({
+      autoLockEnabled: true,
+      autoLockTimeout: 300,
+      autoLockOnFocusLoss: false,
+    });
     renderTab();
 
     const timeoutInput = screen.getByRole('spinbutton') as HTMLInputElement;
@@ -232,7 +252,11 @@ describe('PreferencesSecurityTab — auto-lock immediate persistence', () => {
   });
 
   it('clamps timeout to 999 on blur for out-of-range input', () => {
-    mockPreferences.mockReturnValue({ autoLockEnabled: true, autoLockTimeout: 300 });
+    mockPreferences.mockReturnValue({
+      autoLockEnabled: true,
+      autoLockTimeout: 300,
+      autoLockOnFocusLoss: false,
+    });
     renderTab();
 
     const timeoutInput = screen.getByRole('spinbutton') as HTMLInputElement;
@@ -245,7 +269,11 @@ describe('PreferencesSecurityTab — auto-lock immediate persistence', () => {
   });
 
   it('clamps timeout to 5 on blur for below-minimum input', () => {
-    mockPreferences.mockReturnValue({ autoLockEnabled: true, autoLockTimeout: 300 });
+    mockPreferences.mockReturnValue({
+      autoLockEnabled: true,
+      autoLockTimeout: 300,
+      autoLockOnFocusLoss: false,
+    });
     renderTab();
 
     const timeoutInput = screen.getByRole('spinbutton') as HTMLInputElement;
@@ -258,7 +286,11 @@ describe('PreferencesSecurityTab — auto-lock immediate persistence', () => {
   });
 
   it('shows an inline warning while typing a below-minimum value and clears it after blur', () => {
-    mockPreferences.mockReturnValue({ autoLockEnabled: true, autoLockTimeout: 300 });
+    mockPreferences.mockReturnValue({
+      autoLockEnabled: true,
+      autoLockTimeout: 300,
+      autoLockOnFocusLoss: false,
+    });
     renderTab();
 
     const timeoutInput = screen.getByRole('spinbutton') as HTMLInputElement;
@@ -267,5 +299,64 @@ describe('PreferencesSecurityTab — auto-lock immediate persistence', () => {
 
     fireEvent.blur(timeoutInput, { target: { value: '2' } });
     expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+});
+
+describe('PreferencesSecurityTab — auto-lock on focus loss (TODO-0068)', () => {
+  afterEach(() => {
+    vi.clearAllMocks();
+    mockPreferences.mockReturnValue({
+      autoLockEnabled: false,
+      autoLockTimeout: 300,
+      autoLockOnFocusLoss: false,
+    });
+  });
+
+  it('renders the focus-loss checkbox unchecked by default', () => {
+    mockPreferences.mockReturnValue({
+      autoLockEnabled: false,
+      autoLockTimeout: 300,
+      autoLockOnFocusLoss: false,
+    });
+    renderTab();
+    const checkbox = screen.getByRole('checkbox', { name: /lock when the window loses focus/i });
+    expect(checkbox).not.toBeChecked();
+  });
+
+  it('renders the focus-loss checkbox checked when preferences.autoLockOnFocusLoss is true', () => {
+    mockPreferences.mockReturnValue({
+      autoLockEnabled: false,
+      autoLockTimeout: 300,
+      autoLockOnFocusLoss: true,
+    });
+    renderTab();
+    const checkbox = screen.getByRole('checkbox', { name: /lock when the window loses focus/i });
+    expect(checkbox).toBeChecked();
+  });
+
+  it('calls setPreferences({ autoLockOnFocusLoss: true }) when clicked', () => {
+    mockPreferences.mockReturnValue({
+      autoLockEnabled: false,
+      autoLockTimeout: 300,
+      autoLockOnFocusLoss: false,
+    });
+    renderTab();
+    const checkbox = screen.getByRole('checkbox', { name: /lock when the window loses focus/i });
+    fireEvent.click(checkbox);
+    expect(mockSetPreferences).toHaveBeenCalledWith(
+      expect.objectContaining({ autoLockOnFocusLoss: true }),
+    );
+  });
+
+  it('renders even when autoLockEnabled is false, proving independence from the idle timer', () => {
+    mockPreferences.mockReturnValue({
+      autoLockEnabled: false,
+      autoLockTimeout: 300,
+      autoLockOnFocusLoss: false,
+    });
+    renderTab();
+    expect(
+      screen.getByRole('checkbox', { name: /lock when the window loses focus/i }),
+    ).toBeInTheDocument();
   });
 });

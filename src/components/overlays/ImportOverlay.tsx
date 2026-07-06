@@ -1,6 +1,6 @@
 import { createSignal, onMount, Show, For } from 'solid-js';
 import { Dialog } from '@kobalte/core/dialog';
-import { open as openDialog } from '@tauri-apps/plugin-dialog';
+import { open as openDialog } from '../../lib/dialog';
 import { createLogger } from '../../lib/logger';
 import {
   listImportPlugins,

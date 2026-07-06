@@ -1,5 +1,5 @@
 import { For, createResource, createSignal, type Accessor } from 'solid-js';
-import { open as openDialog } from '@tauri-apps/plugin-dialog';
+import { open as openDialog } from '../../../lib/dialog';
 import { useI18n } from '../../../i18n';
 import { preferences, setPreferences } from '../../../state/preferences';
 import { customFontsVersion, incrementCustomFontsVersion } from '../../../state/fonts';

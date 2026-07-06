@@ -205,6 +205,8 @@ These are used by E2E tests — **do not remove** from components.
 
 9. **TipTap dialog state capture — snapshot, not memo**: Never use `createMemo(() => editor.state.*)` inside a dialog component. TipTap collapses the selection when an `autofocus` input receives focus, making reactive reads of `editor.state.selection` unreliable after the dialog opens. Instead, capture editor state **once** when the dialog opens via a `createEffect` that fires when `isOpen` transitions to `true`. See `snapshotEditor()` in `src/components/editor/LinkOverlay.tsx` as the reference implementation.
 
+10. **Always import `open`/`save`/`confirm` from `src/lib/dialog.ts`, never directly from `@tauri-apps/plugin-dialog`**: native dialogs are separate OS windows that steal focus from the main window, which would trigger the focus-loss auto-lock (`src/lib/focus-lock.ts`, TODO-0068) mid-export/import if left unguarded. `dialog.ts` wraps the same three functions with a shared open-dialog counter that `focus-lock.ts` consults via `isDialogOpen()` to suppress the lock while one of the app's own dialogs is open. A new call site importing the plugin directly reopens the false-positive-lock gap this wrapper exists to close.
+
 ## Common Task Checklists
 
 ### Adding an Alignable Editor Block Node

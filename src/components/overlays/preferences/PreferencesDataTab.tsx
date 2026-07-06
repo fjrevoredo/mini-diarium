@@ -1,5 +1,5 @@
 import { createSignal, createEffect, Show } from 'solid-js';
-import { confirm as dialogConfirm, open as openDirDialog } from '@tauri-apps/plugin-dialog';
+import { confirm as dialogConfirm, open as openDirDialog } from '../../../lib/dialog';
 import { createLogger } from '../../../lib/logger';
 import * as tauri from '../../../lib/tauri';
 import { mapTauriError } from '../../../lib/errors';

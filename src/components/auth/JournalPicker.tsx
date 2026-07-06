@@ -1,5 +1,5 @@
 import { createSignal, For, Show } from 'solid-js';
-import { confirm, open } from '@tauri-apps/plugin-dialog';
+import { confirm, open } from '../../lib/dialog';
 import {
   journals,
   activeJournalId,

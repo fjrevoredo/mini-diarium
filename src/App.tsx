@@ -3,6 +3,7 @@ import { listen, UnlistenFn } from '@tauri-apps/api/event';
 import { authState, initializeAuth, lockJournal, setupAuthEventListeners } from './state/auth';
 import { initializeTheme } from './lib/theme';
 import { createLogger } from './lib/logger';
+import { createFocusLossAutoLock } from './lib/focus-lock';
 import { preferences } from './state/preferences';
 import { setLocale, useI18n } from './i18n';
 import { updateMenuLocale } from './lib/tauri';
@@ -51,6 +52,12 @@ function App() {
       }
       ACTIVITY_EVENTS.forEach((e) => document.removeEventListener(e, handleActivity));
     });
+  });
+
+  createFocusLossAutoLock({
+    enabled: () => preferences().autoLockOnFocusLoss,
+    isUnlocked: () => authState() === 'unlocked',
+    lock: () => void lockJournal(),
   });
 
   onMount(() => {

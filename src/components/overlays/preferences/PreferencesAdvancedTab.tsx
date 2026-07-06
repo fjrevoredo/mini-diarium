@@ -1,5 +1,5 @@
 import { createSignal, createEffect, Show } from 'solid-js';
-import { save } from '@tauri-apps/plugin-dialog';
+import { save } from '../../../lib/dialog';
 import { openUrl } from '@tauri-apps/plugin-opener';
 import { preferences } from '../../../state/preferences';
 import { getActiveTheme } from '../../../lib/theme';

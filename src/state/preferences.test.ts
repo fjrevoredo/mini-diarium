@@ -123,4 +123,12 @@ describe('preferences — loadPreferences migration', () => {
     expect(linkIdx).toBe(inlineCodeIdx + 1);
     expect(bulletListIdx).toBe(linkIdx + 1);
   });
+
+  it('defaults autoLockOnFocusLoss to false for a stored value that predates the field (TODO-0068)', async () => {
+    localStorage.setItem('preferences', JSON.stringify({ autoLockEnabled: true }));
+
+    const { preferences } = await import('./preferences');
+
+    expect(preferences().autoLockOnFocusLoss).toBe(false);
+  });
 });

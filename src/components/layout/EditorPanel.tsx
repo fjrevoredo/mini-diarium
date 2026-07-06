@@ -13,7 +13,7 @@ import type { DiaryEntry, EntryMetadata } from '../../lib/tauri';
 import { formatTimestamp } from '../../lib/dates';
 import { isSaving } from '../../state/entries';
 import { preferences } from '../../state/preferences';
-import { open as openDialog } from '@tauri-apps/plugin-dialog';
+import { open as openDialog } from '../../lib/dialog';
 import { parseMarkdownToHtml } from '../../lib/markdown';
 import { mapTauriError } from '../../lib/errors';
 import { countWordsInHtml, countWordsFromText } from '../../lib/wordcount';

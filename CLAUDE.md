@@ -172,9 +172,10 @@ cmd.exe /c bun run coverage:self-test       # parser self-test
 3. **Skill sync requires plugin exclusion list**: Project skills live in `.agents/skills/` and are linked into `.claude/skills/` via `cmd.exe /c bun run sync-skills`. Skills already provided by a Claude Code plugin must be listed in `PLUGIN_SKILLS` inside `scripts/sync-skills.js` — otherwise duplicates appear and trigger ambiguity arises. **When installing a new plugin that ships skills, check its skill names and add them to that list.**
    Low-frequency manual workflows now live under the `runbooks` dispatcher. Mirror only `.agents/skills/runbooks` into `.claude/skills/runbooks`; its nested library entries load from `ENTRY.md` and are not mirrored as standalone top-level skills.
 
-4. **Auto-lock fires from two independent paths** — any change to the lock/unlock flow must account for both:
-   - **Frontend idle timer** (`App.tsx`): tracks user activity events (mousemove, keydown, click, scroll, touchstart). After `autoLockTimeout` seconds of inactivity, calls `lockJournal()`. Controlled by `autoLockEnabled` + `autoLockTimeout` preferences.
-   - **Backend OS events** (`screen_lock.rs`): listens for OS-level session lock, logoff, or system suspend (Windows: `WM_WTSSESSION_CHANGE`, `WM_POWERBROADCAST`; macOS: screen-sleep and `com.apple.screenIsLocked` notifications). Immediately calls `auto_lock_diary_if_unlocked()` and emits `'journal-locked'` event. Fires even when the app is in the background.
+4. **Auto-lock fires from three independent paths** — any change to the lock/unlock flow must account for all three. See the `security-stance` skill (Section 6) for full detail on event names, the dialog-guard, and platform specifics:
+   - **Frontend idle timer** (`App.tsx`): user-activity-based, controlled by `autoLockEnabled`/`autoLockTimeout`.
+   - **Backend OS events** (`screen_lock.rs`): OS session lock/logoff/suspend; fires even while the app is in the background.
+   - **Frontend focus-loss lock** (`src/lib/focus-lock.ts` + `src-tauri/src/window_focus.rs`): debounced lock (`FOCUS_LOSS_DEBOUNCE_MS`, default 3s) on OS-level focus loss (minimize, alt-tab, Cmd+H), controlled by `autoLockOnFocusLoss`. Any code that opens a native dialog must import `open`/`save`/`confirm` from `src/lib/dialog.ts`, never `@tauri-apps/plugin-dialog` directly — see `src/CLAUDE.md` gotcha #10.
 
 5. **SonarCloud quality gate failure — read the API, don't guess**: When the "SonarCloud Code Analysis" check fails on a PR, the PR comment gives only a summary. To find which files are responsible, use the public API directly — no login required:
 

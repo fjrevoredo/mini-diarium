@@ -410,6 +410,7 @@
       "autoLockTimeoutLabel": "Tiempo de espera (segundos)",
       "autoLockRange": "(1–999)",
       "autoLockTimeoutTooLow": "El mínimo es de {{ min }} segundos. El valor se aumentará al salir del campo.",
+      "autoLockOnFocusLossLabel": "Lock when the window loses focus",
       "allFieldsRequired": "Todos los campos son obligatorios",
       "passwordsMismatch": "Las contraseñas nuevas no coinciden",
       "keypairPasswordRequired": "La contraseña actual es obligatoria",
