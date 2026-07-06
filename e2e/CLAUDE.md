@@ -29,6 +29,8 @@ bun run test:e2e                        # Run suite only (binary must already ex
 bun run test:e2e:stateful               # Stateful E2E mode (persistence-oriented lane)
 ```
 
+**CI platform coverage gap:** CI E2E runs Linux/WebKitGTK only. WebView2 (Windows) behavior is covered exclusively by local `bun run test:e2e:local` runs and manual `tauri-agent-dev` verification — green CI does not exercise `#[cfg(windows)]` paths (e.g. `WebResourceRequested` network blocking, print image decode timing). Do not treat a green CI E2E run as evidence that platform-specific WebView code works.
+
 ## data-testid Attributes
 
 The canonical `data-testid` inventory lives in [`src/CLAUDE.md — data-testid Attributes`](../src/CLAUDE.md#data-testid-attributes). The E2E specs use a subset of those attributes. Do not add a new `data-testid` selector to a spec without first adding it to the canonical table.

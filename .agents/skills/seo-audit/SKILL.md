@@ -1,6 +1,6 @@
 ---
 name: seo-audit
-description: When the user wants to audit, review, or diagnose SEO issues on their site. Also use when the user mentions "SEO audit," "technical SEO," "why am I not ranking," "SEO issues," "on-page SEO," "meta tags review," "SEO health check," "my traffic dropped," "lost rankings," "not showing up in Google," "site isn't ranking," "Google update hit me," "page speed," "core web vitals," "crawl errors," or "indexing issues." Use this even if the user just says something vague like "my SEO is bad" or "help with SEO" — start with an audit. For building pages at scale to target keywords, see programmatic-seo. For adding structured data, see schema-markup. For AI search optimization, see ai-seo.
+description: Applies to the static marketing site under `website/` only. Use when the user wants to audit, review, or diagnose SEO issues on that site. Also use when the user mentions "SEO audit," "technical SEO," "why am I not ranking," "SEO issues," "on-page SEO," "meta tags review," "SEO health check," "my traffic dropped," "lost rankings," "not showing up in Google," "site isn't ranking," "Google update hit me," "page speed," "core web vitals," "crawl errors," or "indexing issues." Use this even if the user just says something vague like "my SEO is bad" or "help with SEO" — start with an audit.
 metadata:
   version: 1.2.0
 ---
@@ -453,7 +453,6 @@ Same format as above
 
 - [AI Writing Detection](references/ai-writing-detection.md): Common AI writing patterns to avoid (em dashes, overused phrases, filler words)
 - [International SEO](references/international-seo.md): Evidence and sources for hreflang, canonical + i18n, sitemaps, URL structure, and content quality across locales
-- For AI search optimization (AEO, GEO, LLMO, AI Overviews), see the **ai-seo** skill
 
 ---
 
@@ -484,14 +483,3 @@ Same format as above
 3. Any recent changes or migrations?
 4. Who are your top organic competitors?
 5. What's your current organic traffic baseline?
-
----
-
-## Related Skills
-
-- **ai-seo**: For optimizing content for AI search engines (AEO, GEO, LLMO)
-- **programmatic-seo**: For building SEO pages at scale
-- **site-architecture**: For page hierarchy, navigation design, and URL structure
-- **schema-markup**: For implementing structured data
-- **page-cro**: For optimizing pages for conversion (not just ranking)
-- **analytics-tracking**: For measuring SEO performance

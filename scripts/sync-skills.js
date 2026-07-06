@@ -6,7 +6,15 @@
 // trigger ambiguity. MAINTENANCE: whenever you install a new plugin that ships
 // skills, add its skill names to PLUGIN_SKILLS below, then re-run sync-skills.
 
-import { lstatSync, mkdirSync, readdirSync, rmSync, symlinkSync, unlinkSync } from 'node:fs';
+import {
+  lstatSync,
+  mkdirSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  symlinkSync,
+  unlinkSync,
+} from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -56,6 +64,9 @@ const scriptPath = fileURLToPath(import.meta.url);
 const root = resolve(scriptPath, '../../');
 const source = join(root, '.agents', 'skills');
 const target = join(root, '.claude', 'skills');
+// Second mirror for the pi runtime. Pi has no plugin system, so it receives the
+// full canonical set — including the skills excluded from .claude via PLUGIN_SKILLS.
+const piTarget = join(root, '.pi', 'skills');
 
 function getSkillLinkType() {
   return process.platform === 'win32' ? 'junction' : 'dir';
@@ -116,6 +127,33 @@ export function cleanupLibrarySkillMirrors({ targetRoot, sourceRoot, skillNames 
   return removed;
 }
 
+function listFilesRecursive(root, prefix = '') {
+  const files = [];
+  for (const entry of readdirSync(join(root, prefix), { withFileTypes: true })) {
+    const relative = prefix ? `${prefix}/${entry.name}` : entry.name;
+    if (entry.isDirectory()) {
+      files.push(...listFilesRecursive(root, relative));
+    } else {
+      files.push(relative);
+    }
+  }
+  return files.sort();
+}
+
+export function dirsHaveIdenticalContents(sourceDir, mirrorDir) {
+  const sourceFiles = listFilesRecursive(sourceDir);
+  const mirrorFiles = listFilesRecursive(mirrorDir);
+  if (
+    sourceFiles.length !== mirrorFiles.length ||
+    sourceFiles.some((file, i) => file !== mirrorFiles[i])
+  ) {
+    return false;
+  }
+  return sourceFiles.every((file) =>
+    readFileSync(join(sourceDir, file)).equals(readFileSync(join(mirrorDir, file))),
+  );
+}
+
 function ensureTargetRoot(targetRoot) {
   mkdirSync(targetRoot, { recursive: true });
 }
@@ -150,12 +188,31 @@ function syncSkills({
     }
 
     const destination = join(targetRoot, skill.name);
-    if (readPathStat(destination)) {
-      console.log(`  skip  ${skill.name}`);
+    const sourcePath = join(sourceRoot, skill.name);
+    const destStat = readPathStat(destination);
+    if (destStat) {
+      if (destStat.isSymbolicLink()) {
+        console.log(`  skip  ${skill.name}`);
+        continue;
+      }
+      // A real directory shadows the canonical source (e.g. materialized by an old
+      // git checkout). Silently keeping it means edits to .agents/skills never
+      // propagate — repair when contents are identical, refuse when they differ.
+      if (!dirsHaveIdenticalContents(sourcePath, destination)) {
+        throw new Error(
+          `DRIFT: ${destination} is a real directory whose contents differ from ` +
+            `${sourcePath}. Reconcile the two manually (the .agents copy is canonical), ` +
+            `delete the .claude copy, then re-run sync-skills.`,
+        );
+      }
+      rmSync(destination, { recursive: true, force: true });
+      symlinkSync(sourcePath, destination, skillType);
+      console.log(`  repair ${skill.name}`);
+      linked++;
       continue;
     }
 
-    symlinkSync(join(sourceRoot, skill.name), destination, skillType);
+    symlinkSync(sourcePath, destination, skillType);
     console.log(`  link  ${skill.name}`);
     linked++;
   }
@@ -164,7 +221,10 @@ function syncSkills({
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === scriptPath) {
+  console.log('.claude/skills:');
   syncSkills();
+  console.log('\n.pi/skills:');
+  syncSkills({ targetRoot: piTarget, pluginSkills: new Set() });
 }
 
 export { LIBRARY_SKILLS, PLUGIN_SKILLS, syncSkills };

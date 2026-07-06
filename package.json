@@ -44,7 +44,7 @@
     "sync-skills": "node scripts/sync-skills.js",
     "check:ui-errors": "node scripts/check-ui-error-sanitization.js",
     "test:print": "playwright test --config playwright.config.ts",
-    "postinstall": "node scripts/install-hooks.js"
+    "postinstall": "node scripts/install-hooks.js && node scripts/sync-skills.js"
   },
   "license": "MIT",
   "puppeteer": {

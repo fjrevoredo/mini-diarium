@@ -24,6 +24,9 @@ Thumbs.db
 # Claude Code local settings
 .claude/*.local.json
 .claude/projects/
+# Generated skill mirrors — canonical sources live in .agents/skills/ (bun run sync-skills)
+.claude/skills/
+.pi/skills/
 
 # Logs
 *.log

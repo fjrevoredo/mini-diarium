@@ -19,12 +19,14 @@ jobs:
       - name: Record job start time
         run: echo "JOB_STARTED_EPOCH=$(date -u +%s)" >> "$GITHUB_ENV"
 
-      - uses: actions/checkout@v7.0.0
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@4be7066ada62dd38de10e7b70166bc74ed198c30 # stable
+        with:
+          toolchain: stable
 
       - name: Cache Rust artifacts
-        uses: Swatinem/rust-cache@v2
+        uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
         with:
           workspaces: src-tauri -> target
           cache-on-failure: true
@@ -50,7 +52,7 @@ jobs:
           echo "CI pipeline duration: ${DURATION_SEC}s (${DURATION_NS}ns)"
 
       - name: Store benchmark results
-        uses: benchmark-action/github-action-benchmark@v1
+        uses: benchmark-action/github-action-benchmark@52576c92bccf6ac60c8223ec7eb2565637cae9ba # v1
         with:
           tool: cargo
           output-file-path: bench-output.txt
