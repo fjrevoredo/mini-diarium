@@ -3,28 +3,50 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Mini Diarium privacy policy: no telemetry, no cloud storage, no analytics. Your journal entries are encrypted locally and never leave your device." />
+  <meta name="description" content="The Mini Diarium newsletter: occasional new releases, milestones, and launch news for the encrypted offline journal app. No spam, unsubscribe in one click." />
   <meta name="robots" content="index,follow" />
   <meta name="theme-color" content="#0e0e0e" />
   <meta name="author" content="Francisco J. Revoredo" />
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="Mini Diarium" />
   <meta property="og:locale" content="en_US" />
-  <meta property="og:url" content="https://mini-diarium.com/privacy/" />
-  <meta property="og:title" content="Privacy Policy | Mini Diarium" />
-  <meta property="og:description" content="Mini Diarium privacy policy: no telemetry, no cloud storage, no analytics. Your journal entries are encrypted locally." />
+  <meta property="og:url" content="https://mini-diarium.com/newsletter/" />
+  <meta property="og:title" content="Newsletter | Mini Diarium" />
+  <meta property="og:description" content="Occasional new releases, milestones, and launch news for the encrypted offline journal app. No spam, unsubscribe in one click." />
   <meta property="og:image" content="https://mini-diarium.com/assets/og-cover.png" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:site" content="@MiniDiarium" />
   <meta name="twitter:creator" content="@MiniDiarium" />
-  <meta name="twitter:title" content="Privacy Policy | Mini Diarium" />
-  <meta name="twitter:description" content="Mini Diarium privacy policy: no telemetry, no cloud storage, no analytics." />
+  <meta name="twitter:title" content="Newsletter | Mini Diarium" />
+  <meta name="twitter:description" content="Occasional new releases, milestones, and launch news for the encrypted offline journal app." />
   <meta name="twitter:image" content="https://mini-diarium.com/assets/og-cover.png" />
-  <title>Privacy Policy | Mini Diarium</title>
-  <link rel="canonical" href="https://mini-diarium.com/privacy/" />
-  <link rel="alternate" hreflang="x-default" href="https://mini-diarium.com/privacy/" />
+  <title>Newsletter | Mini Diarium</title>
+  <link rel="canonical" href="https://mini-diarium.com/newsletter/" />
+  <link rel="alternate" hreflang="x-default" href="https://mini-diarium.com/newsletter/" />
   <link rel="icon" href="/assets/logo.svg" type="image/svg+xml" />
   <link rel="stylesheet" href="/css/style.48234f1b.css" />
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": "https://mini-diarium.com/#organization",
+        "name": "Mini Diarium",
+        "url": "https://mini-diarium.com"
+      },
+      {
+        "@type": "WebPage",
+        "@id": "https://mini-diarium.com/newsletter/#webpage",
+        "url": "https://mini-diarium.com/newsletter/",
+        "name": "Newsletter | Mini Diarium",
+        "description": "Occasional new releases, milestones, and launch news for the encrypted offline journal app. No spam, unsubscribe in one click.",
+        "publisher": { "@id": "https://mini-diarium.com/#organization" }
+      }
+    ]
+  }
+  </script>
 </head>
 <body>
 
@@ -65,42 +87,31 @@
 
 <section class="hero">
   <div class="container">
-    <p class="hero-eyebrow">Privacy</p>
-    <h1>Privacy Policy</h1>
-    <p class="hero-sub">Mini Diarium does not collect your data, send telemetry, or share anything with third parties.</p>
+    <p class="hero-eyebrow">Newsletter</p>
+    <h1>Stay in the loop</h1>
+    <p class="hero-sub">Occasional emails about Mini Diarium, the encrypted offline journal app. New releases, milestones, and launch news only.</p>
   </div>
 </section>
 
 <section class="blog-post-body">
   <div class="container">
-    <div class="blog-post prose" aria-label="Privacy Policy" style="max-width: 720px; margin: 0 auto;">
-      <p><strong>Last updated: 2026-07-06</strong></p>
+    <div class="blog-post prose" aria-label="Newsletter" style="max-width: 720px; margin: 0 auto;">
 
-      <h2>What Mini Diarium does not do</h2>
-      <p>Mini Diarium has no network client. It makes no HTTP requests. It does not send analytics, telemetry, crash reports, usage statistics, or any other data to any server.</p>
-      <p>Mini Diarium does not store journal entries on cloud servers. Your entries are encrypted locally on your device and never leave it unless you explicitly export them.</p>
-      <p>Mini Diarium does not require an account, email address, or online registration.</p>
-      <p>Mini Diarium does not use third-party analytics or tracking services.</p>
+      <h2>What you'll get</h2>
+      <p>New release announcements with what changed, occasional milestones, and launch news, including the upcoming Product Hunt launch. A few emails a year, never daily.</p>
 
-      <h2>What data stays on your device</h2>
-      <p>When you create a journal, a local encrypted SQLite database is created in your user data directory. All entries are encrypted with AES-256-GCM before they are written to the database. The plaintext of your entries never reaches disk in unencrypted form.</p>
-      <p>The database and its automatic backups remain entirely local. Mini Diarium does not sync or back up to any cloud service.</p>
+      <h2>How your email is handled</h2>
+      <p>The newsletter is delivered by Buttondown. When you subscribe, your address is stored by Buttondown and used only to send you this newsletter. Subscription confirms via double opt-in, and every email includes a one-click unsubscribe link.</p>
+      <p>The newsletter is separate from the Mini Diarium app. The app has no network client, stores nothing online, and does not connect to Buttondown or the newsletter.</p>
 
-      <h2>What you control</h2>
-      <p>You control your journal file location, backup frequency, and export destination. When you export entries (as JSON or Markdown), that file is stored wherever you choose.</p>
-      <p>You can delete your journal file and all backups at any time. Uninstalling Mini Diarium removes the application but does not delete your journal file or backups by default.</p>
+      <h2>Subscribe</h2>
+      <form class="newsletter-form newsletter-form--lg embeddable-buttondown-form" action="https://buttondown.com/api/emails/embed-subscribe/mini_diarium" method="post">
+        <label for="bd-email-page">Email address</label>
+        <input type="email" name="email" id="bd-email-page" placeholder="you@example.com" required />
+        <input type="submit" value="Subscribe" />
+        <span class="newsletter-powered">Powered by <a href="https://buttondown.com/refer/mini_diarium" target="_blank" rel="noopener noreferrer">Buttondown</a></span>
+      </form>
 
-      <h2>Third-party services</h2>
-      <p>The only external resources Mini Diarium's website loads are the SourceForge download badge and platform icons. These are external services with their own privacy policies. The Mini Diarium app itself connects to no external services.</p>
-
-      <h2>Newsletter</h2>
-      <p>This website offers an optional email newsletter, operated by Buttondown. If you subscribe, your email address is sent to and stored by Buttondown, which sends the newsletter on our behalf. Subscription uses double opt-in, and every email includes a one-click unsubscribe link. The newsletter is a website feature and is separate from the Mini Diarium app, which has no network client and does not connect to the newsletter or to Buttondown.</p>
-
-      <h2>Changes to this policy</h2>
-      <p>If this privacy policy changes, the updated version will be published at mini-diarium.com/privacy/ with an updated "Last updated" date.</p>
-
-      <h2>Contact</h2>
-      <p>For questions about this privacy policy, contact: <a href="mailto:minidiarium@gmail.com">minidiarium@gmail.com</a></p>
     </div>
   </div>
 </section>
