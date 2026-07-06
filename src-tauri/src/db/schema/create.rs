@@ -1,6 +1,7 @@
 use super::{DatabaseConnection, SCHEMA_VERSION};
 use crate::crypto::cipher;
-use aes_gcm::aead::rand_core::RngCore;
+use rand_core::OsRng;
+use rand_core::RngCore;
 use rusqlite::Connection;
 use zeroize::Zeroize;
 
@@ -48,7 +49,7 @@ pub fn create_database<P: AsRef<std::path::Path>>(
     password: String,
 ) -> Result<DatabaseConnection, String> {
     let mut master_key_bytes = [0u8; 32];
-    aes_gcm::aead::OsRng.fill_bytes(&mut master_key_bytes);
+    OsRng.fill_bytes(&mut master_key_bytes);
     let encryption_key =
         cipher::Key::from_slice(&master_key_bytes).ok_or("Invalid master key size")?;
 
@@ -85,7 +86,7 @@ pub fn create_database_auto<P: AsRef<std::path::Path>>(
     auto_key_bytes: &[u8; 32],
 ) -> Result<DatabaseConnection, String> {
     let mut master_key_bytes = [0u8; 32];
-    aes_gcm::aead::OsRng.fill_bytes(&mut master_key_bytes);
+    OsRng.fill_bytes(&mut master_key_bytes);
     let encryption_key =
         cipher::Key::from_slice(&master_key_bytes).ok_or("Invalid master key size")?;
 

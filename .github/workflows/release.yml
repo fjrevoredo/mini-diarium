@@ -109,7 +109,7 @@ jobs:
           toolchain: stable
 
       - name: Cache cargo dependencies
-        uses: actions/cache@27d5ce7f107fe9357f9df03efb73ab90386fccae # v5.0.5
+        uses: actions/cache@v6.1.0
         with:
           path: |
             ~/.cargo/bin/
@@ -145,7 +145,7 @@ jobs:
         run: rm -rf src-tauri/target/release/bundle
 
       - name: Build Tauri app
-        uses: tauri-apps/tauri-action@84b9d35b5fc46c1e45415bdb6144030364f7ebc5 # v0.6.2
+        uses: tauri-apps/tauri-action@v1.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
