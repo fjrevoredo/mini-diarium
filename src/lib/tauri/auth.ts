@@ -80,8 +80,7 @@ export interface KeypairFiles {
 }
 
 export type MultiAuthCredential =
-  | { type: 'password'; value: string }
-  | { type: 'keypair'; key_path: string };
+  { type: 'password'; value: string } | { type: 'keypair'; key_path: string };
 
 export async function listAuthMethods(): Promise<AuthMethodInfo[]> {
   return await invoke('list_auth_methods');
