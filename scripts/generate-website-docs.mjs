@@ -256,7 +256,7 @@ function isoDate(value) {
 function readSections() {
   const files = readdirSync(DOCS_SRC_DIR)
     .filter((fileName) => fileName.endsWith('.md') && !fileName.startsWith('_'))
-    .sort();
+    .sort((a, b) => a.localeCompare(b));
 
   const sections = files.map((fileName) => parseFrontMatter(path.join(DOCS_SRC_DIR, fileName)));
   const publishedSections = sections.filter((section) => !section.draft);

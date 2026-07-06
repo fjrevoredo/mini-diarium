@@ -229,7 +229,7 @@ function fileLastModified(filePath) {
 function readPosts() {
   const files = readdirSync(POSTS_DIR)
     .filter((fileName) => fileName.endsWith('.md'))
-    .sort();
+    .sort((a, b) => a.localeCompare(b));
 
   const posts = files.map((fileName) => parseFrontMatter(path.join(POSTS_DIR, fileName)));
   const publishedPosts = posts.filter((post) => !post.draft);

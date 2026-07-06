@@ -137,7 +137,7 @@ function listFilesRecursive(root, prefix = '') {
       files.push(relative);
     }
   }
-  return files.sort();
+  return files.sort((a, b) => a.localeCompare(b));
 }
 
 export function dirsHaveIdenticalContents(sourceDir, mirrorDir) {
