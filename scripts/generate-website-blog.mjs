@@ -113,6 +113,13 @@ const STATIC_PAGES = [
     summary:
       'A direct overview of what an encrypted journal app should do, how Mini Diarium handles offline storage, and why local-first ownership matters.',
   },
+  {
+    title: 'Newsletter',
+    url: `${SITE_URL}/newsletter/`,
+    filePath: path.join(WEBSITE_DIR, 'newsletter', 'index.html'),
+    summary:
+      "Mini Diarium's email newsletter: occasional new releases, milestones, and launch news for the encrypted offline journal app. No spam, unsubscribe anytime.",
+  },
 ];
 
 const REQUIRED_FIELDS = ['title', 'slug', 'description', 'date', 'updated', 'author', 'tags'];
@@ -222,7 +229,7 @@ function fileLastModified(filePath) {
 function readPosts() {
   const files = readdirSync(POSTS_DIR)
     .filter((fileName) => fileName.endsWith('.md'))
-    .sort();
+    .sort((a, b) => a.localeCompare(b));
 
   const posts = files.map((fileName) => parseFrontMatter(path.join(POSTS_DIR, fileName)));
   const publishedPosts = posts.filter((post) => !post.draft);
@@ -283,6 +290,15 @@ function buildFooter() {
   return `
 <footer class="footer">
   <div class="container">
+    <div class="footer-newsletter">
+      <p class="newsletter-pitch"><strong>Newsletter.</strong> New releases, milestones, and launch news. No spam, unsubscribe anytime.</p>
+      <form class="newsletter-form embeddable-buttondown-form" action="https://buttondown.com/api/emails/embed-subscribe/mini_diarium" method="post">
+        <label for="bd-email-footer">Email address</label>
+        <input type="email" name="email" id="bd-email-footer" placeholder="you@example.com" required />
+        <input type="submit" value="Subscribe" />
+        <span class="newsletter-powered">Powered by <a href="https://buttondown.com/refer/mini_diarium" target="_blank" rel="noopener noreferrer">Buttondown</a></span>
+      </form>
+    </div>
     <div class="footer-inner">
       <div class="footer-left">
         <img src="/assets/logo.svg" alt="" class="footer-logo" width="20" height="20" aria-hidden="true" />

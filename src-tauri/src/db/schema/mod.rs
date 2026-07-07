@@ -241,8 +241,8 @@ mod tests {
 
     #[test]
     fn test_create_and_auto_unlock() {
-        use aes_gcm::aead::rand_core::RngCore;
-        use aes_gcm::aead::OsRng;
+        use rand_core::OsRng;
+        use rand_core::RngCore;
         let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
         let db_path = tmp.path().to_path_buf();
         drop(tmp);
@@ -273,8 +273,8 @@ mod tests {
 
     #[test]
     fn test_auto_unlock_wrong_key_fails() {
-        use aes_gcm::aead::rand_core::RngCore;
-        use aes_gcm::aead::OsRng;
+        use rand_core::OsRng;
+        use rand_core::RngCore;
         let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
         let db_path = tmp.path().to_path_buf();
         drop(tmp);

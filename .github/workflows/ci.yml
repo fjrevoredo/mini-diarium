@@ -18,25 +18,26 @@ jobs:
     name: Lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7.0.0
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
-      - uses: oven-sh/setup-bun@v2
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
         with:
           bun-version: 1.2
 
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@4be7066ada62dd38de10e7b70166bc74ed198c30 # stable
         with:
+          toolchain: stable
           components: clippy, rustfmt
 
       - name: Cache bun dependencies
-        uses: actions/cache@v5.0.5
+        uses: actions/cache@v6.1.0
         with:
           path: ~/.bun/install/cache
           key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
           restore-keys: ${{ runner.os }}-bun-
 
       - name: Cache Rust artifacts
-        uses: Swatinem/rust-cache@v2
+        uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
         with:
           workspaces: src-tauri -> target
           cache-on-failure: true
@@ -76,7 +77,7 @@ jobs:
 
       - name: Cache D2 binary
         id: cache-d2
-        uses: actions/cache@v5.0.5
+        uses: actions/cache@v6.1.0
         with:
           path: ~/.local/bin/d2
           key: d2-v0.7.1-linux  # bump this key when upgrading D2
@@ -102,25 +103,26 @@ jobs:
     name: Test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7.0.0
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
-      - uses: oven-sh/setup-bun@v2
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
         with:
           bun-version: 1.2
 
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@4be7066ada62dd38de10e7b70166bc74ed198c30 # stable
         with:
+          toolchain: stable
           components: llvm-tools-preview
 
       - name: Cache bun dependencies
-        uses: actions/cache@v5.0.5
+        uses: actions/cache@v6.1.0
         with:
           path: ~/.bun/install/cache
           key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
           restore-keys: ${{ runner.os }}-bun-
 
       - name: Cache Rust artifacts
-        uses: Swatinem/rust-cache@v2
+        uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
         with:
           workspaces: src-tauri -> target
           cache-on-failure: true
@@ -137,7 +139,7 @@ jobs:
 
       - name: Cache Playwright Chromium
         id: cache-playwright
-        uses: actions/cache@v5.0.5
+        uses: actions/cache@v6.1.0
         with:
           path: ~/.cache/ms-playwright
           key: playwright-chromium-${{ hashFiles('bun.lock') }}
@@ -149,7 +151,7 @@ jobs:
 
       - name: Cache nextest binary
         id: cache-nextest
-        uses: actions/cache@v5.0.5
+        uses: actions/cache@v6.1.0
         with:
           path: ~/.cargo/bin/cargo-nextest
           key: nextest-Linux-v0.9  # bump this key when upgrading nextest
@@ -160,7 +162,7 @@ jobs:
 
       - name: Cache llvm-cov binary
         id: cache-llvm-cov
-        uses: actions/cache@v5.0.5
+        uses: actions/cache@v6.1.0
         with:
           path: ~/.cargo/bin/cargo-llvm-cov
           key: llvm-cov-Linux-v0.6  # bump when upgrading llvm-cov
@@ -198,27 +200,29 @@ jobs:
     needs: [lint, test]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v7.0.0
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
-      - uses: oven-sh/setup-bun@v2
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
         with:
           bun-version: 1.2
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
           node-version: 20
 
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@4be7066ada62dd38de10e7b70166bc74ed198c30 # stable
+        with:
+          toolchain: stable
 
       - name: Cache Rust artifacts
-        uses: Swatinem/rust-cache@v2
+        uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
         with:
           workspaces: src-tauri -> target
           cache-targets: false   # release+LTO artifacts too large; not incrementally reusable
           cache-on-failure: false
 
       - name: Cache bun dependencies
-        uses: actions/cache@v5.0.5
+        uses: actions/cache@v6.1.0
         with:
           path: ~/.bun/install/cache
           key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
@@ -235,14 +239,14 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Build Tauri app
-        uses: tauri-apps/tauri-action@v0.6.2
+        uses: tauri-apps/tauri-action@2d793bf2c8c505b9b76211601b09aab48922225d # v1.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CARGO_PROFILE_RELEASE_LTO: thin         # thin LTO for CI speed; release.yml uses full LTO
           CARGO_PROFILE_RELEASE_OPT_LEVEL: "2"    # opt-level 2 sufficient for CI validation
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: mini-diarium-ubuntu-latest
           path: |
@@ -251,7 +255,7 @@ jobs:
           if-no-files-found: ignore
 
       - name: Upload Linux binary for E2E tests
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: mini-diarium-linux-binary
           path: src-tauri/target/release/mini-diarium
@@ -265,17 +269,19 @@ jobs:
       matrix:
         os: [macos-latest, windows-latest]
     steps:
-      - uses: actions/checkout@v7.0.0
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
-      - uses: oven-sh/setup-bun@v2
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
         with:
           bun-version: 1.2
 
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
         with:
           node-version: 20
 
-      - uses: dtolnay/rust-toolchain@stable
+      - uses: dtolnay/rust-toolchain@4be7066ada62dd38de10e7b70166bc74ed198c30 # stable
+        with:
+          toolchain: stable
 
       - name: Fix cargo PATH (macOS arm64 workaround)
         if: runner.os == 'macOS'
@@ -285,14 +291,14 @@ jobs:
           echo "$(dirname "$(rustup which cargo)")" >> "$GITHUB_PATH"
 
       - name: Cache Rust artifacts
-        uses: Swatinem/rust-cache@v2
+        uses: Swatinem/rust-cache@e18b497796c12c097a38f9edb9d0641fb99eee32 # v2
         with:
           workspaces: src-tauri -> target
           cache-targets: false   # release+LTO artifacts too large; not incrementally reusable
           cache-on-failure: false
 
       - name: Cache bun dependencies
-        uses: actions/cache@v5.0.5
+        uses: actions/cache@v6.1.0
         with:
           path: ~/.bun/install/cache
           key: ${{ runner.os }}-bun-${{ hashFiles('bun.lock') }}
@@ -306,7 +312,7 @@ jobs:
         run: echo "JENKINS_URL=${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" >> "$GITHUB_ENV"
 
       - name: Build Tauri app
-        uses: tauri-apps/tauri-action@v0.6.2
+        uses: tauri-apps/tauri-action@2d793bf2c8c505b9b76211601b09aab48922225d # v1.0.0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           CARGO_PROFILE_RELEASE_LTO: thin         # thin LTO for CI speed; release.yml uses full LTO
@@ -319,7 +325,7 @@ jobs:
           find src-tauri/target -name "bundle_dmg.sh" -print -exec sed -n '1,260p' {} \;
 
       - name: Upload artifacts
-        uses: actions/upload-artifact@v7
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: mini-diarium-${{ matrix.os }}
           path: |
@@ -338,11 +344,11 @@ jobs:
       image: ghcr.io/flathub-infra/flatpak-github-actions:gnome-50
       options: --privileged
     steps:
-      - uses: actions/checkout@v7.0.0
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
       - name: Cache flatpak-builder-tools
         id: cache-fbt
-        uses: actions/cache@v5.0.5
+        uses: actions/cache@v6.1.0
         with:
           path: /tmp/flatpak-builder-tools
           key: flatpak-builder-tools-v1  # bump when you need to refresh the clone
@@ -366,7 +372,7 @@ jobs:
       - name: Validate AppStream metainfo
         run: appstreamcli validate data/linux/io.github.fjrevoredo.mini-diarium.metainfo.xml
 
-      - uses: flatpak/flatpak-github-actions/flatpak-builder@v6
+      - uses: flatpak/flatpak-github-actions/flatpak-builder@401fe28a8384095fc1531b9d320b292f0ee45adb # v6
         with:
           manifest-path: flatpak/io.github.fjrevoredo.mini-diarium.yml
           cache-key: flatpak-builder-${{ hashFiles('flatpak/**', 'src-tauri/Cargo.lock', 'bun.lock') }}
@@ -379,15 +385,15 @@ jobs:
     runs-on: ubuntu-latest
     needs: build-linux   # only needs Linux binary; decoupled from slow macOS/Windows builds
     steps:
-      - uses: actions/checkout@v7.0.0
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
 
-      - uses: oven-sh/setup-bun@v2
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
         with:
           bun-version: 1.2
 
       - name: Cache tauri-driver binary
         id: cache-tauri-driver
-        uses: actions/cache@v5.0.5
+        uses: actions/cache@v6.1.0
         with:
           path: ~/.cargo/bin/tauri-driver
           key: tauri-driver-Linux-v0.1   # bump this key when upgrading tauri-driver
@@ -395,7 +401,9 @@ jobs:
 
       - name: Install Rust toolchain (for tauri-driver install only)
         if: steps.cache-tauri-driver.outputs.cache-hit != 'true'
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@4be7066ada62dd38de10e7b70166bc74ed198c30 # stable
+        with:
+          toolchain: stable
 
       - name: Install tauri-driver
         if: steps.cache-tauri-driver.outputs.cache-hit != 'true'
@@ -414,7 +422,7 @@ jobs:
             librsvg2-dev
 
       - name: Download Linux binary
-        uses: actions/download-artifact@v8
+        uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           name: mini-diarium-linux-binary
           path: src-tauri/target/release/
