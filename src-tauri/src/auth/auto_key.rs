@@ -34,8 +34,8 @@ impl<'a> AutoKeyMethod<'a> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use aes_gcm::aead::rand_core::RngCore;
-    use aes_gcm::aead::OsRng;
+    use rand_core::OsRng;
+    use rand_core::RngCore;
 
     fn random_key() -> [u8; 32] {
         let mut k = [0u8; 32];

@@ -4,12 +4,13 @@ description: |
   SolidJS framework development skill for building reactive web applications with fine-grained reactivity.
   Use when working with SolidJS projects including: (1) Creating components with signals, stores, and effects,
   (2) Implementing reactive state management, (3) Using control flow components (Show, For, Switch/Match),
-  (4) Setting up routing with Solid Router, (5) Building full-stack apps with SolidStart,
-  (6) Data fetching with createResource, (7) Context API for shared state, (8) SSR/SSG configuration.
-  Triggers: solid, solidjs, solid-js, solid start, solidstart, createSignal, createStore, createEffect.
+  (4) Data fetching with createResource, (5) Context API for shared state.
+  Triggers: solid, solidjs, solid-js, createSignal, createStore, createEffect.
 ---
 
 # SolidJS Development
+
+> **Scope note for this repo:** Mini Diarium is a plain Vite SPA — no Solid Router, no SolidStart, no SSR/SSG. Skip the routing/SolidStart/SSR sections and references below; do not introduce those idioms here.
 
 SolidJS is a declarative JavaScript library for building user interfaces with fine-grained reactivity. Unlike virtual DOM frameworks, Solid compiles templates to real DOM nodes and updates them with fine-grained reactions.
 

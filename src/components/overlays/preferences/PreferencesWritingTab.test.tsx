@@ -83,8 +83,7 @@ describe('PreferencesWritingTab', () => {
     fireEvent.click(screen.getByRole('button', { name: /select none/i }));
 
     const latestCall = spy.mock.calls[spy.mock.calls.length - 1]?.[0] as
-      | Partial<prefState.Preferences>
-      | undefined;
+      Partial<prefState.Preferences> | undefined;
     expect(latestCall?.toolbarItems).toBeDefined();
     expect(latestCall?.toolbarItems?.every((item) => item.enabled === false)).toBe(true);
   });
