@@ -1,7 +1,8 @@
 use crate::crypto::cipher;
 use crate::db::schema::DatabaseConnection;
-use aes_gcm::aead::rand_core::RngCore;
 use log::{debug, error, info};
+use rand_core::OsRng;
+use rand_core::RngCore;
 use rusqlite;
 use std::path::Path;
 use zeroize::Zeroize;
@@ -26,7 +27,7 @@ pub(crate) fn migrate_v2_to_v3(
     info!("Migration v2→v3: backup created at {:?}", backup_path);
 
     let mut master_key_bytes = [0u8; 32];
-    aes_gcm::aead::OsRng.fill_bytes(&mut master_key_bytes);
+    OsRng.fill_bytes(&mut master_key_bytes);
 
     db.conn
         .execute_batch("BEGIN IMMEDIATE TRANSACTION")

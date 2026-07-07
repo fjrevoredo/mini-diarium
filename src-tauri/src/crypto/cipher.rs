@@ -1,8 +1,9 @@
-use aes_gcm::aead::rand_core::RngCore;
 use aes_gcm::{
-    aead::{Aead, KeyInit, OsRng},
+    aead::{Aead, KeyInit},
     Aes256Gcm, Nonce,
 };
+use rand_core::OsRng;
+use rand_core::RngCore;
 use zeroize::{Zeroize, ZeroizeOnDrop};
 
 /// Size of AES-256 key in bytes
@@ -88,11 +89,11 @@ pub fn encrypt(key: &Key, plaintext: &[u8]) -> Result<Vec<u8>, CipherError> {
 
     // Generate random nonce
     let nonce_bytes = generate_nonce();
-    let nonce = Nonce::from_slice(&nonce_bytes);
+    let nonce = Nonce::try_from(nonce_bytes.as_ref()).unwrap();
 
     // Encrypt the plaintext
     let ciphertext = cipher
-        .encrypt(nonce, plaintext)
+        .encrypt(&nonce, plaintext)
         .map_err(|e| CipherError::EncryptionFailed(e.to_string()))?;
 
     // Prepend nonce to ciphertext
@@ -123,14 +124,14 @@ pub fn decrypt(key: &Key, ciphertext: &[u8]) -> Result<Vec<u8>, CipherError> {
     let cipher = Aes256Gcm::new(key.as_bytes().into());
 
     // Extract nonce from the first 12 bytes
-    let nonce = Nonce::from_slice(&ciphertext[..NONCE_SIZE]);
+    let nonce = Nonce::try_from(&ciphertext[..NONCE_SIZE]).unwrap();
 
     // Extract actual ciphertext (everything after the nonce)
     let encrypted_data = &ciphertext[NONCE_SIZE..];
 
     // Decrypt the data
     let plaintext = cipher
-        .decrypt(nonce, encrypted_data)
+        .decrypt(&nonce, encrypted_data)
         .map_err(|e| CipherError::DecryptionFailed(e.to_string()))?;
 
     Ok(plaintext)

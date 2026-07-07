@@ -256,7 +256,7 @@ function isoDate(value) {
 function readSections() {
   const files = readdirSync(DOCS_SRC_DIR)
     .filter((fileName) => fileName.endsWith('.md') && !fileName.startsWith('_'))
-    .sort();
+    .sort((a, b) => a.localeCompare(b));
 
   const sections = files.map((fileName) => parseFrontMatter(path.join(DOCS_SRC_DIR, fileName)));
   const publishedSections = sections.filter((section) => !section.draft);
@@ -315,6 +315,15 @@ function buildFooter() {
   return `
 <footer class="footer">
   <div class="container">
+    <div class="footer-newsletter">
+      <p class="newsletter-pitch"><strong>Newsletter.</strong> New releases, milestones, and launch news. No spam, unsubscribe anytime.</p>
+      <form class="newsletter-form embeddable-buttondown-form" action="https://buttondown.com/api/emails/embed-subscribe/mini_diarium" method="post">
+        <label for="bd-email-footer">Email address</label>
+        <input type="email" name="email" id="bd-email-footer" placeholder="you@example.com" required />
+        <input type="submit" value="Subscribe" />
+        <span class="newsletter-powered">Powered by <a href="https://buttondown.com/refer/mini_diarium" target="_blank" rel="noopener noreferrer">Buttondown</a></span>
+      </form>
+    </div>
     <div class="footer-inner">
       <div class="footer-left">
         <img src="/assets/logo.svg" alt="" class="footer-logo" width="20" height="20" aria-hidden="true" />

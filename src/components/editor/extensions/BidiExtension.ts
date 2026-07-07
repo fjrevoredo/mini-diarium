@@ -57,9 +57,7 @@ export const BidiExtension = Extension.create({
     return {
       'Mod-Shift-d': () => {
         const paragraphDir = this.editor.getAttributes('paragraph').dir as
-          | string
-          | null
-          | undefined;
+          string | null | undefined;
         const headingDir = this.editor.getAttributes('heading').dir as string | null | undefined;
         const currentDir = paragraphDir ?? headingDir ?? null;
         const nextDir: 'rtl' | 'ltr' = currentDir === 'rtl' ? 'ltr' : 'rtl';
