@@ -26,13 +26,13 @@ export default defineConfig({
         '**/mockData.ts',
         'scripts/**',
       ],
-      // Backstop thresholds ~4 pts below measured values (2026-06-26: stmt 73.82%, branch 60.16%, fn 75.94%, line 73.60%).
+      // Backstop thresholds ~4 pts below measured values (2026-07-08: stmt 80.43%, branch 65.95%, fn 84.06%, line 81.51%).
       // These guard against regressions; raise them as coverage improves.
       thresholds: {
-        statements: 69,
-        branches: 56,
-        functions: 71,
-        lines: 69,
+        statements: 76,
+        branches: 62,
+        functions: 80,
+        lines: 77,
       },
     },
   },

@@ -66,9 +66,18 @@ describe('extractImageSourcesFromHtml', () => {
     expect(result.dataUrls).toEqual([PNG_DATA_URL]);
   });
 
-  it('does not throw on malformed HTML', () => {
-    expect(() => extractImageSourcesFromHtml('<img src="data:image/png;base64,abc')).not.toThrow();
-    expect(() => extractImageSourcesFromHtml('<<<not valid html>>>')).not.toThrow();
+  it('returns empty sources for malformed HTML (does not throw or emit garbage)', () => {
+    // Unterminated tag/attribute: the lenient parser drops the broken src rather
+    // than salvaging a partial data URL.
+    expect(extractImageSourcesFromHtml('<img src="data:image/png;base64,abc')).toEqual({
+      dataUrls: [],
+      filePaths: [],
+    });
+    // No <img> tags at all: empty sources, not a thrown error.
+    expect(extractImageSourcesFromHtml('<<<not valid html>>>')).toEqual({
+      dataUrls: [],
+      filePaths: [],
+    });
   });
 
   it('returns empty sources for plain text (no img tags)', () => {

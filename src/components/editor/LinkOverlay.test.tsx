@@ -518,7 +518,7 @@ describe('LinkOverlay — close behavior', () => {
     const cancelBtn = Array.from(document.querySelectorAll('button')).find(
       (b) => b.textContent === 'Cancel',
     ) as HTMLButtonElement;
-    expect(cancelBtn).toBeTruthy();
+    expect(cancelBtn).toBeInTheDocument();
     fireEvent.click(cancelBtn);
     expect(onClose).toHaveBeenCalled();
   });

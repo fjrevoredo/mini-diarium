@@ -1,9 +1,36 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { waitFor } from '@solidjs/testing-library';
 import { renderWithI18n } from '../../test/i18n-test-utils';
-import { resetUiState, setIsMoreMenuOpen, isSearchOpen } from '../../state/ui';
+import { mockTauriBarrel } from '../../test/mock-tauri';
+import {
+  resetUiState,
+  setIsMoreMenuOpen,
+  isSearchOpen,
+  selectedDate,
+  setSelectedDate,
+} from '../../state/ui';
 import { setPreferences, resetPreferences } from '../../state/preferences';
 
 const mockClose = vi.hoisted(() => vi.fn(() => Promise.resolve()));
+
+// Capture the real menu-event handlers MainLayout registers via listen(), and
+// stub the navigation wrapper so we can assert the date it is invoked with.
+const eventMocks = vi.hoisted(() => ({
+  navigatePreviousDay: vi.fn(),
+  listeners: new Map<string, (event: unknown) => void | Promise<void>>(),
+}));
+
+vi.mock('@tauri-apps/api/event', () => ({
+  listen: vi.fn(async (event: string, handler: (e: unknown) => void | Promise<void>) => {
+    eventMocks.listeners.set(event, handler);
+    return () => eventMocks.listeners.delete(event);
+  }),
+  emit: vi.fn(async () => {}),
+}));
+
+vi.mock('../../lib/tauri', () =>
+  mockTauriBarrel({ navigatePreviousDay: eventMocks.navigatePreviousDay }),
+);
 
 vi.mock('@tauri-apps/api/window', () => ({
   getCurrentWindow: () => ({ close: mockClose }),
@@ -68,5 +95,37 @@ describe('MainLayout global keydown guards', () => {
     );
 
     expect(isSearchOpen()).toBe(false);
+  });
+});
+
+describe('MainLayout menu navigation', () => {
+  beforeEach(() => {
+    resetUiState();
+    resetPreferences();
+    eventMocks.listeners.clear();
+    eventMocks.navigatePreviousDay.mockReset();
+  });
+
+  afterEach(() => {
+    resetUiState();
+    resetPreferences();
+  });
+
+  it('previous-day handler navigates from the CURRENT selected date, not the initial one', async () => {
+    eventMocks.navigatePreviousDay.mockResolvedValue('2024-01-19');
+
+    renderWithI18n(() => <MainLayout />);
+
+    // onMount registers the listeners asynchronously.
+    await waitFor(() => expect(eventMocks.listeners.has('menu-navigate-previous-day')).toBe(true));
+
+    // The user changes the selected date AFTER the listener was registered.
+    setSelectedDate('2024-01-20');
+
+    // Fire the menu event; the handler must read selectedDate() at call time.
+    await eventMocks.listeners.get('menu-navigate-previous-day')!(undefined);
+
+    expect(eventMocks.navigatePreviousDay).toHaveBeenCalledWith('2024-01-20');
+    await waitFor(() => expect(selectedDate()).toBe('2024-01-19'));
   });
 });

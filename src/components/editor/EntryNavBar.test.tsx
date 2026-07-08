@@ -153,14 +153,26 @@ describe('EntryNavBar direct jump', () => {
     expect(onGoTo).toHaveBeenCalledWith(0);
   });
 
-  it('does not crash when onGoTo is not provided', () => {
+  it('clicking an entry number button is a genuine no-op when onGoTo is not provided', () => {
+    const onPrev = vi.fn();
+    const onNext = vi.fn();
+    const onAdd = vi.fn();
     const { container } = renderWithI18n(() => (
-      <EntryNavBar total={2} index={0} onPrev={noop} onNext={noop} onAdd={noop} />
+      <EntryNavBar total={2} index={0} onPrev={onPrev} onNext={onNext} onAdd={onAdd} />
     ));
     const btn = container.querySelector(
       '[data-testid="entry-number-button-2"]',
     ) as HTMLButtonElement;
-    expect(() => btn.click()).not.toThrow();
+    btn.click();
+    // No other handler is accidentally fired, and the controlled selection is unchanged.
+    expect(onPrev).not.toHaveBeenCalled();
+    expect(onNext).not.toHaveBeenCalled();
+    expect(onAdd).not.toHaveBeenCalled();
+    expect(btn).not.toHaveAttribute('aria-current');
+    expect(container.querySelector('[data-testid="entry-number-button-1"]')).toHaveAttribute(
+      'aria-current',
+      'true',
+    );
   });
 });
 

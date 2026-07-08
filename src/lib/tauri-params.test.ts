@@ -8,9 +8,9 @@ import {
   saveEntry,
   getEntriesForDate,
   deleteEntryIfEmpty,
-  type DiaryEntry,
 } from './tauri';
 import { invoke } from '@tauri-apps/api/core';
+import { makeEntry } from '../test/fixtures';
 
 vi.mock('@tauri-apps/api/core', () => ({
   invoke: vi.fn(),
@@ -77,15 +77,7 @@ describe('Tauri Entry Command Parameter Names', () => {
   });
 
   it('createEntry should pass date parameter', async () => {
-    const mockEntry: DiaryEntry = {
-      id: 1,
-      date: '2024-01-15',
-      title: '',
-      text: '',
-      word_count: 0,
-      date_created: '2024-01-15T00:00:00Z',
-      date_updated: '2024-01-15T00:00:00Z',
-    };
+    const mockEntry = makeEntry();
     mockInvoke.mockResolvedValue(mockEntry);
 
     await createEntry('2024-01-15');

@@ -50,7 +50,7 @@ describe('ImagePickerOverlay', () => {
 
     expect(
       await screen.findByText('No saved images yet. Insert an image to save it here.'),
-    ).toBeTruthy();
+    ).toBeInTheDocument();
   });
 
   it('selects on first click without inserting', async () => {
@@ -68,8 +68,8 @@ describe('ImagePickerOverlay', () => {
     expect(onInsert).not.toHaveBeenCalled();
     expect(tile.getAttribute('aria-pressed')).toBe('true');
     expect(screen.getByRole('button', { name: 'Insert' })).toBeEnabled();
-    expect(screen.getByText('320 × 180')).toBeTruthy();
-    expect(screen.getByText('2026-06-01 to 2026-06-03')).toBeTruthy();
+    expect(screen.getByText('320 × 180')).toBeInTheDocument();
+    expect(screen.getByText('2026-06-01 to 2026-06-03')).toBeInTheDocument();
   });
 
   it('double click inserts the selected image', async () => {
@@ -134,7 +134,7 @@ describe('ImagePickerOverlay', () => {
     fireEvent.click(tile);
     fireEvent.click(screen.getByRole('button', { name: 'Insert' }));
 
-    expect(await screen.findByText('Failed to insert image.')).toBeTruthy();
+    expect(await screen.findByText('Failed to insert image.')).toBeInTheDocument();
     expect(onClose).not.toHaveBeenCalled();
   });
 
@@ -201,7 +201,7 @@ describe('ImagePickerOverlay', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Load more' }));
 
     const gifTile = (await screen.findByText('GIF')).closest('button') as HTMLButtonElement;
-    expect(gifTile).toBeTruthy();
+    expect(gifTile).toBeInTheDocument();
     expect(pngTile.getAttribute('aria-pressed')).toBe('true');
   });
 
@@ -253,13 +253,13 @@ describe('ImagePickerOverlay', () => {
     fireEvent.click(tile);
     fireEvent.click(screen.getByRole('button', { name: 'Preview' }));
 
-    expect(await screen.findByText('320 × 180')).toBeTruthy();
+    expect(await screen.findByText('320 × 180')).toBeInTheDocument();
     expect(screen.queryByText('PNG')).toBeNull();
     expect(screen.getByRole('button', { name: 'Insert' })).toBeEnabled();
 
     fireEvent.click(screen.getByRole('button', { name: 'Library' }));
 
-    expect(await screen.findByText('PNG')).toBeTruthy();
+    expect(await screen.findByText('PNG')).toBeInTheDocument();
     expect(screen.queryByText('320 × 180')).toBeNull();
   });
 });

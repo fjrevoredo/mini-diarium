@@ -3,7 +3,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, it, expect } from 'vitest';
 
-// Regression guard for https://github.com/your-org/mini-diarium/issues/163
+// Regression guard for https://github.com/fjrevoredo/mini-diarium/issues/163
 // The Tailwind reset (list-style: none) erases bullet/number markers globally.
 // These rules must explicitly restore them inside ProseMirror or lists appear blank.
 describe('editor.css list-style-type reset guard', () => {
