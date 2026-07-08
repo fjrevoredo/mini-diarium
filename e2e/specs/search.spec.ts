@@ -11,54 +11,21 @@
  *   - Run via: `bun run test:e2e`
  */
 
+import { connectToApp, authenticate, dismissOnboardingTour } from './helpers';
+
 const TEST_PASSWORD = 'e2e-test-password-123'; // same journal DB as diary-workflow.spec.ts
 const TEST_TITLE = 'Sunset picnic at the reservoir';
 const SEARCH_TERM = 'Sunset';
 
 describe('Search overlay', () => {
   it('finds an entry via search and opens it in the editor', async () => {
-    await browser.url('tauri://localhost');
-    await browser.pause(5000);
+    await connectToApp();
 
     // 1. Auth screen: create (clean mode) or unlock (stateful).
-    const authScreen = await browser.waitUntil(
-      async () => {
-        const create = await $('[data-testid="password-create-input"]')
-          .isDisplayed()
-          .catch(() => false);
-        const unlock = await $('[data-testid="password-unlock-input"]')
-          .isDisplayed()
-          .catch(() => false);
-        if (create) return 'create' as const;
-        if (unlock) return 'unlock' as const;
-        return false;
-      },
-      { timeout: 10000, timeoutMsg: 'Auth screen did not appear' },
-    );
-
-    if (authScreen === 'create') {
-      await $('[data-testid="password-create-input"]').setValue(TEST_PASSWORD);
-      await $('[data-testid="password-repeat-input"]').setValue(TEST_PASSWORD);
-      await $('[data-testid="create-journal-button"]').click();
-    } else {
-      await $('[data-testid="password-unlock-input"]').setValue(TEST_PASSWORD);
-      await $('[data-testid="unlock-journal-button"]').click();
-    }
+    await authenticate(TEST_PASSWORD);
 
     // 2. Dismiss the first-run onboarding tour if it appears.
-    const nextBtn = $('[data-testid="onboarding-next-btn"]');
-    const tourPresent = await nextBtn
-      .waitForExist({ timeout: 3000 })
-      .then(() => true)
-      .catch(() => false);
-    if (tourPresent) {
-      for (let i = 0; i < 3; i++) {
-        await browser.execute(() => {
-          (document.querySelector('[data-testid="onboarding-next-btn"]') as HTMLElement)?.click();
-        });
-      }
-      await nextBtn.waitForExist({ timeout: 5000, reverse: true });
-    }
+    await dismissOnboardingTour();
     await $('[data-testid="search-button"]').waitForClickable({ timeout: 10000 });
 
     // 3. Write a searchable entry. The editor is the default view after unlock.

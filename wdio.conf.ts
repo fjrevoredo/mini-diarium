@@ -9,7 +9,6 @@ import {
   writeFileSync,
 } from 'node:fs';
 import { spawn, spawnSync, type ChildProcess } from 'node:child_process';
-import type { Options } from '@wdio/types';
 
 type E2eMode = 'clean' | 'stateful';
 const e2eMode: E2eMode = process.env['E2E_MODE'] === 'stateful' ? 'stateful' : 'clean';
@@ -148,7 +147,10 @@ function removeTempDir(path: string | null): void {
   }
 }
 
-export const config: Options.Testrunner = {
+// wdio v9 config type. `WebdriverIO.Config` (not the v8 `Options.Testrunner`)
+// is what carries `capabilities` — it extends `Options.Testrunner` plus
+// `Capabilities.WithRequestedTestrunnerCapabilities`, which adds that field.
+export const config: WebdriverIO.Config = {
   specs: ['./e2e/specs/**/*.spec.ts'],
   maxInstances: 1,
 

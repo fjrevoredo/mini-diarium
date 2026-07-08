@@ -20,6 +20,8 @@
  * these dates, since the calendar initialises on the current month after each unlock.
  */
 
+import { connectToApp, authenticate, dismissOnboardingTour } from './helpers';
+
 const TEST_PASSWORD = 'e2e-test-password-123'; // same journal DB as diary-workflow.spec.ts
 
 const now = new Date();
@@ -77,37 +79,6 @@ describe('Multi-entry workflow', () => {
       await waitForSidebarExpanded(false, `Sidebar did not close after selecting ${date}`);
     };
 
-    const unlockOrCreate = async () => {
-      const authScreen = await browser.waitUntil(
-        async () => {
-          const create = await $('[data-testid="password-create-input"]')
-            .isDisplayed()
-            .catch(() => false);
-          const unlock = await $('[data-testid="password-unlock-input"]')
-            .isDisplayed()
-            .catch(() => false);
-          if (create) return 'create' as const;
-          if (unlock) return 'unlock' as const;
-          return false;
-        },
-        {
-          timeout: 10000,
-          timeoutMsg: 'Neither password-create-input nor password-unlock-input appeared',
-        },
-      );
-
-      if (authScreen === 'create') {
-        await $('[data-testid="password-create-input"]').setValue(TEST_PASSWORD);
-        await $('[data-testid="password-repeat-input"]').setValue(TEST_PASSWORD);
-        await $('[data-testid="create-journal-button"]').click();
-      } else {
-        await $('[data-testid="password-unlock-input"]').setValue(TEST_PASSWORD);
-        await $('[data-testid="unlock-journal-button"]').click();
-      }
-
-      await $('[data-testid="toggle-sidebar-button"]').waitForClickable({ timeout: 10000 });
-    };
-
     const waitForEntryButtons = async (expectedTotal: number, msg: string) => {
       await browser.waitUntil(
         async () => {
@@ -121,15 +92,20 @@ describe('Multi-entry workflow', () => {
 
     // ── connect ───────────────────────────────────────────────────────────────
 
-    await browser.url('tauri://localhost');
-    await browser.pause(5000);
+    await connectToApp();
 
     // ── Scenario A: Multi-entry persistence ──────────────────────────────────
     // Creates 2 entries on MULTI_DATE_1, locks the journal, unlocks it, and verifies
     // both entries survive: the counter still shows "/ 2" and the newest entry's content
     // is visible (loadEntriesForDate opens the newest entry after unlock).
 
-    await unlockOrCreate();
+    // Auth (create or unlock) then dismiss the onboarding tour if it appears.
+    // Calling dismissOnboardingTour() here (even though this spec usually hits the
+    // unlock path with no tour) removes a latent order-dependency: if this file ran
+    // first it would create the journal and the tour would block the flow.
+    await authenticate(TEST_PASSWORD);
+    await dismissOnboardingTour();
+    await $('[data-testid="toggle-sidebar-button"]').waitForClickable({ timeout: 10000 });
 
     // Open sidebar and navigate to the test date (in the previous month).
     await openSidebar();

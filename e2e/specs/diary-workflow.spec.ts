@@ -10,6 +10,8 @@
  *   - Run via: `bun run test:e2e`
  */
 
+import { connectToApp, authenticate, dismissOnboardingTour } from './helpers';
+
 const TEST_PASSWORD = 'e2e-test-password-123';
 const TEST_TITLE = 'E2E Test Entry';
 const TEST_BODY = 'This entry was written by the E2E test suite.';
@@ -25,54 +27,15 @@ const TEST_DATE = `${year}-${month}-${testDay}`;
 
 describe('Core journal workflow', () => {
   it('creates journal, writes an entry, locks, and verifies persistence after unlock', async () => {
-    // Navigate to the app — session connects before the window finishes loading its URL
-    await browser.url('tauri://localhost');
+    // 1. Navigate to the app; it auto-selects the pre-configured journal from
+    //    config.json and transitions directly to the auth screen.
+    await connectToApp();
 
-    // Give WebView2 time to render the UI
-    await browser.pause(5000);
-
-    // 1. App auto-selects the pre-configured journal from config.json
-    //    and transitions directly to the auth screen.
-
-    // 2. Auth screen is either:
-    //    - PasswordCreation (no journal yet — clean mode always, stateful first run)
-    //    - PasswordPrompt   (journal exists — stateful mode on second+ run)
-    const authScreen = await browser.waitUntil(
-      async () => {
-        const create = await $('[data-testid="password-create-input"]').isDisplayed().catch(() => false);
-        const unlock = await $('[data-testid="password-unlock-input"]').isDisplayed().catch(() => false);
-        if (create) return 'create' as const;
-        if (unlock) return 'unlock' as const;
-        return false;
-      },
-      { timeout: 10000, timeoutMsg: 'Neither password-create-input nor password-unlock-input appeared' },
-    );
-
-    if (authScreen === 'create') {
-      await $('[data-testid="password-create-input"]').setValue(TEST_PASSWORD);
-      await $('[data-testid="password-repeat-input"]').setValue(TEST_PASSWORD);
-      await $('[data-testid="create-journal-button"]').click();
-    } else {
-      await $('[data-testid="password-unlock-input"]').setValue(TEST_PASSWORD);
-      await $('[data-testid="unlock-journal-button"]').click();
-    }
+    // 2. Auth screen: create (no journal yet) or unlock (journal exists).
+    await authenticate(TEST_PASSWORD);
 
     // 3. Dismiss the first-run onboarding tour if it appears (only on journal creation).
-    //    The tour mounts asynchronously after startOnboarding() fires, so we first wait up
-    //    to 3 s for the button to appear in DOM before deciding if the tour is present.
-    //    Then browser.execute() fires native JS clicks (bypassing the spotlight overlay's
-    //    z-50 stacking interference with WebDriver's click-interception check), and
-    //    waitForExist reverse polls until the button is actually removed from DOM.
-    const nextBtn = $('[data-testid="onboarding-next-btn"]');
-    const tourPresent = await nextBtn.waitForExist({ timeout: 3000 }).then(() => true).catch(() => false);
-    if (tourPresent) {
-      for (let i = 0; i < 3; i++) {
-        await browser.execute(() => {
-          (document.querySelector('[data-testid="onboarding-next-btn"]') as HTMLElement)?.click();
-        });
-      }
-      await nextBtn.waitForExist({ timeout: 5000, reverse: true });
-    }
+    await dismissOnboardingTour();
 
     // 4. Journal created and unlocked → MainLayout is now visible
     //    Sidebar starts collapsed; open it to access the calendar, then click the target date

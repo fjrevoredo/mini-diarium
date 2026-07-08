@@ -3,8 +3,15 @@
     "target": "ES2020",
     "module": "CommonJS",
     "moduleResolution": "node",
-    "lib": ["ES2020"],
-    "types": ["node", "webdriverio/async"],
+    // node10 resolution is deprecated in TS 6+ but is what wdio's classic types
+    // layout resolves cleanly under; silence the removal warning until TS 7.
+    "ignoreDeprecations": "6.0",
+    // DOM is needed for the `document`/`window`/`HTMLElement` references inside
+    // `browser.execute()` callbacks, which run in the WebView context.
+    "lib": ["ES2020", "DOM"],
+    // wdio v9 ambient globals: `@wdio/globals/types` provides `browser`/`$`/`expect`
+    // (replaces the removed v7 `webdriverio/async`); `mocha` provides `describe`/`it`.
+    "types": ["node", "@wdio/globals/types", "mocha"],
     "skipLibCheck": true,
     "strict": true,
     "esModuleInterop": true,

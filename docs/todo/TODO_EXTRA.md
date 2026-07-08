@@ -274,14 +274,22 @@ Parent: [`TODO-0065: Remove redundant native menu items once in-app equivalents 
 
 ---
 
-## TODO-0064-01: E2E coverage for newly in-app-reachable actions
+## TODO-0064-01: E2E coverage for in-app-reachable actions (right-sized)
 
-Parent: [`TODO-0064: E2E coverage for newly in-app-reachable actions`](TODO.md)
+Parent: [`TODO-0064: E2E coverage for in-app-reachable actions (right-sized)`](TODO.md)
 
-**Why these actions have no E2E coverage today**: Preferences, Statistics, Import, Export, Previous/Next Day, and Go to Date are currently reachable only through the native OS menu bar (menu items defined in `src-tauri/src/menu.rs`). WebdriverIO drives the app via `tauri-driver` at the WebView level (`e2e/CLAUDE.md` "Test Runners") — it cannot interact with OS-native menu bars, so no spec exercises this menu today. This is the concrete "improved E2E testability" payoff named in the original TODO-0041.
+**Why these actions historically had no E2E coverage**: Preferences, Statistics, Import, Export, Previous/Next Day, and Go to Date were reachable only through the native OS menu bar (menu items defined in `src-tauri/src/menu.rs`). WebdriverIO drives the app via `tauri-driver` at the WebView level (`e2e/CLAUDE.md` "Test Runners") — it cannot interact with OS-native menu bars. As TODO-0061–0063 surface these actions inside the WebView (`HeaderMoreMenu` + Header controls), they become WebDriver-reachable. This is the concrete "improved E2E testability" payoff named in the original TODO-0041.
 
-**Dependency**: this TODO is gated on TODO-0061–0063 landing their `data-testid` hooks first — the new `⋮` overflow menu trigger/items (TODO-0061-01, TODO-0062-01) and the new day-navigation/date-title controls (TODO-0063-01) all need `data-testid` entries in the canonical table (`src/CLAUDE.md` "data-testid Attributes") before specs can select them; `e2e/CLAUDE.md` gotcha #(data-testid section) forbids adding a spec selector that isn't in that table first.
+**Scope discipline (why this is right-sized, not exhaustive)**: E2E runs the real Tauri binary through `tauri-driver` and is slow/serial (`maxInstances: 1`, one shared journal DB per run). It should cover representative full-stack user paths, not re-test every menu item. Overlay open/close logic without DB effects belongs in Vitest component tests; deep import/export behavior belongs in Rust tests. E2E overlay-open checks here are **shallow smoke checks** against the real WebView (portal rendering), not feature tests.
 
-**Suggested spec scope**: add to `e2e/specs/` — open the overflow menu and assert each overlay opens (Preferences, Statistics, Import, Export); click the day-nav arrows and assert the Header date title updates; click the date title and assert `GoToDateOverlay` opens. Follow the existing viewport constraints (`e2e/CLAUDE.md` gotchas #2–3, 800×660 clean-mode default) — no new `browser.setWindowSize()` calls.
+**Done in this task**: extracted the duplicated auth/onboarding boilerplate into `e2e/specs/helpers.ts` (`connectToApp`, `authenticate`, `dismissOnboardingTour`) and refactored `diary-workflow`, `search`, `multi-entry` to use it; added `e2e/specs/header-actions.spec.ts` covering `⋮` → Preferences (the one path reachable today via TODO-0061). Added `data-testid="preferences-overlay"` to `PreferencesOverlay.tsx` and the canonical table row.
+
+**Deferred, non-blocking (incrementally extended as controls land, not gated on them)**:
+- When **TODO-0062** lands, extend `header-actions.spec.ts` with a *single* assertion per new overlay — `⋮` → Statistics/Import/Export each *opens*, nothing more.
+- When **TODO-0063** lands, add day-nav (`◀`/`▶` changes the Header date title) and date-title → `GoToDateOverlay` opens.
+
+**Explicit non-goal**: no exhaustive per-item feature flows in E2E.
+
+**Constraints**: each new spec selector must exist in the canonical `data-testid` table (`src/CLAUDE.md`) first (`e2e/CLAUDE.md` data-testid section). Follow the viewport constraints (`e2e/CLAUDE.md` gotchas #2–3, 800×660 clean-mode default) — no new `browser.setWindowSize()` calls.
 
 ---

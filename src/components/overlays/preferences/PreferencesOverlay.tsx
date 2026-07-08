@@ -85,6 +85,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
         />
         <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
           <Dialog.Content
+            data-testid="preferences-overlay"
             class="relative w-full max-w-2xl sm:max-w-3xl lg:max-w-4xl rounded-lg bg-primary p-8 data-[expanded]:animate-in data-[closed]:animate-out data-[closed]:fade-out-0 data-[expanded]:fade-in-0 data-[closed]:zoom-out-95 data-[expanded]:zoom-in-95"
             style={{ 'box-shadow': 'var(--shadow-lg)' }}
             onKeyDown={handleKeyDown}

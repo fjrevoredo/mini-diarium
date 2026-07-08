@@ -168,6 +168,7 @@ These are used by E2E tests — **do not remove** from components.
 | `HeaderMoreMenu.tsx` | Overflow menu trigger (⋮) | `header-more-menu-trigger` |
 | `HeaderMoreMenu.tsx` | Overflow menu dropdown content | `header-more-menu-content` |
 | `HeaderMoreMenu.tsx` | Preferences item in overflow menu | `header-more-menu-preferences-item` |
+| `PreferencesOverlay.tsx` | Preferences dialog content | `preferences-overlay` |
 | `TitleEditor.tsx` | Title input | `title-input` |
 | `Calendar.tsx` | Each day button | `calendar-day-YYYY-MM-DD` |
 | `EntryNavBar.tsx` | Nav bar container | `entry-nav-bar` |
