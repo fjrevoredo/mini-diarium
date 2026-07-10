@@ -1302,6 +1302,7 @@ mod tests {
             date_created: String::new(),
             date_updated: String::new(),
             metadata: None,
+            locked: false,
         };
 
         let resolved = resolve_image_refs_in_entries(&db, vec![entry]).unwrap();
@@ -1333,6 +1334,7 @@ mod tests {
             date_created: String::new(),
             date_updated: String::new(),
             metadata: None,
+            locked: false,
         };
 
         let resolved = resolve_image_refs_in_entries(&db, vec![entry]).unwrap();
@@ -1412,6 +1414,7 @@ mod tests {
             date_created: String::new(),
             date_updated: String::new(),
             metadata: None,
+            locked: false,
         };
 
         let resolved = resolve_image_refs_in_entries(&db, vec![entry]).unwrap();

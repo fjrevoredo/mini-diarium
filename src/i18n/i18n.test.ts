@@ -88,6 +88,11 @@ describe('mapTauriError', () => {
     expect(result).toBe(en.errors.journalNotUnlocked);
   });
 
+  it('maps "entry is locked" → errors.entryLocked', () => {
+    const result = mapTauriError('entry is locked', defaultT);
+    expect(result).toBe(en.errors.entryLocked);
+  });
+
   it('maps last auth removal → errors.cannotRemoveLastAuth', () => {
     const result = mapTauriError('cannot remove last auth method', defaultT);
     expect(result).toBe(en.errors.cannotRemoveLastAuth);

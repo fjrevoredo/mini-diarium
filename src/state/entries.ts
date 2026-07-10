@@ -1,13 +1,33 @@
 import { createSignal } from 'solid-js';
+import { getLockedEntryDates } from '../lib/tauri';
 
 // List of all entry dates
 const [entryDates, setEntryDates] = createSignal<string[]>([]);
 
+// Dates (YYYY-MM-DD) that have at least one locked entry — feeds calendar/timeline indicators.
+const [lockedDates, setLockedDates] = createSignal<string[]>([]);
+
+// Monotonic counter bumped on every lock toggle so resources keyed on it refetch.
+const [lockVersion, setLockVersion] = createSignal(0);
+
 // Save state
 const [isSaving, setIsSaving] = createSignal(false);
 
+/** Refreshes the set of dates that have locked entries and bumps the lock version. */
+export async function refreshLockedDates(): Promise<void> {
+  try {
+    // `?? []` guards the string[] signal against a null/undefined IPC result.
+    setLockedDates((await getLockedEntryDates()) ?? []);
+  } catch {
+    // Non-fatal: indicators are cosmetic. Leave the previous set in place.
+  }
+  setLockVersion((v) => v + 1);
+}
+
 export function resetEntriesState(): void {
   setEntryDates([]);
+  setLockedDates([]);
+  setLockVersion(0);
   setIsSaving(false);
 }
 
@@ -25,4 +45,12 @@ export async function executeCleanupCallbacks(): Promise<void> {
   }
 }
 
-export { entryDates, setEntryDates, isSaving, setIsSaving };
+export {
+  entryDates,
+  setEntryDates,
+  lockedDates,
+  setLockedDates,
+  lockVersion,
+  isSaving,
+  setIsSaving,
+};

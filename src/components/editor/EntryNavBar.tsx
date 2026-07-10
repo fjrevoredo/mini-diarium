@@ -1,4 +1,5 @@
 import { For, Show } from 'solid-js';
+import { Lock, Unlock } from 'lucide-solid';
 import { useI18n } from '../../i18n';
 
 interface EntryNavBarProps {
@@ -13,6 +14,10 @@ interface EntryNavBarProps {
   onDelete?: () => void;
   deleteDisabled?: boolean;
   deleteTitle?: string;
+  onToggleLock?: () => void;
+  locked?: boolean;
+  lockDisabled?: boolean;
+  lockTitle?: string;
 }
 
 export function EntryNavBar(props: EntryNavBarProps) {
@@ -59,6 +64,21 @@ export function EntryNavBar(props: EntryNavBarProps) {
         </div>
       </Show>
       <div class="flex items-center gap-2 ml-auto">
+        <Show when={props.onToggleLock}>
+          <button
+            data-testid="entry-lock-button"
+            onClick={() => props.onToggleLock!()}
+            disabled={props.lockDisabled}
+            title={props.lockTitle}
+            aria-pressed={props.locked ? 'true' : 'false'}
+            class="px-2 py-0.5 rounded hover:bg-hover text-tertiary disabled:opacity-30"
+            aria-label={
+              props.lockTitle ?? (props.locked ? t('editor.unlockEntry') : t('editor.lockEntry'))
+            }
+          >
+            {props.locked ? <Lock size={16} /> : <Unlock size={16} />}
+          </button>
+        </Show>
         <Show when={props.total > 1 && props.onDelete}>
           <button
             data-testid="entry-delete-button"

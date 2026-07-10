@@ -7,6 +7,8 @@ interface TitleEditorProps {
   onEnter?: () => void;
   placeholder?: string;
   spellCheck?: boolean;
+  /** When true the title input is read-only and does not auto-focus on mount (TODO-0071). */
+  readOnly?: boolean;
 }
 
 export default function TitleEditor(props: TitleEditorProps) {
@@ -27,9 +29,9 @@ export default function TitleEditor(props: TitleEditorProps) {
     props.onInput?.(target.value);
   };
 
-  // Focus on mount
+  // Focus on mount — skipped when read-only so a locked entry doesn't steal focus.
   createEffect(() => {
-    inputRef?.focus();
+    if (!props.readOnly) inputRef?.focus();
   });
 
   return (
@@ -40,6 +42,7 @@ export default function TitleEditor(props: TitleEditorProps) {
       value={props.value}
       onInput={handleInput}
       onKeyDown={handleKeyDown}
+      readOnly={props.readOnly}
       placeholder={props.placeholder || t('editor.titlePlaceholder')}
       spellcheck={props.spellCheck ?? true}
       dir="auto"

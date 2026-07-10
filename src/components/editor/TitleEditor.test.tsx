@@ -73,4 +73,18 @@ describe('TitleEditor component', () => {
     const input2 = screen.getByPlaceholderText(/title/i) as HTMLInputElement;
     expect(input2.getAttribute('spellcheck')).toBe('true');
   });
+
+  it('is read-only and does not auto-focus when readOnly is set', () => {
+    renderWithI18n(() => <TitleEditor value="Locked" readOnly={true} />);
+    const input = screen.getByPlaceholderText(/title/i) as HTMLInputElement;
+    expect(input.readOnly).toBe(true);
+    expect(document.activeElement).not.toBe(input);
+  });
+
+  it('auto-focuses and is editable when readOnly is not set', () => {
+    renderWithI18n(() => <TitleEditor value="Open" />);
+    const input = screen.getByPlaceholderText(/title/i) as HTMLInputElement;
+    expect(input.readOnly).toBe(false);
+    expect(document.activeElement).toBe(input);
+  });
 });

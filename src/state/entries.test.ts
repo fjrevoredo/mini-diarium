@@ -1,0 +1,57 @@
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+const mocks = vi.hoisted(() => ({
+  getLockedEntryDates: vi.fn<() => Promise<string[]>>(),
+}));
+
+vi.mock('../lib/tauri', async () => {
+  const actual = await vi.importActual<typeof import('../lib/tauri')>('../lib/tauri');
+  return { ...actual, getLockedEntryDates: mocks.getLockedEntryDates };
+});
+
+import {
+  lockedDates,
+  setLockedDates,
+  lockVersion,
+  refreshLockedDates,
+  resetEntriesState,
+  setEntryDates,
+  entryDates,
+} from './entries';
+
+describe('entries state — lock signals', () => {
+  beforeEach(() => {
+    mocks.getLockedEntryDates.mockReset();
+    resetEntriesState();
+  });
+
+  it('refreshLockedDates loads locked dates and bumps lockVersion', async () => {
+    mocks.getLockedEntryDates.mockResolvedValue(['2024-01-01', '2024-02-02']);
+    const before = lockVersion();
+    await refreshLockedDates();
+    expect(lockedDates()).toEqual(['2024-01-01', '2024-02-02']);
+    expect(lockVersion()).toBe(before + 1);
+  });
+
+  it('refreshLockedDates keeps the previous set but still bumps version on error', async () => {
+    setLockedDates(['2024-03-03']);
+    mocks.getLockedEntryDates.mockRejectedValue(new Error('locked'));
+    const before = lockVersion();
+    await refreshLockedDates();
+    expect(lockedDates()).toEqual(['2024-03-03']);
+    expect(lockVersion()).toBe(before + 1);
+  });
+
+  it('resetEntriesState clears locked dates, entry dates, and resets lockVersion', async () => {
+    setEntryDates(['2024-01-01']);
+    setLockedDates(['2024-01-01']);
+    mocks.getLockedEntryDates.mockResolvedValue([]);
+    await refreshLockedDates(); // bump version above 0
+    expect(lockVersion()).toBeGreaterThan(0);
+
+    resetEntriesState();
+    expect(entryDates()).toEqual([]);
+    expect(lockedDates()).toEqual([]);
+    expect(lockVersion()).toBe(0);
+  });
+});

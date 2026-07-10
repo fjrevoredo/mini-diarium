@@ -20,8 +20,8 @@ vi.mock('../../lib/tauri', async () => {
 import Timeline from './Timeline';
 
 const ENTRIES: TimelineEntry[] = [
-  { id: 2, date: '2026-02-01', title: 'Second entry', preview: 'A later day' },
-  { id: 1, date: '2026-01-01', title: 'First entry', preview: 'The beginning' },
+  { id: 2, date: '2026-02-01', title: 'Second entry', preview: 'A later day', locked: false },
+  { id: 1, date: '2026-01-01', title: 'First entry', preview: 'The beginning', locked: false },
 ];
 
 describe('Timeline', () => {
@@ -76,5 +76,20 @@ describe('Timeline', () => {
     await waitFor(() => {
       expect(screen.getByText('Untitled')).toBeInTheDocument();
     });
+  });
+
+  it('renders a passive lock indicator only for locked entries', async () => {
+    mocks.getTimelineEntries.mockResolvedValue([
+      { id: 2, date: '2026-02-01', title: 'Locked one', preview: 'x', locked: true },
+      { id: 1, date: '2026-01-01', title: 'Open one', preview: 'y', locked: false },
+    ]);
+    renderWithI18n(() => <Timeline />);
+    await waitFor(() => {
+      expect(screen.getByText('Locked one')).toBeInTheDocument();
+    });
+    const indicators = screen.getAllByTestId('timeline-lock-indicator');
+    expect(indicators).toHaveLength(1);
+    // The indicator is a non-interactive badge, not a button.
+    expect(indicators[0].tagName).not.toBe('BUTTON');
   });
 });

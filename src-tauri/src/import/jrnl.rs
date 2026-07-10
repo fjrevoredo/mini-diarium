@@ -83,6 +83,7 @@ pub fn parse_jrnl_json(json: &str) -> Result<Vec<DiaryEntry>, String> {
             date_created: now.clone(),
             date_updated: now.clone(),
             metadata: None,
+            locked: false,
         });
     }
 

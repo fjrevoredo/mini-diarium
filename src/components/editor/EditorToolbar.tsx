@@ -52,6 +52,8 @@ interface EditorToolbarProps {
   onImportMarkdown?: () => void;
   entryMetadata?: EntryMetadata | null;
   onEntryMetadataChange?: (meta: EntryMetadata | null) => void;
+  /** When true the entry is locked (read-only): all formatting controls are disabled. */
+  locked?: boolean;
 }
 
 export default function EditorToolbar(props: EditorToolbarProps) {
@@ -558,7 +560,13 @@ export default function EditorToolbar(props: EditorToolbarProps) {
         role="toolbar"
         data-tour-target="toolbar"
         aria-label={t('editor.toolbar.aria')}
-        class="flex flex-wrap items-center gap-1 border-b border-primary bg-tertiary px-3 py-2 sticky top-0 z-10 rounded-t-lg"
+        aria-disabled={props.locked ? 'true' : undefined}
+        classList={{
+          'flex flex-wrap items-center gap-1 border-b border-primary bg-tertiary px-3 py-2 sticky top-0 z-10 rounded-t-lg': true,
+          // Locked entries are read-only: block all pointer interaction with formatting
+          // controls and dim the toolbar so the read-only state is visible (TODO-0071).
+          'pointer-events-none opacity-50': !!props.locked,
+        }}
       >
         {/* Hidden inputs — always rendered so refs are valid for click triggers */}
         <input

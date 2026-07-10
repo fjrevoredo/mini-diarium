@@ -34,6 +34,7 @@
     "title": "Cronologia",
     "empty": "Ancora nessuna voce.",
     "untitled": "Senza titolo",
+    "lockedIndicator": "Voce bloccata",
     "openEntry": "Apri la voce del {{ date }}"
   },
   "calendar": {
@@ -70,6 +71,7 @@
     "openPicker": "Apri selettore mese",
     "closePicker": "Chiudi selettore mese",
     "hasEntry": ", ha una voce",
+    "hasLockedEntry": ", ha una voce bloccata",
     "monthYearAria": "{{ name }} {{ year }}"
   },
   "auth": {
@@ -206,6 +208,9 @@
     "nextEntry": "Voce successiva",
     "goToEntry": "Vai alla voce {{ number }}",
     "deleteEntry": "Elimina voce",
+    "lockEntry": "Blocca voce",
+    "unlockEntry": "Sblocca voce",
+    "entryLockedHint": "Questa voce è bloccata. Sbloccala per apportare modifiche.",
     "addEntry": "Aggiungi voce",
     "addEntryCreating": "Creazione voce…",
     "addEntryHint": "Scrivi qualcosa prima per aggiungere un'altra voce di questo giorno",
@@ -599,6 +604,7 @@
     "incorrectPassword": "Password errata.",
     "decryptionFailed": "Impossibile decifrare. Il file chiave potrebbe essere errato o i dati potrebbero essere danneggiati.",
     "journalNotUnlocked": "Sblocca prima il tuo diario.",
+    "entryLocked": "Questa voce è bloccata. Sbloccala per apportare modifiche.",
     "cannotRemoveLastAuth": "Impossibile rimuovere l'ultimo metodo di autenticazione.",
     "cannotReadKeyFile": "Impossibile leggere il file chiave. Verifica che il file esista e che tu abbia il permesso di leggerlo.",
     "cannotSaveKeyFile": "Impossibile salvare il file chiave. Verifica i permessi della cartella.",

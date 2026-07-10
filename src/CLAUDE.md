@@ -177,6 +177,9 @@ These are used by E2E tests — **do not remove** from components.
 | `EntryNavBar.tsx` | Next entry button (`→`) | `entry-next-button` |
 | `EntryNavBar.tsx` | Delete entry button (`−`) | `entry-delete-button` |
 | `EntryNavBar.tsx` | Add entry button (`+`) | `entry-add-button` |
+| `EntryNavBar.tsx` | Lock/unlock entry button; `aria-pressed` reflects locked state | `entry-lock-button` |
+| `Timeline.tsx` | Passive lock indicator on a locked entry's row | `timeline-lock-indicator` |
+| `Calendar.tsx` | Passive lock glyph on a day with a locked entry | `calendar-lock-YYYY-MM-DD` |
 
 ## Gotchas and Pitfalls
 

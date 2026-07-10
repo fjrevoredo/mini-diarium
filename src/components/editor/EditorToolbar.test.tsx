@@ -803,3 +803,23 @@ describe('EditorToolbar link button — visibility', () => {
     expect(btn.className).toContain('btn-active');
   });
 });
+
+describe('EditorToolbar — locked (read-only) state', () => {
+  it('dims the toolbar and blocks pointer interaction when locked', () => {
+    const { getByRole } = renderWithI18n(() => (
+      <EditorToolbar editor={makeEditorMock()} locked={true} />
+    ));
+    const toolbar = getByRole('toolbar');
+    expect(toolbar.getAttribute('aria-disabled')).toBe('true');
+    expect(toolbar.className).toContain('pointer-events-none');
+  });
+
+  it('does not disable the toolbar when not locked', () => {
+    const { getByRole } = renderWithI18n(() => (
+      <EditorToolbar editor={makeEditorMock()} locked={false} />
+    ));
+    const toolbar = getByRole('toolbar');
+    expect(toolbar.getAttribute('aria-disabled')).toBeNull();
+    expect(toolbar.className).not.toContain('pointer-events-none');
+  });
+});

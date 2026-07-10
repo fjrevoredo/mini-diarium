@@ -19,6 +19,8 @@ import { mapTauriError } from '../../lib/errors';
 
 interface EntryTagsProps {
   entryId: number;
+  /** When true the entry is locked: adding/removing tags is disabled (TODO-0071). */
+  locked?: boolean;
 }
 
 export default function EntryTags(props: EntryTagsProps) {
@@ -43,6 +45,12 @@ export default function EntryTags(props: EntryTagsProps) {
   createEffect(() => {
     const id = props.entryId;
     void loadEntryTags(id);
+  });
+
+  // If the entry becomes locked while the add-tag dropdown is open, close it so its
+  // outside-click listener is torn down and no stale mutation UI remains.
+  createEffect(() => {
+    if (props.locked) setIsDropdownOpen(false);
   });
 
   const loadEntryTags = async (id: number) => {
@@ -163,86 +171,90 @@ export default function EntryTags(props: EntryTagsProps) {
             >
               {tag.name}
             </button>
-            <button
-              onClick={() => void handleRemoveTag(tag.id)}
-              class="text-tertiary hover:text-primary leading-none"
-              aria-label={`Remove tag ${tag.name}`}
-              type="button"
-            >
-              ×
-            </button>
+            <Show when={!props.locked}>
+              <button
+                onClick={() => void handleRemoveTag(tag.id)}
+                class="text-tertiary hover:text-primary leading-none"
+                aria-label={`Remove tag ${tag.name}`}
+                type="button"
+              >
+                ×
+              </button>
+            </Show>
           </span>
         )}
       </For>
 
-      <div class="relative">
-        <button
-          data-tag-add-button
-          onClick={() => setIsDropdownOpen((o) => !o)}
-          class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 border border-dashed border-primary text-tertiary hover:text-secondary hover:border-secondary transition-colors"
-          title={t('tags.addTag')}
-          type="button"
-        >
-          + {t('tags.addTag')}
-        </button>
-
-        <Show when={isDropdownOpen()}>
-          <div
-            ref={(el) => {
-              dropdownRef = el;
-            }}
-            class="absolute left-0 top-full z-50 mt-1 min-w-48 rounded-md border border-primary bg-secondary shadow-lg"
+      <Show when={!props.locked}>
+        <div class="relative">
+          <button
+            data-tag-add-button
+            onClick={() => setIsDropdownOpen((o) => !o)}
+            class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 border border-dashed border-primary text-tertiary hover:text-secondary hover:border-secondary transition-colors"
+            title={t('tags.addTag')}
+            type="button"
           >
-            <div class="p-2 border-b border-primary">
-              <input
-                ref={(el) => {
-                  inputRef = el;
-                }}
-                type="text"
-                value={newTagName()}
-                onInput={(e) => setNewTagName(e.currentTarget.value)}
-                onKeyDown={handleInputKeyDown}
-                placeholder={t('tags.newTag')}
-                class="w-full rounded px-2 py-1 text-xs bg-primary text-primary border border-primary focus:outline-none focus:border-secondary"
-              />
-            </div>
-            <div class="max-h-40 overflow-y-auto">
-              <Show
-                when={filteredTags().length > 0 || newTagName().trim()}
-                fallback={<p class="px-3 py-2 text-xs text-tertiary">{t('tags.noTags')}</p>}
-              >
-                <For each={filteredTags()}>
-                  {(tag) => (
+            + {t('tags.addTag')}
+          </button>
+
+          <Show when={isDropdownOpen()}>
+            <div
+              ref={(el) => {
+                dropdownRef = el;
+              }}
+              class="absolute left-0 top-full z-50 mt-1 min-w-48 rounded-md border border-primary bg-secondary shadow-lg"
+            >
+              <div class="p-2 border-b border-primary">
+                <input
+                  ref={(el) => {
+                    inputRef = el;
+                  }}
+                  type="text"
+                  value={newTagName()}
+                  onInput={(e) => setNewTagName(e.currentTarget.value)}
+                  onKeyDown={handleInputKeyDown}
+                  placeholder={t('tags.newTag')}
+                  class="w-full rounded px-2 py-1 text-xs bg-primary text-primary border border-primary focus:outline-none focus:border-secondary"
+                />
+              </div>
+              <div class="max-h-40 overflow-y-auto">
+                <Show
+                  when={filteredTags().length > 0 || newTagName().trim()}
+                  fallback={<p class="px-3 py-2 text-xs text-tertiary">{t('tags.noTags')}</p>}
+                >
+                  <For each={filteredTags()}>
+                    {(tag) => (
+                      <button
+                        onClick={() => void handleAddExistingTag(tag)}
+                        class="w-full px-3 py-1.5 text-left text-xs text-primary hover:bg-tertiary"
+                        type="button"
+                      >
+                        {tag.name}
+                      </button>
+                    )}
+                  </For>
+                  <Show
+                    when={
+                      newTagName().trim() &&
+                      !allTags().some(
+                        (t) => t.name.toLowerCase() === newTagName().trim().toLowerCase(),
+                      )
+                    }
+                  >
                     <button
-                      onClick={() => void handleAddExistingTag(tag)}
-                      class="w-full px-3 py-1.5 text-left text-xs text-primary hover:bg-tertiary"
+                      onClick={() => void handleCreateTag()}
+                      class="w-full px-3 py-1.5 text-left text-xs text-accent hover:bg-tertiary"
                       type="button"
                     >
-                      {tag.name}
+                      {t('tags.create', { name: newTagName().trim() })}
                     </button>
-                  )}
-                </For>
-                <Show
-                  when={
-                    newTagName().trim() &&
-                    !allTags().some(
-                      (t) => t.name.toLowerCase() === newTagName().trim().toLowerCase(),
-                    )
-                  }
-                >
-                  <button
-                    onClick={() => void handleCreateTag()}
-                    class="w-full px-3 py-1.5 text-left text-xs text-accent hover:bg-tertiary"
-                    type="button"
-                  >
-                    {t('tags.create', { name: newTagName().trim() })}
-                  </button>
+                  </Show>
                 </Show>
-              </Show>
+              </div>
             </div>
-          </div>
-        </Show>
-      </div>
+          </Show>
+        </div>
+      </Show>
 
       <button
         onClick={() => setIsTagManagerOpen(true)}

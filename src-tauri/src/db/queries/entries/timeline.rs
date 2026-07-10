@@ -51,6 +51,8 @@ pub struct TimelineRow {
     pub date: String,
     pub title: String,
     pub preview: String,
+    /// UX-only per-entry lock flag (plaintext column; cheap to read here).
+    pub locked: bool,
 }
 
 /// Newest-first timeline query. Decrypts only title and preview_enc.
@@ -66,7 +68,7 @@ pub fn get_entries_for_timeline(db: &DatabaseConnection) -> Result<Vec<TimelineR
             // for entries that have a pre-computed preview.
             "SELECT id, date, title_encrypted, \
                     CASE WHEN preview_enc IS NOT NULL THEN NULL ELSE text_encrypted END, \
-                    preview_enc \
+                    preview_enc, locked \
              FROM entries ORDER BY date DESC, id DESC",
         )
         .map_err(|e| format!("Failed to prepare timeline query: {}", e))?;
@@ -79,37 +81,60 @@ pub fn get_entries_for_timeline(db: &DatabaseConnection) -> Result<Vec<TimelineR
                 row.get::<_, Vec<u8>>(2)?,
                 row.get::<_, Option<Vec<u8>>>(3)?,
                 row.get::<_, Option<Vec<u8>>>(4)?,
+                row.get::<_, bool>(5)?,
             ))
         })
         .map_err(|e| format!("Failed to query timeline: {}", e))?
         .collect::<Result<Vec<_>, _>>()
         .map_err(|e| format!("Failed to read timeline row: {}", e))?
         .into_iter()
-        .map(|(id, date, title_enc, text_enc_opt, preview_enc_opt)| {
-            let title = crate::db::queries::decrypt_utf8(db.key(), &title_enc, "title")?;
-            let preview = match preview_enc_opt {
-                Some(enc) => crate::db::queries::decrypt_utf8(db.key(), &enc, "preview")?,
-                None => {
-                    let text_enc = text_enc_opt.ok_or_else(|| {
-                        "text_encrypted unexpectedly NULL for legacy entry".to_string()
-                    })?;
-                    preview_from_html(&crate::db::queries::decrypt_utf8(
-                        db.key(),
-                        &text_enc,
-                        "text",
-                    )?)
-                }
-            };
-            Ok(TimelineRow {
-                id,
-                date,
-                title,
-                preview,
-            })
-        })
+        .map(
+            |(id, date, title_enc, text_enc_opt, preview_enc_opt, locked)| {
+                let title = crate::db::queries::decrypt_utf8(db.key(), &title_enc, "title")?;
+                let preview = match preview_enc_opt {
+                    Some(enc) => crate::db::queries::decrypt_utf8(db.key(), &enc, "preview")?,
+                    None => {
+                        let text_enc = text_enc_opt.ok_or_else(|| {
+                            "text_encrypted unexpectedly NULL for legacy entry".to_string()
+                        })?;
+                        preview_from_html(&crate::db::queries::decrypt_utf8(
+                            db.key(),
+                            &text_enc,
+                            "text",
+                        )?)
+                    }
+                };
+                Ok(TimelineRow {
+                    id,
+                    date,
+                    title,
+                    preview,
+                    locked,
+                })
+            },
+        )
         .collect::<Result<Vec<_>, String>>()?;
 
     Ok(rows)
+}
+
+/// Returns the distinct dates (YYYY-MM-DD) that have at least one locked entry.
+///
+/// Feeds the calendar's passive lock indicator. Reads only the plaintext `locked`
+/// column — no decryption needed.
+pub fn get_locked_entry_dates(db: &DatabaseConnection) -> Result<Vec<String>, String> {
+    let mut stmt = db
+        .conn()
+        .prepare("SELECT DISTINCT date FROM entries WHERE locked = 1 ORDER BY date")
+        .map_err(|e| format!("Failed to prepare locked-dates query: {}", e))?;
+
+    let dates = stmt
+        .query_map([], |row| row.get(0))
+        .map_err(|e| format!("Failed to query locked dates: {}", e))?
+        .collect::<Result<Vec<String>, _>>()
+        .map_err(|e| format!("Failed to collect locked dates: {}", e))?;
+
+    Ok(dates)
 }
 
 #[cfg(test)]
@@ -164,6 +189,7 @@ mod tests {
             date_created: "2024-01-01T00:00:00Z".to_string(),
             date_updated: "2024-01-01T00:00:00Z".to_string(),
             metadata: None,
+            locked: false,
         };
 
         insert_entry(&db, &make_entry("2024-01-01", "Alpha", "<p>First</p>")).unwrap();
@@ -198,6 +224,7 @@ mod tests {
                 date_created: "2024-06-01T00:00:00Z".to_string(),
                 date_updated: "2024-06-01T00:00:00Z".to_string(),
                 metadata: None,
+                locked: false,
             },
         )
         .unwrap();
@@ -235,6 +262,7 @@ mod tests {
                 date_created: "2024-07-01T00:00:00Z".to_string(),
                 date_updated: "2024-07-01T00:00:00Z".to_string(),
                 metadata: None,
+                locked: false,
             },
         )
         .unwrap();
@@ -256,5 +284,69 @@ mod tests {
         // Round-trip via timeline query must recover the preview.
         let rows = get_entries_for_timeline(&db).unwrap();
         assert_eq!(rows[0].preview, secret);
+    }
+
+    #[test]
+    fn test_get_locked_entry_dates_returns_only_locked() {
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+
+        let make = |date: &str, title: &str| DiaryEntry {
+            id: 0,
+            date: date.to_string(),
+            title: title.to_string(),
+            text: "<p>x</p>".to_string(),
+            word_count: 1,
+            date_created: "2024-01-01T00:00:00Z".to_string(),
+            date_updated: "2024-01-01T00:00:00Z".to_string(),
+            metadata: None,
+            locked: false,
+        };
+
+        insert_entry(&db, &make("2024-01-01", "A")).unwrap();
+        let locked_id = db.conn().last_insert_rowid();
+        insert_entry(&db, &make("2024-02-01", "B")).unwrap();
+        insert_entry(&db, &make("2024-03-01", "C")).unwrap();
+        let locked_id_2 = db.conn().last_insert_rowid();
+
+        // Initially no locked entries.
+        assert!(get_locked_entry_dates(&db).unwrap().is_empty());
+
+        set_entry_locked(&db, locked_id, true).unwrap();
+        set_entry_locked(&db, locked_id_2, true).unwrap();
+
+        let dates = get_locked_entry_dates(&db).unwrap();
+        assert_eq!(
+            dates,
+            vec!["2024-01-01".to_string(), "2024-03-01".to_string()]
+        );
+    }
+
+    #[test]
+    fn test_timeline_reflects_locked_flag() {
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+
+        insert_entry(
+            &db,
+            &DiaryEntry {
+                id: 0,
+                date: "2024-04-01".to_string(),
+                title: "Locked".to_string(),
+                text: "<p>x</p>".to_string(),
+                word_count: 1,
+                date_created: "2024-04-01T00:00:00Z".to_string(),
+                date_updated: "2024-04-01T00:00:00Z".to_string(),
+                metadata: None,
+                locked: false,
+            },
+        )
+        .unwrap();
+        let id = db.conn().last_insert_rowid();
+        set_entry_locked(&db, id, true).unwrap();
+
+        let rows = get_entries_for_timeline(&db).unwrap();
+        assert_eq!(rows.len(), 1);
+        assert!(rows[0].locked, "timeline row must reflect locked flag");
     }
 }

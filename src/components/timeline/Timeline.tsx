@@ -1,8 +1,9 @@
 import { createResource, For, Show, Suspense } from 'solid-js';
+import { Lock } from 'lucide-solid';
 import { getTimelineEntries } from '../../lib/tauri';
 import type { TimelineEntry } from '../../lib/tauri';
 import { setSelectedDate, setMainView } from '../../state/ui';
-import { entryDates } from '../../state/entries';
+import { entryDates, lockVersion } from '../../state/entries';
 import { formatDate } from '../../lib/dates';
 import { preferences } from '../../state/preferences';
 import { useI18n } from '../../i18n';
@@ -17,9 +18,10 @@ import { useI18n } from '../../i18n';
 export default function Timeline() {
   const t = useI18n();
 
-  // Keying the resource on entryDates() refreshes the list when entries change.
-  const [entries] = createResource<TimelineEntry[], string[]>(
-    () => entryDates(),
+  // Keying the resource on both entryDates() and lockVersion() refreshes the list when
+  // entries change or when a lock is toggled (so the passive lock indicator stays in sync).
+  const [entries] = createResource<TimelineEntry[], readonly [string[], number]>(
+    () => [entryDates(), lockVersion()] as const,
     () => getTimelineEntries(),
   );
 
@@ -41,7 +43,7 @@ export default function Timeline() {
             <ul class="divide-y divide-primary rounded-lg border border-primary bg-primary shadow-sm">
               <For each={entries()}>
                 {(entry) => (
-                  <li>
+                  <li class="relative">
                     <button
                       type="button"
                       onClick={() => openEntry(entry)}
@@ -64,6 +66,17 @@ export default function Timeline() {
                         </Show>
                       </span>
                     </button>
+                    {/* Passive (non-interactive) lock indicator — the toggle lives in the editor. */}
+                    <Show when={entry.locked}>
+                      <span
+                        data-testid="timeline-lock-indicator"
+                        class="pointer-events-none absolute right-3 top-3 text-tertiary"
+                        title={t('timeline.lockedIndicator')}
+                      >
+                        <Lock size={14} aria-hidden="true" />
+                        <span class="sr-only">{t('timeline.lockedIndicator')}</span>
+                      </span>
+                    </Show>
                   </li>
                 )}
               </For>

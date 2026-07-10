@@ -2,12 +2,14 @@ use crate::db::schema::DatabaseConnection;
 
 pub mod delete;
 pub mod insert;
+pub mod lock;
 pub mod read;
 pub mod timeline;
 pub mod update;
 
 pub use delete::*;
 pub use insert::*;
+pub use lock::*;
 pub use read::*;
 pub use timeline::*;
 pub use update::*;
@@ -25,7 +27,7 @@ pub struct EntryMetadata {
 }
 
 /// Represents a diary entry
-#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
 pub struct DiaryEntry {
     pub id: i64,              // AUTOINCREMENT primary key
     pub date: String,         // ISO 8601 date (YYYY-MM-DD)
@@ -36,6 +38,10 @@ pub struct DiaryEntry {
     pub date_updated: String, // ISO 8601 timestamp
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub metadata: Option<EntryMetadata>,
+    /// UX-only "locked to prevent accidental edits" flag (non-sensitive plaintext column).
+    /// Not a security boundary — see TODO-0071 / migration v12→v13.
+    #[serde(default)]
+    pub locked: bool,
 }
 
 /// Normalizes entry metadata: trims empty family strings to None, clamps font size to 12–24 px.

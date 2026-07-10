@@ -1,7 +1,7 @@
 import { createSignal, untrack } from 'solid-js';
 import { listen, UnlistenFn } from '@tauri-apps/api/event';
 import * as tauri from '../lib/tauri';
-import { setEntryDates, executeCleanupCallbacks } from './entries';
+import { setEntryDates, executeCleanupCallbacks, refreshLockedDates } from './entries';
 import { createLogger } from '../lib/logger';
 import { mapTauriError } from '../lib/errors';
 import { journals, activeJournalId, loadJournals } from './journals';
@@ -37,6 +37,9 @@ function prepareUnlockedSession(): void {
   resetSessionState();
   resetAuthTransientState();
   setAuthState('unlocked');
+  // Populate the locked-entry indicators for the freshly unlocked journal.
+  // Fire-and-forget: indicators are cosmetic and the DB is already unlocked here.
+  void refreshLockedDates();
 }
 
 // Refresh auth state using the current backend journal path without reloading journal metadata.

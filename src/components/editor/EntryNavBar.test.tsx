@@ -313,3 +313,92 @@ describe('EntryNavBar — delete button', () => {
     expect(container.querySelector('[aria-label="Remove this entry"]')).not.toBeNull();
   });
 });
+
+describe('EntryNavBar — lock button', () => {
+  it('does NOT render lock button when onToggleLock not provided', () => {
+    const { container } = renderWithI18n(() => (
+      <EntryNavBar total={1} index={0} onPrev={noop} onNext={noop} onAdd={noop} />
+    ));
+    expect(container.querySelector('[data-testid="entry-lock-button"]')).toBeNull();
+  });
+
+  it('renders lock button for a single entry (unlike delete)', () => {
+    const { container } = renderWithI18n(() => (
+      <EntryNavBar
+        total={1}
+        index={0}
+        onPrev={noop}
+        onNext={noop}
+        onAdd={noop}
+        onToggleLock={noop}
+      />
+    ));
+    expect(container.querySelector('[data-testid="entry-lock-button"]')).not.toBeNull();
+  });
+
+  it('calls onToggleLock when the lock button is clicked', () => {
+    const onToggleLock = vi.fn();
+    const { container } = renderWithI18n(() => (
+      <EntryNavBar
+        total={1}
+        index={0}
+        onPrev={noop}
+        onNext={noop}
+        onAdd={noop}
+        onToggleLock={onToggleLock}
+      />
+    ));
+    const btn = container.querySelector('[data-testid="entry-lock-button"]') as HTMLButtonElement;
+    btn.click();
+    expect(onToggleLock).toHaveBeenCalledTimes(1);
+  });
+
+  it('disables the lock button when lockDisabled is true (no persisted id)', () => {
+    const { container } = renderWithI18n(() => (
+      <EntryNavBar
+        total={1}
+        index={0}
+        onPrev={noop}
+        onNext={noop}
+        onAdd={noop}
+        onToggleLock={noop}
+        lockDisabled={true}
+      />
+    ));
+    const btn = container.querySelector('[data-testid="entry-lock-button"]') as HTMLButtonElement;
+    expect(btn.disabled).toBe(true);
+  });
+
+  it('reflects the locked state via aria-pressed and default aria-label', () => {
+    const { container } = renderWithI18n(() => (
+      <EntryNavBar
+        total={1}
+        index={0}
+        onPrev={noop}
+        onNext={noop}
+        onAdd={noop}
+        onToggleLock={noop}
+        locked={true}
+      />
+    ));
+    const btn = container.querySelector('[data-testid="entry-lock-button"]') as HTMLButtonElement;
+    expect(btn.getAttribute('aria-pressed')).toBe('true');
+    expect(btn.getAttribute('aria-label')).toBe('Unlock entry');
+  });
+
+  it('uses the Lock/Unlock aria-label based on locked state', () => {
+    const { container } = renderWithI18n(() => (
+      <EntryNavBar
+        total={1}
+        index={0}
+        onPrev={noop}
+        onNext={noop}
+        onAdd={noop}
+        onToggleLock={noop}
+        locked={false}
+      />
+    ));
+    const btn = container.querySelector('[data-testid="entry-lock-button"]') as HTMLButtonElement;
+    expect(btn.getAttribute('aria-label')).toBe('Lock entry');
+  });
+});

@@ -236,7 +236,7 @@
       "@id": "https://mini-diarium.com/docs/writing-entries/#article",
       "headline": "Writing Entries",
       "description": "Mini Diarium's rich text editor supports formatting, images, named links, tags, and multiple entries per day. Auto-save and RTL language support are built in.",
-      "dateModified": "2026-06-27T00:00:00Z",
+      "dateModified": "2026-07-10T00:00:00Z",
       "keywords": "editor, formatting, entries, writing",
       "publisher": {
         "@type": "Organization",
@@ -398,6 +398,15 @@
         <li>Use <code>−</code> to delete the current entry.</li>
         <li>If a day has only one entry, the navigation bar stays hidden.</li>
         </ul>
+        <h2 id="locking-an-entry-against-accidental-edits">Locking an Entry Against Accidental Edits</h2><p>When you reread an older day from the calendar or timeline, you can lock the entry so a stray keystroke never changes it. Click the <strong>lock button</strong> in the entry navigation bar to make the current entry read-only, then click it again to unlock and resume editing. The lock control lives only in the editor, not on the calendar or timeline.</p>
+        <p>A locked entry cannot be edited, deleted, or re-tagged:</p>
+        <ul>
+        <li>The editor and title field become read-only.</li>
+        <li>The formatting toolbar and the delete button are disabled.</li>
+        <li>The add-tag and remove-tag controls are hidden. You can still click a tag to filter by it, since filtering navigates without changing the entry.</li>
+        </ul>
+        <p>Days that contain a locked entry show a small lock indicator on their calendar cell and their timeline row, so you can see which entries are protected without opening them.</p>
+        <p>This lock guards against accidental edits. It is not a security feature, and it is separate from the journal&#39;s password and auto-lock. The locked state is stored as ordinary, unencrypted entry metadata, so anyone who can unlock the journal can also unlock an individual entry. The lock persists across app restarts and journal unlocks.</p>
         <h2 id="auto-save">Auto-Save</h2><p>Entries save automatically as you type with a short debounce delay. You do not need to manually save anything. If you clear out an entry completely (emptying both the title and the body), it is automatically deleted after the debounce completes.</p>
         <h2 id="word-count">Word Count</h2><p>A live word count is displayed below the editor and updates as you write.</p>
         <h2 id="inserting-images">Inserting Images</h2><p>You can add images to your entries in several ways:</p>
@@ -501,6 +510,7 @@
           <li class="docs-toc-h2"><a href="#the-editor">The Editor</a></li>
           <li class="docs-toc-h2"><a href="#titles">Titles</a></li>
           <li class="docs-toc-h2"><a href="#multiple-entries-per-day">Multiple Entries Per Day</a></li>
+          <li class="docs-toc-h2"><a href="#locking-an-entry-against-accidental-edits">Locking an Entry Against Accidental Edits</a></li>
           <li class="docs-toc-h2"><a href="#auto-save">Auto-Save</a></li>
           <li class="docs-toc-h2"><a href="#word-count">Word Count</a></li>
           <li class="docs-toc-h2"><a href="#inserting-images">Inserting Images</a></li>

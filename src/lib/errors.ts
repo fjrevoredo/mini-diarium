@@ -39,6 +39,10 @@ export function mapTauriError(err: unknown, t: T = defaultT): string {
   if (/journal (must be|is not) unlocked/i.test(raw)) {
     return t('errors.journalNotUnlocked');
   }
+  // Per-entry lock rejection (save/delete of a locked entry) — localize the raw string.
+  if (/^entry is locked$/i.test(raw)) {
+    return t('errors.entryLocked');
+  }
   if (/cannot remove.*(last|only)|minimum.*auth|last.*auth/i.test(raw)) {
     return t('errors.cannotRemoveLastAuth');
   }

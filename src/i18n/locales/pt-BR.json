@@ -34,6 +34,7 @@
     "title": "Linha do tempo",
     "empty": "Ainda não há entradas.",
     "untitled": "Sem título",
+    "lockedIndicator": "Entrada bloqueada",
     "openEntry": "Abrir entrada de {{ date }}"
   },
   "calendar": {
@@ -70,6 +71,7 @@
     "openPicker": "Abrir seletor de mês",
     "closePicker": "Fechar seletor de mês",
     "hasEntry": ", possui entrada",
+    "hasLockedEntry": ", tem entrada bloqueada",
     "monthYearAria": "{{ name }} de {{ year }}"
   },
   "auth": {
@@ -206,6 +208,9 @@
     "nextEntry": "Próxima entrada",
     "goToEntry": "Ir para a entrada {{ number }}",
     "deleteEntry": "Excluir entrada",
+    "lockEntry": "Bloquear entrada",
+    "unlockEntry": "Desbloquear entrada",
+    "entryLockedHint": "Esta entrada está bloqueada. Desbloqueie-a para fazer alterações.",
     "addEntry": "Adicionar entrada",
     "addEntryCreating": "Criando entrada…",
     "addEntryHint": "Escreva algo primeiro para adicionar outra entrada para este dia",
@@ -599,6 +604,7 @@
     "incorrectPassword": "Senha incorreta.",
     "decryptionFailed": "Não foi possível descriptografar. O arquivo de chave pode estar incorreto ou os dados podem estar corrompidos.",
     "journalNotUnlocked": "Por favor, desbloqueie seu diário primeiro.",
+    "entryLocked": "Esta entrada está bloqueada. Desbloqueie-a para fazer alterações.",
     "cannotRemoveLastAuth": "Não é possível remover o último método de autenticação.",
     "cannotReadKeyFile": "Não foi possível ler o arquivo de chave. Verifique se o arquivo existe e se você tem permissão para lê-lo.",
     "cannotSaveKeyFile": "Não foi possível salvar o arquivo de chave. Verifique as permissões da pasta.",

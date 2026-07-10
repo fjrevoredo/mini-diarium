@@ -42,6 +42,7 @@ fn make_entry(date: &str) -> DiaryEntry {
         date_created: ts.clone(),
         date_updated: ts,
         metadata: None,
+        locked: false,
     }
 }
 
@@ -160,6 +161,7 @@ fn bench_search_entries(c: &mut Criterion) {
                 date_created: ts.clone(),
                 date_updated: ts,
                 metadata: None,
+                locked: false,
             };
             insert_entry(&db, &entry).unwrap();
         }

@@ -52,6 +52,8 @@ interface DiaryEditorProps {
   onImportMarkdown?: () => void;
   entryMetadata?: EntryMetadata | null;
   onEntryMetadataChange?: (meta: EntryMetadata | null) => void;
+  /** When true the editor is read-only (per-entry lock, TODO-0071). */
+  locked?: boolean;
 }
 
 // Core: resize a data URL via canvas and insert at the current cursor position.
@@ -246,6 +248,9 @@ export default function DiaryEditor(props: DiaryEditorProps) {
         LinkWithDialog,
       ],
       content: props.content,
+      // Start read-only when the entry is locked so typing is blocked before the
+      // setEditable effect below runs on first paint.
+      editable: !props.locked,
       editorProps: {
         attributes: {
           class: 'journal-editor-content focus:outline-none max-w-none',
@@ -256,6 +261,9 @@ export default function DiaryEditor(props: DiaryEditorProps) {
           return handleEditorLinkClick(event as MouseEvent);
         },
         handleDrop(_view, event) {
+          // setEditable(false) only blocks typed input; programmatic image inserts
+          // below would bypass it, so refuse drops entirely on a locked entry.
+          if (props.locked) return false;
           const dragEvent = event as DragEvent;
           const dt = dragEvent.dataTransfer;
           if (!dt) return false;
@@ -318,6 +326,8 @@ export default function DiaryEditor(props: DiaryEditorProps) {
           return false;
         },
         handlePaste(_view, event) {
+          // Same rationale as handleDrop: block programmatic image paste when locked.
+          if (props.locked) return false;
           const items = Array.from(event.clipboardData?.items ?? []);
           const imageItems = items.filter((i) => i.type.startsWith('image/'));
           if (!imageItems.length) return false;
@@ -369,6 +379,15 @@ export default function DiaryEditor(props: DiaryEditorProps) {
     }
   });
 
+  // Toggle read-only state when the entry's lock changes (TODO-0071).
+  createEffect(() => {
+    const editorInstance = editor();
+    const locked = props.locked ?? false;
+    if (editorInstance && !editorInstance.isDestroyed) {
+      editorInstance.setEditable(!locked);
+    }
+  });
+
   // Dispatch a transaction whenever the placeholder prop changes so ProseMirror re-runs its
   // decoration pass and picks up the new value from the placeholder callback above.
   createEffect(() => {
@@ -414,6 +433,7 @@ export default function DiaryEditor(props: DiaryEditorProps) {
     >
       <EditorToolbar
         editor={editor()}
+        locked={props.locked}
         onInsertImage={(file) => {
           const e = editor();
           if (e)
@@ -429,6 +449,8 @@ export default function DiaryEditor(props: DiaryEditorProps) {
       <Show when={isImagePickerOpen()}>
         <ImagePickerOverlay
           onInsert={(dataUrl) => {
+            // Locked entries reject programmatic inserts (mirrors handleDrop/handlePaste).
+            if (props.locked) return;
             // Insert verbatim — no canvas re-encode — so save preserves the original fingerprint.
             editor()?.chain().focus().setImage({ src: dataUrl }).run();
           }}

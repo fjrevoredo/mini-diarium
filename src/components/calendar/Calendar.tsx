@@ -1,7 +1,7 @@
 import { createSignal, createEffect, untrack, For, createMemo, Show } from 'solid-js';
-import { ChevronLeft, ChevronRight } from 'lucide-solid';
+import { ChevronLeft, ChevronRight, Lock } from 'lucide-solid';
 import { selectedDate, setSelectedDate, setIsSidebarCollapsed } from '../../state/ui';
-import { entryDates } from '../../state/entries';
+import { entryDates, lockedDates } from '../../state/entries';
 import { tagFilteredDates } from '../../state/tags';
 import { preferences } from '../../state/preferences';
 import { getTodayString } from '../../lib/dates';
@@ -400,6 +400,7 @@ export default function Calendar() {
                         const hasEntry = createMemo(() =>
                           (tagFilteredDates() ?? entryDates()).includes(day.date),
                         );
+                        const hasLocked = createMemo(() => lockedDates().includes(day.date));
                         const isSelected = () => day.date === selectedDate();
                         return (
                           <div role="gridcell">
@@ -409,7 +410,7 @@ export default function Calendar() {
                               tabIndex={focusedDate() === day.date ? 0 : -1}
                               aria-selected={isSelected()}
                               aria-current={day.isToday ? 'date' : undefined}
-                              aria-label={`${formatDateLabel(day.date, preferences().language)}${hasEntry() ? t('calendar.hasEntry') : ''}`}
+                              aria-label={`${formatDateLabel(day.date, preferences().language)}${hasEntry() ? t('calendar.hasEntry') : ''}${hasLocked() ? t('calendar.hasLockedEntry') : ''}`}
                               class={`
                             relative h-8 w-full rounded text-sm flex flex-col items-center justify-center
                             ${day.isCurrentMonth ? 'text-primary' : 'text-muted'}
@@ -424,6 +425,14 @@ export default function Calendar() {
                                 <span
                                   aria-hidden="true"
                                   class={`mt-0.5 h-1 w-1 rounded-full ${isSelected() ? 'bg-white' : tagFilteredDates() !== null ? 'bg-filter-dot' : 'bg-interactive'}`}
+                                />
+                              </Show>
+                              <Show when={hasLocked()}>
+                                <Lock
+                                  data-testid={`calendar-lock-${day.date}`}
+                                  size={9}
+                                  aria-hidden="true"
+                                  class={`absolute right-0.5 top-0.5 ${isSelected() ? 'text-white' : 'text-tertiary'}`}
                                 />
                               </Show>
                             </button>

@@ -136,6 +136,7 @@ mod tests {
             date_created: "2024-03-20T00:00:00Z".to_string(),
             date_updated: "2024-03-20T00:00:00Z".to_string(),
             metadata: None,
+            locked: false,
         };
         let result = update_entry(&db, &entry);
 

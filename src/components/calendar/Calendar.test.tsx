@@ -26,6 +26,7 @@ describe('Calendar', () => {
 
   afterEach(() => {
     entriesState.setEntryDates([]);
+    entriesState.setLockedDates([]);
     vi.restoreAllMocks();
   });
 
@@ -56,6 +57,16 @@ describe('Calendar', () => {
     renderWithI18n(() => <Calendar />);
     const btn = screen.getByTestId('calendar-day-2026-05-10');
     expect(btn.getAttribute('aria-label')).toContain(', has entry');
+  });
+
+  it('a date in lockedDates shows the lock glyph and has-locked-entry aria fragment', () => {
+    entriesState.setLockedDates(['2026-05-12']);
+    renderWithI18n(() => <Calendar />);
+    const btn = screen.getByTestId('calendar-day-2026-05-12');
+    expect(btn.getAttribute('aria-label')).toContain(', has locked entry');
+    expect(screen.getByTestId('calendar-lock-2026-05-12')).toBeInTheDocument();
+    // A non-locked day has no glyph.
+    expect(screen.queryByTestId('calendar-lock-2026-05-13')).toBeNull();
   });
 
   it('clicking Previous Month changes the displayed month header', () => {

@@ -242,6 +242,7 @@ mod tests {
             date_created: now.clone(),
             date_updated: now,
             metadata: None,
+            locked: false,
         }
     }
 

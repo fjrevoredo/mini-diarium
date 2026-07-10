@@ -221,4 +221,35 @@ describe('EntryTags', () => {
       expect(err?.textContent).not.toContain('/secret/path');
     });
   });
+
+  describe('when the entry is locked', () => {
+    it('hides the add-tag button and the per-tag remove button', async () => {
+      mocks.getAllTags.mockResolvedValue([WORK_TAG]);
+      mocks.getTagsForEntry.mockResolvedValue([WORK_TAG]);
+      await loadAllTags();
+
+      renderWithI18n(() => <EntryTags entryId={1} locked={true} />);
+      await screen.findByText('Work');
+
+      // The tag chip still renders (read-only), but its mutation controls are gone.
+      expect(screen.queryByRole('button', { name: '+ Add tag' })).toBeNull();
+      expect(screen.queryByRole('button', { name: 'Remove tag Work' })).toBeNull();
+    });
+
+    it('still lets the tag name act as a filter (navigation, not an edit)', async () => {
+      mocks.getAllTags.mockResolvedValue([WORK_TAG]);
+      mocks.getTagsForEntry.mockResolvedValue([WORK_TAG]);
+      mocks.getEntryDatesByTag.mockResolvedValue(['2026-01-01']);
+      await loadAllTags();
+
+      renderWithI18n(() => <EntryTags entryId={1} locked={true} />);
+      await screen.findByText('Work');
+
+      fireEvent.click(screen.getByRole('button', { name: 'Work' }));
+      await waitFor(() => expect(activeTagFilter()?.id).toBe(1));
+      // No tag mutation IPC was invoked.
+      expect(mocks.addTagToEntry).not.toHaveBeenCalled();
+      expect(mocks.removeTagFromEntry).not.toHaveBeenCalled();
+    });
+  });
 });

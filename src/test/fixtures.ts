@@ -25,6 +25,7 @@ export function makeEntry(overrides: Partial<DiaryEntry> = {}): DiaryEntry {
     word_count: 0,
     date_created: '2024-01-15T00:00:00Z',
     date_updated: '2024-01-15T00:00:00Z',
+    locked: false,
     ...overrides,
   };
 }
@@ -35,6 +36,7 @@ export function makeTimelineEntry(overrides: Partial<TimelineEntry> = {}): Timel
     date: '2024-01-15',
     title: 'Entry title',
     preview: 'A short preview',
+    locked: false,
     ...overrides,
   };
 }

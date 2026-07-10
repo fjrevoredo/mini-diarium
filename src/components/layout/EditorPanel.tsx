@@ -7,11 +7,11 @@ import DiaryEditor from '../editor/DiaryEditor';
 import WordCount from '../editor/WordCount';
 import { EntryNavBar } from '../editor/EntryNavBar';
 import { selectedDate, selectedEntryId, setSelectedEntryId } from '../../state/ui';
-import { readTextFile } from '../../lib/tauri';
+import { readTextFile, setEntryLocked } from '../../lib/tauri';
 import EntryTags from '../editor/EntryTags';
 import type { DiaryEntry, EntryMetadata } from '../../lib/tauri';
 import { formatTimestamp } from '../../lib/dates';
-import { isSaving } from '../../state/entries';
+import { isSaving, refreshLockedDates } from '../../state/entries';
 import { preferences } from '../../state/preferences';
 import { open as openDialog } from '../../lib/dialog';
 import { parseMarkdownToHtml } from '../../lib/markdown';
@@ -178,6 +178,34 @@ export default function EditorPanel() {
     }
   };
 
+  // Whether the currently displayed entry is locked (read-only). Drives the editor,
+  // title input, delete button, and lock toggle. See TODO-0071.
+  const currentLocked = () => dayEntries()[currentIndex()]?.locked ?? false;
+
+  const handleToggleLock = async () => {
+    const id = pendingEntryId();
+    if (id === null) return;
+    const next = !currentLocked();
+    try {
+      if (next) {
+        // Flush current content before locking. The entry is still unlocked in the DB
+        // here, so the save succeeds and no in-flight edit is lost.
+        const edInst = editorInstance();
+        const currentContent = edInst && !edInst.isDestroyed ? edInst.getHTML() : content();
+        lifecycle.debouncedSave.cancel();
+        await lifecycle.saveCurrentById(id, title(), currentContent);
+      }
+      await setEntryLocked(id, next);
+      // Update the local entry so currentLocked() flips and the editor becomes read-only
+      // (or editable) immediately, without a full reload.
+      setDayEntries((prev) => prev.map((e) => (e.id === id ? { ...e, locked: next } : e)));
+      // Refresh the calendar + timeline indicators.
+      await refreshLockedDates();
+    } catch (err) {
+      setImportError(mapTauriError(err, t));
+    }
+  };
+
   const handleImportMarkdown = async () => {
     setImportError(null);
 
@@ -257,8 +285,12 @@ export default function EditorPanel() {
               : t('editor.addEntryTitle')
         }
         onDelete={nav.handleDeleteEntry}
-        deleteDisabled={isCreatingEntry() || dayEntries().length <= 1}
+        deleteDisabled={isCreatingEntry() || dayEntries().length <= 1 || currentLocked()}
         deleteTitle={t('editor.deleteEntry')}
+        onToggleLock={() => void handleToggleLock()}
+        locked={currentLocked()}
+        lockDisabled={isCreatingEntry() || pendingEntryId() === null}
+        lockTitle={currentLocked() ? t('editor.unlockEntry') : t('editor.lockEntry')}
       />
       <div class="flex-1 overflow-y-auto px-6 pb-6">
         <div class="pt-6 mx-auto w-full max-w-3xl xl:max-w-5xl 2xl:max-w-6xl">
@@ -270,6 +302,7 @@ export default function EditorPanel() {
                 onEnter={handleTitleEnter}
                 placeholder={t('editor.titleOptionalPlaceholder')}
                 spellCheck={preferences().enableSpellcheck}
+                readOnly={currentLocked()}
               />
               <Show when={preferences().showEntryTimestamps}>
                 <Show when={dayEntries()[currentIndex()]}>
@@ -297,6 +330,7 @@ export default function EditorPanel() {
             </Show>
             <DiaryEditor
               content={content()}
+              locked={currentLocked()}
               entryMetadata={entryMetadata()}
               onEntryMetadataChange={(meta) => {
                 setEntryMetadata(meta);
@@ -327,7 +361,7 @@ export default function EditorPanel() {
               onImportMarkdown={handleImportMarkdown}
             />
             <Show when={pendingEntryId() !== null}>
-              <EntryTags entryId={pendingEntryId()!} />
+              <EntryTags entryId={pendingEntryId()!} locked={currentLocked()} />
             </Show>
           </div>
         </div>

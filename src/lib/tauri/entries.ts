@@ -15,6 +15,8 @@ export interface DiaryEntry {
   date_created: string;
   date_updated: string;
   metadata?: EntryMetadata | null;
+  /** UX-only lock against accidental edits — not a security boundary. See TODO-0071. */
+  locked: boolean;
 }
 
 export async function createEntry(date: string): Promise<DiaryEntry> {
@@ -46,6 +48,16 @@ export async function deleteEntry(id: number): Promise<void> {
   return invoke('delete_entry', { id });
 }
 
+/** Toggle the per-entry lock flag. Targeted UPDATE — does not re-encrypt entry content. */
+export async function setEntryLocked(id: number, locked: boolean): Promise<void> {
+  await invoke('set_entry_locked', { id, locked });
+}
+
+/** Distinct dates (YYYY-MM-DD) that have at least one locked entry — feeds indicators. */
+export async function getLockedEntryDates(): Promise<string[]> {
+  return await invoke('get_locked_entry_dates');
+}
+
 export async function getAllEntryDates(): Promise<string[]> {
   return await invoke('get_all_entry_dates');
 }
@@ -57,6 +69,8 @@ export interface TimelineEntry {
   date: string;
   title: string;
   preview: string;
+  /** UX-only lock flag — drives the passive timeline lock indicator. */
+  locked: boolean;
 }
 
 export async function getTimelineEntries(): Promise<TimelineEntry[]> {

@@ -14,6 +14,7 @@ pub struct TimelineEntry {
     pub date: String,
     pub title: String,
     pub preview: String,
+    pub locked: bool,
 }
 
 /// Creates a new blank diary entry for the given date and returns it with its assigned id
@@ -30,6 +31,7 @@ pub fn create_entry(date: String, state: State<DiaryState>) -> Result<DiaryEntry
             date_created: now.clone(),
             date_updated: now,
             metadata: None,
+            locked: false,
         };
         queries::insert_entry(db, &entry)?;
         let new_id = db.conn().last_insert_rowid();
@@ -49,6 +51,11 @@ pub(crate) fn save_entry_inner(
     state: &DiaryState,
 ) -> Result<(), String> {
     with_unlocked_db(state, |db| {
+        // Defense-in-depth: reject content saves for locked entries. The UI already
+        // gates editing, so this is a safety net (e.g. against a raced autosave).
+        if queries::is_entry_locked(db, id)? {
+            return Err("entry is locked".to_string());
+        }
         queries::update_entry_with_images(db, id, title, text, metadata)?;
         debug!("Saved entry id={}", id);
         Ok(())
@@ -100,6 +107,11 @@ pub fn delete_entry_if_empty(
 #[tauri::command]
 pub fn delete_entry(id: i64, state: State<DiaryState>) -> Result<(), String> {
     with_unlocked_db(&state, |db| {
+        // Locked entries are protected from deletion as well as editing. The UI disables
+        // the delete button when locked; this is the backend safety net.
+        if queries::is_entry_locked(db, id)? {
+            return Err("entry is locked".to_string());
+        }
         let deleted = queries::delete_entry_by_id(db, id)
             .map_err(|e| format!("Failed to delete entry: {}", e))?;
         if !deleted {
@@ -107,6 +119,24 @@ pub fn delete_entry(id: i64, state: State<DiaryState>) -> Result<(), String> {
         }
         Ok(())
     })
+}
+
+/// Sets the per-entry `locked` flag (UX affordance against accidental edits).
+///
+/// Targeted UPDATE that never re-encrypts entry content — see `queries::set_entry_locked`.
+#[tauri::command]
+pub fn set_entry_locked(id: i64, locked: bool, state: State<DiaryState>) -> Result<(), String> {
+    with_unlocked_db(&state, |db| {
+        queries::set_entry_locked(db, id, locked)?;
+        debug!("Set entry id={} locked={}", id, locked);
+        Ok(())
+    })
+}
+
+/// Returns the distinct dates that have at least one locked entry (calendar indicator).
+#[tauri::command]
+pub fn get_locked_entry_dates(state: State<DiaryState>) -> Result<Vec<String>, String> {
+    with_unlocked_db(&state, queries::get_locked_entry_dates)
 }
 
 /// Gets all dates that have entries
@@ -132,6 +162,7 @@ pub fn get_timeline_entries(state: State<DiaryState>) -> Result<Vec<TimelineEntr
                 date: r.date,
                 title: r.title,
                 preview: r.preview,
+                locked: r.locked,
             })
             .collect())
     })
@@ -161,6 +192,7 @@ mod tests {
             date_created: now.clone(),
             date_updated: now,
             metadata: None,
+            locked: false,
         };
         queries::insert_entry(&db, &entry).unwrap();
         let new_id = db.conn().last_insert_rowid();
@@ -191,6 +223,7 @@ mod tests {
             date_created: now.clone(),
             date_updated: now,
             metadata: None,
+            locked: false,
         };
         queries::insert_entry(&db, &entry).unwrap();
         let id = db.conn().last_insert_rowid();
@@ -222,6 +255,7 @@ mod tests {
             date_created: now.clone(),
             date_updated: now.clone(),
             metadata: None,
+            locked: false,
         };
 
         queries::insert_entry(&db, &make_entry("Morning")).unwrap();
@@ -252,6 +286,7 @@ mod tests {
             date_created: now.clone(),
             date_updated: now,
             metadata: None,
+            locked: false,
         };
         queries::insert_entry(&db, &entry).unwrap();
         let id = db.conn().last_insert_rowid();
@@ -280,6 +315,7 @@ mod tests {
             date_created: now.clone(),
             date_updated: now.clone(),
             metadata: None,
+            locked: false,
         };
 
         // Insert multiple entries, two on the same date
@@ -318,6 +354,7 @@ mod tests {
             date_created: now.clone(),
             date_updated: now,
             metadata: None,
+            locked: false,
         };
         queries::insert_entry(&db, &entry).unwrap();
         let id = db.conn().last_insert_rowid();
@@ -371,6 +408,7 @@ mod tests {
             date_created: now.clone(),
             date_updated: now,
             metadata: None,
+            locked: false,
         };
         queries::insert_entry(&db, &blank).unwrap();
         let entry_id = db.conn().last_insert_rowid();
@@ -388,5 +426,45 @@ mod tests {
             .unwrap();
         assert_eq!(retrieved.title, "My Title");
         assert_eq!(retrieved.word_count, 3);
+    }
+
+    #[test]
+    fn test_save_entry_rejects_locked_entry() {
+        use crate::commands::auth::DiaryState;
+        use std::path::PathBuf;
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+        let now = chrono::Utc::now().to_rfc3339();
+        let entry = DiaryEntry {
+            id: 0,
+            date: "2024-06-01".to_string(),
+            title: "Original".to_string(),
+            text: "Original content".to_string(),
+            word_count: 2,
+            date_created: now.clone(),
+            date_updated: now,
+            metadata: None,
+            locked: false,
+        };
+        queries::insert_entry(&db, &entry).unwrap();
+        let entry_id = db.conn().last_insert_rowid();
+        queries::set_entry_locked(&db, entry_id, true).unwrap();
+
+        let state = DiaryState::new(
+            PathBuf::from("test_save_locked.db"),
+            PathBuf::from("test_save_locked_backups"),
+            PathBuf::from("."),
+        );
+        *state.db.lock().unwrap() = Some(db);
+
+        let err = save_entry_inner(entry_id, "Hacked", "Hacked content", None, &state).unwrap_err();
+        assert_eq!(err, "entry is locked");
+
+        // Content must be unchanged.
+        let db_guard = state.db.lock().unwrap();
+        let retrieved = queries::get_entry_by_id(db_guard.as_ref().unwrap(), entry_id)
+            .unwrap()
+            .unwrap();
+        assert_eq!(retrieved.title, "Original");
     }
 }

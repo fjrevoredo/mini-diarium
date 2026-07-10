@@ -161,7 +161,7 @@ mod tests {
             .conn()
             .query_row("SELECT version FROM schema_version", [], |row| row.get(0))
             .unwrap();
-        assert_eq!(version, 12, "Should be at version 12 after migration");
+        assert_eq!(version, 13, "Should be at version 13 after migration");
 
         let slot_count: i32 = db
             .conn()
@@ -211,7 +211,7 @@ mod tests {
             .conn()
             .query_row("SELECT version FROM schema_version", [], |row| row.get(0))
             .unwrap();
-        assert_eq!(version, 12);
+        assert_eq!(version, 13);
 
         let entries = crate::db::queries::get_entries_by_date(&db, "2024-06-01").unwrap();
         assert_eq!(entries.len(), 1);

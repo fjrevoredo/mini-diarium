@@ -45,6 +45,8 @@ const mocks = vi.hoisted(() => ({
   deleteEntryIfEmpty: vi.fn(),
   getEntriesForDate: vi.fn(),
   getAllEntryDates: vi.fn(),
+  setEntryLocked: vi.fn(),
+  getLockedEntryDates: vi.fn(),
   readTextFile: vi.fn(),
   confirm: vi.fn(),
   open: vi.fn(() => Promise.resolve(null as string | null)),
@@ -60,6 +62,8 @@ vi.mock('../../lib/tauri', async () => {
     deleteEntryIfEmpty: mocks.deleteEntryIfEmpty,
     getEntriesForDate: mocks.getEntriesForDate,
     getAllEntryDates: mocks.getAllEntryDates,
+    setEntryLocked: mocks.setEntryLocked,
+    getLockedEntryDates: mocks.getLockedEntryDates,
     readTextFile: mocks.readTextFile,
   };
 });
@@ -137,6 +141,7 @@ function makeEntry(overrides: Partial<DiaryEntry>): DiaryEntry {
     date_created: overrides.date_created ?? '2026-04-23T10:00:00Z',
     date_updated: overrides.date_updated ?? '2026-04-23T10:00:00Z',
     metadata: overrides.metadata,
+    locked: overrides.locked ?? false,
   };
 }
 
@@ -169,6 +174,8 @@ describe('EditorPanel integration', () => {
     mocks.saveEntry.mockResolvedValue(undefined);
     mocks.deleteEntryIfEmpty.mockResolvedValue(true);
     mocks.deleteEntry.mockResolvedValue(undefined);
+    mocks.setEntryLocked.mockResolvedValue(undefined);
+    mocks.getLockedEntryDates.mockResolvedValue([]);
     mocks.confirm.mockResolvedValue(true);
     setSelectedDate('2026-04-23');
     // Session flag is module-global; reset so each test starts pre-focus.
@@ -204,6 +211,41 @@ describe('EditorPanel integration', () => {
     expect(mocks.saveEntry).toHaveBeenCalledWith(42, 'Morning', '<p>Hello world</p>', null);
     // Must not have treated the typed content as empty (no delete).
     expect(mocks.deleteEntryIfEmpty).not.toHaveBeenCalled();
+  });
+
+  it('lock-toggle: locking flushes content, calls setEntryLocked, and makes the entry read-only', async () => {
+    const existing = makeEntry({ id: 55, title: 'Keep me', text: '<p>Body</p>' });
+    mocks.getEntriesForDate.mockResolvedValue([existing]);
+
+    renderWithI18n(() => <EditorPanel />);
+    await waitFor(() => {
+      expect(mocks.getEntriesForDate).toHaveBeenCalledWith('2026-04-23');
+    });
+    await flushMicrotasks();
+
+    const lockBtn = screen.getByTestId('entry-lock-button') as HTMLButtonElement;
+    // Enabled because the loaded entry has a persisted id.
+    expect(lockBtn.disabled).toBe(false);
+
+    fireEvent.click(lockBtn);
+
+    await waitFor(() => {
+      expect(mocks.setEntryLocked).toHaveBeenCalledWith(55, true);
+    });
+    await flushMicrotasks();
+
+    // Locking first flushes the current content (by id + title) so nothing in-flight is lost.
+    expect(mocks.saveEntry).toHaveBeenCalledWith(55, 'Keep me', expect.any(String), null);
+    // Indicators refresh after the toggle.
+    expect(mocks.getLockedEntryDates).toHaveBeenCalled();
+
+    // Title input becomes read-only, reflecting the now-locked entry.
+    await waitFor(() => {
+      expect(screen.getByTestId('title-input')).toHaveAttribute('readonly');
+    });
+    // The delete button (visible only for multi-entry days) is gone here, but the lock
+    // button now advertises the "unlock" affordance.
+    expect(screen.getByTestId('entry-lock-button').getAttribute('aria-label')).toBe('Unlock entry');
   });
 
   it('switch-day-while-unsaved: flushes pending save before loading the new day', async () => {

@@ -131,6 +131,7 @@ fn convert_to_entries(arr: Array) -> Result<Vec<DiaryEntry>, String> {
             title,
             text,
             metadata,
+            locked: false,
         });
     }
     Ok(entries)
@@ -384,6 +385,7 @@ mod tests {
                 date_created: "2024-01-01T00:00:00Z".into(),
                 date_updated: "2024-01-01T00:00:00Z".into(),
                 metadata: None,
+                locked: false,
             },
             DiaryEntry {
                 id: 2,
@@ -394,6 +396,7 @@ mod tests {
                 date_created: "2024-01-02T00:00:00Z".into(),
                 date_updated: "2024-01-02T00:00:00Z".into(),
                 metadata: None,
+                locked: false,
             },
         ]
     }
@@ -508,6 +511,7 @@ fn format_entries(entries) {
             date_created: "2024-06-15T00:00:00Z".into(),
             date_updated: "2024-06-15T00:00:00Z".into(),
             metadata: None,
+            locked: false,
         }];
 
         let result = plugin.export(entries, &HashMap::new()).unwrap();
@@ -657,6 +661,7 @@ fn format_entries(entries) {
             date_created: "2024-06-15T00:00:00Z".into(),
             date_updated: "2024-06-15T00:00:00Z".into(),
             metadata: None,
+            locked: false,
         }];
 
         let result = plugin.export(entries, &HashMap::new()).unwrap();
@@ -681,6 +686,7 @@ fn format_entries(entries) {
                 font_family: Some("Georgia".to_string()),
                 font_size: Some(16.0),
             }),
+            locked: false,
         }];
         let arr = entries_to_rhai_array(entries);
         let map = arr[0].clone().try_cast::<Map>().unwrap();

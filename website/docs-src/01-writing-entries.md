@@ -3,7 +3,7 @@ title: Writing Entries
 slug: writing-entries
 description: Mini Diarium's rich text editor supports formatting, images, named links, tags, and multiple entries per day. Auto-save and RTL language support are built in.
 order: 2
-updated: 2026-06-27
+updated: 2026-07-10
 tags: editor, formatting, entries, writing
 ---
 
@@ -36,6 +36,20 @@ Each date can contain multiple separate entries. This is useful for writing at d
 - Use `+` to create a new blank entry on the same date.
 - Use `−` to delete the current entry.
 - If a day has only one entry, the navigation bar stays hidden.
+
+## Locking an Entry Against Accidental Edits
+
+When you reread an older day from the calendar or timeline, you can lock the entry so a stray keystroke never changes it. Click the **lock button** in the entry navigation bar to make the current entry read-only, then click it again to unlock and resume editing. The lock control lives only in the editor, not on the calendar or timeline.
+
+A locked entry cannot be edited, deleted, or re-tagged:
+
+- The editor and title field become read-only.
+- The formatting toolbar and the delete button are disabled.
+- The add-tag and remove-tag controls are hidden. You can still click a tag to filter by it, since filtering navigates without changing the entry.
+
+Days that contain a locked entry show a small lock indicator on their calendar cell and their timeline row, so you can see which entries are protected without opening them.
+
+This lock guards against accidental edits. It is not a security feature, and it is separate from the journal's password and auto-lock. The locked state is stored as ordinary, unencrypted entry metadata, so anyone who can unlock the journal can also unlock an individual entry. The lock persists across app restarts and journal unlocks.
 
 ## Auto-Save
 

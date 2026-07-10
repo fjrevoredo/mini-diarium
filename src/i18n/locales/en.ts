@@ -57,6 +57,7 @@ const en = {
     empty: 'No entries yet.',
     untitled: 'Untitled',
     openEntry: 'Open entry from {{ date }}',
+    lockedIndicator: 'Locked entry',
   },
 
   /** Calendar widget */
@@ -99,6 +100,8 @@ const en = {
     closePicker: 'Close month picker',
     /** Appended to calendar day aria-label when the day has an entry */
     hasEntry: ', has entry',
+    /** Appended to calendar day aria-label when the day has a locked entry */
+    hasLockedEntry: ', has locked entry',
     /** Month + year aria-label used in month picker button: e.g. "Jan 2026" */
     monthYearAria: '{{ name }} {{ year }}',
   },
@@ -286,6 +289,10 @@ const en = {
     goToEntry: 'Go to entry {{ number }}',
     deleteEntry: 'Delete entry',
     addEntry: 'Add entry',
+    /** EntryNavBar lock toggle */
+    lockEntry: 'Lock entry',
+    unlockEntry: 'Unlock entry',
+    entryLockedHint: 'This entry is locked. Unlock it to make changes.',
     /** EditorPanel — add/delete button titles */
     addEntryCreating: 'Creating entry…',
     addEntryHint: 'Write something first to add another entry for this day',
@@ -709,6 +716,7 @@ const en = {
     decryptionFailed:
       'Could not decrypt. The key file may be incorrect or the data may be corrupted.',
     journalNotUnlocked: 'Please unlock your journal first.',
+    entryLocked: 'This entry is locked. Unlock it to make changes.',
     cannotRemoveLastAuth: 'Cannot remove the last authentication method.',
     cannotReadKeyFile:
       'Could not read key file. Check that the file exists and you have permission to read it.',

@@ -34,6 +34,7 @@
     "title": "Chronologie",
     "empty": "Aucune entrée pour le moment.",
     "untitled": "Sans titre",
+    "lockedIndicator": "Entrée verrouillée",
     "openEntry": "Ouvrir l'entrée du {{ date }}"
   },
   "calendar": {
@@ -70,6 +71,7 @@
     "openPicker": "Ouvrir le sélecteur de mois",
     "closePicker": "Fermer le sélecteur de mois",
     "hasEntry": ", a une entrée",
+    "hasLockedEntry": ", contient une entrée verrouillée",
     "monthYearAria": "{{ name }} {{ year }}"
   },
   "auth": {
@@ -206,6 +208,9 @@
     "nextEntry": "Entrée suivante",
     "goToEntry": "Aller à l'entrée {{ number }}",
     "deleteEntry": "Supprimer l'entrée",
+    "lockEntry": "Verrouiller l'entrée",
+    "unlockEntry": "Déverrouiller l'entrée",
+    "entryLockedHint": "Cette entrée est verrouillée. Déverrouillez-la pour la modifier.",
     "addEntry": "Ajouter une entrée",
     "addEntryCreating": "Création de l'entrée…",
     "addEntryHint": "Écrivez quelque chose d'abord pour ajouter une autre entrée pour ce jour",
@@ -599,6 +604,7 @@
     "incorrectPassword": "Mot de passe incorrect.",
     "decryptionFailed": "Impossible de déchiffrer. Le fichier clé peut être incorrect ou les données peuvent être corrompues.",
     "journalNotUnlocked": "Veuillez d'abord déverrouiller votre journal.",
+    "entryLocked": "Cette entrée est verrouillée. Déverrouillez-la pour la modifier.",
     "cannotRemoveLastAuth": "Impossible de supprimer la dernière méthode d'authentification.",
     "cannotReadKeyFile": "Impossible de lire le fichier clé. Vérifiez que le fichier existe et que vous avez l'autorisation de le lire.",
     "cannotSaveKeyFile": "Impossible d'enregistrer le fichier clé. Vérifiez les permissions du dossier.",

@@ -34,6 +34,7 @@
     "title": "Zeitleiste",
     "empty": "Noch keine Einträge.",
     "untitled": "Ohne Titel",
+    "lockedIndicator": "Gesperrter Eintrag",
     "openEntry": "Eintrag vom {{ date }} öffnen"
   },
   "calendar": {
@@ -70,6 +71,7 @@
     "openPicker": "Monatsauswahl öffnen",
     "closePicker": "Monatsauswahl schließen",
     "hasEntry": ", hat Eintrag",
+    "hasLockedEntry": ", hat gesperrten Eintrag",
     "monthYearAria": "{{ name }} {{ year }}"
   },
   "auth": {
@@ -206,6 +208,9 @@
     "nextEntry": "Nächster Eintrag",
     "goToEntry": "Gehe zu Eintrag {{ number }}",
     "deleteEntry": "Eintrag löschen",
+    "lockEntry": "Eintrag sperren",
+    "unlockEntry": "Eintrag entsperren",
+    "entryLockedHint": "Dieser Eintrag ist gesperrt. Entsperren Sie ihn, um Änderungen vorzunehmen.",
     "addEntry": "Eintrag hinzufügen",
     "addEntryCreating": "Erstelle Eintrag…",
     "addEntryHint": "Schreibe zuerst etwas, um einen weiteren Eintrag für diesen Tag hinzuzufügen",
@@ -599,6 +604,7 @@
     "incorrectPassword": "Falsches Passwort.",
     "decryptionFailed": "Entschlüsselung fehlgeschlagen. Die Schlüsseldatei könnte falsch sein oder die Daten beschädigt.",
     "journalNotUnlocked": "Bitte entsperre zuerst dein Tagebuch.",
+    "entryLocked": "Dieser Eintrag ist gesperrt. Entsperren Sie ihn, um Änderungen vorzunehmen.",
     "cannotRemoveLastAuth": "Das letzte Authentifizierungsverfahren kann nicht entfernt werden.",
     "cannotReadKeyFile": "Die Schlüsseldatei konnte nicht gelesen werden. Überprüfe, ob die Datei existiert und du Leseberechtigung hast.",
     "cannotSaveKeyFile": "Die Schlüsseldatei konnte nicht gespeichert werden. Überprüfe die Berechtigungen des Ordners.",

@@ -34,6 +34,7 @@
     "title": "Cronología",
     "empty": "Aún no hay entradas.",
     "untitled": "Sin título",
+    "lockedIndicator": "Entrada bloqueada",
     "openEntry": "Abrir la entrada del {{ date }}"
   },
   "calendar": {
@@ -70,6 +71,7 @@
     "openPicker": "Abrir selector de mes",
     "closePicker": "Cerrar selector de mes",
     "hasEntry": ", tiene entrada",
+    "hasLockedEntry": ", tiene entrada bloqueada",
     "monthYearAria": "{{ name }} {{ year }}"
   },
   "auth": {
@@ -206,6 +208,9 @@
     "nextEntry": "Entrada siguiente",
     "goToEntry": "Ir a la entrada {{ number }}",
     "deleteEntry": "Eliminar entrada",
+    "lockEntry": "Bloquear entrada",
+    "unlockEntry": "Desbloquear entrada",
+    "entryLockedHint": "Esta entrada está bloqueada. Desbloquéala para hacer cambios.",
     "addEntry": "Añadir entrada",
     "addEntryCreating": "Creando entrada…",
     "addEntryHint": "Escribe algo primero para añadir otra entrada de este día",
@@ -599,6 +604,7 @@
     "incorrectPassword": "Contraseña incorrecta.",
     "decryptionFailed": "No se pudo descifrar. El archivo de clave puede ser incorrecto o los datos pueden estar dañados.",
     "journalNotUnlocked": "Por favor desbloquea tu diario primero.",
+    "entryLocked": "Esta entrada está bloqueada. Desbloquéala para hacer cambios.",
     "cannotRemoveLastAuth": "No se puede eliminar el último método de autenticación.",
     "cannotReadKeyFile": "No se pudo leer el archivo de clave. Verifica que el archivo exista y tengas permiso para leerlo.",
     "cannotSaveKeyFile": "No se pudo guardar el archivo de clave. Verifica los permisos de la carpeta.",

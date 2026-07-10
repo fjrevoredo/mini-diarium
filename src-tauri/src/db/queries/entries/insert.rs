@@ -178,6 +178,7 @@ mod tests {
                 font_family: Some("   ".to_string()),
                 font_size: None,
             }),
+            locked: false,
         };
         insert_entry(&db, &entry).unwrap();
         let retrieved = get_entries_by_date(&db, "2024-08-01").unwrap();
@@ -203,6 +204,7 @@ mod tests {
                 font_family: None,
                 font_size: Some(99.0),
             }),
+            locked: false,
         };
         insert_entry(&db, &entry).unwrap();
         let retrieved = get_entries_by_date(&db, "2024-08-02").unwrap();
@@ -229,6 +231,7 @@ mod tests {
                 font_family: None,
                 font_size: Some(4.0),
             }),
+            locked: false,
         };
         insert_entry(&db, &entry).unwrap();
         let retrieved = get_entries_by_date(&db, "2024-08-03").unwrap();
@@ -257,6 +260,7 @@ mod tests {
                 font_family: Some(secret_family.to_string()),
                 font_size: Some(16.0),
             }),
+            locked: false,
         };
         insert_entry(&db, &entry).unwrap();
 

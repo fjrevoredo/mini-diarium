@@ -258,6 +258,7 @@ mod db_tests {
             date_created: ts.clone(),
             date_updated: ts,
             metadata: None,
+            locked: false,
         }
     }
 

@@ -670,6 +670,7 @@ mod tests {
             date_created: "2024-01-01T00:00:00Z".to_string(),
             date_updated: "2024-01-01T00:00:00Z".to_string(),
             metadata: None,
+            locked: false,
         };
         crate::db::queries::insert_entry(&db, &entry).unwrap();
 

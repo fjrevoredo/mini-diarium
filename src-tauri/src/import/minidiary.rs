@@ -106,6 +106,7 @@ fn parse_minidiary_array_format(json_str: &str) -> Result<Vec<DiaryEntry>, Strin
             date_created: now.clone(),
             date_updated,
             metadata: entry.metadata,
+            locked: false,
         });
     }
 
@@ -141,6 +142,7 @@ fn parse_mini_diary_object_format(mini_diary: MiniDiaryJson) -> Result<Vec<Diary
             date_created: now.clone(),
             date_updated,
             metadata: None,
+            locked: false,
         });
     }
 

@@ -17,6 +17,7 @@ pub fn create_test_entry(date: &str) -> DiaryEntry {
         date_created: now.clone(),
         date_updated: now,
         metadata: None,
+        locked: false,
     }
 }
 

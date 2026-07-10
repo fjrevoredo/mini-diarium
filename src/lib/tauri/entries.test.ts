@@ -1,6 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { invoke } from '@tauri-apps/api/core';
-import { deleteEntry, getAllEntryDates, getTimelineEntries } from './entries';
+import {
+  deleteEntry,
+  getAllEntryDates,
+  getTimelineEntries,
+  setEntryLocked,
+  getLockedEntryDates,
+} from './entries';
 import { makeTimelineEntry } from '../../test/fixtures';
 
 // NOTE: createEntry / saveEntry / getEntriesForDate / deleteEntryIfEmpty are
@@ -31,5 +37,16 @@ describe('entries command wrappers (IPC contract)', () => {
     mockInvoke.mockResolvedValue(entries);
     await expect(getTimelineEntries()).resolves.toEqual(entries);
     expect(mockInvoke).toHaveBeenCalledWith('get_timeline_entries');
+  });
+
+  it('setEntryLocked → set_entry_locked { id, locked }', async () => {
+    await setEntryLocked(7, true);
+    expect(mockInvoke).toHaveBeenCalledWith('set_entry_locked', { id: 7, locked: true });
+  });
+
+  it('getLockedEntryDates → get_locked_entry_dates and passes the array through', async () => {
+    mockInvoke.mockResolvedValue(['2024-01-01']);
+    await expect(getLockedEntryDates()).resolves.toEqual(['2024-01-01']);
+    expect(mockInvoke).toHaveBeenCalledWith('get_locked_entry_dates');
   });
 });

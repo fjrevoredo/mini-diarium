@@ -5,7 +5,7 @@ use rusqlite::params;
 // Shared column projection for all entry queries.
 const ENTRY_SELECT: &str =
     "SELECT id, date, title_encrypted, text_encrypted, word_count, date_created, date_updated, \
-     entry_metadata_encrypted FROM entries";
+     entry_metadata_encrypted, locked FROM entries";
 
 type EntryRow = (
     i64,
@@ -16,10 +16,21 @@ type EntryRow = (
     String,
     String,
     Option<Vec<u8>>,
+    bool,
 );
 
 fn row_to_entry(db: &DatabaseConnection, row: EntryRow) -> Result<DiaryEntry, String> {
-    let (id, date, title_enc, text_enc, word_count, date_created, date_updated, metadata_enc) = row;
+    let (
+        id,
+        date,
+        title_enc,
+        text_enc,
+        word_count,
+        date_created,
+        date_updated,
+        metadata_enc,
+        locked,
+    ) = row;
     let title = crate::db::queries::decrypt_utf8(db.key(), &title_enc, "title")?;
     let text = crate::db::queries::decrypt_utf8(db.key(), &text_enc, "text")?;
     let metadata = match metadata_enc {
@@ -41,6 +52,7 @@ fn row_to_entry(db: &DatabaseConnection, row: EntryRow) -> Result<DiaryEntry, St
         date_created,
         date_updated,
         metadata,
+        locked,
     })
 }
 
@@ -72,6 +84,7 @@ pub fn get_entries_by_date(db: &DatabaseConnection, date: &str) -> Result<Vec<Di
                 row.get::<_, String>(5)?,
                 row.get::<_, String>(6)?,
                 row.get::<_, Option<Vec<u8>>>(7)?,
+                row.get::<_, bool>(8)?,
             ))
         })
         .map_err(|e| format!("Failed to query entries: {}", e))?
@@ -103,6 +116,7 @@ pub fn get_entry_by_id(db: &DatabaseConnection, id: i64) -> Result<Option<DiaryE
                 row.get::<_, String>(5)?,
                 row.get::<_, String>(6)?,
                 row.get::<_, Option<Vec<u8>>>(7)?,
+                row.get::<_, bool>(8)?,
             ))
         },
     );
@@ -160,6 +174,7 @@ pub fn get_all_entries(db: &DatabaseConnection) -> Result<Vec<DiaryEntry>, Strin
                 row.get::<_, String>(5)?,
                 row.get::<_, String>(6)?,
                 row.get::<_, Option<Vec<u8>>>(7)?,
+                row.get::<_, bool>(8)?,
             ))
         })
         .map_err(|e| format!("Failed to query entries: {}", e))?
@@ -215,6 +230,7 @@ pub fn get_entries_in_range(
                 row.get::<_, String>(5)?,
                 row.get::<_, String>(6)?,
                 row.get::<_, Option<Vec<u8>>>(7)?,
+                row.get::<_, bool>(8)?,
             ))
         })
         .map_err(|e| format!("Failed to query entries: {}", e))?
@@ -297,6 +313,7 @@ mod tests {
                 date_created: "2024-01-01T00:00:00Z".into(),
                 date_updated: "2024-01-01T00:00:00Z".into(),
                 metadata: None,
+                locked: false,
             },
         )
         .unwrap();
@@ -311,6 +328,7 @@ mod tests {
                 date_created: "2024-01-02T00:00:00Z".into(),
                 date_updated: "2024-01-02T00:00:00Z".into(),
                 metadata: None,
+                locked: false,
             },
         )
         .unwrap();
@@ -337,6 +355,7 @@ mod tests {
                 date_created: "2024-01-01T00:00:00Z".into(),
                 date_updated: "2024-01-01T00:00:00Z".into(),
                 metadata: None,
+                locked: false,
             },
         )
         .unwrap();
