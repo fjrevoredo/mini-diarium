@@ -64,12 +64,10 @@ fn bench_insert(c: &mut Criterion) {
     c.bench_function("db_insert_entry", |b| {
         b.iter_batched(
             || {
-                let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
-                let db = create_database(tmp.path().to_str().unwrap(), BENCH_PASSWORD.to_string())
-                    .unwrap();
-                (tmp, db)
+                // In-memory DB: isolates query CPU cost from per-iteration fsync variance.
+                create_database(":memory:", BENCH_PASSWORD.to_string()).unwrap()
             },
-            |(_tmp, db)| insert_entry(&db, &make_entry("2024-01-01")).unwrap(),
+            |db| insert_entry(&db, &make_entry("2024-01-01")).unwrap(),
             BatchSize::SmallInput,
         );
     });
@@ -77,8 +75,8 @@ fn bench_insert(c: &mut Criterion) {
 
 /// Updates an existing entry — the real auto-save path, called every ~500ms while typing.
 fn bench_update(c: &mut Criterion) {
-    let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
-    let db = create_database(tmp.path().to_str().unwrap(), BENCH_PASSWORD.to_string()).unwrap();
+    // In-memory DB: isolates query CPU cost from per-iteration fsync variance.
+    let db = create_database(":memory:", BENCH_PASSWORD.to_string()).unwrap();
     insert_entry(&db, &make_entry("2024-06-01")).unwrap();
     let saved = get_entries_by_date(&db, "2024-06-01")
         .unwrap()
@@ -179,14 +177,13 @@ fn bench_delete(c: &mut Criterion) {
     c.bench_function("db_delete_entry", |b| {
         b.iter_batched(
             || {
-                let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
-                let db = create_database(tmp.path().to_str().unwrap(), BENCH_PASSWORD.to_string())
-                    .unwrap();
+                // In-memory DB: isolates query CPU cost from per-iteration fsync variance.
+                let db = create_database(":memory:", BENCH_PASSWORD.to_string()).unwrap();
                 insert_entry(&db, &make_entry("2024-01-01")).unwrap();
                 let id = get_entries_by_date(&db, "2024-01-01").unwrap()[0].id;
-                (tmp, db, id)
+                (db, id)
             },
-            |(_tmp, db, id)| {
+            |(db, id)| {
                 delete_entry_by_id(&db, id).unwrap();
             },
             BatchSize::SmallInput,

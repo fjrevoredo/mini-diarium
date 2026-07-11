@@ -19,9 +19,9 @@ Rust benchmarks live in `src-tauri/benches/` (four criterion files: auth, cipher
 |-----------|------|-----------|
 | `cipher_encrypt` | `cipher_bench.rs` | AES-256-GCM encrypt at 1 KB, 10 KB, 100 KB |
 | `cipher_decrypt` | `cipher_bench.rs` | AES-256-GCM decrypt at 1 KB, 10 KB, 100 KB |
-| `db_insert_entry` | `db_bench.rs` | One-time entry creation into fresh DB |
-| `db_update_entry` | `db_bench.rs` | Auto-save hot path: update existing entry (realistic HTML) |
-| `db_delete_entry` | `db_bench.rs` | Hard delete by id — explicit user-initiated delete |
+| `db_insert_entry` | `db_bench.rs` | One-time entry creation into fresh DB (in-memory DB — isolates query CPU from disk-flush variance) |
+| `db_update_entry` | `db_bench.rs` | Auto-save hot path: update existing entry, realistic HTML (in-memory DB — isolates query CPU from disk-flush variance) |
+| `db_delete_entry` | `db_bench.rs` | Hard delete by id — explicit user-initiated delete (in-memory DB — isolates query CPU from disk-flush variance) |
 | `db_get_entries_by_date` | `db_bench.rs` | Read 1 entry by date |
 | `db_get_all_entry_dates/100` | `db_bench.rs` | Distinct date list — 100-entry journal |
 | `db_get_all_entry_dates/500` | `db_bench.rs` | Distinct date list — 500-entry journal |
@@ -94,7 +94,7 @@ The duration step uses `if: always()` so it runs even after earlier steps fail. 
 
 4. **`jsdom` environment is required for `markdown.bench.ts`** — DOMPurify calls `window.document.createElement`. Vitest's default `jsdom` environment (set in `vitest.config.ts`) provides this. Do not add a `@vitest-environment` override — it would be redundant and could cause confusion.
 
-5. **Keep `NamedTempFile` alive in `iter_batched` setups** — `tempfile::NamedTempFile` deletes its file on `Drop`. In `iter_batched`, the setup closure must return both `(tmp, db)` so the file outlives the benchmark iteration. Dropping `tmp` before the iteration runs will cause SQLite to open a deleted file.
+5. **Keep `NamedTempFile` alive in `iter_batched` setups** — `tempfile::NamedTempFile` deletes its file on `Drop`. In `iter_batched`, the setup closure must return both `(tmp, db)` so the file outlives the benchmark iteration. Dropping `tmp` before the iteration runs will cause SQLite to open a deleted file. **Exception:** the three mutating benches (`db_insert_entry`, `db_update_entry`, `db_delete_entry`) now use `create_database(":memory:", …)` and carry no tempfile, so this rule no longer applies to them — it still governs the read/search benches that seed a file-backed DB.
 
 6. **All benchmark imports use `mini_diarium_lib::*`** — the Cargo.toml `[lib]` section declares `name = "mini_diarium_lib"`. Benchmark targets import from this crate name, not from the binary target. Ensure `pub mod crypto` and `pub mod db` are exported from `lib.rs`.
 
