@@ -13,6 +13,7 @@ Mini Diarium has four locations where persistent state lives:
 | `localStorage['preferences']` | 14-field `Preferences` interface | Yes | No |
 | `localStorage['theme-preference']` | `'auto'\|'light'\|'dark'` | Yes | No |
 | `localStorage['theme-overrides']` | CSS token override map | Yes | No |
+| `localStorage['feature-flags']` | Runtime feature-flag map (open `Record<string, boolean>`) | Yes | No |
 | `config.json` (`{app_data_dir}/`) | Journal registry, active journal ID, `auto_key`, legacy `diary_dir` | Yes | No |
 | `db_settings` table in `diary.db` | `require_all_auth` + HKDF-SHA256 MAC | Requires unlock | Yes (integrity-protected) |
 | In-memory signals (`src/state/`) | Session state: dates, overlays, tags, auth state | Requires unlock | N/A |
@@ -90,6 +91,8 @@ Q5: Is this a security enforcement setting or integrity-critical?
 **Key: `'theme-preference'`** — `'auto'|'light'|'dark'`, managed by `src/lib/theme.ts`.
 
 **Key: `'theme-overrides'`** — JSON object of CSS token overrides per-theme, managed by `src/lib/theme-overrides.ts`.
+
+**Key: `'feature-flags'`** — open `Record<string, boolean>` of runtime feature flags, managed by `src/state/feature-flags.ts`. Migration-free by design: unknown keys are dropped and absent flags fall back to defaults, so no `loadPreferences`-style migration block is ever needed. Not wiped by `resetPreferences` and not part of settings export (experimental flags are ephemeral, like the theme keys). See `docs/decisions/2026-06-feature-flags.md` (Tier 2).
 
 ### `config.json` (`{app_data_dir}/config.json`)
 
@@ -184,6 +187,7 @@ Schema version bumps for `db_settings` changes must go through the normal migrat
 - `src/state/preferences.ts` — `Preferences` interface and the `'preferences'` localStorage key.
 - `src/lib/theme.ts` — `'theme-preference'` localStorage key management.
 - `src/lib/theme-overrides.ts` — `'theme-overrides'` localStorage key management.
+- `src/state/feature-flags.ts` — `'feature-flags'` localStorage key (migration-free runtime feature flags).
 - `src-tauri/src/config.rs` — `JournalConfig`, `AppConfig`, all config.json helpers.
 - `src-tauri/src/db/schema/migrations/` — `migrate_v5_to_v6` (adds `db_settings`); `src-tauri/src/db/schema/mod.rs` — `SCHEMA_VERSION`.
 - `src-tauri/src/db/queries/db_settings.rs` — `get_db_setting`, `set_db_setting`, `verify_require_all_auth` (fail-safe checks MAC presence/well-formedness; `_master_key` param currently unused — does not recompute MAC at read time), `write_require_all_auth_mac` (HKDF-SHA256, info=`"mini-diarium:require_all_auth:v1"`).

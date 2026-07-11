@@ -32,6 +32,36 @@ export async function connectToApp(): Promise<void> {
 }
 
 /**
+ * Enable (or disable) a runtime feature flag, then reload so it takes effect.
+ *
+ * `src/state/feature-flags.ts` reads `localStorage['feature-flags']` once at
+ * module-init (`createSignal(loadFlags())`), so seeding the key is not enough on
+ * its own — the WebView must reload for the fresh value to be picked up. Call
+ * this AFTER `connectToApp()` but BEFORE `authenticate()`: the reload lands back
+ * on the (still locked) auth screen, so no unlock state is lost.
+ */
+export async function setFeatureFlag(flag: string, enabled: boolean): Promise<void> {
+  await browser.execute(
+    (key: string, f: string, on: boolean) => {
+      let current: Record<string, unknown> = {};
+      try {
+        current = JSON.parse(localStorage.getItem(key) || '{}');
+      } catch {
+        current = {};
+      }
+      current[f] = on;
+      localStorage.setItem(key, JSON.stringify(current));
+    },
+    'feature-flags',
+    flag,
+    enabled,
+  );
+  // Reload so feature-flags.ts re-reads localStorage at module-init.
+  await browser.url('tauri://localhost');
+  await browser.pause(5000);
+}
+
+/**
  * Detect the auth screen and run the correct branch:
  *   - PasswordCreation (no journal yet — clean mode always, stateful first run)
  *   - PasswordPrompt   (journal exists — subsequent runs)

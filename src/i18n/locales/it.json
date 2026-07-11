@@ -21,7 +21,10 @@
       "showTimeline": "Mostra cronologia",
       "showEditor": "Mostra editor",
       "search": "Cerca",
-      "moreOptions": "Altre opzioni"
+      "moreOptions": "Altre opzioni",
+      "menuStatistics": "Statistiche",
+      "menuImport": "Importa",
+      "menuExport": "Esporta"
     },
     "sidebar": {
       "navigation": "Navigazione",
@@ -453,7 +456,10 @@
       "diagnosticsHint": "Genera un file JSON con metadati dell'applicazione per aiutare a diagnosticare problemi. Non sono inclusi il contenuto del diario, le password o le chiavi di crittografia.",
       "generateDump": "Genera dump di debug",
       "generating": "Generazione…",
-      "dumpSuccess": "Dump di debug salvato correttamente."
+      "dumpSuccess": "Dump di debug salvato correttamente.",
+      "experimentalTitle": "Funzionalità sperimentali",
+      "experimentalHint": "Queste funzionalità sono ancora in sviluppo e potrebbero cambiare o essere rimosse. Attivale a tuo rischio.",
+      "inAppMenuLabel": "Menu nell'app (Statistiche, Importa, Esporta)"
     },
     "footer": {
       "cancel": "Annulla",

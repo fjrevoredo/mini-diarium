@@ -11,6 +11,7 @@ import {
 } from '../../state/ui';
 import { lockJournal } from '../../state/auth';
 import { preferences } from '../../state/preferences';
+import { isFeatureEnabled } from '../../state/feature-flags';
 import { useI18n } from '../../i18n';
 import { hasUnread, unreadCount } from '../../state/notifications';
 import HeaderMoreMenu from './HeaderMoreMenu';
@@ -127,7 +128,12 @@ export default function Header(props: HeaderProps) {
         >
           <Lock size={20} />
         </button>
-        <HeaderMoreMenu />
+        {/* The whole ⋮ overflow menu is gated behind the in-app-menu migration
+            flag (TODO-0062): hidden entirely until the migration completes.
+            Preferences stays reachable via the native OS menu meanwhile. */}
+        <Show when={isFeatureEnabled('inAppMenu')}>
+          <HeaderMoreMenu />
+        </Show>
       </div>
     </header>
   );

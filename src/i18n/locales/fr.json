@@ -21,7 +21,10 @@
       "showTimeline": "Afficher la chronologie",
       "showEditor": "Afficher l'éditeur",
       "search": "Rechercher",
-      "moreOptions": "Plus d'options"
+      "moreOptions": "Plus d'options",
+      "menuStatistics": "Statistiques",
+      "menuImport": "Importer",
+      "menuExport": "Exporter"
     },
     "sidebar": {
       "navigation": "Navigation",
@@ -453,7 +456,10 @@
       "diagnosticsHint": "Génère un fichier JSON avec les métadonnées de l'application pour aider à diagnostiquer les problèmes. Aucun contenu de journal, mot de passe ou clé de chiffrement n'est inclus.",
       "generateDump": "Générer le dump de débogage",
       "generating": "Génération…",
-      "dumpSuccess": "Dump de débogage enregistré avec succès."
+      "dumpSuccess": "Dump de débogage enregistré avec succès.",
+      "experimentalTitle": "Fonctionnalités expérimentales",
+      "experimentalHint": "Ces fonctionnalités sont encore en développement et peuvent changer ou être supprimées. Activez-les à vos risques.",
+      "inAppMenuLabel": "Menu dans l'application (Statistiques, Importer, Exporter)"
     },
     "footer": {
       "cancel": "Annuler",

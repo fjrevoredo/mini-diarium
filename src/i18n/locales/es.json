@@ -21,7 +21,10 @@
       "showTimeline": "Mostrar cronología",
       "showEditor": "Mostrar editor",
       "search": "Buscar",
-      "moreOptions": "Más opciones"
+      "moreOptions": "Más opciones",
+      "menuStatistics": "Estadísticas",
+      "menuImport": "Importar",
+      "menuExport": "Exportar"
     },
     "sidebar": {
       "navigation": "Navegación",
@@ -453,7 +456,10 @@
       "diagnosticsHint": "Genera un archivo JSON con metadatos de la aplicación para ayudar a diagnosticar problemas. No se incluye el contenido del diario, contraseñas ni claves de cifrado.",
       "generateDump": "Generar volcado de depuración",
       "generating": "Generando…",
-      "dumpSuccess": "Volcado de depuración guardado correctamente."
+      "dumpSuccess": "Volcado de depuración guardado correctamente.",
+      "experimentalTitle": "Funciones experimentales",
+      "experimentalHint": "Estas funciones aún están en desarrollo y pueden cambiar o eliminarse. Actívalas bajo tu propio riesgo.",
+      "inAppMenuLabel": "Menú en la aplicación (Estadísticas, Importar, Exportar)"
     },
     "footer": {
       "cancel": "Cancelar",

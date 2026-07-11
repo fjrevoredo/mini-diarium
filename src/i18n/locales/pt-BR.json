@@ -21,7 +21,10 @@
       "showTimeline": "Mostrar linha do tempo",
       "showEditor": "Mostrar editor",
       "search": "Pesquisar",
-      "moreOptions": "Mais opções"
+      "moreOptions": "Mais opções",
+      "menuStatistics": "Estatísticas",
+      "menuImport": "Importar",
+      "menuExport": "Exportar"
     },
     "sidebar": {
       "navigation": "Navegação",
@@ -453,7 +456,10 @@
       "diagnosticsHint": "Gera um arquivo JSON com metadados do aplicativo para ajudar a diagnosticar problemas. Nenhum conteúdo do diário, senha ou chave de criptografia é incluído.",
       "generateDump": "Gerar despejo de depuração",
       "generating": "Gerando…",
-      "dumpSuccess": "Despejo de depuração salvo com sucesso."
+      "dumpSuccess": "Despejo de depuração salvo com sucesso.",
+      "experimentalTitle": "Recursos experimentais",
+      "experimentalHint": "Esses recursos ainda estão em desenvolvimento e podem mudar ou ser removidos. Ative por sua conta e risco.",
+      "inAppMenuLabel": "Menu no aplicativo (Estatísticas, Importar, Exportar)"
     },
     "footer": {
       "cancel": "Cancelar",

@@ -6,6 +6,10 @@
  * native OS menu bar, which `tauri-driver` cannot drive; the `HeaderMoreMenu`
  * (TODO-0061) surfaces it inside the WebView where WebDriver can reach it.
  *
+ * The whole `⋮` menu is gated behind the `inAppMenu` runtime feature flag
+ * (TODO-0062) and defaults OFF, so this spec enables the flag (via
+ * `setFeatureFlag` → localStorage + reload) before the menu exists.
+ *
  * Session model: each spec file gets a fresh (locked) app process, so this file
  * starts at the auth screen regardless of spec order — unlock branch if the
  * shared journal already exists on disk, create branch (+ tour) if this file
@@ -17,17 +21,20 @@
  *   - Run via: `bun run test:e2e`
  */
 
-import { connectToApp, authenticate, dismissOnboardingTour } from './helpers';
+import { connectToApp, authenticate, dismissOnboardingTour, setFeatureFlag } from './helpers';
 
 const TEST_PASSWORD = 'e2e-test-password-123'; // same journal DB as diary-workflow.spec.ts
 
 describe('Header in-app actions', () => {
   it('opens Preferences via the ⋮ overflow menu', async () => {
-    // 1. Connect, auth (create or unlock), dismiss the tour if it appears.
-    //    No sidebar/calendar interaction and no entry write are needed — the `⋮`
-    //    trigger lives in the always-visible Header right cluster (visible at
-    //    800×660; no browser.setWindowSize per e2e/CLAUDE.md gotchas #2–3).
+    // 1. Connect, enable the inAppMenu flag (reloads to re-read localStorage),
+    //    then auth (create or unlock) and dismiss the tour if it appears. The `⋮`
+    //    trigger lives in the Header right cluster (visible at 800×660; no
+    //    browser.setWindowSize per e2e/CLAUDE.md gotchas #2–3) but only renders
+    //    once the flag is on. setFeatureFlag runs before auth, so the reload it
+    //    performs lands on the still-locked auth screen (no unlock state lost).
     await connectToApp();
+    await setFeatureFlag('inAppMenu', true);
     await authenticate(TEST_PASSWORD);
     await dismissOnboardingTour();
 

@@ -26,6 +26,8 @@ State modules live in `src/state/` — one file per domain, all SolidJS signals.
 
 The `Preferences` interface (fields, types, defaults) is the source of truth in `src/state/preferences.ts`. Stored in `localStorage`.
 
+`feature-flags.ts` holds runtime feature flags (Tier 2 of the feature-flag strategy) in a **migration-free** open `Record<string, boolean>` under its own `localStorage['feature-flags']` key. `isFeatureEnabled(flag)` is a reactive read (drives `<Show>`); `setFeatureFlag(flag, enabled)` persists. Adding/retiring a flag is just editing the `FeatureFlag` union + `DEFAULTS` — there is deliberately no migration block. Use this (not the `Preferences` interface) to gate in-progress features that need a runtime toggle. **To flip a flag:** in-app via **Preferences → Advanced → Experimental Features** (unlocked-only, reactive), or in dev/E2E by seeding `localStorage['feature-flags']` before load (e.g. `localStorage.setItem('feature-flags', JSON.stringify({ inAppMenu: true }))`). Every flag defaults off. See [`docs/decisions/2026-06-feature-flags.md`](../docs/decisions/2026-06-feature-flags.md) (Tier 2 → "Enabling / disabling a flag at runtime") for the full how-to and current-flag inventory.
+
 > **Settings taxonomy:** When adding a new setting, see [`docs/decisions/2026-05-settings-storage-taxonomy.md`](../docs/decisions/2026-05-settings-storage-taxonomy.md) for the decision flowchart (`localStorage` vs. `config.json` vs. `db_settings` vs. in-memory).
 
 ## i18n / Translations
@@ -165,9 +167,12 @@ These are used by E2E tests — **do not remove** from components.
 | `SearchOverlay.tsx` | Search dialog content | `search-overlay` |
 | `Header.tsx` | Lock button | `lock-journal-button` |
 | `Header.tsx` | Timeline toggle button | `timeline-toggle-button` |
-| `HeaderMoreMenu.tsx` | Overflow menu trigger (⋮) | `header-more-menu-trigger` |
+| `HeaderMoreMenu.tsx` | Overflow menu trigger (⋮) — whole menu gated behind `inAppMenu` flag at the `Header.tsx` render site | `header-more-menu-trigger` |
 | `HeaderMoreMenu.tsx` | Overflow menu dropdown content | `header-more-menu-content` |
 | `HeaderMoreMenu.tsx` | Preferences item in overflow menu | `header-more-menu-preferences-item` |
+| `HeaderMoreMenu.tsx` | Statistics item in overflow menu | `header-more-menu-statistics-item` |
+| `HeaderMoreMenu.tsx` | Import item in overflow menu | `header-more-menu-import-item` |
+| `HeaderMoreMenu.tsx` | Export item in overflow menu | `header-more-menu-export-item` |
 | `PreferencesOverlay.tsx` | Preferences dialog content | `preferences-overlay` |
 | `TitleEditor.tsx` | Title input | `title-input` |
 | `Calendar.tsx` | Each day button | `calendar-day-YYYY-MM-DD` |
@@ -202,6 +207,8 @@ These are used by E2E tests — **do not remove** from components.
    - `'preferences'` — the `Preferences` interface (autoLockEnabled, hideTitles, etc.)
    - `'theme-preference'` — `'auto'|'light'|'dark'` (managed by `src/lib/theme.ts`)
    - `'theme-overrides'` — JSON object of CSS token overrides (managed by `src/lib/theme-overrides.ts`)
+
+   A fourth independent key, `'feature-flags'` (managed by `src/state/feature-flags.ts`), holds runtime experimental flags. Unlike the three above it is **not** wiped by `resetPreferences` and **not** included in settings export — experimental flags are intentionally ephemeral, so leave it out of reset/export flows.
 
    See [`docs/decisions/2026-05-settings-storage-taxonomy.md`](../docs/decisions/2026-05-settings-storage-taxonomy.md) for the full taxonomy and decision guide.
 

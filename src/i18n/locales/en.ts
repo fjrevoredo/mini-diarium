@@ -42,6 +42,9 @@ const en = {
       showEditor: 'Show editor',
       search: 'Search',
       moreOptions: 'More options',
+      menuStatistics: 'Statistics',
+      menuImport: 'Import',
+      menuExport: 'Export',
     },
     sidebar: {
       navigation: 'Navigation',
@@ -537,6 +540,10 @@ const en = {
       generateDump: 'Generate Debug Dump',
       generating: 'Generating…',
       dumpSuccess: 'Debug dump saved successfully.',
+      experimentalTitle: 'Experimental Features',
+      experimentalHint:
+        'These features are still in development and may change or be removed. Enable them at your own risk.',
+      inAppMenuLabel: 'In-app menu (Statistics, Import, Export)',
     },
     footer: {
       cancel: 'Cancel',

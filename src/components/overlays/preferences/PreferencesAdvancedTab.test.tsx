@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { screen, fireEvent } from '@solidjs/testing-library';
 import { createSignal } from 'solid-js';
 import { renderWithI18n } from '../../../test/i18n-test-utils';
+import { isFeatureEnabled, setFeatureFlag } from '../../../state/feature-flags';
 import PreferencesAdvancedTab from './PreferencesAdvancedTab';
 
 const {
@@ -85,5 +86,30 @@ describe('PreferencesAdvancedTab', () => {
     renderTab();
     fireEvent.click(screen.getByRole('button', { name: 'Reset to Default' }));
     expect(mockResetThemeOverrides).toHaveBeenCalledTimes(1);
+  });
+
+  describe('experimental features', () => {
+    beforeEach(() => {
+      localStorage.clear();
+      setFeatureFlag('inAppMenu', false);
+    });
+
+    it('reflects the current inAppMenu flag state and flips it on toggle', () => {
+      renderTab();
+
+      const checkbox = screen.getByRole('checkbox', {
+        name: /in-app menu/i,
+      }) as HTMLInputElement;
+
+      expect(checkbox.checked).toBe(false);
+
+      fireEvent.click(checkbox);
+      expect(isFeatureEnabled('inAppMenu')).toBe(true);
+      expect(checkbox.checked).toBe(true);
+
+      fireEvent.click(checkbox);
+      expect(isFeatureEnabled('inAppMenu')).toBe(false);
+      expect(checkbox.checked).toBe(false);
+    });
   });
 });
