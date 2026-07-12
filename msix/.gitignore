@@ -1,0 +1,9 @@
+# MSIX build outputs — never commit generated payload, packages, or dev certs.
+dist/
+*.msix
+*.msixbundle
+*.pfx
+*.cer
+
+# Development certificate
+devcert.pfx

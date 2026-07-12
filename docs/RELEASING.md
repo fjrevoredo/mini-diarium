@@ -348,7 +348,7 @@ The following happens automatically when you push a tag:
 ✅ Upload artifacts to the draft release
 ✅ Publish the release automatically after artifact verification
 ✅ Open a cleanup PR removing `latest-changelog.md` when it is safe to do so
-✅ Dispatch WinGet, Homebrew, and Flathub publish workflows
+✅ Dispatch WinGet, Homebrew, Flathub, and Microsoft Store publish workflows
 
 You only need to:
 
@@ -414,3 +414,67 @@ When the release workflow publishes a release, the `flathub-publish.yml` workflo
 ### Flatpak Maintenance
 
 The initial Flathub submission work is already complete. For future changes, debugging, or release upkeep, use [FLATPAK_MAINTENANCE.md](FLATPAK_MAINTENANCE.md).
+
+---
+
+## Microsoft Store (MSIX)
+
+Mini Diarium is distributed on the Microsoft Store as an **MSIX with package identity**.
+The **Store signs the package and manages updates** — there is no paid code-signing
+certificate and no in-app updater, so this channel stays compatible with the app's
+no-network / no-telemetry non-negotiables (see `PHILOSOPHY.md`).
+
+Packaging sources live in [`../msix/`](../msix/) (`Package.appxmanifest`) and
+[`../scripts/build-msix.ps1`](../scripts/build-msix.ps1). Read
+[`../msix/README.md`](../msix/README.md) before changing anything Store-related — it
+covers the identity manifest, the local build recipe, the smoke-test checklist, and the
+AppData-virtualization limitation.
+
+### First submission is manual (one-time)
+
+The listing text, screenshots, age rating (IARC questionnaire), and privacy
+declarations cannot be automated. Do them by hand in Partner Center:
+
+1. Fill the three identity placeholders in `msix/Package.appxmanifest` from Partner
+   Center → Product management → Product identity, and commit.
+2. Build and smoke-test a local MSIX (`msix/README.md` → "Local build + smoke test").
+3. Create the submission in Partner Center, upload the **unsigned** `.msix` (the Store
+   signs it), and fill the listing: description (reuse `longDescription` from
+   `tauri.conf.json`), screenshots, category (Utility), age rating, and privacy —
+   emphasize local-only, no data collection, no network.
+4. Submit for certification and record the **Product ID** (needed for CI).
+5. Once live, capture the Store listing URL and Package Family Name, then add a "Get it
+   from the Microsoft Store" option to the website install page (`website/docs-src/`,
+   regenerated via `bun run website:build-static` — never hand-edit generated HTML).
+
+### Automated update submissions (every release after the first)
+
+The `msstore-publish.yml` workflow builds the MSIX and pushes a package update,
+dispatched from the release workflow alongside WinGet/Homebrew/Flathub. It is
+**non-blocking**: a failure never fails the core release.
+
+**Requirements (one-time):**
+
+- An Azure AD (Microsoft Entra) app registration associated with the Partner Center
+  account, with a client secret.
+- Repository secrets: `PARTNER_CENTER_TENANT_ID`, `PARTNER_CENTER_SELLER_ID`,
+  `PARTNER_CENTER_CLIENT_ID`, `PARTNER_CENTER_CLIENT_SECRET`, and `MSSTORE_PRODUCT_ID`.
+
+**Version handling:** the MSIX 4-part version is derived from the release tag at build
+time (`vX.Y.Z` → `X.Y.Z.0`) by `build-msix.ps1`. The committed manifest keeps a
+placeholder version; `bump-version.sh` does **not** stamp it (avoids a fourth version
+file drifting).
+
+**Dry-run before trusting a tag to auto-publish:** the `msstore` CLI has no native Tauri
+integration, so this pipeline packs the MSIX with `winapp` and pushes it via the raw
+`msstore publish` command rather than `msstore init`. Use the workflow's dry-run mode
+whenever you want to check the pipeline without publishing:
+
+```bash
+gh workflow run msstore-publish.yml --ref master \
+  --field tag=vX.Y.Z --field dry_run=true
+```
+
+This creates/updates a **draft** submission (`--noCommit`) without publishing; confirm
+with `msstore submission status <productId>`. Once the draft looks right, a real tagged
+release auto-dispatches the workflow and publishes the update.

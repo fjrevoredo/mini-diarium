@@ -1,0 +1,152 @@
+name: Publish to Microsoft Store
+
+# Pushes a package UPDATE to the Microsoft Store for an already-published product.
+#
+# The FIRST submission (listing text, screenshots, age rating, privacy declarations) is
+# done by hand in Partner Center — it cannot be automated. This workflow only automates
+# subsequent package updates, mirroring winget-publish.yml.
+#
+# Prerequisites (one-time — see docs/RELEASING.md "Microsoft Store (MSIX)"):
+#   * msix/Package.appxmanifest identity filled in from Partner Center.
+#   * Azure AD (Entra) app registration associated with the Partner Center account.
+#   * Repo secrets: PARTNER_CENTER_TENANT_ID, PARTNER_CENTER_SELLER_ID,
+#     PARTNER_CENTER_CLIENT_ID, PARTNER_CENTER_CLIENT_SECRET, MSSTORE_PRODUCT_ID.
+
+permissions:
+  contents: read
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Release tag (e.g. v0.6.2)'
+        required: true
+      dry_run:
+        description: 'Create/update a draft submission without committing (validation run)'
+        type: boolean
+        default: false
+
+jobs:
+  publish-msstore:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          # Build the exact tagged commit, not the workflow's default ref.
+          ref: ${{ inputs.tag || github.event.release.tag_name }}
+
+      - name: Verify Partner Center secrets are set
+        shell: pwsh
+        run: |
+          $missing = @()
+          foreach ($name in 'PARTNER_CENTER_TENANT_ID','PARTNER_CENTER_SELLER_ID','PARTNER_CENTER_CLIENT_ID','PARTNER_CENTER_CLIENT_SECRET','MSSTORE_PRODUCT_ID') {
+            if (-not (Get-Item "env:$name" -ErrorAction SilentlyContinue).Value) { $missing += $name }
+          }
+          if ($missing.Count -gt 0) {
+            Write-Error "Missing required secrets: $($missing -join ', '). Add them at Settings -> Secrets and variables -> Actions."
+            exit 1
+          }
+          Write-Host "All Partner Center secrets are configured."
+        env:
+          PARTNER_CENTER_TENANT_ID: ${{ secrets.PARTNER_CENTER_TENANT_ID }}
+          PARTNER_CENTER_SELLER_ID: ${{ secrets.PARTNER_CENTER_SELLER_ID }}
+          PARTNER_CENTER_CLIENT_ID: ${{ secrets.PARTNER_CENTER_CLIENT_ID }}
+          PARTNER_CENTER_CLIENT_SECRET: ${{ secrets.PARTNER_CENTER_CLIENT_SECRET }}
+          MSSTORE_PRODUCT_ID: ${{ secrets.MSSTORE_PRODUCT_ID }}
+
+      - name: Determine version
+        id: prep
+        shell: pwsh
+        env:
+          INPUT_TAG: ${{ inputs.tag }}
+          EVENT_TAG: ${{ github.event.release.tag_name || github.ref_name }}
+        run: |
+          $tag = if ($env:INPUT_TAG) { $env:INPUT_TAG } else { $env:EVENT_TAG }
+          $version = $tag -replace '^v', ''
+          "tag=$tag" >> $env:GITHUB_OUTPUT
+          "version=$version" >> $env:GITHUB_OUTPUT
+          Write-Host "Building MSIX for $tag (version $version)"
+
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
+        with:
+          bun-version: 1.2
+
+      - uses: actions/setup-node@48b55a011bda9f5d6aeb4c2d9c7362e8dae4041e # v6
+        with:
+          node-version: 20
+
+      - uses: dtolnay/rust-toolchain@4be7066ada62dd38de10e7b70166bc74ed198c30 # stable
+        with:
+          toolchain: stable
+
+      - name: Install packaging tooling (winapp + msstore CLI)
+        shell: pwsh
+        run: |
+          # winapp packs the MSIX; msstore pushes the submission (needs .NET 9 Desktop Runtime).
+          # The msstore CLI is installed by display name per Microsoft's quickstart; if
+          # that match ever becomes ambiguous in CI, pin its winget --id instead.
+          $common = @('--accept-source-agreements','--accept-package-agreements','--disable-interactivity')
+          winget install --id microsoft.winappcli @common
+          winget install --id Microsoft.DotNet.DesktopRuntime.9 @common
+          winget install --name "Microsoft Store Developer CLI" @common
+          # Refresh PATH for subsequent steps (winget installs to per-user/machine paths).
+          "$env:LOCALAPPDATA\Microsoft\WindowsApps" >> $env:GITHUB_PATH
+
+      - name: Install frontend dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Build Tauri app (release, frontend-embedded)
+        # --no-bundle: skip the msi/nsis installers (we produce our own MSIX). This is a
+        # real Tauri build, so the frontend is embedded — never package a bare cargo build.
+        run: bun run tauri build --no-bundle
+
+      - name: Assemble MSIX payload and pack (unsigned — Store signs it)
+        shell: pwsh
+        run: |
+          pwsh ./scripts/build-msix.ps1 -Version "${{ steps.prep.outputs.version }}" -Pack -Unsigned
+
+      - name: Configure msstore CLI credentials
+        shell: pwsh
+        run: |
+          msstore reconfigure `
+            --tenantId "${{ secrets.PARTNER_CENTER_TENANT_ID }}" `
+            --sellerId "${{ secrets.PARTNER_CENTER_SELLER_ID }}" `
+            --clientId "${{ secrets.PARTNER_CENTER_CLIENT_ID }}" `
+            --clientSecret "${{ secrets.PARTNER_CENTER_CLIENT_SECRET }}"
+          if ($LASTEXITCODE -ne 0) { Write-Error "msstore reconfigure failed"; exit 1 }
+
+      - name: Publish package update to the Store
+        shell: pwsh
+        env:
+          PRODUCT_ID: ${{ secrets.MSSTORE_PRODUCT_ID }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          $pkg = Get-ChildItem -Path msix/dist -Filter '*.msix' -File -ErrorAction SilentlyContinue |
+            Sort-Object LastWriteTime -Descending | Select-Object -First 1
+          if (-not $pkg) { Write-Error "No packed MSIX found under msix/dist"; exit 1 }
+          $msix = $pkg.FullName
+          Write-Host "Publishing package: $msix"
+
+          # `msstore publish` uploads the package, updates the pending submission, and
+          # commits it. --noCommit leaves a DRAFT submission for validation runs.
+          # The msstore CLI has no native Tauri integration (`init` doesn't apply here),
+          # so this pushes a standalone MSIX directly. If `publish` cannot consume a
+          # standalone MSIX, fall back to the `msstore submission` sub-commands (see
+          # docs/RELEASING.md "Microsoft Store (MSIX)").
+          $args = @('publish', $env:PRODUCT_ID, '--inputFile', $msix, '--verbose')
+          if ($env:DRY_RUN -eq 'true') {
+            Write-Host "DRY RUN: creating/updating a draft submission (no commit)."
+            $args += '--noCommit'
+          }
+          msstore @args
+          if ($LASTEXITCODE -ne 0) { Write-Error "msstore publish failed with exit code $LASTEXITCODE"; exit 1 }
+
+      - name: Report submission status
+        if: always()
+        shell: pwsh
+        run: |
+          msstore submission status "${{ secrets.MSSTORE_PRODUCT_ID }}" || Write-Host "Could not fetch submission status."

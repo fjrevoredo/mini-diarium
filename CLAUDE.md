@@ -245,6 +245,8 @@ For applying GitHub dependency PRs, use `$runbooks apply-dependency-prs` in Code
 
 Use `$runbooks pre-release` in Codex or `/runbooks pre-release` in Claude Code, then follow [docs/RELEASING.md](docs/RELEASING.md) for the full process. From this shell, route project commands through `cmd.exe /c ...`. Version bump script: `./bump-version.sh X.Y.Z`.
 
+**Distribution channels** on each tagged release: GitHub Releases (installers) plus WinGet, Homebrew, Flathub, and the **Microsoft Store** (MSIX, Store-signed). The Store pipeline lives in [`msix/`](msix/README.md) + [`scripts/build-msix.ps1`](scripts/build-msix.ps1) + [`.github/workflows/msstore-publish.yml`](.github/workflows/msstore-publish.yml); the first Store submission is manual, updates are CI-dispatched (non-blocking) from `release.yml`. See [docs/RELEASING.md](docs/RELEASING.md) → "Microsoft Store (MSIX)".
+
 ## Docs Maintenance
 
 When behavior or conventions change:

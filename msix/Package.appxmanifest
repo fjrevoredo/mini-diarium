@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  MSIX identity manifest for the Microsoft Store build of Mini Diarium.
+
+  This is a hand-authored, full-trust (Win32) desktop manifest — Mini Diarium is a
+  packaged classic desktop app, not a UWP app, so it declares `runFullTrust` and
+  uses `Windows.FullTrustApplication` as the entry point.
+
+  Identity values below are PLACEHOLDERS. Replace the three `__…__` tokens ONCE with
+  the exact values from Partner Center → your reserved product → Product management →
+  Product identity, then commit. They are stable for the life of the app and are NOT
+  rewritten by CI. See msix/README.md for where to find each value.
+
+  The `Version` attribute IS rewritten at build time from the release tag
+  (X.Y.Z -> X.Y.Z.0) by scripts/build-msix.ps1, so do not hand-maintain it.
+
+  Deliberately absent: `internetClient` and every other network capability. Mini
+  Diarium makes no network calls (see PHILOSOPHY.md non-negotiables); declaring a
+  network capability would be both false and a needless Store-privacy red flag.
+-->
+<Package
+  xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+  xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+  xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+  IgnorableNamespaces="uap rescap">
+
+  <Identity
+    Name="fjrevoredo.MiniDiarium"
+    Publisher="CN=418EE735-930A-47CF-942F-0D0B47D683D7"
+    Version="0.6.2.0"
+    ProcessorArchitecture="x64" />
+
+  <Properties>
+    <DisplayName>Mini Diarium</DisplayName>
+    <PublisherDisplayName>fjrevoredo</PublisherDisplayName>
+    <Logo>Assets\StoreLogo.png</Logo>
+  </Properties>
+
+  <Dependencies>
+    <!-- 10.0.17763.0 = Windows 10 1809, the oldest still-serviced desktop baseline. -->
+    <TargetDeviceFamily Name="Windows.Desktop" MinVersion="10.0.17763.0" MaxVersionTested="10.0.22631.0" />
+  </Dependencies>
+
+  <Resources>
+    <Resource Language="en-us" />
+  </Resources>
+
+  <Applications>
+    <Application Id="MiniDiarium" Executable="mini-diarium.exe" EntryPoint="Windows.FullTrustApplication">
+      <uap:VisualElements
+        DisplayName="Mini Diarium"
+        Description="An encrypted, local-first desktop journaling app"
+        BackgroundColor="#1E1E2E"
+        Square150x150Logo="Assets\Square150x150Logo.png"
+        Square44x44Logo="Assets\Square44x44Logo.png">
+        <!--
+          No Square310x310Logo: MSIX requires a Wide310x150Logo alongside it, which the
+          Tauri icon set doesn't produce and a desktop app doesn't need. The small (71x71)
+          and medium (150x150) tiles carry no such pairing requirement.
+        -->
+        <uap:DefaultTile
+          ShortName="Mini Diarium"
+          Square71x71Logo="Assets\Square71x71Logo.png" />
+      </uap:VisualElements>
+    </Application>
+  </Applications>
+
+  <Capabilities>
+    <!--
+      runFullTrust is mandatory for a packaged Win32 executable and is unrelated to
+      network access. It declares "this is a classic desktop app", nothing more.
+      No `internetClient` / broad-filesystem capabilities: file import/export and
+      key-file access go through the broker-mediated file picker, and there is no
+      network I/O.
+    -->
+    <rescap:Capability Name="runFullTrust" />
+  </Capabilities>
+</Package>

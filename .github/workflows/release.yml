@@ -300,6 +300,20 @@ jobs:
             --ref master \
             --field tag="$GITHUB_REF_NAME"
 
+      # Best-effort: the Microsoft Store update runs only once the product is live and
+      # the PARTNER_CENTER_* / MSSTORE_PRODUCT_ID secrets are configured. A failure here
+      # (e.g. secrets not yet set, first submission still pending manual review) must not
+      # fail the release, so this step is non-blocking.
+      - name: Trigger Microsoft Store publish
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh workflow run msstore-publish.yml \
+            --repo "${{ github.repository }}" \
+            --ref master \
+            --field tag="$GITHUB_REF_NAME"
+
       - name: Check out master for changelog cleanup
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
