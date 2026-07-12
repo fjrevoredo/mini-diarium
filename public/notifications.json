@@ -1,6 +1,16 @@
 {
   "entries": [
     {
+      "id": "v0.6.2-release",
+      "type": "release",
+      "version": "0.6.2",
+      "title": "What's new in 0.6.2",
+      "body": "Mini Diarium 0.6.2 brings two new locking controls: auto-lock when the window loses focus so you can minimize or switch away without leaving your journal open, and a per-entry lock that makes individual entries read-only so you can browse without worrying about accidental edits. The auto-lock timeout now enforces a 5-second minimum to keep the app usable.",
+      "date": "2026-07-12",
+      "linkUrl": "https://github.com/fjrevoredo/mini-diarium/releases/tag/v0.6.2",
+      "linkLabel": "Full release notes"
+    },
+    {
       "id": "v0.6.0-release",
       "type": "release",
       "version": "0.6.0",

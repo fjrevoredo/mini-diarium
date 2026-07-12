@@ -31,7 +31,7 @@ Template:
 
 # Versions
 
-## [0.6.2] - Unreleased
+## [0.6.2] - 12-07-2026
 
 ### Added
 - **Lock journal when the window loses focus** (TODO-0068, addressing [#194](https://github.com/fjrevoredo/mini-diarium/issues/194)): a new "Lock when the window loses focus" toggle in Preferences → Security (off by default, independent of the existing idle-timer auto-lock) locks the journal a few seconds after the app window loses OS-level focus — minimizing, Alt+Tab/Cmd+Tab away, clicking another window, or Cmd+H on macOS. A short debounce means a quick misclick outside the window doesn't lock the journal if focus returns in time, and opening one of the app's own native dialogs (export, import, key-file save) never triggers it. Detection lives in Rust (`WindowEvent::Focused`) rather than the DOM `visibilitychange` API, which does not reliably fire on window minimize in the bundled WebView2. Verified end-to-end on Windows; macOS/Linux rely on the same cross-platform windowing API and have not been separately live-tested.
