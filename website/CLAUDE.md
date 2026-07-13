@@ -135,19 +135,19 @@ Delete the `.md` file from `posts-src/` and run `bun run website:build-static`. 
 
 ### Keyword Map
 
-Every blog post should target at least one specific search query. Current keyword gaps and owned topics:
+Every blog post should target at least one specific search query. The full keyword and
+topic-cluster map (pillar + clusters, target queries, current positions, owning page, and which
+engine surfaces the demand) lives in **[`docs/seo/STRATEGY.md`](../docs/seo/STRATEGY.md) §3**.
+That is the single source of truth; do not maintain a duplicate table here (per
+[`CONTEXT_FILES_BEST_PRACTICES.md`](../docs/best-practices/CONTEXT_FILES_BEST_PRACTICES.md):
+prefer pointers over copies).
 
-| Query | Approach |
-|-------|----------|
-| `encrypted diary` | "What Is an Encrypted Diary" — foundational explainer |
-| `private journal app` | "How to Choose a Private Journal App" — buyer's checklist |
-| `encrypted journal` | Owned by `/encrypted-journal/` landing page |
-| `desktop diary app` | Targeted by `desktop-diary-app` post |
-| `private offline journal` | Owned by `private-diary-app-for-desktop` post |
-
-> **Current positions:** Check [`docs/seo/Queries.csv`](../docs/seo/Queries.csv) (updated quarterly) for live ranking data before writing a new post. Do not rely on inline numbers here — they are stale within days.
-
-When writing a new post, check the [SEO audit data](../docs/seo/) to avoid cannibalizing existing pages and to identify new keyword opportunities. If `docs/seo/` does not exist (CSV exports are added quarterly), use the keyword map above as the primary reference and verify the new post's primary keyword does not appear as the title or H1 of an existing post.
+Before writing a new post:
+- Read `STRATEGY.md` §3 to place the post in a cluster and confirm the target query is not
+  already the title/H1 of an existing post (cannibalization).
+- Check live positions in the latest export under [`docs/seo/performance/`](../docs/seo/performance/)
+  (do not rely on inline numbers anywhere; they are stale within days).
+- For the "before you write a blog post" checklist, follow `STRATEGY.md` §9.
 
 ### Target topics
 
@@ -228,14 +228,23 @@ Current nav order: Features → Security → Blog → Docs → Download
 
 ### Monitoring Cadence
 
-- Export Google Search Console data (3-month window) to `docs/seo/` quarterly
-- Compare against the last baseline in [`docs/seo/`](../docs/seo/) (see the most recent `Pages.csv` and `Queries.csv` — do not inline numbers here).
-- Key metrics to watch (current baselines in `docs/seo/Pages.csv` and `Queries.csv`):
-  - `/encrypted-journal/` CTR — target >2%
-  - Blog post CTR on positions 6–10 — target >1%
-  - US market CTR — target >5%
+The recurring, data-driven review is the `seo-performance-review` skill (bi-weekly at current
+volume). It ingests the latest Google Search Console + Bing exports, runs the analysis
+framework in [`docs/seo/STRATEGY.md`](../docs/seo/STRATEGY.md) §5, produces content briefs, and
+updates the action plan. Run it each cycle rather than doing this by hand.
+
+- Export Google Search Console (3-month window) and Bing (overview + query-level Keyword report)
+  to [`docs/seo/performance/`](../docs/seo/performance/) each cycle. The review skill guides the
+  pull when data is stale.
+- Compare against the most recent snapshot: the latest `docs/seo/STATUS_REPORT_*.md` and the
+  prior dated folder under `docs/seo/performance/` (do not inline numbers here; they go stale).
+- Key metrics to watch (baselines in the latest status report, not inlined here):
+  - `/encrypted-journal/` CTR (target >2%)
+  - Blog post CTR at positions 6-10 (target >1%)
+  - US market CTR (target >5%)
   - New blog post positions as they get indexed
-- After each audit, create or update `docs/seo/seo-fix-plan.md` with prioritized actions
+- The prioritized fix queue and the hypothesis log live in
+  [`docs/seo/action-plan.md`](../docs/seo/action-plan.md), kept current by the review skill.
 
 ### Production Configuration
 

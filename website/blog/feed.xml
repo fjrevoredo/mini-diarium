@@ -14,6 +14,20 @@
     <pubDate>Mon, 13 Jul 2026 00:00:00 GMT</pubDate>
   </item>
   <item>
+    <title>Password-Protected Journal App: What It Really Means</title>
+    <link>https://mini-diarium.com/blog/password-protected-journal-app/</link>
+    <guid isPermaLink="true">https://mini-diarium.com/blog/password-protected-journal-app/</guid>
+    <description>A password on a journal app can mean a login screen or real encryption. Here is how to tell the difference, and what locking one entry actually protects.</description>
+    <pubDate>Mon, 13 Jul 2026 00:00:00 GMT</pubDate>
+  </item>
+  <item>
+    <title>Secure Journal App: What Actually Makes One Secure</title>
+    <link>https://mini-diarium.com/blog/secure-journal-app/</link>
+    <guid isPermaLink="true">https://mini-diarium.com/blog/secure-journal-app/</guid>
+    <description>Plenty of apps call themselves secure. A journal app earns it by encrypting entries on disk, running fully offline, and holding no key it could hand over.</description>
+    <pubDate>Mon, 13 Jul 2026 00:00:00 GMT</pubDate>
+  </item>
+  <item>
     <title>Notion Alternative for Private Journaling</title>
     <link>https://mini-diarium.com/blog/notion-alternative-for-journaling/</link>
     <guid isPermaLink="true">https://mini-diarium.com/blog/notion-alternative-for-journaling/</guid>
@@ -42,10 +56,10 @@
     <pubDate>Fri, 29 May 2026 00:00:00 GMT</pubDate>
   </item>
   <item>
-    <title>How to Choose a Private Journal App in 2026</title>
+    <title>How to Choose a Private Journal App: 5 Checks That Matter</title>
     <link>https://mini-diarium.com/blog/private-journal-app-how-to-choose/</link>
     <guid isPermaLink="true">https://mini-diarium.com/blog/private-journal-app-how-to-choose/</guid>
-    <description>A private journal app should encrypt entries at rest, work fully offline, avoid telemetry, and give you a portable export. Here is a practical checklist for evaluating one.</description>
+    <description>Not all private journal apps actually keep your writing private. Five checks reveal which ones encrypt at rest, work offline, and let you leave with your data.</description>
     <pubDate>Fri, 08 May 2026 00:00:00 GMT</pubDate>
   </item>
   <item>

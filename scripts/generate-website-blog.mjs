@@ -44,7 +44,7 @@ const DESCRIPTION_MAP = {
   'what-is-an-encrypted-diary':
     "An encrypted diary encrypts entries before they touch disk. It's an architectural guarantee, not a login screen. Here is what that means.",
   'private-journal-app-how-to-choose':
-    'A practical checklist for evaluating private journal apps: encryption at rest, local storage, offline use, open exports, and open source.',
+    'Five checks for evaluating a private journal app: encryption at rest, local storage, offline use, open exports, and open source.',
   'desktop-diary-app':
     'A desktop diary app should encrypt entries at rest, store the primary copy locally, work offline, and export to open formats. Storage model and exit path matter more than feature lists.',
   'standard-notes-alternative':
@@ -55,6 +55,10 @@ const DESCRIPTION_MAP = {
     'Notion stores journal entries on its servers, where AI features can read them. Mini Diarium encrypts each entry locally with AES-256-GCM, with no account and no server.',
   'can-your-journal-be-subpoenaed':
     'A subpoena can only compel a company to hand over what it holds and can decrypt. A local-first journal with no server and no account has nothing to produce.',
+  'password-protected-journal-app':
+    'A password on a journal app can mean a login screen or real encryption at rest. Mini Diarium encrypts the whole journal with AES-256-GCM behind one password or key file, with a per-entry lock that prevents accidental edits, not a second password.',
+  'secure-journal-app':
+    'A secure journal app encrypts entries on disk with a named algorithm, has no recovery backdoor, and keeps a small network surface. Mini Diarium uses AES-256-GCM, has no HTTP client, and is open source for Windows, macOS, and Linux.',
 };
 
 const BLUF_MAP = {
@@ -94,6 +98,10 @@ const BLUF_MAP = {
     '<p class="bluf"><strong>Short answer:</strong> Notion is a collaborative, server-hosted workspace: entries live on Notion\'s servers, Notion holds the encryption keys, and Notion AI can process content when enabled. Mini Diarium is a single-user desktop app that encrypts each entry with AES-256-GCM before it touches disk, with no server, no account, and no AI processing.</p>',
   'can-your-journal-be-subpoenaed':
     '<p class="bluf"><strong>Short answer:</strong> A subpoena can only compel a company to produce what it holds and can access. If a journal app stores entries in a form it can decrypt, or keeps a password-recovery path, a valid legal request can reach that content. A local-first journal with no server and no account has no copy of your entries for any request to reach.</p>',
+  'password-protected-journal-app':
+    '<p class="bluf"><strong>Short answer:</strong> A journal password is only meaningful if it unlocks encryption, not just a login screen. Mini Diarium encrypts the entire journal with AES-256-GCM behind one password or key file, so the database is unreadable when copied elsewhere. It has no per-entry passwords and no per-entry encryption; its per-entry lock only prevents accidental edits once the journal is already unlocked.</p>',
+  'secure-journal-app':
+    '<p class="bluf"><strong>Short answer:</strong> A secure journal app encrypts each entry on disk with a named algorithm, has no recovery backdoor, and keeps a minimal network surface. Mini Diarium encrypts entries with AES-256-GCM before they touch disk, has no HTTP client at all, and is open source under the MIT license for Windows, macOS, and Linux, so its security claims can be verified rather than trusted.</p>',
 };
 
 const STATIC_PAGES = [

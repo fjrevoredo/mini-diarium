@@ -1,9 +1,9 @@
 ---
-title: How to Choose a Private Journal App in 2026
+title: "How to Choose a Private Journal App: 5 Checks That Matter"
 slug: private-journal-app-how-to-choose
-description: A private journal app should encrypt entries at rest, work fully offline, avoid telemetry, and give you a portable export. Here is a practical checklist for evaluating one.
+description: Not all private journal apps actually keep your writing private. Five checks reveal which ones encrypt at rest, work offline, and let you leave with your data.
 date: 2026-05-08
-updated: 2026-05-08
+updated: 2026-07-13
 author: Francisco J. Revoredo
 tags: private journal app, encrypted diary, offline journal, local-first journaling
 excerpt: A practical checklist for evaluating private journal apps: encryption model, storage location, network dependency, export formats, and what actually matters for long-term ownership.
