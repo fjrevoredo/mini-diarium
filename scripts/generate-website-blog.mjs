@@ -53,6 +53,8 @@ const DESCRIPTION_MAP = {
     'Compares Mini Diarium to Obsidian for journal writing: Obsidian stores vault files as unencrypted Markdown on disk; Mini Diarium encrypts each entry with AES-256-GCM at the storage layer.',
   'notion-alternative-for-journaling':
     'Notion stores journal entries on its servers, where AI features can read them. Mini Diarium encrypts each entry locally with AES-256-GCM, with no account and no server.',
+  'can-your-journal-be-subpoenaed':
+    'A subpoena can only compel a company to hand over what it holds and can decrypt. A local-first journal with no server and no account has nothing to produce.',
 };
 
 const BLUF_MAP = {
@@ -90,6 +92,8 @@ const BLUF_MAP = {
     '<p class="bluf"><strong>Short answer:</strong> Obsidian stores vault files as plain Markdown on disk with no built-in encryption. Mini Diarium encrypts each entry with AES-256-GCM before writing to a local SQLite database and has no network client. If you journal in Obsidian and want encryption at the storage layer without relying on a community plugin, Mini Diarium is a purpose-built alternative for Windows, macOS, and Linux.</p>',
   'notion-alternative-for-journaling':
     '<p class="bluf"><strong>Short answer:</strong> Notion is a collaborative, server-hosted workspace: entries live on Notion\'s servers, Notion holds the encryption keys, and Notion AI can process content when enabled. Mini Diarium is a single-user desktop app that encrypts each entry with AES-256-GCM before it touches disk, with no server, no account, and no AI processing.</p>',
+  'can-your-journal-be-subpoenaed':
+    '<p class="bluf"><strong>Short answer:</strong> A subpoena can only compel a company to produce what it holds and can access. If a journal app stores entries in a form it can decrypt, or keeps a password-recovery path, a valid legal request can reach that content. A local-first journal with no server and no account has no copy of your entries for any request to reach.</p>',
 };
 
 const STATIC_PAGES = [

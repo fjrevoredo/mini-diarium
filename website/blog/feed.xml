@@ -5,7 +5,14 @@
     <link>https://mini-diarium.com/blog/</link>
     <description>Static articles about encrypted journals, private diary apps, offline journaling, and local-first software.</description>
     <language>en-us</language>
-    <lastBuildDate>Wed, 01 Jul 2026 00:00:00 GMT</lastBuildDate>
+    <lastBuildDate>Mon, 13 Jul 2026 00:00:00 GMT</lastBuildDate>
+  <item>
+    <title>Can Your Journal App Be Subpoenaed?</title>
+    <link>https://mini-diarium.com/blog/can-your-journal-be-subpoenaed/</link>
+    <guid isPermaLink="true">https://mini-diarium.com/blog/can-your-journal-be-subpoenaed/</guid>
+    <description>Cloud providers must comply with valid legal requests for user data. Here is what a subpoena can compel a journal app to hand over, and what it cannot reach.</description>
+    <pubDate>Mon, 13 Jul 2026 00:00:00 GMT</pubDate>
+  </item>
   <item>
     <title>Notion Alternative for Private Journaling</title>
     <link>https://mini-diarium.com/blog/notion-alternative-for-journaling/</link>

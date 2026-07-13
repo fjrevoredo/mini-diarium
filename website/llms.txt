@@ -34,6 +34,7 @@
 
 ## Latest Articles
 
+- A subpoena can only compel a company to hand over what it holds and can decrypt. A local-first journal with no server and no account has nothing to produce. (https://mini-diarium.com/blog/can-your-journal-be-subpoenaed/)
 - Notion stores journal entries on its servers, where AI features can read them. Mini Diarium encrypts each entry locally with AES-256-GCM, with no account and no server. (https://mini-diarium.com/blog/notion-alternative-for-journaling/)
 - Compares Mini Diarium to Obsidian for journal writing: Obsidian stores vault files as unencrypted Markdown on disk; Mini Diarium encrypts each entry with AES-256-GCM at the storage layer. (https://mini-diarium.com/blog/obsidian-alternative-for-journaling/)
 - Compares Mini Diarium to Standard Notes for users who want encrypted journal entries on their device only, with no sync service or server dependency. (https://mini-diarium.com/blog/standard-notes-alternative/)
