@@ -111,12 +111,17 @@ jobs:
 
       - name: Configure msstore CLI credentials
         shell: pwsh
+        env:
+          TENANT_ID: ${{ secrets.PARTNER_CENTER_TENANT_ID }}
+          SELLER_ID: ${{ secrets.PARTNER_CENTER_SELLER_ID }}
+          CLIENT_ID: ${{ secrets.PARTNER_CENTER_CLIENT_ID }}
+          CLIENT_SECRET: ${{ secrets.PARTNER_CENTER_CLIENT_SECRET }}
         run: |
           msstore reconfigure `
-            --tenantId "${{ secrets.PARTNER_CENTER_TENANT_ID }}" `
-            --sellerId "${{ secrets.PARTNER_CENTER_SELLER_ID }}" `
-            --clientId "${{ secrets.PARTNER_CENTER_CLIENT_ID }}" `
-            --clientSecret "${{ secrets.PARTNER_CENTER_CLIENT_SECRET }}"
+            --tenantId "$env:TENANT_ID" `
+            --sellerId "$env:SELLER_ID" `
+            --clientId "$env:CLIENT_ID" `
+            --clientSecret "$env:CLIENT_SECRET"
           if ($LASTEXITCODE -ne 0) { Write-Error "msstore reconfigure failed"; exit 1 }
 
       - name: Publish package update to the Store
@@ -148,5 +153,7 @@ jobs:
       - name: Report submission status
         if: always()
         shell: pwsh
+        env:
+          PRODUCT_ID: ${{ secrets.MSSTORE_PRODUCT_ID }}
         run: |
-          msstore submission status "${{ secrets.MSSTORE_PRODUCT_ID }}" || Write-Host "Could not fetch submission status."
+          msstore submission status "$env:PRODUCT_ID" || Write-Host "Could not fetch submission status."
