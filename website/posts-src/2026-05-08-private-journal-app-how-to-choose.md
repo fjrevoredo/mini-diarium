@@ -3,7 +3,7 @@ title: "How to Choose a Private Journal App: 5 Checks That Matter"
 slug: private-journal-app-how-to-choose
 description: Not all private journal apps actually keep your writing private. Five checks reveal which ones encrypt at rest, work offline, and let you leave with your data.
 date: 2026-05-08
-updated: 2026-07-13
+updated: 2026-07-14
 author: Francisco J. Revoredo
 tags: private journal app, encrypted diary, offline journal, local-first journaling
 excerpt: A practical checklist for evaluating private journal apps: encryption model, storage location, network dependency, export formats, and what actually matters for long-term ownership.
@@ -67,4 +67,4 @@ Mini Diarium is a local-first desktop journal app for Windows, macOS, and Linux.
 
 If you want the shorter product overview, start with the [encrypted journal guide](/encrypted-journal/). If you are comparing Mini Diarium to other tools, the [comparison page](/compare/) covers Day One, Notion, Obsidian, Standard Notes, and Joplin on the same criteria listed above.
 
-For more on what encryption at rest actually means, read [what is an encrypted diary](/blog/what-is-an-encrypted-diary/). For the desktop-specific requirements, the post on [private diary apps for desktop](/blog/private-diary-app-for-desktop/) goes deeper on what matters when you write on your own machine.
+For more on what encryption at rest actually means, read [what is an encrypted diary](/blog/what-is-an-encrypted-diary/). For the desktop-specific requirements, the post on [private diary apps for desktop](/blog/private-diary-app-for-desktop/) goes deeper on what matters when you write on your own machine. If you are still deciding what these terms should mean before you shortlist anything, the posts on [what makes a journal secure](/blog/secure-journal-app/) and [what a password actually protects](/blog/password-protected-journal-app/) unpack the two claims apps lean on most.
