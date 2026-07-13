@@ -35,7 +35,7 @@ aes-gcm = "0.11"
 zeroize = { version = "1.8", features = ["derive"] }
 rusqlite = { version = "0.40", features = ["bundled"] }
 rand = "0.10"
-rand_core = "0.6"
+rand_core = "0.10"
 hex = "0.4"
 x25519-dalek = { version = "2", features = ["static_secrets"] }
 hkdf = "0.13"
