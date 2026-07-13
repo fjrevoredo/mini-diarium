@@ -136,8 +136,9 @@ post.
 ## Guardrails
 
 - **Never auto-draft blog posts.** Produce briefs; the author writes.
-- **Respect the password/lock accuracy guardrail** in any brief for the secure/password cluster:
-  whole-journal AES-256-GCM + per-entry edit-lock, never per-entry passwords/encryption.
+- **Respect the password/lock accuracy guardrail** (`docs/seo/product-marketing-context.md`, read
+  in Step 0) in any brief for the secure/password cluster: whole-journal AES-256-GCM + per-entry
+  edit-lock, never per-entry encryption.
 - **Honest about scale.** ~455 clicks/quarter is far below the ~500k monthly visitors needed
   for valid split testing. Report directional signals and hypotheses, not causal claims.
 - **Freeze non-transferring signals.** Do not recommend keyword-density, anchor-text, paid-link

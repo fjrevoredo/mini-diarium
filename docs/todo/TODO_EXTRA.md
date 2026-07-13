@@ -127,7 +127,7 @@ bun run type-check
 
 Parent: [`TODO-0011: Website SEO/GEO follow-up backlog`](TODO.md)
 
-**Reference**: [`docs/seo-geo-implementation-plan.md`](../seo-geo-implementation-plan.md) — Task 4.4
+**Reference**: [`docs/archive/seo-geo-implementation-plan.md`](../archive/seo-geo-implementation-plan.md) — Task 4.4
 
 Unique per-post OG images would require a design step and an image generation pipeline not present in the current static site. Out of scope for the current static website architecture.
 

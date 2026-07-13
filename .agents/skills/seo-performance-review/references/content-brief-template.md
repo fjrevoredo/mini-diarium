@@ -40,8 +40,9 @@ trade-off, and the specific constraint. Every product claim backed by a technica
 - <e.g. /compare/ or a related /blog/ post>
 
 ### Accuracy guardrails that apply
-- <e.g. password/lock cluster: whole-journal AES-256-GCM + per-entry edit-lock, NOT per-entry
-  passwords/encryption. Or: name any limitation plainly (desktop-only, no sync).>
+- <e.g. password/lock cluster: whole-journal AES-256-GCM + per-entry edit-lock, never per-entry
+  encryption (canonical wording: `docs/seo/product-marketing-context.md`). Or: name any
+  limitation plainly (desktop-only, no sync).>
 
 ### Cannibalization check
 - <confirm the primary query is not already the title/H1 of an existing post; if it is,

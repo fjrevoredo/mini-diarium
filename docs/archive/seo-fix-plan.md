@@ -1,3 +1,5 @@
+> **Archived status:** COMPLETED historical plan, superseded by `docs/seo/action-plan.md`. See the hub index at `docs/seo/README.md`.
+
 # SEO Fix Plan — Mini Diarium Website
 
 ## Metadata

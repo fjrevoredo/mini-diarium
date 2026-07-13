@@ -151,11 +151,10 @@ Before writing a new post:
 
 ### Target topics
 
-Posts should address real search intent around:
-- encrypted offline journaling
-- local-first ownership and portability
-- specific tool comparisons or migrations (Day One, Mini Diary, jrnl, etc.)
-- why architecture matters for private writing
+The owned topic and its adjacent framings are defined once in
+[`docs/seo/STRATEGY.md`](../docs/seo/STRATEGY.md) §1 and
+[`docs/seo/product-marketing-context.md`](../docs/seo/product-marketing-context.md). Place every
+post inside that owned topic; do not chase unrelated volume.
 
 ### Title and Description Rules
 
@@ -179,7 +178,7 @@ Posts should address real search intent around:
 
 **GEO (BLUF) rule:**
 
-The `BLUF_MAP` entry for each post must be a single self-contained answer that an LLM can quote verbatim without needing surrounding context. It should name the specific products, the specific trade-off, and the specific constraint.
+The BLUF content shape (a self-contained 50–80-word direct answer above the first H2 that names the specific products, trade-off, and constraint) is defined in [`docs/seo/STRATEGY.md`](../docs/seo/STRATEGY.md) §2. The generator-specific mechanic: each post's `BLUF_MAP` entry must hold that answer and be quotable by an LLM verbatim with no surrounding context.
 
 **Internal linking:**
 
@@ -248,7 +247,7 @@ updates the action plan. Run it each cycle rather than doing this by hand.
 
 ### Production Configuration
 
-HTTP→HTTPS redirect is handled by Coolify, not the local `website/nginx.conf`. If GSC shows `http://` impressions, the Coolify edge must be configured with 301 redirects. See `docs/seo/production-config-notes.md`.
+HTTP→HTTPS redirect is handled by Coolify, not the local `website/nginx.conf`. If GSC shows `http://` impressions, the Coolify edge must be configured with 301 redirects.
 
 ### IndexNow
 
@@ -325,7 +324,7 @@ See `website/docs-src/_template.md` for the starter template.
 | `encrypted-journal/`, `compare/`, `privacy/` | Edit | Static guide / comparison / policy pages |
 | `css/`, `js/` | Edit | Site stylesheet and scripts |
 | `nginx.conf` | Edit | Local Docker preview only — does not affect production |
-| `../docs/seo/` | Edit | SEO audit exports (outside `website/` but referenced by monitoring guidance above) |
+| `../docs/seo/` | Edit | SEO/GEO + growth hub (outside `website/`) — start at [`../docs/seo/README.md`](../docs/seo/README.md) |
 
 ---
 

@@ -1,3 +1,5 @@
+> **Archived status:** COMPLETED historical execution record of the May 2026 SEO/GEO audit. See the hub index at `docs/seo/README.md`.
+
 # SEO/GEO Implementation Plan
 
 ## Metadata

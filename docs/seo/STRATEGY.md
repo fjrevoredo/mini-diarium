@@ -31,19 +31,17 @@ anchor-text optimization, paid-link velocity, SERP-feature chasing).
 
 ## 1. Positioning & owned topic
 
+The brand facts (what the product is, the ICP, and the owned-topic framings) are stated once in
+[`product-marketing-context.md`](product-marketing-context.md); the owned topic is **"encrypted
+offline journaling."** This section keeps only the strategic argument for why that topic is the
+lever.
+
 **Own the topic, not the keyword.** For a low-Domain-Rating niche brand, topical authority is
 the single highest-leverage lever on both the SEO and GEO axes [corpus §1.2, Tier A/B]. A
 specialist that covers a topic completely can outrank DR-96 generalists, and GEO citation
 correlates with topical depth, not Domain Rating (r≈0.18 vs 0.55–0.65 for classic ranking)
-[corpus §2.2, §3.2].
-
-**The owned topic is "encrypted offline journaling."** It is narrow, honest to the product,
-and defensible. Everything we publish should deepen coverage of that topic and its subtopics
-rather than chase unrelated volume. Adjacent framings we own or want to own:
-
-- Private / secure **desktop** journaling.
-- **Local-first** ownership and portability (you keep the exit door open).
-- Offline-**by-architecture** privacy (no HTTP client, so no data can leave).
+[corpus §2.2, §3.2]. Everything we publish should deepen coverage of that topic and its
+subtopics rather than chase unrelated volume.
 
 **Quasi-YMYL implication.** This is a privacy/encryption product. Author and entity trust
 matter more than for a generic app. Google maintains an entity model (`pageEmbeddingsVersion`
@@ -99,12 +97,12 @@ different emphasis.
   for windows", "offline diary for pc", "desktop diary windows", dozens of "windows" variants).
   Where it is honest, keep **Windows/desktop explicit** in titles and H1s. That framing earns
   disproportionate Bing return and is the exact channel IndexNow already pushes to.
-- **(b) Accuracy guardrail for the password/lock cluster.** Mini Diarium encrypts the *entire*
-  journal (AES-256-GCM) behind one password or key file, and additionally offers a per-entry
-  **lock-against-accidental-edits** flag. It does **not** offer separate per-entry passwords or
-  per-entry encryption. Any content targeting "does diarium have a password" / "lock certain
-  entries in diarium" must frame these facts precisely and must not imply per-entry encryption
-  (repo rule: every product claim backed by a technical fact).
+- **(b) Accuracy guardrail for the password/lock cluster.** The secure/password cluster and any
+  password/lock content are governed by the accuracy guardrail in
+  [`product-marketing-context.md`](product-marketing-context.md) (canonical): frame whole-journal
+  AES-256-GCM encryption and the per-entry edit-lock precisely, and never imply per-entry
+  encryption. It applies to any content targeting "does diarium have a password" / "lock certain
+  entries in diarium".
 
 ### Pillar: Encrypted journal / diary → `/encrypted-journal/`
 
@@ -301,18 +299,20 @@ authority signal that feeds both Google's entity model and LLM source-trust heur
 
 Organic search is the compounding channel, but it is slow and the click itself is increasingly
 rare (when an AI Overview appears, users click a traditional result ~8% of the time vs ~15%
-without [corpus §3.3]). Complementary surfaces:
+without [corpus §3.3]). Newsletter, community, and comparison surfaces are complementary, not
+substitutes. The implementation state for each distribution surface lives in
+[`growth/`](growth/); this section keeps only the strategic frame.
 
-- **Newsletter (currently 1 subscriber).** The pragmatic plan: state a clear value proposition
-  tied to the owned topic ("occasional releases and privacy-journaling notes, no spam"), add a
-  per-post CTA at the end of each blog post, wire RSS-to-email so publishing a post emails the
-  list without extra work, and keep cadence honest (only when there is a release or a real
-  post). Do not build heavy tooling before there is an audience. The `/newsletter/` page and
-  `feed.xml` already exist.
+- **Newsletter.** A low-friction email surface tied to the owned topic ("occasional releases
+  and privacy-journaling notes, no spam"). Do not build heavy tooling before there is an
+  audience. Provider, placement, and open items: [`growth/newsletter.md`](growth/newsletter.md).
 - **GitHub / community.** The repo (200+ stars from a Hacker News post) is a trust and
   discovery surface. Keep the README's one-line description consistent with the entity
   description (§6). Community surfaces (r/selfhosted, r/privacy, r/opensource) reward honest
   FOSS framing, not marketing.
+- **Product Hunt launch.** A one-time momentum surface for a solo-indie FOSS product. The
+  adapted 6-week roadmap, go/no-go checklist, and realistic-outcome expectations:
+  [`growth/product-hunt-launch.md`](growth/product-hunt-launch.md).
 - **Comparison-driven referral.** "X alternative" and "X vs Y" queries convert buyer intent;
   the comparison posts and `/compare/` are the referral surface. Keep them current as
   competitors change pricing or features.

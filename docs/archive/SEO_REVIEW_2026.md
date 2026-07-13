@@ -1,3 +1,5 @@
+> **Archived status:** Historical May 2026 SEO audit. **Still load-bearing** - `docs/seo/action-plan.md` P4 items and its Verification Checklist reference this document. Current strategy lives in `docs/seo/STRATEGY.md`; the hub index is `docs/seo/README.md`.
+
 **Audit date:** May 2, 2026
 **Site:** https://mini-diarium.com/
 **Priority order:** P1 = fix today, P2 = this week, P3 = this month, P4 = ongoing

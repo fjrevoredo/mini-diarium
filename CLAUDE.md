@@ -99,6 +99,7 @@ Static marketing site — plain HTML/CSS/JS. Deploy via Coolify using `website/d
 **Blog posts:** Write `posts-src/YYYY-MM-DD-slug.md`, then run `cmd.exe /c bun run website:blog`. Never hand-craft HTML in `blog/`. See [website/CLAUDE.md](website/CLAUDE.md) for the full workflow.
 **Docs pages:** Edit `docs-src/NN-slug.md`, then run `cmd.exe /c bun run website:build-static`. Never hand-craft HTML in `docs/` — all files there are generated output.
 **Docs are the authoritative user reference:** `website/docs-src/` is the primary source of truth for how every user-facing feature works — for both users and agents auditing feature behavior. After adding, changing, or removing any user-facing feature, update the relevant `docs-src/` file in the same task. Stale docs are a bug.
+**SEO/GEO + growth:** strategy, keyword map, status, action plan, and growth/distribution material live in `docs/seo/` (start at [docs/seo/README.md](docs/seo/README.md)).
 
 ## Command Registry
 

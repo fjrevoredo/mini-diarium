@@ -94,9 +94,9 @@ after any `posts-src/` or static-page change with `cmd.exe /c bun run website:bu
 - **Cluster:** secure/password-protected (Google `password protected journal` pos ~27–30, no
   dedicated page) + Bing feature-intent ("does diarium have a password", "can you lock certain
   entries in diarium").
-- **Guardrail:** describe whole-journal AES-256-GCM encryption + password/key-file unlock and
-  the per-entry edit-lock precisely. Do **not** imply per-entry passwords or per-entry
-  encryption (`STRATEGY.md` §3b).
+- **Guardrail:** apply the password/lock accuracy guardrail
+  ([`product-marketing-context.md`](product-marketing-context.md)): whole-journal AES-256-GCM +
+  per-entry edit-lock, never per-entry encryption.
 - **Deliverable:** `website/posts-src/2026-07-…-password-protected-journal-app.md` + map
   entries; rebuild.
 
