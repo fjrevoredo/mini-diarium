@@ -69,7 +69,7 @@
     "@tiptap/extension-image": "^3.27.2",
     "@tiptap/extension-placeholder": "^3.27.2",
     "@tiptap/extension-text-align": "^3.27.2",
-    "@tiptap/extension-text-style": "^3.27.1",
+    "@tiptap/extension-text-style": "^3.27.2",
     "@tiptap/pm": "^3.27.1",
     "@tiptap/starter-kit": "^3.27.2",
     "dompurify": "^3.4.11",
