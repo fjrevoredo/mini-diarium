@@ -74,30 +74,45 @@
 <section class="blog-post-body">
   <div class="container">
     <div class="blog-post prose" aria-label="Privacy Policy" style="max-width: 720px; margin: 0 auto;">
-      <p><strong>Last updated: 2026-07-06</strong></p>
+      <p><strong>Last updated: 2026-07-15</strong></p>
 
-      <h2>What Mini Diarium does not do</h2>
-      <p>Mini Diarium has no network client. It makes no HTTP requests. It does not send analytics, telemetry, crash reports, usage statistics, or any other data to any server.</p>
-      <p>Mini Diarium does not store journal entries on cloud servers. Your entries are encrypted locally on your device and never leave it unless you explicitly export them.</p>
-      <p>Mini Diarium does not require an account, email address, or online registration.</p>
-      <p>Mini Diarium does not use third-party analytics or tracking services.</p>
+      <p>This privacy policy explains how Mini Diarium (the "app") handles your information. Mini Diarium is a local-first, offline journaling application. It is developed and published by Francisco J. Revoredo (the "developer", "we", or "us"), who is the data controller for the limited purposes described below. In short: the app collects no personal information and sends nothing over the network.</p>
 
-      <h2>What data stays on your device</h2>
-      <p>When you create a journal, a local encrypted SQLite database is created in your user data directory. All entries are encrypted with AES-256-GCM before they are written to the database. The plaintext of your entries never reaches disk in unencrypted form.</p>
-      <p>The database and its automatic backups remain entirely local. Mini Diarium does not sync or back up to any cloud service.</p>
+      <h2>Summary</h2>
+      <ul>
+        <li>The app collects <strong>no</strong> personal information.</li>
+        <li>The app has no network client and transmits <strong>no</strong> data to us or to any third party.</li>
+        <li>Your journal content is encrypted on your device and never leaves it unless you explicitly export it.</li>
+        <li>No account, sign-in, email address, or online registration is required to use the app.</li>
+      </ul>
+
+      <h2>Information we collect</h2>
+      <p>The Mini Diarium app collects no personal information. It does not gather your name, email address, location, contacts, device identifiers, or usage data. Because the app has no network client and makes no HTTP requests, there is no mechanism by which it could transmit such information to us or to anyone else.</p>
+      <p>The app does not send analytics, telemetry, crash reports, usage statistics, advertising identifiers, or any other data to any server. It does not include third-party analytics, advertising, or tracking SDKs.</p>
+
+      <h2>How your journal data is stored and secured</h2>
+      <p>When you create a journal, a local encrypted SQLite database is created in your user data directory on your device. All entries are encrypted with AES-256-GCM before they are written to the database, using a key derived from your password (Argon2id) or a key file that you control. The plaintext of your entries never reaches disk in unencrypted form.</p>
+      <p>The database and its automatic backups remain entirely on your device. The app does not sync, upload, or back up your data to any cloud service, and we never receive a copy of it. Because the app collects no data and holds nothing on our servers, there is nothing for us to retain, and there is no data on our side for you to access, correct, or delete.</p>
 
       <h2>What you control</h2>
-      <p>You control your journal file location, backup frequency, and export destination. When you export entries (as JSON or Markdown), that file is stored wherever you choose.</p>
-      <p>You can delete your journal file and all backups at any time. Uninstalling Mini Diarium removes the application but does not delete your journal file or backups by default.</p>
+      <p>You control your password or key file, your journal file location, backup frequency, and export destination. When you export entries (for example, as JSON, Markdown, or PDF), that file is stored wherever you choose, in unencrypted form; from that point its security is in your hands.</p>
+      <p>You can delete your journal file and all backups at any time. Uninstalling the app removes the application but does not delete your journal file or backups by default, so that you don't lose your data unintentionally.</p>
 
-      <h2>Third-party services</h2>
-      <p>The only external resources Mini Diarium's website loads are the SourceForge download badge and platform icons. These are external services with their own privacy policies. The Mini Diarium app itself connects to no external services.</p>
+      <h2>Distribution channels (Microsoft Store and others)</h2>
+      <p>Mini Diarium is distributed through the Microsoft Store and through other channels such as GitHub Releases, WinGet, Homebrew, and Flathub. When you obtain or run the app through a store or platform, that platform may collect information such as download counts, install and reliability data, and diagnostic reports, governed by <em>that platform's</em> own privacy policy, not this one. For the Microsoft Store, see the <a href="https://privacy.microsoft.com/privacystatement" target="_blank" rel="noopener noreferrer">Microsoft Privacy Statement</a>. We do not receive personally identifiable information from these channels; at most we see aggregate, anonymized download and rating figures.</p>
 
-      <h2>Newsletter</h2>
-      <p>This website offers an optional email newsletter, operated by Buttondown. If you subscribe, your email address is sent to and stored by Buttondown, which sends the newsletter on our behalf. Subscription uses double opt-in, and every email includes a one-click unsubscribe link. The newsletter is a website feature and is separate from the Mini Diarium app, which has no network client and does not connect to the newsletter or to Buttondown.</p>
+      <h2>Children's privacy</h2>
+      <p>Mini Diarium is a general-audience journaling tool. It does not knowingly collect any information from anyone, including children. Because the app collects no personal information at all, no data about children is ever gathered or transmitted.</p>
+
+      <h2>Website and newsletter</h2>
+      <p>This section applies to the website at mini-diarium.com, which is separate from the app. The only external resource the website loads is the SourceForge download badge, served from SourceForge's content delivery network; SourceForge is a third party with its own privacy policy. The website also contains outbound links to third-party sites such as GitHub, SourceForge, and LinkedIn, each of which has its own privacy policy. The website does not load third-party analytics, advertising, or tracking scripts.</p>
+      <p>The website offers an optional email newsletter, operated by Buttondown. If you choose to subscribe, your email address is sent to and stored by Buttondown, which sends the newsletter on our behalf. Subscription uses double opt-in, and every email includes a one-click unsubscribe link. The newsletter is a website feature and is entirely separate from the app, which has no network client and does not connect to the newsletter or to Buttondown.</p>
+
+      <h2>Your rights</h2>
+      <p>Privacy laws such as the GDPR and CCPA give you rights to access, correct, delete, or port your personal data, and to object to its processing. Because Mini Diarium collects and holds no personal data about you, these rights are satisfied by default: there is no data on our side to disclose, correct, delete, or transfer. Your journal content remains under your sole control on your own device. If you have questions about how any of this applies to you, contact us using the details below.</p>
 
       <h2>Changes to this policy</h2>
-      <p>If this privacy policy changes, the updated version will be published at mini-diarium.com/privacy/ with an updated "Last updated" date.</p>
+      <p>If this privacy policy changes, the updated version will be published at mini-diarium.com/privacy/ with an updated "Last updated" date. Material changes will be reflected here before they take effect.</p>
 
       <h2>Contact</h2>
       <p>For questions about this privacy policy, contact: <a href="mailto:minidiarium@gmail.com">minidiarium@gmail.com</a></p>
