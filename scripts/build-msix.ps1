@@ -18,8 +18,9 @@
       * the Store/tile icon assets
 
     VERSION: MSIX requires a 4-part version. X.Y.Z is mapped to X.Y.Z.0 and written into
-    the staged manifest's Identity/@Version. The committed manifest keeps a placeholder
-    version; this script never edits the committed file.
+    the staged manifest's Identity/@Version. The committed manifest carries a concrete
+    version that is not kept in sync by bump-version.sh, so treat it as informational
+    only — the staged copy is what ships, and this script never edits the committed file.
 
 .PARAMETER Version
     Release version as X.Y.Z (a leading 'v' and a trailing '.0' are both tolerated).
@@ -185,9 +186,11 @@ if (-not $Pack) {
     return
 }
 
-# A package with placeholder identity is uninstallable (Add-AppxPackage) and unsubmittable.
+# The committed manifest holds the real Partner Center identity, so this guard should never
+# fire. It is kept as a cheap regression check against someone re-tokenizing the manifest: a
+# package with placeholder identity is uninstallable (Add-AppxPackage) and unsubmittable.
 # The guard lives here, not in staging, so the payload can still be assembled and the app
-# run directly from dist\ to verify completeness before identity is filled in.
+# run directly from dist\ to verify completeness.
 $stagedManifest = Get-Content (Join-Path $DistDir 'Package.appxmanifest') -Raw
 if ($stagedManifest -match '__PARTNER_CENTER_') {
     throw @"

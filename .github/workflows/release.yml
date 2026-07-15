@@ -300,10 +300,11 @@ jobs:
             --ref master \
             --field tag="$GITHUB_REF_NAME"
 
-      # Best-effort: the Microsoft Store update runs only once the product is live and
-      # the PARTNER_CENTER_* / MSSTORE_PRODUCT_ID secrets are configured. A failure here
-      # (e.g. secrets not yet set, first submission still pending manual review) must not
-      # fail the release, so this step is non-blocking.
+      # Best-effort: the product is live on the Store, but the update still needs the
+      # PARTNER_CENTER_* / MSSTORE_PRODUCT_ID secrets to be configured. A failure here
+      # (e.g. secrets not yet set) must not fail the release, so this step is non-blocking.
+      # This is the ONLY trigger for msstore-publish.yml — it has no `release:` trigger, so
+      # do not add one here or the release would submit twice.
       - name: Trigger Microsoft Store publish
         continue-on-error: true
         env:

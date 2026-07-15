@@ -278,6 +278,17 @@ section {
   height: auto;
 }
 
+.hero-msstore {
+  display: inline-block;
+  margin: 0.1rem auto 1rem;
+}
+
+.hero-msstore img {
+  display: block;
+  width: min(161px, 100%);
+  height: auto;
+}
+
 .hero-source a {
   color: var(--text-muted);
   text-decoration: underline;

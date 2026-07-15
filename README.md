@@ -21,6 +21,7 @@ Free, open source, and never touches the internet.
 [![SolidJS](https://img.shields.io/badge/SolidJS-2C4F7C?logo=solid&logoColor=white)](https://solidjs.com)
 [![Rust](https://img.shields.io/badge/Rust-CE422B?logo=rust&logoColor=white)](https://www.rust-lang.org)
 [![Flathub](https://img.shields.io/flathub/v/io.github.fjrevoredo.mini-diarium?logo=flathub&logoColor=white&label=Flathub)](https://flathub.org/apps/io.github.fjrevoredo.mini-diarium)
+[![Microsoft Store](https://img.shields.io/badge/Microsoft_Store-0078D4)](https://apps.microsoft.com/detail/9PJFTX44ZS43)
 
 [mini-diarium.com](https://mini-diarium.com) · [Download](#download) · [Documentation](https://mini-diarium.com/docs) · [Features](#features) · [Philosophy](PHILOSOPHY.md) · [Benchmarks](https://fjrevoredo.github.io/mini-diarium/benchmarks/)
 
@@ -42,6 +43,7 @@ Download the latest release for your platform from [GitHub Releases](https://git
 
 Quick install:
 
+- Windows (Microsoft Store): [apps.microsoft.com/detail/9PJFTX44ZS43](https://apps.microsoft.com/detail/9PJFTX44ZS43)
 - Windows (WinGet): `winget install fjrevoredo.MiniDiarium`
 - macOS (Homebrew): `brew tap fjrevoredo/mini-diarium` then `brew install --cask mini-diarium`
 - Linux (Flatpak): `flatpak install flathub io.github.fjrevoredo.mini-diarium`

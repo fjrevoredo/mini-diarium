@@ -6,10 +6,10 @@
   packaged classic desktop app, not a UWP app, so it declares `runFullTrust` and
   uses `Windows.FullTrustApplication` as the entry point.
 
-  Identity values below are PLACEHOLDERS. Replace the three `__…__` tokens ONCE with
-  the exact values from Partner Center → your reserved product → Product management →
-  Product identity, then commit. They are stable for the life of the app and are NOT
-  rewritten by CI. See msix/README.md for where to find each value.
+  The Identity values below are the real ones from Partner Center → Product management →
+  Product identity (product 9PJFTX44ZS43). They are filled in, stable for the life of the
+  app, and NOT rewritten by CI — do not tokenize them back out. See msix/README.md for
+  what each value maps to in Partner Center.
 
   The `Version` attribute IS rewritten at build time from the release tag
   (X.Y.Z -> X.Y.Z.0) by scripts/build-msix.ps1, so do not hand-maintain it.

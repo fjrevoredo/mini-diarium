@@ -430,22 +430,35 @@ Packaging sources live in [`../msix/`](../msix/) (`Package.appxmanifest`) and
 covers the identity manifest, the local build recipe, the smoke-test checklist, and the
 AppData-virtualization limitation.
 
-### First submission is manual (one-time)
+### First submission — done (2026-07-15)
 
-The listing text, screenshots, age rating (IARC questionnaire), and privacy
-declarations cannot be automated. Do them by hand in Partner Center:
+The app is **live on the Store**. This section is kept as a record; the steps below are
+not to be repeated.
 
-1. Fill the three identity placeholders in `msix/Package.appxmanifest` from Partner
-   Center → Product management → Product identity, and commit.
-2. Build and smoke-test a local MSIX (`msix/README.md` → "Local build + smoke test").
-3. Create the submission in Partner Center, upload the **unsigned** `.msix` (the Store
-   signs it), and fill the listing: description (reuse `longDescription` from
+| Fact | Value |
+|------|-------|
+| Product ID | `9PJFTX44ZS43` (the `MSSTORE_PRODUCT_ID` secret) |
+| Store listing | https://apps.microsoft.com/detail/9PJFTX44ZS43 |
+| Package Family Name | `fjrevoredo.MiniDiarium_4vckxhggeazhp` |
+| Went live | 2026-07-15 |
+
+The listing text, screenshots, age rating (IARC questionnaire), and privacy declarations
+cannot be automated, so the first submission was done by hand in Partner Center:
+
+1. Filled the identity values in `msix/Package.appxmanifest` from Partner Center →
+   Product management → Product identity, and committed them. They are stable for the
+   life of the app — see [`../msix/README.md`](../msix/README.md) → "Product identity".
+2. Built and smoke-tested a local MSIX (`msix/README.md` → "Local build + smoke test").
+3. Created the submission in Partner Center, uploaded the **unsigned** `.msix` (the Store
+   signs it), and filled the listing: description (reuse `longDescription` from
    `tauri.conf.json`), screenshots, category (Utility), age rating, and privacy —
-   emphasize local-only, no data collection, no network.
-4. Submit for certification and record the **Product ID** (needed for CI).
-5. Once live, capture the Store listing URL and Package Family Name, then add a "Get it
-   from the Microsoft Store" option to the website install page (`website/docs-src/`,
-   regenerated via `bun run website:build-static` — never hand-edit generated HTML).
+   emphasizing local-only, no data collection, no network.
+4. Submitted for certification and recorded the **Product ID** (needed for CI).
+5. Once live, captured the Store listing URL and Package Family Name and added the "Get it
+   from the Microsoft Store" option to the install surfaces: `website/index.html` (hero
+   badge + Windows platform card) and [`INSTALLATION.md`](INSTALLATION.md). Both are
+   hand-edited; `website/index.html` still needs `bun run website:build-static` afterwards
+   so asset fingerprints stay in sync.
 
 ### Automated update submissions (every release after the first)
 
@@ -461,9 +474,10 @@ dispatched from the release workflow alongside WinGet/Homebrew/Flathub. It is
   `PARTNER_CENTER_CLIENT_ID`, `PARTNER_CENTER_CLIENT_SECRET`, and `MSSTORE_PRODUCT_ID`.
 
 **Version handling:** the MSIX 4-part version is derived from the release tag at build
-time (`vX.Y.Z` → `X.Y.Z.0`) by `build-msix.ps1`. The committed manifest keeps a
-placeholder version; `bump-version.sh` does **not** stamp it (avoids a fourth version
-file drifting).
+time (`vX.Y.Z` → `X.Y.Z.0`) by `build-msix.ps1`, which stamps it into a staged copy of the
+manifest. The committed manifest carries a concrete version that `bump-version.sh` does
+**not** stamp (avoids a fourth version file drifting), so it is informational only and
+will drift behind the current release — that is expected and harmless.
 
 **Dry-run before trusting a tag to auto-publish:** the `msstore` CLI has no native Tauri
 integration, so this pipeline packs the MSIX with `winapp` and pushes it via the raw

@@ -9,7 +9,7 @@ This directory holds the parts that are versioned in git:
 
 | File | Purpose |
 |------|---------|
-| `Package.appxmanifest` | MSIX identity manifest. Identity values are placeholders you fill **once** from Partner Center; the `Version` is stamped at build time. |
+| `Package.appxmanifest` | MSIX identity manifest. Identity values are filled in from Partner Center and stable for the life of the app; the `Version` is stamped at build time. |
 | `.gitignore` | Keeps build outputs (`dist/`, `*.msix`, dev certs) out of git. |
 
 The actual packaging is done by [`../scripts/build-msix.ps1`](../scripts/build-msix.ps1),
@@ -23,22 +23,30 @@ generator already produces from `public/logo-transparent.svg`. Regenerate them w
 
 ---
 
-## One-time setup: fill the identity manifest
+## Product identity (filled in — do not change)
 
-Open Partner Center → your reserved product → **Product management → Product
-identity**, and copy these into `Package.appxmanifest`:
+The app is **live on the Store** and its identity is already committed in
+`Package.appxmanifest`. These values come from Partner Center → your reserved product →
+**Product management → Product identity**, and are stable for the life of the app:
 
-| Manifest field | Partner Center value |
-|----------------|----------------------|
-| `Identity/@Name` (`__PARTNER_CENTER_IDENTITY_NAME__`) | **Package/Identity Name** |
-| `Identity/@Publisher` (`__PARTNER_CENTER_PUBLISHER_CN__`) | **Publisher** (the full `CN=…` string) |
-| `Properties/PublisherDisplayName` (`__PARTNER_CENTER_PUBLISHER_DISPLAY_NAME__`) | **Publisher Display Name** |
+| Manifest field | Partner Center value | Committed value |
+|----------------|----------------------|-----------------|
+| `Identity/@Name` | **Package/Identity Name** | `fjrevoredo.MiniDiarium` |
+| `Identity/@Publisher` | **Publisher** (the full `CN=…` string) | `CN=418EE735-930A-47CF-942F-0D0B47D683D7` |
+| `Properties/PublisherDisplayName` | **Publisher Display Name** | `fjrevoredo` |
 
-Also note the **Package Family Name (PFN)** shown on the same page — it is not used in
-the manifest but is handy for docs, support, and `Get-AppxPackage` filtering.
+Live product facts (not used in the manifest, but needed for docs, support, CI config, and
+`Get-AppxPackage` filtering):
 
-These values are stable for the life of the app. Commit them once. Do **not** tokenize
-them back out for CI — only `Version` is machine-rewritten.
+| Fact | Value |
+|------|-------|
+| Product ID | `9PJFTX44ZS43` (the `MSSTORE_PRODUCT_ID` secret) |
+| Store listing | https://apps.microsoft.com/detail/9PJFTX44ZS43 |
+| Package Family Name (PFN) | `fjrevoredo.MiniDiarium_4vckxhggeazhp` |
+
+Do **not** tokenize the identity values back out for CI — only `Version` is
+machine-rewritten. `build-msix.ps1` keeps a guard that fails the pack step if placeholder
+tokens ever reappear in the manifest; it should never fire.
 
 > Store rule: the **publisher name must not equal the product name**. The Tauri
 > `identifier` (`com.minidiarium`) is unrelated to MSIX identity and does not need to
@@ -117,8 +125,9 @@ already has journals under the classic install will **not** see them in the Stor
 (and vice-versa). This is expected MSIX behavior, not a bug. It is a non-issue for the
 Store's target audience (new, non-technical users), but existing users migrating from
 the GitHub build must move their journal directory by hand (or keep using the build
-they started with). Document this on the website's install page when the Store listing
-goes live.
+they started with). This is documented for users in
+[`../docs/INSTALLATION.md`](../docs/INSTALLATION.md) ("Microsoft Store (Windows)") and, in
+short form, on the Windows platform card of `website/index.html`.
 
 ---
 
@@ -147,8 +156,9 @@ Paste this into the Partner Center justification field:
 
 ## Submission flow
 
-- **First submission is manual** — listing text, screenshots, age rating (IARC), and
-  privacy declarations are done by hand in Partner Center and cannot be automated.
+- **The first submission is done** — listing text, screenshots, age rating (IARC), and
+  privacy declarations were filled in by hand in Partner Center (they cannot be
+  automated). The product is live as `9PJFTX44ZS43`.
 - **Subsequent package updates are automated** by `msstore-publish.yml`.
 
 See the "Microsoft Store (MSIX)" section of [`../docs/RELEASING.md`](../docs/RELEASING.md)

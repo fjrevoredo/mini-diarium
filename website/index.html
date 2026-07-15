@@ -72,7 +72,7 @@
     .hero-fact span{display:block;color:var(--text);font-size:.92rem;line-height:1.5}
     .hero-context{max-width:720px;margin:0 auto 1.25rem;color:var(--text-muted);font-size:.95rem}
     .hero-context a{color:var(--text)}
-    .hero-sourceforge{display:inline-block;margin:.1rem auto 1rem}
+    .hero-sourceforge,.hero-msstore{display:inline-block;margin:.1rem auto 1rem}
     .hero-source{font-size:.8rem;color:var(--text-muted)}
     .demo{padding:0 0 clamp(3rem,8vw,6rem)}
     .demo-window{background:var(--bg-card);border:1px solid var(--border);border-radius:16px;overflow:hidden;box-shadow:0 24px 80px rgba(0,0,0,.6);max-width:900px;margin:0 auto}
@@ -84,7 +84,7 @@
     @media (max-width:900px){.hero-facts{grid-template-columns:repeat(2,minmax(0,1fr))}}
     @media (max-width:768px){.nav-links{display:none}.nav-toggle{display:block;background:none;border:none;cursor:pointer;padding:.5rem;color:var(--text);margin-left:auto}.hero-facts{grid-template-columns:1fr}}
   </style>
-  <link rel="stylesheet" href="/css/style.48234f1b.css" />
+  <link rel="stylesheet" href="/css/style.77f6d0e8.css" />
 
   <script type="application/ld+json">
   {
@@ -116,7 +116,10 @@
           "@id": "https://mini-diarium.com/#organization"
         },
         "license": "https://opensource.org/licenses/MIT",
-        "codeRepository": "https://github.com/fjrevoredo/mini-diarium"
+        "codeRepository": "https://github.com/fjrevoredo/mini-diarium",
+        "sameAs": [
+          "https://apps.microsoft.com/detail/9PJFTX44ZS43"
+        ]
       },
       {
         "@type": "Organization",
@@ -311,6 +314,9 @@
     </p>
     <a class="hero-sourceforge" href="https://sourceforge.net/projects/mini-diarium/files/latest/download" data-nosnippet>
       <img alt="Download Mini-Diarium" src="https://a.fsdn.com/con/app/sf-download-button" width="276" height="48" srcset="https://a.fsdn.com/con/app/sf-download-button?button_size=2x 2x" loading="lazy" />
+    </a>
+    <a class="hero-msstore" href="https://apps.microsoft.com/detail/9PJFTX44ZS43" target="_blank" rel="noopener noreferrer" data-nosnippet>
+      <img alt="Get Mini Diarium from the Microsoft Store" src="/assets/ms-store-badge.svg" width="161" height="44" loading="lazy" />
     </a>
     <p class="hero-source" data-nosnippet>Free &amp; open source · MIT License · No account required</p>
   </div>
@@ -701,8 +707,16 @@
         </svg>
         <h3>Windows</h3>
         <p>
-          Download the <code>.msi</code> or <code>.exe</code> NSIS installer, no admin rights required.
-          Windows SmartScreen may show a warning on first launch. Click "More info" then "Run anyway."
+          Get it from the
+          <a href="https://apps.microsoft.com/detail/9PJFTX44ZS43" target="_blank" rel="noopener noreferrer">Microsoft Store</a>
+          for the easiest install: the Store signs the package and keeps it updated, so there is no
+          SmartScreen warning. A Store install keeps its journals in its own data directory, separate
+          from a direct-download install.
+        </p>
+        <p>
+          Prefer a direct download? Grab the <code>.msi</code> or <code>.exe</code> NSIS installer, no
+          admin rights required. These builds are unsigned, so Windows SmartScreen may show a warning on
+          first launch. Click "More info" then "Run anyway."
           Mini Diarium is open source and builds are reproducible from source.
         </p>
       </div>

@@ -6,9 +6,27 @@ Download the latest release for your platform from [GitHub Releases](https://git
 
 | Platform | Format                                                        |
 | -------- | ------------------------------------------------------------- |
-| Windows  | `.msi` or `.exe` (NSIS installer, no admin required)          |
+| Windows  | MSIX via the Microsoft Store, or `.msi` / `.exe` (NSIS installer, no admin required) |
 | macOS    | `.dmg`                                                        |
 | Linux    | `.AppImage`, `.deb`, Flatpak via Flathub, or Nix Flake        |
+
+## Microsoft Store (Windows)
+
+Mini Diarium is available on the [Microsoft Store](https://apps.microsoft.com/detail/9PJFTX44ZS43). The Store signs the package and handles updates, so there is **no SmartScreen warning** on first launch and nothing to update by hand.
+
+Install from the listing page:
+
+```
+https://apps.microsoft.com/detail/9PJFTX44ZS43
+```
+
+Or open it directly on Windows:
+
+```powershell
+start ms-windows-store://pdp/?productid=9PJFTX44ZS43
+```
+
+> **Note:** A Store (MSIX) install gets its own virtualized per-package data directory, separate from the one used by the `.exe` / `.msi` build. Journals created in a GitHub or WinGet install will **not** appear in the Store build, and vice versa. This is expected MSIX behavior, not a bug. If you already use Mini Diarium, either stay on the build you started with or move your journal folder across by hand.
 
 ## Windows (WinGet)
 
@@ -111,7 +129,9 @@ An overlay is also exported as `mini-diarium.overlays.default` (adds `pkgs.mini-
 
 **Windows**
 
-On first launch, Windows SmartScreen may show a warning ("Windows protected your PC"). This is expected for unsigned applications. Click "More info" then "Run anyway" to proceed. Mini Diarium is open source and builds are reproducible from source.
+Store installs are signed by the Microsoft Store and launch without a warning.
+
+For the GitHub-download and WinGet builds, Windows SmartScreen may show a warning on first launch ("Windows protected your PC"). This is expected for unsigned applications. Click "More info" then "Run anyway" to proceed. Mini Diarium is open source and builds are reproducible from source.
 
 **macOS**
 

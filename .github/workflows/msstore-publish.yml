@@ -7,7 +7,8 @@ name: Publish to Microsoft Store
 # subsequent package updates, mirroring winget-publish.yml.
 #
 # Prerequisites (one-time — see docs/RELEASING.md "Microsoft Store (MSIX)"):
-#   * msix/Package.appxmanifest identity filled in from Partner Center.
+#   * msix/Package.appxmanifest identity filled in from Partner Center (done — the product
+#     is live as 9PJFTX44ZS43).
 #   * Azure AD (Entra) app registration associated with the Partner Center account.
 #   * Repo secrets: PARTNER_CENTER_TENANT_ID, PARTNER_CENTER_SELLER_ID,
 #     PARTNER_CENTER_CLIENT_ID, PARTNER_CENTER_CLIENT_SECRET, MSSTORE_PRODUCT_ID.
@@ -15,9 +16,10 @@ name: Publish to Microsoft Store
 permissions:
   contents: read
 
+# Dispatched by release.yml for a tagged release (alongside WinGet/Homebrew/Flathub), or run
+# by hand. Deliberately NOT subscribed to `release: [published]` — release.yml already
+# dispatches this workflow with the tag, and both triggers firing would submit twice.
 on:
-  release:
-    types: [published]
   workflow_dispatch:
     inputs:
       tag:
@@ -37,7 +39,7 @@ jobs:
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           # Build the exact tagged commit, not the workflow's default ref.
-          ref: ${{ inputs.tag || github.event.release.tag_name }}
+          ref: ${{ inputs.tag }}
 
       - name: Verify Partner Center secrets are set
         shell: pwsh
@@ -63,9 +65,8 @@ jobs:
         shell: pwsh
         env:
           INPUT_TAG: ${{ inputs.tag }}
-          EVENT_TAG: ${{ github.event.release.tag_name || github.ref_name }}
         run: |
-          $tag = if ($env:INPUT_TAG) { $env:INPUT_TAG } else { $env:EVENT_TAG }
+          $tag = $env:INPUT_TAG
           $version = $tag -replace '^v', ''
           "tag=$tag" >> $env:GITHUB_OUTPUT
           "version=$version" >> $env:GITHUB_OUTPUT

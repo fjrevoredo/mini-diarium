@@ -55,7 +55,7 @@ const HOWTO_STEPS_MAP = {
   'getting-started': [
     {
       name: 'Download Mini Diarium',
-      text: 'Download the installer for your platform (Windows, macOS, or Linux) from the GitHub releases page. Run the installer and launch Mini Diarium.',
+      text: 'On Windows, install Mini Diarium from the Microsoft Store. On macOS and Linux, or for a direct download on Windows, get the installer for your platform from the GitHub releases page. Run the installer and launch Mini Diarium.',
     },
     {
       name: 'Create your first journal',
