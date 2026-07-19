@@ -67,6 +67,8 @@ New: "Should show 3 or 4 files: `package.json`, `bun.lock`, `package-lock.json`,
 
 ### Part 3 — CI (optional but recommended)
 
+**Status (2026-07-16):** Completed. `.github/workflows/nix.yml` implements this — a path-filtered job (triggers on `package-lock.json`, `nix/**`, `flake.nix`, `flake.lock`) that runs `nix build .#default --no-link` to verify `npmDepsHash`, and on `push` auto-refreshes the hash from the build's `got:` output and commits it. The original suggestion below is retained for context.
+
 Add a path-filtered GitHub Actions job that only runs when `package-lock.json` or `nix/package.nix` changes. This catches stale hashes from human contributors who bypass the skills.
 
 Suggested workflow addition to `.github/workflows/ci.yml` or a new `nix.yml`:

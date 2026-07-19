@@ -16,6 +16,7 @@ export default function HeaderMoreMenu() {
     <DropdownMenu open={isMoreMenuOpen()} onOpenChange={setIsMoreMenuOpen}>
       <DropdownMenu.Trigger
         data-testid="header-more-menu-trigger"
+        data-tour-target="import"
         class="rounded p-2 hover:bg-hover text-tertiary transition-colors"
         aria-label={t('layout.header.moreOptions')}
       >

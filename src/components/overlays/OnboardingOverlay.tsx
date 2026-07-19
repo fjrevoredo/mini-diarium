@@ -195,9 +195,11 @@ export default function OnboardingTour() {
       bodyKey: 'onboarding.tip_import_body',
       actionKey: 'onboarding.tip_import_action',
       onAction: () => setIsImportOpen(true),
-      targetSelector: null,
-      // "Import" lives in the native menu bar just above the webview's top edge.
-      // ~45px from left is a stable estimate for the File menu item on all platforms.
+      targetSelector: '[data-tour-target="import"]',
+      // Prefer the in-app "⋮" overflow control when the `inAppMenu` flag is on
+      // (the trigger carries data-tour-target="import"). When the flag is off the
+      // element is absent and measure() falls back to this native-menu-bar hint,
+      // since "Import" genuinely lives in the OS menu bar above the webview's top edge.
       edgeHint: { side: 'top', offset: 125 },
     },
     {
