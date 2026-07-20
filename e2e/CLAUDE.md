@@ -22,10 +22,13 @@ Specs live in `e2e/specs/`. Current suite covers: core diary workflow (create â†
 
 ## Verification Commands
 
+For the canonical post-task checklist (tests + formatting + CHANGELOG + TODO), see [Post-Task Completion Best Practices](../docs/best-practices/POST_TASK_BEST_PRACTICES.md).
+
+E2E-specific:
+
 ```bash
 bun run test:e2e:local                  # Build binary + run full suite
 bun run test:e2e:local -- --skip-build  # Skip build, run suite only (faster on repeat runs)
-bun run test:e2e                        # Run suite only (binary must already exist)
 bun run test:e2e:stateful               # Stateful E2E mode (persistence-oriented lane)
 ```
 

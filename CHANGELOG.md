@@ -23,6 +23,9 @@ Template:
 ### Internal
 - **Internal X**: Internal change X description
 
+### Security
+- **Security X**: Security change X description
+
 
 ## [X.Y.Z-1] - dd-mm-YYYY
 
@@ -38,6 +41,7 @@ Template:
 
 ### Internal
 - **Onboarding tour's Import step retargeted to the in-app `⋮` menu** (TODO-0062, completing the in-app-menu migration piece begun in 0.6.2): the first-run tour's "Import" step now spotlights the header overflow (`⋮`) trigger via a new `data-tour-target="import"` attribute on it, instead of pointing an arrow off-screen at the native OS menu bar. This is flag-aware and correct in both states: when the `inAppMenu` runtime feature flag is on the trigger exists and the tour highlights it; when the flag is off (the default) the whole overflow menu isn't rendered, so the element is absent and the tour transparently falls back to the existing native-menu-bar edge hint (where Import genuinely still lives). No onboarding change for users on a default build. This was the last remaining piece before the flag can graduate to on-by-default (TODO-0065, still approval-gated). No user-visible change in a default build.
+- **Consolidated the post-task completion checklist into a single best-practices doc**: the six-check workflow every task must pass before being reported done (scope assessment, originating TODO closed, CHANGELOG entry, tests + type-check green, formatting clean, summary template) now lives in `docs/best-practices/POST_TASK_BEST_PRACTICES.md` as the single source of truth. Step 1 maps each task scope (frontend-only, backend-only, full-stack, dependency-update, CI/build, docs-only, refactor) to which checks are mandatory, recommended, or skippable, and codifies the E2E rule: run `test:e2e:local` only for cross-layer user-flow changes or dependency updates; CI covers the rest. Root `CLAUDE.md` (Rule 1 + the Verification Commands section), `CONTRIBUTING.md`, `scripts/README.md`, and the four domain `CLAUDE.md` files now point at it instead of duplicating the verification command list. Also reconciled the CHANGELOG format spec in `.claude/agents/docs-sync-guardian.md`, `latest-changelog.template.md`, and the template block at the top of `CHANGELOG.md` with current practice (the `dd-mm-YYYY` date format, the project-specific `### Internal` section, and `### Security`). Added a clarifying note to `CONTEXT_FILES_BEST_PRACTICES.md` anti-pattern #8 explaining why a cross-cutting review rule lives in `best-practices/` rather than as a skill. No production behavior change.
 
 
 ## [0.6.2] - 12-07-2026

@@ -75,9 +75,11 @@ For **user-scriptable** formats, users drop a `.rhai` file in `{app_data_dir}/pl
 
 ## Verification Commands
 
+For the canonical post-task checklist (tests + formatting + CHANGELOG + TODO), see [Post-Task Completion Best Practices](../docs/best-practices/POST_TASK_BEST_PRACTICES.md).
+
+Backend-specific:
+
 ```bash
-cargo test --manifest-path src-tauri/Cargo.toml                         # All backend tests
-cargo test --manifest-path src-tauri/Cargo.toml <module>                # Specific module
 cargo bench --manifest-path src-tauri/Cargo.toml                        # All Rust benchmarks (criterion)
 cargo bench --manifest-path src-tauri/Cargo.toml --bench cipher_bench   # Specific benchmark
 ```

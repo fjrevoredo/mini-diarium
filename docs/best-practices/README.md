@@ -10,6 +10,7 @@ Ownership rule: domain guides describe current structure, workflows, and feature
 - [CI Best Practices](CI_BEST_PRACTICES.md) - GitHub Actions structure, permissions, caching, release safeguards, artifacts, and failure diagnostics.
 - [Context File Best Practices](CONTEXT_FILES_BEST_PRACTICES.md) - authoring rules for CLAUDE.md / AGENTS.md files: what belongs, what doesn't, format guidelines, and an audit checklist.
 - [Writing Style Guide](WRITING_STYLE.md) - shared rules for all human-facing prose (blog posts, PR responses, docs): em dashes, filler phrases, voice, and punctuation.
+- [Post-Task Completion Best Practices](POST_TASK_BEST_PRACTICES.md) - the six-check checklist every task must pass before being reported as complete (scope assessment, TODO, CHANGELOG, tests, formatting, summary), plus the verbatim summary template to present.
 
 Use these together with the domain guides:
 

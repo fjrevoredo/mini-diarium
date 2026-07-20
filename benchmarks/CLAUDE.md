@@ -6,6 +6,10 @@ Rust benchmarks live in `src-tauri/benches/` (four criterion files: auth, cipher
 
 ## Verification Commands
 
+For the canonical post-task checklist (tests + formatting + CHANGELOG + TODO), see [Post-Task Completion Best Practices](../docs/best-practices/POST_TASK_BEST_PRACTICES.md).
+
+Benchmark-specific:
+
 | Command | What it does |
 |---------|-------------|
 | `cargo bench --manifest-path src-tauri/Cargo.toml` | Run all Rust benchmarks |

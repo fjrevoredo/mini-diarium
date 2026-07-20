@@ -26,4 +26,12 @@ The release workflow will fail if "REPLACE BEFORE TAGGING" is still present.
 ### Removed
 
 <!-- ALL THE "Removed" ENTRIES OF THE TO BE RELEASE VERSION IN THE CHANGELOG, IF THEY EXIST -->
+
+### Internal
+
+<!-- ALL THE "Internal" ENTRIES OF THE TO BE RELEASED VERSION IN THE CHANGELOG, IF THEY EXIST -->
+
+### Security
+
+<!-- ALL THE "Security" ENTRIES OF THE TO BE RELEASED VERSION IN THE CHANGELOG, IF THEY EXIST -->
 </template>

@@ -76,19 +76,19 @@ You are the authoritative expert on these 16 files/areas:
 ---
 
 ### 6. `CHANGELOG.md` (root)
-**Purpose:** User-facing history of all changes. Follows Keep a Changelog format strictly.
+**Purpose:** History of all changes. Inspired by Keep a Changelog, with two intentional deviations documented below.
 
-**Format:** Keep a Changelog (https://keepachangelog.com) compliance mandatory:
-- Version headers: `## [Unreleased]` or `## [vX.Y.Z] - YYYY-MM-DD`
-- Sub-sections: `### Added`, `### Changed`, `### Fixed`, `### Removed`, `### Security` only (no other section names)
-- Entries: bullet points, user-facing language, starting with capital letters
+**Format:**
+- Version headers: `## [Unreleased]` or `## [X.Y.Z] - dd-mm-YYYY` (date format is `dd-mm-YYYY`, not ISO `YYYY-MM-DD` — preserved for historical consistency)
+- Sub-sections, in this order: `### Added`, `### Fixed`, `### Changed`, `### Removed`, `### Internal`, `### Security`. The `### Internal` section is project-specific (not part of Keep a Changelog) and is used for test-only changes, refactors, build/CI updates, and other changes with no user-visible impact. Omit empty sections rather than leaving them as blank headers
+- Entry style: `- **Bold title** (TODO-XXXX): one-paragraph description.` Cross-link the GitHub issue/PR when relevant
 - No empty sections
 
-**Owns:** Every user-visible change: features, UI changes, fixes, performance improvements, security fixes, auth methods, import/export formats.
+**Owns:** Every change that affects users or the codebase: features, UI changes, fixes, performance improvements, security fixes, auth methods, import/export formats, plus internal-only changes (under `### Internal`) that reviewers and maintainers should see in history.
 
-**Does NOT own:** Internal refactors with no user impact, test-only changes, doc-only changes (unless major restructuring like a PHILOSOPHY.md overhaul).
+**Does NOT own:** Truly trivial changes (typo fixes, whitespace-only formatting).
 
-**Rules:** Unreleased work goes under the current version block at the top. Never backdate entries. Write for end users, not developers.
+**Rules:** Unreleased work goes under the current version block at the top (`## [X.Y.Z] - Unreleased`). Never backdate entries. The date is stamped at release time by the `pre-release` runbook.
 
 ---
 

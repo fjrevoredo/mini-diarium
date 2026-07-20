@@ -66,52 +66,21 @@ The `experimental` Cargo feature (`--features experimental`) and `VITE_EXPERIMEN
 
 ## Check Suite
 
-A Git pre-commit hook auto-installs on `bun install` (via the `postinstall` lifecycle) and runs Prettier on staged `src/**/*.{ts,tsx,css}` files plus `cargo fmt` on staged `src-tauri/**/*.rs` files before every commit. This keeps the commit cycle fast (<2s typical) and prevents style violations from reaching the repo. Bypass with `git commit --no-verify` when needed.
+Every task — feature, fix, or refactor — must pass the [post-task completion checklist](docs/best-practices/POST_TASK_BEST_PRACTICES.md) before being reported as done. That checklist covers tests, formatting, CHANGELOG entries, TODO closure, and the summary format to present.
 
-For everything beyond formatting, run the pre-commit script before pushing:
+For quick feedback during development (before running the full checklist):
 
 ```bash
-# Recommended: Full check suite (runs all tests)
-bun run pre-commit
-
-# Or for quick feedback during development
-bun run check        # Fast (no tests, ~5-10 seconds)
+bun run check        # Fast: type-check + ESLint + Prettier (~5-10 seconds)
+bun run pre-commit   # Full: the above + frontend tests + backend tests + clippy (~40-60 seconds)
 ```
 
-These scripts check:
-
-- ✓ TypeScript type checking
-- ✓ ESLint (no errors)
-- ✓ Prettier formatting
-- ✓ Frontend tests (Vitest)
-- ✓ Backend tests (Rust)
-- ✓ Rust Clippy (warnings as errors)
-- ✓ Rust formatting
-
-**Quick fixes** if checks fail:
+Quick fixes for the most common failures:
 
 ```bash
 bun run lint:fix     # Auto-fix ESLint errors
-bun run format       # Auto-fix formatting
+bun run format       # Auto-fix Prettier formatting
 ```
-
-**Manual check commands** (if you prefer running individually):
-
-```bash
-# Frontend
-bun run lint          # ESLint
-bun run format:check  # Prettier
-bun run type-check    # TypeScript strict mode
-bun run test:run      # Vitest
-
-# Backend
-cd src-tauri
-cargo test            # Rust unit tests
-cargo clippy --all-targets -- -D warnings
-cargo fmt --check
-```
-
-See `scripts/README.md` for details on the pre-commit scripts.
 
 ## Project Structure
 

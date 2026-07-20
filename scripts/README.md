@@ -2,41 +2,16 @@
 
 Automated code quality checks for Mini Diarium.
 
+The full task-completion checklist (tests, formatting, CHANGELOG, TODO closure, summary template) lives in [`docs/best-practices/POST_TASK_BEST_PRACTICES.md`](../docs/best-practices/POST_TASK_BEST_PRACTICES.md). The scripts below are the mechanics that checklist relies on.
+
 ## Available Scripts
 
-### Quick Check (Fast)
-```bash
-bun run check
-```
+| Script | Purpose | Duration |
+|--------|---------|----------|
+| `bun run check` | Type-check + ESLint + Prettier (no tests) | ~5-10 s |
+| `bun run pre-commit` | The above + frontend tests + backend tests + clippy + rustfmt + patch-coverage gate | ~40-60 s |
 
-**Duration:** ~5-10 seconds
-**Checks:**
-- ✓ TypeScript type checking
-- ✓ ESLint (no errors allowed, warnings OK)
-- ✓ Prettier formatting
-
-**Use when:** You want fast feedback during development before committing.
-
----
-
-### Pre-commit (Complete)
-```bash
-bun run pre-commit
-```
-
-**Duration:** ~40-60 seconds
-**Checks:**
-- ✓ TypeScript type checking
-- ✓ ESLint (no errors allowed, warnings OK)
-- ✓ Prettier formatting
-- ✓ Frontend tests (23 tests)
-- ✓ Backend tests (160 Rust tests)
-- ✓ Rust Clippy (with -D warnings)
-- ✓ Rust formatting
-
-**Use when:** Before committing to ensure everything works correctly.
-
----
+Use `bun run check` for fast feedback during development; use `bun run pre-commit` before pushing.
 
 ## Local Git Hook (auto-installed)
 
@@ -56,27 +31,6 @@ The hook is intentionally fast (formatting only, scoped to staged files). The fu
 **CI behavior**: GitHub Actions does not run the hook; `.github/workflows/ci.yml` already runs `bun run format:check` and `cargo fmt --check` on every push and PR.
 
 **Reinstall**: run `bun install` again, or `git config core.hooksPath .githooks` manually.
-
----
-
-## Quick Fix Commands
-
-If checks fail, use these commands to auto-fix common issues:
-
-```bash
-# Fix ESLint errors
-bun run lint:fix
-
-# Fix Prettier formatting
-bun run format
-
-# Fix Rust formatting
-cd src-tauri && cargo fmt
-
-# Run tests in watch mode to debug failures
-bun run test              # Frontend
-cd src-tauri && cargo test  # Backend
-```
 
 ## Exit Codes
 

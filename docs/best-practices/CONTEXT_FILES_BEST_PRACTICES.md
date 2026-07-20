@@ -110,7 +110,7 @@ These all occurred in Mini Diarium's CLAUDE.md files and required dedicated clea
 
 7. **The hardcoded path** — `cmd.exe /c "cd /d D:\Repos\mini-diarium\src-tauri && ..."` broke on any clone to a different directory; and `cmd.exe` misparses `/C` inside `Cargo.toml` as its own execute flag.
 
-8. **Long task checklists in CLAUDE.md** — multi-step procedures for icon regeneration, lockfile updates, and releasing belong in skills so they load on demand rather than consuming context in every session. The root CLAUDE.md still carries these; they are candidates to move to `.claude/skills/` once the 200-line adherence threshold becomes a concern.
+8. **Long task checklists in CLAUDE.md** — multi-step procedures for icon regeneration, lockfile updates, and releasing belong in skills so they load on demand rather than consuming context in every session. The root CLAUDE.md still carries these; they are candidates to move to `.claude/skills/` once the 200-line adherence threshold becomes a concern. *The post-task completion checklist in [`POST_TASK_BEST_PRACTICES.md`](POST_TASK_BEST_PRACTICES.md) is a cross-cutting review rule (applies to every task), not a specific-workflow procedure, which is why it lives here rather than as a skill.*
 
 9. **Treating CLAUDE.md as enforced policy** — instructions in CLAUDE.md shape Claude's behavior but are not guaranteed. Treating them as hard guarantees leads to false confidence. Anything that *must* happen should be a hook.
 

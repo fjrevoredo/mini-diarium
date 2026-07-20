@@ -139,15 +139,12 @@ The backend emits via `app.emit("menu-*", ())` in `menu.rs`. See root CLAUDE.md 
 
 ## Verification Commands
 
+For the canonical post-task checklist (tests + formatting + CHANGELOG + TODO), see [Post-Task Completion Best Practices](../docs/best-practices/POST_TASK_BEST_PRACTICES.md).
+
+Frontend-specific:
+
 ```bash
-cmd.exe /c bun run test:run           # All frontend tests (single run)
-cmd.exe /c bun run test               # Watch mode
-cmd.exe /c bun run test:coverage      # Coverage report
-cmd.exe /c bun run lint               # ESLint
-cmd.exe /c bun run lint:fix           # ESLint autofix
-cmd.exe /c bun run format:check       # Prettier check
-cmd.exe /c bun run format             # Prettier fix
-cmd.exe /c bun run type-check         # TypeScript type check
+cmd.exe /c bun run test:coverage      # Coverage report (single run, writes coverage/lcov.info)
 ```
 
 ## data-testid Attributes

@@ -133,29 +133,15 @@ All menu event names are prefixed `menu-`. See `menu.rs` for the full list.
 
 ## Verification Commands
 
+For the per-task completion checklist (scope assessment, tests, type-check, formatting, CHANGELOG, TODO, summary template), see [Post-Task Completion Best Practices](docs/best-practices/POST_TASK_BEST_PRACTICES.md). The commands below cover broader verification needs not specific to a single task.
+
 ```bash
-# Backend
-cargo test --manifest-path src-tauri/Cargo.toml
-cargo test --manifest-path src-tauri/Cargo.toml <module>
-
-# Frontend
-cmd.exe /c bun run test:run
-cmd.exe /c bun run type-check
-
-# E2E
-cmd.exe /c bun run test:e2e:local
-cmd.exe /c bun run test:e2e:local -- --skip-build
-
 # Manual UI verification (agent, Windows-only)
 # See .agents/skills/tauri-agent-dev/SKILL.md
 
 # Diagrams
 cmd.exe /c bun run diagrams:check       # Verification-only
 cmd.exe /c bun run diagrams             # Regenerate all docs/diagrams/ SVGs
-
-# Benchmarks
-cargo bench --manifest-path src-tauri/Cargo.toml
-cmd.exe /c bun run bench
 
 # Coverage — local mirror of Codecov's patch check (≥80% of new/changed lines vs origin/master)
 cmd.exe /c bun run coverage:diff            # gate existing lcov files (see Gotcha #6)
@@ -216,7 +202,7 @@ See [Backend guide](src-tauri/CLAUDE.md) for the full auth architecture and per-
 
 ## Agent Workflow Rules
 
-1. **Validate after each completed task.** Run the relevant test/type-check/lint command immediately after finishing a task, before moving to the next one. This catches bugs at the point of introduction and keeps diagnosis trivial.
+1. **Complete every task with the post-task checklist.** Run the [post-task completion checklist](docs/best-practices/POST_TASK_BEST_PRACTICES.md) — tests green, formatting clean, CHANGELOG entry, originating TODO closed — before reporting a task as done, and present the result using its summary template. Catches bugs at the point of introduction and keeps diagnosis trivial.
 2. **Format after changes.** A Git pre-commit hook (`.githooks/pre-commit`, installed automatically by `bun install` via the `postinstall` lifecycle) runs Prettier on staged `src/**/*.{ts,tsx,css}` files and `cargo fmt` on staged `src-tauri/**/*.rs` files before every commit, so style violations never reach the repository. Manual `cmd.exe /c bun run format` is still available for full-tree sweeps after refactors. Bypass the hook with `git commit --no-verify` when needed. Note: the git hook **formats staged files only** — the full quality gate is the separate manual command `bun run pre-commit` (its steps also run in CI); it is not wired to `git commit` despite the shared name.
 3. **Use `manual-planning` skill for any plan.** When asked to create a plan, roadmap, implementation checklist, or planning document, load the `manual-planning` skill and follow its template.
 4. **Use `todo-manager` skill for TODO operations.** When adding, tracking, archiving, or validating TODO items in `docs/todo/TODO.md`, load the `todo-manager` skill. Never manually assign TODO IDs.
