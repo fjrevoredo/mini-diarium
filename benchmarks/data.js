@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1784576358836,
+  "lastUpdate": 1784580131746,
   "repoUrl": "https://github.com/fjrevoredo/mini-diarium",
   "entries": {
     "Benchmark": [
@@ -26224,6 +26224,174 @@ window.BENCHMARK_DATA = {
           {
             "name": "ci_pipeline_duration",
             "value": 524000000000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "committer": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "distinct": true,
+          "id": "f0fb6e31285c0e95aa96c6737020a3b100588219",
+          "message": "docs: consolidate post-task checklist and reconcile CHANGELOG spec\n\nAdd docs/best-practices/POST_TASK_BEST_PRACTICES.md as the single source\nof truth for the six-check workflow every task must pass before being\nreported done (scope assessment, TODO closure, CHANGELOG entry, tests +\nlints, formatting, summary template). Step 1 maps each task scope\n(frontend-only, backend-only, full-stack, dependency-update, CI/build,\ndocs-only, refactor) to its mandatory checks, with a separate E2E rule\nlisting the four conditions that trigger a local E2E run (full-stack or\ndependency update; cross-layer user flows; window/viewport code;\nplatform-specific #[cfg(...)] paths). Otherwise CI covers E2E.\n\nReplace duplicated verification command lists in root CLAUDE.md\n(Rule 1 + the Verification Commands section), CONTRIBUTING.md,\nscripts/README.md, and the four domain CLAUDE.md files with brief\npointers to the new doc. Step 4 surfaces \\\bun run pre-commit\\ as the\ncomprehensive one-command path and aligns the individual-command list\nwith what the scope table mandates (ESLint + clippy added).\n\nReconcile the CHANGELOG format spec in .claude/agents/docs-sync-guardian.md,\nlatest-changelog.template.md, and the template block at the top of\nCHANGELOG.md with current practice: dd-mm-YYYY dates, the project-specific\n### Internal section, and ### Security. Add a clarifying note to\nCONTEXT_FILES_BEST_PRACTICES.md anti-pattern #8 explaining why a\ncross-cutting review rule lives in best-practices/ rather than as a skill.\n\nNo production behavior change.",
+          "timestamp": "2026-07-20T22:33:06+02:00",
+          "tree_id": "4527e21b72df4c8b5dbfd95b0da6b9a576baeb8b",
+          "url": "https://github.com/fjrevoredo/mini-diarium/commit/f0fb6e31285c0e95aa96c6737020a3b100588219"
+        },
+        "date": 1784580130874,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "auth_argon2/wrap_master_key",
+            "value": 94969200,
+            "range": "± 1040336",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "auth_argon2/unwrap_master_key",
+            "value": 94212235,
+            "range": "± 2155700",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_encrypt/1024",
+            "value": 5591,
+            "range": "± 125",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_encrypt/10240",
+            "value": 46762,
+            "range": "± 161",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_encrypt/102400",
+            "value": 461230,
+            "range": "± 1951",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_decrypt/1024",
+            "value": 4843,
+            "range": "± 16",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_decrypt/10240",
+            "value": 45715,
+            "range": "± 71",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_decrypt/102400",
+            "value": 456576,
+            "range": "± 8717",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_insert_entry",
+            "value": 66807,
+            "range": "± 5859",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_update_entry",
+            "value": 20677,
+            "range": "± 159",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_delete_entry",
+            "value": 98294,
+            "range": "± 8212",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_entries_by_date",
+            "value": 17354,
+            "range": "± 29",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_all_entry_dates/100",
+            "value": 32588,
+            "range": "± 56",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_all_entry_dates/500",
+            "value": 117213,
+            "range": "± 513",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_all_entries/100",
+            "value": 193708,
+            "range": "± 617",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_all_entries/500",
+            "value": 892263,
+            "range": "± 8141",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_all_entries/1000",
+            "value": 1765649,
+            "range": "± 11254",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_all_entries/3650",
+            "value": 6426495,
+            "range": "± 15973",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_search_entries/500",
+            "value": 17766469,
+            "range": "± 275546",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_search_entries/1000",
+            "value": 36251285,
+            "range": "± 311718",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_search_entries/3650",
+            "value": 132785549,
+            "range": "± 2065678",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "count_words_plain_500w",
+            "value": 5764,
+            "range": "± 63",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "count_words_html_500w",
+            "value": 6994,
+            "range": "± 357",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "ci_pipeline_duration",
+            "value": 525000000000,
             "range": "± 0",
             "unit": "ns/iter"
           }
