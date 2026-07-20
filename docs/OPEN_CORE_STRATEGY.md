@@ -209,11 +209,12 @@ Each milestone carries a **Checklist** of `- [ ]` items to tick off as the work 
 - **Verification:** `cargo test --manifest-path src-tauri/Cargo.toml`, `cmd.exe /c bun run test:run`, `cmd.exe /c bun run type-check`, `cmd.exe /c bun run lint`, `cmd.exe /c bun run test:e2e`.
 - **Exit criteria:** all green; no open behavioral regressions.
 - **Checklist:**
-  - [ ] Backend suite green on `master` (`cargo test --manifest-path src-tauri/Cargo.toml`)
-  - [ ] Frontend green (`test:run`, `type-check`, `lint`)
-  - [ ] E2E green (`test:e2e`)
-  - [ ] Coverage gate green (`coverage:check`)
-  - [ ] Baseline recorded (commit SHA + green state noted as the reference point)
+  - [x] Backend suite green on `master` (`cargo test --manifest-path src-tauri/Cargo.toml`)
+  - [x] Frontend green (`test:run`, `type-check`, `lint`)
+  - [x] E2E green (`test:e2e`)
+  - [x] Coverage gate green (`coverage:check`)
+  - [x] Baseline recorded (commit SHA + green state noted as the reference point)
+- **Baseline recorded:** master @ 13c29e8 — backend (522 tests) / frontend (test:run 756 tests + type-check + lint) / E2E (5 spec files, 10 tests) / coverage gate (no instrumented changes to gate; generation pipeline green) all green on 2026-07-20, no flakes or re-runs. This is the behavior-preserving reference for TODO-0076 (M1).
 
 ### M1 — Workspace split (Section 9, step 1)
 
