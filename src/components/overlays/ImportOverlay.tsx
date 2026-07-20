@@ -131,6 +131,7 @@ export default function ImportOverlay(props: ImportOverlayProps) {
         />
         <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
           <Dialog.Content
+            data-testid="import-overlay"
             class="w-full max-w-md rounded-lg bg-primary p-6 data-[expanded]:animate-in data-[closed]:animate-out data-[closed]:fade-out-0 data-[expanded]:fade-in-0 data-[closed]:zoom-out-95 data-[expanded]:zoom-in-95"
             style={{ 'box-shadow': 'var(--shadow-lg)' }}
             onKeyDown={handleKeyDown}

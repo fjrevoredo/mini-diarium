@@ -288,9 +288,9 @@ Parent: [`TODO-0064: E2E coverage for in-app-reachable actions (right-sized)`](T
 
 **Done in this task**: extracted the duplicated auth/onboarding boilerplate into `e2e/specs/helpers.ts` (`connectToApp`, `authenticate`, `dismissOnboardingTour`) and refactored `diary-workflow`, `search`, `multi-entry` to use it; added `e2e/specs/header-actions.spec.ts` covering `⋮` → Preferences (the one path reachable today via TODO-0061). Added `data-testid="preferences-overlay"` to `PreferencesOverlay.tsx` and the canonical table row.
 
-**Deferred, non-blocking (incrementally extended as controls land, not gated on them)**:
-- When **TODO-0062** lands, extend `header-actions.spec.ts` with a *single* assertion per new overlay — `⋮` → Statistics/Import/Export each *opens*, nothing more.
-- When **TODO-0063** lands, add day-nav (`◀`/`▶` changes the Header date title) and date-title → `GoToDateOverlay` opens.
+**Extended as controls landed (both now done)**:
+- **TODO-0062 (done 2026-07-20)**: `header-actions.spec.ts` extended with a shallow "opens" smoke check for each of `⋮` → Statistics/Import/Export — one `it` per overlay, nothing more. The three near-identical bodies share a local `assertMenuItemOpensOverlay(itemTestId, overlayTestId)` helper (the existing Preferences check was refactored onto it too) to stay under the SonarCloud `new_duplicated_lines_density` gate (root CLAUDE.md Gotcha #5). Required `data-testid`s (`stats-overlay`, `import-overlay`, `export-overlay`) added to the three `Dialog.Content`s and the canonical table (`src/CLAUDE.md`).
+- **TODO-0063 (done)**: day-nav (`◀`/`▶` changes the Header date title) and date-title → `GoToDateOverlay` open checks landed with TODO-0063.
 
 **Explicit non-goal**: no exhaustive per-item feature flows in E2E.
 

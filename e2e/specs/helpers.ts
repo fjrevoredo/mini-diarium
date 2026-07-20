@@ -39,6 +39,13 @@ export async function connectToApp(): Promise<void> {
  * its own — the WebView must reload for the fresh value to be picked up. Call
  * this AFTER `connectToApp()` but BEFORE `authenticate()`: the reload lands back
  * on the (still locked) auth screen, so no unlock state is lost.
+ *
+ * The reload uses `browser.refresh()` (the WebDriver "Refresh" command), NOT
+ * `browser.url('tauri://localhost')`. Navigating to the already-current URL is a
+ * no-op on msedgedriver/WebView2 (Windows) — the page does not actually reload,
+ * so `feature-flags.ts` never re-runs `loadFlags()` and the flag appears set in
+ * localStorage yet the gated UI never renders. `refresh()` forces a genuine
+ * reload on both WebView2 and WebKitGTK.
  */
 export async function setFeatureFlag(flag: string, enabled: boolean): Promise<void> {
   await browser.execute(
@@ -57,7 +64,7 @@ export async function setFeatureFlag(flag: string, enabled: boolean): Promise<vo
     enabled,
   );
   // Reload so feature-flags.ts re-reads localStorage at module-init.
-  await browser.url('tauri://localhost');
+  await browser.refresh();
   await browser.pause(5000);
 }
 

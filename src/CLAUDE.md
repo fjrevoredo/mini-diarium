@@ -177,6 +177,9 @@ These are used by E2E tests — **do not remove** from components.
 | `HeaderMoreMenu.tsx` | Import item in overflow menu | `header-more-menu-import-item` |
 | `HeaderMoreMenu.tsx` | Export item in overflow menu | `header-more-menu-export-item` |
 | `PreferencesOverlay.tsx` | Preferences dialog content | `preferences-overlay` |
+| `StatsOverlay.tsx` | Statistics dialog content | `stats-overlay` |
+| `ImportOverlay.tsx` | Import dialog content | `import-overlay` |
+| `ExportOverlay.tsx` | Export dialog content | `export-overlay` |
 | `TitleEditor.tsx` | Title input | `title-input` |
 | `Calendar.tsx` | Each day button | `calendar-day-YYYY-MM-DD` |
 | `EntryNavBar.tsx` | Nav bar container | `entry-nav-bar` |

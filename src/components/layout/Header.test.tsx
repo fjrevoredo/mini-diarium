@@ -6,6 +6,9 @@ import {
   mainView,
   resetUiState,
   isPreferencesOpen,
+  isStatsOpen,
+  isImportOpen,
+  isExportOpen,
   isGoToDateOpen,
   selectedDate,
   setSelectedDate,
@@ -130,4 +133,29 @@ describe('Header more menu', () => {
 
     await waitFor(() => expect(isPreferencesOpen()).toBe(true));
   });
+
+  // Header does not mount the overlays (MainLayout does), so — as with the
+  // Preferences test above — assert the state/ui read signal flips rather than an
+  // overlay render.
+  it.each([
+    ['header-more-menu-statistics-item', isStatsOpen],
+    ['header-more-menu-import-item', isImportOpen],
+    ['header-more-menu-export-item', isExportOpen],
+  ] as const)(
+    'opens the overlay for %s when the inAppMenu flag is on',
+    async (itemTestId, isOpen) => {
+      setFeatureFlag('inAppMenu', true);
+      const user = userEvent.setup();
+      renderWithI18n(() => <Header />);
+
+      expect(isOpen()).toBe(false);
+
+      await user.click(screen.getByTestId('header-more-menu-trigger'));
+
+      const item = await waitFor(() => screen.getByTestId(itemTestId));
+      await user.click(item);
+
+      await waitFor(() => expect(isOpen()).toBe(true));
+    },
+  );
 });
