@@ -25,10 +25,9 @@ pub struct PrivateKeyMethod {
 impl KeypairMethod {
     /// Wraps `master_key` for this public key. Returns the `wrapped_key` blob.
     pub fn wrap_master_key(&self, master_key: &[u8]) -> Result<Vec<u8>, String> {
-        use rand_core::OsRng;
-
         // Generate ephemeral keypair
-        let eph_secret = EphemeralSecret::random_from_rng(OsRng);
+        let mut rng = rand::rng();
+        let eph_secret = EphemeralSecret::random_from_rng(&mut rng);
         let eph_public = PublicKey::from(&eph_secret);
 
         // Compute ECDH shared secret
@@ -97,9 +96,8 @@ impl PrivateKeyMethod {
 /// The private key should be saved to a file by the user; the public key
 /// is registered with the diary via `register_keypair`.
 pub fn generate_keypair() -> Result<crate::auth::KeypairFiles, String> {
-    use rand_core::OsRng;
-
-    let private = StaticSecret::random_from_rng(OsRng);
+    let mut rng = rand::rng();
+    let private = StaticSecret::random_from_rng(&mut rng);
     let public = PublicKey::from(&private);
 
     Ok(crate::auth::KeypairFiles {
@@ -128,8 +126,8 @@ mod tests {
     }
 
     fn random_keypair() -> ([u8; 32], [u8; 32]) {
-        use rand_core::OsRng;
-        let private = StaticSecret::random_from_rng(OsRng);
+        let mut rng = rand::rng();
+        let private = StaticSecret::random_from_rng(&mut rng);
         let public = PublicKey::from(&private);
         (private.to_bytes(), *public.as_bytes())
     }
