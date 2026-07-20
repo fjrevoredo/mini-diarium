@@ -72,11 +72,11 @@
     "@tiptap/extension-text-style": "^3.27.2",
     "@tiptap/pm": "^3.27.1",
     "@tiptap/starter-kit": "^3.27.2",
-    "dompurify": "^3.4.11",
+    "dompurify": "^3.4.12",
     "html2canvas": "^1.4.1",
     "jspdf": "^4.2.1",
     "lucide-solid": "^1.23.0",
-    "marked": "^18.0.5",
+    "marked": "^18.0.6",
     "solid-js": "^1.9.14"
   },
   "devDependencies": {
