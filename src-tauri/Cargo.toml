@@ -37,7 +37,7 @@ rusqlite = { version = "0.40", features = ["bundled"] }
 rand = "0.10"
 rand_core = "0.6"
 hex = "0.4"
-x25519-dalek = { version = "2", features = ["static_secrets"] }
+x25519-dalek = { version = "3", features = ["static_secrets"] }
 hkdf = "0.13"
 sha2 = "0.11"
 base64 = "0.22"
