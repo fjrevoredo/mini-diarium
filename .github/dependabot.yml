@@ -15,6 +15,13 @@ updates:
         dependency-type: development
       prod-dependencies:
         dependency-type: production
+    # typescript 7 needs typescript-eslint@9+ first; current
+    # typescript-eslint@8.x peer range is `>=4.8.4 <6.1.0`. Ignore TS
+    # major bumps until the eslint stack is upgraded.
+    ignore:
+      - dependency-name: typescript
+        update-types:
+          - version-update:semver-major
 
   - package-ecosystem: cargo
     directory: /src-tauri
