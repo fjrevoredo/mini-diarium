@@ -37,8 +37,8 @@ let
         || lib.hasPrefix "node_modules/" rel
         || rel == "dist"
         || lib.hasPrefix "dist/" rel
-        || rel == "src-tauri/target"
-        || lib.hasPrefix "src-tauri/target/" rel
+        || rel == "target"
+        || lib.hasPrefix "target/" rel
         || rel == "result"
         || lib.hasPrefix "result/" rel
         # The Nix files themselves don't affect the build, so editing them
@@ -84,11 +84,13 @@ rustPlatform.buildRustPackage {
   pname = "mini-diarium";
   inherit version src;
 
-  cargoRoot = "src-tauri";
+  # Virtual workspace: the manifest and Cargo.lock live at the repo root, but we
+  # only build the app crate (which pulls in the in-tree mini-diarium-core path dep).
+  cargoRoot = ".";
   buildAndTestSubdir = "src-tauri";
 
   cargoLock = {
-    lockFile = ../src-tauri/Cargo.lock;
+    lockFile = ../Cargo.lock;
   };
 
   # Production build must embed the bundled frontend assets.

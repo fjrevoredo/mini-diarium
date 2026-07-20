@@ -37,8 +37,8 @@ let tauriDriver: ChildProcess;
 const appBinary = resolve(
   process.cwd(),
   process.platform === 'win32'
-    ? 'src-tauri/target/release/mini-diarium.exe'
-    : 'src-tauri/target/release/mini-diarium',
+    ? 'target/release/mini-diarium.exe'
+    : 'target/release/mini-diarium',
 );
 
 // Local cache for downloaded msedgedriver binaries

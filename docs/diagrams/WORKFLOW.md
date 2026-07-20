@@ -52,7 +52,7 @@ Typical checks:
 - UI structure and state flow: `src/`
 - Tauri command surface: `src-tauri/src/lib.rs`
 - backend behavior: `src-tauri/src/commands/`
-- persistence behavior: `src-tauri/src/db/`
+- persistence behavior: `crates/mini-diarium-core/src/db/`
 
 If the code and the diagram disagree, the code wins.
 

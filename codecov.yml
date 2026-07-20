@@ -18,3 +18,4 @@ flags:
   backend:
     paths:
       - src-tauri/src/
+      - crates/mini-diarium-core/src/

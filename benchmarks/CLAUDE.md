@@ -14,7 +14,7 @@ Benchmark-specific:
 |---------|-------------|
 | `cargo bench --manifest-path src-tauri/Cargo.toml` | Run all Rust benchmarks |
 | `cargo bench --manifest-path src-tauri/Cargo.toml --bench cipher_bench` | Run cipher benchmarks only |
-| `cargo bench --manifest-path src-tauri/Cargo.toml -- --output-format html` | HTML report → `src-tauri/target/criterion/` |
+| `cargo bench --manifest-path src-tauri/Cargo.toml -- --output-format html` | HTML report → `target/criterion/` (workspace target dir at repo root) |
 | `bun run bench` | Run frontend Vitest benchmarks |
 
 ## Benchmarks Covered
@@ -100,7 +100,7 @@ The duration step uses `if: always()` so it runs even after earlier steps fail. 
 
 5. **Keep `NamedTempFile` alive in `iter_batched` setups** — `tempfile::NamedTempFile` deletes its file on `Drop`. In `iter_batched`, the setup closure must return both `(tmp, db)` so the file outlives the benchmark iteration. Dropping `tmp` before the iteration runs will cause SQLite to open a deleted file. **Exception:** the three mutating benches (`db_insert_entry`, `db_update_entry`, `db_delete_entry`) now use `create_database(":memory:", …)` and carry no tempfile, so this rule no longer applies to them — it still governs the read/search benches that seed a file-backed DB.
 
-6. **All benchmark imports use `mini_diarium_lib::*`** — the Cargo.toml `[lib]` section declares `name = "mini_diarium_lib"`. Benchmark targets import from this crate name, not from the binary target. Ensure `pub mod crypto` and `pub mod db` are exported from `lib.rs`.
+6. **All benchmark imports use `mini_diarium_lib::*`** — the app crate's Cargo.toml `[lib]` section declares `name = "mini_diarium_lib"`. Benchmark targets (which stay in `src-tauri/benches/`, built with the app crate) import from this crate name, not from the binary target. Since `crypto`, `auth`, and `db` moved to the `mini-diarium-core` crate, `lib.rs` re-exports them (`pub use mini_diarium_core::{auth, crypto, db, …};`), so `mini_diarium_lib::{crypto,auth,db}::…` bench imports resolve unchanged. `db_bench` also reaches `mini_diarium_lib::commands::search` (an app-crate module). Both crates set `[lib] bench = false`.
 
 7. **Auth bench uses `sample_size(10)` intentionally** — Argon2id takes 100–300 ms per
    sample; 10 samples (~30–60 s) is sufficient for trend tracking without blocking CI.

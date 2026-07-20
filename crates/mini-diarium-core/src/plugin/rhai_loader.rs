@@ -8,7 +8,7 @@ use std::path::{Path, PathBuf};
 
 // Keep plugin docs in one place: the generated `{app_data_dir}/plugins/README.md`
 // is a direct copy of this repository guide.
-const PLUGINS_README: &str = include_str!("../../../docs/user-plugins/USER_PLUGIN_GUIDE.md");
+const PLUGINS_README: &str = include_str!("../../../../docs/user-plugins/USER_PLUGIN_GUIDE.md");
 
 /// Metadata parsed from the comment header of a .rhai script.
 struct ScriptMeta {
@@ -372,7 +372,7 @@ mod tests {
     use super::*;
 
     const PLAIN_TEXT_TIMELINE_FIXTURE: &str =
-        include_str!("../../../docs/user-plugins/plain-text-timeline.rhai");
+        include_str!("../../../../docs/user-plugins/plain-text-timeline.rhai");
 
     fn sample_entries() -> Vec<DiaryEntry> {
         vec![

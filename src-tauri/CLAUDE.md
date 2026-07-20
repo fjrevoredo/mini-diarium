@@ -3,11 +3,30 @@
 > For project architecture, command registry, and cross-cutting conventions see the [root CLAUDE.md](../CLAUDE.md).
 > For durable backend rules, use [Rust best practices](../docs/best-practices/RUST_BEST_PRACTICES.md) and [Tauri best practices](../docs/best-practices/TAURI_BEST_PRACTICES.md) before changing commands, auth policy, migrations, encrypted storage, IPC, or WebView security.
 
+## Workspace layout
+
+The backend is a Cargo **workspace** (root `Cargo.toml`) with two members:
+
+- **App crate — `src-tauri/`** (`mini-diarium`): the Tauri commands (`commands/*`), native menu, OS shell, WebView security, and window/screen-lock listeners. Depends on the core crate; `lib.rs` re-exports its modules (`pub use mini_diarium_core::{auth, backup, config, crypto, db, export, import, plugin};`) so `crate::db::…`-style paths in `commands/*` resolve unchanged.
+- **Core crate — `crates/mini-diarium-core/`** (`mini-diarium-core`): the Tauri-free business layer — crypto, auth, db, import/export, plugins, backup, config. **Zero `tauri::` references.** Consumable by a future separate product and eventually WASM (see [`docs/OPEN_CORE_STRATEGY.md`](../docs/OPEN_CORE_STRATEGY.md)). Its version is intentionally decoupled from the app version.
+
+`Cargo.lock` and `target/` live at the repo root. Run all backend tests with `cargo test --workspace` (**not** `--manifest-path src-tauri/Cargo.toml`, which skips the core crate's tests).
+
 ## Key Modules
+
+### App crate (`src-tauri/src/`)
 
 | Path | Purpose |
 |------|---------|
-| `commands/` | One module per command group — all registered via `generate_handler![]` in `lib.rs`. Groups: `auth/` (multi-file), `entries`, `search`, `navigation`, `stats`, `import`, `export`, `plugin`, `debug`, `files`, `fonts`, `images`, `menu`, `tags` |
+| `commands/` | One module per command group — all registered via `generate_handler![]` in `lib.rs`. Groups: `auth/` (multi-file), `entries`, `search`, `navigation`, `stats`, `import`, `export`, `plugin`, `debug`, `files`, `fonts`, `images`, `menu`, `tags`. Handlers delegate to the core crate. |
+| `webview_security/` | Platform WebView handlers that block external HTTP(S) at the OS level |
+| `menu.rs` | Native menu builder and `menu-*` event emitter |
+| `screen_lock.rs` | OS session-lock listener → auto-lock trigger |
+
+### Core crate (`crates/mini-diarium-core/src/`)
+
+| Path | Purpose |
+|------|---------|
 | `db/schema/` | DB connection helpers (`open_connection*`), DDL, and schema migrations `v1_to_v2` … `v12_to_v13` via `apply_pending` |
 | `db/queries/` | Encrypted row helpers — shared format primitives in `mod.rs` (`encrypt_for_storage`, `decrypt_utf8`) |
 | `auth/` | Auth method implementations: password (Argon2id), keypair (X25519 ECIES), auto-key (device-bound) |
@@ -15,9 +34,8 @@
 | `import/` | Built-in diary format parsers (Mini Diary, Day One, jrnl) |
 | `export/` | JSON and Markdown export writers |
 | `plugin/` | Plugin trait, registry, Rhai script loader and sandbox |
-| `webview_security/` | Platform WebView handlers that block external HTTP(S) at the OS level |
-| `menu.rs` | Native menu builder and `menu-*` event emitter |
-| `screen_lock.rs` | OS session-lock listener → auto-lock trigger |
+| `backup.rs` | Encrypted-DB backup rotation |
+| `config.rs` | `JournalConfig`/`JournalInfo` and `config.json` handling |
 
 ## Conventions
 
@@ -65,13 +83,13 @@ All menu event names are prefixed `menu-`. See `menu.rs` for the full list. See 
 ### Import Parser Pattern (Built-in)
 
 To add a new **built-in** import format (compiled Rust):
-1. Create `src-tauri/src/import/FORMAT.rs` — parser returning `Vec<DiaryEntry>`
-2. Add `pub mod FORMAT;` to `src-tauri/src/import/mod.rs`
-3. Add a builtin wrapper struct in `plugin/builtins.rs` implementing `ImportPlugin`, and register it in `register_all()`
+1. Create `crates/mini-diarium-core/src/import/FORMAT.rs` — parser returning `Vec<DiaryEntry>`
+2. Add `pub mod FORMAT;` to `crates/mini-diarium-core/src/import/mod.rs`
+3. Add a builtin wrapper struct in `crates/mini-diarium-core/src/plugin/builtins.rs` implementing `ImportPlugin`, and register it in `register_all()`
 
 The plugin system (`run_import_plugin`) is the single entry point; no per-format Tauri command is needed. The search reindex hook lives in `commands::import::import_entries` (see `// Search index hook:` comment).
 
-For **user-scriptable** formats, users drop a `.rhai` file in `{app_data_dir}/plugins/`. See `plugin/rhai_loader.rs` for the Rhai script contract and `docs/user-plugins/USER_PLUGIN_GUIDE.md` for the end-user plugin guide and templates.
+For **user-scriptable** formats, users drop a `.rhai` file in `{app_data_dir}/plugins/`. See `crates/mini-diarium-core/src/plugin/rhai_loader.rs` for the Rhai script contract and `docs/user-plugins/USER_PLUGIN_GUIDE.md` for the end-user plugin guide and templates.
 
 ## Verification Commands
 
@@ -163,15 +181,15 @@ Activate during development: `cargo build --features experimental`. See `docs/de
 
 **Option A: Built-in (compiled Rust)**
 
-1. Create `src-tauri/src/import/FORMAT.rs` with a `parse_FORMAT(content: &str) -> Result<Vec<DiaryEntry>, String>` function
-2. Add `pub mod FORMAT;` to `src-tauri/src/import/mod.rs`
-3. Add a builtin wrapper struct in `plugin/builtins.rs` implementing `ImportPlugin` (or `ExportPlugin`), register in `register_all()`
+1. Create `crates/mini-diarium-core/src/import/FORMAT.rs` with a `parse_FORMAT(content: &str) -> Result<Vec<DiaryEntry>, String>` function
+2. Add `pub mod FORMAT;` to `crates/mini-diarium-core/src/import/mod.rs`
+3. Add a builtin wrapper struct in `crates/mini-diarium-core/src/plugin/builtins.rs` implementing `ImportPlugin` (or `ExportPlugin`), register in `register_all()`
 
 The plugin runner (`run_import_plugin` / `run_export_plugin`) dispatches to the builtin. No per-format Tauri command is required — the frontend discovers available formats via `list_import_plugins()` / `list_export_plugins()`.
 
 **Option B: User-scriptable (Rhai)**
 
-Users drop a `.rhai` file in `{diary_dir}/plugins/`. The file must have a `// @name`, `// @type`, and optionally `// @extensions` comment header. Import scripts define `fn parse(content)` returning an array of entry maps; export scripts define `fn format_entries(entries)` returning a string. See `docs/user-plugins/USER_PLUGIN_GUIDE.md` for templates and `plugin/rhai_loader.rs` for the runtime.
+Users drop a `.rhai` file in `{diary_dir}/plugins/`. The file must have a `// @name`, `// @type`, and optionally `// @extensions` comment header. Import scripts define `fn parse(content)` returning an array of entry maps; export scripts define `fn format_entries(entries)` returning a string. See `docs/user-plugins/USER_PLUGIN_GUIDE.md` for templates and `crates/mini-diarium-core/src/plugin/rhai_loader.rs` for the runtime.
 
 ### Search
 

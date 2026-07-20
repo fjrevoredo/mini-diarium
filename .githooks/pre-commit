@@ -14,14 +14,16 @@ if [ -n "$FRONTEND_FILES" ]; then
   git add $FRONTEND_FILES
 fi
 
-BACKEND_FILES=$(echo "$STAGED" | grep -E '^src-tauri/.*\.rs$' || true)
+# Match staged Rust in both the app crate (src-tauri/) and the mini-diarium-core
+# crate (crates/); `cargo fmt --all` formats every workspace member from root.
+BACKEND_FILES=$(echo "$STAGED" | grep -E '^(src-tauri|crates)/.*\.rs$' || true)
 if [ -n "$BACKEND_FILES" ]; then
   if command -v cargo >/dev/null 2>&1; then
-    echo "pre-commit: formatting src-tauri/ with cargo fmt..."
-    (cd src-tauri && cargo fmt)
+    echo "pre-commit: formatting Rust workspace with cargo fmt --all..."
+    cargo fmt --all
     git add $BACKEND_FILES
   else
-    echo "pre-commit: cargo not in PATH; skipping rust formatting (run: cd src-tauri && cargo fmt)" >&2
+    echo "pre-commit: cargo not in PATH; skipping rust formatting (run: cargo fmt --all)" >&2
   fi
 fi
 

@@ -46,6 +46,7 @@ Read all five files and verify each contains `RELEASE_VERSION`:
 
 - If **any** file has a different version → **STOP**, report every discrepancy, and suggest running `./bump-version.sh X.Y.Z` (Linux/macOS) or `.\bump-version.ps1 X.Y.Z` (Windows).
 - All five must match before continuing.
+- **Do not** add `crates/mini-diarium-core/Cargo.toml` to this table. The core crate's version (`0.1.0`) is **intentionally decoupled** from the app version — it is an internal path dependency, not bumped per release, and deliberately not wired into `bump-version.sh`/`.ps1`. See [`docs/OPEN_CORE_STRATEGY.md`](../../../../docs/OPEN_CORE_STRATEGY.md).
 
 ---
 

@@ -25,9 +25,12 @@ This repo is commonly worked on from a WSL shell over a Windows checkout. In tha
 Operational rule for agents in this environment:
 
 - Prefer `cmd.exe /c ...` for project commands unless you have explicitly verified a Linux-native setup.
-- Do not start with bare `bun`, `vite`, `vitest`, or `tauri` from WSL in this repo. (`cargo` is fine bare — use `--manifest-path src-tauri/Cargo.toml` from the repo root.)
-- For Rust commands under `src-tauri`, use `--manifest-path` to run from the repo root:
-  - `cargo test --manifest-path src-tauri/Cargo.toml`
+- Do not start with bare `bun`, `vite`, `vitest`, or `tauri` from WSL in this repo. (`cargo` is fine bare.)
+- **Workspace layout:** the backend is a Cargo **workspace** (root `Cargo.toml`) with two members — the app crate at `src-tauri/` (`mini-diarium`: `commands/*`, OS shell) and the Tauri-free business layer at `crates/mini-diarium-core/` (`mini-diarium-core`: crypto/auth/db/import/export/plugin/backup/config). `Cargo.lock` and `target/` live at the repo root.
+- For Rust commands, run `cargo` bare from the repo root. `--manifest-path src-tauri/Cargo.toml` targets **only the app crate**; `--workspace` targets **both crates** (required for "run all backend tests" — without it the core module tests silently stop running):
+  - `cargo test --workspace` — all backend tests (both crates)
+  - `cargo test --manifest-path crates/mini-diarium-core/Cargo.toml` — core crate only
+  - `cargo test --manifest-path src-tauri/Cargo.toml` — app crate only
 - Use repo-local Tauri CLI through `cmd.exe /c bun run tauri ...`; do not assume `cargo tauri` is globally installed.
 - Treat generic shell snippets in docs as human-oriented unless they already say "Run from this Codex shell".
 
@@ -37,7 +40,7 @@ Commands verified to work from this shell via Windows:
 - `cmd.exe /c bun run lint`
 - `cmd.exe /c bun run test:run`
 - `cmd.exe /c bun run build`
-- `cargo test --manifest-path src-tauri/Cargo.toml`
+- `cargo test --workspace`
 - `cmd.exe /c bun run test:e2e`
 - `cmd.exe /c bun run tauri info`
 - `cmd.exe /c bun run diagrams:check`
@@ -75,9 +78,11 @@ Quick reference (ASCII art):
 └────────────────────────────┬────────────────────────────────────┘
                              │ invoke() / listen()
 ┌────────────────────────────┴────────────────────────────────────┐
-│                      BACKEND (Rust)                             │
-│ Cmds: auth · entries · search · nav · stats · import/export · plugin │
-│ Biz: crypto/ · db/ · import/ · export/ · plugin/ · menu.rs · config.rs│
+│                 BACKEND (Rust — Cargo workspace)                 │
+│ App crate  (src-tauri/): commands (auth · entries · search · nav │
+│   · stats · import/export · plugin) · menu.rs · OS shell         │
+│ Core crate (crates/mini-diarium-core/): crypto · auth · db ·     │
+│   import · export · plugin · backup · config  (no tauri dep)     │
 └────────────────────────────┬────────────────────────────────────┘
                              │
            ┌──────────┬──────────────┬─────────────┬──────────────┐
@@ -103,7 +108,7 @@ Static marketing site — plain HTML/CSS/JS. Deploy via Coolify using `website/d
 
 ## Command Registry
 
-All Tauri commands are registered in `src-tauri/src/lib.rs` (`generate_handler![]`). Frontend wrappers with typed signatures live in `src/lib/tauri/` (one sub-file per command category, re-exported from the barrel `index.ts`). Rust names use `snake_case`; wrappers use `camelCase`.
+All Tauri commands are registered in `src-tauri/src/lib.rs` (`generate_handler![]`). The command handlers live in the app crate (`src-tauri/src/commands/*`) and delegate to the Tauri-free business layer in the `mini-diarium-core` crate (`crates/mini-diarium-core/`); `lib.rs` re-exports the core modules (`pub use mini_diarium_core::{auth, backup, config, crypto, db, export, import, plugin};`) so `crate::db::…`-style paths in commands resolve unchanged. Frontend wrappers with typed signatures live in `src/lib/tauri/` (one sub-file per command category, re-exported from the barrel `index.ts`). Rust names use `snake_case`; wrappers use `camelCase`.
 
 Command groups: `auth` (journal lifecycle, auth slots, multi-auth), `entries`, `files`, `search` (stub — see Gotcha #1), `nav`, `stats`, `export`, `plugin`, `debug`, `menu`, `fonts`, `tags`, `images`.
 
@@ -178,7 +183,7 @@ cmd.exe /c bun run coverage:self-test       # parser self-test
    - **`new_duplicated_lines_density` > 3%**: copy-pasted test helpers or fixture objects — extract to a shared constant/function in the same file.
    - **`new_coverage` < threshold**: new logic in a file that `generatePdfFromElement`-style functions (html2canvas/jsPDF) can't be tested in JSDOM — mock the module boundary instead.
 
-6. **Codecov patch check — mirror it locally before pushing**: CI uploads `coverage/lcov.info` (frontend) and `src-tauri/lcov.info` (backend) to Codecov, which enforces `patch ≥ 80%` (new/changed lines) and `project: auto` (no total regression) per `codecov.yml`. The Vitest thresholds in `vitest.config.ts` are a coarse frontend-only global floor and do **not** catch patch/project failures — you can pass locally and still fail Codecov. Run the local mirror: `cmd.exe /c bun run coverage:diff` (`scripts/check-diff-coverage.mjs`) consumes the same lcov files + `git diff origin/master`, fails below 80%, and lists every uncovered new line as `file:line`. This mirrors the **patch** check (the most common CI failure); the **project** total-regression check needs a base-branch coverage baseline and is not replicated locally. The gate now also runs as step 9 of `bun run pre-commit` (via `--working-tree`, so it checks not-yet-committed changes against `origin/master`); that run generates both lcov files by running the frontend/backend tests with coverage. Frontend lcov comes from `bun run test:coverage`; backend lcov requires `cargo-llvm-cov` + `cargo-nextest` (`cargo install cargo-llvm-cov cargo-nextest --locked`) via `cargo llvm-cov nextest --lcov --output-path lcov.info` from `src-tauri/`. Flags: `--generate` (run both), `--base <ref>`, `--fail-under <pct>`, `--no-fail`, `--frontend`/`--backend`. See [CI Best Practices → Coverage Gating](docs/best-practices/CI_BEST_PRACTICES.md#coverage-gating).
+6. **Codecov patch check — mirror it locally before pushing**: CI uploads `coverage/lcov.info` (frontend) and `src-tauri/lcov.info` (backend) to Codecov, which enforces `patch ≥ 80%` (new/changed lines) and `project: auto` (no total regression) per `codecov.yml`. The Vitest thresholds in `vitest.config.ts` are a coarse frontend-only global floor and do **not** catch patch/project failures — you can pass locally and still fail Codecov. Run the local mirror: `cmd.exe /c bun run coverage:diff` (`scripts/check-diff-coverage.mjs`) consumes the same lcov files + `git diff origin/master`, fails below 80%, and lists every uncovered new line as `file:line`. This mirrors the **patch** check (the most common CI failure); the **project** total-regression check needs a base-branch coverage baseline and is not replicated locally. The gate now also runs as step 9 of `bun run pre-commit` (via `--working-tree`, so it checks not-yet-committed changes against `origin/master`); that run generates both lcov files by running the frontend/backend tests with coverage. Frontend lcov comes from `bun run test:coverage`; backend lcov requires `cargo-llvm-cov` + `cargo-nextest` (`cargo install cargo-llvm-cov cargo-nextest --locked`) via `cargo llvm-cov nextest --workspace --lcov --output-path lcov.info` from `src-tauri/` (`--workspace` so the `mini-diarium-core` crate is covered; lcov still lands at `src-tauri/lcov.info`). Flags: `--generate` (run both), `--base <ref>`, `--fail-under <pct>`, `--no-fail`, `--frontend`/`--backend`. See [CI Best Practices → Coverage Gating](docs/best-practices/CI_BEST_PRACTICES.md#coverage-gating).
 
 ## Security Rules
 

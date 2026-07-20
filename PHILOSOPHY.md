@@ -1,6 +1,6 @@
 # PHILOSOPHY.md
 
-_Last updated: 2026-05-20, applies to v0.4.0+_
+_Last updated: 2026-07-21, applies to v0.4.0+_
 
 This document defines the guiding principles for Mini Diarium. Every feature decision, architectural choice, and contribution must align with these values. When in doubt, refer back here.
 
@@ -185,12 +185,12 @@ This section explains how each principle from Part I translates into concrete de
 
 ### Principle 1: Extensions in Practice
 
-"Extension" and "plugin" are used interchangeably in this codebase. The implementation lives in `src-tauri/src/plugin/`.
+"Extension" and "plugin" are used interchangeably in this codebase. The implementation lives in `crates/mini-diarium-core/src/plugin/`.
 
 Extensions are defined as Rust traits:
 
 ```rust
-// src-tauri/src/plugin/mod.rs
+// crates/mini-diarium-core/src/plugin/mod.rs
 pub trait ImportPlugin: Send + Sync {
     fn info(&self) -> PluginInfo;
     fn parse(&self, content: &str) -> Result<Vec<DiaryEntry>, String>;
@@ -203,7 +203,7 @@ pub trait ExportPlugin: Send + Sync {
 
 Any extension that fails returns `Err(String)`; it cannot panic the core. Built-in formats (Mini Diary, Day One JSON/TXT, jrnl, JSON export, Markdown export) all implement the same traits as user-provided extensions, so there is no privileged "built-in" path.
 
-User Rhai scripts placed in `<diary_dir>/plugins/` are auto-discovered at startup by `src-tauri/src/plugin/rhai_loader.rs` and registered alongside built-in plugins. This is the concrete mechanism behind "allow users to script their own export pipelines" (Principle 4).
+User Rhai scripts placed in `<diary_dir>/plugins/` are auto-discovered at startup by `crates/mini-diarium-core/src/plugin/rhai_loader.rs` and registered alongside built-in plugins. This is the concrete mechanism behind "allow users to script their own export pipelines" (Principle 4).
 
 Both `ImportOverlay.tsx` and `ExportOverlay.tsx` are wired to the plugin registry via `listImportPlugins`/`runImportPlugin` and `listExportPlugins`/`runExportPlugin`. Adding a new built-in or user-provided format requires no UI changes.
 
@@ -211,18 +211,18 @@ Both `ImportOverlay.tsx` and `ExportOverlay.tsx` are wired to the plugin registr
 
 ### Principle 2: Security Implementation
 
-**Algorithms and libraries** (`src-tauri/Cargo.toml`):
-- Symmetric encryption: `aes-gcm = "0.10"` (AES-256-GCM with per-entry random nonces, `src-tauri/src/crypto/cipher.rs`)
-- Password KDF: `argon2` (Argon2id with m=65536 KiB / 64 MB, t=3, p=4, `src-tauri/src/crypto/password.rs:7-10`; these parameters exceed OWASP minimums)
-- Key-file auth: `x25519-dalek = "2"` + `hkdf = "0.12"` (X25519 ECIES, `src-tauri/src/auth/keypair.rs`)
+**Algorithms and libraries** (declared in `crates/mini-diarium-core/Cargo.toml`, the Tauri-free business-layer crate):
+- Symmetric encryption: `aes-gcm = "0.11"` (AES-256-GCM with per-entry random nonces, `crates/mini-diarium-core/src/crypto/cipher.rs`)
+- Password KDF: `argon2` (Argon2id with m=65536 KiB / 64 MB, t=3, p=4, `crates/mini-diarium-core/src/crypto/password.rs:7-10`; these parameters exceed OWASP minimums)
+- Key-file auth: `x25519-dalek = "3"` + `hkdf = "0.13"` (X25519 ECIES, `crates/mini-diarium-core/src/auth/keypair.rs`)
 - Zeroization: `zeroize` crate with `ZeroizeOnDrop` derive macro
 
 **Zeroization layers** (defense-in-depth, not a single mechanism):
-1. `SecretBytes` newtype in `src-tauri/src/auth/mod.rs`: `#[derive(ZeroizeOnDrop)]` ensures automatic cleanup on drop regardless of whether the caller remembers to zeroize
+1. `SecretBytes` newtype in `crates/mini-diarium-core/src/auth/mod.rs`: `#[derive(ZeroizeOnDrop)]` ensures automatic cleanup on drop regardless of whether the caller remembers to zeroize
 2. Explicit `.zeroize()` calls on password strings in `crypto/password.rs` on both the success path (line 60) and the error path (line 103)
 3. `SecretBytes` implements `Debug` as `SecretBytes([REDACTED; N])`, preventing key material from leaking into logs
 
-**No-network enforcement**: verified at the dependency level. `src-tauri/Cargo.toml` contains no `reqwest`, `hyper`, `socket2`, `ureq`, or equivalent crate. The constraint cannot be accidentally violated without a visible `Cargo.toml` change.
+**No-network enforcement**: verified at the dependency level. Neither `src-tauri/Cargo.toml` (app crate) nor `crates/mini-diarium-core/Cargo.toml` (business-layer crate) contains `reqwest`, `hyper`, `socket2`, `ureq`, or equivalent crate. The constraint cannot be accidentally violated without a visible change to one of the two `Cargo.toml` manifests (both scanned by `scripts/check-no-network.ps1`).
 
 ---
 
@@ -232,14 +232,14 @@ Both `ImportOverlay.tsx` and `ExportOverlay.tsx` are wired to the plugin registr
 
 | Layer | How to run |
 |---|---|
-| Backend unit + integration | `cd src-tauri && cargo test` |
+| Backend unit + integration | `cargo test --workspace` (app crate + `mini-diarium-core`) |
 | Frontend unit | `bun run test:run` |
 | E2E | `bun run test:e2e:local` |
 | Benchmarks | `cd src-tauri && cargo bench` / `bun run bench` |
 
 **E2E stack**: WebdriverIO v9 + tauri-driver (official Tauri bridge) against the real compiled binary. Config: `wdio.conf.ts` (root). Specs: `e2e/specs/`. Test isolation: each run creates a fresh OS temp directory passed to the app via `MINI_DIARIUM_DATA_DIR`; `lib.rs` uses this as the diary path when set, with no effect on production builds. Run the full suite (build + run): `bun run test:e2e:local`. Run suite only (binary already built): `bun run test:e2e`.
 
-**Benchmark stack**: criterion 0.5 in `src-tauri/benches/` for Rust hot paths (AES-256-GCM cipher, encrypted SQLite queries, word count); Vitest bench in `src/lib/markdown.bench.ts` for frontend Markdown parsing. CI workflow (`.github/workflows/benchmark.yml`) runs on every push to `master`, stores results as JSON in `gh-pages`, and alerts on regressions exceeding 200% without blocking the build. See `benchmarks/CLAUDE.md` for the full guide.
+**Benchmark stack**: criterion 0.8 in `src-tauri/benches/` for Rust hot paths (AES-256-GCM cipher, encrypted SQLite queries, word count); Vitest bench in `src/lib/markdown.bench.ts` for frontend Markdown parsing. CI workflow (`.github/workflows/benchmark.yml`) runs on every push to `master`, stores results as JSON in `gh-pages`, and alerts on regressions exceeding 200% without blocking the build. See `benchmarks/CLAUDE.md` for the full guide.
 
 **Known gap**: Frontend coverage is shallow. Calendar, most overlays (GoToDateOverlay, PreferencesOverlay, StatsOverlay, ImportOverlay, ExportOverlay), DiaryEditor, and Sidebar have no tests. Auth screens and NotificationsOverlay now have partial coverage. Tracked in `docs/todo/TODO.md`.
 
@@ -247,7 +247,7 @@ Both `ImportOverlay.tsx` and `ExportOverlay.tsx` are wired to the plugin registr
 
 ### Principle 4: Data Portability in Practice
 
-**Import formats** (each in its own `src-tauri/src/import/` module):
+**Import formats** (each in its own `crates/mini-diarium-core/src/import/` module):
 - Mini Diary JSON (`minidiary.rs`)
 - Day One JSON (`dayone.rs`)
 - Day One TXT (`dayone_txt.rs`)
@@ -255,13 +255,13 @@ Both `ImportOverlay.tsx` and `ExportOverlay.tsx` are wired to the plugin registr
 
 Imports preserve source entries as separate records. If imported data lands on a date that already has entries, Mini Diarium creates additional entries for that date rather than merging content heuristically.
 
-**Export formats** (each in `src-tauri/src/export/`):
+**Export formats** (each in `crates/mini-diarium-core/src/export/`):
 - JSON: structured export with entry IDs
 - Markdown: HTML-to-Markdown conversion for readable export
 
 **Adding a new format** follows the Import Parser Pattern in `CLAUDE.md`: one `*.rs` parser module, one command in `commands/import.rs`, register in `lib.rs`, add wrapper in `src/lib/tauri/`. The UI (`ImportOverlay.tsx`) picks it up automatically via `listImportPlugins`; no UI change needed.
 
-**Schema**: documented in `src-tauri/src/db/schema/` (mod.rs, create.rs, open.rs, legacy.rs, migrations/) with full migration history. Current version: v7 (tags and entry_tags tables added). Entries use stable integer IDs and support multiple entries per day. AES-256-GCM with standard key derivation; decryptable with any standard crypto toolkit given the password.
+**Schema**: documented in `crates/mini-diarium-core/src/db/schema/` (mod.rs, create.rs, open.rs, legacy.rs, migrations/) with full migration history. Current version: v13 (tracked by `SCHEMA_VERSION` in `mod.rs`). Entries use stable integer IDs and support multiple entries per day. AES-256-GCM with standard key derivation; decryptable with any standard crypto toolkit given the password.
 
 ---
 
@@ -276,6 +276,6 @@ The "no plugin marketplaces" rule means no distribution, discovery, or hosting o
 ### Principle 6: Simplicity in Practice
 
 - **State**: 8 signal modules (`src/state/`). No Redux, Zustand, derived-state middleware, or selector layers.
-- **Database**: direct `rusqlite` queries in `src-tauri/src/db/queries/` (entries.rs, tags.rs, auth_slots.rs, db_settings.rs). No ORM, no query builder, no migration framework beyond the inline schema version check.
-- **Dependencies**: the runtime dependency set in `src-tauri/Cargo.toml` is intentionally lean for a cryptographic desktop app.
-- **Justified complexity examples**: `src-tauri/src/screen_lock.rs` uses platform-specific Win32 event hooks (Windows) and equivalent macOS hooks for session-lock detection; this is necessary for auto-lock, not gold-plating. The Rhai scripting engine (`src-tauri/src/plugin/rhai_loader.rs`) adds binary size but is the only way to deliver user-scriptable extensions without requiring a recompile.
+- **Database**: direct `rusqlite` queries in `crates/mini-diarium-core/src/db/queries/` (entries.rs, tags.rs, auth_slots.rs, db_settings.rs). No ORM, no query builder, no migration framework beyond the inline schema version check.
+- **Dependencies**: the runtime dependency set (split across the app crate's `src-tauri/Cargo.toml` and the business layer's `crates/mini-diarium-core/Cargo.toml`) is intentionally lean for a cryptographic desktop app.
+- **Justified complexity examples**: `src-tauri/src/screen_lock.rs` uses platform-specific Win32 event hooks (Windows) and equivalent macOS hooks for session-lock detection; this is necessary for auto-lock, not gold-plating. The Rhai scripting engine (`crates/mini-diarium-core/src/plugin/rhai_loader.rs`) adds binary size but is the only way to deliver user-scriptable extensions without requiring a recompile.

@@ -2,7 +2,7 @@
 
 **Status:** Accepted (as-shipped)
 **Date:** 2026-04-21
-**Related:** GitHub discussion #83; `src-tauri/src/auth/auto_key.rs`; `src-tauri/src/commands/auth/auth_core.rs:create_diary_auto`; `src-tauri/src/config.rs:JournalConfig`; `src/components/auth/PasswordCreation.tsx` (user warning).
+**Related:** GitHub discussion #83; `crates/mini-diarium-core/src/auth/auto_key.rs`; `src-tauri/src/commands/auth/auth_core.rs:create_diary_auto`; `crates/mini-diarium-core/src/config.rs:JournalConfig`; `src/components/auth/PasswordCreation.tsx` (user warning).
 
 ## Context
 
@@ -50,8 +50,8 @@ Cost estimated at 1–2 days of work per platform plus test coverage. Worth doin
 
 ## References
 
-- `src-tauri/src/auth/auto_key.rs` — `AutoKeyMethod` implementation (wrap_master_key / unwrap_master_key).
-- `src-tauri/src/config.rs` — `JournalConfig.auto_key: Option<String>` field + `save_journal_auto_key()` helper.
+- `crates/mini-diarium-core/src/auth/auto_key.rs` — `AutoKeyMethod` implementation (wrap_master_key / unwrap_master_key).
+- `crates/mini-diarium-core/src/config.rs` — `JournalConfig.auto_key: Option<String>` field + `save_journal_auto_key()` helper.
 - `src-tauri/src/commands/auth/auth_core.rs:create_diary_auto` — journal creation path.
 - `src-tauri/src/commands/auth/auth_core.rs:unlock_diary_auto` — silent unlock path.
 - `src/components/auth/PasswordCreation.tsx` — user-facing warning + acknowledgement checkbox.

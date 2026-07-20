@@ -229,7 +229,7 @@ Generated files and platform-specific WebView security code may exceed these lim
 5. Run focused auth tests:
 
    ```powershell
-   cargo test --manifest-path src-tauri/Cargo.toml auth
+   cargo test --workspace auth
    ```
 
 ### WebView Security Regression
@@ -248,7 +248,7 @@ cmd.exe /c bun run type-check
 cmd.exe /c bun run lint
 cmd.exe /c bun run check:ui-errors
 cmd.exe /c bun run test:run
-cargo test --manifest-path src-tauri/Cargo.toml
+cargo test --workspace
 cmd.exe /c bun run build
 ```
 

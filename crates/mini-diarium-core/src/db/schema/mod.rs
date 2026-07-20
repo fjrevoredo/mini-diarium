@@ -26,6 +26,19 @@ impl DatabaseConnection {
     pub fn key(&self) -> &cipher::Key {
         &self.encryption_key
     }
+
+    /// Test-only constructor: assembles a `DatabaseConnection` from a raw
+    /// connection and key. The fields stay `pub(crate)` in production; this
+    /// gated constructor lets *dependent* crates (e.g. the app crate's font
+    /// tests) build fixtures without exposing internals. Never compiled into
+    /// release builds — see the `test-support` feature in Cargo.toml.
+    #[cfg(any(test, feature = "test-support"))]
+    pub fn from_parts(conn: Connection, encryption_key: cipher::Key) -> Self {
+        Self {
+            conn,
+            encryption_key,
+        }
+    }
 }
 
 /// Current schema version

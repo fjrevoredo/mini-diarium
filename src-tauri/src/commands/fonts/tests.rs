@@ -161,10 +161,7 @@ fn make_test_db() -> DatabaseConnection {
          );",
     )
     .unwrap();
-    DatabaseConnection {
-        conn,
-        encryption_key: cipher::Key::from_slice(&[0u8; 32]).unwrap(),
-    }
+    DatabaseConnection::from_parts(conn, cipher::Key::from_slice(&[0u8; 32]).unwrap())
 }
 
 fn ttf_bytes() -> Vec<u8> {

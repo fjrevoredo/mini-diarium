@@ -124,7 +124,8 @@ async function main() {
     const hasCov = run('cargo llvm-cov --version', 'Checking cargo-llvm-cov', { silent: true });
     if (hasCov.success) {
       const backendCov = run(
-        'cargo llvm-cov nextest --lcov --output-path lcov.info',
+        // --workspace covers the mini-diarium-core crate too; lcov lands at src-tauri/lcov.info.
+        'cargo llvm-cov nextest --workspace --lcov --output-path lcov.info',
         'Running Rust tests with coverage',
         { cwd: cargoPath },
       );
@@ -138,7 +139,7 @@ async function main() {
     } else {
       warning('cargo-llvm-cov not installed — running plain cargo test (backend coverage skipped)');
       results.warnings.push('Backend coverage skipped (install cargo-llvm-cov for patch gating)');
-      const backendTest = run('cargo test --quiet', 'Running Rust tests', { cwd: cargoPath });
+      const backendTest = run('cargo test --workspace --quiet', 'Running Rust tests', { cwd: cargoPath });
       if (backendTest.success) {
         success('All backend tests passed');
         results.passed.push('Backend Tests');
@@ -155,7 +156,7 @@ async function main() {
   // 7. Rust Clippy
   if (existsSync(cargoPath)) {
     header('Rust Clippy');
-    const clippy = run('cargo clippy --all-targets --quiet -- -D warnings', 'Running clippy', { cwd: cargoPath });
+    const clippy = run('cargo clippy --workspace --all-targets --quiet -- -D warnings', 'Running clippy', { cwd: cargoPath });
     if (clippy.success) {
       success('No clippy warnings');
       results.passed.push('Rust Clippy');
@@ -168,7 +169,7 @@ async function main() {
   // 8. Rust Format Check
   if (existsSync(cargoPath)) {
     header('Rust Format Check');
-    const rustfmt = run('cargo fmt --check', 'Checking Rust formatting', { cwd: cargoPath });
+    const rustfmt = run('cargo fmt --all --check', 'Checking Rust formatting', { cwd: cargoPath });
     if (rustfmt.success) {
       success('All Rust files properly formatted');
       results.passed.push('Rust Format');

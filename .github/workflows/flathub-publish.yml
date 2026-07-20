@@ -169,7 +169,7 @@ jobs:
       - name: Generate cargo-sources.json
         run: |
           python3 /tmp/flatpak-builder-tools/cargo/flatpak-cargo-generator.py \
-            /tmp/mini-diarium-release/src-tauri/Cargo.lock \
+            /tmp/mini-diarium-release/Cargo.lock \
             -o /tmp/mini-diarium-release/flatpak/cargo-sources.json
 
       - name: Generate node-sources.json

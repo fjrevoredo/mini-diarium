@@ -65,8 +65,8 @@ $cargoToml = Get-Content $cargoTomlPath -Raw
 $cargoToml = $cargoToml -replace '(?m)^version\s*=\s*"\d+\.\d+\.\d+"', "version = `"$Version`""
 Set-Content -Path $cargoTomlPath -Value $cargoToml -NoNewline
 
-# 4. Update Cargo.lock
-Write-Host "Updating src-tauri/Cargo.lock..."
+# 4. Update Cargo.lock (repo-root workspace lockfile; cargo is workspace-aware)
+Write-Host "Updating Cargo.lock..."
 Push-Location src-tauri
 $null = cargo build --quiet 2>$null
 if (-not $?) {
@@ -207,7 +207,7 @@ Write-Host ""
 
 # Show what changed
 Write-Host "Changes:"
-git diff package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock website/index.html website/encrypted-journal/index.html README.md data\linux\io.github.fjrevoredo.mini-diarium.metainfo.xml | Select-Object -First 30
+git diff package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml Cargo.lock website/index.html website/encrypted-journal/index.html README.md data\linux\io.github.fjrevoredo.mini-diarium.metainfo.xml | Select-Object -First 30
 
 # Get current branch
 $currentBranch = git branch --show-current
@@ -215,7 +215,7 @@ $currentBranch = git branch --show-current
 Write-Host ""
 Write-Host "${Yellow}Next steps:${Reset}"
 Write-Host "1. Review the changes above"
-Write-Host "2. Commit: ${Green}git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock website/index.html README.md data\linux\io.github.fjrevoredo.mini-diarium.metainfo.xml; git commit -m `"chore: bump version to $Version`"${Reset}"
+Write-Host "2. Commit: ${Green}git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml Cargo.lock website/index.html README.md data\linux\io.github.fjrevoredo.mini-diarium.metainfo.xml; git commit -m `"chore: bump version to $Version`"${Reset}"
 Write-Host "3. Push branch: ${Green}git push origin $currentBranch${Reset}"
 Write-Host "4. Create PR to merge $currentBranch → master"
 Write-Host "5. After PR is merged, checkout master and create tag:"

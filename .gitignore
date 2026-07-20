@@ -3,7 +3,8 @@ node_modules/
 
 # Build output
 dist/
-src-tauri/target/
+# Cargo workspace target dir now lives at the repo root (see root Cargo.toml).
+/target/
 
 # Environment
 .env

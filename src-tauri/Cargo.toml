@@ -24,33 +24,30 @@ bench = false  # entry point only; no bench items — libtest rejects --output-f
 tauri-build = { version = "2.6.0", features = [] }
 
 [dependencies]
+# The Tauri-free business layer. Pulls in crypto/auth/db/import/export/plugin,
+# so the crypto-and-storage deps (argon2, aes-gcm, x25519-dalek, hkdf, sha2,
+# rhai, image, …) live in that crate's manifest, not here.
+mini-diarium-core = { path = "../crates/mini-diarium-core" }
 tauri = { version = "2.11.2", features = ["devtools"] }
 tauri-plugin-opener = "2.5.4"
 tauri-plugin-dialog = "2.7.1"
 tauri-plugin-window-state = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-argon2 = { version = "0.5", features = ["std"] }
-aes-gcm = "0.11"
 zeroize = { version = "1.8", features = ["derive"] }
 rusqlite = { version = "0.40", features = ["bundled"] }
 rand = "0.10"
 rand_core = "0.6"
 hex = "0.4"
-x25519-dalek = { version = "3", features = ["static_secrets"] }
-hkdf = "0.13"
-sha2 = "0.11"
 base64 = "0.22"
 chrono = "0.4"
-rhai = { version = "1", features = ["serde"] }
 log = "0.4"
 env_logger = "0.11.10"
-image = { version = "0.25", default-features = false, features = ["png", "jpeg", "gif", "webp", "bmp"] }
 unicode-normalization = "0.1"
 
-[profile.release]
-opt-level = 3
-lto = true
+# NOTE: [profile.release] lives in the workspace-root Cargo.toml. Cargo ignores
+# [profile.*] in non-root workspace members, so declaring it here would silently
+# drop LTO / opt-level=3 from release builds.
 
 [features]
 # Production builds outside the Tauri CLI must enable this so the app loads
@@ -65,6 +62,9 @@ custom-protocol = ["tauri/custom-protocol"]
 experimental = []
 
 [dev-dependencies]
+# Enable core's test-only constructors (e.g. DatabaseConnection::from_parts) for
+# the app crate's own tests. This feature is off in normal lib/bin builds.
+mini-diarium-core = { path = "../crates/mini-diarium-core", features = ["test-support"] }
 tempfile = "3"
 criterion = { version = "0.8.2", features = ["html_reports"] }
 

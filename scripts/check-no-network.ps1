@@ -15,14 +15,23 @@ function Ok([string]$msg) {
     Write-Host "OK:   $msg" -ForegroundColor Green
 }
 
-# ── 1. Rust: no network-capable crates in Cargo.toml ────────────────────────
-$cargoToml = Join-Path $PSScriptRoot ".." "src-tauri" "Cargo.toml"
+# ── 1. Rust: no network-capable crates in any workspace manifest ─────────────
+# Dependencies are split across two crates: the app crate (src-tauri/Cargo.toml)
+# and the Tauri-free business layer (crates/mini-diarium-core/Cargo.toml), which
+# now holds the crypto/db/import/export deps. Scan BOTH so the no-network
+# guarantee spans the whole workspace, not just the app crate.
+$cargoManifests = @(
+    (Join-Path $PSScriptRoot ".." "src-tauri" "Cargo.toml"),
+    (Join-Path $PSScriptRoot ".." "crates" "mini-diarium-core" "Cargo.toml")
+)
 $networkCrates = 'reqwest|hyper|ureq|isahc|curl|native-tls|rustls|tokio-tungstenite|tauri-plugin-http|tauri-plugin-updater|tauri-plugin-websocket'
-$matches = Select-String -Path $cargoToml -Pattern $networkCrates -ErrorAction SilentlyContinue
-if ($matches) {
-    foreach ($m in $matches) { Fail "Forbidden network crate in Cargo.toml: $($m.Line.Trim())" }
-} else {
-    Ok "No forbidden network crates in Cargo.toml"
+foreach ($cargoToml in $cargoManifests) {
+    $matches = Select-String -Path $cargoToml -Pattern $networkCrates -ErrorAction SilentlyContinue
+    if ($matches) {
+        foreach ($m in $matches) { Fail "Forbidden network crate in ${cargoToml}: $($m.Line.Trim())" }
+    } else {
+        Ok "No forbidden network crates in $cargoToml"
+    }
 }
 
 # ── 2. Frontend: no raw network APIs outside the isolation script ────────────

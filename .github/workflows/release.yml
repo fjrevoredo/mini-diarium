@@ -116,8 +116,8 @@ jobs:
             ~/.cargo/registry/index/
             ~/.cargo/registry/cache/
             ~/.cargo/git/db/
-            src-tauri/target/
-          key: ${{ runner.os }}-cargo-release-${{ hashFiles('src-tauri/Cargo.lock') }}
+            target/
+          key: ${{ runner.os }}-cargo-release-${{ hashFiles('Cargo.lock') }}
           restore-keys: |
             ${{ runner.os }}-cargo-release-
             ${{ runner.os }}-cargo-
@@ -142,7 +142,7 @@ jobs:
 
       - name: Clear stale bundle artifacts from cache
         shell: bash
-        run: rm -rf src-tauri/target/release/bundle
+        run: rm -rf target/release/bundle
 
       - name: Build Tauri app
         uses: tauri-apps/tauri-action@1deb371b0cd8bd54025b384f1cd735e725c4060f # v1.0.0
@@ -155,7 +155,7 @@ jobs:
         if: failure() && matrix.platform == 'macos'
         run: |
           echo "Dumping generated bundle_dmg.sh scripts (if any):"
-          find src-tauri/target -name "bundle_dmg.sh" -print -exec sed -n '1,260p' {} \;
+          find target -name "bundle_dmg.sh" -print -exec sed -n '1,260p' {} \;
 
       - name: Prepare release artifacts (Linux)
         if: matrix.platform == 'linux'
@@ -164,8 +164,8 @@ jobs:
           VERSION="${{ needs.create-release.outputs.version }}"
           VERSION="${VERSION:-dev-${GITHUB_SHA::7}}"
 
-          find src-tauri/target/release/bundle -name "*.AppImage" -exec cp {} release-artifacts/Mini-Diarium-${VERSION}-linux.AppImage \;
-          find src-tauri/target/release/bundle -name "*.deb" -exec cp {} release-artifacts/Mini-Diarium-${VERSION}-linux.deb \;
+          find target/release/bundle -name "*.AppImage" -exec cp {} release-artifacts/Mini-Diarium-${VERSION}-linux.AppImage \;
+          find target/release/bundle -name "*.deb" -exec cp {} release-artifacts/Mini-Diarium-${VERSION}-linux.deb \;
 
           cd release-artifacts
           sha256sum * > checksums-linux.txt
@@ -178,7 +178,7 @@ jobs:
           VERSION="${{ needs.create-release.outputs.version }}"
           VERSION="${VERSION:-dev-${GITHUB_SHA::7}}"
 
-          find src-tauri/target/universal-apple-darwin/release/bundle -name "*.dmg" -exec cp {} release-artifacts/Mini-Diarium-${VERSION}-macos.dmg \;
+          find target/universal-apple-darwin/release/bundle -name "*.dmg" -exec cp {} release-artifacts/Mini-Diarium-${VERSION}-macos.dmg \;
 
           cd release-artifacts
           shasum -a 256 * > checksums-macos.txt
@@ -192,8 +192,8 @@ jobs:
           VERSION="${{ needs.create-release.outputs.version }}"
           VERSION="${VERSION:-dev-${GITHUB_SHA::7}}"
 
-          find src-tauri/target/release/bundle -name "*.msi" -exec cp {} release-artifacts/Mini-Diarium-${VERSION}-windows.msi \;
-          find src-tauri/target/release/bundle/nsis -name "*.exe" -exec cp {} release-artifacts/Mini-Diarium-${VERSION}-windows.exe \; || true
+          find target/release/bundle -name "*.msi" -exec cp {} release-artifacts/Mini-Diarium-${VERSION}-windows.msi \;
+          find target/release/bundle/nsis -name "*.exe" -exec cp {} release-artifacts/Mini-Diarium-${VERSION}-windows.exe \; || true
 
           cd release-artifacts
           sha256sum * > checksums-windows.txt

@@ -40,7 +40,7 @@ Use this path when branch protection allows direct pushes to `master` (e.g., sin
 ```bash
 # 1. Run `$runbooks pre-release` on master (canonical entry: `.agents/skills/runbooks/skills/pre-release/ENTRY.md`)
 # 2. Commit version bump
-git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock \
+git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml Cargo.lock \
   website/index.html README.md data/linux/io.github.fjrevoredo.mini-diarium.metainfo.xml \
   latest-changelog.md
 git commit -m "chore: bump version to X.Y.Z"
@@ -119,10 +119,12 @@ This automatically updates:
 
 - `package.json`
 - `src-tauri/tauri.conf.json`
-- `src-tauri/Cargo.toml`
-- `src-tauri/Cargo.lock`
+- `src-tauri/Cargo.toml` (the **app** crate version)
+- `Cargo.lock` (repo-root workspace lockfile — refreshed by a `cargo build`/`check`)
 - `website/index.html` version badge, structured-data `softwareVersion`, and direct website download URLs
 - `data/linux/io.github.fjrevoredo.mini-diarium.metainfo.xml` release entry
+
+> **Note:** the `mini-diarium-core` crate (`crates/mini-diarium-core/Cargo.toml`) carries its own fixed `version = "0.1.0"`, which is **intentionally decoupled** from the app version and **not** bumped per release. It is an internal path dependency; its version is irrelevant until distribution is decided (open-core roadmap M4). Do not add it to `bump-version.sh`/`.ps1` or the version-consistency checks. See [`OPEN_CORE_STRATEGY.md`](OPEN_CORE_STRATEGY.md).
 
 ### Step 3: Prepare the Release Notes File
 
@@ -138,7 +140,7 @@ The workflow publishes this file verbatim as the GitHub release body, so it must
 
 ```bash
 # Commit version bump and release notes
-git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock website/index.html README.md data/linux/io.github.fjrevoredo.mini-diarium.metainfo.xml latest-changelog.md
+git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml Cargo.lock website/index.html README.md data/linux/io.github.fjrevoredo.mini-diarium.metainfo.xml latest-changelog.md
 git commit -m "chore: bump version to 0.1.1"
 
 # Push branch
@@ -294,7 +296,7 @@ git checkout master && git pull && git checkout -b release-X.Y.Z
 cp latest-changelog.example.md latest-changelog.md
 
 # 4. Commit and push branch
-git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock website/index.html README.md data/linux/io.github.fjrevoredo.mini-diarium.metainfo.xml latest-changelog.md
+git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml Cargo.lock website/index.html README.md data/linux/io.github.fjrevoredo.mini-diarium.metainfo.xml latest-changelog.md
 git commit -m "chore: bump version to X.Y.Z"
 git push origin release-X.Y.Z
 
@@ -321,7 +323,7 @@ git checkout master; git pull; git checkout -b release-X.Y.Z
 Copy-Item latest-changelog.example.md latest-changelog.md
 
 # 4. Commit and push branch
-git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock website/index.html README.md data/linux/io.github.fjrevoredo.mini-diarium.metainfo.xml latest-changelog.md
+git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml Cargo.lock website/index.html README.md data/linux/io.github.fjrevoredo.mini-diarium.metainfo.xml latest-changelog.md
 git commit -m "chore: bump version to X.Y.Z"
 git push origin release-X.Y.Z
 
@@ -389,7 +391,7 @@ No separate WinGet setup document exists; configure `WINGET_TOKEN` and follow th
 
 When the release workflow publishes a release, the `flathub-publish.yml` workflow prepares the Flathub update PR by:
 
-✅ Generates `cargo-sources.json` from `src-tauri/Cargo.lock` (offline Cargo deps for the Flatpak sandbox)
+✅ Generates `cargo-sources.json` from `Cargo.lock` (offline Cargo deps for the Flatpak sandbox)
 ✅ Generates `node-sources.json` from `package-lock.json` for offline npm deps
 ✅ Rewrites the local Flatpak manifest to a pinned git source for the release commit
 ✅ Clones `flathub/io.github.fjrevoredo.mini-diarium`, copies the generated files, and opens a PR

@@ -1,0 +1,11 @@
+[workspace]
+# Match today's single-crate edition-2021 resolver to avoid feature-unification drift.
+resolver = "2"
+members = ["src-tauri", "crates/*"]
+
+# MOVED from src-tauri/Cargo.toml — Cargo only honors [profile.*] in the workspace
+# root, and silently ignores it in non-root members. Keeping it here preserves
+# release-build LTO / opt-level=3 for the app crate.
+[profile.release]
+opt-level = 3
+lto = true

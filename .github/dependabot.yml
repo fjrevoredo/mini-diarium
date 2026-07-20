@@ -24,7 +24,11 @@ updates:
           - version-update:semver-major
 
   - package-ecosystem: cargo
-    directory: /src-tauri
+    # Repo-root virtual Cargo workspace: the Cargo.lock and both member
+    # manifests (src-tauri/Cargo.toml + crates/mini-diarium-core/Cargo.toml)
+    # live under /, so point Dependabot at the workspace root to cover both
+    # crates. Pointing at /src-tauri would miss the core crate's crypto/db deps.
+    directory: /
     schedule:
       interval: weekly
       day: monday

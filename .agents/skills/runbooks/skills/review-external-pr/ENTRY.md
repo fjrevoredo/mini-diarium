@@ -61,7 +61,7 @@ concern for any of these:
 - `package.json` scripts (`prepare`, `postinstall`, `preinstall`) — run automatically on install
 - Lockfile additions not backed by `package.json` changes — can smuggle dependencies
 - `src-tauri/capabilities/` or `tauri.conf.json` security section — expands OS-level permissions
-- `src-tauri/src/crypto/` or auth code unrelated to the stated fix
+- `crates/mini-diarium-core/src/crypto/` or auth code unrelated to the stated fix
 - `CHANGELOG.md`, version fields, or release scripts touched by a non-maintainer
 
 #### 2b — Diff content scan

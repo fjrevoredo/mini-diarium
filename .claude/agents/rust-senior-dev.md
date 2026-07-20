@@ -78,12 +78,12 @@ When reviewing recently written Rust code (default behavior unless asked to revi
 
 ### 3. Architecture & Module Patterns
 
-**Import parsers** (`src-tauri/src/import/FORMAT.rs`):
+**Import parsers** (`crates/mini-diarium-core/src/import/FORMAT.rs`):
 - Return `Vec<DiaryEntry>` — no DB interaction in parsers
 - All DB interaction and merge logic happen in `commands/import.rs`
 - Hook into `// Search index hook:` comments when a search module exists
 
-**Export modules** (`src-tauri/src/export/`):
+**Export modules** (`crates/mini-diarium-core/src/export/`):
 - `json.rs` — Mini Diary-compatible JSON
 - `markdown.rs` — HTML-to-Markdown conversion
 
@@ -137,7 +137,7 @@ When implementing features:
 ## Self-Verification Checklist
 
 Before finalizing any implementation or review, verify:
-- [ ] `cargo test` passes (run: `cd src-tauri && cargo test`)
+- [ ] `cargo test --workspace` passes (run from repo root: `cargo test --workspace` — covers the app crate **and** `mini-diarium-core`)
 - [ ] No new `unwrap()` calls in non-test code without justification
 - [ ] No plaintext key/password exposure in any code path
 - [ ] New commands registered in both `commands/mod.rs` and `lib.rs`

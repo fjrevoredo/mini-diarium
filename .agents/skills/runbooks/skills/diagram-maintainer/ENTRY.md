@@ -78,7 +78,7 @@ Typical targets:
 - UI/state shape: `src/`
 - command registry: `src-tauri/src/lib.rs`
 - command behavior: `src-tauri/src/commands/`
-- persistence behavior: `src-tauri/src/db/`
+- persistence behavior: `crates/mini-diarium-core/src/db/`
 
 If code and diagram disagree, the code wins.
 

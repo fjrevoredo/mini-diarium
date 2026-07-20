@@ -12,7 +12,7 @@ Use this guide when touching any of the following:
 - `data/linux/io.github.fjrevoredo.mini-diarium.desktop`
 - `data/linux/io.github.fjrevoredo.mini-diarium.metainfo.xml`
 - `package-lock.json`
-- `src-tauri/Cargo.lock`
+- `Cargo.lock`
 - `.github/workflows/flathub-publish.yml`
 - `flatpak/rewrite-manifest.py`
 
@@ -24,7 +24,7 @@ Use this guide when touching any of the following:
 | `data/linux/io.github.fjrevoredo.mini-diarium.desktop` | Desktop entry installed into the Flatpak. |
 | `data/linux/io.github.fjrevoredo.mini-diarium.metainfo.xml` | AppStream metadata used by Flathub validation and store listing. |
 | `package-lock.json` | npm lockfile used by offline `npm ci` in the Flatpak sandbox. |
-| `src-tauri/Cargo.lock` | Cargo lockfile used for vendored Rust crates. |
+| `Cargo.lock` | Cargo lockfile used for vendored Rust crates. |
 | `.github/workflows/flathub-publish.yml` | Release automation that prepares the Flathub update PR. |
 | `flatpak/rewrite-manifest.py` | Rewrites the local manifest from `type: dir` to a pinned `type: git` source for Flathub. |
 
@@ -178,7 +178,7 @@ Before changing anything significant in the Flatpak package, validate locally on
 Typical generation commands:
 
 ```bash
-python3 /path/to/flatpak-builder-tools/cargo/flatpak-cargo-generator.py src-tauri/Cargo.lock -o flatpak/cargo-sources.json
+python3 /path/to/flatpak-builder-tools/cargo/flatpak-cargo-generator.py Cargo.lock -o flatpak/cargo-sources.json
 node flatpak/generate-node-sources.mjs package-lock.json flatpak/node-sources.json "$HOME/.npm"
 ```
 

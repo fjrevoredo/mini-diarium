@@ -27,7 +27,7 @@ modules:
       - npm ci --offline --legacy-peer-deps
       - npm run build
       - cargo build --release --features custom-protocol --manifest-path src-tauri/Cargo.toml
-      - install -Dm755 src-tauri/target/release/mini-diarium /app/bin/mini-diarium
+      - install -Dm755 target/release/mini-diarium /app/bin/mini-diarium
       - install -Dm644 data/linux/io.github.fjrevoredo.mini-diarium.desktop /app/share/applications/io.github.fjrevoredo.mini-diarium.desktop
       - install -Dm644 src-tauri/icons/32x32.png /app/share/icons/hicolor/32x32/apps/io.github.fjrevoredo.mini-diarium.png
       - install -Dm644 src-tauri/icons/128x128.png /app/share/icons/hicolor/128x128/apps/io.github.fjrevoredo.mini-diarium.png

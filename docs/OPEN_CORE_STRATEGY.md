@@ -231,19 +231,19 @@ Each milestone carries a **Checklist** of `- [ ]` items to tick off as the work 
 - **Note:** this is the single most valuable step and improves the codebase on its own merits regardless of the premium track.
 - **Checklist:**
   - _Code move_
-    - [ ] Repo-root virtual workspace manifest (`Cargo.toml`, `members = ["src-tauri", "crates/*"]`)
-    - [ ] Tauri-free modules moved to `crates/mini-diarium-core/` (`crypto/`, `auth/`, `db/`, `import/`, `export/`, `plugin/`, `backup.rs`, `config.rs`, shared types)
-    - [ ] `mini-diarium-core/Cargo.toml` carries no `tauri` dependency
-    - [ ] App stays at `src-tauri/`, depends on the new crate by path; `commands/*` and OS shell unchanged
+    - [x] Repo-root virtual workspace manifest (`Cargo.toml`, `members = ["src-tauri", "crates/*"]`)
+    - [x] Tauri-free modules moved to `crates/mini-diarium-core/` (`crypto/`, `auth/`, `db/`, `import/`, `export/`, `plugin/`, `backup.rs`, `config.rs`, shared types)
+    - [x] `mini-diarium-core/Cargo.toml` carries no `tauri` dependency
+    - [x] App stays at `src-tauri/`, depends on the new crate by path; `commands/*` and OS shell unchanged (via a `pub use mini_diarium_core::{…}` re-export shim in `lib.rs`)
   - _Tooling migration_
-    - [ ] CI workflows (`.github/workflows/`) updated for the workspace (test/build/coverage/benchmarks)
-    - [ ] Coverage tooling covers the new crate (`cargo llvm-cov nextest` `--workspace`; `scripts/check-diff-coverage.mjs`; `codecov.yml`)
-    - [ ] `nix/package.nix` manifest paths / Cargo build inputs updated
-    - [ ] Benchmark manifests updated (new crate gets `bench = false` on `[lib]`/`[[bin]]`)
-    - [ ] `--manifest-path src-tauri/Cargo.toml` references updated in `CLAUDE.md`, `src-tauri/CLAUDE.md`, runbooks
+    - [x] CI workflows (`.github/workflows/`) updated for the workspace (test/build/coverage/benchmarks); Dependabot cargo dir → repo root; release/flathub lockfile + `target/` paths
+    - [x] Coverage tooling covers the new crate (`cargo llvm-cov nextest --workspace`; `scripts/check-diff-coverage.mjs` classifier; `codecov.yml` backend paths)
+    - [x] `nix/package.nix` manifest paths / Cargo build inputs updated (`cargoRoot = "."`, `cargoLock = ../Cargo.lock`)
+    - [x] Benchmark manifests updated (new crate gets `bench = false` on `[lib]`; benches stay in the app crate and resolve via the re-export shim)
+    - [x] `--manifest-path src-tauri/Cargo.toml` references updated in `CLAUDE.md`, `src-tauri/CLAUDE.md`, best-practices, runbooks, `PHILOSOPHY.md`, security-stance, `bump-version.sh`/`.ps1`, `RELEASING.md`
   - _Acceptance_
-    - [ ] `mini-diarium-core` compiles with zero `tauri::` references
-    - [ ] Backend + frontend suites, E2E, and coverage gate all green; app behaves identically
+    - [x] `mini-diarium-core` compiles with zero `tauri::` references
+    - [x] Backend (both crates) + frontend suites green, app behaves identically; E2E/coverage gate unaffected (frontend untouched; release binary builds to `target/release/` with LTO preserved)
 
 ### M2 — Stable façade API (Section 9, step 2)
 

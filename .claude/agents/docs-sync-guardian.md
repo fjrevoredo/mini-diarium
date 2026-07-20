@@ -170,7 +170,7 @@ You are the authoritative expert on these 16 files/areas:
 
 **Update triggers:** New auth methods, crypto parameter changes, security vulnerabilities fixed, threat model clarifications.
 
-**CRITICAL:** Parameters here must exactly match the constants at the top of `src-tauri/src/crypto/password.rs` and the Security Rules in the backend guide. Three-way sync required for any crypto change: SECURITY.md + CLAUDE.md files + source code.
+**CRITICAL:** Parameters here must exactly match the constants at the top of `crates/mini-diarium-core/src/crypto/password.rs` and the Security Rules in the backend guide. Three-way sync required for any crypto change: SECURITY.md + CLAUDE.md files + source code.
 
 ---
 
@@ -212,9 +212,9 @@ You are the authoritative expert on these 16 files/areas:
 ---
 
 ### 14. Version manifest files
-`src-tauri/tauri.conf.json`, `package.json`, `src-tauri/Cargo.toml`, `src-tauri/Cargo.lock`
+`src-tauri/tauri.conf.json`, `package.json`, `src-tauri/Cargo.toml`, `Cargo.lock` (repo-root workspace lockfile)
 
-**Update triggers:** Version bumps only (via `bump-version.sh`). All four must stay in sync.
+**Update triggers:** Version bumps only (via `bump-version.sh`). All four must stay in sync. Note: `crates/mini-diarium-core/Cargo.toml` carries a fixed `version = "0.1.0"` that is intentionally decoupled from the app version and is **not** bumped per release.
 
 ---
 
@@ -377,7 +377,7 @@ When you change a primary doc, check and sync these related docs:
 5. Check CHANGELOG.md for missing entries (check git log for recent commits)
 6. Check MEMORY.md for outdated or conflicting information
 7. Check PHILOSOPHY.md Part II implementation details against actual code
-8. Check SECURITY.md crypto params against the constants in `src-tauri/src/crypto/password.rs`
+8. Check SECURITY.md crypto params against the constants in `crates/mini-diarium-core/src/crypto/password.rs`
 9. Check `website/docs-src/` pages for features changed since their last edit (stale docs are a bug)
 10. Report all discrepancies with specific line-level detail and proposed fixes
 

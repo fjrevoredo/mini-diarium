@@ -131,6 +131,10 @@ export function parseUnifiedDiff(diffText, repoRootNorm) {
 
 export function classifyGroup(p) {
   if (p.startsWith('src-tauri/src/')) return 'backend';
+  // The Tauri-free business layer lives in the mini-diarium-core crate; its
+  // coverage lands in the same backend lcov (src-tauri/lcov.info) via the
+  // --workspace test run, so classify it as backend too.
+  if (p.startsWith('crates/mini-diarium-core/src/')) return 'backend';
   if (p.startsWith('src/')) return 'frontend';
   return 'other';
 }
@@ -215,7 +219,9 @@ function generateCoverage() {
   } else {
     const res = spawnSync(
       'cargo', // NOSONAR — developer-controlled PATH: known toolchain executable
-      ['llvm-cov', 'nextest', '--lcov', '--output-path', 'lcov.info'],
+      // --workspace so the mini-diarium-core crate (crypto/auth/db/import/export/
+      // plugin) is covered; lcov still lands at src-tauri/lcov.info.
+      ['llvm-cov', 'nextest', '--workspace', '--lcov', '--output-path', 'lcov.info'],
       { cwd: path.join(process.cwd(), 'src-tauri'), stdio: 'inherit' },
     );
     if (res.status !== 0) errors.push('Backend coverage failed: `cargo llvm-cov nextest`');
@@ -370,7 +376,7 @@ function main() {
       paint(
         'dim',
         '  Generate them with: bun run test:coverage  (frontend) and\n' +
-          '  cargo llvm-cov nextest --lcov --output-path lcov.info  (backend, from src-tauri/)\n' +
+          '  cargo llvm-cov nextest --workspace --lcov --output-path lcov.info  (backend, from src-tauri/)\n' +
           '  or pass --generate to run them automatically.',
       ),
     );

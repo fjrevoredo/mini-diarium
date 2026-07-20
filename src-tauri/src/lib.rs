@@ -1,13 +1,12 @@
-pub mod auth;
-pub mod backup;
+// The Tauri-free business layer now lives in the `mini-diarium-core` crate.
+// Re-export its modules so all `crate::{auth,backup,config,crypto,db,export,
+// import,plugin}::…` paths in commands/*, menu.rs, lib.rs, and the benches
+// resolve unchanged. (M2 / TODO-0077 replaces this internal reaching with a
+// deliberate façade API.)
+pub use mini_diarium_core::{auth, backup, config, crypto, db, export, import, plugin};
+
 pub mod commands;
-pub mod config;
-pub mod crypto;
-pub mod db;
-pub mod export;
-pub mod import;
 pub mod menu;
-pub mod plugin;
 pub mod screen_lock;
 mod webview_security;
 mod window_focus;

@@ -46,7 +46,7 @@ For each PR, classify it by ecosystem using the **first** signal that matches:
    gh pr view <N> --json files --jq '.files[].path'
    ```
    - `package.json` / `package-lock.json` / `bun.lock` → npm
-   - `src-tauri/Cargo.toml` / `src-tauri/Cargo.lock` → cargo
+   - `src-tauri/Cargo.toml` / `crates/mini-diarium-core/Cargo.toml` / `Cargo.lock` (repo root) → cargo
    - `.github/workflows/*.yml` → actions
 
 If a PR matches multiple ecosystems (unusual but possible for grouped
@@ -57,7 +57,7 @@ Dependabot PRs), apply each procedure in order: npm → cargo → actions.
 | Ecosystem   | Procedure File          | Primary Validation                                 |
 |-------------|-------------------------|----------------------------------------------------|
 | npm         | `procedures/npm.md`     | `cmd.exe /c bun run type-check`                    |
-| cargo       | `procedures/cargo.md`   | `cmd.exe /c cargo test --manifest-path src-tauri/Cargo.toml` |
+| cargo       | `procedures/cargo.md`   | `cmd.exe /c cargo test --workspace`                |
 | actions     | `procedures/actions.md` | `actionlint` on the changed workflows              |
 
 ## Cross-Cutting Gotchas
@@ -76,8 +76,8 @@ Dependabot PRs), apply each procedure in order: npm → cargo → actions.
 ## Scope Boundaries
 
 - **Covers:** npm (`package.json` + `bun.lock` + `package-lock.json`),
-  Cargo (`src-tauri/Cargo.toml` + `src-tauri/Cargo.lock`), and GitHub
-  Actions (`.github/workflows/*.yml`).
+  Cargo (`src-tauri/Cargo.toml` + `crates/mini-diarium-core/Cargo.toml` +
+  repo-root `Cargo.lock`), and GitHub Actions (`.github/workflows/*.yml`).
 - **Out of scope for this skill:** direct edits to other ecosystem files
   (e.g., `flake.nix`, `nix/package.nix`). The npm procedure includes a
   Linux-only `npmDepsHash` refresh step for `nix/package.nix`; that is

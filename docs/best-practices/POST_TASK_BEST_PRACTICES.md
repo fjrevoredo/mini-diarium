@@ -71,9 +71,10 @@ cmd.exe /c bun run type-check
 cmd.exe /c bun run lint
 cmd.exe /c bun run test:run
 
-# Backend
-cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings
-cargo test --manifest-path src-tauri/Cargo.toml
+# Backend (workspace: app crate + mini-diarium-core; --workspace is required so
+# the core crate's tests actually run)
+cargo clippy --workspace --all-targets -- -D warnings
+cargo test --workspace
 ```
 
 If a previously-passing test now fails for an unrelated reason, surface it — do not silently disable it.
@@ -86,7 +87,7 @@ If a previously-passing test now fails for an unrelated reason, surface it — d
 Two layers, both must pass:
 
 - **Frontend** — Prettier: `cmd.exe /c bun run format:check` (auto-fix with `bun run format`).
-- **Backend** — rustfmt: `cargo fmt --manifest-path src-tauri/Cargo.toml --check` (auto-fix by dropping `--check`).
+- **Backend** — rustfmt: `cargo fmt --all --check` (formats every workspace member; auto-fix by dropping `--check`).
 
 The `.githooks/pre-commit` hook auto-formats **staged files only** on every `commit`. It is intentionally fast and scoped; it is not the full quality gate. For a full-tree sweep after a refactor, run the two commands above without `--check`.
 

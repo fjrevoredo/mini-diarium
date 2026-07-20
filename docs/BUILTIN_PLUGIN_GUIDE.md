@@ -46,7 +46,7 @@ Validate against `PHILOSOPHY.md` before merging:
 
 For export plugins:
 
-1. Implement `ExportPlugin` in `src-tauri/src/plugin/builtins.rs`.
+1. Implement `ExportPlugin` in `crates/mini-diarium-core/src/plugin/builtins.rs`.
 2. Provide stable metadata:
    - id namespace: `builtin:*`
    - clear `name`

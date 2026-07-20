@@ -52,8 +52,8 @@ echo "Updating src-tauri/Cargo.toml..."
 sed -i.bak -E "s/^version[[:space:]]*=[[:space:]]*\"[0-9]+\.[0-9]+\.[0-9]+\"/version = \"${NEW_VERSION}\"/" src-tauri/Cargo.toml
 rm src-tauri/Cargo.toml.bak
 
-# 4. Update Cargo.lock
-echo "Updating src-tauri/Cargo.lock..."
+# 4. Update Cargo.lock (repo-root workspace lockfile; cargo is workspace-aware)
+echo "Updating Cargo.lock..."
 cd src-tauri
 cargo build --quiet 2>/dev/null || cargo check --quiet
 cd ..
@@ -191,7 +191,7 @@ echo ""
 
 # Show what changed
 echo "Changes:"
-git diff package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock \
+git diff package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml Cargo.lock \
   website/index.html website/encrypted-journal/index.html README.md \
   data/linux/io.github.fjrevoredo.mini-diarium.metainfo.xml | head -40
 
@@ -201,7 +201,7 @@ current_branch=$(git branch --show-current)
 echo ""
 echo -e "${YELLOW}Next steps:${NC}"
 echo "1. Review the changes above"
-echo "2. Commit: ${GREEN}git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml src-tauri/Cargo.lock website/index.html website/encrypted-journal/index.html README.md data/linux/io.github.fjrevoredo.mini-diarium.metainfo.xml && git commit -m \"chore: bump version to ${NEW_VERSION}\"${NC}"
+echo "2. Commit: ${GREEN}git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml Cargo.lock website/index.html website/encrypted-journal/index.html README.md data/linux/io.github.fjrevoredo.mini-diarium.metainfo.xml && git commit -m \"chore: bump version to ${NEW_VERSION}\"${NC}"
 echo "3. Push branch: ${GREEN}git push origin ${current_branch}${NC}"
 echo "4. Create PR to merge ${current_branch} → master"
 echo "5. After PR is merged, checkout master and create tag:"

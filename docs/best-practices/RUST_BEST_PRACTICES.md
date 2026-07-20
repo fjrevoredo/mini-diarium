@@ -70,7 +70,7 @@ Encrypted data read failures are real errors, not empty fields.
 Diagnostic check:
 
 ```powershell
-rg -n "filter_map\\(|unwrap_or_default\\(|from_utf8" src-tauri/src/db/queries
+rg -n "filter_map\\(|unwrap_or_default\\(|from_utf8" crates/mini-diarium-core/src/db/queries
 ```
 
 Review every match in encrypted data paths.
@@ -85,15 +85,15 @@ Application code should not know ciphertext blob layout or encryption error mapp
 
 Current references:
 
-- `src-tauri/src/db/queries/mod.rs`
-- `src-tauri/src/db/queries/entries/` (split into `insert.rs`, `update.rs`, `read.rs`, `timeline.rs`)
-- `src-tauri/src/db/queries/tags.rs`
+- `crates/mini-diarium-core/src/db/queries/mod.rs`
+- `crates/mini-diarium-core/src/db/queries/entries/` (split into `insert.rs`, `update.rs`, `read.rs`, `timeline.rs`)
+- `crates/mini-diarium-core/src/db/queries/tags.rs`
 
 ### Keep Migrations Linear And Auditable
 
 Migration ordering has one owner.
 
-- Add new migrations under `src-tauri/src/db/schema/migrations/`.
+- Add new migrations under `crates/mini-diarium-core/src/db/schema/migrations/`.
 - Register each new pending migration in `apply_pending`.
 - Open paths should call `apply_pending` instead of hand-listing every migration. Legacy bootstrap migrations may be exceptions, but the exception should be obvious and tested.
 - Expensive or data-rewriting migrations need explicit rollback/back-up reasoning.
@@ -102,7 +102,7 @@ Migration ordering has one owner.
 Diagnostic check:
 
 ```powershell
-rg -n "migrate_v[0-9]_to_v[0-9]" src-tauri/src/db/schema src-tauri/src/db
+rg -n "migrate_v[0-9]_to_v[0-9]" crates/mini-diarium-core/src/db/schema src-tauri/src/db
 ```
 
 Unexpected direct calls outside migration plumbing need review.
@@ -202,16 +202,17 @@ Current example: legacy `require_all_auth` config migration into `db_settings`.
 Run these before accepting Rust backend refactors:
 
 ```powershell
-cargo test --manifest-path src-tauri/Cargo.toml
+cargo test --workspace
 cmd.exe /c bun run check
 ```
 
-For focused diagnosis:
+For focused diagnosis (`--workspace` filters across both crates by name; `auth`,
+`queries`, and `schema` all live in the `mini-diarium-core` crate):
 
 ```powershell
-cargo test --manifest-path src-tauri/Cargo.toml auth
-cargo test --manifest-path src-tauri/Cargo.toml queries
-cargo test --manifest-path src-tauri/Cargo.toml schema
+cargo test --workspace auth
+cargo test --workspace queries
+cargo test --workspace schema
 ```
 
 ## Review Questions

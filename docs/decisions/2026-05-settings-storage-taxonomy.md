@@ -2,7 +2,7 @@
 
 **Status:** Accepted
 **Date:** 2026-05-17
-**Related:** `src/state/preferences.ts`; `src-tauri/src/config.rs`; `src-tauri/src/db/schema/migrations/` (migrate_v5_to_v6); `src-tauri/src/db/queries/db_settings.rs` (get_db_setting, set_db_setting, verify_require_all_auth, write_require_all_auth_mac); `src-tauri/src/commands/auth/auth_core.rs` (migrate_require_all_auth_to_db).
+**Related:** `src/state/preferences.ts`; `crates/mini-diarium-core/src/config.rs`; `crates/mini-diarium-core/src/db/schema/migrations/` (migrate_v5_to_v6); `crates/mini-diarium-core/src/db/queries/db_settings.rs` (get_db_setting, set_db_setting, verify_require_all_auth, write_require_all_auth_mac); `src-tauri/src/commands/auth/auth_core.rs` (migrate_require_all_auth_to_db).
 
 ## Context
 
@@ -96,7 +96,7 @@ Q5: Is this a security enforcement setting or integrity-critical?
 
 ### `config.json` (`{app_data_dir}/config.json`)
 
-Managed by `src-tauri/src/config.rs`. The file contains an `AppConfig` struct:
+Managed by `crates/mini-diarium-core/src/config.rs`. The file contains an `AppConfig` struct:
 
 | Field | Type | Purpose |
 |---|---|---|
@@ -188,7 +188,7 @@ Schema version bumps for `db_settings` changes must go through the normal migrat
 - `src/lib/theme.ts` — `'theme-preference'` localStorage key management.
 - `src/lib/theme-overrides.ts` — `'theme-overrides'` localStorage key management.
 - `src/state/feature-flags.ts` — `'feature-flags'` localStorage key (migration-free runtime feature flags).
-- `src-tauri/src/config.rs` — `JournalConfig`, `AppConfig`, all config.json helpers.
-- `src-tauri/src/db/schema/migrations/` — `migrate_v5_to_v6` (adds `db_settings`); `src-tauri/src/db/schema/mod.rs` — `SCHEMA_VERSION`.
-- `src-tauri/src/db/queries/db_settings.rs` — `get_db_setting`, `set_db_setting`, `verify_require_all_auth` (fail-safe checks MAC presence/well-formedness; `_master_key` param currently unused — does not recompute MAC at read time), `write_require_all_auth_mac` (HKDF-SHA256, info=`"mini-diarium:require_all_auth:v1"`).
+- `crates/mini-diarium-core/src/config.rs` — `JournalConfig`, `AppConfig`, all config.json helpers.
+- `crates/mini-diarium-core/src/db/schema/migrations/` — `migrate_v5_to_v6` (adds `db_settings`); `crates/mini-diarium-core/src/db/schema/mod.rs` — `SCHEMA_VERSION`.
+- `crates/mini-diarium-core/src/db/queries/db_settings.rs` — `get_db_setting`, `set_db_setting`, `verify_require_all_auth` (fail-safe checks MAC presence/well-formedness; `_master_key` param currently unused — does not recompute MAC at read time), `write_require_all_auth_mac` (HKDF-SHA256, info=`"mini-diarium:require_all_auth:v1"`).
 - `src-tauri/src/commands/auth/auth_core.rs` — `migrate_require_all_auth_to_db` (reference migration pattern).
