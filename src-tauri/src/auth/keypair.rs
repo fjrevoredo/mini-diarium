@@ -26,6 +26,7 @@ impl KeypairMethod {
     /// Wraps `master_key` for this public key. Returns the `wrapped_key` blob.
     pub fn wrap_master_key(&self, master_key: &[u8]) -> Result<Vec<u8>, String> {
         // Generate ephemeral keypair
+        // rand::rng() = ThreadRng: OS-seeded ChaCha12 CSPRNG, satisfies x25519-dalek 3's infallible CryptoRng bound
         let mut rng = rand::rng();
         let eph_secret = EphemeralSecret::random_from_rng(&mut rng);
         let eph_public = PublicKey::from(&eph_secret);
@@ -96,6 +97,7 @@ impl PrivateKeyMethod {
 /// The private key should be saved to a file by the user; the public key
 /// is registered with the diary via `register_keypair`.
 pub fn generate_keypair() -> Result<crate::auth::KeypairFiles, String> {
+    // rand::rng() = ThreadRng: OS-seeded ChaCha12 CSPRNG, satisfies x25519-dalek 3's infallible CryptoRng bound
     let mut rng = rand::rng();
     let private = StaticSecret::random_from_rng(&mut rng);
     let public = PublicKey::from(&private);
