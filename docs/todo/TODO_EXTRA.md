@@ -247,6 +247,8 @@ Parent: [`TODO-0062: Add Statistics, Import, Export to the header overflow menu`
 
 Parent: [`TODO-0063: Add in-app day-navigation and go-to-date controls to the Header`](TODO.md)
 
+**Done (2026-07-20):** extracted the shared prev/next-day logic (including the future clamp) into `src/lib/day-navigation.ts` (`goToPreviousDay`/`goToNextDay`), which both the `MainLayout.tsx` menu listeners and the new Header buttons call — one source of truth. Added the always-on Header controls (`◀` `header-prev-day-button`, clickable date title `header-date-title` → `GoToDateOverlay`, `▶` `header-next-day-button`), the three `layout.header` i18n keys (`previousDay`/`nextDay`/`goToDate`), the three `data-testid` rows in `src/CLAUDE.md`, Vitest coverage in `Header.test.tsx` + `day-navigation.test.ts`, and E2E day-nav/go-to-date checks in `header-actions.spec.ts`. Controls ship un-gated (not behind `inAppMenu`, per the confirmed decision). Docs page `website/docs-src/02-navigating.md` updated. Verified no wrap/overflow at 800×660.
+
 **Existing logic to extract**: `src/components/layout/MainLayout.tsx` imports `navigatePreviousDay`/`navigateNextDay` (lines 42-43) and currently only calls them from native-menu listeners:
 ```
 listen('menu-navigate-previous-day', ...)  // line 111, calls navigatePreviousDay(selectedDate()) at line 113

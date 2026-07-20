@@ -39,15 +39,10 @@ import {
   setIsSearchOpen,
   isMoreMenuOpen,
 } from '../../state/ui';
-import {
-  navigatePreviousDay,
-  navigateNextDay,
-  navigateToToday,
-  navigatePreviousMonth,
-  navigateNextMonth,
-} from '../../lib/tauri';
+import { navigateToToday, navigatePreviousMonth, navigateNextMonth } from '../../lib/tauri';
 import { preferences } from '../../state/preferences';
 import { getTodayString } from '../../lib/dates';
+import { goToPreviousDay, goToNextDay } from '../../lib/day-navigation';
 import { onboardingMode, minimizeOnboarding } from '../../state/onboarding';
 
 const log = createLogger('MainLayout');
@@ -110,31 +105,10 @@ export default function MainLayout() {
     document.addEventListener('keydown', handleGlobalEsc);
     document.addEventListener('keydown', handleSearchShortcut);
     // Previous Day menu item
-    unlisteners.push(
-      await listen('menu-navigate-previous-day', async () => {
-        try {
-          const newDate = await navigatePreviousDay(selectedDate());
-          setSelectedDate(newDate);
-        } catch (error) {
-          log.error('Failed to navigate to previous day:', error);
-        }
-      }),
-    );
+    unlisteners.push(await listen('menu-navigate-previous-day', () => goToPreviousDay()));
 
     // Next Day menu item
-    unlisteners.push(
-      await listen('menu-navigate-next-day', async () => {
-        try {
-          const newDate = await navigateNextDay(selectedDate());
-          // Clamp to today if future entries are not allowed
-          const today = getTodayString();
-          const finalDate = !preferences().allowFutureEntries && newDate > today ? today : newDate;
-          setSelectedDate(finalDate);
-        } catch (error) {
-          log.error('Failed to navigate to next day:', error);
-        }
-      }),
-    );
+    unlisteners.push(await listen('menu-navigate-next-day', () => goToNextDay()));
 
     // Go to Today menu item
     unlisteners.push(

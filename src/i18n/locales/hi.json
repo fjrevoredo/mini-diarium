@@ -14,6 +14,9 @@
     "loading": "लोड हो रहा है...",
     "header": {
       "toggleMenu": "मेनू टॉगल करें",
+      "previousDay": "पिछला दिन",
+      "nextDay": "अगला दिन",
+      "goToDate": "तारीख पर जाएं",
       "about": "के बारे में",
       "lockJournal": "जर्नल लॉक करें",
       "notificationsNone": "सूचनाएं",

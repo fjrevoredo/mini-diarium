@@ -1,10 +1,12 @@
 /**
  * E2E test: Header in-app actions
  *
- * Covers the one newly in-app-reachable main path that exists today: the `⋮`
- * overflow menu → Preferences. Preferences was previously reachable only via the
- * native OS menu bar, which `tauri-driver` cannot drive; the `HeaderMoreMenu`
- * (TODO-0061) surfaces it inside the WebView where WebDriver can reach it.
+ * Covers the in-app-reachable Header paths:
+ *   - the `⋮` overflow menu → Preferences (TODO-0061/0062, flag-gated). Preferences
+ *     was previously reachable only via the native OS menu bar, which `tauri-driver`
+ *     cannot drive; `HeaderMoreMenu` surfaces it inside the WebView.
+ *   - the always-on day-navigation controls: ◀ / ▶ day buttons and the clickable
+ *     date title that opens the Go to Date overlay (TODO-0063).
  *
  * The whole `⋮` menu is gated behind the `inAppMenu` runtime feature flag
  * (TODO-0062) and defaults OFF, so this spec enables the flag (via
@@ -88,5 +90,54 @@ describe('Header in-app actions', () => {
     if (!closed) {
       console.warn('Preferences overlay did not close on Escape (non-fatal secondary check)');
     }
+  });
+
+  // The day-navigation controls (◀ / date title / ▶) are always-on — unlike the
+  // ⋮ overflow menu they are NOT gated behind the inAppMenu flag (TODO-0063).
+  // These run after the Preferences test in the same session, so the app is
+  // already unlocked on the main screen.
+  it('moves the day forward and back via the ◀ / ▶ Header buttons', async () => {
+    const dateTitle = $('[data-testid="header-date-title"]');
+    await dateTitle.waitForDisplayed({ timeout: 10000 });
+    const before = await dateTitle.getText();
+
+    // Previous day: the title text must change.
+    const prev = $('[data-testid="header-prev-day-button"]');
+    await prev.waitForClickable({ timeout: 5000 });
+    await prev.click();
+    await browser.waitUntil(async () => (await dateTitle.getText()) !== before, {
+      timeout: 5000,
+      timeoutMsg: 'Header date title did not change after clicking Previous day',
+    });
+    const afterPrev = await dateTitle.getText();
+    expect(afterPrev).not.toBe(before);
+
+    // Next day returns to the original date.
+    const next = $('[data-testid="header-next-day-button"]');
+    await next.waitForClickable({ timeout: 5000 });
+    await next.click();
+    await browser.waitUntil(async () => (await dateTitle.getText()) === before, {
+      timeout: 5000,
+      timeoutMsg: 'Header date title did not return to the original date after clicking Next day',
+    });
+    expect(await dateTitle.getText()).toBe(before);
+  });
+
+  it('opens the Go to Date overlay when the Header date title is clicked', async () => {
+    const dateTitle = $('[data-testid="header-date-title"]');
+    await dateTitle.waitForClickable({ timeout: 10000 });
+    await dateTitle.click();
+
+    // GoToDateOverlay has no data-testid; its date input (#date-input) is a
+    // stable, unique marker that the dialog rendered.
+    const dateInput = $('#date-input');
+    await dateInput.waitForDisplayed({ timeout: 5000 });
+    expect(await dateInput.isDisplayed()).toBe(true);
+
+    // Close it again so the session is left clean for any later tests.
+    await browser.keys(['Escape']);
+    await dateInput
+      .waitForDisplayed({ timeout: 5000, reverse: true })
+      .catch(() => console.warn('Go to Date overlay did not close on Escape (non-fatal)'));
   });
 });

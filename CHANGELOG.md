@@ -33,6 +33,9 @@ Template:
 
 ## [0.6.3] - Unreleased
 
+### Added
+- **In-app day navigation in the header** (TODO-0063): the header date now sits between a `◀` previous-day button and a `▶` next-day button, and the date itself is clickable to open the Go to Date picker. Previously these actions lived only in the native OS menu bar, which is off-screen on most platforms and unreachable by the E2E harness — they are now core, always-visible affordances (not gated behind the in-app-menu experimental flag). The `▶` button respects the "allow future entries" preference, stopping at today when future entries are disabled. The prev/next-day logic is now a single shared source of truth (`src/lib/day-navigation.ts`) used by both the header buttons and the existing menu shortcuts, so both behave identically.
+
 ### Internal
 - **Onboarding tour's Import step retargeted to the in-app `⋮` menu** (TODO-0062, completing the in-app-menu migration piece begun in 0.6.2): the first-run tour's "Import" step now spotlights the header overflow (`⋮`) trigger via a new `data-tour-target="import"` attribute on it, instead of pointing an arrow off-screen at the native OS menu bar. This is flag-aware and correct in both states: when the `inAppMenu` runtime feature flag is on the trigger exists and the tour highlights it; when the flag is off (the default) the whole overflow menu isn't rendered, so the element is absent and the tour transparently falls back to the existing native-menu-bar edge hint (where Import genuinely still lives). No onboarding change for users on a default build. This was the last remaining piece before the flag can graduate to on-by-default (TODO-0065, still approval-gated). No user-visible change in a default build.
 

@@ -164,6 +164,9 @@ These are used by E2E tests — **do not remove** from components.
 | `PasswordPrompt.tsx` | Unlock submit button | `unlock-journal-button` |
 | `Header.tsx` | Sidebar toggle (hamburger) | `toggle-sidebar-button` |
 | `Header.tsx` | Search button (opens `SearchOverlay`) | `search-button` |
+| `Header.tsx` | Previous-day button (◀) | `header-prev-day-button` |
+| `Header.tsx` | Date title button (opens `GoToDateOverlay`) | `header-date-title` |
+| `Header.tsx` | Next-day button (▶) | `header-next-day-button` |
 | `SearchOverlay.tsx` | Search dialog content | `search-overlay` |
 | `Header.tsx` | Lock button | `lock-journal-button` |
 | `Header.tsx` | Timeline toggle button | `timeline-toggle-button` |

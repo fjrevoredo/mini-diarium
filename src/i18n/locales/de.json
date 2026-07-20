@@ -14,6 +14,9 @@
     "loading": "Lädt...",
     "header": {
       "toggleMenu": "Menü umschalten",
+      "previousDay": "Vorheriger Tag",
+      "nextDay": "Nächster Tag",
+      "goToDate": "Gehe zu Datum",
       "about": "Über",
       "lockJournal": "Tagebuch sperren",
       "notificationsNone": "Benachrichtigungen",

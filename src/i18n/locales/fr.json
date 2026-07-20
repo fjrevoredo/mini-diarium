@@ -14,6 +14,9 @@
     "loading": "Chargement...",
     "header": {
       "toggleMenu": "Basculer le menu",
+      "previousDay": "Jour précédent",
+      "nextDay": "Jour suivant",
+      "goToDate": "Aller à la date",
       "about": "À propos",
       "lockJournal": "Verrouiller le journal",
       "notificationsNone": "Notifications",

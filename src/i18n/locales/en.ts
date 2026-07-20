@@ -34,6 +34,9 @@ const en = {
     loading: 'Loading...',
     header: {
       toggleMenu: 'Toggle menu',
+      previousDay: 'Previous day',
+      nextDay: 'Next day',
+      goToDate: 'Go to date',
       about: 'About',
       lockJournal: 'Lock journal',
       notificationsNone: 'Notifications',

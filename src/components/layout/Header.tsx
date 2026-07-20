@@ -1,5 +1,15 @@
 import { createSignal, Show } from 'solid-js';
-import { Menu, Lock, Info, Bell, List, PenLine, Search } from 'lucide-solid';
+import {
+  Menu,
+  Lock,
+  Info,
+  Bell,
+  List,
+  PenLine,
+  Search,
+  ChevronLeft,
+  ChevronRight,
+} from 'lucide-solid';
 import {
   selectedDate,
   setIsAboutOpen,
@@ -8,7 +18,9 @@ import {
   mainView,
   setMainView,
   setIsSearchOpen,
+  setIsGoToDateOpen,
 } from '../../state/ui';
+import { goToPreviousDay, goToNextDay } from '../../lib/day-navigation';
 import { lockJournal } from '../../state/auth';
 import { preferences } from '../../state/preferences';
 import { isFeatureEnabled } from '../../state/feature-flags';
@@ -70,7 +82,30 @@ export default function Header(props: HeaderProps) {
         >
           <Search size={20} />
         </button>
-        <h1 class="text-lg font-semibold text-primary">{formattedDate()}</h1>
+        <button
+          onClick={() => goToPreviousDay()}
+          data-testid="header-prev-day-button"
+          class="rounded p-2 hover:bg-hover text-tertiary transition-colors"
+          aria-label={t('layout.header.previousDay')}
+        >
+          <ChevronLeft size={20} />
+        </button>
+        <button
+          onClick={() => setIsGoToDateOpen(true)}
+          data-testid="header-date-title"
+          class="border-0 bg-transparent p-0 text-lg font-semibold text-primary cursor-pointer hover:text-interactive transition-colors"
+          aria-label={t('layout.header.goToDate')}
+        >
+          {formattedDate()}
+        </button>
+        <button
+          onClick={() => goToNextDay()}
+          data-testid="header-next-day-button"
+          class="rounded p-2 hover:bg-hover text-tertiary transition-colors"
+          aria-label={t('layout.header.nextDay')}
+        >
+          <ChevronRight size={20} />
+        </button>
       </div>
 
       {/* Right: Timeline toggle + About + Notifications + Lock */}

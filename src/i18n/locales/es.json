@@ -14,6 +14,9 @@
     "loading": "Cargando...",
     "header": {
       "toggleMenu": "Alternar menú",
+      "previousDay": "Día anterior",
+      "nextDay": "Día siguiente",
+      "goToDate": "Ir a fecha",
       "about": "Acerca de",
       "lockJournal": "Bloquear diario",
       "notificationsNone": "Notificaciones",
