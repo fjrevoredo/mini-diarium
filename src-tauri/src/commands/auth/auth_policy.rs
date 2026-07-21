@@ -18,7 +18,7 @@ pub fn set_require_all_auth(enabled: bool, state: State<DiaryState>) -> Result<(
     let db = db_state.as_ref().ok_or("Journal must be unlocked")?;
 
     if enabled {
-        let methods = crate::db::queries::list_auth_slots(db)?;
+        let methods = crate::db::list_auth_slots(db)?;
         let non_auto = methods.iter().filter(|m| m.slot_type != "auto").count();
         if non_auto < 2 {
             return Err(
@@ -28,11 +28,11 @@ pub fn set_require_all_auth(enabled: bool, state: State<DiaryState>) -> Result<(
     }
 
     if enabled {
-        crate::db::queries::set_db_setting(db.conn(), "require_all_auth", "true")?;
-        crate::db::queries::write_require_all_auth_mac(db.conn(), db.key().as_bytes())?;
+        crate::db::set_db_setting(db, "require_all_auth", "true")?;
+        crate::db::write_require_all_auth_mac(db)?;
     } else {
-        crate::db::queries::delete_db_setting(db.conn(), "require_all_auth")?;
-        crate::db::queries::delete_db_setting(db.conn(), "require_all_auth_mac")?;
+        crate::db::delete_db_setting(db, "require_all_auth")?;
+        crate::db::delete_db_setting(db, "require_all_auth_mac")?;
     }
 
     // Best-effort cleanup of legacy config.json value
@@ -49,7 +49,7 @@ pub fn set_require_all_auth(enabled: bool, state: State<DiaryState>) -> Result<(
 #[cfg(test)]
 mod tests {
     use super::super::test_helpers::*;
-    use crate::db::schema::create_database;
+    use crate::db::create_database;
 
     #[test]
     fn test_set_require_all_auth_true_writes_valid_mac() {
@@ -58,24 +58,7 @@ mod tests {
         let db = create_database(&db_path, "password".to_string()).unwrap();
 
         // Add a second non-auto auth slot (required for enabling)
-        let method = crate::auth::password::PasswordMethod::new("second_password".to_string());
-        let master_key_bytes = {
-            let (_, wrapped_key) = crate::db::queries::get_password_slot(&db).unwrap().unwrap();
-            crate::auth::password::PasswordMethod::new("password".to_string())
-                .unwrap_master_key(&wrapped_key)
-                .unwrap()
-        };
-        let wrapped = method.wrap_master_key(&master_key_bytes).unwrap();
-        let now = chrono::Utc::now().to_rfc3339();
-        crate::db::queries::insert_auth_slot(
-            &db,
-            "password",
-            "Second Password",
-            None,
-            &wrapped,
-            &now,
-        )
-        .unwrap();
+        crate::auth::add_password_slot(&db, "Second Password", "second_password").unwrap();
 
         // Enable require_all_auth using the internal db query functions
         {
@@ -85,29 +68,24 @@ mod tests {
         {
             let db_guard = state.db.lock().unwrap();
             let db_ref = db_guard.as_ref().unwrap();
-            crate::db::queries::set_db_setting(db_ref.conn(), "require_all_auth", "true").unwrap();
-            crate::db::queries::write_require_all_auth_mac(db_ref.conn(), db_ref.key().as_bytes())
-                .unwrap();
+            crate::db::set_db_setting(db_ref, "require_all_auth", "true").unwrap();
+            crate::db::write_require_all_auth_mac(db_ref).unwrap();
         }
 
         // Verify "true" flag is set
         let db_guard = state.db.lock().unwrap();
         let db_ref = db_guard.as_ref().unwrap();
         assert_eq!(
-            crate::db::queries::get_db_setting(db_ref.conn(), "require_all_auth").unwrap(),
+            crate::db::get_db_setting(db_ref, "require_all_auth").unwrap(),
             "true"
         );
 
         // Verify MAC is present (64-char hex string)
-        let mac_hex =
-            crate::db::queries::get_db_setting(db_ref.conn(), "require_all_auth_mac").unwrap();
+        let mac_hex = crate::db::get_db_setting(db_ref, "require_all_auth_mac").unwrap();
         assert_eq!(mac_hex.len(), 64);
 
         // Verify the MAC is valid by checking verify_require_all_auth returns true
-        assert!(crate::db::queries::verify_require_all_auth(
-            db_ref.conn(),
-            db_ref.key().as_bytes()
-        ));
+        assert!(crate::db::verify_require_all_auth(db_ref));
 
         drop(db_guard);
     }
@@ -119,24 +97,7 @@ mod tests {
         let db = create_database(&db_path, "password".to_string()).unwrap();
 
         // Add a second non-auto auth slot
-        let method = crate::auth::password::PasswordMethod::new("second_password".to_string());
-        let master_key_bytes = {
-            let (_, wrapped_key) = crate::db::queries::get_password_slot(&db).unwrap().unwrap();
-            crate::auth::password::PasswordMethod::new("password".to_string())
-                .unwrap_master_key(&wrapped_key)
-                .unwrap()
-        };
-        let wrapped = method.wrap_master_key(&master_key_bytes).unwrap();
-        let now = chrono::Utc::now().to_rfc3339();
-        crate::db::queries::insert_auth_slot(
-            &db,
-            "password",
-            "Second Password",
-            None,
-            &wrapped,
-            &now,
-        )
-        .unwrap();
+        crate::auth::add_password_slot(&db, "Second Password", "second_password").unwrap();
 
         // Enable first via internal db query functions
         {
@@ -146,37 +107,32 @@ mod tests {
         {
             let db_guard = state.db.lock().unwrap();
             let db_ref = db_guard.as_ref().unwrap();
-            crate::db::queries::set_db_setting(db_ref.conn(), "require_all_auth", "true").unwrap();
-            crate::db::queries::write_require_all_auth_mac(db_ref.conn(), db_ref.key().as_bytes())
-                .unwrap();
+            crate::db::set_db_setting(db_ref, "require_all_auth", "true").unwrap();
+            crate::db::write_require_all_auth_mac(db_ref).unwrap();
         }
 
         let db_guard = state.db.lock().unwrap();
         let db_ref = db_guard.as_ref().unwrap();
         assert_eq!(
-            crate::db::queries::get_db_setting(db_ref.conn(), "require_all_auth").unwrap(),
+            crate::db::get_db_setting(db_ref, "require_all_auth").unwrap(),
             "true"
         );
-        assert!(
-            crate::db::queries::get_db_setting(db_ref.conn(), "require_all_auth_mac").is_some()
-        );
+        assert!(crate::db::get_db_setting(db_ref, "require_all_auth_mac").is_some());
         drop(db_guard);
 
         // Disable using internal db query functions
         {
             let db_guard = state.db.lock().unwrap();
             let db_ref = db_guard.as_ref().unwrap();
-            crate::db::queries::delete_db_setting(db_ref.conn(), "require_all_auth").unwrap();
-            crate::db::queries::delete_db_setting(db_ref.conn(), "require_all_auth_mac").unwrap();
+            crate::db::delete_db_setting(db_ref, "require_all_auth").unwrap();
+            crate::db::delete_db_setting(db_ref, "require_all_auth_mac").unwrap();
         }
 
         // Both rows must be deleted
         let db_guard = state.db.lock().unwrap();
         let db_ref = db_guard.as_ref().unwrap();
-        assert!(crate::db::queries::get_db_setting(db_ref.conn(), "require_all_auth").is_none());
-        assert!(
-            crate::db::queries::get_db_setting(db_ref.conn(), "require_all_auth_mac").is_none()
-        );
+        assert!(crate::db::get_db_setting(db_ref, "require_all_auth").is_none());
+        assert!(crate::db::get_db_setting(db_ref, "require_all_auth_mac").is_none());
         drop(db_guard);
     }
 }

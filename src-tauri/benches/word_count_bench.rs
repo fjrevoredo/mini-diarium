@@ -1,5 +1,5 @@
 use criterion::{criterion_group, criterion_main, Criterion};
-use mini_diarium_lib::db::queries::count_words;
+use mini_diarium_lib::db::count_words;
 
 /// Representative TipTap HTML (~200 words): mixed <h2>, <p>, <ul>, <li>, <strong>, <em>
 const REALISTIC_HTML: &str = concat!(

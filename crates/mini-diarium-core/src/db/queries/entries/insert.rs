@@ -3,12 +3,12 @@ use super::{count_words, encrypt_metadata, get_entry_by_id, update_entry, DiaryE
 use crate::db::schema::DatabaseConnection;
 use rusqlite::params;
 
-/// Inserts a new entry into the database
+/// Inserts a new entry into the database and returns its AUTOINCREMENT row id.
 ///
 /// # Arguments
 /// * `db` - Database connection with encryption key
 /// * `entry` - The diary entry to insert (id field is ignored; AUTOINCREMENT assigns it)
-pub fn insert_entry(db: &DatabaseConnection, entry: &DiaryEntry) -> Result<(), String> {
+pub fn insert_entry(db: &DatabaseConnection, entry: &DiaryEntry) -> Result<i64, String> {
     let title_encrypted =
         crate::db::queries::encrypt_for_storage(db.key(), entry.title.as_bytes(), "title")?;
     let text_encrypted =
@@ -38,7 +38,7 @@ pub fn insert_entry(db: &DatabaseConnection, entry: &DiaryEntry) -> Result<(), S
 
     // Search index hook: call search module's index_entry() here when implemented.
 
-    Ok(())
+    Ok(db.conn().last_insert_rowid())
 }
 
 /// Inserts a new entry and normalizes any embedded or referenced images atomically.
@@ -54,8 +54,7 @@ pub fn insert_entry_with_images(
             .execute("BEGIN IMMEDIATE", [])
             .map_err(|e| format!("BEGIN failed: {}", e))?;
 
-        insert_entry(db, entry)?;
-        let entry_id = db.conn().last_insert_rowid();
+        let entry_id = insert_entry(db, entry)?;
 
         let (rewritten, image_ids) =
             crate::db::queries::images::extract_and_replace_image_refs(&entry.text, db)?;

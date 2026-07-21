@@ -1,5 +1,5 @@
 use crate::commands::auth::DiaryState;
-use crate::db::schema::{DatabaseConnection, SCHEMA_VERSION};
+use crate::db::{self, DatabaseConnection, SCHEMA_VERSION};
 use chrono::Utc;
 use log::info;
 use serde::Serialize;
@@ -91,50 +91,27 @@ fn build_debug_dump(
     preferences: serde_json::Value,
 ) -> Result<DebugDumpContent, String> {
     let generated_at = Utc::now().to_rfc3339();
-    let conn = db.conn();
 
-    let db_user_version: i32 = conn
-        .query_row("PRAGMA user_version", [], |r| r.get(0))
-        .unwrap_or(-1);
+    let (db_user_version, sqlite_version) = db::read_engine_versions(db);
 
-    let sqlite_version: String = conn
-        .query_row("SELECT sqlite_version()", [], |r| r.get(0))
-        .unwrap_or_else(|_| "unknown".to_string());
+    // Derive entry stats from the plaintext (date, word_count) columns — no decryption.
+    // Rows are ordered by date ASC, so first/last give the date range and consecutive
+    // dedup gives the distinct-day count.
+    let date_word_counts = db::get_entry_date_word_counts(db)?;
+    let total_entries = date_word_counts.len() as i64;
+    let total_words: i64 = date_word_counts.iter().map(|(_, w)| *w as i64).sum();
+    let mut distinct_dates: Vec<&str> = date_word_counts.iter().map(|(d, _)| d.as_str()).collect();
+    distinct_dates.dedup();
+    let total_distinct_days = distinct_dates.len() as i64;
+    let first_entry_date = date_word_counts.first().map(|(d, _)| d.clone());
+    let last_entry_date = date_word_counts.last().map(|(d, _)| d.clone());
 
-    let total_entries: i64 = conn
-        .query_row("SELECT COUNT(*) FROM entries", [], |r| r.get(0))
-        .unwrap_or(0);
-    let total_distinct_days: i64 = conn
-        .query_row("SELECT COUNT(DISTINCT date) FROM entries", [], |r| r.get(0))
-        .unwrap_or(0);
-    let total_words: i64 = conn
-        .query_row(
-            "SELECT COALESCE(SUM(word_count), 0) FROM entries",
-            [],
-            |r| r.get(0),
-        )
-        .unwrap_or(0);
-    let first_entry_date: Option<String> = conn
-        .query_row("SELECT MIN(date) FROM entries", [], |r| r.get(0))
-        .ok()
-        .flatten();
-    let last_entry_date: Option<String> = conn
-        .query_row("SELECT MAX(date) FROM entries", [], |r| r.get(0))
-        .ok()
-        .flatten();
-
-    let mut stmt = conn
-        .prepare("SELECT \"type\" FROM auth_slots ORDER BY id ASC")
-        .map_err(|e| format!("Failed to prepare auth_slots query: {}", e))?;
-    let auth_methods: Vec<AuthMethodSummary> = stmt
-        .query_map([], |row| {
-            Ok(AuthMethodSummary {
-                slot_type: row.get(0)?,
-            })
+    let auth_methods: Vec<AuthMethodSummary> = db::list_auth_slots(db)?
+        .into_iter()
+        .map(|m| AuthMethodSummary {
+            slot_type: m.slot_type,
         })
-        .map_err(|e| format!("Failed to query auth slots: {}", e))?
-        .collect::<Result<Vec<_>, _>>()
-        .map_err(|e| format!("Failed to collect auth slots: {}", e))?;
+        .collect();
 
     let journals = crate::config::load_journals(app_data_dir);
     let journal_count = journals.len();
@@ -196,8 +173,7 @@ fn build_debug_dump(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::db::queries::{insert_entry, DiaryEntry};
-    use crate::db::schema::create_database;
+    use crate::db::{create_database, insert_entry, DiaryEntry};
     use std::fs;
 
     fn temp_dir(name: &str) -> std::path::PathBuf {

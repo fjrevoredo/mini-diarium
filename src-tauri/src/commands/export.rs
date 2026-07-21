@@ -1,8 +1,6 @@
 use crate::commands::auth::{with_unlocked_db, DiaryState};
-use crate::db::queries::{self, DiaryEntry};
-use crate::db::schema::DatabaseConnection;
-pub use crate::export::html::PrintLabels;
-use crate::export::{html, json, markdown};
+use crate::db::{self, DatabaseConnection, DiaryEntry};
+pub use crate::export::PrintLabels;
 use log::{debug, error, info};
 use tauri::State;
 
@@ -25,9 +23,9 @@ pub(crate) fn fetch_entries(
     date_to: Option<&str>,
 ) -> Result<Vec<DiaryEntry>, String> {
     if date_from.is_none() && date_to.is_none() {
-        queries::get_all_entries(db)
+        db::get_all_entries(db)
     } else {
-        queries::get_entries_in_range(db, date_from, date_to)
+        db::get_entries_in_range(db, date_from, date_to)
     }
 }
 
@@ -42,11 +40,11 @@ pub fn export_json(
     info!("Starting JSON export to file: {}", file_path);
     with_unlocked_db(&state, |db| {
         let entries = fetch_entries(db, date_from.as_deref(), date_to.as_deref())?;
-        let entries = crate::db::queries::images::resolve_image_refs_in_entries(db, entries)?;
-        let tags = crate::db::queries::tags::get_tags_names_map(db)?;
+        let entries = db::resolve_image_refs_in_entries(db, entries)?;
+        let tags = db::get_tags_names_map(db)?;
         let entries_exported = entries.len();
         debug!("Serializing {} entries to JSON...", entries_exported);
-        let json_string = json::export_entries_to_json(entries, &tags)?;
+        let json_string = crate::export::export_entries_to_json(entries, &tags)?;
         std::fs::write(&file_path, &json_string).map_err(|e| {
             let err = format!("Failed to write file: {}", e);
             error!("{}", err);
@@ -76,11 +74,12 @@ pub fn export_markdown(
     info!("Starting Markdown export to file: {}", file_path);
     with_unlocked_db(&state, |db| {
         let entries = fetch_entries(db, date_from.as_deref(), date_to.as_deref())?;
-        let entries = crate::db::queries::images::resolve_image_refs_in_entries(db, entries)?;
-        let tags = crate::db::queries::tags::get_tags_names_map(db)?;
+        let entries = db::resolve_image_refs_in_entries(db, entries)?;
+        let tags = db::get_tags_names_map(db)?;
         let entries_exported = entries.len();
         debug!("Converting {} entries to Markdown...", entries_exported);
-        let (md_string, assets) = markdown::export_entries_to_markdown_with_assets(entries, &tags);
+        let (md_string, assets) =
+            crate::export::export_entries_to_markdown_with_assets(entries, &tags);
         std::fs::write(&file_path, &md_string).map_err(|e| {
             let err = format!("Failed to write file: {}", e);
             error!("{}", err);
@@ -128,12 +127,13 @@ pub fn print_entries(
     info!("Starting print export");
     with_unlocked_db(&state, |db| {
         let entries = fetch_entries(db, date_from.as_deref(), date_to.as_deref())?;
-        let entries = crate::db::queries::images::resolve_image_refs_in_entries(db, entries)?;
-        let tags = crate::db::queries::tags::get_tags_names_map(db)?;
+        let entries = db::resolve_image_refs_in_entries(db, entries)?;
+        let tags = db::get_tags_names_map(db)?;
         let entries_exported = entries.len();
         let generated_at = chrono::Utc::now().format("%Y-%m-%d").to_string();
         debug!("Generating print HTML for {} entries", entries_exported);
-        let html_output = html::generate_print_html(entries, &tags, &generated_at, &labels);
+        let html_output =
+            crate::export::generate_print_html(entries, &tags, &generated_at, &labels);
         info!("Print HTML generated: {} entries", entries_exported);
         Ok(PrintResult {
             entries_exported,
@@ -144,8 +144,7 @@ pub fn print_entries(
 
 #[cfg(test)]
 mod tests {
-    use crate::db::queries::DiaryEntry;
-    use crate::db::schema::create_database;
+    use crate::db::{self, create_database, DiaryEntry};
     use std::fs;
 
     fn cleanup_files(paths: &[&str]) {
@@ -161,7 +160,7 @@ mod tests {
             date: date.to_string(),
             title: title.to_string(),
             text: text.to_string(),
-            word_count: crate::db::queries::count_words(text),
+            word_count: db::count_words(text),
             date_created: now.clone(),
             date_updated: now,
             metadata: None,
@@ -173,10 +172,8 @@ mod tests {
     fn test_fetch_entries_returns_all_when_no_dates() {
         let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
         let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
-        crate::db::queries::insert_entry(&db, &create_test_entry("2024-01-01", "A", "text a"))
-            .unwrap();
-        crate::db::queries::insert_entry(&db, &create_test_entry("2024-06-15", "B", "text b"))
-            .unwrap();
+        db::insert_entry(&db, &create_test_entry("2024-01-01", "A", "text a")).unwrap();
+        db::insert_entry(&db, &create_test_entry("2024-06-15", "B", "text b")).unwrap();
 
         let result = super::fetch_entries(&db, None, None).unwrap();
         assert_eq!(result.len(), 2);
@@ -186,12 +183,9 @@ mod tests {
     fn test_fetch_entries_filters_by_date_range() {
         let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
         let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
-        crate::db::queries::insert_entry(&db, &create_test_entry("2024-01-01", "Jan", "text"))
-            .unwrap();
-        crate::db::queries::insert_entry(&db, &create_test_entry("2024-06-15", "Jun", "text"))
-            .unwrap();
-        crate::db::queries::insert_entry(&db, &create_test_entry("2024-12-31", "Dec", "text"))
-            .unwrap();
+        db::insert_entry(&db, &create_test_entry("2024-01-01", "Jan", "text")).unwrap();
+        db::insert_entry(&db, &create_test_entry("2024-06-15", "Jun", "text")).unwrap();
+        db::insert_entry(&db, &create_test_entry("2024-12-31", "Dec", "text")).unwrap();
 
         let result = super::fetch_entries(&db, Some("2024-01-01"), Some("2024-06-30")).unwrap();
         assert_eq!(result.len(), 2);
@@ -206,22 +200,22 @@ mod tests {
         let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
 
         // Insert entries
-        crate::db::queries::insert_entry(
+        db::insert_entry(
             &db,
             &create_test_entry("2024-01-01", "Entry 1", "Content one"),
         )
         .unwrap();
-        crate::db::queries::insert_entry(
+        db::insert_entry(
             &db,
             &create_test_entry("2024-01-02", "Entry 2", "Content two"),
         )
         .unwrap();
 
         // Export using the pure function (can't use Tauri State in unit tests)
-        let entries = crate::db::queries::get_all_entries(&db).unwrap();
+        let entries = db::get_all_entries(&db).unwrap();
 
         let json_string =
-            crate::export::json::export_entries_to_json(entries, &std::collections::HashMap::new())
+            crate::export::export_entries_to_json(entries, &std::collections::HashMap::new())
                 .unwrap();
         fs::write(export_path, &json_string).unwrap();
 
@@ -251,11 +245,11 @@ mod tests {
         let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
 
         // Export empty diary
-        let entries = crate::db::queries::get_all_entries(&db).unwrap();
+        let entries = db::get_all_entries(&db).unwrap();
         assert_eq!(entries.len(), 0);
 
         let json_string =
-            crate::export::json::export_entries_to_json(entries, &std::collections::HashMap::new())
+            crate::export::export_entries_to_json(entries, &std::collections::HashMap::new())
                 .unwrap();
         fs::write(export_path, &json_string).unwrap();
 

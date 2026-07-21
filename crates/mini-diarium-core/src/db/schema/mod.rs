@@ -17,13 +17,21 @@ pub struct DatabaseConnection {
 }
 
 impl DatabaseConnection {
-    /// Returns a reference to the underlying SQLite connection
-    pub fn conn(&self) -> &Connection {
+    /// Returns a reference to the underlying SQLite connection.
+    ///
+    /// Intentionally **`pub(crate)`** — the raw handle never escapes the crate (open-core
+    /// M2 / TODO-0077). External consumers reach the database only through the curated `db`
+    /// façade (see `crates/mini-diarium-core/API.md`).
+    pub(crate) fn conn(&self) -> &Connection {
         &self.conn
     }
 
-    /// Returns a reference to the encryption key (master key)
-    pub fn key(&self) -> &cipher::Key {
+    /// Returns a reference to the encryption key (master key).
+    ///
+    /// Intentionally **`pub(crate)`** — key material never escapes the crate. Auth-slot
+    /// operations that need to wrap the master key are exposed as composed functions
+    /// (`auth::add_password_slot` / `auth::add_keypair_slot`) instead.
+    pub(crate) fn key(&self) -> &cipher::Key {
         &self.encryption_key
     }
 

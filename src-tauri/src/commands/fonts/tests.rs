@@ -1,7 +1,5 @@
 use super::*;
-use crate::crypto::cipher;
-use crate::db::schema::DatabaseConnection;
-use rusqlite::Connection;
+use crate::db::DatabaseConnection;
 
 // --- family_from_stem ---
 
@@ -147,21 +145,9 @@ fn list_fonts_in_dir_sorts_and_deduplicates() {
 // --- DB helpers for command unit tests ---
 
 fn make_test_db() -> DatabaseConnection {
-    let conn = Connection::open_in_memory().unwrap();
-    conn.execute_batch(
-        "CREATE TABLE schema_version (version INTEGER PRIMARY KEY);
-         INSERT INTO schema_version VALUES (8);
-         CREATE TABLE custom_fonts (
-             id         INTEGER PRIMARY KEY AUTOINCREMENT,
-             family     TEXT NOT NULL,
-             weight     TEXT NOT NULL CHECK(weight IN ('Regular','Bold')),
-             data       BLOB NOT NULL,
-             created_at TEXT NOT NULL,
-             UNIQUE(family, weight)
-         );",
-    )
-    .unwrap();
-    DatabaseConnection::from_parts(conn, cipher::Key::from_slice(&[0u8; 32]).unwrap())
+    // A real in-memory v13 database (with the actual `custom_fonts` table) so the
+    // font helpers run against the production schema, not a hand-rolled one.
+    crate::db::create_database(":memory:", "test".to_string()).unwrap()
 }
 
 fn ttf_bytes() -> Vec<u8> {
@@ -226,14 +212,12 @@ fn test_list_custom_fonts_impl_aggregates_weights() {
 fn test_import_custom_font_impl_inserts_regular() {
     let db = make_test_db();
     import_custom_font_impl("MyFont", "Regular", &ttf_bytes(), NOW, &db).unwrap();
-    let count: i64 = db
-        .conn()
-        .query_row(
-            "SELECT COUNT(*) FROM custom_fonts WHERE family='MyFont' AND weight='Regular'",
-            [],
-            |r| r.get(0),
-        )
-        .unwrap();
+    assert!(crate::db::custom_font_has_weight(&db, "MyFont", "Regular").unwrap());
+    let count = crate::db::list_custom_font_rows(&db)
+        .unwrap()
+        .iter()
+        .filter(|(f, w)| f == "MyFont" && w == "Regular")
+        .count();
     assert_eq!(count, 1);
 }
 
@@ -249,14 +233,11 @@ fn test_import_custom_font_impl_allows_bold_after_regular() {
     let db = make_test_db();
     import_custom_font_impl("MyFont", "Regular", &ttf_bytes(), NOW, &db).unwrap();
     import_custom_font_impl("MyFont", "Bold", &ttf_bytes(), NOW, &db).unwrap();
-    let count: i64 = db
-        .conn()
-        .query_row(
-            "SELECT COUNT(*) FROM custom_fonts WHERE family='MyFont'",
-            [],
-            |r| r.get(0),
-        )
-        .unwrap();
+    let count = crate::db::list_custom_font_rows(&db)
+        .unwrap()
+        .iter()
+        .filter(|(f, _)| f == "MyFont")
+        .count();
     assert_eq!(count, 2);
 }
 
@@ -267,13 +248,8 @@ fn test_import_custom_font_impl_replace_updates_existing() {
     let updated = vec![0x00, 0x01, 0x00, 0x00, 0xCC, 0xDD, 0x00, 0x00];
     import_custom_font_impl("MyFont", "Regular", &orig, NOW, &db).unwrap();
     import_custom_font_impl("MyFont", "Regular", &updated, NOW, &db).unwrap();
-    let stored: Vec<u8> = db
-        .conn()
-        .query_row(
-            "SELECT data FROM custom_fonts WHERE family='MyFont' AND weight='Regular'",
-            [],
-            |r| r.get(0),
-        )
+    let stored = crate::db::get_custom_font_weight_data(&db, "MyFont", "Regular")
+        .unwrap()
         .unwrap();
     assert_eq!(
         stored, updated,
@@ -289,14 +265,11 @@ fn test_delete_custom_font_family_impl_removes_all_weights() {
     import_custom_font_impl("DelFont", "Regular", &ttf_bytes(), NOW, &db).unwrap();
     import_custom_font_impl("DelFont", "Bold", &ttf_bytes(), NOW, &db).unwrap();
     delete_custom_font_family_impl("DelFont", &db).unwrap();
-    let count: i64 = db
-        .conn()
-        .query_row(
-            "SELECT COUNT(*) FROM custom_fonts WHERE family='DelFont'",
-            [],
-            |r| r.get(0),
-        )
-        .unwrap();
+    let count = crate::db::list_custom_font_rows(&db)
+        .unwrap()
+        .iter()
+        .filter(|(f, _)| f == "DelFont")
+        .count();
     assert_eq!(count, 0, "all weights must be deleted");
 }
 
@@ -306,14 +279,11 @@ fn test_delete_custom_font_family_impl_only_removes_target() {
     import_custom_font_impl("DelFont", "Regular", &ttf_bytes(), NOW, &db).unwrap();
     import_custom_font_impl("KeepFont", "Regular", &ttf_bytes(), NOW, &db).unwrap();
     delete_custom_font_family_impl("DelFont", &db).unwrap();
-    let keep_count: i64 = db
-        .conn()
-        .query_row(
-            "SELECT COUNT(*) FROM custom_fonts WHERE family='KeepFont'",
-            [],
-            |r| r.get(0),
-        )
-        .unwrap();
+    let keep_count = crate::db::list_custom_font_rows(&db)
+        .unwrap()
+        .iter()
+        .filter(|(f, _)| f == "KeepFont")
+        .count();
     assert_eq!(keep_count, 1, "other families must not be affected");
 }
 

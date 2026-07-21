@@ -253,12 +253,12 @@ Each milestone carries a **Checklist** of `- [ ]` items to tick off as the work 
 - **Verification:** app still compiles and passes the full suite against the façade only; a grep confirms `commands/*` no longer reference `db::queries::*` internals directly.
 - **Exit criteria:** the Tauri app and a hypothetical second consumer would call the same surface; internals are sealed; `API.md` present.
 - **Checklist:**
-  - [ ] Public façade covers open/unlock, entry CRUD, search, import/export, auth-slot management
-  - [ ] `commands/*` refactored to call only the façade (no direct `db::queries::*` access)
-  - [ ] Internals sealed (`pub(crate)` / private everywhere outside the façade)
-  - [ ] `crates/mini-diarium-core/API.md` written as the stability contract
-  - [ ] Full suite passes against the façade only
-  - [ ] `cargo-public-api` regression guard noted as a deferred follow-up (not built now)
+  - [x] Public façade covers open/unlock, entry CRUD, search, import/export, auth-slot management
+  - [x] `commands/*` refactored to call only the façade (no direct `db::queries::*` access)
+  - [x] Internals sealed (`pub(crate)` / private everywhere outside the façade)
+  - [x] `crates/mini-diarium-core/API.md` written as the stability contract
+  - [x] Full suite passes against the façade only
+  - [x] `cargo-public-api` regression guard noted as a deferred follow-up (not built now)
 
 ### M3 — Kernel / handle separation (Section 8 gradient)
 

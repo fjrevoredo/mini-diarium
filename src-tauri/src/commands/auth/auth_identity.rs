@@ -10,8 +10,8 @@ use super::{with_unlocked_db, DiaryState};
 pub fn verify_password(password: String, state: State<DiaryState>) -> Result<(), String> {
     with_unlocked_db(&state, |db| {
         let (_, wrapped_key) =
-            crate::db::queries::get_password_slot(db)?.ok_or("No password auth method found")?;
-        let method = crate::auth::password::PasswordMethod::new(password);
+            crate::db::get_password_slot(db)?.ok_or("No password auth method found")?;
+        let method = crate::auth::PasswordMethod::new(password);
         // The returned SecretBytes is dropped immediately, zeroing memory automatically.
         let _master_key_bytes = method
             .unwrap_master_key(&wrapped_key)
@@ -24,7 +24,7 @@ pub fn verify_password(password: String, state: State<DiaryState>) -> Result<(),
 pub(crate) fn list_auth_methods_inner(
     state: &DiaryState,
 ) -> Result<Vec<crate::auth::AuthMethodInfo>, String> {
-    with_unlocked_db(state, crate::db::queries::list_auth_slots)
+    with_unlocked_db(state, crate::db::list_auth_slots)
 }
 
 /// Lists all registered authentication methods (without sensitive key material).
@@ -76,7 +76,17 @@ pub fn peek_auth_slot_types(state: State<DiaryState>) -> Result<JournalPeek, Str
         .collect::<Result<Vec<_>, _>>()
         .map_err(|e| format!("Failed to collect: {}", e))?;
 
-    let require_all_auth = crate::db::queries::get_db_setting(&conn, "require_all_auth")
+    // This peek opens the container with a plain (non-decrypting) connection — there is no
+    // `DatabaseConnection`/key here — so read the `require_all_auth` flag with direct SQL.
+    // `.ok()` maps a missing `db_settings` table (pre-v6 journals) to "not set", matching
+    // `db::get_db_setting`'s behavior on the unlocked path.
+    let require_all_auth = conn
+        .query_row(
+            "SELECT value FROM db_settings WHERE key = 'require_all_auth'",
+            [],
+            |row| row.get::<_, String>(0),
+        )
+        .ok()
         .map(|v| v == "true")
         .unwrap_or(false);
 
@@ -104,7 +114,7 @@ pub struct AuthSlotPeek {
 #[cfg(test)]
 mod tests {
     use super::super::test_helpers::*;
-    use crate::db::schema::create_database;
+    use crate::db::create_database;
     #[test]
     fn test_list_auth_methods_locked_returns_error() {
         let (_fixture, state, _, _) = make_state("list_methods_locked");
@@ -114,13 +124,13 @@ mod tests {
 
     #[test]
     fn test_list_auth_methods() {
-        use crate::auth::keypair::generate_keypair;
+        use crate::auth::generate_keypair;
 
         let (_fixture, _, db_path, _) = make_state("list_methods");
 
         let db = create_database(&db_path, "password".to_string()).unwrap();
 
-        let slots = crate::db::queries::list_auth_slots(&db).unwrap();
+        let slots = crate::db::list_auth_slots(&db).unwrap();
         assert_eq!(slots.len(), 1);
         assert_eq!(slots[0].slot_type, "password");
 
@@ -129,7 +139,7 @@ mod tests {
         let pub_key_vec = hex::decode(&kp.public_key_hex).unwrap();
         let fake_wrapped = [0u8; 92];
         let now = chrono::Utc::now().to_rfc3339();
-        crate::db::queries::insert_auth_slot(
+        crate::db::insert_auth_slot(
             &db,
             "keypair",
             "My Key",
@@ -139,7 +149,7 @@ mod tests {
         )
         .unwrap();
 
-        let slots = crate::db::queries::list_auth_slots(&db).unwrap();
+        let slots = crate::db::list_auth_slots(&db).unwrap();
         assert_eq!(slots.len(), 2);
         assert!(slots.iter().any(|s| s.slot_type == "keypair"));
         // Wrapped key is NOT in the returned structs (security)

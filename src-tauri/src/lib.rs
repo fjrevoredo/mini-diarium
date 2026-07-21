@@ -1,9 +1,9 @@
-// The Tauri-free business layer now lives in the `mini-diarium-core` crate.
-// Re-export its modules so all `crate::{auth,backup,config,crypto,db,export,
-// import,plugin}::…` paths in commands/*, menu.rs, lib.rs, and the benches
-// resolve unchanged. (M2 / TODO-0077 replaces this internal reaching with a
-// deliberate façade API.)
-pub use mini_diarium_core::{auth, backup, config, crypto, db, export, import, plugin};
+// The Tauri-free business layer lives in the `mini-diarium-core` crate. Re-export its
+// modules so `crate::{auth,backup,config,crypto,db,export,import,plugin,search}::…` paths
+// in commands/*, menu.rs, lib.rs, and the benches resolve. As of M2 (TODO-0077) the app
+// reaches core only through its curated façade — the module roots re-export the stable
+// API and seal their internals (see crates/mini-diarium-core/API.md).
+pub use mini_diarium_core::{auth, backup, config, crypto, db, export, import, plugin, search};
 
 pub mod commands;
 pub mod menu;
@@ -195,8 +195,8 @@ pub fn run() {
                 plugin::rhai_loader::migrate_journal_plugins(&old_dirs, &plugins_dir);
             }
 
-            let mut registry = plugin::registry::PluginRegistry::new();
-            plugin::builtins::register_all(&mut registry);
+            let mut registry = plugin::PluginRegistry::new();
+            plugin::register_all(&mut registry);
             plugin::rhai_loader::load_plugins(&plugins_dir, &mut registry);
             app.manage(std::sync::Mutex::new(registry));
 

@@ -3,13 +3,17 @@ use crate::crypto::cipher;
 pub mod auth_slots;
 pub mod db_settings;
 pub mod entries;
+pub mod fonts;
 pub mod images;
+pub mod meta;
 pub mod tags;
 
 pub use auth_slots::*;
 pub use db_settings::*;
 pub use entries::*;
+pub use fonts::*;
 pub use images::*;
+pub use meta::*;
 pub use tags::*;
 
 // Shared crypto helpers used by all query sub-modules.

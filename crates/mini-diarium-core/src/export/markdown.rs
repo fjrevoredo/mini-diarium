@@ -29,7 +29,13 @@ use std::collections::HashMap;
 /// ```
 ///
 /// HTML content from TipTap is converted to Markdown.
-pub fn export_entries_to_markdown(
+///
+/// Image-free plain-Markdown export. Production paths use
+/// [`export_entries_to_markdown_with_assets`] / [`export_entries_to_markdown_inline`]
+/// (which handle embedded images); this simpler form is retained as a unit-test entry
+/// point for the shared `html_to_markdown` conversion, hence `#[cfg(test)]`.
+#[cfg(test)]
+fn export_entries_to_markdown(
     entries: Vec<DiaryEntry>,
     tags: &HashMap<i64, Vec<String>>,
 ) -> String {

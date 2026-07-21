@@ -1,4 +1,4 @@
-use crate::db::schema::{
+use crate::db::{
     create_database, create_database_auto, open_database, open_database_auto,
     open_database_with_keypair,
 };
@@ -38,11 +38,8 @@ fn read_private_key_from_file(key_path: &str) -> Result<[u8; 32], String> {
 /// One-time migration: if `db_settings` has no "require_all_auth" key and the legacy
 /// `config.json` had it set to true for the active journal, write "true" to `db_settings`
 /// then clear the config.json flag.
-fn migrate_require_all_auth_to_db(
-    db: &crate::db::schema::DatabaseConnection,
-    state: &super::DiaryState,
-) {
-    if crate::db::queries::get_db_setting(db.conn(), "require_all_auth").is_none() {
+fn migrate_require_all_auth_to_db(db: &crate::db::DatabaseConnection, state: &super::DiaryState) {
+    if crate::db::get_db_setting(db, "require_all_auth").is_none() {
         let active_id = crate::config::load_active_journal_id(&state.app_data_dir);
         let had_config_flag = active_id
             .as_ref()
@@ -54,9 +51,7 @@ fn migrate_require_all_auth_to_db(
             .unwrap_or(false);
 
         if had_config_flag {
-            if let Err(e) =
-                crate::db::queries::set_db_setting(db.conn(), "require_all_auth", "true")
-            {
+            if let Err(e) = crate::db::set_db_setting(db, "require_all_auth", "true") {
                 warn!("Failed to migrate require_all_auth to db_settings: {}", e);
             } else {
                 info!("Migrated require_all_auth from config.json to db_settings");
@@ -79,11 +74,11 @@ fn migrate_require_all_auth_to_db(
 /// than there are non-auto auth slots.
 pub(crate) fn check_require_all_auth_credential_count(
     credential_count: usize,
-    db: &crate::db::schema::DatabaseConnection,
+    db: &crate::db::DatabaseConnection,
 ) -> Result<(), String> {
-    let require_all = crate::db::queries::verify_require_all_auth(db.conn(), db.key().as_bytes());
+    let require_all = crate::db::verify_require_all_auth(db);
     if require_all {
-        let all_slots = crate::db::queries::list_auth_slots(db)?;
+        let all_slots = crate::db::list_auth_slots(db)?;
         let non_auto_count = all_slots.iter().filter(|s| s.slot_type != "auto").count();
         if credential_count < non_auto_count {
             return Err("This journal requires all authentication methods. \
@@ -101,7 +96,7 @@ pub(crate) fn check_require_all_auth_credential_count(
 /// Does not enforce `require_all_auth` slot-coverage policy; that check lives in `perform_unlock`.
 pub(crate) fn verify_credentials_and_collect_slots(
     creds: &[MultiAuthCredential],
-    conn: &crate::db::schema::DatabaseConnection,
+    conn: &crate::db::DatabaseConnection,
 ) -> Result<std::collections::HashSet<i64>, String> {
     use std::collections::HashSet;
     let mut satisfied: HashSet<i64> = HashSet::new();
@@ -109,27 +104,26 @@ pub(crate) fn verify_credentials_and_collect_slots(
     for cred in creds {
         let slot_id = match cred {
             MultiAuthCredential::Password { value } => {
-                let (slot_id, wrapped_key) = crate::db::queries::get_password_slot(conn)?
-                    .ok_or("No password auth method found")?;
-                let method = crate::auth::password::PasswordMethod::new(value.clone());
+                let (slot_id, wrapped_key) =
+                    crate::db::get_password_slot(conn)?.ok_or("No password auth method found")?;
+                let method = crate::auth::PasswordMethod::new(value.clone());
                 method
                     .unwrap_master_key(&wrapped_key)
                     .map_err(|_| "Incorrect password".to_string())?;
-                crate::db::queries::update_slot_last_used(conn.conn(), slot_id)?;
+                crate::db::update_slot_last_used(conn, slot_id)?;
                 slot_id
             }
             MultiAuthCredential::Keypair { key_path } => {
                 let mut private_key = read_private_key_from_file(key_path)?;
-                let pub_key = crate::auth::keypair::derive_public_key(private_key);
-                let (slot_id, wrapped_key) =
-                    crate::db::queries::get_keypair_slot_by_pubkey(conn, &pub_key)?
-                        .ok_or("Key file does not match any registered key")?;
-                let method = crate::auth::keypair::PrivateKeyMethod { private_key };
+                let pub_key = crate::auth::derive_public_key(private_key);
+                let (slot_id, wrapped_key) = crate::db::get_keypair_slot_by_pubkey(conn, &pub_key)?
+                    .ok_or("Key file does not match any registered key")?;
+                let method = crate::auth::PrivateKeyMethod { private_key };
                 method
                     .unwrap_master_key(&wrapped_key)
                     .map_err(|_| "Key file authentication failed".to_string())?;
                 private_key.zeroize();
-                crate::db::queries::update_slot_last_used(conn.conn(), slot_id)?;
+                crate::db::update_slot_last_used(conn, slot_id)?;
                 slot_id
             }
         };
@@ -181,7 +175,7 @@ pub(crate) fn perform_unlock(
         UnlockMode::Password(password) => {
             let conn = open_database(&db_path, password, &backups_dir)?;
             migrate_require_all_auth_to_db(&conn, state);
-            if crate::db::queries::verify_require_all_auth(conn.conn(), conn.key().as_bytes()) {
+            if crate::db::verify_require_all_auth(&conn) {
                 return Err(
                     "This journal requires all authentication methods. Use the combined unlock."
                         .to_string(),
@@ -194,7 +188,7 @@ pub(crate) fn perform_unlock(
             let conn = open_database_with_keypair(&db_path, private_key, &backups_dir)?;
             private_key.zeroize();
             migrate_require_all_auth_to_db(&conn, state);
-            if crate::db::queries::verify_require_all_auth(conn.conn(), conn.key().as_bytes()) {
+            if crate::db::verify_require_all_auth(&conn) {
                 return Err(
                     "This journal requires all authentication methods. Use the combined unlock."
                         .to_string(),
@@ -219,8 +213,8 @@ pub(crate) fn perform_unlock(
             // Verify all credentials, reject duplicate slot IDs, collect satisfied slot IDs.
             let satisfied_slots = verify_credentials_and_collect_slots(&credentials, &conn)?;
             // When require_all_auth is active, every registered non-auto slot must be satisfied.
-            if crate::db::queries::verify_require_all_auth(conn.conn(), conn.key().as_bytes()) {
-                let all_slots = crate::db::queries::list_auth_slots(&conn)?;
+            if crate::db::verify_require_all_auth(&conn) {
+                let all_slots = crate::db::list_auth_slots(&conn)?;
                 let non_auto_slot_ids: std::collections::HashSet<i64> = all_slots
                     .iter()
                     .filter(|s| s.slot_type != "auto")
@@ -233,15 +227,12 @@ pub(crate) fn perform_unlock(
                 }
             }
             // Self-heal: write MAC for existing v6 journals that predate MAC support
-            if crate::db::queries::get_db_setting(conn.conn(), "require_all_auth")
+            if crate::db::get_db_setting(&conn, "require_all_auth")
                 .map(|v| v == "true")
                 .unwrap_or(false)
-                && crate::db::queries::get_db_setting(conn.conn(), "require_all_auth_mac").is_none()
+                && crate::db::get_db_setting(&conn, "require_all_auth_mac").is_none()
             {
-                if let Err(e) = crate::db::queries::write_require_all_auth_mac(
-                    conn.conn(),
-                    conn.key().as_bytes(),
-                ) {
+                if let Err(e) = crate::db::write_require_all_auth_mac(&conn) {
                     warn!("Failed to write require_all_auth MAC: {}", e);
                 }
             }
@@ -390,23 +381,23 @@ pub fn change_password(
 
     // Find the password slot
     let (slot_id, wrapped_key) =
-        crate::db::queries::get_password_slot(db)?.ok_or("No password auth method found")?;
+        crate::db::get_password_slot(db)?.ok_or("No password auth method found")?;
 
     // Verify old password and recover master_key
-    let old_method = crate::auth::password::PasswordMethod::new(old_password);
+    let old_method = crate::auth::PasswordMethod::new(old_password);
     let master_key_bytes = old_method
         .unwrap_master_key(&wrapped_key)
         .map_err(|_| "Incorrect current password".to_string())?;
 
     // Re-wrap master_key with new password
-    let new_method = crate::auth::password::PasswordMethod::new(new_password);
+    let new_method = crate::auth::PasswordMethod::new(new_password);
     let new_wrapped_key = new_method
         .wrap_master_key(&master_key_bytes)
         .map_err(|e| format!("Failed to re-wrap master key: {}", e))?;
     // master_key_bytes zeroed automatically on drop (SecretBytes)
 
     // Update the auth slot (no entry re-encryption needed)
-    crate::db::queries::update_auth_slot_wrapped_key(db, slot_id, &new_wrapped_key)?;
+    crate::db::update_auth_slot_wrapped_key(db, slot_id, &new_wrapped_key)?;
 
     info!("Password changed successfully");
     Ok(())
@@ -578,7 +569,7 @@ pub fn unlock_diary_all_methods(
 #[cfg(test)]
 mod tests {
     use super::super::test_helpers::*;
-    use crate::db::schema::{create_database, open_database};
+    use crate::db::{create_database, open_database};
 
     #[test]
     fn test_check_diary_path() {
@@ -661,7 +652,7 @@ mod tests {
         let db = create_database(&db_path, "old_password".to_string()).unwrap();
 
         // Add a test entry
-        let entry = crate::db::queries::DiaryEntry {
+        let entry = crate::db::DiaryEntry {
             id: 0,
             date: "2024-01-01".to_string(),
             title: "Test Entry".to_string(),
@@ -672,20 +663,20 @@ mod tests {
             metadata: None,
             locked: false,
         };
-        crate::db::queries::insert_entry(&db, &entry).unwrap();
+        crate::db::insert_entry(&db, &entry).unwrap();
 
         // Change password using v3 re-wrapping (no re-encryption)
-        let (slot_id, wrapped_key) = crate::db::queries::get_password_slot(&db).unwrap().unwrap();
-        let old_method = crate::auth::password::PasswordMethod::new("old_password".to_string());
+        let (slot_id, wrapped_key) = crate::db::get_password_slot(&db).unwrap().unwrap();
+        let old_method = crate::auth::PasswordMethod::new("old_password".to_string());
         let master_key = old_method.unwrap_master_key(&wrapped_key).unwrap();
-        let new_method = crate::auth::password::PasswordMethod::new("new_password".to_string());
+        let new_method = crate::auth::PasswordMethod::new("new_password".to_string());
         let new_wrapped = new_method.wrap_master_key(&master_key).unwrap();
-        crate::db::queries::update_auth_slot_wrapped_key(&db, slot_id, &new_wrapped).unwrap();
+        crate::db::update_auth_slot_wrapped_key(&db, slot_id, &new_wrapped).unwrap();
         drop(db);
 
         // Open with new password — entry should still be accessible
         let db2 = open_database(&db_path, "new_password".to_string(), &backups_dir).unwrap();
-        let entries = crate::db::queries::get_entries_by_date(&db2, "2024-01-01").unwrap();
+        let entries = crate::db::get_entries_by_date(&db2, "2024-01-01").unwrap();
         assert_eq!(entries.len(), 1);
         let retrieved = &entries[0];
         assert_eq!(retrieved.title, "Test Entry");
@@ -700,13 +691,13 @@ mod tests {
     fn test_open_database_auto_ignores_require_all_auth_flag() {
         // Bypass holds because (a) unlock_diary_auto doesn't route through perform_unlock
         // and (b) open_database_auto doesn't check the require_all_auth flag.
-        use crate::db::schema::{create_database_auto, open_database_auto};
+        use crate::db::{create_database_auto, open_database_auto};
 
         let (_fixture, _, db_path, backups_dir) = make_state("auto_bypass_req_all");
         let auto_key = [0x2au8; 32]; // arbitrary fixed key
 
         let db = create_database_auto(&db_path, &auto_key).unwrap();
-        crate::db::queries::set_db_setting(db.conn(), "require_all_auth", "true").unwrap();
+        crate::db::set_db_setting(&db, "require_all_auth", "true").unwrap();
         drop(db);
 
         let result = open_database_auto(&db_path, &auto_key, &backups_dir);
@@ -719,8 +710,8 @@ mod tests {
 
     #[test]
     fn test_check_require_all_auth_rejects_single_credential() {
-        use crate::auth::keypair::generate_keypair;
-        use crate::db::schema::open_database;
+        use crate::auth::generate_keypair;
+        use crate::db::open_database;
 
         let (_fixture, _, db_path, backups_dir) = make_state("req_all_multi_guard");
 
@@ -728,27 +719,13 @@ mod tests {
 
         // Register a keypair slot so there are 2 non-auto slots
         let kp = generate_keypair().unwrap();
-        let pub_bytes_vec = hex::decode(&kp.public_key_hex).unwrap();
         let mut pub_key = [0u8; 32];
-        pub_key.copy_from_slice(&pub_bytes_vec);
-        let kp_method = crate::auth::keypair::KeypairMethod {
-            public_key: pub_key,
-        };
-        let kp_wrapped = kp_method.wrap_master_key(db.key().as_bytes()).unwrap();
-        let now = chrono::Utc::now().to_rfc3339();
-        crate::db::queries::insert_auth_slot(
-            &db,
-            "keypair",
-            "My Key",
-            Some(&pub_bytes_vec),
-            &kp_wrapped,
-            &now,
-        )
-        .unwrap();
+        pub_key.copy_from_slice(&hex::decode(&kp.public_key_hex).unwrap());
+        crate::auth::add_keypair_slot(&db, "My Key", pub_key).unwrap();
 
         // Set require_all_auth flag + MAC (MAC is required for verify_require_all_auth)
-        crate::db::queries::set_db_setting(db.conn(), "require_all_auth", "true").unwrap();
-        crate::db::queries::write_require_all_auth_mac(db.conn(), db.key().as_bytes()).unwrap();
+        crate::db::set_db_setting(&db, "require_all_auth", "true").unwrap();
+        crate::db::write_require_all_auth_mac(&db).unwrap();
         drop(db);
 
         // Re-open and call the real guard function
@@ -773,7 +750,7 @@ mod tests {
         let db = create_database(&db_path, "password".to_string()).unwrap();
 
         // Write require_all_auth = "true" directly into db_settings
-        crate::db::queries::set_db_setting(db.conn(), "require_all_auth", "true").unwrap();
+        crate::db::set_db_setting(&db, "require_all_auth", "true").unwrap();
         drop(db);
 
         // Attempt single-method password unlock — must be blocked
@@ -786,7 +763,7 @@ mod tests {
             "open_database should succeed (guard is in unlock_diary)"
         );
         let db2 = result.unwrap();
-        let flag = crate::db::queries::get_db_setting(db2.conn(), "require_all_auth");
+        let flag = crate::db::get_db_setting(&db2, "require_all_auth");
         assert_eq!(
             flag.as_deref(),
             Some("true"),
@@ -796,32 +773,18 @@ mod tests {
 
     #[test]
     fn test_duplicate_password_credential_rejected() {
-        use crate::auth::keypair::{generate_keypair, KeypairMethod};
-        use crate::db::schema::{create_database, open_database};
+        use crate::auth::generate_keypair;
+        use crate::db::{create_database, open_database};
 
         let (_fixture, _, db_path, backups_dir) = make_state("dup_pw_cred");
         let db = create_database(&db_path, "password".to_string()).unwrap();
 
         let kp = generate_keypair().unwrap();
-        let pub_bytes_vec = hex::decode(&kp.public_key_hex).unwrap();
         let mut pub_key = [0u8; 32];
-        pub_key.copy_from_slice(&pub_bytes_vec);
-        let kp_method = KeypairMethod {
-            public_key: pub_key,
-        };
-        let kp_wrapped = kp_method.wrap_master_key(db.key().as_bytes()).unwrap();
-        let now = chrono::Utc::now().to_rfc3339();
-        crate::db::queries::insert_auth_slot(
-            &db,
-            "keypair",
-            "My Key",
-            Some(&pub_bytes_vec),
-            &kp_wrapped,
-            &now,
-        )
-        .unwrap();
-        crate::db::queries::set_db_setting(db.conn(), "require_all_auth", "true").unwrap();
-        crate::db::queries::write_require_all_auth_mac(db.conn(), db.key().as_bytes()).unwrap();
+        pub_key.copy_from_slice(&hex::decode(&kp.public_key_hex).unwrap());
+        crate::auth::add_keypair_slot(&db, "My Key", pub_key).unwrap();
+        crate::db::set_db_setting(&db, "require_all_auth", "true").unwrap();
+        crate::db::write_require_all_auth_mac(&db).unwrap();
         drop(db);
 
         let db2 = open_database(&db_path, "password".to_string(), &backups_dir).unwrap();
@@ -839,32 +802,18 @@ mod tests {
 
     #[test]
     fn test_duplicate_keypair_credential_rejected() {
-        use crate::auth::keypair::{generate_keypair, KeypairMethod};
-        use crate::db::schema::{create_database, open_database};
+        use crate::auth::generate_keypair;
+        use crate::db::{create_database, open_database};
 
         let (fixture, _, db_path, backups_dir) = make_state("dup_kp_cred");
         let db = create_database(&db_path, "password".to_string()).unwrap();
 
         let kp = generate_keypair().unwrap();
-        let pub_bytes_vec = hex::decode(&kp.public_key_hex).unwrap();
         let mut pub_key = [0u8; 32];
-        pub_key.copy_from_slice(&pub_bytes_vec);
-        let kp_method = KeypairMethod {
-            public_key: pub_key,
-        };
-        let kp_wrapped = kp_method.wrap_master_key(db.key().as_bytes()).unwrap();
-        let now = chrono::Utc::now().to_rfc3339();
-        crate::db::queries::insert_auth_slot(
-            &db,
-            "keypair",
-            "My Key",
-            Some(&pub_bytes_vec),
-            &kp_wrapped,
-            &now,
-        )
-        .unwrap();
-        crate::db::queries::set_db_setting(db.conn(), "require_all_auth", "true").unwrap();
-        crate::db::queries::write_require_all_auth_mac(db.conn(), db.key().as_bytes()).unwrap();
+        pub_key.copy_from_slice(&hex::decode(&kp.public_key_hex).unwrap());
+        crate::auth::add_keypair_slot(&db, "My Key", pub_key).unwrap();
+        crate::db::set_db_setting(&db, "require_all_auth", "true").unwrap();
+        crate::db::write_require_all_auth_mac(&db).unwrap();
         drop(db);
 
         let key_file = fixture.path().join("dup-kp-cred.key");
@@ -886,33 +835,19 @@ mod tests {
 
     #[test]
     fn test_valid_password_and_keypair_satisfies_all_slots() {
-        use crate::auth::keypair::{generate_keypair, KeypairMethod};
-        use crate::db::schema::{create_database, open_database};
+        use crate::auth::generate_keypair;
+        use crate::db::{create_database, open_database};
 
         let (fixture, _, db_path, backups_dir) = make_state("valid_pw_kp_creds");
         let db = create_database(&db_path, "password".to_string()).unwrap();
 
         let kp = generate_keypair().unwrap();
-        let pub_bytes_vec = hex::decode(&kp.public_key_hex).unwrap();
         let mut pub_key = [0u8; 32];
-        pub_key.copy_from_slice(&pub_bytes_vec);
-        let kp_method = KeypairMethod {
-            public_key: pub_key,
-        };
-        let kp_wrapped = kp_method.wrap_master_key(db.key().as_bytes()).unwrap();
-        let now = chrono::Utc::now().to_rfc3339();
-        let kp_slot_id = crate::db::queries::insert_auth_slot(
-            &db,
-            "keypair",
-            "My Key",
-            Some(&pub_bytes_vec),
-            &kp_wrapped,
-            &now,
-        )
-        .unwrap();
-        let (pw_slot_id, _) = crate::db::queries::get_password_slot(&db).unwrap().unwrap();
-        crate::db::queries::set_db_setting(db.conn(), "require_all_auth", "true").unwrap();
-        crate::db::queries::write_require_all_auth_mac(db.conn(), db.key().as_bytes()).unwrap();
+        pub_key.copy_from_slice(&hex::decode(&kp.public_key_hex).unwrap());
+        let kp_slot_id = crate::auth::add_keypair_slot(&db, "My Key", pub_key).unwrap();
+        let (pw_slot_id, _) = crate::db::get_password_slot(&db).unwrap().unwrap();
+        crate::db::set_db_setting(&db, "require_all_auth", "true").unwrap();
+        crate::db::write_require_all_auth_mac(&db).unwrap();
         drop(db);
 
         let key_file = fixture.path().join("valid-pw-kp.key");

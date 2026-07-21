@@ -7,8 +7,8 @@
 
 The backend is a Cargo **workspace** (root `Cargo.toml`) with two members:
 
-- **App crate — `src-tauri/`** (`mini-diarium`): the Tauri commands (`commands/*`), native menu, OS shell, WebView security, and window/screen-lock listeners. Depends on the core crate; `lib.rs` re-exports its modules (`pub use mini_diarium_core::{auth, backup, config, crypto, db, export, import, plugin};`) so `crate::db::…`-style paths in `commands/*` resolve unchanged.
-- **Core crate — `crates/mini-diarium-core/`** (`mini-diarium-core`): the Tauri-free business layer — crypto, auth, db, import/export, plugins, backup, config. **Zero `tauri::` references.** Consumable by a future separate product and eventually WASM (see [`docs/OPEN_CORE_STRATEGY.md`](../docs/OPEN_CORE_STRATEGY.md)). Its version is intentionally decoupled from the app version.
+- **App crate — `src-tauri/`** (`mini-diarium`): the Tauri commands (`commands/*`), native menu, OS shell, WebView security, and window/screen-lock listeners. Depends on the core crate; `lib.rs` re-exports its modules (`pub use mini_diarium_core::{auth, backup, config, crypto, db, export, import, plugin, search};`) so `crate::db::…`-style paths in `commands/*` resolve. **As of open-core M2 (TODO-0077), `commands/*` reach core only through its curated façade** — the module roots (`db`, `auth`, `export`, `import`, `plugin`) re-export the stable API and seal their internals to `pub(crate)`. Do **not** reintroduce `crate::db::queries::…` / `crate::db::schema::…` / `db.conn()` / `db.key()` in `commands/*`; use the façade names (e.g. `crate::db::insert_entry`, `crate::auth::add_password_slot`). The stable surface is documented in [`crates/mini-diarium-core/API.md`](../crates/mini-diarium-core/API.md).
+- **Core crate — `crates/mini-diarium-core/`** (`mini-diarium-core`): the Tauri-free business layer — crypto, auth, db, import/export, plugins, backup, config, search. **Zero `tauri::` references.** Consumable by a future separate product and eventually WASM (see [`docs/OPEN_CORE_STRATEGY.md`](../docs/OPEN_CORE_STRATEGY.md)). Its curated public surface is the [`API.md`](../crates/mini-diarium-core/API.md) stability contract; everything else is `pub(crate)`/private. Its version is intentionally decoupled from the app version.
 
 `Cargo.lock` and `target/` live at the repo root. Run all backend tests with `cargo test --workspace` (**not** `--manifest-path src-tauri/Cargo.toml`, which skips the core crate's tests).
 
@@ -84,7 +84,7 @@ All menu event names are prefixed `menu-`. See `menu.rs` for the full list. See 
 
 To add a new **built-in** import format (compiled Rust):
 1. Create `crates/mini-diarium-core/src/import/FORMAT.rs` — parser returning `Vec<DiaryEntry>`
-2. Add `pub mod FORMAT;` to `crates/mini-diarium-core/src/import/mod.rs`
+2. Add `pub(crate) mod FORMAT;` to `crates/mini-diarium-core/src/import/mod.rs` (import parsers are sealed to the crate as of open-core M2; the only public import path is via the plugin registry)
 3. Add a builtin wrapper struct in `crates/mini-diarium-core/src/plugin/builtins.rs` implementing `ImportPlugin`, and register it in `register_all()`
 
 The plugin system (`run_import_plugin`) is the single entry point; no per-format Tauri command is needed. The search reindex hook lives in `commands::import::import_entries` (see `// Search index hook:` comment).
@@ -182,7 +182,7 @@ Activate during development: `cargo build --features experimental`. See `docs/de
 **Option A: Built-in (compiled Rust)**
 
 1. Create `crates/mini-diarium-core/src/import/FORMAT.rs` with a `parse_FORMAT(content: &str) -> Result<Vec<DiaryEntry>, String>` function
-2. Add `pub mod FORMAT;` to `crates/mini-diarium-core/src/import/mod.rs`
+2. Add `pub(crate) mod FORMAT;` to `crates/mini-diarium-core/src/import/mod.rs` (parsers stay sealed to the crate; the plugin registry is the only public path)
 3. Add a builtin wrapper struct in `crates/mini-diarium-core/src/plugin/builtins.rs` implementing `ImportPlugin` (or `ExportPlugin`), register in `register_all()`
 
 The plugin runner (`run_import_plugin` / `run_export_plugin`) dispatches to the builtin. No per-format Tauri command is required — the frontend discovers available formats via `list_import_plugins()` / `list_export_plugins()`.
@@ -203,7 +203,8 @@ ever written to disk.
 
 | Layer | File | What it provides |
 |-------|------|-----------------|
-| Rust command | `src-tauri/src/commands/search.rs` | `SearchResult` + `SearchResponse` structs, `search_entries` command, `search_entries_impl(db, query)` pub scan core |
+| Core scan | `crates/mini-diarium-core/src/search.rs` | `SearchResult` + `SearchResponse` structs + `search_entries(db, query)` in-memory scan core (open-core M2 façade) |
+| Rust command | `src-tauri/src/commands/search.rs` | Thin `#[tauri::command] search_entries` wrapper over `mini_diarium_core::search::search_entries`; re-exports `SearchResult`/`SearchResponse` |
 | Frontend wrapper | `src/lib/tauri/search.ts` | `SearchResult` interface + `searchEntries(query)` async function returning `SearchResponse` |
 | Frontend state | `src/state/search.ts` | `searchQuery`, `searchResults`, `isSearching` signals |
 | Frontend components | `src/components/search/SearchOverlay.tsx` | Palette-style dialog mounting `SearchBar` + `SearchResults` (in `MainLayout`) |

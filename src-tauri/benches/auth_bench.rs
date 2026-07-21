@@ -1,5 +1,5 @@
 use criterion::{criterion_group, criterion_main, Criterion};
-use mini_diarium_lib::auth::password::PasswordMethod;
+use mini_diarium_lib::auth::PasswordMethod;
 
 fn bench_wrap(c: &mut Criterion) {
     let master_key = [42u8; 32];

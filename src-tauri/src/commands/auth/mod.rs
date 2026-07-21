@@ -1,4 +1,4 @@
-use crate::db::schema::DatabaseConnection;
+use crate::db::DatabaseConnection;
 use log::{info, warn};
 use std::path::PathBuf;
 use std::sync::Mutex;
@@ -110,7 +110,7 @@ pub use auth_slots::*;
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::db::schema::create_database;
+    use crate::db::create_database;
 
     #[test]
     fn test_with_unlocked_db_locked_returns_error() {

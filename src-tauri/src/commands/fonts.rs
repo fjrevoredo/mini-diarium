@@ -1,11 +1,10 @@
 use base64::{engine::general_purpose, Engine as _};
-use rusqlite::OptionalExtension;
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 use tauri::{path::BaseDirectory, AppHandle, Manager, State};
 
 use crate::commands::auth::{with_unlocked_db, DiaryState};
-use crate::db::schema::DatabaseConnection;
+use crate::db::{self, DatabaseConnection};
 
 fn resolve_font_dir(app_handle: &AppHandle) -> Result<PathBuf, String> {
     #[cfg(target_os = "linux")]
@@ -140,16 +139,7 @@ pub struct CustomFontSummary {
 }
 
 fn list_custom_fonts_impl(db: &DatabaseConnection) -> Result<Vec<CustomFontSummary>, String> {
-    let mut stmt = db
-        .conn()
-        .prepare("SELECT family, weight FROM custom_fonts ORDER BY family, weight")
-        .map_err(|e| format!("Failed to prepare list_custom_fonts query: {e}"))?;
-
-    let rows: Vec<(String, String)> = stmt
-        .query_map([], |row| Ok((row.get(0)?, row.get(1)?)))
-        .map_err(|e| format!("Failed to query custom_fonts: {e}"))?
-        .collect::<Result<_, _>>()
-        .map_err(|e| format!("Failed to read custom_fonts row: {e}"))?;
+    let rows = db::list_custom_font_rows(db)?;
 
     let mut map: BTreeMap<String, CustomFontSummary> = BTreeMap::new();
     for (family, weight) in rows {
@@ -206,28 +196,10 @@ fn import_custom_font_impl(
     now: &str,
     db: &DatabaseConnection,
 ) -> Result<(), String> {
-    if weight == "Bold" {
-        let has_regular: bool = db
-            .conn()
-            .query_row(
-                "SELECT 1 FROM custom_fonts WHERE family = ?1 AND weight = 'Regular' LIMIT 1",
-                rusqlite::params![family],
-                |_row| Ok(()),
-            )
-            .optional()
-            .map_err(|e| format!("Failed to verify existing Regular weight: {e}"))?
-            .is_some();
-        if !has_regular {
-            return Err("Import the Regular weight before importing Bold.".to_string());
-        }
+    if weight == "Bold" && !db::custom_font_has_weight(db, family, "Regular")? {
+        return Err("Import the Regular weight before importing Bold.".to_string());
     }
-    db.conn()
-        .execute(
-            "INSERT OR REPLACE INTO custom_fonts (family, weight, data, created_at) VALUES (?1, ?2, ?3, ?4)",
-            rusqlite::params![family, weight, bytes, now],
-        )
-        .map(|_| ())
-        .map_err(|e| format!("Failed to store font: {e}"))
+    db::upsert_custom_font(db, family, weight, bytes, now)
 }
 
 #[tauri::command]
@@ -247,13 +219,7 @@ pub fn import_custom_font(
 }
 
 fn delete_custom_font_family_impl(family: &str, db: &DatabaseConnection) -> Result<(), String> {
-    db.conn()
-        .execute(
-            "DELETE FROM custom_fonts WHERE family = ?1",
-            rusqlite::params![family],
-        )
-        .map(|_| ())
-        .map_err(|e| format!("Failed to delete custom font '{}': {e}", family))
+    db::delete_custom_font_family(db, family)
 }
 
 #[tauri::command]
@@ -269,29 +235,11 @@ fn get_custom_font_data(
     family: &str,
     db: &DatabaseConnection,
 ) -> Result<Option<FontFaceData>, String> {
-    let regular_blob = db
-        .conn()
-        .query_row(
-            "SELECT data FROM custom_fonts WHERE family = ?1 AND weight = 'Regular'",
-            rusqlite::params![family],
-            |row| row.get::<_, Vec<u8>>(0),
-        )
-        .optional()
-        .map_err(|e| format!("Failed to read custom Regular font: {e}"))?;
-
-    let Some(reg_bytes) = regular_blob else {
+    let Some(reg_bytes) = db::get_custom_font_weight_data(db, family, "Regular")? else {
         return Ok(None);
     };
 
-    let bold_blob = db
-        .conn()
-        .query_row(
-            "SELECT data FROM custom_fonts WHERE family = ?1 AND weight = 'Bold'",
-            rusqlite::params![family],
-            |row| row.get::<_, Vec<u8>>(0),
-        )
-        .optional()
-        .map_err(|e| format!("Failed to read custom Bold font: {e}"))?;
+    let bold_blob = db::get_custom_font_weight_data(db, family, "Bold")?;
 
     let bold_synthesized = bold_blob.is_none();
     let bold_bytes = bold_blob.unwrap_or_else(|| reg_bytes.clone());

@@ -460,14 +460,6 @@ pub fn get_image_by_id(
 }
 
 /// Returns paginated image summaries in the journal for media-picker UIs.
-pub fn list_image_summaries(
-    db: &DatabaseConnection,
-    limit: Option<i64>,
-    offset: Option<i64>,
-) -> Result<ImageSummaryPage, String> {
-    list_image_summaries_filtered(db, limit, offset, None, None)
-}
-
 pub fn list_image_summaries_filtered(
     db: &DatabaseConnection,
     limit: Option<i64>,
@@ -1104,7 +1096,7 @@ mod tests {
         replace_entry_image_links(&db, entry_b, &[png_id]).unwrap();
         replace_entry_image_links(&db, entry_c, &[jpg_id]).unwrap();
 
-        let images = list_image_summaries(&db, None, None).unwrap();
+        let images = list_image_summaries_filtered(&db, None, None, None, None).unwrap();
         assert_eq!(images.items.len(), 2);
         assert!(!images.has_more);
         assert!(images.items.iter().all(|img| !img.created_at.is_empty()));

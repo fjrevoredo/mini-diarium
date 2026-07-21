@@ -92,7 +92,7 @@ Quick reference (ASCII art):
 ```
 
 **Key relationships:**
-- Entries are stored encrypted in SQLite. Each entry has a unique integer `id` (PRIMARY KEY AUTOINCREMENT) and can have a unique date. Multiple entries per date are supported (schema v6). Full-text search is implemented as an in-memory scan over decrypted entries (`commands/search.rs`); the old plaintext `entries_fts` table was removed in schema v4.
+- Entries are stored encrypted in SQLite. Each entry has a unique integer `id` (PRIMARY KEY AUTOINCREMENT) and can have a unique date. Multiple entries per date are supported (schema v6). Full-text search is implemented as an in-memory scan over decrypted entries — the scan core lives in `crates/mini-diarium-core/src/search.rs` (`search_entries`), with a thin `commands/search.rs` Tauri wrapper; the old plaintext `entries_fts` table was removed in schema v4.
 - Menu events flow: Rust `app.emit("menu-*")` → frontend `listen()` in `shortcuts.ts` or overlay components.
 - Preferences use `localStorage` (not Tauri store plugin).
 - Multiple journals are tracked in `{app_data_dir}/config.json` via `JournalConfig` entries. Each journal maps to a directory containing its own `diary.db`. `DiaryState` holds a single connection; switching journals updates `db_path`/`backups_dir` and auto-locks. Legacy single-diary configs are auto-migrated on first `load_journals()` call.
@@ -108,7 +108,7 @@ Static marketing site — plain HTML/CSS/JS. Deploy via Coolify using `website/d
 
 ## Command Registry
 
-All Tauri commands are registered in `src-tauri/src/lib.rs` (`generate_handler![]`). The command handlers live in the app crate (`src-tauri/src/commands/*`) and delegate to the Tauri-free business layer in the `mini-diarium-core` crate (`crates/mini-diarium-core/`); `lib.rs` re-exports the core modules (`pub use mini_diarium_core::{auth, backup, config, crypto, db, export, import, plugin};`) so `crate::db::…`-style paths in commands resolve unchanged. Frontend wrappers with typed signatures live in `src/lib/tauri/` (one sub-file per command category, re-exported from the barrel `index.ts`). Rust names use `snake_case`; wrappers use `camelCase`.
+All Tauri commands are registered in `src-tauri/src/lib.rs` (`generate_handler![]`). The command handlers live in the app crate (`src-tauri/src/commands/*`) and delegate to the Tauri-free business layer in the `mini-diarium-core` crate (`crates/mini-diarium-core/`); `lib.rs` re-exports the core modules (`pub use mini_diarium_core::{auth, backup, config, crypto, db, export, import, plugin, search};`) so `crate::db::…`-style paths in commands resolve. As of open-core **M2 (TODO-0077)** the commands reach core only through its **curated façade** — each module root re-exports the stable API and seals its internals (`db::queries`/`db::schema` and the `auth`/`export`/`import`/`plugin` sub-modules are `pub(crate)`; `DatabaseConnection::conn()`/`key()` never leave the crate). The contract is [`crates/mini-diarium-core/API.md`](crates/mini-diarium-core/API.md). Frontend wrappers with typed signatures live in `src/lib/tauri/` (one sub-file per command category, re-exported from the barrel `index.ts`). Rust names use `snake_case`; wrappers use `camelCase`.
 
 Command groups: `auth` (journal lifecycle, auth slots, multi-auth), `entries`, `files`, `search` (stub — see Gotcha #1), `nav`, `stats`, `export`, `plugin`, `debug`, `menu`, `fonts`, `tags`, `images`.
 

@@ -1,11 +1,8 @@
 use criterion::{criterion_group, criterion_main, BatchSize, BenchmarkId, Criterion};
-use mini_diarium_lib::commands::search::search_entries_impl;
+use mini_diarium_core::search::search_entries;
 use mini_diarium_lib::db::{
-    queries::{
-        count_words, delete_entry_by_id, get_all_entries, get_all_entry_dates, get_entries_by_date,
-        insert_entry, update_entry, DiaryEntry,
-    },
-    schema::create_database,
+    count_words, create_database, delete_entry_by_id, get_all_entries, get_all_entry_dates,
+    get_entries_by_date, insert_entry, update_entry, DiaryEntry,
 };
 
 const BENCH_PASSWORD: &str = "bench-only-not-a-real-secret";
@@ -165,7 +162,7 @@ fn bench_search_entries(c: &mut Criterion) {
         }
         // "authentication" appears in REALISTIC_HTML — matches all entries.
         group.bench_with_input(BenchmarkId::from_parameter(count), &db, |b, db| {
-            b.iter(|| search_entries_impl(db, "authentication").unwrap());
+            b.iter(|| search_entries(db, "authentication").unwrap());
         });
         drop(tmp);
     }

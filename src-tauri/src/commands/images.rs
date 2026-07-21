@@ -1,13 +1,11 @@
 use crate::commands::auth::{with_unlocked_db, DiaryState};
-use crate::db::queries::images::{ImageData, ImageSummaryPage, ImageSummarySort};
+use crate::db::{ImageData, ImageSummaryPage, ImageSummarySort};
 use tauri::State;
 
 /// Returns all decrypted images associated with a specific entry.
 #[tauri::command]
 pub fn get_entry_images(entry_id: i64, state: State<DiaryState>) -> Result<Vec<ImageData>, String> {
-    with_unlocked_db(&state, |db| {
-        crate::db::queries::images::get_images_for_entry(db, entry_id)
-    })
+    with_unlocked_db(&state, |db| crate::db::get_images_for_entry(db, entry_id))
 }
 
 /// Returns metadata-only image summaries stored in the journal, newest-first.
@@ -20,13 +18,7 @@ pub fn list_journal_image_summaries(
     state: State<DiaryState>,
 ) -> Result<ImageSummaryPage, String> {
     with_unlocked_db(&state, |db| {
-        crate::db::queries::images::list_image_summaries_filtered(
-            db,
-            limit,
-            offset,
-            sort,
-            month.as_deref(),
-        )
+        crate::db::list_image_summaries_filtered(db, limit, offset, sort, month.as_deref())
     })
 }
 
@@ -34,7 +26,7 @@ pub fn list_journal_image_summaries(
 #[tauri::command]
 pub fn get_image_data(image_id: i64, state: State<DiaryState>) -> Result<ImageData, String> {
     with_unlocked_db(&state, |db| {
-        crate::db::queries::images::get_image_by_id(db, image_id)?
+        crate::db::get_image_by_id(db, image_id)?
             .ok_or_else(|| format!("No image found with id: {}", image_id))
     })
 }

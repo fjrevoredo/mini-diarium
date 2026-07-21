@@ -1,5 +1,4 @@
-use crate::db::queries;
-use crate::db::schema::DatabaseConnection;
+use crate::db::{self, DatabaseConnection, DiaryEntry};
 use log::error;
 
 const MAX_IMPORT_FILE_SIZE: u64 = 100 * 1024 * 1024; // 100 MB
@@ -37,7 +36,7 @@ pub struct ImportResult {
 /// Each entry always creates a new row (AUTOINCREMENT id). No merge logic.
 pub(crate) fn import_entries(
     db: &DatabaseConnection,
-    entries: Vec<queries::DiaryEntry>,
+    entries: Vec<DiaryEntry>,
 ) -> Result<ImportResult, String> {
     let mut entries_imported = 0;
     let mut entries_skipped = 0;
@@ -49,7 +48,7 @@ pub(crate) fn import_entries(
             continue;
         }
         // Always insert a new row — AUTOINCREMENT assigns the id
-        queries::insert_entry_with_images(db, &entry)?;
+        db::insert_entry_with_images(db, &entry)?;
         entries_imported += 1;
     }
 
@@ -62,12 +61,7 @@ pub(crate) fn import_entries(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::db::queries::DiaryEntry;
-    use crate::db::schema::create_database;
-    use std::collections::HashMap;
-
-    const TINY_PNG_B64: &str =
-        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
+    use crate::db::{create_database, DiaryEntry};
 
     fn create_test_entry(date: &str, title: &str, text: &str) -> DiaryEntry {
         let now = chrono::Utc::now().to_rfc3339();
@@ -76,19 +70,12 @@ mod tests {
             date: date.to_string(),
             title: title.to_string(),
             text: text.to_string(),
-            word_count: crate::db::queries::count_words(text),
+            word_count: db::count_words(text),
             date_created: now.clone(),
             date_updated: now,
             metadata: None,
             locked: false,
         }
-    }
-
-    fn tiny_png_html() -> String {
-        format!(
-            r#"<p>Imported</p><img src="data:image/png;base64,{}" alt="">"#,
-            TINY_PNG_B64
-        )
     }
 
     #[test]
@@ -114,7 +101,7 @@ mod tests {
 
         // Insert existing entry
         let existing = create_test_entry("2024-01-01", "Morning", "Had breakfast");
-        crate::db::queries::insert_entry(&db, &existing).unwrap();
+        db::insert_entry(&db, &existing).unwrap();
 
         // Import entry with same date — should create a second entry (no merge)
         let entries = vec![create_test_entry("2024-01-01", "Evening", "Had dinner")];
@@ -125,7 +112,7 @@ mod tests {
         assert_eq!(result.entries_skipped, 0);
 
         // Both entries should exist on the same date
-        let all = crate::db::queries::get_entries_by_date(&db, "2024-01-01").unwrap();
+        let all = db::get_entries_by_date(&db, "2024-01-01").unwrap();
         assert_eq!(all.len(), 2);
     }
 
@@ -179,93 +166,9 @@ mod tests {
         assert_eq!(result.entries_skipped, 0);
     }
 
-    #[test]
-    fn test_import_normalizes_legacy_data_url_images() {
-        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
-        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
-
-        let entries = vec![create_test_entry(
-            "2024-01-03",
-            "Image entry",
-            &tiny_png_html(),
-        )];
-        import_entries(&db, entries).unwrap();
-
-        let imported = crate::db::queries::get_all_entries(&db).unwrap();
-        assert_eq!(imported.len(), 1);
-        assert!(imported[0].text.contains("image-id://"));
-        assert!(!imported[0].text.contains("data:image"));
-
-        let image_count: i64 = db
-            .conn()
-            .query_row("SELECT COUNT(*) FROM images", [], |row| row.get(0))
-            .unwrap();
-        assert_eq!(image_count, 1);
-
-        let link_count: i64 = db
-            .conn()
-            .query_row("SELECT COUNT(*) FROM entry_images", [], |row| row.get(0))
-            .unwrap();
-        assert_eq!(link_count, 1);
-    }
-
-    #[test]
-    fn test_import_preserves_entries_without_images() {
-        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
-        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
-
-        let text = "<p>Plain imported text</p>";
-        let entries = vec![create_test_entry("2024-01-04", "Text entry", text)];
-        import_entries(&db, entries).unwrap();
-
-        let imported = crate::db::queries::get_all_entries(&db).unwrap();
-        assert_eq!(imported.len(), 1);
-        assert_eq!(imported[0].text, text);
-
-        let image_count: i64 = db
-            .conn()
-            .query_row("SELECT COUNT(*) FROM images", [], |row| row.get(0))
-            .unwrap();
-        assert_eq!(image_count, 0);
-    }
-
-    #[test]
-    fn test_mini_diarium_json_round_trip_preserves_image_export_behavior() {
-        let source_tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
-        let source_db =
-            create_database(source_tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
-
-        let source_entry = create_test_entry("2024-01-05", "Round trip", &tiny_png_html());
-        crate::db::queries::insert_entry_with_images(&source_db, &source_entry).unwrap();
-
-        let exported_entries = crate::db::queries::get_all_entries(&source_db).unwrap();
-        let exported_entries =
-            crate::db::queries::images::resolve_image_refs_in_entries(&source_db, exported_entries)
-                .unwrap();
-        let json =
-            crate::export::json::export_entries_to_json(exported_entries, &HashMap::new()).unwrap();
-
-        let parsed = crate::import::minidiary::parse_minidiary_json(&json).unwrap();
-
-        let target_tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
-        let target_db =
-            create_database(target_tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
-        import_entries(&target_db, parsed).unwrap();
-
-        let imported = crate::db::queries::get_all_entries(&target_db).unwrap();
-        assert_eq!(imported.len(), 1);
-        assert!(imported[0].text.contains("image-id://"));
-        assert!(!imported[0].text.contains("data:image"));
-
-        let image_count: i64 = target_db
-            .conn()
-            .query_row("SELECT COUNT(*) FROM images", [], |row| row.get(0))
-            .unwrap();
-        assert_eq!(image_count, 1);
-
-        let re_exported =
-            crate::db::queries::images::resolve_image_refs_in_entries(&target_db, imported)
-                .unwrap();
-        assert!(re_exported[0].text.contains("data:image/png;base64,"));
-    }
+    // NOTE: the image-normalization and Mini Diary JSON round-trip tests moved into the
+    // core crate (`mini-diarium-core/src/import/mod.rs`), where `insert_entry_with_images`,
+    // the `minidiary` parser, and the image-store internals live. See TODO-0077 (open-core
+    // M2): the app calls only the curated `db` façade, so those tests can no longer reach a
+    // raw connection or the (now `pub(crate)`) parser from here.
 }

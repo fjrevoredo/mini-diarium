@@ -110,14 +110,32 @@ pub fn count_auth_slots(db: &DatabaseConnection) -> Result<i64, String> {
         .map_err(|e| format!("Database error: {}", e))
 }
 
+/// Returns the `type` string of the auth slot with the given id, or `None` if absent.
+///
+/// Distinguishes "no such slot" (`Ok(None)`) from a database error (`Err`) so callers
+/// can preserve exact "Auth slot not found" semantics without reaching for a raw handle.
+pub fn get_auth_slot_type(db: &DatabaseConnection, slot_id: i64) -> Result<Option<String>, String> {
+    let result = db.conn().query_row(
+        "SELECT type FROM auth_slots WHERE id = ?1",
+        params![slot_id],
+        |row| row.get::<_, String>(0),
+    );
+    match result {
+        Ok(t) => Ok(Some(t)),
+        Err(rusqlite::Error::QueryReturnedNoRows) => Ok(None),
+        Err(e) => Err(format!("Database error: {}", e)),
+    }
+}
+
 /// Updates the `last_used` timestamp for a slot.
-pub fn update_slot_last_used(conn: &rusqlite::Connection, slot_id: i64) -> Result<(), String> {
+pub fn update_slot_last_used(db: &DatabaseConnection, slot_id: i64) -> Result<(), String> {
     let now = chrono::Utc::now().to_rfc3339();
-    conn.execute(
-        "UPDATE auth_slots SET last_used = ?1 WHERE id = ?2",
-        params![&now, slot_id],
-    )
-    .map_err(|e| format!("Failed to update last_used: {}", e))?;
+    db.conn()
+        .execute(
+            "UPDATE auth_slots SET last_used = ?1 WHERE id = ?2",
+            params![&now, slot_id],
+        )
+        .map_err(|e| format!("Failed to update last_used: {}", e))?;
     Ok(())
 }
 
@@ -166,7 +184,7 @@ mod tests {
         assert_eq!(keypair_slot.public_key_hex, Some(hex::encode(fake_pub_key)));
 
         // Update last_used
-        update_slot_last_used(db.conn(), slot_id).unwrap();
+        update_slot_last_used(&db, slot_id).unwrap();
         let slots = list_auth_slots(&db).unwrap();
         let updated = slots.iter().find(|s| s.id == slot_id).unwrap();
         assert!(updated.last_used.is_some());
@@ -221,6 +239,22 @@ mod tests {
     }
 
     #[test]
+    fn test_get_auth_slot_type() {
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+
+        // The password slot created by create_database
+        let (slot_id, _) = get_password_slot(&db).unwrap().unwrap();
+        assert_eq!(
+            get_auth_slot_type(&db, slot_id).unwrap().as_deref(),
+            Some("password")
+        );
+
+        // A non-existent slot returns Ok(None)
+        assert_eq!(get_auth_slot_type(&db, 999_999).unwrap(), None);
+    }
+
+    #[test]
     fn test_update_slot_last_used_sets_timestamp() {
         let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
         let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
@@ -243,7 +277,7 @@ mod tests {
         );
 
         // Update last_used
-        update_slot_last_used(db.conn(), slot_id).unwrap();
+        update_slot_last_used(&db, slot_id).unwrap();
 
         // last_used must now be non-null
         let last_used_after: Option<String> = db

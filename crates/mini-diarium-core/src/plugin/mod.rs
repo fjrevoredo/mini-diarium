@@ -1,8 +1,14 @@
-pub mod builtins;
-pub mod registry;
+pub(crate) mod builtins;
+pub(crate) mod registry;
 pub mod rhai_loader;
 
-use crate::db::queries::DiaryEntry;
+// Curated public façade (see crates/mini-diarium-core/API.md): the registry type and the
+// builtin-registration entry point are re-exported at the `plugin` root; the concrete
+// builtin plugin structs stay `pub(crate)`.
+pub use builtins::register_all;
+pub use registry::PluginRegistry;
+
+use crate::db::DiaryEntry;
 use std::collections::HashMap;
 
 /// Metadata about a plugin, returned to the frontend

@@ -1,5 +1,5 @@
 use crate::commands::auth::{with_unlocked_db, DiaryState};
-use crate::db::schema::DatabaseConnection;
+use crate::db::{self, DatabaseConnection};
 use tauri::State;
 
 /// Statistics about diary entries
@@ -27,16 +27,7 @@ pub fn get_statistics(state: State<DiaryState>) -> Result<Statistics, String> {
 /// Calculates statistics from the database
 fn calculate_statistics(db: &DatabaseConnection) -> Result<Statistics, String> {
     // Get all entry dates and word counts (ordered by date ASC, id ASC for multi-entry days)
-    let mut stmt = db
-        .conn()
-        .prepare("SELECT date, word_count FROM entries ORDER BY date ASC, id ASC")
-        .map_err(|e| format!("Failed to prepare statement: {}", e))?;
-
-    let entries: Vec<(String, i32)> = stmt
-        .query_map([], |row| Ok((row.get(0)?, row.get(1)?)))
-        .map_err(|e| format!("Failed to query entries: {}", e))?
-        .collect::<Result<Vec<_>, _>>()
-        .map_err(|e| format!("Failed to collect entries: {}", e))?;
+    let entries: Vec<(String, i32)> = db::get_entry_date_word_counts(db)?;
 
     // Total entries (each row counts)
     let total_entries = entries.len() as i32;
@@ -161,8 +152,7 @@ fn days_between(date1: &str, date2: &str) -> Result<i64, String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::db::queries::{insert_entry, DiaryEntry};
-    use crate::db::schema::create_database;
+    use crate::db::{create_database, insert_entry, DiaryEntry};
 
     fn create_test_entry(date: &str, word_count: i32) -> DiaryEntry {
         let now = chrono::Utc::now().to_rfc3339();

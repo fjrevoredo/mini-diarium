@@ -1,7 +1,44 @@
+use crate::db::schema::DatabaseConnection;
 use rusqlite::params;
 
+// ─── Public façade (curated API — see crates/mini-diarium-core/API.md) ──────────
+//
+// These wrappers take a `&DatabaseConnection` so no raw `rusqlite::Connection`
+// handle escapes the crate. They delegate to the retained `*_conn` helpers below,
+// which stay `pub(crate)` because the in-crate unit tests exercise the missing-table
+// / raw-DB code paths with bare connections.
+
 /// Returns the value for `key`, or `None` if absent or if `db_settings` doesn't exist yet.
-pub fn get_db_setting(conn: &rusqlite::Connection, key: &str) -> Option<String> {
+pub fn get_db_setting(db: &DatabaseConnection, key: &str) -> Option<String> {
+    get_db_setting_conn(db.conn(), key)
+}
+
+/// Upserts a key-value pair in `db_settings`.
+pub fn set_db_setting(db: &DatabaseConnection, key: &str, value: &str) -> Result<(), String> {
+    set_db_setting_conn(db.conn(), key, value)
+}
+
+/// Deletes a key from `db_settings`. Does nothing if the key is absent.
+pub fn delete_db_setting(db: &DatabaseConnection, key: &str) -> Result<(), String> {
+    delete_db_setting_conn(db.conn(), key)
+}
+
+/// Returns the effective require_all_auth state with MAC verification.
+/// Fail-safe: if the flag is "true" but MAC is absent or invalid, returns true.
+pub fn verify_require_all_auth(db: &DatabaseConnection) -> bool {
+    verify_require_all_auth_conn(db.conn(), db.key().as_bytes())
+}
+
+/// Writes the MAC for the require_all_auth flag. Called after a successful
+/// all-methods unlock to self-heal existing journals.
+pub fn write_require_all_auth_mac(db: &DatabaseConnection) -> Result<(), String> {
+    write_require_all_auth_mac_conn(db.conn(), db.key().as_bytes())
+}
+
+// ─── Raw-connection helpers (pub(crate)) ────────────────────────────────────────
+
+/// Returns the value for `key`, or `None` if absent or if `db_settings` doesn't exist yet.
+pub(crate) fn get_db_setting_conn(conn: &rusqlite::Connection, key: &str) -> Option<String> {
     conn.query_row(
         "SELECT value FROM db_settings WHERE key = ?1",
         params![key],
@@ -11,7 +48,11 @@ pub fn get_db_setting(conn: &rusqlite::Connection, key: &str) -> Option<String> 
 }
 
 /// Upserts a key-value pair in `db_settings`.
-pub fn set_db_setting(conn: &rusqlite::Connection, key: &str, value: &str) -> Result<(), String> {
+pub(crate) fn set_db_setting_conn(
+    conn: &rusqlite::Connection,
+    key: &str,
+    value: &str,
+) -> Result<(), String> {
     conn.execute(
         "INSERT OR REPLACE INTO db_settings (key, value) VALUES (?1, ?2)",
         params![key, value],
@@ -21,7 +62,7 @@ pub fn set_db_setting(conn: &rusqlite::Connection, key: &str, value: &str) -> Re
 }
 
 /// Deletes a key from `db_settings`. Does nothing if the key is absent.
-pub fn delete_db_setting(conn: &rusqlite::Connection, key: &str) -> Result<(), String> {
+pub(crate) fn delete_db_setting_conn(conn: &rusqlite::Connection, key: &str) -> Result<(), String> {
     conn.execute("DELETE FROM db_settings WHERE key = ?1", params![key])
         .map(|_| ())
         .map_err(|e| format!("Failed to delete db_setting '{}': {}", key, e))
@@ -40,13 +81,16 @@ fn compute_settings_mac(master_key: &[u8; 32]) -> [u8; 32] {
 /// Returns the effective require_all_auth state with MAC verification.
 /// Fail-safe: if the flag is "true" but MAC is absent or invalid, returns true
 /// (more restrictive interpretation when uncertain).
-pub fn verify_require_all_auth(conn: &rusqlite::Connection, _master_key: &[u8; 32]) -> bool {
-    match get_db_setting(conn, "require_all_auth").as_deref() {
+pub(crate) fn verify_require_all_auth_conn(
+    conn: &rusqlite::Connection,
+    _master_key: &[u8; 32],
+) -> bool {
+    match get_db_setting_conn(conn, "require_all_auth").as_deref() {
         None | Some("false") => return false,
         _ => {}
     }
     // Value is "true" — verify MAC
-    let stored_hex = match get_db_setting(conn, "require_all_auth_mac") {
+    let stored_hex = match get_db_setting_conn(conn, "require_all_auth_mac") {
         None => return true, // fail-safe: MAC absent → enforce guard
         Some(h) => h,
     };
@@ -63,12 +107,12 @@ pub fn verify_require_all_auth(conn: &rusqlite::Connection, _master_key: &[u8; 3
 
 /// Writes the MAC for the require_all_auth flag. Called after a successful
 /// all-methods unlock to self-heal existing journals.
-pub fn write_require_all_auth_mac(
+pub(crate) fn write_require_all_auth_mac_conn(
     conn: &rusqlite::Connection,
     master_key: &[u8; 32],
 ) -> Result<(), String> {
     let mac = compute_settings_mac(master_key);
-    set_db_setting(conn, "require_all_auth_mac", &hex::encode(mac))
+    set_db_setting_conn(conn, "require_all_auth_mac", &hex::encode(mac))
 }
 
 #[cfg(test)]
@@ -80,7 +124,9 @@ mod tests {
     fn test_get_db_setting_missing_key_returns_none() {
         let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
         let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
-        let result = get_db_setting(db.conn(), "nonexistent_key");
+        // Exercise the public wrapper as well as the raw helper.
+        assert!(get_db_setting(&db, "nonexistent_key").is_none());
+        let result = get_db_setting_conn(db.conn(), "nonexistent_key");
         assert!(result.is_none());
     }
 
@@ -89,14 +135,25 @@ mod tests {
         let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
         let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
 
-        set_db_setting(db.conn(), "require_all_auth", "true").unwrap();
-        let value = get_db_setting(db.conn(), "require_all_auth");
-        assert_eq!(value, Some("true".to_string()));
+        // Public wrapper round-trip.
+        set_db_setting(&db, "require_all_auth", "true").unwrap();
+        assert_eq!(
+            get_db_setting(&db, "require_all_auth"),
+            Some("true".to_string())
+        );
 
-        // Update the same key
-        set_db_setting(db.conn(), "require_all_auth", "false").unwrap();
-        let value2 = get_db_setting(db.conn(), "require_all_auth");
+        // Update the same key via the raw helper.
+        set_db_setting_conn(db.conn(), "require_all_auth", "false").unwrap();
+        let value2 = get_db_setting_conn(db.conn(), "require_all_auth");
         assert_eq!(value2, Some("false".to_string()));
+
+        // verify/write wrappers operate on the DatabaseConnection.
+        assert!(!verify_require_all_auth(&db));
+        write_require_all_auth_mac(&db).unwrap();
+        set_db_setting(&db, "require_all_auth", "true").unwrap();
+        assert!(verify_require_all_auth(&db));
+        delete_db_setting(&db, "require_all_auth").unwrap();
+        assert!(!verify_require_all_auth(&db));
     }
 
     #[test]
@@ -109,7 +166,7 @@ mod tests {
         )
         .unwrap();
 
-        let result = get_db_setting(&conn, "require_all_auth");
+        let result = get_db_setting_conn(&conn, "require_all_auth");
         assert!(
             result.is_none(),
             "must return None when table does not exist"
@@ -126,18 +183,18 @@ mod tests {
         .unwrap();
 
         // Insert a row
-        set_db_setting(&conn, "test_key", "test_value").unwrap();
+        set_db_setting_conn(&conn, "test_key", "test_value").unwrap();
         assert_eq!(
-            get_db_setting(&conn, "test_key"),
+            get_db_setting_conn(&conn, "test_key"),
             Some("test_value".to_string())
         );
 
         // Delete it
-        delete_db_setting(&conn, "test_key").unwrap();
-        assert_eq!(get_db_setting(&conn, "test_key"), None);
+        delete_db_setting_conn(&conn, "test_key").unwrap();
+        assert_eq!(get_db_setting_conn(&conn, "test_key"), None);
 
         // Deleting a non-existent key is not an error
-        delete_db_setting(&conn, "non_existent_key").unwrap();
+        delete_db_setting_conn(&conn, "non_existent_key").unwrap();
     }
 
     #[test]
@@ -159,7 +216,7 @@ mod tests {
         )
         .unwrap();
         let key = [0u8; 32];
-        assert!(!verify_require_all_auth(&conn, &key));
+        assert!(!verify_require_all_auth_conn(&conn, &key));
     }
 
     #[test]
@@ -173,11 +230,11 @@ mod tests {
         let key = [0u8; 32];
 
         // Write the MAC first
-        write_require_all_auth_mac(&conn, &key).unwrap();
+        write_require_all_auth_mac_conn(&conn, &key).unwrap();
         // Now write the flag "true"
-        set_db_setting(&conn, "require_all_auth", "true").unwrap();
+        set_db_setting_conn(&conn, "require_all_auth", "true").unwrap();
 
-        assert!(verify_require_all_auth(&conn, &key));
+        assert!(verify_require_all_auth_conn(&conn, &key));
     }
 
     #[test]
@@ -191,8 +248,8 @@ mod tests {
         let key = [0u8; 32];
 
         // Write "true" WITHOUT a MAC — fail-safe should enforce guard (return true)
-        set_db_setting(&conn, "require_all_auth", "true").unwrap();
-        assert!(verify_require_all_auth(&conn, &key));
+        set_db_setting_conn(&conn, "require_all_auth", "true").unwrap();
+        assert!(verify_require_all_auth_conn(&conn, &key));
     }
 
     #[test]
@@ -206,23 +263,23 @@ mod tests {
         let key = [0u8; 32];
 
         // Write valid MAC
-        write_require_all_auth_mac(&conn, &key).unwrap();
-        set_db_setting(&conn, "require_all_auth", "true").unwrap();
-        assert!(verify_require_all_auth(&conn, &key));
+        write_require_all_auth_mac_conn(&conn, &key).unwrap();
+        set_db_setting_conn(&conn, "require_all_auth", "true").unwrap();
+        assert!(verify_require_all_auth_conn(&conn, &key));
 
         // Tamper with the MAC (overwrite with garbage)
-        set_db_setting(
+        set_db_setting_conn(
             &conn,
             "require_all_auth_mac",
             "deadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
         )
         .unwrap();
         // Now fail-safe should still enforce guard (return true)
-        assert!(verify_require_all_auth(&conn, &key));
+        assert!(verify_require_all_auth_conn(&conn, &key));
 
         // Now change value to "false" — value takes precedence, guard should be off
-        set_db_setting(&conn, "require_all_auth", "false").unwrap();
-        assert!(!verify_require_all_auth(&conn, &key));
+        set_db_setting_conn(&conn, "require_all_auth", "false").unwrap();
+        assert!(!verify_require_all_auth_conn(&conn, &key));
     }
 
     #[test]
@@ -236,14 +293,14 @@ mod tests {
         let key = [0u8; 32];
 
         // Write both rows
-        set_db_setting(&conn, "require_all_auth", "true").unwrap();
-        write_require_all_auth_mac(&conn, &key).unwrap();
-        assert!(verify_require_all_auth(&conn, &key));
+        set_db_setting_conn(&conn, "require_all_auth", "true").unwrap();
+        write_require_all_auth_mac_conn(&conn, &key).unwrap();
+        assert!(verify_require_all_auth_conn(&conn, &key));
 
         // Delete both rows
-        delete_db_setting(&conn, "require_all_auth").unwrap();
-        delete_db_setting(&conn, "require_all_auth_mac").unwrap();
-        assert!(!verify_require_all_auth(&conn, &key));
+        delete_db_setting_conn(&conn, "require_all_auth").unwrap();
+        delete_db_setting_conn(&conn, "require_all_auth_mac").unwrap();
+        assert!(!verify_require_all_auth_conn(&conn, &key));
     }
 
     #[test]
@@ -256,10 +313,10 @@ mod tests {
         .unwrap();
         let key = [0u8; 32];
 
-        write_require_all_auth_mac(&conn, &key).unwrap();
+        write_require_all_auth_mac_conn(&conn, &key).unwrap();
 
         // Verify the MAC is stored as hex (64 chars)
-        let stored_hex = get_db_setting(&conn, "require_all_auth_mac").unwrap();
+        let stored_hex = get_db_setting_conn(&conn, "require_all_auth_mac").unwrap();
         assert_eq!(stored_hex.len(), 64);
 
         // Hex-decode and verify it matches compute_settings_mac

@@ -109,14 +109,13 @@ pub fn open_database_with_keypair<P1: AsRef<Path>, P2: AsRef<Path>>(
     let encryption_key =
         cipher::Key::from_slice(&master_key_bytes).ok_or("Invalid master key size")?;
 
-    queries::update_slot_last_used(&conn, slot_id)?;
-
     let _ = backups_dir;
 
     let db = DatabaseConnection {
         conn,
         encryption_key,
     };
+    queries::update_slot_last_used(&db, slot_id)?;
     apply_pending(&db)?;
     Ok(db)
 }
@@ -162,12 +161,11 @@ pub fn open_database_auto<P1: AsRef<Path>, P2: AsRef<Path>>(
     let encryption_key =
         cipher::Key::from_slice(&master_key_bytes).ok_or("Invalid master key size")?;
 
-    queries::update_slot_last_used(&conn, slot_id)?;
-
     let db = DatabaseConnection {
         conn,
         encryption_key,
     };
+    queries::update_slot_last_used(&db, slot_id)?;
     apply_pending(&db)?;
 
     let _ = backups_dir;
@@ -202,10 +200,10 @@ fn open_v3_with_password(
     let encryption_key =
         cipher::Key::from_slice(&master_key_bytes).ok_or("Invalid master key size")?;
 
-    queries::update_slot_last_used(&conn, slot_id)?;
-
-    Ok(DatabaseConnection {
+    let db = DatabaseConnection {
         conn,
         encryption_key,
-    })
+    };
+    queries::update_slot_last_used(&db, slot_id)?;
+    Ok(db)
 }

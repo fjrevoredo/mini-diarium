@@ -1,8 +1,7 @@
 use crate::commands::auth::DiaryState;
 use crate::commands::export::ExportResult;
 use crate::commands::import::ImportResult;
-use crate::plugin::registry::PluginRegistry;
-use crate::plugin::PluginInfo;
+use crate::plugin::{PluginInfo, PluginRegistry};
 use log::{debug, error, info};
 use std::sync::Mutex;
 use tauri::State;
@@ -110,8 +109,8 @@ pub fn run_export_plugin(
             err.to_string()
         })?;
         let entries = super::export::fetch_entries(db, date_from.as_deref(), date_to.as_deref())?;
-        let entries = crate::db::queries::images::resolve_image_refs_in_entries(db, entries)?;
-        let tags = crate::db::queries::tags::get_tags_names_map(db)?;
+        let entries = crate::db::resolve_image_refs_in_entries(db, entries)?;
+        let tags = crate::db::get_tags_names_map(db)?;
         (entries, tags)
     };
     let entries_exported = entries.len();
@@ -172,13 +171,13 @@ pub fn run_export_plugin(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::db::queries::DiaryEntry;
-    use crate::plugin::builtins;
+    use crate::db::DiaryEntry;
+    use crate::plugin::register_all;
 
     #[test]
     fn test_list_import_plugins_returns_builtins() {
         let mut registry = PluginRegistry::new();
-        builtins::register_all(&mut registry);
+        register_all(&mut registry);
         let list = registry.list_importers();
         assert_eq!(list.len(), 4);
         assert!(list.iter().all(|p| p.builtin));
@@ -187,7 +186,7 @@ mod tests {
     #[test]
     fn test_list_export_plugins_returns_builtins() {
         let mut registry = PluginRegistry::new();
-        builtins::register_all(&mut registry);
+        register_all(&mut registry);
         let list = registry.list_exporters();
         assert_eq!(list.len(), 3);
         assert!(list.iter().all(|p| p.builtin));
@@ -196,7 +195,7 @@ mod tests {
     #[test]
     fn test_run_import_via_registry() {
         let mut registry = PluginRegistry::new();
-        builtins::register_all(&mut registry);
+        register_all(&mut registry);
 
         let plugin = registry.find_importer("builtin:minidiary-json").unwrap();
         let json = r#"{"metadata":{"version":"3.3.0"},"entries":{"2024-01-01":{"title":"Test","text":"Hello","dateUpdated":"2024-01-01T00:00:00Z"}}}"#;
@@ -208,7 +207,7 @@ mod tests {
     #[test]
     fn test_run_export_via_registry() {
         let mut registry = PluginRegistry::new();
-        builtins::register_all(&mut registry);
+        register_all(&mut registry);
 
         let plugin = registry.find_exporter("builtin:json").unwrap();
         let entries = vec![DiaryEntry {
@@ -232,7 +231,7 @@ mod tests {
     #[test]
     fn test_import_plugin_not_found() {
         let mut registry = PluginRegistry::new();
-        builtins::register_all(&mut registry);
+        register_all(&mut registry);
 
         // Mirrors the ok_or_else in run_import_plugin; use .err().unwrap() because
         // dyn ImportPlugin does not implement Debug (required by .unwrap_err())
@@ -250,7 +249,7 @@ mod tests {
     #[test]
     fn test_export_plugin_not_found() {
         let mut registry = PluginRegistry::new();
-        builtins::register_all(&mut registry);
+        register_all(&mut registry);
 
         // Mirrors the ok_or_else in run_export_plugin; use .err().unwrap() because
         // dyn ExportPlugin does not implement Debug (required by .unwrap_err())

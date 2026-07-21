@@ -252,7 +252,7 @@ mod tests {
 
     #[test]
     fn test_change_diary_directory_auto_locks_and_moves_file() {
-        use crate::db::schema::create_database;
+        use crate::db::create_database;
 
         let src = tempfile::tempdir().unwrap();
         let dst = tempfile::tempdir().unwrap();

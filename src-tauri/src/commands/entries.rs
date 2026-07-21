@@ -1,5 +1,5 @@
 use crate::commands::auth::{with_unlocked_db, DiaryState};
-use crate::db::queries::{self, DiaryEntry, EntryMetadata};
+use crate::db::{self, DiaryEntry, EntryMetadata};
 use log::debug;
 use serde::Serialize;
 use tauri::State;
@@ -33,10 +33,9 @@ pub fn create_entry(date: String, state: State<DiaryState>) -> Result<DiaryEntry
             metadata: None,
             locked: false,
         };
-        queries::insert_entry(db, &entry)?;
-        let new_id = db.conn().last_insert_rowid();
+        let new_id = db::insert_entry(db, &entry)?;
         debug!("Created entry id={} for {}", new_id, date);
-        let created = queries::get_entry_by_id(db, new_id)?
+        let created = db::get_entry_by_id(db, new_id)?
             .ok_or_else(|| format!("Failed to retrieve newly created entry for {}", date))?;
         Ok(created)
     })
@@ -53,10 +52,10 @@ pub(crate) fn save_entry_inner(
     with_unlocked_db(state, |db| {
         // Defense-in-depth: reject content saves for locked entries. The UI already
         // gates editing, so this is a safety net (e.g. against a raced autosave).
-        if queries::is_entry_locked(db, id)? {
+        if db::is_entry_locked(db, id)? {
             return Err("entry is locked".to_string());
         }
-        queries::update_entry_with_images(db, id, title, text, metadata)?;
+        db::update_entry_with_images(db, id, title, text, metadata)?;
         debug!("Saved entry id={}", id);
         Ok(())
     })
@@ -80,7 +79,7 @@ pub fn get_entries_for_date(
     date: String,
     state: State<DiaryState>,
 ) -> Result<Vec<DiaryEntry>, String> {
-    with_unlocked_db(&state, |db| queries::get_entries_by_date(db, &date))
+    with_unlocked_db(&state, |db| db::get_entries_by_date(db, &date))
 }
 
 /// Deletes an entry by id if both title and text are empty/whitespace
@@ -96,7 +95,7 @@ pub fn delete_entry_if_empty(
     with_unlocked_db(&state, |db| {
         if title.trim().is_empty() && text.trim().is_empty() {
             debug!("Deleting empty entry id={}", id);
-            queries::delete_entry_by_id(db, id)
+            db::delete_entry_by_id(db, id)
         } else {
             Ok(false)
         }
@@ -109,11 +108,11 @@ pub fn delete_entry(id: i64, state: State<DiaryState>) -> Result<(), String> {
     with_unlocked_db(&state, |db| {
         // Locked entries are protected from deletion as well as editing. The UI disables
         // the delete button when locked; this is the backend safety net.
-        if queries::is_entry_locked(db, id)? {
+        if db::is_entry_locked(db, id)? {
             return Err("entry is locked".to_string());
         }
-        let deleted = queries::delete_entry_by_id(db, id)
-            .map_err(|e| format!("Failed to delete entry: {}", e))?;
+        let deleted =
+            db::delete_entry_by_id(db, id).map_err(|e| format!("Failed to delete entry: {}", e))?;
         if !deleted {
             return Err("Entry not found".to_string());
         }
@@ -123,11 +122,11 @@ pub fn delete_entry(id: i64, state: State<DiaryState>) -> Result<(), String> {
 
 /// Sets the per-entry `locked` flag (UX affordance against accidental edits).
 ///
-/// Targeted UPDATE that never re-encrypts entry content — see `queries::set_entry_locked`.
+/// Targeted UPDATE that never re-encrypts entry content — see `db::set_entry_locked`.
 #[tauri::command]
 pub fn set_entry_locked(id: i64, locked: bool, state: State<DiaryState>) -> Result<(), String> {
     with_unlocked_db(&state, |db| {
-        queries::set_entry_locked(db, id, locked)?;
+        db::set_entry_locked(db, id, locked)?;
         debug!("Set entry id={} locked={}", id, locked);
         Ok(())
     })
@@ -136,7 +135,7 @@ pub fn set_entry_locked(id: i64, locked: bool, state: State<DiaryState>) -> Resu
 /// Returns the distinct dates that have at least one locked entry (calendar indicator).
 #[tauri::command]
 pub fn get_locked_entry_dates(state: State<DiaryState>) -> Result<Vec<String>, String> {
-    with_unlocked_db(&state, queries::get_locked_entry_dates)
+    with_unlocked_db(&state, db::get_locked_entry_dates)
 }
 
 /// Gets all dates that have entries
@@ -144,7 +143,7 @@ pub fn get_locked_entry_dates(state: State<DiaryState>) -> Result<Vec<String>, S
 /// Returns a sorted list of distinct dates in YYYY-MM-DD format
 #[tauri::command]
 pub fn get_all_entry_dates(state: State<DiaryState>) -> Result<Vec<String>, String> {
-    with_unlocked_db(&state, queries::get_all_entry_dates)
+    with_unlocked_db(&state, db::get_all_entry_dates)
 }
 
 /// Gets a lightweight, newest-first list of all entries for the timeline view.
@@ -154,7 +153,7 @@ pub fn get_all_entry_dates(state: State<DiaryState>) -> Result<Vec<String>, Stri
 #[tauri::command]
 pub fn get_timeline_entries(state: State<DiaryState>) -> Result<Vec<TimelineEntry>, String> {
     with_unlocked_db(&state, |db| {
-        let rows = queries::get_entries_for_timeline(db)?;
+        let rows = db::get_entries_for_timeline(db)?;
         Ok(rows
             .into_iter()
             .map(|r| TimelineEntry {
@@ -171,7 +170,7 @@ pub fn get_timeline_entries(state: State<DiaryState>) -> Result<Vec<TimelineEntr
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::db::schema::create_database;
+    use crate::db::create_database;
 
     // Note: Command-level tests would require Tauri test infrastructure
     // The workflow tests below verify the underlying logic
@@ -194,11 +193,10 @@ mod tests {
             metadata: None,
             locked: false,
         };
-        queries::insert_entry(&db, &entry).unwrap();
-        let new_id = db.conn().last_insert_rowid();
+        let new_id = db::insert_entry(&db, &entry).unwrap();
 
         // Retrieve and verify
-        let retrieved = queries::get_entry_by_id(&db, new_id).unwrap();
+        let retrieved = db::get_entry_by_id(&db, new_id).unwrap();
         assert!(retrieved.is_some());
         let e = retrieved.unwrap();
         assert_eq!(e.id, new_id);
@@ -225,18 +223,17 @@ mod tests {
             metadata: None,
             locked: false,
         };
-        queries::insert_entry(&db, &entry).unwrap();
-        let id = db.conn().last_insert_rowid();
+        let id = db::insert_entry(&db, &entry).unwrap();
 
         // Update via update_entry
-        let mut updated = queries::get_entry_by_id(&db, id).unwrap().unwrap();
+        let mut updated = db::get_entry_by_id(&db, id).unwrap().unwrap();
         updated.title = "Updated Title".to_string();
         updated.text = "Updated Content".to_string();
         updated.word_count = 2;
-        queries::update_entry(&db, &updated).unwrap();
+        db::update_entry(&db, &updated).unwrap();
 
         // Verify update
-        let retrieved = queries::get_entry_by_id(&db, id).unwrap().unwrap();
+        let retrieved = db::get_entry_by_id(&db, id).unwrap().unwrap();
         assert_eq!(retrieved.title, "Updated Title");
     }
 
@@ -258,11 +255,11 @@ mod tests {
             locked: false,
         };
 
-        queries::insert_entry(&db, &make_entry("Morning")).unwrap();
-        queries::insert_entry(&db, &make_entry("Afternoon")).unwrap();
-        queries::insert_entry(&db, &make_entry("Evening")).unwrap();
+        db::insert_entry(&db, &make_entry("Morning")).unwrap();
+        db::insert_entry(&db, &make_entry("Afternoon")).unwrap();
+        db::insert_entry(&db, &make_entry("Evening")).unwrap();
 
-        let entries = queries::get_entries_by_date(&db, "2024-02-01").unwrap();
+        let entries = db::get_entries_by_date(&db, "2024-02-01").unwrap();
         assert_eq!(entries.len(), 3);
         // Newest first (highest id first)
         assert_eq!(entries[0].title, "Evening");
@@ -288,15 +285,14 @@ mod tests {
             metadata: None,
             locked: false,
         };
-        queries::insert_entry(&db, &entry).unwrap();
-        let id = db.conn().last_insert_rowid();
+        let id = db::insert_entry(&db, &entry).unwrap();
 
         // Delete empty entry
-        let deleted = queries::delete_entry_by_id(&db, id).unwrap();
+        let deleted = db::delete_entry_by_id(&db, id).unwrap();
         assert!(deleted);
 
         // Verify deletion
-        let retrieved = queries::get_entry_by_id(&db, id).unwrap();
+        let retrieved = db::get_entry_by_id(&db, id).unwrap();
         assert!(retrieved.is_none());
     }
 
@@ -319,12 +315,12 @@ mod tests {
         };
 
         // Insert multiple entries, two on the same date
-        queries::insert_entry(&db, &make_entry("2024-01-01")).unwrap();
-        queries::insert_entry(&db, &make_entry("2024-01-15")).unwrap();
-        queries::insert_entry(&db, &make_entry("2024-01-15")).unwrap(); // second on same date
-        queries::insert_entry(&db, &make_entry("2024-02-01")).unwrap();
+        db::insert_entry(&db, &make_entry("2024-01-01")).unwrap();
+        db::insert_entry(&db, &make_entry("2024-01-15")).unwrap();
+        db::insert_entry(&db, &make_entry("2024-01-15")).unwrap(); // second on same date
+        db::insert_entry(&db, &make_entry("2024-02-01")).unwrap();
 
-        let dates = queries::get_all_entry_dates(&db).unwrap();
+        let dates = db::get_all_entry_dates(&db).unwrap();
         // DISTINCT: only 3 unique dates
         assert_eq!(dates.len(), 3);
         assert_eq!(dates[0], "2024-01-01");
@@ -333,9 +329,9 @@ mod tests {
 
     #[test]
     fn test_word_count() {
-        assert_eq!(queries::count_words("Hello world"), 2);
-        assert_eq!(queries::count_words(""), 0);
-        assert_eq!(queries::count_words("One two three four five"), 5);
+        assert_eq!(db::count_words("Hello world"), 2);
+        assert_eq!(db::count_words(""), 0);
+        assert_eq!(db::count_words("One two three four five"), 5);
     }
 
     #[test]
@@ -356,15 +352,14 @@ mod tests {
             metadata: None,
             locked: false,
         };
-        queries::insert_entry(&db, &entry).unwrap();
-        let id = db.conn().last_insert_rowid();
+        let id = db::insert_entry(&db, &entry).unwrap();
 
         // delete_entry_by_id returns Ok(true) when entry exists — mirrors command Ok(())
-        let deleted = queries::delete_entry_by_id(&db, id).unwrap();
+        let deleted = db::delete_entry_by_id(&db, id).unwrap();
         assert!(deleted);
 
         // Entry is gone
-        let retrieved = queries::get_entry_by_id(&db, id).unwrap();
+        let retrieved = db::get_entry_by_id(&db, id).unwrap();
         assert!(retrieved.is_none());
     }
 
@@ -375,7 +370,7 @@ mod tests {
 
         // delete_entry_by_id returns Ok(false) for a non-existent id — the command
         // maps this to Err("Entry not found")
-        let deleted = queries::delete_entry_by_id(&db, 9999).unwrap();
+        let deleted = db::delete_entry_by_id(&db, 9999).unwrap();
         assert!(!deleted);
     }
 
@@ -410,8 +405,7 @@ mod tests {
             metadata: None,
             locked: false,
         };
-        queries::insert_entry(&db, &blank).unwrap();
-        let entry_id = db.conn().last_insert_rowid();
+        let entry_id = db::insert_entry(&db, &blank).unwrap();
         let state = DiaryState::new(
             PathBuf::from("test_save_entry_unlocked.db"),
             PathBuf::from("test_save_entry_unlocked_backups"),
@@ -421,7 +415,7 @@ mod tests {
         let result = save_entry_inner(entry_id, "My Title", "My content here", None, &state);
         assert!(result.is_ok(), "err: {:?}", result.err());
         let db_guard = state.db.lock().unwrap();
-        let retrieved = queries::get_entry_by_id(db_guard.as_ref().unwrap(), entry_id)
+        let retrieved = db::get_entry_by_id(db_guard.as_ref().unwrap(), entry_id)
             .unwrap()
             .unwrap();
         assert_eq!(retrieved.title, "My Title");
@@ -446,9 +440,8 @@ mod tests {
             metadata: None,
             locked: false,
         };
-        queries::insert_entry(&db, &entry).unwrap();
-        let entry_id = db.conn().last_insert_rowid();
-        queries::set_entry_locked(&db, entry_id, true).unwrap();
+        let entry_id = db::insert_entry(&db, &entry).unwrap();
+        db::set_entry_locked(&db, entry_id, true).unwrap();
 
         let state = DiaryState::new(
             PathBuf::from("test_save_locked.db"),
@@ -462,7 +455,7 @@ mod tests {
 
         // Content must be unchanged.
         let db_guard = state.db.lock().unwrap();
-        let retrieved = queries::get_entry_by_id(db_guard.as_ref().unwrap(), entry_id)
+        let retrieved = db::get_entry_by_id(db_guard.as_ref().unwrap(), entry_id)
             .unwrap()
             .unwrap();
         assert_eq!(retrieved.title, "Original");
