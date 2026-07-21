@@ -143,7 +143,14 @@ pip install --require-hashes    # pip
 - **Only install if cache missed** — skip install entirely on a hit
 - **Disable caching for large release artifacts** (e.g. LTO/optimized builds) that are non-incrementally reusable
 - **Pin `bunx`/`npx` invocations to an exact version** matching the lockfile (e.g. `bunx playwright@1.61.1 install`), not a bare package name. A bare name resolves to whatever the registry serves today, which SonarCloud flags as `githubactions:S8543` (installing unverified releases). Bump the pin alongside the corresponding dependency in `package.json`.
-- **Forbid non-HTTPS redirects when downloading with `curl`** by passing `--proto-redir -all,https` alongside `-L`. Without it, an HTTPS URL that 302s to `http://` would silently downgrade the transfer (SonarCloud `githubactions:S6506`). Use the same flag for any `wget`-style download of release artifacts.
+- **Never use `curl -L`/`--location` in CI downloads** (SonarCloud `githubactions:S6506`, former hotspot, flags every redirect-following `curl` invocation — and does **not** recognize `--proto-redir` as a mitigation). For GitHub release URLs (which 302 to a signed `release-assets.githubusercontent.com` URL), resolve the redirect manually with a HEAD request, assert the resolved URL is HTTPS, then GET it directly:
+
+  ```bash
+  URL="https://github.com/OWNER/REPO/releases/download/V/TARBALL"
+  FINAL="$(curl -fsSI -o /dev/null -w '%{redirect_url}' "$URL")"
+  case "$FINAL" in https://*) ;; *) echo "not HTTPS: $FINAL" >&2; exit 1 ;; esac
+  curl -fsS -o /tmp/file "$FINAL"
+  ```
 
 ---
 

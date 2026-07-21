@@ -41,7 +41,7 @@ Template:
 
 ### Security
 - **Hardened CI against two SonarCloud vulnerabilities in `.github/workflows/ci.yml`**:
-    - **HTTPS-only redirects on `curl` downloads (S6506)**: the D2 release tarball download now passes `--proto-redir -all,https` to `curl -fsSL`, so a 3xx response cannot downgrade the transfer to `http://`. GitHub release assets redirect from `github.com` to `objects.githubusercontent.com`, both HTTPS in practice — the flag enforces that invariant regardless of upstream changes.
+    - **HTTPS-only download of the D2 release tarball (S6506)**: the `curl -fsSL` download of `d2-v0.7.1` followed GitHub's 302 to `release-assets.githubusercontent.com` with `-L`, which SonarCloud's `githubactions:S6506` rule flags (and does not recognize `--proto-redir` as a mitigation). The download now resolves the redirect manually with a HEAD request, asserts the resolved URL is HTTPS, and GETs it directly — no `-L` anywhere. The signed URL returned by GitHub already carries `spr=https`, so the explicit `case` check is defense-in-depth.
     - **Pinned `bunx playwright` version (S8543)**: `bunx playwright install --with-deps chromium` was unversioned, letting the registry serve any release; it is now pinned to `playwright@1.61.1` (the exact version resolved in `bun.lock`) with a comment to bump it alongside the `@playwright/test` dependency. This prevents a compromised or yanked upstream release from silently landing in CI.
     - Both rules are now recorded as durable CI guidance in `docs/best-practices/CI_BEST_PRACTICES.md`.
 
