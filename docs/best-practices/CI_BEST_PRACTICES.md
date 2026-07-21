@@ -142,6 +142,8 @@ pip install --require-hashes    # pip
 - **Pin tools to a specific version** in the cache key, with a comment to bump it on upgrade
 - **Only install if cache missed** — skip install entirely on a hit
 - **Disable caching for large release artifacts** (e.g. LTO/optimized builds) that are non-incrementally reusable
+- **Pin `bunx`/`npx` invocations to an exact version** matching the lockfile (e.g. `bunx playwright@1.61.1 install`), not a bare package name. A bare name resolves to whatever the registry serves today, which SonarCloud flags as `githubactions:S8543` (installing unverified releases). Bump the pin alongside the corresponding dependency in `package.json`.
+- **Forbid non-HTTPS redirects when downloading with `curl`** by passing `--proto-redir -all,https` alongside `-L`. Without it, an HTTPS URL that 302s to `http://` would silently downgrade the transfer (SonarCloud `githubactions:S6506`). Use the same flag for any `wget`-style download of release artifacts.
 
 ---
 

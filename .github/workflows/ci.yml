@@ -86,7 +86,8 @@ jobs:
         if: steps.cache-d2.outputs.cache-hit != 'true'
         run: |
           set -euo pipefail
-          curl -fsSL -o /tmp/d2.tar.gz \
+          # --proto-redir -all,https: forbid redirects to non-HTTPS schemes (S6506)
+          curl -fsSL --proto-redir -all,https -o /tmp/d2.tar.gz \
             "https://github.com/terrastruct/d2/releases/download/v0.7.1/d2-v0.7.1-linux-amd64.tar.gz"
           tar -xzf /tmp/d2.tar.gz -C /tmp
           mkdir -p ~/.local/bin
@@ -147,7 +148,9 @@ jobs:
 
       - name: Install Playwright Chromium
         if: steps.cache-playwright.outputs.cache-hit != 'true'
-        run: bunx playwright install --with-deps chromium
+        # Pin Playwright to the exact version resolved in bun.lock (S8543).
+        # Bump alongside the @playwright/test dependency in package.json.
+        run: bunx playwright@1.61.1 install --with-deps chromium
 
       - name: Cache nextest binary
         id: cache-nextest
