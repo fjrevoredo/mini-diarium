@@ -152,12 +152,12 @@ The `unsafe` impls are sound: the AST is immutable after compilation and each ca
 
 ---
 
-### AT-8 — `rand 0.8` is pinned; upgrade to 0.10 is blocked
-**Status:** Open (deferred; ecosystem not ready)
+### AT-8 — `rand_core 0.6` is pinned; bump to 0.10 is blocked on source migration
+**Status:** Open (deferred; source migration not yet done)
 
-`aes-gcm 0.10` and `x25519-dalek 2` both depend on `rand_core 0.6`. Upgrading to `rand 0.10` (which requires `rand_core 0.9`) would require switching to pre-release crypto crates (`aes-gcm 0.11.0-rc.3`, `x25519-dalek 3.0.0-pre.6`), which is inappropriate for a privacy-first application.
+`rand` is already at `0.10` and the crypto crates (`aes-gcm 0.11`, `x25519-dalek 3`) are on stable releases that depend on the modern `rand_core`. The remaining blocker is a source migration: `rand_core 0.10` removed `OsRng` and renamed `RngCore` to `Rng`. The codebase still has ~22 `rand_core::OsRng` / `rand_core::RngCore` call sites — in `crates/mini-diarium-core/src/crypto/cipher.rs`, `crates/mini-diarium-core/src/db/schema/create.rs`, `crates/mini-diarium-core/src/db/schema/migrations/v2_to_v3.rs`, and several test modules — that must be migrated to `rand::rng()` / the `Rng` trait before the `rand_core = "0.6"` → `"0.10"` manifest bump compiles.
 
-**Retry when:** `aes-gcm 0.11` and `x25519-dalek 3` publish stable releases. The four files that need changes are documented in MEMORY.md under "Deferred Dependency Upgrades."
+**Retry when:** the `OsRng`/`RngCore` call sites are migrated; then apply the `rand_core = "0.10"` bump in both `src-tauri/Cargo.toml` and `crates/mini-diarium-core/Cargo.toml`. (Dependabot PR #225 was closed with this comment on 2026-07-21.)
 
 ---
 
