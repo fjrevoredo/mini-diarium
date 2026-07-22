@@ -185,7 +185,7 @@ The façade API from Step 2 (Section 9) should therefore be defined so that the 
 Each step is independently shippable and behavior-preserving. Nothing here changes what the open core does; it changes how it is packaged.
 
 1. **Introduce the workspace and move Tauri-free modules into `mini-diarium-core`.** Pure code-move plus `Cargo.toml` restructure; the app depends on the new crate. Verification: the full existing backend test suite passes unchanged. This is cheap, improves the codebase regardless of the premium track, and is the prerequisite for everything else.
-2. **Define a stable core façade API.** Today `commands/*` reach directly into `db::queries::*` and friends. A consumer crate should not depend on internal module paths. Add a deliberate public API on `mini-diarium-core` (open/unlock, entry CRUD, search, import/export, auth-slot management) so both the Tauri app and + call the same stable surface. Treat everything else as internal.
+2. **Define a core façade API.** Today `commands/*` reach directly into `db::queries::*` and friends. A consumer crate should not depend on internal module paths. Add a deliberate public API on `mini-diarium-core` (open/unlock, entry CRUD, search, import/export, auth-slot management) so both the Tauri app and + call the same surface. Treat everything else as internal. The surface stays explicitly **pre-1.0 and internal** until step 3 decides distribution — one curated list of names, not yet an external stability promise.
 3. **Decide core-crate distribution.** Publish to crates.io (public, versioned, maximally in the open-source spirit) versus a git dependency or submodule (keeps versioning private). MIT permits either; this is a preference, not a constraint.
 4. **Decide the frontend boundary (only if + reuses UI).** The SolidJS UI talks to the backend through the `invoke()` seam in `src/lib/tauri/*.ts`. A desktop-shaped + with sync could share most components and state; a hosted-web + needs a substantially different frontend and a JS/WASM layer replacing the Rust backend behind that seam. Defer this until the + surface is chosen, because the answer differs entirely by surface.
 5. **Governance groundwork.** Add a CLA if there is any future intent to relicense the core itself (MIT already permits building proprietary layers over outside contributions, so a CLA is only needed for relicensing, not for open-core per se). Register or defend the trademark on the name. Add a short `CONTRIBUTING.md` note that premium features live in a separate product and repo.
@@ -244,19 +244,20 @@ Each milestone carries a **Checklist** of `- [ ]` items to tick off as the work 
   - _Acceptance_
     - [x] `mini-diarium-core` compiles with zero `tauri::` references
     - [x] Backend (both crates) + frontend suites green, app behaves identically; E2E/coverage gate unaffected (frontend untouched; release binary builds to `target/release/` with LTO preserved)
+    - [x] No stale single-crate assumptions in active docs — _gap-filled 2026-07-22:_ the M1 commit left `README.md` and `.claude/agents/test-failure-analyst.md` pointing at the pre-workspace `src-tauri/target/` location; both corrected to the workspace-root `target/`, and `scripts/check-stale-build-paths.js` (`bun run check:build-paths`, wired into `quick-check` and `pre-commit`) now guards the regression.
 
 ### M2 — Stable façade API (Section 9, step 2)
 
 - **Goal:** give consumers one deliberate public surface instead of reaching into internal module paths.
-- **Deliverables:** a public API on `mini-diarium-core` covering open/unlock, entry CRUD, search, import/export, and auth-slot management; `commands/*` refactored to call only that façade; everything else marked internal (`pub(crate)` / private). A short `crates/mini-diarium-core/API.md` documenting that surface as the stability contract.
+- **Deliverables:** a public API on `mini-diarium-core` covering open/unlock, entry CRUD, search, import/export, and auth-slot management; `commands/*` refactored to call only that façade; everything else marked internal (`pub(crate)` / private). A short `crates/mini-diarium-core/API.md` documenting that surface, its pre-1.0/internal status, and the compatibility, error, secret-handling, handle/transaction, and serde rules that go with it.
 - **Boundary guard:** for now the boundary is enforced by module visibility (`pub` only on the façade, `pub(crate)`/private everywhere else) plus code review — sufficient while the app is the only consumer. An automated public-API regression guard (a `cargo-public-api` snapshot test in CI that fails when the surface drifts) is noted as a **deferred follow-up**, worth adding once `minidiarium-plus` actually exists and the contract needs teeth; building it now would be CI-maintenance cost with no external consumer to protect.
 - **Verification:** app still compiles and passes the full suite against the façade only; a grep confirms `commands/*` no longer reference `db::queries::*` internals directly.
 - **Exit criteria:** the Tauri app and a hypothetical second consumer would call the same surface; internals are sealed; `API.md` present.
 - **Checklist:**
   - [x] Public façade covers open/unlock, entry CRUD, search, import/export, auth-slot management
-  - [x] `commands/*` refactored to call only the façade (no direct `db::queries::*` access)
+  - [x] `commands/*` refactored to call only the façade (no direct `db::queries::*` access) — _gap-filled 2026-07-22:_ the M2 commit left `peek_auth_slot_types` opening its own `rusqlite::Connection` with bespoke SQL. Moved to `db::peek_auth_slot_types(path)` behind the façade; the command is now a thin wrapper and the app crate's `rusqlite` dependency is gone. `rg "rusqlite|db::queries::|db::schema::|\.conn\(\)|\.key\(\)" src-tauri/src` returns nothing.
   - [x] Internals sealed (`pub(crate)` / private everywhere outside the façade)
-  - [x] `crates/mini-diarium-core/API.md` written as the stability contract
+  - [x] `crates/mini-diarium-core/API.md` written as the contract — _extended 2026-07-22_ with the pre-1.0/internal status, MSRV/edition, error policy (including the two `mapTauriError`-coupled phrases), secret-handling, handle/transaction semantics, frozen serde fields, and the change rule.
   - [x] Full suite passes against the façade only
   - [x] `cargo-public-api` regression guard noted as a deferred follow-up (not built now)
 

@@ -143,7 +143,7 @@ bun install
 bun run tauri build
 ```
 
-Artifacts will be in `src-tauri/target/release/bundle/`.
+Artifacts will be in `target/release/bundle/` (the Cargo workspace root owns `target/`).
 
 ## Tech Stack
 

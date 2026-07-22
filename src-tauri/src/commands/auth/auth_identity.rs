@@ -2,6 +2,11 @@ use tauri::State;
 
 use super::{with_unlocked_db, DiaryState};
 
+// The peek result types are core-owned (open-core M2 façade). Re-exported here so the
+// command signature and existing `commands::auth::…` paths keep resolving — same pattern
+// as `commands/search.rs` re-exporting `SearchResult`.
+pub use crate::db::{AuthSlotPeek, JournalPeek};
+
 /// Verifies the current password without performing any other operation.
 ///
 /// Used by the frontend to validate credentials before starting multi-step
@@ -35,78 +40,25 @@ pub fn list_auth_methods(
     list_auth_methods_inner(&state)
 }
 
-/// Reads auth slot types and labels from a locked journal (no key required).
-///
-/// Opens the SQLite container with a plain connection — the container is not encrypted
-/// at the SQLite level; only entry content is AES-256-GCM encrypted at the application
-/// layer. Excludes `auto` slots (device-bound keys that never require user input).
-/// Returns empty slots and `require_all_auth: false` if the DB file does not yet exist.
-/// Does NOT expose wrapped_key or public_key.
-#[tauri::command]
-pub fn peek_auth_slot_types(state: State<DiaryState>) -> Result<JournalPeek, String> {
+/// Pure inner of `peek_auth_slot_types` — takes `&DiaryState` so it can be tested without Tauri.
+pub(crate) fn peek_auth_slot_types_inner(state: &DiaryState) -> Result<JournalPeek, String> {
     let db_path = state
         .db_path
         .lock()
         .map_err(|_| "State lock poisoned".to_string())?
         .clone();
 
-    if !db_path.exists() {
-        return Ok(JournalPeek {
-            slots: vec![],
-            require_all_auth: false,
-        });
-    }
-
-    let conn = rusqlite::Connection::open(&db_path)
-        .map_err(|e| format!("Failed to open journal: {}", e))?;
-
-    let mut stmt = conn
-        .prepare("SELECT id, type, label FROM auth_slots WHERE type != 'auto' ORDER BY id ASC")
-        .map_err(|e| format!("Failed to prepare: {}", e))?;
-
-    let rows = stmt
-        .query_map([], |row| {
-            Ok(AuthSlotPeek {
-                id: row.get(0)?,
-                slot_type: row.get(1)?,
-                label: row.get(2)?,
-            })
-        })
-        .map_err(|e| format!("Failed to query: {}", e))?
-        .collect::<Result<Vec<_>, _>>()
-        .map_err(|e| format!("Failed to collect: {}", e))?;
-
-    // This peek opens the container with a plain (non-decrypting) connection — there is no
-    // `DatabaseConnection`/key here — so read the `require_all_auth` flag with direct SQL.
-    // `.ok()` maps a missing `db_settings` table (pre-v6 journals) to "not set", matching
-    // `db::get_db_setting`'s behavior on the unlocked path.
-    let require_all_auth = conn
-        .query_row(
-            "SELECT value FROM db_settings WHERE key = 'require_all_auth'",
-            [],
-            |row| row.get::<_, String>(0),
-        )
-        .ok()
-        .map(|v| v == "true")
-        .unwrap_or(false);
-
-    Ok(JournalPeek {
-        slots: rows,
-        require_all_auth,
-    })
+    crate::db::peek_auth_slot_types(db_path)
 }
 
-#[derive(Debug, serde::Serialize)]
-pub struct JournalPeek {
-    pub slots: Vec<AuthSlotPeek>,
-    pub require_all_auth: bool,
-}
-
-#[derive(Debug, serde::Serialize)]
-pub struct AuthSlotPeek {
-    pub id: i64,
-    pub slot_type: String,
-    pub label: String,
+/// Reads auth slot types and labels from a locked journal (no key required).
+///
+/// Thin wrapper over `mini_diarium_core::db::peek_auth_slot_types`, which owns the
+/// missing-file, `auto`-slot-exclusion, and pre-v6 `db_settings` semantics. Never exposes
+/// `wrapped_key` or `public_key`.
+#[tauri::command]
+pub fn peek_auth_slot_types(state: State<DiaryState>) -> Result<JournalPeek, String> {
+    peek_auth_slot_types_inner(&state)
 }
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
@@ -115,6 +67,24 @@ pub struct AuthSlotPeek {
 mod tests {
     use super::super::test_helpers::*;
     use crate::db::create_database;
+
+    #[test]
+    fn test_peek_auth_slot_types_reads_journal_through_the_facade() {
+        let (_fixture, state, db_path, _) = make_state("peek_slots");
+
+        // No journal yet — the façade short-circuits without creating the file.
+        let empty = super::peek_auth_slot_types_inner(&state).unwrap();
+        assert!(empty.slots.is_empty());
+        assert!(!empty.require_all_auth);
+
+        create_database(&db_path, "test".to_string()).unwrap();
+
+        let peek = super::peek_auth_slot_types_inner(&state).unwrap();
+        assert_eq!(peek.slots.len(), 1);
+        assert_eq!(peek.slots[0].slot_type, "password");
+        assert!(!peek.require_all_auth);
+    }
+
     #[test]
     fn test_list_auth_methods_locked_returns_error() {
         let (_fixture, state, _, _) = make_state("list_methods_locked");

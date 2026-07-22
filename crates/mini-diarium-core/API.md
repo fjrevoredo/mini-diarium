@@ -1,21 +1,120 @@
-# `mini-diarium-core` — Public API (stability contract)
+# `mini-diarium-core` — Public API
 
-This document is the **curated public surface** of `mini-diarium-core`: the deliberate,
-stable API that consumers (the desktop app crate `mini-diarium`, a future `minidiarium-plus`,
-and eventually a WASM tier) may depend on. It was defined in open-core **M2 (TODO-0077)**.
+This document is the **curated public surface** of `mini-diarium-core`: the deliberate API
+that consumers (the desktop app crate `mini-diarium`, a future `minidiarium-plus`, and
+eventually a WASM tier) call. It was defined in open-core **M2 (TODO-0077)**.
 
 **Rule of thumb:** if a name is not listed here, it is an implementation detail. It may be
 `pub` inside the crate for internal reuse, but it is sealed behind a `pub(crate)` module or
 otherwise not re-exported at a module root, so external crates cannot name it. Treat anything
 unlisted as subject to change without notice.
 
-The boundary is enforced today by **module visibility + code review**. An automated
+Each item below is reachable at the path shown (e.g. `mini_diarium_core::db::insert_entry`).
+
+---
+
+## Contract & compatibility
+
+### Status: pre-1.0, internal
+
+The crate is version `0.1.0` and is consumed **only** as a path dependency by
+`mini-diarium` in this repository. Until open-core **M4** decides distribution
+(crates.io vs. git dependency — see [`docs/OPEN_CORE_STRATEGY.md`](../../docs/OPEN_CORE_STRATEGY.md) §10),
+**any item listed here may change without notice**: no deprecation window, no semver
+promise, no changelog obligation beyond this repository's own `CHANGELOG.md`.
+
+What this document *does* guarantee today is narrower and still useful: it is the complete
+list of names an external consumer is allowed to reach for, and it is kept truthful
+(see [Change rule](#change-rule)). It is **not** an external stability promise, and the
+crate should not be presented as a dependency-ready stable API until M4 says so.
+
+The boundary is enforced by **module visibility + code review**. An automated
 `cargo-public-api` guard (fail CI when the public surface changes without a corresponding
 API.md update) is an explicit **deferred follow-up** — see OPEN_CORE_STRATEGY.md §10.
 
-Each item below is reachable at the path shown (e.g. `mini_diarium_core::db::insert_entry`).
-Serde-serialized types keep their field names stable — the frontend/IPC contract depends on
-them.
+### MSRV / edition
+
+Rust **1.95** (pinned in `rust-toolchain.toml`), edition **2021**. Bumping the toolchain is
+a contract change and updates this line.
+
+### Error policy
+
+Every fallible function returns `Result<_, String>`. **The error text is a display value,
+not a branch key** — consumers must not pattern-match on it, and its wording may change in
+any commit.
+
+There is exactly one honest exception, and it exists because the desktop app predates this
+contract: `mapTauriError` (`src/lib/errors.ts`) classifies backend errors by **regex
+heuristics** to pick a localized message. Core owns two of the phrases it keys on:
+
+| Phrase | Produced by | Consumer behaviour |
+|---|---|---|
+| `"Incorrect password"` | `auth/password.rs`, `db/schema/open.rs` | mapped to the localized "incorrect password" message |
+| any `rusqlite` / `sqlite` / `argon2` substring | propagated driver/KDF errors | collapsed into a generic "internal error" |
+
+Renaming either is a contract change and requires updating `src/lib/errors.ts` in the same
+commit. Every other error string is free-form.
+
+### Secrets
+
+No public API returns a master key or a raw `rusqlite::Connection`.
+`DatabaseConnection::{conn, key}` are `pub(crate)` by design; operations that need the
+master key are exposed as composed functions instead (e.g. `auth::add_password_slot`).
+Passwords and key material are never logged, printed, or serialized.
+
+### Handle & mutation semantics
+
+Blanket rules, so individual entries below do not repeat them:
+
+- **Unlocked handle required.** Every `db::*` function that takes `&DatabaseConnection`
+  operates on an already-unlocked journal; obtaining one is the job of the
+  `create_database*` / `open_database*` constructors. The single exception is
+  `db::peek_auth_slot_types`, which takes a **path** and needs neither a handle nor a key.
+- **Transactions.** `insert_entry_with_images`, `update_entry_with_images`, and
+  `delete_entry_by_id` wrap their work in `BEGIN IMMEDIATE` / `COMMIT` with an explicit
+  `ROLLBACK` on any failure (`db/queries/entries/{insert,update,delete}.rs`), so the
+  long-lived connection is never left in a half-open transaction. The lower-level
+  `insert_entry` / `update_entry` are single-statement writes with no transaction of their
+  own — they are the primitives the `*_with_images` variants compose.
+- **Foreign keys.** Connections are always opened through `db::schema`'s `open_connection`,
+  which sets the per-connection `PRAGMA foreign_keys = ON` that all `ON DELETE CASCADE` /
+  `RESTRICT` declarations depend on.
+- **Encryption.** Entry title/text/preview/metadata, tag names, and image bytes are
+  AES-256-GCM encrypted at the application layer before they reach SQLite. The SQLite
+  container itself is *not* encrypted — that is why an unauthenticated peek is possible.
+
+### Serde guarantees
+
+Field names of the IPC-visible types **are frozen**: the frontend's TypeScript interfaces
+(`src/lib/tauri/*.ts`) mirror them verbatim, so renaming one silently breaks the UI.
+
+| Type | Serialized fields |
+|---|---|
+| `DiaryEntry` | `id`, `date`, `title`, `text`, `word_count`, `date_created`, `date_updated`, `metadata` (omitted when `None`), `locked` |
+| `EntryMetadata` | `fontFamily`, `fontSize` (**renamed** from `font_family`/`font_size`; each omitted when `None`) |
+| `TimelineRow` | `id`, `date`, `title`, `preview`, `locked` |
+| `Tag` | `id`, `name`, `created_at` |
+| `ImageData` | `id`, `mime_type`, `data_base64` |
+| `ImageSummary` | `id`, `mime_type`, `created_at`, `thumbnail_mime_type`, `thumbnail_data_base64`, `width`, `height`, `byte_size`, `usage_count`, `first_entry_date`, `latest_entry_date` |
+| `ImageSummaryPage` | `items`, `has_more` |
+| `ImageSummarySort` | enum, `snake_case`: `newest`, `oldest`, `most_used` |
+| `AuthMethodInfo` | `id`, `slot_type`, `label`, `public_key_hex` (`null` for password slots), `created_at`, `last_used` |
+| `KeypairFiles` | `public_key_hex`, `private_key_hex` |
+| `JournalPeek` | `slots`, `require_all_auth` |
+| `AuthSlotPeek` | `id`, `slot_type`, `label` |
+| `PluginInfo` | `id`, `name`, `file_extensions`, `builtin` |
+| `ExportOutput` | not serialized — a plain Rust struct with `content: String` and `assets: Vec<(String, Vec<u8>)>` |
+| `SearchResult` | `id`, `date`, `title`, `snippet` |
+| `SearchResponse` | **`camelCase`**: `results`, `totalMatches` |
+| `JournalConfig` | `id`, `name`, `path`, `auto_key`, `db_filename`, `require_all_auth` (last three omitted when `None`) — this is the on-disk `config.json` shape, so it is also a **file-format** contract |
+| `JournalInfo` | `id`, `name`, `path`, `auto_protected`, `require_all_auth`, `db_filename` — the IPC-safe DTO; never carries the raw `auto_key` |
+| `PrintLabels` | **deserialize-only** input: `generated_label`, `tags_label`, `no_entries_label`, `months` |
+
+### Change rule
+
+Any change to a listed symbol's **name, signature, serde field, or error class** updates
+this file **in the same commit**. Adding a new public name means adding it here; if it is
+not worth listing, it should not be `pub`.
 
 ---
 
@@ -67,6 +166,17 @@ sealed (`pub(crate)`); the names below are re-exported at `db`.
 - `verify_require_all_auth`, `write_require_all_auth_mac`
 - (The raw-`&rusqlite::Connection` forms `*_conn` stay `pub(crate)` — used only by in-crate
   tests exercising the missing-table paths.)
+
+### Locked-journal peek (no handle, no key)
+- `peek_auth_slot_types(path) -> Result<JournalPeek, String>` — reads auth-slot types/labels
+  and the `require_all_auth` flag straight from a **locked** journal file, so an unlock screen
+  knows which credentials to ask for. Excludes `auto` slots; never returns `wrapped_key` or
+  `public_key`. A missing file yields an empty peek **without creating it**; a pre-v6 journal
+  with no `db_settings` table yields `require_all_auth: false`.
+  The flag is read here **without** its HKDF MAC (there is no key to verify with). That is not
+  a bypass: this value only decides what the UI *asks* for — enforcement stays with the
+  MAC-verified, fail-safe `verify_require_all_auth` on the unlocked path.
+- Types: `JournalPeek`, `AuthSlotPeek`
 
 ### Introspection / stats
 - `read_schema_version`, `read_engine_versions`, `get_entry_date_word_counts`

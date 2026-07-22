@@ -63,7 +63,7 @@ SUGGESTED FOCUS: <1 sentence on highest-priority fix or root cause chain>
 When analyzing tests for this project:
 - Backend tests live in `src-tauri/src/**/*.rs` — modules: auth, commands, crypto, db, import, export, backup
 - Frontend tests use Vitest + @solidjs/testing-library — must use `render(() => <Component />)` arrow wrapper
-- E2E tests use WebdriverIO + tauri-driver; binary must exist at `src-tauri/target/release/mini-diarium[.exe]`
+- E2E tests use WebdriverIO + tauri-driver; binary must exist at `target/release/mini-diarium[.exe]` (workspace-root `target/`)
 - Common failure patterns to flag: "Diary not unlocked" (state not set up), date format issues (must be `YYYY-MM-DD`), command not registered in `generate_handler![]`, missing Tauri mock in test setup
 - If a Rust test fails with `unwrap()` on None in db context, likely cause is test DB not initialized
 - AES/crypto failures likely indicate key derivation or nonce issues in `crypto/cipher.rs`

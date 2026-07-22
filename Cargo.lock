@@ -2654,7 +2654,6 @@ dependencies = [
  "objc2-web-kit",
  "rand",
  "rand_core 0.6.4",
- "rusqlite",
  "serde",
  "serde_json",
  "tauri",

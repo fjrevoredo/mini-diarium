@@ -106,6 +106,17 @@ async function main() {
     results.failed.push('UI Error Sanitization');
   }
 
+  // 4b. Stale pre-workspace build path guard
+  header('Stale Build Paths');
+  const buildPaths = run('bun run check:build-paths', 'Checking pre-workspace target/ paths');
+  if (buildPaths.success) {
+    success('No stale pre-workspace build paths');
+    results.passed.push('Stale Build Paths');
+  } else {
+    error('Stale pre-workspace build paths found (the workspace root owns target/)');
+    results.failed.push('Stale Build Paths');
+  }
+
   // 5. Frontend Tests (with coverage)
   header('Frontend Tests');
   const frontendTest = run('bun run test:coverage', 'Running tests with coverage');

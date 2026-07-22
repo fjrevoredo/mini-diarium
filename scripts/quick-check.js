@@ -85,6 +85,18 @@ if (uiErrors.success) {
   log(uiErrors.output, 'red');
 }
 
+// Stale pre-workspace build path guard
+process.stdout.write('Build paths... ');
+const buildPaths = run('bun run check:build-paths');
+if (buildPaths.success) {
+  log('✓', 'green');
+  results.passed.push('Build paths');
+} else {
+  log('✗', 'red');
+  results.failed.push('Build paths');
+  log(buildPaths.output, 'red');
+}
+
 // Summary
 console.log();
 if (results.failed.length === 0) {

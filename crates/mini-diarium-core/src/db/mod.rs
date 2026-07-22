@@ -1,7 +1,8 @@
+pub(crate) mod peek;
 pub(crate) mod queries;
 pub(crate) mod schema;
 
-// ── Curated public façade (the stability contract — see crates/mini-diarium-core/API.md) ──
+// ── Curated public façade (the API contract — see crates/mini-diarium-core/API.md) ──
 //
 // The `queries` and `schema` sub-modules are sealed to the crate; consumers reach the
 // database layer only through the names re-exported here at the `db` root.
@@ -10,6 +11,9 @@ pub use schema::{
     create_database, create_database_auto, open_database, open_database_auto,
     open_database_with_keypair, DatabaseConnection, SCHEMA_VERSION,
 };
+
+// Locked-journal metadata — the one `db` read that needs no handle and no key.
+pub use peek::{peek_auth_slot_types, AuthSlotPeek, JournalPeek};
 
 // Grouped by concern to mirror API.md; `rustfmt::skip` keeps the grouping (rustfmt would
 // otherwise flatten it into one alphabetical list).
