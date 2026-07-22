@@ -13,13 +13,15 @@ TODO entry format:
 - After creating a new TODO, update the `Latest TODO ID` marker to reflect the new highest ID
 - Use the `todo-manager` skill (`.agents/skills/todo-manager/`) for creation, tracking, archival, and validation
 
-**Latest TODO ID: TODO-0080** — next new TODO should be TODO-0081
+**Latest TODO ID: TODO-0081** — next new TODO should be TODO-0082
 
 ---
 
 ## High Priority
 
 ---
+
+- [ ] **TODO-0081: Spell check not functioning on Linux/WebKitGTK (#227)** — the "Enable spellcheck" preference (Preferences → Writing) silently does nothing on Linux (reported on Debian 13 / Flatpak, v0.6.2). Root cause: the implementation only sets the HTML `spellcheck` attribute on the editor DOM (`DiaryEditor.tsx:257`, `TitleEditor.tsx:47`), which WebKitGTK — Tauri's Linux WebView — ignores unless the WebView-level spell-checking setting is also enabled and Hunspell/enchant dictionaries are reachable. macOS (WKWebView) and Windows (WebView2) honor the attribute via OS-native checkers, so only Linux is affected; the Flatpak sandbox further restricts dictionary access. Acceptance: with the preference on, misspelled words are underlined on Linux with system dictionaries installed, and the toggle still disables them cleanly; document any Flatpak finish-args/runtime-extension changes needed for dictionary access.
 
 - [ ] **TODO-0008: Cursor height too tall after Shift+Enter on macOS (#118)** — the text caret (cursor) height becomes extra long starting on the second line, but only when inserting a soft line break with Shift+Enter (Enter alone works fine); macOS-only (v0.4.20); likely a `line-height` or `font-family` mismatch in ProseMirror's `<br>` handling introduced with new editor fonts in v0.4.20; audit soft-break styling in `src/styles/editor.css` and the `--editor-font-family` / `--editor-font-size` CSS custom properties
 ---

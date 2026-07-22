@@ -16,6 +16,7 @@ Free, open source, and never touches the internet.
 [![Platform](https://img.shields.io/badge/platform-Windows_%7C_macOS_%7C_Linux-lightgrey)](https://github.com/fjrevoredo/mini-diarium#download)
 [![Follow @MiniDiarium](https://img.shields.io/badge/Follow-%40MiniDiarium-000?logo=x&logoColor=white)](https://x.com/MiniDiarium)
 [![Ko-fi](https://img.shields.io/badge/Ko--fi-Buy_me_a_coffee-ff5f5f?logo=kofi&logoColor=white)](https://ko-fi.com/fjrevoredo)
+[![Donate crypto](https://img.shields.io/badge/Crypto-XMR%20%7C%20BTC%20%7C%20Lightning-FF6600?logo=monero&logoColor=white)](DONATE.md)
 
 [![Tauri v2](https://img.shields.io/badge/Tauri_v2-24C8DB?logo=tauri&logoColor=white)](https://tauri.app)
 [![SolidJS](https://img.shields.io/badge/SolidJS-2C4F7C?logo=solid&logoColor=white)](https://solidjs.com)
@@ -35,7 +36,36 @@ Mini Diarium is free, open source, and will always be. If you find it useful and
   <img src="https://storage.ko-fi.com/cdn/kofi2.png" alt="Buy Me a Coffee on Ko-fi" height="48" />
 </a>
 
+Prefer crypto? Monero, Bitcoin, and Lightning are below and in [DONATE.md](DONATE.md).
+
 </div>
+
+<details>
+<summary><b>Donate with crypto (Monero &middot; Bitcoin &middot; Lightning)</b></summary>
+
+<br />
+
+**Monero (XMR)**, standard mainnet address:
+
+```text
+4ApNmqczyAoWsprSrCMsPNKTGhxaH1Cs6agLVaGiKuBBVSotWK9uj3oVQkWYUX9XUGQJyC9WB7cMofE8wfp5BbUoEdcwbjv
+```
+
+**Bitcoin (BTC)**, on-chain native SegWit (bech32):
+
+```text
+bc1q0y6v888ala2f8r7tm8g30vqt9ma09w9ww4jhum
+```
+
+**Bitcoin over Lightning**, a Lightning address that works with Cake Wallet, Phoenix, Zeus, Blink, and Wallet of Satoshi:
+
+```text
+mini-diarium@cake.cash
+```
+
+Always verify addresses against [DONATE.md](DONATE.md) on `master` before sending. That file also covers network warnings and what donations do and do not buy.
+
+</details>
 
 ## Download
 

@@ -132,6 +132,13 @@ const STATIC_PAGES = [
     summary:
       "Mini Diarium's email newsletter: occasional new releases, milestones, and launch news for the encrypted offline journal app. No spam, unsubscribe anytime.",
   },
+  {
+    title: 'Donate',
+    url: `${SITE_URL}/donate/`,
+    filePath: path.join(WEBSITE_DIR, 'donate', 'index.html'),
+    summary:
+      'Ways to support Mini Diarium: Ko-fi, Monero, Bitcoin, and Bitcoin over Lightning.',
+  },
 ];
 
 const REQUIRED_FIELDS = ['title', 'slug', 'description', 'date', 'updated', 'author', 'tags'];
@@ -324,6 +331,7 @@ function buildFooter() {
         <a href="https://github.com/fjrevoredo/mini-diarium" target="_blank" rel="noopener noreferrer">GitHub</a>
         <a href="https://x.com/MiniDiarium" target="_blank" rel="noopener noreferrer">X</a>
         <a href="/privacy/">Privacy</a>
+        <a href="/donate/">Donate</a>
         <a href="https://github.com/fjrevoredo/mini-diarium/blob/master/SECURITY.md" target="_blank" rel="noopener noreferrer">Security</a>
         <a href="https://github.com/fjrevoredo/mini-diarium/blob/master/CHANGELOG.md" target="_blank" rel="noopener noreferrer">Changelog</a>
         <a href="/blog/feed.xml">RSS</a>

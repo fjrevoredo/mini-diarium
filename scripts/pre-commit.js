@@ -117,6 +117,20 @@ async function main() {
     results.failed.push('Stale Build Paths');
   }
 
+  // 4c. Donation address drift guard
+  header('Donation Addresses');
+  const donationAddresses = run(
+    'bun run check:donation-addresses',
+    'Checking published crypto addresses',
+  );
+  if (donationAddresses.success) {
+    success('Donation addresses are valid and consistent');
+    results.passed.push('Donation Addresses');
+  } else {
+    error('Donation address drift or invalid checksum (crypto sent to a wrong address is lost)');
+    results.failed.push('Donation Addresses');
+  }
+
   // 5. Frontend Tests (with coverage)
   header('Frontend Tests');
   const frontendTest = run('bun run test:coverage', 'Running tests with coverage');

@@ -7,6 +7,7 @@
 - Privacy Policy: https://mini-diarium.com/privacy/
 - Encrypted Journal App Guide: https://mini-diarium.com/encrypted-journal/
 - Newsletter: https://mini-diarium.com/newsletter/
+- Donate: https://mini-diarium.com/donate/
 - Blog: https://mini-diarium.com/blog/
 - RSS feed: https://mini-diarium.com/blog/feed.xml
 - Source code: https://github.com/fjrevoredo/mini-diarium
@@ -31,6 +32,7 @@
 - Privacy Policy: Mini Diarium's privacy policy: no telemetry, no cloud storage, no analytics. (https://mini-diarium.com/privacy/)
 - Encrypted Journal App Guide: A direct overview of what an encrypted journal app should do, how Mini Diarium handles offline storage, and why local-first ownership matters. (https://mini-diarium.com/encrypted-journal/)
 - Newsletter: Mini Diarium's email newsletter: occasional new releases, milestones, and launch news for the encrypted offline journal app. No spam, unsubscribe anytime. (https://mini-diarium.com/newsletter/)
+- Donate: Ways to support Mini Diarium: Ko-fi, Monero, Bitcoin, and Bitcoin over Lightning. (https://mini-diarium.com/donate/)
 
 ## Latest Articles
 

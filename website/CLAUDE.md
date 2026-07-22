@@ -20,10 +20,13 @@ The only files you should edit manually are:
 - `encrypted-journal/index.html` — the encrypted journal guide page
 - `compare/index.html` — the comparison matrix page
 - `privacy/index.html` — the privacy policy page
+- `newsletter/index.html` — the newsletter signup page
+- `donate/index.html` — the donation page
 - `css/`, `js/` — styles and scripts
 
 When editing any of the static manual pages above, ensure these elements stay consistent:
-- **Navigation** — all four manual pages share the same nav structure. If you add or remove a nav item, update all four plus the generator's `buildNav()` in `scripts/generate-website-blog.mjs`.
+- **Navigation** — every manual page shares the same nav structure. If you add or remove a nav item, update all of them plus the generator's `buildNav()` in `scripts/generate-website-blog.mjs`.
+- **Footer** — the footer is duplicated the same way the nav is: once per manual page, plus `buildFooter()` in **both** `scripts/generate-website-blog.mjs` and `scripts/generate-website-docs.mjs` (those two are byte-identical, so any footer edit goes into both). Changing a footer link means editing every manual page and both generators, then re-running `bun run website:build-static` so `blog/` and `docs/` pick it up.
 - **Hreflang** — every page must have `<link rel="alternate" hreflang="x-default" href="...">` pointing to its canonical URL. The generators handle this for blog and docs pages automatically.
 
 ---
@@ -207,11 +210,13 @@ When creating a new static HTML page (not generated from Markdown), ensure:
 
 ### Navigation Consistency
 
-The main navigation lives in four places that must stay in sync:
+The main navigation lives in these places, which must stay in sync (the footer is duplicated across the same set):
 - `website/index.html` (uses `#fragment` links since it's at root)
 - `website/encrypted-journal/index.html` (uses `/#fragment` links)
 - `website/compare/index.html` (uses `/#fragment` links)
 - `website/privacy/index.html` (uses `/#fragment` links)
+- `website/newsletter/index.html` (uses `/#fragment` links)
+- `website/donate/index.html` (uses `/#fragment` links)
 - `scripts/generate-website-blog.mjs` → `buildNav()` (uses `/#fragment` links for blog pages)
 - `scripts/generate-website-docs.mjs` → (uses `/#fragment` links for docs pages)
 
@@ -321,7 +326,7 @@ See `website/docs-src/_template.md` for the starter template.
 | `blog/`, `docs/` | Generated | Do not edit — overwritten on every build |
 | `sitemap.xml`, `llms.txt`, `feed.xml` | Generated | Do not edit — managed by the generator scripts |
 | `index.html` | Edit | Homepage — edit static sections directly; blog teaser block is auto-updated |
-| `encrypted-journal/`, `compare/`, `privacy/` | Edit | Static guide / comparison / policy pages |
+| `encrypted-journal/`, `compare/`, `privacy/`, `newsletter/`, `donate/` | Edit | Static guide / comparison / policy / signup / donation pages |
 | `css/`, `js/` | Edit | Site stylesheet and scripts |
 | `nginx.conf` | Edit | Local Docker preview only — does not affect production |
 | `../docs/seo/` | Edit | SEO/GEO + growth hub (outside `website/`) — start at [`../docs/seo/README.md`](../docs/seo/README.md) |

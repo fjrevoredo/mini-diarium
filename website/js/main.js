@@ -70,3 +70,37 @@ if (document.querySelector('.docs-layout')) {
     headings.forEach(h => observer.observe(h));
   }
 }
+
+// Donate-specific: copy-to-clipboard buttons for the crypto addresses
+document.querySelectorAll('.copy-btn').forEach(btn => {
+  const idleLabel = btn.textContent;
+
+  btn.addEventListener('click', async () => {
+    let copied = false;
+    try {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(btn.dataset.address);
+        copied = true;
+      }
+    } catch {
+      copied = false;
+    }
+
+    // No clipboard API (or it refused): select the address so it can be copied by hand
+    if (!copied) {
+      const code = btn.parentElement.querySelector('code');
+      if (code) {
+        const range = document.createRange();
+        range.selectNodeContents(code);
+        const selection = window.getSelection();
+        selection.removeAllRanges();
+        selection.addRange(range);
+      }
+    }
+
+    btn.textContent = copied ? 'Copied' : 'Selected';
+    setTimeout(() => {
+      btn.textContent = idleLabel;
+    }, 2000);
+  });
+});

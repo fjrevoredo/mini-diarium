@@ -44,6 +44,7 @@
     "sync-skills": "node scripts/sync-skills.js",
     "check:ui-errors": "node scripts/check-ui-error-sanitization.js",
     "check:build-paths": "node scripts/check-stale-build-paths.js",
+    "check:donation-addresses": "node scripts/check-donation-addresses.js",
     "test:print": "playwright test --config playwright.config.ts",
     "postinstall": "node scripts/install-hooks.js && node scripts/sync-skills.js"
   },
