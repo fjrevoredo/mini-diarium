@@ -1,0 +1,240 @@
+//! Pure-string matching and snippet building for [`super::search_entries`].
+//!
+//! No database and no crypto: every function here takes and returns plain strings,
+//! so the scan core stays testable without a live connection.
+
+use unicode_normalization::char::is_combining_mark;
+use unicode_normalization::UnicodeNormalization;
+
+/// Bytes of context shown on each side of a match (snapped to char boundaries).
+const SNIPPET_RADIUS: usize = 48;
+
+/// Case- and accent-fold one char: lowercase, NFD-decompose, drop combining marks.
+/// Per-char NFD is sufficient for accent stripping — we discard all combining marks,
+/// so canonical reordering across chars is irrelevant.
+fn fold_char(ch: char) -> impl Iterator<Item = char> {
+    ch.to_lowercase().nfd().filter(|c| !is_combining_mark(*c))
+}
+
+/// AND semantics: every term must appear in the (folded) title or body.
+pub(super) fn matches_all(title_lc: &str, text_lc: &str, terms: &[String]) -> bool {
+    terms
+        .iter()
+        .all(|t| title_lc.contains(t.as_str()) || text_lc.contains(t.as_str()))
+}
+
+/// Split a query into deduped, case- and accent-folded terms.
+pub(super) fn normalize_terms(query: &str) -> Vec<String> {
+    let mut terms: Vec<String> = Vec::new();
+    for raw in query.split_whitespace() {
+        let folded: String = raw.chars().flat_map(fold_char).collect();
+        if !folded.is_empty() && !terms.contains(&folded) {
+            terms.push(folded);
+        }
+    }
+    terms
+}
+
+/// Strip HTML tags so matching and snippets run over visible prose rather than TipTap
+/// markup. Not a full HTML parser — a lightweight tag remover, sufficient for the editor's
+/// own serialized output (no DOM in Rust). Entity decoding is intentionally left out; the
+/// few entities the editor emits render as literal text in a snippet, which is acceptable.
+pub(super) fn strip_html(s: &str) -> String {
+    let mut out = String::with_capacity(s.len());
+    let mut in_tag = false;
+    for ch in s.chars() {
+        match ch {
+            '<' => in_tag = true,
+            '>' => in_tag = false,
+            _ if !in_tag => out.push(ch),
+            _ => {}
+        }
+    }
+    out
+}
+
+/// Case- and accent-fold a string while recording, for each byte of the folded output,
+/// the byte offset of the originating char in the source. A trailing sentinel maps
+/// `folded.len()` back to `src.len()` so a match end never indexes out of range.
+///
+/// This is what makes snippet offsets correct: folding (lowercasing + NFD accent
+/// stripping) can change byte length (e.g. 'İ', or 'é' → 'e'), so a `find()` offset in
+/// the folded string is not a valid index into the original without this map. Each folded
+/// byte still maps to its originating source char's start offset, so `build_snippet` can
+/// slice the original (accented) text around a match.
+pub(super) fn lower_with_map(src: &str) -> (String, Vec<usize>) {
+    let mut lowered = String::with_capacity(src.len());
+    let mut map: Vec<usize> = Vec::with_capacity(src.len() + 1);
+    for (idx, ch) in src.char_indices() {
+        for lc in fold_char(ch) {
+            let mut buf = [0u8; 4];
+            let encoded = lc.encode_utf8(&mut buf);
+            for _ in 0..encoded.len() {
+                map.push(idx);
+            }
+            lowered.push(lc);
+        }
+    }
+    map.push(src.len()); // sentinel
+    (lowered, map)
+}
+
+/// Build a `<mark>`-highlighted, HTML-escaped snippet around the earliest term hit.
+pub(super) fn build_snippet(
+    orig: &str,
+    lowered: &str,
+    map: &[usize],
+    terms: &[String],
+) -> Option<String> {
+    let (match_byte, match_len) = terms
+        .iter()
+        .filter_map(|t| lowered.find(t.as_str()).map(|b| (b, t.len())))
+        .min_by_key(|&(b, _)| b)?;
+
+    let m_start = map[match_byte];
+    let m_end = map[match_byte + match_len];
+
+    let win_start = snap_floor(orig, m_start.saturating_sub(SNIPPET_RADIUS));
+    let win_end = snap_ceil(orig, (m_end + SNIPPET_RADIUS).min(orig.len()));
+
+    let mut out = String::new();
+    if win_start > 0 {
+        out.push('…');
+    }
+    out.push_str(&escape_html(&orig[win_start..m_start]));
+    out.push_str("<mark>");
+    out.push_str(&escape_html(&orig[m_start..m_end]));
+    out.push_str("</mark>");
+    out.push_str(&escape_html(&orig[m_end..win_end]));
+    if win_end < orig.len() {
+        out.push('…');
+    }
+    Some(out)
+}
+
+fn snap_floor(s: &str, mut i: usize) -> usize {
+    while i > 0 && !s.is_char_boundary(i) {
+        i -= 1;
+    }
+    i
+}
+
+fn snap_ceil(s: &str, mut i: usize) -> usize {
+    while i < s.len() && !s.is_char_boundary(i) {
+        i += 1;
+    }
+    i
+}
+
+/// Escape text destined for the `<mark>`-bearing snippet so entry content can't inject
+/// markup. `&` first so existing characters aren't double-escaped.
+fn escape_html(s: &str) -> String {
+    s.replace('&', "&amp;")
+        .replace('<', "&lt;")
+        .replace('>', "&gt;")
+}
+
+// The implementation helpers run under the default feature set now that search is part
+// of production builds.
+#[cfg(test)]
+mod impl_tests {
+    use super::*;
+
+    #[test]
+    fn normalize_terms_folds_dedups_and_splits() {
+        assert_eq!(
+            normalize_terms("  Hello   WORLD hello "),
+            vec!["hello".to_string(), "world".to_string()]
+        );
+        assert!(normalize_terms("   ").is_empty());
+    }
+
+    #[test]
+    fn matches_all_is_and_across_title_and_body() {
+        let terms = normalize_terms("rust journal");
+        assert!(matches_all("my rust notes", "a journal entry", &terms));
+        assert!(!matches_all("my rust notes", "no body match", &terms));
+    }
+
+    #[test]
+    fn strip_html_removes_tags_so_tag_names_are_not_matchable() {
+        let html = "<p>Hello <strong>world</strong></p>";
+        let plain = strip_html(html);
+        assert_eq!(plain, "Hello world");
+
+        // Visible prose still matches; tag names ("p", "strong") no longer do.
+        let (lc, _) = lower_with_map(&plain);
+        let hit = |q: &str| matches_all("", &lc, &normalize_terms(q));
+        assert!(hit("world"));
+        assert!(!hit("strong"));
+        assert!(!hit("p"));
+    }
+
+    #[test]
+    fn lower_with_map_sentinel_and_ascii_offsets() {
+        let (lc, map) = lower_with_map("AbC");
+        assert_eq!(lc, "abc");
+        assert_eq!(map, vec![0, 1, 2, 3]); // incl. sentinel == src.len()
+    }
+
+    #[test]
+    fn snippet_highlights_first_match_case_insensitively() {
+        let (lc, map) = lower_with_map("The Rust language");
+        let terms = normalize_terms("rust");
+        let snip = build_snippet("The Rust language", &lc, &map, &terms).unwrap();
+        assert!(snip.contains("<mark>Rust</mark>")); // original casing preserved
+    }
+
+    #[test]
+    fn snippet_escapes_surrounding_html() {
+        let text = "load <script>alert(1)</script> rust";
+        let (lc, map) = lower_with_map(text);
+        let terms = normalize_terms("rust");
+        let snip = build_snippet(text, &lc, &map, &terms).unwrap();
+        assert!(!snip.contains("<script>"));
+        assert!(snip.contains("&lt;script&gt;"));
+        assert!(snip.contains("<mark>rust</mark>"));
+    }
+
+    #[test]
+    fn snippet_is_char_boundary_safe_on_multibyte() {
+        let text = format!("{} rust", "héllo wörld ".repeat(10));
+        let (lc, map) = lower_with_map(&text);
+        let terms = normalize_terms("rust");
+        let snip = build_snippet(&text, &lc, &map, &terms).unwrap(); // must not panic
+        assert!(snip.contains("<mark>rust</mark>"));
+    }
+
+    #[test]
+    fn no_match_returns_none_snippet() {
+        let (lc, map) = lower_with_map("nothing here");
+        let terms = normalize_terms("rust");
+        assert!(build_snippet("nothing here", &lc, &map, &terms).is_none());
+    }
+
+    #[test]
+    fn normalize_terms_folds_accents() {
+        // Case + accent folding collapse all three spellings into one deduped term.
+        assert_eq!(normalize_terms("Café CAFÉ cafe"), vec!["cafe".to_string()]);
+    }
+
+    #[test]
+    fn lower_with_map_strips_accents_and_keeps_map() {
+        // 'é' is 2 bytes at source idx 3; it folds to the 1-byte 'e' mapping back to 3.
+        // Sentinel == src.len() == 5.
+        let (lc, map) = lower_with_map("Café");
+        assert_eq!(lc, "cafe");
+        assert_eq!(map, vec![0, 1, 2, 3, 5]);
+    }
+
+    #[test]
+    fn snippet_matches_and_highlights_accented_original() {
+        // An unaccented query matches accented text, and the snippet preserves the
+        // original accented characters inside the <mark> (must not panic).
+        let text = "I love Café au lait";
+        let (lc, map) = lower_with_map(text);
+        let terms = normalize_terms("cafe");
+        let snip = build_snippet(text, &lc, &map, &terms).unwrap();
+        assert!(snip.contains("<mark>Café</mark>"));
+    }
+}

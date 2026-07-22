@@ -146,7 +146,7 @@ See KI-5. From the developer perspective: `PluginRegistry` is built in `lib.rs`'
 ### AT-7 — `rhai::AST` requires `unsafe impl Send + Sync`
 **Status:** By design (library limitation)
 
-`rhai::AST` does not implement `Send + Sync` in the current version of the Rhai crate. The `unsafe impl Send for RhaiImportPlugin` and `unsafe impl Sync for RhaiImportPlugin` (and their `RhaiExportPlugin` equivalents) in `plugin/rhai_loader.rs` are required to store the compiled AST in `State<Mutex<PluginRegistry>>`.
+`rhai::AST` does not implement `Send + Sync` in the current version of the Rhai crate. The `unsafe impl Send for RhaiImportPlugin` and `unsafe impl Sync for RhaiImportPlugin` (and their `RhaiExportPlugin` equivalents) in `plugin/rhai_loader/runtime.rs` are required to store the compiled AST in `State<Mutex<PluginRegistry>>`.
 
 The `unsafe` impls are sound: the AST is immutable after compilation and each call to `parse()` / `format_entries()` constructs a fresh `Engine`. No shared mutable state exists across threads. This is documented in CLAUDE.md Gotcha #11 and the backend assessment report.
 

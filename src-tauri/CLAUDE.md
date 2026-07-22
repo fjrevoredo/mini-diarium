@@ -89,7 +89,7 @@ To add a new **built-in** import format (compiled Rust):
 
 The plugin system (`run_import_plugin`) is the single entry point; no per-format Tauri command is needed. The search reindex hook lives in `commands::import::import_entries` (see `// Search index hook:` comment).
 
-For **user-scriptable** formats, users drop a `.rhai` file in `{app_data_dir}/plugins/`. See `crates/mini-diarium-core/src/plugin/rhai_loader.rs` for the Rhai script contract and `docs/user-plugins/USER_PLUGIN_GUIDE.md` for the end-user plugin guide and templates.
+For **user-scriptable** formats, users drop a `.rhai` file in `{app_data_dir}/plugins/`. See `crates/mini-diarium-core/src/plugin/rhai_loader/` for the Rhai script contract (`metadata.rs` parses the `// @name`/`// @type` header, `runtime.rs` holds the sandboxed engine) and `docs/user-plugins/USER_PLUGIN_GUIDE.md` for the end-user plugin guide and templates.
 
 ## Verification Commands
 
@@ -189,7 +189,7 @@ The plugin runner (`run_import_plugin` / `run_export_plugin`) dispatches to the 
 
 **Option B: User-scriptable (Rhai)**
 
-Users drop a `.rhai` file in `{diary_dir}/plugins/`. The file must have a `// @name`, `// @type`, and optionally `// @extensions` comment header. Import scripts define `fn parse(content)` returning an array of entry maps; export scripts define `fn format_entries(entries)` returning a string. See `docs/user-plugins/USER_PLUGIN_GUIDE.md` for templates and `crates/mini-diarium-core/src/plugin/rhai_loader.rs` for the runtime.
+Users drop a `.rhai` file in `{diary_dir}/plugins/`. The file must have a `// @name`, `// @type`, and optionally `// @extensions` comment header. Import scripts define `fn parse(content)` returning an array of entry maps; export scripts define `fn format_entries(entries)` returning a string. See `docs/user-plugins/USER_PLUGIN_GUIDE.md` for templates and `crates/mini-diarium-core/src/plugin/rhai_loader/runtime.rs` for the runtime.
 
 ### Search
 
@@ -203,7 +203,7 @@ ever written to disk.
 
 | Layer | File | What it provides |
 |-------|------|-----------------|
-| Core scan | `crates/mini-diarium-core/src/search.rs` | `SearchResult` + `SearchResponse` structs + `search_entries(db, query)` in-memory scan core (open-core M2 façade) |
+| Core scan | `crates/mini-diarium-core/src/search/` | `mod.rs`: `SearchResult` + `SearchResponse` structs + `search_entries(db, query)` DB orchestration (open-core M2 façade). `text.rs`: DB-free, crypto-free term folding, matching, and snippet building |
 | Rust command | `src-tauri/src/commands/search.rs` | Thin `#[tauri::command] search_entries` wrapper over `mini_diarium_core::search::search_entries`; re-exports `SearchResult`/`SearchResponse` |
 | Frontend wrapper | `src/lib/tauri/search.ts` | `SearchResult` interface + `searchEntries(query)` async function returning `SearchResponse` |
 | Frontend state | `src/state/search.ts` | `searchQuery`, `searchResults`, `isSearching` signals |

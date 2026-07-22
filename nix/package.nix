@@ -43,7 +43,8 @@ let
         || lib.hasPrefix "result/" rel
         # The Nix files themselves don't affect the build, so editing them
         # shouldn't invalidate the (expensive) Rust+npm build. Markdown is NOT
-        # excluded: src/plugin/rhai_loader.rs include_str!()s a docs/*.md file.
+        # excluded: crates/mini-diarium-core/src/plugin/rhai_loader/mod.rs
+        # include_str!()s a docs/*.md file.
         || rel == "flake.nix"
         || rel == "flake.lock"
         || rel == "nix"

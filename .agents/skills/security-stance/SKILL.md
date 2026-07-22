@@ -24,7 +24,7 @@ Load when work touches any of:
 - Backups & rotation: `crates/mini-diarium-core/src/backup.rs`
 - Journal config: `crates/mini-diarium-core/src/config.rs` (`JournalConfig`, `auto_key`, `require_all_auth`)
 - Import / export: `src-tauri/src/commands/import.rs`, `commands/export.rs`, `import/*.rs`, `export/*.rs`
-- Plugin sandbox: `crates/mini-diarium-core/src/plugin/rhai_loader.rs`, `plugin/registry.rs`, `plugin/builtins.rs`
+- Plugin sandbox: `crates/mini-diarium-core/src/plugin/rhai_loader/` (`runtime.rs` = engine + limits, `metadata.rs`, `mod.rs` = loader), `plugin/registry.rs`, `plugin/builtins.rs`
 - Search interface (preserved stub): `src-tauri/src/commands/search.rs`, `src/state/search.ts`, `src/components/search/`
 - Debug dump: `src-tauri/src/commands/debug.rs`
 - File-read commands & allowlists: `src-tauri/src/commands/files.rs`
@@ -242,9 +242,9 @@ FTS was removed in v0.2.0 (schema v4) because the plaintext `entries_fts` table 
 
 ## 10. Plugin / Rhai sandbox
 
-- User scripts live in `{diary_dir}/plugins/*.rhai`. No filesystem access, no network access, Rhai `set_max_operations` and other safety limits applied (`plugin/rhai_loader.rs:55-60+`).
+- User scripts live in `{diary_dir}/plugins/*.rhai`. No filesystem access, no network access, Rhai `set_max_operations` and other safety limits applied (`plugin/rhai_loader/runtime.rs:13-15`, inside `create_sandboxed_engine`).
 - Built-ins and Rhai plugins share the same `ImportPlugin`/`ExportPlugin` traits (`plugin/mod.rs`). There is **no privileged built-in path** — built-ins implement the same interface as user-provided extensions (see `PHILOSOPHY.md:204`).
-- The `unsafe impl Send for RhaiImportPlugin {}` / `unsafe impl Sync` (and the matching pair on `RhaiExportPlugin`) at `plugin/rhai_loader.rs:149-150,173-174` is **justified** because the AST is immutable after compilation and the Engine is created fresh per invocation. **Adding cached mutable engines, plugin state, or shared mutable AST invalidates the justification** — flag for redesign and update or remove the `unsafe` blocks accordingly. See `src-tauri/CLAUDE.md` Gotcha #7.
+- The `unsafe impl Send for RhaiImportPlugin {}` / `unsafe impl Sync` (and the matching pair on `RhaiExportPlugin`) at `plugin/rhai_loader/runtime.rs:126-127,150-151` is **justified** because the AST is immutable after compilation and the Engine is created fresh per invocation. **Adding cached mutable engines, plugin state, or shared mutable AST invalidates the justification** — flag for redesign and update or remove the `unsafe` blocks accordingly. See `src-tauri/CLAUDE.md` Gotcha #7.
 - Rhai's `export` is a reserved keyword → export scripts must define `fn format_entries(entries)` (not `fn export`). The `RhaiExportPlugin` wrapper calls `"format_entries"` internally. See `src-tauri/CLAUDE.md` Gotcha #6.
 - The plugin registry is built **once at startup**; diary-directory changes require app restart. Do not add hot-reload without threat modelling — it opens a path for the plugin dir to swap underneath a running unlock. See `src-tauri/CLAUDE.md` Gotcha #5.
 - `unsafe impl Send + Sync` should only ever appear on Rhai wrappers. Any new `unsafe impl` on a plugin type requires explicit review.
@@ -324,7 +324,7 @@ window-state:default
 - **Mutex poisoning must not panic.** Commands must propagate a string error rather than letting a panic escape the Tauri boundary (a panic in a command aborts the process). For DB-only commands, use `with_unlocked_db` (canonical errors: `"Journal state lock failed"` / `"Journal must be unlocked"`). For commands that must open-code the preamble, use `.map_err(|_| "Journal state lock failed".to_string())`. **Do not** use `.unwrap()` on a Mutex — that converts a poisoned lock into a process abort.
 - **Schema migrations** (`db/schema/migrations/`) must be idempotent and wrapped in a transaction. Historical v3→v4 and v4→v5 followed this; new migrations must too. Bump `SCHEMA_VERSION` (`db/schema/mod.rs:32`) and document the migration step inline.
 - New commands must be registered in **two** places: `src-tauri/src/commands/mod.rs` (module) and `lib.rs` `generate_handler![]`. Missing either causes silent failure or compile error. Add the typed wrapper in the matching command-category sub-file under `src/lib/tauri/`. See `src-tauri/CLAUDE.md` "Adding a New Tauri Command".
-- `unsafe` blocks outside crypto crates appear in four places: `screen_lock.rs` (Win32 subclass / WTS APIs), the two Rhai wrapper `Send + Sync` impls in `rhai_loader.rs:149-174`, and the two network-isolation platform handlers in `lib.rs` — `install_webresource_requested_handler` (Windows COM, `lib.rs:373+`) and `install_content_rule_list` (macOS ObjC2, `lib.rs:448+`). Each `unsafe` block has a `// SAFETY:` comment justifying it. **Any new `unsafe` block elsewhere requires explicit security review and a `SAFETY:` block matching that pattern.**
+- `unsafe` blocks outside crypto crates appear in four places: `screen_lock.rs` (Win32 subclass / WTS APIs), the two Rhai wrapper `Send + Sync` impls in `rhai_loader/runtime.rs:126-151`, and the two network-isolation platform handlers in `lib.rs` — `install_webresource_requested_handler` (Windows COM, `lib.rs:373+`) and `install_content_rule_list` (macOS ObjC2, `lib.rs:448+`). Each `unsafe` block has a `// SAFETY:` comment justifying it. **Any new `unsafe` block elsewhere requires explicit security review and a `SAFETY:` block matching that pattern.**
 
 ---
 
@@ -339,7 +339,7 @@ Run these before merging anything that touched a Section 1 surface. A surprising
 | `invoke()` call sites that may need `mapTauriError` review | `grep -rn "invoke(" src/lib/tauri/` and audit downstream callers |
 | `MINI_DIARIUM_E2E*` env vars leaking outside `lib.rs` | `grep -rn "MINI_DIARIUM_E2E\|MINI_DIARIUM_APP_DIR\|MINI_DIARIUM_DATA_DIR" src-tauri/src/` (must show `lib.rs` only) |
 | `unwrap()` on the diary mutex (Mutex-poison panic risk) | `grep -rn "state.db.lock().unwrap" src-tauri/src/` |
-| New `unsafe impl` blocks | `grep -rn "unsafe impl" src-tauri/src/` (expect: 4 in `rhai_loader.rs` — `Send`/`Sync` for `RhaiImportPlugin` and `RhaiExportPlugin`; zero in `lib.rs` — the platform handlers use `unsafe {}` blocks, not `unsafe impl`) |
+| New `unsafe impl` blocks | `git grep -n "unsafe impl" -- src-tauri/src crates` (expect: 4 in `plugin/rhai_loader/runtime.rs` — `Send`/`Sync` for `RhaiImportPlugin` and `RhaiExportPlugin`; zero in `lib.rs` — the platform handlers use `unsafe {}` blocks, not `unsafe impl`) |
 | New file-read commands without allowlist | `grep -rn "std::fs::read" src-tauri/src/commands/` and confirm extension/size guards |
 | Plaintext logging of secret material | `grep -rnE "info!\|debug!\|println!\|eprintln!" crates/mini-diarium-core/src/auth/ crates/mini-diarium-core/src/crypto/` and confirm no secrets in format args |
 | FTS reintroduction | `grep -rn "fts5\|entries_fts" src-tauri/src/` (must return empty) |

@@ -203,7 +203,7 @@ pub trait ExportPlugin: Send + Sync {
 
 Any extension that fails returns `Err(String)`; it cannot panic the core. Built-in formats (Mini Diary, Day One JSON/TXT, jrnl, JSON export, Markdown export) all implement the same traits as user-provided extensions, so there is no privileged "built-in" path.
 
-User Rhai scripts placed in `<diary_dir>/plugins/` are auto-discovered at startup by `crates/mini-diarium-core/src/plugin/rhai_loader.rs` and registered alongside built-in plugins. This is the concrete mechanism behind "allow users to script their own export pipelines" (Principle 4).
+User Rhai scripts placed in `<diary_dir>/plugins/` are auto-discovered at startup by `crates/mini-diarium-core/src/plugin/rhai_loader/` and registered alongside built-in plugins. This is the concrete mechanism behind "allow users to script their own export pipelines" (Principle 4).
 
 Both `ImportOverlay.tsx` and `ExportOverlay.tsx` are wired to the plugin registry via `listImportPlugins`/`runImportPlugin` and `listExportPlugins`/`runExportPlugin`. Adding a new built-in or user-provided format requires no UI changes.
 
@@ -278,4 +278,4 @@ The "no plugin marketplaces" rule means no distribution, discovery, or hosting o
 - **State**: 8 signal modules (`src/state/`). No Redux, Zustand, derived-state middleware, or selector layers.
 - **Database**: direct `rusqlite` queries in `crates/mini-diarium-core/src/db/queries/` (entries.rs, tags.rs, auth_slots.rs, db_settings.rs). No ORM, no query builder, no migration framework beyond the inline schema version check.
 - **Dependencies**: the runtime dependency set (split across the app crate's `src-tauri/Cargo.toml` and the business layer's `crates/mini-diarium-core/Cargo.toml`) is intentionally lean for a cryptographic desktop app.
-- **Justified complexity examples**: `src-tauri/src/screen_lock.rs` uses platform-specific Win32 event hooks (Windows) and equivalent macOS hooks for session-lock detection; this is necessary for auto-lock, not gold-plating. The Rhai scripting engine (`crates/mini-diarium-core/src/plugin/rhai_loader.rs`) adds binary size but is the only way to deliver user-scriptable extensions without requiring a recompile.
+- **Justified complexity examples**: `src-tauri/src/screen_lock.rs` uses platform-specific Win32 event hooks (Windows) and equivalent macOS hooks for session-lock detection; this is necessary for auto-lock, not gold-plating. The Rhai scripting engine (`crates/mini-diarium-core/src/plugin/rhai_loader/`) adds binary size but is the only way to deliver user-scriptable extensions without requiring a recompile.

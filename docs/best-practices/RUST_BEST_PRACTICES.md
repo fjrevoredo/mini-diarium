@@ -174,10 +174,12 @@ Acceptable exceptions:
 
 When a file crosses the soft limit, first look for a responsibility split that matches the domain boundary: command wrapper vs. command core, query helper vs. schema/migration, parser vs. formatter, registry vs. execution, or test fixture vs. assertions.
 
-Diagnostic check:
+Diagnostic check — scan **both** workspace members (the app crate at `src-tauri/` and the
+business layer at `crates/mini-diarium-core/`); scanning only `src-tauri\src` misses every
+core module:
 
 ```powershell
-Get-ChildItem src-tauri\src -Recurse -Include *.rs |
+Get-ChildItem src-tauri\src, crates\mini-diarium-core\src -Recurse -Include *.rs |
   Where-Object { $_.FullName -notmatch '\\target\\|\\generated\\' } |
   ForEach-Object {
     $lines = (Get-Content $_.FullName).Count

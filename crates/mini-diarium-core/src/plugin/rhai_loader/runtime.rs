@@ -1,60 +1,12 @@
-use super::registry::PluginRegistry;
-use super::{ExportOutput, ExportPlugin, ImportPlugin, PluginInfo};
+//! Sandboxed Rhai engine, entry ↔ Rhai marshalling, and the plugin wrapper structs.
+
 use crate::db::queries::{DiaryEntry, EntryMetadata};
-use log::{info, warn};
+use crate::plugin::{ExportOutput, ExportPlugin, ImportPlugin, PluginInfo};
 use rhai::{Array, Dynamic, Engine, Map, Scope, AST};
 use std::collections::HashMap;
-use std::path::{Path, PathBuf};
-
-// Keep plugin docs in one place: the generated `{app_data_dir}/plugins/README.md`
-// is a direct copy of this repository guide.
-const PLUGINS_README: &str = include_str!("../../../../docs/user-plugins/USER_PLUGIN_GUIDE.md");
-
-/// Metadata parsed from the comment header of a .rhai script.
-struct ScriptMeta {
-    name: String,
-    plugin_type: String, // "import" or "export"
-    extensions: Vec<String>,
-}
-
-/// Parse `// @key: value` lines from the top of a script.
-fn parse_metadata(source: &str) -> Option<ScriptMeta> {
-    let mut name = None;
-    let mut plugin_type = None;
-    let mut extensions = None;
-
-    for line in source.lines() {
-        let trimmed = line.trim();
-        if trimmed.is_empty() {
-            continue; // skip blank lines in header
-        }
-        if !trimmed.starts_with("//") {
-            break; // stop at first non-comment, non-blank line
-        }
-        let comment = trimmed.trim_start_matches("//").trim();
-        if let Some(val) = comment.strip_prefix("@name:") {
-            name = Some(val.trim().to_string());
-        } else if let Some(val) = comment.strip_prefix("@type:") {
-            plugin_type = Some(val.trim().to_lowercase());
-        } else if let Some(val) = comment.strip_prefix("@extensions:") {
-            extensions = Some(
-                val.split(',')
-                    .map(|s| s.trim().to_string())
-                    .filter(|s| !s.is_empty())
-                    .collect::<Vec<_>>(),
-            );
-        }
-    }
-
-    Some(ScriptMeta {
-        name: name?,
-        plugin_type: plugin_type?,
-        extensions: extensions.unwrap_or_default(),
-    })
-}
 
 /// Create a sandboxed Rhai engine with host-provided helper functions.
-fn create_sandboxed_engine() -> Engine {
+pub(super) fn create_sandboxed_engine() -> Engine {
     let mut engine = Engine::new();
 
     // Safety limits
@@ -164,9 +116,9 @@ fn entries_to_rhai_array(entries: Vec<DiaryEntry>) -> Array {
 
 // --- Wrapper structs ---
 
-struct RhaiImportPlugin {
-    info: PluginInfo,
-    script: AST,
+pub(super) struct RhaiImportPlugin {
+    pub(super) info: PluginInfo,
+    pub(super) script: AST,
 }
 
 // Safety: AST is immutable after compilation. Engine is created fresh per call_fn()
@@ -189,9 +141,9 @@ impl ImportPlugin for RhaiImportPlugin {
     }
 }
 
-struct RhaiExportPlugin {
-    info: PluginInfo,
-    script: AST,
+pub(super) struct RhaiExportPlugin {
+    pub(super) info: PluginInfo,
+    pub(super) script: AST,
 }
 
 // Safety: Same rationale as RhaiImportPlugin above.
@@ -222,222 +174,9 @@ impl ExportPlugin for RhaiExportPlugin {
     }
 }
 
-/// Ensure the plugins directory exists and contains a README.md.
-pub fn ensure_plugins_dir(plugins_dir: &Path) {
-    if let Err(e) = std::fs::create_dir_all(plugins_dir) {
-        warn!(
-            "Failed to create plugins directory '{}': {}",
-            plugins_dir.display(),
-            e
-        );
-        return;
-    }
-    let readme_path = plugins_dir.join("README.md");
-    if !readme_path.exists() {
-        if let Err(e) = std::fs::write(&readme_path, PLUGINS_README) {
-            warn!("Failed to write plugins README: {}", e);
-        }
-    }
-}
-
-/// One-time migration: copy .rhai plugin files from per-journal plugin directories
-/// to the new central plugins directory. Originals are left in place.
-pub fn migrate_journal_plugins(old_journal_dirs: &[PathBuf], new_plugins_dir: &Path) {
-    if let Err(e) = std::fs::create_dir_all(new_plugins_dir) {
-        warn!("Failed to create central plugins directory: {}", e);
-        return;
-    }
-    for journal_dir in old_journal_dirs {
-        let old_plugins = journal_dir.join("plugins");
-        if !old_plugins.is_dir() {
-            continue;
-        }
-        let entries = match std::fs::read_dir(&old_plugins) {
-            Ok(e) => e,
-            Err(_) => continue,
-        };
-        for entry in entries.flatten() {
-            let path = entry.path();
-            if path.extension().and_then(|e| e.to_str()) != Some("rhai") {
-                continue;
-            }
-            let Some(filename) = path.file_name() else {
-                continue;
-            };
-            let dest = new_plugins_dir.join(filename);
-            if dest.exists() {
-                continue;
-            }
-            match std::fs::copy(&path, &dest) {
-                Ok(_) => info!(
-                    "Migrated plugin '{}' to central plugins dir",
-                    path.display()
-                ),
-                Err(e) => warn!("Failed to migrate plugin '{}': {}", path.display(), e),
-            }
-        }
-    }
-}
-
-/// Scan `plugins_dir` for `.rhai` files and register them with the registry.
-pub fn load_plugins(plugins_dir: &Path, registry: &mut PluginRegistry) {
-    ensure_plugins_dir(plugins_dir);
-
-    let entries = match std::fs::read_dir(plugins_dir) {
-        Ok(e) => e,
-        Err(e) => {
-            warn!("Failed to read plugins directory: {}", e);
-            return;
-        }
-    };
-
-    let engine = create_sandboxed_engine();
-
-    for entry in entries.flatten() {
-        let path = entry.path();
-        if path.extension().and_then(|e| e.to_str()) != Some("rhai") {
-            continue;
-        }
-
-        let source = match std::fs::read_to_string(&path) {
-            Ok(s) => s,
-            Err(e) => {
-                warn!("Failed to read plugin '{}': {}", path.display(), e);
-                continue;
-            }
-        };
-
-        let meta = match parse_metadata(&source) {
-            Some(m) => m,
-            None => {
-                warn!(
-                    "Plugin '{}' missing required @name and @type metadata, skipping",
-                    path.display()
-                );
-                continue;
-            }
-        };
-
-        let file_stem = path
-            .file_stem()
-            .and_then(|s| s.to_str())
-            .unwrap_or("unknown");
-        let plugin_id = format!("rhai:{}", file_stem);
-
-        let ast = match engine.compile(&source) {
-            Ok(ast) => ast,
-            Err(e) => {
-                warn!("Failed to compile plugin '{}': {}", path.display(), e);
-                continue;
-            }
-        };
-
-        let info = PluginInfo {
-            id: plugin_id,
-            name: meta.name,
-            file_extensions: meta.extensions,
-            builtin: false,
-        };
-
-        match meta.plugin_type.as_str() {
-            "import" => {
-                info!(
-                    "Loaded Rhai import plugin '{}' from {}",
-                    info.name,
-                    path.display()
-                );
-                registry.register_importer(Box::new(RhaiImportPlugin { info, script: ast }));
-            }
-            "export" => {
-                info!(
-                    "Loaded Rhai export plugin '{}' from {}",
-                    info.name,
-                    path.display()
-                );
-                registry.register_exporter(Box::new(RhaiExportPlugin { info, script: ast }));
-            }
-            other => {
-                warn!(
-                    "Plugin '{}' has unknown @type '{}', skipping",
-                    path.display(),
-                    other
-                );
-            }
-        }
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    const PLAIN_TEXT_TIMELINE_FIXTURE: &str =
-        include_str!("../../../../docs/user-plugins/plain-text-timeline.rhai");
-
-    fn sample_entries() -> Vec<DiaryEntry> {
-        vec![
-            DiaryEntry {
-                id: 1,
-                date: "2024-01-01".into(),
-                title: "".into(),
-                text: "<p>First body</p>".into(),
-                word_count: 2,
-                date_created: "2024-01-01T00:00:00Z".into(),
-                date_updated: "2024-01-01T00:00:00Z".into(),
-                metadata: None,
-                locked: false,
-            },
-            DiaryEntry {
-                id: 2,
-                date: "2024-01-02".into(),
-                title: "Second".into(),
-                text: "<p>Second body</p>".into(),
-                word_count: 2,
-                date_created: "2024-01-02T00:00:00Z".into(),
-                date_updated: "2024-01-02T00:00:00Z".into(),
-                metadata: None,
-                locked: false,
-            },
-        ]
-    }
-
-    #[test]
-    fn test_parse_metadata_complete() {
-        let source =
-            "// @name: My Plugin\n// @type: import\n// @extensions: json, txt\nfn parse(c) { [] }";
-        let meta = parse_metadata(source).unwrap();
-        assert_eq!(meta.name, "My Plugin");
-        assert_eq!(meta.plugin_type, "import");
-        assert_eq!(meta.extensions, vec!["json", "txt"]);
-    }
-
-    #[test]
-    fn test_parse_metadata_missing_name() {
-        let source = "// @type: import\nfn parse(c) { [] }";
-        assert!(parse_metadata(source).is_none());
-    }
-
-    #[test]
-    fn test_parse_metadata_missing_type() {
-        let source = "// @name: Test\nfn parse(c) { [] }";
-        assert!(parse_metadata(source).is_none());
-    }
-
-    #[test]
-    fn test_parse_metadata_no_extensions() {
-        let source = "// @name: Test\n// @type: export\nfn format_entries(e) { \"\" }";
-        let meta = parse_metadata(source).unwrap();
-        assert!(meta.extensions.is_empty());
-    }
-
-    #[test]
-    fn test_parse_metadata_with_blank_lines() {
-        let source = "// @name: Test\n\n// @type: import\n// @extensions: json\nfn parse(c) { [] }";
-        let meta = parse_metadata(source).unwrap();
-        assert_eq!(meta.name, "Test");
-        assert_eq!(meta.plugin_type, "import");
-        assert_eq!(meta.extensions, vec!["json"]);
-    }
 
     #[test]
     fn test_rhai_import_plugin_basic() {
@@ -554,71 +293,6 @@ fn parse(content) {
         let entries = plugin.parse(input).unwrap();
         assert_eq!(entries.len(), 1);
         assert_eq!(entries[0].date, "2024-03-01");
-    }
-
-    #[test]
-    fn test_load_plugins_from_dir() {
-        let dir = tempfile::tempdir().unwrap();
-
-        // Write a valid import plugin
-        let script = "// @name: Temp Plugin\n// @type: import\n// @extensions: txt\nfn parse(content) { [] }";
-        std::fs::write(dir.path().join("test_plugin.rhai"), script).unwrap();
-
-        // Write a non-.rhai file (should be ignored)
-        std::fs::write(dir.path().join("readme.txt"), "not a plugin").unwrap();
-
-        let mut registry = PluginRegistry::new();
-        load_plugins(dir.path(), &mut registry);
-
-        assert_eq!(registry.list_importers().len(), 1);
-        assert_eq!(registry.list_importers()[0].id, "rhai:test_plugin");
-        assert_eq!(registry.list_importers()[0].name, "Temp Plugin");
-
-        // README.md should be created
-        assert!(dir.path().join("README.md").exists());
-    }
-
-    #[test]
-    fn test_load_export_plugin_fixture_from_dir() {
-        let dir = tempfile::tempdir().unwrap();
-        std::fs::write(
-            dir.path().join("plain-text-timeline.rhai"),
-            PLAIN_TEXT_TIMELINE_FIXTURE,
-        )
-        .unwrap();
-
-        let mut registry = PluginRegistry::new();
-        load_plugins(dir.path(), &mut registry);
-
-        let exporters = registry.list_exporters();
-        assert_eq!(exporters.len(), 1);
-        assert_eq!(exporters[0].id, "rhai:plain-text-timeline");
-        assert_eq!(exporters[0].name, "Plain Text Timeline");
-        assert_eq!(exporters[0].file_extensions, vec!["txt"]);
-        assert!(!exporters[0].builtin);
-    }
-
-    #[test]
-    fn test_rhai_export_plugin_fixture_output() {
-        let dir = tempfile::tempdir().unwrap();
-        std::fs::write(
-            dir.path().join("plain-text-timeline.rhai"),
-            PLAIN_TEXT_TIMELINE_FIXTURE,
-        )
-        .unwrap();
-
-        let mut registry = PluginRegistry::new();
-        load_plugins(dir.path(), &mut registry);
-
-        let plugin = registry.find_exporter("rhai:plain-text-timeline").unwrap();
-        let output = plugin.export(sample_entries(), &HashMap::new()).unwrap();
-        let expected = format!(
-            "2024-01-01 | (untitled)\n{}\n---\n2024-01-02 | Second\n{}",
-            crate::export::markdown::html_to_markdown("<p>First body</p>"),
-            crate::export::markdown::html_to_markdown("<p>Second body</p>")
-        );
-
-        assert_eq!(output.content, expected);
     }
 
     #[test]
