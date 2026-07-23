@@ -211,14 +211,14 @@ Both `ImportOverlay.tsx` and `ExportOverlay.tsx` are wired to the plugin registr
 
 ### Principle 2: Security Implementation
 
-**Algorithms and libraries** (declared in `crates/mini-diarium-core/Cargo.toml`, the Tauri-free business-layer crate):
-- Symmetric encryption: `aes-gcm = "0.11"` (AES-256-GCM with per-entry random nonces, `crates/mini-diarium-core/src/crypto/cipher.rs`)
-- Password KDF: `argon2` (Argon2id with m=65536 KiB / 64 MB, t=3, p=4, `crates/mini-diarium-core/src/crypto/password.rs:7-10`; these parameters exceed OWASP minimums)
-- Key-file auth: `x25519-dalek = "3"` + `hkdf = "0.13"` (X25519 ECIES, `crates/mini-diarium-core/src/auth/keypair.rs`)
+**Algorithms and libraries** (declared in `crates/mini-diarium-crypto/Cargo.toml`, the Tauri-free, `rusqlite`-free cryptographic crate; `x25519-dalek`/`hkdf`/`zeroize` are also declared in the `crates/mini-diarium-core/Cargo.toml` business layer, which uses them in the db path):
+- Symmetric encryption: `aes-gcm = "0.11"` (AES-256-GCM with per-entry random nonces, `crates/mini-diarium-crypto/src/crypto/cipher.rs`)
+- Password KDF: `argon2` (Argon2id with m=65536 KiB / 64 MB, t=3, p=4, `crates/mini-diarium-crypto/src/crypto/password.rs:7-10`; these parameters exceed OWASP minimums)
+- Key-file auth: `x25519-dalek = "3"` + `hkdf = "0.13"` (X25519 ECIES, `crates/mini-diarium-crypto/src/auth/keypair.rs`)
 - Zeroization: `zeroize` crate with `ZeroizeOnDrop` derive macro
 
 **Zeroization layers** (defense-in-depth, not a single mechanism):
-1. `SecretBytes` newtype in `crates/mini-diarium-core/src/auth/mod.rs`: `#[derive(ZeroizeOnDrop)]` ensures automatic cleanup on drop regardless of whether the caller remembers to zeroize
+1. `SecretBytes` newtype in `crates/mini-diarium-crypto/src/auth/mod.rs` (re-exported by `mini-diarium-core`): `#[derive(ZeroizeOnDrop)]` ensures automatic cleanup on drop regardless of whether the caller remembers to zeroize
 2. Explicit `.zeroize()` calls on password strings in `crypto/password.rs` on both the success path (line 60) and the error path (line 103)
 3. `SecretBytes` implements `Debug` as `SecretBytes([REDACTED; N])`, preventing key material from leaking into logs
 

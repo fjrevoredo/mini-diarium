@@ -1,53 +1,16 @@
-pub(crate) mod auto_key;
-pub(crate) mod keypair;
-pub(crate) mod password;
+// The pure cryptographic auth layer (cipher-backed master-key wrapping, keypair helpers, and
+// the SecretBytes/KeypairFiles value types) lives in the rusqlite-free `mini-diarium-crypto`
+// crate as of open-core M3a (TODO-0082). Re-export it here so the curated core façade
+// (crates/mini-diarium-core/API.md) is byte-for-byte unchanged for consumers.
+pub use mini_diarium_crypto::auth::{
+    derive_public_key, generate_keypair, AutoKeyMethod, KeypairFiles, KeypairMethod,
+    PasswordMethod, PrivateKeyMethod, SecretBytes,
+};
 
-// Curated public façade (see crates/mini-diarium-core/API.md): the auth-method types and
-// keypair helpers are re-exported at the `auth` root; the sub-modules seal to `pub(crate)`.
-pub use auto_key::AutoKeyMethod;
-pub use keypair::{derive_public_key, generate_keypair, KeypairMethod, PrivateKeyMethod};
-pub use password::PasswordMethod;
-
-use zeroize::ZeroizeOnDrop;
-
-/// Wrapper for heap-allocated secret bytes that zeroes memory on drop.
-///
-/// Use this instead of a bare `Vec<u8>` for sensitive key material so that
-/// memory is reliably overwritten even when the caller forgets to call
-/// `.zeroize()` explicitly.
-#[derive(ZeroizeOnDrop)]
-pub struct SecretBytes(pub Vec<u8>);
-
-impl std::ops::Deref for SecretBytes {
-    type Target = [u8];
-    fn deref(&self) -> &[u8] {
-        &self.0
-    }
-}
-
-impl std::fmt::Debug for SecretBytes {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "SecretBytes([REDACTED; {}])", self.0.len())
-    }
-}
-
-impl PartialEq<Vec<u8>> for SecretBytes {
-    fn eq(&self, other: &Vec<u8>) -> bool {
-        self.0 == *other
-    }
-}
-
-impl PartialEq<SecretBytes> for Vec<u8> {
-    fn eq(&self, other: &SecretBytes) -> bool {
-        *self == other.0
-    }
-}
-
-impl PartialEq<SecretBytes> for SecretBytes {
-    fn eq(&self, other: &SecretBytes) -> bool {
-        self.0 == other.0
-    }
-}
+// Keep the sub-module-qualified paths that the in-core db modules use
+// (`crate::auth::{password, keypair, auto_key}::…`) resolving without touching those call
+// sites. Sealed to the crate — they are not part of the public façade.
+pub(crate) use mini_diarium_crypto::auth::{auto_key, keypair, password};
 
 /// Information about a registered auth method (returned to frontend)
 #[derive(Debug, serde::Serialize)]
@@ -59,13 +22,6 @@ pub struct AuthMethodInfo {
     pub public_key_hex: Option<String>,
     pub created_at: String,
     pub last_used: Option<String>,
-}
-
-/// Result of generating a new X25519 keypair
-#[derive(Debug, serde::Serialize)]
-pub struct KeypairFiles {
-    pub public_key_hex: String,
-    pub private_key_hex: String,
 }
 
 /// Wraps the current session's master key with a new password and stores it as a

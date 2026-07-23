@@ -170,7 +170,7 @@ You are the authoritative expert on these 16 files/areas:
 
 **Update triggers:** New auth methods, crypto parameter changes, security vulnerabilities fixed, threat model clarifications.
 
-**CRITICAL:** Parameters here must exactly match the constants at the top of `crates/mini-diarium-core/src/crypto/password.rs` and the Security Rules in the backend guide. Three-way sync required for any crypto change: SECURITY.md + CLAUDE.md files + source code.
+**CRITICAL:** Parameters here must exactly match the constants at the top of `crates/mini-diarium-crypto/src/crypto/password.rs` and the Security Rules in the backend guide. Three-way sync required for any crypto change: SECURITY.md + CLAUDE.md files + source code.
 
 ---
 
@@ -377,7 +377,7 @@ When you change a primary doc, check and sync these related docs:
 5. Check CHANGELOG.md for missing entries (check git log for recent commits)
 6. Check MEMORY.md for outdated or conflicting information
 7. Check PHILOSOPHY.md Part II implementation details against actual code
-8. Check SECURITY.md crypto params against the constants in `crates/mini-diarium-core/src/crypto/password.rs`
+8. Check SECURITY.md crypto params against the constants in `crates/mini-diarium-crypto/src/crypto/password.rs`
 9. Check `website/docs-src/` pages for features changed since their last edit (stale docs are a bug)
 10. Report all discrepancies with specific line-level detail and proposed fixes
 

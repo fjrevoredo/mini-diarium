@@ -155,9 +155,9 @@ The `unsafe` impls are sound: the AST is immutable after compilation and each ca
 ### AT-8 — `rand_core 0.6` is pinned; bump to 0.10 is blocked on source migration
 **Status:** Open (deferred; source migration not yet done)
 
-`rand` is already at `0.10` and the crypto crates (`aes-gcm 0.11`, `x25519-dalek 3`) are on stable releases that depend on the modern `rand_core`. The remaining blocker is a source migration: `rand_core 0.10` removed `OsRng` and renamed `RngCore` to `Rng`. The codebase still has ~22 `rand_core::OsRng` / `rand_core::RngCore` call sites — in `crates/mini-diarium-core/src/crypto/cipher.rs`, `crates/mini-diarium-core/src/db/schema/create.rs`, `crates/mini-diarium-core/src/db/schema/migrations/v2_to_v3.rs`, and several test modules — that must be migrated to `rand::rng()` / the `Rng` trait before the `rand_core = "0.6"` → `"0.10"` manifest bump compiles.
+`rand` is already at `0.10` and the crypto crates (`aes-gcm 0.11`, `x25519-dalek 3`) are on stable releases that depend on the modern `rand_core`. The remaining blocker is a source migration: `rand_core 0.10` removed `OsRng` and renamed `RngCore` to `Rng`. The codebase still has ~22 `rand_core::OsRng` / `rand_core::RngCore` call sites — in `crates/mini-diarium-crypto/src/crypto/cipher.rs`, `crates/mini-diarium-core/src/db/schema/create.rs`, `crates/mini-diarium-core/src/db/schema/migrations/v2_to_v3.rs`, and several test modules — that must be migrated to `rand::rng()` / the `Rng` trait before the `rand_core = "0.6"` → `"0.10"` manifest bump compiles.
 
-**Retry when:** the `OsRng`/`RngCore` call sites are migrated; then apply the `rand_core = "0.10"` bump in both `src-tauri/Cargo.toml` and `crates/mini-diarium-core/Cargo.toml`. (Dependabot PR #225 was closed with this comment on 2026-07-21.)
+**Retry when:** the `OsRng`/`RngCore` call sites are migrated; then apply the `rand_core = "0.10"` bump in all three manifests that now carry it — `src-tauri/Cargo.toml`, `crates/mini-diarium-core/Cargo.toml`, and `crates/mini-diarium-crypto/Cargo.toml` (the crypto crate gained `rand_core` when `cipher.rs` moved there in open-core M3a / TODO-0082). (Dependabot PR #225 was closed with this comment on 2026-07-21.)
 
 ---
 
@@ -252,4 +252,4 @@ The app data directory resolution (`resolve_app_data_dir`) and legacy config det
 
 ---
 
-*Last updated: 2026-05-09. For the security threat model, see [SECURITY.md](../SECURITY.md). For open features and enhancements, see [OPEN_TASKS.md](OPEN_TASKS.md). For the full backend architectural assessment conducted at v0.4.9, see [BACKEND_ASSESSMENT_2026-03.md](BACKEND_ASSESSMENT_2026-03.md).*
+*Last updated: 2026-07-23. For the security threat model, see [SECURITY.md](../SECURITY.md). For open features and enhancements, see [OPEN_TASKS.md](OPEN_TASKS.md). For the full backend architectural assessment conducted at v0.4.9, see [BACKEND_ASSESSMENT_2026-03.md](BACKEND_ASSESSMENT_2026-03.md).*

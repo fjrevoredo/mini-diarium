@@ -1,0 +1,29 @@
+[package]
+name = "mini-diarium-crypto"
+# Intentionally decoupled from the app crate's version (src-tauri/Cargo.toml),
+# like mini-diarium-core. This is an internal path dependency; its version is
+# irrelevant until distribution is decided (open-core roadmap M4).
+version = "0.1.0"
+edition = "2021"
+description = "Reusable, rusqlite-free cryptographic layer of Mini Diarium (cipher, password hashing, master-key wrapping)"
+authors = ["you"]
+
+[lib]
+# Defensive, per docs/OPEN_CORE_STRATEGY.md: benches live in the app crate, but
+# keep libtest from being invoked here with --output-format bencher.
+bench = false
+
+[dependencies]
+# Only what the moved crypto/auth code names — deliberately NO rusqlite, rhai,
+# image, chrono, serde_json, or base64, so this crate stays WASM-targetable and
+# free of the desktop SQLite binding (open-core M3a / TODO-0082).
+serde = { version = "1", features = ["derive"] }
+argon2 = { version = "0.5", features = ["std"] }
+aes-gcm = "0.11"
+zeroize = { version = "1.8", features = ["derive"] }
+rand = "0.10"
+rand_core = "0.6"
+hex = "0.4"
+x25519-dalek = { version = "3", features = ["static_secrets"] }
+hkdf = "0.13"
+sha2 = "0.11"

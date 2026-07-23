@@ -160,11 +160,21 @@ Cargo.toml              # [workspace] virtual manifest (new), members = ["src-ta
 src-tauri/              # app crate "mini-diarium" — unchanged location
   Cargo.toml
 crates/
-  mini-diarium-core/    # Tauri-free rlib
+  mini-diarium-crypto/  # rusqlite-free cryptographic base (M3a / TODO-0082)
     Cargo.toml
-    src/                # crypto, auth, db, import, export, plugin, backup, config, shared types
-  # room for a future mini-diarium-kernel crate (see the M3 gradient below)
+    src/                # crypto (cipher, password hashing), auth (master-key wrapping methods)
+  mini-diarium-core/    # Tauri-free rlib; depends on mini-diarium-crypto and re-exports crypto/auth
+    Cargo.toml
+    src/                # db, import, export, plugin, backup, config, search, shared types
 ```
+
+> **Naming note (2026-07-23, supersedes "kernel").** The M3a gradient crate below was
+> penciled in as `mini-diarium-kernel`, but "kernel" next to "core" is two synonyms for
+> "the central library" with no hint of which is lower. It shipped (TODO-0082) as
+> **`mini-diarium-crypto`** — named for what it is (the pure cryptographic layer) — so the
+> stack reads bottom-up at a glance: `crypto` (base) → `core` (SQLite business layer,
+> depends on crypto) → `mini-diarium` (app). This matches the common Rust pattern of a
+> foundational `*-crypto` crate under a business crate.
 
 Rationale, driven by how the crate is consumed: git and crates.io dependencies resolve a package by name regardless of where it sits in the repo, so external consumption (`minidiarium-plus`) and publishing are layout-neutral. What *does* discriminate is that the reusable, Tauri-free, WASM-targeted code must not read as "owned" by a directory literally named `src-tauri/`; a neutral `crates/` home is the idiomatic Rust "library + app" workspace shape and scales cleanly to the later kernel/core sub-split (M3). Keeping the app at `src-tauri/` preserves the `--manifest-path src-tauri/Cargo.toml` convention baked into CI, coverage tooling, `nix/`, benchmarks, and the domain `CLAUDE.md` files.
 
@@ -209,7 +219,7 @@ Each milestone carries a **Checklist** of `- [ ]` items to tick off as the work 
 | M0 — baseline lock | Complete | Green baseline recorded at `13c29e8`; retained as historical behavior-preserving evidence. |
 | M1 — workspace split | Complete | `mini-diarium-core` is a workspace member with no Tauri dependency; the review's stale `src-tauri/target/` documentation gap is guarded by `bun run check:build-paths`. |
 | M2 — façade API | Complete | `API.md`, sealed internal modules, and the façade-only app path are present; `peek_auth_slot_types` is now core-owned and the app no longer depends on `rusqlite`. |
-| M3 — kernel / handle separation | Pending | The core crate still directly couples encrypted-row read/write code and migrations to `DatabaseConnection`/`rusqlite`; TODO-0082 and TODO-0083 separate the portable kernel from the desktop adapter. |
+| M3 — kernel / handle separation | M3a done (2026-07-23); M3b pending | **M3a (TODO-0082):** the `rusqlite`-free `mini-diarium-crypto` crate now holds `crypto/` + the pure `auth/` master-key wrapping; `cargo tree -p mini-diarium-crypto` shows no `rusqlite`, and core re-exports it so the façade is unchanged. **M3b (TODO-0083, pending):** the core crate still couples the encrypted-**row** read/write format and migrations to `DatabaseConnection`/`rusqlite`; the storage-boundary adapter is deliberately left for TODO-0083. |
 | M4 — distribution and governance | Pending | No distribution ADR, premium-boundary statement in `CONTRIBUTING.md`, or recorded trademark posture exists; TODO-0084 through TODO-0086 make those independently reviewable. |
 
 ### M0 — Baseline lock (precondition)
@@ -279,9 +289,12 @@ Each milestone carries a **Checklist** of `- [ ]` items to tick off as the work 
 - **Exit criteria:** the storage binding is an injectable boundary, not a hard dependency of the crypto/format kernel.
 - **Tracked as:** TODO-0082 (portable crypto/auth kernel) and TODO-0083 (encrypted-format boundary plus `rusqlite` adapter). These remain open-core work only; no browser SQLite implementation or + product code belongs in either item.
 - **Checklist:**
-  - [ ] `crypto/`, the X25519/HKDF slot-unwrapping, and the encrypted-row format callable independently of the `rusqlite` connection type
-  - [ ] Desktop path supplies `rusqlite`-backed storage as one implementation behind the boundary
-  - [ ] Kernel compiles without `rusqlite` in scope; existing tests still pass via the desktop path
+  - _M3a (TODO-0082, landed 2026-07-23):_
+    - [x] `crypto/` and the X25519/HKDF slot-unwrapping extracted into the `rusqlite`-free `mini-diarium-crypto` crate, callable independently of the `rusqlite` connection type (`cargo tree -p mini-diarium-crypto` shows no `rusqlite`); `mini-diarium-core` depends on it and re-exports `crypto`/`auth` so the M2 façade is unchanged
+    - [x] Crypto crate compiles without `rusqlite` in scope; existing tests still pass via the desktop path (`cargo build -p mini-diarium-crypto` standalone; `cargo test --workspace` green)
+  - _M3b (TODO-0083, pending):_
+    - [ ] The encrypted-row read/write format (`db/queries` `encrypt_for_storage`/`decrypt_*`) callable independently of the `rusqlite` connection type
+    - [ ] Desktop path supplies `rusqlite`-backed storage as one implementation behind the boundary
 
 ### M4 — Distribution and governance groundwork (Section 9, steps 3 and 5)
 

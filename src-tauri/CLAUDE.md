@@ -5,12 +5,15 @@
 
 ## Workspace layout
 
-The backend is a Cargo **workspace** (root `Cargo.toml`) with two members:
+The backend is a Cargo **workspace** (root `Cargo.toml`) with three members, layered
+bottom-up: `mini-diarium-crypto` (base) → `mini-diarium-core` (depends on crypto) →
+`mini-diarium` (app, depends on core):
 
 - **App crate — `src-tauri/`** (`mini-diarium`): the Tauri commands (`commands/*`), native menu, OS shell, WebView security, and window/screen-lock listeners. Depends on the core crate; `lib.rs` re-exports its modules (`pub use mini_diarium_core::{auth, backup, config, crypto, db, export, import, plugin, search};`) so `crate::db::…`-style paths in `commands/*` resolve. **As of open-core M2 (TODO-0077), `commands/*` reach core only through its curated façade** — the module roots (`db`, `auth`, `export`, `import`, `plugin`) re-export the curated API and seal their internals to `pub(crate)`. Do **not** reintroduce `crate::db::queries::…` / `crate::db::schema::…` / `db.conn()` / `db.key()` — **or a raw `rusqlite::Connection`** — in `commands/*`; use the façade names (e.g. `crate::db::insert_entry`, `crate::auth::add_password_slot`, `crate::db::peek_auth_slot_types`). The app crate **no longer depends on `rusqlite` at all** (bundled SQLite arrives transitively through the core crate), so a direct driver call is now a compile error rather than a convention violation. Two greps must stay empty: `rg "rusqlite" src-tauri/src` and `rg "db::queries::|db::schema::|\.conn\(\)|\.key\(\)" src-tauri/src`. The surface is documented in [`crates/mini-diarium-core/API.md`](../crates/mini-diarium-core/API.md), which is explicitly **pre-1.0 and internal** — see its "Contract & compatibility" section for the error/serde/handle rules that come with it.
-- **Core crate — `crates/mini-diarium-core/`** (`mini-diarium-core`): the Tauri-free business layer — crypto, auth, db, import/export, plugins, backup, config, search. **Zero `tauri::` references.** Consumable by a future separate product and eventually WASM (see [`docs/OPEN_CORE_STRATEGY.md`](../docs/OPEN_CORE_STRATEGY.md)). Its curated public surface is documented in [`API.md`](../crates/mini-diarium-core/API.md) (pre-1.0, internal until open-core M4 decides distribution); everything else is `pub(crate)`/private. Its version is intentionally decoupled from the app version.
+- **Core crate — `crates/mini-diarium-core/`** (`mini-diarium-core`): the Tauri-free **SQLite** business layer — db, import/export, plugins, backup, config, search. **Zero `tauri::` references.** It **depends on `mini-diarium-crypto` and re-exports** its `crypto`/`auth` modules, so `mini_diarium_core::crypto::…` / `…::auth::…` (and the app-crate shim) still resolve. Consumable by a future separate product and eventually WASM (see [`docs/OPEN_CORE_STRATEGY.md`](../docs/OPEN_CORE_STRATEGY.md)). Its curated public surface is documented in [`API.md`](../crates/mini-diarium-core/API.md) (pre-1.0, internal until open-core M4 decides distribution); everything else is `pub(crate)`/private. Its version is intentionally decoupled from the app version.
+- **Crypto crate — `crates/mini-diarium-crypto/`** (`mini-diarium-crypto`): the reusable, **`rusqlite`-free** cryptographic base — AES-256-GCM cipher, Argon2id password hashing, and the X25519/HKDF master-key wrapping (`crypto/` + the pure `auth/` methods and their `SecretBytes`/`KeypairFiles` value types). Carved out in open-core **M3a (TODO-0082)** so the universal cryptographic code compiles without the desktop SQLite binding in its dependency graph, keeping the WASM door open. Acceptance invariant: `cargo tree -p mini-diarium-crypto` shows **no `rusqlite`**. Surface documented in [`crates/mini-diarium-crypto/API.md`](../crates/mini-diarium-crypto/API.md). The db-coupled pieces (`AuthMethodInfo`, `add_password_slot`/`add_keypair_slot`, the encrypted-row format) stay in the core crate.
 
-`Cargo.lock` and `target/` live at the repo root. Run all backend tests with `cargo test --workspace` (**not** `--manifest-path src-tauri/Cargo.toml`, which skips the core crate's tests).
+`Cargo.lock` and `target/` live at the repo root. Run all backend tests with `cargo test --workspace` (**not** `--manifest-path src-tauri/Cargo.toml`, which skips the core and crypto crates' tests).
 
 ## Key Modules
 
@@ -29,13 +32,25 @@ The backend is a Cargo **workspace** (root `Cargo.toml`) with two members:
 |------|---------|
 | `db/schema/` | DB connection helpers (`open_connection*`), DDL, and schema migrations `v1_to_v2` … `v12_to_v13` via `apply_pending` |
 | `db/queries/` | Encrypted row helpers — shared format primitives in `mod.rs` (`encrypt_for_storage`, `decrypt_utf8`) |
-| `auth/` | Auth method implementations: password (Argon2id), keypair (X25519 ECIES), auto-key (device-bound) |
-| `crypto/` | AES-256-GCM cipher and Argon2id password hashing |
+| `auth/` | Composed slot ops (`add_password_slot`/`add_keypair_slot`) + `AuthMethodInfo` DTO. Re-exports the pure auth methods from the `mini-diarium-crypto` crate (see below). |
 | `import/` | Built-in diary format parsers (Mini Diary, Day One, jrnl) |
 | `export/` | JSON and Markdown export writers |
 | `plugin/` | Plugin trait, registry, Rhai script loader and sandbox |
 | `backup.rs` | Encrypted-DB backup rotation |
 | `config.rs` | `JournalConfig`/`JournalInfo` and `config.json` handling |
+
+### Crypto crate (`crates/mini-diarium-crypto/src/`)
+
+`rusqlite`-free; re-exported by the core crate as `crypto`/`auth`.
+
+| Path | Purpose |
+|------|---------|
+| `crypto/cipher.rs` | AES-256-GCM encrypt/decrypt + keyed HKDF-SHA256 fingerprints (`tag_name_fingerprint`, `image_fingerprint`) |
+| `crypto/password.rs` | Argon2id password hashing (`hash_password`, `verify_password`, `derive_key_from_phc_hash`, `generate_salt`) |
+| `auth/password.rs` | `PasswordMethod` — master-key wrap/unwrap via Argon2id + AES-256-GCM |
+| `auth/keypair.rs` | `KeypairMethod`/`PrivateKeyMethod` — X25519 ECIES wrap/unwrap; `generate_keypair`, `derive_public_key` |
+| `auth/auto_key.rs` | `AutoKeyMethod` — device-bound 32-byte key wrap/unwrap (no KDF) |
+| `auth/mod.rs` | `SecretBytes` (zeroize-on-drop) + `KeypairFiles` value types; re-exports the method types |
 
 ## Conventions
 

@@ -19,3 +19,4 @@ flags:
     paths:
       - src-tauri/src/
       - crates/mini-diarium-core/src/
+      - crates/mini-diarium-crypto/src/

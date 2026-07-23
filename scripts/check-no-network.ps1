@@ -16,14 +16,16 @@ function Ok([string]$msg) {
 }
 
 # ── 1. Rust: no network-capable crates in any workspace manifest ─────────────
-# Dependencies are split across two crates: the app crate (src-tauri/Cargo.toml)
-# and the Tauri-free business layer (crates/mini-diarium-core/Cargo.toml), which
-# now holds the crypto/db/import/export deps. Scan BOTH so the no-network
-# guarantee spans the whole workspace, not just the app crate.
-$cargoManifests = @(
-    (Join-Path $PSScriptRoot ".." "src-tauri" "Cargo.toml"),
-    (Join-Path $PSScriptRoot ".." "crates" "mini-diarium-core" "Cargo.toml")
-)
+# Dependencies are split across the app crate (src-tauri/Cargo.toml) and the
+# Tauri-free library crates under crates/* — mini-diarium-core (db/import/export/…)
+# and mini-diarium-crypto (the rusqlite-free cipher/auth kernel). Scan ALL of them
+# so the no-network guarantee spans the whole workspace, not just the app crate.
+# Globbing crates/*/Cargo.toml auto-covers any future crate.
+$cratesDir = Join-Path $PSScriptRoot ".." "crates"
+$cargoManifests = @(Join-Path $PSScriptRoot ".." "src-tauri" "Cargo.toml")
+$cargoManifests += Get-ChildItem -Path $cratesDir -Directory -ErrorAction SilentlyContinue |
+    ForEach-Object { Join-Path $_.FullName "Cargo.toml" } |
+    Where-Object { Test-Path $_ }
 $networkCrates = 'reqwest|hyper|ureq|isahc|curl|native-tls|rustls|tokio-tungstenite|tauri-plugin-http|tauri-plugin-updater|tauri-plugin-websocket'
 foreach ($cargoToml in $cargoManifests) {
     $matches = Select-String -Path $cargoToml -Pattern $networkCrates -ErrorAction SilentlyContinue

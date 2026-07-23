@@ -86,7 +86,9 @@ rustPlatform.buildRustPackage {
   inherit version src;
 
   # Virtual workspace: the manifest and Cargo.lock live at the repo root, but we
-  # only build the app crate (which pulls in the in-tree mini-diarium-core path dep).
+  # only build the app crate, which pulls in the in-tree path deps mini-diarium-core
+  # and (transitively) mini-diarium-crypto. The source filter already includes
+  # crates/**, and cargoLock.lockFile resolves the new path-dep automatically.
   cargoRoot = ".";
   buildAndTestSubdir = "src-tauri";
 

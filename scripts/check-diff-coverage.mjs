@@ -131,10 +131,12 @@ export function parseUnifiedDiff(diffText, repoRootNorm) {
 
 export function classifyGroup(p) {
   if (p.startsWith('src-tauri/src/')) return 'backend';
-  // The Tauri-free business layer lives in the mini-diarium-core crate; its
-  // coverage lands in the same backend lcov (src-tauri/lcov.info) via the
-  // --workspace test run, so classify it as backend too.
-  if (p.startsWith('crates/mini-diarium-core/src/')) return 'backend';
+  // The Tauri-free library crates (mini-diarium-core, mini-diarium-crypto, and any
+  // future crates/*) all have their coverage land in the same backend lcov
+  // (src-tauri/lcov.info) via the --workspace test run, so classify anything under
+  // crates/<name>/src/ as backend. A path-specific check would silently drop a new
+  // crate's diff lines into 'other' (ungated).
+  if (/^crates\/[^/]+\/src\//.test(p)) return 'backend';
   if (p.startsWith('src/')) return 'frontend';
   return 'other';
 }
@@ -467,6 +469,8 @@ function runSelfTest() {
 
   eq('classifyGroup frontend', classifyGroup('src/App.tsx'), 'frontend');
   eq('classifyGroup backend', classifyGroup('src-tauri/src/commands/auth.rs'), 'backend');
+  eq('classifyGroup core crate backend', classifyGroup('crates/mini-diarium-core/src/db/queries/mod.rs'), 'backend');
+  eq('classifyGroup crypto crate backend', classifyGroup('crates/mini-diarium-crypto/src/crypto/cipher.rs'), 'backend');
   eq('classifyGroup other', classifyGroup('scripts/x.mjs'), 'other');
 
   const subByFile = new Map([['src/commands/auth.rs', new Map([[1, 0]])]]);

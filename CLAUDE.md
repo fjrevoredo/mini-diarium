@@ -26,10 +26,11 @@ Operational rule for agents in this environment:
 
 - Prefer `cmd.exe /c ...` for project commands unless you have explicitly verified a Linux-native setup.
 - Do not start with bare `bun`, `vite`, `vitest`, or `tauri` from WSL in this repo. (`cargo` is fine bare.)
-- **Workspace layout:** the backend is a Cargo **workspace** (root `Cargo.toml`) with two members — the app crate at `src-tauri/` (`mini-diarium`: `commands/*`, OS shell) and the Tauri-free business layer at `crates/mini-diarium-core/` (`mini-diarium-core`: crypto/auth/db/import/export/plugin/backup/config). `Cargo.lock` and `target/` live at the repo root.
-- For Rust commands, run `cargo` bare from the repo root. `--manifest-path src-tauri/Cargo.toml` targets **only the app crate**; `--workspace` targets **both crates** (required for "run all backend tests" — without it the core module tests silently stop running):
-  - `cargo test --workspace` — all backend tests (both crates)
+- **Workspace layout:** the backend is a Cargo **workspace** (root `Cargo.toml`) with three members, layered bottom-up: (1) `crates/mini-diarium-crypto/` (`mini-diarium-crypto`: the `rusqlite`-free cryptographic base — cipher/password-hashing/master-key-wrapping); (2) `crates/mini-diarium-core/` (`mini-diarium-core`: the Tauri-free SQLite business layer — db/import/export/plugin/backup/config/search — which **depends on and re-exports** `crypto`/`auth` from the crypto crate); (3) the app crate at `src-tauri/` (`mini-diarium`: `commands/*`, OS shell), which depends on core. `Cargo.lock` and `target/` live at the repo root.
+- For Rust commands, run `cargo` bare from the repo root. `--manifest-path src-tauri/Cargo.toml` targets **only the app crate**; `--workspace` targets **all three crates** (required for "run all backend tests" — without it the core and crypto module tests silently stop running):
+  - `cargo test --workspace` — all backend tests (all three crates)
   - `cargo test --manifest-path crates/mini-diarium-core/Cargo.toml` — core crate only
+  - `cargo test --manifest-path crates/mini-diarium-crypto/Cargo.toml` — crypto crate only
   - `cargo test --manifest-path src-tauri/Cargo.toml` — app crate only
 - Use repo-local Tauri CLI through `cmd.exe /c bun run tauri ...`; do not assume `cargo tauri` is globally installed.
 - Treat generic shell snippets in docs as human-oriented unless they already say "Run from this Codex shell".

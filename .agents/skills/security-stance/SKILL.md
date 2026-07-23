@@ -1,6 +1,6 @@
 ---
 name: security-stance
-description: "Mini Diarium's opinionated security, encryption, and privacy stance. Load when touching crypto (crates/mini-diarium-core/src/crypto/), auth (crates/mini-diarium-core/src/auth/, commands/auth/), IPC boundaries (src/lib/errors.ts, tauri.ts), auto-lock (screen_lock.rs, App.tsx idle timer), database schema/migrations (db/schema.rs), backups (backup.rs), config.json / JournalConfig, import/export, plugin sandbox (Rhai), search (intentionally stubbed), debug dump, Tauri capabilities (src-tauri/capabilities/) or CSP (tauri.conf.json), E2E isolation env vars, or anything involving passwords, keys, nonces, zeroization, or entry persistence. Also load when reviewing or proposing new features to judge against the six PHILOSOPHY.md principles and five non-negotiables."
+description: "Mini Diarium's opinionated security, encryption, and privacy stance. Load when touching crypto (crates/mini-diarium-crypto/src/crypto/), auth (crates/mini-diarium-core/src/auth/, commands/auth/), IPC boundaries (src/lib/errors.ts, tauri.ts), auto-lock (screen_lock.rs, App.tsx idle timer), database schema/migrations (db/schema.rs), backups (backup.rs), config.json / JournalConfig, import/export, plugin sandbox (Rhai), search (intentionally stubbed), debug dump, Tauri capabilities (src-tauri/capabilities/) or CSP (tauri.conf.json), E2E isolation env vars, or anything involving passwords, keys, nonces, zeroization, or entry persistence. Also load when reviewing or proposing new features to judge against the six PHILOSOPHY.md principles and five non-negotiables."
 compatibility: Designed for Claude Code. Applies to Mini Diarium only.
 ---
 
@@ -16,8 +16,8 @@ The authoritative sources are `PHILOSOPHY.md` and `SECURITY.md`. This skill dist
 
 Load when work touches any of:
 
-- Crypto: `crates/mini-diarium-core/src/crypto/cipher.rs`, `crates/mini-diarium-core/src/crypto/password.rs`
-- Auth: `crates/mini-diarium-core/src/auth/{mod,password,keypair,auto_key}.rs`, `src-tauri/src/commands/auth/`
+- Crypto: `crates/mini-diarium-crypto/src/crypto/cipher.rs`, `crates/mini-diarium-crypto/src/crypto/password.rs`
+- Auth: `crates/mini-diarium-core/src/auth/mod.rs` (composed slot ops + `AuthMethodInfo`), `crates/mini-diarium-crypto/src/auth/{password,keypair,auto_key}.rs` (the pure wrapping methods), `src-tauri/src/commands/auth/`
 - IPC contract: `src/lib/tauri/`, `src/lib/errors.ts`, any new `#[tauri::command]`
 - Auto-lock paths: `src/App.tsx` idle timer, `src-tauri/src/screen_lock.rs`, `src/lib/focus-lock.ts`, `src-tauri/src/window_focus.rs`, `src/lib/dialog.ts`
 - DB schema / migrations: `crates/mini-diarium-core/src/db/schema/mod.rs` (`SCHEMA_VERSION` at line 32), `crates/mini-diarium-core/src/db/schema/migrations/`
@@ -48,7 +48,7 @@ From `PHILOSOPHY.md:165-169`. These are not preferences — they are red lines.
 
 | # | Rule | Enforcement / Where it shows up first |
 |---|------|---------------------------------------|
-| 1 | **No network access.** Mini Diarium never initiates any network connection. OS-opener links (About screen, Onboarding) hand a URL to the system browser — the app makes no network call itself. | Neither `src-tauri/Cargo.toml` (app crate) nor `crates/mini-diarium-core/Cargo.toml` (business layer) contains `reqwest`, `hyper`, `socket2`, `ureq`, etc. (`PHILOSOPHY.md:225`). Capabilities allowlist (`src-tauri/capabilities/default.json`) has no `http:*`. CI static check `scripts/check-no-network.ps1` (scans both manifests) enforces this on every push. Adding a network crate or capability is the visible violation. |
+| 1 | **No network access.** Mini Diarium never initiates any network connection. OS-opener links (About screen, Onboarding) hand a URL to the system browser — the app makes no network call itself. | None of the three crate manifests — `src-tauri/Cargo.toml` (app crate), `crates/mini-diarium-core/Cargo.toml` (business layer), or `crates/mini-diarium-crypto/Cargo.toml` (crypto crate) — contains `reqwest`, `hyper`, `socket2`, `ureq`, etc. (`PHILOSOPHY.md:225`). Capabilities allowlist (`src-tauri/capabilities/default.json`) has no `http:*`. CI static check `scripts/check-no-network.ps1` (globs and scans all crate manifests) enforces this on every push. Adding a network crate or capability is the visible violation. |
 | 2 | **No custom cryptography.** Standard algorithms and established libraries only. | Code review: any homegrown MAC, KDF, cipher mode, nonce scheme, or "encryption helper" is the violation. We use `aes-gcm`, `argon2`, `x25519-dalek`, `hkdf`, `zeroize`. |
 | 3 | **No password recovery.** If credentials are lost, data is gone. Mitigation = register a second auth method. | Refusing to add a "reset password without old password" path. The only re-wrap is `change_password` (requires current creds). `remove_auth_method` refuses to delete the last slot. |
 | 4 | **No vendor lock-in.** Users must be able to export and migrate freely. | JSON + Markdown exports remain plaintext, with documented schema (`PHILOSOPHY.md:82-87`). Removing or proprietizing an export format is the violation. |
@@ -68,7 +68,7 @@ Compact form of `SECURITY.md:30-43`. This is the "what can I honestly promise?" 
 | Password guessing at rest | YES | Argon2id m=64 MiB, t=3, p=4 (exceeds OWASP 2023 minimums) | `SECURITY.md:33`, `crypto/password.rs:8-10` |
 | Weak-credential key-file attack | YES | X25519 ECDH + HKDF-SHA256 — strength = 256-bit curve regardless of file location/name | `SECURITY.md:34`, `auth/keypair.rs:8` |
 | Multi-credential compromise (revoke one, others unaffected) | YES | Each auth method wraps its own copy of the master key in `auth_slots` | `SECURITY.md:35` |
-| In-memory key leakage after lock | YES | Lock drops DB connection, clears keys; `SecretBytes`/`Key` use `ZeroizeOnDrop`; explicit `.zeroize()` on success and error paths | `SECURITY.md:36`, `auth/mod.rs:5-44`, `crypto/cipher.rs:14-22`, `crypto/password.rs:60,103` |
+| In-memory key leakage after lock | YES | Lock drops DB connection, clears keys; `SecretBytes`/`Key` use `ZeroizeOnDrop`; explicit `.zeroize()` on success and error paths | `SECURITY.md:36`, `crates/mini-diarium-crypto/src/auth/mod.rs:21-53`, `crypto/cipher.rs:14-22`, `crypto/password.rs:60,103` |
 | Running session on the device (unlocked) | NO | Out of scope — content lives in process memory; mitigated by locking | `SECURITY.md:40` |
 | Malicious software on the device (keylogger, screen-cap, ptrace) | NO | Out of scope — protect the device first | `SECURITY.md:41` |
 | Cloud-sync provider compromise of the DB file alone | PARTIAL | Sees only ciphertext. **If the same provider also holds the key file or `config.json` with `auto_key`, the journal is compromised.** | `SECURITY.md:42`, `docs/decisions/2026-04-passwordless-journal.md` |
@@ -80,17 +80,17 @@ Compact form of `SECURITY.md:30-43`. This is the "what can I honestly promise?" 
 
 | Invariant | Value / shape | File:line | What breaks if changed |
 |---|---|---|---|
-| AES-GCM key size | 32 bytes (AES-256) | `crates/mini-diarium-core/src/crypto/cipher.rs:9` | Incompatible with all existing ciphertext |
-| AES-GCM nonce size | 12 bytes | `crates/mini-diarium-core/src/crypto/cipher.rs:12` | AES-GCM spec violation; existing blobs unparseable |
-| AES-GCM nonce generation | Random per encrypt via `OsRng.fill_bytes` | `crates/mini-diarium-core/src/crypto/cipher.rs:70-74` | Nonce reuse → catastrophic keystream-XOR leak |
-| Ciphertext blob layout | `[nonce(12) ‖ ciphertext ‖ tag(16)]` | `crates/mini-diarium-core/src/crypto/cipher.rs:83-104` | All existing entries unrecoverable |
-| Argon2id memory | 65536 KiB (64 MB) | `crates/mini-diarium-core/src/crypto/password.rs:8` | Weakening = faster offline crack; strengthening = slow unlock on older hardware. Either way: schema migration + CHANGELOG Security entry. |
-| Argon2id iterations | 3 | `crates/mini-diarium-core/src/crypto/password.rs:9` | Same — migration class change |
-| Argon2id parallelism | 4 | `crates/mini-diarium-core/src/crypto/password.rs:10` | Same — migration class change |
-| X25519 HKDF info string | `b"mini-diarium-v1"` (constant) | `crates/mini-diarium-core/src/auth/keypair.rs:8` | All existing keypair slots unrecoverable |
-| Wrapped-key blob (keypair) | `[eph_pub(32) ‖ nonce(12) ‖ ciphertext(32) ‖ tag(16)] = 92 bytes` for a 32-byte master key | `crates/mini-diarium-core/src/auth/keypair.rs:12-14` | Existing keypair slots unparseable |
-| `SecretBytes` | `#[derive(ZeroizeOnDrop)]`; Debug shows `SecretBytes([REDACTED; N])` | `crates/mini-diarium-core/src/auth/mod.rs:5-44` | Keys linger in heap; `Debug` would leak bytes |
-| `Key` struct | `#[derive(Zeroize, ZeroizeOnDrop)]`; Debug shows `[REDACTED]` | `crates/mini-diarium-core/src/crypto/cipher.rs:14-22` | Same leak class |
+| AES-GCM key size | 32 bytes (AES-256) | `crates/mini-diarium-crypto/src/crypto/cipher.rs:9` | Incompatible with all existing ciphertext |
+| AES-GCM nonce size | 12 bytes | `crates/mini-diarium-crypto/src/crypto/cipher.rs:12` | AES-GCM spec violation; existing blobs unparseable |
+| AES-GCM nonce generation | Random per encrypt via `OsRng.fill_bytes` | `crates/mini-diarium-crypto/src/crypto/cipher.rs:70-74` | Nonce reuse → catastrophic keystream-XOR leak |
+| Ciphertext blob layout | `[nonce(12) ‖ ciphertext ‖ tag(16)]` | `crates/mini-diarium-crypto/src/crypto/cipher.rs:83-104` | All existing entries unrecoverable |
+| Argon2id memory | 65536 KiB (64 MB) | `crates/mini-diarium-crypto/src/crypto/password.rs:8` | Weakening = faster offline crack; strengthening = slow unlock on older hardware. Either way: schema migration + CHANGELOG Security entry. |
+| Argon2id iterations | 3 | `crates/mini-diarium-crypto/src/crypto/password.rs:9` | Same — migration class change |
+| Argon2id parallelism | 4 | `crates/mini-diarium-crypto/src/crypto/password.rs:10` | Same — migration class change |
+| X25519 HKDF info string | `b"mini-diarium-v1"` (constant) | `crates/mini-diarium-crypto/src/auth/keypair.rs:8` | All existing keypair slots unrecoverable |
+| Wrapped-key blob (keypair) | `[eph_pub(32) ‖ nonce(12) ‖ ciphertext(32) ‖ tag(16)] = 92 bytes` for a 32-byte master key | `crates/mini-diarium-crypto/src/auth/keypair.rs:12-14` | Existing keypair slots unparseable |
+| `SecretBytes` | `#[derive(ZeroizeOnDrop)]`; Debug shows `SecretBytes([REDACTED; N])` | `crates/mini-diarium-crypto/src/auth/mod.rs:21-53` | Keys linger in heap; `Debug` would leak bytes |
+| `Key` struct | `#[derive(Zeroize, ZeroizeOnDrop)]`; Debug shows `[REDACTED]` | `crates/mini-diarium-crypto/src/crypto/cipher.rs:14-22` | Same leak class |
 | Master-key generation | 32 random bytes from `aes_gcm::aead::OsRng.fill_bytes`, raw bytes zeroized after wrap | `crates/mini-diarium-core/src/db/schema/create.rs` | Predictable / reused master key would be catastrophic |
 | Schema version | `pub const SCHEMA_VERSION: i32 = 7;` | `crates/mini-diarium-core/src/db/schema/mod.rs:32` | Bump on every breaking schema change |
 | Max import file size | 100 MB (`MAX_IMPORT_FILE_SIZE`) | `src-tauri/src/commands/import.rs:5` | Too high → memory DoS; too low → legitimate imports fail |
@@ -114,9 +114,9 @@ Three wrap methods exist:
 
 | Method | File | Wrap mechanism | Stores |
 |---|---|---|---|
-| `PasswordMethod` | `crates/mini-diarium-core/src/auth/password.rs` | Argon2id-derived key + AES-256-GCM | PHC hash + AES-GCM blob |
-| `KeypairMethod` | `crates/mini-diarium-core/src/auth/keypair.rs` | X25519 ECIES + HKDF-SHA256 + AES-256-GCM | X25519 public key + 92-byte ECIES blob |
-| `AutoKeyMethod` | `crates/mini-diarium-core/src/auth/auto_key.rs` | 32-byte device-bound random key + AES-256-GCM (no KDF — already 32 bytes of entropy) | Wrapping key hex lives in `config.json`, **not** in the DB |
+| `PasswordMethod` | `crates/mini-diarium-crypto/src/auth/password.rs` | Argon2id-derived key + AES-256-GCM | PHC hash + AES-GCM blob |
+| `KeypairMethod` | `crates/mini-diarium-crypto/src/auth/keypair.rs` | X25519 ECIES + HKDF-SHA256 + AES-256-GCM | X25519 public key + 92-byte ECIES blob |
+| `AutoKeyMethod` | `crates/mini-diarium-crypto/src/auth/auto_key.rs` | 32-byte device-bound random key + AES-256-GCM (no KDF — already 32 bytes of entropy) | Wrapping key hex lives in `config.json`, **not** in the DB |
 
 Hard rules:
 
@@ -124,7 +124,7 @@ Hard rules:
 - **`remove_auth_method` refuses to delete the last slot.** That guard lives at `src-tauri/src/commands/auth/auth_methods.rs:197+`. Never remove or weaken it. Removing the only auth method = unrecoverable journal.
 - **`require_all_auth` (per journal)** forces `unlock_diary_all_methods`. Single-method unlock paths must keep the guard. The guard lives in `commands/auth/auth_core.rs:80-90` and again at `:136-146` (one per single-method unlock path). When adding a new single-method unlock path, add the guard there too.
 - **Passwordless (`AutoKeyMethod`)** is accepted per `docs/decisions/2026-04-passwordless-journal.md`. Trade-off: OS-account compromise = journal compromise. The UI surfaces this via an explicit acknowledgement checkbox in `PasswordCreation.tsx`. The `auto_key` hex **must** stay in `config.json` — moving it into the DB creates a decryption circularity (you would need the key to decrypt the key).
-- **Master-key returns** travel as `SecretBytes` (`auth/mod.rs:5-44`) so they zeroize on drop even if the caller forgets.
+- **Master-key returns** travel as `SecretBytes` (`crates/mini-diarium-crypto/src/auth/mod.rs:21-53`) so they zeroize on drop even if the caller forgets.
 - **Both success and error paths zeroize.** Wrong-password code paths must also call `.zeroize()` on derived wrapping keys. See `crypto/password.rs:60` (success) and `:103` (error).
 
 ---
@@ -341,7 +341,7 @@ Run these before merging anything that touched a Section 1 surface. A surprising
 | `unwrap()` on the diary mutex (Mutex-poison panic risk) | `grep -rn "state.db.lock().unwrap" src-tauri/src/` |
 | New `unsafe impl` blocks | `git grep -n "unsafe impl" -- src-tauri/src crates` (expect: 4 in `plugin/rhai_loader/runtime.rs` — `Send`/`Sync` for `RhaiImportPlugin` and `RhaiExportPlugin`; zero in `lib.rs` — the platform handlers use `unsafe {}` blocks, not `unsafe impl`) |
 | New file-read commands without allowlist | `grep -rn "std::fs::read" src-tauri/src/commands/` and confirm extension/size guards |
-| Plaintext logging of secret material | `grep -rnE "info!\|debug!\|println!\|eprintln!" crates/mini-diarium-core/src/auth/ crates/mini-diarium-core/src/crypto/` and confirm no secrets in format args |
+| Plaintext logging of secret material | `grep -rnE "info!\|debug!\|println!\|eprintln!" crates/mini-diarium-core/src/auth/ crates/mini-diarium-crypto/src/auth/ crates/mini-diarium-crypto/src/crypto/` and confirm no secrets in format args |
 | FTS reintroduction | `grep -rn "fts5\|entries_fts" src-tauri/src/` (must return empty) |
 
 ---

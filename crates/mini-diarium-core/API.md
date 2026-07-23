@@ -189,7 +189,13 @@ sealed (`pub(crate)`); the names below are re-exported at `db`.
 
 ## `auth` — authentication methods & master-key wrapping
 
-The `auth::{auto_key, keypair, password}` sub-modules are sealed (`pub(crate)`).
+The pure cryptographic parts of this surface — `SecretBytes`, `KeypairFiles`, the four method
+types, `generate_keypair`, and `derive_public_key` — are **re-exported from
+[`mini-diarium-crypto`](../mini-diarium-crypto/API.md)** (open-core M3a / TODO-0082); they live
+in that `rusqlite`-free crate. The db-coupled parts (`AuthMethodInfo`, `add_password_slot`,
+`add_keypair_slot`) stay in this crate. Consumers reach the whole surface at
+`mini_diarium_core::auth::…` regardless. The `auth::{auto_key, keypair, password}` sub-modules
+are sealed (`pub(crate)`).
 
 ### Types
 `SecretBytes`, `AuthMethodInfo`, `KeypairFiles`, `PasswordMethod`, `KeypairMethod`,
@@ -211,6 +217,8 @@ unwrapping the current password slot, so it needs no separate helper.
 
 ## `crypto` — the reusable cryptographic kernel
 
+**Re-exported from [`mini-diarium-crypto`](../mini-diarium-crypto/API.md)** (open-core M3a /
+TODO-0082) — the `rusqlite`-free crate where the cipher and password hashing actually live.
 Reached at `crypto::cipher` / `crypto::password` (also used by benches).
 
 - `cipher::{Key, encrypt, decrypt, CipherError, tag_name_fingerprint, image_fingerprint}`

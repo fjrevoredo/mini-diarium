@@ -21,10 +21,14 @@ bench = false
 test-support = []
 
 [dependencies]
+# The reusable, rusqlite-free cryptographic layer (cipher, password hashing, master-key
+# wrapping). This crate re-exports its `crypto`/`auth` modules (open-core M3a / TODO-0082),
+# so `argon2` and `aes-gcm` live in that crate's manifest, not here. `x25519-dalek`, `hkdf`,
+# and `sha2` remain direct deps below — the db layer still names them (keypair-slot lookup
+# in db/schema/open.rs; the require_all_auth MAC in db/queries/db_settings.rs).
+mini-diarium-crypto = { path = "../mini-diarium-crypto" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-argon2 = { version = "0.5", features = ["std"] }
-aes-gcm = "0.11"
 zeroize = { version = "1.8", features = ["derive"] }
 rusqlite = { version = "0.40", features = ["bundled"] }
 rand = "0.10"

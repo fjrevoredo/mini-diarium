@@ -174,12 +174,13 @@ Acceptable exceptions:
 
 When a file crosses the soft limit, first look for a responsibility split that matches the domain boundary: command wrapper vs. command core, query helper vs. schema/migration, parser vs. formatter, registry vs. execution, or test fixture vs. assertions.
 
-Diagnostic check — scan **both** workspace members (the app crate at `src-tauri/` and the
-business layer at `crates/mini-diarium-core/`); scanning only `src-tauri\src` misses every
-core module:
+Diagnostic check — scan **all three** workspace members (the app crate at `src-tauri/`, the
+business layer at `crates/mini-diarium-core/`, and the crypto crate at
+`crates/mini-diarium-crypto/`); scanning only `src-tauri\src` misses every core and crypto
+module:
 
 ```powershell
-Get-ChildItem src-tauri\src, crates\mini-diarium-core\src -Recurse -Include *.rs |
+Get-ChildItem src-tauri\src, crates\mini-diarium-core\src, crates\mini-diarium-crypto\src -Recurse -Include *.rs |
   Where-Object { $_.FullName -notmatch '\\target\\|\\generated\\' } |
   ForEach-Object {
     $lines = (Get-Content $_.FullName).Count
@@ -208,8 +209,9 @@ cargo test --workspace
 cmd.exe /c bun run check
 ```
 
-For focused diagnosis (`--workspace` filters across both crates by name; `auth`,
-`queries`, and `schema` all live in the `mini-diarium-core` crate):
+For focused diagnosis (`--workspace` filters across all three crates by name; `queries` and
+`schema` live in the `mini-diarium-core` crate, while the `auth` method tests live in the
+`mini-diarium-crypto` crate — the `auth` filter also matches core's `slot_tests`):
 
 ```powershell
 cargo test --workspace auth

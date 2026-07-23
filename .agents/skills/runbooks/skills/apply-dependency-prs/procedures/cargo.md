@@ -5,12 +5,15 @@ procedure dispatched from `ENTRY.md` for PRs classified as **cargo** by the
 Triage section.
 
 > **Workspace layout (read first).** The backend is a Cargo **workspace** rooted
-> at the repo-root `Cargo.toml`, with two members: the app crate
-> `src-tauri/Cargo.toml` (tauri, platform, serde, log, …) and the Tauri-free
-> `crates/mini-diarium-core/Cargo.toml` (argon2, aes-gcm, rusqlite, rhai, image,
-> x25519-dalek, …). The single lockfile is at the repo root: **`Cargo.lock`**
-> (not `src-tauri/Cargo.lock`). A cargo dependency PR may bump a crate in
-> **either** manifest.
+> at the repo-root `Cargo.toml`, with three members: the app crate
+> `src-tauri/Cargo.toml` (tauri, platform, serde, log, …), the Tauri-free business
+> layer `crates/mini-diarium-core/Cargo.toml` (rusqlite, rhai, image, x25519-dalek,
+> hkdf, sha2, chrono, …), and the `rusqlite`-free crypto crate
+> `crates/mini-diarium-crypto/Cargo.toml` (argon2, aes-gcm, zeroize, x25519-dalek,
+> hkdf, sha2, rand, …). The single lockfile is at the repo root: **`Cargo.lock`**
+> (not `src-tauri/Cargo.lock`). A cargo dependency PR may bump a crate in **any** of
+> the three manifests (e.g. an `argon2`/`aes-gcm` bump now lands in the crypto crate;
+> a shared crate like `x25519-dalek` may need bumping in more than one manifest).
 
 Cargo has two distinct update paths, selected by whether the PR touches a
 manifest file:
