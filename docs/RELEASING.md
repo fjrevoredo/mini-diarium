@@ -487,9 +487,19 @@ integration, so this pipeline packs the MSIX with `winapp` and pushes it via the
 whenever you want to check the pipeline without publishing:
 
 ```bash
+# Build the CURRENT branch with an explicit version, then create a draft only.
 gh workflow run msstore-publish.yml --ref master \
-  --field tag=vX.Y.Z --field dry_run=true
+  --field tag=master --field dry_run_version=X.Y.Z --field dry_run=true
 ```
+
+> **Do not dry-run against an old release tag.** The workflow checks out `--field tag`
+> and builds it. Any tag at or before `v0.6.2` predates `scripts/build-msix.ps1` and the
+> `msix/` payload, so the pack step fails with "not recognized … script file". Build a
+> branch (`tag=master`) that contains the tooling instead, and pass an explicit
+> `dry_run_version` — a branch name is not a version, and the version must also **exceed
+> the live Store package** or the Store rejects the update. For a real release,
+> `release.yml` dispatches with `--field tag=vX.Y.Z` and **no** `dry_run_version` (it is
+> derived from the tag).
 
 This creates/updates a **draft** submission (`--noCommit`) without publishing; confirm
 with `msstore submission status <productId>`. Once the draft looks right, a real tagged

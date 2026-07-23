@@ -23,8 +23,12 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: 'Release tag (e.g. v0.6.2)'
+        description: 'Git ref to build. A release tag (e.g. v0.6.2) for real submissions, or a branch (e.g. master) for a dry run. NOTE: tags released before the msix/ tooling landed (<= v0.6.2) do not contain scripts/build-msix.ps1 and cannot pack — dry-run against master.'
         required: true
+      dry_run_version:
+        description: 'DRY RUNS ONLY — the X.Y.Z version to stamp into the MSIX when `tag` is a branch (e.g. master) rather than a vX.Y.Z release tag. A branch name is not a version, so it cannot be derived from the ref and must be supplied here; it must also EXCEED the live Store package version or the Store rejects the update. Leave empty for real releases: the version is derived from the `tag` (vX.Y.Z -> X.Y.Z).'
+        required: false
+        default: ''
       dry_run:
         description: 'Create/update a draft submission without committing (validation run)'
         type: boolean
@@ -38,7 +42,8 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
-          # Build the exact tagged commit, not the workflow's default ref.
+          # Build the exact ref requested: the release tag for real submissions, or a
+          # branch (e.g. master) for a dry run — not the workflow's default ref.
           ref: ${{ inputs.tag }}
 
       - name: Verify Partner Center secrets are set
@@ -65,12 +70,20 @@ jobs:
         shell: pwsh
         env:
           INPUT_TAG: ${{ inputs.tag }}
+          INPUT_DRY_RUN_VERSION: ${{ inputs.dry_run_version }}
         run: |
           $tag = $env:INPUT_TAG
-          $version = $tag -replace '^v', ''
+          # Real release: `tag` is a vX.Y.Z release tag, so derive the version from it.
+          # Dry run: `tag` is a branch (which has the msix/ tooling) and a branch name is
+          # not a version, so `dry_run_version` supplies it explicitly.
+          if ($env:INPUT_DRY_RUN_VERSION) {
+            $version = $env:INPUT_DRY_RUN_VERSION
+          } else {
+            $version = $tag -replace '^v', ''
+          }
           "tag=$tag" >> $env:GITHUB_OUTPUT
           "version=$version" >> $env:GITHUB_OUTPUT
-          Write-Host "Building MSIX for $tag (version $version)"
+          Write-Host "Building MSIX from ref '$tag' (version $version)"
 
       - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
         with:
