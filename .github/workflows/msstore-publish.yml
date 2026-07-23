@@ -108,7 +108,12 @@ jobs:
       - name: Assemble MSIX payload and pack (unsigned — Store signs it)
         shell: pwsh
         run: |
-          pwsh ./scripts/build-msix.ps1 -Version "${{ steps.prep.outputs.version }}" -Pack -Unsigned
+          # This step already runs under `shell: pwsh`, so run the packer directly with the
+          # call operator — do NOT prefix `pwsh`. A nested pwsh re-parses the .ps1 path as a
+          # CLI argument and, on the CI runner, fails with "is not recognized as the name of
+          # a script file" (works locally, so it is environment/cwd-specific). An absolute
+          # ${{ github.workspace }} path also removes any working-directory ambiguity.
+          & "${{ github.workspace }}/scripts/build-msix.ps1" -Version "${{ steps.prep.outputs.version }}" -Pack -Unsigned
 
       - name: Configure msstore CLI credentials
         shell: pwsh
