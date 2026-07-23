@@ -139,16 +139,22 @@ jobs:
 
           # `msstore publish` uploads the package, updates the pending submission, and
           # commits it. --noCommit leaves a DRAFT submission for validation runs.
-          # The msstore CLI has no native Tauri integration (`init` doesn't apply here),
-          # so this pushes a standalone MSIX directly. If `publish` cannot consume a
-          # standalone MSIX, fall back to the `msstore submission` sub-commands (see
-          # docs/RELEASING.md "Microsoft Store (MSIX)").
-          $args = @('publish', $env:PRODUCT_ID, '--inputFile', $msix, '--verbose')
+          #
+          # Argument order follows Microsoft's documented MSIX package-update form:
+          #   msstore publish <path-to-.msix> -id <productId> [--noCommit]
+          # The .msix path is the POSITIONAL argument (pathOrUrl); the Store product id
+          # goes via -id/--appId, which is required here because the repo is not
+          # `msstore init`-linked (the CLI has no native Tauri integration). Passing the
+          # product id positionally makes the CLI treat it as a project path/URL and fail.
+          # Ref: learn.microsoft.com/en-us/windows/apps/publish/msstore-dev-cli/github-actions
+          # If `publish` still cannot consume a standalone MSIX, fall back to the
+          # `msstore submission` sub-commands (see docs/RELEASING.md "Microsoft Store (MSIX)").
+          $publishArgs = @('publish', $msix, '-id', $env:PRODUCT_ID, '--verbose')
           if ($env:DRY_RUN -eq 'true') {
             Write-Host "DRY RUN: creating/updating a draft submission (no commit)."
-            $args += '--noCommit'
+            $publishArgs += '--noCommit'
           }
-          msstore @args
+          msstore @publishArgs
           if ($LASTEXITCODE -ne 0) { Write-Error "msstore publish failed with exit code $LASTEXITCODE"; exit 1 }
 
       - name: Report submission status
