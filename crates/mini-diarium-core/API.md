@@ -80,8 +80,11 @@ Blanket rules, so individual entries below do not repeat them:
   which sets the per-connection `PRAGMA foreign_keys = ON` that all `ON DELETE CASCADE` /
   `RESTRICT` declarations depend on.
 - **Encryption.** Entry title/text/preview/metadata, tag names, and image bytes are
-  AES-256-GCM encrypted at the application layer before they reach SQLite. The SQLite
-  container itself is *not* encrypted — that is why an unauthenticated peek is possible.
+  AES-256-GCM encrypted at the application layer before they reach SQLite, via the
+  `format` field codec (see [`format`](#format--at-rest-encrypted-row-field-codec)) —
+  which lives in the `rusqlite`-free `mini-diarium-crypto` crate, not core. `db::queries`
+  only assembles rows and binds the resulting bytes as SQL params. The SQLite container
+  itself is *not* encrypted — that is why an unauthenticated peek is possible.
 
 ### Serde guarantees
 
@@ -223,6 +226,17 @@ Reached at `crypto::cipher` / `crypto::password` (also used by benches).
 
 - `cipher::{Key, encrypt, decrypt, CipherError, tag_name_fingerprint, image_fingerprint}`
 - `password::{hash_password, verify_password, derive_key_from_phc_hash, generate_salt, PasswordError}`
+
+---
+
+## `format` — at-rest encrypted-row field codec
+
+**Re-exported from [`mini-diarium-crypto`](../mini-diarium-crypto/API.md)** (open-core M3b /
+TODO-0083) — the `rusqlite`-free crate where the encrypted-row field codec now lives. Reached at
+`format::…`. This is the only plaintext↔ciphertext transform used by every encrypted entry/tag/
+image row; `db::queries` re-exports it internally under the historical names.
+
+- `format::{encrypt_for_storage, decrypt_utf8, decrypt_bytes}`
 
 ---
 

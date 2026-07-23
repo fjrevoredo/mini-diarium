@@ -219,7 +219,7 @@ Each milestone carries a **Checklist** of `- [ ]` items to tick off as the work 
 | M0 — baseline lock | Complete | Green baseline recorded at `13c29e8`; retained as historical behavior-preserving evidence. |
 | M1 — workspace split | Complete | `mini-diarium-core` is a workspace member with no Tauri dependency; the review's stale `src-tauri/target/` documentation gap is guarded by `bun run check:build-paths`. |
 | M2 — façade API | Complete | `API.md`, sealed internal modules, and the façade-only app path are present; `peek_auth_slot_types` is now core-owned and the app no longer depends on `rusqlite`. |
-| M3 — kernel / handle separation | M3a done (2026-07-23); M3b pending | **M3a (TODO-0082):** the `rusqlite`-free `mini-diarium-crypto` crate now holds `crypto/` + the pure `auth/` master-key wrapping; `cargo tree -p mini-diarium-crypto` shows no `rusqlite`, and core re-exports it so the façade is unchanged. **M3b (TODO-0083, pending):** the core crate still couples the encrypted-**row** read/write format and migrations to `DatabaseConnection`/`rusqlite`; the storage-boundary adapter is deliberately left for TODO-0083. |
+| M3 — kernel / handle separation | Complete (2026-07-23) | **M3a (TODO-0082):** the `rusqlite`-free `mini-diarium-crypto` crate holds `crypto/` + the pure `auth/` master-key wrapping; `cargo tree -p mini-diarium-crypto` shows no `rusqlite`, and core re-exports it so the façade is unchanged. **M3b (TODO-0083):** the encrypted-**row** field codec (`encrypt_for_storage`/`decrypt_utf8`/`decrypt_bytes`) moved into the kernel as `mini_diarium_crypto::format`, so 100% of the plaintext↔ciphertext transforms are now `rusqlite`-free; `db/queries` remains the desktop adapter (row assembly + SQL binding) behind that boundary, with no on-disk format change. Connection-bound migration/test re-encryption (`db/schema/legacy.rs`, `migrations/v2_to_v3.rs`) already uses the kernel cipher directly and is out of the narrowest boundary by design. |
 | M4 — distribution and governance | Pending | No distribution ADR, premium-boundary statement in `CONTRIBUTING.md`, or recorded trademark posture exists; TODO-0084 through TODO-0086 make those independently reviewable. |
 
 ### M0 — Baseline lock (precondition)
@@ -292,9 +292,9 @@ Each milestone carries a **Checklist** of `- [ ]` items to tick off as the work 
   - _M3a (TODO-0082, landed 2026-07-23):_
     - [x] `crypto/` and the X25519/HKDF slot-unwrapping extracted into the `rusqlite`-free `mini-diarium-crypto` crate, callable independently of the `rusqlite` connection type (`cargo tree -p mini-diarium-crypto` shows no `rusqlite`); `mini-diarium-core` depends on it and re-exports `crypto`/`auth` so the M2 façade is unchanged
     - [x] Crypto crate compiles without `rusqlite` in scope; existing tests still pass via the desktop path (`cargo build -p mini-diarium-crypto` standalone; `cargo test --workspace` green)
-  - _M3b (TODO-0083, pending):_
-    - [ ] The encrypted-row read/write format (`db/queries` `encrypt_for_storage`/`decrypt_*`) callable independently of the `rusqlite` connection type
-    - [ ] Desktop path supplies `rusqlite`-backed storage as one implementation behind the boundary
+  - _M3b (TODO-0083, landed 2026-07-23):_
+    - [x] The encrypted-row read/write format (`encrypt_for_storage`/`decrypt_utf8`/`decrypt_bytes`) callable independently of the `rusqlite` connection type — moved verbatim into the kernel as `mini_diarium_crypto::format` (keyed by a bare `cipher::Key`), with round-trip tests proving the entry/tag/image field codec works with no `rusqlite` in scope; core re-exports it under the historical names so all ~20 `db/queries` call sites are unchanged
+    - [x] Desktop path supplies `rusqlite`-backed storage as one implementation behind the boundary — `db/queries` now only assembles rows and binds the codec's bytes as SQL params; the on-disk blob format is byte-identical (no data migration)
 
 ### M4 — Distribution and governance groundwork (Section 9, steps 3 and 5)
 

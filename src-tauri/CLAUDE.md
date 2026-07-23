@@ -31,7 +31,7 @@ bottom-up: `mini-diarium-crypto` (base) → `mini-diarium-core` (depends on cryp
 | Path | Purpose |
 |------|---------|
 | `db/schema/` | DB connection helpers (`open_connection*`), DDL, and schema migrations `v1_to_v2` … `v12_to_v13` via `apply_pending` |
-| `db/queries/` | Encrypted row helpers — shared format primitives in `mod.rs` (`encrypt_for_storage`, `decrypt_utf8`) |
+| `db/queries/` | Encrypted-row assembly / SQL binding (desktop adapter). The field codec (`encrypt_for_storage`, `decrypt_utf8`, `decrypt_bytes`) now lives in the crypto crate's `format` module (M3b / TODO-0083); `mod.rs` re-exports it under the historical names so call sites are unchanged |
 | `auth/` | Composed slot ops (`add_password_slot`/`add_keypair_slot`) + `AuthMethodInfo` DTO. Re-exports the pure auth methods from the `mini-diarium-crypto` crate (see below). |
 | `import/` | Built-in diary format parsers (Mini Diary, Day One, jrnl) |
 | `export/` | JSON and Markdown export writers |
@@ -47,6 +47,7 @@ bottom-up: `mini-diarium-crypto` (base) → `mini-diarium-core` (depends on cryp
 |------|---------|
 | `crypto/cipher.rs` | AES-256-GCM encrypt/decrypt + keyed HKDF-SHA256 fingerprints (`tag_name_fingerprint`, `image_fingerprint`) |
 | `crypto/password.rs` | Argon2id password hashing (`hash_password`, `verify_password`, `derive_key_from_phc_hash`, `generate_salt`) |
+| `format.rs` | At-rest encrypted-row field codec (`encrypt_for_storage`, `decrypt_utf8`, `decrypt_bytes`) — thin `cipher`-backed wrapper, re-exported by core as `format` (M3b / TODO-0083) |
 | `auth/password.rs` | `PasswordMethod` — master-key wrap/unwrap via Argon2id + AES-256-GCM |
 | `auth/keypair.rs` | `KeypairMethod`/`PrivateKeyMethod` — X25519 ECIES wrap/unwrap; `generate_keypair`, `derive_public_key` |
 | `auth/auto_key.rs` | `AutoKeyMethod` — device-bound 32-byte key wrap/unwrap (no KDF) |

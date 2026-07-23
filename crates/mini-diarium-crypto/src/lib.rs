@@ -20,3 +20,6 @@
 
 pub mod auth;
 pub mod crypto;
+// The reusable at-rest encrypted-row field codec (open-core M3b / TODO-0083). Built on
+// `crypto::cipher`, `rusqlite`-free, and re-exported by `mini-diarium-core` as its `format`.
+pub mod format;

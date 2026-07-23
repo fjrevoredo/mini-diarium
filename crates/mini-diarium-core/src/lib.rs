@@ -18,6 +18,10 @@ pub mod config;
 // (open-core M3a / TODO-0082). Re-export it so `mini_diarium_core::crypto::…` and every
 // in-core `crate::crypto::…` path resolve unchanged.
 pub use mini_diarium_crypto::crypto;
+// The encrypted-row field codec also lives in the rusqlite-free crypto crate (open-core M3b /
+// TODO-0083). Re-export it so `mini_diarium_core::format::…` and every in-core
+// `crate::format::…` path resolve unchanged.
+pub use mini_diarium_crypto::format;
 pub mod db;
 pub mod export;
 pub mod import;

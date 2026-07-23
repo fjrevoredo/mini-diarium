@@ -75,6 +75,28 @@ leaking plaintext to an offline attacker. Password hashing is Argon2id (m=64 MiB
 
 ---
 
+## `format` — the at-rest encrypted-row field codec
+
+Reached at `format::…` (re-exported by core as `mini_diarium_core::format`). Moved here from
+`mini-diarium-core`'s `db::queries` in open-core **M3b (TODO-0083)** so that **100% of the
+plaintext↔ciphertext transforms live in this `rusqlite`-free crate**; core keeps only the
+row-assembly / SQL-binding as the desktop adapter.
+
+- `format::encrypt_for_storage(key, plaintext, label) -> Result<Vec<u8>, String>`
+- `format::decrypt_utf8(key, ciphertext, label) -> Result<String, String>`
+- `format::decrypt_bytes(key, ciphertext, label) -> Result<Vec<u8>, String>`
+
+These are the **only** transform used by every encrypted row Mini Diarium writes and reads
+(entry title/text/preview/metadata, tag names, image bytes/thumbnails). Each is keyed by a bare
+[`cipher::Key`] — no database handle — so the codec is callable against any storage substitute.
+This is a thin, opinionated wrapper over `cipher` (nonce-prepended AES-256-GCM blobs, UTF-8
+decode for text fields, `label`-tagged display-only errors), not the raw AEAD. The `label`
+argument names the field for error messages only; it is never stored or authenticated. The
+on-disk blob is byte-identical to raw `cipher::encrypt` output — the move changed no bytes on
+disk.
+
+---
+
 ## `auth` — master-key wrapping methods & value types
 
 The `auth::{auto_key, keypair, password}` sub-modules stay `pub` so `mini-diarium-core` can

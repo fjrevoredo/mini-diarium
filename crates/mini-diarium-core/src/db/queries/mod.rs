@@ -1,5 +1,3 @@
-use crate::crypto::cipher;
-
 pub mod auth_slots;
 pub mod db_settings;
 pub mod entries;
@@ -16,22 +14,6 @@ pub use images::*;
 pub use meta::*;
 pub use tags::*;
 
-// Shared crypto helpers used by all query sub-modules.
-// Private items in a parent module are visible to all child modules in Rust.
-fn encrypt_for_storage(
-    key: &cipher::Key,
-    plaintext: &[u8],
-    label: &str,
-) -> Result<Vec<u8>, String> {
-    cipher::encrypt(key, plaintext).map_err(|e| format!("Failed to encrypt {}: {}", label, e))
-}
-
-fn decrypt_utf8(key: &cipher::Key, ciphertext: &[u8], label: &str) -> Result<String, String> {
-    let bytes = cipher::decrypt(key, ciphertext)
-        .map_err(|e| format!("Failed to decrypt {}: {}", label, e))?;
-    String::from_utf8(bytes).map_err(|e| format!("Invalid UTF-8 in {}: {}", label, e))
-}
-
-fn decrypt_bytes(key: &cipher::Key, ciphertext: &[u8], label: &str) -> Result<Vec<u8>, String> {
-    cipher::decrypt(key, ciphertext).map_err(|e| format!("Failed to decrypt {}: {}", label, e))
-}
+// The encrypted-row field codec now lives in the rusqlite-free kernel (open-core M3b /
+// TODO-0083). Re-export under the historical names so db::queries call sites are unchanged.
+pub(crate) use crate::format::{decrypt_bytes, decrypt_utf8, encrypt_for_storage};
