@@ -196,11 +196,21 @@ This section sequences the Section 9 steps into concrete, ordered milestones for
 
 The roadmap remains a plan, not a commitment. Verification commands follow this repo's WSL-over-Windows convention (route project commands through `cmd.exe /c ...`; `cargo` runs bare with `--manifest-path`).
 
-**Commitment status.** The packaging milestones that are valuable regardless of whether MiniDiarium+ ever ships — **M0 (baseline lock), M1 (workspace split), and M2 (façade API)** — are approved for tracking and are being re-expressed as `todo-manager` items. **M3 (kernel/handle separation) and M4 (distribution/governance) stay roadmap-only** and are deliberately *not* tracked yet: M3's only payoff is a browser + surface that has not been greenlit (building its storage-trait abstraction now would be speculative, against PHILOSOPHY's "Simple is Good" / "Focused Scope"), and M4 is a set of decisions best captured as a short ADR when they are actually forced. The M1 layout below already leaves room for M3, so deferring it costs nothing.
+**Commitment status.** M0–M2 are complete: the baseline was recorded, the workspace split landed, and the core now exposes the documented, sealed pre-1.0 façade. The two M1/M2 review gaps were also closed on 2026-07-22: stale workspace-target documentation now has a regression guard, and the app's last bespoke `rusqlite` read was moved behind the core façade. **M3 and M4 are now approved for backlog tracking** (2026-07-23), while retaining their original sequencing and decision gates: M3 is split into the portable-kernel and desktop-adapter TODOs; M4 is split into distribution, contribution/relicensing, and brand-protection TODOs. Tracking these items does not authorize a + product, network code, or speculative browser storage implementation.
 
 **Ordering rationale.** M1 is the gate for everything (no crate, no façade). M2 depends on the crate existing. M3 depends on the façade existing (it constrains the façade's shape). M4 is decision/governance work that can proceed in parallel but is placed last because it is only meaningful once the crate is real. M1 and M2 each stand on their own merits and are worth doing even if MiniDiarium+ never ships.
 
-Each milestone carries a **Checklist** of `- [ ]` items to tick off as the work lands, so this doc doubles as a live progress tracker alongside the `todo-manager` entries (TODO-0075–0077 cover M0–M2). The prose above each checklist stays the source of intent; the checklist is the fillable acceptance list.
+Each milestone carries a **Checklist** of `- [ ]` items to tick off as the work lands, so this doc doubles as a live progress tracker alongside the `todo-manager` entries (TODO-0075–0077 cover M0–M2; TODO-0082–0086 split M3–M4). The prose above each checklist stays the source of intent; the checklist is the fillable acceptance list.
+
+### Progress reassessment (2026-07-23)
+
+| Milestone | Status | Evidence / remaining work |
+|---|---|---|
+| M0 — baseline lock | Complete | Green baseline recorded at `13c29e8`; retained as historical behavior-preserving evidence. |
+| M1 — workspace split | Complete | `mini-diarium-core` is a workspace member with no Tauri dependency; the review's stale `src-tauri/target/` documentation gap is guarded by `bun run check:build-paths`. |
+| M2 — façade API | Complete | `API.md`, sealed internal modules, and the façade-only app path are present; `peek_auth_slot_types` is now core-owned and the app no longer depends on `rusqlite`. |
+| M3 — kernel / handle separation | Pending | The core crate still directly couples encrypted-row read/write code and migrations to `DatabaseConnection`/`rusqlite`; TODO-0082 and TODO-0083 separate the portable kernel from the desktop adapter. |
+| M4 — distribution and governance | Pending | No distribution ADR, premium-boundary statement in `CONTRIBUTING.md`, or recorded trademark posture exists; TODO-0084 through TODO-0086 make those independently reviewable. |
 
 ### M0 — Baseline lock (precondition)
 
@@ -267,7 +277,8 @@ Each milestone carries a **Checklist** of `- [ ]` items to tick off as the work 
 - **Deliverables:** the façade (M2) shaped so `crypto/` and the X25519/HKDF slot-unwrapping in `auth/`, plus the encrypted-row read/write format, are callable independently of the `rusqlite` connection type; the desktop path continues to supply the `rusqlite`-backed storage as one implementation behind that boundary.
 - **Verification:** the kernel portion compiles as a unit without the `rusqlite` feature/dependency in scope; existing tests still pass through the desktop path.
 - **Exit criteria:** the storage binding is an injectable boundary, not a hard dependency of the crypto/format kernel.
-- **Checklist** _(roadmap-only — not tracked; gated on a browser + surface being greenlit):_
+- **Tracked as:** TODO-0082 (portable crypto/auth kernel) and TODO-0083 (encrypted-format boundary plus `rusqlite` adapter). These remain open-core work only; no browser SQLite implementation or + product code belongs in either item.
+- **Checklist:**
   - [ ] `crypto/`, the X25519/HKDF slot-unwrapping, and the encrypted-row format callable independently of the `rusqlite` connection type
   - [ ] Desktop path supplies `rusqlite`-backed storage as one implementation behind the boundary
   - [ ] Kernel compiles without `rusqlite` in scope; existing tests still pass via the desktop path
@@ -278,7 +289,8 @@ Each milestone carries a **Checklist** of `- [ ]` items to tick off as the work 
 - **Deliverables:** a decision on core-crate distribution (crates.io versus git dependency/submodule); trademark registration or defense for the name; a `CONTRIBUTING.md` note stating premium features live in a separate product and repo; a CLA only if future relicensing of the core is intended.
 - **Verification:** decisions recorded (ideally as a short ADR under `docs/decisions/`); `CONTRIBUTING.md` present.
 - **Exit criteria:** distribution stance chosen; brand and contribution posture documented.
-- **Checklist** _(roadmap-only — not tracked; capture as an ADR when the decisions are actually forced):_
+- **Tracked as:** TODO-0084 (distribution ADR), TODO-0085 (contribution/relicensing posture), and TODO-0086 (trademark/name protection posture). The relevant maintainer decisions remain explicit acceptance gates; none is inferred merely by adding the TODOs.
+- **Checklist:**
   - [ ] Distribution decided (crates.io vs git dependency/submodule)
   - [ ] Trademark registered or defended for the name
   - [ ] `CONTRIBUTING.md` note: premium features live in a separate product and repo
