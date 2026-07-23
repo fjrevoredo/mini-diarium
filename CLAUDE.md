@@ -80,10 +80,12 @@ Quick reference (ASCII art):
                              │ invoke() / listen()
 ┌────────────────────────────┴────────────────────────────────────┐
 │                 BACKEND (Rust — Cargo workspace)                 │
-│ App crate  (src-tauri/): commands (auth · entries · search · nav │
-│   · stats · import/export · plugin) · menu.rs · OS shell         │
-│ Core crate (crates/mini-diarium-core/): crypto · auth · db ·     │
-│   import · export · plugin · backup · config  (no tauri dep)     │
+│ App crate  (src-tauri/): commands (auth · entries · search ·     │
+│   nav · stats · import/export · plugin) · menu.rs · OS shell     │
+│ Core crate (mini-diarium-core): db · import · export · plugin    │
+│   · search · backup · config  (no tauri dep)                     │
+│ Crypto crate (mini-diarium-crypto): cipher · password hashing    │
+│   · master-key wrapping  (no rusqlite dep)                       │
 └────────────────────────────┬────────────────────────────────────┘
                              │
            ┌──────────┬──────────────┬─────────────┬──────────────┐

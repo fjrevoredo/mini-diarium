@@ -30,11 +30,12 @@ ipc: {
 }
 
 backend: {
-  label: "Rust Backend"
+  label: "Rust Backend\n(Cargo workspace)"
   style.fill: "#fff3e0"
 
-  commands: "Commands\n(auth, entries, search(stub), navigation,\nstats, import, export, plugin)"
-  services: "Services\ncrypto/ db/ import/ export/ plugin/\nconfig.rs backup.rs menu.rs"
+  app_crate: "App crate — src-tauri/\ncommands (auth, entries, search, nav,\nstats, import, export, plugin)\nmenu.rs · OS shell"
+  core_crate: "Core crate — mini-diarium-core\ndb · import · export · plugin · search\nbackup · config (Tauri-free)"
+  crypto_crate: "Crypto crate — mini-diarium-crypto\ncipher · password hashing\nmaster-key wrapping (rusqlite-free)"
 }
 
 data: {
@@ -64,11 +65,12 @@ state.journal_state -> ipc.invoke
 state.search_state -> ipc.invoke
 state.ui_state -> ipc.invoke
 
-ipc.invoke -> backend.commands
+ipc.invoke -> backend.app_crate
 
-backend.commands -> backend.services
-backend.services -> data.diary_db
-backend.services -> data.backups
-backend.services -> data.journal_config
-backend.services -> data.plugins_dir
+backend.app_crate -> backend.core_crate
+backend.core_crate -> backend.crypto_crate
+backend.core_crate -> data.diary_db
+backend.core_crate -> data.backups
+backend.core_crate -> data.journal_config
+backend.core_crate -> data.plugins_dir
 state.pref_state -> data.prefs
