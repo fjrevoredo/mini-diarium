@@ -196,7 +196,7 @@ Each step is independently shippable and behavior-preserving. Nothing here chang
 
 1. **Introduce the workspace and move Tauri-free modules into `mini-diarium-core`.** Pure code-move plus `Cargo.toml` restructure; the app depends on the new crate. Verification: the full existing backend test suite passes unchanged. This is cheap, improves the codebase regardless of the premium track, and is the prerequisite for everything else.
 2. **Define a core façade API.** Today `commands/*` reach directly into `db::queries::*` and friends. A consumer crate should not depend on internal module paths. Add a deliberate public API on `mini-diarium-core` (open/unlock, entry CRUD, search, import/export, auth-slot management) so both the Tauri app and + call the same surface. Treat everything else as internal. The surface stays explicitly **pre-1.0 and internal** until step 3 decides distribution — one curated list of names, not yet an external stability promise.
-3. **Decide core-crate distribution.** Publish to crates.io (public, versioned, maximally in the open-source spirit) versus a git dependency or submodule (keeps versioning private). MIT permits either; this is a preference, not a constraint.
+3. **Decide core-crate distribution.** Publish to crates.io (public, versioned, maximally in the open-source spirit) versus a git dependency or submodule (keeps versioning private). MIT permits either; this is a preference, not a constraint. — **Resolved 2026-07-24 (M4a / TODO-0084): tagged git dependency; crates.io deferred behind an explicit trigger, submodule rejected.** See [`docs/decisions/2026-07-core-crate-distribution.md`](decisions/2026-07-core-crate-distribution.md).
 4. **Decide the frontend boundary (only if + reuses UI).** The SolidJS UI talks to the backend through the `invoke()` seam in `src/lib/tauri/*.ts`. A desktop-shaped + with sync could share most components and state; a hosted-web + needs a substantially different frontend and a JS/WASM layer replacing the Rust backend behind that seam. Defer this until the + surface is chosen, because the answer differs entirely by surface.
 5. **Governance groundwork.** Add a CLA if there is any future intent to relicense the core itself (MIT already permits building proprietary layers over outside contributions, so a CLA is only needed for relicensing, not for open-core per se). Register or defend the trademark on the name. Add a short `CONTRIBUTING.md` note that premium features live in a separate product and repo.
 
@@ -220,7 +220,7 @@ Each milestone carries a **Checklist** of `- [ ]` items to tick off as the work 
 | M1 — workspace split | Complete | `mini-diarium-core` is a workspace member with no Tauri dependency; the review's stale `src-tauri/target/` documentation gap is guarded by `bun run check:build-paths`. |
 | M2 — façade API | Complete | `API.md`, sealed internal modules, and the façade-only app path are present; `peek_auth_slot_types` is now core-owned and the app no longer depends on `rusqlite`. |
 | M3 — kernel / handle separation | Complete (2026-07-23) | **M3a (TODO-0082):** the `rusqlite`-free `mini-diarium-crypto` crate holds `crypto/` + the pure `auth/` master-key wrapping; `cargo tree -p mini-diarium-crypto` shows no `rusqlite`, and core re-exports it so the façade is unchanged. **M3b (TODO-0083):** the encrypted-**row** field codec (`encrypt_for_storage`/`decrypt_utf8`/`decrypt_bytes`) moved into the kernel as `mini_diarium_crypto::format`, so 100% of the plaintext↔ciphertext transforms are now `rusqlite`-free; `db/queries` remains the desktop adapter (row assembly + SQL binding) behind that boundary, with no on-disk format change. Connection-bound migration/test re-encryption (`db/schema/legacy.rs`, `migrations/v2_to_v3.rs`) already uses the kernel cipher directly and is out of the narrowest boundary by design. |
-| M4 — distribution and governance | Pending | No distribution ADR, premium-boundary statement in `CONTRIBUTING.md`, or recorded trademark posture exists; TODO-0084 through TODO-0086 make those independently reviewable. |
+| M4 — distribution and governance | In progress | **M4a (TODO-0084) complete 2026-07-24:** distribution settled as a **tagged git dependency**, crates.io deferred behind a recorded trigger — [`docs/decisions/2026-07-core-crate-distribution.md`](decisions/2026-07-core-crate-distribution.md); both `API.md` files and `RELEASING.md` updated to agree. **M4b (TODO-0085, premium-boundary statement in `CONTRIBUTING.md`) and M4c (TODO-0086, trademark posture) remain open.** |
 
 ### M0 — Baseline lock (precondition)
 
@@ -304,11 +304,15 @@ Each milestone carries a **Checklist** of `- [ ]` items to tick off as the work 
 - **Exit criteria:** distribution stance chosen; brand and contribution posture documented.
 - **Tracked as:** TODO-0084 (distribution ADR), TODO-0085 (contribution/relicensing posture), and TODO-0086 (trademark/name protection posture). The relevant maintainer decisions remain explicit acceptance gates; none is inferred merely by adding the TODOs.
 - **Checklist:**
-  - [ ] Distribution decided (crates.io vs git dependency/submodule)
-  - [ ] Trademark registered or defended for the name
-  - [ ] `CONTRIBUTING.md` note: premium features live in a separate product and repo
-  - [ ] CLA added _only if_ future relicensing of the core is intended
-  - [ ] Decisions recorded as a short ADR under `docs/decisions/`
+  - _M4a (TODO-0084, landed 2026-07-24):_
+    - [x] Distribution decided — **tagged git dependency**; crates.io deferred (not rejected) behind an explicit trigger. Submodule rejected outright: Cargo resolves git dependencies natively, so a submodule adds checkout ceremony and a second source of truth for the pinned revision with no offsetting benefit. Rationale is the permanence asymmetry (a yank does not delete an artifact or release a name, whereas a git dependency upgrades to a published crate at any time) plus the absence of any second consumer to serve. Decision covers **both** library crates: publishing is transitive, so a published `mini-diarium-core` would require publishing `mini-diarium-crypto` first — the reverse is not true, which is why "publish crypto only" is recorded as the partial hedge if a crate name ever comes under threat. All three names were unclaimed on crates.io as of 2026-07-24; leaving them so is the knowingly-accepted cost.
+    - [x] Versioning/compatibility stance recorded — both library crates stay on independent `0.x` versions decoupled from the app's, stay out of `bump-version.sh`/`.ps1` / the pre-release guard / `RELEASING.md`, and the pre-1.0/internal `API.md` contract stands unchanged (consumers pin a git tag, so façade churn is their scheduling decision).
+    - [x] Decision recorded as an ADR under `docs/decisions/` ([`2026-07-core-crate-distribution.md`](decisions/2026-07-core-crate-distribution.md)), with ownership, publishing prerequisites, and reopen triggers; both `API.md` files and `RELEASING.md` updated to agree with it.
+    - [x] Manifest hygiene fixed independently of the distribution choice — `license = "MIT"` + `repository` added to all three manifests and the placeholder `authors = ["you"]` replaced. Correctness defects in their own right, not publishing prep.
+  - _M4b (TODO-0085) and M4c (TODO-0086) — open:_
+    - [ ] Trademark registered or defended for the name
+    - [ ] `CONTRIBUTING.md` note: premium features live in a separate product and repo
+    - [ ] CLA added _only if_ future relicensing of the core is intended
 
 ### Definition of done for the open core
 

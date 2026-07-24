@@ -18,15 +18,23 @@ Each item below is reachable at the path shown (e.g. `mini_diarium_core::db::ins
 ### Status: pre-1.0, internal
 
 The crate is version `0.1.0` and is consumed **only** as a path dependency by
-`mini-diarium` in this repository. Until open-core **M4** decides distribution
-(crates.io vs. git dependency — see [`docs/OPEN_CORE_STRATEGY.md`](../../docs/OPEN_CORE_STRATEGY.md) §10),
-**any item listed here may change without notice**: no deprecation window, no semver
-promise, no changelog obligation beyond this repository's own `CHANGELOG.md`.
+`mini-diarium` in this repository. **Any item listed here may change without notice**:
+no deprecation window, no semver promise, no changelog obligation beyond this
+repository's own `CHANGELOG.md`.
+
+Open-core **M4a** settled distribution on 2026-07-24 and this status is the deliberate
+consequence, not a placeholder: the crate is distributed as a **tagged git dependency**,
+is **not** published to crates.io, and stays on an independent `0.x` version decoupled
+from the app's. A consumer pins a git tag, so façade churn is its scheduling decision —
+which is what makes deferring a semver promise affordable. See
+[`docs/decisions/2026-07-core-crate-distribution.md`](../../docs/decisions/2026-07-core-crate-distribution.md)
+for the rationale, the publishing prerequisites, and the conditions that would reopen it.
 
 What this document *does* guarantee today is narrower and still useful: it is the complete
 list of names an external consumer is allowed to reach for, and it is kept truthful
 (see [Change rule](#change-rule)). It is **not** an external stability promise, and the
-crate should not be presented as a dependency-ready stable API until M4 says so.
+crate should not be presented as a dependency-ready stable API until that ADR is reopened
+and says so.
 
 The boundary is enforced by **module visibility + code review**. An automated
 `cargo-public-api` guard (fail CI when the public surface changes without a corresponding

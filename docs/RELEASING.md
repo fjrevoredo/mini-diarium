@@ -124,7 +124,7 @@ This automatically updates:
 - `website/index.html` version badge, structured-data `softwareVersion`, and direct website download URLs
 - `data/linux/io.github.fjrevoredo.mini-diarium.metainfo.xml` release entry
 
-> **Note:** the `mini-diarium-core` crate (`crates/mini-diarium-core/Cargo.toml`) carries its own fixed `version = "0.1.0"`, which is **intentionally decoupled** from the app version and **not** bumped per release. It is an internal path dependency; its version is irrelevant until distribution is decided (open-core roadmap M4). Do not add it to `bump-version.sh`/`.ps1` or the version-consistency checks. See [`OPEN_CORE_STRATEGY.md`](OPEN_CORE_STRATEGY.md).
+> **Note:** the two **library** crates — `mini-diarium-core` (`crates/mini-diarium-core/Cargo.toml`) and `mini-diarium-crypto` (`crates/mini-diarium-crypto/Cargo.toml`) — each carry their own fixed `version = "0.1.0"`, **intentionally decoupled** from the app version and **not** bumped per release. Do not add them to `bump-version.sh`/`.ps1` or the version-consistency checks. This is now a settled decision, not a provisional one: open-core **M4a** (2026-07-24) chose a **tagged git dependency** over crates.io publication, so an app release never bumps, tags, or publishes a library crate, and there is no library release track to run here. See [`docs/decisions/2026-07-core-crate-distribution.md`](decisions/2026-07-core-crate-distribution.md) and [`OPEN_CORE_STRATEGY.md`](OPEN_CORE_STRATEGY.md).
 
 ### Step 3: Prepare the Release Notes File
 

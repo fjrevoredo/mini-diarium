@@ -21,10 +21,17 @@ unchanged surface. Direct dependents reach the same names one module deeper, e.g
 ### Status: pre-1.0, internal
 
 Version `0.1.0`, consumed **only** as a path dependency by `mini-diarium-core` in this
-repository. Until open-core **M4** decides distribution, **any item listed here may change
-without notice** — no deprecation window, no semver promise. This is not an external stability
-promise. The same [Contract & compatibility](../mini-diarium-core/API.md#contract--compatibility)
-rules the core documents apply here; the points below are the ones specific to this crate.
+repository. **Any item listed here may change without notice** — no deprecation window, no
+semver promise. This is not an external stability promise. The same
+[Contract & compatibility](../mini-diarium-core/API.md#contract--compatibility) rules the core
+documents apply here; the points below are the ones specific to this crate.
+
+Open-core **M4a** (2026-07-24) settled distribution: **tagged git dependency, not published
+to crates.io**, independent `0.x` version decoupled from the app's — see
+[`docs/decisions/2026-07-core-crate-distribution.md`](../../docs/decisions/2026-07-core-crate-distribution.md).
+That ADR names this crate as the one with standalone value (small, `rusqlite`-free,
+WASM-targetable) and therefore the only candidate for a partial, name-protection-driven
+publication if a crate name ever comes under threat. No such publication is authorized today.
 
 ### No `rusqlite`, no storage engine
 
