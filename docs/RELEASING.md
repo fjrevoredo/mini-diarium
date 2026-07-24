@@ -475,6 +475,22 @@ dispatched from the release workflow alongside WinGet/Homebrew/Flathub. It is
 - Repository secrets: `PARTNER_CENTER_TENANT_ID`, `PARTNER_CENTER_SELLER_ID`,
   `PARTNER_CENTER_CLIENT_ID`, `PARTNER_CENTER_CLIENT_SECRET`, and `MSSTORE_PRODUCT_ID`.
 
+> **If the Partner Center account is a single personal Microsoft account** (no
+> company/work account, as here), it likely has **no existing Entra tenant** to
+> associate — Partner Center → Account settings → Tenants will only offer
+> **"Create Microsoft Entra ID"** (no manual "enter existing tenant ID" field). Go
+> through that wizard (free; "business name"/"number of employees" are just profile
+> text, not a real business registration check) to create a new tenant, **then** create
+> the app registration inside it (entra.microsoft.com → Identity → Applications → App
+> registrations), grant it the **Manager** role under Partner Center → Account settings
+> → User management → Microsoft Entra applications, and set the three
+> `PARTNER_CENTER_TENANT_ID`/`CLIENT_ID`/`CLIENT_SECRET` secrets from that new
+> registration. Associating/rotating the tenant does not touch the live Store listing —
+> it's purely an API-identity concern, scoped by `MSSTORE_PRODUCT_ID`. After granting the
+> Manager role, allow a few minutes for propagation before the first `reconfigure`/
+> `publish` call succeeds (an early attempt may 401 on the specific application lookup
+> even though authentication itself succeeds).
+
 **Version handling:** the MSIX 4-part version is derived from the release tag at build
 time (`vX.Y.Z` → `X.Y.Z.0`) by `build-msix.ps1`, which stamps it into a staged copy of the
 manifest. The committed manifest carries a concrete version that `bump-version.sh` does
