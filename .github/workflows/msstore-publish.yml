@@ -103,10 +103,22 @@ jobs:
           # winapp packs the MSIX; msstore pushes the submission (needs .NET 9 Desktop Runtime).
           # The msstore CLI is installed by display name per Microsoft's quickstart; if
           # that match ever becomes ambiguous in CI, pin its winget --id instead.
+          # winget's own exit code isn't surfaced by PowerShell as a terminating error, so a
+          # transient failure (e.g. a flaky download) is silently swallowed here and only
+          # resurfaces much later as a confusing "tool not found" in a downstream step.
+          # Fail fast at the actual point of failure instead.
+          function Install-WingetPackage {
+            param([string[]]$WingetArgs)
+            winget install @WingetArgs
+            if ($LASTEXITCODE -ne 0) {
+              Write-Error "winget install failed (exit code $LASTEXITCODE) for: $WingetArgs"
+              exit 1
+            }
+          }
           $common = @('--accept-source-agreements','--accept-package-agreements','--disable-interactivity')
-          winget install --id microsoft.winappcli @common
-          winget install --id Microsoft.DotNet.DesktopRuntime.9 @common
-          winget install --name "Microsoft Store Developer CLI" @common
+          Install-WingetPackage -WingetArgs (@('--id', 'microsoft.winappcli') + $common)
+          Install-WingetPackage -WingetArgs (@('--id', 'Microsoft.DotNet.DesktopRuntime.9') + $common)
+          Install-WingetPackage -WingetArgs (@('--name', 'Microsoft Store Developer CLI') + $common)
           # Refresh PATH for subsequent steps (winget installs to per-user/machine paths).
           "$env:LOCALAPPDATA\Microsoft\WindowsApps" >> $env:GITHUB_PATH
 
