@@ -6,7 +6,9 @@ name = "mini-diarium-crypto"
 version = "0.1.0"
 edition = "2021"
 description = "Reusable, rusqlite-free cryptographic layer of Mini Diarium (cipher, password hashing, master-key wrapping)"
-authors = ["you"]
+authors = ["Francisco J. Revoredo"]
+license = "MIT"
+repository = "https://github.com/fjrevoredo/mini-diarium"
 
 [lib]
 # Defensive, per docs/OPEN_CORE_STRATEGY.md: benches live in the app crate, but

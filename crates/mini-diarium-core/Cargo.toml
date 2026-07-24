@@ -7,7 +7,9 @@ name = "mini-diarium-core"
 version = "0.1.0"
 edition = "2021"
 description = "Tauri-free business layer of Mini Diarium (crypto, auth, db, import/export, plugins)"
-authors = ["you"]
+authors = ["Francisco J. Revoredo"]
+license = "MIT"
+repository = "https://github.com/fjrevoredo/mini-diarium"
 
 [lib]
 # Defensive, per docs/OPEN_CORE_STRATEGY.md: benches live in the app crate, but
