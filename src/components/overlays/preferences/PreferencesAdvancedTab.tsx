@@ -1,8 +1,8 @@
-import { createSignal, createEffect, Show } from 'solid-js';
+import { createSignal, createEffect, Show, For } from 'solid-js';
 import { save } from '../../../lib/dialog';
 import { openUrl } from '@tauri-apps/plugin-opener';
 import { preferences } from '../../../state/preferences';
-import { isFeatureEnabled, setFeatureFlag } from '../../../state/feature-flags';
+import { FEATURE_FLAGS, isFeatureEnabled, setFeatureFlag } from '../../../state/feature-flags';
 import { getActiveTheme } from '../../../lib/theme';
 import {
   saveThemeOverrides,
@@ -150,24 +150,34 @@ export default function PreferencesAdvancedTab(props: TabProps) {
       <div class="border-t border-primary pt-4 mt-4">
         <PreferencesCustomFontsSection />
       </div>
-      {/* Experimental features */}
-      <div class="border-t border-primary pt-4 mt-4">
-        <h3 class="text-sm font-medium text-primary mb-3">
-          {t('prefs.advanced.experimentalTitle')}
-        </h3>
-        <p class="text-xs text-tertiary mb-3 leading-relaxed">
-          {t('prefs.advanced.experimentalHint')}
-        </p>
-        <label class="flex items-center gap-3">
-          <input
-            type="checkbox"
-            checked={isFeatureEnabled('inAppMenu')}
-            onChange={(e) => setFeatureFlag('inAppMenu', e.currentTarget.checked)}
-            class="h-4 w-4 rounded border-primary text-blue-600 focus:ring-blue-500"
-          />
-          <span class="text-sm text-secondary">{t('prefs.advanced.inAppMenuLabel')}</span>
-        </label>
-      </div>
+      {/* Experimental features — rendered from the FEATURE_FLAGS registry, and hidden
+          entirely while that registry is empty (the state since `inAppMenu` graduated
+          in TODO-0065) so users never see an empty group. */}
+      <Show when={FEATURE_FLAGS.length > 0}>
+        <div class="border-t border-primary pt-4 mt-4">
+          <h3 class="text-sm font-medium text-primary mb-3">
+            {t('prefs.advanced.experimentalTitle')}
+          </h3>
+          <p class="text-xs text-tertiary mb-3 leading-relaxed">
+            {t('prefs.advanced.experimentalHint')}
+          </p>
+          <div class="space-y-2">
+            <For each={FEATURE_FLAGS}>
+              {(def) => (
+                <label class="flex items-center gap-3">
+                  <input
+                    type="checkbox"
+                    checked={isFeatureEnabled(def.flag)}
+                    onChange={(e) => setFeatureFlag(def.flag, e.currentTarget.checked)}
+                    class="h-4 w-4 rounded border-primary text-blue-600 focus:ring-blue-500"
+                  />
+                  <span class="text-sm text-secondary">{t(def.labelKey)}</span>
+                </label>
+              )}
+            </For>
+          </div>
+        </div>
+      </Show>
     </div>
   );
 }

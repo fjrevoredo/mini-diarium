@@ -461,8 +461,7 @@
       "generating": "Generando…",
       "dumpSuccess": "Volcado de depuración guardado correctamente.",
       "experimentalTitle": "Funciones experimentales",
-      "experimentalHint": "Estas funciones aún están en desarrollo y pueden cambiar o eliminarse. Actívalas bajo tu propio riesgo.",
-      "inAppMenuLabel": "Menú en la aplicación (Estadísticas, Importar, Exportar)"
+      "experimentalHint": "Estas funciones aún están en desarrollo y pueden cambiar o eliminarse. Actívalas bajo tu propio riesgo."
     },
     "footer": {
       "cancel": "Cancelar",

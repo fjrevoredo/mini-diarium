@@ -102,7 +102,7 @@ Search decrypts entries in memory to run each query and never writes a plaintext
 
 ## Import
 
-Open the import dialog from **Journal → Import...** in the app menu.
+Click the **⋮** menu in the header and select **Import...**.
 
 **Built-in formats:**
 
@@ -115,7 +115,7 @@ Imports are additive. If an imported entry falls on a date that already has entr
 
 ## Export
 
-Open the export dialog from **Journal → Export...** in the app menu:
+Click the **⋮** menu in the header and select **Export...**:
 
 - **Mini Diary JSON**: machine-readable, can be re-imported into Mini Diarium
 - **Markdown**: human-readable, grouped by date; if a day has multiple entries, each appears under its own sub-heading
@@ -276,7 +276,7 @@ accepted. Unrecognised names are silently ignored. The supported families are:
 
 ## Statistics
 
-Open from **Journal → Statistics...** in the app menu:
+Click the **⋮** menu in the header and select **Statistics...**:
 
 - **Total entries** and **total words**
 - **Average words per entry**

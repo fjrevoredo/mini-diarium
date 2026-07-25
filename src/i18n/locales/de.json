@@ -461,8 +461,7 @@
       "generating": "Erzeuge…",
       "dumpSuccess": "Debug-Dump erfolgreich gespeichert.",
       "experimentalTitle": "Experimentelle Funktionen",
-      "experimentalHint": "Diese Funktionen befinden sich noch in Entwicklung und können sich ändern oder entfernt werden. Aktivierung auf eigene Gefahr.",
-      "inAppMenuLabel": "In-App-Menü (Statistik, Import, Export)"
+      "experimentalHint": "Diese Funktionen befinden sich noch in Entwicklung und können sich ändern oder entfernt werden. Aktivierung auf eigene Gefahr."
     },
     "footer": {
       "cancel": "Abbrechen",

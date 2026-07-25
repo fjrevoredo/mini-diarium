@@ -3,7 +3,7 @@ title: Navigating Your Journal
 slug: navigating
 description: Navigate your journal using the sidebar calendar, keyboard shortcuts, and day-navigation buttons. Jump to any date, go to today, and browse your entry history.
 order: 3
-updated: 2026-07-20
+updated: 2026-07-25
 tags: navigation, calendar, keyboard shortcuts, dates
 ---
 
@@ -36,10 +36,6 @@ Press `Ctrl+G` to open the date picker and jump directly to any date. This is th
 ## Header Day Controls
 
 The header shows the current day's date, flanked by a `◀` previous-day button and a `▶` next-day button. Click them to step one day at a time. When [future entries are disabled](preferences), the next-day button stops at today. Clicking the date title itself opens the Go to Date picker.
-
-## Navigation Buttons
-
-The app menu under **Journal** provides **Previous Day** and **Next Day** actions that step one calendar day at a time (the same as the header `◀` / `▶` buttons). **Go to Today** takes you back to the current date from anywhere.
 
 ## Month Navigation
 

@@ -85,12 +85,12 @@ VITE_EXPERIMENTAL=true bun run tauri dev
 
 ### Tier 2 — Runtime opt-in (adopted 2026-07-11)
 
-The first concrete Tier 2 use case is the in-app menu migration (TODO-0062): Statistics/Import/Export moved off the native OS menu into the header `⋮` menu and need to land on `master` but stay hidden from users until the whole migration completes (native-menu removal is the approval-gated TODO-0065). A **build-time** `VITE_EXPERIMENTAL` gate would force a rebuild to flip; the desire here was a **runtime** toggle a maintainer can flip in-app without rebuilding.
+The first concrete Tier 2 use case was the in-app menu migration (TODO-0062): Statistics/Import/Export moved off the native OS menu into the header `⋮` menu and needed to land on `master` but stay hidden from users until the whole migration completed (native-menu removal was the approval-gated TODO-0065). That flag has since graduated — see "Current runtime flags" below. A **build-time** `VITE_EXPERIMENTAL` gate would force a rebuild to flip; the desire here was a **runtime** toggle a maintainer can flip in-app without rebuilding.
 
 **Chosen implementation — a migration-free open-map store in its own localStorage key (`src/state/feature-flags.ts`).** This supersedes the earlier suggestion above to "add fields to the `Preferences` interface":
 
 - **Storage:** a dedicated `localStorage['feature-flags']` key holding an open `Record<string, boolean>`, separate from `localStorage['preferences']` (mirrors how theme keys live outside `preferences` — see `src/CLAUDE.md` Gotcha #7). It is **not** wiped by `resetPreferences` and **not** included in settings export; experimental flags are intentionally ephemeral.
-- **No migration, ever.** `loadFlags()` keeps only boolean-valued entries; unknown/retired keys are silently dropped on the next load, and absent flags fall back to a `DEFAULTS` map (typically `false`). Adding a flag = extend the `FeatureFlag` union + `DEFAULTS`. Retiring one = delete from both. This is the whole point: unlike `preferences.ts`, there is never a per-flag migration block to maintain when a flag is added or retired.
+- **No migration, ever.** `loadFlags()` keeps only boolean-valued entries; unknown/retired keys are silently dropped on the next load, and absent flags fall back to a `DEFAULTS` map (typically `false`). Adding a flag = extend the `FeatureFlag` union, `DEFAULTS`, and the `FEATURE_FLAGS` registry (which pairs each flag with its label's i18n key and drives the Advanced-tab UI). Retiring one = delete from all three. This is the whole point: unlike `preferences.ts`, there is never a per-flag migration block to maintain when a flag is added or retired.
 - **API:** `isFeatureEnabled(flag)` (reactive read, so `<Show>` re-renders on toggle) and `setFeatureFlag(flag, enabled)` (updates the signal and persists). The runtime toggle lives in the Advanced preferences tab (unlocked-only).
 
 **Why not the `Preferences` interface?** `Preferences` carries a migration block (`loadPreferences()`) that appends new defaults and self-heals stored values. Every flag added there would grow that migration surface and every flag retired would risk a stale-field cleanup. The constraint for this work was explicitly *do not touch `loadPreferences()` when a flag is added or retired* — an open-map store with no migration satisfies that directly.
@@ -99,31 +99,36 @@ The first concrete Tier 2 use case is the in-app menu migration (TODO-0062): Sta
 
 #### Current runtime flags
 
-| Flag (`FeatureFlag`) | Default | Gates | Graduates with |
+**The inventory is empty as of 2026-07-25.** `inAppMenu` — the only flag Tier 2 ever carried — **graduated with TODO-0065**: the `<Show>` wrapper came off the `<HeaderMoreMenu />` render site in `Header.tsx`, so the `⋮` menu is now unconditional, and the flag was deleted from the `FeatureFlag` union, `DEFAULTS`, and `FEATURE_FLAGS` per the retirement rule above (no migration; a stale stored `inAppMenu` key is simply ignored on the next load).
+
+`src/state/feature-flags.ts` is kept as **dormant infrastructure** — the store, its API, and the `e2e/specs/helpers.ts` `setFeatureFlag` helper all survive with an empty union, so the next in-progress feature that wants a runtime toggle costs three small edits instead of rebuilding the mechanism. The Preferences → Advanced → Experimental Features section renders from `FEATURE_FLAGS` and **hides itself entirely while that registry is empty**, so users never see an empty group in the meantime.
+
+| Flag (`FeatureFlag`) | Default | Gates | Status |
 |---|---|---|---|
-| `inAppMenu` | `false` | The **entire** header `⋮` overflow menu — the trigger and all items (Preferences, Statistics, Import, Export). Gated at the entry point in `Header.tsx` (`<Show when={isFeatureEnabled('inAppMenu')}><HeaderMoreMenu /></Show>`); `HeaderMoreMenu.tsx` itself is flag-agnostic. | TODO-0065 (native-menu removal, approval-gated) |
+| _(none registered)_ | — | — | — |
+| ~~`inAppMenu`~~ | `false` | The **entire** header `⋮` overflow menu — the trigger and all items (Preferences, Statistics, Import, Export). Gated at the entry point in `Header.tsx`; `HeaderMoreMenu.tsx` was always flag-agnostic. | Graduated 2026-07-25 (TODO-0065) |
 
 #### Enabling / disabling a flag at runtime
 
 Every flag defaults **off** and each user's choice persists per app-install in `localStorage['feature-flags']`. There are two ways to flip one:
 
-1. **In-app (the normal path — maintainers / manual testing).** Unlock a journal, open **Preferences → Advanced → Experimental Features**, and check or uncheck the flag (e.g. "In-app menu (Statistics, Import, Export)"). The change is reactive: gated UI (`<Show when={isFeatureEnabled(...)}>`) appears or disappears immediately, no reload needed. The Advanced tab is unlocked-only, so this is unavailable pre-unlock.
+1. **In-app (the normal path — maintainers / manual testing).** Unlock a journal, open **Preferences → Advanced → Experimental Features**, and check or uncheck the flag. The change is reactive: gated UI (`<Show when={isFeatureEnabled(...)}>`) appears or disappears immediately, no reload needed. The Advanced tab is unlocked-only, so this is unavailable pre-unlock. **While `FEATURE_FLAGS` is empty the section is not rendered at all** — with nothing to toggle there is nothing to show; it reappears as soon as a flag is registered.
 
-   **No lock-out, even though `inAppMenu` hides the whole `⋮` menu:** Preferences is *also* reachable from the native OS menu (macOS App menu / Windows/Linux File menu, `CmdOrCtrl+,` — see `menu.rs`, present on every platform until TODO-0065 removes it). So a user whose `⋮` menu is hidden still opens Preferences → Advanced from the native menu to turn the flag on. The native menu is the fallback access path precisely so gating the in-app menu can never trap the toggle behind itself.
+   **No lock-out — a standing constraint on what a flag may gate.** While `inAppMenu` existed, the justification for hiding the whole `⋮` menu was that Preferences stayed reachable from the native OS menu, so the toggle could never be trapped behind itself. TODO-0065 narrowed the native menu to Preferences + Quit, which **preserves that exact fallback** (the File/App menu item and `CmdOrCtrl+,` both remain, on every platform) while removing every other native escape hatch. The rule to carry forward: **a flag must never gate the only path to the Advanced preferences tab.** Gating the `⋮` menu stays safe because Preferences keeps two other routes; gating the Preferences overlay itself would not be.
 
 2. **Directly in `localStorage` (dev / E2E / pre-unlock).** The store is a plain JSON object under one key, so you can set it from DevTools, an E2E spec, or the `tauri-agent-dev` console — no app UI required:
 
    ```js
    // Enable
-   localStorage.setItem('feature-flags', JSON.stringify({ inAppMenu: true }));
+   localStorage.setItem('feature-flags', JSON.stringify({ someFlag: true }));
    // Disable (either set it false, or remove the whole key to fall back to defaults)
-   localStorage.setItem('feature-flags', JSON.stringify({ inAppMenu: false }));
+   localStorage.setItem('feature-flags', JSON.stringify({ someFlag: false }));
    localStorage.removeItem('feature-flags');
    ```
 
-   The signal reads `localStorage` at module init (`createSignal(loadFlags())`), so a write made **before** the app mounts is picked up automatically; a write made while the app is running needs a reload (or an in-process `setFeatureFlag` call) to re-render. This is exactly why the E2E helper `setFeatureFlag(flag, enabled)` in `e2e/specs/helpers.ts` seeds the key **and reloads** — called after `connectToApp()` but before `authenticate()`, so the reload lands on the still-locked auth screen and no unlock state is lost. `header-actions.spec.ts` uses it to enable `inAppMenu` before driving the `⋮` menu (TODO-0064 extends the same helper to the gated items). Because unknown keys are dropped and absent flags fall back to `DEFAULTS`, a malformed or stale value is harmless — the flag simply reads its default.
+   The signal reads `localStorage` at module init (`createSignal(loadFlags())`), so a write made **before** the app mounts is picked up automatically; a write made while the app is running needs a reload (or an in-process `setFeatureFlag` call) to re-render. This is exactly why the E2E helper `setFeatureFlag(flag, enabled)` in `e2e/specs/helpers.ts` seeds the key **and reloads** — called after `connectToApp()` but before `authenticate()`, so the reload lands on the still-locked auth screen and no unlock state is lost. `header-actions.spec.ts` used it to enable `inAppMenu` before driving the `⋮` menu; since that flag graduated the helper has **no caller** and is retained (and documented as such in its doc-comment) for the next flag, because the reload gotcha it encodes is expensive to rediscover. Because unknown keys are dropped and absent flags fall back to `DEFAULTS`, a malformed or stale value is harmless — the flag simply reads its default.
 
-To turn a flag **off for everyone** (e.g. reverting a premature enable), you don't touch stored state: flip its `DEFAULTS` entry to `false` in `src/state/feature-flags.ts` (already the default for `inAppMenu`) — any user who explicitly enabled it keeps their stored `true` until they toggle it back or clear the key. To retire a flag entirely, delete it from the `FeatureFlag` union and `DEFAULTS`; stale stored keys are dropped silently on the next load.
+To turn a flag **off for everyone** (e.g. reverting a premature enable), you don't touch stored state: flip its `DEFAULTS` entry to `false` in `src/state/feature-flags.ts` — any user who explicitly enabled it keeps their stored `true` until they toggle it back or clear the key. To retire a flag entirely, delete it from the `FeatureFlag` union, `DEFAULTS`, and `FEATURE_FLAGS`; stale stored keys are ignored on the next load. `inAppMenu`'s graduation on 2026-07-25 is the worked example of that path.
 
 ## Worked Example
 

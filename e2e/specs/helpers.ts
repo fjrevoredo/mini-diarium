@@ -34,6 +34,12 @@ export async function connectToApp(): Promise<void> {
 /**
  * Enable (or disable) a runtime feature flag, then reload so it takes effect.
  *
+ * **Currently unused on purpose.** `inAppMenu` — the only flag that ever existed —
+ * graduated in TODO-0065, leaving `src/state/feature-flags.ts` as dormant infra with
+ * an empty flag union. This helper is kept alongside it because the reload gotcha it
+ * encodes (see below, and `e2e/CLAUDE.md` gotcha #4) is expensive to rediscover and
+ * applies to the next flag that lands.
+ *
  * `src/state/feature-flags.ts` reads `localStorage['feature-flags']` once at
  * module-init (`createSignal(loadFlags())`), so seeding the key is not enough on
  * its own — the WebView must reload for the fresh value to be picked up. Call

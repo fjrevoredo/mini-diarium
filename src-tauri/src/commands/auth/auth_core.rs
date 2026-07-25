@@ -139,16 +139,12 @@ pub(crate) fn verify_credentials_and_collect_slots(
 }
 
 /// Opens the DB with the given credentials, runs the require-all-auth guard and migration,
-/// installs the connection into `DiaryState`, triggers backup rotation, and updates the menu.
+/// installs the connection into `DiaryState`, and triggers backup rotation.
 ///
 /// Shared by `unlock_diary`, `unlock_diary_with_keypair`, and `unlock_diary_all_methods`.
 /// `unlock_diary_auto` routes through its own path (P20 policy — no multi-auth check for
 /// local-only journals). See `docs/decisions/2026-04-passwordless-journal.md`.
-pub(crate) fn perform_unlock(
-    mode: UnlockMode,
-    state: &DiaryState,
-    app: &AppHandle<Wry>,
-) -> Result<(), String> {
+pub(crate) fn perform_unlock(mode: UnlockMode, state: &DiaryState) -> Result<(), String> {
     // Early validation before acquiring any locks
     if let UnlockMode::AllMethods(ref creds) = mode {
         if creds.is_empty() {
@@ -253,17 +249,12 @@ pub(crate) fn perform_unlock(
         warn!("Failed to create backup: {}", e);
     }
 
-    crate::menu::update_menu_lock_state(app, false);
     Ok(())
 }
 
 /// Creates a new encrypted diary database
 #[tauri::command]
-pub fn create_diary(
-    password: String,
-    state: State<DiaryState>,
-    app: AppHandle<Wry>,
-) -> Result<(), String> {
+pub fn create_diary(password: String, state: State<DiaryState>) -> Result<(), String> {
     let db_path = state
         .db_path
         .lock()
@@ -283,28 +274,19 @@ pub fn create_diary(
     *db_state = Some(db_conn);
 
     info!("Journal created");
-    crate::menu::update_menu_lock_state(&app, false);
     Ok(())
 }
 
 /// Unlocks (opens) an existing diary with a password
 #[tauri::command]
-pub fn unlock_diary(
-    password: String,
-    state: State<DiaryState>,
-    app: AppHandle<Wry>,
-) -> Result<(), String> {
-    perform_unlock(UnlockMode::Password(password), &state, &app)
+pub fn unlock_diary(password: String, state: State<DiaryState>) -> Result<(), String> {
+    perform_unlock(UnlockMode::Password(password), &state)
 }
 
 /// Unlocks an existing diary using an X25519 private key file
 #[tauri::command]
-pub fn unlock_diary_with_keypair(
-    key_path: String,
-    state: State<DiaryState>,
-    app: AppHandle<Wry>,
-) -> Result<(), String> {
-    perform_unlock(UnlockMode::Keypair(key_path), &state, &app)
+pub fn unlock_diary_with_keypair(key_path: String, state: State<DiaryState>) -> Result<(), String> {
+    perform_unlock(UnlockMode::Keypair(key_path), &state)
 }
 
 /// Locks the diary (closes the database connection)
@@ -315,7 +297,6 @@ pub fn lock_diary(state: State<DiaryState>, app: AppHandle<Wry>) -> Result<(), S
     }
 
     info!("Journal locked");
-    crate::menu::update_menu_lock_state(&app, true);
     super::emit_diary_locked(&app, "manual");
     Ok(())
 }
@@ -422,7 +403,6 @@ pub fn reset_diary(state: State<DiaryState>, app: AppHandle<Wry>) -> Result<(), 
     std::fs::remove_file(&db_path).map_err(|e| format!("Failed to delete journal: {}", e))?;
 
     info!("Journal reset");
-    crate::menu::update_menu_lock_state(&app, true);
     Ok(())
 }
 
@@ -431,7 +411,7 @@ pub fn reset_diary(state: State<DiaryState>, app: AppHandle<Wry>) -> Result<(), 
 /// Generates a 32-byte random local key, saves it to the active JournalConfig
 /// in config.json, and creates the database with an 'auto' auth slot.
 #[tauri::command]
-pub fn create_diary_auto(state: State<DiaryState>, app: AppHandle<Wry>) -> Result<(), String> {
+pub fn create_diary_auto(state: State<DiaryState>) -> Result<(), String> {
     let db_path = state
         .db_path
         .lock()
@@ -470,7 +450,6 @@ pub fn create_diary_auto(state: State<DiaryState>, app: AppHandle<Wry>) -> Resul
     *db_state = Some(db_conn);
 
     info!("Local-only journal created");
-    crate::menu::update_menu_lock_state(&app, false);
     Ok(())
 }
 
@@ -491,7 +470,7 @@ pub fn create_diary_auto(state: State<DiaryState>, app: AppHandle<Wry>) -> Resul
 /// `docs/refactoring-report-2026-05-21.md` §P20 and
 /// `docs/decisions/2026-04-passwordless-journal.md` for the full rationale.
 #[tauri::command]
-pub fn unlock_diary_auto(state: State<DiaryState>, app: AppHandle<Wry>) -> Result<(), String> {
+pub fn unlock_diary_auto(state: State<DiaryState>) -> Result<(), String> {
     let db_path = state
         .db_path
         .lock()
@@ -545,7 +524,6 @@ pub fn unlock_diary_auto(state: State<DiaryState>, app: AppHandle<Wry>) -> Resul
         warn!("Failed to create backup: {}", e);
     }
 
-    crate::menu::update_menu_lock_state(&app, false);
     Ok(())
 }
 
@@ -559,9 +537,8 @@ pub fn unlock_diary_auto(state: State<DiaryState>, app: AppHandle<Wry>) -> Resul
 pub fn unlock_diary_all_methods(
     credentials: Vec<MultiAuthCredential>,
     state: State<DiaryState>,
-    app: AppHandle<Wry>,
 ) -> Result<(), String> {
-    perform_unlock(UnlockMode::AllMethods(credentials), &state, &app)
+    perform_unlock(UnlockMode::AllMethods(credentials), &state)
 }
 
 // ─── Tests ────────────────────────────────────────────────────────────────────
@@ -745,30 +722,72 @@ mod tests {
 
     #[test]
     fn test_require_all_auth_in_db_blocks_single_unlock() {
-        let (_fixture, _, db_path, backups_dir) = make_state("req_all_auth_guard");
+        let (_fixture, state, db_path, _backups_dir) = make_state("req_all_auth_guard");
 
         let db = create_database(&db_path, "password".to_string()).unwrap();
-
-        // Write require_all_auth = "true" directly into db_settings
         crate::db::set_db_setting(&db, "require_all_auth", "true").unwrap();
+        crate::db::write_require_all_auth_mac(&db).unwrap();
         drop(db);
 
-        // Attempt single-method password unlock — must be blocked
-        let result = open_database(&db_path, "password".to_string(), &backups_dir);
-        // open_database itself succeeds; the guard is in unlock_diary. We verify via
-        // get_db_setting after opening, since unlock_diary is a Tauri command we can't
-        // call directly in tests.
+        // Single-method password unlock must be refused by the guard inside
+        // `perform_unlock`, and must leave the journal locked.
+        let err =
+            super::perform_unlock(super::UnlockMode::Password("password".to_string()), &state)
+                .unwrap_err();
         assert!(
-            result.is_ok(),
-            "open_database should succeed (guard is in unlock_diary)"
+            err.contains("requires all authentication methods"),
+            "got: {err}"
         );
-        let db2 = result.unwrap();
-        let flag = crate::db::get_db_setting(&db2, "require_all_auth");
-        assert_eq!(
-            flag.as_deref(),
-            Some("true"),
-            "require_all_auth must persist in db_settings"
+        assert!(
+            state.db.lock().unwrap().is_none(),
+            "a refused unlock must not install a connection"
         );
+    }
+
+    #[test]
+    fn test_perform_unlock_installs_connection_on_correct_password() {
+        let (_fixture, state, db_path, _backups_dir) = make_state("perform_unlock_ok");
+
+        drop(create_database(&db_path, "password".to_string()).unwrap());
+
+        super::perform_unlock(super::UnlockMode::Password("password".to_string()), &state).unwrap();
+
+        assert!(
+            state.db.lock().unwrap().is_some(),
+            "a successful unlock must install the connection into DiaryState"
+        );
+    }
+
+    #[test]
+    fn test_perform_unlock_rejects_wrong_password_and_stays_locked() {
+        let (_fixture, state, db_path, _backups_dir) = make_state("perform_unlock_wrong_pw");
+
+        drop(create_database(&db_path, "password".to_string()).unwrap());
+
+        let err = super::perform_unlock(super::UnlockMode::Password("nope".to_string()), &state)
+            .unwrap_err();
+        assert!(err.contains("Incorrect password"), "got: {err}");
+        assert!(state.db.lock().unwrap().is_none());
+    }
+
+    #[test]
+    fn test_perform_unlock_rejects_empty_credential_list() {
+        let (_fixture, state, _db_path, _backups_dir) = make_state("perform_unlock_no_creds");
+
+        // Rejected before any lock is acquired or the DB file is even consulted —
+        // note this fixture never creates a journal.
+        let err = super::perform_unlock(super::UnlockMode::AllMethods(vec![]), &state).unwrap_err();
+        assert_eq!(err, "No credentials provided");
+    }
+
+    #[test]
+    fn test_perform_unlock_reports_missing_journal() {
+        let (_fixture, state, _db_path, _backups_dir) = make_state("perform_unlock_no_db");
+
+        let err =
+            super::perform_unlock(super::UnlockMode::Password("password".to_string()), &state)
+                .unwrap_err();
+        assert!(err.contains("No journal found"), "got: {err}");
     }
 
     #[test]

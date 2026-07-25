@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { screen, fireEvent, waitFor } from '@solidjs/testing-library';
 import userEvent from '@testing-library/user-event';
 import { renderWithI18n } from '../../test/i18n-test-utils';
@@ -13,7 +13,6 @@ import {
   selectedDate,
   setSelectedDate,
 } from '../../state/ui';
-import { setFeatureFlag } from '../../state/feature-flags';
 
 import Header from './Header';
 
@@ -102,23 +101,9 @@ describe('Header day navigation', () => {
 describe('Header more menu', () => {
   beforeEach(() => {
     resetUiState();
-    localStorage.clear();
-    setFeatureFlag('inAppMenu', false);
   });
 
-  afterEach(() => {
-    setFeatureFlag('inAppMenu', false);
-    localStorage.clear();
-  });
-
-  it('hides the ⋮ overflow menu entirely when the inAppMenu flag is off', () => {
-    renderWithI18n(() => <Header />);
-
-    expect(screen.queryByTestId('header-more-menu-trigger')).not.toBeInTheDocument();
-  });
-
-  it('opens Preferences via the overflow menu when the inAppMenu flag is on', async () => {
-    setFeatureFlag('inAppMenu', true);
+  it('opens Preferences via the overflow menu', async () => {
     const user = userEvent.setup();
     renderWithI18n(() => <Header />);
 
@@ -141,21 +126,17 @@ describe('Header more menu', () => {
     ['header-more-menu-statistics-item', isStatsOpen],
     ['header-more-menu-import-item', isImportOpen],
     ['header-more-menu-export-item', isExportOpen],
-  ] as const)(
-    'opens the overlay for %s when the inAppMenu flag is on',
-    async (itemTestId, isOpen) => {
-      setFeatureFlag('inAppMenu', true);
-      const user = userEvent.setup();
-      renderWithI18n(() => <Header />);
+  ] as const)('opens the overlay for %s', async (itemTestId, isOpen) => {
+    const user = userEvent.setup();
+    renderWithI18n(() => <Header />);
 
-      expect(isOpen()).toBe(false);
+    expect(isOpen()).toBe(false);
 
-      await user.click(screen.getByTestId('header-more-menu-trigger'));
+    await user.click(screen.getByTestId('header-more-menu-trigger'));
 
-      const item = await waitFor(() => screen.getByTestId(itemTestId));
-      await user.click(item);
+    const item = await waitFor(() => screen.getByTestId(itemTestId));
+    await user.click(item);
 
-      await waitFor(() => expect(isOpen()).toBe(true));
-    },
-  );
+    await waitFor(() => expect(isOpen()).toBe(true));
+  });
 });

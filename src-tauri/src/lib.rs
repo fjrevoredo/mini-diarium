@@ -201,8 +201,7 @@ pub fn run() {
             app.manage(std::sync::Mutex::new(registry));
 
             // Build and set application menu
-            let (lockable, translatable) = menu::build_menu(app.handle())?;
-            app.manage(lockable);
+            let translatable = menu::build_menu(app.handle())?;
             app.manage(translatable);
 
             // Create the main window programmatically so we can configure two critical

@@ -16,13 +16,9 @@ import TagManager from '../overlays/TagManager';
 import OnboardingTour from '../overlays/OnboardingOverlay';
 import SearchOverlay from '../search/SearchOverlay';
 import {
-  selectedDate,
-  setSelectedDate,
   mainView,
   isSidebarCollapsed,
   setIsSidebarCollapsed,
-  isGoToDateOpen,
-  setIsGoToDateOpen,
   isPreferencesOpen,
   setIsPreferencesOpen,
   isStatsOpen,
@@ -31,18 +27,12 @@ import {
   setIsImportOpen,
   isExportOpen,
   setIsExportOpen,
-  isAboutOpen,
-  isNotificationsOpen,
   isTagManagerOpen,
   setIsTagManagerOpen,
-  isSearchOpen,
-  setIsSearchOpen,
-  isMoreMenuOpen,
+  isAnyOverlayOpen,
 } from '../../state/ui';
-import { navigateToToday, navigatePreviousMonth, navigateNextMonth } from '../../lib/tauri';
 import { preferences } from '../../state/preferences';
-import { getTodayString } from '../../lib/dates';
-import { goToPreviousDay, goToNextDay } from '../../lib/day-navigation';
+import { registerKeyboardShortcuts } from '../../lib/keyboard-shortcuts';
 import { onboardingMode, minimizeOnboarding } from '../../state/onboarding';
 
 const log = createLogger('MainLayout');
@@ -50,6 +40,7 @@ const log = createLogger('MainLayout');
 export default function MainLayout() {
   // Store cleanup functions at component level
   const unlisteners: UnlistenFn[] = [];
+  let unregisterShortcuts: (() => void) | undefined;
 
   const handleGlobalEsc = (e: KeyboardEvent) => {
     if (e.key !== 'Escape') return;
@@ -59,19 +50,7 @@ export default function MainLayout() {
     }
     if (onboardingMode() === 'minimized') return;
     // Never fire when any dialog is open — they handle their own Escape
-    if (
-      isGoToDateOpen() ||
-      isPreferencesOpen() ||
-      isStatsOpen() ||
-      isImportOpen() ||
-      isExportOpen() ||
-      isAboutOpen() ||
-      isNotificationsOpen() ||
-      isTagManagerOpen() ||
-      isSearchOpen() ||
-      isMoreMenuOpen()
-    )
-      return;
+    if (isAnyOverlayOpen()) return;
     if (preferences().escAction === 'quit') {
       getCurrentWindow()
         .close()
@@ -79,108 +58,15 @@ export default function MainLayout() {
     }
   };
 
-  // Open the search overlay on Cmd/Ctrl+F. The webview has no native find-in-page, and
-  // no editor command uses this combo, so it is safe to claim app-wide. Suppress default
-  // to stop any platform find behavior, and bail when another overlay is already open.
-  const handleSearchShortcut = (e: KeyboardEvent) => {
-    if (!(e.metaKey || e.ctrlKey) || e.key.toLowerCase() !== 'f') return;
-    if (
-      isGoToDateOpen() ||
-      isPreferencesOpen() ||
-      isStatsOpen() ||
-      isImportOpen() ||
-      isExportOpen() ||
-      isAboutOpen() ||
-      isNotificationsOpen() ||
-      isTagManagerOpen() ||
-      isMoreMenuOpen()
-    )
-      return;
-    e.preventDefault();
-    setIsSearchOpen(true);
-  };
-
-  // Setup menu event listeners
   onMount(async () => {
     document.addEventListener('keydown', handleGlobalEsc);
-    document.addEventListener('keydown', handleSearchShortcut);
-    // Previous Day menu item
-    unlisteners.push(await listen('menu-navigate-previous-day', () => goToPreviousDay()));
+    unregisterShortcuts = registerKeyboardShortcuts();
 
-    // Next Day menu item
-    unlisteners.push(await listen('menu-navigate-next-day', () => goToNextDay()));
-
-    // Go to Today menu item
-    unlisteners.push(
-      await listen('menu-navigate-to-today', async () => {
-        try {
-          const newDate = await navigateToToday();
-          setSelectedDate(newDate);
-        } catch (error) {
-          log.error('Failed to navigate to today:', error);
-        }
-      }),
-    );
-
-    // Go to Date menu item
-    unlisteners.push(
-      await listen('menu-go-to-date', () => {
-        setIsGoToDateOpen(true);
-      }),
-    );
-
-    // Preferences menu item
+    // Preferences is the only remaining native menu item (TODO-0065) — every other
+    // action moved into the webview, so this is the last `menu-*` listener.
     unlisteners.push(
       await listen('menu-preferences', () => {
         setIsPreferencesOpen(true);
-      }),
-    );
-
-    // Statistics menu item
-    unlisteners.push(
-      await listen('menu-statistics', () => {
-        setIsStatsOpen(true);
-      }),
-    );
-
-    // Import menu item
-    unlisteners.push(
-      await listen('menu-import', () => {
-        setIsImportOpen(true);
-      }),
-    );
-
-    // Export menu item
-    unlisteners.push(
-      await listen('menu-export', () => {
-        setIsExportOpen(true);
-      }),
-    );
-
-    // Previous Month menu item
-    unlisteners.push(
-      await listen('menu-navigate-previous-month', async () => {
-        try {
-          const newDate = await navigatePreviousMonth(selectedDate());
-          setSelectedDate(newDate);
-        } catch (error) {
-          log.error('Failed to navigate to previous month:', error);
-        }
-      }),
-    );
-
-    // Next Month menu item
-    unlisteners.push(
-      await listen('menu-navigate-next-month', async () => {
-        try {
-          const newDate = await navigateNextMonth(selectedDate());
-          // Clamp to today if future entries are not allowed
-          const today = getTodayString();
-          const finalDate = !preferences().allowFutureEntries && newDate > today ? today : newDate;
-          setSelectedDate(finalDate);
-        } catch (error) {
-          log.error('Failed to navigate to next month:', error);
-        }
       }),
     );
   });
@@ -189,7 +75,7 @@ export default function MainLayout() {
   onCleanup(() => {
     unlisteners.forEach((unlisten) => unlisten());
     document.removeEventListener('keydown', handleGlobalEsc);
-    document.removeEventListener('keydown', handleSearchShortcut);
+    unregisterShortcuts?.();
   });
 
   return (

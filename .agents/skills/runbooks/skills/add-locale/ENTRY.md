@@ -44,28 +44,17 @@ Maintain alphabetical order by English name.
 
 ## Step 4: Add native menu labels in `src-tauri/src/commands/menu.rs`
 
-Add a new `"{code}" =>` arm to `labels_for_locale()` **before** the `_ =>` fallback (line ~87).
+Add a new `"{code}" =>` arm to `labels_for_locale()` **before** the `_ =>` fallback.
 Without this step the native OS menu bar silently falls back to English — there is no compile error.
+
+The native menu is only Preferences + Quit since TODO-0065 (everything else moved into the
+WebView), so this is now just two strings — and only one of them on macOS:
 
 ```rust
 "hi" => MenuLabels {
-    navigation_menu: "नेविगेशन",
-    diary_menu: "डायरी",
-    navigate_prev_day: "पिछला दिन",
-    navigate_next_day: "अगला दिन",
-    navigate_today: "आज पर जाएं",
-    go_to_date: "तारीख पर जाएं...",
-    navigate_prev_month: "पिछला महीना",
-    navigate_next_month: "अगला महीना",
-    statistics: "आँकड़े...",
-    import_item: "आयात करें...",
-    export_item: "निर्यात करें...",
     preferences: "प्राथमिकताएं...",
-    about: "Mini Diarium के बारे में",
     #[cfg(not(target_os = "macos"))]
     file_menu: "फ़ाइल",
-    #[cfg(not(target_os = "macos"))]
-    help_menu: "सहायता",
 },
 ```
 

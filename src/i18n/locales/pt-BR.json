@@ -461,8 +461,7 @@
       "generating": "Gerando…",
       "dumpSuccess": "Despejo de depuração salvo com sucesso.",
       "experimentalTitle": "Recursos experimentais",
-      "experimentalHint": "Esses recursos ainda estão em desenvolvimento e podem mudar ou ser removidos. Ative por sua conta e risco.",
-      "inAppMenuLabel": "Menu no aplicativo (Estatísticas, Importar, Exportar)"
+      "experimentalHint": "Esses recursos ainda estão em desenvolvimento e podem mudar ou ser removidos. Ative por sua conta e risco."
     },
     "footer": {
       "cancel": "Cancelar",

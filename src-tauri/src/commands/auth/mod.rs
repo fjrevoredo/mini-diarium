@@ -71,7 +71,6 @@ pub(crate) fn auto_lock_diary_if_unlocked(
 
     if did_lock {
         info!("Journal auto-locked ({})", reason);
-        crate::menu::update_menu_lock_state(&app, true);
         emit_diary_locked(&app, reason);
     }
 

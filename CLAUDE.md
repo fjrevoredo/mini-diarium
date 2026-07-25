@@ -96,7 +96,7 @@ Quick reference (ASCII art):
 
 **Key relationships:**
 - Entries are stored encrypted in SQLite. Each entry has a unique integer `id` (PRIMARY KEY AUTOINCREMENT) and can have a unique date. Multiple entries per date are supported (schema v6). Full-text search is implemented as an in-memory scan over decrypted entries — the scan core lives in `crates/mini-diarium-core/src/search/` (`search_entries` in `mod.rs`; the DB-free matching/snippet helpers in `text.rs`), with a thin `commands/search.rs` Tauri wrapper; the old plaintext `entries_fts` table was removed in schema v4.
-- Menu events flow: Rust `app.emit("menu-*")` → frontend `listen()` in `shortcuts.ts` or overlay components.
+- Menu events flow: Rust `app.emit("menu-*")` → frontend `listen()` in `MainLayout.tsx` or overlay components. Since TODO-0065 the native menu holds only Preferences + Quit, so `menu-preferences` is the sole event; all other app shortcuts are JS `keydown` handlers in `src/lib/keyboard-shortcuts.ts`.
 - Preferences use `localStorage` (not Tauri store plugin).
 - Multiple journals are tracked in `{app_data_dir}/config.json` via `JournalConfig` entries. Each journal maps to a directory containing its own `diary.db`. `DiaryState` holds a single connection; switching journals updates `db_path`/`backups_dir` and auto-locks. Legacy single-diary configs are auto-migrated on first `load_journals()` call.
 
@@ -134,10 +134,10 @@ Command groups: `auth` (journal lifecycle, auth slots, multi-auth), `entries`, `
 
 Rust emits → frontend listens (cross-layer coordination):
 ```
-menu.rs:      app.emit("menu-navigate-previous-day", ())
-shortcuts.ts: listen("menu-navigate-previous-day", handler)
+menu.rs:        app.emit("menu-preferences", ())
+MainLayout.tsx: listen("menu-preferences", handler)
 ```
-All menu event names are prefixed `menu-`. See `menu.rs` for the full list.
+Menu event names are prefixed `menu-`. TODO-0065 reduced the native menu to Preferences + Quit, so this is now the **only** such event; keyboard shortcuts other than `CmdOrCtrl+,` are JS `keydown` handlers in `src/lib/keyboard-shortcuts.ts`, not OS accelerators.
 
 ## Verification Commands
 

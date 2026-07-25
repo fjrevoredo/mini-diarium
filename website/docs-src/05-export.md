@@ -3,13 +3,13 @@ title: Exporting Data
 slug: export
 description: Export your journal as JSON, Markdown, or PDF. JSON preserves IDs, tags, and metadata; Markdown is human-readable; PDF creates a formatted A4 document.
 order: 6
-updated: 2026-06-27
+updated: 2026-07-25
 tags: export, backup, JSON, Markdown, PDF, print, portability, tags
 ---
 
 ## Opening the Export Dialog
 
-Open the export dialog from **Journal → Export...** in the app menu.
+Click the **⋮** menu in the header and select **Export...**.
 
 ## Built-In Export Formats
 

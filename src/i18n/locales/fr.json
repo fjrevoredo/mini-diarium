@@ -461,8 +461,7 @@
       "generating": "Génération…",
       "dumpSuccess": "Dump de débogage enregistré avec succès.",
       "experimentalTitle": "Fonctionnalités expérimentales",
-      "experimentalHint": "Ces fonctionnalités sont encore en développement et peuvent changer ou être supprimées. Activez-les à vos risques.",
-      "inAppMenuLabel": "Menu dans l'application (Statistiques, Importer, Exporter)"
+      "experimentalHint": "Ces fonctionnalités sont encore en développement et peuvent changer ou être supprimées. Activez-les à vos risques."
     },
     "footer": {
       "cancel": "Annuler",

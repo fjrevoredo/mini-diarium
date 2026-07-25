@@ -17,20 +17,12 @@ type ArrowSide = 'left' | 'right' | 'top' | 'bottom';
 
 type I18nKey = Parameters<T>[0];
 
-// For native OS elements (menu bar, system tray) that live outside the webview DOM.
-// `offset` is px along the chosen edge: top/bottom → distance from left; left/right → distance from top.
-interface EdgeHint {
-  side: 'top' | 'bottom' | 'left' | 'right';
-  offset: number;
-}
-
 interface StepDef {
   titleKey: I18nKey;
   bodyKey: I18nKey;
   actionKey: I18nKey;
   onAction: () => void;
   targetSelector: string | null;
-  edgeHint?: EdgeHint; // set when the real target is a native (non-DOM) element
 }
 
 interface CardPosition {
@@ -117,54 +109,6 @@ function computePositions(rect: DOMRect): { card: CardPosition; spotlight: Spotl
   };
 }
 
-// Positions the card flush with the webview edge indicated by the hint, arrow pointing outward.
-function computeEdgeHintPosition(hint: EdgeHint): CardPosition {
-  const vw = window.innerWidth;
-  const vh = window.innerHeight;
-  const { side, offset } = hint;
-  const clampL = (x: number) => Math.max(PADDING, Math.min(vw - CARD_W - PADDING, x));
-  const clampT = (y: number) => Math.max(PADDING, Math.min(vh - CARD_H - PADDING, y));
-
-  switch (side) {
-    case 'top': {
-      const left = clampL(offset - CARD_W / 2);
-      return {
-        top: GAP + 8,
-        left,
-        arrowSide: 'top',
-        arrowPercent: clampPercent((offset - left) / CARD_W),
-      };
-    }
-    case 'bottom': {
-      const left = clampL(offset - CARD_W / 2);
-      return {
-        top: vh - CARD_H - GAP - 8,
-        left,
-        arrowSide: 'bottom',
-        arrowPercent: clampPercent((offset - left) / CARD_W),
-      };
-    }
-    case 'left': {
-      const top = clampT(offset - CARD_H / 2);
-      return {
-        top,
-        left: GAP + 8,
-        arrowSide: 'left',
-        arrowPercent: clampPercent((offset - top) / CARD_H),
-      };
-    }
-    case 'right': {
-      const top = clampT(offset - CARD_H / 2);
-      return {
-        top,
-        left: vw - CARD_W - GAP - 8,
-        arrowSide: 'right',
-        arrowPercent: clampPercent((offset - top) / CARD_H),
-      };
-    }
-  }
-}
-
 function centeredPosition(): CardPosition {
   return {
     top: window.innerHeight / 2 - CARD_H / 2,
@@ -179,7 +123,6 @@ export default function OnboardingTour() {
   const [popoverOpen, setPopoverOpen] = createSignal(false);
   const [cardPos, setCardPos] = createSignal<CardPosition>(centeredPosition());
   const [spotlightRect, setSpotlightRect] = createSignal<SpotlightRect | null>(null);
-  const [activeEdgeHint, setActiveEdgeHint] = createSignal<EdgeHint | null>(null);
 
   // Plain const — keys are static strings; translation happens at render via t()
   const steps: StepDef[] = [
@@ -195,12 +138,10 @@ export default function OnboardingTour() {
       bodyKey: 'onboarding.tip_import_body',
       actionKey: 'onboarding.tip_import_action',
       onAction: () => setIsImportOpen(true),
+      // The "⋮" overflow-menu trigger, which owns Import since the native menu was
+      // reduced to Preferences + Quit (TODO-0065). It always renders, so no fallback
+      // hint is needed for a native menu bar that no longer holds this action.
       targetSelector: '[data-tour-target="import"]',
-      // Prefer the in-app "⋮" overflow control when the `inAppMenu` flag is on
-      // (the trigger carries data-tour-target="import"). When the flag is off the
-      // element is absent and measure() falls back to this native-menu-bar hint,
-      // since "Import" genuinely lives in the OS menu bar above the webview's top edge.
-      edgeHint: { side: 'top', offset: 125 },
     },
     {
       titleKey: 'onboarding.tip_docs_title',
@@ -226,26 +167,14 @@ export default function OnboardingTour() {
         batch(() => {
           setCardPos(card);
           setSpotlightRect(spotlight);
-          setActiveEdgeHint(null);
         });
         return;
       }
     }
 
-    // Native element hint (menu bar, system tray, etc.)
-    if (stepDef.edgeHint) {
-      batch(() => {
-        setSpotlightRect(null);
-        setActiveEdgeHint(stepDef.edgeHint!);
-        setCardPos(computeEdgeHintPosition(stepDef.edgeHint!));
-      });
-      return;
-    }
-
     // No target at all — center the card
     batch(() => {
       setSpotlightRect(null);
-      setActiveEdgeHint(null);
       setCardPos(centeredPosition());
     });
   };
@@ -290,11 +219,6 @@ export default function OnboardingTour() {
           />
         </Show>
 
-        {/* Pulsing dot at the webview edge for native (non-DOM) targets */}
-        <Show when={activeEdgeHint() !== null}>
-          <EdgeDot hint={activeEdgeHint()!} />
-        </Show>
-
         {/* Card — positioned via inline top/left */}
         <div
           class="fixed z-50 w-80 rounded-lg bg-primary p-5"
@@ -304,7 +228,7 @@ export default function OnboardingTour() {
             'box-shadow': 'var(--shadow-lg)',
           }}
         >
-          <Show when={spotlightRect() !== null || activeEdgeHint() !== null}>
+          <Show when={spotlightRect() !== null}>
             <Arrow side={cardPos().arrowSide} percent={cardPos().arrowPercent} />
           </Show>
           <div class="flex items-center justify-between mb-3">
@@ -385,43 +309,6 @@ export default function OnboardingTour() {
         </div>
       </Show>
     </>
-  );
-}
-
-// Soft glowing area pinned to the webview edge, indicating a native element just beyond it.
-// Intentionally imprecise — a glow rather than a dot — because the actual item position
-// varies across platforms and window positions.
-function EdgeDot(props: { hint: EdgeHint }) {
-  const SIZE = 40;
-  const HALF = SIZE / 2;
-  const style = createMemo((): Record<string, string> => {
-    const { side, offset } = props.hint;
-    const base: Record<string, string> = {
-      position: 'fixed',
-      'z-index': '51',
-      width: `${SIZE}px`,
-      height: `${SIZE}px`,
-    };
-    switch (side) {
-      case 'top':
-        return { ...base, top: `${-HALF}px`, left: `${offset - HALF}px` };
-      case 'bottom':
-        return { ...base, bottom: `${-HALF}px`, left: `${offset - HALF}px` };
-      case 'left':
-        return { ...base, left: `${-HALF}px`, top: `${offset - HALF}px` };
-      case 'right':
-        return { ...base, right: `${-HALF}px`, top: `${offset - HALF}px` };
-    }
-  });
-  return (
-    <div
-      class="rounded-full animate-pulse pointer-events-none"
-      style={{
-        ...style(),
-        background:
-          'radial-gradient(circle, rgba(255,255,255,0.75) 0%, rgba(255,255,255,0.25) 45%, rgba(255,255,255,0) 70%)',
-      }}
-    />
   );
 }
 

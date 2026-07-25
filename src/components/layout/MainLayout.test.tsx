@@ -6,6 +6,7 @@ import {
   resetUiState,
   setIsMoreMenuOpen,
   isSearchOpen,
+  isPreferencesOpen,
   selectedDate,
   setSelectedDate,
 } from '../../state/ui';
@@ -98,7 +99,7 @@ describe('MainLayout global keydown guards', () => {
   });
 });
 
-describe('MainLayout menu navigation', () => {
+describe('MainLayout navigation wiring', () => {
   beforeEach(() => {
     resetUiState();
     resetPreferences();
@@ -111,21 +112,32 @@ describe('MainLayout menu navigation', () => {
     resetPreferences();
   });
 
-  it('previous-day handler navigates from the CURRENT selected date, not the initial one', async () => {
+  it('previous-day shortcut navigates from the CURRENT selected date, not the initial one', async () => {
     eventMocks.navigatePreviousDay.mockResolvedValue('2024-01-19');
 
     renderWithI18n(() => <MainLayout />);
 
-    // onMount registers the listeners asynchronously.
-    await waitFor(() => expect(eventMocks.listeners.has('menu-navigate-previous-day')).toBe(true));
-
-    // The user changes the selected date AFTER the listener was registered.
+    // The user changes the selected date AFTER the shortcut handler was registered.
     setSelectedDate('2024-01-20');
 
-    // Fire the menu event; the handler must read selectedDate() at call time.
-    await eventMocks.listeners.get('menu-navigate-previous-day')!(undefined);
+    // Ctrl+[ — the handler must read selectedDate() at call time, not at mount.
+    document.dispatchEvent(
+      new KeyboardEvent('keydown', { key: '[', code: 'BracketLeft', ctrlKey: true, bubbles: true }),
+    );
 
-    expect(eventMocks.navigatePreviousDay).toHaveBeenCalledWith('2024-01-20');
+    await waitFor(() => expect(eventMocks.navigatePreviousDay).toHaveBeenCalledWith('2024-01-20'));
     await waitFor(() => expect(selectedDate()).toBe('2024-01-19'));
+  });
+
+  it('registers the surviving menu-preferences listener and opens Preferences', async () => {
+    renderWithI18n(() => <MainLayout />);
+
+    // onMount registers the listener asynchronously.
+    await waitFor(() => expect(eventMocks.listeners.has('menu-preferences')).toBe(true));
+
+    expect(isPreferencesOpen()).toBe(false);
+    await eventMocks.listeners.get('menu-preferences')!(undefined);
+
+    expect(isPreferencesOpen()).toBe(true);
   });
 });

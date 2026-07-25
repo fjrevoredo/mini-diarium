@@ -26,7 +26,7 @@ State modules live in `src/state/` — one file per domain, all SolidJS signals.
 
 The `Preferences` interface (fields, types, defaults) is the source of truth in `src/state/preferences.ts`. Stored in `localStorage`.
 
-`feature-flags.ts` holds runtime feature flags (Tier 2 of the feature-flag strategy) in a **migration-free** open `Record<string, boolean>` under its own `localStorage['feature-flags']` key. `isFeatureEnabled(flag)` is a reactive read (drives `<Show>`); `setFeatureFlag(flag, enabled)` persists. Adding/retiring a flag is just editing the `FeatureFlag` union + `DEFAULTS` — there is deliberately no migration block. Use this (not the `Preferences` interface) to gate in-progress features that need a runtime toggle. **To flip a flag:** in-app via **Preferences → Advanced → Experimental Features** (unlocked-only, reactive), or in dev/E2E by seeding `localStorage['feature-flags']` before load (e.g. `localStorage.setItem('feature-flags', JSON.stringify({ inAppMenu: true }))`). Every flag defaults off. See [`docs/decisions/2026-06-feature-flags.md`](../docs/decisions/2026-06-feature-flags.md) (Tier 2 → "Enabling / disabling a flag at runtime") for the full how-to and current-flag inventory.
+`feature-flags.ts` holds runtime feature flags (Tier 2 of the feature-flag strategy) in a **migration-free** open `Record<string, boolean>` under its own `localStorage['feature-flags']` key. `isFeatureEnabled(flag)` is a reactive read (drives `<Show>`); `setFeatureFlag(flag, enabled)` persists. Adding/retiring a flag is just editing the `FeatureFlag` union, `DEFAULTS`, and the `FEATURE_FLAGS` registry — there is deliberately no migration block. Use this (not the `Preferences` interface) to gate in-progress features that need a runtime toggle. **The union and registry are currently empty**: `inAppMenu`, the only flag that ever existed, graduated in TODO-0065, and the module is kept as dormant infra. **To flip a flag:** in-app via **Preferences → Advanced → Experimental Features** (unlocked-only, reactive — the section renders from `FEATURE_FLAGS` and hides itself while that list is empty, which is the state today), or in dev/E2E by seeding `localStorage['feature-flags']` before load (e.g. `localStorage.setItem('feature-flags', JSON.stringify({ someFlag: true }))`). Every flag defaults off. See [`docs/decisions/2026-06-feature-flags.md`](../docs/decisions/2026-06-feature-flags.md) (Tier 2 → "Enabling / disabling a flag at runtime") for the full how-to and current-flag inventory.
 
 > **Settings taxonomy:** When adding a new setting, see [`docs/decisions/2026-05-settings-storage-taxonomy.md`](../docs/decisions/2026-05-settings-storage-taxonomy.md) for the decision flowchart (`localStorage` vs. `config.json` vs. `db_settings` vs. in-memory).
 
@@ -127,15 +127,21 @@ it('renders correctly', () => {
 
 Note the arrow wrapper `() => <Component />` — required for SolidJS test rendering. Use `renderWithI18n` (not bare `render`) so the `I18nProvider` context is available.
 
+### Keyboard Shortcuts
+
+Every app-level shortcut lives in `src/lib/keyboard-shortcuts.ts` — one `keydown` handler on `document`, registered by `MainLayout`'s `onMount` via `registerKeyboardShortcuts()` and torn down in `onCleanup`. Add new combos there, not in a component. Two rules the file already encodes and new bindings must follow: match brackets on `e.code` (`e.key` is `{`/`}` when Shift is held) and bail when `isAnyOverlayOpen()` (`src/state/ui.ts`) — overlays own the keyboard while open.
+
+These were OS-level native-menu accelerators until TODO-0065 reduced the native menu to Preferences + Quit. `CmdOrCtrl+,` (Preferences) is the one accelerator still handled by the OS.
+
 ### Menu Event Pattern — Frontend
 
-All menu event names are prefixed `menu-`. Listen in `shortcuts.ts` or overlay components:
+Menu event names are prefixed `menu-`. `menu-preferences` is the only one the backend still emits (TODO-0065); `MainLayout.tsx` listens for it:
 
 ```typescript
-listen("menu-navigate-previous-day", handler)
+listen("menu-preferences", handler)
 ```
 
-The backend emits via `app.emit("menu-*", ())` in `menu.rs`. See root CLAUDE.md for the full cross-layer pattern.
+The backend emits via `app.emit("menu-preferences", ())` in `menu.rs`. See root CLAUDE.md for the full cross-layer pattern.
 
 ## Verification Commands
 
@@ -167,7 +173,7 @@ These are used by E2E tests — **do not remove** from components.
 | `SearchOverlay.tsx` | Search dialog content | `search-overlay` |
 | `Header.tsx` | Lock button | `lock-journal-button` |
 | `Header.tsx` | Timeline toggle button | `timeline-toggle-button` |
-| `HeaderMoreMenu.tsx` | Overflow menu trigger (⋮) — whole menu gated behind `inAppMenu` flag at the `Header.tsx` render site | `header-more-menu-trigger` |
+| `HeaderMoreMenu.tsx` | Overflow menu trigger (⋮); also carries `data-tour-target="import"` for the onboarding tour | `header-more-menu-trigger` |
 | `HeaderMoreMenu.tsx` | Overflow menu dropdown content | `header-more-menu-content` |
 | `HeaderMoreMenu.tsx` | Preferences item in overflow menu | `header-more-menu-preferences-item` |
 | `HeaderMoreMenu.tsx` | Statistics item in overflow menu | `header-more-menu-statistics-item` |

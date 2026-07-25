@@ -51,6 +51,30 @@ const [isSearchOpen, setIsSearchOpen] = createSignal(false);
 // Escape/search-shortcut guards can detect it and avoid firing underneath it.
 const [isMoreMenuOpen, setIsMoreMenuOpen] = createSignal(false);
 
+/**
+ * True while any modal overlay owns the screen. Single source of truth for the
+ * "don't fire underneath a dialog" guard used by the global Escape handler and by
+ * every app-level keyboard shortcut (`src/lib/keyboard-shortcuts.ts`) — overlays
+ * handle their own keys, so nothing behind them may react.
+ *
+ * Every overlay signal in this module belongs here. When you add one, add it here too.
+ */
+export function isAnyOverlayOpen(): boolean {
+  return (
+    isGoToDateOpen() ||
+    isPreferencesOpen() ||
+    isStatsOpen() ||
+    isImportOpen() ||
+    isExportOpen() ||
+    isAboutOpen() ||
+    isNotificationsOpen() ||
+    isTagManagerOpen() ||
+    isImagePickerOpen() ||
+    isSearchOpen() ||
+    isMoreMenuOpen()
+  );
+}
+
 export function resetUiState(): void {
   setSelectedDate(getTodayString());
   setSelectedEntryId(null);

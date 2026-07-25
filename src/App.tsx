@@ -1,5 +1,4 @@
 import { Match, Show, Switch, createEffect, onCleanup, onMount } from 'solid-js';
-import { listen, UnlistenFn } from '@tauri-apps/api/event';
 import { authState, initializeAuth, lockJournal, setupAuthEventListeners } from './state/auth';
 import { initializeTheme } from './lib/theme';
 import { createLogger } from './lib/logger';
@@ -75,14 +74,8 @@ function App() {
         log.error('Failed to setup auth event listeners:', error);
       });
 
-    let unlistenAbout: UnlistenFn | undefined;
-    void listen('menu-about', () => setIsAboutOpen(true)).then((fn) => {
-      unlistenAbout = fn;
-    });
-
     onCleanup(() => {
       cleanupAuthListeners?.();
-      unlistenAbout?.();
     });
   });
 

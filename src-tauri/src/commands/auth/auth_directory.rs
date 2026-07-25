@@ -143,7 +143,6 @@ pub fn change_diary_directory(
     // Emit regardless of move outcome — the DB is already locked at this point if was_unlocked.
     if was_unlocked {
         super::emit_diary_locked(&app, "directory change");
-        crate::menu::update_menu_lock_state(&app, true);
     }
     result
 }

@@ -3,13 +3,13 @@ title: Importing Data
 slug: import
 description: Import journal entries from Mini Diary, Day One, jrnl, or plain text files. Mini Diarium includes built-in importers and supports custom Rhai import plugins.
 order: 5
-updated: 2026-06-04
+updated: 2026-07-25
 tags: import, migration, Mini Diary, Day One, jrnl
 ---
 
 ## Opening the Import Dialog
 
-Open the import dialog from **Journal → Import...** in the app menu.
+Click the **⋮** menu in the header and select **Import...**.
 
 ## Built-In Import Formats
 

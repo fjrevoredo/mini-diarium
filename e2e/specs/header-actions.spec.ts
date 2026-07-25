@@ -3,17 +3,19 @@
  *
  * Covers the in-app-reachable Header paths:
  *   - the `⋮` overflow menu → Preferences / Statistics / Import / Export
- *     (TODO-0061/0062, flag-gated). These were previously reachable only via the
- *     native OS menu bar, which `tauri-driver` cannot drive; `HeaderMoreMenu`
- *     surfaces them inside the WebView. Statistics/Import/Export are shallow
- *     "overlay opens" smoke checks (TODO-0064-01 scope discipline), not feature
- *     suites.
- *   - the always-on day-navigation controls: ◀ / ▶ day buttons and the clickable
- *     date title that opens the Go to Date overlay (TODO-0063).
+ *     (TODO-0061/0062). These were previously reachable only via the native OS
+ *     menu bar, which `tauri-driver` cannot drive; `HeaderMoreMenu` surfaces them
+ *     inside the WebView. Statistics/Import/Export are shallow "overlay opens"
+ *     smoke checks (TODO-0064-01 scope discipline), not feature suites.
+ *   - the day-navigation controls: ◀ / ▶ day buttons and the clickable date title
+ *     that opens the Go to Date overlay (TODO-0063).
+ *   - one keyboard-shortcut smoke check (TODO-0065). The native menu was reduced
+ *     to Preferences + Quit and its accelerators were re-implemented as JS keydown
+ *     handlers (`src/lib/keyboard-shortcuts.ts`); this is the only place that
+ *     proves the JS layer really replaced the OS accelerators in a real WebView.
  *
- * The whole `⋮` menu is gated behind the `inAppMenu` runtime feature flag
- * (TODO-0062) and defaults OFF, so this spec enables the flag (via
- * `setFeatureFlag` → localStorage + reload) before the menu exists.
+ * The `⋮` menu is unconditional since the `inAppMenu` feature flag graduated
+ * (TODO-0065) — no flag seeding is needed before it exists.
  *
  * Session model: each spec file gets a fresh (locked) app process, so this file
  * starts at the auth screen regardless of spec order — unlock branch if the
@@ -26,7 +28,8 @@
  *   - Run via: `bun run test:e2e`
  */
 
-import { connectToApp, authenticate, dismissOnboardingTour, setFeatureFlag } from './helpers';
+import { Key } from 'webdriverio';
+import { connectToApp, authenticate, dismissOnboardingTour } from './helpers';
 
 const TEST_PASSWORD = 'e2e-test-password-123'; // same journal DB as diary-workflow.spec.ts
 
@@ -35,10 +38,9 @@ const TEST_PASSWORD = 'e2e-test-password-123'; // same journal DB as diary-workf
  *
  * Shared by every `⋮` → overlay smoke check so the near-identical open/click/
  * assert bodies are not copy-pasted (SonarCloud `new_duplicated_lines_density`
- * gate, root CLAUDE.md Gotcha #5). Assumes the session is already unlocked with
- * the `inAppMenu` flag on (the first `it` in the describe block establishes that
- * and the rest reuse the session). Leaves the overlay closed on exit so the next
- * check starts clean.
+ * gate, root CLAUDE.md Gotcha #5). Assumes the session is already unlocked (the
+ * first `it` in the describe block establishes that and the rest reuse the
+ * session). Leaves the overlay closed on exit so the next check starts clean.
  */
 async function assertMenuItemOpensOverlay(itemTestId: string, overlayTestId: string) {
   const trigger = $('[data-testid="header-more-menu-trigger"]');
@@ -76,14 +78,10 @@ async function assertMenuItemOpensOverlay(itemTestId: string, overlayTestId: str
 
 describe('Header in-app actions', () => {
   it('opens Preferences via the ⋮ overflow menu', async () => {
-    // 1. Connect, enable the inAppMenu flag (reloads to re-read localStorage),
-    //    then auth (create or unlock) and dismiss the tour if it appears. The `⋮`
+    // 1. Connect, auth (create or unlock), dismiss the tour if it appears. The `⋮`
     //    trigger lives in the Header right cluster (visible at 800×660; no
-    //    browser.setWindowSize per e2e/CLAUDE.md gotchas #2–3) but only renders
-    //    once the flag is on. setFeatureFlag runs before auth, so the reload it
-    //    performs lands on the still-locked auth screen (no unlock state lost).
+    //    browser.setWindowSize per e2e/CLAUDE.md gotchas #2–3) and always renders.
     await connectToApp();
-    await setFeatureFlag('inAppMenu', true);
     await authenticate(TEST_PASSWORD);
     await dismissOnboardingTour();
 
@@ -94,8 +92,8 @@ describe('Header in-app actions', () => {
 
   // The remaining ⋮ → overlay checks are shallow "opens" smoke checks
   // (TODO-0064-01 scope discipline), not feature suites. They run after the
-  // Preferences test in the same session — the flag is already on and the app is
-  // already unlocked on the main screen, so no new setFeatureFlag or auth needed.
+  // Preferences test in the same session — the app is already unlocked on the
+  // main screen, so no new auth is needed.
   // Opening Import/Export only calls setIs*Open(true); the native OS file dialog
   // fires on in-overlay buttons, not on mount, so focus-loss auto-lock is not a
   // concern for a mere "opens" check.
@@ -108,10 +106,9 @@ describe('Header in-app actions', () => {
   it('opens Export via the ⋮ overflow menu', async () =>
     assertMenuItemOpensOverlay('header-more-menu-export-item', 'export-overlay'));
 
-  // The day-navigation controls (◀ / date title / ▶) are always-on — unlike the
-  // ⋮ overflow menu they are NOT gated behind the inAppMenu flag (TODO-0063).
-  // These run after the Preferences test in the same session, so the app is
-  // already unlocked on the main screen.
+  // The day-navigation controls (◀ / date title / ▶) landed in TODO-0063. These
+  // run after the Preferences test in the same session, so the app is already
+  // unlocked on the main screen.
   it('moves the day forward and back via the ◀ / ▶ Header buttons', async () => {
     const dateTitle = $('[data-testid="header-date-title"]');
     await dateTitle.waitForDisplayed({ timeout: 10000 });
@@ -137,6 +134,29 @@ describe('Header in-app actions', () => {
       timeoutMsg: 'Header date title did not return to the original date after clicking Next day',
     });
     expect(await dateTitle.getText()).toBe(before);
+  });
+
+  // The one keyboard-shortcut check (TODO-0065). Ctrl+[ used to be an OS-level
+  // menu accelerator that fired before the WebView saw the keystroke; it is now a
+  // JS keydown handler, and only a real WebView run can prove the swap works.
+  // Ctrl+] restores the original date so later checks start where they expect.
+  it('moves the day back via the Ctrl+[ keyboard shortcut', async () => {
+    const dateTitle = $('[data-testid="header-date-title"]');
+    await dateTitle.waitForDisplayed({ timeout: 10000 });
+    const before = await dateTitle.getText();
+
+    await browser.keys([Key.Ctrl, '[']);
+    await browser.waitUntil(async () => (await dateTitle.getText()) !== before, {
+      timeout: 5000,
+      timeoutMsg: 'Header date title did not change after pressing Ctrl+[',
+    });
+    expect(await dateTitle.getText()).not.toBe(before);
+
+    await browser.keys([Key.Ctrl, ']']);
+    await browser.waitUntil(async () => (await dateTitle.getText()) === before, {
+      timeout: 5000,
+      timeoutMsg: 'Header date title did not return to the original date after pressing Ctrl+]',
+    });
   });
 
   it('opens the Go to Date overlay when the Header date title is clicked', async () => {

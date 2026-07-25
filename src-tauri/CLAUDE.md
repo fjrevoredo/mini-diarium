@@ -23,7 +23,7 @@ bottom-up: `mini-diarium-crypto` (base) → `mini-diarium-core` (depends on cryp
 |------|---------|
 | `commands/` | One module per command group — all registered via `generate_handler![]` in `lib.rs`. Groups: `auth/` (multi-file), `entries`, `search`, `navigation`, `stats`, `import`, `export`, `plugin`, `debug`, `files`, `fonts`, `images`, `menu`, `tags`. Handlers delegate to the core crate. |
 | `webview_security/` | Platform WebView handlers that block external HTTP(S) at the OS level |
-| `menu.rs` | Native menu builder and `menu-*` event emitter |
+| `menu.rs` | Native menu builder (Preferences + Quit only, plus the macOS `PredefinedMenuItem` Edit/Window submenus) and the `menu-preferences` event emitter |
 | `screen_lock.rs` | OS session-lock listener → auto-lock trigger |
 
 ### Core crate (`crates/mini-diarium-core/src/`)
@@ -88,13 +88,17 @@ For command design rules that should not regress, see:
 
 ### Menu Event Pattern — Backend
 
-Emit events in `menu.rs`; the frontend listens in `shortcuts.ts` or overlay components:
+Emit events in `menu.rs`; the frontend listens in `MainLayout.tsx` or overlay components:
 
 ```rust
-app.emit("menu-navigate-previous-day", ())
+app.emit("menu-preferences", ())
 ```
 
-All menu event names are prefixed `menu-`. See `menu.rs` for the full list. See root CLAUDE.md for the full cross-layer pattern.
+Menu event names are prefixed `menu-`. Since TODO-0065 reduced the native menu to
+Preferences + Quit, **`menu-preferences` is the only event emitted** — every other action
+lives in the WebView (Header controls, the `⋮` overflow menu, and the JS keyboard
+shortcuts in `src/lib/keyboard-shortcuts.ts`). Preferences is also the only remaining
+OS-level accelerator (`CmdOrCtrl+,`). See root CLAUDE.md for the full cross-layer pattern.
 
 ### Import Parser Pattern (Built-in)
 
