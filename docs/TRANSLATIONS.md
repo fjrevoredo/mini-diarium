@@ -6,7 +6,7 @@ Thank you for your interest in translating Mini Diarium! This guide explains how
 
 ## How it works
 
-All UI strings live in `src/i18n/locales/en.ts` — this is the canonical English source. Locale files are JSON objects with the same nested structure. The app ships English-only; community translations are loaded at build time.
+All UI strings live in `src/i18n/locales/en.ts` — this is the canonical English source. Locale files are JSON objects with the same nested structure. Mini Diarium currently ships English, French, German, Hindi, Italian, Portuguese (Brazil), and Spanish; community translations are loaded at build time.
 
 ---
 
@@ -83,7 +83,14 @@ bun run sync-languages
 
 Commit the updated files alongside your JSON translation.
 
-### 6. Open a pull request
+### 6. Add Linux spellcheck dictionary support
+
+Every shipped locale also needs a Hunspell dictionary mapping and Flatpak bundle, otherwise
+spellcheck silently has no dictionary on Linux. Follow the **Add Linux spellcheck dictionary
+support** step in the [add-locale runbook](../.agents/skills/runbooks/skills/add-locale/ENTRY.md)
+before opening a pull request.
+
+### 7. Open a pull request
 
 Submit a PR with your JSON file. Title it `i18n: add <Language> translation` (e.g. `i18n: add German translation`). Include in the PR description:
 - Your language name and BCP 47 tag

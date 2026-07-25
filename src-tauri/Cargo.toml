@@ -99,6 +99,15 @@ windows-sys = { version = "0.61", features = [
 webview2-com = "0.38.2"
 windows = { version = "0.61" }
 
+[target.'cfg(target_os = "linux")'.dependencies]
+# Direct dep for enabling spell checking on the WebKitWebContext in spellcheck.rs.
+# `wry` (via tauri) already depends on webkit2gtk 2.x with the `v2_40` feature, so this
+# adds a dependency edge rather than a new package — Cargo.lock and the Flatpak's
+# generated cargo-sources.json are unchanged. Keep the version range compatible with
+# tauri's so both resolve to the same `webkit2gtk::WebView` type that
+# `PlatformWebview::inner()` returns.
+webkit2gtk = { version = "2", features = ["v2_40"] }
+
 [target.'cfg(target_os = "macos")'.dependencies]
 objc2-app-kit = { version = "0.3", features = ["NSWorkspace"] }
 objc2-foundation = { version = "0.3", features = [

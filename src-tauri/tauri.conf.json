@@ -46,6 +46,14 @@
         "depends": [
           "libwebkit2gtk-4.1-0",
           "libappindicator3-1"
+        ],
+        "recommends": [
+          "hunspell-en-us"
+        ]
+      },
+      "rpm": {
+        "recommends": [
+          "hunspell-en-US"
         ]
       }
     }

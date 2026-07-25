@@ -12,8 +12,9 @@ description: |
 2. **Wire** into `src/i18n/index.ts` (import + localeMap entry)
 3. **Add** to `AVAILABLE_LOCALES` in `src/i18n/locales/index.ts`
 4. **Add native menu labels** in `src-tauri/src/commands/menu.rs`
-5. **Run** `bun run sync-languages`
-6. **Validate** `bun run validate:locales`
+5. **Add Linux spellcheck dictionary support** in `src-tauri/src/spellcheck.rs` and `flatpak/io.github.fjrevoredo.mini-diarium.yml`
+6. **Run** `bun run sync-languages`
+7. **Validate** `bun run validate:locales`
 
 ## Step 1: Create the locale JSON
 
@@ -60,7 +61,28 @@ WebView), so this is now just two strings — and only one of them on macOS:
 
 The locale code must match exactly what appears in `AVAILABLE_LOCALES` and `localeMap`.
 
-## Step 5: Run sync-languages
+## Step 5: Add Linux spellcheck dictionary support
+
+Every shipped UI locale must resolve to a dictionary that is bundled in the Flatpak.
+Without this step, the locale works in the UI but spellcheck silently finds no dictionary on Linux.
+
+1. Add the language's default region to `DEFAULT_REGIONS` in `src-tauri/src/spellcheck.rs`.
+   Use the dictionary locale that should apply when the UI code has no region. Locale codes are
+   [BCP 47 tags](https://www.rfc-editor.org/rfc/rfc5646), so they may be a bare language (`fr`)
+   or include a region (`pt-BR`); the resolver normalizes either form to `language_REGION`.
+2. In `flatpak/io.github.fjrevoredo.mini-diarium.yml`, add matching `.aff` and `.dic` install
+   commands under `hunspell-dicts`, using the normalized filename that Enchant looks up in
+   `/app/share/hunspell/`. Add the upstream licence/readme files for that dictionary as well.
+3. Update the module comment's shipped-language count and the user-facing Linux spellcheck list
+   in `website/docs-src/07-preferences.md`.
+4. Compare all `AVAILABLE_LOCALES` entries with `DEFAULT_REGIONS` and the Flatpak install pairs.
+   Every shipped locale must have one resolved dictionary locale and one `.aff`/`.dic` pair.
+
+`src-tauri/CLAUDE.md` Gotcha #9 is the canonical explanation of the WebKitGTK and dictionary
+contract. Do not add a spellcheck dictionary for an unshipped locale unless the product decision
+also adds that UI locale.
+
+## Step 6: Run sync-languages
 
 ```bash
 bun run sync-languages
@@ -72,7 +94,7 @@ If no output is shown (known issue with `cmd.exe /c bun run ...` in this environ
 npx tsx scripts/sync-languages.ts
 ```
 
-## Step 6: Validate
+## Step 7: Validate
 
 ```bash
 bun run validate:locales   # Must show OK for new locale
@@ -94,7 +116,7 @@ Expected output: `validate-locales: [{code}.json] OK (N keys)` where N is the cu
 3. **Plural forms wrong** — test singular (count=1) and plural (count=2+) separately
 4. **Month/day not 3 letters** — must be exactly 3; check BCP 47 standards
 5. **Forgotten sync** — `sync-languages` required after updating `AVAILABLE_LOCALES`
-6. **Date formatting** — `preferences().language` is the 2-letter code (e.g., `'fr'`), NOT `'fr-FR'`; browser maps automatically
+6. **Locale-code shape** — `preferences().language` is a BCP 47 tag, not necessarily a two-letter language code: `'fr'` and `'pt-BR'` are both valid. Keep the exact code aligned across `AVAILABLE_LOCALES`, `localeMap`, native-menu labels, and the spellcheck resolver.
 7. **Missing Rust menu arm** — the most commonly forgotten step. `labels_for_locale()` in `src-tauri/src/commands/menu.rs` silently falls back to English if no arm is added for the new locale; there is no compile error or runtime warning.
 8. **Silent script output** — `bun run validate:locales` and `bun run sync-languages` may produce no visible output when run via `cmd.exe /c` in this WSL-over-Windows environment. Run `npx tsx scripts/validate-locales.ts` and `npx tsx scripts/sync-languages.ts` directly to confirm they executed and see their output.
 9. **ASCII double-quotes inside JSON string values** — JSON string delimiters are `"` (U+0022). If a translation value contains a `"` (U+0022) character, it will silently terminate the string and corrupt the JSON. When a language conventionally quotes terms with `„…"` or `"…"`, verify the inner characters are Unicode typographic quotes (U+201C `"`, U+201D `"`, U+201E `„`), not ASCII U+0022. Safest approach: avoid quoting UI terms in translation strings entirely (e.g., `gehen Sie zum Tab Erweitert` instead of `gehen Sie zum Tab „Erweitert"`). If the Edit tool produces JSON parse errors on a line you just wrote, use PowerShell to inspect the raw bytes: `sed -n 'Np' file.json | xxd | head` — ASCII `22` hex is the problem character.

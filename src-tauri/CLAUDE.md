@@ -25,6 +25,7 @@ bottom-up: `mini-diarium-crypto` (base) → `mini-diarium-core` (depends on cryp
 | `webview_security/` | Platform WebView handlers that block external HTTP(S) at the OS level |
 | `menu.rs` | Native menu builder (Preferences + Quit only, plus the macOS `PredefinedMenuItem` Edit/Window submenus) and the `menu-preferences` event emitter |
 | `screen_lock.rs` | OS session-lock listener → auto-lock trigger |
+| `spellcheck.rs` | Dictionary-language resolution + the Linux-only WebView enablement (see Gotcha #9) |
 
 ### Core crate (`crates/mini-diarium-core/src/`)
 
@@ -163,6 +164,8 @@ The following layers prevent the embedded WebView from making outbound network r
 7. **Rhai's `export` keyword is reserved**: Export plugin scripts must use `fn format_entries(entries)` instead of `fn export(entries)`. The `RhaiExportPlugin` wrapper calls `"format_entries"` internally.
 
 8. **Rhai AST requires `unsafe impl Send + Sync`**: The `rhai::AST` type does not implement `Send + Sync` in the current version. The `unsafe` impls on `RhaiImportPlugin` and `RhaiExportPlugin` are required and justified: AST is immutable after compilation, and Engine is created fresh per invocation.
+
+9. **WebView-level spell checking is a Linux-only concern** (TODO-0081, issue #227): WebView2 and WKWebView route the HTML `spellcheck` attribute to an OS-native text checker, so on Windows/macOS the frontend attribute is the whole feature. WebKitGTK runs no checker until `set_spell_checking_enabled(true)` is called on the `WebKitWebContext`, which defaults to off — so `spellcheck::apply` has a `#[cfg(target_os = "linux")]` body and is a deliberate no-op elsewhere. `webkit2gtk` is a direct dependency only under `[target.'cfg(target_os = "linux")'.dependencies]`; it must stay version-compatible with tauri's so `PlatformWebview::inner()` returns the same `webkit2gtk::WebView` type. Dictionaries are data, not code: the Flatpak manifest installs them to `/app/share/hunspell/`, other Linux packages rely on `/usr/share/hunspell`. Keep `DEFAULT_REGIONS` in `spellcheck.rs`, the `hunspell-dicts` module in `flatpak/io.github.fjrevoredo.mini-diarium.yml`, and the shipped locale list in `src/i18n/locales/` in sync — a UI language with no matching dictionary silently checks nothing.
 
 ## Common Task Checklists
 

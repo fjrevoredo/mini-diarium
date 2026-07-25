@@ -10,5 +10,6 @@ pub mod menu;
 pub mod navigation;
 pub mod plugin;
 pub mod search;
+pub mod spellcheck;
 pub mod stats;
 pub mod tags;

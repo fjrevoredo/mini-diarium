@@ -8,6 +8,7 @@ pub use mini_diarium_core::{auth, backup, config, crypto, db, export, import, pl
 pub mod commands;
 pub mod menu;
 pub mod screen_lock;
+pub mod spellcheck;
 mod webview_security;
 mod window_focus;
 
@@ -358,6 +359,8 @@ pub fn run() {
             commands::debug::generate_debug_dump,
             // Menu locale
             commands::menu::update_menu_locale,
+            // Spellcheck
+            commands::spellcheck::set_spellcheck_enabled,
             // Fonts
             commands::fonts::list_bundled_fonts,
             commands::fonts::get_font_data,

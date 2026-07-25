@@ -236,7 +236,7 @@
       "@id": "https://mini-diarium.com/docs/preferences/#article",
       "headline": "Preferences",
       "description": "Configure Mini Diarium from the Preferences panel: choose a theme, set auto-lock timeout, adjust editor font and size, manage authentication methods, and more.",
-      "dateModified": "2026-07-06T00:00:00Z",
+      "dateModified": "2026-07-25T00:00:00Z",
       "keywords": "preferences, settings, theme, auto-lock, configuration",
       "publisher": {
         "@type": "Organization",
@@ -423,7 +423,7 @@
         </tr>
         <tr>
         <td>Spellcheck</td>
-        <td>Toggle browser spellcheck in the editor</td>
+        <td>Toggle spellcheck in the editor. The dictionary follows your interface language. See &quot;Spell check on Linux&quot; below if you are on Linux</td>
         </tr>
         <tr>
         <td>Toolbar items</td>
@@ -439,6 +439,17 @@
         </tr>
         </tbody></table>
         <p>Timestamp format and precision are configured from the editor timestamp popup (clock button), not from Preferences.</p>
+        <h3 id="spell-check-on-linux">Spell check on Linux</h3><p>Windows and macOS hand spell checking to the operating system, so the toggle is all you need. Linux checks against hunspell dictionary files instead, and which ones are available depends on how you installed Mini Diarium.</p>
+        <ul>
+        <li><strong>Flatpak</strong>: dictionaries for all seven interface languages (English, Spanish, German, French, Italian, Portuguese (Brazil), and Hindi) ship inside the app. Nothing to install.</li>
+        <li><strong>.deb, .rpm, AppImage, AUR</strong>: Mini Diarium uses the dictionaries already installed on your system, under <code>/usr/share/hunspell</code>. Most distributions install the English one by default; install your language&#39;s <code>hunspell-&lt;language&gt;</code> package to get the rest.</li>
+        </ul>
+        <p>To use a language that is not bundled, drop its <code>.aff</code> and <code>.dic</code> files into:</p>
+        <ul>
+        <li>Flatpak: <code>~/.var/app/io.github.fjrevoredo.mini-diarium/config/enchant/hunspell/</code></li>
+        <li>Everything else: <code>~/.config/enchant/hunspell/</code></li>
+        </ul>
+        <p>Name them after the locale you want checked, for example <code>nl_NL.aff</code> and <code>nl_NL.dic</code>.</p>
         <h2 id="security-settings">Security Settings</h2><table>
         <thead>
         <tr>
@@ -552,6 +563,7 @@
           <li class="docs-toc-h2"><a href="#opening-preferences">Opening Preferences</a></li>
           <li class="docs-toc-h2"><a href="#general-settings">General Settings</a></li>
           <li class="docs-toc-h2"><a href="#writing-settings">Writing Settings</a></li>
+          <li class="docs-toc-h3"><a href="#spell-check-on-linux">Spell check on Linux</a></li>
           <li class="docs-toc-h2"><a href="#security-settings">Security Settings</a></li>
           <li class="docs-toc-h2"><a href="#data-settings">Data Settings</a></li>
           <li class="docs-toc-h2"><a href="#advanced-settings">Advanced Settings</a></li>

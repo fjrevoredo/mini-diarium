@@ -3,7 +3,7 @@ title: Preferences
 slug: preferences
 description: Configure Mini Diarium from the Preferences panel: choose a theme, set auto-lock timeout, adjust editor font and size, manage authentication methods, and more.
 order: 8
-updated: 2026-07-06
+updated: 2026-07-25
 tags: preferences, settings, theme, auto-lock, configuration
 ---
 
@@ -29,12 +29,26 @@ Preferences are now **close-only**: there is no Save/Cancel footer. Reversible s
 | Allow future entries | Write entries for dates that have not happened yet |
 | Hide titles | Remove the title field for a minimal, distraction-free look |
 | Show entry timestamps | Display creation and last-updated timestamps on each entry |
-| Spellcheck | Toggle browser spellcheck in the editor |
+| Spellcheck | Toggle spellcheck in the editor. The dictionary follows your interface language. See "Spell check on Linux" below if you are on Linux |
 | Toolbar items | Configure which formatting controls appear in the editor toolbar and their order. Each of the 17 controls (Headings, Underline, Strikethrough, Text color, Highlight color, Blockquote, Inline code, Bullet list, Numbered list, Horizontal rule, Insert image, Import Markdown, Insert timestamp, Text direction, Alignment, Font family, Font size) can be enabled/disabled individually and reordered with ↑/↓ buttons. "Select all" and "Select none" toggle all controls at once. Bold and Italic are always present at the start of the toolbar and cannot be removed. Font family and Font size are disabled by default; enable them to get compact dropdown pickers directly in the toolbar. Note: when enabled, these dropdowns apply inline formatting to selected text (not changing this preference). To change the app-wide font default, use the "Editor font" setting below. |
 | Editor font size | Adjust the app-wide default body text size in the editor (12–24 px). When an entry has an entry-specific font default or inline font formatting applied to the selection, those take precedence over this app default. |
 | Editor font | Choose an app-wide default font family for the editor body from bundled options or uploaded custom fonts. When an entry has an entry-specific font default or inline font formatting applied to the selection, those take precedence over this app default. See Writing Entries for the full three-level font system. |
 
 Timestamp format and precision are configured from the editor timestamp popup (clock button), not from Preferences.
+
+### Spell check on Linux
+
+Windows and macOS hand spell checking to the operating system, so the toggle is all you need. Linux checks against hunspell dictionary files instead, and which ones are available depends on how you installed Mini Diarium.
+
+- **Flatpak**: dictionaries for all seven interface languages (English, Spanish, German, French, Italian, Portuguese (Brazil), and Hindi) ship inside the app. Nothing to install.
+- **.deb, .rpm, AppImage, AUR**: Mini Diarium uses the dictionaries already installed on your system, under `/usr/share/hunspell`. Most distributions install the English one by default; install your language's `hunspell-<language>` package to get the rest.
+
+To use a language that is not bundled, drop its `.aff` and `.dic` files into:
+
+- Flatpak: `~/.var/app/io.github.fjrevoredo.mini-diarium/config/enchant/hunspell/`
+- Everything else: `~/.config/enchant/hunspell/`
+
+Name them after the locale you want checked, for example `nl_NL.aff` and `nl_NL.dic`.
 
 ## Security Settings
 

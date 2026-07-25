@@ -9,6 +9,7 @@ export * from './plugins';
 export * from './files';
 export * from './debug';
 export * from './menu';
+export * from './spellcheck';
 export * from './fonts';
 export * from './tags';
 export * from './images';

@@ -5,7 +5,7 @@ import { createLogger } from './lib/logger';
 import { createFocusLossAutoLock } from './lib/focus-lock';
 import { preferences } from './state/preferences';
 import { setLocale, useI18n } from './i18n';
-import { updateMenuLocale } from './lib/tauri';
+import { setSpellcheckEnabled, updateMenuLocale } from './lib/tauri';
 import { isAboutOpen, setIsAboutOpen } from './state/ui';
 import { loadNotifications } from './state/notifications';
 import JournalPicker from './components/auth/JournalPicker';
@@ -28,6 +28,15 @@ function App() {
     const lang = preferences().language;
     setLocale(lang);
     void updateMenuLocale(lang);
+  });
+
+  // Push the spellcheck preference down to the WebView itself. The HTML `spellcheck`
+  // attribute in the editor is enough on Windows/macOS, but WebKitGTK runs no checker
+  // until it is enabled on the web context — see src-tauri/src/spellcheck.rs. Kept
+  // separate from the locale effect: different concern, and it must re-run on either input.
+  createEffect(() => {
+    const { enableSpellcheck, language } = preferences();
+    void setSpellcheckEnabled(enableSpellcheck, language);
   });
 
   createEffect(() => {

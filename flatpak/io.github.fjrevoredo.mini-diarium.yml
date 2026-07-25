@@ -14,6 +14,48 @@ finish-args:
   - --device=dri
 
 modules:
+  # Hunspell dictionaries for the seven shipped UI languages.
+  #
+  # org.gnome.Platform ships the English dictionary and nothing else, so without this
+  # the spellcheck preference does nothing in Flatpak for every other language.
+  # Enchant's hunspell provider searches every g_get_system_data_dirs() entry plus
+  # /hunspell, which inside the sandbox includes /app/share — so files installed here
+  # are picked up automatically, exactly like the /app/share/fonts payload above.
+  #
+  # Filenames are renamed to the <locale>.aff/.dic that enchant looks for: upstream
+  # names do not match (de_DE_frami, fr). One pinned archive rather than fourteen
+  # pinned files keeps this to a single checksum and ships every dictionary's licence
+  # from the same tree; if the ~113 MB build-time download becomes a problem, the
+  # fallback is per-file `type: file` sources with the same install commands.
+  - name: hunspell-dicts
+    buildsystem: simple
+    build-commands:
+      - install -Dm644 en/en_US.aff /app/share/hunspell/en_US.aff
+      - install -Dm644 en/en_US.dic /app/share/hunspell/en_US.dic
+      - install -Dm644 es/es_ES.aff /app/share/hunspell/es_ES.aff
+      - install -Dm644 es/es_ES.dic /app/share/hunspell/es_ES.dic
+      - install -Dm644 de/de_DE_frami.aff /app/share/hunspell/de_DE.aff
+      - install -Dm644 de/de_DE_frami.dic /app/share/hunspell/de_DE.dic
+      - install -Dm644 fr_FR/fr.aff /app/share/hunspell/fr_FR.aff
+      - install -Dm644 fr_FR/fr.dic /app/share/hunspell/fr_FR.dic
+      - install -Dm644 it_IT/it_IT.aff /app/share/hunspell/it_IT.aff
+      - install -Dm644 it_IT/it_IT.dic /app/share/hunspell/it_IT.dic
+      - install -Dm644 pt_BR/pt_BR.aff /app/share/hunspell/pt_BR.aff
+      - install -Dm644 pt_BR/pt_BR.dic /app/share/hunspell/pt_BR.dic
+      - install -Dm644 hi_IN/hi_IN.aff /app/share/hunspell/hi_IN.aff
+      - install -Dm644 hi_IN/hi_IN.dic /app/share/hunspell/hi_IN.dic
+      - install -Dm644 en/license.txt en/README_en_US.txt -t /app/share/licenses/io.github.fjrevoredo.mini-diarium/hunspell-dicts/en/
+      - install -Dm644 es/LICENSE.md es/README_hunspell_es.txt -t /app/share/licenses/io.github.fjrevoredo.mini-diarium/hunspell-dicts/es/
+      - install -Dm644 de/COPYING_GPLv2 de/COPYING_GPLv3 de/COPYING_LGPL_v2.0.txt de/COPYING_LGPL_v2.1.txt de/README_de_DE_frami.txt -t /app/share/licenses/io.github.fjrevoredo.mini-diarium/hunspell-dicts/de/
+      - install -Dm644 fr_FR/README_fr.txt -t /app/share/licenses/io.github.fjrevoredo.mini-diarium/hunspell-dicts/fr/
+      - install -Dm644 it_IT/README_it_IT.txt it_IT/legacy/it_IT_COPYING it_IT/legacy/it_IT_license.txt -t /app/share/licenses/io.github.fjrevoredo.mini-diarium/hunspell-dicts/it/
+      - install -Dm644 pt_BR/README_pt_BR.txt pt_BR/README_en.txt -t /app/share/licenses/io.github.fjrevoredo.mini-diarium/hunspell-dicts/pt_BR/
+      - install -Dm644 hi_IN/COPYING hi_IN/README_hi_IN.txt -t /app/share/licenses/io.github.fjrevoredo.mini-diarium/hunspell-dicts/hi/
+    sources:
+      - type: archive
+        url: https://github.com/LibreOffice/dictionaries/archive/refs/tags/libreoffice-26.2.5.2.tar.gz
+        sha256: c79f6826862ee064390f5f6f3cc0cc68f1c84df1062a25fac9510d583644d896
+
   - name: mini-diarium
     buildsystem: simple
     build-options:
