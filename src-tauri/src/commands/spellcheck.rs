@@ -1,4 +1,4 @@
-use crate::spellcheck;
+use crate::spellcheck::{self, SpellcheckStatus};
 use tauri::{AppHandle, Manager};
 
 /// Which dictionary languages to hand the WebView.
@@ -43,6 +43,14 @@ pub fn set_spellcheck_enabled(app: AppHandle, enabled: bool, locale: String) -> 
     Ok(())
 }
 
+/// Report whether Enchant can provide the dictionary WebKitGTK will use.
+///
+/// Windows and macOS return `None` because spell checking is delegated to the OS.
+#[tauri::command]
+pub fn get_spellcheck_status(locale: String) -> Result<Option<SpellcheckStatus>, String> {
+    Ok(spellcheck::status(&locale, system_locale().as_deref()))
+}
+
 #[cfg(test)]
 mod tests {
     use super::{languages_for, pick_locale};
@@ -62,7 +70,7 @@ mod tests {
     fn system_locale_refines_the_ui_language() {
         assert_eq!(
             languages_for(true, "en", Some("en_GB.UTF-8")),
-            vec!["en_GB"]
+            vec!["en_GB", "en_US"]
         );
     }
 

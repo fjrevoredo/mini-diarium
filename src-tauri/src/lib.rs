@@ -361,6 +361,7 @@ pub fn run() {
             commands::menu::update_menu_locale,
             // Spellcheck
             commands::spellcheck::set_spellcheck_enabled,
+            commands::spellcheck::get_spellcheck_status,
             // Fonts
             commands::fonts::list_bundled_fonts,
             commands::fonts::get_font_data,

@@ -6,6 +6,17 @@
 //! `WebKitWebContext`, which defaults to off — so on Linux the attribute alone is
 //! inert and [`apply`] is what actually turns the feature on.
 
+use serde::Serialize;
+
+/// Availability of the dictionary WebKitGTK will request for the selected UI locale.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SpellcheckStatus {
+    pub language: String,
+    pub dictionary_available: bool,
+    pub is_flatpak: bool,
+}
+
 /// Region appended to a bare language tag, one per shipped UI language.
 ///
 /// Resolving to a fully-qualified locale (rather than a bare tag) is what
@@ -48,8 +59,9 @@ fn parse_locale(raw: &str) -> Option<(String, Option<String>)> {
 /// The UI language wins: an explicit region in it (`pt-BR`) is used as-is. Only when
 /// the UI language carries no region does the system locale get a say, and then only
 /// if it names the same base language — so a German system locale never drags in a
-/// German dictionary for an English UI. Otherwise the language's default region
-/// applies. The result is never empty.
+/// German dictionary for an English UI. The app language's default region remains a
+/// fallback, so a Flatpak-bundled `es_ES` dictionary still works on an `es_MX` system.
+/// The result is never empty.
 pub fn resolve_languages(ui_locale: &str, env_locale: Option<&str>) -> Vec<String> {
     let Some((language, ui_region)) = parse_locale(ui_locale) else {
         return vec!["en_US".to_string()];
@@ -64,17 +76,110 @@ pub fn resolve_languages(ui_locale: &str, env_locale: Option<&str>) -> Vec<Strin
         .filter(|(env_language, _)| *env_language == language)
         .and_then(|(_, region)| region);
 
-    let region = env_region.or_else(|| {
-        DEFAULT_REGIONS
-            .iter()
-            .find(|(tag, _)| *tag == language)
-            .map(|(_, region)| region.to_string())
-    });
+    let default_region = DEFAULT_REGIONS
+        .iter()
+        .find(|(tag, _)| *tag == language)
+        .map(|(_, region)| region.to_string());
 
-    match region {
-        Some(region) => vec![format!("{}_{}", language, region)],
+    match (env_region, default_region) {
+        (Some(env_region), Some(default_region)) if env_region != default_region => vec![
+            format!("{}_{}", language, env_region),
+            format!("{}_{}", language, default_region),
+        ],
+        (Some(region), _) | (None, Some(region)) => vec![format!("{}_{}", language, region)],
         // Unknown language with no known default: best effort, never empty.
-        None => vec![language],
+        (None, None) => vec![language],
+    }
+}
+
+/// Resolve the active dictionary and check whether Enchant can provide it.
+///
+/// The injected lookup keeps tests independent from the machine's installed
+/// dictionaries while production uses Enchant itself below.
+pub fn status_for(
+    ui_locale: &str,
+    env_locale: Option<&str>,
+    is_flatpak: bool,
+    dictionary_exists: impl Fn(&str) -> bool,
+) -> SpellcheckStatus {
+    let languages = resolve_languages(ui_locale, env_locale);
+    let language = languages
+        .first()
+        .cloned()
+        .unwrap_or_else(|| "en_US".to_string());
+    let dictionary_available = languages
+        .iter()
+        .any(|candidate| dictionary_exists(candidate));
+
+    SpellcheckStatus {
+        language,
+        dictionary_available,
+        is_flatpak,
+    }
+}
+
+#[cfg(target_os = "linux")]
+fn enchant_dictionary_exists(language: &str) -> bool {
+    use std::ffi::{c_char, c_int, c_void, CString};
+
+    type EnchantBrokerInit = unsafe extern "C" fn() -> *mut c_void;
+    type EnchantBrokerDictExists = unsafe extern "C" fn(*mut c_void, *const c_char) -> c_int;
+    type EnchantBrokerFree = unsafe extern "C" fn(*mut c_void);
+
+    let Ok(language) = CString::new(language) else {
+        return false;
+    };
+
+    // Enchant is already a WebKitGTK runtime dependency. Loading it at runtime
+    // avoids making native development builds depend on its header package.
+    let Ok(library) = (unsafe { libloading::Library::new("libenchant-2.so.2") }) else {
+        return false;
+    };
+
+    // SAFETY: The Enchant 2 public header declares these exact C ABI signatures.
+    // `library` remains alive until after the broker is freed, and the CString
+    // keeps the language pointer valid for the duration of the call.
+    unsafe {
+        let Ok(init) = library.get::<EnchantBrokerInit>(b"enchant_broker_init\0") else {
+            return false;
+        };
+        let Ok(dict_exists) =
+            library.get::<EnchantBrokerDictExists>(b"enchant_broker_dict_exists\0")
+        else {
+            return false;
+        };
+        let Ok(free) = library.get::<EnchantBrokerFree>(b"enchant_broker_free\0") else {
+            return false;
+        };
+
+        let broker = init();
+        if broker.is_null() {
+            return false;
+        }
+
+        let exists = dict_exists(broker, language.as_ptr()) != 0;
+        free(broker);
+        exists
+    }
+}
+
+/// Return dictionary availability on Linux, where WebKitGTK uses Enchant.
+/// Other platforms use their OS-native checker and have no dictionary status to report.
+pub fn status(ui_locale: &str, env_locale: Option<&str>) -> Option<SpellcheckStatus> {
+    #[cfg(target_os = "linux")]
+    {
+        Some(status_for(
+            ui_locale,
+            env_locale,
+            std::env::var_os("FLATPAK_ID").is_some(),
+            enchant_dictionary_exists,
+        ))
+    }
+
+    #[cfg(not(target_os = "linux"))]
+    {
+        let _ = (ui_locale, env_locale);
+        None
     }
 }
 
@@ -125,11 +230,14 @@ pub fn apply(window: &tauri::WebviewWindow, enabled: bool, languages: Vec<String
 
 #[cfg(test)]
 mod tests {
-    use super::resolve_languages;
+    use super::{resolve_languages, status_for};
 
     #[test]
     fn env_region_refines_matching_base_language() {
-        assert_eq!(resolve_languages("en", Some("en_GB.UTF-8")), vec!["en_GB"]);
+        assert_eq!(
+            resolve_languages("en", Some("en_GB.UTF-8")),
+            vec!["en_GB", "en_US"]
+        );
     }
 
     #[test]
@@ -185,5 +293,42 @@ mod tests {
         // Whatever it is, WebKit must be handed a usable locale.
         assert_eq!(resolve_languages("", None), vec!["en_US"]);
         assert_eq!(resolve_languages("C", Some("de_DE.UTF-8")), vec!["en_US"]);
+    }
+
+    #[test]
+    fn status_reports_the_resolved_dictionary_availability() {
+        assert_eq!(
+            status_for("es", None, false, |language| language == "es_ES"),
+            super::SpellcheckStatus {
+                language: "es_ES".to_string(),
+                dictionary_available: true,
+                is_flatpak: false,
+            }
+        );
+    }
+
+    #[test]
+    fn status_marks_missing_flatpak_dictionary_for_repair_guidance() {
+        assert_eq!(
+            status_for("es", None, true, |_| false),
+            super::SpellcheckStatus {
+                language: "es_ES".to_string(),
+                dictionary_available: false,
+                is_flatpak: true,
+            }
+        );
+    }
+
+    #[test]
+    fn status_accepts_the_bundled_default_when_the_system_region_is_unavailable() {
+        assert_eq!(
+            status_for("es", Some("es_MX.UTF-8"), true, |language| language
+                == "es_ES"),
+            super::SpellcheckStatus {
+                language: "es_MX".to_string(),
+                dictionary_available: true,
+                is_flatpak: true,
+            }
+        );
     }
 }

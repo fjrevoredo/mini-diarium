@@ -393,6 +393,11 @@ const en = {
         'Displays the creation and last updated time below the title for the current entry.',
       spellcheckLabel: 'Enable spellcheck',
       spellcheckHint: 'When enabled, browser spellcheck will highlight misspelled words.',
+      spellcheckDictionaryMissing:
+        "Spell check needs the English language pack. Open your computer's Software app and search for “English spell checking.” Install the language support it suggests, then restart Mini Diarium.",
+      spellcheckDictionaryMissingFlatpak:
+        "Spell check should be included with Mini Diarium. Open your computer's Software app, update Mini Diarium, then restart it. If this warning remains, reinstall Mini Diarium.",
+      spellcheckDictionaryHelp: 'Open the spell-check setup guide',
       toolbarItemsLabel: 'Toolbar items',
       toolbarItemsHint:
         'Customize which formatting controls appear in the editor toolbar and their order.',

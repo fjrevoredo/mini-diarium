@@ -6,19 +6,28 @@ import * as prefState from '../../../state/preferences';
 import { DEFAULT_TOOLBAR_ITEMS } from '../../../state/preferences';
 import PreferencesWritingTab from './PreferencesWritingTab';
 
-const { mockListBundledFonts, mockListCustomFonts } = vi.hoisted(() => ({
-  mockListBundledFonts: vi.fn<() => Promise<string[]>>(),
-  mockListCustomFonts: vi.fn<() => Promise<import('../../../lib/tauri').CustomFontSummary[]>>(),
-}));
+const { mockGetSpellcheckStatus, mockListBundledFonts, mockListCustomFonts, mockOpenUrl } =
+  vi.hoisted(() => ({
+    mockGetSpellcheckStatus:
+      vi.fn<() => Promise<import('../../../lib/tauri').SpellcheckStatus | null>>(),
+    mockListBundledFonts: vi.fn<() => Promise<string[]>>(),
+    mockListCustomFonts: vi.fn<() => Promise<import('../../../lib/tauri').CustomFontSummary[]>>(),
+    mockOpenUrl: vi.fn<() => Promise<void>>(),
+  }));
 
 vi.mock('../../../lib/tauri', async () => {
   const actual = await vi.importActual<typeof import('../../../lib/tauri')>('../../../lib/tauri');
   return {
     ...actual,
+    getSpellcheckStatus: mockGetSpellcheckStatus,
     listBundledFonts: mockListBundledFonts,
     listCustomFonts: mockListCustomFonts,
   };
 });
+
+vi.mock('@tauri-apps/plugin-opener', () => ({
+  openUrl: mockOpenUrl,
+}));
 
 describe('PreferencesWritingTab', () => {
   function renderTab() {
@@ -30,6 +39,7 @@ describe('PreferencesWritingTab', () => {
     localStorage.clear();
     vi.clearAllMocks();
     mockListCustomFonts.mockResolvedValue([]);
+    mockGetSpellcheckStatus.mockResolvedValue(null);
     prefState.setPreferences({
       hideTitles: false,
       editorFontFamily: null,
@@ -74,6 +84,56 @@ describe('PreferencesWritingTab', () => {
     fireEvent.click(checkbox);
 
     expect(spy).toHaveBeenCalledWith(expect.objectContaining({ hideTitles: true }));
+  });
+
+  it('warns when the active Linux dictionary is unavailable', async () => {
+    mockGetSpellcheckStatus.mockResolvedValue({
+      language: 'es_ES',
+      dictionaryAvailable: false,
+      isFlatpak: false,
+    });
+
+    renderTab();
+
+    expect(
+      await screen.findByText(/spell check needs the English language pack/i),
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /open the spell-check setup guide/i }));
+    expect(mockOpenUrl).toHaveBeenCalledWith(
+      'https://mini-diarium.com/docs/preferences/#spell-check-on-linux',
+    );
+  });
+
+  it('does not warn when the active Linux dictionary is available', async () => {
+    mockGetSpellcheckStatus.mockResolvedValue({
+      language: 'es_ES',
+      dictionaryAvailable: true,
+      isFlatpak: false,
+    });
+
+    renderTab();
+
+    await waitFor(() => {
+      expect(mockGetSpellcheckStatus).toHaveBeenCalledWith('en', expect.anything());
+    });
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it('tells Flatpak users to repair a missing bundled dictionary', async () => {
+    mockGetSpellcheckStatus.mockResolvedValue({
+      language: 'es_ES',
+      dictionaryAvailable: false,
+      isFlatpak: true,
+    });
+
+    renderTab();
+
+    expect(
+      await screen.findByText(/spell check should be included with Mini Diarium/i),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /open the spell-check setup guide/i }),
+    ).toBeInTheDocument();
   });
 
   it('select none persists a disabled toolbar-items list immediately', () => {

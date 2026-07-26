@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { invoke } from '@tauri-apps/api/core';
-import { setSpellcheckEnabled } from './spellcheck';
+import { getSpellcheckStatus, setSpellcheckEnabled } from './spellcheck';
 
 vi.mock('@tauri-apps/api/core', () => ({ invoke: vi.fn() }));
 const mockInvoke = vi.mocked(invoke);
@@ -24,5 +24,20 @@ describe('spellcheck command wrappers (IPC contract)', () => {
       enabled: false,
       locale: 'pt-BR',
     });
+  });
+
+  it('getSpellcheckStatus → get_spellcheck_status { locale }', async () => {
+    mockInvoke.mockResolvedValueOnce({
+      language: 'es_ES',
+      dictionaryAvailable: false,
+      isFlatpak: false,
+    });
+
+    await expect(getSpellcheckStatus('es')).resolves.toEqual({
+      language: 'es_ES',
+      dictionaryAvailable: false,
+      isFlatpak: false,
+    });
+    expect(mockInvoke).toHaveBeenCalledWith('get_spellcheck_status', { locale: 'es' });
   });
 });

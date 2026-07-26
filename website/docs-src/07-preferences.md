@@ -3,7 +3,7 @@ title: Preferences
 slug: preferences
 description: Configure Mini Diarium from the Preferences panel: choose a theme, set auto-lock timeout, adjust editor font and size, manage authentication methods, and more.
 order: 8
-updated: 2026-07-25
+updated: 2026-07-26
 tags: preferences, settings, theme, auto-lock, configuration
 ---
 
@@ -38,12 +38,32 @@ Timestamp format and precision are configured from the editor timestamp popup (c
 
 ### Spell check on Linux
 
-Windows and macOS hand spell checking to the operating system, so the toggle is all you need. Linux checks against hunspell dictionary files instead, and which ones are available depends on how you installed Mini Diarium.
+Windows and macOS handle spell checking for you. On Linux, Mini Diarium uses spelling language packs installed on your computer. It does not download them automatically, but you only need to add a language pack once.
 
-- **Flatpak**: dictionaries for all seven interface languages (English, Spanish, German, French, Italian, Portuguese (Brazil), and Hindi) ship inside the app. Nothing to install.
-- **.deb, .rpm, AppImage, AUR**: Mini Diarium uses the dictionaries already installed on your system, under `/usr/share/hunspell`. Most distributions install the English one by default; install your language's `hunspell-<language>` package to get the rest.
+If Preferences shows a spell-check warning, start with your computer's **Software** app. Search for your language followed by “spell checking”, such as “Spanish spell checking”, install the suggested language support, then close and reopen Mini Diarium.
 
-To use a language that is not bundled, drop its `.aff` and `.dic` files into:
+#### Example: Spanish spell checking on Ubuntu or Debian
+
+Using a terminal is optional. If you prefer it, open **Terminal** (on Ubuntu, press `Ctrl` + `Alt` + `T`) and run:
+
+```bash
+sudo apt update
+sudo apt install hunspell-es
+```
+
+Enter your computer password when asked. Nothing is shown while you type the password; that is normal. When the command finishes, close and reopen Mini Diarium.
+
+#### Flatpak
+
+Flatpak installs include dictionaries for all seven interface languages (English, Spanish, German, French, Italian, Portuguese (Brazil), and Hindi). If you see a warning, open your computer's Software app, update Mini Diarium, and restart it. If the warning remains, reinstall Mini Diarium.
+
+#### Need more help?
+
+Email [minidiarium@gmail.com](mailto:minidiarium@gmail.com) with your Linux distribution and the language selected in Mini Diarium, or [report the problem on GitHub](https://github.com/fjrevoredo/mini-diarium/issues).
+
+#### Advanced: use another language
+
+To use a language that is not bundled, place its `.aff` and `.dic` files in:
 
 - Flatpak: `~/.var/app/io.github.fjrevoredo.mini-diarium/config/enchant/hunspell/`
 - Everything else: `~/.config/enchant/hunspell/`

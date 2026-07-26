@@ -1,13 +1,18 @@
-import { createMemo, For } from 'solid-js';
+import { createMemo, createResource, For, Show } from 'solid-js';
 import { ChevronUp, ChevronDown } from 'lucide-solid';
 import { useI18n } from '../../../i18n';
 import { preferences, setPreferences } from '../../../state/preferences';
 import type { ToolbarItem, ToolbarItemKey } from '../../../state/preferences';
 import type { TabProps } from './shared';
 import PreferencesFontFamilyField from './PreferencesFontFamilyField';
+import { getSpellcheckStatus } from '../../../lib/tauri';
+import { openUrl } from '@tauri-apps/plugin-opener';
+
+const SPELLCHECK_SETUP_GUIDE = 'https://mini-diarium.com/docs/preferences/#spell-check-on-linux';
 
 export default function PreferencesWritingTab(_props: TabProps) {
   const t = useI18n();
+  const [spellcheckStatus] = createResource(() => preferences().language, getSpellcheckStatus);
 
   const FIRST_DAY_OPTIONS = createMemo(() => [
     { value: 'null', label: t('prefs.writing.firstDaySystem') },
@@ -183,6 +188,24 @@ export default function PreferencesWritingTab(_props: TabProps) {
         <p class="ml-7 text-xs text-tertiary leading-relaxed">
           {t('prefs.writing.spellcheckHint')}
         </p>
+        <Show
+          when={preferences().enableSpellcheck && spellcheckStatus()?.dictionaryAvailable === false}
+        >
+          <p class="ml-7 text-xs text-amber-600 dark:text-amber-400 leading-relaxed" role="alert">
+            {t(
+              spellcheckStatus()?.isFlatpak
+                ? 'prefs.writing.spellcheckDictionaryMissingFlatpak'
+                : 'prefs.writing.spellcheckDictionaryMissing',
+            )}
+          </p>
+          <button
+            type="button"
+            class="ml-7 text-xs text-blue-500 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500"
+            onClick={() => void openUrl(SPELLCHECK_SETUP_GUIDE)}
+          >
+            {t('prefs.writing.spellcheckDictionaryHelp')}
+          </button>
+        </Show>
       </div>
 
       {/* Toolbar Items */}
