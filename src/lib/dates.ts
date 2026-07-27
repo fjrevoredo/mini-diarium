@@ -13,6 +13,35 @@ export function formatDate(dateStr: string, locale?: string): string {
 }
 
 /**
+ * Date presentation styles offered for the timeline row date (TODO-0072).
+ * 'full' reproduces formatDate() exactly; 'iso' is intentionally locale-independent.
+ */
+export type DateFormatStyle = 'full' | 'long' | 'medium' | 'short' | 'iso';
+
+/**
+ * Formats a date string (YYYY-MM-DD) using one of the presentation styles above.
+ *
+ * `dateStyle` must never be combined with individual component options (Intl throws
+ * a TypeError), so 'full' delegates to formatDate() — its explicit option bag is the
+ * contract for the default, and CLDR does not guarantee the two agree in every locale.
+ */
+export function formatDateWithStyle(
+  dateStr: string,
+  style: DateFormatStyle,
+  locale?: string,
+): string {
+  if (style === 'iso') return dateStr;
+  if (style === 'full') return formatDate(dateStr, locale);
+  const date = new Date(dateStr + 'T00:00:00');
+  try {
+    return date.toLocaleDateString(locale ?? 'en-US', { dateStyle: style });
+  } catch {
+    // A corrupted preferences.language would make Intl throw RangeError — never blank the row.
+    return date.toLocaleDateString('en-US', { dateStyle: style });
+  }
+}
+
+/**
  * Gets the current date in YYYY-MM-DD format (in local timezone)
  */
 export function getTodayString(): string {

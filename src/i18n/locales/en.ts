@@ -452,6 +452,18 @@ const en = {
       customFontDeleteAriaLabel: 'Remove {{ family }} custom font',
       customFontFamilyRequired: 'Font family name is required.',
       customFontRegularRequired: 'Regular weight file is required.',
+      timelineTitle: 'Timeline',
+      timelineDateFormatLabel: 'Date format',
+      timelineDateFormatHint:
+        'Sets how the date is written next to each timeline entry. All styles except ISO follow your interface language.',
+      timelineDateFormatFull: 'Full',
+      timelineDateFormatLong: 'Long',
+      timelineDateFormatMedium: 'Medium',
+      timelineDateFormatShort: 'Short',
+      timelineDateFormatIso: 'ISO (YYYY-MM-DD)',
+      timelinePreviewLabel: 'Show entry preview',
+      timelinePreviewHint:
+        'When disabled, each timeline row shows only the date and the title, without the first line of the entry.',
     },
     security: {
       authMethodsTitle: 'Authentication Methods',

@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   getTodayString,
   formatDate,
+  formatDateWithStyle,
   isValidDate,
   addDays,
   addMonths,
@@ -45,6 +46,45 @@ describe('dates utility functions', () => {
 
       expect(jan).toContain('January');
       expect(dec).toContain('December');
+    });
+  });
+
+  // Assertions here stay at the substring/regex level on purpose: Node ICU builds differ
+  // on punctuation and spacing between CI hosts, so exact-string matches would be flaky.
+  describe('formatDateWithStyle', () => {
+    it('reproduces formatDate exactly for the "full" style', () => {
+      expect(formatDateWithStyle('2024-01-15', 'full', 'en-US')).toBe(
+        formatDate('2024-01-15', 'en-US'),
+      );
+    });
+
+    it('returns the stored string verbatim for the "iso" style, regardless of locale', () => {
+      expect(formatDateWithStyle('2024-01-15', 'iso', 'en')).toBe('2024-01-15');
+      expect(formatDateWithStyle('2024-01-15', 'iso', 'de')).toBe('2024-01-15');
+    });
+
+    it('drops the weekday but keeps the full month for the "long" style', () => {
+      const formatted = formatDateWithStyle('2024-01-15', 'long', 'en-US');
+      expect(formatted).toContain('January');
+      expect(formatted).toContain('2024');
+      expect(formatted).not.toContain('Monday');
+    });
+
+    it('abbreviates the month for the "medium" style', () => {
+      const formatted = formatDateWithStyle('2024-01-15', 'medium', 'en-US');
+      expect(formatted).toContain('Jan');
+      expect(formatted).not.toContain('January');
+    });
+
+    it('renders a numeric date for the "short" style', () => {
+      expect(formatDateWithStyle('2024-01-15', 'short', 'en-US')).toMatch(
+        /\d{1,2}\/\d{1,2}\/\d{2}/,
+      );
+    });
+
+    it('falls back to en-US when the stored locale is malformed', () => {
+      const formatted = formatDateWithStyle('2024-01-15', 'medium', 'not a locale');
+      expect(formatted.length).toBeGreaterThan(0);
     });
   });
 

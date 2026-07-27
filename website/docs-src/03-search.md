@@ -31,5 +31,5 @@ Search is fastest when you remember specific words. When you only remember rough
 
 - **Calendar** in the sidebar, for browsing by date.
 - **Go to Date** dialog with Ctrl+G (Cmd+G on macOS), to jump to a known date.
-- **Timeline** view (toggled from the header), a chronological list of every entry with previews.
+- **Timeline** view (toggled from the header), a chronological list of every entry with an optional one-line preview (see Preferences → Writing → Timeline).
 - **Export** to Markdown or JSON and use your operating system's file search. Exported files are not encrypted, so do this only on a trusted device.

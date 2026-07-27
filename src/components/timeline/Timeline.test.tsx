@@ -3,6 +3,7 @@ import { screen, waitFor } from '@solidjs/testing-library';
 import { renderWithI18n } from '../../test/i18n-test-utils';
 import { setEntryDates } from '../../state/entries';
 import { selectedDate, mainView, setMainView, resetUiState } from '../../state/ui';
+import { setPreferences } from '../../state/preferences';
 import type { TimelineEntry } from '../../lib/tauri';
 
 const mocks = vi.hoisted(() => ({
@@ -29,6 +30,8 @@ describe('Timeline', () => {
     mocks.getTimelineEntries.mockReset();
     setEntryDates(['2026-01-01', '2026-02-01']);
     resetUiState();
+    // Preference state is module-global and persisted, so leakage between tests is real.
+    setPreferences({ timelineDateFormat: 'full', showTimelinePreview: true, language: 'en' });
   });
 
   it('renders the list of entries', async () => {
@@ -76,6 +79,53 @@ describe('Timeline', () => {
     await waitFor(() => {
       expect(screen.getByText('Untitled')).toBeInTheDocument();
     });
+  });
+
+  it('renders the full date by default', async () => {
+    mocks.getTimelineEntries.mockResolvedValue(ENTRIES);
+
+    renderWithI18n(() => <Timeline />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Thursday, January 1, 2026')).toBeInTheDocument();
+    });
+  });
+
+  it('renders the plain stored date when the ISO style is selected', async () => {
+    mocks.getTimelineEntries.mockResolvedValue(ENTRIES);
+    setPreferences({ timelineDateFormat: 'iso' });
+
+    renderWithI18n(() => <Timeline />);
+
+    await waitFor(() => {
+      expect(screen.getByText('2026-01-01')).toBeInTheDocument();
+    });
+    expect(screen.queryByText('Thursday, January 1, 2026')).not.toBeInTheDocument();
+  });
+
+  it('keeps the full date in the aria-label even under the ISO style', async () => {
+    mocks.getTimelineEntries.mockResolvedValue(ENTRIES);
+    setPreferences({ timelineDateFormat: 'iso' });
+
+    renderWithI18n(() => <Timeline />);
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole('button', { name: /Open entry from Thursday, January 1, 2026/ }),
+      ).toBeInTheDocument();
+    });
+  });
+
+  it('hides the preview but keeps the title when showTimelinePreview is off', async () => {
+    mocks.getTimelineEntries.mockResolvedValue(ENTRIES);
+    setPreferences({ showTimelinePreview: false });
+
+    renderWithI18n(() => <Timeline />);
+
+    await waitFor(() => {
+      expect(screen.getByText('First entry')).toBeInTheDocument();
+    });
+    expect(screen.queryByText('The beginning')).not.toBeInTheDocument();
   });
 
   it('renders a passive lock indicator only for locked entries', async () => {

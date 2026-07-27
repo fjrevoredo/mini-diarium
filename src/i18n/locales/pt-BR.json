@@ -376,7 +376,17 @@
       "customFontDeleteButton": "Remover",
       "customFontDeleteAriaLabel": "Remover fonte personalizada {{ family }}",
       "customFontFamilyRequired": "O nome da família da fonte é obrigatório.",
-      "customFontRegularRequired": "O arquivo de peso Regular é obrigatório."
+      "customFontRegularRequired": "O arquivo de peso Regular é obrigatório.",
+      "timelineTitle": "Linha do tempo",
+      "timelineDateFormatLabel": "Formato de data",
+      "timelineDateFormatHint": "Define como a data é escrita ao lado de cada entrada da linha do tempo. Todos os estilos, exceto ISO, seguem o idioma da interface.",
+      "timelineDateFormatFull": "Completo",
+      "timelineDateFormatLong": "Longo",
+      "timelineDateFormatMedium": "Médio",
+      "timelineDateFormatShort": "Curto",
+      "timelineDateFormatIso": "ISO (AAAA-MM-DD)",
+      "timelinePreviewLabel": "Mostrar prévia da entrada",
+      "timelinePreviewHint": "Quando desativado, cada linha da linha do tempo mostra apenas a data e o título, sem a primeira linha da entrada."
     },
     "security": {
       "authMethodsTitle": "Métodos de autenticação",

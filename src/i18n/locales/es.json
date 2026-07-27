@@ -376,7 +376,17 @@
       "customFontDeleteButton": "Eliminar",
       "customFontDeleteAriaLabel": "Eliminar fuente personalizada {{ family }}",
       "customFontFamilyRequired": "El nombre de la familia tipográfica es obligatorio.",
-      "customFontRegularRequired": "El archivo de peso Regular es obligatorio."
+      "customFontRegularRequired": "El archivo de peso Regular es obligatorio.",
+      "timelineTitle": "Cronología",
+      "timelineDateFormatLabel": "Formato de fecha",
+      "timelineDateFormatHint": "Define cómo se escribe la fecha junto a cada entrada de la cronología. Todos los estilos excepto ISO siguen el idioma de la interfaz.",
+      "timelineDateFormatFull": "Completo",
+      "timelineDateFormatLong": "Largo",
+      "timelineDateFormatMedium": "Medio",
+      "timelineDateFormatShort": "Corto",
+      "timelineDateFormatIso": "ISO (AAAA-MM-DD)",
+      "timelinePreviewLabel": "Mostrar vista previa de la entrada",
+      "timelinePreviewHint": "Cuando se desactiva, cada fila de la cronología muestra solo la fecha y el título, sin la primera línea de la entrada."
     },
     "security": {
       "authMethodsTitle": "Métodos de autenticación",

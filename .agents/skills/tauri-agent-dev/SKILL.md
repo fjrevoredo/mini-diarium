@@ -23,10 +23,25 @@ for `website:build-static`, but it is not specific to that one script. If a comm
 returns nothing but the banner, that is the signature of this issue, not a sign the command failed
 — retry it through the PowerShell tool before concluding anything is wrong.
 
+**`agent:dev:start` does not return to you — always launch it with `run_in_background: true`.**
+The script itself is written to exit once CDP is up (it spawns `tauri dev`, polls, prints
+`Tauri dev running.`, and falls off the end of `main()`), but through this tool chain the call stays
+attached to the live process tree and is only reported as complete when you later run
+`agent:dev:stop`. Waiting on it in the foreground burns the entire tool timeout and teaches you
+nothing: a foreground call with a 400 s timeout will be force-backgrounded at 400 s even though the
+app window opened ~60 s in. Launch it backgrounded and use `probe` as the readiness signal:
+
 ```bash
+# 1. Launch — run_in_background: true, do NOT wait on this call
 bun run agent:dev:start
+
+# 2. Readiness — this one DOES return, in well under a second
 bun run agent:dev:probe
 ```
+
+The same applies to `agent-browser connect <port>`: it does not return either. Launch it
+backgrounded (or simply issue it and move on) and treat the first successful
+`agent-browser snapshot` as proof the connection is live — `snapshot` returns normally.
 
 Useful flags:
 
@@ -47,8 +62,8 @@ What start does:
 - writes logs to `.agent-dev/dev.log`
 
 **Detecting readiness:** don't grep the raw `start` output for guessed keywords ("ready", "listening",
-etc.) — `agent:dev:start` is a backgrounded long-running process and its stdout is not a reliable
-readiness signal through this tool chain. `agent:dev:probe` is the purpose-built readiness check and
+etc.) — per the note above, `start` never hands its output back, so its stdout is not a readiness
+signal at all through this tool chain. `agent:dev:probe` is the purpose-built readiness check and
 returns structured JSON (`{"running":true,...}`) the moment the CDP target is live. Poll it directly
 instead of building an ad hoc log-watcher:
 
@@ -80,9 +95,35 @@ After `agent-browser connect`, use the normal browser-driving loop:
 4. use eval for DOM or `localStorage` reads
 5. take screenshots when the user needs proof
 
-PowerShell note:
+PowerShell notes:
 
 - Quote `@eNNN` refs. Use `agent-browser click '@e5'`, not `agent-browser click @e5`.
+
+- **Pass every non-trivial `eval` script as a single-quoted here-string, never as an inline
+  double-quoted argument.** PowerShell eats backslash-escaped quotes inside a `"…"` argument, so JS
+  containing quoted selectors arrives at the browser mangled. This call:
+
+  ```powershell
+  agent-browser eval "(function(){ document.querySelectorAll('a[aria-label^=\"Open entry\"]') })()"
+  ```
+
+  fails with `'a[aria-label^= Open entry]' is not a valid selector` — the inner quotes were stripped,
+  not escaped. The failure looks like a bad selector, so it sends you rewriting correct JS. Use:
+
+  ```powershell
+  $js = @'
+  (function(){
+    const rows = Array.from(document.querySelectorAll('li button'))
+      .filter(b => (b.getAttribute('aria-label') || '').startsWith('Open entry'));
+    return { count: rows.length };
+  })()
+  '@
+  agent-browser eval $js
+  ```
+
+  The `@'…'@` form is literal — no `$`, backtick, or quote interpretation — so the JS reaches the
+  browser byte-for-byte. The closing `'@` **must** be at column 0 on its own line. As a bonus,
+  `startsWith`/`includes` filtering in JS avoids CSS attribute-selector quoting entirely.
 
 **Stale ref warning**: `@eNNN` refs are assigned at snapshot time. Any DOM mutation (tab switch,
 scroll, dialog open/close) can reassign refs so an old ref silently targets a different element.
@@ -105,23 +146,30 @@ turn per check. Use a short shell-level wait (`sleep 1-2` inline before the next
 
 Prefer the app's documented `data-testid` hooks where they exist. Do not invent new ones.
 
-- `password-create-input`
-- `password-repeat-input`
-- `create-journal-button`
-- `password-unlock-input`
-- `unlock-journal-button`
-- `toggle-sidebar-button`
-- `lock-journal-button`
-- `title-input`
-- `calendar-day-YYYY-MM-DD`
-- `entry-nav-bar`
-- `entry-prev-button`
-- `entry-number-button-{N}`
-- `entry-next-button`
-- `entry-add-button`
-- `entry-delete-button`
+**The canonical list is the `data-testid` table in [`src/CLAUDE.md`](../../../src/CLAUDE.md) — read it
+there rather than trusting a copy.** It is maintained as E2E contract and grows whenever a new
+testid ships; a duplicated list here goes stale silently and sends you hunting by text for controls
+that already have a stable hook. The ones you reach for most in this workflow:
 
-For Preferences and tab navigation, use visible text and current DOM state. There is no documented `data-testid` contract for those controls in `src/CLAUDE.md`.
+| Purpose | testid |
+|---|---|
+| Journal creation | `password-create-input`, `password-repeat-input`, `create-journal-button` |
+| Journal unlock | `password-unlock-input`, `unlock-journal-button` |
+| Header | `toggle-sidebar-button`, `lock-journal-button`, `search-button`, `timeline-toggle-button`, `header-date-title`, `header-prev-day-button`, `header-next-day-button` |
+| Overflow menu | `header-more-menu-trigger`, then `header-more-menu-{preferences,statistics,import,export}-item` |
+| Overlays (assert open) | `preferences-overlay`, `stats-overlay`, `import-overlay`, `export-overlay`, `search-overlay` |
+| Onboarding | `onboarding-next-btn` |
+| Editor | `title-input`, `entry-nav-bar`, `entry-{prev,next,add,delete,lock}-button`, `entry-number-button-{N}` |
+| Calendar | `calendar-day-YYYY-MM-DD` |
+
+Preferences has no `data-testid`s, but it does have stable `id` attributes — use those, not visible
+text (text matching breaks under a non-English `language` preference):
+
+- Tabs: `#pref-tab-general`, `#pref-tab-writing`, `#pref-tab-security`, `#pref-tab-data`,
+  `#pref-tab-advanced`. Note `writing` and `security` render **only while unlocked**
+  (`PreferencesOverlay.tsx`), so unlock before reaching for them.
+- Controls: e.g. `#pref-first-day`, `#pref-timeline-date-format`, `#show-timeline-preview`,
+  `#hide-titles`, `#allow-future`, `#enable-spellcheck`, `#editor-font-size`.
 
 ## Common Recipes
 
@@ -138,9 +186,42 @@ For an existing sandbox journal:
 1. fill `password-unlock-input`
 2. click `unlock-journal-button`
 
+### Dismiss The Onboarding Tour (do this immediately after creating a journal)
+
+**A fresh sandbox always lands in the onboarding tour, and its overlay swallows clicks aimed at the
+header.** This is not an occasional annoyance — it fires on every first run, and the symptom is
+misleading: `agent-browser click '[data-testid=header-more-menu-trigger]'` reports `✓ Done`, the menu
+never opens, and the follow-up click on a menu item fails with `Element not found`. It reads like a
+broken menu or a stale ref. Check for `onboarding-next-btn` in the DOM before believing that.
+
+Don't step through the tour by hand and don't try to pre-seed its localStorage key — the key is
+`onboarding-shown-{activeJournalId}` (`src/state/onboarding.ts`), and the journal id does not exist
+until after creation. Click through to the end in one eval instead; the loop is id-agnostic and
+survives the tour gaining or losing steps:
+
+```powershell
+$js = @'
+(function(){
+  let clicks = 0;
+  for (let i = 0; i < 12; i++) {
+    const b = document.querySelector('[data-testid=onboarding-next-btn]');
+    if (!b) break;
+    b.click(); clicks++;
+  }
+  return { clicks, stillThere: !!document.querySelector('[data-testid=onboarding-next-btn]') };
+})()
+'@
+agent-browser eval $js
+```
+
+Expect `stillThere: false`. The final click calls `dismissOnboarding()`, which persists the key, so
+the tour stays gone for the rest of the sandbox's life — including across reloads.
+
 ### Read Or Verify Preferences
 
-Open the Preferences UI through the visible app controls, then navigate to the needed tab by text.
+Open Preferences via `header-more-menu-trigger` → `header-more-menu-preferences-item` (dismiss the
+onboarding tour first — see above, or the trigger click silently does nothing), then click the tab
+by id (`#pref-tab-writing`, etc.).
 
 To inspect saved preferences directly:
 
@@ -205,15 +286,13 @@ timer or avoid stale refs), chain them in a single `eval` call:
 ```javascript
 (function() {
   // 1. Open a dialog
-  const openBtn = Array.from(document.querySelectorAll('button'))
-    .find(b => b.textContent.includes('Open Preferences'));
-  if (!openBtn) return {error: 'button not found'};
+  const openBtn = document.querySelector('[data-testid=header-more-menu-preferences-item]');
+  if (!openBtn) return {error: 'menu item not found — is the overflow menu open?'};
   openBtn.click();
 
-  // 2. Navigate to a tab
-  const tab = Array.from(document.querySelectorAll('[role="tab"]'))
-    .find(t => t.textContent.trim() === 'Security');
-  if (!tab) return {error: 'tab not found'};
+  // 2. Navigate to a tab (by id — text matching breaks under a non-English language pref)
+  const tab = document.querySelector('#pref-tab-security');
+  if (!tab) return {error: 'tab not found — unlocked?'};
   tab.click();
 
   // 3. Read a UI control state
@@ -266,6 +345,9 @@ If `agent:dev:stop` fails during sandbox deletion with a transient WebView file 
 ## Troubleshooting
 
 - Start can take 30-90 seconds on a cold build. Use `--timeout 180` if Rust rebuilds are expected.
+- **`agent:dev:start` or `agent-browser connect` "times out" / gets force-backgrounded**: expected — neither returns through this tool chain. Launch both with `run_in_background: true` and poll `bun run agent:dev:probe` for readiness. See "Start A Session".
+- **Clicks report `✓ Done` but nothing happens, then the next selector is `Element not found`**: on a fresh sandbox this is the onboarding tour overlay intercepting the click, not a broken control. Check for `[data-testid=onboarding-next-btn]` and dismiss it — see "Dismiss The Onboarding Tour".
+- **`eval` fails with `'…' is not a valid selector` on JS you know is correct**: PowerShell stripped the escaped inner quotes. Re-send the script as a `@'…'@` here-string — see the PowerShell notes under "Drive The UI".
 - If port `9222` is already taken, restart with `--port 9223` and connect agent-browser to that port.
 - If start succeeds but the page target is not immediately recorded, run `bun run agent:dev:probe` (poll it — see "Detecting readiness" above). Probe resolves the current page target from the live `/json` list.
 - If probe says `cdp unreachable`, inspect `.agent-dev/dev.log`.

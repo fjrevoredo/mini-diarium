@@ -376,7 +376,17 @@
       "customFontDeleteButton": "हटाएं",
       "customFontDeleteAriaLabel": "{{ family }} कस्टम फ़ॉन्ट हटाएं",
       "customFontFamilyRequired": "फ़ॉन्ट परिवार का नाम आवश्यक है।",
-      "customFontRegularRequired": "Regular वज़न की फ़ाइल आवश्यक है।"
+      "customFontRegularRequired": "Regular वज़न की फ़ाइल आवश्यक है।",
+      "timelineTitle": "टाइमलाइन",
+      "timelineDateFormatLabel": "दिनांक प्रारूप",
+      "timelineDateFormatHint": "तय करता है कि टाइमलाइन की हर प्रविष्टि के बगल में दिनांक कैसे लिखा जाए। ISO को छोड़कर सभी शैलियाँ आपकी इंटरफ़ेस भाषा का अनुसरण करती हैं।",
+      "timelineDateFormatFull": "पूर्ण",
+      "timelineDateFormatLong": "लंबा",
+      "timelineDateFormatMedium": "मध्यम",
+      "timelineDateFormatShort": "छोटा",
+      "timelineDateFormatIso": "ISO (YYYY-MM-DD)",
+      "timelinePreviewLabel": "प्रविष्टि की झलक दिखाएँ",
+      "timelinePreviewHint": "बंद होने पर, टाइमलाइन की हर पंक्ति में केवल दिनांक और शीर्षक दिखते हैं, प्रविष्टि की पहली पंक्ति नहीं।"
     },
     "security": {
       "authMethodsTitle": "प्रमाणीकरण विधियाँ",

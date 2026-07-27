@@ -236,7 +236,7 @@
       "@id": "https://mini-diarium.com/docs/preferences/#article",
       "headline": "Preferences",
       "description": "Configure Mini Diarium from the Preferences panel: choose a theme, set auto-lock timeout, adjust editor font and size, manage authentication methods, and more.",
-      "dateModified": "2026-07-26T00:00:00Z",
+      "dateModified": "2026-07-27T00:00:00Z",
       "keywords": "preferences, settings, theme, auto-lock, configuration",
       "publisher": {
         "@type": "Organization",
@@ -436,6 +436,14 @@
         <tr>
         <td>Editor font</td>
         <td>Choose an app-wide default font family for the editor body from bundled options or uploaded custom fonts. When an entry has an entry-specific font default or inline font formatting applied to the selection, those take precedence over this app default. See Writing Entries for the full three-level font system.</td>
+        </tr>
+        <tr>
+        <td>Timeline → Date format</td>
+        <td>Choose how the date is written next to each row in the Timeline view: Full (&quot;Monday, January 15, 2024&quot;), Long (&quot;January 15, 2024&quot;), Medium (&quot;Jan 15, 2024&quot;), Short (&quot;1/15/24&quot;), or ISO (&quot;2024-01-15&quot;). Every style except ISO follows your interface language; ISO is always <code>YYYY-MM-DD</code>, which keeps the date column a fixed width. Each option in the dropdown shows a live example using today&#39;s date. The default is Full.</td>
+        </tr>
+        <tr>
+        <td>Timeline → Show entry preview</td>
+        <td>Show or hide the first line of each entry underneath its title in the Timeline view. When turned off, each row collapses to just the date and the title, which fits more entries on screen. On by default.</td>
         </tr>
         </tbody></table>
         <p>Timestamp format and precision are configured from the editor timestamp popup (clock button), not from Preferences.</p>

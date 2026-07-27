@@ -4,6 +4,7 @@ import { renderWithI18n } from '../../../test/i18n-test-utils';
 import { createSignal } from 'solid-js';
 import * as prefState from '../../../state/preferences';
 import { DEFAULT_TOOLBAR_ITEMS } from '../../../state/preferences';
+import { formatDate, getTodayString } from '../../../lib/dates';
 import PreferencesWritingTab from './PreferencesWritingTab';
 
 const { mockGetSpellcheckStatus, mockListBundledFonts, mockListCustomFonts, mockOpenUrl } =
@@ -44,6 +45,8 @@ describe('PreferencesWritingTab', () => {
       hideTitles: false,
       editorFontFamily: null,
       toolbarItems: DEFAULT_TOOLBAR_ITEMS.map((item) => ({ ...item })),
+      timelineDateFormat: 'full',
+      showTimelinePreview: true,
     });
   });
 
@@ -134,6 +137,38 @@ describe('PreferencesWritingTab', () => {
     expect(
       screen.getByRole('button', { name: /open the spell-check setup guide/i }),
     ).toBeInTheDocument();
+  });
+
+  it('changing the timeline date format persists immediately', () => {
+    renderTab();
+
+    const select = screen.getByLabelText(/date format/i) as HTMLSelectElement;
+    fireEvent.change(select, { target: { value: 'medium' } });
+
+    expect(select.value).toBe('medium');
+    const stored = JSON.parse(localStorage.getItem('preferences') ?? '{}') as prefState.Preferences;
+    expect(stored.timelineDateFormat).toBe('medium');
+  });
+
+  it('labels each timeline date format option with a live example', () => {
+    renderTab();
+
+    const select = screen.getByLabelText(/date format/i) as HTMLSelectElement;
+    const isoOption = [...select.options].find((o) => o.value === 'iso');
+    expect(isoOption?.textContent).toContain('—');
+    expect(isoOption?.textContent).toContain(getTodayString());
+
+    const fullOption = [...select.options].find((o) => o.value === 'full');
+    expect(fullOption?.textContent).toContain(formatDate(getTodayString(), 'en'));
+  });
+
+  it('toggling the timeline preview persists immediately', () => {
+    renderTab();
+
+    fireEvent.click(screen.getByLabelText(/show entry preview/i));
+
+    const stored = JSON.parse(localStorage.getItem('preferences') ?? '{}') as prefState.Preferences;
+    expect(stored.showTimelinePreview).toBe(false);
   });
 
   it('select none persists a disabled toolbar-items list immediately', () => {

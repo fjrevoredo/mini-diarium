@@ -376,7 +376,17 @@
       "customFontDeleteButton": "Supprimer",
       "customFontDeleteAriaLabel": "Supprimer la police personnalisée {{ family }}",
       "customFontFamilyRequired": "Le nom de la famille de polices est requis.",
-      "customFontRegularRequired": "Le fichier de graisse Normale est requis."
+      "customFontRegularRequired": "Le fichier de graisse Normale est requis.",
+      "timelineTitle": "Chronologie",
+      "timelineDateFormatLabel": "Format de date",
+      "timelineDateFormatHint": "Définit la façon dont la date est écrite à côté de chaque entrée de la chronologie. Tous les styles sauf ISO suivent la langue de l'interface.",
+      "timelineDateFormatFull": "Complet",
+      "timelineDateFormatLong": "Long",
+      "timelineDateFormatMedium": "Moyen",
+      "timelineDateFormatShort": "Court",
+      "timelineDateFormatIso": "ISO (AAAA-MM-JJ)",
+      "timelinePreviewLabel": "Afficher l'aperçu de l'entrée",
+      "timelinePreviewHint": "Lorsque cette option est désactivée, chaque ligne de la chronologie n'affiche que la date et le titre, sans la première ligne de l'entrée."
     },
     "security": {
       "authMethodsTitle": "Méthodes d'authentification",

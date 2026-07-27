@@ -1,5 +1,10 @@
 import { createSignal } from 'solid-js';
 import { createLogger } from '../lib/logger';
+import type { DateFormatStyle } from '../lib/dates';
+
+// The union is implemented alongside its formatter in lib/dates.ts; re-exported here
+// so preference consumers can import it from the same module as the field itself.
+export type { DateFormatStyle };
 
 const log = createLogger('Preferences');
 
@@ -74,6 +79,8 @@ export interface Preferences {
   timestampFormat: '12h' | '24h';
   timestampPrecision: 'hm' | 'hms';
   language: string; // locale code, e.g. 'en'
+  timelineDateFormat: DateFormatStyle; // date style used per timeline row
+  showTimelinePreview: boolean; // show the text preview under each timeline title
 }
 
 const DEFAULT_PREFERENCES: Preferences = {
@@ -92,6 +99,8 @@ const DEFAULT_PREFERENCES: Preferences = {
   timestampFormat: '12h',
   timestampPrecision: 'hm',
   language: 'en',
+  timelineDateFormat: 'full',
+  showTimelinePreview: true,
 };
 
 // Items that were always visible before the per-item toolbar config was introduced

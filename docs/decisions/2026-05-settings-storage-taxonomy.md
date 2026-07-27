@@ -10,7 +10,7 @@ Mini Diarium has four locations where persistent state lives:
 
 | Location | What it stores | Always accessible? | Encrypted? |
 |---|---|---|---|
-| `localStorage['preferences']` | 14-field `Preferences` interface | Yes | No |
+| `localStorage['preferences']` | 17-field `Preferences` interface | Yes | No |
 | `localStorage['theme-preference']` | `'auto'\|'light'\|'dark'` | Yes | No |
 | `localStorage['theme-overrides']` | CSS token override map | Yes | No |
 | `localStorage['feature-flags']` | Runtime feature-flag map (open `Record<string, boolean>`) | Yes | No |
@@ -69,7 +69,7 @@ Q5: Is this a security enforcement setting or integrity-critical?
 
 ### `localStorage`
 
-**Key: `'preferences'`** — `Preferences` interface (14 fields), managed by `src/state/preferences.ts`:
+**Key: `'preferences'`** — `Preferences` interface (17 fields), managed by `src/state/preferences.ts`:
 
 | Field | Type | Default |
 |---|---|---|
@@ -80,13 +80,16 @@ Q5: Is this a security enforcement setting or integrity-critical?
 | `escAction` | `'none'\|'quit'` | `'none'` |
 | `autoLockEnabled` | `boolean` | `false` |
 | `autoLockTimeout` | `number` (seconds) | `300` |
-| `toolbarItems` | `ToolbarItem[]` (15 items, per-item enabled + order) | all enabled |
+| `autoLockOnFocusLoss` | `boolean` | `false` |
+| `toolbarItems` | `ToolbarItem[]` (19 items, per-item enabled + order) | all enabled except `fontFamily`/`fontSize` |
 | `editorFontSize` | `number` (px, 12–24) | `16` |
 | `editorFontFamily` | `string\|null` | `null` (system default) |
 | `showEntryTimestamps` | `boolean` | `false` |
 | `timestampFormat` | `'12h'\|'24h'` | `'12h'` |
 | `timestampPrecision` | `'hm'\|'hms'` | `'hm'` |
 | `language` | `string` | `'en'` |
+| `timelineDateFormat` | `DateFormatStyle` (`'full'\|'long'\|'medium'\|'short'\|'iso'`) | `'full'` |
+| `showTimelinePreview` | `boolean` | `true` |
 
 **Key: `'theme-preference'`** — `'auto'|'light'|'dark'`, managed by `src/lib/theme.ts`.
 

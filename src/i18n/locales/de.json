@@ -376,7 +376,17 @@
       "customFontDeleteButton": "Entfernen",
       "customFontDeleteAriaLabel": "Eigene Schrift {{ family }} entfernen",
       "customFontFamilyRequired": "Der Name der Schriftfamilie ist erforderlich.",
-      "customFontRegularRequired": "Die Datei für das reguläre Gewicht ist erforderlich."
+      "customFontRegularRequired": "Die Datei für das reguläre Gewicht ist erforderlich.",
+      "timelineTitle": "Zeitleiste",
+      "timelineDateFormatLabel": "Datumsformat",
+      "timelineDateFormatHint": "Legt fest, wie das Datum neben jedem Eintrag in der Zeitleiste geschrieben wird. Alle Stile außer ISO richten sich nach Ihrer Anzeigesprache.",
+      "timelineDateFormatFull": "Vollständig",
+      "timelineDateFormatLong": "Lang",
+      "timelineDateFormatMedium": "Mittel",
+      "timelineDateFormatShort": "Kurz",
+      "timelineDateFormatIso": "ISO (JJJJ-MM-TT)",
+      "timelinePreviewLabel": "Eintragsvorschau anzeigen",
+      "timelinePreviewHint": "Wenn deaktiviert, zeigt jede Zeile der Zeitleiste nur Datum und Titel, ohne die erste Zeile des Eintrags."
     },
     "security": {
       "authMethodsTitle": "Authentifizierungsmethoden",

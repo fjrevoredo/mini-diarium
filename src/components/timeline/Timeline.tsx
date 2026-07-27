@@ -4,7 +4,7 @@ import { getTimelineEntries } from '../../lib/tauri';
 import type { TimelineEntry } from '../../lib/tauri';
 import { setSelectedDate, setMainView } from '../../state/ui';
 import { entryDates, lockVersion } from '../../state/entries';
-import { formatDate } from '../../lib/dates';
+import { formatDate, formatDateWithStyle } from '../../lib/dates';
 import { preferences } from '../../state/preferences';
 import { useI18n } from '../../i18n';
 
@@ -44,6 +44,8 @@ export default function Timeline() {
               <For each={entries()}>
                 {(entry) => (
                   <li class="relative">
+                    {/* The aria-label deliberately keeps the full date even when the visible
+                        column uses 'short'/'iso' — those forms are ambiguous read aloud. */}
                     <button
                       type="button"
                       onClick={() => openEntry(entry)}
@@ -53,13 +55,17 @@ export default function Timeline() {
                       })}
                     >
                       <span class="flex-shrink-0 whitespace-nowrap pt-0.5 text-sm font-medium text-tertiary">
-                        {formatDate(entry.date, preferences().language)}
+                        {formatDateWithStyle(
+                          entry.date,
+                          preferences().timelineDateFormat,
+                          preferences().language,
+                        )}
                       </span>
                       <span class="min-w-0 flex-1">
                         <span class="block truncate font-semibold text-primary">
                           {entry.title.trim() || t('timeline.untitled')}
                         </span>
-                        <Show when={entry.preview}>
+                        <Show when={preferences().showTimelinePreview && entry.preview}>
                           <span class="mt-0.5 block truncate text-sm text-secondary">
                             {entry.preview}
                           </span>

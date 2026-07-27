@@ -131,4 +131,15 @@ describe('preferences — loadPreferences migration', () => {
 
     expect(preferences().autoLockOnFocusLoss).toBe(false);
   });
+
+  it('backfills the timeline display defaults for a stored value that predates them (TODO-0072)', async () => {
+    localStorage.setItem('preferences', JSON.stringify({ hideTitles: true }));
+
+    const { preferences } = await import('./preferences');
+
+    expect(preferences().timelineDateFormat).toBe('full');
+    expect(preferences().showTimelinePreview).toBe(true);
+    // The spread backfill must not clobber unrelated stored values.
+    expect(preferences().hideTitles).toBe(true);
+  });
 });

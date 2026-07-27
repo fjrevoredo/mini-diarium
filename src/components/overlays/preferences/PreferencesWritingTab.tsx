@@ -2,9 +2,10 @@ import { createMemo, createResource, For, Show } from 'solid-js';
 import { ChevronUp, ChevronDown } from 'lucide-solid';
 import { useI18n } from '../../../i18n';
 import { preferences, setPreferences } from '../../../state/preferences';
-import type { ToolbarItem, ToolbarItemKey } from '../../../state/preferences';
+import type { DateFormatStyle, ToolbarItem, ToolbarItemKey } from '../../../state/preferences';
 import type { TabProps } from './shared';
 import PreferencesFontFamilyField from './PreferencesFontFamilyField';
+import { formatDateWithStyle, getTodayString } from '../../../lib/dates';
 import { getSpellcheckStatus } from '../../../lib/tauri';
 import { openUrl } from '@tauri-apps/plugin-opener';
 
@@ -24,6 +25,25 @@ export default function PreferencesWritingTab(_props: TabProps) {
     { value: '5', label: t('prefs.writing.firstDayFriday') },
     { value: '6', label: t('prefs.writing.firstDaySaturday') },
   ]);
+
+  // Each option carries a live example rendered in the selected language, so five short
+  // translated names carry the whole explanation and re-render when the language changes.
+  const DATE_FORMAT_OPTIONS = createMemo(() => {
+    const sample = getTodayString();
+    const locale = preferences().language;
+    return (
+      [
+        ['full', t('prefs.writing.timelineDateFormatFull')],
+        ['long', t('prefs.writing.timelineDateFormatLong')],
+        ['medium', t('prefs.writing.timelineDateFormatMedium')],
+        ['short', t('prefs.writing.timelineDateFormatShort')],
+        ['iso', t('prefs.writing.timelineDateFormatIso')],
+      ] as const
+    ).map(([value, name]) => ({
+      value,
+      label: `${name} — ${formatDateWithStyle(sample, value, locale)}`,
+    }));
+  });
 
   const ITEM_LABELS = createMemo(
     () =>
@@ -307,6 +327,51 @@ export default function PreferencesWritingTab(_props: TabProps) {
         value={preferences().editorFontFamily ?? ''}
         onChange={(value) => setPreferences({ editorFontFamily: value || null })}
       />
+
+      {/* Timeline */}
+      <div>
+        <h3 class="text-sm font-medium text-primary mb-3">{t('prefs.writing.timelineTitle')}</h3>
+
+        <label
+          for="pref-timeline-date-format"
+          class="block text-sm font-medium text-secondary mb-2"
+        >
+          {t('prefs.writing.timelineDateFormatLabel')}
+        </label>
+        <select
+          id="pref-timeline-date-format"
+          value={preferences().timelineDateFormat}
+          onChange={(e) =>
+            setPreferences({ timelineDateFormat: e.currentTarget.value as DateFormatStyle })
+          }
+          class="w-full px-3 py-2 border border-primary bg-primary text-primary rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+        >
+          <For each={DATE_FORMAT_OPTIONS()}>
+            {(option) => <option value={option.value}>{option.label}</option>}
+          </For>
+        </select>
+        <p class="mt-2 text-xs text-tertiary leading-relaxed">
+          {t('prefs.writing.timelineDateFormatHint')}
+        </p>
+
+        <div class="space-y-2 mt-6">
+          <div class="flex items-center">
+            <input
+              type="checkbox"
+              id="show-timeline-preview"
+              checked={preferences().showTimelinePreview}
+              onChange={(e) => setPreferences({ showTimelinePreview: e.currentTarget.checked })}
+              class="h-4 w-4 rounded border-primary text-blue-600 focus:ring-blue-500"
+            />
+            <label for="show-timeline-preview" class="ml-3 text-sm text-secondary">
+              {t('prefs.writing.timelinePreviewLabel')}
+            </label>
+          </div>
+          <p class="ml-7 text-xs text-tertiary leading-relaxed">
+            {t('prefs.writing.timelinePreviewHint')}
+          </p>
+        </div>
+      </div>
     </div>
   );
 }

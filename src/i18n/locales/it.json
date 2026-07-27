@@ -376,7 +376,17 @@
       "customFontDeleteButton": "Rimuovi",
       "customFontDeleteAriaLabel": "Rimuovi carattere personalizzato {{ family }}",
       "customFontFamilyRequired": "Il nome della famiglia di caratteri è obbligatorio.",
-      "customFontRegularRequired": "Il file di peso Normale è obbligatorio."
+      "customFontRegularRequired": "Il file di peso Normale è obbligatorio.",
+      "timelineTitle": "Cronologia",
+      "timelineDateFormatLabel": "Formato data",
+      "timelineDateFormatHint": "Stabilisce come viene scritta la data accanto a ogni voce della cronologia. Tutti gli stili tranne ISO seguono la lingua dell'interfaccia.",
+      "timelineDateFormatFull": "Completo",
+      "timelineDateFormatLong": "Lungo",
+      "timelineDateFormatMedium": "Medio",
+      "timelineDateFormatShort": "Breve",
+      "timelineDateFormatIso": "ISO (AAAA-MM-GG)",
+      "timelinePreviewLabel": "Mostra anteprima della voce",
+      "timelinePreviewHint": "Se disattivata, ogni riga della cronologia mostra solo la data e il titolo, senza la prima riga della voce."
     },
     "security": {
       "authMethodsTitle": "Metodi di autenticazione",
