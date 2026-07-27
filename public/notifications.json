@@ -1,6 +1,16 @@
 {
   "entries": [
     {
+      "id": "v0.6.3-release",
+      "type": "release",
+      "version": "0.6.3",
+      "title": "What's new in 0.6.3",
+      "body": "This release completes the in-app navigation migration with header day controls and a ⋮ menu, adds timeline display preferences and a donation page, and fixes Linux spell check. Internally, the backend is now a three-crate open-core workspace with a sealed API façade, and the Microsoft Store update pipeline is live.",
+      "date": "2026-07-27",
+      "linkUrl": "https://github.com/fjrevoredo/mini-diarium/releases/tag/v0.6.3",
+      "linkLabel": "Full release notes"
+    },
+    {
       "id": "v0.6.2-release",
       "type": "release",
       "version": "0.6.2",

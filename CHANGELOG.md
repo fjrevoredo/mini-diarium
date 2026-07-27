@@ -34,7 +34,7 @@ Template:
 
 # Versions
 
-## [0.6.3] - Unreleased
+## [0.6.3] - 27-07-2026
 
 ### Added
 - **Website donation page**: added a donation page at [mini-diarium.com/donate/](https://mini-diarium.com/donate/), reachable from a "Support the project" section on the homepage and a `Donate` link in the site-wide footer. It lists Ko-fi (card, PayPal, Apple Pay) and the Monero, Bitcoin, and Bitcoin-over-Lightning addresses, each with a copy-to-clipboard button, plus the same network-mismatch and traceability notes as `DONATE.md`. Donations were previously reachable only from the GitHub repo.
