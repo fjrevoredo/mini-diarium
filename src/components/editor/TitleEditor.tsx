@@ -1,4 +1,4 @@
-import { createEffect } from 'solid-js';
+import { onMount } from 'solid-js';
 import { useI18n } from '../../i18n';
 
 interface TitleEditorProps {
@@ -30,7 +30,13 @@ export default function TitleEditor(props: TitleEditorProps) {
   };
 
   // Focus on mount — skipped when read-only so a locked entry doesn't steal focus.
-  createEffect(() => {
+  //
+  // Must be onMount, not createEffect: `readOnly` is derived from dayEntries/currentIndex,
+  // so a tracking scope re-runs this on every entry-list change — including the
+  // setDayEntries inside startEntryCreation, which fires while the user is still typing
+  // their first sentence. The title input would then steal focus mid-word and swallow the
+  // rest of the keystrokes. onMount reads props untracked, so it focuses once. See TODO-0089.
+  onMount(() => {
     if (!props.readOnly) inputRef?.focus();
   });
 

@@ -8,6 +8,12 @@
  *                back to entry 1 via "←" from a blank entry 2
  *   Scenario C — Regression (v0.4.9 Variant 2): "+" must stay enabled after switching
  *                to another day (which auto-deletes the blank entry 2) and switching back
+ *   Scenario D — Direct jump via the `← 1 2 →` number bar. Doubles as the guard for the
+ *                title-input focus steal (TODO-0089): if TitleEditor re-focuses itself when
+ *                dayEntries changes, the tail of ENTRY_1_BODY is typed into entry 1's title
+ *   Scenario E — Regression (TODO-0089): typing into an entry and immediately toggling the
+ *                Timeline must not wipe the body. Uses real TipTap, which the Vitest suite
+ *                cannot: the mock editor there cannot reproduce real destroy/teardown timing.
  *
  * Prerequisites:
  *   - `bun run tauri build --` must have been run
@@ -34,6 +40,7 @@ const lmMonth = String(prevMonth.getMonth() + 1).padStart(2, '0');
 const MULTI_DATE_1 = `${lmYear}-${lmMonth}-01`; // scenario A: persistence
 const MULTI_DATE_2 = `${lmYear}-${lmMonth}-02`; // scenario B: variant-1 regression
 const MULTI_DATE_3 = `${lmYear}-${lmMonth}-03`; // scenario C: variant-2 regression
+const MULTI_DATE_4 = `${lmYear}-${lmMonth}-04`; // scenario E: TODO-0089 body-wipe regression
 
 const ENTRY_1_BODY = 'First entry for multi-entry test.';
 // Second entry uses the title field (via setValue) rather than the ProseMirror body.
@@ -42,6 +49,10 @@ const ENTRY_1_BODY = 'First entry for multi-entry test.';
 // Using title-input.setValue() is deterministic and matches the persistence-check pattern
 // already established in diary-workflow.spec.ts.
 const ENTRY_2_TITLE = 'Second entry (persistence check)';
+// Scenario E (TODO-0089): a titled, non-blank entry — the wipe kept the title and
+// emptied the body, so both must be asserted.
+const SCENARIO_E_TITLE = 'Body wipe regression';
+const SCENARIO_E_BODY = 'This body must survive a Timeline toggle.';
 
 describe('Multi-entry workflow', () => {
   it('creates multiple entries, persists them, and guards the "+" button across navigation', async () => {
@@ -280,7 +291,10 @@ describe('Multi-entry workflow', () => {
     await $('[data-testid="entry-number-button-1"]').waitForClickable({ timeout: 5000 });
     await $('[data-testid="entry-number-button-1"]').click();
 
-    // Verify we jumped to entry 1 — its title should be empty (only body was set)
+    // Verify we jumped to entry 1 — its title should be empty (only body was set).
+    // This also guards the title-input focus-steal regression: if TitleEditor re-focuses
+    // itself when dayEntries changes, the tail of ENTRY_1_BODY lands in entry 1's title
+    // instead of its body, and this assertion sees that leftover title. See TODO-0089.
     await browser.waitUntil(
       async () => (await $('[data-testid="title-input"]').getValue()) === '',
       {
@@ -295,5 +309,80 @@ describe('Multi-entry workflow', () => {
       timeout: 5000,
       timeoutMsg: 'Scenario D: entry-number-button-1 should be active',
     });
+
+    // ── Scenario E: type-then-toggle-Timeline must not wipe the body (TODO-0089) ──
+    // The reported symptom was an entry row surviving with its title intact and its body
+    // blank — i.e. save_entry(id, title, ''). It happened when the editor committed WHICH
+    // entry it was editing before it knew WHAT that entry contained, so the flush that
+    // runs on unmount paired a real id+title with an empty document. The Timeline toggle
+    // is a plain <Show> swap in MainLayout, so it unmounts EditorPanel outright.
+
+    const toggleTimeline = async () => {
+      const btn = $('[data-testid="timeline-toggle-button"]');
+      await btn.waitForClickable({ timeout: 10000 });
+      await btn.click();
+    };
+
+    await clickCalendarDay(MULTI_DATE_4);
+    await $('[data-testid="title-input"]').waitForDisplayed({ timeout: 5000 });
+    await browser.pause(1000); // let loadEntriesForDate(MULTI_DATE_4) settle before seeding
+
+    // Seed a persisted entry with both a title and a body.
+    await $('[data-testid="title-input"]').setValue(SCENARIO_E_TITLE);
+    const editorE = await $('.ProseMirror');
+    await editorE.click();
+    await browser.keys(SCENARIO_E_BODY);
+    await browser.pause(2500); // flush autosave
+
+    // Seed sanity-check: without this, a seeding failure is indistinguishable from the
+    // wipe the loop below is meant to detect (both leave the body missing).
+    await browser.waitUntil(
+      async () => ((await $('.ProseMirror').getText()) ?? '').includes(SCENARIO_E_BODY),
+      { timeout: 5000, timeoutMsg: 'Scenario E: seed body never reached the editor' },
+    );
+    await browser.waitUntil(
+      async () => (await $('[data-testid="title-input"]').getValue()) === SCENARIO_E_TITLE,
+      { timeout: 5000, timeoutMsg: 'Scenario E: seed title never reached the editor' },
+    );
+
+    // Three type-then-immediately-toggle cycles. No pause between the keystrokes and the
+    // toggle: the whole point is to land inside the 500 ms debounce window, which is where
+    // the wipe used to happen. The repeat covers the "under load" variant.
+    for (let i = 1; i <= 3; i++) {
+      const appended = ` add${i}`;
+      const editorLoop = await $('.ProseMirror');
+      await editorLoop.click();
+      await browser.keys(['End']);
+      await browser.keys(appended);
+      await toggleTimeline(); // → Timeline (unmounts EditorPanel mid-debounce)
+      await browser.pause(500);
+      await toggleTimeline(); // → back to the editor (remounts + reloads the date)
+      await $('[data-testid="title-input"]').waitForDisplayed({ timeout: 10000 });
+
+      // THE REGRESSION GUARD: the title must survive AND the body must still be there.
+      // A wipe leaves the title intact and the body empty, so asserting only on the title
+      // would pass against the bug.
+      await browser.waitUntil(
+        async () => (await $('[data-testid="title-input"]').getValue()) === SCENARIO_E_TITLE,
+        { timeout: 10000, timeoutMsg: `Scenario E cycle ${i}: title lost after Timeline toggle` },
+      );
+      await browser.waitUntil(
+        async () => ((await $('.ProseMirror').getText()) ?? '').includes(SCENARIO_E_BODY),
+        {
+          timeout: 10000,
+          timeoutMsg: `Scenario E cycle ${i}: entry body was wiped by the Timeline toggle (TODO-0089)`,
+        },
+      );
+    }
+
+    // The typed additions must have been flushed on unmount, not dropped: dispose() now
+    // snapshots and writes rather than merely cancelling the pending debounce.
+    await browser.waitUntil(
+      async () => ((await $('.ProseMirror').getText()) ?? '').includes('add3'),
+      {
+        timeout: 10000,
+        timeoutMsg: 'Scenario E: the last typed text was dropped instead of flushed on unmount',
+      },
+    );
   });
 });

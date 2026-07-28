@@ -34,10 +34,22 @@ Template:
 
 # Versions
 
-## [Unreleased]
+## [0.6.4] - Unreleased
+
+### Fixed
+- **Entry content loss when navigating quickly**: an entry could be left with its title intact and its body wiped after typing and immediately switching entries, changing the date, or toggling the Timeline. The editor committed *which* entry it was editing (id and title) separately from *what that entry contained*, so any interruption in between — a superseded load, a failed image lookup, a keystroke that beat the load — left a window where the next save paired a real entry with an empty document.
+    - **Atomic entry commits**: id, title, body, and metadata are now written as one indivisible update, after the entry's images have been resolved, never before
+    - **Hydration guard**: a save is refused outright unless the body in the editor actually belongs to the entry being written
+    - **Snapshot-based saves**: the save-vs-delete decision is captured together with the content instead of being re-derived when the autosave timer fires up to half a second later
+    - **Unmount now flushes**: closing the editor (including the Timeline toggle) saves the last few hundred milliseconds of typing instead of discarding it
+    - **Backend veto restored**: the auto-delete command re-checks the real entry body it is given and refuses to remove anything that is not genuinely blank, recognising empty editor markup (`<p></p>`, `<p><br></p>`, `&nbsp;`) while treating an image-only or table-only entry as content
+    - **Typing before an entry loads** no longer creates a duplicate entry, and the editor no longer auto-focuses until the entry it is about to show has finished loading
+    - **Reopening the editor no longer blanks the entry**: switching to the Timeline and back reloaded the entry correctly but then immediately replaced it with an empty document and saved that over the real one. The editor library emits an "update" event for things that are not edits — including the internal call that keeps the read-only state in sync — and one of those fired in the moment between the entry's body being loaded and being handed to the editor, so the still-empty document was mistaken for the user having deleted everything. Only genuine document changes now count as edits
+- **Text typed on a blank day could jump into the title field**: the title input re-focused itself every time the day's entry list changed, which happens as soon as the first keystroke creates the entry — so the rest of the sentence was typed into the title instead of the body. It now takes focus once, when it appears
 
 ### Internal
 - **winget-publish workflow**: cap generated ReleaseNotes at WinGet's 10,000-character manifest limit so long release bodies no longer break the WinGet PR submission
+
 
 ## [0.6.3] - 27-07-2026
 

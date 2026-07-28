@@ -17,6 +17,7 @@ import { FontSize } from '@tiptap/extension-text-style/font-size';
 import Color from '@tiptap/extension-color';
 import TextAlign from '@tiptap/extension-text-align';
 import EditorToolbar from './EditorToolbar';
+import { isDocumentChange } from './editorUpdateGuard';
 import { AlignableImage } from './extensions/AlignableImage';
 import { BidiExtension } from './extensions/BidiExtension';
 import { TimestampMark } from './extensions/TimestampMark';
@@ -342,9 +343,12 @@ export default function DiaryEditor(props: DiaryEditorProps) {
           return true;
         },
       },
-      onUpdate: ({ editor }) => {
-        const html = editor.getHTML();
-        props.onUpdate?.(html);
+      onUpdate: ({ transaction, appendedTransactions, editor }) => {
+        // Only forward real document changes — a synthetic update (setEditable, see the
+        // locked effect below) would otherwise be treated as a keystroke and overwrite the
+        // entry body that a load has just committed. See isDocumentChange / TODO-0089.
+        if (!isDocumentChange(transaction, appendedTransactions)) return;
+        props.onUpdate?.(editor.getHTML());
       },
     });
 
@@ -384,7 +388,12 @@ export default function DiaryEditor(props: DiaryEditorProps) {
     const editorInstance = editor();
     const locked = props.locked ?? false;
     if (editorInstance && !editorInstance.isDestroyed) {
-      editorInstance.setEditable(!locked);
+      // emitUpdate=false: setEditable() otherwise emits a synthetic `update` carrying the
+      // current document even though nothing changed. This effect re-runs whenever
+      // dayEntries/currentIndex change (props.locked reads both), i.e. on every entry
+      // load and save — so the default would fire a stream of fake "edits". See TODO-0089
+      // and the onUpdate guard above.
+      editorInstance.setEditable(!locked, false);
     }
   });
 

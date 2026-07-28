@@ -1,21 +1,13 @@
-import { type Accessor, type Setter } from 'solid-js';
-import type { Editor } from '@tiptap/core';
-import {
-  createEntry,
-  deleteEntry,
-  getEntriesForDate,
-  getAllEntryDates,
-  getEntryImages,
-} from '../../../lib/tauri';
-import type { DiaryEntry, EntryMetadata } from '../../../lib/tauri';
+import { batch, type Accessor, type Setter } from 'solid-js';
+import { createEntry, deleteEntry, getEntriesForDate, getAllEntryDates } from '../../../lib/tauri';
+import type { DiaryEntry } from '../../../lib/tauri';
 import { setEntryDates } from '../../../state/entries';
-import { countWordsInHtml } from '../../../lib/wordcount';
 import { createLogger } from '../../../lib/logger';
 import { confirm } from '../../../lib/dialog';
 import { useI18n } from '../../../i18n';
 import type { EditorEmptyCheckHook } from './useEditorEmptyCheck';
 import type { EntryLifecycleHook } from './useEntryLifecycle';
-import { hasImageRefs, resolveImageRefs } from '../../../lib/image-refs';
+import { clearEntryFromEditor, commitEntryToEditor, resolveEntryHtml } from './entryHydration';
 
 const log = createLogger('Editor');
 
@@ -28,27 +20,24 @@ export async function fetchEntriesOrdered(date: string): Promise<DiaryEntry[]> {
   return entries.slice().reverse();
 }
 
+/**
+ * Note what is deliberately absent: the title/content/wordCount/pendingEntryId/metadata
+ * setters. Navigation changes which entry is displayed, and that transition is only ever
+ * valid as one atomic commit — so this hook reaches those setters exclusively through
+ * `lifecycle.entryCommitTargets` + `commitEntryToEditor`/`clearEntryFromEditor`. Adding
+ * a loose setter back here reopens the body-wipe race. See TODO-0089.
+ */
 export interface UseMultiEntryNavOptions {
   t: ReturnType<typeof useI18n>;
   selectedDate: Accessor<string>;
-  editorInstance: Accessor<Editor | null>;
-  title: Accessor<string>;
-  setTitle: Setter<string>;
-  content: Accessor<string>;
-  setContent: Setter<string>;
-  setWordCount: Setter<number>;
   dayEntries: Accessor<DiaryEntry[]>;
   setDayEntries: Setter<DiaryEntry[]>;
   currentIndex: Accessor<number>;
-  setCurrentIndex: Setter<number>;
   pendingEntryId: Accessor<number | null>;
-  setPendingEntryId: Setter<number | null>;
   isCreatingEntry: Accessor<boolean>;
   setIsCreatingEntry: Setter<boolean>;
   emptyCheck: EditorEmptyCheckHook;
   lifecycle: EntryLifecycleHook;
-  entryMetadata: Accessor<EntryMetadata | null>;
-  setEntryMetadata: Setter<EntryMetadata | null>;
 }
 
 export interface MultiEntryNavHook {
@@ -62,15 +51,16 @@ export function useMultiEntryNav(opts: UseMultiEntryNavOptions): MultiEntryNavHo
 
   const navigateToEntry = async (newIndex: number) => {
     const token = ++navToken;
-    // Save current first — read from editor directly to capture alignment transactions
-    // that may not have propagated to the content() signal yet.
-    const currentId = opts.pendingEntryId();
-    if (currentId !== null) {
-      opts.lifecycle.debouncedSave.cancel();
-      const edInst = opts.editorInstance();
-      const currentContent = edInst && !edInst.isDestroyed ? edInst.getHTML() : opts.content();
-      await opts.lifecycle.saveCurrentById(currentId, opts.title(), currentContent);
-    }
+    // Flush an in-flight createEntry() first — defensive: pendingEntryId is null while a
+    // creation is in flight, so the currentId flush below would otherwise no-op and any
+    // typed content would be lost/misattributed. See TODO-0089.
+    await opts.lifecycle.flushPendingCreation();
+    if (opts.lifecycle.isDisposed() || token !== navToken) return;
+
+    // Save current first — snapshot-based, so the id, title, body, and the
+    // save-vs-delete decision all come from the same instant.
+    await opts.lifecycle.flushCurrent('navigateToEntry');
+    if (opts.lifecycle.isDisposed() || token !== navToken) return;
 
     const entries = opts.dayEntries();
     if (newIndex < 0 || newIndex >= entries.length) return;
@@ -83,27 +73,15 @@ export function useMultiEntryNav(opts: UseMultiEntryNavOptions): MultiEntryNavHo
       // Filter to entries that still exist
       const validIndex = Math.min(newIndex, refreshed.length - 1);
       if (validIndex < 0) {
-        opts.setCurrentIndex(0);
-        opts.setPendingEntryId(null);
-        opts.setTitle('');
-        opts.setContent('');
-        opts.setWordCount(0);
+        clearEntryFromEditor(opts.lifecycle.entryCommitTargets);
         return;
       }
 
-      opts.setCurrentIndex(validIndex);
       const entry = refreshed[validIndex];
-      opts.setPendingEntryId(entry.id);
-      opts.setTitle(entry.title);
-      let html = entry.text;
-      if (hasImageRefs(html)) {
-        const images = await getEntryImages(entry.id);
-        if (opts.lifecycle.isDisposed() || token !== navToken) return;
-        html = resolveImageRefs(html, images);
-      }
-      opts.setContent(html);
-      opts.setWordCount(countWordsInHtml(html));
-      opts.setEntryMetadata(entry.metadata ?? null);
+      // Resolve the body BEFORE committing anything — see commitEntryToEditor.
+      const html = await resolveEntryHtml(entry);
+      if (opts.lifecycle.isDisposed() || token !== navToken) return;
+      commitEntryToEditor(opts.lifecycle.entryCommitTargets, entry, html, validIndex);
     } catch (error) {
       log.error('Failed to navigate to entry:', error);
     }
@@ -118,14 +96,9 @@ export function useMultiEntryNav(opts: UseMultiEntryNavOptions): MultiEntryNavHo
     opts.setIsCreatingEntry(true);
 
     try {
-      // Save current first — read from editor directly to capture alignment.
-      const currentId = opts.pendingEntryId();
-      if (currentId !== null) {
-        opts.lifecycle.debouncedSave.cancel();
-        const edInst = opts.editorInstance();
-        const currentContent = edInst && !edInst.isDestroyed ? edInst.getHTML() : opts.content();
-        await opts.lifecycle.saveCurrentById(currentId, opts.title(), currentContent);
-      }
+      // Save current first — snapshot-based, see navigateToEntry.
+      await opts.lifecycle.flushCurrent('addEntry');
+      if (opts.lifecycle.isDisposed()) return;
 
       const newEntry = await createEntry(opts.selectedDate());
       if (opts.lifecycle.isDisposed()) return;
@@ -138,13 +111,10 @@ export function useMultiEntryNav(opts: UseMultiEntryNavOptions): MultiEntryNavHo
       // after reversal the index depends on position — look it up by id.
       const idx = refreshed.findIndex((e) => e.id === newEntry.id);
       const newIndex = idx >= 0 ? idx : 0;
-      opts.setCurrentIndex(newIndex);
-      opts.setPendingEntryId(newEntry.id);
       opts.lifecycle.setJustCreatedEntryId(newEntry.id);
-      opts.setTitle('');
-      opts.setContent('');
-      opts.setWordCount(0);
-      opts.setEntryMetadata(null);
+      // A brand-new entry is blank by definition, so its body needs no resolution:
+      // the empty document IS its content, and the commit is atomic on its own.
+      commitEntryToEditor(opts.lifecycle.entryCommitTargets, newEntry, '', newIndex);
       // Cancel any previously queued debounced save from the current entry before
       // switching to the new blank entry — prevents saving the wrong entry data.
       opts.lifecycle.debouncedSave.cancel();
@@ -172,37 +142,29 @@ export function useMultiEntryNav(opts: UseMultiEntryNavOptions): MultiEntryNavHo
       const entryToDelete = opts.dayEntries()[opts.currentIndex()];
       if (!entryToDelete?.id) return;
 
+      // The entry is about to disappear — do not let a queued save fire against it.
+      opts.lifecycle.debouncedSave.cancel();
       await deleteEntry(entryToDelete.id);
 
       const refreshed = await fetchEntriesOrdered(opts.selectedDate());
+      if (opts.lifecycle.isDisposed()) return;
 
       if (refreshed.length === 0) {
-        opts.setPendingEntryId(null);
-        opts.setTitle('');
-        opts.setContent('');
-        opts.setWordCount(0);
-        opts.setEntryMetadata(null);
+        clearEntryFromEditor(opts.lifecycle.entryCommitTargets);
         opts.setDayEntries([]);
-        opts.setCurrentIndex(0);
       } else {
         let newIndex = opts.currentIndex();
         if (newIndex >= refreshed.length) {
           newIndex = refreshed.length - 1;
         }
         const entry = refreshed[newIndex];
-        opts.setPendingEntryId(entry.id);
-        opts.setTitle(entry.title);
-        let html = entry.text;
-        if (hasImageRefs(html)) {
-          const images = await getEntryImages(entry.id);
-          if (opts.lifecycle.isDisposed()) return;
-          html = resolveImageRefs(html, images);
-        }
-        opts.setContent(html);
-        opts.setWordCount(countWordsInHtml(html));
-        opts.setEntryMetadata(entry.metadata ?? null);
-        opts.setDayEntries(refreshed);
-        opts.setCurrentIndex(newIndex);
+        // Resolve the body BEFORE committing anything — see commitEntryToEditor.
+        const html = await resolveEntryHtml(entry);
+        if (opts.lifecycle.isDisposed()) return;
+        batch(() => {
+          opts.setDayEntries(refreshed);
+          commitEntryToEditor(opts.lifecycle.entryCommitTargets, entry, html, newIndex);
+        });
       }
     } catch (error) {
       log.error('Failed to delete entry:', error);

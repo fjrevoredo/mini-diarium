@@ -17,11 +17,7 @@ import { open as openDialog } from '../../lib/dialog';
 import { parseMarkdownToHtml } from '../../lib/markdown';
 import { mapTauriError } from '../../lib/errors';
 import { countWordsInHtml, countWordsFromText } from '../../lib/wordcount';
-import {
-  useEditorEmptyCheck,
-  computeIsEmpty,
-  editorHasImages,
-} from './editor-panel/useEditorEmptyCheck';
+import { useEditorEmptyCheck, computeIsEmpty } from './editor-panel/useEditorEmptyCheck';
 import { useEntryLifecycle } from './editor-panel/useEntryLifecycle';
 import { useMultiEntryNav } from './editor-panel/useMultiEntryNav';
 import { hasFocusedEditorOnUnlock, setHasFocusedEditorOnUnlock } from '../../state/session';
@@ -67,27 +63,19 @@ export default function EditorPanel() {
     setEntryMetadata,
   });
 
+  // Only read-side state + the lifecycle hook: the entry-switch setters are reached
+  // exclusively through lifecycle.entryCommitTargets so the commit stays atomic.
   const nav = useMultiEntryNav({
     t,
     selectedDate,
-    editorInstance,
-    title,
-    setTitle,
-    content,
-    setContent,
-    setWordCount,
     dayEntries,
     setDayEntries,
     currentIndex,
-    setCurrentIndex,
     pendingEntryId,
-    setPendingEntryId,
     isCreatingEntry,
     setIsCreatingEntry,
     emptyCheck,
     lifecycle,
-    entryMetadata,
-    setEntryMetadata,
   });
 
   createEffect(() => {
@@ -116,6 +104,10 @@ export default function EditorPanel() {
   // fires again on the next unlock. requestAnimationFrame ensures the browser has painted.
   createEffect(() => {
     const ed = editorInstance();
+    // Do not invite typing into an editor whose entry has not finished loading: the load
+    // is about to replace the document, and a keystroke that lands first races the
+    // id/title/content commit. Re-runs when the load settles. See TODO-0089.
+    if (lifecycle.isLoadInFlight()) return;
     if (!ed || ed.isDestroyed || hasFocusedEditorOnUnlock()) return;
     requestAnimationFrame(() => {
       // Re-check teardown state: the editor can be destroyed between scheduling and
@@ -137,7 +129,10 @@ export default function EditorPanel() {
     // document state. Fires after TipTap processes the content, not when the SolidJS
     // content() signal is set — closes the timing gap where editor.isEmpty is stale.
     const edInst = editorInstance();
-    emptyCheck.setEditorIsEmpty(computeIsEmpty(edInst, newContent));
+    // One emptiness verdict, computed once and carried with the payload — the debounced
+    // save must not re-derive it 500 ms later from state that has since moved on.
+    const isEmpty = computeIsEmpty(edInst, newContent);
+    emptyCheck.setEditorIsEmpty(isEmpty);
     setWordCount(
       edInst && !edInst.isDestroyed
         ? countWordsFromText(edInst.getText())
@@ -145,13 +140,9 @@ export default function EditorPanel() {
     );
     const id = pendingEntryId();
     if (id !== null) {
-      lifecycle.debouncedSave(id, title(), newContent);
+      lifecycle.debouncedSave(id, title(), newContent, isEmpty);
     } else {
       // Skip creation on programmatic updates (loading an empty day fires onUpdate with empty content).
-      const editor = editorInstance();
-      const isEmpty = editor
-        ? editor.isEmpty || (editor.getText().trim() === '' && !editorHasImages(editor))
-        : newContent.trim() === '';
       if (isEmpty) return;
       log.debug('handleContentUpdate: pendingEntryId=null, first real content keystroke');
       lifecycle.startEntryCreation('handleContentUpdate');
@@ -163,7 +154,7 @@ export default function EditorPanel() {
     setTitle(newTitle);
     const id = pendingEntryId();
     if (id !== null) {
-      lifecycle.debouncedSave(id, newTitle, content());
+      lifecycle.debouncedSave(id, newTitle, content(), computeIsEmpty(editorInstance(), content()));
     } else {
       if (newTitle.trim() === '') return;
       log.debug(`handleTitleInput: pendingEntryId=null, title='${newTitle.substring(0, 20)}'`);
@@ -190,10 +181,7 @@ export default function EditorPanel() {
       if (next) {
         // Flush current content before locking. The entry is still unlocked in the DB
         // here, so the save succeeds and no in-flight edit is lost.
-        const edInst = editorInstance();
-        const currentContent = edInst && !edInst.isDestroyed ? edInst.getHTML() : content();
-        lifecycle.debouncedSave.cancel();
-        await lifecycle.saveCurrentById(id, title(), currentContent);
+        await lifecycle.flushCurrent('toggleLock');
       }
       await setEntryLocked(id, next);
       // Update the local entry so currentLocked() flips and the editor becomes read-only
@@ -251,12 +239,7 @@ export default function EditorPanel() {
   // Save on window unload
   onMount(() => {
     const handleBeforeUnload = () => {
-      const id = pendingEntryId();
-      if (id !== null) {
-        const edInst = editorInstance();
-        const currentContent = edInst && !edInst.isDestroyed ? edInst.getHTML() : content();
-        void lifecycle.saveCurrentById(id, title(), currentContent);
-      }
+      void lifecycle.flushCurrent('beforeunload');
     };
 
     window.addEventListener('beforeunload', handleBeforeUnload);
@@ -336,7 +319,12 @@ export default function EditorPanel() {
                 setEntryMetadata(meta);
                 const id = pendingEntryId();
                 if (id !== null) {
-                  lifecycle.debouncedSave(id, title(), content());
+                  lifecycle.debouncedSave(
+                    id,
+                    title(),
+                    content(),
+                    computeIsEmpty(editorInstance(), content()),
+                  );
                 }
               }}
               onUpdate={handleContentUpdate}
@@ -351,7 +339,9 @@ export default function EditorPanel() {
                   // loaded from DB (e.g. on navigation or date reload), justCreatedEntryId
                   // is null/mismatched and the debounce fires normally.
                   if (id !== null && id !== lifecycle.getJustCreatedEntryId()) {
-                    lifecycle.debouncedSave(id, untrack(title), untrack(content));
+                    // isEmpty is the callback's own argument (true here) — TipTap has
+                    // already processed the document, so this is the authoritative verdict.
+                    lifecycle.debouncedSave(id, untrack(title), untrack(content), true);
                   }
                 }
               }}

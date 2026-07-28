@@ -82,6 +82,74 @@ pub fn get_entries_for_date(
     with_unlocked_db(&state, |db| db::get_entries_by_date(db, &date))
 }
 
+/// Tags that carry content even though they contribute no text — an entry that is only
+/// an image or a rule is not blank and must never be auto-deleted.
+const NON_TEXT_CONTENT_TAGS: [&str; 6] = ["<img", "<hr", "<video", "<audio", "<iframe", "<table"];
+
+/// Returns true when an editor HTML fragment carries no user-visible content.
+///
+/// The editor persists an "empty" document as an HTML shell (`<p></p>`, `<p><br></p>`,
+/// sometimes with `&nbsp;`), so a byte-level `trim().is_empty()` would refuse to
+/// auto-delete entries the user considers blank. Anything else — a single character, an
+/// image, a table — counts as content and vetoes the delete.
+///
+/// This is the backend half of the TODO-0089 guard: the frontend now sends the real body
+/// instead of `""`, and this function is what makes that submission meaningful.
+fn is_blank_html(text: &str) -> bool {
+    let trimmed = text.trim();
+    if trimmed.is_empty() {
+        return true;
+    }
+
+    let lowered = trimmed.to_ascii_lowercase();
+    if NON_TEXT_CONTENT_TAGS
+        .iter()
+        .any(|tag| lowered.contains(tag))
+    {
+        return false;
+    }
+
+    // Strip tags, then normalise the entities the editor emits for a blank line.
+    let mut stripped = String::with_capacity(lowered.len());
+    let mut in_tag = false;
+    for ch in lowered.chars() {
+        match ch {
+            '<' => in_tag = true,
+            '>' => in_tag = false,
+            c if !in_tag => stripped.push(c),
+            _ => {}
+        }
+    }
+
+    stripped
+        .replace("&nbsp;", " ")
+        .replace("&#160;", " ")
+        .replace("&#xa0;", " ")
+        .replace('\u{a0}', " ")
+        .trim()
+        .is_empty()
+}
+
+/// Pure inner of `delete_entry_if_empty` — takes `&DiaryState` so it can be tested without Tauri.
+pub(crate) fn delete_entry_if_empty_inner(
+    id: i64,
+    title: &str,
+    text: &str,
+    state: &DiaryState,
+) -> Result<bool, String> {
+    with_unlocked_db(state, |db| {
+        // The title stays a plain-text check: it is not HTML, and running it through the
+        // tag stripper would read a literal title like "<3" as blank.
+        if title.trim().is_empty() && is_blank_html(text) {
+            debug!("Deleting empty entry id={}", id);
+            db::delete_entry_by_id(db, id)
+        } else {
+            debug!("Refusing to delete non-empty entry id={}", id);
+            Ok(false)
+        }
+    })
+}
+
 /// Deletes an entry by id if both title and text are empty/whitespace
 ///
 /// Returns true if the entry was deleted, false otherwise
@@ -92,14 +160,7 @@ pub fn delete_entry_if_empty(
     text: String,
     state: State<DiaryState>,
 ) -> Result<bool, String> {
-    with_unlocked_db(&state, |db| {
-        if title.trim().is_empty() && text.trim().is_empty() {
-            debug!("Deleting empty entry id={}", id);
-            db::delete_entry_by_id(db, id)
-        } else {
-            Ok(false)
-        }
-    })
+    delete_entry_if_empty_inner(id, &title, &text, &state)
 }
 
 /// Deletes an entry by id
@@ -294,6 +355,104 @@ mod tests {
         // Verify deletion
         let retrieved = db::get_entry_by_id(&db, id).unwrap();
         assert!(retrieved.is_none());
+    }
+
+    #[test]
+    fn test_is_blank_html_recognises_editor_empty_shells() {
+        for blank in [
+            "",
+            "   ",
+            "<p></p>",
+            "<p><br></p>",
+            "<p>&nbsp;</p>",
+            "<p>\u{a0}</p>",
+            "<p></p><p></p>",
+        ] {
+            assert!(is_blank_html(blank), "expected blank: {:?}", blank);
+        }
+        for content in ["<p>a</p>", "<p><img src=\"x\"></p>", "<hr>", "text"] {
+            assert!(!is_blank_html(content), "expected non-blank: {:?}", content);
+        }
+    }
+
+    /// The backend veto restored by TODO-0089: a delete request carrying real content
+    /// must be refused, so a wrong-context frontend flush cannot erase a live entry.
+    #[test]
+    fn test_delete_entry_if_empty_refuses_non_empty_text() {
+        use crate::commands::auth::DiaryState;
+        use std::path::PathBuf;
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+        let now = chrono::Utc::now().to_rfc3339();
+        let entry = DiaryEntry {
+            id: 0,
+            date: "2024-07-01".to_string(),
+            title: String::new(),
+            text: "<p>Real content</p>".to_string(),
+            word_count: 2,
+            date_created: now.clone(),
+            date_updated: now,
+            metadata: None,
+            locked: false,
+        };
+        let entry_id = db::insert_entry(&db, &entry).unwrap();
+
+        let state = DiaryState::new(
+            PathBuf::from("test_delete_if_empty.db"),
+            PathBuf::from("test_delete_if_empty_backups"),
+            PathBuf::from("."),
+        );
+        *state.db.lock().unwrap() = Some(db);
+
+        // Blank title but a real body → refused.
+        let deleted =
+            delete_entry_if_empty_inner(entry_id, "", "<p>Real content</p>", &state).unwrap();
+        assert!(!deleted, "non-empty text must not be deleted");
+        {
+            let guard = state.db.lock().unwrap();
+            assert!(db::get_entry_by_id(guard.as_ref().unwrap(), entry_id)
+                .unwrap()
+                .is_some());
+        }
+
+        // An empty HTML shell with no title → deleted.
+        let deleted = delete_entry_if_empty_inner(entry_id, "", "<p></p>", &state).unwrap();
+        assert!(deleted, "empty HTML shell must auto-delete");
+        let guard = state.db.lock().unwrap();
+        assert!(db::get_entry_by_id(guard.as_ref().unwrap(), entry_id)
+            .unwrap()
+            .is_none());
+    }
+
+    #[test]
+    fn test_delete_entry_if_empty_refuses_non_empty_title() {
+        use crate::commands::auth::DiaryState;
+        use std::path::PathBuf;
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+        let now = chrono::Utc::now().to_rfc3339();
+        let entry = DiaryEntry {
+            id: 0,
+            date: "2024-07-02".to_string(),
+            title: "Titled".to_string(),
+            text: String::new(),
+            word_count: 0,
+            date_created: now.clone(),
+            date_updated: now,
+            metadata: None,
+            locked: false,
+        };
+        let entry_id = db::insert_entry(&db, &entry).unwrap();
+
+        let state = DiaryState::new(
+            PathBuf::from("test_delete_if_empty_title.db"),
+            PathBuf::from("test_delete_if_empty_title_backups"),
+            PathBuf::from("."),
+        );
+        *state.db.lock().unwrap() = Some(db);
+
+        let deleted = delete_entry_if_empty_inner(entry_id, "Titled", "<p></p>", &state).unwrap();
+        assert!(!deleted, "a titled entry must not be auto-deleted");
     }
 
     #[test]
