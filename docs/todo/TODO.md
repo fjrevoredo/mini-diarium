@@ -13,7 +13,7 @@ TODO entry format:
 - After creating a new TODO, update the `Latest TODO ID` marker to reflect the new highest ID
 - Use the `todo-manager` skill (`.agents/skills/todo-manager/`) for creation, tracking, archival, and validation
 
-**Latest TODO ID: TODO-0086** — next new TODO should be TODO-0087
+**Latest TODO ID: TODO-0089** — next new TODO should be TODO-0090
 
 ---
 
@@ -22,6 +22,7 @@ TODO entry format:
 ---
 
 - [ ] **TODO-0008: Cursor height too tall after Shift+Enter on macOS (#118)** — the text caret (cursor) height becomes extra long starting on the second line, but only when inserting a soft line break with Shift+Enter (Enter alone works fine); macOS-only (v0.4.20); likely a `line-height` or `font-family` mismatch in ProseMirror's `<br>` handling introduced with new editor fonts in v0.4.20; audit soft-break styling in `src/styles/editor.css` and the `--editor-font-family` / `--editor-font-size` CSS custom properties
+- [ ] **TODO-0089: Newly created entries can disappear when navigating between entries and the timeline (user report)** — navigating away from a just-created entry (to another entry or to the timeline) sometimes causes it to vanish instead of being persisted; suspected race condition between the save-entry and delete-empty-entry event handlers firing on navigation, where a delete-empty-entry check runs against a not-yet-saved or mid-save entry and removes content that should have persisted. A similar symptom previously occurred when navigating between entries within a single day — confirm whether that is the same root cause before fixing; see the multi-entry save/delete flow in [docs/diagrams/save-entry.mmd](../diagrams/save-entry.mmd). Acceptance: an entry created and then navigated away from (to another entry, another date, or the timeline) is reliably persisted every time, including under rapid navigation immediately after creation; add a regression test (unit or E2E) that reproduces the race.
 ---
 
 ## Website Priority
