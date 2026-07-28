@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 
-import { enrichDefaultLocaleManifest, normalizeReleaseNotes } from './enrich-winget-manifest.mjs';
+import {
+  enrichDefaultLocaleManifest,
+  MAX_RELEASE_NOTES_LENGTH,
+  normalizeReleaseNotes,
+} from './enrich-winget-manifest.mjs';
 
 describe('enrich-winget-manifest', () => {
   it('normalizeReleaseNotes strips markdown while keeping structure', () => {
@@ -33,6 +37,39 @@ describe('enrich-winget-manifest', () => {
     expect(lines.every((line) => line.length <= 100)).toBe(true);
     expect(lines[0]).toMatch(/^- /);
     expect(lines[1]).toMatch(/^  /);
+  });
+
+  it('normalizeReleaseNotes truncates output over the WinGet 10000-character manifest limit', () => {
+    const lines = Array.from(
+      { length: 400 },
+      (_, index) => `- Change entry number ${index} with enough padding text to add up.`,
+    );
+    const body = lines.join('\n');
+    expect(body.length).toBeGreaterThan(MAX_RELEASE_NOTES_LENGTH);
+
+    const normalized = normalizeReleaseNotes(body);
+
+    expect(normalized.length).toBeLessThanOrEqual(MAX_RELEASE_NOTES_LENGTH);
+    expect(normalized).toMatch(/… \(truncated — see ReleaseNotesUrl for full notes\)$/);
+  });
+
+  it('normalizeReleaseNotes truncation cuts on a line boundary, never mid-word', () => {
+    const lines = Array.from(
+      { length: 400 },
+      (_, index) => `- Change entry number ${index} with enough padding text to add up.`,
+    );
+    const body = lines.join('\n');
+
+    const normalized = normalizeReleaseNotes(body);
+    const withoutSuffix = normalized.replace(
+      /\n… \(truncated — see ReleaseNotesUrl for full notes\)$/,
+      '',
+    );
+    const keptLines = withoutSuffix.split('\n');
+
+    for (const line of keptLines) {
+      expect(lines).toContain(line);
+    }
   });
 
   it('enrichDefaultLocaleManifest replaces release fields before ManifestType', () => {

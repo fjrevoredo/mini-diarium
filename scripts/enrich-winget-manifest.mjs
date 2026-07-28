@@ -97,6 +97,30 @@ function wrapLine(line, width = 100) {
   return wrapped;
 }
 
+export const MAX_RELEASE_NOTES_LENGTH = 10000;
+const TRUNCATION_SUFFIX = '\n… (truncated — see ReleaseNotesUrl for full notes)';
+
+export function truncateReleaseNotes(text, maxLength = MAX_RELEASE_NOTES_LENGTH) {
+  if (text.length <= maxLength) {
+    return text;
+  }
+
+  const budget = maxLength - TRUNCATION_SUFFIX.length;
+  if (budget <= 0) {
+    return text.slice(0, maxLength);
+  }
+
+  const truncated = text.slice(0, budget);
+  const lastNewline = truncated.lastIndexOf('\n');
+
+  if (lastNewline === -1) {
+    // Even the first line alone exceeds the budget; hard character cut as fallback.
+    return `${truncated}${TRUNCATION_SUFFIX}`;
+  }
+
+  return `${truncated.slice(0, lastNewline)}${TRUNCATION_SUFFIX}`;
+}
+
 export function normalizeReleaseNotes(markdown) {
   const normalizedLines = removeHtmlComments(
     markdown.replace(/\r\n/g, '\n')
@@ -128,7 +152,7 @@ export function normalizeReleaseNotes(markdown) {
     throw new Error('Release body did not contain any usable release notes');
   }
 
-  return normalized;
+  return truncateReleaseNotes(normalized);
 }
 
 function findDefaultLocaleManifest(manifestDir) {

@@ -34,6 +34,11 @@ Template:
 
 # Versions
 
+## [Unreleased]
+
+### Internal
+- **winget-publish workflow**: cap generated ReleaseNotes at WinGet's 10,000-character manifest limit so long release bodies no longer break the WinGet PR submission
+
 ## [0.6.3] - 27-07-2026
 
 ### Added
