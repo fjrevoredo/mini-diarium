@@ -313,6 +313,12 @@ See `website/docs-src/_template.md` for the starter template.
 
 3. **`fingerprint-website-assets.mjs`** — hashes `css/style.css` and `js/main.js`, writes the content-addressed copies (`css/style.<hash>.css`, `js/main.<hash>.js`), and rewrites all HTML references to use the new names. Removes stale fingerprinted files when the hash changes.
 
+   **Hashing is line-ending-normalized** (`\r\n` → `\n` before the digest, and the hashed copy is written as those same normalized bytes), so the fingerprint is a function of the content and not of which platform checked the repo out. `.gitattributes` additionally pins `website/` css/js/html/xml/txt output to `eol=lf`; the two layers are deliberate belt-and-braces — the same pairing already used for `docs/diagrams/`. Without them a Windows checkout produced different hashes than CI and rotated the `<link>`/`<script>` refs in every generated HTML file on each platform switch.
+
+   **The script is a no-op when nothing changed.** It compares before writing and skips identical files, reporting `N updated / N unchanged`. A run with no CSS/JS change performs zero writes. Writes retry with backoff, because Windows AV/indexer can briefly hold a handle on a freshly written file (`errno -4094` / `UNKNOWN`).
+
+   Pure helpers (`shortHash`, `readNormalized`, `rewriteAssetReferences`, `ASSETS`) are exported and covered by `scripts/fingerprint-website-assets.test.mjs` — run it with `node --test scripts/fingerprint-website-assets.test.mjs`.
+
 **Do not run the scripts individually.** `bun run website:blog` or `bun run website:docs` alone leaves the repo in an inconsistent state (unfingerprinted references committed alongside fingerprinted asset files).
 
 ---

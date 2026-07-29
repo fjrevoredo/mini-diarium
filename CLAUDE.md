@@ -49,7 +49,7 @@ Commands verified to work from this shell via Windows:
 
 Commands with side effects:
 
-- `bun run website:build-static` rewrites generated files under `website/` — use the **PowerShell tool** directly (not Bash + cmd.exe, which may return empty output for this command)
+- `bun run website:build-static` rewrites generated files under `website/` — use the **PowerShell tool** directly (not Bash + cmd.exe, which may return empty output for this command). The run is byte-reproducible across platforms and rewrites nothing when no source changed; the one exception is `website/sitemap.xml`, whose `lastmod` stamps are set to the current date by the generators
 - `cmd.exe /c bun run diagrams` regenerates SVG outputs
 
 ## Architecture

@@ -9,3 +9,13 @@ data/linux/*.desktop text eol=lf
 
 # Git hooks must use LF (shebang + `set -e` break on Windows CRLF)
 .githooks/*          text eol=lf
+
+# Generated website output must match committed bytes on all platforms —
+# scripts/fingerprint-website-assets.mjs content-hashes css/js and the
+# generators rewrite html/xml/txt from LF sources.
+website/css/*.css     text eol=lf
+website/js/*.js       text eol=lf
+website/**/*.html     text eol=lf
+website/sitemap.xml   text eol=lf
+website/blog/feed.xml text eol=lf
+website/llms.txt      text eol=lf
