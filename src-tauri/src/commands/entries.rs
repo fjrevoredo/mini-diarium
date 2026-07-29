@@ -82,16 +82,56 @@ pub fn get_entries_for_date(
     with_unlocked_db(&state, |db| db::get_entries_by_date(db, &date))
 }
 
-/// Tags that carry content even though they contribute no text — an entry that is only
-/// an image or a rule is not blank and must never be auto-deleted.
-const NON_TEXT_CONTENT_TAGS: [&str; 6] = ["<img", "<hr", "<video", "<audio", "<iframe", "<table"];
+/// Tag names that may appear inside a document the user considers blank — the structural
+/// and inline-formatting wrappers TipTap leaves behind when a paragraph is emptied.
+///
+/// This is an **allowlist**, keyed on the tag name only, so attribute-bearing shells such
+/// as `<p dir="ltr">` (BidiExtension) and `<p style="text-align: center">` (TextAlign)
+/// still normalise to blank. Anything not named here — `<img>`, `<hr>`, `<table>`,
+/// `<canvas>`, `<object>`, `<embed>`, `<svg>`, a custom element — vetoes the delete.
+const BLANK_COMPATIBLE_TAGS: [&str; 27] = [
+    "p",
+    "br",
+    "div",
+    "span",
+    "h1",
+    "h2",
+    "h3",
+    "h4",
+    "h5",
+    "h6",
+    "ul",
+    "ol",
+    "li",
+    "blockquote",
+    "pre",
+    "code",
+    "strong",
+    "b",
+    "em",
+    "i",
+    "s",
+    "strike",
+    "u",
+    "mark",
+    "a",
+    "sub",
+    "sup",
+];
 
 /// Returns true when an editor HTML fragment carries no user-visible content.
 ///
 /// The editor persists an "empty" document as an HTML shell (`<p></p>`, `<p><br></p>`,
 /// sometimes with `&nbsp;`), so a byte-level `trim().is_empty()` would refuse to
-/// auto-delete entries the user considers blank. Anything else — a single character, an
-/// image, a table — counts as content and vetoes the delete.
+/// auto-delete entries the user considers blank.
+///
+/// **Conservative by construction**: only the tag names in `BLANK_COMPATIBLE_TAGS` can
+/// appear in a fragment this function calls blank. Every unrecognised tag, comment,
+/// doctype, or malformed tag returns `false` — the command accepts an arbitrary IPC
+/// string and import paths can introduce foreign markup, and refusing to delete a real
+/// entry is the only safe direction to be wrong in. The two parser failure modes fail
+/// that way too: a `>` inside a quoted attribute spills the rest of the attribute out as
+/// residual text, and an unterminated tag is rejected outright.
 ///
 /// This is the backend half of the TODO-0089 guard: the frontend now sends the real body
 /// instead of `""`, and this function is what makes that submission meaningful.
@@ -101,27 +141,49 @@ fn is_blank_html(text: &str) -> bool {
         return true;
     }
 
-    let lowered = trimmed.to_ascii_lowercase();
-    if NON_TEXT_CONTENT_TAGS
-        .iter()
-        .any(|tag| lowered.contains(tag))
-    {
-        return false;
-    }
-
-    // Strip tags, then normalise the entities the editor emits for a blank line.
-    let mut stripped = String::with_capacity(lowered.len());
-    let mut in_tag = false;
-    for ch in lowered.chars() {
-        match ch {
-            '<' => in_tag = true,
-            '>' => in_tag = false,
-            c if !in_tag => stripped.push(c),
-            _ => {}
+    let chars: Vec<char> = trimmed.chars().collect();
+    let mut stripped = String::with_capacity(trimmed.len());
+    let mut i = 0;
+    while i < chars.len() {
+        if chars[i] != '<' {
+            stripped.push(chars[i]);
+            i += 1;
+            continue;
         }
+        i += 1;
+        // `<!…` — a comment or doctype. The editor never emits one for a blank document.
+        if chars.get(i) == Some(&'!') {
+            return false;
+        }
+        if chars.get(i) == Some(&'/') {
+            i += 1;
+        }
+        let name_start = i;
+        while i < chars.len() && !chars[i].is_whitespace() && chars[i] != '/' && chars[i] != '>' {
+            i += 1;
+        }
+        let name = chars[name_start..i]
+            .iter()
+            .collect::<String>()
+            .to_ascii_lowercase();
+        if name.is_empty() || !BLANK_COMPATIBLE_TAGS.contains(&name.as_str()) {
+            return false;
+        }
+        // Skip attributes up to the terminator. A tag that never closes is malformed;
+        // consuming it silently would drop it from `stripped` and read as blank.
+        while i < chars.len() && chars[i] != '>' {
+            i += 1;
+        }
+        if i == chars.len() {
+            return false;
+        }
+        i += 1;
     }
 
+    // Normalise the entities the editor emits for a blank line. Lowercased so the
+    // hex-entity spellings (`&#xA0;`) match too.
     stripped
+        .to_ascii_lowercase()
         .replace("&nbsp;", " ")
         .replace("&#160;", " ")
         .replace("&#xa0;", " ")
@@ -371,6 +433,58 @@ mod tests {
             assert!(is_blank_html(blank), "expected blank: {:?}", blank);
         }
         for content in ["<p>a</p>", "<p><img src=\"x\"></p>", "<hr>", "text"] {
+            assert!(!is_blank_html(content), "expected non-blank: {:?}", content);
+        }
+    }
+
+    /// The allowlist must stay attribute-tolerant: TextAlign and BidiExtension both leave
+    /// attributes on an otherwise-empty paragraph, and TipTap marks its trailing break.
+    /// Keying on the tag name (not the exact shell) is what keeps these auto-deletable —
+    /// an exact-string allowlist would let genuinely blank entries accumulate forever.
+    #[test]
+    fn test_is_blank_html_tolerates_attributes_on_empty_shells() {
+        for blank in [
+            "<p dir=\"ltr\"></p>",
+            "<p style=\"text-align:center\"></p>",
+            "<p><br class=\"ProseMirror-trailingBreak\"></p>",
+            "<P></P>",
+            "<div><p><span></span></p></div>",
+            // An empty bullet carries no user-visible content, same as an empty paragraph.
+            "<ul><li><p></p></li></ul>",
+        ] {
+            assert!(is_blank_html(blank), "expected blank: {:?}", blank);
+        }
+    }
+
+    /// TODO-0089 remediation: the classifier is an allowlist, so a node it does not know
+    /// vetoes the auto-delete rather than being stripped away as if it were formatting.
+    /// The IPC command takes an arbitrary string and import paths can carry foreign
+    /// markup, so "unrecognised" must mean "keep the entry", never "safe to delete".
+    #[test]
+    fn test_is_blank_html_refuses_unrecognised_markup() {
+        for content in [
+            "<canvas></canvas>",
+            "<object data=\"x\"></object>",
+            "<embed src=\"x\">",
+            "<svg><circle r=\"1\"/></svg>",
+            "<my-widget></my-widget>",
+            "<!-- just a comment -->",
+            "<!DOCTYPE html>",
+            "<video></video>",
+            "<audio></audio>",
+            "<iframe src=\"x\"></iframe>",
+            "<table><tr><td></td></tr></table>",
+            // An image-only entry — the shape the editor actually produces.
+            "<figure class=\"image-container\"><img src=\"data:image/png;base64,AAAA\"></figure>",
+            // Malformed: no terminator, so nothing can be verified about it.
+            "<p",
+            "<p></p><span",
+            // A `>` inside a quoted attribute desynchronises the scan; the spill-over
+            // text is what makes the result "not blank".
+            "<p title=\"a>b\"></p>",
+            // An empty tag name is not a tag we can classify.
+            "< p></p>",
+        ] {
             assert!(!is_blank_html(content), "expected non-blank: {:?}", content);
         }
     }

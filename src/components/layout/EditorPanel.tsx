@@ -140,7 +140,7 @@ export default function EditorPanel() {
     );
     const id = pendingEntryId();
     if (id !== null) {
-      lifecycle.debouncedSave(id, title(), newContent, isEmpty);
+      lifecycle.debouncedSave(id, title(), newContent, isEmpty, entryMetadata());
     } else {
       // Skip creation on programmatic updates (loading an empty day fires onUpdate with empty content).
       if (isEmpty) return;
@@ -154,7 +154,13 @@ export default function EditorPanel() {
     setTitle(newTitle);
     const id = pendingEntryId();
     if (id !== null) {
-      lifecycle.debouncedSave(id, newTitle, content(), computeIsEmpty(editorInstance(), content()));
+      lifecycle.debouncedSave(
+        id,
+        newTitle,
+        content(),
+        computeIsEmpty(editorInstance(), content()),
+        entryMetadata(),
+      );
     } else {
       if (newTitle.trim() === '') return;
       log.debug(`handleTitleInput: pendingEntryId=null, title='${newTitle.substring(0, 20)}'`);
@@ -324,6 +330,7 @@ export default function EditorPanel() {
                     title(),
                     content(),
                     computeIsEmpty(editorInstance(), content()),
+                    entryMetadata(),
                   );
                 }
               }}
@@ -341,7 +348,13 @@ export default function EditorPanel() {
                   if (id !== null && id !== lifecycle.getJustCreatedEntryId()) {
                     // isEmpty is the callback's own argument (true here) — TipTap has
                     // already processed the document, so this is the authoritative verdict.
-                    lifecycle.debouncedSave(id, untrack(title), untrack(content), true);
+                    lifecycle.debouncedSave(
+                      id,
+                      untrack(title),
+                      untrack(content),
+                      true,
+                      untrack(entryMetadata),
+                    );
                   }
                 }
               }}
