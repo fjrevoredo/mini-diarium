@@ -11,6 +11,16 @@
       "linkLabel": "Full release notes"
     },
     {
+      "id": "v0.6.4-backup-recovery",
+      "type": "announcement",
+      "version": "0.6.4",
+      "title": "Automatic backups have you covered!",
+      "body": "If you ever suspect data loss or corruption in your journal, locate your automatic backup folder right away and copy it somewhere safe. Then report the issue at https://github.com/fjrevoredo/mini-diarium/issues or to minidiarium@gmail.com. Learn more about how backups work at the link below.",
+      "date": "2026-07-30",
+      "linkUrl": "https://mini-diarium.com/docs/backups/",
+      "linkLabel": "How backups work"
+    },
+    {
       "id": "v0.6.3-release",
       "type": "release",
       "version": "0.6.3",
