@@ -51,6 +51,9 @@
 
   <releases>
     <!-- New release entries are prepended here by bump-version.sh -->
+    <release version="0.6.4" date="2026-07-29">
+      <url type="details">https://github.com/fjrevoredo/mini-diarium/releases/tag/v0.6.4</url>
+    </release>
     <release version="0.6.3" date="2026-07-27">
       <url type="details">https://github.com/fjrevoredo/mini-diarium/releases/tag/v0.6.3</url>
     </release>
