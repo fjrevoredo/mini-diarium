@@ -110,6 +110,7 @@ Field names of the IPC-visible types **are frozen**: the frontend's TypeScript i
 | `ImageSummaryPage` | `items`, `has_more` |
 | `ImageSummarySort` | enum, `snake_case`: `newest`, `oldest`, `most_used` |
 | `AuthMethodInfo` | `id`, `slot_type`, `label`, `public_key_hex` (`null` for password slots), `created_at`, `last_used` |
+| `ContentCounts` | `tags`, `entry_tag_links`, `images`, `entry_image_links`, `images_missing_thumbnail`, `custom_font_families`, `custom_font_rows`, `locked_entries`, `entries_with_metadata`, `entries_missing_preview` — all `i64`. Serialized into the debug dump file, so this is also a **support-artifact** contract |
 | `KeypairFiles` | `public_key_hex`, `private_key_hex` |
 | `JournalPeek` | `slots`, `require_all_auth` |
 | `AuthSlotPeek` | `id`, `slot_type`, `label` |
@@ -191,6 +192,11 @@ sealed (`pub(crate)`); the names below are re-exported at `db`.
 
 ### Introspection / stats
 - `read_schema_version`, `read_engine_versions`, `get_entry_date_word_counts`
+- `read_content_counts(db) -> Result<ContentCounts, String>` — per-feature row counts for
+  the debug dump. Plain `SELECT COUNT(*)` only: **nothing is decrypted**, so no entry text,
+  tag name, or image byte is materialised. Deliberately not built on `get_all_tags` /
+  `list_image_summaries_filtered`, which do decrypt.
+- Type: `ContentCounts`
 
 ### Custom fonts
 - `list_custom_font_rows`, `custom_font_has_weight`, `upsert_custom_font`,
@@ -268,6 +274,8 @@ The scan decrypts entries in memory per query and never persists a plaintext ind
 
 ## `backup` — encrypted-DB backup rotation
 
+- `MAX_BACKUPS: usize` — retention target. Public so diagnostics can report it alongside
+  the actual on-disk count; a mismatch means rotation is not running.
 - `create_backup`, `rotate_backups`, `backup_and_rotate`
 
 ---

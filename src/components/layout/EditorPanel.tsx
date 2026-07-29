@@ -163,7 +163,9 @@ export default function EditorPanel() {
       );
     } else {
       if (newTitle.trim() === '') return;
-      log.debug(`handleTitleInput: pendingEntryId=null, title='${newTitle.substring(0, 20)}'`);
+      // Length only, never the text — the title is entry content. Matches the convention
+      // in useEntryPersistence.ts.
+      log.debug(`handleTitleInput: pendingEntryId=null, titleLen=${newTitle.length}`);
       lifecycle.startEntryCreation('handleTitleInput');
     }
   };

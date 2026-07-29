@@ -6,9 +6,13 @@ export interface DebugDumpResult {
   generated_at: string;
 }
 
+/**
+ * `clientStateJson` is a serialised `ClientState` (see `src/lib/debug-dump-payload.ts`) —
+ * the whole browser-side payload, not just preferences.
+ */
 export async function generateDebugDump(
   filePath: string,
-  preferencesJson: string,
+  clientStateJson: string,
 ): Promise<DebugDumpResult> {
-  return await invoke<DebugDumpResult>('generate_debug_dump', { filePath, preferencesJson });
+  return await invoke<DebugDumpResult>('generate_debug_dump', { filePath, clientStateJson });
 }

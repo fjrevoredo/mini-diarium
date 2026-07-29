@@ -1,8 +1,8 @@
 import { createSignal, createEffect, Show, For } from 'solid-js';
 import { save } from '../../../lib/dialog';
 import { openUrl } from '@tauri-apps/plugin-opener';
-import { preferences } from '../../../state/preferences';
 import { FEATURE_FLAGS, isFeatureEnabled, setFeatureFlag } from '../../../state/feature-flags';
+import { buildClientState } from '../../../lib/debug-dump-payload';
 import { getActiveTheme } from '../../../lib/theme';
 import {
   saveThemeOverrides,
@@ -70,7 +70,7 @@ export default function PreferencesAdvancedTab(props: TabProps) {
         setDumpGenerating(false);
         return;
       }
-      await tauri.generateDebugDump(filePath, JSON.stringify(preferences()));
+      await tauri.generateDebugDump(filePath, JSON.stringify(buildClientState()));
       setDumpStatus('success');
     } catch (err) {
       setDumpError(mapTauriError(err, t));

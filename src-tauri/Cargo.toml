@@ -48,6 +48,10 @@ chrono = "0.4"
 log = "0.4"
 env_logger = "0.11.10"
 unicode-normalization = "0.1"
+# OS name/version/edition for the debug dump. Depended on directly rather than through
+# tauri-plugin-os, which only wraps this crate and would add an init() call, a JS
+# package, and capability plumbing for a value nothing but Rust reads.
+os_info = "3"
 
 # NOTE: [profile.release] lives in the workspace-root Cargo.toml. Cargo ignores
 # [profile.*] in non-root workspace members, so declaring it here would silently

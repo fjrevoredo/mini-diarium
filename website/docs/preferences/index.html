@@ -505,10 +505,74 @@
         </tr>
         <tr>
         <td>Generate Debug Dump</td>
-        <td>Export a privacy-safe diagnostic JSON file</td>
+        <td>Export a privacy-safe diagnostic JSON file (see below)</td>
         </tr>
         </tbody></table>
         <p>Custom font upload and delete stay explicit button-driven actions. If you delete the currently selected custom font, the editor font falls back to System Default immediately.</p>
+        <h2 id="debug-dump">Debug dump</h2><p><strong>Preferences → Advanced → Diagnostics → Generate Debug Dump</strong> writes a single JSON file you can attach to a bug report. Your journal must be unlocked, because most of what the file describes is read from the open database.</p>
+        <p>What it contains:</p>
+        <table>
+        <thead>
+        <tr>
+        <th>Group</th>
+        <th>Fields</th>
+        </tr>
+        </thead>
+        <tbody><tr>
+        <td>App and platform</td>
+        <td>App version, Tauri version, debug/release build, OS, OS version, CPU architecture, WebView version</td>
+        </tr>
+        <tr>
+        <td>Database</td>
+        <td>Stored schema version, the schema version this build expects, SQLite version, database file size</td>
+        </tr>
+        <tr>
+        <td>Journals</td>
+        <td>How many journals are configured, an 8-character prefix of the active journal&#39;s id, and per journal: whether it is passwordless and whether it uses the default <code>diary.db</code> filename</td>
+        </tr>
+        <tr>
+        <td>Security settings</td>
+        <td>Whether the active journal requires all unlock methods, and whether a deprecated copy of that flag is still in <code>config.json</code></td>
+        </tr>
+        <tr>
+        <td>Storage location</td>
+        <td>Whether the journal appears to sit inside a cloud-sync folder, and which tool it looks like (a name only, never the folder)</td>
+        </tr>
+        <tr>
+        <td>Entry statistics</td>
+        <td>Entry count, distinct days written, total words, first and last entry dates</td>
+        </tr>
+        <tr>
+        <td>Feature counts</td>
+        <td>Number of tags, tag links, images, image links, images without a thumbnail, custom font families and files, locked entries, entries with metadata, entries without a stored preview</td>
+        </tr>
+        <tr>
+        <td>Unlock methods</td>
+        <td>For each: its type (password or key file), when it was created, when it was last used</td>
+        </tr>
+        <tr>
+        <td>Backups</td>
+        <td>How many backups exist, the retention limit, the oldest and newest backup filenames, total size on disk</td>
+        </tr>
+        <tr>
+        <td>Plugins</td>
+        <td>Number of <code>.rhai</code> script files, and each registered plugin&#39;s id, whether it imports or exports, and whether it is built in</td>
+        </tr>
+        <tr>
+        <td>Spell checking</td>
+        <td>On Linux only: the resolved dictionary language and whether it is installed</td>
+        </tr>
+        <tr>
+        <td>Your settings</td>
+        <td>Your preferences, theme choice, theme overrides, and experimental flags</td>
+        </tr>
+        <tr>
+        <td>Recent activity</td>
+        <td>The last 200 app log records and the last 200 in-app log records</td>
+        </tr>
+        </tbody></table>
+        <p>What it never contains: your password, any encryption key, the device key for a passwordless journal, diary entry content, entry titles, tag names, unlock-method labels, journal names, or any file or folder path. Paths are stripped from log records before they are written, and the app deliberately does not record entry-level detail at the log levels that end up in the file.</p>
+        <p>The file is plain, readable JSON. Open it in any text editor before sending it if you want to check it yourself.</p>
         <h2 id="theme-overrides-advanced">Theme Overrides (Advanced)</h2><p>Advanced users can customize the app&#39;s color palette by overriding individual CSS theme tokens.</p>
         <p>Open <strong>Preferences → Advanced</strong>, then enter a JSON object with <code>light</code> and/or <code>dark</code> keys, each mapping CSS variable names to color values:</p>
         <pre><code class="language-json">{
@@ -579,6 +643,7 @@
           <li class="docs-toc-h2"><a href="#security-settings">Security Settings</a></li>
           <li class="docs-toc-h2"><a href="#data-settings">Data Settings</a></li>
           <li class="docs-toc-h2"><a href="#advanced-settings">Advanced Settings</a></li>
+          <li class="docs-toc-h2"><a href="#debug-dump">Debug dump</a></li>
           <li class="docs-toc-h2"><a href="#theme-overrides-advanced">Theme Overrides (Advanced)</a></li>
           <li class="docs-toc-h3"><a href="#supported-token-families">Supported Token Families</a></li>
           <li class="docs-toc-h2"><a href="#reset-journal">Reset Journal</a></li>

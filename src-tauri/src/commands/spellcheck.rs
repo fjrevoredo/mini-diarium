@@ -21,7 +21,9 @@ fn pick_locale(lc_all: Option<String>, lang: Option<String>) -> Option<String> {
         .find(|value| !value.is_empty())
 }
 
-fn system_locale() -> Option<String> {
+/// The OS locale, used to refine the dictionary region. Shared with the debug dump,
+/// which reports the same spell-check status this command returns.
+pub(crate) fn system_locale() -> Option<String> {
     pick_locale(std::env::var("LC_ALL").ok(), std::env::var("LANG").ok())
 }
 

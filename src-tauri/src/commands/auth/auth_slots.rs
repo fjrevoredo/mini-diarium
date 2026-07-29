@@ -109,7 +109,8 @@ pub fn register_keypair(
         // Wrap master_key for the new keypair using the session key and store the slot.
         crate::auth::add_keypair_slot(db, &label, pub_key)?;
 
-        info!("Keypair auth method registered: {}", label);
+        // The label is user-supplied and these records are captured into the debug dump.
+        info!("Keypair auth method registered");
         Ok(())
     })
 }

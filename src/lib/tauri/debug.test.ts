@@ -10,7 +10,7 @@ describe('debug command wrappers (IPC contract)', () => {
     vi.clearAllMocks();
   });
 
-  it('generateDebugDump → generate_debug_dump { filePath, preferencesJson } (camelCase)', async () => {
+  it('generateDebugDump → generate_debug_dump { filePath, clientStateJson } (camelCase)', async () => {
     const result: DebugDumpResult = {
       file_path: '/dump.txt',
       generated_at: '2024-01-01T00:00:00Z',
@@ -19,7 +19,7 @@ describe('debug command wrappers (IPC contract)', () => {
     await expect(generateDebugDump('/dump.txt', '{"a":1}')).resolves.toEqual(result);
     expect(mockInvoke).toHaveBeenCalledWith('generate_debug_dump', {
       filePath: '/dump.txt',
-      preferencesJson: '{"a":1}',
+      clientStateJson: '{"a":1}',
     });
   });
 });

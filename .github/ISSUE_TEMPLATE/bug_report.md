@@ -20,8 +20,11 @@ What should happen instead.
 What actually happens. Include error messages or screenshots if available.
 
 **Debug Dump** *(optional — skip if the app cannot be opened)*
-Open the app → **Help → Generate Debug Dump**, then attach the resulting JSON file to this issue.
-The file contains only diagnostic metadata (app version, entry counts, schema version) — no diary content.
+Unlock your journal, then open **Preferences → Advanced → Diagnostics → Generate Debug Dump**
+and attach the resulting JSON file to this issue.
+The file contains only diagnostic metadata (app and OS versions, schema version, entry and
+feature counts, recent log records with file paths removed). It never contains diary
+content, entry titles, tag names, journal names, passwords, keys, or file paths.
 
 **Environment**
 - OS: [e.g. Windows 11, macOS 14, Ubuntu 24.04]

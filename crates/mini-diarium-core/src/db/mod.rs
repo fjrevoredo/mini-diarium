@@ -41,7 +41,8 @@ pub use queries::{
     delete_db_setting, get_db_setting, set_db_setting, verify_require_all_auth,
     write_require_all_auth_mac,
     // Schema / engine / entry-stats introspection
-    get_entry_date_word_counts, read_engine_versions, read_schema_version,
+    get_entry_date_word_counts, read_content_counts, read_engine_versions, read_schema_version,
+    ContentCounts,
     // Custom fonts
     custom_font_has_weight, delete_custom_font_family, get_custom_font_weight_data,
     list_custom_font_rows, upsert_custom_font,

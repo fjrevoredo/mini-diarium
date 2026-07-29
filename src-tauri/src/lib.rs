@@ -6,9 +6,11 @@
 pub use mini_diarium_core::{auth, backup, config, crypto, db, export, import, plugin, search};
 
 pub mod commands;
+pub mod log_capture;
 pub mod menu;
 pub mod screen_lock;
 pub mod spellcheck;
+pub mod sync_detect;
 mod webview_security;
 mod window_focus;
 
@@ -87,10 +89,16 @@ pub fn run() {
         }
     }
 
-    env_logger::Builder::from_env(
-        env_logger::Env::default().default_filter_or("mini_diarium_lib=info"),
-    )
-    .init();
+    // `build()` + `log_capture::install` instead of `init()`: the same env_logger still
+    // writes to stderr, but every Info-and-above record is also kept in a bounded
+    // in-memory ring buffer so the debug dump can carry it. See log_capture's module docs
+    // for the Info-only / redact-on-read privacy rules.
+    log_capture::install(
+        env_logger::Builder::from_env(
+            env_logger::Env::default().default_filter_or("mini_diarium_lib=info"),
+        )
+        .build(),
+    );
     info!("Mini Diarium starting");
 
     let is_e2e = is_e2e_mode();

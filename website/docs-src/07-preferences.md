@@ -93,9 +93,35 @@ You can change your journal's storage location from Preferences. The `diary.db` 
 |---------|-------------|
 | Theme Overrides | Advanced JSON-based CSS token overrides (see below) |
 | Custom fonts | Upload/remove custom `.ttf`, `.otf`, `.woff`, or `.woff2` font families used by the editor |
-| Generate Debug Dump | Export a privacy-safe diagnostic JSON file |
+| Generate Debug Dump | Export a privacy-safe diagnostic JSON file (see below) |
 
 Custom font upload and delete stay explicit button-driven actions. If you delete the currently selected custom font, the editor font falls back to System Default immediately.
+
+## Debug dump
+
+**Preferences → Advanced → Diagnostics → Generate Debug Dump** writes a single JSON file you can attach to a bug report. Your journal must be unlocked, because most of what the file describes is read from the open database.
+
+What it contains:
+
+| Group | Fields |
+|---------|-------------|
+| App and platform | App version, Tauri version, debug/release build, OS, OS version, CPU architecture, WebView version |
+| Database | Stored schema version, the schema version this build expects, SQLite version, database file size |
+| Journals | How many journals are configured, an 8-character prefix of the active journal's id, and per journal: whether it is passwordless and whether it uses the default `diary.db` filename |
+| Security settings | Whether the active journal requires all unlock methods, and whether a deprecated copy of that flag is still in `config.json` |
+| Storage location | Whether the journal appears to sit inside a cloud-sync folder, and which tool it looks like (a name only, never the folder) |
+| Entry statistics | Entry count, distinct days written, total words, first and last entry dates |
+| Feature counts | Number of tags, tag links, images, image links, images without a thumbnail, custom font families and files, locked entries, entries with metadata, entries without a stored preview |
+| Unlock methods | For each: its type (password or key file), when it was created, when it was last used |
+| Backups | How many backups exist, the retention limit, the oldest and newest backup filenames, total size on disk |
+| Plugins | Number of `.rhai` script files, and each registered plugin's id, whether it imports or exports, and whether it is built in |
+| Spell checking | On Linux only: the resolved dictionary language and whether it is installed |
+| Your settings | Your preferences, theme choice, theme overrides, and experimental flags |
+| Recent activity | The last 200 app log records and the last 200 in-app log records |
+
+What it never contains: your password, any encryption key, the device key for a passwordless journal, diary entry content, entry titles, tag names, unlock-method labels, journal names, or any file or folder path. Paths are stripped from log records before they are written, and the app deliberately does not record entry-level detail at the log levels that end up in the file.
+
+The file is plain, readable JSON. Open it in any text editor before sending it if you want to check it yourself.
 
 ## Theme Overrides (Advanced)
 

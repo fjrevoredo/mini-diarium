@@ -26,6 +26,8 @@ bottom-up: `mini-diarium-crypto` (base) → `mini-diarium-core` (depends on cryp
 | `menu.rs` | Native menu builder (Preferences + Quit only, plus the macOS `PredefinedMenuItem` Edit/Window submenus) and the `menu-preferences` event emitter |
 | `screen_lock.rs` | OS session-lock listener → auto-lock trigger |
 | `spellcheck.rs` | Dictionary-language resolution + the Linux-only WebView enablement (see Gotcha #9) |
+| `log_capture.rs` | Bounded in-memory ring buffer of recent log records, feeding the debug dump (see Gotcha #10) |
+| `sync_detect.rs` | Cloud-sync-folder heuristics for the debug dump; returns a tool name, never a path |
 
 ### Core crate (`crates/mini-diarium-core/src/`)
 
@@ -166,6 +168,12 @@ The following layers prevent the embedded WebView from making outbound network r
 8. **Rhai AST requires `unsafe impl Send + Sync`**: The `rhai::AST` type does not implement `Send + Sync` in the current version. The `unsafe` impls on `RhaiImportPlugin` and `RhaiExportPlugin` are required and justified: AST is immutable after compilation, and Engine is created fresh per invocation.
 
 9. **WebView-level spell checking is a Linux-only concern** (TODO-0081, issue #227): WebView2 and WKWebView route the HTML `spellcheck` attribute to an OS-native text checker, so on Windows/macOS the frontend attribute is the whole feature. WebKitGTK runs no checker until `set_spell_checking_enabled(true)` is called on the `WebKitWebContext`, which defaults to off — so `spellcheck::apply` has a `#[cfg(target_os = "linux")]` body and is a deliberate no-op elsewhere. `webkit2gtk` is a direct dependency only under `[target.'cfg(target_os = "linux")'.dependencies]`; it must stay version-compatible with tauri's so `PlatformWebview::inner()` returns the same `webkit2gtk::WebView` type. Dictionaries are data, not code: the Flatpak manifest installs them to `/app/share/hunspell/`, other Linux packages rely on `/usr/share/hunspell`. `tauri dev` is not a Flatpak dictionary test: it uses host dictionaries, so install the active language's `hunspell-*` package before using it to validate spellcheck. Keep `DEFAULT_REGIONS` in `spellcheck.rs`, the `hunspell-dicts` module in `flatpak/io.github.fjrevoredo.mini-diarium.yml`, and the shipped locale list in `src/i18n/locales/` in sync — a UI language with no matching dictionary silently checks nothing.
+
+10. **The global logger is a capture tap, and `Info`-and-above records reach users** (TODO-0090): `lib.rs` installs `env_logger` via `.build()` + `log_capture::install(...)` instead of `.init()`. Stderr behaviour is unchanged, but every `Info`/`Warn`/`Error` record is also kept in a 200-entry ring buffer and serialized into the debug dump. Three invariants:
+    - **Never interpolate user data into `info!`/`warn!`/`error!`.** Journal names, auth-slot labels, tag names, and entry titles must not appear at those levels — no regex can recognise them, so the fix is always at the call site (see the id-only `info!` in `commands/auth/auth_journals.rs`). Paths are the one exception: `log_capture::redact` scrubs the home directory and absolute-path-shaped runs on read.
+    - **`Debug`/`Trace` are never captured**, by design — that is where path- and entry-shaped detail is allowed to live.
+    - **Nothing inside the ring buffer's mutex may log**, or `CapturingLogger::log` re-enters its own lock and deadlocks.
+    The dump's privacy boundary is enforced by `test_build_debug_dump_leaks_nothing_sensitive` in `commands/debug.rs`, which asserts the serialized dump carries no key material, no user-chosen string, and no path shape. A new dump field that fails it is the thing that is wrong.
 
 ## Common Task Checklists
 

@@ -59,7 +59,8 @@ fn add_journal_inner(
         .unwrap_or_else(|| id.clone());
     config::save_journals(app_data_dir, &journals, &active_id)?;
 
-    info!("Journal added: {} ({})", journal.name, id);
+    // Id only — the name is user-chosen and these records are captured into the debug dump.
+    info!("Journal added: {}", id);
     Ok(JournalInfo::from(&journal))
 }
 
@@ -183,7 +184,8 @@ fn switch_journal_inner(id: String, state: &DiaryState) -> Result<(), String> {
     // Persist active journal id
     config::save_active_journal_id(&state.app_data_dir, &id)?;
 
-    info!("Switched to journal: {} ({})", journal.name, id);
+    // Id only — the name is user-chosen and these records are captured into the debug dump.
+    info!("Switched to journal: {}", id);
     Ok(())
 }
 

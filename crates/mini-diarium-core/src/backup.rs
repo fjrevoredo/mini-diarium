@@ -3,7 +3,11 @@ use log::debug;
 use std::fs;
 use std::path::{Path, PathBuf};
 
-const MAX_BACKUPS: usize = 30;
+/// Number of rotated backups retained per journal.
+///
+/// Public so diagnostics (the debug dump) can report the retention target alongside the
+/// actual on-disk backup count — a mismatch is the signal that rotation is not running.
+pub const MAX_BACKUPS: usize = 30;
 
 /// Creates a backup of the diary file
 /// Returns the path of the created backup file
