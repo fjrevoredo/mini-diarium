@@ -112,7 +112,27 @@ Read `docs/todo/TODO.md`. Find all top-level `- [x]` items **and** their indente
 
 ---
 
-## Step 5 — Generate `latest-changelog.md`
+## Step 5 — Style and user-facing language review
+
+**Scope:** only the `### Added`, `### Changed`, `### Fixed`, and `### Removed` sections of the current unreleased block in `CHANGELOG.md` — the same slice Step 6 reads to generate `latest-changelog.md`. `Internal` and `Security` sections are out of scope; they never reach `latest-changelog.md`.
+
+1. Read [`docs/best-practices/WRITING_STYLE.md`](../../../../../docs/best-practices/WRITING_STYLE.md) and apply its rules to every entry in scope. Do not restate the rule list here — always read the current file, since duplicating it risks drifting out of sync.
+
+2. **Mechanical style-guide violations** (em dashes used as connectors, prohibited filler phrases, emoji, 3+ consecutive sentences with identical grammatical structure, passive voice where active reads naturally, missing Oxford comma, semicolon misuse): fix directly in `CHANGELOG.md`. Preserve meaning and existing Markdown formatting (bold lead-in, sub-bullets, links, `(TODO-XXXX)`/issue references). List each fix in the completion report as `before → after` (a short form is fine for long entries).
+
+3. **Internal/implementation-detail language** (internal file names, function/hook names, code-level mechanism names presented as the user-facing explanation, dev-only jargon) that isn't appropriate for an end user reading release notes: do **not** rewrite silently. Collect every instance with a suggested user-facing rewrite and present them together via the question tool, batched (same pattern as Step 7's "ask user" question — not a hard STOP):
+   - **Question:** "Apply N suggested rewrites for user-facing language?"
+   - Frame each suggested rewrite as its own accept/skip item within that one question.
+   - Apply only the rewrites the user accepts.
+   - **Guidance, not a rule:** sub-bullets that are clearly a technical changelog record for developers (this repo's entries often nest an internal explanation under a user-facing headline bullet) are lower priority for rewriting than the top-level bullet text, since the top-level bullet is what a user reads first. Use judgment.
+
+4. **No violations found:** note "no style/tone issues found" in the completion report and continue — don't fabricate a question prompt.
+
+5. **Never a hard stop.** Once mechanical fixes are applied and the user has responded to any suggested rewrites (accepted or skipped), continue to Step 6 using the now-current `CHANGELOG.md` content.
+
+---
+
+## Step 6 — Generate `latest-changelog.md`
 
 1. Read `latest-changelog.template.md`. Extract the content between `<template>` and `</template>` tags (exclude the tags themselves and the HTML comment block above them).
 
@@ -132,14 +152,14 @@ Read `docs/todo/TODO.md`. Find all top-level `- [x]` items **and** their indente
 
 ---
 
-## Step 6 — Add release notification (ask user)
+## Step 7 — Add release notification (ask user)
 
 Before stamping the CHANGELOG, ask the user whether they want to add a release notification to `public/notifications.json`. Use the question tool:
 
 - **Question:** "Add a release notification for vX.Y.Z to public/notifications.json?"
 - **Options:**
   - "Yes, add notification" — proceed to add the entry
-  - "No, skip" — skip to Step 7
+  - "No, skip" — skip to Step 8
 
 **If the user chooses "Yes, add notification":**
 
@@ -167,7 +187,7 @@ Before stamping the CHANGELOG, ask the user whether they want to add a release n
 4. **Prepend** the new entry to the `entries` array (newest first, matching the existing order).
 5. Write the updated JSON back to `public/notifications.json` (use 2-space indentation, matching the existing format — a trailing newline at end of file is expected).
 
-**If the user chooses "No, skip":** do nothing and proceed to Step 7.
+**If the user chooses "No, skip":** do nothing and proceed to Step 8.
 
 **Edge cases:**
 - If `public/notifications.json` is missing or cannot be parsed: note the error and skip (do not block the release).
@@ -175,7 +195,7 @@ Before stamping the CHANGELOG, ask the user whether they want to add a release n
 
 ---
 
-## Step 7 — Stamp CHANGELOG date
+## Step 8 — Stamp CHANGELOG date
 
 In `CHANGELOG.md`, replace the `[Unreleased]` token in the first version heading:
 
@@ -193,6 +213,7 @@ After all steps complete, print a summary including:
 - Which version files were checked (all five pass)
 - Lockfile integrity check result (pass / regenerated / N/A)
 - Whether TODO items were archived (count, or "none found")
+- Style/tone review: N mechanical fixes applied, N rewrites suggested (N accepted / N skipped), or "no issues found"
 - Confirmation that `latest-changelog.md` was written
 - Whether a release notification was added to `public/notifications.json` (or "user skipped" / "not added")
 - Confirmation that CHANGELOG was date-stamped
@@ -217,6 +238,7 @@ Also remind the user to:
 | Branch is not `master` and doesn't contain RELEASE_VERSION | STOP — ask user |
 | Any version file mismatch | STOP — report all, suggest bump-version |
 | No checked TODO items | Note it, continue |
+| Style/tone review finds no issues | Note it, continue |
 | `latest-changelog.md` already exists | Overwrite silently |
 | Notification with same id already exists | Warn, skip adding |
 | `public/notifications.json` missing/unparseable | Note error, skip adding |
