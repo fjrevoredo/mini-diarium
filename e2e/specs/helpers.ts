@@ -112,6 +112,26 @@ export async function authenticate(password: string): Promise<void> {
 }
 
 /**
+ * Types text into whatever element currently has focus, one character per
+ * `browser.keys()` call.
+ *
+ * `browser.keys(str)` sends the whole string as a single WebDriver Actions
+ * tick: every keyDown fires before any keyUp. On WebKitGTK (Linux CI), a
+ * second keyDown for a key that is still "down" (no keyUp yet queued) is
+ * read as key-repeat rather than a new keystroke, so the second half of any
+ * doubled letter (e.g. "toggle", "add") is silently dropped — deterministically,
+ * not flaky (reproduced identically across separate CI runs). `.setValue()`
+ * does not have this problem (different WebDriver command), but is not an
+ * option for a TipTap/ProseMirror body. Use this instead of `browser.keys()`
+ * whenever the typed string may contain a doubled letter.
+ */
+export async function typeText(text: string): Promise<void> {
+  for (const char of text) {
+    await browser.keys(char);
+  }
+}
+
+/**
  * Dismiss the first-run onboarding tour if it appears (only on journal creation).
  *
  * The tour mounts asynchronously after `startOnboarding()` fires, so we first

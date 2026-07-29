@@ -26,7 +26,7 @@
  * these dates, since the calendar initialises on the current month after each unlock.
  */
 
-import { connectToApp, authenticate, dismissOnboardingTour } from './helpers';
+import { connectToApp, authenticate, dismissOnboardingTour, typeText } from './helpers';
 
 const TEST_PASSWORD = 'e2e-test-password-123'; // same journal DB as diary-workflow.spec.ts
 
@@ -331,7 +331,9 @@ describe('Multi-entry workflow', () => {
     await $('[data-testid="title-input"]').setValue(SCENARIO_E_TITLE);
     const editorE = await $('.ProseMirror');
     await editorE.click();
-    await browser.keys(SCENARIO_E_BODY);
+    // typeText, not browser.keys(): SCENARIO_E_BODY contains a doubled letter
+    // ("toggle") — see typeText's doc comment in helpers.ts.
+    await typeText(SCENARIO_E_BODY);
     await browser.pause(2500); // flush autosave
 
     // Seed sanity-check: without this, a seeding failure is indistinguishable from the
@@ -353,7 +355,9 @@ describe('Multi-entry workflow', () => {
       const editorLoop = await $('.ProseMirror');
       await editorLoop.click();
       await browser.keys(['End']);
-      await browser.keys(appended);
+      // typeText, not browser.keys(): "add1"/"add2"/"add3" contain a doubled
+      // letter ("add") — see typeText's doc comment in helpers.ts.
+      await typeText(appended);
       await toggleTimeline(); // → Timeline (unmounts EditorPanel mid-debounce)
       await browser.pause(500);
       await toggleTimeline(); // → back to the editor (remounts + reloads the date)

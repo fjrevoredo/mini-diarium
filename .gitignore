@@ -82,3 +82,5 @@ flatpak/node-sources.json
 
 .direnv/
 result
+
+.claude/settings.json
