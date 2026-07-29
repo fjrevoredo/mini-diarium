@@ -1,6 +1,16 @@
 {
   "entries": [
     {
+      "id": "v0.6.4-release",
+      "type": "release",
+      "version": "0.6.4",
+      "title": "What's new in 0.6.4",
+      "body": "Fixed a potential content-loss bug when editing and quickly navigating to the timeline or another entry, fixed text that could jump into the title field on blank days, and brought the debug dump up to date with current app features.",
+      "date": "2026-07-30",
+      "linkUrl": "https://github.com/fjrevoredo/mini-diarium/releases/tag/v0.6.4",
+      "linkLabel": "Full release notes"
+    },
+    {
       "id": "v0.6.3-release",
       "type": "release",
       "version": "0.6.3",
