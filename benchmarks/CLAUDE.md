@@ -19,30 +19,12 @@ Benchmark-specific:
 
 ## Benchmarks Covered
 
-| Benchmark | File | Scenarios |
-|-----------|------|-----------|
-| `cipher_encrypt` | `cipher_bench.rs` | AES-256-GCM encrypt at 1 KB, 10 KB, 100 KB |
-| `cipher_decrypt` | `cipher_bench.rs` | AES-256-GCM decrypt at 1 KB, 10 KB, 100 KB |
-| `db_insert_entry` | `db_bench.rs` | One-time entry creation into fresh DB (in-memory DB — isolates query CPU from disk-flush variance) |
-| `db_update_entry` | `db_bench.rs` | Auto-save hot path: update existing entry, realistic HTML (in-memory DB — isolates query CPU from disk-flush variance) |
-| `db_delete_entry` | `db_bench.rs` | Hard delete by id — explicit user-initiated delete (in-memory DB — isolates query CPU from disk-flush variance) |
-| `db_get_entries_by_date` | `db_bench.rs` | Read 1 entry by date |
-| `db_get_all_entry_dates/100` | `db_bench.rs` | Distinct date list — 100-entry journal |
-| `db_get_all_entry_dates/500` | `db_bench.rs` | Distinct date list — 500-entry journal |
-| `db_get_all_entries/100` | `db_bench.rs` | Full scan — 100-entry journal |
-| `db_get_all_entries/500` | `db_bench.rs` | Full scan — 500-entry journal |
-| `db_get_all_entries/1000` | `db_bench.rs` | Full scan — 1000-entry journal |
-| `db_get_all_entries/3650` | `db_bench.rs` | Full scan — 3650-entry journal (decade scale) |
-| `db_search_entries/500` | `db_bench.rs` | In-memory full-text search — 500-entry worst case (all match) |
-| `db_search_entries/1000` | `db_bench.rs` | In-memory full-text search — 1000-entry worst case |
-| `db_search_entries/3650` | `db_bench.rs` | In-memory full-text search — 3650-entry worst case; 150 ms is the architecture decision gate |
-| `auth_argon2/wrap_master_key` | `auth_bench.rs` | Argon2id hash + AES-GCM wrap (unlock cost) |
-| `auth_argon2/unwrap_master_key` | `auth_bench.rs` | Argon2id verify + AES-GCM unwrap (unlock cost) |
-| `count_words_plain_500w` | `word_count_bench.rs` | Word count on ~500-word plain prose |
-| `count_words_html_500w` | `word_count_bench.rs` | Word count on realistic TipTap HTML |
-| `parseMarkdownToHtml short` | `markdown.bench.ts` | marked + DOMPurify on ~100-word Markdown |
-| `parseMarkdownToHtml long` | `markdown.bench.ts` | marked + DOMPurify on ~1000-word Markdown |
-| `ci_pipeline_duration` | _workflow-generated_ | Total wall-clock CI pipeline duration on master |
+The bench files themselves are the inventory — read `cipher_bench.rs`, `db_bench.rs`, `auth_bench.rs`, `word_count_bench.rs` (criterion) and `markdown.bench.ts` (Vitest) for the current scenario list. `ci_pipeline_duration` is workflow-generated, not a bench file.
+
+Two design choices that the bench code does not explain:
+
+- **The `db_*` benches use an in-memory DB on purpose** — it isolates query CPU cost from disk-flush variance.
+- **`db_search_entries/3650` (decade scale) is the architecture decision gate: 150 ms.** If the in-memory scan exceeds it, the no-plaintext-index design has to be revisited.
 
 ## Benchmark Dashboard (`index.html`)
 

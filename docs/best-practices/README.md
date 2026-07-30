@@ -9,6 +9,7 @@ Ownership rule: domain guides describe current structure, workflows, and feature
 - [Frontend Best Practices](FRONTEND_BEST_PRACTICES.md) - SolidJS reactivity, state ownership, Tauri error UI, TipTap/editor flows, accessibility, testing, and E2E stability.
 - [CI Best Practices](CI_BEST_PRACTICES.md) - GitHub Actions structure, permissions, caching, release safeguards, artifacts, and failure diagnostics.
 - [Context File Best Practices](CONTEXT_FILES_BEST_PRACTICES.md) - authoring rules for CLAUDE.md / AGENTS.md files: what belongs, what doesn't, format guidelines, and an audit checklist.
+- [Agent Hooks Best Practices](AGENT_HOOKS_BEST_PRACTICES.md) - configuring Claude Code hooks: per-event time budgets, measured command costs in this repo, why whole-project work belongs on `Stop`, and the current hook configuration to reproduce on a fresh clone.
 - [Writing Style Guide](WRITING_STYLE.md) - shared rules for all human-facing prose (blog posts, PR responses, docs): em dashes, filler phrases, voice, and punctuation.
 - [Post-Task Completion Best Practices](POST_TASK_BEST_PRACTICES.md) - the six-check checklist every task must pass before being reported as complete (scope assessment, TODO, CHANGELOG, tests, formatting, summary), plus the verbatim summary template to present.
 

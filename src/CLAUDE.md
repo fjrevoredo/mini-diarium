@@ -3,21 +3,6 @@
 > For project architecture, command registry, and cross-cutting conventions see the [root CLAUDE.md](../CLAUDE.md).
 > For durable frontend rules, use [Frontend best practices](../docs/best-practices/FRONTEND_BEST_PRACTICES.md) before changing SolidJS reactivity, state ownership, Tauri error UI, TipTap/editor behavior, accessibility, or E2E-visible UI.
 
-## Key Directories
-
-| Directory | Purpose |
-|-----------|---------|
-| `src/components/auth/` | Pre-auth unlock and journal creation screens |
-| `src/components/calendar/` | Monthly calendar with entry date indicators |
-| `src/components/editor/` | TipTap rich-text editor, toolbar, entry navigation, inline overlays |
-| `src/components/layout/` | App shell and editor panel; extracted hooks live in `editor-panel/` |
-| `src/components/overlays/` | All overlay dialogs — preferences (split by tab), stats, import/export, tags, notifications, onboarding, image picker |
-| `src/components/search/` | Search UI — `SearchOverlay` (mounted in `MainLayout`), `SearchBar`, `SearchResults` |
-| `src/state/` | Signal-based state modules, one per domain — see State Management below |
-| `src/lib/` | Tauri invoke wrappers (`tauri/` — one sub-file per command category, barrel `index.ts`), utility helpers, shortcuts listener, theme management |
-| `src/i18n/` | Translation files (`locales/`) and i18n context wrapper |
-| `src/test/` | Vitest setup and `renderWithI18n` helper |
-
 ## State Management
 
 State modules live in `src/state/` — one file per domain, all SolidJS signals. See each file for current signals and exports.

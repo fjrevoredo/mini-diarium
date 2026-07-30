@@ -341,24 +341,7 @@ See `website/docs-src/_template.md` for the starter template.
 
 ## Local Docker Dev
 
-Use the Docker Compose setup in `website/` to build and preview the site locally before committing or deploying.
-
-### Prerequisites
-
-Docker Desktop must be installed and its daemon must be running.
-
-### Commands (run from `website/` directory)
-
-```bash
-# Build the Docker image
-docker compose build
-
-# Start the container (serves at http://localhost:80)
-docker compose up -d
-
-# Stop the container
-docker compose down
-```
+Use the standard `docker compose` commands from the `website/` directory to build and preview the site locally before committing or deploying. The container serves on port 80.
 
 ### Verifying the site
 

@@ -16,7 +16,7 @@ For domain-specific conventions, gotchas, and checklists, see:
 - [E2E (e2e/)](e2e/CLAUDE.md) — WebdriverIO, tauri-driver, viewport rules, E2E mode contracts
 - [Benchmarks (benchmarks/)](benchmarks/CLAUDE.md) — criterion, Vitest bench, CI tracking, gotchas
 - [Website (website/)](website/CLAUDE.md) — blog post workflow, generator script, content strategy, file layout
-- [Best practices](docs/best-practices/README.md) — durable frontend, Rust, Tauri, and CI rules for code quality and regression diagnosis
+- [Best practices](docs/best-practices/README.md) — durable frontend, Rust, Tauri, CI, and agent-hook rules for code quality and regression diagnosis
 
 ## Execution Environment
 
@@ -61,38 +61,6 @@ Commands with side effects:
 - [Layered architecture](docs/diagrams/architecture.svg) - Presentation/state/backend/data layers including journals, config, and plugins (D2)
 
 **Regenerate diagrams:** `cmd.exe /c bun run diagrams` — regenerates all `docs/diagrams/` SVGs; `.mmd` sources via mmdc, `.d2` sources via d2.
-
-Quick reference (ASCII art):
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│                     PRESENTATION LAYER                         │
-│                    (SolidJS Components)                       │
-│  ┌──────────┐ ┌────────┐ ┌────────────┐ ┌────────┐ ┌──────────┐ │
-│  │ Journals │ │  Auth  │ │ MainLayout │ │ Search │ │ Overlays │ │
-│  └──────────┘ └────────┘ └────────────┘ └────────┘ └──────────┘ │
-└────────────────────────────┬────────────────────────────────────┘
-                             │ Reactive Signals
-┌────────────────────────────┴────────────────────────────────────┐
-│                       STATE LAYER                               │
-│              Signal-based state modules (src/state/ — one module per domain)              │
-└────────────────────────────┬────────────────────────────────────┘
-                             │ invoke() / listen()
-┌────────────────────────────┴────────────────────────────────────┐
-│                 BACKEND (Rust — Cargo workspace)                 │
-│ App crate  (src-tauri/): commands (auth · entries · search ·     │
-│   nav · stats · import/export · plugin) · menu.rs · OS shell     │
-│ Core crate (mini-diarium-core): db · import · export · plugin    │
-│   · search · backup · config  (no tauri dep)                     │
-│ Crypto crate (mini-diarium-crypto): cipher · password hashing    │
-│   · master-key wrapping  (no rusqlite dep)                       │
-└────────────────────────────┬────────────────────────────────────┘
-                             │
-           ┌──────────┬──────────────┬─────────────┬──────────────┐
-           │ diary.db │ config.json  │ backups/    │ plugins/     │
-           │ encrypted│ journals     │ rotated     │ Rhai scripts │
-           └──────────┴──────────────┴─────────────┴──────────────┘
-```
 
 **Key relationships:**
 - Entries are stored encrypted in SQLite. Each entry has a unique integer `id` (PRIMARY KEY AUTOINCREMENT) and can have a unique date. Multiple entries per date are supported (schema v6). Full-text search is implemented as an in-memory scan over decrypted entries — the scan core lives in `crates/mini-diarium-core/src/search/` (`search_entries` in `mod.rs`; the DB-free matching/snippet helpers in `text.rs`), with a thin `commands/search.rs` Tauri wrapper; the old plaintext `entries_fts` table was removed in schema v4.
@@ -172,21 +140,9 @@ cmd.exe /c bun run coverage:self-test       # parser self-test
    - **Backend OS events** (`screen_lock.rs`): OS session lock/logoff/suspend; fires even while the app is in the background.
    - **Frontend focus-loss lock** (`src/lib/focus-lock.ts` + `src-tauri/src/window_focus.rs`): debounced lock (`FOCUS_LOSS_DEBOUNCE_MS`, default 3s) on OS-level focus loss (minimize, alt-tab, Cmd+H), controlled by `autoLockOnFocusLoss`. Any code that opens a native dialog must import `open`/`save`/`confirm` from `src/lib/dialog.ts`, never `@tauri-apps/plugin-dialog` directly — see `src/CLAUDE.md` gotcha #10.
 
-5. **SonarCloud quality gate failure — read the API, don't guess**: When the "SonarCloud Code Analysis" check fails on a PR, the PR comment gives only a summary. To find which files are responsible, use the public API directly — no login required:
+5. **SonarCloud PR comments only summarize — they never name the offending files.** When the "SonarCloud Code Analysis" check fails, query the public SonarCloud API for the per-file breakdown instead of guessing. Recipes: `ci-gate-diagnosis` skill.
 
-   ```bash
-   # Which condition failed and by how much
-   curl -s "https://sonarcloud.io/api/qualitygates/project_status?projectKey=fjrevoredo_mini-diarium&pullRequest=<PR>" | jq .
-
-   # Per-file breakdown (replace metric key as needed: new_duplicated_lines_density, new_coverage, etc.)
-   curl -s "https://sonarcloud.io/api/measures/component_tree?component=fjrevoredo_mini-diarium&pullRequest=<PR>&metricKeys=new_duplicated_lines_density,new_duplicated_lines&strategy=leaves&ps=50" | jq '.components[] | select(.measures[].value != "0.0") | {name: .name, measures: .measures}'
-   ```
-
-   Common failures and their usual causes:
-   - **`new_duplicated_lines_density` > 3%**: copy-pasted test helpers or fixture objects — extract to a shared constant/function in the same file.
-   - **`new_coverage` < threshold**: new logic in a file that `generatePdfFromElement`-style functions (html2canvas/jsPDF) can't be tested in JSDOM — mock the module boundary instead.
-
-6. **Codecov patch check — mirror it locally before pushing**: CI uploads `coverage/lcov.info` (frontend) and `src-tauri/lcov.info` (backend) to Codecov, which enforces `patch ≥ 80%` (new/changed lines) and `project: auto` (no total regression) per `codecov.yml`. The Vitest thresholds in `vitest.config.ts` are a coarse frontend-only global floor and do **not** catch patch/project failures — you can pass locally and still fail Codecov. Run the local mirror: `cmd.exe /c bun run coverage:diff` (`scripts/check-diff-coverage.mjs`) consumes the same lcov files + `git diff origin/master`, fails below 80%, and lists every uncovered new line as `file:line`. This mirrors the **patch** check (the most common CI failure); the **project** total-regression check needs a base-branch coverage baseline and is not replicated locally. The gate now also runs as step 9 of `bun run pre-commit` (via `--working-tree`, so it checks not-yet-committed changes against `origin/master`); that run generates both lcov files by running the frontend/backend tests with coverage. Frontend lcov comes from `bun run test:coverage`; backend lcov requires `cargo-llvm-cov` + `cargo-nextest` (`cargo install cargo-llvm-cov cargo-nextest --locked`) via `cargo llvm-cov nextest --workspace --lcov --output-path lcov.info` from `src-tauri/` (`--workspace` so the `mini-diarium-core` crate is covered; lcov still lands at `src-tauri/lcov.info`). Flags: `--generate` (run both), `--base <ref>`, `--fail-under <pct>`, `--no-fail`, `--frontend`/`--backend`. See [CI Best Practices → Coverage Gating](docs/best-practices/CI_BEST_PRACTICES.md#coverage-gating).
+6. **Codecov patch check — the Vitest thresholds in `vitest.config.ts` do NOT catch it**: they are a coarse frontend-only global floor, so you can pass locally and still fail Codecov's `patch ≥ 80%` on new/changed lines. Mirror the gate before pushing with `cmd.exe /c bun run coverage:diff` (also step 9 of `bun run pre-commit`). Full mechanics, lcov generation, and flags: `ci-gate-diagnosis` skill.
 
 ## Security Rules
 

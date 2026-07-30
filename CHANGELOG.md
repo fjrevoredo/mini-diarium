@@ -34,6 +34,12 @@ Template:
 
 # Versions
 
+## [Unreleased]
+
+### Internal
+- **Agent hooks best-practices guide**: added [`docs/best-practices/AGENT_HOOKS_BEST_PRACTICES.md`](docs/best-practices/AGENT_HOOKS_BEST_PRACTICES.md), covering per-event time budgets for Claude Code hooks, measured command costs in this repo, the rule that whole-project work belongs on `Stop` rather than `PostToolUse`, and the current hook configuration. Both `.claude/settings.json` and `.claude/settings.local.json` are gitignored, so hook setup does not survive a clone and has to be documented.
+- **Trimmed derivable content from context files**: removed the ASCII architecture diagram from the root `CLAUDE.md` (the linked `docs/diagrams/` sources already cover it), the directory table from `src/CLAUDE.md`, the benchmark inventory table from `benchmarks/CLAUDE.md`, and the standard `docker compose` invocations from `website/CLAUDE.md`. Moved the SonarCloud and Codecov diagnosis recipes out of the root `CLAUDE.md` gotchas into the new `ci-gate-diagnosis` skill, leaving the headline warnings in place.
+
 ## [0.6.4] - 30-07-2026
 
 ### Fixed
