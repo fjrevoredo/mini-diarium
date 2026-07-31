@@ -2,6 +2,19 @@
 
 Download the latest release for your platform from [GitHub Releases](https://github.com/fjrevoredo/mini-diarium/releases).
 
+## System requirements
+
+| Platform | Minimum version                                            |
+| -------- | ---------------------------------------------------------- |
+| Windows  | Windows 10 (1809) or later, 64-bit                          |
+| macOS    | **macOS 10.15 Catalina** or later (Intel and Apple Silicon) |
+| Linux    | Ubuntu 20.04+, Fedora 36+, Arch, or equivalent (`glibc` 2.31+, WebKitGTK 4.1) |
+
+The macOS `.dmg` is a universal binary and runs natively on both Intel and Apple Silicon Macs.
+Versions older than Catalina (Mojave 10.14, High Sierra 10.13, and earlier) are **not supported** —
+the app will refuse to launch. See [issue #241](https://github.com/fjrevoredo/mini-diarium/issues/241)
+for the discussion on older macOS releases.
+
 ## Package formats
 
 | Platform | Format                                                        |

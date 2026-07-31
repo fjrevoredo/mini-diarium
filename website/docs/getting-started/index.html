@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Create your first encrypted journal, set a password, and start writing. Covers the welcome tour, multiple journals, key file auth, and local-only mode." />
+  <meta name="description" content="System requirements, creating your first encrypted journal, setting a password, the welcome tour, multiple journals, key file auth, and local-only mode." />
   <meta name="robots" content="index,follow,max-snippet:-1,max-image-preview:large,max-video-preview:-1" />
   <meta name="theme-color" content="#0e0e0e" />
   <meta name="author" content="Francisco J. Revoredo" />
@@ -12,7 +12,7 @@
   <meta property="og:locale" content="en_US" />
   <meta property="og:url" content="https://mini-diarium.com/docs/getting-started/" />
   <meta property="og:title" content="Getting Started — Mini Diarium Documentation" />
-  <meta property="og:description" content="Create your first encrypted journal, set a password, and start writing. Covers the welcome tour, multiple journals, key file auth, and local-only mode." />
+  <meta property="og:description" content="System requirements, creating your first encrypted journal, setting a password, the welcome tour, multiple journals, key file auth, and local-only mode." />
   <meta property="og:image" content="https://mini-diarium.com/assets/og-cover.png" />
   <meta property="og:image:type" content="image/png" />
   <meta property="og:image:width" content="1200" />
@@ -22,7 +22,7 @@
   <meta name="twitter:site" content="@MiniDiarium" />
   <meta name="twitter:creator" content="@MiniDiarium" />
   <meta name="twitter:title" content="Getting Started — Mini Diarium Documentation" />
-  <meta name="twitter:description" content="Create your first encrypted journal, set a password, and start writing. Covers the welcome tour, multiple journals, key file auth, and local-only mode." />
+  <meta name="twitter:description" content="System requirements, creating your first encrypted journal, setting a password, the welcome tour, multiple journals, key file auth, and local-only mode." />
   <meta name="twitter:image" content="https://mini-diarium.com/assets/og-cover.png" />
   
   <title>Getting Started — Mini Diarium Documentation</title>
@@ -235,9 +235,9 @@
       "@type": "TechArticle",
       "@id": "https://mini-diarium.com/docs/getting-started/#article",
       "headline": "Getting Started",
-      "description": "Create your first encrypted journal, set a password, and start writing. Covers the welcome tour, multiple journals, key file auth, and local-only mode.",
-      "dateModified": "2026-06-27T00:00:00Z",
-      "keywords": "setup, password, first launch",
+      "description": "System requirements, creating your first encrypted journal, setting a password, the welcome tour, multiple journals, key file auth, and local-only mode.",
+      "dateModified": "2026-07-31T00:00:00Z",
+      "keywords": "setup, password, first launch, system requirements",
       "publisher": {
         "@type": "Organization",
         "name": "Mini Diarium",
@@ -345,7 +345,7 @@
     <div class="post-header">
       <p class="hero-eyebrow">Mini Diarium documentation</p>
       <h1>Getting Started</h1>
-      <p class="hero-sub">Create your first encrypted journal, set a password, and start writing. Covers the welcome tour, multiple journals, key file auth, and local-only mode.</p>
+      <p class="hero-sub">System requirements, creating your first encrypted journal, setting a password, the welcome tour, multiple journals, key file auth, and local-only mode.</p>
     </div>
   </div>
 </section>
@@ -401,6 +401,29 @@
         </div>
       </nav>
       <article class="blog-post prose" aria-label="Getting Started">
+        <h2 id="system-requirements">System Requirements</h2><table>
+        <thead>
+        <tr>
+        <th>Platform</th>
+        <th>Minimum version</th>
+        </tr>
+        </thead>
+        <tbody><tr>
+        <td>Windows</td>
+        <td>Windows 10 (1809) or later, 64-bit</td>
+        </tr>
+        <tr>
+        <td>macOS</td>
+        <td>macOS 10.15 Catalina or later (Intel and Apple Silicon)</td>
+        </tr>
+        <tr>
+        <td>Linux</td>
+        <td>Ubuntu 20.04+, Fedora 36+, Arch, or equivalent (<code>glibc</code> 2.31+, WebKitGTK 4.1)</td>
+        </tr>
+        </tbody></table>
+        <p>The macOS download is a universal binary, so one <code>.dmg</code> covers both Intel and Apple Silicon Macs.</p>
+        <p>macOS releases older than Catalina (Mojave 10.14 and earlier) are <strong>not supported</strong>. The app declares
+        a minimum system version, so macOS will refuse to launch it rather than starting and failing partway.</p>
         <h2 id="first-launch">First Launch</h2><p>When you open Mini Diarium, the app starts at the <strong>Journal Picker</strong>. From there you can create a new journal or open an existing <code>diary.db</code> file.</p>
         <p>If you create a new journal, you will be asked to create a password. This password encrypts your entire journal using AES-256-GCM encryption.</p>
         <p><strong>There is no password recovery.</strong> If you forget your password, your entries cannot be recovered. Choose something memorable and keep it safe.</p>
@@ -434,6 +457,7 @@
       <aside class="docs-toc" aria-label="On this page">
         <p class="docs-toc-label">On this page</p>
         <ul>
+          <li class="docs-toc-h2"><a href="#system-requirements">System Requirements</a></li>
           <li class="docs-toc-h2"><a href="#first-launch">First Launch</a></li>
           <li class="docs-toc-h2"><a href="#welcome-tour">Welcome Tour</a></li>
           <li class="docs-toc-h2"><a href="#locking-and-unlocking">Locking and Unlocking</a></li>

@@ -71,6 +71,8 @@ Always verify addresses against [DONATE.md](DONATE.md) on `master` before sendin
 
 Download the latest release for your platform from [GitHub Releases](https://github.com/fjrevoredo/mini-diarium/releases).
 
+Requires **Windows 10 (1809)+**, **macOS 10.15 Catalina+**, or **Linux** (Ubuntu 20.04+, Fedora 36+, Arch, or equivalent).
+
 Quick install:
 
 - Windows (Microsoft Store): [apps.microsoft.com/detail/9PJFTX44ZS43](https://apps.microsoft.com/detail/9PJFTX44ZS43)

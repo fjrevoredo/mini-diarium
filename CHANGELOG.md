@@ -36,6 +36,9 @@ Template:
 
 ## [Unreleased]
 
+### Added
+- **Published minimum supported OS versions**: the minimum version for each platform (Windows 10 1809+, macOS 10.15 Catalina+, Linux with `glibc` 2.31+ / WebKitGTK 4.1) was only recorded in `tauri.conf.json` and appeared nowhere a user could find it. It is now stated in the README download section, a new "System requirements" section in [`docs/INSTALLATION.md`](docs/INSTALLATION.md), the Getting Started documentation page, and on each platform card in the website download section. Requested in [issue #241](https://github.com/fjrevoredo/mini-diarium/issues/241) by a user who could not tell whether the app would run on their Mac before downloading it.
+
 ### Internal
 - **Agent hooks best-practices guide**: added [`docs/best-practices/AGENT_HOOKS_BEST_PRACTICES.md`](docs/best-practices/AGENT_HOOKS_BEST_PRACTICES.md), covering per-event time budgets for Claude Code hooks, measured command costs in this repo, the rule that whole-project work belongs on `Stop` rather than `PostToolUse`, and the current hook configuration. Both `.claude/settings.json` and `.claude/settings.local.json` are gitignored, so hook setup does not survive a clone and has to be documented.
 - **Trimmed derivable content from context files**: removed the ASCII architecture diagram from the root `CLAUDE.md` (the linked `docs/diagrams/` sources already cover it), the directory table from `src/CLAUDE.md`, the benchmark inventory table from `benchmarks/CLAUDE.md`, and the standard `docker compose` invocations from `website/CLAUDE.md`. Moved the SonarCloud and Codecov diagnosis recipes out of the root `CLAUDE.md` gotchas into the new `ci-gate-diagnosis` skill, leaving the headline warnings in place.

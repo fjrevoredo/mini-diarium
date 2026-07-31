@@ -1,11 +1,24 @@
 ---
 title: Getting Started
 slug: getting-started
-description: Create your first encrypted journal, set a password, and start writing. Covers the welcome tour, multiple journals, key file auth, and local-only mode.
+description: System requirements, creating your first encrypted journal, setting a password, the welcome tour, multiple journals, key file auth, and local-only mode.
 order: 1
-updated: 2026-06-27
-tags: setup, password, first launch
+updated: 2026-07-31
+tags: setup, password, first launch, system requirements
 ---
+
+## System Requirements
+
+| Platform | Minimum version |
+| --- | --- |
+| Windows | Windows 10 (1809) or later, 64-bit |
+| macOS | macOS 10.15 Catalina or later (Intel and Apple Silicon) |
+| Linux | Ubuntu 20.04+, Fedora 36+, Arch, or equivalent (`glibc` 2.31+, WebKitGTK 4.1) |
+
+The macOS download is a universal binary, so one `.dmg` covers both Intel and Apple Silicon Macs.
+
+macOS releases older than Catalina (Mojave 10.14 and earlier) are **not supported**. The app declares
+a minimum system version, so macOS will refuse to launch it rather than starting and failing partway.
 
 ## First Launch
 

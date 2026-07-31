@@ -308,3 +308,49 @@ Parent: [`TODO-0064: E2E coverage for in-app-reachable actions (right-sized)`](T
 **Constraints**: each new spec selector must exist in the canonical `data-testid` table (`src/CLAUDE.md`) first (`e2e/CLAUDE.md` data-testid section). Follow the viewport constraints (`e2e/CLAUDE.md` gotchas #2–3, 800×660 clean-mode default) — no new `browser.setWindowSize()` calls.
 
 ---
+
+## TODO-0096-01: macOS Mojave support feasibility evidence
+
+Parent: [`TODO-0096: Analyze feasibility of macOS Mojave (10.14) support`](TODO.md)
+
+**Origin**: [issue #241](https://github.com/fjrevoredo/mini-diarium/issues/241). The reporter runs Mojave and notes others use even older releases (Mavericks) on Macs kept as writing machines. The documentation half of that issue (publishing the minimum supported version) was completed separately; this item covers only the "can we actually support Mojave" question.
+
+**Current declared floor**: `src-tauri/tauri.conf.json` sets `bundle.macOS.minimumSystemVersion` to `10.15`. That becomes `LSMinimumSystemVersion` in `Info.plist`, so macOS refuses to launch the app below Catalina rather than starting and failing partway.
+
+### What is NOT a blocker (verified)
+
+- **Rust toolchain**: the platform support doc states the minimum is macOS 10.12 Sierra on x86_64 and 11.0 Big Sur on ARM64. Mojave (10.14) is inside the x86_64 floor.
+- **Tauri's stated 10.15**: that is the *build machine* requirement on the prerequisites page, not a runtime guarantee. It is not evidence that the runtime fails below 10.15.
+- **`wry` 0.55.1 / `tao` 0.35.3**: `src/wkwebview/mod.rs:1077` and `:373` perform *runtime* OS version checks before touching 10.15+ and 10.14+ APIs. The changelog documents fixes specifically for 10.13/10.14 (`Symbol not found: _NSHTTPCookieSameSite`, the `drawsBackground` KVC crash). The contributor on [wry#1668](https://github.com/tauri-apps/wry/pull/1668) reports testing on 10.13.6. The single 10.15-only call (`setAllowsContentJavaScript`) is behind `javascript_disabled`, which this app never sets.
+- **Regex lookbehind in the bundle**: `(?<=` / `(?<!` appear in the built output and would be a *parse* error on Safari < 16.4 (white screen). They come from `marked`, which feature-detects lookbehind in a `try`/`catch` and falls back. Not a blocker.
+
+### What IS the blocker
+
+Mojave caps at Safari 14.1.2, and WKWebView uses the system WebKit, so the frontend baseline is Safari 14.1. Meanwhile `vite.config.ts` sets `build.target: 'esnext'`, so esbuild downlevels nothing. Scanning `dist/assets/*.js` found:
+
+| Symbol | Requires | Source | Impact |
+|--------|----------|--------|--------|
+| `Array.prototype.at(-1)` | Safari 15.4 | `marked` (~20 uses) | Markdown import/export throws |
+| `findLast` | Safari 15.4 | `vendor-tiptap`, `onUpdate` path | **Editor breaks on every update** |
+| `color-mix()` | Safari 16.2 | `src/styles/editor.css:177` | Cosmetic (focus ring) |
+| `100dvh` | Safari 15.4 | `ImagePickerOverlay.tsx:179` | Cosmetic, behind `sm:` breakpoint |
+| `Object.hasOwn` | Safari 15.4 | bundled with a built-in fallback | None |
+
+These are runtime `TypeError`s in specific features, not a dead-on-arrival bundle, so they are polyfillable — but only after a full audit, and the list will drift with every dependency bump.
+
+### Cost of actually shipping it
+
+- Change `build.target` to `safari14` (or add a browserslist) and add the polyfills.
+- **A separate x86_64-only DMG.** `.github/workflows/release.yml:152` builds `--target universal-apple-darwin`; arm64 requires macOS 11.0, so a 10.14 artifact cannot be universal. New matrix entry, new artifact name, new checksum line, new download-page row.
+- Lower `minimumSystemVersion` and pin an Xcode whose SDK still permits a 10.14 deployment target (Xcode 16.4 still allows 10.13; `macos-latest` on GitHub Actions may not).
+- **No way to test it.** GitHub Actions has no Mojave runner. Every release would ship that artifact blind without a physical Mojave machine.
+
+### Open questions for the analysis
+
+1. Is there measurable demand beyond this one issue?
+2. Is there a Mojave machine (maintainer or trusted contributor) willing to smoke-test each release? Without one, shipping an untestable artifact for an encryption-heavy app is hard to justify — a silent webview failure can look like data loss to a user.
+3. Would a downlevelled `safari14` build target regress bundle size or performance enough to matter for the supported platforms? If the cost is near zero, lowering the target repo-wide is defensible on its own merits regardless of the Mojave decision.
+4. Mavericks (10.9) is out of scope permanently — no stable Rust toolchain produces binaries that run there. Say so plainly when replying to the issue.
+5. **Does the planned MiniDiarium+ web tier make this moot?** Mostly no, and the reasoning should not be re-derived later. (a) The browser tiers are the *paid* separate product ([`OPEN_CORE_STRATEGY.md` §2](../OPEN_CORE_STRATEGY.md)), so pointing a free-app user at them is not a real answer. (b) On Mojave, Safari caps at 14.1.2 and WKWebView *is* that engine, so opening a web tier in Safari on the same machine hits the identical Safari 14 wall — the gain only exists if the user installs a third-party browser. (c) That escape hatch is closing: Firefox ESR 115 is the last Firefox for macOS 10.12–10.14 (extended to March 2026, re-evaluated February 2026) and Chrome dropped 10.14 at Chrome 117. A user on an unpatched browser typing a decryption password is a worse position than a native binary, and the served-code caveat (§6) means we would have to document the web tier as a *downgrade* from the desktop guarantee, not an upgrade. (d) The WASM SQLite substitute is explicitly deferred out of the open-core roadmap (§10), so the timeline does not fit either. The genuine structural insight still holds for other old hardware: WKWebView is welded to the OS version, and a user-installed browser breaks that coupling — it just does not rescue Mojave.
+
+---

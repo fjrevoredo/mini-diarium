@@ -175,7 +175,7 @@
             "name": "Which desktop platforms are supported?",
             "acceptedAnswer": {
               "@type": "Answer",
-              "text": "Mini Diarium supports Windows, macOS, and Linux."
+              "text": "Mini Diarium supports Windows 10 (1809) and later, macOS 10.15 Catalina and later, and Linux (Ubuntu 20.04+, Fedora 36+, Arch, or equivalent)."
             }
           },
           {
@@ -673,7 +673,7 @@
       </details>
       <details class="faq-item">
         <summary>Which desktop platforms are supported?</summary>
-        <p>Mini Diarium supports Windows, macOS, and Linux builds published from the GitHub releases page.</p>
+        <p>Mini Diarium supports Windows 10 (1809) and later, macOS 10.15 Catalina and later, and Linux (Ubuntu 20.04+, Fedora 36+, Arch, or equivalent). Builds for all three are published from the GitHub releases page.</p>
       </details>
       <details class="faq-item">
         <summary>Can I import and export journal data?</summary>
@@ -707,6 +707,9 @@
         </svg>
         <h3>Windows</h3>
         <p>
+          Requires <strong>Windows 10 (1809) or later</strong>, 64-bit.
+        </p>
+        <p>
           Get it from the
           <a href="https://apps.microsoft.com/detail/9PJFTX44ZS43" target="_blank" rel="noopener noreferrer">Microsoft Store</a>
           for the easiest install: the Store signs the package and keeps it updated, so there is no
@@ -727,6 +730,10 @@
         </svg>
         <h3>macOS</h3>
         <p>
+          Requires <strong>macOS 10.15 Catalina or later</strong>. Universal binary, runs natively on
+          Intel and Apple Silicon.
+        </p>
+        <p>
           Download the <code>.dmg</code> and drag to Applications.
           Gatekeeper may block it on first launch. Run once in Terminal:<br />
           <code>xattr -cr "/Applications/Mini Diarium.app"</code><br />
@@ -740,6 +747,10 @@
           <line x1="12" y1="19" x2="20" y2="19"/>
         </svg>
         <h3>Linux</h3>
+        <p>
+          Requires <strong>Ubuntu 20.04+, Fedora 36+, Arch</strong>, or equivalent
+          (<code>glibc</code> 2.31+, WebKitGTK 4.1).
+        </p>
         <p>
           Download the <code>.AppImage</code> or <code>.deb</code> package.
           Verify the SHA-256 checksum against <code>checksums-linux.txt</code> from the release before installing.

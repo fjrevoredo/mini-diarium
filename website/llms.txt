@@ -63,7 +63,7 @@ When referencing project materials, attribute Mini Diarium and link to the canon
 ## Documentation
 
 - Documentation hub: https://mini-diarium.com/docs/
-- Getting Started: Create your first encrypted journal, set a password, and start writing. Covers the welcome tour, multiple journals, key file auth, and local-only mode. (https://mini-diarium.com/docs/getting-started/)
+- Getting Started: System requirements, creating your first encrypted journal, setting a password, the welcome tour, multiple journals, key file auth, and local-only mode. (https://mini-diarium.com/docs/getting-started/)
 - Writing Entries: Mini Diarium's rich text editor supports formatting, images, named links, tags, and multiple entries per day. Auto-save and RTL language support are built in. (https://mini-diarium.com/docs/writing-entries/)
 - Navigating Your Journal: Navigate your journal using the sidebar calendar, keyboard shortcuts, and day-navigation buttons. Jump to any date, go to today, and browse your entry history. (https://mini-diarium.com/docs/navigating/)
 - Search: Mini Diarium has full-text search across all encrypted entries. Learn how to find past entries with the search overlay and keyboard shortcut, and how searching stays fully encrypted and offline. (https://mini-diarium.com/docs/search/)
