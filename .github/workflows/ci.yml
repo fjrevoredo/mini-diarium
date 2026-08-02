@@ -137,7 +137,10 @@ jobs:
       - name: Cache and install Linux system dependencies
         uses: awalsh128/cache-apt-pkgs-action@681749ae568c81c2037cb9185e38b709b261bd2f # v1.6.1
         with:
-          packages: libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+          # xvfb: the wayland_titlebar GTK widget test needs a real display to run
+          # (it self-skips without one). Drop it alongside TODO-0097 if nothing
+          # else in the backend suite needs a display by then.
+          packages: libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf xvfb
           version: 1.0
           execute_install_scripts: true
 
@@ -190,7 +193,12 @@ jobs:
         # tested and all core module tests silently stop running. lcov still
         # lands at src-tauri/lcov.info (unchanged Codecov upload path below),
         # now with crates/mini-diarium-core/src/ SF: entries.
-        run: cargo llvm-cov nextest --workspace --lcov --output-path lcov.info
+        #
+        # xvfb-run: the wayland_titlebar GTK widget test needs a display or it
+        # self-skips (and its Linux-only lines would then count as uncovered
+        # against the Codecov patch gate). nextest runs each test in its own
+        # process, which satisfies GTK's main-thread expectation.
+        run: xvfb-run --auto-servernum cargo llvm-cov nextest --workspace --lcov --output-path lcov.info
 
       - name: Print layout tests
         run: bun run test:print

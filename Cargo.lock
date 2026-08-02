@@ -2661,6 +2661,7 @@ dependencies = [
  "chrono",
  "criterion",
  "env_logger",
+ "gtk",
  "hex",
  "libloading 0.9.0",
  "log",

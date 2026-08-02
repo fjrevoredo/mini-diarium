@@ -26,6 +26,7 @@ bottom-up: `mini-diarium-crypto` (base) → `mini-diarium-core` (depends on cryp
 | `menu.rs` | Native menu builder (Preferences + Quit only, plus the macOS `PredefinedMenuItem` Edit/Window submenus) and the `menu-preferences` event emitter |
 | `screen_lock.rs` | OS session-lock listener → auto-lock trigger |
 | `spellcheck.rs` | Dictionary-language resolution + the Linux-only WebView enablement (see Gotcha #9) |
+| `wayland_titlebar.rs` | Temporary Linux/Wayland fix for unresponsive tao title-bar buttons; self-disabling, scheduled for deletion (see Gotcha #11) |
 | `log_capture.rs` | Bounded in-memory ring buffer of recent log records, feeding the debug dump (see Gotcha #10) |
 | `sync_detect.rs` | Cloud-sync-folder heuristics for the debug dump; returns a tool name, never a path |
 
@@ -174,6 +175,13 @@ The following layers prevent the embedded WebView from making outbound network r
     - **`Debug`/`Trace` are never captured**, by design — that is where path- and entry-shaped detail is allowed to live.
     - **Nothing inside the ring buffer's mutex may log**, or `CapturingLogger::log` re-enters its own lock and deadlocks.
     The dump's privacy boundary is enforced by `test_build_debug_dump_leaks_nothing_sensitive` in `commands/debug.rs`, which asserts the serialized dump carries no key material, no user-chosen string, and no path shape. A new dump field that fails it is the thing that is wrong.
+
+11. **`wayland_titlebar.rs` is a temporary, self-disabling `tao` workaround — do not extend it** (TODO-0097, issue #238). The second Linux-only WebView/windowing concern after Gotcha #9, and the only one scheduled for deletion. `tao ≤ 0.35` installs its own Wayland client-side decoration: a `GtkHeaderBar` wrapped in a `GtkEventBox` with `above_child = true`. In GTK 3 that flag is the **sole** reason the event box realizes a `GDK_INPUT_ONLY` overlay `GdkWindow`, and `gtk_event_box_map()` re-raises it above the children on **every map**, so it swallows every press before the min/max/close buttons see it (the press then dies in tao's `Propagation::Stop` window handlers). `wayland_titlebar::defuse` calls `set_above_child(false)`, which makes GTK unrealize/re-realize the event box **without** the overlay — permanent, not a one-shot nudge — plus a redundant `set_resizable` round-trip that restores the original value. Three constraints:
+    - **It must be called after `win.show()`** in `lib.rs` — a pre-map fix is undone by the next map. This app is affected from launch precisely because it builds with `.visible(false)` so `tauri-plugin-window-state` restores geometry first.
+    - The pure `decide()` half is compiled on all platforms so its tests run everywhere; that is what the `cfg_attr(not(linux), allow(dead_code))` is for.
+    - The Linux-only `gtk = "0.18"` dependency must stay version-compatible with tauri's, or `WebviewWindow::gtk_window()` returns a different `gtk::ApplicationWindow` type and the module stops compiling.
+
+    It self-disables on X11 (no titlebar widget) and under `tao ≥ 0.36` (no `EventBox`). The `tao_version_still_needs_the_workaround` guard test fails the moment the lockfile carries tao ≥ 0.36 — that failure is the signal to delete the module, its `mod` + call site, the `gtk` dep, this gotcha, and the CI `xvfb-run` wrapper. Fixed upstream by [tao#1218](https://github.com/tauri-apps/tao/pull/1218).
 
 ## Common Task Checklists
 

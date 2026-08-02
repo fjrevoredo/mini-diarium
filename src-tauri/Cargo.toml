@@ -112,6 +112,13 @@ windows = { version = "0.61" }
 # `PlatformWebview::inner()` returns.
 webkit2gtk = { version = "2", features = ["v2_40"] }
 libloading = "0.9"
+# Direct dep for the Wayland title-bar fix in wayland_titlebar.rs (issue #238).
+# `tao` (via tauri) already depends on gtk 0.18.2, so this adds a dependency edge
+# rather than a new package — Cargo.lock and the Flatpak's generated
+# cargo-sources.json are unchanged. The version must track whatever 0.18.x `tao`
+# resolves, or `WebviewWindow::gtk_window()` returns a different
+# `gtk::ApplicationWindow` type and this stops compiling.
+gtk = "0.18"
 
 [target.'cfg(target_os = "macos")'.dependencies]
 objc2-app-kit = { version = "0.3", features = ["NSWorkspace"] }
