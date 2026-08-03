@@ -79,7 +79,7 @@
     "html2canvas": "^1.4.1",
     "jspdf": "^4.2.1",
     "lucide-solid": "^1.25.0",
-    "marked": "^18.0.6",
+    "marked": "^18.0.7",
     "solid-js": "^1.9.14"
   },
   "devDependencies": {
