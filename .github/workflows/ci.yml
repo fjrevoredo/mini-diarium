@@ -152,7 +152,10 @@ jobs:
         uses: actions/cache@v6.1.0
         with:
           path: ~/.cache/ms-playwright
-          key: playwright-chromium-${{ hashFiles('bun.lock') }}
+          # The version suffix ties the cache to the exact Playwright version
+          # installed below. Bump BOTH this key suffix AND the install pin
+          # alongside the @playwright/test dependency in package.json.
+          key: playwright-chromium-1.62.1-${{ hashFiles('bun.lock') }}
           restore-keys: playwright-chromium-
 
       - name: Install Playwright Chromium
