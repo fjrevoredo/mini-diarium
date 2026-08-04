@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1785870326268,
+  "lastUpdate": 1785877749979,
   "repoUrl": "https://github.com/fjrevoredo/mini-diarium",
   "entries": {
     "Benchmark": [
@@ -33448,6 +33448,174 @@ window.BENCHMARK_DATA = {
           {
             "name": "ci_pipeline_duration",
             "value": 505000000000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "committer": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "distinct": true,
+          "id": "a16b4e417df856a0d76a344e519aed3e1d25a4b2",
+          "message": "fix: revert jsdom to 29, pin undici ^7.29.0 for Node 20 compat\n\njsdom 30 requires Node >=22.22.2 (via undici 8.x), incompatible with\nthe Flatpak SDK and CI build jobs which use Node 20. Reverted to 29.\n\nnpm install --legacy-peer-deps had contaminated package.json by adding\nundici ^8.10.0 and ip-address ^10.4.0 as direct dependencies (from the\nearlier npm update transitives). Removed both; undici is now pinned as\n^7.29.0 in devDependencies to keep the resolved version Node-20-safe.",
+          "timestamp": "2026-08-04T23:00:12+02:00",
+          "tree_id": "932eac77d4b1ce2656f8e549cb8dd1809a03c369",
+          "url": "https://github.com/fjrevoredo/mini-diarium/commit/a16b4e417df856a0d76a344e519aed3e1d25a4b2"
+        },
+        "date": 1785877748772,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "auth_argon2/wrap_master_key",
+            "value": 104881981,
+            "range": "± 1632938",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "auth_argon2/unwrap_master_key",
+            "value": 108706875,
+            "range": "± 881628",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_encrypt/1024",
+            "value": 1074,
+            "range": "± 7",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_encrypt/10240",
+            "value": 5423,
+            "range": "± 80",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_encrypt/102400",
+            "value": 51835,
+            "range": "± 446",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_decrypt/1024",
+            "value": 712,
+            "range": "± 5",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_decrypt/10240",
+            "value": 4924,
+            "range": "± 46",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_decrypt/102400",
+            "value": 49563,
+            "range": "± 475",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_insert_entry",
+            "value": 62111,
+            "range": "± 3168",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_update_entry",
+            "value": 12637,
+            "range": "± 117",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_delete_entry",
+            "value": 101452,
+            "range": "± 8141",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_entries_by_date",
+            "value": 10285,
+            "range": "± 133",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_all_entry_dates/100",
+            "value": 25854,
+            "range": "± 197",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_all_entry_dates/500",
+            "value": 102827,
+            "range": "± 759",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_all_entries/100",
+            "value": 137635,
+            "range": "± 794",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_all_entries/500",
+            "value": 635144,
+            "range": "± 6572",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_all_entries/1000",
+            "value": 1261284,
+            "range": "± 12130",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_all_entries/3650",
+            "value": 4589646,
+            "range": "± 31091",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_search_entries/500",
+            "value": 13229563,
+            "range": "± 105075",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_search_entries/1000",
+            "value": 27026868,
+            "range": "± 210193",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_search_entries/3650",
+            "value": 98850421,
+            "range": "± 648361",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "count_words_plain_500w",
+            "value": 4094,
+            "range": "± 36",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "count_words_html_500w",
+            "value": 6436,
+            "range": "± 111",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "ci_pipeline_duration",
+            "value": 521000000000,
             "range": "± 0",
             "unit": "ns/iter"
           }
