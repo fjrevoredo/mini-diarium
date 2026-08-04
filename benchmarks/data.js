@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1785713896295,
+  "lastUpdate": 1785864478291,
   "repoUrl": "https://github.com/fjrevoredo/mini-diarium",
   "entries": {
     "Benchmark": [
@@ -32944,6 +32944,174 @@ window.BENCHMARK_DATA = {
           {
             "name": "ci_pipeline_duration",
             "value": 518000000000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "committer": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "distinct": true,
+          "id": "e3663a3c8cc1a8f785e6f25748631f81dc7265b3",
+          "message": "Dependency Update: marked 18.0.7, @wdio/cli 9.30, @wdio/local-runner 9.30, @wdio/mocha-framework 9.30, eslint 10.8, jsdom 30.0, prettier 3.9.6, @playwright/test 1.62, undici 7.29, ip-address 10.4, base64 0.23",
+          "timestamp": "2026-08-04T18:25:53+02:00",
+          "tree_id": "5c2c5806340fa58e30fd262007d8f0f11d7d49a0",
+          "url": "https://github.com/fjrevoredo/mini-diarium/commit/e3663a3c8cc1a8f785e6f25748631f81dc7265b3"
+        },
+        "date": 1785864476792,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "auth_argon2/wrap_master_key",
+            "value": 94207578,
+            "range": "± 997585",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "auth_argon2/unwrap_master_key",
+            "value": 92636735,
+            "range": "± 1654991",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_encrypt/1024",
+            "value": 1342,
+            "range": "± 23",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_encrypt/10240",
+            "value": 6549,
+            "range": "± 34",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_encrypt/102400",
+            "value": 94287,
+            "range": "± 571",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_decrypt/1024",
+            "value": 767,
+            "range": "± 3",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_decrypt/10240",
+            "value": 5789,
+            "range": "± 72",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_decrypt/102400",
+            "value": 56787,
+            "range": "± 968",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_insert_entry",
+            "value": 60372,
+            "range": "± 7759",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_update_entry",
+            "value": 14826,
+            "range": "± 73",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_delete_entry",
+            "value": 91209,
+            "range": "± 13470",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_entries_by_date",
+            "value": 15970,
+            "range": "± 98",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_all_entry_dates/100",
+            "value": 32645,
+            "range": "± 125",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_all_entry_dates/500",
+            "value": 118594,
+            "range": "± 1366",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_all_entries/100",
+            "value": 158342,
+            "range": "± 657",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_all_entries/500",
+            "value": 709355,
+            "range": "± 2708",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_all_entries/1000",
+            "value": 1382339,
+            "range": "± 21125",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_all_entries/3650",
+            "value": 5070785,
+            "range": "± 128152",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_search_entries/500",
+            "value": 13048235,
+            "range": "± 92532",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_search_entries/1000",
+            "value": 26768629,
+            "range": "± 175804",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_search_entries/3650",
+            "value": 97599582,
+            "range": "± 416067",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "count_words_plain_500w",
+            "value": 6752,
+            "range": "± 45",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "count_words_html_500w",
+            "value": 8613,
+            "range": "± 83",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "ci_pipeline_duration",
+            "value": 527000000000,
             "range": "± 0",
             "unit": "ns/iter"
           }
