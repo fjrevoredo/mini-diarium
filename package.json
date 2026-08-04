@@ -77,12 +77,10 @@
     "@tiptap/starter-kit": "^3.28.0",
     "dompurify": "^3.4.12",
     "html2canvas": "^1.4.1",
-    "ip-address": "^10.4.0",
     "jspdf": "^4.2.1",
     "lucide-solid": "^1.25.0",
     "marked": "^18.0.7",
-    "solid-js": "^1.9.14",
-    "undici": "^8.10.0"
+    "solid-js": "^1.9.14"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
@@ -105,7 +103,7 @@
     "eslint": "^10.8.0",
     "eslint-plugin-solid": "^0.14.5",
     "happy-dom": "^20.11.0",
-    "jsdom": "^30.0.0",
+    "jsdom": "^29.1.1",
     "prettier": "^3.9.6",
     "typescript": "~6.0.3",
     "typescript-eslint": "^8.65.0",
@@ -114,6 +112,7 @@
     "vite-plugin-solid": "^2.11.13",
     "vitest": "^4.1.8",
     "webdriverio": "^9.29.0",
-    "@playwright/test": "^1.62.0"
+    "@playwright/test": "^1.62.0",
+    "undici": "^7.29.0"
   }
 }
