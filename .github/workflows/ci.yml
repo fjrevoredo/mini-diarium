@@ -159,7 +159,7 @@ jobs:
         if: steps.cache-playwright.outputs.cache-hit != 'true'
         # Pin Playwright to the exact version resolved in bun.lock (S8543).
         # Bump alongside the @playwright/test dependency in package.json.
-        run: bunx playwright@1.61.1 install --with-deps chromium
+        run: bunx playwright@1.62.1 install --with-deps chromium
 
       - name: Cache nextest binary
         id: cache-nextest
