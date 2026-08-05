@@ -1,4 +1,5 @@
 pub mod auth;
+pub mod backup_triggers;
 pub mod debug;
 pub mod entries;
 pub mod export;

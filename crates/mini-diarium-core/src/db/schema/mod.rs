@@ -9,9 +9,10 @@ mod open;
 pub use create::{create_database, create_database_auto};
 pub use open::{open_database, open_database_auto, open_database_with_keypair};
 
-// `mod create` is private to `schema`, so siblings under `db` (e.g. `db::peek`) cannot
-// reach the mandatory FK-pragma connection helper without this re-export.
-pub(crate) use create::open_connection;
+// `mod create` is private to `schema`, so siblings under `db` (e.g. `db::peek`) and the
+// backup engine cannot reach the mandatory FK-pragma connection helpers without this
+// re-export.
+pub(crate) use create::{open_connection, open_connection_readonly};
 
 /// Wrapper for database connection with encryption key
 #[derive(Debug)]

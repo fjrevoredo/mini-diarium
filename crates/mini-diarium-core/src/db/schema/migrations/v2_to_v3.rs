@@ -16,14 +16,16 @@ use zeroize::Zeroize;
 /// returns a new v3 `DatabaseConnection` (with the master key).
 pub(crate) fn migrate_v2_to_v3(
     mut db: DatabaseConnection,
-    db_path: &Path,
     backups_dir: &Path,
     password: String,
 ) -> Result<DatabaseConnection, String> {
     info!("Migration v2→v3: starting");
 
-    let backup_path = crate::backup::create_backup(db_path, backups_dir)
+    // v2 journals predate the auth-slot model, so this takes the atomic `VACUUM INTO`
+    // write without the master-key verification the modern engine applies.
+    let backup_name = crate::backup::create_pre_v3_snapshot(&db, backups_dir)
         .map_err(|e| format!("Failed to create pre-migration backup: {}", e))?;
+    let backup_path = backups_dir.join(&backup_name);
     info!("Migration v2→v3: backup created at {:?}", backup_path);
 
     let mut master_key_bytes = [0u8; 32];

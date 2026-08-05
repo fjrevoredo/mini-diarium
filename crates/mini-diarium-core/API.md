@@ -272,11 +272,68 @@ The scan decrypts entries in memory per query and never persists a plaintext ind
 
 ---
 
-## `backup` — encrypted-DB backup rotation
+## `backup` — encrypted-journal snapshots
 
-- `MAX_BACKUPS: usize` — retention target. Public so diagnostics can report it alongside
-  the actual on-disk count; a mismatch means rotation is not running.
-- `create_backup`, `rotate_backups`, `backup_and_rotate`
+A snapshot is an ordinary encrypted Mini Diarium database written with `VACUUM INTO`, fsync,
+and an atomic rename, then verified before it is reported as created. No plaintext and no key
+material is ever written to the backups directory. Reached at the `backup` root; the
+`policy` / `store` / `manifest` sub-modules are also public, since the policy layer is the
+reusable half.
+
+**Replaces** the pre-TODO-0098 surface (`MAX_BACKUPS`, `create_backup`, `rotate_backups`,
+`backup_and_rotate`), which is gone. Retention is now tiered, so no single `MAX_BACKUPS`
+number describes it.
+
+### Entry points
+- `create_snapshot(db, &BackupContext, SnapshotTrigger) -> Result<SnapshotOutcome, String>` —
+  applies the dedup/interval rules, writes and verifies if needed, then applies retention.
+  Retention runs even when the snapshot is skipped.
+- `list_snapshots(backups_dir) -> Result<Vec<SnapshotMeta>, String>` — newest first. Needs
+  **no key and no open journal**: it reconciles the manifest against the directory and
+  describes anything new from the snapshot's plaintext columns.
+- `create_pre_v3_snapshot(db, backups_dir) -> Result<String, String>` — the reduced form for
+  v1/v2 journals, which have no auth slots to verify against.
+
+### Types
+- `BackupContext { db_path, backups_dir, app_version: Option<&str> }` — `db_path` is required
+  because the SQLite change counter lives in the live file's header and cannot be read
+  through an open connection.
+- `SnapshotOutcome::{Created(Box<SnapshotMeta>), Skipped(SkipReason)}`, `SkipReason::{Unchanged, TooSoon}`
+- `SnapshotTrigger::{Unlock, Lock, Migration, Destructive(Cow<'static, str>), Manual, PreRestore, Adopted}`
+  — `SnapshotTrigger::destructive(&'static str)` constructs the `Destructive` variant without
+  allocating. `Adopted` marks a pre-upgrade file whose original trigger is unknowable.
+- `SnapshotMeta` — the manifest record (see below).
+- `RetentionPolicy` (+ `for_journal_size`), `RetentionDecision { keep, evict, budget_exceeded }`,
+  `SnapshotDecision::{Take, Skip}`
+- `Manifest { schema_version, snapshots }`, `MANIFEST_FILE`, `MANIFEST_SCHEMA_VERSION`
+- `SnapshotStore` trait (`list`, `write`, `read`, `delete`, `stat`) + `FsSnapshotStore`,
+  `StoredSnapshot` — the storage boundary, so retention is reusable against other backends.
+
+### Pure policy (no I/O, no clock — `now` is always a parameter)
+- `plan_retention(&[SnapshotMeta], &RetentionPolicy, now) -> RetentionDecision`
+- `should_snapshot(&[SnapshotMeta], &SnapshotTrigger, current_change_counter, &RetentionPolicy, now) -> SnapshotDecision`
+- Constants: `RECENT_SNAPSHOTS`, `DAILY_DAYS`, `WEEKLY_WEEKS`, `MONTHLY_MONTHS`,
+  `MIN_AUTOMATIC_INTERVAL_SECS`, `MIN_STORAGE_BUDGET_BYTES`
+
+### `manifest.json` — the core↔consumer interchange point
+
+A **plaintext** sidecar in the backups directory, and therefore a privacy boundary as much as
+a data structure. `SnapshotMeta` fields:
+
+| Field | Notes |
+|---|---|
+| `file_name` | Generated `backup-*.db` stamp. A file name, never a path. |
+| `created_at` | RFC 3339 UTC. |
+| `trigger` | `SnapshotTrigger`, `snake_case`; `Destructive` serializes as `{"destructive": "<op>"}`. |
+| `byte_size` | |
+| `sqlite_change_counter` | `Option<u32>`. **Must be persisted, never read back from a snapshot** — `VACUUM INTO` rebuilds the database, so the copy's counter is unrelated to the source's. |
+| `db_schema_version`, `app_version`, `entry_count`, `entry_date_range` | All `Option`; read without a key. |
+| `auth_slot_types` | **Types only** (`password`/`keypair`/`auto`). Slot *labels* are user-chosen and must never appear. |
+| `verified` | "The live master key was confirmed to decrypt this snapshot", **not** "we know what is inside". |
+
+It must never carry entry content, entry titles, tag names, journal names, auth-slot labels,
+or any filesystem path. Enforced by `test_manifest_contains_no_user_content`. A missing or
+corrupt manifest is rebuilt from a directory scan rather than erroring.
 
 ---
 

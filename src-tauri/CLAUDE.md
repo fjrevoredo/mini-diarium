@@ -40,7 +40,7 @@ bottom-up: `mini-diarium-crypto` (base) → `mini-diarium-core` (depends on cryp
 | `import/` | Built-in diary format parsers (Mini Diary, Day One, jrnl) |
 | `export/` | JSON and Markdown export writers |
 | `plugin/` | Plugin trait, registry, Rhai script loader and sandbox |
-| `backup.rs` | Encrypted-DB backup rotation |
+| `backup/` | Encrypted-journal snapshots: `policy.rs` (pure retention/dedup decisions — no I/O, no clock), `store.rs` (the only `std::fs` in the subsystem: `VACUUM INTO`, fsync, atomic rename, verification, naming), `manifest.rs` (the plaintext `manifest.json` sidecar + adoption of pre-upgrade files), `mod.rs` (orchestration). See Gotcha #12 |
 | `config.rs` | `JournalConfig`/`JournalInfo` and `config.json` handling |
 
 ### Crypto crate (`crates/mini-diarium-crypto/src/`)
@@ -182,6 +182,14 @@ The following layers prevent the embedded WebView from making outbound network r
     - The Linux-only `gtk = "0.18"` dependency must stay version-compatible with tauri's, or `WebviewWindow::gtk_window()` returns a different `gtk::ApplicationWindow` type and the module stops compiling.
 
     It self-disables on X11 (no titlebar widget) and under `tao ≥ 0.36` (no `EventBox`). The `tao_version_still_needs_the_workaround` guard test fails the moment the lockfile carries tao ≥ 0.36 — that failure is the signal to delete the module, its `mod` + call site, the `gtk` dep, this gotcha, and the CI `xvfb-run` wrapper. Fixed upstream by [tao#1218](https://github.com/tauri-apps/tao/pull/1218).
+
+12. **A snapshot must precede the risky write, and must not block the UI** (TODO-0098). The backup engine lives in core (`backup/`); `commands/backup_triggers.rs` is the app-side wiring that decides *when* it runs. Four constraints:
+    - **Failure semantics are deliberately asymmetric.** A failed snapshot is logged and swallowed everywhere except before a schema migration, where `db::schema::open` **aborts the migration**. A missing backup is recoverable; a half-migrated journal is not. Do not "fix" that inconsistency.
+    - **The lock path moves the connection, it does not share it.** `lock_diary_inner` takes the `DatabaseConnection` out of `DiaryState` and hands it to a worker thread, so the backend reads as locked the instant it returns while the snapshot finishes against the moved handle. Any caller that then touches `diary.db` on the filesystem — moving or deleting it — must use `LockCompletion::AwaitFileRelease`, or the open handle makes the operation fail on Windows (`os error 32`).
+    - **The change counter is read from the live file and persisted in the manifest.** `VACUUM INTO` rebuilds the database, so a snapshot's own counter is unrelated to its source's. Reading it back from a snapshot silently breaks deduplication; `test_vacuum_into_resets_the_change_counter` is the permanent guard.
+    - **`manifest.json` is plaintext and its contents are a privacy decision.** Timestamps, counts, sizes, versions, and auth-slot *types* only — never entry content, titles, tag names, journal names, auth-slot *labels*, or any filesystem path. `test_manifest_contains_no_user_content` enforces it.
+
+    Snapshot verification checks that the live master key **decrypts content in** the snapshot. It cannot "unwrap an auth slot": a `wrapped_key` is unwrapped *by a credential* to produce the master key, so holding the master key does not reverse it.
 
 ## Common Task Checklists
 

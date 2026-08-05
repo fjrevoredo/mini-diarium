@@ -113,7 +113,8 @@ struct DebugDumpContent {
     content_counts: ContentCounts,
     auth_methods: Vec<AuthMethodSummary>,
     backup_count: usize,
-    backup_max: usize,
+    backup_verified_count: usize,
+    backup_retention_policy: String,
     oldest_backup: Option<String>,
     newest_backup: Option<String>,
     backups_total_bytes: u64,
@@ -344,7 +345,8 @@ fn build_debug_dump(
         content_counts: db::read_content_counts(db)?,
         auth_methods,
         backup_count: backups.count,
-        backup_max: crate::backup::MAX_BACKUPS,
+        backup_verified_count: backups.verified_count,
+        backup_retention_policy: retention_policy_summary(),
         oldest_backup: backups.oldest,
         newest_backup: backups.newest,
         backups_total_bytes: backups.total_bytes,
@@ -363,48 +365,50 @@ fn build_debug_dump(
 #[derive(Debug, Default)]
 struct BackupStats {
     count: usize,
+    verified_count: usize,
     oldest: Option<String>,
     newest: Option<String>,
     total_bytes: u64,
 }
 
-/// Counts and measures the rotated backups in `backups_dir`.
+/// Summarises the snapshots in `backups_dir`, via the backup manifest.
 ///
-/// Matches `backup-*.db` exactly as `rotate_backups` does — counting every directory
-/// entry is what previously reported 50 backups against a `MAX_BACKUPS` of 30. The
-/// filenames are `backup-YYYY-MM-DD-HHhMM.db`, whose lexicographic order is chronological
-/// (the property rotation itself relies on), so sorting gives the real oldest/newest.
-/// Those stamps are non-sensitive by construction — they contain no user-chosen text.
+/// Reads through `backup::list_snapshots`, which reconciles the manifest against the
+/// directory, so the dump reports exactly what the engine itself considers a snapshot —
+/// including pre-upgrade files it has adopted, and excluding the in-flight `.tmp` writes
+/// that counting directory entries used to include. The read is non-mutating: the dump
+/// never writes the manifest back.
+///
+/// Every field is non-sensitive by construction. Snapshot file names are generated
+/// timestamps containing no user-chosen text, and the manifest itself is barred from
+/// carrying entry content, tag names, or auth-slot labels.
 fn read_backup_stats(backups_dir: &Path) -> BackupStats {
-    let Ok(entries) = std::fs::read_dir(backups_dir) else {
+    // Newest first.
+    let Ok(snapshots) = crate::backup::list_snapshots(backups_dir) else {
         return BackupStats::default();
     };
 
-    let mut names: Vec<String> = Vec::new();
-    let mut total_bytes: u64 = 0;
-
-    for entry in entries.filter_map(|e| e.ok()) {
-        let path = entry.path();
-        if !path.is_file() {
-            continue;
-        }
-        let Some(name) = path.file_name().and_then(|n| n.to_str()) else {
-            continue;
-        };
-        if !(name.starts_with("backup-") && name.ends_with(".db")) {
-            continue;
-        }
-        total_bytes += entry.metadata().map(|m| m.len()).unwrap_or(0);
-        names.push(name.to_string());
-    }
-
-    names.sort();
     BackupStats {
-        count: names.len(),
-        oldest: names.first().cloned(),
-        newest: names.last().cloned(),
-        total_bytes,
+        count: snapshots.len(),
+        verified_count: snapshots.iter().filter(|s| s.verified).count(),
+        oldest: snapshots.last().map(|s| s.file_name.clone()),
+        newest: snapshots.first().map(|s| s.file_name.clone()),
+        total_bytes: snapshots.iter().map(|s| s.byte_size).sum(),
     }
+}
+
+/// One-line description of the retention policy, for support triage.
+///
+/// Replaces the former single `backup_max` number, which could not describe a tiered
+/// policy and was the source of three mutually inconsistent published retention claims.
+fn retention_policy_summary() -> String {
+    format!(
+        "{} recent + 1/day for {}d + 1/week for {}w + 1/month for {}mo",
+        crate::backup::RECENT_SNAPSHOTS,
+        crate::backup::DAILY_DAYS,
+        crate::backup::WEEKLY_WEEKS,
+        crate::backup::MONTHLY_MONTHS,
+    )
 }
 
 /// Applies [`log_capture::redact`] to every string in a JSON tree, in place.

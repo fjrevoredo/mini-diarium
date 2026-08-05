@@ -318,37 +318,62 @@ Click the **⋮** menu in the header and select **Statistics...**:
 
 ## Backups
 
+> The authoritative user-facing reference is [the Backups documentation page](https://mini-diarium.com/docs/backups/). This section is the summary.
+
+### What a backup is
+
+A backup is a **snapshot**: a complete Mini Diarium database, encrypted with the same key as your live journal. There is no separate backup format. Snapshots are written with SQLite's `VACUUM INTO`, moved into place atomically, then reopened and verified — a snapshot that exists is one that works.
+
 ### When backups are created
 
-A backup is created automatically each time you successfully unlock your journal, whether by password or key file. If the unlock fails (wrong password, missing key file), no backup is taken.
+- **Before a schema migration** — whenever a new version needs to upgrade your journal's internal format. If this snapshot cannot be written, the migration is refused and your journal is left untouched.
+- **Before a destructive action** — resetting a journal, importing a file, removing an authentication method, or moving the journal.
+- **On unlock, lock, and app exit** — only if the journal actually changed, and at most once per hour for these automatic triggers. Opening your journal just to read produces no new snapshot.
 
 ### Backup location
 
-Backups are stored in a `backups/` subfolder **inside the same directory as your `diary.db`**. The default journal directory by OS:
+Snapshots are stored in a `backups/{journal name}/` subfolder **inside the same directory as your `diary.db`**, where `{journal name}` is the database filename without its extension (`diary` by default). Each journal gets its own folder. The default journal directory by OS:
 
 - **Windows**: `%APPDATA%\com.minidiarium\` (legacy: `%APPDATA%\com.minidiarium.app\`)
 - **macOS**: `~/Library/Application Support/com.minidiarium/` (legacy: `~/Library/Application Support/com.minidiarium.app/`)
 - **Linux**: `~/.local/share/com.minidiarium/` (legacy: `~/.local/share/com.minidiarium.app/`)
 
-If you have changed your journal location (see *Preferences → Storage Location*), backups are created in `{your chosen directory}/backups/` instead.
+If you have changed your journal location (see *Preferences → Storage Location*), snapshots are created in `{your chosen directory}/backups/{journal name}/` instead.
 
 ### Backup filenames
 
-Each backup is named `backup-YYYY-MM-DD-HHhMM.db` (for example, `backup-2024-01-15-14h30.db`). The timestamp reflects local time at the moment of unlock.
+Each snapshot is named `backup-YYYY-MM-DD-HHhMMmSS.db` (for example, `backup-2026-08-04-14h30m07.db`). The timestamp reflects local time at the moment the snapshot was taken. A `manifest.json` beside them records each snapshot's time, trigger, size, and entry count — never entry text, titles, tag names, or journal names.
 
-### Rotation
+### Retention
 
-Mini Diarium keeps the **50 most recent backups**. When a new backup would push the count above 50, the oldest backups are deleted automatically. Only files matching the `backup-*.db` naming pattern are counted; any other files you place in the `backups/` folder are left untouched.
+Retention is tiered, so how much history you have does not depend on how often you open the app:
+
+- the **10 most recent** snapshots, whatever their age
+- **one per day** for the last 14 days
+- **one per week** for the last 8 weeks
+- **one per month** for the last 12 months
+
+A storage budget of 2 GB (or three times your journal's size, whichever is larger) caps the total; when it is exceeded, the *most recent* tier is thinned first so older history is preserved. Only files matching the `backup-*.db` naming pattern are managed; anything else in the folder is left untouched. Snapshots from earlier versions of Mini Diarium are adopted, not discarded.
+
+### Restoring
+
+In-app restore is not available yet. To restore today, close Mini Diarium, copy the snapshot over your `diary.db`, and reopen the app. Keep a copy of the file you replace until you have confirmed the snapshot has what you expected.
 
 ### Custom journal locations
 
-When you move your journal to a different folder via Preferences, `diary.db` is physically moved to the new location and all future backups will go into `{new location}/backups/`.
+When you move your journal to a different folder via Preferences, `diary.db` is physically moved to the new location and all future snapshots go into `{new location}/backups/{journal name}/`.
 
-**Existing backups in the old `backups/` folder are not moved.** If you want to keep your backup history, copy the old `backups/` folder to the new journal directory before or after the move.
+**Existing snapshots in the old folder are not moved.** If you want to keep your history, copy the old `backups/` folder to the new journal directory before or after the move.
 
 ### Cloud-synced and external locations
 
-If you place your journal directory inside a cloud-synced folder (Dropbox, OneDrive, iCloud Drive, etc.), both `diary.db` and the `backups/` subfolder will be included in the sync, giving you off-site backup on top of local rotation. Keep in mind that Mini Diarium does not coordinate concurrent access — **do not open the same journal from two devices at the same time**.
+If you place your journal directory inside a cloud-synced folder (Dropbox, OneDrive, iCloud Drive, etc.), both `diary.db` and the `backups/` subfolder will be included in the sync, giving you off-site backup on top of local snapshots. Keep in mind that Mini Diarium does not coordinate concurrent access — **do not open the same journal from two devices at the same time**.
+
+### Limits worth knowing before you need them
+
+- **A snapshot keeps the credentials it was taken with.** After a password change, older snapshots still need the **old** password.
+- **Removing an authentication method does not revoke it retroactively.** A removed key file still unlocks snapshots taken while it was registered.
+- **Local-only journals need this device.** A passwordless journal's key lives in `config.json` in the app data directory, which is *not* part of the backups folder. Copying the backups folder to another machine is not enough to restore it there.
 
 ## FAQ
 

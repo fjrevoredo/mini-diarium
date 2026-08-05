@@ -245,9 +245,11 @@ pub(crate) fn perform_unlock(mode: UnlockMode, state: &DiaryState) -> Result<(),
 
     info!("{}", label);
 
-    if let Err(e) = crate::backup::backup_and_rotate(&db_path, &backups_dir) {
-        warn!("Failed to create backup: {}", e);
-    }
+    // Post-unlock snapshot. Subject to the dedup and minimum-interval rules, so opening the
+    // app to read produces nothing, while a crash-only workflow (never locking, never
+    // exiting cleanly) still accumulates snapshots. The pre-migration snapshot that matters
+    // most was already taken inside `open_database*`, before `apply_pending` ran.
+    crate::commands::backup_triggers::snapshot_after_unlock(state);
 
     Ok(())
 }
@@ -388,7 +390,17 @@ pub fn change_password(
 /// WARNING: This permanently deletes all data!
 #[tauri::command]
 pub fn reset_diary(state: State<DiaryState>, app: AppHandle<Wry>) -> Result<(), String> {
-    let _ = lock_diary(state.clone(), app.clone());
+    // Snapshot *before* the lock: locking takes the connection away, and `VACUUM INTO`
+    // needs it. This is the last recoverable copy of a journal the user is about to delete.
+    crate::commands::backup_triggers::snapshot_before_destructive(&state, "reset_diary");
+
+    // Wait for the connection to actually close — `remove_file` below fails on Windows
+    // while any handle to `diary.db` is still open.
+    let did_lock = super::lock_diary_inner_with(&state, super::LockCompletion::AwaitFileRelease)?;
+    if did_lock {
+        info!("Journal locked");
+        super::emit_diary_locked(&app, "manual");
+    }
 
     let db_path = state
         .db_path
@@ -517,12 +529,16 @@ pub fn unlock_diary_auto(state: State<DiaryState>) -> Result<(), String> {
         .lock()
         .map_err(|_| "State lock poisoned".to_string())?;
     *db_state = Some(db_conn);
+    // The snapshot below re-acquires this lock, so the guard must not outlive this scope.
+    drop(db_state);
 
     info!("Local-only journal unlocked");
 
-    if let Err(e) = crate::backup::backup_and_rotate(&db_path, &backups_dir) {
-        warn!("Failed to create backup: {}", e);
-    }
+    // Post-unlock snapshot. Subject to the dedup and minimum-interval rules, so opening the
+    // app to read produces nothing, while a crash-only workflow (never locking, never
+    // exiting cleanly) still accumulates snapshots. The pre-migration snapshot that matters
+    // most was already taken inside `open_database*`, before `apply_pending` ran.
+    crate::commands::backup_triggers::snapshot_after_unlock(&state);
 
     Ok(())
 }

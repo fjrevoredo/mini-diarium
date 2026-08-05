@@ -81,6 +81,10 @@ name = "auth_bench"
 harness = false
 
 [[bench]]
+name = "backup_bench"
+harness = false
+
+[[bench]]
 name = "cipher_bench"
 harness = false
 

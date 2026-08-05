@@ -81,12 +81,16 @@ The app accepts any non-empty password (minimum 1 character). A visual strength 
 
 ---
 
-### KI-9 — Backup files use SQLite file copy, not WAL mode
-**Status:** Known limitation
+### KI-9 — Backup files used SQLite file copy, not WAL mode
+**Status:** Resolved in TODO-0098
 
-Automatic backups are created by copying the SQLite file at unlock time. SQLite's default journal mode is used; WAL (Write-Ahead Logging) mode is not currently enabled. A backup taken during an active write could theoretically capture a partially-committed transaction, though SQLite's journaling makes this extremely unlikely in practice. A backup taken immediately after a crash before the journal was rolled back could capture a pre-rollback snapshot.
+Backups were created with `fs::copy` of the live SQLite file, so a copy taken during an active write could capture a partially-committed transaction, and a partial copy was indistinguishable from a good backup.
 
-**Mitigation in practice:** Backups are taken at unlock time, before any writes occur in the new session, which minimizes the window for partially-committed state.
+Snapshots are now written with `VACUUM INTO`, which makes SQLite **rebuild** a clean database from committed pages rather than copying bytes. The result is internally consistent under either journal mode, so the torn-copy concern no longer applies. The write is then fsynced, moved into place with an atomic rename, and reopened and verified before it is reported as created; on any failure the file is deleted, so a partial write can never masquerade as a backup.
+
+WAL mode remains disabled. That is now an independent decision rather than a mitigation for this issue: `VACUUM INTO` is correct under either mode.
+
+> The former "mitigation in practice" claim — that backups were taken at unlock time *before any writes occur* — was **incorrect** even for the old implementation, and is removed. Backups are now taken **before** the risky write (schema migrations, destructive commands), which is what that sentence wrongly implied.
 
 ---
 

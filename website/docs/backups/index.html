@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Mini Diarium automatically backs up your encrypted journal on every unlock and keeps the 30 most recent copies in a backups folder next to your diary.db." />
+  <meta name="description" content="Mini Diarium snapshots your encrypted journal before risky changes, verifies every copy it writes, and keeps tiered backup history going back a year." />
   <meta name="robots" content="index,follow,max-snippet:-1,max-image-preview:large,max-video-preview:-1" />
   <meta name="theme-color" content="#0e0e0e" />
   <meta name="author" content="Francisco J. Revoredo" />
@@ -12,7 +12,7 @@
   <meta property="og:locale" content="en_US" />
   <meta property="og:url" content="https://mini-diarium.com/docs/backups/" />
   <meta property="og:title" content="Backups — Mini Diarium Documentation" />
-  <meta property="og:description" content="Mini Diarium automatically backs up your encrypted journal on every unlock and keeps the 30 most recent copies in a backups folder next to your diary.db." />
+  <meta property="og:description" content="Mini Diarium snapshots your encrypted journal before risky changes, verifies every copy it writes, and keeps tiered backup history going back a year." />
   <meta property="og:image" content="https://mini-diarium.com/assets/og-cover.png" />
   <meta property="og:image:type" content="image/png" />
   <meta property="og:image:width" content="1200" />
@@ -22,7 +22,7 @@
   <meta name="twitter:site" content="@MiniDiarium" />
   <meta name="twitter:creator" content="@MiniDiarium" />
   <meta name="twitter:title" content="Backups — Mini Diarium Documentation" />
-  <meta name="twitter:description" content="Mini Diarium automatically backs up your encrypted journal on every unlock and keeps the 30 most recent copies in a backups folder next to your diary.db." />
+  <meta name="twitter:description" content="Mini Diarium snapshots your encrypted journal before risky changes, verifies every copy it writes, and keeps tiered backup history going back a year." />
   <meta name="twitter:image" content="https://mini-diarium.com/assets/og-cover.png" />
   
   <title>Backups — Mini Diarium Documentation</title>
@@ -235,9 +235,9 @@
       "@type": "TechArticle",
       "@id": "https://mini-diarium.com/docs/backups/#article",
       "headline": "Backups",
-      "description": "Mini Diarium automatically backs up your encrypted journal on every unlock and keeps the 30 most recent copies in a backups folder next to your diary.db.",
-      "dateModified": "2026-06-27T00:00:00Z",
-      "keywords": "backups, data safety, backup rotation, storage",
+      "description": "Mini Diarium snapshots your encrypted journal before risky changes, verifies every copy it writes, and keeps tiered backup history going back a year.",
+      "dateModified": "2026-08-04T00:00:00Z",
+      "keywords": "backups, data safety, backup rotation, storage, snapshots",
       "publisher": {
         "@type": "Organization",
         "name": "Mini Diarium",
@@ -345,7 +345,7 @@
     <div class="post-header">
       <p class="hero-eyebrow">Mini Diarium documentation</p>
       <h1>Backups</h1>
-      <p class="hero-sub">Mini Diarium automatically backs up your encrypted journal on every unlock and keeps the 30 most recent copies in a backups folder next to your diary.db.</p>
+      <p class="hero-sub">Mini Diarium snapshots your encrypted journal before risky changes, verifies every copy it writes, and keeps tiered backup history going back a year.</p>
     </div>
   </div>
 </section>
@@ -401,21 +401,67 @@
         </div>
       </nav>
       <article class="blog-post prose" aria-label="Backups">
-        <h2 id="when-backups-are-created">When Backups Are Created</h2><p>A backup is created automatically each time you successfully unlock your journal, whether by password or key file. If the unlock fails (wrong password, missing key file), no backup is taken.</p>
-        <h2 id="backup-location">Backup Location</h2><p>Backups are stored in a <code>backups/</code> subfolder inside the same directory as your <code>diary.db</code>. Default journal directories by operating system:</p>
+        <h2 id="what-a-backup-is">What a Backup Is</h2><p>A backup is a <strong>snapshot</strong>: a complete, ordinary Mini Diarium database file, encrypted exactly like your live journal with exactly the same key. There is no separate backup format. If you can open your journal, you can open its snapshots.</p>
+        <p>Snapshots are written with SQLite&#39;s <code>VACUUM INTO</code>, which rebuilds a clean copy rather than copying the file byte by byte. The copy is flushed to disk, moved into place atomically, and then reopened and checked before Mini Diarium reports it as created. A snapshot that exists is a snapshot that works.</p>
+        <h2 id="when-snapshots-are-created">When Snapshots Are Created</h2><table>
+        <thead>
+        <tr>
+        <th>Trigger</th>
+        <th>When</th>
+        </tr>
+        </thead>
+        <tbody><tr>
+        <td><strong>Before a schema migration</strong></td>
+        <td>Whenever a new version of Mini Diarium needs to upgrade your journal&#39;s internal format. This is the important one.</td>
+        </tr>
+        <tr>
+        <td><strong>Before a destructive action</strong></td>
+        <td>Resetting a journal, importing a file, removing an authentication method, or moving your journal to another folder.</td>
+        </tr>
+        <tr>
+        <td><strong>On unlock</strong></td>
+        <td>After you successfully unlock, if the journal changed since the last snapshot.</td>
+        </tr>
+        <tr>
+        <td><strong>On lock and on exit</strong></td>
+        <td>When you lock the journal or close the app, if it changed while it was open.</td>
+        </tr>
+        </tbody></table>
+        <p>Two rules keep this from filling your disk:</p>
         <ul>
-        <li><strong>Windows</strong>: <code>%APPDATA%\com.minidiarium\backups\</code></li>
-        <li><strong>macOS</strong>: <code>~/Library/Application Support/com.minidiarium/backups/</code></li>
-        <li><strong>Linux</strong>: <code>~/.local/share/com.minidiarium/backups/</code></li>
+        <li><strong>Nothing changed, nothing written.</strong> Mini Diarium compares the database&#39;s internal change counter against the last snapshot. Opening your journal to read something produces no new snapshot at all.</li>
+        <li><strong>At most one automatic snapshot per hour.</strong> Explicit actions (a migration, a destructive command) ignore this and always snapshot.</li>
         </ul>
-        <p>If you have changed your journal location in Preferences, backups are created in <code>{your chosen directory}/backups/</code> instead.</p>
-        <h2 id="backup-filenames">Backup Filenames</h2><p>Each backup is named <code>backup-YYYY-MM-DD-HHhMM.db</code>, for example <code>backup-2024-01-15-14h30.db</code>. The timestamp reflects local time at the moment of unlock.</p>
-        <h2 id="rotation">Rotation</h2><p>Mini Diarium keeps the <strong>30 most recent backups</strong>. When a new backup would push the count above 30, the oldest backup is deleted automatically. Only files matching the <code>backup-*.db</code> naming pattern are counted; any other files you place in the <code>backups/</code> folder are left untouched.</p>
-        <h2 id="custom-journal-locations">Custom Journal Locations</h2><p>When you move your journal to a different folder via Preferences, <code>diary.db</code> is physically moved to the new location and all future backups will go into <code>{new location}/backups/</code>.</p>
-        <p><strong>Existing backups in the old folder are not moved automatically.</strong> If you want to keep your backup history, copy the old <code>backups/</code> folder to the new journal directory before or after the move.</p>
-        <h2 id="cloud-synced-locations">Cloud-Synced Locations</h2><p>If you place your journal directory inside a cloud-synced folder (Dropbox, OneDrive, iCloud Drive, and so on), both <code>diary.db</code> and the <code>backups/</code> subfolder will be included in the sync, giving you off-site backup on top of local rotation.</p>
+        <p>The pre-migration snapshot is the one exception to &quot;backups never get in the way&quot;: if it cannot be written, the migration is <strong>refused</strong> and your journal is left untouched. Proceeding with an upgrade that has no recoverable copy is the one failure you cannot undo.</p>
+        <h2 id="backup-location">Backup Location</h2><p>Snapshots are stored in a <code>backups/{journal name}/</code> subfolder inside the same directory as your <code>diary.db</code>, where <code>{journal name}</code> is your database filename without its extension (<code>diary</code> by default). Each journal gets its own folder. Default journal directories by operating system:</p>
+        <ul>
+        <li><strong>Windows</strong>: <code>%APPDATA%\com.minidiarium\backups\diary\</code></li>
+        <li><strong>macOS</strong>: <code>~/Library/Application Support/com.minidiarium/backups/diary/</code></li>
+        <li><strong>Linux</strong>: <code>~/.local/share/com.minidiarium/backups/diary/</code></li>
+        </ul>
+        <p>If you have changed your journal location in Preferences, snapshots are created in <code>{your chosen directory}/backups/{journal name}/</code> instead.</p>
+        <h2 id="backup-filenames">Backup Filenames</h2><p>Each snapshot is named <code>backup-YYYY-MM-DD-HHhMMmSS.db</code>, for example <code>backup-2026-08-04-14h30m07.db</code>. The timestamp reflects local time at the moment the snapshot was taken.</p>
+        <p>Alongside them sits a <code>manifest.json</code> file recording when each snapshot was taken, why, how large it is, how many entries it holds, and which kinds of credential it accepts. It holds no entry text, no titles, no tag names, and no journal names. Deleting it is harmless: Mini Diarium rebuilds it by scanning the folder.</p>
+        <h2 id="how-long-snapshots-are-kept">How Long Snapshots Are Kept</h2><p>Retention is <strong>tiered</strong>, so how much history you have does not depend on how often you open the app:</p>
+        <ul>
+        <li>the <strong>10 most recent</strong> snapshots, whatever their age</li>
+        <li><strong>one per day</strong> for the last 14 days</li>
+        <li><strong>one per week</strong> for the last 8 weeks</li>
+        <li><strong>one per month</strong> for the last 12 months</li>
+        </ul>
+        <p>A snapshot that qualifies for more than one tier occupies one slot, not several. A burst of activity in a single afternoon cannot push out last month&#39;s copy.</p>
+        <p>On top of that sits a storage budget of 2 GB, or three times the size of your journal, whichever is larger. If the snapshots exceed it, Mini Diarium thins the <em>most recent</em> tier first and protects the older ones, because those are the ones you cannot recreate.</p>
+        <p>Only files matching the <code>backup-*.db</code> naming pattern are managed. Anything else you put in the folder is left alone. Snapshots created by earlier versions of Mini Diarium are adopted automatically on first run, not discarded.</p>
+        <h2 id="restoring">Restoring</h2><p>Restoring from within the app is not available yet. Today, restoring means closing Mini Diarium, copying the snapshot you want over your <code>diary.db</code>, and reopening the app. Keep a copy of the file you are replacing until you have confirmed the snapshot has what you expected.</p>
+        <p>An in-app restore, including recovering individual entries out of a snapshot, is the next stage of this work.</p>
+        <h2 id="custom-journal-locations">Custom Journal Locations</h2><p>When you move your journal to a different folder via Preferences, <code>diary.db</code> is physically moved to the new location and all future snapshots go into <code>{new location}/backups/{journal name}/</code>.</p>
+        <p><strong>Existing snapshots in the old folder are not moved automatically.</strong> If you want to keep your history, copy the old <code>backups/</code> folder to the new journal directory before or after the move.</p>
+        <h2 id="cloud-synced-locations">Cloud-Synced Locations</h2><p>If you place your journal directory inside a cloud-synced folder (Dropbox, OneDrive, iCloud Drive, and so on), both <code>diary.db</code> and the <code>backups/</code> subfolder are included in the sync, giving you off-site backup on top of local snapshots.</p>
         <p>Keep in mind that Mini Diarium does not coordinate concurrent access. <strong>Do not open the same journal from two devices at the same time.</strong> The encrypted database file is not designed for simultaneous multi-device write access.</p>
-        <h2 id="backups-are-encrypted">Backups Are Encrypted</h2><p>Backup files are exact copies of <code>diary.db</code> at the moment of unlock. They are fully encrypted with the same password and key as your live journal. A backup without your password is unreadable.</p>
+        <h2 id="snapshots-are-encrypted-and-what-that-costs-you">Snapshots Are Encrypted, and What That Costs You</h2><p>Snapshots are fully encrypted with the same key as your live journal. A snapshot without your credentials is unreadable. That is the point, and it has three consequences worth knowing before you need them.</p>
+        <p><strong>A snapshot keeps the credentials it was taken with.</strong> If you change your password, snapshots taken before the change still require the <strong>old</strong> password. Keep it somewhere safe, or take a fresh snapshot right after changing it.</p>
+        <p><strong>Removing an authentication method does not revoke it retroactively.</strong> A key file you removed still unlocks every snapshot taken while it was registered. If you removed it because it was compromised, delete the snapshots that predate the removal too.</p>
+        <p><strong>Local-only journals need this device.</strong> A journal with no password is protected by a device-bound key stored in Mini Diarium&#39;s <code>config.json</code>, which lives in the app data directory and is <strong>not</strong> part of the backups folder. Copying the backups folder to another machine is not enough to restore it there. If that matters to you, add a password or a key file to the journal so its snapshots are portable.</p>
         
         
                 <div class="docs-prevnext">
@@ -426,13 +472,15 @@
       <aside class="docs-toc" aria-label="On this page">
         <p class="docs-toc-label">On this page</p>
         <ul>
-          <li class="docs-toc-h2"><a href="#when-backups-are-created">When Backups Are Created</a></li>
+          <li class="docs-toc-h2"><a href="#what-a-backup-is">What a Backup Is</a></li>
+          <li class="docs-toc-h2"><a href="#when-snapshots-are-created">When Snapshots Are Created</a></li>
           <li class="docs-toc-h2"><a href="#backup-location">Backup Location</a></li>
           <li class="docs-toc-h2"><a href="#backup-filenames">Backup Filenames</a></li>
-          <li class="docs-toc-h2"><a href="#rotation">Rotation</a></li>
+          <li class="docs-toc-h2"><a href="#how-long-snapshots-are-kept">How Long Snapshots Are Kept</a></li>
+          <li class="docs-toc-h2"><a href="#restoring">Restoring</a></li>
           <li class="docs-toc-h2"><a href="#custom-journal-locations">Custom Journal Locations</a></li>
           <li class="docs-toc-h2"><a href="#cloud-synced-locations">Cloud-Synced Locations</a></li>
-          <li class="docs-toc-h2"><a href="#backups-are-encrypted">Backups Are Encrypted</a></li>
+          <li class="docs-toc-h2"><a href="#snapshots-are-encrypted-and-what-that-costs-you">Snapshots Are Encrypted, and What That Costs You</a></li>
         </ul>
       </aside>
     </div>

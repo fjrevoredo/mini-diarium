@@ -5,15 +5,14 @@ use std::path::Path;
 /// Migration v1 → v2: Replace external-content FTS with standalone FTS table.
 ///
 /// Does NOT change the encryption key or re-encrypt entries.
-pub(crate) fn migrate_v1_to_v2(
-    db: &DatabaseConnection,
-    db_path: &Path,
-    backups_dir: &Path,
-) -> Result<(), String> {
+pub(crate) fn migrate_v1_to_v2(db: &DatabaseConnection, backups_dir: &Path) -> Result<(), String> {
     info!("Migration v1→v2: starting");
 
-    let backup_path = crate::backup::create_backup(db_path, backups_dir)
+    // v1 journals predate the auth-slot model, so this takes the atomic `VACUUM INTO`
+    // write without the master-key verification the modern engine applies.
+    let backup_name = crate::backup::create_pre_v3_snapshot(db, backups_dir)
         .map_err(|e| format!("Failed to create pre-migration backup: {}", e))?;
+    let backup_path = backups_dir.join(&backup_name);
     info!("Migration v1→v2: backup created at {:?}", backup_path);
 
     let conn = db.conn();

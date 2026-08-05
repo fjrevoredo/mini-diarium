@@ -38,6 +38,10 @@ pub fn run_import_plugin(
         plugin_id, file_path
     );
 
+    // An import writes an unbounded number of entries and has no undo. Snapshot before
+    // parsing so a malformed file that half-imports is recoverable.
+    crate::commands::backup_triggers::snapshot_before_destructive(&state, "run_import_plugin");
+
     debug!("Reading file...");
     let content = super::import::read_import_file(&file_path)?;
 

@@ -30,18 +30,60 @@ struct JournalLockedEventPayload {
     reason: String,
 }
 
-fn lock_diary_inner(state: &DiaryState) -> Result<bool, String> {
-    let mut db_state = state
-        .db
-        .lock()
-        .map_err(|_| "Failed to access journal state".to_string())?;
+/// How long a caller is willing to stay in `lock_diary_inner_with`.
+pub(crate) enum LockCompletion {
+    /// Return as soon as the journal is unreachable. The `Lock` snapshot finishes in the
+    /// background. Correct for every user-facing lock, where responsiveness is the point.
+    Detached,
+    /// Additionally wait for the background snapshot to close the database file.
+    ///
+    /// Required by callers that touch `diary.db` on the filesystem immediately afterwards —
+    /// moving it or deleting it. On Windows an open SQLite handle makes both fail outright
+    /// (`os error 32`), so "locked" is not a strong enough guarantee for them: they need
+    /// "closed".
+    AwaitFileRelease,
+}
 
-    if db_state.is_none() {
+/// Locks the journal, taking a `Lock`-triggered snapshot on the way out.
+///
+/// The connection is handed to a background thread rather than dropped, so the snapshot runs
+/// against a handle no command can reach: `DiaryState.db` is `None` the moment the handle is
+/// taken, which is what "locked" means to every other code path. The snapshot then finishes
+/// and drops the connection, zeroizing the master key.
+///
+/// This covers all three auto-lock paths (idle timer, OS session lock, focus loss) because
+/// every one of them funnels through here.
+fn lock_diary_inner_with(state: &DiaryState, completion: LockCompletion) -> Result<bool, String> {
+    let Some(done) = crate::commands::backup_triggers::take_connection_and_snapshot(
+        state,
+        crate::backup::SnapshotTrigger::Lock,
+    ) else {
+        // Distinguish "already locked" from "the state lock is poisoned", which the caller
+        // must still see as an error.
+        let db_state = state
+            .db
+            .lock()
+            .map_err(|_| "Failed to access journal state".to_string())?;
+        debug_assert!(db_state.is_none());
         return Ok(false);
+    };
+
+    if let LockCompletion::AwaitFileRelease = completion {
+        // `recv` always returns: the worker sends on completion, and a panicking worker
+        // drops the sender, which surfaces as `Err`. Either way the connection is gone.
+        // In practice this returns immediately — these callers snapshot synchronously just
+        // beforehand, so the `Lock` snapshot is deduplicated away.
+        if done.recv().is_err() {
+            warn!("The lock-time snapshot thread ended without reporting completion");
+        }
     }
 
-    *db_state = None;
     Ok(true)
+}
+
+/// Locks the journal without waiting for the lock-time snapshot to finish.
+fn lock_diary_inner(state: &DiaryState) -> Result<bool, String> {
+    lock_diary_inner_with(state, LockCompletion::Detached)
 }
 
 fn emit_diary_locking(app: &AppHandle<Wry>, reason: &str) {

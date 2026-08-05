@@ -75,9 +75,16 @@ pub(crate) fn change_diary_directory_with_auto_lock_inner(
     new_dir: &str,
     state: &DiaryState,
 ) -> Result<(), String> {
+    // Snapshot before the move, while the connection is still open and still points at the
+    // old location. The snapshot lands in the *old* backups directory; Task 5.1 is what
+    // makes the history follow the journal.
+    crate::commands::backup_triggers::snapshot_before_destructive(state, "change_diary_directory");
+
     // Auto-lock: close the DB connection before moving the file.
-    // Safe on all platforms — SQLite holds a file lock while open.
-    if super::lock_diary_inner(state)? {
+    // Safe on all platforms — SQLite holds a file lock while open. `AwaitFileRelease`
+    // because the lock-time snapshot runs on a background thread that keeps the file open;
+    // moving it out from under that handle fails on Windows.
+    if super::lock_diary_inner_with(state, super::LockCompletion::AwaitFileRelease)? {
         info!("Journal auto-locked for directory change");
     }
 

@@ -29,7 +29,9 @@ The UI in `PasswordCreation.tsx` explicitly surfaces the trade-off: a warning ch
 - Zero platform-specific code. Works identically on Windows, macOS, Linux.
 - No keychain prompts, no keychain-unavailable edge cases on headless Linux.
 - Migration to Option C later is straightforward: move the `auto_key` hex out of `config.json` and into the OS keychain, keeping `auth_slots` unchanged. Entries never need re-encryption.
-- Backups (copy of the diary directory) remain self-contained — you back up `diary.db` and `config.json` together.
+- Migration is not blocked by backups: snapshots are ordinary encrypted databases, so an `auto` slot survives a restore unchanged.
+
+> **Correction (2026-08-04, TODO-0098).** This section previously claimed that "backups (copy of the diary directory) remain self-contained — you back up `diary.db` and `config.json` together." **That was wrong.** `config.json` lives in the **app data directory**, not the journal directory, and app-created snapshots go to `{journal dir}/backups/{db_stem}/`. A local-only journal's backups therefore carry no key material and **cannot be restored on another machine** without also copying `config.json` by hand. This is deliberate — no key is ever written into the backups folder, and a test asserts it — but it is a real limitation, closed by disclosure rather than by shipping the key. See the plan's Assumption 2 and `website/docs-src/09-backups.md`.
 
 ### What this costs
 - **OS-account compromise = journal compromise.** If someone has read access to the user's home directory, they have the key. This is no worse than "a passphrase written on a sticky note on the laptop," but it is measurably weaker than a password-protected journal.

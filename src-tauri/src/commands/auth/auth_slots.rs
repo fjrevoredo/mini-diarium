@@ -196,6 +196,11 @@ pub fn remove_auth_method(
     current_password: Option<String>,
     state: State<DiaryState>,
 ) -> Result<(), String> {
+    // Removing a credential is irreversible and locks the user out of one way in. Snapshot
+    // first — note that the snapshot keeps the slot being removed, which is a disclosure the
+    // Backups panel has to make rather than a bug.
+    crate::commands::backup_triggers::snapshot_before_destructive(&state, "remove_auth_method");
+
     remove_auth_method_inner(slot_id, current_password, &state)
 }
 

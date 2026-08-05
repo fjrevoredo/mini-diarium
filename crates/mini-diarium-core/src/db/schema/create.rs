@@ -18,6 +18,22 @@ pub(crate) fn open_connection<P: AsRef<std::path::Path>>(path: P) -> Result<Conn
     Ok(conn)
 }
 
+/// Opens an existing database file **read-only**, with foreign-key enforcement.
+///
+/// The read-only counterpart of [`open_connection`], and the only sanctioned way to
+/// inspect a file the caller must not modify — snapshot verification and snapshot
+/// description both need to read a `backup-*.db` without touching it. Unlike
+/// `Connection::open`, `SQLITE_OPEN_READ_ONLY` will not create a missing file, so a
+/// vanished snapshot surfaces as an error instead of an empty database.
+pub(crate) fn open_connection_readonly<P: AsRef<std::path::Path>>(
+    path: P,
+) -> Result<Connection, String> {
+    let conn = Connection::open_with_flags(path, rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY)
+        .map_err(|e| format!("Failed to open database read-only: {}", e))?;
+    configure_connection(&conn)?;
+    Ok(conn)
+}
+
 /// Opens an in-memory database and enables foreign-key enforcement.
 ///
 /// Use this in tests instead of `Connection::open_in_memory()` whenever the test

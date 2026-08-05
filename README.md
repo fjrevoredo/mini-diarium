@@ -124,7 +124,7 @@ Read the full principles and how these translates to the architecture in [PHILOS
 - **Import**: Mini Diary JSON, Day One JSON/TXT, and jrnl JSON with additive imports that preserve separate same-date entries
 - **Export**: JSON for structural fidelity and Markdown for human-readable best-effort export
 - **Themes**
-- **Automatic backups**: backup on unlock with rotation
+- **Automatic backups**: verified encrypted snapshots taken before migrations and destructive actions, with tiered retention going back a year
 - **Statistics**
 - **Preferences**: first day of week, future entries toggle, title visibility, spellcheck, auto-lock, password change, authentication method management
 - **Cross-platform**: Windows, macOS, and Linux

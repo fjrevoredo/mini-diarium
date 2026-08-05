@@ -74,6 +74,67 @@ fn is_e2e_mode() -> bool {
 }
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
+/// Takes a snapshot of an unlocked journal as the app closes, within a hard time budget.
+///
+/// This is the app's **only** window-event hook; it exists for this trigger and nothing
+/// else. Window lifecycle handling is deliberately not refactored around it.
+///
+/// The sequence matters. `prevent_close` holds the window open, the journal handle is moved
+/// onto a worker thread (which locks the backend immediately — see `lock_diary_inner`), and
+/// a second thread waits on the worker for at most
+/// [`SHUTDOWN_SNAPSHOT_BUDGET`](commands::backup_triggers::SHUTDOWN_SNAPSHOT_BUDGET) before
+/// destroying the window regardless. Overrunning the budget is not an error: the process
+/// exits, the in-flight `VACUUM INTO` leaves only a `.tmp` file that the next run sweeps,
+/// and the existing snapshot set is untouched. A journal too large to snapshot in five
+/// seconds must not hold shutdown hostage.
+///
+/// `destroy()` does not re-emit `CloseRequested`, so this cannot loop; the guard flag covers
+/// a second close arriving while the first snapshot is still running.
+fn install_exit_snapshot_hook(window: &tauri::WebviewWindow) {
+    use std::sync::atomic::{AtomicBool, Ordering};
+    use std::sync::Arc;
+
+    let closing = Arc::new(AtomicBool::new(false));
+
+    window.on_window_event({
+        let window = window.clone();
+        move |event| {
+            if !matches!(event, tauri::WindowEvent::CloseRequested { .. }) {
+                return;
+            }
+            // `swap` rather than load+store: two close events racing must not both prevent
+            // the close and leave the window unclosable.
+            if closing.swap(true, Ordering::SeqCst) {
+                return;
+            }
+
+            let tauri::WindowEvent::CloseRequested { api, .. } = event else {
+                return;
+            };
+            api.prevent_close();
+
+            let app = window.app_handle().clone();
+            let window = window.clone();
+            std::thread::spawn(move || {
+                use tauri::Manager;
+                let state = app.state::<commands::auth::DiaryState>();
+                if let Some(done) = commands::backup_triggers::take_connection_and_snapshot(
+                    &state,
+                    backup::SnapshotTrigger::Lock,
+                ) {
+                    if done
+                        .recv_timeout(commands::backup_triggers::SHUTDOWN_SNAPSHOT_BUDGET)
+                        .is_err()
+                    {
+                        warn!("Exit snapshot exceeded its budget; closing without waiting");
+                    }
+                }
+                let _ = window.destroy();
+            });
+        }
+    });
+}
+
 pub fn run() {
     // Disable DMA-BUF renderer on Linux to avoid WebKit rendering issues
     // (white screen / GPU reset) on some drivers. Must be set before GTK init.
@@ -301,6 +362,8 @@ pub fn run() {
             // (issue #238). Must run after show() — the overlay is re-raised on every
             // map. Self-disabling; removed once Tauri ships tao >=0.36 (tao#1218).
             wayland_titlebar::apply(&win);
+
+            install_exit_snapshot_hook(&win);
 
             Ok(())
         })
