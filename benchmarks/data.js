@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1785962924270,
+  "lastUpdate": 1785967119486,
   "repoUrl": "https://github.com/fjrevoredo/mini-diarium",
   "entries": {
     "Benchmark": [
@@ -34288,6 +34288,36 @@ window.BENCHMARK_DATA = {
           {
             "name": "ci_pipeline_duration",
             "value": 510000000000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "committer": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "distinct": true,
+          "id": "490380c4a7b9dbac3a45c3084b8594d7763800f8",
+          "message": "Backups are now verified snapshots taken before risky changes, not file copies taken after unlock",
+          "timestamp": "2026-08-05T23:57:49+02:00",
+          "tree_id": "f6ede025d708e65b714e0a25b6a3cae42efdfad2",
+          "url": "https://github.com/fjrevoredo/mini-diarium/commit/490380c4a7b9dbac3a45c3084b8594d7763800f8"
+        },
+        "date": 1785967118746,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "ci_pipeline_duration",
+            "value": 34000000000,
             "range": "± 0",
             "unit": "ns/iter"
           }
