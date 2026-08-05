@@ -34,7 +34,7 @@ Template:
 
 # Versions
 
-## [0.6.5] - 05-08-2026
+## [0.6.6] - Unreleased
 
 ### Changed
 - **Backups are now verified snapshots taken before risky changes, not file copies taken after unlock** ([TODO-0098](docs/todo/TODO.md)): the backup subsystem was rewritten around the failure it could not previously survive — a faulty schema migration with no recoverable copy of the journal. Backups remain ordinary encrypted Mini Diarium databases; nothing about the format, the encryption, or the auth-slot model changed.
@@ -47,6 +47,8 @@ Template:
 
 ### Fixed
 - **Documentation stated three different backup retention numbers, and one false safety claim**: the homepage said 5, the user guide said 50, the documentation page said 30, and the actual code kept 30. `docs/KNOWN_ISSUES.md` additionally claimed backups were taken "before any writes occur", which was never true. The backups documentation page has been rewritten, and the backups path is now correctly documented as `backups/{journal name}/` rather than `backups/`. The passwordless-journal decision record's claim that app-created backups are self-contained has been corrected: `config.json` lives in the app data directory and is not included, so a local-only journal's backups cannot be restored on another machine.
+
+## [0.6.5] - 05-08-2026
 
 ### Added
 - **Published minimum supported OS versions**: the minimum version for each platform (Windows 10 1809+, macOS 10.15 Catalina+, Linux with `glibc` 2.31+ / WebKitGTK 4.1) was only recorded in `tauri.conf.json` and appeared nowhere a user could find it. It is now stated in the README download section, a new "System requirements" section in [`docs/INSTALLATION.md`](docs/INSTALLATION.md), the Getting Started documentation page, and on each platform card in the website download section. Requested in [issue #241](https://github.com/fjrevoredo/mini-diarium/issues/241) by a user who could not tell whether the app would run on their Mac before downloading it.
