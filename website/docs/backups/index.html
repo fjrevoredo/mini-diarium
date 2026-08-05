@@ -236,7 +236,7 @@
       "@id": "https://mini-diarium.com/docs/backups/#article",
       "headline": "Backups",
       "description": "Mini Diarium snapshots your encrypted journal before risky changes, verifies every copy it writes, and keeps tiered backup history going back a year.",
-      "dateModified": "2026-08-04T00:00:00Z",
+      "dateModified": "2026-08-06T00:00:00Z",
       "keywords": "backups, data safety, backup rotation, storage, snapshots",
       "publisher": {
         "@type": "Organization",
@@ -452,7 +452,24 @@
         <p>A snapshot that qualifies for more than one tier occupies one slot, not several. A burst of activity in a single afternoon cannot push out last month&#39;s copy.</p>
         <p>On top of that sits a storage budget of 2 GB, or three times the size of your journal, whichever is larger. If the snapshots exceed it, Mini Diarium thins the <em>most recent</em> tier first and protects the older ones, because those are the ones you cannot recreate.</p>
         <p>Only files matching the <code>backup-*.db</code> naming pattern are managed. Anything else you put in the folder is left alone. Snapshots created by earlier versions of Mini Diarium are adopted automatically on first run, not discarded.</p>
-        <h2 id="restoring">Restoring</h2><p>Restoring from within the app is not available yet. Today, restoring means closing Mini Diarium, copying the snapshot you want over your <code>diary.db</code>, and reopening the app. Keep a copy of the file you are replacing until you have confirmed the snapshot has what you expected.</p>
+        <h2 id="seeing-your-backups">Seeing Your Backups</h2><p>Open <strong>Preferences → Backups</strong>. The panel lists every snapshot, newest first, with the date it was taken, why it was taken, how many entries it holds, its size, and the range of entry dates inside it.</p>
+        <p>Above the list is the state of the whole folder: whether backups are working, when the last one was taken, how much space they use against the storage budget, and the retention policy in words.</p>
+        <p>Four things you can do from here:</p>
+        <ul>
+        <li><strong>Back up now</strong> takes a snapshot immediately. Unlike the automatic ones, it ignores the once-per-hour limit and the &quot;nothing changed&quot; rule, so it always produces a snapshot.</li>
+        <li><strong>Check</strong> re-opens one snapshot and confirms your journal&#39;s key still decrypts it. Snapshots taken by an older version of Mini Diarium start as <em>Not checked</em>, which means &quot;not confirmed yet&quot;, not &quot;broken&quot;. A snapshot that fails the check is reported, never deleted: it may still open with the credential it was taken with.</li>
+        <li><strong>Delete</strong> removes one snapshot.</li>
+        <li><strong>Open backups folder</strong> opens the folder in your file manager.</li>
+        </ul>
+        <h3 id="when-the-journal-will-not-open">When the journal will not open</h3><p>The same panel is reachable from the unlock screen, before you enter anything, via <strong>View backups</strong>. This is deliberate. The moment you most need to know which backups exist is the moment your journal will not open.</p>
+        <p>Everything descriptive still works there, because none of it needs your key: the dates, counts, sizes, and reasons are readable from the snapshots and their manifest without decrypting anything. The actions that do need the key (taking, checking, and deleting backups) are disabled until you unlock.</p>
+        <h3 id="when-something-is-wrong">When something is wrong</h3><p>The panel replaces &quot;Backups are working.&quot; with a plain-language cause when it can find one:</p>
+        <ul>
+        <li><strong>The last attempt failed.</strong> Backups taken as the app locks or exits run in the background, so a failure has nowhere to appear at the time. It is recorded and shown here instead. Open the backups folder and check it is reachable and has free space.</li>
+        <li><strong>The folder cannot be reached.</strong> Usually a journal on a removable or synced drive that is disconnected. Reconnect it.</li>
+        <li><strong>Backups are over their storage limit.</strong> Not an error. Mini Diarium trims the most recent snapshots first and keeps the older ones.</li>
+        </ul>
+        <h2 id="restoring">Restoring</h2><p>Restoring from within the app is not available yet. Today, restoring means closing Mini Diarium, copying the snapshot you want over your <code>diary.db</code>, and reopening the app. <strong>Open backups folder</strong> in Preferences → Backups is the quickest way to get there. Keep a copy of the file you are replacing until you have confirmed the snapshot has what you expected.</p>
         <p>An in-app restore, including recovering individual entries out of a snapshot, is the next stage of this work.</p>
         <h2 id="custom-journal-locations">Custom Journal Locations</h2><p>When you move your journal to a different folder via Preferences, <code>diary.db</code> is physically moved to the new location and all future snapshots go into <code>{new location}/backups/{journal name}/</code>.</p>
         <p><strong>Existing snapshots in the old folder are not moved automatically.</strong> If you want to keep your history, copy the old <code>backups/</code> folder to the new journal directory before or after the move.</p>
@@ -477,6 +494,9 @@
           <li class="docs-toc-h2"><a href="#backup-location">Backup Location</a></li>
           <li class="docs-toc-h2"><a href="#backup-filenames">Backup Filenames</a></li>
           <li class="docs-toc-h2"><a href="#how-long-snapshots-are-kept">How Long Snapshots Are Kept</a></li>
+          <li class="docs-toc-h2"><a href="#seeing-your-backups">Seeing Your Backups</a></li>
+          <li class="docs-toc-h3"><a href="#when-the-journal-will-not-open">When the journal will not open</a></li>
+          <li class="docs-toc-h3"><a href="#when-something-is-wrong">When something is wrong</a></li>
           <li class="docs-toc-h2"><a href="#restoring">Restoring</a></li>
           <li class="docs-toc-h2"><a href="#custom-journal-locations">Custom Journal Locations</a></li>
           <li class="docs-toc-h2"><a href="#cloud-synced-locations">Cloud-Synced Locations</a></li>

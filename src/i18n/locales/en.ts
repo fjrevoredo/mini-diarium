@@ -150,6 +150,8 @@ const en = {
       /** Used as "Unlock <name>" — only the prefix word */
       unlockPrefix: 'Unlock',
       backToJournals: '← Back to Journals',
+      toolsAria: 'Tools available without unlocking',
+      viewBackups: 'View backups',
       passwordMode: 'Password',
       keyFileMode: 'Key File',
       unlockMethodAria: 'Unlock method',
@@ -360,6 +362,7 @@ const en = {
     tabWriting: 'Writing',
     tabSecurity: 'Security',
     tabData: 'Data',
+    tabBackups: 'Backups',
     tabAdvanced: 'Advanced',
     general: {
       themeLabel: 'Theme',
@@ -544,6 +547,61 @@ const en = {
       resetDoubleConfirmTitle: 'Reset Journal — Final Warning',
       changeDirectoryTitle: 'Choose Journal Directory',
       resetFailedAlert: 'Failed to reset journal: {{ message }}',
+    },
+    backups: {
+      title: 'Backups',
+      hint: 'A backup is a complete, encrypted copy of this journal, taken automatically before anything risky and kept on this device only.',
+      retentionPolicy:
+        'Kept: the {{ recent }} most recent, plus one per day for {{ dailyDays }} days, one per week for {{ weeklyWeeks }} weeks, and one per month for {{ monthlyMonths }} months.',
+      loading: 'Loading backups…',
+      loadError: 'Could not read the backups folder.',
+      empty: 'No backups yet. One is taken automatically the first time this journal changes.',
+      emptyLocked: 'No backups found for this journal.',
+
+      backUpNow: 'Back up now',
+      backingUp: 'Backing up…',
+      verify: 'Check',
+      verifying: 'Checking…',
+      delete: 'Delete',
+      revealFolder: 'Open backups folder',
+      confirmDelete: 'Delete this backup? This cannot be undone.',
+      actionsNeedUnlock: 'Unlock this journal to create, check, or delete backups.',
+
+      statusTitle: 'Status',
+      lastBackup: 'Last backup: {{ when }}',
+      lastBackupNever: 'No backup has been taken yet.',
+      totalSize: 'Using {{ used }} of {{ budget }}.',
+      countSummary_one: '{{ count }} backup',
+      countSummary_other: '{{ count }} backups',
+      healthOk: 'Backups are working.',
+      healthFailed:
+        'The last backup attempt failed ({{ when }}). Open the backups folder to check it is reachable and has free space.',
+      healthUnreachable:
+        'The backups folder cannot be reached. If it is on a removable or synced drive, reconnect it.',
+      healthBudget:
+        'Backups are over their storage limit. The most recent ones will be trimmed first; older ones are kept.',
+
+      entryCount_one: '{{ count }} entry',
+      entryCount_other: '{{ count }} entries',
+      dateRange: '{{ from }} to {{ to }}',
+      verified: 'Checked',
+      unverified: 'Not checked',
+      unverifiedHint:
+        'Not yet checked against this journal’s key. This is normal for backups made by an older version.',
+
+      triggerUnlock: 'After unlocking',
+      triggerLock: 'On locking',
+      triggerMigration: 'Before a database upgrade',
+      triggerManual: 'Manual',
+      triggerPreRestore: 'Before a restore',
+      triggerAdopted: 'Made by an earlier version',
+      triggerDestructive: 'Before {{ operation }}',
+
+      localOnlyTitle: 'This journal has no password',
+      localOnlyNotice:
+        'Its backups are encrypted with a key stored in this app’s settings on this device. Copying the backups folder to another machine is not enough to open them there.',
+
+      listAria: 'Backups, newest first',
     },
     advanced: {
       themeOverridesTitle: 'Theme Overrides',

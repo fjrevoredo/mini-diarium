@@ -291,6 +291,17 @@ number describes it.
 - `list_snapshots(backups_dir) -> Result<Vec<SnapshotMeta>, String>` — newest first. Needs
   **no key and no open journal**: it reconciles the manifest against the directory and
   describes anything new from the snapshot's plaintext columns.
+- `backup_health(backups_dir, db_path) -> BackupHealth` — aggregate state for a health
+  indicator. Like `list_snapshots`, needs **no key and no open journal**: `db_path` is only
+  `stat`ed, for the storage budget and to tell "never backed up yet" (normal) from "the
+  journal's directory is gone" (broken).
+- `verify_snapshot_file(db, backups_dir, file_name) -> Result<SnapshotMeta, String>` —
+  re-checks one snapshot against the live master key and persists the result. A snapshot that
+  fails is **reported, not deleted**: it may still be readable with the credential it was
+  taken with.
+- `delete_snapshot(backups_dir, file_name) -> Result<(), String>` — deletes the file and its
+  record. The name is validated against the engine's naming rule first, so a caller cannot
+  address anything outside the backups directory (snapshot names arrive from the frontend).
 - `create_pre_v3_snapshot(db, backups_dir) -> Result<String, String>` — the reduced form for
   v1/v2 journals, which have no auth slots to verify against.
 
@@ -305,13 +316,23 @@ number describes it.
 - `SnapshotMeta` — the manifest record (see below).
 - `RetentionPolicy` (+ `for_journal_size`), `RetentionDecision { keep, evict, budget_exceeded }`,
   `SnapshotDecision::{Take, Skip}`
-- `Manifest { schema_version, snapshots }`, `MANIFEST_FILE`, `MANIFEST_SCHEMA_VERSION`
+- `BackupHealth { snapshot_count, verified_count, total_bytes, budget_bytes, budget_exceeded,
+  newest_created_at, oldest_created_at, last_failure, directory_accessible, recent,
+  daily_days, weekly_weeks, monthly_months }` — the retention numbers travel with it so a UI
+  can render the policy as translated text instead of pinning strings to constants.
+- `BackupFailure { at, trigger }` — deliberately carries **no message**: it is persisted in
+  the plaintext manifest, where an arbitrary I/O error string is the easiest way to leak a
+  filesystem path by accident. The underlying error is in the log at `warn`.
+- `Manifest { schema_version, snapshots, last_failure }`, `MANIFEST_FILE`,
+  `MANIFEST_SCHEMA_VERSION` — `last_failure` is `#[serde(default)]`, so manifests written
+  before it stay readable.
 - `SnapshotStore` trait (`list`, `write`, `read`, `delete`, `stat`) + `FsSnapshotStore`,
   `StoredSnapshot` — the storage boundary, so retention is reusable against other backends.
 
 ### Pure policy (no I/O, no clock — `now` is always a parameter)
 - `plan_retention(&[SnapshotMeta], &RetentionPolicy, now) -> RetentionDecision`
 - `should_snapshot(&[SnapshotMeta], &SnapshotTrigger, current_change_counter, &RetentionPolicy, now) -> SnapshotDecision`
+- `summarize_health(&[SnapshotMeta], &RetentionPolicy, last_failure, directory_accessible) -> BackupHealth`
 - Constants: `RECENT_SNAPSHOTS`, `DAILY_DAYS`, `WEEKLY_WEEKS`, `MONTHLY_MONTHS`,
   `MIN_AUTOMATIC_INTERVAL_SECS`, `MIN_STORAGE_BUDGET_BYTES`
 

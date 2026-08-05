@@ -165,6 +165,19 @@ These are used by E2E tests — **do not remove** from components.
 | `HeaderMoreMenu.tsx` | Import item in overflow menu | `header-more-menu-import-item` |
 | `HeaderMoreMenu.tsx` | Export item in overflow menu | `header-more-menu-export-item` |
 | `PreferencesOverlay.tsx` | Preferences dialog content | `preferences-overlay` |
+| `BackupsPanel.tsx` | Panel root (Preferences → Backups and the pre-auth view) | `backups-panel` |
+| `BackupsPanel.tsx` | One snapshot row | `backups-list-item` |
+| `BackupsPanel.tsx` | Empty-state message | `backups-empty` |
+| `BackupsPanel.tsx` | "Backups are working" line | `backups-health-ok` |
+| `BackupsPanel.tsx` | Degraded-health line (unreachable folder / failed attempt / over budget) | `backups-health-problem` |
+| `BackupsPanel.tsx` | Back up now button | `backups-create-button` |
+| `BackupsPanel.tsx` | Open backups folder button | `backups-reveal-button` |
+| `BackupsPanel.tsx` | Per-row checked / not-checked badge | `backups-item-verified` / `backups-item-unverified` |
+| `BackupsPanel.tsx` | Passwordless-journal notice (UX-7) | `backups-local-only-notice` |
+| `BackupsPanel.tsx` | Reduced-mode explanation for disabled actions | `backups-locked-hint` |
+| `BackupsOverlay.tsx` | Standalone backups dialog (pre-auth) | `backups-overlay` |
+| `PreAuthTools.tsx` | Row of tools reachable without unlocking | `pre-auth-tools` |
+| `PreAuthTools.tsx` | View-backups entry point on the unlock screen | `pre-auth-backups-button` |
 | `StatsOverlay.tsx` | Statistics dialog content | `stats-overlay` |
 | `ImportOverlay.tsx` | Import dialog content | `import-overlay` |
 | `ExportOverlay.tsx` | Export dialog content | `export-overlay` |

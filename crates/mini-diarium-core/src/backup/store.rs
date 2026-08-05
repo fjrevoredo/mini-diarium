@@ -147,6 +147,9 @@ impl SnapshotStore for FsSnapshotStore {
     }
 
     fn read(&self, file_name: &str) -> Result<PathBuf, String> {
+        if !is_snapshot_file_name(file_name) {
+            return Err("Snapshot not found".to_string());
+        }
         let path = self.dir.join(file_name);
         if !path.is_file() {
             return Err("Snapshot not found".to_string());
@@ -155,6 +158,11 @@ impl SnapshotStore for FsSnapshotStore {
     }
 
     fn delete(&self, file_name: &str) -> Result<(), String> {
+        if !is_snapshot_file_name(file_name) {
+            return Err(format!(
+                "Refusing to delete a non-snapshot file: {file_name}"
+            ));
+        }
         let path = self.dir.join(file_name);
         match fs::remove_file(&path) {
             Ok(()) => {
@@ -167,6 +175,9 @@ impl SnapshotStore for FsSnapshotStore {
     }
 
     fn stat(&self, file_name: &str) -> Result<u64, String> {
+        if !is_snapshot_file_name(file_name) {
+            return Err("Snapshot not found".to_string());
+        }
         fs::metadata(self.dir.join(file_name))
             .map(|m| m.len())
             .map_err(|e| format!("Failed to stat snapshot: {e}"))
@@ -261,8 +272,19 @@ pub(crate) fn file_size(path: &Path) -> Option<u64> {
 // ── Naming ────────────────────────────────────────────────────────────────────────────
 
 /// Whether `name` is a snapshot file this engine owns.
+///
+/// Every method that turns a caller-supplied name into a path goes through this, because
+/// snapshot names reach the store from the frontend once the `backup` command group exists
+/// (`delete_backup`, `verify_backup`). The prefix and suffix are the ownership test; the
+/// separator and `..` rejections are what keep `dir.join(name)` inside `dir` — without them
+/// `backup-../../diary.db` satisfies both affixes and escapes.
 pub(crate) fn is_snapshot_file_name(name: &str) -> bool {
-    name.starts_with(SNAPSHOT_PREFIX) && name.ends_with(SNAPSHOT_SUFFIX)
+    name.starts_with(SNAPSHOT_PREFIX)
+        && name.ends_with(SNAPSHOT_SUFFIX)
+        && !name.contains('/')
+        && !name.contains('\\')
+        && !name.contains("..")
+        && !name.contains('\0')
 }
 
 /// Builds the snapshot file name for `at`, avoiding collisions with existing files.
@@ -396,7 +418,7 @@ fn fsync_dir(dir: &Path) {
 /// encrypted row instead proves the property that actually matters, and proves it against
 /// the same key the entries were written with. A journal with no encrypted content yet has
 /// nothing to check, so checks 1–2 stand alone in that case.
-fn verify_snapshot(path: &Path, key: &cipher::Key) -> Result<(), String> {
+pub(crate) fn verify_snapshot(path: &Path, key: &cipher::Key) -> Result<(), String> {
     let conn = open_connection_readonly(path)
         .map_err(|e| format!("Snapshot verification failed to open the file: {e}"))?;
 
@@ -719,6 +741,46 @@ mod tests {
             "sweep must not touch unrelated files"
         );
     }
+
+    #[test]
+    fn test_every_name_taking_method_refuses_to_escape_the_backups_directory() {
+        // Snapshot names arrive from the frontend once the `backup` command group exists,
+        // so `dir.join(name)` is joining untrusted input. The prefix/suffix affixes alone do
+        // not contain it: `backup-../../diary.db` satisfies both.
+        let dir = tempfile::tempdir().unwrap();
+        let backups = dir.path().join("backups");
+        fs::create_dir_all(&backups).unwrap();
+        let outside = dir.path().join("diary.db");
+        fs::write(&outside, "the live journal").unwrap();
+        fs::write(backups.join(MANIFEST_FILE_FOR_TEST), "{}").unwrap();
+
+        let store = FsSnapshotStore::new(&backups);
+
+        for hostile in [
+            "backup-../diary.db",
+            "backup-..\\diary.db",
+            "../diary.db",
+            "..\\diary.db",
+            "/etc/passwd",
+            MANIFEST_FILE_FOR_TEST,
+        ] {
+            assert!(store.read(hostile).is_err(), "read accepted {hostile:?}");
+            assert!(
+                store.delete(hostile).is_err(),
+                "delete accepted {hostile:?}"
+            );
+            assert!(store.stat(hostile).is_err(), "stat accepted {hostile:?}");
+        }
+
+        assert!(outside.exists(), "a hostile name reached outside the store");
+        assert!(
+            backups.join(MANIFEST_FILE_FOR_TEST).exists(),
+            "the manifest is not a snapshot and must not be deletable as one"
+        );
+    }
+
+    /// Local copy so this test does not reach into the `manifest` module for one constant.
+    const MANIFEST_FILE_FOR_TEST: &str = "manifest.json";
 
     // ── Naming ───────────────────────────────────────────────────────────────────────
 

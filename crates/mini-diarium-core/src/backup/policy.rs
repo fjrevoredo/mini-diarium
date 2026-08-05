@@ -122,6 +122,19 @@ pub struct SnapshotMeta {
     pub verified: bool,
 }
 
+/// A snapshot attempt that failed, recorded so the failure survives the process.
+///
+/// Deliberately carries **no message**. Most snapshot failures are I/O failures, and the
+/// manifest is a plaintext file that the Privacy Decision forbids from holding a filesystem
+/// path — persisting an arbitrary error string would be the easiest way to break that rule
+/// by accident. When and why the attempt happened is what the UI needs; the underlying error
+/// is already in the log at `warn` level.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct BackupFailure {
+    pub at: DateTime<Utc>,
+    pub trigger: SnapshotTrigger,
+}
+
 // ── Policy ────────────────────────────────────────────────────────────────────────────
 
 /// The tier windows, interval, and storage budget that drive both decisions.
@@ -159,6 +172,68 @@ impl Default for RetentionPolicy {
             min_interval: Duration::seconds(MIN_AUTOMATIC_INTERVAL_SECS),
             storage_budget_bytes: MIN_STORAGE_BUDGET_BYTES,
         }
+    }
+}
+
+// ── Health ────────────────────────────────────────────────────────────────────────────
+
+/// Aggregate state of one journal's backups directory.
+///
+/// Everything here is either derived from the manifest or supplied by the caller, so it is
+/// subject to the same Privacy Decision: counts, sizes, timestamps, and policy numbers only.
+/// The retention numbers travel with it so the UI can render the policy as a translated
+/// sentence rather than pinning English text to constants it cannot see.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct BackupHealth {
+    pub snapshot_count: usize,
+    /// How many snapshots the live master key has been confirmed to decrypt. Adopted
+    /// pre-upgrade files start unverified — that is "unconfirmed", not "broken".
+    pub verified_count: usize,
+    pub total_bytes: u64,
+    pub budget_bytes: u64,
+    /// Whether the snapshots on disk already exceed the budget. Retention thins on the next
+    /// snapshot, so this is a "will be trimmed" signal rather than an error.
+    pub budget_exceeded: bool,
+    pub newest_created_at: Option<DateTime<Utc>>,
+    pub oldest_created_at: Option<DateTime<Utc>>,
+    /// The last snapshot attempt that failed, if it has not been superseded by a success.
+    pub last_failure: Option<BackupFailure>,
+    /// Whether the backups directory itself is reachable. `false` is the common concrete
+    /// cause behind a failed attempt — an external drive or synced folder that went away.
+    pub directory_accessible: bool,
+    pub recent: usize,
+    pub daily_days: i64,
+    pub weekly_weeks: u32,
+    pub monthly_months: u32,
+}
+
+/// Summarises a set of snapshots against the policy in force.
+///
+/// Pure, like the rest of this module: the caller supplies whether the directory is
+/// reachable and what the last recorded failure was, so this reads neither the clock nor the
+/// filesystem.
+pub fn summarize_health(
+    snapshots: &[SnapshotMeta],
+    policy: &RetentionPolicy,
+    last_failure: Option<BackupFailure>,
+    directory_accessible: bool,
+) -> BackupHealth {
+    let total_bytes = snapshots.iter().map(|s| s.byte_size).sum();
+
+    BackupHealth {
+        snapshot_count: snapshots.len(),
+        verified_count: snapshots.iter().filter(|s| s.verified).count(),
+        total_bytes,
+        budget_bytes: policy.storage_budget_bytes,
+        budget_exceeded: total_bytes > policy.storage_budget_bytes,
+        newest_created_at: snapshots.iter().map(|s| s.created_at).max(),
+        oldest_created_at: snapshots.iter().map(|s| s.created_at).min(),
+        last_failure,
+        directory_accessible,
+        recent: policy.recent,
+        daily_days: policy.daily_days,
+        weekly_weeks: policy.weekly_weeks,
+        monthly_months: policy.monthly_months,
     }
 }
 

@@ -433,6 +433,14 @@ pub fn run() {
             commands::plugin::list_export_plugins,
             commands::plugin::run_import_plugin,
             commands::plugin::run_export_plugin,
+            // Backups
+            commands::backup::list_backups,
+            commands::backup::list_backups_unauthenticated,
+            commands::backup::get_backup_health,
+            commands::backup::create_backup_now,
+            commands::backup::verify_backup,
+            commands::backup::delete_backup,
+            commands::backup::reveal_backups_folder,
             // Debug
             commands::debug::generate_debug_dump,
             // Menu locale

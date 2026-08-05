@@ -8,6 +8,7 @@ import PreferencesGeneralTab from './PreferencesGeneralTab';
 import PreferencesWritingTab from './PreferencesWritingTab';
 import PreferencesSecurityTab from './PreferencesSecurityTab';
 import PreferencesDataTab from './PreferencesDataTab';
+import PreferencesBackupsTab from './PreferencesBackupsTab';
 import PreferencesAdvancedTab from './PreferencesAdvancedTab';
 
 interface PreferencesOverlayProps {
@@ -34,7 +35,10 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
   createEffect(() => {
     if (
       !isUnlocked() &&
-      (activeTab() === 'writing' || activeTab() === 'security' || activeTab() === 'advanced')
+      (activeTab() === 'writing' ||
+        activeTab() === 'security' ||
+        activeTab() === 'backups' ||
+        activeTab() === 'advanced')
     ) {
       setActiveTab('general');
     }
@@ -61,7 +65,7 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
       'general',
       ...(isUnlocked() ? (['writing', 'security'] as Tab[]) : []),
       'data',
-      ...(isUnlocked() ? (['advanced'] as Tab[]) : []),
+      ...(isUnlocked() ? (['backups', 'advanced'] as Tab[]) : []),
     ];
     const currentIndex = tabs.indexOf(activeTab());
     let nextIndex = currentIndex;
@@ -194,6 +198,21 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
 
                 <Show when={isUnlocked()}>
                   <button
+                    id="pref-tab-backups"
+                    type="button"
+                    role="tab"
+                    aria-selected={activeTab() === 'backups'}
+                    aria-controls="pref-panel-backups"
+                    tabIndex={activeTab() === 'backups' ? 0 : -1}
+                    onClick={() => setActiveTab('backups')}
+                    class={tabClass('backups')}
+                  >
+                    {t('prefs.tabBackups')}
+                  </button>
+                </Show>
+
+                <Show when={isUnlocked()}>
+                  <button
                     id="pref-tab-advanced"
                     type="button"
                     role="tab"
@@ -224,6 +243,16 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                   <PreferencesDataTab isOpen={isOpenAccessor} onClose={props.onClose} />
                 </div>
                 <Show when={isUnlocked()}>
+                  <div hidden={activeTab() !== 'backups'}>
+                    {/* Panels are rendered but hidden, so this tab gets a narrowed
+                        "is showing" accessor rather than the overlay's: its load reads the
+                        backups directory, and there is no reason to touch the disk every
+                        time someone opens Preferences to change the theme. */}
+                    <PreferencesBackupsTab
+                      isOpen={() => isOpenAccessor() && activeTab() === 'backups'}
+                      onClose={props.onClose}
+                    />
+                  </div>
                   <div hidden={activeTab() !== 'advanced'}>
                     <PreferencesAdvancedTab isOpen={isOpenAccessor} onClose={props.onClose} />
                   </div>

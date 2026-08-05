@@ -28,7 +28,7 @@ use chrono::{DateTime, Utc};
 use log::{debug, warn};
 use serde::{Deserialize, Serialize};
 
-use super::policy::{SnapshotMeta, SnapshotTrigger};
+use super::policy::{BackupFailure, SnapshotMeta, SnapshotTrigger};
 use super::store::{describe_snapshot, parse_snapshot_timestamp, SnapshotStore, StoredSnapshot};
 
 /// File name of the sidecar inside the backups directory.
@@ -43,6 +43,14 @@ const TEMP_MANIFEST_FILE: &str = "manifest.json.tmp";
 pub struct Manifest {
     pub schema_version: u32,
     pub snapshots: Vec<SnapshotMeta>,
+    /// The last snapshot attempt that failed, cleared by the next success.
+    ///
+    /// Persisted rather than held in memory because the failures that matter most happen on
+    /// the lock and shutdown paths, on a background thread, with no UI attached — without
+    /// this the user would never learn that backups stopped working. `#[serde(default)]`
+    /// keeps manifests written before this field readable.
+    #[serde(default)]
+    pub last_failure: Option<BackupFailure>,
 }
 
 impl Manifest {
@@ -50,6 +58,7 @@ impl Manifest {
         Self {
             schema_version: MANIFEST_SCHEMA_VERSION,
             snapshots: Vec::new(),
+            last_failure: None,
         }
     }
 
@@ -146,6 +155,7 @@ pub(crate) fn load_reconciled(dir: &Path, store: &impl SnapshotStore) -> Manifes
     Manifest {
         schema_version: MANIFEST_SCHEMA_VERSION,
         snapshots,
+        last_failure: existing.last_failure,
     }
     .sorted()
 }
@@ -228,6 +238,10 @@ mod tests {
                 auth_slot_types: vec!["password".to_string()],
                 verified: true,
             }],
+            last_failure: Some(BackupFailure {
+                at: Utc::now(),
+                trigger: SnapshotTrigger::Lock,
+            }),
         };
 
         save(dir.path(), &manifest).unwrap();
@@ -290,6 +304,7 @@ mod tests {
                     auth_slot_types: vec![],
                     verified: true,
                 }],
+                last_failure: None,
             },
         )
         .unwrap();
