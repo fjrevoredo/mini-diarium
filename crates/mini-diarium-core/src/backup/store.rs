@@ -115,10 +115,14 @@ impl FsSnapshotStore {
 
 impl SnapshotStore for FsSnapshotStore {
     fn list(&self) -> Result<Vec<StoredSnapshot>, String> {
-        let Ok(entries) = fs::read_dir(&self.dir) else {
-            // A backups directory that does not exist yet holds no snapshots. That is a
-            // normal first-run state, not an error.
-            return Ok(Vec::new());
+        let entries = match fs::read_dir(&self.dir) {
+            Ok(entries) => entries,
+            // A backups directory that does not exist yet holds no snapshots — a normal
+            // first-run state, not an error.
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(Vec::new()),
+            // Anything else is a real fault. Reporting it as "no snapshots" is how a blocked
+            // backups path came to read as healthy.
+            Err(e) => return Err(format!("Failed to read the backups directory: {e}")),
         };
 
         let mut snapshots = Vec::new();
@@ -267,6 +271,51 @@ impl FsSnapshotStore {
 /// the backup engine.
 pub(crate) fn file_size(path: &Path) -> Option<u64> {
     fs::metadata(path).map(|m| m.len()).ok()
+}
+
+/// What the backups directory looks like on disk, as far as writing snapshots is concerned.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum DirState {
+    /// Exists, is a directory, and can be enumerated.
+    Usable,
+    /// Nothing exists at this path yet — the normal first-run state. The engine creates it
+    /// on the first write.
+    Absent,
+    /// Something exists that stops it being used: a file occupying the path or one of its
+    /// parents, or a directory that cannot be read.
+    Blocked,
+}
+
+/// Classifies `dir` by walking up from it to the deepest path that actually exists.
+///
+/// The walk is what makes this portable. A file occupying a *parent* of `dir` surfaces as
+/// `NotFound` on Windows and `NotADirectory` on Unix when `dir` itself is probed, so neither
+/// error kind can be trusted at the leaf; climbing until something exists finds the offending
+/// file either way. It also matches the shape the app actually uses, `{journal dir}/backups/{db stem}`,
+/// where the intermediate level is created by the engine too.
+pub(crate) fn dir_state(dir: &Path) -> DirState {
+    for (depth, ancestor) in dir.ancestors().enumerate() {
+        match fs::metadata(ancestor) {
+            // Nothing readable here, and no way to learn more from a deeper probe.
+            Err(e) if e.kind() == std::io::ErrorKind::PermissionDenied => return DirState::Blocked,
+            // This level tells us nothing yet — keep climbing.
+            Err(_) => continue,
+            // A file where a directory has to be. `create_dir_all` can never get past it.
+            Ok(meta) if !meta.is_dir() => return DirState::Blocked,
+            // The backups directory itself exists. Enumerating it is the only honest proof
+            // that it can be used.
+            Ok(_) if depth == 0 => {
+                return if fs::read_dir(dir).is_ok() {
+                    DirState::Usable
+                } else {
+                    DirState::Blocked
+                }
+            }
+            // An ancestor exists and is a directory, so the rest can still be created.
+            Ok(_) => return DirState::Absent,
+        }
+    }
+    DirState::Absent
 }
 
 // ── Naming ────────────────────────────────────────────────────────────────────────────
@@ -740,6 +789,36 @@ mod tests {
             backups.join("readme.txt").exists(),
             "sweep must not touch unrelated files"
         );
+    }
+
+    #[test]
+    fn test_list_distinguishes_a_missing_directory_from_an_unusable_one() {
+        // Collapsing both into "no snapshots" is how a blocked backups path came to read as
+        // healthy: the listing looked like a first run, so nothing else had reason to object.
+        let dir = tempfile::tempdir().unwrap();
+
+        let missing = FsSnapshotStore::new(dir.path().join("never-created"));
+        assert!(
+            missing.list().unwrap().is_empty(),
+            "a backups directory that does not exist yet is a first run, not a fault"
+        );
+        assert_eq!(dir_state(missing.dir()), DirState::Absent);
+
+        let occupied = dir.path().join("occupied");
+        fs::write(&occupied, "not a directory").unwrap();
+        let blocked = FsSnapshotStore::new(&occupied);
+        assert!(
+            blocked.list().is_err(),
+            "a backups path that cannot be enumerated must surface as an error"
+        );
+        assert_eq!(dir_state(&occupied), DirState::Blocked);
+        assert_eq!(
+            dir_state(&occupied.join("diary")),
+            DirState::Blocked,
+            "a file occupying a parent blocks the nested path the app actually uses"
+        );
+
+        assert_eq!(dir_state(dir.path()), DirState::Usable);
     }
 
     #[test]

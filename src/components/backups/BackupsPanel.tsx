@@ -13,11 +13,14 @@ import { journals, activeJournalId } from '../../state/journals';
  * (take a snapshot, re-check one, delete one) act on the backups directory, never on
  * entries.
  *
- * `reduced` is the pre-auth mode. The *data* is identical — snapshot metadata needs no key,
- * which is the whole reason a pre-auth view is possible — so the difference is only which
- * command supplies it and that every action requiring the master key is disabled with a
- * reason attached. That is also why this lives outside `preferences/`: TODO-0094's
- * locked-journal debug dump needs the same affordance.
+ * `reduced` is the pre-auth mode. The *payload* is identical — snapshot metadata needs no
+ * key, which is the whole reason a pre-auth view is possible — so the difference is which
+ * command supplies it, that every action requiring the master key is disabled with a reason
+ * attached, and that the rendering additionally withholds entry counts and date ranges. That
+ * last part is disclosure, not capability: the locked screen shows dates, ages, triggers,
+ * sizes and health only, so a passer-by learns that backups exist without learning how much
+ * has been written and over what span. That is also why this lives outside `preferences/`:
+ * TODO-0094's locked-journal debug dump needs the same affordance.
  */
 interface BackupsPanelProps {
   /** Re-run the load whenever this flips to true (overlay opened, view shown). */
@@ -177,15 +180,16 @@ export default function BackupsPanel(props: BackupsPanelProps) {
 
   /**
    * The single worst thing true of the backups right now, or `null` when all is well.
-   * Ordered by how much it costs the user: a folder that cannot be reached means no backups
+   * Ordered by how much it costs the user: a folder that cannot be used means no backups
    * at all, a failed attempt means no *new* backups, an exceeded budget only means the
    * newest ones get trimmed.
    */
   const problem = () => {
     const state = health();
     if (!state) return null;
-    // `directory_accessible` is "exists, or can be created", so a journal that has simply
-    // never been backed up reports true. False means the journal's own folder is gone.
+    // `directory_accessible` is "exists and can be listed, or does not exist yet and can be
+    // created", so a journal that has simply never been backed up reports true. False means
+    // the journal's own folder is gone, or something has taken the backups path's place.
     if (!state.directory_accessible) return t('prefs.backups.healthUnreachable');
     if (state.last_failure)
       return t('prefs.backups.healthFailed', {
@@ -332,19 +336,21 @@ export default function BackupsPanel(props: BackupsPanelProps) {
                   </div>
                   <p class="text-xs text-secondary mt-1">
                     {describeTrigger(snapshot.trigger, t)}
-                    {' · '}
-                    {snapshot.entry_count === null
-                      ? '—'
-                      : t(
-                          snapshot.entry_count === 1
-                            ? 'prefs.backups.entryCount_one'
-                            : 'prefs.backups.entryCount_other',
-                          { count: snapshot.entry_count },
-                        )}
+                    <Show when={!props.reduced}>
+                      {' · '}
+                      {snapshot.entry_count === null
+                        ? '—'
+                        : t(
+                            snapshot.entry_count === 1
+                              ? 'prefs.backups.entryCount_one'
+                              : 'prefs.backups.entryCount_other',
+                            { count: snapshot.entry_count },
+                          )}
+                    </Show>
                     {' · '}
                     {formatBytes(snapshot.byte_size)}
                   </p>
-                  <Show when={snapshot.entry_date_range}>
+                  <Show when={!props.reduced && snapshot.entry_date_range}>
                     {(range) => (
                       <p class="text-xs text-tertiary mt-0.5">
                         {t('prefs.backups.dateRange', { from: range()[0], to: range()[1] })}

@@ -261,10 +261,18 @@ pub fn backup_health(backups_dir: &Path, db_path: &Path) -> BackupHealth {
 /// the journal's own directory is gone, the journal is unreachable and so is everything
 /// beside it, on every platform.
 ///
-/// A directory that exists is not proof of write permission; that failure surfaces through
-/// `last_failure`, which is the only place it can honestly be observed.
+/// A directory that exists and enumerates is still not proof of write permission. That last
+/// failure surfaces through `last_failure` — but only when the manifest beside it is
+/// writable, which a blocked path is precisely not. So this signal is the only honest one
+/// there: when the path cannot hold a snapshot it cannot hold the record of that failure
+/// either, and `directory_accessible` has to carry it alone.
 fn backups_dir_is_usable(backups_dir: &Path, db_path: &Path) -> bool {
-    backups_dir.is_dir() || db_path.parent().is_some_and(Path::is_dir)
+    match store::dir_state(backups_dir) {
+        store::DirState::Usable => true,
+        store::DirState::Blocked => false,
+        // Not created yet: the normal first run, so ask the journal's own directory instead.
+        store::DirState::Absent => db_path.parent().is_some_and(Path::is_dir),
+    }
 }
 
 /// Re-checks an existing snapshot against the live master key and records the result.
@@ -723,6 +731,70 @@ mod tests {
 
         assert!(fixture.db_path.exists(), "the live journal was deleted");
         assert_eq!(list_snapshots(&fixture.backups_dir).unwrap().len(), 1);
+    }
+
+    #[test]
+    fn test_health_reports_a_backups_path_blocked_by_a_file_as_unusable() {
+        // The failure mode that made every other signal lie: with the path blocked, the
+        // snapshot cannot be written *and* `manifest.json` cannot record that it failed, so
+        // `directory_accessible` is the only place the truth can surface.
+        let fixture = Fixture::new("health-blocked");
+
+        // Shape 1 — the backups path itself is occupied by a file.
+        std::fs::write(&fixture.backups_dir, b"not a directory").unwrap();
+
+        assert!(
+            create_snapshot(&fixture.db, &fixture.ctx(), SnapshotTrigger::Manual).is_err(),
+            "a snapshot cannot be written into a path occupied by a file"
+        );
+        let health = backup_health(&fixture.backups_dir, &fixture.db_path);
+        assert!(
+            !health.directory_accessible,
+            "a backups path occupied by a file must not report as usable"
+        );
+        assert!(
+            health.last_failure.is_none(),
+            "the failure record cannot be persisted into a blocked path — which is exactly \
+             why `directory_accessible` has to carry this on its own"
+        );
+
+        // Shape 2 — the nesting the app really uses, with the intermediate level blocked.
+        let nested = fixture.backups_dir.join("diary");
+        let ctx = BackupContext {
+            db_path: &fixture.db_path,
+            backups_dir: &nested,
+            app_version: Some("0.6.4"),
+        };
+
+        assert!(create_snapshot(&fixture.db, &ctx, SnapshotTrigger::Manual).is_err());
+        let nested_health = backup_health(&nested, &fixture.db_path);
+        assert!(
+            !nested_health.directory_accessible,
+            "a file occupying a parent of the backups directory must not report as usable"
+        );
+        assert!(nested_health.last_failure.is_none());
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn test_health_reports_an_unreadable_backups_directory_as_unusable() {
+        use std::fs::Permissions;
+        use std::os::unix::fs::PermissionsExt;
+
+        let fixture = Fixture::new("health-unreadable");
+        fixture.snapshot(SnapshotTrigger::Manual);
+        assert!(backup_health(&fixture.backups_dir, &fixture.db_path).directory_accessible);
+
+        std::fs::set_permissions(&fixture.backups_dir, Permissions::from_mode(0o000)).unwrap();
+        let health = backup_health(&fixture.backups_dir, &fixture.db_path);
+        // Restore first: an unreadable directory would fail the `TempDir` drop as well, and a
+        // panic below must not leave the temp tree behind.
+        std::fs::set_permissions(&fixture.backups_dir, Permissions::from_mode(0o700)).unwrap();
+
+        assert!(
+            !health.directory_accessible,
+            "a backups directory that cannot be enumerated must not report as usable"
+        );
     }
 
     #[test]

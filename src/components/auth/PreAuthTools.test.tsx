@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { screen, waitFor, fireEvent } from '@solidjs/testing-library';
+import { screen, waitFor, fireEvent, within } from '@solidjs/testing-library';
 import { renderWithI18n } from '../../test/i18n-test-utils';
 import PreAuthTools from './PreAuthTools';
 
@@ -104,9 +104,21 @@ describe('PreAuthTools', () => {
     fireEvent.click(screen.getByTestId('pre-auth-backups-button'));
 
     await waitFor(() => expect(screen.getByTestId('backups-list-item')).toBeInTheDocument());
-    expect(screen.getByText(/2 entries/)).toBeInTheDocument();
-    expect(screen.getByText(/2024-01-15/)).toBeInTheDocument();
+    const row = within(screen.getByTestId('backups-list-item'));
+    expect(row.getByText(/After unlocking/)).toBeInTheDocument();
+    expect(row.getByText(/4\.0 KB/)).toBeInTheDocument();
     expect(screen.getByTestId('backups-item-unverified')).toBeInTheDocument();
+  });
+
+  it('withholds entry counts and date ranges on the lock screen', async () => {
+    // Task 3.3's disclosure contract: enough to answer "is there a backup, and how recent?"
+    // without telling anyone walking past how much has been written and over what span.
+    renderWithI18n(() => <PreAuthTools />);
+    fireEvent.click(screen.getByTestId('pre-auth-backups-button'));
+
+    await waitFor(() => expect(screen.getByTestId('backups-list-item')).toBeInTheDocument());
+    expect(screen.queryByText(/2 entries/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/2024-01-15 to 2024-03-20/)).not.toBeInTheDocument();
   });
 
   it('does not render the panel until the entry point is used', () => {

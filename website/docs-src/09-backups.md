@@ -77,14 +77,14 @@ Four things you can do from here:
 
 The same panel is reachable from the unlock screen, before you enter anything, via **View backups**. This is deliberate. The moment you most need to know which backups exist is the moment your journal will not open.
 
-Everything descriptive still works there, because none of it needs your key: the dates, counts, sizes, and reasons are readable from the snapshots and their manifest without decrypting anything. The actions that do need the key (taking, checking, and deleting backups) are disabled until you unlock.
+Everything you need to answer "is there a backup, and how recent is it?" still works there, because none of it needs your key: the dates, sizes, and reasons are readable from the snapshots and their manifest without decrypting anything. Entry counts and date ranges are held back until you unlock, so a passer-by at the lock screen learns that backups exist without learning how much you have written or over what span. The actions that do need the key (taking, checking, and deleting backups) are disabled until you unlock.
 
 ### When something is wrong
 
 The panel replaces "Backups are working." with a plain-language cause when it can find one:
 
 - **The last attempt failed.** Backups taken as the app locks or exits run in the background, so a failure has nowhere to appear at the time. It is recorded and shown here instead. Open the backups folder and check it is reachable and has free space.
-- **The folder cannot be reached.** Usually a journal on a removable or synced drive that is disconnected. Reconnect it.
+- **The folder cannot be used.** Usually a journal on a removable or synced drive that is disconnected, so reconnect it. It also covers the case where the backups folder still has an address but nothing usable at it: something else, a file for instance, has taken its place, or the folder itself can no longer be read. That second case is worth stating separately because no failure record can be written into a folder that cannot be written to, so this line is the only warning you get.
 - **Backups are over their storage limit.** Not an error. Mini Diarium trims the most recent snapshots first and keeps the older ones.
 
 ## Restoring

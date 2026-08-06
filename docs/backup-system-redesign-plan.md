@@ -596,7 +596,7 @@ enabling the feature; `Cargo.lock` is unaffected, since features are not recorde
 |---|---|---|
 | 1 | Task 3.1: `get_backup_health`, with no definition of what "health" contains. | Added `BackupHealth` + the pure `summarize_health` to `policy.rs`, and **persisted failures**: `Manifest` gained `last_failure: Option<BackupFailure>` (`#[serde(default)]`, so older manifests still load). Without it, UX-6's "last N snapshots failed" is unanswerable — lock and shutdown snapshots run on a background thread with no UI attached, so a journal whose backups had stopped working looked identical to one that was up to date. `BackupFailure` carries **only `at` and `trigger`, never a message**: the manifest is plaintext and the Privacy Decision forbids filesystem paths, and an arbitrary I/O error string is the easiest way to break that by accident. |
 | 2 | Task 3.1 step 1: `reveal_backups_folder` "uses `revealItemInDir` from `@tauri-apps/plugin-opener`" — a JS API — while also being a Rust command. | Those are contradictory. Shipped as a Rust command calling `tauri_plugin_opener::reveal_item_in_dir`, so the backups path never crosses the IPC boundary. Sending it to the WebView only to send it straight back would put a filesystem path on the wire that the rest of this subsystem is careful to keep off it. `opener:default` covers the Rust path too, so Assumption 7 holds and no capability was added. |
-| 3 | Tasks 3.2 and 3.3 as two separate views. | One shared `src/components/backups/BackupsPanel.tsx` with a `reduced` prop, wrapped by `PreferencesBackupsTab.tsx` (tabpanel shell) and `BackupsOverlay.tsx` (standalone dialog). The pre-auth *data* is identical to the authenticated data — that is the point of a keyless manifest — so the only real difference is which command supplies it and that key-requiring actions are disabled. Task 3.3 step 3's "factor the affordance" is `src/components/auth/PreAuthTools.tsx`: the row of things reachable without unlocking, which TODO-0094 extends by adding one button. |
+| 3 | Tasks 3.2 and 3.3 as two separate views. | One shared `src/components/backups/BackupsPanel.tsx` with a `reduced` prop, wrapped by `PreferencesBackupsTab.tsx` (tabpanel shell) and `BackupsOverlay.tsx` (standalone dialog). The pre-auth *payload* is identical to the authenticated payload — that is the point of a keyless manifest — so the differences are which command supplies it, that key-requiring actions are disabled, and that reduced mode **renders less than it receives**: entry counts and date ranges are withheld, leaving Task 3.3 step 2's "dates, sizes, triggers, and health only". Forking the DTO would buy nothing an attacker cannot get by opening `manifest.json`; the gate is least disclosure on a screen anyone walking past can see, not a security boundary. (Reduced mode first shipped listing the snapshot in full; the review of 2026-08-06 caught the mismatch and it was corrected.) Task 3.3 step 3's "factor the affordance" is `src/components/auth/PreAuthTools.tsx`: the row of things reachable without unlocking, which TODO-0094 extends by adding one button. |
 | 4 | Nothing about path traversal. | `FsSnapshotStore::{read, delete, stat}` joined a caller-supplied name onto the backups directory without validating it. Harmless while every name was engine-generated; a **path-traversal hole** the moment `delete_backup(fileName)` became IPC-reachable — `backup-../../diary.db` satisfies both affixes. `is_snapshot_file_name` now also rejects separators, `..`, and NUL, and all three methods go through it. Guarded by `test_every_name_taking_method_refuses_to_escape_the_backups_directory` (store) and `test_delete_refuses_to_address_anything_outside_the_backups_directory` (engine). |
 | 5 | Milestone 3 exit criterion: "a snapshot that failed to write is visibly distinguished". | Not literally satisfiable, and that is a *consequence* of Milestone 1 rather than a gap. A snapshot that fails to write leaves **no file** — the write is atomic and deletes its own remains, so there is nothing in the list to distinguish. Delivered as the two things that can honestly be shown: the **last failed attempt** (from the new `Manifest.last_failure`) in the health line, and per-snapshot **`Checked` / `Not checked`** for snapshots whose decryptability has not been confirmed. |
 
@@ -619,6 +619,38 @@ that the panel does not cry wolf on a never-backed-up journal.
 
 Worth noting as a process point: this was only caught by running the app. Every unit test
 passed against the wrong behavior, because the tests encoded the same wrong assumption.
+
+### Defect found in review, and fixed
+
+The same lesson, a second time. The fix above answered "does the journal's own directory
+still exist?" but never asked whether the backups path itself was usable, and three separate
+places conspired to hide the answer:
+
+- `FsSnapshotStore::list` collapsed *every* `read_dir` error into `Ok(vec![])`, so a
+  directory blocked by a file read as empty rather than broken.
+- `backups_dir_is_usable` returned `true` whenever the journal's parent existed, whatever
+  occupied `backups_dir`.
+- `create_snapshot` records a failure into `manifest.json` **inside that same directory**, so
+  a blocked path cannot persist the one signal that was supposed to cover this case.
+
+The result: the panel rendered "Backups are working." at the exact moment no backup could be
+written. Fixed by a `store::dir_state` classifier — `Usable` / `Absent` / `Blocked`, resolved
+by walking `ancestors()` to the deepest path that exists, which is what makes it portable
+(a file occupying a parent surfaces as `NotFound` on Windows and `NotADirectory` on Unix) —
+with `list` now returning `Err` for anything that is not `NotFound`, and
+`backups_dir_is_usable` deferring to the classifier and only falling back to the journal
+directory for `Absent`. Pinned by
+`test_health_reports_a_backups_path_blocked_by_a_file_as_unusable` (both the flat and the
+nested `{journal dir}/backups/{db stem}` shapes, asserting `last_failure` is `None` — the
+point being *why* `directory_accessible` has to carry this alone),
+`test_health_reports_an_unreadable_backups_directory_as_unusable` (Unix), and
+`test_list_distinguishes_a_missing_directory_from_an_unusable_one`.
+
+The process point is the same one as above, which is why it is worth recording twice: every
+unit test passed against the wrong `directory_accessible` behaviour, because the tests
+encoded the same wrong assumption the code did. `test_a_failed_snapshot_is_an_error_not_a_silent_skip`
+even built the exact blocked-directory fixture and asserted only that `create_snapshot`
+errored — it never asked what health said afterwards.
 
 ## Execution Notes
 

@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { screen, waitFor, fireEvent } from '@solidjs/testing-library';
+import { screen, waitFor, fireEvent, within } from '@solidjs/testing-library';
 import { renderWithI18n } from '../../test/i18n-test-utils';
 import BackupsPanel, { formatBytes, describeTrigger } from './BackupsPanel';
 import { defaultT } from '../../i18n';
@@ -120,6 +120,9 @@ describe('BackupsPanel', () => {
     expect(screen.getByText(/Manual/)).toBeInTheDocument();
     expect(screen.getByText(/Before a database upgrade/)).toBeInTheDocument();
     expect(screen.getByText(/3 entries/)).toBeInTheDocument();
+    // Both fixtures carry the same range, so both rows must show it — the other side of the
+    // gate the reduced-mode test pins.
+    expect(screen.getAllByText(/2024-01-15 to 2024-03-20/)).toHaveLength(2);
     expect(screen.getByTestId('backups-item-verified')).toBeInTheDocument();
     expect(screen.getByTestId('backups-item-unverified')).toBeInTheDocument();
   });
@@ -161,7 +164,7 @@ describe('BackupsPanel', () => {
     renderWithI18n(() => <BackupsPanel isVisible={visible} />);
 
     await waitFor(() =>
-      expect(screen.getByTestId('backups-health-problem')).toHaveTextContent(/cannot be reached/i),
+      expect(screen.getByTestId('backups-health-problem')).toHaveTextContent(/cannot be used/i),
     );
   });
 
@@ -269,6 +272,28 @@ describe('BackupsPanel', () => {
       expect(screen.getByRole('button', { name: 'Check' })).toBeDisabled();
       expect(screen.getByRole('button', { name: 'Delete' })).toBeDisabled();
       expect(screen.getByTestId('backups-locked-hint')).toBeInTheDocument();
+    });
+
+    it('shows dates, triggers, sizes and health only — no entry counts or date ranges', async () => {
+      // Task 3.3's disclosure contract. Not a plaintext leak either way (the manifest privacy
+      // decision permits this metadata), but the locked screen should not tell a passer-by
+      // how much has been written and over what span.
+      mockListBackupsUnauthenticated.mockResolvedValue({
+        snapshots: [snapshot()],
+        health: health(),
+      });
+
+      renderWithI18n(() => <BackupsPanel isVisible={visible} reduced />);
+
+      await waitFor(() => expect(screen.getByTestId('backups-list-item')).toBeInTheDocument());
+      const row = within(screen.getByTestId('backups-list-item'));
+      expect(row.getByText(/Manual/)).toBeInTheDocument();
+      expect(row.getByText(/4\.0 KB/)).toBeInTheDocument();
+      expect(screen.getByTestId('backups-item-verified')).toBeInTheDocument();
+      expect(screen.getByTestId('backups-health-ok')).toBeInTheDocument();
+
+      expect(screen.queryByText(/3 entries/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/2024-01-15 to 2024-03-20/)).not.toBeInTheDocument();
     });
 
     it('still allows opening the backups folder — the one useful action with no key', async () => {

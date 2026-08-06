@@ -124,7 +124,14 @@ pub(crate) fn save(dir: &Path, manifest: &Manifest) -> Result<(), String> {
 /// unknown" — the descriptive fields are read from the snapshot without a key.
 pub(crate) fn load_reconciled(dir: &Path, store: &impl SnapshotStore) -> Manifest {
     let existing = load(dir).unwrap_or_else(Manifest::empty);
-    let files = store.list().unwrap_or_default();
+    // Degrading to "nothing on disk" is deliberate: a metadata read must never make the
+    // backups themselves unusable. It must not be *silent*, though — a store that cannot be
+    // listed is exactly the state `backup_health` reports separately, and this log is what
+    // ties the two together in a bug report.
+    let files = store.list().unwrap_or_else(|e| {
+        warn!("Failed to list the backups directory: {}", e);
+        Vec::new()
+    });
 
     let mut snapshots = Vec::with_capacity(files.len());
     for file in &files {

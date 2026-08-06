@@ -577,7 +577,7 @@ const en = {
       healthFailed:
         'The last backup attempt failed ({{ when }}). Open the backups folder to check it is reachable and has free space.',
       healthUnreachable:
-        'The backups folder cannot be reached. If it is on a removable or synced drive, reconnect it.',
+        'The backups folder cannot be used. If the journal is on a removable or synced drive, reconnect it; otherwise check that the folder still exists and nothing has taken its place.',
       healthBudget:
         'Backups are over their storage limit. The most recent ones will be trimmed first; older ones are kept.',
 

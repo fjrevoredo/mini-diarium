@@ -487,7 +487,7 @@
       "countSummary_other": "{{ count }} Sicherungen",
       "healthOk": "Die Sicherungen funktionieren.",
       "healthFailed": "Der letzte Sicherungsversuch ist fehlgeschlagen ({{ when }}). Öffne den Sicherungsordner und prüfe, ob er erreichbar ist und genug freien Speicher hat.",
-      "healthUnreachable": "Der Sicherungsordner ist nicht erreichbar. Wenn er auf einem Wechseldatenträger oder in einem synchronisierten Ordner liegt, verbinde ihn erneut.",
+      "healthUnreachable": "Der Sicherungsordner kann nicht verwendet werden. Wenn das Journal auf einem Wechseldatenträger oder in einem synchronisierten Ordner liegt, verbinde ihn erneut; prüfe andernfalls, ob der Ordner noch existiert und nichts seinen Platz eingenommen hat.",
       "healthBudget": "Die Sicherungen überschreiten ihr Speicherlimit. Zuerst werden die neuesten ausgedünnt; die älteren bleiben erhalten.",
       "entryCount_one": "{{ count }} Eintrag",
       "entryCount_other": "{{ count }} Einträge",
