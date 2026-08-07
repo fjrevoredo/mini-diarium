@@ -267,7 +267,15 @@ pub fn create_diary(password: String, state: State<DiaryState>) -> Result<(), St
         return Err("Journal already exists".to_string());
     }
 
-    let db_conn = create_database(&db_path, password)?;
+    // Log the raw cause before it is sanitized for the UI. `create_diary` used to log nothing,
+    // so the real reason a journal could not be created never reached anyone — a Flathub user
+    // spent two weeks blocked behind a generic "check your permissions" message. Error text
+    // only: `db_path` must not appear at Info-and-above (see src-tauri/CLAUDE.md Gotcha #10).
+    // `map_err`, not `inspect_err`: the latter is stable only since 1.76 and the MSRV is 1.75.
+    let db_conn = create_database(&db_path, password).map_err(|e| {
+        log::error!("Journal creation failed: {e}");
+        e
+    })?;
 
     let mut db_state = state
         .db

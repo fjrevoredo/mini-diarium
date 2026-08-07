@@ -98,6 +98,8 @@
       "namePlaceholder": "z. B. Mein Tagebuch",
       "journalNamePlaceholder": "Name des Tagebuchs",
       "locationLabel": "Speicherort",
+      "useDefaultLocation": "Standardort verwenden",
+      "defaultLocationHint": "Der Standardort gibt jedem Tagebuch einen eigenen Ordner. Du musst nur suchen, wenn du einen anderen Ordner möchtest.",
       "confirmRemoveMessage": "Dieses Tagebuch aus der Liste entfernen? Die Tagebuchdatei wird nicht gelöscht.",
       "confirmRemoveTitle": "Tagebuch entfernen",
       "noJournalFound": "Die ausgewählte Datei ist keine gültige Tagebuch-Datenbank.",
@@ -630,6 +632,9 @@
     "cannotReadKeyFile": "Die Schlüsseldatei konnte nicht gelesen werden. Überprüfe, ob die Datei existiert und du Leseberechtigung hast.",
     "cannotSaveKeyFile": "Die Schlüsseldatei konnte nicht gespeichert werden. Überprüfe die Berechtigungen des Ordners.",
     "fileOperationFailed": "Ein Datei-Vorgang ist fehlgeschlagen. Überprüfe, ob du die notwendigen Berechtigungen hast.",
+    "portalPathRejected": "Dieser Ordner ist nur vorübergehend für Mini Diarium freigegeben, daher ließe sich ein dort gespeichertes Tagebuch später nicht mehr öffnen. Verwende stattdessen den Standardort.",
+    "backupFileRejected": "Diese Datei ist eine Sicherungskopie. Sie direkt zu öffnen würde sie verändern. Kopiere sie zuerst an einen anderen Ort und öffne dann die Kopie.",
+    "journalAlreadyRegistered": "Dieses Tagebuch ist bereits in deiner Liste. Öffne es oben aus der Liste, statt es erneut hinzuzufügen.",
     "internalError": "Ein interner Fehler ist aufgetreten.",
     "unexpectedError": "Ein unerwarteter Fehler ist aufgetreten."
   }

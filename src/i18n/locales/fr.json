@@ -98,6 +98,8 @@
       "namePlaceholder": "ex. Mon journal",
       "journalNamePlaceholder": "Nom du journal",
       "locationLabel": "Emplacement",
+      "useDefaultLocation": "Utiliser l'emplacement par défaut",
+      "defaultLocationHint": "L'emplacement par défaut donne à chaque journal son propre dossier. Vous n'avez besoin de parcourir que si vous voulez un autre dossier.",
       "confirmRemoveMessage": "Supprimer ce journal de la liste ? Le fichier du journal ne sera pas supprimé.",
       "confirmRemoveTitle": "Supprimer le journal",
       "noJournalFound": "Le fichier sélectionné n'est pas une base de données de journal valide.",
@@ -630,6 +632,9 @@
     "cannotReadKeyFile": "Impossible de lire le fichier clé. Vérifiez que le fichier existe et que vous avez l'autorisation de le lire.",
     "cannotSaveKeyFile": "Impossible d'enregistrer le fichier clé. Vérifiez les permissions du dossier.",
     "fileOperationFailed": "Une opération de fichier a échoué. Vérifiez que vous avez les permissions nécessaires.",
+    "portalPathRejected": "Ce dossier n'est partagé avec Mini Diarium que temporairement : un journal enregistré là cesserait de s'ouvrir plus tard. Utilisez plutôt l'emplacement par défaut.",
+    "backupFileRejected": "Ce fichier est une sauvegarde. L'ouvrir directement le modifierait. Copiez-le d'abord ailleurs, puis ouvrez la copie.",
+    "journalAlreadyRegistered": "Ce journal est déjà dans votre liste. Ouvrez-le depuis la liste ci-dessus au lieu de l'ajouter à nouveau.",
     "internalError": "Une erreur interne s'est produite.",
     "unexpectedError": "Une erreur inattendue s'est produite."
   }

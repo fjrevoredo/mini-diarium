@@ -40,7 +40,9 @@ x25519-dalek = { version = "3", features = ["static_secrets"] }
 hkdf = "0.13"
 sha2 = "0.11"
 base64 = "0.23"
-chrono = "0.4"
+# `serde` is required, not optional: backup::policy::SnapshotMeta and the manifest sidecar
+# derive Serialize/Deserialize over DateTime<Utc>, which chrono only implements under it.
+chrono = { version = "0.4", features = ["serde"] }
 rhai = { version = "1", features = ["serde"] }
 log = "0.4"
 image = { version = "0.25", default-features = false, features = ["png", "jpeg", "gif", "webp", "bmp"] }

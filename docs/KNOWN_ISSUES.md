@@ -94,6 +94,32 @@ WAL mode remains disabled. That is now an independent decision rather than a mit
 
 ---
 
+### KI-10 — On Flatpak, folders outside the sandbox are reached through a temporary portal path
+**Status:** Open (mitigated in v0.6.6)
+
+The Flathub build runs sandboxed and has direct access only to its own data directory. When you browse to any *other* folder, the file chooser goes through the XDG document portal, which hands the app a temporary handle under `/run/user/<uid>/doc/` instead of the real path. That handle is tied to one grant: it works while the chooser's permission lasts and stops resolving afterwards. A journal whose stored location is such a handle becomes unopenable later, and creating a new database inside one fails.
+
+This affects only journals placed outside the sandbox — the chooser opens on a real, writable location, so the common path is unaffected.
+
+**Mitigation (v0.6.6):** **+ Create New Journal** now pre-fills a working location — your Documents folder, or the app's own data folder where Documents is not writable (as on Flathub, where the sandbox holds no filesystem permission) — and no longer requires the folder chooser at all. Each journal created there gets a folder of its own. The app also refuses a portal path as a journal location — explaining why instead of failing with a generic permissions error. The refusal covers both ways a journal gets a location: adding one, and **Preferences → Data → Change journal directory**. The move case is refused before the database file is touched, since relocating a journal into a path that later stops resolving is worse than a bad config entry.
+
+**Workaround if you want a journal in a specific host folder:** grant Mini Diarium persistent access to it with Flatseal (or `flatpak override --user --filesystem=/path/to/folder io.github.fjrevoredo.mini-diarium`), then pick the folder. With a real filesystem permission in place the chooser returns the true path rather than a portal handle.
+
+Resolving an existing stored portal path back to its host location is not implemented; a journal already saved that way must be re-added from its real folder.
+
+---
+
+### KI-11 — Opening a backup snapshot directly modifies it
+**Status:** Mitigated in v0.6.6
+
+A snapshot is an ordinary encrypted Mini Diarium database, so **+ Open Existing** used to accept one — and opening it as a journal writes to it, destroying the untouched restore point you were reaching for. This affected every platform, not just Flatpak.
+
+**Mitigation (v0.6.6):** the app refuses to register a `backup-*.db` file, or any file inside a `backups/` folder, as a journal, and tells you to copy it elsewhere first and open the copy.
+
+**Workaround:** copy the snapshot out of the `backups/` folder, rename it (e.g. `diary.db`), and open the copy. A non-destructive in-app restore is tracked in TODO-0098.
+
+---
+
 ## For Developers
 
 ### AT-1 — Single database connection; no concurrent read access

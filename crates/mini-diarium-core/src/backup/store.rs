@@ -24,7 +24,7 @@ use crate::db::DatabaseConnection;
 
 /// Prefix every snapshot file carries. Unchanged from the pre-upgrade format so files
 /// written by older versions are still recognised.
-pub(crate) const SNAPSHOT_PREFIX: &str = "backup-";
+pub const SNAPSHOT_PREFIX: &str = "backup-";
 /// Suffix every snapshot file carries.
 pub(crate) const SNAPSHOT_SUFFIX: &str = ".db";
 /// Prefix for in-flight writes. Never matches the listing filter, so an interrupted write
@@ -261,7 +261,10 @@ pub(crate) fn file_size(path: &Path) -> Option<u64> {
 // ── Naming ────────────────────────────────────────────────────────────────────────────
 
 /// Whether `name` is a snapshot file this engine owns.
-pub(crate) fn is_snapshot_file_name(name: &str) -> bool {
+///
+/// Exported through the crate façade so the app can *refuse* to register a snapshot as a
+/// journal without duplicating the `"backup-"` literal.
+pub fn is_snapshot_file_name(name: &str) -> bool {
     name.starts_with(SNAPSHOT_PREFIX) && name.ends_with(SNAPSHOT_SUFFIX)
 }
 

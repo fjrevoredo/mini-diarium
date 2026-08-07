@@ -236,7 +236,7 @@
       "@id": "https://mini-diarium.com/docs/getting-started/#article",
       "headline": "Getting Started",
       "description": "System requirements, creating your first encrypted journal, setting a password, the welcome tour, multiple journals, key file auth, and local-only mode.",
-      "dateModified": "2026-07-31T00:00:00Z",
+      "dateModified": "2026-08-08T00:00:00Z",
       "keywords": "setup, password, first launch, system requirements",
       "publisher": {
         "@type": "Organization",
@@ -425,6 +425,8 @@
         <p>macOS releases older than Catalina (Mojave 10.14 and earlier) are <strong>not supported</strong>. The app declares
         a minimum system version, so macOS will refuse to launch it rather than starting and failing partway.</p>
         <h2 id="first-launch">First Launch</h2><p>When you open Mini Diarium, the app starts at the <strong>Journal Picker</strong>. From there you can create a new journal or open an existing <code>diary.db</code> file.</p>
+        <p><strong>+ Create New Journal</strong> opens a short form with the location already filled in. You only need to give the journal a name and click <strong>Add</strong>; picking a folder yourself is optional. <strong>Browse…</strong> lets you choose a different one, and <strong>Use default location</strong> puts it back.</p>
+        <p>The default location is a <code>Mini Diarium</code> folder inside your Documents folder, or a folder inside the app&#39;s own data directory where Documents is not writable — as on the Flathub build, where the app is sandboxed. Whichever it resolves to is shown in the form before you create anything. Each journal created there gets a folder of its own, named after the journal. A folder you browse to is used exactly as you chose it, and the journal is created directly inside it.</p>
         <p>If you create a new journal, you will be asked to create a password. This password encrypts your entire journal using AES-256-GCM encryption.</p>
         <p><strong>There is no password recovery.</strong> If you forget your password, your entries cannot be recovered. Choose something memorable and keep it safe.</p>
         <h2 id="welcome-tour">Welcome Tour</h2><p>The first time you create a journal, a <strong>three-step overlay tour</strong> appears to highlight key features:</p>
@@ -440,7 +442,16 @@
         <p>As an alternative to your password, you can register a key file in <strong>Preferences → Authentication Methods</strong>. Once registered, use the &quot;Key File&quot; tab on the unlock screen and select your <code>.key</code> file to unlock without typing your password.</p>
         <p>You can also enable <strong>idle auto-lock</strong> in <strong>Preferences → Security → Auto-Lock</strong>. When enabled, Mini Diarium locks automatically after the configured period of inactivity.</p>
         <h2 id="multiple-journals">Multiple Journals</h2><p>You can maintain separate journals for different purposes: personal, work, travel, and so on. Each journal is an independent encrypted file in its own folder.</p>
-        <p><strong>Adding a journal:</strong> Use the Journal Picker&#39;s add actions. You can create a new journal in a chosen folder or add an existing <code>diary.db</code>.</p>
+        <p><strong>Adding a journal:</strong> Use the Journal Picker&#39;s add actions. You can create a new journal — in the default location or a folder you choose — or add an existing <code>diary.db</code>.</p>
+        <p><strong>Where a journal can live:</strong> any ordinary folder you can write to. Three cases are refused, with an explanation:</p>
+        <ul>
+        <li><p><strong>A journal already in your list.</strong> Every journal uses the same <code>diary.db</code> filename, so two entries in one folder would be two names for a single journal. Adding one again is refused with &quot;already in your list&quot; — open it from the list instead.</p>
+        </li>
+        <li><p><strong>A backup snapshot.</strong> Files named <code>backup-*.db</code>, and anything inside a <code>backups</code> folder, cannot be opened as a journal, because opening one would write to it and destroy the restore point. To read an old snapshot, copy it out of the <code>backups</code> folder first and open the copy.</p>
+        </li>
+        <li><p><strong>A temporary sandbox location (Flatpak only).</strong> On the Flathub build, browsing to a folder outside the app&#39;s sandbox returns a temporary path under <code>/run/user/…/doc/</code> rather than the real one. It works at first and stops working later, so it is refused. Use the default location, or grant the app permanent access to the folder you want with <a href="https://flathub.org/apps/com.github.tchx84.Flatseal" target="_blank" rel="noopener noreferrer">Flatseal</a> before selecting it.</p>
+        </li>
+        </ul>
         <p><strong>Switching journals:</strong> Open the Journal Picker, choose the journal you want, and then unlock it. On a shared device, this lets each person select their own journal before any authentication prompt appears.</p>
         <p><strong>Removing a journal:</strong> Remove a journal entry from the Journal Picker. This only removes it from the configured list; the journal files on disk are not deleted. Removing the last configured journal is allowed and leaves the picker in an empty state.</p>
         <p>If you only have one journal, the Journal Picker simply shows that single journal as the only choice.</p>

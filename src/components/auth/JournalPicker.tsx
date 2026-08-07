@@ -9,7 +9,7 @@ import {
   renameJournal,
 } from '../../state/journals';
 import { refreshAuthState, error as authError } from '../../state/auth';
-import { checkJournalPath } from '../../lib/tauri';
+import { checkJournalPath, getDefaultJournalDir, prepareJournalDir } from '../../lib/tauri';
 import { mapTauriError } from '../../lib/errors';
 import { useI18n } from '../../i18n';
 
@@ -24,6 +24,10 @@ export default function JournalPicker() {
   const [newName, setNewName] = createSignal('');
   const [newDir, setNewDir] = createSignal('');
   const [dbFilename, setDbFilename] = createSignal<string | undefined>(undefined);
+  // Whether newDir() is the backend's default location rather than a folder the user browsed
+  // to. Only the default is a shared parent that every journal is created under, so only the
+  // default needs a per-journal subfolder allocated inside it.
+  const [usingDefaultLocation, setUsingDefaultLocation] = createSignal(false);
   const [renamingId, setRenamingId] = createSignal<string | null>(null);
   const [renameValue, setRenameValue] = createSignal('');
 
@@ -73,6 +77,30 @@ export default function JournalPicker() {
     setRenamingId(null);
   };
 
+  const handleUseDefaultLocation = async () => {
+    setLocalError(null);
+    try {
+      setNewDir(await getDefaultJournalDir());
+      setUsingDefaultLocation(true);
+    } catch (err) {
+      setLocalError(mapTauriError(err, t));
+    }
+  };
+
+  /**
+   * Opens the create form with a working location already filled in.
+   *
+   * The button used to call `handleBrowseCreate` directly, which made the folder chooser
+   * unavoidable — and under Flatpak the chooser is what hands back an unusable document-portal
+   * path. Browse… is still one click away and still overrides this prefill.
+   */
+  const handleStartCreate = async () => {
+    setLocalError(null);
+    setAddMode('create');
+    // Never clobber a folder the user already chose in this session.
+    if (!newDir()) await handleUseDefaultLocation();
+  };
+
   const handleBrowseCreate = async () => {
     setLocalError(null);
     const selected = await open({
@@ -87,6 +115,7 @@ export default function JournalPicker() {
         .split(/[/\\]/)
         .pop() || 'My Journal';
     setNewDir(selected);
+    setUsingDefaultLocation(false);
     if (!newName()) setNewName(folderName);
     setAddMode('create');
   };
@@ -105,7 +134,11 @@ export default function JournalPicker() {
     setLocalError(null);
     setIsWorking(true);
     try {
-      const journal = await addJournal(name, dir);
+      // The default location is a shared parent — every journal created without browsing
+      // lands in it, and they all use the same diary.db filename. Give each one its own
+      // subfolder; a browsed folder is used as-is, which is what the user asked for.
+      const target = usingDefaultLocation() ? await prepareJournalDir(dir, name) : dir;
+      const journal = await addJournal(name, target);
       await switchJournal(journal.id);
       await refreshAuthState();
     } catch (err) {
@@ -135,6 +168,7 @@ export default function JournalPicker() {
     const filename = selected.split(/[/\\]/).pop() || 'diary.db';
     const stemName = filename.replace(/\.db$/i, '') || 'My Journal';
     setNewDir(parentDir);
+    setUsingDefaultLocation(false);
     setDbFilename(filename);
     if (!newName()) setNewName(stemName);
     setAddMode('open');
@@ -167,6 +201,7 @@ export default function JournalPicker() {
     setAddMode(null);
     setNewName('');
     setNewDir('');
+    setUsingDefaultLocation(false);
     setDbFilename(undefined);
     setLocalError(null);
   };
@@ -283,7 +318,7 @@ export default function JournalPicker() {
               <div class="flex gap-3">
                 <button
                   type="button"
-                  onClick={() => handleBrowseCreate()}
+                  onClick={() => handleStartCreate()}
                   disabled={isWorking()}
                   class="flex-1 rounded-md interactive-primary px-4 py-2.5 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
@@ -332,12 +367,20 @@ export default function JournalPicker() {
                     >
                       {t('common.browseDotDotDot')}
                     </button>
+                    <button
+                      type="button"
+                      onClick={() => handleUseDefaultLocation()}
+                      class="rounded-md border border-primary px-3 py-1.5 text-xs font-medium text-secondary hover:bg-hover focus:outline-none"
+                    >
+                      {t('auth.picker.useDefaultLocation')}
+                    </button>
                     <Show when={newDir()}>
                       <p class="text-xs text-tertiary font-mono truncate" title={newDir()}>
                         {newDir()}
                       </p>
                     </Show>
                   </div>
+                  <p class="mt-1 text-xs text-tertiary">{t('auth.picker.defaultLocationHint')}</p>
                 </div>
                 <div class="flex gap-2">
                   <button

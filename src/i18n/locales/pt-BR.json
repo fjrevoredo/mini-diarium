@@ -98,6 +98,8 @@
       "namePlaceholder": "ex.: Meu diário",
       "journalNamePlaceholder": "Nome do diário",
       "locationLabel": "Local",
+      "useDefaultLocation": "Usar local padrão",
+      "defaultLocationHint": "O local padrão dá a cada diário uma pasta própria. Você só precisa procurar se quiser outra pasta.",
       "confirmRemoveMessage": "Remover este diário da lista? O arquivo do diário não será excluído.",
       "confirmRemoveTitle": "Remover diário",
       "noJournalFound": "O arquivo selecionado não é um banco de dados de diário válido.",
@@ -630,6 +632,9 @@
     "cannotReadKeyFile": "Não foi possível ler o arquivo de chave. Verifique se o arquivo existe e se você tem permissão para lê-lo.",
     "cannotSaveKeyFile": "Não foi possível salvar o arquivo de chave. Verifique as permissões da pasta.",
     "fileOperationFailed": "Uma operação de arquivo falhou. Verifique se você tem as permissões necessárias.",
+    "portalPathRejected": "Essa pasta é compartilhada com o Mini Diarium apenas temporariamente, então um diário salvo ali deixaria de abrir depois. Use o local padrão.",
+    "backupFileRejected": "Esse arquivo é uma cópia de backup. Abri-lo diretamente o modificaria. Copie-o para outro lugar primeiro e abra a cópia.",
+    "journalAlreadyRegistered": "Esse diário já está na sua lista. Abra-o pela lista acima em vez de adicioná-lo de novo.",
     "internalError": "Ocorreu um erro interno.",
     "unexpectedError": "Ocorreu um erro inesperado."
   }

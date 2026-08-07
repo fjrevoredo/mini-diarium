@@ -193,8 +193,43 @@ flatpak run io.github.fjrevoredo.mini-diarium
 - the app launches
 - the UI loads in release mode
 - journal open/save flows still work
-- file picking still works through portals
+- **+ Create New Journal** pre-fills a location and creates a journal **without opening the
+  folder chooser** — this is the path most users take, and it must not depend on the portal
+- file picking still works through portals — open an import/export dialog and confirm a file
+  is actually read or written afterwards. Note what this check does **not** prove: browsing to
+  a folder *outside* the sandbox returns a `/run/user/<uid>/doc/` handle that resolves now and
+  stops resolving later, which is why a Flathub user's journal became unopenable (see
+  KI-10 in [`KNOWN_ISSUES.md`](KNOWN_ISSUES.md)). `add_journal` refuses such paths as of
+  v0.6.6; verify that refusal shows its own message rather than a generic permissions error
 - metainfo validation passes
+
+### Journal-location smoke test (v0.6.6) — NOT YET RUN
+
+The v0.6.6 journal-location fix has **not been verified on a real Flatpak build**. No
+`flatpak` or `flatpak-builder` exists in the development environment or its WSL distro, so
+every claim below about sandbox behaviour is reasoned from the manifest and from Tauri's
+`document_dir()` source, not observed. The fix is safe either way — `get_default_journal_dir`
+probes its preferred location and falls back to the app's own data directory when it is not
+writable — but the steps here are what would turn "safe either way" into "verified". Run them
+on the next Linux session and replace this notice with the result.
+
+The manifest's `finish-args` carries **no `--filesystem=` argument at all**, so the sandbox
+holds no host filesystem permission. Whether `dirs::document_dir()` then resolves to a real
+path, to an inaccessible one, or to `None` (it reads `$XDG_CONFIG_HOME/user-dirs.dirs` and
+returns `None` when that file is absent) is exactly what these steps establish.
+
+1. Build and install **without any Flatseal override** — a granted `--filesystem` permission
+   invalidates the whole test, since it is the absence of one that produces the failure.
+2. **+ Create New Journal**: the Location field must be pre-filled and the journal must be
+   creatable **with no folder chooser at any point**. Record which path it resolved to —
+   `~/Documents/Mini Diarium/<name>` or `~/.var/app/io.github.fjrevoredo.mini-diarium/data/…`.
+   Either is a pass; which one it is answers the open question.
+3. Create a **second** journal the same way. It must land on password creation, not on the
+   first journal's unlock prompt, and must occupy a different folder.
+4. Quit, relaunch, and unlock both journals.
+5. Inspect `~/.var/app/io.github.fjrevoredo.mini-diarium/data/config.json`: each entry's `path`
+   must be a durable location and **must not** be under `/run/user/*/doc/` or
+   `/run/flatpak/doc/`.
 
 ## Release / Flathub Update Checklist
 
