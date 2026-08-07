@@ -132,6 +132,9 @@ const en = {
       namePlaceholder: 'e.g. My Journal',
       journalNamePlaceholder: 'Journal name',
       locationLabel: 'Location',
+      useDefaultLocation: 'Use default location',
+      defaultLocationHint:
+        'The default location gives each journal a folder of its own. You only need to browse if you want a different folder.',
       confirmRemoveMessage:
         'Remove this journal from the list? The journal file will not be deleted.',
       confirmRemoveTitle: 'Remove Journal',
@@ -748,6 +751,12 @@ const en = {
       'Could not read key file. Check that the file exists and you have permission to read it.',
     cannotSaveKeyFile: 'Could not save key file. Check folder permissions.',
     fileOperationFailed: 'A file operation failed. Check that you have the necessary permissions.',
+    portalPathRejected:
+      'That folder is only shared with Mini Diarium temporarily, so a journal saved there would stop opening later. Use the default location instead.',
+    backupFileRejected:
+      'That file is a backup snapshot. Opening it directly would change it. Copy it somewhere else first, then open the copy.',
+    journalAlreadyRegistered:
+      'That journal is already in your list. Open it from the list above instead of adding it again.',
     internalError: 'An internal error occurred.',
     unexpectedError: 'An unexpected error occurred.',
   },

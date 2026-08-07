@@ -282,3 +282,81 @@ fn test_save_journal_auto_key_clear() {
 
     cleanup(&dir);
 }
+
+#[test]
+fn test_default_journal_dir_prefers_documents() {
+    let app_data = PathBuf::from("/app-data");
+    let documents = PathBuf::from("/home/jon/Documents");
+
+    let dir = default_journal_dir(&app_data, Some(&documents));
+
+    assert_eq!(dir, documents.join("Mini Diarium"));
+}
+
+#[test]
+fn test_default_journal_dir_falls_back_to_app_data() {
+    let app_data = PathBuf::from("/app-data");
+
+    let dir = default_journal_dir(&app_data, None);
+
+    assert_eq!(dir, app_data.join("journals"));
+}
+
+#[test]
+fn test_journal_dir_name_keeps_an_ordinary_name() {
+    assert_eq!(journal_dir_name("Work"), "Work");
+    assert_eq!(journal_dir_name("  Travel   Diary  "), "Travel Diary");
+    assert_eq!(
+        journal_dir_name("Jon's Journal (2026)"),
+        "Jon's Journal (2026)"
+    );
+}
+
+/// The load-bearing case: a separator would escape the parent folder the caller chose.
+#[test]
+fn test_journal_dir_name_strips_path_separators_and_control_characters() {
+    let name = journal_dir_name("../../etc/passwd");
+    assert!(!name.contains('/'), "produced a path, not a name: {name}");
+    assert!(!name.contains('\\'), "produced a path, not a name: {name}");
+    assert_eq!(name, "....etcpasswd");
+
+    assert_eq!(journal_dir_name("C:\\Users\\jon"), "CUsersjon");
+    assert_eq!(journal_dir_name("we\u{0}ird\n"), "weird");
+}
+
+#[test]
+fn test_journal_dir_name_sidesteps_reserved_device_names() {
+    assert_eq!(journal_dir_name("CON"), "CON_");
+    assert_eq!(journal_dir_name("nul"), "nul_");
+    assert_eq!(journal_dir_name("COM9"), "COM9_");
+    assert_eq!(journal_dir_name("LPT1.notes"), "LPT1.notes_");
+    // Only whole components are reserved — do not mangle names that merely start with one.
+    assert_eq!(journal_dir_name("Console"), "Console");
+    assert_eq!(journal_dir_name("COM10"), "COM10");
+}
+
+#[test]
+fn test_journal_dir_name_trims_trailing_dots_and_spaces() {
+    // Windows drops these silently, so "Work." and "Work" would resolve to one folder.
+    assert_eq!(journal_dir_name("Work."), "Work");
+    assert_eq!(journal_dir_name("Work..."), "Work");
+    assert_eq!(journal_dir_name("Work "), "Work");
+}
+
+#[test]
+fn test_journal_dir_name_falls_back_when_nothing_survives() {
+    assert_eq!(journal_dir_name(""), "Journal");
+    assert_eq!(journal_dir_name("///"), "Journal");
+    assert_eq!(journal_dir_name("   "), "Journal");
+    assert_eq!(journal_dir_name("..."), "Journal");
+}
+
+#[test]
+fn test_journal_dir_name_caps_the_length_without_splitting_a_character() {
+    let long = "é".repeat(200);
+
+    let name = journal_dir_name(&long);
+
+    assert_eq!(name.chars().count(), 64);
+    assert!(name.chars().all(|c| c == 'é'));
+}

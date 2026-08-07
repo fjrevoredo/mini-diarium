@@ -151,6 +151,88 @@ pub fn save_journals(
     save_config(app_data_dir, &config)
 }
 
+/// The folder a brand-new journal should be created in when the user has not picked one.
+///
+/// Exists so creating a journal never *requires* the folder chooser. On Flatpak the chooser
+/// opens the XDG document portal for anything outside the sandbox, and the `/run/user/*/doc/`
+/// handle it hands back is per-grant: stored as a journal's permanent location it stops
+/// resolving later. Offering a known-good default is the fix; `add_journal` separately
+/// refuses portal handles.
+///
+/// `documents_dir` is a parameter rather than being resolved here so this stays pure and
+/// directly testable — the caller supplies the platform lookup.
+pub fn default_journal_dir(app_data_dir: &Path, documents_dir: Option<&Path>) -> PathBuf {
+    match documents_dir {
+        Some(docs) => docs.join("Mini Diarium"),
+        None => app_data_dir.join("journals"),
+    }
+}
+
+/// Longest folder name `journal_dir_name` will produce, in characters.
+///
+/// Well below every filesystem's per-component limit, leaving room for the `-2`/`-3` suffix
+/// the caller may append and for the `backups/<stem>` tree created inside the folder.
+const MAX_JOURNAL_DIR_NAME_LEN: usize = 64;
+
+/// Windows device names. A path component matching one of these — with or without an
+/// extension — cannot be created on Windows at all, so the name has to be nudged aside.
+const RESERVED_DEVICE_NAMES: [&str; 22] = [
+    "CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8",
+    "COM9", "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9",
+];
+
+/// Turns a user-chosen journal name into a safe single folder name.
+///
+/// Each journal needs its **own** directory: they all use the same `diary.db` filename, so two
+/// journals sharing a folder are two config entries pointing at one database. The name is user
+/// input and goes straight into a path, so everything a filesystem can choke on is removed —
+/// path separators (which would silently escape the intended parent), the rest of the Windows
+/// reserved set, control characters, trailing dots and spaces (Windows strips them, so
+/// `"Work."` and `"Work"` would collide), and the device names.
+///
+/// The result is a *name*, never a path: it contains no separator, and is never empty.
+pub fn journal_dir_name(name: &str) -> String {
+    let mut cleaned = String::new();
+    let mut pending_space = false;
+    for ch in name.chars() {
+        if ch.is_control() || matches!(ch, '<' | '>' | ':' | '"' | '/' | '\\' | '|' | '?' | '*') {
+            continue;
+        }
+        if ch.is_whitespace() {
+            // Collapse runs of whitespace, and never let one start the name.
+            pending_space = !cleaned.is_empty();
+            continue;
+        }
+        if pending_space {
+            cleaned.push(' ');
+            pending_space = false;
+        }
+        cleaned.push(ch);
+    }
+
+    // Truncate by characters, not bytes — a byte slice can split a multi-byte character.
+    let mut cleaned: String = cleaned.chars().take(MAX_JOURNAL_DIR_NAME_LEN).collect();
+    // Windows silently drops trailing dots and spaces from a component; trimming them here
+    // keeps the name we store equal to the name on disk.
+    while cleaned.ends_with('.') || cleaned.ends_with(' ') {
+        cleaned.pop();
+    }
+
+    if cleaned.is_empty() {
+        return "Journal".to_string();
+    }
+
+    let stem = cleaned.split('.').next().unwrap_or(&cleaned);
+    if RESERVED_DEVICE_NAMES
+        .iter()
+        .any(|reserved| stem.eq_ignore_ascii_case(reserved))
+    {
+        cleaned.push('_');
+    }
+
+    cleaned
+}
+
 /// Returns the active journal ID from config, if any.
 pub fn load_active_journal_id(app_data_dir: &Path) -> Option<String> {
     load_config(app_data_dir).active_journal_id

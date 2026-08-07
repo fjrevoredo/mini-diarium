@@ -75,6 +75,23 @@ pub(crate) fn change_diary_directory_with_auto_lock_inner(
     new_dir: &str,
     state: &DiaryState,
 ) -> Result<(), String> {
+    // Refuse an unusable destination **before** anything is snapshotted, locked, or moved.
+    // This path reaches the same folder chooser as journal creation, so on Flatpak it can hand
+    // back the same per-grant `/run/user/*/doc/` handle — and here that is worse than a bad
+    // config entry: the live database is *relocated* to a path that later stops resolving.
+    // Moving a journal inside a `backups/` tree is refused for the same reason it cannot be
+    // opened from one — retention prunes files there.
+    {
+        let db_filename = state
+            .db_path
+            .lock()
+            .map_err(|_| "State lock poisoned".to_string())?
+            .file_name()
+            .and_then(|s| s.to_str())
+            .map(str::to_string);
+        super::check_journal_location(new_dir, db_filename.as_deref())?;
+    }
+
     // Snapshot before the move, while the connection is still open and still points at the
     // old location. The snapshot lands in the *old* backups directory; Task 5.1 is what
     // makes the history follow the journal.
@@ -180,6 +197,38 @@ mod tests {
         );
         assert!(result.is_ok());
         assert!(db_path.exists());
+    }
+
+    /// Moving a journal reaches the same folder chooser as creating one, so it can reach the
+    /// same document-portal handle. The refusal must happen before the file is touched — a
+    /// journal relocated into a per-grant path is unreachable once the grant lapses.
+    #[test]
+    fn test_change_diary_directory_refuses_a_portal_destination_without_moving() {
+        let src = tempfile::tempdir().unwrap();
+        let app = tempfile::tempdir().unwrap();
+        let db_path = src.path().join("diary.db");
+        std::fs::write(&db_path, b"fake db").unwrap();
+
+        let state = DiaryState::new(
+            db_path.clone(),
+            src.path().join("backups").join("diary"),
+            app.path().to_path_buf(),
+        );
+
+        let result =
+            change_diary_directory_with_auto_lock_inner("/run/user/1000/doc/abc123", &state);
+
+        let err = result.unwrap_err();
+        assert!(err.contains("sandbox"), "unexpected error: {err}");
+        assert!(
+            db_path.exists(),
+            "the journal must not be moved when the destination is refused"
+        );
+        assert_eq!(
+            *state.db_path.lock().unwrap(),
+            db_path,
+            "state must still point at the original location"
+        );
     }
 
     #[test]

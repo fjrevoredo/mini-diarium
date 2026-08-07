@@ -64,6 +64,8 @@ Only files matching the `backup-*.db` naming pattern are managed. Anything else 
 
 Restoring from within the app is not available yet. Today, restoring means closing Mini Diarium, copying the snapshot you want over your `diary.db`, and reopening the app. Keep a copy of the file you are replacing until you have confirmed the snapshot has what you expected.
 
+**Do not point Mini Diarium at a snapshot where it sits.** A snapshot is a working database, so **+ Open Existing** would happily open one — and opening it as a journal writes to it, destroying the untouched restore point. The app now refuses `backup-*.db` files and anything inside a `backups` folder for exactly that reason. To look inside a snapshot, copy it somewhere else first, rename the copy to `diary.db`, and open that.
+
 An in-app restore, including recovering individual entries out of a snapshot, is the next stage of this work.
 
 ## Custom Journal Locations
