@@ -327,7 +327,7 @@ pub(crate) fn dir_state(dir: &Path) -> DirState {
 /// (`delete_backup`, `verify_backup`). The prefix and suffix are the ownership test; the
 /// separator and `..` rejections are what keep `dir.join(name)` inside `dir` — without them
 /// `backup-../../diary.db` satisfies both affixes and escapes.
-pub(crate) fn is_snapshot_file_name(name: &str) -> bool {
+pub fn is_snapshot_file_name(name: &str) -> bool {
     name.starts_with(SNAPSHOT_PREFIX)
         && name.ends_with(SNAPSHOT_SUFFIX)
         && !name.contains('/')
