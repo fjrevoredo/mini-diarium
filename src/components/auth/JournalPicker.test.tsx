@@ -17,6 +17,8 @@ const mocks = vi.hoisted(() => ({
   renameJournal: vi.fn(),
   refreshAuthState: vi.fn(),
   checkJournalPath: vi.fn(),
+  getDefaultJournalDir: vi.fn(),
+  prepareJournalDir: vi.fn(),
 }));
 
 vi.mock('../../state/journals', () => ({
@@ -41,6 +43,8 @@ vi.mock('../../state/auth', () => ({
 
 vi.mock('../../lib/tauri', () => ({
   checkJournalPath: mocks.checkJournalPath,
+  getDefaultJournalDir: mocks.getDefaultJournalDir,
+  prepareJournalDir: mocks.prepareJournalDir,
 }));
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -64,7 +68,21 @@ describe('JournalPicker component', () => {
     mocks.renameJournal.mockResolvedValue(undefined);
     mocks.refreshAuthState.mockResolvedValue(undefined);
     mocks.checkJournalPath.mockResolvedValue(false);
+    mocks.getDefaultJournalDir.mockResolvedValue('/home/testuser/Documents/Mini Diarium');
+    mocks.prepareJournalDir.mockImplementation(async (base: string, name: string) =>
+      Promise.resolve(`${base}/${name}`),
+    );
   });
+
+  /** Fills in the create form and submits it. */
+  const createJournalNamed = async (name: string) => {
+    fireEvent.click(screen.getByText(/create new journal/i));
+    await vi.waitFor(() => expect(mocks.getDefaultJournalDir).toHaveBeenCalled());
+
+    const nameInput = screen.getByPlaceholderText(/e\.g\. my journal/i);
+    fireEvent.input(nameInput, { target: { value: name } });
+    fireEvent.click(screen.getByRole('button', { name: /^add$/i }));
+  };
 
   it('renders empty state when no journals are configured', () => {
     setJournals([]);
@@ -135,6 +153,115 @@ describe('JournalPicker component', () => {
     // After failed check, addMode becomes 'open' with an error shown
     await vi.waitFor(() => {
       expect(screen.getByText(/not a valid diary database/i)).toBeInTheDocument();
+    });
+  });
+
+  // Creating a journal used to open the folder chooser unconditionally, which under Flatpak
+  // is what handed back an unusable document-portal path. The chooser must now be optional.
+  it('pre-fills the default location when Create New Journal is clicked, without a dialog', async () => {
+    const dialogMock = await import('@tauri-apps/plugin-dialog');
+    renderWithI18n(() => <JournalPicker />);
+
+    fireEvent.click(screen.getByText(/create new journal/i));
+
+    await vi.waitFor(() => {
+      expect(screen.getByTitle('/home/testuser/Documents/Mini Diarium')).toBeInTheDocument();
+    });
+    expect(mocks.getDefaultJournalDir).toHaveBeenCalled();
+    expect(dialogMock.open).not.toHaveBeenCalled();
+  });
+
+  it('shows a sanitized error when the default location cannot be prepared', async () => {
+    mocks.getDefaultJournalDir.mockRejectedValue(
+      new Error('Could not prepare the default journal folder: Access is denied. (os error 5)'),
+    );
+
+    renderWithI18n(() => <JournalPicker />);
+    fireEvent.click(screen.getByText(/create new journal/i));
+
+    await vi.waitFor(() => {
+      expect(screen.getByRole('alert')).toBeInTheDocument();
+    });
+    // The raw OS detail must not reach the user.
+    expect(screen.getByRole('alert')).not.toHaveTextContent(/os error/i);
+  });
+
+  it('lets Browse… override the pre-filled default location', async () => {
+    const dialogMock = await import('@tauri-apps/plugin-dialog');
+    vi.mocked(dialogMock.open).mockResolvedValueOnce('/home/testuser/elsewhere');
+
+    renderWithI18n(() => <JournalPicker />);
+    fireEvent.click(screen.getByText(/create new journal/i));
+
+    await vi.waitFor(() => {
+      expect(screen.getByTitle('/home/testuser/Documents/Mini Diarium')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: /^browse/i }));
+
+    await vi.waitFor(() => {
+      expect(screen.getByTitle('/home/testuser/elsewhere')).toBeInTheDocument();
+    });
+    expect(screen.queryByTitle('/home/testuser/Documents/Mini Diarium')).not.toBeInTheDocument();
+  });
+
+  // P1 regression: every default-location create used to receive the *same* directory, so a
+  // second journal was registered against the first one's diary.db — and unlocking it asked
+  // for the first journal's password under the second journal's name.
+  it('gives each journal created at the default location a folder of its own', async () => {
+    mocks.prepareJournalDir
+      .mockResolvedValueOnce('/home/testuser/Documents/Mini Diarium/Work')
+      .mockResolvedValueOnce('/home/testuser/Documents/Mini Diarium/Personal');
+
+    const first = renderWithI18n(() => <JournalPicker />);
+    await createJournalNamed('Work');
+    await vi.waitFor(() => expect(mocks.addJournal).toHaveBeenCalledTimes(1));
+    first.unmount();
+
+    renderWithI18n(() => <JournalPicker />);
+    await createJournalNamed('Personal');
+    await vi.waitFor(() => expect(mocks.addJournal).toHaveBeenCalledTimes(2));
+
+    expect(mocks.prepareJournalDir).toHaveBeenNthCalledWith(
+      1,
+      '/home/testuser/Documents/Mini Diarium',
+      'Work',
+    );
+    const [firstPath, secondPath] = mocks.addJournal.mock.calls.map((call) => call[1]);
+    expect(firstPath).toBe('/home/testuser/Documents/Mini Diarium/Work');
+    expect(secondPath).toBe('/home/testuser/Documents/Mini Diarium/Personal');
+    expect(firstPath).not.toBe(secondPath);
+  });
+
+  it('creates the journal directly in a browsed folder, allocating nothing', async () => {
+    const dialogMock = await import('@tauri-apps/plugin-dialog');
+    vi.mocked(dialogMock.open).mockResolvedValueOnce('/home/testuser/elsewhere');
+
+    renderWithI18n(() => <JournalPicker />);
+    fireEvent.click(screen.getByText(/create new journal/i));
+    await vi.waitFor(() => expect(mocks.getDefaultJournalDir).toHaveBeenCalled());
+
+    fireEvent.click(screen.getByRole('button', { name: /^browse/i }));
+    await vi.waitFor(() => {
+      expect(screen.getByTitle('/home/testuser/elsewhere')).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByRole('button', { name: /^add$/i }));
+
+    await vi.waitFor(() => {
+      expect(mocks.addJournal).toHaveBeenCalledWith('elsewhere', '/home/testuser/elsewhere');
+    });
+    // Browsing means "put it here", so the chosen folder is used verbatim.
+    expect(mocks.prepareJournalDir).not.toHaveBeenCalled();
+  });
+
+  it('shows a friendly error when the journal is already in the list', async () => {
+    mocks.addJournal.mockRejectedValue(new Error('Journal is already in your list'));
+
+    renderWithI18n(() => <JournalPicker />);
+    await createJournalNamed('Work');
+
+    await vi.waitFor(() => {
+      expect(screen.getByRole('alert')).toHaveTextContent(/already in your list/i);
     });
   });
 

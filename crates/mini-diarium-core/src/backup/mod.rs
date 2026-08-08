@@ -39,7 +39,9 @@ pub use policy::{
     SnapshotTrigger, DAILY_DAYS, MIN_AUTOMATIC_INTERVAL_SECS, MIN_STORAGE_BUDGET_BYTES,
     MONTHLY_MONTHS, RECENT_SNAPSHOTS, WEEKLY_WEEKS,
 };
-pub use store::{FsSnapshotStore, SnapshotStore, StoredSnapshot};
+pub use store::{
+    is_snapshot_file_name, FsSnapshotStore, SnapshotStore, StoredSnapshot, SNAPSHOT_PREFIX,
+};
 
 /// What the engine needs to know beyond the open journal itself.
 ///

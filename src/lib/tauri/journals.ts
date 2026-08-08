@@ -26,6 +26,26 @@ export async function addJournal(
   return await invoke('add_journal', { name, path, dbFilename });
 }
 
+/**
+ * A ready-to-use folder for a new journal, created by the backend if it does not exist yet.
+ * Lets the picker pre-fill the location so creating a journal never needs the folder chooser.
+ */
+export async function getDefaultJournalDir(): Promise<string> {
+  return await invoke('get_default_journal_dir');
+}
+
+/**
+ * Allocates a folder of its own for a new journal under `base`, and creates it.
+ *
+ * Only the pre-filled default location goes through this. Every journal uses the same
+ * `diary.db` filename, so creating two of them in one folder would register two entries
+ * pointing at a single database. A folder the user browsed to keeps its existing meaning —
+ * the journal is created directly there.
+ */
+export async function prepareJournalDir(base: string, name: string): Promise<string> {
+  return await invoke('prepare_journal_dir', { base, name });
+}
+
 export async function removeJournal(id: string): Promise<void> {
   await invoke('remove_journal', { id });
 }

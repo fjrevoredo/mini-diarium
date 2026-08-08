@@ -270,6 +270,23 @@ The scan decrypts entries in memory per query and never persists a plaintext ind
   `load_active_journal_id`, `save_active_journal_id`, `save_journal_auto_key`,
   `set_journal_require_all_auth`
 
+### Default-location helpers
+
+Both are pure — no I/O, no platform lookup — so the caller owns creating the directory and
+deciding what to do when it cannot.
+
+- `default_journal_dir(app_data_dir, documents_dir: Option<&Path>) -> PathBuf` — where a new
+  journal goes when the user has not picked a folder: `<documents>/Mini Diarium`, or
+  `<app_data>/journals` when no documents directory is available. A *preference*, not a
+  guarantee: it does not check that the result is writable. The app crate probes it and falls
+  back to the `None` form when the preferred location cannot be created or written to.
+- `journal_dir_name(name: &str) -> String` — sanitises a user-chosen journal name into a safe
+  single folder name for use under that directory. Strips path separators and the rest of the
+  Windows reserved set, collapses whitespace, trims trailing dots and spaces, sidesteps the
+  reserved device names (`CON`, `NUL`, `COM1`…), caps the length, and returns `"Journal"` when
+  nothing survives. The result is a **name**, never a path: it contains no separator and is
+  never empty, so it cannot escape the parent the caller chose.
+
 ---
 
 ## `backup` — encrypted-journal snapshots
@@ -328,6 +345,13 @@ number describes it.
   before it stay readable.
 - `SnapshotStore` trait (`list`, `write`, `read`, `delete`, `stat`) + `FsSnapshotStore`,
   `StoredSnapshot` — the storage boundary, so retention is reusable against other backends.
+
+### Naming
+- `is_snapshot_file_name(&str) -> bool` and `SNAPSHOT_PREFIX` — the engine's file-naming rule,
+  exported so a consumer can *recognise* a snapshot without duplicating the `"backup-"`
+  literal. The app uses it to refuse registering a snapshot as a journal: a snapshot is an
+  ordinary openable database, and opening one as a journal writes to it, destroying the
+  restore point. Recognition only — snapshot names are still produced solely inside `store`.
 
 ### Pure policy (no I/O, no clock — `now` is always a parameter)
 - `plan_retention(&[SnapshotMeta], &RetentionPolicy, now) -> RetentionDecision`

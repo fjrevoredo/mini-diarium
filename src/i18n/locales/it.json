@@ -98,6 +98,8 @@
       "namePlaceholder": "es. Il mio diario",
       "journalNamePlaceholder": "Nome del diario",
       "locationLabel": "Posizione",
+      "useDefaultLocation": "Usa posizione predefinita",
+      "defaultLocationHint": "La posizione predefinita assegna a ogni diario una cartella propria. Devi sfogliare solo se preferisci un'altra cartella.",
       "confirmRemoveMessage": "Rimuovere questo diario dall'elenco? Il file del diario non verrà eliminato.",
       "confirmRemoveTitle": "Rimuovi diario",
       "noJournalFound": "Il file selezionato non è un database di diario valido.",
@@ -676,6 +678,9 @@
     "cannotReadKeyFile": "Impossibile leggere il file chiave. Verifica che il file esista e che tu abbia il permesso di leggerlo.",
     "cannotSaveKeyFile": "Impossibile salvare il file chiave. Verifica i permessi della cartella.",
     "fileOperationFailed": "Un'operazione su file è fallita. Verifica che tu abbia i permessi necessari.",
+    "portalPathRejected": "Quella cartella è condivisa con Mini Diarium solo temporaneamente, quindi un diario salvato lì smetterebbe di aprirsi in seguito. Usa invece la posizione predefinita.",
+    "backupFileRejected": "Quel file è una copia di backup. Aprirlo direttamente lo modificherebbe. Copialo prima altrove, poi apri la copia.",
+    "journalAlreadyRegistered": "Quel diario è già nel tuo elenco. Aprilo dall’elenco qui sopra invece di aggiungerlo di nuovo.",
     "internalError": "Si è verificato un errore interno.",
     "unexpectedError": "Si è verificato un errore imprevisto."
   }

@@ -34,7 +34,21 @@ Template:
 
 # Versions
 
-## [0.6.6] - Unreleased
+## [0.6.6] - 08-08-2026
+
+### Fixed
+- **Creating a journal no longer depends on the folder chooser in Flatpak** ([TODO-0100](docs/todo/TODO.md)): **+ Create New Journal** no longer opens the folder picker before showing the form. The form starts with a working location, so you can create a journal without browsing for a folder. **Browse…** remains available when you want to choose a different location.
+    - **The default location is your Documents folder, or the app's own data folder where Documents is not writable** — as on the Flathub build, where the sandbox holds no filesystem permission. The location is shown in the form before you create anything. Previously a Documents folder that could not be prepared left the location empty and **Add** disabled: a create form that could not create.
+    - **Each journal created at the default location gets a folder of its own**, named after the journal. Every journal uses the same `diary.db` filename, so without this a second journal would have been registered against the first one's database. Unlocking it would then ask for the first journal's password under the second one's name.
+    - **A journal already in your list is refused rather than added twice**, with an explanation. A folder you browse to is still used exactly as you chose it.
+- **The app now rejects a temporary sandbox location as a journal folder** and explains why instead of showing a generic failure ([KI-10](docs/KNOWN_ISSUES.md)). This covers both ways a journal gets a location: adding one, and **Preferences → Data → Change journal directory**. The app rejects a move *before* touching the database file, because relocating a journal into a path that later stops resolving is worse than a bad config entry. Existing journals already stored that way are not repaired automatically; re-add them from their real folder.
+- **Opening a backup snapshot no longer destroys it**: a snapshot is an ordinary encrypted database. **+ Open Existing** accepted one, and opening it as a journal wrote to it, overwriting the untouched restore point you were reaching for. `backup-*.db` files, and anything inside a `backups/` folder, are now refused with instructions to copy the file elsewhere and open the copy. This affected every platform ([KI-11](docs/KNOWN_ISSUES.md)).
+- **Database failures are no longer reported as permission problems**: database failures were previously shown as "A file operation failed. Check that you have the necessary permissions", which sent diagnosis in the wrong direction for weeks. The app now reports the actual problem, and journal creation records the underlying cause.
+
+### Internal
+- **`chrono`'s `serde` feature is now declared explicitly** in `mini-diarium-core`: the backup manifest derives `Serialize`/`Deserialize` over `DateTime<Utc>`, which chrono only implements under that feature. The crate had been relying on another dependency to enable it and stopped compiling on its own.
+
+## [0.6.5] - 05-08-2026
 
 ### Added
 - **Backups are now visible, and reachable even when the journal will not open** ([TODO-0098](docs/todo/TODO.md)): the backup system had no user interface at all — no way to see whether a backup existed, when it was taken, or whether it was any good. There is now a **Preferences → Backups** panel listing every backup with its date, why it was taken, how many entries it holds, its size, and whether it has been checked against this journal's key. It also reports the folder's overall state: whether backups are working, when the last one was taken, how much space they use against their limit, and the retention policy in plain language. From here you can take a backup on demand, re-check one, delete one, or open the backups folder in your file manager.
