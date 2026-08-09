@@ -4,7 +4,7 @@
 
 - Plan Status: IN PROGRESS
 - Created: 2026-08-04
-- Last Updated: 2026-08-06 (Milestone 3 implemented except the Linux half of Task 3.4 — see Implementation Record — Milestone 3)
+- Last Updated: 2026-08-09 (Task 4.1 implemented; Milestone 3 still open on the Linux half of Task 3.4)
 - Owner: Coding agent
 - Approval: APPROVED (2026-08-04)
 - Tracking: [TODO-0098](todo/TODO.md)
@@ -335,13 +335,13 @@ title-bar issue).
 
 ### Milestone 4: Restore
 
-- Status: TO BE DONE
+- Status: IN PROGRESS (Task 4.1 complete; Tasks 4.2–4.3 held at the UX gate)
 - Purpose: Deliver the capability whose absence made the incident recovery manual: getting data back out of a snapshot, in-app, without writing plaintext to disk.
 - Exit Criteria: All seven UX-GATE scenarios signed off; a whole-journal restore and a per-entry restore both demonstrated end-to-end against a snapshot the app produced itself; no code path in the restore flow writes decrypted content to the filesystem; an E2E scenario covers the round trip.
 
 #### Task 4.1: Read-only snapshot inspection
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Objective: A snapshot can be opened and browsed without registering it as a journal (finding B-6).
 - Steps:
   1. Add core support for opening a snapshot read-only with a supplied credential, held separately from the live `DiaryState` connection and never written to `config.json`.
@@ -350,6 +350,7 @@ title-bar issue).
   4. Ensure the inspection connection is closed and its key zeroized on panel close, journal lock, app exit, and journal switch.
 - Validation: Tests `test_inspect_does_not_register_a_journal` (assert `config.json` unchanged), `test_inspect_connection_is_dropped_on_lock`, and a test that a snapshot predating a password change is detected as needing the old credential.
 - Notes: Two open connections with two different keys is the sharpest security edge in this plan. Review against the `security-stance` skill before implementation, particularly the auto-lock paths in root `CLAUDE.md` gotcha 4 — all three must tear down the inspection connection.
+- Implemented 2026-08-09. `crates/mini-diarium-core/src/backup/inspect.rs` (9 tests) + `src-tauri/src/commands/backup_inspect.rs` (5 tests) + typed wrappers in `src/lib/tauri/backup.ts` (7 tests). No UI — Tasks 4.2/4.3 own that and are gated. Four deviations, recorded in the Milestone 4 implementation record below: the teardown lives in `DiaryState`, the entry query is schema-adaptive, credential drift is detected by comparing plaintext slot bytes, and a fourth command (`check_backup_credentials`) was added for UX-3.
 
 #### Task 4.2: Whole-journal restore
 
@@ -651,6 +652,41 @@ unit test passed against the wrong `directory_accessible` behaviour, because the
 encoded the same wrong assumption the code did. `test_a_failed_snapshot_is_an_error_not_a_silent_skip`
 even built the exact blocked-directory fixture and asserted only that `create_snapshot`
 errored — it never asked what health said afterwards.
+
+## Implementation Record — Milestone 4, Task 4.1
+
+Implemented 2026-08-09. Tasks 4.2–4.4 remain `TO BE DONE` and **must not start** until the
+seven UX-GATE scenarios have per-scenario sign-off; nothing in this task is gated, because it
+adds no destructive interaction and no UI.
+
+Verification: `cargo test --workspace` **705 passed / 0 failed** (234 app, 429 core, 42
+crypto), `cargo clippy --workspace --all-targets -- -D warnings` clean, `cargo fmt --all`
+applied, `bun run test:run` green, `type-check` and `lint` green.
+
+### A correction made first
+
+The branch's `CHANGELOG.md` carried a **duplicate `## [0.6.5]` heading**, a merge artifact
+from `bd61e9e4`: the Milestone 3 entries were written while `0.6.5` was the in-progress
+section, master then shipped `0.6.5` without them and moved to `0.6.6`, and the merge left
+the unreleased Milestone 3 work filed under an already-released version. Moved into a
+`## [0.7.0] - Unreleased` section (Assumption 4: Milestones 3–5 ship in a later minor) and
+the duplicate heading removed.
+
+### Deviations from the plan as written
+
+| # | Plan said | What shipped, and why |
+|---|---|---|
+| 1 | Task 4.1 step 4: close the inspection connection "on panel close, journal lock, app exit, and journal switch" — four call sites. | Kept in `DiaryState.inspection` and closed at the top of `lock_diary_inner_with`, which **all four** already funnel through (the last three via `auto_lock_diary_if_unlocked`). One teardown, enforced by the call graph rather than by four callers remembering. The close runs *before* that function's already-locked early return, which is what covers a journal switch on a locked journal. `close_inspection` is deliberately infallible and recovers a poisoned mutex: a lock handler that gives up on an error would leave a decrypted snapshot open, which is the exact outcome it exists to prevent. |
+| 2 | Task 4.1 step 2: `list_backup_entries` mirroring "the timeline's existing minimal-IPC shape". | Same four fields, but **not** `get_entries_for_timeline`, which selects `preview_enc` (v12) and `locked` (v13). The most valuable snapshot is the pre-migration one, which by definition predates the migration it was taken for — so the current timeline query would fail on exactly the snapshots that matter most. `list_snapshot_entries` reads `PRAGMA table_info` first and builds the query to match, falling back to deriving the preview from the entry text. Pinned by `test_inspect_reads_an_older_schema_snapshot`, which rolls a real journal back to v11. |
+| 3 | Task 4.1 step 3: "detect that the snapshot's auth slots differ from the live journal's". | The slot *type* is unchanged by a password change — both sides still say `password` — so comparing types would never fire on the case UX-3 exists for. The comparison is over `(type, public_key, wrapped_key)`: re-wrapping produces a fresh nonce and ciphertext, so the drift is visible as a byte difference. All three columns are plaintext, so this needs no key and works while the journal is locked. `compared: false` distinguishes "the live journal could not be read" from "no drift" — claiming a backup needs a different password because `diary.db` is missing would be a guess presented as a finding. |
+| 4 | Three commands: `open_backup_readonly` / `list_backup_entries` / `close_backup`. | A fourth, `check_backup_credentials`, because UX-3 requires the warning *before* the credential prompt and the other three all come after it. It is keyless, so it also answers from the pre-auth panel. |
+| 5 | Nothing about whether inspection requires an unlocked journal. | **It does.** Inspection decrypts entry content, and the pre-auth panel exists so a locked screen can report that backups *exist* — not read them; `verify_backup` and `delete_backup` already draw this line for weaker reasons. It costs the legitimate user nothing even in the B-11 case the feature was built for: a snapshot needing the old password still belongs to someone who knows the current one, so they unlock with today's password and open the snapshot with the old one. The only case that cannot unlock first is a journal too damaged to open at all, and the answer there is whole-journal restore (Task 4.2). `check_backup_credentials` stays keyless and works while locked, since it reads only plaintext slot columns. Pinned by `test_reading_a_backup_requires_an_unlocked_journal`. |
+
+Also worth recording: `open_snapshot_readonly` refuses v1/v2 snapshots rather than reading
+them. Those predate auth slots and keep a password-derived key in the legacy `metadata`
+table, so reading one means migrating it — which is the one thing this module must never do
+to a snapshot. Whole-journal restore (Task 4.2) is the correct path for them, and the error
+says so.
 
 ## Execution Notes
 

@@ -191,6 +191,11 @@ The following layers prevent the embedded WebView from making outbound network r
 
     Snapshot verification checks that the live master key **decrypts content in** the snapshot. It cannot "unwrap an auth slot": a `wrapped_key` is unwrapped *by a credential* to produce the master key, so holding the master key does not reverse it.
 
+13. **Inspecting a snapshot opens a second decrypted database with a second master key** (TODO-0098 Milestone 4). `commands/backup_inspect.rs` is the IPC surface; the engine is `mini_diarium_core::backup::inspect`. Three constraints:
+    - **The handle lives in `DiaryState.inspection`, not in its own managed state.** That is what makes `lock_diary_inner_with` tear it down — every lock path (idle timer, OS session lock, focus loss, journal switch, app exit) funnels through that one function, so the invariant holds by call graph rather than by a caller remembering a second teardown. The teardown runs **before** the already-locked early return, which is what covers the journal-switch case.
+    - **The connection is read-only at the SQLite level, and no migration runs.** Opening a snapshot as a journal writes to it — `update_slot_last_used` alone destroys the restore point ([KI-11](../docs/KNOWN_ISSUES.md)) — and migrating one would rewrite the copy taken *because* a migration was the risk. `list_snapshot_entries` adapts to whatever schema the snapshot carries instead.
+    - **A snapshot may need a different credential than the live journal.** After a password change the snapshot keeps the old wrapped key (finding B-11), so `check_backup_credentials` compares the plaintext auth-slot rows and says so *before* the user is prompted. It needs no key and works while the journal is locked.
+
 ## Common Task Checklists
 
 ### Adding a New Tauri Command

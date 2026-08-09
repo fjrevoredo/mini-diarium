@@ -8,6 +8,12 @@ import {
   verifyBackup,
   deleteBackup,
   revealBackupsFolder,
+  checkBackupCredentials,
+  openBackupReadonly,
+  listBackupEntries,
+  closeBackup,
+  type BackupCredentialReport,
+  type BackupEntry,
   type BackupHealth,
   type SnapshotMeta,
 } from './backup';
@@ -104,5 +110,75 @@ describe('backup command wrappers (IPC contract)', () => {
   it('propagates backend errors instead of swallowing them', async () => {
     mockInvoke.mockRejectedValue('Journal must be unlocked');
     await expect(createBackupNow()).rejects.toBe('Journal must be unlocked');
+  });
+});
+
+describe('backup inspection wrappers (IPC contract)', () => {
+  const report: BackupCredentialReport = {
+    snapshot_slot_types: ['password'],
+    live_slot_types: ['password'],
+    differs_from_live: true,
+    compared: true,
+  };
+
+  const entry: BackupEntry = {
+    id: 7,
+    date: '2024-01-15',
+    title: 'Inspected',
+    preview: 'body text',
+  };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('checkBackupCredentials → check_backup_credentials { fileName }', async () => {
+    mockInvoke.mockResolvedValue(report);
+    await expect(checkBackupCredentials(snapshot.file_name)).resolves.toEqual(report);
+    expect(mockInvoke).toHaveBeenCalledWith('check_backup_credentials', {
+      fileName: snapshot.file_name,
+    });
+  });
+
+  it('openBackupReadonly sends a password and a null key path', async () => {
+    mockInvoke.mockResolvedValue({ file_name: snapshot.file_name, credential_differs: false });
+    await openBackupReadonly(snapshot.file_name, { password: 'old-password' });
+    expect(mockInvoke).toHaveBeenCalledWith('open_backup_readonly', {
+      fileName: snapshot.file_name,
+      password: 'old-password',
+      keyPath: null,
+    });
+  });
+
+  it('openBackupReadonly sends both credentials as null when none is given', async () => {
+    // The local-only case: the backend falls back to this device's key. Sending `undefined`
+    // would drop the argument entirely and the Rust `Option` would still be `None`, but an
+    // explicit null keeps the wire shape identical across the three cases.
+    mockInvoke.mockResolvedValue({ file_name: snapshot.file_name, credential_differs: false });
+    await openBackupReadonly(snapshot.file_name);
+    expect(mockInvoke).toHaveBeenCalledWith('open_backup_readonly', {
+      fileName: snapshot.file_name,
+      password: null,
+      keyPath: null,
+    });
+  });
+
+  it('listBackupEntries → list_backup_entries with no arguments', async () => {
+    mockInvoke.mockResolvedValue([entry]);
+    await expect(listBackupEntries()).resolves.toEqual([entry]);
+    expect(mockInvoke).toHaveBeenCalledWith('list_backup_entries');
+  });
+
+  it('closeBackup → close_backup', async () => {
+    mockInvoke.mockResolvedValue(undefined);
+    await expect(closeBackup()).resolves.toBeUndefined();
+    expect(mockInvoke).toHaveBeenCalledWith('close_backup');
+  });
+
+  it('surfaces a wrong-credential failure rather than resolving empty', async () => {
+    mockInvoke.mockRejectedValue('That password does not open this backup.');
+    await expect(openBackupReadonly(snapshot.file_name, { password: 'wrong' })).rejects.toBe(
+      'That password does not open this backup.',
+    );
   });
 });

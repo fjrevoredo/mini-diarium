@@ -322,6 +322,32 @@ number describes it.
 - `create_pre_v3_snapshot(db, backups_dir) -> Result<String, String>` — the reduced form for
   v1/v2 journals, which have no auth slots to verify against.
 
+### Inspection (`backup::inspect`, re-exported at the `backup` root)
+
+Reading a snapshot **without** adopting it as a journal. The distinction matters because a
+snapshot is an ordinary openable database: opening one the normal way writes to it
+(`update_slot_last_used` alone is enough), which destroys the restore point being examined.
+
+- `open_snapshot_file(backups_dir, file_name, SnapshotCredential) -> Result<DatabaseConnection, String>`
+  — validates the name like `delete_snapshot` does, then opens the snapshot
+  `SQLITE_OPEN_READ_ONLY`. **No migration runs** and nothing is registered; the caller owns
+  the returned connection and dropping it zeroizes the key.
+- `check_snapshot_credentials(backups_dir, file_name, live_db_path) -> Result<SnapshotCredentialReport, String>`
+  — needs **no key**: auth-slot rows are plaintext. Answers "will today's password open this
+  snapshot?" before the user is asked to type one (finding B-11).
+- `list_snapshot_entries(db) -> Result<Vec<SnapshotEntry>, String>` — id, date, title, and a
+  200-character preview only. Adapts to the snapshot's schema version, since `preview_enc`
+  (v12) and `locked` (v13) are absent from exactly the pre-migration snapshots that matter
+  most.
+- `open_snapshot_readonly(path, SnapshotCredential)` / `compare_snapshot_credentials(snapshot_path, live_db_path)`
+  — the same two operations addressed by path rather than by name.
+- `SnapshotCredential::{Password(String), PrivateKey([u8; 32]), AutoKey([u8; 32])}` —
+  zeroize-on-drop, and its `Debug` prints the variant only.
+- `SnapshotEntry { id, date, title, preview }`
+- `SnapshotCredentialReport { snapshot_slot_types, live_slot_types, differs_from_live, compared }`
+  — `compared: false` means the live journal could not be read, which makes
+  `differs_from_live` moot rather than merely `false`.
+
 ### Types
 - `BackupContext { db_path, backups_dir, app_version: Option<&str> }` — `db_path` is required
   because the SQLite change counter lives in the live file's header and cannot be read

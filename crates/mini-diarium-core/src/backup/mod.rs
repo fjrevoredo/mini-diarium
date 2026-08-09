@@ -21,6 +21,7 @@
 //! partially written copy was indistinguishable from a good one, and the backup was taken
 //! **after** unlock rather than before the migration that might damage the journal.
 
+pub mod inspect;
 pub mod manifest;
 pub mod policy;
 pub mod store;
@@ -32,6 +33,10 @@ use log::{debug, info, warn};
 
 use crate::db::DatabaseConnection;
 
+pub use inspect::{
+    compare_snapshot_credentials, list_snapshot_entries, open_snapshot_readonly,
+    SnapshotCredential, SnapshotCredentialReport, SnapshotEntry,
+};
 pub use manifest::{Manifest, MANIFEST_FILE, MANIFEST_SCHEMA_VERSION};
 pub use policy::{
     plan_retention, should_snapshot, summarize_health, BackupFailure, BackupHealth,
@@ -331,6 +336,37 @@ pub fn delete_snapshot(backups_dir: &Path, file_name: &str) -> Result<(), String
     let mut manifest = manifest::load_reconciled(backups_dir, &store);
     manifest.snapshots.retain(|s| s.file_name != file_name);
     manifest::save(backups_dir, &manifest)
+}
+
+/// Opens one snapshot read-only for inspection, addressed by file name.
+///
+/// The name goes through the same validation as [`delete_snapshot`] before it touches the
+/// filesystem, so a caller cannot address anything outside the backups directory. The
+/// returned connection is the caller's to hold and drop; dropping it zeroizes the key.
+///
+/// See [`inspect`] for why this cannot simply open the snapshot as a journal.
+pub fn open_snapshot_file(
+    backups_dir: &Path,
+    file_name: &str,
+    credential: inspect::SnapshotCredential,
+) -> Result<DatabaseConnection, String> {
+    let store = FsSnapshotStore::new(backups_dir);
+    let path = store.read(file_name)?;
+    inspect::open_snapshot_readonly(&path, credential)
+}
+
+/// Reports whether one snapshot still accepts the live journal's credentials, by file name.
+///
+/// Needs no key and no unlocked journal: auth-slot rows are plaintext. That is what lets the
+/// UI warn *before* asking for a credential (scenario UX-3) rather than after a failure.
+pub fn check_snapshot_credentials(
+    backups_dir: &Path,
+    file_name: &str,
+    live_db_path: &Path,
+) -> Result<inspect::SnapshotCredentialReport, String> {
+    let store = FsSnapshotStore::new(backups_dir);
+    let path = store.read(file_name)?;
+    inspect::compare_snapshot_credentials(&path, live_db_path)
 }
 
 /// Pre-v3 migration snapshot, for journals that predate the auth-slot model.

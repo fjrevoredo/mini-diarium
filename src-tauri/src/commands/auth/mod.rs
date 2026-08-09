@@ -12,6 +12,14 @@ pub struct DiaryState {
     /// App data directory — always the fixed system location, used for config.json.
     /// Never changes after startup, so no Mutex needed.
     pub app_data_dir: PathBuf,
+    /// A snapshot opened read-only for inspection — a **second** decrypted database with a
+    /// **second** master key, held apart from `db` and never registered as a journal.
+    ///
+    /// It lives here rather than in its own managed state so that locking the journal tears
+    /// it down automatically: every lock path funnels through [`lock_diary_inner_with`], and
+    /// an invariant enforced by the call graph does not depend on a future caller
+    /// remembering a second teardown.
+    pub inspection: Mutex<Option<crate::commands::backup_inspect::InspectedSnapshot>>,
 }
 
 impl DiaryState {
@@ -21,6 +29,7 @@ impl DiaryState {
             db_path: Mutex::new(db_path),
             backups_dir: Mutex::new(backups_dir),
             app_data_dir,
+            inspection: Mutex::new(None),
         }
     }
 }
@@ -54,6 +63,12 @@ pub(crate) enum LockCompletion {
 /// This covers all three auto-lock paths (idle timer, OS session lock, focus loss) because
 /// every one of them funnels through here.
 fn lock_diary_inner_with(state: &DiaryState, completion: LockCompletion) -> Result<bool, String> {
+    // First, and unconditionally: a snapshot opened for inspection holds a decrypted database
+    // and a master key of its own, and locking the journal while that stays open would leave
+    // the app's content readable behind a locked screen. This runs before the early return
+    // below, so it covers the already-locked case a journal switch produces.
+    crate::commands::backup_inspect::close_inspection(state);
+
     let Some(done) = crate::commands::backup_triggers::take_connection_and_snapshot(
         state,
         crate::backup::SnapshotTrigger::Lock,

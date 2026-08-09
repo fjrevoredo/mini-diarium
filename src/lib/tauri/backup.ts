@@ -113,3 +113,71 @@ export async function deleteBackup(fileName: string): Promise<void> {
 export async function revealBackupsFolder(): Promise<void> {
   await invoke('reveal_backups_folder');
 }
+
+/**
+ * Whether a snapshot still accepts the credential the live journal accepts.
+ *
+ * A password change re-wraps the master key in the journal only, so every snapshot taken
+ * beforehand still opens with the *old* password. Reading this before prompting is what
+ * turns "this backup is broken" into "this backup needs the password you used then".
+ */
+export interface BackupCredentialReport {
+  /** Auth-slot *types* the snapshot accepts. Never user-chosen labels. */
+  snapshot_slot_types: string[];
+  live_slot_types: string[];
+  differs_from_live: boolean;
+  /** `false` when the live journal could not be read, which makes the comparison moot. */
+  compared: boolean;
+}
+
+/** One entry inside an opened snapshot. Title and a short preview only — never full text. */
+export interface BackupEntry {
+  id: number;
+  date: string;
+  title: string;
+  preview: string;
+}
+
+/** The result of opening a snapshot for reading. */
+export interface OpenBackupInfo {
+  file_name: string;
+  credential_differs: boolean;
+}
+
+/** Checks a snapshot's credentials against the live journal's. Needs no key. */
+export async function checkBackupCredentials(fileName: string): Promise<BackupCredentialReport> {
+  return await invoke<BackupCredentialReport>('check_backup_credentials', { fileName });
+}
+
+/**
+ * Opens a snapshot read-only, ready for {@link listBackupEntries}.
+ *
+ * Pass a password, or a key-file path, or neither — a journal with no password uses this
+ * device's key. The snapshot is never migrated, never written to, and never registered as a
+ * journal, and locking the journal closes it.
+ *
+ * Requires the live journal to be unlocked: this decrypts entry content, and the pre-auth
+ * panel exists to report that backups exist, not to read them. A backup needing an older
+ * password is still reachable — unlock with today's password, open the backup with the old
+ * one.
+ */
+export async function openBackupReadonly(
+  fileName: string,
+  credential?: { password?: string; keyPath?: string },
+): Promise<OpenBackupInfo> {
+  return await invoke<OpenBackupInfo>('open_backup_readonly', {
+    fileName,
+    password: credential?.password ?? null,
+    keyPath: credential?.keyPath ?? null,
+  });
+}
+
+/** Lists the open snapshot's entries, newest first. */
+export async function listBackupEntries(): Promise<BackupEntry[]> {
+  return await invoke<BackupEntry[]>('list_backup_entries');
+}
+
+/** Closes the open snapshot and forgets its key. Closing nothing is not an error. */
+export async function closeBackup(): Promise<void> {
+  await invoke('close_backup');
+}
