@@ -4,12 +4,12 @@
 
 - Plan Status: IN PROGRESS
 - Created: 2026-08-04
-- Last Updated: 2026-08-09 (Task 4.1 implemented; Milestone 3 still open on the Linux half of Task 3.4)
+- Last Updated: 2026-08-10 (UX-GATE scenarios signed off; Milestone 3 still open on the Linux half of Task 3.4; Milestone 4 unblocked to start Tasks 4.2–4.3)
 - Owner: Coding agent
 - Approval: APPROVED (2026-08-04)
 - Tracking: [TODO-0098](todo/TODO.md)
 - Source assessment: [`docs/reports/2026-08-04-backup-system-assessment.md`](reports/2026-08-04-backup-system-assessment.md) (Option A, §6.1)
-- Tags: `UX-GATE: REQUIRED` (Milestone 4), `PLATFORM-VERIFY` (Milestone 3, reveal-in-folder)
+- Tags: `UX-GATE: SATISFIED 2026-08-10` (Milestone 4), `PLATFORM-VERIFY` (Milestone 3, reveal-in-folder)
 
 ## Status Legend
 
@@ -82,6 +82,24 @@ The manifest is a **plaintext** sidecar next to encrypted snapshots. This is a d
 | UX-5 | Restore target date already has entries | The user is told a new entry will be created alongside the existing one (multi-entry dates are supported), never a silent overwrite |
 | UX-6 | Backup health is degraded (last N snapshots failed, or budget exceeded) | A persistent, non-blocking indicator with a plain-language cause and the folder path |
 | UX-7 | Local-only journal (Assumption 2) | Persistent notice that these snapshots require this device's `config.json` and cannot be restored on another machine |
+
+### Sign-off Record
+
+Signed off 2026-08-10, against a rendered HTML prototype (light and dark) built for this review — not checked into the repo, so this record captures what it showed rather than pointing back to it.
+
+| # | Scenario | Outcome |
+|---|---|---|
+| UX-1 | Inspecting a snapshot | Approved |
+| UX-2 | Whole-journal restore | Approved, after a mechanism question — resolved below and folded into Task 4.2's steps |
+| UX-3 | Credential drift | Approved |
+| UX-4 | Restoring selected entries | Approved |
+| UX-5 | Restore target date already has entries | Approved |
+| UX-6 | Backup health degraded | Approved — already shipped in Milestone 3; the prototype flagged one deviation from the literal requirement (an "Open backups folder" action rather than a printed path string, so the path never crosses the IPC boundary as text) and it stands as reviewed and accepted |
+| UX-7 | Local-only journal | Approved — already shipped in Milestone 3 |
+
+**UX-2 mechanism, clarified during review:** restoring is a full-file atomic swap, not a merge and not a second `VACUUM INTO` pass. A snapshot is already a complete, valid encrypted database — it was written by `VACUUM INTO` when the backup was taken — so restoring means closing the live connection, copying the snapshot to a temp name inside the journal directory, fsyncing it, and atomically renaming it over `diary.db`: the same write-then-rename pattern Task 1.4 already built for taking a backup, aimed the other direction. Two consequences, both folded into Task 4.2's steps: the operation is real I/O, not instant, so the confirm dialog needs a disabled `Restoring…` busy state before the success banner (matching the existing `backingUp`/`verifying` pattern in `BackupsPanel.tsx`); and the connection teardown has to *wait* for the file handle to actually release rather than assume it, reusing `LockCompletion::AwaitFileRelease` from Milestone 1's Windows fix (Task 1.6 deviation 4, `os error 32`) for the identical reason — a rename over an still-open `diary.db` fails on Windows the same way `change_diary_directory` and `reset_diary` did.
+
+Tasks 4.2 and 4.3 are unblocked to start.
 
 ## Milestones
 
@@ -335,7 +353,7 @@ title-bar issue).
 
 ### Milestone 4: Restore
 
-- Status: IN PROGRESS (Task 4.1 complete; Tasks 4.2–4.3 held at the UX gate)
+- Status: IN PROGRESS (Task 4.1 complete; UX gate signed off 2026-08-10 — see the Sign-off Record; Tasks 4.2–4.3 ready to start)
 - Purpose: Deliver the capability whose absence made the incident recovery manual: getting data back out of a snapshot, in-app, without writing plaintext to disk.
 - Exit Criteria: All seven UX-GATE scenarios signed off; a whole-journal restore and a per-entry restore both demonstrated end-to-end against a snapshot the app produced itself; no code path in the restore flow writes decrypted content to the filesystem; an E2E scenario covers the round trip.
 
@@ -358,11 +376,11 @@ title-bar issue).
 - Objective: Roll the journal back to a snapshot, reversibly.
 - Steps:
   1. Take a `PreRestore` safety snapshot of the current state and verify it. Abort the restore if it fails.
-  2. Lock the journal, close the live connection, atomically replace the database file, reopen, and re-run `apply_pending`.
-  3. Surface scenario UX-2's confirmation and success message, naming the safety snapshot.
+  2. Lock the journal, close the live connection — waiting for the handle to actually release via `LockCompletion::AwaitFileRelease` (Milestone 1, Task 1.6 deviation 4; do not assume close is synchronous, this is the same Windows `os error 32` hazard) — then copy the snapshot file to a temp name inside the journal directory, fsync it, and atomically rename it over `diary.db`. Reopen and re-run `apply_pending`, since the snapshot's schema version may be older than the live one.
+  3. Surface scenario UX-2's confirmation, a disabled `Restoring…` busy state on the confirm button while step 2 runs (same pattern as `backingUp`/`verifying` in `BackupsPanel.tsx`), and the success message naming the safety snapshot.
   4. On any failure after the file swap begins, restore from the safety snapshot and report clearly.
 - Validation: Tests `test_restore_takes_a_verified_safety_snapshot_first` and `test_failed_restore_rolls_back_to_the_safety_snapshot`. Manual end-to-end run in the dev app.
-- Notes: Blocked on UX-2 and UX-3 sign-off. Restoring an older snapshot may downgrade the schema version, which `apply_pending` then re-migrates — the pre-migration snapshot from Task 1.6 covers that path, so verify the two interact correctly rather than producing two snapshots for one action.
+- Notes: UX-2 and UX-3 signed off 2026-08-10 against a rendered prototype (see the UX Gate Sign-off Record) — this task may start. Restoring an older snapshot may downgrade the schema version, which `apply_pending` then re-migrates — the pre-migration snapshot from Task 1.6 covers that path, so verify the two interact correctly rather than producing two snapshots for one action.
 
 #### Task 4.3: Per-entry restore
 
@@ -374,7 +392,7 @@ title-bar issue).
   3. Restore tags where the snapshot has them — this path is not constrained by the lossy JSON export format that drops them (finding B-5).
   4. Never overwrite: a restored entry is added alongside existing entries on that date (scenario UX-5), reusing `insert_entry_with_images` so image references are normalized correctly.
 - Validation: Tests `test_restored_entry_is_added_not_overwritten`, `test_restore_entries_preserves_tags`, `test_restore_entries_writes_no_plaintext_to_disk` (assert no new files appear in temp or the journal directory during the operation). Manual end-to-end run.
-- Notes: Blocked on UX-4 and UX-5 sign-off. The assessment's highest-value single feature.
+- Notes: UX-4 and UX-5 signed off 2026-08-10 against a rendered prototype (see the UX Gate Sign-off Record) — this task may start. The assessment's highest-value single feature.
 
 #### Task 4.4: E2E coverage for the restore round trip
 
