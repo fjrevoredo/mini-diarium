@@ -199,6 +199,41 @@ export async function listBackupEntries(): Promise<BackupEntry[]> {
   return await invoke<BackupEntry[]>('list_backup_entries');
 }
 
+/** Whether a snapshot entry's counterpart exists in the live journal, and how it compares. */
+export type EntryMatchStatus = 'missing' | 'shorter_in_live' | 'present';
+
+/** One snapshot entry as the restore picker shows it: {@link BackupEntry}'s fields plus a
+ * status against the live journal. Matched by date + title — entry ids are not stable across
+ * databases. */
+export interface BackupEntryDiff extends BackupEntry {
+  status: EntryMatchStatus;
+}
+
+/**
+ * Lists the open snapshot's entries alongside their status against the live journal —
+ * missing, shorter, or already present.
+ */
+export async function listBackupEntriesWithStatus(): Promise<BackupEntryDiff[]> {
+  return await invoke<BackupEntryDiff[]>('list_backup_entries_with_status');
+}
+
+/** What one call to {@link restoreEntriesFromBackup} did. */
+export interface RestoreEntriesSummary {
+  /** How many of the requested entries were added. */
+  added_count: number;
+}
+
+/**
+ * Copies the selected entries out of the open snapshot and into the live journal.
+ *
+ * Never overwrites: each restored entry is added alongside whatever the live journal already
+ * holds on that date, never replacing it. Nothing here writes a file — every intermediate
+ * value (resolved image data, decrypted tag names) lives in memory only.
+ */
+export async function restoreEntriesFromBackup(entryIds: number[]): Promise<RestoreEntriesSummary> {
+  return await invoke<RestoreEntriesSummary>('restore_entries_from_backup', { entryIds });
+}
+
 /** Closes the open snapshot and forgets its key. Closing nothing is not an error. */
 export async function closeBackup(): Promise<void> {
   await invoke('close_backup');

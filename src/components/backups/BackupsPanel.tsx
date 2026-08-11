@@ -8,6 +8,7 @@ import { journals, activeJournalId } from '../../state/journals';
 import { executeCleanupCallbacks } from '../../state/entries';
 import { refreshAfterRestore } from '../../state/session';
 import { createLogger } from '../../lib/logger';
+import BackupInspectDialog from './BackupInspectDialog';
 
 const log = createLogger('BackupsPanel');
 
@@ -79,6 +80,7 @@ export default function BackupsPanel(props: BackupsPanelProps) {
   const [successMessage, setSuccessMessage] = createSignal<string | null>(null);
   const [busyAction, setBusyAction] = createSignal<'backup' | 'verify' | 'restore' | null>(null);
   const [busyFile, setBusyFile] = createSignal<string | null>(null);
+  const [inspecting, setInspecting] = createSignal<SnapshotMeta | null>(null);
 
   const isAutoProtected = () =>
     journals().find((j) => j.id === activeJournalId())?.auto_protected ?? false;
@@ -472,12 +474,37 @@ export default function BackupsPanel(props: BackupsPanelProps) {
                     >
                       {t('prefs.backups.delete')}
                     </button>
+                    {/* Per-entry restore needs a decrypted read of the snapshot, so it is
+                        reachable only from the authenticated panel — never reduced/pre-auth
+                        mode (Task 4.1 deviation 5: inspection requires an unlocked journal). */}
+                    <Show when={!props.reduced}>
+                      <button
+                        type="button"
+                        onClick={() => setInspecting(snapshot)}
+                        disabled={busyFile() === snapshot.file_name}
+                        data-testid="backups-restore-entries-button"
+                        class="px-2 py-1 text-xs font-medium text-secondary border border-primary rounded-md hover:bg-hover focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {t('prefs.backups.restoreEntriesButton')}
+                      </button>
+                    </Show>
                   </div>
                 </li>
               )}
             </For>
           </ul>
         </Show>
+      </Show>
+
+      <Show when={inspecting()}>
+        {(snapshot) => (
+          <BackupInspectDialog
+            isOpen={inspecting() !== null}
+            snapshot={snapshot()}
+            autoProtected={isAutoProtected()}
+            onClose={() => setInspecting(null)}
+          />
+        )}
       </Show>
     </div>
   );

@@ -177,7 +177,17 @@ These are used by E2E tests — **do not remove** from components.
 | `BackupsPanel.tsx` | Restore success message, naming the safety snapshot | `backups-restore-success` |
 | `BackupsPanel.tsx` | Passwordless-journal notice (UX-7) | `backups-local-only-notice` |
 | `BackupsPanel.tsx` | Reduced-mode explanation for disabled actions | `backups-locked-hint` |
+| `BackupsPanel.tsx` | Per-row "Restore entries…" button (opens `BackupInspectDialog`; hidden in reduced mode) | `backups-restore-entries-button` |
 | `BackupsOverlay.tsx` | Standalone backups dialog (pre-auth) | `backups-overlay` |
+| `BackupInspectDialog.tsx` | Per-entry restore dialog root | `backup-inspect-dialog` |
+| `BackupInspectDialog.tsx` | Credential-differs notice (UX-3) | `backup-inspect-credential-differs` |
+| `BackupInspectDialog.tsx` | "View entries" submit button | `backup-inspect-open-button` |
+| `BackupInspectDialog.tsx` | Empty-state message | `backup-inspect-empty` |
+| `BackupInspectDialog.tsx` | "Select all missing or shorter" button | `backup-inspect-select-all` |
+| `BackupInspectDialog.tsx` | One snapshot entry row | `backup-inspect-entry-item` |
+| `BackupInspectDialog.tsx` | Per-entry status badge (UX-4) | `backup-inspect-status-missing` / `backup-inspect-status-shorter_in_live` / `backup-inspect-status-present` |
+| `BackupInspectDialog.tsx` | Restore-selected button | `backup-inspect-restore-button` |
+| `BackupInspectDialog.tsx` | Restore success message | `backup-inspect-success` |
 | `PreAuthTools.tsx` | Row of tools reachable without unlocking | `pre-auth-tools` |
 | `PreAuthTools.tsx` | View-backups entry point on the unlock screen | `pre-auth-backups-button` |
 | `StatsOverlay.tsx` | Statistics dialog content | `stats-overlay` |

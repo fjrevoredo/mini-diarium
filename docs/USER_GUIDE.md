@@ -357,7 +357,12 @@ A storage budget of 2 GB (or three times your journal's size, whichever is large
 
 ### Restoring
 
-In-app restore is not available yet. To restore today, close Mini Diarium, copy the snapshot over your `diary.db`, and reopen the app. Keep a copy of the file you replace until you have confirmed the snapshot has what you expected.
+Restoring is built into the app, from **Preferences → Backups**, in two forms:
+
+- **Restore** rolls the whole journal back to a snapshot. It names the date, warns that entries written since will be replaced, and takes a safety snapshot of the current state first — so it can be undone. No password is asked for; the master key never changes across a password change.
+- **Restore entries…** recovers specific entries from a snapshot without touching the rest of the journal. It flags entries missing from, or shorter in, the live journal, and never overwrites — a recovered entry is added alongside whatever the date already holds.
+
+Nothing decrypted is written to disk during either kind of restore.
 
 ### Custom journal locations
 

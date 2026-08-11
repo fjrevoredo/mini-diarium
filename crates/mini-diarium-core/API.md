@@ -348,6 +348,49 @@ snapshot is an ordinary openable database: opening one the normal way writes to 
   — `compared: false` means the live journal could not be read, which makes
   `differs_from_live` moot rather than merely `false`.
 
+### Whole-journal restore (`backup::restore`, re-exported at the `backup` root)
+
+Rolls the live journal back to a snapshot: a `PreRestore` safety snapshot of the current
+state first, then an atomic file swap (the same write-then-rename primitive `store` uses for
+*taking* a snapshot, aimed the other direction), then a reopen that migrates the result if the
+restored snapshot predates the current schema.
+
+- `restore_from_snapshot(db: DatabaseConnection, &BackupContext, file_name) -> RestoreOutcome`
+  — takes the live connection **by value**: owning it proves nothing else can reach the
+  journal while the file underneath it is being replaced. No credential is asked for —
+  `change_password` re-wraps the master key rather than re-encrypting entries, so the key the
+  live connection already holds is the key every snapshot this journal ever produced was
+  encrypted with.
+- `RestoreOutcome { db: Option<DatabaseConnection>, safety_snapshot: Option<SnapshotMeta>, restored: bool, error: Option<String> }`
+  — deliberately not a `Result`: every path (success, an aborted attempt, or a rolled-back
+  failure) hands back a connection the caller should reinstall. `db` is `None` only in the
+  unrecoverable case where neither the restored file nor the safety snapshot could be
+  reopened; the safety snapshot's file name is still included so there is always something to
+  act on.
+
+### Per-entry restore (`backup::restore_entries`, re-exported at the `backup` root)
+
+Copies individual entries out of an already-open inspection connection (see Inspection above)
+and into the live journal, in-process — no plaintext ever touches disk.
+
+- `list_snapshot_entries_with_status(snapshot_db, live_db) -> Result<Vec<SnapshotEntryDiff>, String>`
+  — the same fields `list_snapshot_entries` returns, plus an `EntryMatchStatus`. Matched by
+  date + title (entry ids are not stable across databases — each database assigns its own
+  AUTOINCREMENT sequence), falling back to "another blank-titled live entry on the same date"
+  when the title itself is blank. `word_count` — already an unencrypted column — stands in for
+  "how much content survived", so the comparison costs no decryption beyond what listing the
+  snapshot and reading the live day's entries already do.
+- `restore_entries_from_snapshot(live_db, snapshot_db, entry_ids: &[i64]) -> Result<RestoreEntriesOutcome, String>`
+  — never overwrites: every entry is a fresh `INSERT`, so a date that already holds live
+  entries gets an additional one alongside them. `image-id://N` refs are resolved against the
+  *snapshot's* image store before the text crosses into the live database, where those ids
+  name something else entirely; tags are restored by decrypted name, sidestepping the
+  fingerprint mismatch a live-keyed comparison would hit. A restored entry is never locked,
+  regardless of the snapshot's own `locked` flag.
+- `EntryMatchStatus::{Missing, ShorterInLive, Present}`
+- `SnapshotEntryDiff { id, date, title, preview, status }`
+- `RestoreEntriesOutcome { added_count }`
+
 ### Types
 - `BackupContext { db_path, backups_dir, app_version: Option<&str> }` — `db_path` is required
   because the SQLite change counter lives in the live file's header and cannot be read

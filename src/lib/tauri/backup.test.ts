@@ -12,10 +12,14 @@ import {
   checkBackupCredentials,
   openBackupReadonly,
   listBackupEntries,
+  listBackupEntriesWithStatus,
+  restoreEntriesFromBackup,
   closeBackup,
   type BackupCredentialReport,
   type BackupEntry,
+  type BackupEntryDiff,
   type BackupHealth,
+  type RestoreEntriesSummary,
   type RestoreSummary,
   type SnapshotMeta,
 } from './backup';
@@ -188,6 +192,29 @@ describe('backup inspection wrappers (IPC contract)', () => {
     mockInvoke.mockResolvedValue([entry]);
     await expect(listBackupEntries()).resolves.toEqual([entry]);
     expect(mockInvoke).toHaveBeenCalledWith('list_backup_entries');
+  });
+
+  it('listBackupEntriesWithStatus → list_backup_entries_with_status with no arguments', async () => {
+    const diff: BackupEntryDiff = { ...entry, status: 'shorter_in_live' };
+    mockInvoke.mockResolvedValue([diff]);
+    await expect(listBackupEntriesWithStatus()).resolves.toEqual([diff]);
+    expect(mockInvoke).toHaveBeenCalledWith('list_backup_entries_with_status');
+  });
+
+  it('restoreEntriesFromBackup → restore_entries_from_backup { entryIds } (camelCase)', async () => {
+    const summary: RestoreEntriesSummary = { added_count: 2 };
+    mockInvoke.mockResolvedValue(summary);
+    await expect(restoreEntriesFromBackup([7, 9])).resolves.toEqual(summary);
+    expect(mockInvoke).toHaveBeenCalledWith('restore_entries_from_backup', {
+      entryIds: [7, 9],
+    });
+  });
+
+  it('restoreEntriesFromBackup rejects rather than resolving empty when the backend refuses', async () => {
+    mockInvoke.mockRejectedValue('Select at least one entry to restore.');
+    await expect(restoreEntriesFromBackup([])).rejects.toBe(
+      'Select at least one entry to restore.',
+    );
   });
 
   it('closeBackup → close_backup', async () => {

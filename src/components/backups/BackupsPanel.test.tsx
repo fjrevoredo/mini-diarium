@@ -62,6 +62,26 @@ vi.mock('../../state/session', () => ({
   refreshAfterRestore: mockRefreshAfterRestore,
 }));
 
+// BackupInspectDialog (Task 4.3) is a heavy component with its own IPC effects, tested on its
+// own in BackupInspectDialog.test.tsx. Stubbed here so this file tests only that BackupsPanel
+// opens it with the right snapshot and `autoProtected` prop — not its internal behavior.
+vi.mock('./BackupInspectDialog', () => ({
+  default: (props: {
+    isOpen: boolean;
+    snapshot: SnapshotMeta;
+    autoProtected?: boolean;
+    onClose: () => void;
+  }) => (
+    <div data-testid="mock-inspect-dialog">
+      <span data-testid="mock-inspect-file">{props.snapshot.file_name}</span>
+      <span data-testid="mock-inspect-auto">{String(props.autoProtected)}</span>
+      <button type="button" onClick={() => props.onClose()}>
+        mock-close
+      </button>
+    </div>
+  ),
+}));
+
 function snapshot(overrides: Partial<SnapshotMeta> = {}): SnapshotMeta {
   return {
     file_name: 'backup-2026-08-06-09h30m00.db',
@@ -381,6 +401,56 @@ describe('BackupsPanel', () => {
       expect(mockRefreshAfterRestore).not.toHaveBeenCalled();
 
       vi.restoreAllMocks();
+    });
+  });
+
+  describe('per-entry restore entry point (Task 4.3)', () => {
+    it('opens BackupInspectDialog for the clicked snapshot, passing autoProtected through', async () => {
+      mockJournals.mockReturnValue([{ id: 'j1', auto_protected: true }]);
+      mockListBackups.mockResolvedValue([snapshot()]);
+      mockGetBackupHealth.mockResolvedValue(health());
+
+      renderWithI18n(() => <BackupsPanel isVisible={visible} />);
+      await waitFor(() =>
+        expect(screen.getByTestId('backups-restore-entries-button')).toBeInTheDocument(),
+      );
+      expect(screen.queryByTestId('mock-inspect-dialog')).not.toBeInTheDocument();
+
+      fireEvent.click(screen.getByTestId('backups-restore-entries-button'));
+
+      expect(screen.getByTestId('mock-inspect-dialog')).toBeInTheDocument();
+      expect(screen.getByTestId('mock-inspect-file')).toHaveTextContent(snapshot().file_name);
+      // isAutoProtected() reads the active journal's own flag, not a hardcoded default —
+      // this is the one prop wiring nothing else in this file exercises.
+      expect(screen.getByTestId('mock-inspect-auto')).toHaveTextContent('true');
+    });
+
+    it('closes the dialog when it reports back via onClose', async () => {
+      mockListBackups.mockResolvedValue([snapshot()]);
+      mockGetBackupHealth.mockResolvedValue(health());
+
+      renderWithI18n(() => <BackupsPanel isVisible={visible} />);
+      await waitFor(() =>
+        expect(screen.getByTestId('backups-restore-entries-button')).toBeInTheDocument(),
+      );
+      fireEvent.click(screen.getByTestId('backups-restore-entries-button'));
+      expect(screen.getByTestId('mock-inspect-dialog')).toBeInTheDocument();
+
+      fireEvent.click(screen.getByText('mock-close'));
+
+      expect(screen.queryByTestId('mock-inspect-dialog')).not.toBeInTheDocument();
+    });
+
+    it('hides the entry point in reduced (pre-auth) mode — inspection needs an unlocked journal', async () => {
+      mockListBackupsUnauthenticated.mockResolvedValue({
+        snapshots: [snapshot()],
+        health: health(),
+      });
+
+      renderWithI18n(() => <BackupsPanel isVisible={visible} reduced />);
+
+      await waitFor(() => expect(screen.getByTestId('backups-list-item')).toBeInTheDocument());
+      expect(screen.queryByTestId('backups-restore-entries-button')).not.toBeInTheDocument();
     });
   });
 

@@ -613,6 +613,31 @@ const en = {
         'Its backups are encrypted with a key stored in this app’s settings on this device. Copying the backups folder to another machine is not enough to open them there.',
 
       listAria: 'Backups, newest first',
+
+      restoreEntriesButton: 'Restore entries…',
+      restoreEntriesTitle: 'Restore individual entries',
+      restoreEntriesDescription:
+        'Browse this backup and copy specific entries into your journal, without touching anything else.',
+      credentialPrompt: 'Enter the credential this backup was taken with.',
+      credentialDiffersNotice:
+        'This backup was taken with a different password or key than your journal uses today. Enter the one it was taken with, not today’s.',
+      viewEntriesButton: 'View entries',
+      viewingEntriesFor: 'Viewing entries from {{ when }}',
+      readOnlyNotice: 'Read-only. Nothing changes until you choose to restore.',
+      loadingEntries: 'Loading entries…',
+      noEntries: 'This backup has no entries.',
+      statusMissing: 'Missing from your journal',
+      statusShorter: 'Shorter in your journal',
+      statusPresent: 'Already in your journal',
+      selectAllMissing: 'Select all missing or shorter',
+      entriesSelectedCount_one: '{{ count }} entry selected',
+      entriesSelectedCount_other: '{{ count }} entries selected',
+      restoreSelectedButton: 'Restore selected',
+      restoringEntries: 'Restoring…',
+      restoreEntriesSuccess_one:
+        '{{ count }} entry added. Nothing already in your journal was overwritten.',
+      restoreEntriesSuccess_other:
+        '{{ count }} entries added. Nothing already in your journal was overwritten.',
     },
     advanced: {
       themeOverridesTitle: 'Theme Overrides',

@@ -4,7 +4,7 @@
 
 - Plan Status: IN PROGRESS
 - Created: 2026-08-04
-- Last Updated: 2026-08-11 (Task 4.2 whole-journal restore implemented; Milestone 3 still open on the Linux half of Task 3.4; Task 4.3 per-entry restore unblocked to start)
+- Last Updated: 2026-08-11 (Task 4.3 per-entry restore implemented; Milestone 4 now complete except Task 4.4 E2E coverage; Milestone 3 still open on the Linux half of Task 3.4)
 - Owner: Coding agent
 - Approval: APPROVED (2026-08-04)
 - Tracking: [TODO-0098](todo/TODO.md)
@@ -353,7 +353,7 @@ title-bar issue).
 
 ### Milestone 4: Restore
 
-- Status: IN PROGRESS (Tasks 4.1–4.2 complete; UX gate signed off 2026-08-10 — see the Sign-off Record; Task 4.3 ready to start)
+- Status: IN PROGRESS (Tasks 4.1–4.3 complete; UX gate signed off 2026-08-10 — see the Sign-off Record; Task 4.4 E2E coverage remains before this milestone's exit criteria are met)
 - Purpose: Deliver the capability whose absence made the incident recovery manual: getting data back out of a snapshot, in-app, without writing plaintext to disk.
 - Exit Criteria: All seven UX-GATE scenarios signed off; a whole-journal restore and a per-entry restore both demonstrated end-to-end against a snapshot the app produced itself; no code path in the restore flow writes decrypted content to the filesystem; an E2E scenario covers the round trip.
 
@@ -385,7 +385,7 @@ title-bar issue).
 
 #### Task 4.3: Per-entry restore
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Objective: Recover individual entries from a snapshot with no plaintext leaving the process (finding B-5).
 - Steps:
   1. Add a two-pane view listing the snapshot's entries beside the live journal's, flagging entries missing from, or shorter in, the live journal.
@@ -394,6 +394,23 @@ title-bar issue).
   4. Never overwrite: a restored entry is added alongside existing entries on that date (scenario UX-5), reusing `insert_entry_with_images` so image references are normalized correctly.
 - Validation: Tests `test_restored_entry_is_added_not_overwritten`, `test_restore_entries_preserves_tags`, `test_restore_entries_writes_no_plaintext_to_disk` (assert no new files appear in temp or the journal directory during the operation). Manual end-to-end run.
 - Notes: UX-4 and UX-5 signed off 2026-08-10 against a rendered prototype (see the UX Gate Sign-off Record) — this task may start. The assessment's highest-value single feature.
+- Implemented 2026-08-11. `crates/mini-diarium-core/src/backup/restore_entries.rs` (6 new tests) + two new commands (`list_backup_entries_with_status`, `restore_entries_from_backup`) in `src-tauri/src/commands/backup_inspect.rs` (6 new tests) + typed wrappers in `src/lib/tauri/backup.ts` (3 new tests) + a new `src/components/backups/BackupInspectDialog.tsx` (8 tests, new file) wired into `BackupsPanel.tsx` via a per-row "Restore entries…" button, unlocked-mode only (3 new tests in `BackupsPanel.test.tsx` covering the wiring itself, added during this self-check after the coverage report flagged that render path as untested). i18n keys added to `en.ts` and all six locale JSONs. Manually verified end-to-end in the dev app (create entry → snapshot → delete entry → restore via the new dialog → confirm data back); see the deviation table for a bug the manual run caught and a UI staleness bug it caught and led to a fix.
+
+### Deviations from the plan as written
+
+| # | Plan said | What shipped, and why |
+|---|---|---|
+| 1 | Step 1: "a two-pane view listing the snapshot's entries beside the live journal's." | Shipped as **one** list with a per-entry status badge (`Missing` / `Shorter in your journal` / `Already in your journal`), not a literal second pane of live-journal content. The signed-off UX-4 requirements — flags, explicit selection, a result stating how many were added and that nothing was overwritten — are all satisfied by the badges; there was no visibility into the rendered prototype the maintainer signed off against, so a genuine second pane was not attempted speculatively. Flagged here for the maintainer to accept or reject against that prototype, the same way Tasks 4.1 and 4.2 recorded their own UI deviations. |
+| 2 | Step 1's matching implied identity between a snapshot entry and its live counterpart. | Entry ids are **not** stable across databases — each database assigns its own AUTOINCREMENT sequence — so there is no id to match on. Matching is **date + title** (falling back to "another blank-titled live entry on the same date" when the title is itself blank), confirmed with the maintainer via `AskUserQuestion` before implementation over the alternative (date-only, which cannot distinguish two different entries on the same date). `word_count` — already an unencrypted column — stands in for "how much content survived" in the `ShorterInLive` comparison, avoiding extra decryption. |
+| 3 | Step 4: "reusing `insert_entry_with_images` so image references are normalized correctly," with no mention of *how*. | `insert_entry_with_images` alone is not sufficient across databases: it validates an existing `image-id://N` ref against the **target** database's `images` table, so a ref copied verbatim from the snapshot either drops silently (id not found) or — worse — attaches to an unrelated live image that happens to share the id. Fixed by resolving `image-id://` refs back to `data:` URIs against the **snapshot** connection (`resolve_image_refs_in_entries`, the same helper every export path already uses) before the text ever reaches `insert_entry_with_images` against the live connection, which then re-extracts and stores fresh image rows there. Entirely in memory. Pinned by `test_restore_entries_resolves_image_refs_across_databases`, which deliberately keeps an unrelated live image alive through the operation and asserts the restored entry links to neither its id nor its bytes. |
+| 4 | Nothing about reading a *full* entry (not just the preview) out of an older-schema snapshot. | `list_snapshot_entries` (Task 4.1) is preview-only by design and schema-adaptive; restoring needs the full `title`/`text`. Added `read_full_snapshot_entry`, adaptive the same way (`entry_metadata_encrypted`, v9+, defaults to `None` when absent) — the most valuable snapshot is the pre-migration one, which by definition lacks the newest columns. A restored entry's `locked` flag is always `false` regardless of the snapshot's own value: it is a plaintext "protect from accidental edits" marker the user sets deliberately, not something a recovery action should reintroduce as a surprise. |
+| 5 | Test name `test_restore_entries_writes_no_plaintext_to_disk` implying "no new files appear." | As anticipated by the plan's own Task 1.1 fallback reasoning, this would be false even for a correct implementation — SQLite writes rollback-journal files during the insert transaction. The test instead scans every file that *does* appear for the plaintext title/body bytes, the same content-scan pattern `test_backups_directory_never_contains_key_material` (Task 5.3) uses. |
+| 6 | Nothing about local-only (passwordless) journals reaching this feature. | **Caught by the manual dev-app rehearsal, not by the test suite.** The credential form built from the `PasswordPrompt.tsx` pattern had exactly two modes, password and key file — an auto-key journal's user would see a password field with nothing to type into it, and every submission would error. `openBackupReadonly(fileName)` with **neither** argument is the only way to reach `SnapshotCredential::AutoKey` on the backend (already proven by `test_inspect_opens_a_local_only_snapshot_with_the_device_key` in core); nothing in the dialog's own code path could produce that call. Fixed with an `autoProtected` prop (`BackupsPanel.tsx` already computes `isAutoProtected()` for the existing UX-7 notice) that swaps the credential form for a single "View entries" button calling `openBackupReadonly(fileName)` with no credential. Pinned by `BackupInspectDialog.test.tsx`'s "opens a local-only journal with no credential form at all". |
+| 7 | Nothing about the currently open editor after a per-entry restore. | **Also caught only by the manual rehearsal**, after the fix above: restoring an entry onto the date already open in the editor left the editor showing its pre-restore state (calendar updated immediately; the open editor did not) until the user navigated away and back. Unlike whole-journal restore, per-entry restore does not call `executeReloadCallbacks()` unconditionally — that cancels any in-flight debounced save on whatever entry happens to be open, a real cost when nothing about that entry actually changed. Fixed narrowly: the restored entries' dates are captured before the IPC call, and `executeReloadCallbacks()` runs only when one of them equals `selectedDate()`. Pinned by two tests — one proving the reload fires when the date matches, one proving it does not fire (and would not discard an unrelated in-flight save) when it doesn't. |
+
+### A defect found in manual testing, and fixed
+
+The dev-app rehearsal (create entry → snapshot → delete entry → open the new dialog → restore) proved the underlying data path correct on the first pass — the restored title and body matched the original exactly. It also surfaced deviations 6 and 7 above, neither of which any of the 23 automated tests written before that point (6 core + 6 command + 3 wrapper + 8 component) had a way to catch: deviation 6 because every test opened the dialog with a password already in scope, and deviation 7 because component tests mock the Tauri layer and never exercise the currently-open editor's own stale-data window. Both are now covered by dedicated tests alongside the fixes, and a further self-check afterward added 3 tests to `BackupsPanel.test.tsx` for the entry-point wiring itself (button visibility, the `autoProtected` prop, and the open/close round trip), which the coverage report had flagged as untested but no automated test caught.
 
 #### Task 4.4: E2E coverage for the restore round trip
 

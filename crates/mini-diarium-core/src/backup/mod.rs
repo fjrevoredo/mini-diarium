@@ -13,6 +13,7 @@
 //! | [`manifest`] | The `manifest.json` sidecar, including adoption of pre-upgrade files. |
 //! | [`inspect`] | Reading a snapshot read-only without adopting it (Milestone 4). |
 //! | [`restore`] | Rolling the live journal back to a snapshot (Milestone 4). |
+//! | [`restore_entries`] | Restoring individual entries out of a snapshot (Milestone 4). |
 //! | this file | Orchestration — the sequence the layers run in. |
 //!
 //! # Why snapshots are not file copies
@@ -27,6 +28,7 @@ pub mod inspect;
 pub mod manifest;
 pub mod policy;
 pub mod restore;
+pub mod restore_entries;
 pub mod store;
 
 use std::path::Path;
@@ -48,6 +50,10 @@ pub use policy::{
     MONTHLY_MONTHS, RECENT_SNAPSHOTS, WEEKLY_WEEKS,
 };
 pub use restore::{restore_from_snapshot, RestoreOutcome};
+pub use restore_entries::{
+    list_snapshot_entries_with_status, restore_entries_from_snapshot, EntryMatchStatus,
+    RestoreEntriesOutcome, SnapshotEntryDiff,
+};
 pub use store::{
     is_snapshot_file_name, FsSnapshotStore, SnapshotStore, StoredSnapshot, SNAPSHOT_PREFIX,
 };

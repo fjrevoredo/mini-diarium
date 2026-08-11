@@ -19,7 +19,9 @@
 use log::info;
 use tauri::State;
 
-use crate::backup::{self, SnapshotCredential, SnapshotCredentialReport, SnapshotEntry};
+use crate::backup::{
+    self, SnapshotCredential, SnapshotCredentialReport, SnapshotEntry, SnapshotEntryDiff,
+};
 use crate::commands::auth::DiaryState;
 use crate::db::DatabaseConnection;
 
@@ -186,6 +188,107 @@ pub(crate) fn list_backup_entries_inner(state: &DiaryState) -> Result<Vec<Snapsh
         .as_ref()
         .ok_or("No backup is open for inspection")?;
     backup::list_snapshot_entries(&open.db)
+}
+
+/// Lists the open snapshot's entries alongside their status against the live journal —
+/// missing, shorter, or already present (scenario UX-4). Matched by date + title, since entry
+/// ids are not stable across databases.
+///
+/// Requires an unlocked journal for the same reason [`list_backup_entries`] does — plus this
+/// one additionally needs live entry content (word counts) to compare against, not just the
+/// snapshot's.
+#[tauri::command]
+pub fn list_backup_entries_with_status(
+    state: State<DiaryState>,
+) -> Result<Vec<SnapshotEntryDiff>, String> {
+    list_backup_entries_with_status_inner(&state)
+}
+
+/// The testable core of [`list_backup_entries_with_status`]. See
+/// [`open_backup_readonly_inner`].
+pub(crate) fn list_backup_entries_with_status_inner(
+    state: &DiaryState,
+) -> Result<Vec<SnapshotEntryDiff>, String> {
+    // Inspection locked before `db`, matching the ordering `restore_backup_inner` uses
+    // (`close_inspection` runs before it locks `db`) — both this command and that one hold
+    // both locks in the same order, so neither can deadlock against the other.
+    let inspection = state
+        .inspection
+        .lock()
+        .map_err(|_| "Journal state lock failed".to_string())?;
+    let open = inspection
+        .as_ref()
+        .ok_or("No backup is open for inspection")?;
+
+    let db_state = state
+        .db
+        .lock()
+        .map_err(|_| "Journal state lock failed".to_string())?;
+    let live_db = db_state.as_ref().ok_or("Journal must be unlocked")?;
+
+    backup::list_snapshot_entries_with_status(&open.db, live_db)
+}
+
+/// What one call to [`restore_entries_from_backup`] did.
+#[derive(Debug, serde::Serialize)]
+pub struct RestoreEntriesSummary {
+    /// How many of the requested entries were added.
+    pub added_count: usize,
+}
+
+/// Copies the selected entries out of the open snapshot and into the live journal.
+///
+/// Never overwrites: each restored entry is a fresh row, added alongside whatever the live
+/// journal already holds on that date (scenario UX-5), never replacing it. Image references
+/// are resolved against the snapshot's own image store before the text ever reaches the live
+/// database (see the core module doc), and tags are restored by decrypted name. Nothing here
+/// writes a file — every intermediate value lives in memory only.
+///
+/// Requires an unlocked journal and an open inspection, the same requirements
+/// [`list_backup_entries_with_status`] has: this reads full entry content from the snapshot,
+/// not the preview-only fields that cross the IPC boundary elsewhere in this module.
+#[tauri::command]
+pub fn restore_entries_from_backup(
+    entry_ids: Vec<i64>,
+    state: State<DiaryState>,
+) -> Result<RestoreEntriesSummary, String> {
+    restore_entries_from_backup_inner(entry_ids, &state)
+}
+
+/// The testable core of [`restore_entries_from_backup`]. See [`open_backup_readonly_inner`].
+pub(crate) fn restore_entries_from_backup_inner(
+    entry_ids: Vec<i64>,
+    state: &DiaryState,
+) -> Result<RestoreEntriesSummary, String> {
+    if entry_ids.is_empty() {
+        return Err("Select at least one entry to restore.".to_string());
+    }
+
+    let inspection = state
+        .inspection
+        .lock()
+        .map_err(|_| "Journal state lock failed".to_string())?;
+    let open = inspection
+        .as_ref()
+        .ok_or("No backup is open for inspection")?;
+
+    let db_state = state
+        .db
+        .lock()
+        .map_err(|_| "Journal state lock failed".to_string())?;
+    let live_db = db_state.as_ref().ok_or("Journal must be unlocked")?;
+
+    let outcome = backup::restore_entries_from_snapshot(live_db, &open.db, &entry_ids)?;
+
+    info!(
+        "Restored {} entr{} from a backup",
+        outcome.added_count,
+        if outcome.added_count == 1 { "y" } else { "ies" }
+    );
+
+    Ok(RestoreEntriesSummary {
+        added_count: outcome.added_count,
+    })
 }
 
 /// Closes the open snapshot, zeroizing its master key. Closing nothing is not an error.
@@ -475,5 +578,120 @@ mod tests {
         // device key — which would otherwise open a local-only journal's snapshot on an
         // empty prompt.
         assert!(resolve_credential(Some(String::new()), None, &state).is_err());
+    }
+
+    // ── Task 4.3: per-entry restore ─────────────────────────────────────────────────────
+
+    #[test]
+    fn test_status_flags_a_deleted_entry_as_missing() {
+        let (_dir, state, file_name) = state_with_snapshot("status_missing");
+        unlock(&state);
+        open_backup_readonly_inner(file_name, Some("test_password".to_string()), None, &state)
+            .unwrap();
+        let entries = list_backup_entries_inner(&state).unwrap();
+        let id = entries[0].id;
+
+        crate::db::delete_entry_by_id(state.db.lock().unwrap().as_ref().unwrap(), id).unwrap();
+
+        let diffs = list_backup_entries_with_status_inner(&state).unwrap();
+        assert_eq!(diffs.len(), 1);
+        assert_eq!(diffs[0].status, backup::EntryMatchStatus::Missing);
+    }
+
+    #[test]
+    fn test_list_status_requires_an_open_inspection() {
+        let (_dir, state, _) = state_with_snapshot("status_no_inspection");
+        unlock(&state);
+        assert_eq!(
+            list_backup_entries_with_status_inner(&state).unwrap_err(),
+            "No backup is open for inspection"
+        );
+    }
+
+    #[test]
+    fn test_restore_entries_adds_alongside_without_overwriting() {
+        let (_dir, state, file_name) = state_with_snapshot("restore_adds");
+        unlock(&state);
+        open_backup_readonly_inner(file_name, Some("test_password".to_string()), None, &state)
+            .unwrap();
+        let id = list_backup_entries_inner(&state).unwrap()[0].id;
+
+        // Simulate the loss, and add an unrelated entry on the same date so the restore must
+        // add alongside it rather than replace it.
+        {
+            let db_guard = state.db.lock().unwrap();
+            let db = db_guard.as_ref().unwrap();
+            crate::db::delete_entry_by_id(db, id).unwrap();
+            crate::db::insert_entry(
+                db,
+                &crate::db::DiaryEntry {
+                    id: 0,
+                    date: "2024-01-15".to_string(),
+                    title: "Kept".to_string(),
+                    text: "still here".to_string(),
+                    word_count: 2,
+                    date_created: "2024-01-15T00:00:00Z".to_string(),
+                    date_updated: "2024-01-15T00:00:00Z".to_string(),
+                    metadata: None,
+                    locked: false,
+                },
+            )
+            .unwrap();
+        }
+
+        let summary = restore_entries_from_backup_inner(vec![id], &state).unwrap();
+        assert_eq!(summary.added_count, 1);
+
+        let on_date = crate::db::get_entries_by_date(
+            state.db.lock().unwrap().as_ref().unwrap(),
+            "2024-01-15",
+        )
+        .unwrap();
+        assert_eq!(
+            on_date.len(),
+            2,
+            "the existing entry must survive alongside the restored one"
+        );
+        assert!(on_date.iter().any(|e| e.title == "Inspected"));
+        assert!(on_date.iter().any(|e| e.title == "Kept"));
+    }
+
+    #[test]
+    fn test_restore_entries_rejects_an_empty_selection() {
+        let (_dir, state, file_name) = state_with_snapshot("restore_empty");
+        unlock(&state);
+        open_backup_readonly_inner(file_name, Some("test_password".to_string()), None, &state)
+            .unwrap();
+
+        let err = restore_entries_from_backup_inner(vec![], &state).unwrap_err();
+        assert!(err.contains("Select at least one"));
+    }
+
+    #[test]
+    fn test_restore_entries_requires_an_open_inspection() {
+        let (_dir, state, _) = state_with_snapshot("restore_no_inspection");
+        unlock(&state);
+        assert_eq!(
+            restore_entries_from_backup_inner(vec![1], &state).unwrap_err(),
+            "No backup is open for inspection"
+        );
+    }
+
+    #[test]
+    fn test_restore_entries_requires_an_unlocked_journal() {
+        let (_dir, state, file_name) = state_with_snapshot("restore_locked");
+        unlock(&state);
+        open_backup_readonly_inner(file_name, Some("test_password".to_string()), None, &state)
+            .unwrap();
+
+        // Lock the journal without going through the real lock path, so the inspection
+        // connection stays open and only `db` reads `None` — the exact state this guard has
+        // to catch on its own.
+        *state.db.lock().unwrap() = None;
+
+        assert_eq!(
+            restore_entries_from_backup_inner(vec![1], &state).unwrap_err(),
+            "Journal must be unlocked"
+        );
     }
 }

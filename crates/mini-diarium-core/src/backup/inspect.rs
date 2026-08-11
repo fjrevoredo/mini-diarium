@@ -343,7 +343,9 @@ fn wrapped_key_for(
     }
 }
 
-fn has_column(conn: &Connection, table: &str, column: &str) -> Result<bool, String> {
+/// Shared with [`super::restore_entries`], which needs the same schema-adaptive read for a
+/// single full entry that this module needs for the preview list.
+pub(crate) fn has_column(conn: &Connection, table: &str, column: &str) -> Result<bool, String> {
     let mut stmt = conn
         .prepare(&format!("PRAGMA table_info({table})"))
         .map_err(|_| "This backup's structure could not be read.".to_string())?;
