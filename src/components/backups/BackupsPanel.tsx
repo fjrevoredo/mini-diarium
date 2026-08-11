@@ -5,6 +5,11 @@ import { mapTauriError } from '../../lib/errors';
 import { useI18n, type T } from '../../i18n';
 import { preferences } from '../../state/preferences';
 import { journals, activeJournalId } from '../../state/journals';
+import { executeCleanupCallbacks } from '../../state/entries';
+import { refreshAfterRestore } from '../../state/session';
+import { createLogger } from '../../lib/logger';
+
+const log = createLogger('BackupsPanel');
 
 /**
  * The Backups panel, shared by Preferences → Backups and the unlock screen.
@@ -71,7 +76,8 @@ export default function BackupsPanel(props: BackupsPanelProps) {
   const [health, setHealth] = createSignal<BackupHealth | null>(null);
   const [isLoading, setIsLoading] = createSignal(false);
   const [error, setError] = createSignal<string | null>(null);
-  const [busyAction, setBusyAction] = createSignal<'backup' | 'verify' | null>(null);
+  const [successMessage, setSuccessMessage] = createSignal<string | null>(null);
+  const [busyAction, setBusyAction] = createSignal<'backup' | 'verify' | 'restore' | null>(null);
   const [busyFile, setBusyFile] = createSignal<string | null>(null);
 
   const isAutoProtected = () =>
@@ -104,6 +110,7 @@ export default function BackupsPanel(props: BackupsPanelProps) {
   const handleBackUpNow = async () => {
     setBusyAction('backup');
     setError(null);
+    setSuccessMessage(null);
     try {
       await tauri.createBackupNow();
       await load();
@@ -118,6 +125,7 @@ export default function BackupsPanel(props: BackupsPanelProps) {
     setBusyAction('verify');
     setBusyFile(fileName);
     setError(null);
+    setSuccessMessage(null);
     try {
       const updated = await tauri.verifyBackup(fileName);
       setSnapshots((current) => current.map((s) => (s.file_name === fileName ? updated : s)));
@@ -135,11 +143,71 @@ export default function BackupsPanel(props: BackupsPanelProps) {
     // separate OS window that steals focus and would trip the focus-loss auto-lock.
     if (!window.confirm(t('prefs.backups.confirmDelete'))) return;
     setError(null);
+    setSuccessMessage(null);
     try {
       await tauri.deleteBackup(fileName);
       await load();
     } catch (err) {
       setError(mapTauriError(err, t));
+    }
+  };
+
+  const handleRestore = async (snapshot: SnapshotMeta) => {
+    // UX-2: name the snapshot, warn that entries written since will be replaced, and state
+    // that a safety snapshot is taken first — before anything happens, not after.
+    if (
+      !window.confirm(
+        t('prefs.backups.confirmRestore', { when: formatInstant(snapshot.created_at) }),
+      )
+    ) {
+      return;
+    }
+
+    setBusyAction('restore');
+    setBusyFile(snapshot.file_name);
+    setError(null);
+    setSuccessMessage(null);
+    try {
+      // Flush any pending edit into the live journal first, so it is captured by the safety
+      // snapshot the backend takes before swapping the file. Without this, unsaved typing
+      // would simply vanish — captured by neither the restored content nor the safety copy.
+      await executeCleanupCallbacks();
+
+      const result = await tauri.restoreBackup(snapshot.file_name);
+
+      // The restore is committed and irreversible from this point on — a failure below is
+      // cosmetic (a stale view) next to that, and must never land in the same `role="alert"`
+      // slot as a failed restore, or a successful restore would read to the user as failed.
+      try {
+        // The journal now holds different content, but the app's in-memory state (entries,
+        // the open editor, tags) still reflects the pre-restore journal. Discard and refetch
+        // it before anything else can flush stale content back over the restored entry.
+        await refreshAfterRestore();
+      } catch (err) {
+        log.warn('refreshAfterRestore failed after a successful restore:', err);
+      }
+      // `load()` catches and reports its own errors via `error()` — it never throws, so a
+      // failed list refresh cannot be conflated with a failed restore below.
+      await load();
+
+      const safetySnapshot = result.safety_snapshot
+        ? snapshots().find((s) => s.file_name === result.safety_snapshot)
+        : undefined;
+      setSuccessMessage(
+        safetySnapshot
+          ? t('prefs.backups.restoreSuccess', {
+              when: formatInstant(snapshot.created_at),
+              safetyWhen: formatInstant(safetySnapshot.created_at),
+            })
+          : t('prefs.backups.restoreSuccessGeneric', {
+              when: formatInstant(snapshot.created_at),
+            }),
+      );
+    } catch (err) {
+      setError(mapTauriError(err, t));
+    } finally {
+      setBusyAction(null);
+      setBusyFile(null);
     }
   };
 
@@ -311,6 +379,12 @@ export default function BackupsPanel(props: BackupsPanelProps) {
         </p>
       </Show>
 
+      <Show when={successMessage()}>
+        <p class="text-sm text-success" role="status" data-testid="backups-restore-success">
+          {successMessage()}
+        </p>
+      </Show>
+
       {/* List */}
       <Show
         when={!isLoading()}
@@ -375,14 +449,25 @@ export default function BackupsPanel(props: BackupsPanelProps) {
                       disabled={actionsDisabled() || busyFile() === snapshot.file_name}
                       class="px-2 py-1 text-xs font-medium text-secondary border border-primary rounded-md hover:bg-hover focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
-                      {busyFile() === snapshot.file_name
+                      {busyAction() === 'verify' && busyFile() === snapshot.file_name
                         ? t('prefs.backups.verifying')
                         : t('prefs.backups.verify')}
                     </button>
                     <button
                       type="button"
+                      onClick={() => handleRestore(snapshot)}
+                      disabled={actionsDisabled() || busyFile() === snapshot.file_name}
+                      data-testid="backups-restore-button"
+                      class="px-2 py-1 text-xs font-medium text-secondary border border-primary rounded-md hover:bg-hover focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {busyAction() === 'restore' && busyFile() === snapshot.file_name
+                        ? t('prefs.backups.restoring')
+                        : t('prefs.backups.restore')}
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => handleDelete(snapshot.file_name)}
-                      disabled={actionsDisabled()}
+                      disabled={actionsDisabled() || busyFile() === snapshot.file_name}
                       class="px-2 py-1 text-xs font-medium text-destructive border border-primary rounded-md hover:bg-hover focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {t('prefs.backups.delete')}

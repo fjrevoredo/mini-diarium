@@ -11,7 +11,9 @@
 //! | [`policy`] | Pure decisions — when to snapshot, which snapshots to keep. No I/O, no clock. |
 //! | [`store`] | The filesystem: `VACUUM INTO`, fsync, atomic rename, verification, naming. |
 //! | [`manifest`] | The `manifest.json` sidecar, including adoption of pre-upgrade files. |
-//! | this file | Orchestration — the sequence the three layers run in. |
+//! | [`inspect`] | Reading a snapshot read-only without adopting it (Milestone 4). |
+//! | [`restore`] | Rolling the live journal back to a snapshot (Milestone 4). |
+//! | this file | Orchestration — the sequence the layers run in. |
 //!
 //! # Why snapshots are not file copies
 //!
@@ -24,6 +26,7 @@
 pub mod inspect;
 pub mod manifest;
 pub mod policy;
+pub mod restore;
 pub mod store;
 
 use std::path::Path;
@@ -44,6 +47,7 @@ pub use policy::{
     SnapshotTrigger, DAILY_DAYS, MIN_AUTOMATIC_INTERVAL_SECS, MIN_STORAGE_BUDGET_BYTES,
     MONTHLY_MONTHS, RECENT_SNAPSHOTS, WEEKLY_WEEKS,
 };
+pub use restore::{restore_from_snapshot, RestoreOutcome};
 pub use store::{
     is_snapshot_file_name, FsSnapshotStore, SnapshotStore, StoredSnapshot, SNAPSHOT_PREFIX,
 };

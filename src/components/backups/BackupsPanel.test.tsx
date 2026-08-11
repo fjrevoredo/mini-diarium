@@ -13,6 +13,7 @@ const {
   mockVerifyBackup,
   mockDeleteBackup,
   mockRevealBackupsFolder,
+  mockRestoreBackup,
 } = vi.hoisted(() => ({
   mockListBackups: vi.fn(),
   mockListBackupsUnauthenticated: vi.fn(),
@@ -21,6 +22,7 @@ const {
   mockVerifyBackup: vi.fn(),
   mockDeleteBackup: vi.fn(),
   mockRevealBackupsFolder: vi.fn(),
+  mockRestoreBackup: vi.fn(),
 }));
 
 vi.mock('../../lib/tauri', () => ({
@@ -31,6 +33,7 @@ vi.mock('../../lib/tauri', () => ({
   verifyBackup: mockVerifyBackup,
   deleteBackup: mockDeleteBackup,
   revealBackupsFolder: mockRevealBackupsFolder,
+  restoreBackup: mockRestoreBackup,
 }));
 
 const { mockJournals, mockActiveJournalId } = vi.hoisted(() => ({
@@ -41,6 +44,22 @@ const { mockJournals, mockActiveJournalId } = vi.hoisted(() => ({
 vi.mock('../../state/journals', () => ({
   journals: mockJournals,
   activeJournalId: mockActiveJournalId,
+}));
+
+// The restore flow flushes pending edits before the swap and rehydrates entry/tag/search
+// state after it (Task 4.2) — mocked here so this file tests only that BackupsPanel calls
+// them at the right times, not their own (separately tested) internals.
+const { mockExecuteCleanupCallbacks, mockRefreshAfterRestore } = vi.hoisted(() => ({
+  mockExecuteCleanupCallbacks: vi.fn(),
+  mockRefreshAfterRestore: vi.fn(),
+}));
+
+vi.mock('../../state/entries', () => ({
+  executeCleanupCallbacks: mockExecuteCleanupCallbacks,
+}));
+
+vi.mock('../../state/session', () => ({
+  refreshAfterRestore: mockRefreshAfterRestore,
 }));
 
 function snapshot(overrides: Partial<SnapshotMeta> = {}): SnapshotMeta {
@@ -92,6 +111,8 @@ describe('BackupsPanel', () => {
       snapshots: [],
       health: health({ snapshot_count: 0, total_bytes: 0 }),
     });
+    mockExecuteCleanupCallbacks.mockResolvedValue(undefined);
+    mockRefreshAfterRestore.mockResolvedValue(undefined);
   });
 
   it('shows the empty state when the journal has no snapshots yet', async () => {
@@ -244,6 +265,125 @@ describe('BackupsPanel', () => {
     await waitFor(() => expect(screen.getByRole('alert')).toBeInTheDocument());
   });
 
+  describe('restoring a snapshot (Task 4.2)', () => {
+    it('confirms before restoring, naming the snapshot, and does nothing if cancelled', async () => {
+      mockListBackups.mockResolvedValue([snapshot()]);
+      mockGetBackupHealth.mockResolvedValue(health());
+      const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false);
+
+      renderWithI18n(() => <BackupsPanel isVisible={visible} />);
+      await waitFor(() => expect(screen.getByTestId('backups-restore-button')).toBeInTheDocument());
+
+      fireEvent.click(screen.getByTestId('backups-restore-button'));
+
+      expect(confirmSpy).toHaveBeenCalledWith(expect.stringContaining('Restore the journal'));
+      expect(mockRestoreBackup).not.toHaveBeenCalled();
+      expect(mockExecuteCleanupCallbacks).not.toHaveBeenCalled();
+      expect(mockRefreshAfterRestore).not.toHaveBeenCalled();
+
+      confirmSpy.mockRestore();
+    });
+
+    it('restores the confirmed snapshot and shows a success message naming the safety snapshot', async () => {
+      mockListBackups.mockResolvedValueOnce([snapshot()]);
+      mockGetBackupHealth.mockResolvedValue(health());
+      vi.spyOn(window, 'confirm').mockReturnValue(true);
+      mockRestoreBackup.mockResolvedValue({
+        restored: true,
+        safety_snapshot: 'backup-2026-08-11-14h30m00.db',
+      });
+
+      renderWithI18n(() => <BackupsPanel isVisible={visible} />);
+      await waitFor(() => expect(screen.getByTestId('backups-restore-button')).toBeInTheDocument());
+
+      // The reload after a successful restore lists the safety snapshot the backend just took.
+      mockListBackups.mockResolvedValue([
+        snapshot({
+          file_name: 'backup-2026-08-11-14h30m00.db',
+          created_at: '2026-08-11T14:30:00Z',
+        }),
+        snapshot(),
+      ]);
+
+      fireEvent.click(screen.getByTestId('backups-restore-button'));
+
+      await waitFor(() => expect(mockRestoreBackup).toHaveBeenCalledWith(snapshot().file_name));
+      await waitFor(() =>
+        expect(screen.getByTestId('backups-restore-success')).toHaveTextContent(
+          /restored to the backup from/i,
+        ),
+      );
+      expect(screen.getByTestId('backups-restore-success')).toHaveTextContent(
+        /saved as a new backup/i,
+      );
+
+      // Pending edits are flushed into the live journal *before* the swap (so they land in
+      // the safety snapshot), and stale in-memory entry/editor state is discarded and
+      // refetched *after* a successful restore — never the other way around.
+      expect(mockExecuteCleanupCallbacks).toHaveBeenCalledTimes(1);
+      expect(mockRefreshAfterRestore).toHaveBeenCalledTimes(1);
+      const cleanupOrder = mockExecuteCleanupCallbacks.mock.invocationCallOrder[0];
+      const restoreOrder = mockRestoreBackup.mock.invocationCallOrder[0];
+      const refreshOrder = mockRefreshAfterRestore.mock.invocationCallOrder[0];
+      expect(cleanupOrder).toBeLessThan(restoreOrder);
+      expect(restoreOrder).toBeLessThan(refreshOrder);
+
+      vi.restoreAllMocks();
+    });
+
+    it('still reports success when post-restore rehydration fails, never the alert slot', async () => {
+      // The restore itself is committed and irreversible by the time rehydration runs. A
+      // failure here (state refetch, list reload) must not be reported through the same
+      // role="alert" slot as a failed restore — that would tell the user a successful,
+      // irreversible restore had failed, and invite them to "undo" something that already
+      // happened by restoring the safety snapshot on top of it.
+      mockListBackups.mockResolvedValueOnce([snapshot()]);
+      mockGetBackupHealth.mockResolvedValue(health());
+      vi.spyOn(window, 'confirm').mockReturnValue(true);
+      mockRestoreBackup.mockResolvedValue({
+        restored: true,
+        safety_snapshot: 'backup-2026-08-11-14h30m00.db',
+      });
+      mockRefreshAfterRestore.mockRejectedValue(new Error('stale in-memory state'));
+
+      renderWithI18n(() => <BackupsPanel isVisible={visible} />);
+      await waitFor(() => expect(screen.getByTestId('backups-restore-button')).toBeInTheDocument());
+
+      fireEvent.click(screen.getByTestId('backups-restore-button'));
+
+      await waitFor(() =>
+        expect(screen.getByTestId('backups-restore-success')).toHaveTextContent(
+          /restored to the backup from/i,
+        ),
+      );
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+
+      vi.restoreAllMocks();
+    });
+
+    it('shows a sanitized error, and no success message, when the restore fails', async () => {
+      mockListBackups.mockResolvedValue([snapshot()]);
+      mockGetBackupHealth.mockResolvedValue(health());
+      vi.spyOn(window, 'confirm').mockReturnValue(true);
+      mockRestoreBackup.mockRejectedValue('This backup could not be restored: wrong key.');
+
+      renderWithI18n(() => <BackupsPanel isVisible={visible} />);
+      await waitFor(() => expect(screen.getByTestId('backups-restore-button')).toBeInTheDocument());
+
+      fireEvent.click(screen.getByTestId('backups-restore-button'));
+
+      await waitFor(() =>
+        expect(screen.getByRole('alert')).toHaveTextContent(/could not be restored/i),
+      );
+      expect(screen.queryByTestId('backups-restore-success')).not.toBeInTheDocument();
+      // Nothing to rehydrate: the backend never touched a connection the app is holding
+      // state for, whether it aborted outright or rolled back to the safety snapshot.
+      expect(mockRefreshAfterRestore).not.toHaveBeenCalled();
+
+      vi.restoreAllMocks();
+    });
+  });
+
   describe('reduced (pre-auth) mode', () => {
     it('reads through the unauthenticated command, never the unlocked one', async () => {
       mockListBackupsUnauthenticated.mockResolvedValue({
@@ -270,6 +410,7 @@ describe('BackupsPanel', () => {
       await waitFor(() => expect(screen.getByTestId('backups-list-item')).toBeInTheDocument());
       expect(screen.getByTestId('backups-create-button')).toBeDisabled();
       expect(screen.getByRole('button', { name: 'Check' })).toBeDisabled();
+      expect(screen.getByTestId('backups-restore-button')).toBeDisabled();
       expect(screen.getByRole('button', { name: 'Delete' })).toBeDisabled();
       expect(screen.getByTestId('backups-locked-hint')).toBeInTheDocument();
     });

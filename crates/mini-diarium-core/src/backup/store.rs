@@ -265,6 +265,58 @@ impl FsSnapshotStore {
     }
 }
 
+// ── Restore ───────────────────────────────────────────────────────────────────────────
+
+/// Copies `source` into a private temp file beside `db_path`, touching nothing at `db_path`
+/// itself.
+///
+/// Staging happens before anything else in the restore flow touches the backups directory:
+/// the safety snapshot taken between this call and [`finalize_restore`] runs retention on
+/// every call, and retention can evict the very snapshot file being restored (an older
+/// snapshot losing its day-bucket slot to the new safety snapshot, for instance). Once
+/// staged, eviction of the original is irrelevant — this copy is now the one that matters.
+pub(crate) fn stage_restore_copy(db_path: &Path, source: &Path) -> Result<PathBuf, String> {
+    let parent = db_path
+        .parent()
+        .ok_or_else(|| "Journal path has no parent directory".to_string())?;
+    let file_name = db_path
+        .file_name()
+        .and_then(|n| n.to_str())
+        .ok_or_else(|| "Journal path is not valid UTF-8".to_string())?;
+    let temp_path = parent.join(format!("{file_name}.restoring.tmp"));
+
+    // A leftover from a previous interrupted restore would otherwise make this copy fail.
+    let _ = fs::remove_file(&temp_path);
+    fs::copy(source, &temp_path)
+        .map_err(|e| format!("Failed to stage the restored journal: {e}"))?;
+    Ok(temp_path)
+}
+
+/// Fsyncs the staged file and atomically renames it over `db_path`.
+///
+/// The write-then-rename half of [`FsSnapshotStore::write_atomic`], aimed the other
+/// direction: a snapshot is already a complete, valid database, so restoring is a full-file
+/// swap, not a second `VACUUM INTO` pass. The caller must have already released every
+/// handle to `db_path` — on Windows an open handle makes the rename fail outright
+/// (`os error 32`).
+pub(crate) fn finalize_restore(db_path: &Path, staged: &Path) -> Result<(), String> {
+    let result = (|| -> Result<(), String> {
+        fsync_file(staged)?;
+        fs::rename(staged, db_path).map_err(|e| format!("Failed to finalize the restore: {e}"))?;
+        if let Some(parent) = db_path.parent() {
+            fsync_dir(parent);
+        }
+        Ok(())
+    })();
+
+    if result.is_err() {
+        // Leave nothing behind that could be mistaken for the journal or block a retry.
+        let _ = fs::remove_file(staged);
+    }
+
+    result
+}
+
 /// Size of a file in bytes, or `None` if it cannot be read.
 ///
 /// Lives here rather than at the call site because this module owns every `std::fs` call in
@@ -924,6 +976,62 @@ mod tests {
         assert_eq!(
             read_change_counter(Path::new("definitely-not-a-file.db")),
             None
+        );
+    }
+
+    // ── Task 4.2: the restore primitives ─────────────────────────────────────────────
+
+    #[test]
+    fn test_stage_and_finalize_restore_swaps_the_journal() {
+        let dir = tempfile::tempdir().unwrap();
+        let db_path = dir.path().join("diary.db");
+        fs::write(&db_path, b"old content").unwrap();
+        let source = dir.path().join("backup-2026-08-04-12h00m00.db");
+        fs::write(&source, b"new content").unwrap();
+
+        let staged = stage_restore_copy(&db_path, &source).unwrap();
+        assert_eq!(fs::read(&staged).unwrap(), b"new content");
+        // Staging must not touch the live file yet.
+        assert_eq!(fs::read(&db_path).unwrap(), b"old content");
+
+        finalize_restore(&db_path, &staged).unwrap();
+
+        assert_eq!(fs::read(&db_path).unwrap(), b"new content");
+        assert!(
+            !staged.exists(),
+            "the staged temp file must not survive a successful restore"
+        );
+    }
+
+    #[test]
+    fn test_stage_restore_copy_overwrites_a_leftover_temp_file() {
+        // A previous restore attempt that never reached finalize would otherwise poison
+        // every subsequent one.
+        let dir = tempfile::tempdir().unwrap();
+        let db_path = dir.path().join("diary.db");
+        fs::write(&db_path, b"live").unwrap();
+        fs::write(dir.path().join("diary.db.restoring.tmp"), b"stale leftover").unwrap();
+
+        let source = dir.path().join("backup-2026-08-04-12h00m00.db");
+        fs::write(&source, b"fresh copy").unwrap();
+
+        let staged = stage_restore_copy(&db_path, &source).unwrap();
+        assert_eq!(fs::read(&staged).unwrap(), b"fresh copy");
+    }
+
+    #[test]
+    fn test_finalize_restore_leaves_no_temp_file_on_failure() {
+        let dir = tempfile::tempdir().unwrap();
+        // A directory occupying the target name makes the rename fail.
+        let db_path = dir.path().join("diary.db");
+        fs::create_dir_all(&db_path).unwrap();
+        let staged = dir.path().join("diary.db.restoring.tmp");
+        fs::write(&staged, b"content").unwrap();
+
+        assert!(finalize_restore(&db_path, &staged).is_err());
+        assert!(
+            !staged.exists(),
+            "a failed finalize left the temp file behind"
         );
     }
 }

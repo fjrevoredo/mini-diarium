@@ -45,6 +45,30 @@ export async function executeCleanupCallbacks(): Promise<void> {
   }
 }
 
+/**
+ * Reload-without-saving callback system.
+ *
+ * Mirrors the cleanup-callback system above, but for the opposite situation: the journal's
+ * content changed out from under the app *without* a lock/unlock cycle (currently only a
+ * whole-journal restore, Task 4.2), so the editor's in-memory entry state is stale — and
+ * flushing it, the way a cleanup callback would, writes pre-restore content back over the
+ * restored entry. A registered callback must discard its held entry state (e.g. via
+ * `clearEntryFromEditor`, which nulls `pendingEntryId` and makes any incidental flush that
+ * follows a no-op — see `useEntryPersistence`'s hydration-identity guard) before it re-fetches.
+ */
+const [reloadCallbacks, setReloadCallbacks] = createSignal<(() => void | Promise<void>)[]>([]);
+
+export function registerReloadCallback(callback: () => void | Promise<void>): () => void {
+  setReloadCallbacks((prev) => [...prev, callback]);
+  return () => setReloadCallbacks((prev) => prev.filter((cb) => cb !== callback));
+}
+
+export async function executeReloadCallbacks(): Promise<void> {
+  for (const callback of reloadCallbacks()) {
+    await callback();
+  }
+}
+
 export {
   entryDates,
   setEntryDates,

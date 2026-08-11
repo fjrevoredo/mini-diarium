@@ -8,6 +8,7 @@ import {
   verifyBackup,
   deleteBackup,
   revealBackupsFolder,
+  restoreBackup,
   checkBackupCredentials,
   openBackupReadonly,
   listBackupEntries,
@@ -15,6 +16,7 @@ import {
   type BackupCredentialReport,
   type BackupEntry,
   type BackupHealth,
+  type RestoreSummary,
   type SnapshotMeta,
 } from './backup';
 
@@ -110,6 +112,25 @@ describe('backup command wrappers (IPC contract)', () => {
   it('propagates backend errors instead of swallowing them', async () => {
     mockInvoke.mockRejectedValue('Journal must be unlocked');
     await expect(createBackupNow()).rejects.toBe('Journal must be unlocked');
+  });
+
+  it('restoreBackup → restore_backup { fileName } (camelCase)', async () => {
+    const summary: RestoreSummary = {
+      restored: true,
+      safety_snapshot: 'backup-2026-08-11-14h30m00.db',
+    };
+    mockInvoke.mockResolvedValue(summary);
+    await expect(restoreBackup(snapshot.file_name)).resolves.toEqual(summary);
+    expect(mockInvoke).toHaveBeenCalledWith('restore_backup', {
+      fileName: snapshot.file_name,
+    });
+  });
+
+  it('restoreBackup rejects rather than resolving when the restore is aborted or rolled back', async () => {
+    mockInvoke.mockRejectedValue('This backup could not be restored: wrong key.');
+    await expect(restoreBackup(snapshot.file_name)).rejects.toBe(
+      'This backup could not be restored: wrong key.',
+    );
   });
 });
 

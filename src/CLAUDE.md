@@ -173,6 +173,8 @@ These are used by E2E tests — **do not remove** from components.
 | `BackupsPanel.tsx` | Back up now button | `backups-create-button` |
 | `BackupsPanel.tsx` | Open backups folder button | `backups-reveal-button` |
 | `BackupsPanel.tsx` | Per-row checked / not-checked badge | `backups-item-verified` / `backups-item-unverified` |
+| `BackupsPanel.tsx` | Per-row Restore button | `backups-restore-button` |
+| `BackupsPanel.tsx` | Restore success message, naming the safety snapshot | `backups-restore-success` |
 | `BackupsPanel.tsx` | Passwordless-journal notice (UX-7) | `backups-local-only-notice` |
 | `BackupsPanel.tsx` | Reduced-mode explanation for disabled actions | `backups-locked-hint` |
 | `BackupsOverlay.tsx` | Standalone backups dialog (pre-auth) | `backups-overlay` |

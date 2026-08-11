@@ -443,6 +443,7 @@ pub fn run() {
             commands::backup::verify_backup,
             commands::backup::delete_backup,
             commands::backup::reveal_backups_folder,
+            commands::backup::restore_backup,
             commands::backup_inspect::check_backup_credentials,
             commands::backup_inspect::open_backup_readonly,
             commands::backup_inspect::list_backup_entries,

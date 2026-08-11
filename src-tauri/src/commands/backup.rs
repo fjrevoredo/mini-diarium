@@ -19,8 +19,8 @@
 
 use std::path::PathBuf;
 
-use log::info;
-use tauri::State;
+use log::{info, warn};
+use tauri::{AppHandle, Emitter, State, Wry};
 
 use crate::backup::{self, BackupHealth, SnapshotMeta, SnapshotTrigger};
 use crate::commands::auth::DiaryState;
@@ -176,6 +176,109 @@ pub fn reveal_backups_folder(state: State<DiaryState>) -> Result<(), String> {
         .map_err(|e| format!("Failed to open the backups folder: {e}"))
 }
 
+/// What a completed restore attempt looked like, for the confirmation the frontend shows.
+#[derive(Debug, serde::Serialize)]
+pub struct RestoreSummary {
+    /// `true` only when the journal now holds the restored snapshot's content.
+    pub restored: bool,
+    /// The safety snapshot taken before the restore began — present unless the attempt was
+    /// aborted before that point (an unreadable, too-old, or undecryptable target).
+    pub safety_snapshot: Option<String>,
+}
+
+/// Rolls the live journal back to one snapshot.
+///
+/// Takes a `PreRestore` safety snapshot of the current state first, aborting if that fails,
+/// then performs an atomic file swap — the same write-then-rename primitive that takes a
+/// snapshot, aimed the other direction — and reopens the journal, migrating it if the restored
+/// snapshot predates the current schema. No credential is asked for: `change_password`
+/// re-wraps the master key rather than re-encrypting entries, so the key already held by the
+/// live connection is the key every snapshot this journal ever produced was encrypted with.
+///
+/// On a failure discovered *after* the file swap has begun, the journal is automatically
+/// rolled back to the safety snapshot and the error says so.
+#[tauri::command]
+pub fn restore_backup(
+    file_name: String,
+    app: AppHandle<Wry>,
+    state: State<DiaryState>,
+) -> Result<RestoreSummary, String> {
+    let result = restore_backup_inner(file_name, &state);
+
+    // The one case restore cannot paper over: neither the restored file nor the safety
+    // snapshot could be reopened, and `state.db` is `None` now. The frontend must be told —
+    // otherwise it keeps showing the unlocked app shell over a journal that is actually
+    // locked, and the next entry read fails with a confusing error instead of this one.
+    let now_locked = state.db.lock().map(|g| g.is_none()).unwrap_or(false);
+    if now_locked {
+        if let Err(e) = app.emit(
+            "journal-locked",
+            RestoreLockedEventPayload {
+                reason: "restore-failed".to_string(),
+            },
+        ) {
+            warn!("Failed to emit journal-locked event after a failed restore: {e}");
+        }
+    }
+
+    result
+}
+
+/// The testable core of [`restore_backup`]. Split out so the whole restore sequence can be
+/// unit-tested without an `AppHandle` — see "testable command cores" in
+/// `docs/best-practices/TAURI_BEST_PRACTICES.md`. Does not emit events; the Tauri command
+/// wrapper handles that after this returns.
+pub(crate) fn restore_backup_inner(
+    file_name: String,
+    state: &DiaryState,
+) -> Result<RestoreSummary, String> {
+    let (db_path, backups_dir) = journal_paths(state)?;
+
+    // A restore is about to replace the very file a decrypted inspection connection might be
+    // reading from. Tear it down first, exactly as every lock path already does.
+    crate::commands::backup_inspect::close_inspection(state);
+
+    // The guard is held for the whole operation rather than released and reacquired around
+    // it. Dropping it mid-operation would leave `state.db` reading `None` for as long as the
+    // restore takes: a concurrent auto-lock check would see "already locked" and silently
+    // no-op, and this call would then reinstall a connection into a journal an auto-lock path
+    // had just decided should stay locked.
+    let mut db_guard = state
+        .db
+        .lock()
+        .map_err(|_| "Journal state lock failed".to_string())?;
+    let db = db_guard.take().ok_or("Journal must be unlocked")?;
+
+    let ctx = backup::BackupContext {
+        db_path: &db_path,
+        backups_dir: &backups_dir,
+        app_version: Some(env!("CARGO_PKG_VERSION")),
+    };
+
+    let outcome = backup::restore_from_snapshot(db, &ctx, &file_name);
+    *db_guard = outcome.db;
+    drop(db_guard);
+
+    match outcome.error {
+        None => {
+            info!("Journal restored from a backup");
+            Ok(RestoreSummary {
+                restored: outcome.restored,
+                safety_snapshot: outcome.safety_snapshot.map(|s| s.file_name),
+            })
+        }
+        Some(err) => Err(err),
+    }
+}
+
+/// Mirrors `auth::JournalLockedEventPayload`'s wire shape. That type stays private to `auth`
+/// (it owns the user-facing lock flow); this is the one other place that needs to emit the
+/// same event, for the unrecoverable-restore case above.
+#[derive(Clone, serde::Serialize)]
+struct RestoreLockedEventPayload {
+    reason: String,
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -299,5 +402,117 @@ mod tests {
         assert!(backup::delete_snapshot(&backups_dir, "backup-../../diary.db").is_err());
         assert!(backup::delete_snapshot(&backups_dir, "manifest.json").is_err());
         assert!(db_path.exists(), "the live journal was reachable by name");
+    }
+
+    // ── Task 4.2: restore_backup ───────────────────────────────────────────────────────
+
+    #[test]
+    fn test_restore_replaces_the_journal_and_leaves_it_unlocked() {
+        let (_fixture, state) = seeded("backup_cmd_restore_happy");
+        let (db_path, backups_dir) = journal_paths(&state).unwrap();
+
+        let target = {
+            let db_state = state.db.lock().unwrap();
+            let db = db_state.as_ref().unwrap();
+            let ctx = backup::BackupContext {
+                db_path: &db_path,
+                backups_dir: &backups_dir,
+                app_version: Some("0.6.6"),
+            };
+            backup::create_snapshot(db, &ctx, SnapshotTrigger::Manual)
+                .unwrap()
+                .created()
+                .unwrap()
+                .file_name
+                .clone()
+        };
+        insert_entry(
+            state.db.lock().unwrap().as_ref().unwrap(),
+            &entry("Written after the snapshot"),
+        )
+        .unwrap();
+
+        let summary = restore_backup_inner(target.clone(), &state).unwrap();
+
+        assert!(summary.restored);
+        assert_eq!(summary.safety_snapshot.as_deref().map(|_| ()), Some(()));
+        assert!(
+            state.db.lock().unwrap().is_some(),
+            "a successful restore must leave the journal unlocked"
+        );
+        assert_eq!(
+            crate::db::get_all_entries(state.db.lock().unwrap().as_ref().unwrap())
+                .unwrap()
+                .len(),
+            1,
+            "the entry written after the snapshot must not survive the restore"
+        );
+    }
+
+    #[test]
+    fn test_restore_refuses_a_locked_journal() {
+        let (_fixture, state, _db_path, _backups_dir) = make_state("backup_cmd_restore_locked");
+        assert_eq!(
+            restore_backup_inner("backup-2026-01-01-00h00m00.db".to_string(), &state).unwrap_err(),
+            "Journal must be unlocked"
+        );
+    }
+
+    #[test]
+    fn test_restore_of_an_unknown_snapshot_leaves_the_journal_untouched_and_unlocked() {
+        let (_fixture, state) = seeded("backup_cmd_restore_missing");
+
+        let err = restore_backup_inner("backup-does-not-exist.db".to_string(), &state)
+            .expect_err("a missing snapshot must be refused");
+        assert!(!err.is_empty());
+
+        assert!(
+            state.db.lock().unwrap().is_some(),
+            "an aborted restore must not leave the journal locked"
+        );
+    }
+
+    #[test]
+    fn test_restore_closes_an_open_inspection_first() {
+        // A restore is about to replace the very file an inspection connection might be
+        // reading. Leaving it open would decrypt a second database pointing at a journal
+        // state that no longer exists.
+        let (_fixture, state) = seeded("backup_cmd_restore_closes_inspection");
+        let (db_path, backups_dir) = journal_paths(&state).unwrap();
+
+        let target = {
+            let db_state = state.db.lock().unwrap();
+            let db = db_state.as_ref().unwrap();
+            let ctx = backup::BackupContext {
+                db_path: &db_path,
+                backups_dir: &backups_dir,
+                app_version: Some("0.6.6"),
+            };
+            backup::create_snapshot(db, &ctx, SnapshotTrigger::Manual)
+                .unwrap()
+                .created()
+                .unwrap()
+                .file_name
+                .clone()
+        };
+
+        let inspected = backup::open_snapshot_file(
+            &backups_dir,
+            &target,
+            backup::SnapshotCredential::Password("test".to_string()),
+        )
+        .unwrap();
+        *state.inspection.lock().unwrap() =
+            Some(crate::commands::backup_inspect::InspectedSnapshot {
+                file_name: target.clone(),
+                db: inspected,
+            });
+
+        restore_backup_inner(target, &state).unwrap();
+
+        assert!(
+            state.inspection.lock().unwrap().is_none(),
+            "restore must tear down any open inspection connection"
+        );
     }
 }

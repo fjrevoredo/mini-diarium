@@ -566,9 +566,17 @@ const en = {
       verify: 'Check',
       verifying: 'Checking…',
       delete: 'Delete',
+      restore: 'Restore',
+      restoring: 'Restoring…',
       revealFolder: 'Open backups folder',
       confirmDelete: 'Delete this backup? This cannot be undone.',
-      actionsNeedUnlock: 'Unlock this journal to create, check, or delete backups.',
+      confirmRestore:
+        'Restore the journal to the backup from {{ when }}? Entries written since then will be replaced. A safety snapshot of the current state will be taken first, so this can be undone.',
+      restoreSuccess:
+        'Journal restored to the backup from {{ when }}. Your previous state was saved as a new backup from {{ safetyWhen }} in case you need to undo this.',
+      restoreSuccessGeneric:
+        'Journal restored to the backup from {{ when }}. Your previous state was saved as a new backup in case you need to undo this.',
+      actionsNeedUnlock: 'Unlock this journal to create, check, restore, or delete backups.',
 
       statusTitle: 'Status',
       lastBackup: 'Last backup: {{ when }}',

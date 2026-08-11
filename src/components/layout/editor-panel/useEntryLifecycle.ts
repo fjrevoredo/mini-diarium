@@ -2,7 +2,7 @@ import { batch, createSignal, untrack, type Accessor, type Setter } from 'solid-
 import type { Editor } from '@tiptap/core';
 import { createEntry } from '../../../lib/tauri';
 import type { DiaryEntry, EntryMetadata } from '../../../lib/tauri';
-import { registerCleanupCallback } from '../../../state/entries';
+import { registerCleanupCallback, registerReloadCallback } from '../../../state/entries';
 import { selectedEntryId, setSelectedEntryId } from '../../../state/ui';
 import { createLogger } from '../../../lib/logger';
 import { computeIsEmpty, type EditorEmptyCheckHook } from './useEditorEmptyCheck';
@@ -50,6 +50,14 @@ export interface EntryLifecycleHook {
   flushPendingCreation: () => Promise<void>;
   /** See `EntryPersistenceHook.flushCurrent` — the only public write entry point. */
   flushCurrent: (path: string) => Promise<void>;
+  /**
+   * Discards whatever the editor is currently showing and re-fetches the selected date's
+   * entries, **without saving**. For when the journal's content changed underneath the app
+   * without a lock/unlock cycle (a whole-journal restore, Task 4.2) — flushing here would
+   * write pre-restore content back over the restored entry. Registered as a reload callback
+   * automatically; exposed for direct use and for tests.
+   */
+  discardAndReload: () => Promise<void>;
   debouncedSave: DebouncedSaveFn;
   /** Setters that must be written together whenever the displayed entry changes. */
   entryCommitTargets: EntryCommitTargets;
@@ -220,6 +228,21 @@ export function useEntryLifecycle(opts: UseEntryLifecycleOptions): EntryLifecycl
     }
   };
 
+  /**
+   * Discards the editor's current entry state and re-fetches the selected date fresh —
+   * never saves. `clearEntryFromEditor` nulls `pendingEntryId` first, which is what makes
+   * `loadEntriesForDate`'s own `persistence.flushCurrent` call a guaranteed no-op rather
+   * than a write of pre-restore content: `captureCurrentSnapshot` returns null the instant
+   * there is no pending id to snapshot (see `useEntryPersistence`'s hydration-identity
+   * guard). Cancelling the debounce first covers the case where a save was already queued
+   * from typing that happened moments before the restore.
+   */
+  const discardAndReload = async (): Promise<void> => {
+    persistence.debouncedSave.cancel();
+    clearEntryFromEditor(entryCommitTargets);
+    await loadEntriesForDate(untrack(opts.selectedDate));
+  };
+
   const startEntryCreation = (reason: string) => {
     if (untrack(opts.isCreatingEntry)) {
       log.debug(`${reason}: isCreatingEntry guard fired — skipping duplicate creation`);
@@ -330,6 +353,10 @@ export function useEntryLifecycle(opts: UseEntryLifecycleOptions): EntryLifecycl
     await persistence.flushCurrent('lockCleanup');
   });
 
+  // Register the discard-and-reload callback (Task 4.2). Unlike the cleanup callback above,
+  // this one must never flush — see discardAndReload's doc comment.
+  const unregisterReload = registerReloadCallback(discardAndReload);
+
   const dispose = () => {
     // Capture BEFORE flipping isDisposed and before cancelling the debounce. Teardown
     // ordering between DiaryEditor's onCleanup (editor.destroy()) and this call is not
@@ -341,6 +368,7 @@ export function useEntryLifecycle(opts: UseEntryLifecycleOptions): EntryLifecycl
     loadRequestId += 1;
     persistence.debouncedSave.cancel();
     unregister();
+    unregisterReload();
     // Unmount must flush, not drop: the <Show> swap in MainLayout is the Timeline toggle,
     // and every other navigation-away path already flushes before proceeding. writeSnapshot
     // has no disposal guard for exactly this reason.
@@ -355,6 +383,7 @@ export function useEntryLifecycle(opts: UseEntryLifecycleOptions): EntryLifecycl
     startEntryCreation,
     flushPendingCreation,
     flushCurrent: persistence.flushCurrent,
+    discardAndReload,
     debouncedSave: persistence.debouncedSave,
     entryCommitTargets,
     getJustCreatedEntryId: () => justCreatedEntryId,

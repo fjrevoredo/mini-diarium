@@ -105,6 +105,28 @@ export async function deleteBackup(fileName: string): Promise<void> {
   await invoke('delete_backup', { fileName });
 }
 
+/** What a completed restore attempt looked like. */
+export interface RestoreSummary {
+  /** Always `true` when this promise resolves — a failed or rolled-back restore rejects. */
+  restored: boolean;
+  /** The safety snapshot taken before the restore began. */
+  safety_snapshot: string | null;
+}
+
+/**
+ * Rolls the live journal back to one snapshot.
+ *
+ * Takes a safety snapshot of the current state first, then performs an atomic file swap and
+ * reopens the journal — no password or key file is asked for, since the master key never
+ * changes across a password change. Rejects if the target cannot be restored (an unreadable,
+ * too-old, or undecryptable snapshot); the journal is left unchanged in that case. A failure
+ * discovered after the swap has begun is automatically rolled back to the safety snapshot
+ * before this rejects, so the journal is never left mid-restore.
+ */
+export async function restoreBackup(fileName: string): Promise<RestoreSummary> {
+  return await invoke<RestoreSummary>('restore_backup', { fileName });
+}
+
 /**
  * Opens the backups folder in the OS file manager.
  *

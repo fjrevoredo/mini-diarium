@@ -4,7 +4,7 @@
 
 - Plan Status: IN PROGRESS
 - Created: 2026-08-04
-- Last Updated: 2026-08-10 (UX-GATE scenarios signed off; Milestone 3 still open on the Linux half of Task 3.4; Milestone 4 unblocked to start Tasks 4.2–4.3)
+- Last Updated: 2026-08-11 (Task 4.2 whole-journal restore implemented; Milestone 3 still open on the Linux half of Task 3.4; Task 4.3 per-entry restore unblocked to start)
 - Owner: Coding agent
 - Approval: APPROVED (2026-08-04)
 - Tracking: [TODO-0098](todo/TODO.md)
@@ -353,7 +353,7 @@ title-bar issue).
 
 ### Milestone 4: Restore
 
-- Status: IN PROGRESS (Task 4.1 complete; UX gate signed off 2026-08-10 — see the Sign-off Record; Tasks 4.2–4.3 ready to start)
+- Status: IN PROGRESS (Tasks 4.1–4.2 complete; UX gate signed off 2026-08-10 — see the Sign-off Record; Task 4.3 ready to start)
 - Purpose: Deliver the capability whose absence made the incident recovery manual: getting data back out of a snapshot, in-app, without writing plaintext to disk.
 - Exit Criteria: All seven UX-GATE scenarios signed off; a whole-journal restore and a per-entry restore both demonstrated end-to-end against a snapshot the app produced itself; no code path in the restore flow writes decrypted content to the filesystem; an E2E scenario covers the round trip.
 
@@ -372,7 +372,7 @@ title-bar issue).
 
 #### Task 4.2: Whole-journal restore
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Objective: Roll the journal back to a snapshot, reversibly.
 - Steps:
   1. Take a `PreRestore` safety snapshot of the current state and verify it. Abort the restore if it fails.
@@ -381,6 +381,7 @@ title-bar issue).
   4. On any failure after the file swap begins, restore from the safety snapshot and report clearly.
 - Validation: Tests `test_restore_takes_a_verified_safety_snapshot_first` and `test_failed_restore_rolls_back_to_the_safety_snapshot`. Manual end-to-end run in the dev app.
 - Notes: UX-2 and UX-3 signed off 2026-08-10 against a rendered prototype (see the UX Gate Sign-off Record) — this task may start. Restoring an older snapshot may downgrade the schema version, which `apply_pending` then re-migrates — the pre-migration snapshot from Task 1.6 covers that path, so verify the two interact correctly rather than producing two snapshots for one action.
+- Implemented 2026-08-11. `crates/mini-diarium-core/src/backup/restore.rs` (7 tests) + two new primitives in `store.rs` (`stage_restore_copy`, `finalize_restore`, 3 tests) + `restore_backup`/`restore_backup_inner` in `src-tauri/src/commands/backup.rs` (4 tests) + `restoreBackup` in `src/lib/tauri/backup.ts` + a Restore button, confirm, busy state, and success message in `BackupsPanel.tsx`. Manual dev-app rehearsal deferred to Task 6.3 step 2, which exercises this alongside per-entry restore (Task 4.3). Deviations recorded in the Milestone 4 implementation record below.
 
 #### Task 4.3: Per-entry restore
 
@@ -704,7 +705,61 @@ Also worth recording: `open_snapshot_readonly` refuses v1/v2 snapshots rather th
 them. Those predate auth slots and keep a password-derived key in the legacy `metadata`
 table, so reading one means migrating it — which is the one thing this module must never do
 to a snapshot. Whole-journal restore (Task 4.2) is the correct path for them, and the error
-says so.
+says so. **Correction from Task 4.2**: that last sentence was wrong. Restore cannot open a
+v1/v2 snapshot either — `apply_pending` only covers v3 onward, and a v1/v2 snapshot's key
+lives in the legacy `metadata` table under a password-derived key, not a wrapped master key,
+so redoing the v1→v2→v3 migration would need the *original* password, which nothing in this
+plan collects. `open_snapshot_readonly`'s error text was corrected to stop pointing users at
+a path that also refuses them.
+
+## Implementation Record — Milestone 4, Task 4.2
+
+Implemented 2026-08-11. Task 4.3 remains `TO BE DONE` and is unblocked to start; UX-4 and
+UX-5 were already signed off 2026-08-10 (see the Sign-off Record).
+
+Verification: `cargo test --workspace` **724 passed / 0 failed** (242 app, 440 core, 42
+crypto, unaffected by deviation 9 — frontend-only), `cargo clippy --workspace --all-targets --
+-D warnings` clean, `cargo fmt --all` applied, `bun run test:run` **919 passed / 92 files**
+(re-run after deviation 9), `type-check` and `lint` green, `validate:locales` green (620 keys
+× 6 locales), `bun run coverage:check` reports **86.4%** combined diff coverage against the
+80% gate (re-run after the deviation 7/8 frontend fixes; none of the new lines in
+`state/entries.ts`, `state/session.ts`, or `useEntryLifecycle.ts` show up in the tool's
+per-file "missing" breakdown; not re-run again for deviation 9's smaller, fully-covered
+change), `check:build-paths` green. The manual recovery rehearsal (validation step "Manual
+end-to-end run in the dev app") is deferred to Task 6.3 step 2, which the plan already scopes
+as one combined rehearsal covering both per-entry and whole-journal restore — running it
+before Task 4.3 exists would only exercise half the recovery flow.
+
+Two further advisor reviews, run before marking this task complete, surfaced three gaps not
+caught by the (passing) test suite: nothing rehydrated frontend session state after a restore
+that keeps the journal unlocked (deviation 7 — this is the one that mattered, a real
+TODO-0089-class data-loss path), no test exercised the restore/`apply_pending` interaction
+Task 4.2's own note asks for (deviation 8), and a rehydration failure after a *successful*
+restore could render through the same error slot a failed restore uses (deviation 9). All
+three are fixed and covered before this line was written; see the deviation table.
+
+### Deviations from the plan as written
+
+| # | Plan said | What shipped, and why |
+|---|---|---|
+| 1 | Task 4.2 step 2: "copy the snapshot file to a temp name inside the journal directory, fsync it, and atomically rename it over `diary.db`", implying the copy happens after the safety snapshot. | The copy is staged **before** the safety snapshot, not after. `create_snapshot` (used for the safety snapshot too) runs `apply_retention` on *every* call, and retention can evict the very snapshot being restored — an older snapshot losing its day-bucket slot to the brand-new safety snapshot, for instance. Staging a private copy first means later eviction of the original is irrelevant; the copy already exists. `store::stage_restore_copy` / `store::finalize_restore` are the two new primitives, reusing `write_atomic`'s `fsync`-then-`rename` shape aimed the other direction. |
+| 2 | Nothing about how the Tauri command holds `state.db` across the operation. | The lock guard is taken once and held for the *entire* restore, not released and reacquired around the core call. Releasing it mid-operation would leave `state.db` reading `None` for as long as the restore takes: a concurrent auto-lock check (idle timer, OS session lock, focus loss) would see "already locked" and silently no-op, and `restore_backup` would then reinstall a connection into a journal an auto-lock path had just decided should stay locked — a real, if narrow, silent-unlock window. `restore_backup_inner` takes the guard once, passes the owned `DatabaseConnection` into `backup::restore_from_snapshot`, and writes whatever comes back into the same guard before releasing it. |
+| 3 | Nothing about the snapshot inspection connection (Task 4.1). | `restore_backup_inner` calls `backup_inspect::close_inspection` first, unconditionally — the same first step `lock_diary_inner_with` takes. A restore is about to replace the very file an open inspection connection might be reading from; leaving it open would decrypt a second database pointing at a journal state that no longer exists on disk, and retention could delete a snapshot the inspection handle still has open on some platforms. |
+| 4 | No credential-decryptability check called out explicitly. | Added `precheck_restorable`, layered on the existing `store::verify_snapshot` (the same check `SnapshotStore::write` performs after taking a snapshot). Without it, restoring a snapshot the live key cannot decrypt — an adopted pre-upgrade file, or one surviving a `reset_diary`, both real if rare — would swap the file, "successfully" reopen (schema tables read fine even when content does not decrypt), and only fail the first time the user opened an entry. The precheck runs on the *staged* copy, before the safety snapshot, so a doomed restore never touches the live journal at all. `test_restore_rejects_a_snapshot_the_live_key_cannot_decrypt` and `test_restore_survives_a_password_change_between_snapshot_and_restore` pin the two sides of this: the second proves the check is not overly strict — a snapshot taken before a password change still passes, because `change_password` re-wraps rather than regenerates the master key. |
+| 5 | Task 4.2 step 4: "restore from the safety snapshot and report clearly" on any post-swap failure. | Shipped as designed, but the unit test for it (`test_failed_restore_rolls_back_to_the_safety_snapshot`) exercises the private `roll_back` helper directly rather than forcing a fault through the full public pipeline. By the time `restore_from_snapshot` reaches the post-swap reopen, the target has already passed `precheck_restorable` against the exact bytes being swapped in, so a *reachable* post-swap failure needs a fault the public API has no deterministic, cross-platform way to inject (disk I/O, not application logic) — the same category of gap the plan's own Task 1.1 fallback anticipates for the change-counter assumption. What the test proves is the recovery mechanism itself, which is the part of Task 4.2's contract that matters. |
+| 6 | Nothing about the unrecoverable case (neither the restored file nor the safety snapshot can be reopened). | `RestoreOutcome.db` is `Option<DatabaseConnection>`; it is `None` only here. `restore_backup` (the Tauri command) checks `state.db` after the inner call and emits `journal-locked` with reason `restore-failed` when it is empty, so the frontend's existing lock listener (`src/state/auth.ts`) resets to the locked screen instead of continuing to show an unlocked shell over a journal the backend can no longer reach. The event payload is a local struct mirroring `auth::JournalLockedEventPayload`'s wire shape rather than reusing that type, which stays private to the `auth` module for the user-facing lock flow and is not reachable from a sibling `commands::backup`. |
+| 7 | Nothing about frontend session state across a restore that keeps the journal unlocked. | The gap: the panel's first cut called `restoreBackup()` then only reloaded the *backups list* — leaving `entries`, `search`, `tags`, and, critically, the open editor's `pendingEntryId`/title/content pointed at the pre-restore journal. The next flush (date switch, entry switch, unmount, `beforeunload`) would silently write pre-restore content back over the restored entry — the TODO-0089 failure class, landing *after* the safety snapshot, so uncovered by it. Fixed with two additions: `executeCleanupCallbacks()` runs *before* `restoreBackup()` so any in-flight typing is flushed into the live journal and caught by the safety snapshot; `refreshAfterRestore()` (`state/session.ts`) runs after a successful restore and clears/refetches entry, search, and tag state. It is deliberately not `resetSessionState()` — that also calls `resetUiState()`, which would close the very Backups panel about to show the success message. A new reload-callback registry (`registerReloadCallback`/`executeReloadCallbacks`, mirroring the existing cleanup-callback system in `state/entries.ts`) lets `useEntryLifecycle` register `discardAndReload`, which clears the editor's held entry (nulling `pendingEntryId`) *before* re-fetching — that null is what makes the flush inside the reused `loadEntriesForDate` call a guaranteed no-op rather than a stale write, pinned by `useEntryPersistence.test.ts`'s two new cases on the hydration-identity guard. |
+| 8 | Task 4.2's own note: "verify the two interact correctly" (restore + `apply_pending`), with no test named for it. | Added `test_restore_migrates_a_pre_migration_snapshot_to_the_current_schema`: rolls a real v13 journal back to v12 (same trick as `open.rs`'s pre-migration test), snapshots it, brings the live journal current, then restores the v12 snapshot and asserts `read_schema_version` reads `SCHEMA_VERSION` afterward and the entry decrypts. Also asserts no second `Migration`-triggered snapshot is produced by the restore — `reopen_current` calls `apply_pending` directly rather than routing through `open_database`, which is what keeps this from stacking two snapshots for one action. |
+| 9 | Nothing about the panel's error handling once a restore has already succeeded. | A third advisor review, after deviations 7-8 landed, caught that `handleRestore`'s `try` block ran `refreshAfterRestore()` and `load()` *inside* the same `try` as `restoreBackup()`. `refreshAfterRestore()` can throw (any of `getAllEntryDates`/`loadAllTags`/`discardAndReload`'s chain); that throw would skip straight to the panel's `catch`, which renders the error through the same `role="alert"` slot a *failed* restore uses — so a restore that fully committed would read to the user as failed, with no safety-snapshot name shown, inviting them to "restore" again over an already-restored journal. `refreshAfterRestore()` is now wrapped in its own `try`/`catch` that only logs (`createLogger('BackupsPanel')`); the success message is set unconditionally once `restoreBackup()` itself has resolved. `load()` needed no such wrapper — it already catches and reports its own errors via `error()` internally and never throws — but it stays *after* the wrapped `refreshAfterRestore()` call so a list-reload problem is likewise reported through its own accurate message rather than appearing to invalidate the restore. Pinned by a new test, "still reports success when post-restore rehydration fails, never the alert slot". |
+
+### A message correction found during implementation
+
+`inspect.rs`'s `open_snapshot_readonly` told a user with a v1/v2 snapshot to "restore it as a
+whole journal to upgrade it" — a promise Task 4.2 cannot keep, for the same structural reason
+inspection refuses them: `apply_pending` only migrates v3 onward, and redoing the v1→v2→v3
+migration needs the original password. The message now says plainly that this app can
+neither inspect nor restore such a snapshot automatically, rather than sending the user down
+a second dead end.
 
 ## Execution Notes
 

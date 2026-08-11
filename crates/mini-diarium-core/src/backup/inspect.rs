@@ -114,10 +114,13 @@ pub fn open_snapshot_readonly(
 
     // Auth slots arrived in v3. Older snapshots keep their key in the legacy `metadata`
     // table, and reading them means migrating them — which this module must never do.
+    // Whole-journal restore (`backup::restore`) refuses the same snapshots for the same
+    // reason: `apply_pending` only covers v3 onward, so there is no in-app path that opens
+    // one of these without the original password to redo the v1/v2→v3 migration by hand.
     if version < 3 {
         return Err(
-            "This backup uses a journal format older than the one that supports \
-             inspection. Restore it as a whole journal to upgrade it."
+            "This backup uses a journal format older than version 3, which this app can \
+             neither inspect nor restore automatically."
                 .to_string(),
         );
     }
