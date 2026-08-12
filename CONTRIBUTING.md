@@ -4,6 +4,7 @@ Thanks for your interest in contributing! This guide covers everything you need 
 
 ## Prerequisites
 
+- **Git**
 - **Rust** (see `rust-toolchain.toml`, with `clippy` and `rustfmt`)
 - **Bun** 1.x
 - **Tauri v2 system dependencies** (see [Tauri's prerequisites guide](https://v2.tauri.app/start/prerequisites/) for your platform)
@@ -12,7 +13,20 @@ Thanks for your interest in contributing! This guide covers everything you need 
     - If `webkit2gtk4.1-devel` is not found, try `webkit2gtk6.1-devel` and `javascriptcoregtk6.1-devel` instead (newer Fedora releases)
     - If `libsoup3-devel` is not found, try `libsoup-devel`
   - **macOS**: Xcode Command Line Tools
-  - **Windows**: Microsoft Visual Studio C++ Build Tools, WebView2
+  - **Windows**: Microsoft Visual Studio C++ Build Tools, WebView2, [Git for Windows](https://git-scm.com/download/win) (`winget install --id Git.Git -e`)
+
+A fresh Windows machine typically needs, via `winget` or your preferred installer: `Git.Git`, a Rust toolchain (`rustup`, then `rustup component add clippy rustfmt`), Bun, and the Visual Studio C++ Build Tools with the WebView2 runtime (usually already present on Windows 10/11). E2E tests additionally need `cargo install tauri-driver` (see [`e2e/CLAUDE.md`](e2e/CLAUDE.md)); `msedgedriver` itself is downloaded automatically by `wdio.conf.ts`, no manual install needed.
+
+### Optional: regenerating diagrams
+
+Most contributors never need this — `bun run diagrams:check` (part of the check suite) only verifies the SVGs under `docs/diagrams/` are still current with their sources. To actually regenerate them with `bun run diagrams`, you additionally need:
+
+- The [D2 CLI](https://d2lang.com/tour/install) (pinned to v0.7.1 in CI — `winget install --id Terrastruct.D2 -e` on Windows)
+- A one-time Puppeteer browser fetch for the Mermaid renderer: `bunx puppeteer browsers install chrome-headless-shell` (skipped by `bun install` on purpose — see `puppeteer.skipDownload` in `package.json` — since most contributors don't need the download)
+
+### Troubleshooting (Windows)
+
+- **A newly installed tool isn't found (`git`, `d2`, etc.)**: open a **new terminal window**. PATH changes made by an installer are broadcast to new processes only — a shell (or agent session) that was already running won't pick them up.
 
 #### Wayland (Linux)
 
