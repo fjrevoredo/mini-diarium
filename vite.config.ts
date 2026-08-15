@@ -51,14 +51,19 @@ export default defineConfig(async () => ({
     host: host || false,
     hmr: host
       ? {
-          protocol: "ws",
+          protocol: 'ws',
           host,
           port: 1421,
         }
       : undefined,
     watch: {
       // 3. tell Vite to ignore watching `src-tauri`
-      ignored: ["**/src-tauri/**"],
+      // `.agent-dev/**`: the tauri-agent-dev skill's sandbox WebView profile lives under the
+      // repo root (`.agent-dev/sandbox/webview/`), and WebView2 holds an exclusive lock on its
+      // `Cookies` file. Vite's fs watcher crashes the whole dev server with EBUSY the moment it
+      // tries to watch that file, so this directory must stay excluded the same way `src-tauri`
+      // is.
+      ignored: ['**/src-tauri/**', '**/.agent-dev/**'],
     },
   },
 }));
