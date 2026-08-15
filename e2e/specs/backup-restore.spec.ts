@@ -182,11 +182,17 @@ describe('Backup restore round trip', () => {
     // hold other specs' entries (especially once the stateful lane runs — see Finding 1), and
     // [data-testid="backup-inspect-status-missing"] matches any row with that status, not
     // specifically this test's entry.
+    //
+    // Match against `el.textContent` via `browser.execute`, not `row.getText()`: the title
+    // span and preview `<p>` both carry Tailwind `truncate` (overflow:hidden +
+    // text-overflow:ellipsis), and WebDriver's `getText()` returns *rendered* text, which
+    // WebKitWebDriver (CI) and msedgedriver (local) are not guaranteed to compute identically
+    // for a clipped box — `textContent` is unaffected by CSS truncation on either engine.
     const findTargetRows = async (): Promise<WebdriverIO.Element[]> => {
       const rows = await $$('[data-testid="backup-inspect-entry-item"]');
       const matches: WebdriverIO.Element[] = [];
       for (const row of rows) {
-        const text = (await row.getText()) ?? '';
+        const text = await browser.execute((el: HTMLElement) => el.textContent ?? '', row);
         if (text.includes(ENTRY_TITLE) && text.includes(RESTORE_DATE)) {
           matches.push(row);
         }
@@ -198,20 +204,52 @@ describe('Backup restore round trip', () => {
     // delete in step 3 actually reached the database, not just the editor. The wait is
     // generous because opening the snapshot re-derives the master key via Argon2id, whose
     // cost is deliberately variable under system load.
-    await browser.waitUntil(
-      async () => {
-        const matches = await findTargetRows();
-        if (matches.length !== 1) return false;
-        return matches[0]
-          .$('[data-testid="backup-inspect-status-missing"]')
-          .isDisplayed()
-          .catch(() => false);
-      },
-      {
-        timeout: 20000,
-        timeoutMsg: `Row for "${ENTRY_TITLE}" on ${RESTORE_DATE} did not show as missing within 20s`,
-      },
-    );
+    try {
+      await browser.waitUntil(
+        async () => {
+          const matches = await findTargetRows();
+          if (matches.length !== 1) return false;
+          return matches[0]
+            .$('[data-testid="backup-inspect-status-missing"]')
+            .isDisplayed()
+            .catch(() => false);
+        },
+        {
+          timeout: 20000,
+          timeoutMsg: `Row for "${ENTRY_TITLE}" on ${RESTORE_DATE} did not show as missing within 20s`,
+        },
+      );
+    } catch (waitError) {
+      // `loadEntries()` (BackupInspectDialog.tsx) fetches the entry list exactly once, right
+      // after the snapshot opens — this wait never re-fetches, so a timeout here is
+      // deterministic, not flaky. Dump enough state to diagnose it from one CI run instead of
+      // guessing across several: whether the snapshot even opened, and what every row's own
+      // text and status actually say.
+      const openErrorText = await $('[data-testid="backup-inspect-dialog"] [role="alert"]')
+        .getText()
+        .catch(() => '<none>');
+      const emptyState = await $('[data-testid="backup-inspect-empty"]')
+        .isExisting()
+        .catch(() => false);
+      const rows = await $$('[data-testid="backup-inspect-entry-item"]');
+      const rowDumps = await Promise.all(
+        rows.map(async (row, i) => {
+          const text = await browser
+            .execute((el: HTMLElement) => el.textContent ?? '', row)
+            .catch(() => '<getText failed>');
+          const statusTestId = await row
+            .$('[data-testid^="backup-inspect-status-"]')
+            .getAttribute('data-testid')
+            .catch(() => '<no status badge>');
+          return `  row[${i}] status=${statusTestId} text=${JSON.stringify(text)}`;
+        }),
+      );
+      throw new Error(
+        `${(waitError as Error).message}\n` +
+          `Diagnostics: rowCount=${rows.length} emptyState=${emptyState} alertText=${JSON.stringify(openErrorText)}\n` +
+          rowDumps.join('\n'),
+      );
+    }
 
     // Defensive: fail loudly, not silently restore/skip the wrong entry, on a title/date collision.
     const targetRows = await findTargetRows();

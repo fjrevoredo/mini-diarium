@@ -4,7 +4,7 @@
 
 - Plan Status: IN PROGRESS
 - Created: 2026-08-04
-- Last Updated: 2026-08-11 (Task 4.3 per-entry restore implemented; Milestone 4 now complete except Task 4.4 E2E coverage; Milestone 3 still open on the Linux half of Task 3.4)
+- Last Updated: 2026-08-15 (First CI run of Task 4.4's spec failed on Linux/WebKitGTK — diagnosed and fixed, see "CI run #1 failed and was diagnosed" under Task 4.4; Task 4.4 still IN PROGRESS pending the next CI run; Milestone 4 remains IN PROGRESS — whole-journal restore's end-to-end rehearsal is still deferred to Task 6.3; Milestone 3 still open on the Linux half of Task 3.4)
 - Owner: Coding agent
 - Approval: APPROVED (2026-08-04)
 - Tracking: [TODO-0098](todo/TODO.md)
@@ -353,9 +353,10 @@ title-bar issue).
 
 ### Milestone 4: Restore
 
-- Status: IN PROGRESS (Tasks 4.1–4.3 complete; UX gate signed off 2026-08-10 — see the Sign-off Record; Task 4.4 E2E coverage remains before this milestone's exit criteria are met)
+- Status: IN PROGRESS (Tasks 4.1–4.3 complete; Task 4.4 in progress pending CI validation — see its own status line; UX gate signed off 2026-08-10 — see the Sign-off Record; exit criteria not yet fully met — see note)
 - Purpose: Deliver the capability whose absence made the incident recovery manual: getting data back out of a snapshot, in-app, without writing plaintext to disk.
 - Exit Criteria: All seven UX-GATE scenarios signed off; a whole-journal restore and a per-entry restore both demonstrated end-to-end against a snapshot the app produced itself; no code path in the restore flow writes decrypted content to the filesystem; an E2E scenario covers the round trip.
+- Note (2026-08-15): Task 4.4's new E2E spec demonstrates the **per-entry** restore path end-to-end against a real snapshot. It does not touch whole-journal restore (`BackupsPanel`'s "Restore" button) — Task 4.2's own implementation record deliberately deferred that rehearsal to Task 6.3 step 2, "one combined rehearsal covering both per-entry and whole-journal restore." So this milestone's exit criteria remain open on that one point until Task 6.3 runs; do not mark this milestone COMPLETED before that.
 
 #### Task 4.1: Read-only snapshot inspection
 
@@ -414,13 +415,89 @@ The dev-app rehearsal (create entry → snapshot → delete entry → open the n
 
 #### Task 4.4: E2E coverage for the restore round trip
 
-- Status: TO BE DONE
+- Status: IN PROGRESS
 - Objective: The critical recovery flow is covered end-to-end against the real binary.
 - Steps:
   1. Add a WebdriverIO scenario: create entries, take a manual snapshot, delete an entry, restore it from the snapshot, assert it is back.
   2. Follow `e2e/CLAUDE.md` conventions, including `typeText()` (`e2e/specs/helpers.ts:128`) for seeded text per gotcha 5.
 - Validation: `cmd.exe /c bun run test:e2e` green locally and in CI.
 - Notes: E2E runs on Linux/WebKitGTK in CI; keep the scenario free of platform-specific file-manager interaction.
+- Implemented 2026-08-15. New `e2e/specs/backup-restore.spec.ts`: writes an entry on a previous-month date, opens Preferences → Backups, takes a manual snapshot (`SnapshotTrigger::Manual` always bypasses the dedup/interval rules, so the newest row is deterministically the one just taken), deletes the entry via the same debounced auto-delete `multi-entry.spec.ts` already exercises (clearing title + body, not the entry nav bar's trash button, which is gated behind a native OS confirm dialog outside WebDriver's reach), reopens the panel, opens the snapshot via `BackupInspectDialog` with the journal password, confirms the entry shows `backup-inspect-status-missing`, restores it, and confirms the title and body are back in the live editor. `cmd.exe /c bun run test:e2e` green (6 spec files, 12 tests, including this one) both in isolation and as part of the full local suite; CI (Linux/WebKitGTK) coverage pending the next push. `typeText()` was not needed: `ENTRY_BODY` contains no doubled letters, so plain `browser.keys()` already satisfies gotcha 5's actual requirement. (The restore step originally used "Select all missing or shorter" → "Restore selected"; the same-day review's Finding 2 replaced that with selecting only the row matching this test's own title and date — see "Review findings addressed" below.)
+
+### Defect found writing this task's E2E test, and fixed
+
+Deleting the entry via `.setValue('')` on both the title and body looked correct at every layer this session's own checks could see — WDIO's `.getValue()`/`.getText()` read back empty, and a manual dev-app rehearsal via `agent-browser` (a CDP-based driver, not WebDriver) deleted and restored the same entry successfully — yet the automated WDIO spec kept timing out waiting for the restored entry to show `backup-inspect-status-missing`; it showed `backup-inspect-status-shorter_in_live` instead, meaning the live journal still held a shortened copy of the entry. The app's own write-audit log (`useEntryPersistence.ts` `logWrite`, gated at `info` specifically so it survives into production per root `CLAUDE.md` gotcha 10) narrowed it in one line: `write op=saveEntry ... titleLen=24 ... isEmpty=true` — `titleLen=24` is exactly `"Backup Restore E2E Entry".length`, meaning a debounced save reached the backend with the **original, pre-clear** title still attached, so `shouldDelete`'s `currentTitle.trim() === ''` check never saw a blank title and the write silently became a save instead of a delete. The exact mechanism was not fully isolated — the clearest confirmed fact is that clearing with `.setValue('')` is not reliable for this purpose on this WebView2/msedgedriver setup, not that `setValue()` is broken generally (a non-empty `setValue()` earlier in the very same spec persists correctly). Fixed by clearing both fields with real keystrokes instead of `setValue('')`, and *not* with a single `browser.keys()` call carrying an array of repeated `Backspace` presses either — that construct is exactly the shape `e2e/CLAUDE.md` gotcha 5 already warns can silently drop keystrokes on WebKitGTK (one Actions tick, every `keyDown` queued before any `keyUp`), just for `Backspace` instead of a typed letter, and a dropped Backspace would reproduce this same "stale title" failure on CI. The plain `<input>` title is cleared with `Ctrl+A` then one `Backspace` (two distinct keystrokes, not a repeated key, so the hazard doesn't apply); the contenteditable body is cleared with one `Backspace` per character in a loop, the same "one `browser.keys()` call per keystroke" discipline `typeText()` already uses for insertion. Recorded as `e2e/CLAUDE.md` gotcha 6. Also fixed along the way: the `tauri-agent-dev` skill's dev sandbox crashed vite's file watcher with `EBUSY` on WebView2's locked `Cookies` file, because `.agent-dev/sandbox/webview/` lives under the repo root and `vite.config.ts`'s `server.watch.ignored` only excluded `src-tauri/`; added `**/.agent-dev/**` alongside it.
+
+### Review findings addressed (2026-08-15)
+
+A same-day review of the new spec found three P2 issues, all now fixed in `e2e/specs/backup-restore.spec.ts`:
+
+1. **Stateful reruns failed.** The delete step backspaced a fixed `ENTRY_BODY.length`, which only strips the newly-typed copy on a stateful-lane rerun where the date's editor already holds a previous run's content — so the entry never reaches empty and auto-delete never fires. Fixed: the delete step now reads `editor.getText()` into `currentBody` right before clearing, and backspaces `currentBody.length` times.
+2. **The restore assertion wasn't scoped to the target entry.** It used a dialog-wide `[data-testid="backup-inspect-status-missing"]` selector and the "select all missing or shorter" button instead of targeting this test's own row, which a snapshot holding other entries could match incorrectly. Fixed: a `findTargetRows()` helper scans `[data-testid="backup-inspect-entry-item"]` rows for the one whose text contains both `ENTRY_TITLE` and `RESTORE_DATE`; the wait polls that helper until exactly one match shows the missing status, and the restore step asserts `targetRows.length === 1` (failing loudly rather than silently restoring the wrong entry) before clicking that row's own checkbox.
+3. **Task 4.4 was marked `COMPLETED` while its own validation line requires CI green, and CI had not run.** Fixed: status reverted to `IN PROGRESS` (see the task's own status line above and Milestone 4's status line) — stays that way until an actual CI (Linux/WebKitGTK) run confirms the fixed spec green there.
+
+Verifying fix 1 surfaced a **second, related defect** the review itself had not flagged: the *write* step (`editor.click()` then `browser.keys(ENTRY_BODY)`) had no pre-clear either. On a fresh stateful root, a first run was clean, but a second consecutive run reproducibly corrupted the body — `click()` does not guarantee the cursor lands at the end of existing text, so typing spliced `ENTRY_BODY` into the middle of the previous run's restored content (e.g. `"...trip wo" + ENTRY_BODY + "rks end to end."`) instead of replacing it. This went undetected by the test's own final assertion, which used `.includes(ENTRY_BODY)` — a substring check that still passes when the reference string is embedded inside corrupted, duplicated text. Fixed the same way: the write step now measures and clears any pre-existing body content before typing, and the final assertion was tightened from `.includes()` to `.trim() === ENTRY_BODY` — exact match, tolerant only of a leading/trailing whitespace difference between platforms (WebKitGTK on CI vs. msedgedriver locally), so an equivalent interior-splice corruption can't hide behind a substring match again.
+
+All fixes verified locally: `npx tsc --noEmit -p e2e/tsconfig.json` clean (`WebdriverIO.Element[]` needed an explicit type annotation in the new helper — a plain `.map`/`.filter` chain over `$$()`'s resolved array did not infer cleanly); the spec passed twice in clean mode; twice in stateful mode against a genuinely fresh `E2E_STATEFUL_ROOT` (the discriminating rerun that first isolated the write-step defect from a clean start); and, after the `.trim()` change, twice more against the actual, already-dirty `.e2e-stateful/` directory left over from earlier pre-fix reproduction runs — confirming the fix self-heals from real messy state, not only a clean one. The full local clean suite (6 spec files, 12 tests) passed with no regressions. `cargo test --workspace` and the frontend Vitest suite were not re-run for this remediation, since it touched only `e2e/specs/backup-restore.spec.ts` and documentation. CI has not run these fixes yet — that remains the one open item.
+
+### CI run #1 failed and was diagnosed (2026-08-15)
+
+Commit `b489371c` (the spec plus the three review fixes above) ran on GitHub Actions
+(Linux/WebKitGTK, PR #254, run `31897712681`). `Lint`, `Test`, and both `Build` jobs passed;
+`E2E Tests` failed in clean mode with:
+
+```
+1) Backup restore round trip restores a deleted entry from a manually created snapshot
+Error: Row for "Backup Restore E2E Entry" on 2026-07-20 did not show as missing within 20s
+    at async Context.<anonymous> (e2e/specs/backup-restore.spec.ts:201:5)
+```
+
+Every other spec in the same run passed, and this was the suite's first CI execution — not a
+regression, a bug the local Windows/WebView2 runs never exercised.
+
+**Root cause.** `BackupInspectDialog.tsx`'s `loadEntries()` (line 123) fetches the snapshot's
+entry list exactly **once**, immediately after `openBackupReadonly` resolves — there is no
+polling and no re-fetch. That makes the spec's 20 s `browser.waitUntil` at line 201 decorative:
+it re-reads the same static DOM up to 20 s straight, so a timeout there is deterministic, not
+flaky, and re-running the same commit would not have helped. Two candidates were ruled out
+before the real one: (a) a race between the debounced delete and opening the snapshot — ruled
+out by reading `useEntryPersistence.ts:206-216`, which `await`s `deleteEntryIfEmpty` and a
+fresh `getAllEntryDates()` *before* `setEntryDates` ever runs, so the calendar's "has entry"
+check the test relies on at line 145 cannot pass before the backend delete is confirmed; (b) a
+re-render loop destroying and recreating rows during the wait — ruled out by the failed run's
+own timestamps, where the "stale element reference" noise in the log clustered at the *start*
+of the spec (`waitForClickable`/`waitForDisplayed` polling on earlier steps), four minutes
+before the line-201 failure, not during it.
+
+What actually explains a deterministic Linux-fails/Windows-passes split with no timing
+involved: `findTargetRows()` matched via `row.getText()`, and both the entry title `<span>`
+and the preview `<p>` (`BackupInspectDialog.tsx:468-473`) carry Tailwind `truncate`
+(`overflow:hidden` + `text-overflow:ellipsis`). WebDriver's `getText()` is specified to return
+*rendered* text, and WebKitWebDriver (CI) and msedgedriver (local) are not guaranteed to
+compute that identically for a clipped box at the dialog's rendered width — so the exact same
+DOM could satisfy `text.includes(ENTRY_TITLE)` under one engine and not the other.
+
+**Fix**, in `e2e/specs/backup-restore.spec.ts`: `findTargetRows()` now reads each row via
+`browser.execute((el) => el.textContent ?? '', row)` instead of `row.getText()` —
+`textContent` is unaffected by CSS truncation on either engine, so the match no longer depends
+on rendered-text quirks. The line-201 wait is also now wrapped in a `try`/`catch` that, only on
+timeout, dumps diagnostic state (row count, each row's own text and status badge, the
+empty-state flag, and any `role="alert"` text) into the thrown error — so if this still fails
+on the next CI run, the failure is self-diagnosing from one log instead of costing another
+round-trip of guessing, per the same reasoning Task 1.1's fallback already applies to the
+change-counter assumption.
+
+Verified locally: `npx tsc --noEmit -p e2e/tsconfig.json` clean; full local suite green in
+both clean mode and stateful mode (rerun against the already-populated `.e2e-stateful/`
+directory, so a genuine persisted-state rerun, not a fresh root) — 6 spec files, 12 tests, no
+regressions. `bunx prettier --check e2e/specs/backup-restore.spec.ts` clean. Not yet confirmed
+on CI — that is the one open item before Task 4.4 can close.
+
+### Next steps for a new session
+
+- **Push and wait for Linux/WebKitGTK CI**, then flip Task 4.4's status to `COMPLETED` and update its Validation line to record the CI result. Do not mark it complete on local Windows/WebView2 runs alone — that is exactly the inconsistency the 2026-08-15 review caught, and exactly why CI run #1 above still needs a rerun before this task can close.
+- Milestone 4's remaining exit criterion (whole-journal restore's end-to-end rehearsal) is still deferred by design to Task 6.3 — do not expect Milestone 4 to reach `COMPLETED` from Task 4.4 alone, even after CI passes.
+- Milestone 3's Task 3.4 is still `BLOCKED` on Linux verification, independent of this task.
 
 ---
 
