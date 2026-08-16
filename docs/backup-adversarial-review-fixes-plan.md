@@ -2,11 +2,11 @@
 
 ## Metadata
 
-- Plan Status: READY FOR APPROVAL
+- Plan Status: IN PROGRESS
 - Created: 2026-08-16
 - Last Updated: 2026-08-16
 - Owner: Coding agent
-- Approval: PENDING
+- Approval: Approved by user to start Milestone A (2026-08-16)
 
 ## Status Legend
 
@@ -66,13 +66,13 @@ Additionally, `docs/backup-system-redesign-plan.md`'s own Task 5.1 implementatio
 
 ### Milestone A: Restore Integrity
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Purpose: A restore remains reversible across a schema migration, cannot race another backup-directory mutation, and always tells the user which safety snapshot can undo it. Addresses Findings 1, 4 (restore/backend half), and 7.
 - Exit Criteria: Restoring an older-schema snapshot preserves a recoverable copy of the pre-migration restored content even if the migration fails; the four IPC-reachable backup commands (`create_backup_now`, `verify_backup`, `delete_backup`, `restore_backup`) cannot run concurrently against the same journal's backups directory (background trigger-path snapshots — unlock/lock/destructive — are explicitly out of scope for this lock, see Task A2 Notes); the restore success message always names the safety snapshot's timestamp without depending on a subsequent list refresh succeeding. `cargo test --workspace` passes.
 
 #### Task A1: Pre-migration snapshot on restore's post-swap reopen
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Objective: Restoring a snapshot whose schema predates `SCHEMA_VERSION` takes a verified `Migration`-triggered snapshot of the just-swapped-in (pre-migration) content before `apply_pending` runs, mirroring the guarantee every normal unlock path already has.
 - Steps:
   1. In `crates/mini-diarium-core/src/db/schema/open.rs`, change `migrate_with_pre_migration_snapshot` from private to `pub(crate)` so it is reachable from the `backup` module.
@@ -89,7 +89,7 @@ Additionally, `docs/backup-system-redesign-plan.md`'s own Task 5.1 implementatio
 
 #### Task A2: Serialize the four IPC-reachable backup commands
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Objective: `create_backup_now`, `verify_backup`, `delete_backup`, and `restore_backup` — the four commands the Backups panel invokes directly — cannot run concurrently against the same journal's backups directory, closing the window Finding 4 identifies where `delete_backup`'s filesystem mutation runs outside any lock.
 - Steps:
   1. **Scope guard, read first:** `src-tauri/src/commands/backup_triggers.rs` also mutates the backups directory — `snapshot_before_destructive`/`snapshot_after_unlock` call `create_snapshot` while holding `state.db`, and `take_connection_and_snapshot` spawns a **detached thread** that calls `create_snapshot` holding no lock at all. If the new lock below were acquired `db` → `backup_ops` in those paths but `backup_ops` → `db` in the four IPC commands, that is two different lock orderings on the same two locks — a deadlock hazard. This task deliberately does **not** touch `backup_triggers.rs`. The four IPC commands establish `backup_ops` → `db` as their only order; the trigger paths are out of scope and keep running without `backup_ops`. Record this as an accepted residual gap (see Notes), not a silent omission.
@@ -97,14 +97,14 @@ Additionally, `docs/backup-system-redesign-plan.md`'s own Task 5.1 implementatio
   3. In `src-tauri/src/commands/backup.rs`, extract testable inner functions mirroring the existing `restore_backup_inner` split (`:231-272`, and see its own doc comment's rationale, "testable command cores" in `docs/best-practices/TAURI_BEST_PRACTICES.md`) for the other three commands: `create_backup_now_inner(state: &DiaryState) -> Result<SnapshotMeta, String>`, `verify_backup_inner(file_name: String, state: &DiaryState) -> Result<SnapshotMeta, String>`, `delete_backup_inner(file_name: String, state: &DiaryState) -> Result<(), String>`. Move each command's existing body into its `_inner` function; the `#[tauri::command]` wrappers become one-line calls into them (`create_backup_now(state) -> create_backup_now_inner(&state)`, etc.), exactly as `restore_backup` already delegates to `restore_backup_inner`.
   4. Acquire `state.backup_ops.lock()` at the top of each of the four `_inner` functions (`create_backup_now_inner`, `verify_backup_inner`, `delete_backup_inner`, `restore_backup_inner`), **before** acquiring `state.db`, and hold the guard for the entire filesystem-mutating portion of each. Map a poisoned lock to `"Journal state lock failed"` (the existing canonical string) for consistency with `journal_paths`.
 - Validation:
-  - Add tests to `src-tauri/src/commands/backup.rs`'s existing `tests` module (which already constructs `DiaryState` directly via `make_state`/`seeded`, avoiding the `State<T>`-cannot-be-constructed-outside-Tauri problem the existing tests already work around): spawn a thread that holds `state.backup_ops.lock()`, signals a shared `std::sync::mpsc` channel or `AtomicBool` that it has acquired the lock, sleeps briefly, then releases; from the main thread, wait for that signal, then call `delete_backup_inner`/`create_backup_now_inner` and assert (via a timestamp or a second channel signal recorded by the holder thread just before release) that the call's effect is only observed after the holder released the lock.
+  - Add tests to `src-tauri/src/commands/backup.rs`'s existing `tests` module (which already constructs `DiaryState` directly via `make_state`/`seeded`, avoiding the `State<T>`-cannot-be-constructed-outside-Tauri problem the existing tests already work around): a shared `assert_serializes_on_backup_ops` helper spawns a thread that holds `state.backup_ops`, signals acquisition, then runs the probe **on its own thread** and proves it blocks structurally — the probe must not complete within a bounded window while the holder still has the lock (a probe that skips the lock completes almost instantly, well inside that window), and must complete promptly once the holder releases. (An earlier boolean-flag-based version of this helper was empirically a false pass: `create_backup_now_inner`'s own I/O routinely took longer than the flag-set window regardless of whether the lock was held, so the assertion passed even with the lock acquisition deleted — caught by deliberately removing the lock and confirming the test failed, then fixed to the block/release structural check.) Covers all **four** commands (`create_backup_now_inner`, `verify_backup_inner`, `delete_backup_inner`, `restore_backup_inner`), not just the two named above.
   - Confirm `restore_backup_inner`'s existing tests still pass unmodified (it already existed; only its lock-acquisition order changes).
   - `cargo test --manifest-path src-tauri/Cargo.toml`, then full `cargo test --workspace`.
 - Notes: Affected files: `src-tauri/src/commands/auth/mod.rs`, `src-tauri/src/commands/backup.rs`. This lock is additive — it does not replace the existing `state.db` locking, which still governs whether the journal is unlocked. **Accepted residual gap:** a lock/unlock/destructive-trigger snapshot (`backup_triggers.rs`) can still filesystem-race with a concurrent `create_backup_now`/`verify_backup`/`delete_backup`/`restore_backup` call, since those triggers intentionally stay outside `backup_ops` per step 1. This is a narrower fix than "no two backup-directory-mutating operations can ever race" — it closes the concrete window Finding 4 identifies (the Backups panel's own four actions racing each other), not every theoretical racer. Folding the trigger paths in would require a separate task that first resolves the lock-ordering conflict (e.g. by having the triggers acquire `backup_ops` without holding `db`, which likely requires restructuring `snapshot_before_destructive`/`snapshot_after_unlock` to release `db` before the snapshot call — out of scope here).
 
 #### Task A3: Panel-wide frontend mutation lock
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Objective: `BackupsPanel.tsx` cannot have two destructive/mutating actions in flight at once from the UI, and a second click while one is in flight never reaches IPC.
 - Steps:
   1. In `src/components/backups/BackupsPanel.tsx`, replace the `busyAction`/`busyFile` pair's role in gating with a single `const [panelBusy, setPanelBusy] = createSignal(false)` signal (keep `busyAction`/`busyFile` for their existing label-rendering purpose, e.g. "Restoring…" vs "Verifying…", but they no longer solely gate `disabled`).
@@ -118,7 +118,7 @@ Additionally, `docs/backup-system-redesign-plan.md`'s own Task 5.1 implementatio
 
 #### Task A4: Return immutable safety-snapshot display metadata from restore
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Objective: A successful restore's success message always names the safety snapshot's timestamp, even if the subsequent list refresh fails.
 - Steps:
   1. In `src-tauri/src/commands/backup.rs`, change `RestoreSummary` (`:180-187`) to add `pub safety_snapshot_created_at: Option<String>` (an ISO timestamp, mirroring `SnapshotMeta::created_at`).

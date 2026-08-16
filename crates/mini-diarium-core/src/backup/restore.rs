@@ -33,8 +33,7 @@ use std::path::Path;
 use zeroize::Zeroizing;
 
 use crate::crypto::cipher;
-use crate::db::schema::migrations::apply_pending;
-use crate::db::schema::open_connection;
+use crate::db::schema::{migrate_with_pre_migration_snapshot, open_connection};
 use crate::db::DatabaseConnection;
 
 use super::store::{self, FsSnapshotStore, SnapshotStore};
@@ -145,7 +144,7 @@ pub fn restore_from_snapshot(
     drop(db);
 
     if let Err(swap_err) = store::finalize_restore(ctx.db_path, &staged) {
-        return match reopen_current(ctx.db_path, &key_bytes) {
+        return match reopen_current(ctx.db_path, ctx.backups_dir, &key_bytes) {
             Ok(db) => RestoreOutcome {
                 db: Some(db),
                 safety_snapshot: Some(safety_snapshot),
@@ -156,14 +155,21 @@ pub fn restore_from_snapshot(
         };
     }
 
-    match reopen_current(ctx.db_path, &key_bytes) {
+    match reopen_current(ctx.db_path, ctx.backups_dir, &key_bytes) {
         Ok(db) => RestoreOutcome {
             db: Some(db),
             safety_snapshot: Some(safety_snapshot),
             restored: true,
             error: None,
         },
-        Err(reopen_err) => roll_back(&store, ctx.db_path, &key_bytes, safety_snapshot, reopen_err),
+        Err(reopen_err) => roll_back(
+            &store,
+            ctx.db_path,
+            ctx.backups_dir,
+            &key_bytes,
+            safety_snapshot,
+            reopen_err,
+        ),
     }
 }
 
@@ -173,9 +179,15 @@ pub fn restore_from_snapshot(
 /// safety snapshot instead. The safety snapshot was just created and is therefore the newest
 /// snapshot in the directory — `plan_retention` never evicts the single newest snapshot — so
 /// it is still exactly where it was left.
+///
+/// `reopen_current`'s pre-migration snapshot is a no-op here in practice: a `PreRestore`
+/// snapshot is always taken from the live journal via [`create_snapshot`], which never runs
+/// against a journal behind the current schema version, so the reopen below finds
+/// `stored_version == SCHEMA_VERSION` and takes no snapshot.
 fn roll_back(
     store: &FsSnapshotStore,
     db_path: &Path,
+    backups_dir: &Path,
     key_bytes: &[u8; 32],
     safety_snapshot: SnapshotMeta,
     reason: String,
@@ -192,7 +204,7 @@ fn roll_back(
         return RestoreOutcome::unrecoverable(safety_snapshot, reason, e);
     }
 
-    match reopen_current(db_path, key_bytes) {
+    match reopen_current(db_path, backups_dir, key_bytes) {
         Ok(db) => RestoreOutcome {
             db: Some(db),
             safety_snapshot: Some(safety_snapshot),
@@ -239,15 +251,23 @@ fn precheck_restorable(path: &Path, key: &cipher::Key) -> Result<(), String> {
 /// A restored snapshot's schema version may be older than the app's current one — the
 /// pre-migration snapshot is, by definition, always one migration behind — so this mirrors
 /// what `open_database` does after unlocking, minus the credential step this module never
-/// needs.
-fn reopen_current(db_path: &Path, key_bytes: &[u8; 32]) -> Result<DatabaseConnection, String> {
+/// needs. Like every normal-open path, it routes through
+/// [`migrate_with_pre_migration_snapshot`] rather than calling `apply_pending` directly, so a
+/// just-restored, pre-migration target gets its own verified snapshot before the migration
+/// rewrites it — without that, the only fallback on a failed migration would be the
+/// `PreRestore` safety snapshot, which holds the *previous* live content, not the target's.
+fn reopen_current(
+    db_path: &Path,
+    backups_dir: &Path,
+    key_bytes: &[u8; 32],
+) -> Result<DatabaseConnection, String> {
     let conn = open_connection(db_path)?;
     let encryption_key = cipher::Key::from_slice(key_bytes).ok_or("Invalid master key size")?;
     let db = DatabaseConnection {
         conn,
         encryption_key,
     };
-    apply_pending(&db)?;
+    migrate_with_pre_migration_snapshot(&db, db_path, backups_dir)?;
     Ok(db)
 }
 
@@ -334,9 +354,9 @@ mod tests {
     fn test_restore_migrates_a_pre_migration_snapshot_to_the_current_schema() {
         // The most valuable snapshot this plan produces is the pre-migration one — by
         // definition an older schema than the app expects. Restoring it must not leave the
-        // journal stuck on that old schema, and `reopen_current` calling `apply_pending`
-        // directly (rather than `open_database`, which would take a second pre-migration
-        // snapshot of its own) must still actually run the migration.
+        // journal stuck on that old schema, and `reopen_current` must actually run the
+        // migration — and, like every normal-open path, take its own pre-migration snapshot
+        // of the just-restored content first.
         let fixture = Fixture::new("pre-migration-restore");
 
         // Roll a real v12 journal back, the same trick `open.rs`'s own pre-migration test
@@ -389,14 +409,23 @@ mod tests {
         assert_eq!(entries.len(), 1);
         assert_eq!(entries[0].title, "Written before the migration");
 
-        // No second pre-migration snapshot: reopen_current calls apply_pending directly
-        // rather than routing through open_database's migrate_with_pre_migration_snapshot.
+        // reopen_current now routes through migrate_with_pre_migration_snapshot, the same as
+        // every normal-open path — so restoring an old-schema target takes its own verified
+        // snapshot of the just-restored, pre-migration content before rewriting it. Without
+        // this, a migration failure here would have no recoverable copy of the restored
+        // target to fall back to (only the PreRestore safety snapshot of the *previous* live
+        // content).
         let snapshots = super::super::list_snapshots(&fixture.backups_dir).unwrap();
+        let restore_migration_snapshot = snapshots
+            .iter()
+            .find(|s| s.trigger == SnapshotTrigger::Migration && s.file_name != target)
+            .expect(
+                "restoring a pre-migration snapshot must itself take a fresh Migration \
+                 snapshot before rewriting the restored content",
+            );
         assert!(
-            !snapshots
-                .iter()
-                .any(|s| s.trigger == SnapshotTrigger::Migration && s.file_name != target),
-            "restoring an old-schema snapshot must not itself trigger a second Migration snapshot"
+            restore_migration_snapshot.verified,
+            "the restore-triggered migration snapshot must be verified"
         );
     }
 
@@ -575,6 +604,7 @@ mod tests {
         let outcome = roll_back(
             &store,
             &fixture.db_path,
+            &fixture.backups_dir,
             &key_bytes,
             safety.clone(),
             "simulated post-swap failure".to_string(),
@@ -592,5 +622,102 @@ mod tests {
         let entries = crate::db::get_all_entries(&recovered).unwrap();
         assert_eq!(entries.len(), 1);
         assert_eq!(entries[0].title, "Safe content");
+    }
+
+    #[test]
+    fn test_restore_of_a_pre_migration_snapshot_preserves_it_if_the_migration_fails_afterward() {
+        // reopen_current now takes its own pre-migration snapshot of the just-restored
+        // content before running apply_pending (Task A1 / Finding 1). Prove the actual
+        // guarantee: if that migration then fails, the restored-but-not-yet-migrated
+        // target is not lost — it has its own verified snapshot, distinct from the
+        // PreRestore safety snapshot of the *previous* live content.
+        //
+        // The fault is injected the same way `migrate_v12_to_v13`'s own
+        // `test_migrate_v12_to_v13_rolls_back_on_failure` does: the `locked` column is
+        // already physically present (the fixture is built via the real, current schema),
+        // only the `schema_version` row is mislabeled 12, so `ALTER TABLE entries ADD
+        // COLUMN locked` fails with a genuine duplicate-column error — not a fault an
+        // out-of-range schema version could produce deterministically.
+        let fixture = Fixture::new("failed-post-restore-migration");
+
+        // Single connection throughout, the same trick
+        // `test_restore_migrates_a_pre_migration_snapshot_to_the_current_schema` uses: the
+        // live journal's master key is what the restore's precheck must decrypt the target
+        // with, so the target snapshot and the live journal have to share one.
+        let db = create_database(&fixture.db_path, "password".to_string()).unwrap();
+        insert_entry(&db, &entry("2024-01-15", "Restored, pre-migration content")).unwrap();
+        db.conn()
+            .execute("UPDATE schema_version SET version = 12", [])
+            .unwrap();
+
+        // The snapshot itself must be taken while the file is still labeled v12 —
+        // `VACUUM INTO` copies whatever the live file currently is.
+        create_snapshot(&db, &fixture.ctx(), SnapshotTrigger::Manual).unwrap();
+        let target = super::super::list_snapshots(&fixture.backups_dir).unwrap()[0]
+            .file_name
+            .clone();
+
+        // Relabel back to current — the physical schema never changed (the `locked` column
+        // was never dropped), only the version marker was toggled for the snapshot above.
+        db.conn()
+            .execute("UPDATE schema_version SET version = 13", [])
+            .unwrap();
+        insert_entry(&db, &entry("2024-06-01", "Live content before restore")).unwrap();
+
+        let outcome = restore_from_snapshot(db, &fixture.ctx(), &target);
+
+        assert!(
+            !outcome.restored,
+            "the post-swap migration failure must not be reported as a successful restore"
+        );
+        let err = outcome
+            .error
+            .expect("a failed, rolled-back restore must report an error");
+        assert!(
+            err.contains("rolled back") || err.contains("rollback"),
+            "expected an automatic-rollback message, got: {err}"
+        );
+        let recovered = outcome
+            .db
+            .expect("the rollback must hand back a usable connection, not lock the journal");
+        let entries = crate::db::get_all_entries(&recovered).unwrap();
+        assert_eq!(
+            entries.len(),
+            2,
+            "must have rolled back to the PreRestore safety snapshot of the previous live \
+             content (both entries present there), not the 1-entry restore target"
+        );
+        assert!(
+            entries
+                .iter()
+                .any(|e| e.title == "Live content before restore"),
+            "the entry written after the target snapshot must have survived the rollback"
+        );
+
+        let snapshots = super::super::list_snapshots(&fixture.backups_dir).unwrap();
+        let restore_migration_snapshot = snapshots
+            .iter()
+            .find(|s| s.trigger == SnapshotTrigger::Migration)
+            .expect(
+                "the just-restored pre-migration target must have gotten its own snapshot \
+                 before the failed migration rewrote it — otherwise it has no recoverable \
+                 copy of its own",
+            );
+        assert!(
+            restore_migration_snapshot.verified,
+            "the restore-triggered migration snapshot must be verified"
+        );
+        // Distinguish it by content, not just trigger: the target has one entry, the
+        // PreRestore safety snapshot (of the two-entry live journal) has two. Trigger alone
+        // would find the same single Migration-triggered snapshot today, but only because
+        // the target in this fixture happens to be Manual-triggered — pinning entry_count
+        // ties the assertion to the actual guarantee (this is the *restored target's* own
+        // snapshot) rather than to that fixture coincidence.
+        assert_eq!(
+            restore_migration_snapshot.entry_count,
+            Some(1),
+            "the restore-triggered migration snapshot must capture the 1-entry restored \
+             target, not the 2-entry PreRestore safety snapshot"
+        );
     }
 }

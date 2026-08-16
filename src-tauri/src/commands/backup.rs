@@ -88,7 +88,18 @@ pub fn list_backups_unauthenticated(state: State<DiaryState>) -> Result<BackupOv
 /// always produces a snapshot. Anything else would be a button that silently does nothing.
 #[tauri::command]
 pub fn create_backup_now(state: State<DiaryState>) -> Result<SnapshotMeta, String> {
-    let (db_path, backups_dir) = journal_paths(&state)?;
+    create_backup_now_inner(&state)
+}
+
+/// The testable core of [`create_backup_now`]. See `restore_backup_inner`'s doc comment for
+/// why these commands split a `State`-free inner function out.
+pub(crate) fn create_backup_now_inner(state: &DiaryState) -> Result<SnapshotMeta, String> {
+    let _backup_ops = state
+        .backup_ops
+        .lock()
+        .map_err(|_| "Journal state lock failed".to_string())?;
+
+    let (db_path, backups_dir) = journal_paths(state)?;
 
     let db_state = state
         .db
@@ -115,7 +126,21 @@ pub fn create_backup_now(state: State<DiaryState>) -> Result<SnapshotMeta, Strin
 /// acted on without re-listing the whole directory.
 #[tauri::command]
 pub fn verify_backup(file_name: String, state: State<DiaryState>) -> Result<SnapshotMeta, String> {
-    let (_, backups_dir) = journal_paths(&state)?;
+    verify_backup_inner(file_name, &state)
+}
+
+/// The testable core of [`verify_backup`]. See `restore_backup_inner`'s doc comment for why
+/// these commands split a `State`-free inner function out.
+pub(crate) fn verify_backup_inner(
+    file_name: String,
+    state: &DiaryState,
+) -> Result<SnapshotMeta, String> {
+    let _backup_ops = state
+        .backup_ops
+        .lock()
+        .map_err(|_| "Journal state lock failed".to_string())?;
+
+    let (_, backups_dir) = journal_paths(state)?;
 
     let db_state = state
         .db
@@ -132,7 +157,18 @@ pub fn verify_backup(file_name: String, state: State<DiaryState>) -> Result<Snap
 /// backup should not be reachable from the screen shown to whoever finds the machine locked.
 #[tauri::command]
 pub fn delete_backup(file_name: String, state: State<DiaryState>) -> Result<(), String> {
-    let (_, backups_dir) = journal_paths(&state)?;
+    delete_backup_inner(file_name, &state)
+}
+
+/// The testable core of [`delete_backup`]. See `restore_backup_inner`'s doc comment for why
+/// these commands split a `State`-free inner function out.
+pub(crate) fn delete_backup_inner(file_name: String, state: &DiaryState) -> Result<(), String> {
+    let _backup_ops = state
+        .backup_ops
+        .lock()
+        .map_err(|_| "Journal state lock failed".to_string())?;
+
+    let (_, backups_dir) = journal_paths(state)?;
 
     {
         let db_state = state
@@ -184,6 +220,14 @@ pub struct RestoreSummary {
     /// The safety snapshot taken before the restore began — present unless the attempt was
     /// aborted before that point (an unreadable, too-old, or undecryptable target).
     pub safety_snapshot: Option<String>,
+    /// The safety snapshot's `created_at` timestamp, alongside its filename.
+    ///
+    /// The frontend's success message needs to *name* the safety snapshot without depending
+    /// on a subsequent `list_backups` refresh succeeding — that refresh can fail (or simply
+    /// not have run yet) even though the restore itself, and the safety snapshot it took,
+    /// already committed. Carrying the timestamp here makes that message immutable: it comes
+    /// straight from the restore outcome, not a re-query of the directory.
+    pub safety_snapshot_created_at: Option<String>,
 }
 
 /// Rolls the live journal back to one snapshot.
@@ -228,10 +272,19 @@ pub fn restore_backup(
 /// unit-tested without an `AppHandle` — see "testable command cores" in
 /// `docs/best-practices/TAURI_BEST_PRACTICES.md`. Does not emit events; the Tauri command
 /// wrapper handles that after this returns.
+///
+/// Acquires `state.backup_ops` before `state.db`, the same order the other three
+/// backups-directory-mutating commands (`create_backup_now_inner`, `verify_backup_inner`,
+/// `delete_backup_inner`) use, so none of the four can run concurrently against each other.
 pub(crate) fn restore_backup_inner(
     file_name: String,
     state: &DiaryState,
 ) -> Result<RestoreSummary, String> {
+    let _backup_ops = state
+        .backup_ops
+        .lock()
+        .map_err(|_| "Journal state lock failed".to_string())?;
+
     let (db_path, backups_dir) = journal_paths(state)?;
 
     // A restore is about to replace the very file a decrypted inspection connection might be
@@ -262,9 +315,18 @@ pub(crate) fn restore_backup_inner(
     match outcome.error {
         None => {
             info!("Journal restored from a backup");
+            // `to_rfc3339_opts(AutoSi, true)` matches the "Z"-suffixed format `SnapshotMeta`
+            // itself serializes to elsewhere (chrono's serde impl), not `to_rfc3339()`'s
+            // "+00:00" — both parse fine on the frontend, but staying consistent avoids two
+            // different-looking timestamp formats for the same underlying value.
+            let safety_snapshot_created_at = outcome.safety_snapshot.as_ref().map(|s| {
+                s.created_at
+                    .to_rfc3339_opts(chrono::SecondsFormat::AutoSi, true)
+            });
             Ok(RestoreSummary {
                 restored: outcome.restored,
                 safety_snapshot: outcome.safety_snapshot.map(|s| s.file_name),
+                safety_snapshot_created_at,
             })
         }
         Some(err) => Err(err),
@@ -450,6 +512,54 @@ mod tests {
     }
 
     #[test]
+    fn test_restore_summary_names_the_safety_snapshots_timestamp() {
+        // Task A4: the frontend must be able to name the safety snapshot in the success
+        // message without depending on a subsequent list_backups refresh succeeding.
+        let (_fixture, state) = seeded("backup_cmd_restore_safety_timestamp");
+        let (db_path, backups_dir) = journal_paths(&state).unwrap();
+
+        let target = {
+            let db_state = state.db.lock().unwrap();
+            let db = db_state.as_ref().unwrap();
+            let ctx = backup::BackupContext {
+                db_path: &db_path,
+                backups_dir: &backups_dir,
+                app_version: Some("0.6.6"),
+            };
+            backup::create_snapshot(db, &ctx, SnapshotTrigger::Manual)
+                .unwrap()
+                .created()
+                .unwrap()
+                .file_name
+                .clone()
+        };
+
+        let summary = restore_backup_inner(target, &state).unwrap();
+
+        let safety_file_name = summary
+            .safety_snapshot
+            .clone()
+            .expect("a successful restore always takes a safety snapshot");
+        let safety_created_at = summary
+            .safety_snapshot_created_at
+            .clone()
+            .expect("the safety snapshot's timestamp must be returned alongside its name");
+
+        let listed = backup::list_snapshots(&backups_dir).unwrap();
+        let actual = listed
+            .iter()
+            .find(|s| s.file_name == safety_file_name)
+            .expect("the safety snapshot named in the summary must actually exist on disk");
+        assert_eq!(
+            safety_created_at,
+            actual
+                .created_at
+                .to_rfc3339_opts(chrono::SecondsFormat::AutoSi, true),
+            "safety_snapshot_created_at must match the safety snapshot's actual created_at"
+        );
+    }
+
+    #[test]
     fn test_restore_refuses_a_locked_journal() {
         let (_fixture, state, _db_path, _backups_dir) = make_state("backup_cmd_restore_locked");
         assert_eq!(
@@ -470,6 +580,106 @@ mod tests {
             state.db.lock().unwrap().is_some(),
             "an aborted restore must not leave the journal locked"
         );
+    }
+
+    // ── Task A2: the four IPC-reachable backup commands serialize on `backup_ops` ──────
+
+    /// Spawns a thread that holds `state.backup_ops`, then runs `probe` **on its own thread**
+    /// and proves it genuinely blocks on the same lock — not just "happened to finish after
+    /// some flag got set", which is true of *any* slow-enough probe regardless of whether it
+    /// touches `backup_ops` at all (an earlier version of this helper made exactly that
+    /// mistake: `create_backup_now_inner`'s own I/O routinely takes longer than a 50ms
+    /// window, so the assertion passed even with the lock acquisition deleted).
+    ///
+    /// The structural proof is two-sided: while the holder still has `backup_ops`, `probe`
+    /// must **not** have completed within a generous window (a probe that skips the lock
+    /// completes almost immediately, well inside it); once the holder releases, `probe` must
+    /// complete promptly. Only a probe that actually blocks on `backup_ops` satisfies both.
+    fn assert_serializes_on_backup_ops(state: &DiaryState, probe: impl FnOnce() + Send) {
+        let (holder_ready_tx, holder_ready_rx) = std::sync::mpsc::channel::<()>();
+        let (release_tx, release_rx) = std::sync::mpsc::channel::<()>();
+        let (probe_done_tx, probe_done_rx) = std::sync::mpsc::channel::<()>();
+
+        std::thread::scope(|scope| {
+            scope.spawn(move || {
+                let guard = state.backup_ops.lock().unwrap();
+                holder_ready_tx.send(()).unwrap();
+                release_rx.recv().unwrap();
+                drop(guard);
+            });
+
+            holder_ready_rx
+                .recv()
+                .expect("the backup_ops holder thread must signal acquisition");
+
+            scope.spawn(move || {
+                probe();
+                let _ = probe_done_tx.send(());
+            });
+
+            let completed_while_locked =
+                probe_done_rx.recv_timeout(std::time::Duration::from_millis(300));
+
+            // Release the holder *before* asserting: `thread::scope` joins every spawned
+            // thread before returning, including on a panic unwinding through this block, so
+            // asserting first (and panicking on a regression) would leave the holder thread
+            // blocked on `release_rx.recv()` forever with nothing left to send it — hanging
+            // the test instead of failing it.
+            release_tx
+                .send(())
+                .expect("the backup_ops holder thread must still be waiting to release");
+
+            assert!(
+                completed_while_locked.is_err(),
+                "the probe completed while a concurrent thread still held backup_ops — it did \
+                 not actually wait for the lock"
+            );
+
+            probe_done_rx
+                .recv_timeout(std::time::Duration::from_secs(5))
+                .expect(
+                    "the probe did not complete even after the backup_ops holder released the \
+                     lock",
+                );
+        });
+    }
+
+    #[test]
+    fn test_backup_ops_serializes_delete_backup_against_a_concurrent_holder() {
+        let (_fixture, state) = seeded("backup_cmd_ops_lock_delete");
+        assert_serializes_on_backup_ops(&state, || {
+            // The target need not exist — `delete_backup_inner` still has to wait for
+            // `backup_ops` before it can even read the directory to look for it.
+            let _ = delete_backup_inner("backup-does-not-exist.db".to_string(), &state);
+        });
+    }
+
+    #[test]
+    fn test_backup_ops_serializes_create_backup_now_against_a_concurrent_holder() {
+        let (_fixture, state) = seeded("backup_cmd_ops_lock_create");
+        assert_serializes_on_backup_ops(&state, || {
+            create_backup_now_inner(&state).expect("create_backup_now_inner should succeed");
+        });
+    }
+
+    #[test]
+    fn test_backup_ops_serializes_verify_backup_against_a_concurrent_holder() {
+        let (_fixture, state) = seeded("backup_cmd_ops_lock_verify");
+        assert_serializes_on_backup_ops(&state, || {
+            // The target need not exist — `verify_backup_inner` still has to wait for
+            // `backup_ops` before it can even try to read it.
+            let _ = verify_backup_inner("backup-does-not-exist.db".to_string(), &state);
+        });
+    }
+
+    #[test]
+    fn test_backup_ops_serializes_restore_backup_against_a_concurrent_holder() {
+        let (_fixture, state) = seeded("backup_cmd_ops_lock_restore");
+        assert_serializes_on_backup_ops(&state, || {
+            // The target need not exist — `restore_backup_inner` still has to wait for
+            // `backup_ops` before it can even try to read it (it aborts cleanly afterward).
+            let _ = restore_backup_inner("backup-does-not-exist.db".to_string(), &state);
+        });
     }
 
     #[test]

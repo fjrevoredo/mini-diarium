@@ -20,6 +20,18 @@ pub struct DiaryState {
     /// an invariant enforced by the call graph does not depend on a future caller
     /// remembering a second teardown.
     pub inspection: Mutex<Option<crate::commands::backup_inspect::InspectedSnapshot>>,
+    /// Serializes the four IPC-reachable backup commands (`create_backup_now`,
+    /// `verify_backup`, `delete_backup`, `restore_backup`) against each other, so their
+    /// backups-directory filesystem mutations cannot interleave.
+    ///
+    /// Acquired **before** `db` in those four commands — `backup_ops` → `db` is the only
+    /// lock order used there. The background trigger paths in `commands/backup_triggers.rs`
+    /// (unlock/lock/destructive snapshots) deliberately do not take this lock: they already
+    /// acquire `db` first (or, for the detached-thread case, no lock at all), and acquiring
+    /// `backup_ops` there too would risk the opposite order and a two-lock deadlock. See
+    /// Task A2 in `docs/backup-adversarial-review-fixes-plan.md` for the accepted residual
+    /// gap this leaves (trigger-path snapshots can still race the four IPC commands).
+    pub backup_ops: Mutex<()>,
 }
 
 impl DiaryState {
@@ -30,6 +42,7 @@ impl DiaryState {
             backups_dir: Mutex::new(backups_dir),
             app_data_dir,
             inspection: Mutex::new(None),
+            backup_ops: Mutex::new(()),
         }
     }
 }

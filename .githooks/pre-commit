@@ -4,11 +4,24 @@
 # Bypass with: git commit --no-verify
 set -e
 
+# Git execs hooks directly — it never sources .bashrc/.zshrc, so a PATH entry that only
+# lives in one of those (e.g. `~/.bun/bin`, added by .zshrc but not .bashrc/.profile here)
+# is invisible to this script whenever it's invoked from something that didn't already
+# have it set (a GUI git client, an editor's Source Control panel, a non-interactive
+# shell). Fall back to the standard install locations explicitly rather than trusting
+# inheritance, so formatting isn't at the mercy of which shell happened to launch git.
+export PATH="$PATH:$HOME/.bun/bin:$HOME/.cargo/bin"
+
 STAGED=$(git diff --cached --name-only --diff-filter=ACMR) || exit 0
 [ -z "$STAGED" ] && exit 0
 
 FRONTEND_FILES=$(echo "$STAGED" | grep -E '^src/.*\.(ts|tsx|css)$' || true)
 if [ -n "$FRONTEND_FILES" ]; then
+  if ! command -v bunx >/dev/null 2>&1; then
+    echo "pre-commit: bunx not found (checked PATH and ~/.bun/bin) — cannot format staged frontend files." >&2
+    echo "pre-commit: install bun (https://bun.sh) or fix PATH, or bypass with: git commit --no-verify" >&2
+    exit 1
+  fi
   echo "pre-commit: formatting staged frontend files with Prettier..."
   bunx prettier --write $FRONTEND_FILES
   git add $FRONTEND_FILES

@@ -103,6 +103,10 @@ export default function BackupsPanel(props: BackupsPanelProps) {
   const [successMessage, setSuccessMessage] = createSignal<string | null>(null);
   const [busyAction, setBusyAction] = createSignal<'backup' | 'verify' | 'restore' | null>(null);
   const [busyFile, setBusyFile] = createSignal<string | null>(null);
+  // Gates every mutating action panel-wide, not just the row a specific action targets — a
+  // restore in flight on one snapshot must also block create/verify/delete on every other
+  // row, not just re-clicking that same row's own buttons.
+  const [panelBusy, setPanelBusy] = createSignal(false);
   const [inspecting, setInspecting] = createSignal<SnapshotMeta | null>(null);
 
   const isAutoProtected = () =>
@@ -134,6 +138,7 @@ export default function BackupsPanel(props: BackupsPanelProps) {
 
   const handleBackUpNow = async () => {
     setBusyAction('backup');
+    setPanelBusy(true);
     setError(null);
     setSuccessMessage(null);
     try {
@@ -143,12 +148,14 @@ export default function BackupsPanel(props: BackupsPanelProps) {
       setError(mapTauriError(err, t));
     } finally {
       setBusyAction(null);
+      setPanelBusy(false);
     }
   };
 
   const handleVerify = async (fileName: string) => {
     setBusyAction('verify');
     setBusyFile(fileName);
+    setPanelBusy(true);
     setError(null);
     setSuccessMessage(null);
     try {
@@ -160,6 +167,7 @@ export default function BackupsPanel(props: BackupsPanelProps) {
     } finally {
       setBusyAction(null);
       setBusyFile(null);
+      setPanelBusy(false);
     }
   };
 
@@ -167,6 +175,7 @@ export default function BackupsPanel(props: BackupsPanelProps) {
     // Deliberately the browser confirm rather than a native dialog: a native one is a
     // separate OS window that steals focus and would trip the focus-loss auto-lock.
     if (!window.confirm(t('prefs.backups.confirmDelete'))) return;
+    setPanelBusy(true);
     setError(null);
     setSuccessMessage(null);
     try {
@@ -174,6 +183,8 @@ export default function BackupsPanel(props: BackupsPanelProps) {
       await load();
     } catch (err) {
       setError(mapTauriError(err, t));
+    } finally {
+      setPanelBusy(false);
     }
   };
 
@@ -190,6 +201,7 @@ export default function BackupsPanel(props: BackupsPanelProps) {
 
     setBusyAction('restore');
     setBusyFile(snapshot.file_name);
+    setPanelBusy(true);
     setError(null);
     setSuccessMessage(null);
     try {
@@ -215,14 +227,16 @@ export default function BackupsPanel(props: BackupsPanelProps) {
       // failed list refresh cannot be conflated with a failed restore below.
       await load();
 
-      const safetySnapshot = result.safety_snapshot
-        ? snapshots().find((s) => s.file_name === result.safety_snapshot)
-        : undefined;
+      // Named directly from the restore result, not by searching the just-reloaded
+      // `snapshots()` list — that reload can fail (or simply not have run yet) even though
+      // the restore itself, and the safety snapshot it took, already committed (Task A4).
+      // Falls back to the generic message only when the field is genuinely absent, which
+      // means the attempt was aborted before a safety snapshot was ever taken.
       setSuccessMessage(
-        safetySnapshot
+        result.safety_snapshot_created_at
           ? t('prefs.backups.restoreSuccess', {
               when: formatInstant(snapshot.created_at),
-              safetyWhen: formatInstant(safetySnapshot.created_at),
+              safetyWhen: formatInstant(result.safety_snapshot_created_at),
             })
           : t('prefs.backups.restoreSuccessGeneric', {
               when: formatInstant(snapshot.created_at),
@@ -233,6 +247,7 @@ export default function BackupsPanel(props: BackupsPanelProps) {
     } finally {
       setBusyAction(null);
       setBusyFile(null);
+      setPanelBusy(false);
     }
   };
 
@@ -376,7 +391,7 @@ export default function BackupsPanel(props: BackupsPanelProps) {
         <button
           type="button"
           onClick={handleBackUpNow}
-          disabled={actionsDisabled() || busyAction() === 'backup'}
+          disabled={actionsDisabled() || panelBusy()}
           data-testid="backups-create-button"
           class="px-4 py-2 text-sm font-medium interactive-primary rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
         >
@@ -483,7 +498,7 @@ export default function BackupsPanel(props: BackupsPanelProps) {
                     <button
                       type="button"
                       onClick={() => handleVerify(snapshot.file_name)}
-                      disabled={actionsDisabled() || busyFile() === snapshot.file_name}
+                      disabled={actionsDisabled() || panelBusy()}
                       class="px-2 py-1 text-xs font-medium text-secondary border border-primary rounded-md hover:bg-hover focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {busyAction() === 'verify' && busyFile() === snapshot.file_name
@@ -493,7 +508,7 @@ export default function BackupsPanel(props: BackupsPanelProps) {
                     <button
                       type="button"
                       onClick={() => handleRestore(snapshot)}
-                      disabled={actionsDisabled() || busyFile() === snapshot.file_name}
+                      disabled={actionsDisabled() || panelBusy()}
                       data-testid="backups-restore-button"
                       class="px-2 py-1 text-xs font-medium text-secondary border border-primary rounded-md hover:bg-hover focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
@@ -504,7 +519,7 @@ export default function BackupsPanel(props: BackupsPanelProps) {
                     <button
                       type="button"
                       onClick={() => handleDelete(snapshot.file_name)}
-                      disabled={actionsDisabled() || busyFile() === snapshot.file_name}
+                      disabled={actionsDisabled() || panelBusy()}
                       class="px-2 py-1 text-xs font-medium text-destructive border border-primary rounded-md hover:bg-hover focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {t('prefs.backups.delete')}
@@ -515,8 +530,10 @@ export default function BackupsPanel(props: BackupsPanelProps) {
                     <Show when={!props.reduced}>
                       <button
                         type="button"
-                        onClick={() => setInspecting(snapshot)}
-                        disabled={busyFile() === snapshot.file_name}
+                        onClick={() => {
+                          if (!panelBusy()) setInspecting(snapshot);
+                        }}
+                        disabled={panelBusy()}
                         data-testid="backups-restore-entries-button"
                         class="px-2 py-1 text-xs font-medium text-secondary border border-primary rounded-md hover:bg-hover focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
                       >

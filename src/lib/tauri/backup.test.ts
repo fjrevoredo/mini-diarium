@@ -122,6 +122,7 @@ describe('backup command wrappers (IPC contract)', () => {
     const summary: RestoreSummary = {
       restored: true,
       safety_snapshot: 'backup-2026-08-11-14h30m00.db',
+      safety_snapshot_created_at: '2026-08-11T14:30:00Z',
     };
     mockInvoke.mockResolvedValue(summary);
     await expect(restoreBackup(snapshot.file_name)).resolves.toEqual(summary);

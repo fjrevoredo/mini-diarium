@@ -111,6 +111,12 @@ export interface RestoreSummary {
   restored: boolean;
   /** The safety snapshot taken before the restore began. */
   safety_snapshot: string | null;
+  /**
+   * The safety snapshot's timestamp, alongside its filename. Lets the success message name
+   * the safety snapshot directly from this result, without depending on a subsequent
+   * `listBackups`/`getBackupHealth` refresh succeeding.
+   */
+  safety_snapshot_created_at: string | null;
 }
 
 /**

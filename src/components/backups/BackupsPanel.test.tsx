@@ -315,6 +315,7 @@ describe('BackupsPanel', () => {
       mockRestoreBackup.mockResolvedValue({
         restored: true,
         safety_snapshot: 'backup-2026-08-11-14h30m00.db',
+        safety_snapshot_created_at: '2026-08-11T14:30:00Z',
       });
 
       renderWithI18n(() => <BackupsPanel isVisible={visible} />);
@@ -367,6 +368,7 @@ describe('BackupsPanel', () => {
       mockRestoreBackup.mockResolvedValue({
         restored: true,
         safety_snapshot: 'backup-2026-08-11-14h30m00.db',
+        safety_snapshot_created_at: '2026-08-11T14:30:00Z',
       });
       mockRefreshAfterRestore.mockRejectedValue(new Error('stale in-memory state'));
 
@@ -381,6 +383,42 @@ describe('BackupsPanel', () => {
         ),
       );
       expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+
+      vi.restoreAllMocks();
+    });
+
+    it('names the safety snapshot in the success message even when the post-restore list refresh fails (Task A4)', async () => {
+      // The success message is built directly from restoreBackup's own result
+      // (safety_snapshot_created_at), not by searching the just-reloaded snapshots() list —
+      // so it must still name the safety snapshot's timestamp even when load() (the
+      // subsequent listBackups/getBackupHealth call) fails outright.
+      mockListBackups.mockResolvedValueOnce([snapshot()]);
+      mockGetBackupHealth.mockResolvedValue(health());
+      vi.spyOn(window, 'confirm').mockReturnValue(true);
+      mockRestoreBackup.mockResolvedValue({
+        restored: true,
+        safety_snapshot: 'backup-2026-08-11-14h30m00.db',
+        safety_snapshot_created_at: '2026-08-11T14:30:00Z',
+      });
+
+      renderWithI18n(() => <BackupsPanel isVisible={visible} />);
+      await waitFor(() => expect(screen.getByTestId('backups-restore-button')).toBeInTheDocument());
+
+      // The post-restore reload (load()) fails outright — it catches and reports its own
+      // error, but must not degrade the restore's own success message.
+      mockListBackups.mockRejectedValue(new Error('directory temporarily unreachable'));
+      mockGetBackupHealth.mockRejectedValue(new Error('directory temporarily unreachable'));
+
+      fireEvent.click(screen.getByTestId('backups-restore-button'));
+
+      await waitFor(() =>
+        expect(screen.getByTestId('backups-restore-success')).toHaveTextContent(
+          /restored to the backup from/i,
+        ),
+      );
+      expect(screen.getByTestId('backups-restore-success')).toHaveTextContent(
+        /saved as a new backup/i,
+      );
 
       vi.restoreAllMocks();
     });
@@ -404,6 +442,178 @@ describe('BackupsPanel', () => {
       // state for, whether it aborted outright or rolled back to the safety snapshot.
       expect(mockRefreshAfterRestore).not.toHaveBeenCalled();
 
+      vi.restoreAllMocks();
+    });
+  });
+
+  describe('panel-wide mutation lock (Task A3)', () => {
+    // A deferred promise lets each test hold a mutation "in flight" and observe the panel's
+    // disabled state before deciding whether to let it resolve.
+    function deferred<T>() {
+      let resolve!: (value: T) => void;
+      const promise = new Promise<T>((res) => {
+        resolve = res;
+      });
+      return { promise, resolve };
+    }
+
+    function twoRows() {
+      return [
+        snapshot({ file_name: 'backup-row-a.db', created_at: '2026-08-06T09:30:00Z' }),
+        snapshot({ file_name: 'backup-row-b.db', created_at: '2026-08-07T09:30:00Z' }),
+      ];
+    }
+
+    it('blocks delete on a different row while a restore is in flight', async () => {
+      const [rowA, rowB] = twoRows();
+      mockListBackups.mockResolvedValue([rowA, rowB]);
+      mockGetBackupHealth.mockResolvedValue(health());
+      vi.spyOn(window, 'confirm').mockReturnValue(true);
+      const restorePromise = deferred<{ restored: boolean; safety_snapshot: string | null }>();
+      mockRestoreBackup.mockReturnValue(restorePromise.promise);
+
+      renderWithI18n(() => <BackupsPanel isVisible={visible} />);
+      await waitFor(() => expect(screen.getAllByTestId('backups-list-item')).toHaveLength(2));
+      const rows = screen.getAllByTestId('backups-list-item');
+
+      fireEvent.click(within(rows[0]).getByTestId('backups-restore-button'));
+      await waitFor(() => expect(mockRestoreBackup).toHaveBeenCalledWith(rowA.file_name));
+
+      const deleteOnOtherRow = within(rows[1]).getByRole('button', { name: 'Delete' });
+      expect(deleteOnOtherRow).toBeDisabled();
+      fireEvent.click(deleteOnOtherRow);
+      expect(mockDeleteBackup).not.toHaveBeenCalled();
+
+      restorePromise.resolve({ restored: true, safety_snapshot: null });
+      await waitFor(() =>
+        expect(screen.getByTestId('backups-restore-success')).toBeInTheDocument(),
+      );
+      vi.restoreAllMocks();
+    });
+
+    it('blocks "back up now" while a restore is in flight', async () => {
+      const [rowA] = twoRows();
+      mockListBackups.mockResolvedValue([rowA]);
+      mockGetBackupHealth.mockResolvedValue(health());
+      vi.spyOn(window, 'confirm').mockReturnValue(true);
+      const restorePromise = deferred<{ restored: boolean; safety_snapshot: string | null }>();
+      mockRestoreBackup.mockReturnValue(restorePromise.promise);
+
+      renderWithI18n(() => <BackupsPanel isVisible={visible} />);
+      await waitFor(() => expect(screen.getByTestId('backups-list-item')).toBeInTheDocument());
+
+      fireEvent.click(screen.getByTestId('backups-restore-button'));
+      await waitFor(() => expect(mockRestoreBackup).toHaveBeenCalled());
+
+      const createButton = screen.getByTestId('backups-create-button');
+      expect(createButton).toBeDisabled();
+      fireEvent.click(createButton);
+      expect(mockCreateBackupNow).not.toHaveBeenCalled();
+
+      restorePromise.resolve({ restored: true, safety_snapshot: null });
+      await waitFor(() =>
+        expect(screen.getByTestId('backups-restore-success')).toBeInTheDocument(),
+      );
+      vi.restoreAllMocks();
+    });
+
+    it('blocks verify on a different row while a restore is in flight', async () => {
+      const [rowA, rowB] = twoRows();
+      mockListBackups.mockResolvedValue([rowA, rowB]);
+      mockGetBackupHealth.mockResolvedValue(health());
+      vi.spyOn(window, 'confirm').mockReturnValue(true);
+      const restorePromise = deferred<{ restored: boolean; safety_snapshot: string | null }>();
+      mockRestoreBackup.mockReturnValue(restorePromise.promise);
+
+      renderWithI18n(() => <BackupsPanel isVisible={visible} />);
+      await waitFor(() => expect(screen.getAllByTestId('backups-list-item')).toHaveLength(2));
+      const rows = screen.getAllByTestId('backups-list-item');
+
+      fireEvent.click(within(rows[0]).getByTestId('backups-restore-button'));
+      await waitFor(() => expect(mockRestoreBackup).toHaveBeenCalledWith(rowA.file_name));
+
+      const verifyOnOtherRow = within(rows[1]).getByRole('button', { name: /Check|Verify/ });
+      expect(verifyOnOtherRow).toBeDisabled();
+      fireEvent.click(verifyOnOtherRow);
+      expect(mockVerifyBackup).not.toHaveBeenCalled();
+
+      restorePromise.resolve({ restored: true, safety_snapshot: null });
+      await waitFor(() =>
+        expect(screen.getByTestId('backups-restore-success')).toBeInTheDocument(),
+      );
+      vi.restoreAllMocks();
+    });
+
+    it('blocks the inspect-open button while a mutation is in flight', async () => {
+      const [rowA] = twoRows();
+      mockListBackups.mockResolvedValue([rowA]);
+      mockGetBackupHealth.mockResolvedValue(health());
+      vi.spyOn(window, 'confirm').mockReturnValue(true);
+      const restorePromise = deferred<{ restored: boolean; safety_snapshot: string | null }>();
+      mockRestoreBackup.mockReturnValue(restorePromise.promise);
+
+      renderWithI18n(() => <BackupsPanel isVisible={visible} />);
+      await waitFor(() => expect(screen.getByTestId('backups-list-item')).toBeInTheDocument());
+
+      fireEvent.click(screen.getByTestId('backups-restore-button'));
+      await waitFor(() => expect(mockRestoreBackup).toHaveBeenCalled());
+
+      const inspectButton = screen.getByTestId('backups-restore-entries-button');
+      expect(inspectButton).toBeDisabled();
+      fireEvent.click(inspectButton);
+      expect(screen.queryByTestId('mock-inspect-dialog')).not.toBeInTheDocument();
+
+      restorePromise.resolve({ restored: true, safety_snapshot: null });
+      await waitFor(() =>
+        expect(screen.getByTestId('backups-restore-success')).toBeInTheDocument(),
+      );
+      vi.restoreAllMocks();
+    });
+
+    it('leaves "reveal folder" enabled during a mutation — a read-only action', async () => {
+      const [rowA] = twoRows();
+      mockListBackups.mockResolvedValue([rowA]);
+      mockGetBackupHealth.mockResolvedValue(health());
+      vi.spyOn(window, 'confirm').mockReturnValue(true);
+      const restorePromise = deferred<{ restored: boolean; safety_snapshot: string | null }>();
+      mockRestoreBackup.mockReturnValue(restorePromise.promise);
+
+      renderWithI18n(() => <BackupsPanel isVisible={visible} />);
+      await waitFor(() => expect(screen.getByTestId('backups-list-item')).toBeInTheDocument());
+
+      fireEvent.click(screen.getByTestId('backups-restore-button'));
+      await waitFor(() => expect(mockRestoreBackup).toHaveBeenCalled());
+
+      expect(screen.getByTestId('backups-reveal-button')).not.toBeDisabled();
+
+      restorePromise.resolve({ restored: true, safety_snapshot: null });
+      await waitFor(() =>
+        expect(screen.getByTestId('backups-restore-success')).toBeInTheDocument(),
+      );
+      vi.restoreAllMocks();
+    });
+
+    it('re-enables actions once delete completes, even though handleDelete had no busy state before this task', async () => {
+      const [rowA, rowB] = twoRows();
+      mockListBackups.mockResolvedValue([rowA, rowB]);
+      mockGetBackupHealth.mockResolvedValue(health());
+      vi.spyOn(window, 'confirm').mockReturnValue(true);
+      const deletePromise = deferred<void>();
+      mockDeleteBackup.mockReturnValue(deletePromise.promise);
+
+      renderWithI18n(() => <BackupsPanel isVisible={visible} />);
+      await waitFor(() => expect(screen.getAllByTestId('backups-list-item')).toHaveLength(2));
+      const rows = screen.getAllByTestId('backups-list-item');
+
+      fireEvent.click(within(rows[0]).getByRole('button', { name: 'Delete' }));
+      await waitFor(() => expect(mockDeleteBackup).toHaveBeenCalledWith(rowA.file_name));
+
+      const createButton = screen.getByTestId('backups-create-button');
+      expect(createButton).toBeDisabled();
+
+      mockListBackups.mockResolvedValue([rowB]);
+      deletePromise.resolve();
+      await waitFor(() => expect(createButton).not.toBeDisabled());
       vi.restoreAllMocks();
     });
   });
