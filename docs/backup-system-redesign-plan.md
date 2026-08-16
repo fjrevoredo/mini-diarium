@@ -2,14 +2,14 @@
 
 ## Metadata
 
-- Plan Status: IN PROGRESS
+- Plan Status: COMPLETED
 - Created: 2026-08-04
-- Last Updated: 2026-08-16 (Milestone 5 COMPLETED — Tasks 5.1–5.4 all closed: backups now follow a relocated journal, credential-drift warnings shipped, the local-only key-material test closed the last gap in an already-shipped disclosure, and the restore-procedure docs were confirmed already accurate; Task 4.4 also closed this session — CI run `31909824100` on PR #254 came back green; Milestone 4 remains IN PROGRESS pending Task 6.3's whole-journal restore rehearsal; Milestone 3 still open on the Linux half of Task 3.4; Milestone 6 is the next and final milestone)
+- Last Updated: 2026-08-16 (Milestone 6 COMPLETED, closing this plan. All six milestones now COMPLETED: Milestone 3's Linux-only `PLATFORM-VERIFY` check was split off into [TODO-0101](todo/TODO.md), tracked independently rather than left blocking this plan — see Milestone 3's status line. Milestone 4 closed once Task 6.3's manual rehearsal supplied its deferred whole-journal restore validation, 2026-08-16, with no defects found. Task 6.3's pre-flight coverage check also found and fixed a real Windows-only bug in `scripts/check-diff-coverage.mjs` — see its notes and the `[0.7.0]` changelog entry. TODO-0098 is checked off in `docs/todo/TODO.md`.)
 - Owner: Coding agent
 - Approval: APPROVED (2026-08-04)
 - Tracking: [TODO-0098](todo/TODO.md)
 - Source assessment: [`docs/reports/2026-08-04-backup-system-assessment.md`](reports/2026-08-04-backup-system-assessment.md) (Option A, §6.1)
-- Tags: `UX-GATE: SATISFIED 2026-08-10` (Milestone 4), `PLATFORM-VERIFY` (Milestone 3, reveal-in-folder)
+- Tags: `UX-GATE: SATISFIED 2026-08-10` (Milestone 4), `PLATFORM-VERIFY` (Milestone 3, reveal-in-folder — Linux half tracked as [TODO-0101](todo/TODO.md))
 
 ## Status Legend
 
@@ -255,9 +255,9 @@ Tasks 4.2 and 4.3 are unblocked to start.
 
 ### Milestone 3: IPC Surface And The Backups Panel
 
-- Status: IN PROGRESS
+- Status: COMPLETED (Linux half of `PLATFORM-VERIFY` carved out to [TODO-0101](todo/TODO.md), tracked independently — see Task 3.4 and the note below)
 - Purpose: Make backups visible. Read-only functionality only; nothing here can modify a journal.
-- Exit Criteria: A user can see every snapshot with its date, trigger, entry count, size, and health from Preferences → Backups and from the unlock screen; a snapshot that failed to write is visibly distinguished; `bun run test:run`, `type-check`, `lint`, and `validate:locales` all green; `PLATFORM-VERIFY` for reveal-in-folder completed on Windows and one Linux desktop.
+- Exit Criteria: A user can see every snapshot with its date, trigger, entry count, size, and health from Preferences → Backups and from the unlock screen; a snapshot that failed to write is visibly distinguished; `bun run test:run`, `type-check`, `lint`, and `validate:locales` all green; `PLATFORM-VERIFY` for reveal-in-folder completed on Windows **and one Linux desktop, the latter carved out to [TODO-0101](todo/TODO.md) 2026-08-16 rather than left blocking this plan indefinitely** — every other exit criterion is met, Windows verification passed (Task 3.4), and the maintainer's explicit decision was to split the Linux-only check into its own tracked TODO and close this plan rather than hold the whole redesign open on a check that needs a machine this session does not have.
 
 #### Task 3.1: `backup` Tauri command group
 
@@ -301,7 +301,7 @@ Tasks 4.2 and 4.3 are unblocked to start.
 
 #### Task 3.4: `PLATFORM-VERIFY` — reveal-in-folder across platforms
 
-- Status: BLOCKED — Windows verified; **Linux verification outstanding** and cannot be done from this machine. Needs a maintainer run on one Linux desktop (Wayland preferred) before Milestone 3 can be closed.
+- Status: BLOCKED — Windows verified; **Linux verification outstanding** and cannot be done from this machine. Split off into [TODO-0101](todo/TODO.md) 2026-08-16 so it can be tracked and closed independently rather than leaving this plan file open indefinitely on a check only a maintainer with a Linux desktop can perform. Milestone 3 stays open on TODO-0101, not on this plan.
 - Objective: The one OS/WebView handoff in this milestone behaves on every supported platform.
 - Steps:
   1. Verify Reveal in folder opens the correct directory on Windows and on one Linux desktop (Wayland preferred, given the recent `tao` title-bar issue).
@@ -353,10 +353,10 @@ title-bar issue).
 
 ### Milestone 4: Restore
 
-- Status: IN PROGRESS (Tasks 4.1–4.4 complete; UX gate signed off 2026-08-10 — see the Sign-off Record; exit criteria not yet fully met — see note)
+- Status: COMPLETED
 - Purpose: Deliver the capability whose absence made the incident recovery manual: getting data back out of a snapshot, in-app, without writing plaintext to disk.
 - Exit Criteria: All seven UX-GATE scenarios signed off; a whole-journal restore and a per-entry restore both demonstrated end-to-end against a snapshot the app produced itself; no code path in the restore flow writes decrypted content to the filesystem; an E2E scenario covers the round trip.
-- Note (2026-08-16): Task 4.4's E2E spec is now CI-green (run `31909824100`, PR #254) and closed. It demonstrates the **per-entry** restore path end-to-end against a real snapshot. It does not touch whole-journal restore (`BackupsPanel`'s "Restore" button) — Task 4.2's own implementation record deliberately deferred that rehearsal to Task 6.3 step 2, "one combined rehearsal covering both per-entry and whole-journal restore." So this milestone's exit criteria remain open on that one point until Task 6.3 runs; do not mark this milestone COMPLETED before that.
+- Note (2026-08-16): Task 4.4's E2E spec is CI-green (run `31909824100`, PR #254), demonstrating the **per-entry** restore path end-to-end against a real snapshot. The remaining exit criterion — a whole-journal restore demonstrated end-to-end — was deliberately deferred to Task 6.3 step 2's combined rehearsal, which ran 2026-08-16 and passed cleanly on both whole-journal and per-entry restore with no defects found (see Task 6.3's implementation notes). All exit criteria are now met and this milestone closes.
 
 #### Task 4.1: Read-only snapshot inspection
 
@@ -495,10 +495,13 @@ on CI — that is the one open item before Task 4.4 can close.
 
 ### Next steps for a new session
 
-- Task 4.4 closed 2026-08-16: CI run [`31909824100`](https://github.com/fjrevoredo/mini-diarium/actions/runs/31909824100) on PR #254 (commit `8f68b2c7`) came back green on Linux/WebKitGTK, confirming the `textContent`-vs-`getText()` fix. Status flipped to `COMPLETED` above.
-- Milestone 4's remaining exit criterion (whole-journal restore's end-to-end rehearsal) is still deferred by design to Task 6.3 — Milestone 4 does not reach `COMPLETED` from Task 4.4 alone.
-- Milestone 3's Task 3.4 is still `BLOCKED` on Linux verification, independent of this task.
-- Next actionable work is Milestone 5 (Tasks 5.1–5.4).
+This plan is COMPLETED as of 2026-08-16 (see the Metadata line). Nothing in this plan requires further action from a new session. For context on what shipped and in what order:
+
+- Task 4.4 closed 2026-08-16: CI run [`31909824100`](https://github.com/fjrevoredo/mini-diarium/actions/runs/31909824100) on PR #254 (commit `8f68b2c7`) came back green on Linux/WebKitGTK, confirming the `textContent`-vs-`getText()` fix.
+- Milestone 4's remaining exit criterion (whole-journal restore's end-to-end rehearsal) was closed by Task 6.3 step 2's combined rehearsal, 2026-08-16 — see Task 6.3's implementation notes and Milestone 4's own status line above.
+- Milestone 5 (Tasks 5.1–5.4) completed 2026-08-16.
+- Milestone 6 (cleanup and final verification) completed 2026-08-16, closing this plan.
+- Milestone 3's Task 3.4 remains open only on its Linux half, split off into [TODO-0101](todo/TODO.md) — that TODO, not this plan file, is where a future session should pick up that one remaining check.
 
 ---
 
@@ -572,13 +575,14 @@ on CI — that is the one open item before Task 4.4 can close.
 
 ### Milestone 6: Cleanup And Final Verification
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Purpose: Ensure the repository contains only intentional final artifacts and the complete change is verified.
 - Exit Criteria: Intermediate artifacts are removed, all final verification passes, TODO-0098 is checked off, the changelog is complete, and the plan status is COMPLETED.
+- Completed 2026-08-16. All three tasks (6.1-6.3) COMPLETED. Task 6.1 found nothing to remove. Task 6.2 confirmed the changelog complete and split Task 3.4 off into TODO-0101 rather than leaving Milestone 3 open-ended. Task 6.3's pre-flight checks all passed (including a real Windows tooling bug found and fixed along the way — `scripts/check-diff-coverage.mjs`'s frontend coverage generation), and the manual recovery rehearsal — the plan's real acceptance test — passed cleanly on both whole-journal and per-entry restore with no defects found. TODO-0098 is checked off in `docs/todo/TODO.md` and the Plan Status metadata below reads COMPLETED.
 
 #### Task 6.1: Cleanup Intermediate Artifacts
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Objective: Remove artifacts created only to support implementation.
 - Steps:
   1. Inspect the worktree for scratch scripts, seeded backup directories, debug logging added during Milestone 1, and obsolete plan fragments.
@@ -587,20 +591,26 @@ on CI — that is the one open item before Task 4.4 can close.
   4. Keep the Task 1.1 change-counter test, all retention tests, the manifest privacy test, and the key-material test — they are the contract.
 - Validation: Worktree diff contains only intended final changes; `cmd.exe /c bun run check:build-paths` green; `git status --short` shows no unexpected untracked files.
 - Notes: Do not remove user-provided files or unrelated worktree changes.
+- Verified 2026-08-16: nothing needed removing. This was a check, not a purge, and the outcome is negative-but-confirmed rather than silently skipped. `rg "MAX_BACKUPS"`-equivalent grep over `crates/mini-diarium-core/src/backup/` returns no hits (Task 1.3 already dropped the deprecated alias). No `dbg!`/`println!`/`eprintln!` in `crates/mini-diarium-core/src/backup/` or `src-tauri/src/commands/backup*.rs`. `git status --short` clean on this branch. `git ls-files | grep '\.db$'` returns nothing — no `.db` fixtures tracked. Keep-list tests all present and unmodified: `test_vacuum_into_resets_the_change_counter` + the other change-counter tests (`store.rs`), `test_burst_activity_cannot_evict_the_oldest_tier` + `test_unchanged_database_produces_no_snapshot` (`policy.rs`), `test_manifest_contains_no_user_content` (`manifest.rs`), `test_backups_directory_never_contains_key_material` (`store.rs`). Two stale mentions of `MAX_BACKUPS` remain out of scope, as noted going into this task: `CHANGELOG.md:510` (historical, correct to leave) and `crates/mini-diarium-core/API.md:300-301` (already documents its removal, correct); `.agents/skills/security-stance/SKILL.md:98` also still references it and is stale, but touching a skill file is outside this task's scope — worth a separate follow-up, not a plan step here.
+- **Note added after the fact:** the "`git status --short` clean" observation above was true at verification time. Task 6.3's pre-flight coverage check subsequently found and fixed a real bug in `scripts/check-diff-coverage.mjs` (see Task 6.3's notes), so the tree is no longer clean by the time this plan closes — that change is an intended, reviewed part of this session's work, not stray drift, and is captured in its own CHANGELOG entry.
 
 #### Task 6.2: Close TODO-0098 and complete the changelog
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Objective: The originating TODO and the changelog reflect the shipped work.
 - Steps:
   1. Mark TODO-0098 `[x]` in `docs/todo/TODO.md`.
   2. Add the Milestone 3–5 changelog entry (Milestones 1–2 were covered by Task 2.3), describing the Backups panel, both restore paths, and the disclosures.
 - Validation: `rg "TODO-0098" docs/todo/TODO.md` shows `[x]`; changelog entry present.
 - Notes: Archival of the completed TODO is the `todo-manager` or `pre-release` skill's job, not this task's.
+- Split off Task 3.4 into [TODO-0101](todo/TODO.md) 2026-08-16 (see Task 3.4's own notes) before closing this task, per the maintainer's decision on the Linux blocker.
+- Changelog completeness check performed 2026-08-16 against `CHANGELOG.md`'s `## [0.7.0] - Unreleased` section (lines 37-56): every shipped Milestone 3-5 capability already has a corresponding entry — the Backups panel and unlock-screen access, failed-backup visibility, the passwordless caveat, whole-journal restore, per-entry restore, move-with-journal, credential-drift disclosures (Milestone 5), plus internal notes for the inspect groundwork (Task 4.1), the E2E round-trip coverage (Task 4.4), and the key-material test (Task 5.3). No gap found; nothing added.
+- **Re-opened once, briefly.** Task 6.3's pre-flight coverage check surfaced a real bug in `scripts/check-diff-coverage.mjs` (see Task 6.3's notes and the CHANGELOG's new Internal entry). That fix is itself now a shipped change and has its own changelog entry — this task's "no gap found" conclusion above was accurate for Milestones 3-5 and remains so; the coverage-script fix is recorded separately since it belongs to Task 6.3, not to the original Milestone 3-5 feature set.
+- Step 1 (marking TODO-0098 `[x]`) is deliberately deferred to after Task 6.3 passes — a checked-off TODO means "verified done," not "code complete." Completed as the last step of this plan's closeout; see the Metadata line and TODO.md for the final state.
 
 #### Task 6.3: Final Verification
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Objective: Validate the integrated change after cleanup.
 - Steps:
   1. Run every command in Pre-flight Checks below.
@@ -608,6 +618,19 @@ on CI — that is the one open item before Task 4.4 can close.
   3. Fix failures and rerun until verification passes, or record the blocker.
 - Validation: All Pre-flight Checks pass and the rehearsal succeeds without any manual file manipulation outside the app.
 - Notes: Step 2 is the real acceptance test for this plan. A backup system that has never been restored from is not verified.
+- **A third checklist correction found running this task, beyond the two already known going in** (`bun run test:e2e` doesn't build; the stateful E2E lane fails locally on Windows for viewport reasons): **`cmd.exe /c "..."` invoked from this Codex/Claude shell's Bash tool (Git Bash/MSYS) silently no-ops.** MSYS path-conversion rewrites the literal argument `/c` into a Windows path (`C:\`) before `cmd.exe` ever sees it, so the actual command never runs — `cmd.exe` just prints its banner and exits 0. This is a **false pass**, not a crash, which is what makes it dangerous: it looks identical to a successful silent-on-success tool like `tsc --noEmit`. It was only caught here because `validate:locales` is *not* silent on success (it prints a per-locale key count) and that output was missing. The fix is `MSYS_NO_PATHCONV=1 cmd.exe /c "..."`, which every command in this task's own pre-flight run was redone with after the discovery. Flagged for a follow-up `CLAUDE.md`/best-practices edit outside this task's scope, since it affects the documented "Commands verified to work from this shell via Windows" list generally, not just this plan.
+- **Manual recovery rehearsal completed 2026-08-16** via `tauri-agent-dev` against a real sandbox journal — the actual acceptance test for this plan. Sequenced cheap-probe-first per this session's own plan: window.confirm handling was verified before building real state, since the plan's own history shows every rehearsal so far has found a bug the test suite missed.
+  - **`window.confirm` probe.** A trivial journal (one entry, one manual snapshot) was restored immediately to check whether the confirm dialog would wedge the CDP session the way a *native* OS dialog would (the concern the plan flagged, drawing the parallel to Task 5.1's folder-picker workaround). It did not: `agent-browser`'s CDP session handles `window.confirm` transparently with no coordinate-click workaround needed, unlike a native dialog. The probe restore itself succeeded end-to-end, confirming the mechanism before the real scenario was built.
+  - **Whole-journal restore, full scenario.** Wrote three entries across three dates (Aug 9, Aug 14, Aug 16), one tagged (`pre-snapshot`), took a manual snapshot (`Manual · 3 entries`), then wrote a brand-new fourth entry on Aug 11 and edited the Aug 9 entry in place — both strictly after the snapshot, so restore would have something to visibly discard. Before restoring: opened Search and searched `POST-SNAPSHOT`, establishing a baseline of **2 results** (the new Aug 11 entry and the Aug 9 edit); left the Aug 9 entry open in the editor, showing the post-snapshot edit. Triggered **Restore** on the 3-entry snapshot. Result, checked against every point the plan's own history flagged as previously bug-prone and not coverable by unit tests alone:
+    - Success message named the safety snapshot by exact timestamp, as UX-2 requires: *"Journal restored to the backup from Aug 16, 2026, 1:58 PM. Your previous state was saved as a new backup from Aug 16, 2026, 1:59 PM in case you need to undo this."*
+    - **The open editor updated live**, with no navigation and no manual refresh: the Aug 9 entry's body reverted from the post-snapshot edit back to its original text the instant the restore completed — this is deviation 7's fix (`refreshAfterRestore()` / `registerReloadCallback`) working correctly under real conditions, not just its unit test.
+    - Calendar updated live: Aug 11 lost its "has entry" marker; Aug 9, Aug 14, Aug 16 kept theirs.
+    - Re-searching `POST-SNAPSHOT` after the restore returned **"No results found"** — search state refreshed correctly, both occurrences gone.
+    - The `pre-snapshot` tag, applied before the snapshot, was still attached to the Aug 9 entry afterward — tag state survived the round trip correctly.
+    - No defect found. Nothing needed fixing.
+  - **Per-entry restore.** Deleted the live Aug 14 entry (cleared title and body, confirmed the calendar lost its "has entry" marker). Opened **Restore entries…** on the `Manual · 3 entries` snapshot, entered the password, and confirmed the dialog correctly flagged the Aug 14 entry **"Missing from your journal"** while the other two read "Already in your journal." Selected it and restored: status read *"1 entry added. Nothing already in your journal was overwritten,"* the entry's own status flipped live to "Already in your journal," the calendar regained its "has entry" marker, and — again live, no manual refresh — the editor (open on Aug 14, previously showing the empty-entry placeholder) displayed the restored title and body immediately. No defect found.
+  - **Outcome:** both rehearsals passed cleanly on the first attempt, with every point the plan's own Execution Notes and prior deviation history called out as bug-prone (editor staleness, success-message accuracy, search/tag refresh) explicitly checked and confirmed working. No new `BLOCKED` task was needed.
+- **A real bug found and fixed while running the coverage pre-flight check, per the Execution Notes rule.** `bun run coverage:check` (run without `--working-tree`, per this task's own correction below, since this branch had never had a whole-branch-vs-`origin/master` coverage run) reported `⚠ Coverage generation issues: frontend coverage generation failed (tests failed or lcov not written)` — the tool was honest about the failure, so this was not a silent false pass the way the MSYS finding above was, but the gate then proceeded to grade against a stale `coverage/lcov.info` from hours earlier rather than a fresh run. Root cause: `scripts/check-diff-coverage.mjs`'s `generateCoverage()` spawned `bun` directly via `spawnSync`, which cannot execute Windows's `.cmd` shim without going through a shell — the exact defect the `[0.7.0]` changelog already records as fixed in `scripts/render-diagrams.mjs`. Fixed the same way (`cmd.exe /d /s /c` on Windows), verified by confirming `coverage/lcov.info`'s mtime moved forward and that `vitest run --coverage`'s own output now appears in the captured log; the re-run passed with a genuinely fresh frontend measurement, combined branch-wide diff coverage **90.3%** against the 80% gate. No regression test was added: `coverage:self-test` covers the lcov/diff-parsing pure functions only, and `generateCoverage()` itself runs the full test suites as a side effect with no clean seam to unit-test the spawn behavior without either mocking `child_process` (which would not have caught this — the mock would still have to know to distinguish Windows `.cmd` resolution) or actually running the suites in CI on both platforms. Recorded here rather than invented, per the precedent Milestone 4's Task 4.2 deviation 5 already sets for an unreachable-without-real-infra fault path. Changelog entry added under `[0.7.0] → Internal`.
 
 ---
 
@@ -621,21 +644,21 @@ Milestone 4 carries a second gate: Tasks 4.2 and 4.3 must not start until all se
 
 Run these before marking the plan COMPLETED. All commands verified to exist in `package.json` on 2026-08-04.
 
-- [ ] `cargo clippy --workspace --all-targets` passes with zero warnings
-- [ ] `cargo test --workspace` passes with zero failures
-- [ ] `cmd.exe /c bun run type-check` passes
-- [ ] `cmd.exe /c bun run lint` passes
-- [ ] `cmd.exe /c bun run test:run` passes
-- [ ] `cmd.exe /c bun run test:e2e` passes
-- [ ] `cmd.exe /c bun run build` succeeds
-- [ ] `cmd.exe /c bun run format` succeeds
-- [ ] `cmd.exe /c bun run validate:locales` passes — new i18n keys present in all seven locales
-- [ ] `cmd.exe /c bun run coverage:diff` passes the ≥80% patch gate
-- [ ] `cmd.exe /c bun run check:build-paths` passes
-- [ ] `cargo bench --bench backup_bench` runs (Task 1.8)
-- [ ] Any text-processing function tested with non-ASCII strings (ASCII + RTL + CJK minimum)
-- [ ] Manual recovery rehearsal (Task 6.3 step 2) completed
-- [ ] Plan status updated to COMPLETED
+- [x] `cargo clippy --workspace --all-targets` passes with zero warnings — ran as `-- -D warnings` 2026-08-16, clean
+- [x] `cargo test --workspace` passes with zero failures — 2026-08-16, all crates green (452 core + 42 crypto shown; app crate included in the overall zero-failure exit)
+- [x] `cmd.exe /c bun run type-check` passes — 2026-08-16 (re-run with `MSYS_NO_PATHCONV=1`, see Task 6.3 notes on the MSYS `/c`-mangling finding)
+- [x] `cmd.exe /c bun run lint` passes — 2026-08-16 (same MSYS correction)
+- [x] `cmd.exe /c bun run test:run` passes — 2026-08-16, 950/950 tests, 94 files
+- [x] `cmd.exe /c bun run test:e2e` passes — run as the plan's own corrected `test:e2e:local` 2026-08-16: clean lane, 6/6 spec files passed including `backup-restore.spec.ts` (14.6s), 100% in 1m50s
+- [x] `cmd.exe /c bun run build` succeeds — 2026-08-16
+- [x] `cmd.exe /c bun run format` succeeds — 2026-08-16, all files unchanged (already clean)
+- [x] `cmd.exe /c bun run validate:locales` passes — 2026-08-16, 649 keys × 6 locales OK
+- [x] `cmd.exe /c bun run coverage:diff` passes the ≥80% patch gate — run as `coverage:check` (fresh generate + gate, see Task 6.3 notes on the `spawnSync('bun')` Windows bug found and fixed here) without `--working-tree`, the first whole-branch (`HEAD` vs `origin/master`) run for this branch: **90.3%** combined (2827/3131)
+- [x] `cmd.exe /c bun run check:build-paths` passes — 2026-08-16
+- [x] `cargo bench --bench backup_bench` runs (Task 1.8) — 2026-08-16: 15.4ms (small, 140KB), 37.2ms (large, 8MB), 137.4ms (image-heavy, 40MB), consistent with the Milestone 1 baseline (~4ms/MB)
+- [x] Any text-processing function tested with non-ASCII strings (ASCII + RTL + CJK minimum) — already covered by the existing search/text test suite (`search::text::impl_tests`), unaffected by this plan's scope
+- [x] Manual recovery rehearsal (Task 6.3 step 2) completed — 2026-08-16, whole-journal and per-entry restore both passed cleanly, no defects found; see Task 6.3's implementation notes
+- [x] Plan status updated to COMPLETED
 
 ## Plan Self-Check
 
