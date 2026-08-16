@@ -36,8 +36,15 @@ export default defineConfig(async () => ({
   },
 
   // Optimize dependencies
+  // `entries` narrows Vite's esbuild/rolldown dependency scan to the real SPA
+  // entry point. Without it, Vite's default `computeEntries()` globs `**/*.html`
+  // from the repo root (ignoring only `outDir` and `node_modules`, and NOT
+  // honoring .gitignore), sweeping in the 30+ GB `/target/` Cargo build output
+  // and `.reference/` vendor checkout as scan "entry points" and stalling
+  // `bun tauri dev` startup for minutes.
   optimizeDeps: {
     include: ['solid-js', '@tiptap/core'],
+    entries: ['index.html'],
   },
 
   // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`
