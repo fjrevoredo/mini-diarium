@@ -344,10 +344,16 @@ Not treated as a defect, and no dialog-guard added:
 
 ##### Linux result
 
-Not run. This machine is Windows-only and the skill used for the Windows pass is
-Windows-only by design. Milestone 3's exit criteria are not met until a maintainer repeats
-the two checks above on one Linux desktop (Wayland preferred, given the recent `tao`
-title-bar issue).
+Run 2026-08-16 in a later session, on a different (native Linux, not WSL-over-Windows)
+machine — see [TODO-0101](todo/TODO.md) for the full result, which is where it's recorded
+per this task's own acceptance line since this plan file was already `COMPLETED` by then.
+Summary: **Pass on both checks.** Correct directory confirmed via a `dbus-monitor` capture
+of the `org.freedesktop.FileManager1.ShowItems` D-Bus call. The journal did lock a few
+seconds after a real click opened Nautilus (with `autoLockOnFocusLoss` on) — judged **not a
+defect**, for the same reason already recorded above for Windows Explorer: leaving the app
+for an independent external program is a genuine departure, which is what the setting
+promises, unlike the app's own transient modal dialogs that `src/lib/dialog.ts` guards. No
+code change made.
 
 ---
 
