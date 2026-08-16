@@ -1034,4 +1034,117 @@ mod tests {
             "a failed finalize left the temp file behind"
         );
     }
+
+    // ── Task 5.3: local-only journals keep key-less backups ──────────────────────────
+
+    #[test]
+    fn test_backups_directory_never_contains_key_material() {
+        // Plan Assumption 2 / finding B-9: a local-only (passwordless) journal's `auto_key`
+        // lives only in `config.json`, on this device, and must never be written into the
+        // backups directory. The wrapped *master* key legitimately appears in every snapshot's
+        // `auth_slots` table — that ciphertext is not the secret this test guards. Scanning for
+        // the raw `auto_key` bytes specifically is what keeps this test from being satisfied by
+        // encryption alone.
+        use crate::backup::{create_snapshot, BackupContext, SnapshotTrigger};
+        use crate::db::{create_database_auto, insert_entry, DiaryEntry};
+
+        let dir = tempfile::Builder::new()
+            .prefix("mini-diarium-store-no-key-leak-")
+            .tempdir()
+            .unwrap();
+        let db_path = dir.path().join("diary.db");
+        let backups_dir = dir.path().join("backups");
+        let auto_key: [u8; 32] = [
+            0x4b, 0x9a, 0x1c, 0x7d, 0xe2, 0x33, 0x88, 0x0f, 0x56, 0xa7, 0xd1, 0x64, 0xf2, 0x3e,
+            0x91, 0x0c, 0x5d, 0xb8, 0x27, 0x4a, 0x9e, 0x61, 0x3b, 0xc0, 0xf7, 0x1a, 0x85, 0x2d,
+            0x69, 0xe4, 0x0b, 0x93,
+        ];
+
+        let db = create_database_auto(&db_path, &auto_key).unwrap();
+        insert_entry(
+            &db,
+            &DiaryEntry {
+                id: 0,
+                date: "2024-06-01".to_string(),
+                title: "Local only entry".to_string(),
+                text: "body".to_string(),
+                word_count: 1,
+                date_created: "2024-06-01T00:00:00Z".to_string(),
+                date_updated: "2024-06-01T00:00:00Z".to_string(),
+                metadata: None,
+                locked: false,
+            },
+        )
+        .unwrap();
+
+        create_snapshot(
+            &db,
+            &BackupContext {
+                db_path: &db_path,
+                backups_dir: &backups_dir,
+                app_version: Some("0.6.4"),
+            },
+            SnapshotTrigger::Manual,
+        )
+        .unwrap();
+
+        // A second snapshot, so the change-counter dedup path and retention both run at least
+        // once against real state before the scan.
+        insert_entry(
+            &db,
+            &DiaryEntry {
+                id: 0,
+                date: "2024-06-02".to_string(),
+                title: "Second".to_string(),
+                text: "body".to_string(),
+                word_count: 1,
+                date_created: "2024-06-02T00:00:00Z".to_string(),
+                date_updated: "2024-06-02T00:00:00Z".to_string(),
+                metadata: None,
+                locked: false,
+            },
+        )
+        .unwrap();
+        create_snapshot(
+            &db,
+            &BackupContext {
+                db_path: &db_path,
+                backups_dir: &backups_dir,
+                app_version: Some("0.6.4"),
+            },
+            SnapshotTrigger::Manual,
+        )
+        .unwrap();
+
+        assert!(
+            backups_dir.exists(),
+            "the scan below would silently pass over nothing if snapshots were never written"
+        );
+
+        let mut scanned_files = 0;
+        for entry in fs::read_dir(&backups_dir).unwrap() {
+            let path = entry.unwrap().path();
+            if !path.is_file() {
+                continue;
+            }
+            scanned_files += 1;
+            let bytes = fs::read(&path).unwrap();
+            assert!(
+                !contains_subslice(&bytes, &auto_key),
+                "the raw auto_key bytes were found in {}",
+                path.display()
+            );
+        }
+        assert!(
+            scanned_files >= 3,
+            "expected manifest.json plus at least two backup-*.db files, found {scanned_files}"
+        );
+    }
+
+    fn contains_subslice(haystack: &[u8], needle: &[u8]) -> bool {
+        if needle.is_empty() || haystack.len() < needle.len() {
+            return false;
+        }
+        haystack.windows(needle.len()).any(|w| w == needle)
+    }
 }

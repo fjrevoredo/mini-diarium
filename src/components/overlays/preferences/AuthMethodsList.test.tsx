@@ -31,9 +31,11 @@ vi.mock('../../../state/auth', () => ({
   loadAuthMethods: mockLoadAuthMethods,
 }));
 
-function renderList() {
+function renderList(onReviewBackups?: () => void) {
   const [isOpen] = createSignal(true);
-  return renderWithI18n(() => <AuthMethodsList isOpen={isOpen} />);
+  return renderWithI18n(() => (
+    <AuthMethodsList isOpen={isOpen} onReviewBackups={onReviewBackups} />
+  ));
 }
 
 describe('AuthMethodsList', () => {
@@ -103,5 +105,76 @@ describe('AuthMethodsList', () => {
     });
 
     expect(callOrder).toEqual(['verifyPassword', 'confirm']);
+  });
+
+  it('shows a dismissible post-removal notice after a successful removal', async () => {
+    mockAuthMethods.mockReturnValue([
+      { id: 1, slot_type: 'password', label: 'Password', last_used: null },
+      { id: 2, slot_type: 'keypair', label: 'My Key', last_used: null },
+    ]);
+    vi.mocked(dialogConfirm).mockResolvedValue(true);
+
+    renderList();
+    fireEvent.input(screen.getByPlaceholderText('Enter current password'), {
+      target: { value: 'mypassword' },
+    });
+    fireEvent.click(screen.getAllByRole('button', { name: 'Remove' })[0]);
+
+    await vi.waitFor(() => {
+      expect(mockRemoveAuthMethod).toHaveBeenCalled();
+    });
+    await vi.waitFor(() => {
+      expect(screen.getByTestId('removed-method-notice')).toBeInTheDocument();
+    });
+
+    // Dismissible, not auto-timed: it must still be there after a while.
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(screen.getByTestId('removed-method-notice')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Close' }));
+    expect(screen.queryByTestId('removed-method-notice')).not.toBeInTheDocument();
+  });
+
+  it('does not show a "Review backups" action when no callback is supplied', async () => {
+    mockAuthMethods.mockReturnValue([
+      { id: 1, slot_type: 'password', label: 'Password', last_used: null },
+      { id: 2, slot_type: 'keypair', label: 'My Key', last_used: null },
+    ]);
+    vi.mocked(dialogConfirm).mockResolvedValue(true);
+
+    renderList();
+    fireEvent.input(screen.getByPlaceholderText('Enter current password'), {
+      target: { value: 'mypassword' },
+    });
+    fireEvent.click(screen.getAllByRole('button', { name: 'Remove' })[0]);
+
+    await vi.waitFor(() => {
+      expect(screen.getByTestId('removed-method-notice')).toBeInTheDocument();
+    });
+    expect(screen.queryByRole('button', { name: 'Review backups' })).not.toBeInTheDocument();
+  });
+
+  it('calls onReviewBackups and dismisses the notice when "Review backups" is clicked', async () => {
+    mockAuthMethods.mockReturnValue([
+      { id: 1, slot_type: 'password', label: 'Password', last_used: null },
+      { id: 2, slot_type: 'keypair', label: 'My Key', last_used: null },
+    ]);
+    vi.mocked(dialogConfirm).mockResolvedValue(true);
+    const onReviewBackups = vi.fn();
+
+    renderList(onReviewBackups);
+    fireEvent.input(screen.getByPlaceholderText('Enter current password'), {
+      target: { value: 'mypassword' },
+    });
+    fireEvent.click(screen.getAllByRole('button', { name: 'Remove' })[0]);
+
+    await vi.waitFor(() => {
+      expect(screen.getByTestId('removed-method-notice')).toBeInTheDocument();
+    });
+
+    fireEvent.click(screen.getByRole('button', { name: 'Review backups' }));
+
+    expect(onReviewBackups).toHaveBeenCalledTimes(1);
+    expect(screen.queryByTestId('removed-method-notice')).not.toBeInTheDocument();
   });
 });

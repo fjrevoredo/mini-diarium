@@ -59,6 +59,17 @@ export function ChangePasswordForm(props: ChangePasswordFormProps) {
         {t('prefs.security.changePasswordTitle')}
       </h3>
 
+      {/* Persistent, not the auto-dismissing success toast below — a disclosure about your
+          existing backups needs to actually be read, not flash for three seconds. */}
+      <div
+        class="mb-4 rounded-md border border-primary bg-tertiary p-3"
+        data-testid="change-password-snapshot-warning"
+      >
+        <p class="text-xs text-secondary leading-relaxed">
+          {t('prefs.security.changePasswordSnapshotWarning')}
+        </p>
+      </div>
+
       <div class="mb-4">
         <label class="block text-sm font-medium text-secondary mb-2">
           {t('prefs.security.currentPasswordLabel2')}

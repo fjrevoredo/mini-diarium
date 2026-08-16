@@ -8,7 +8,8 @@
     "open": "खोलें",
     "browse": "ब्राउज़ करें",
     "browseDotDotDot": "ब्राउज़ करें...",
-    "browseFolderDotDotDot": "फ़ोल्डर ब्राउज़ करें..."
+    "browseFolderDotDotDot": "फ़ोल्डर ब्राउज़ करें...",
+    "or": "या"
   },
   "layout": {
     "loading": "लोड हो रहा है...",
@@ -403,8 +404,10 @@
       "currentPwdRequired": "वर्तमान पासवर्ड (हटाने के लिए आवश्यक)",
       "currentPwdPlaceholder": "वर्तमान पासवर्ड दर्ज करें",
       "removeError": "प्रमाणीकरण विधि हटाने के लिए वर्तमान पासवर्ड आवश्यक है",
-      "confirmRemoveMessage": "क्या आप वाकई इस प्रमाणीकरण विधि को हटाना चाहते हैं?",
+      "confirmRemoveMessage": "क्या आप वाकई इस प्रमाणीकरण विधि को हटाना चाहते हैं? यह पंजीकृत रहने के दौरान लिए गए हर बैकअप को अब भी खोल सकेगी — इसे यहां हटाने से यह मौजूदा बैकअप से रद्द नहीं होती।",
       "confirmRemoveTitle": "प्रमाणीकरण विधि हटाएं",
+      "removedMethodStillValidWarning": "हटाई गई विधि अब भी उसे हटाने से पहले लिए गए हर बैकअप को खोल सकती है। यदि यह असुरक्षित हो गई थी, तो उन बैकअप को भी हटा दें।",
+      "reviewBackupsButton": "बैकअप जांचें",
       "addPasswordTitle": "पासवर्ड प्रमाणीकरण जोड़ें",
       "addPasswordHint": "कोई पासवर्ड विधि पंजीकृत नहीं है। पासवर्ड से अनलॉक करने के लिए एक जोड़ें।",
       "passwordLabel": "पासवर्ड",
@@ -425,6 +428,7 @@
       "savePrivateKeyTitle": "प्राइवेट की फ़ाइल सेव करें",
       "keypairFileCancelled": "की फ़ाइल सेव रद्द",
       "changePasswordTitle": "पासवर्ड बदलें",
+      "changePasswordSnapshotWarning": "इस बदलाव से पहले लिए गए बैकअप को खोलने के लिए अब भी आपके मौजूदा (पुराने) पासवर्ड की आवश्यकता होगी। इसे सुरक्षित रखें, या पासवर्ड बदलने के तुरंत बाद एक नया बैकअप लें।",
       "currentPasswordLabel2": "वर्तमान पासवर्ड",
       "currentPasswordPlaceholder2": "वर्तमान पासवर्ड दर्ज करें",
       "newPasswordLabel": "नया पासवर्ड",
@@ -463,7 +467,11 @@
       "resetDoubleConfirmMessage": "यह आपका अंतिम अवसर है। क्या आप वाकई अपनी सभी जर्नल एंट्री हटाना चाहते हैं?",
       "resetDoubleConfirmTitle": "जर्नल रीसेट करें — अंतिम चेतावनी",
       "changeDirectoryTitle": "जर्नल निर्देशिका चुनें",
-      "resetFailedAlert": "जर्नल रीसेट करने में विफल: {{ message }}"
+      "resetFailedAlert": "जर्नल रीसेट करने में विफल: {{ message }}",
+      "moveBackupsConfirmTitle": "बैकअप भी स्थानांतरित करें?",
+      "moveBackupsConfirmMessage": "इस जर्नल के मौजूदा बैकअप हैं। क्या इन्हें जर्नल के साथ नए स्थान पर ले जाना है? यदि नहीं, तो वे अपने वर्तमान स्थान पर ही रहेंगे।",
+      "backupsStayedAlert": "आपके मौजूदा बैकअप पुराने स्थान पर छोड़ दिए गए: {{ path }}",
+      "previousLocationFallback": "जर्नल का पिछला फ़ोल्डर"
     },
     "backups": {
       "title": "बैकअप",
@@ -499,6 +507,7 @@
       "entryCount_one": "{{ count }} प्रविष्टि",
       "entryCount_other": "{{ count }} प्रविष्टियाँ",
       "dateRange": "{{ from }} से {{ to }} तक",
+      "requiredCredentialHint": "आवश्यक: {{ credentials }}",
       "verified": "जाँचा गया",
       "unverified": "जाँचा नहीं गया",
       "unverifiedHint": "अभी तक इस डायरी की कुंजी से जाँचा नहीं गया। पुराने संस्करण से बने बैकअप के लिए यह सामान्य है।",

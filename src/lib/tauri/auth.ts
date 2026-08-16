@@ -29,8 +29,8 @@ export async function getJournalPath(): Promise<string> {
   return await invoke('get_diary_path');
 }
 
-export async function changeJournalDirectory(newDir: string): Promise<void> {
-  await invoke('change_diary_directory', { newDir });
+export async function changeJournalDirectory(newDir: string, moveBackups: boolean): Promise<void> {
+  await invoke('change_diary_directory', { newDir, moveBackups });
 }
 
 export async function changePassword(oldPassword: string, newPassword: string): Promise<void> {

@@ -8,7 +8,8 @@
     "open": "Abrir",
     "browse": "Examinar",
     "browseDotDotDot": "Examinar...",
-    "browseFolderDotDotDot": "Examinar carpeta..."
+    "browseFolderDotDotDot": "Examinar carpeta...",
+    "or": "o"
   },
   "layout": {
     "loading": "Cargando...",
@@ -403,8 +404,10 @@
       "currentPwdRequired": "Contraseña actual (requerida para eliminar)",
       "currentPwdPlaceholder": "Ingresa la contraseña actual",
       "removeError": "La contraseña actual es necesaria para eliminar un método de autenticación",
-      "confirmRemoveMessage": "¿Estás seguro de que quieres eliminar este método de autenticación?",
+      "confirmRemoveMessage": "¿Estás seguro de que quieres eliminar este método de autenticación? Seguirá abriendo cada copia de seguridad realizada mientras estaba registrado: eliminarlo aquí no lo revoca de las copias de seguridad existentes.",
       "confirmRemoveTitle": "Eliminar método de autenticación",
+      "removedMethodStillValidWarning": "El método eliminado sigue abriendo cada copia de seguridad realizada antes de eliminarlo. Si estaba comprometido, elimina también esas copias de seguridad.",
+      "reviewBackupsButton": "Revisar copias de seguridad",
       "addPasswordTitle": "Añadir autenticación por contraseña",
       "addPasswordHint": "No hay ningún método de contraseña registrado. Añade uno para poder desbloquear con contraseña.",
       "passwordLabel": "Contraseña",
@@ -425,6 +428,7 @@
       "savePrivateKeyTitle": "Guardar archivo de clave privada",
       "keypairFileCancelled": "Guardado del archivo de clave cancelado",
       "changePasswordTitle": "Cambiar contraseña",
+      "changePasswordSnapshotWarning": "Las copias de seguridad realizadas antes de este cambio seguirán necesitando tu contraseña actual (anterior) para abrirse. Guárdala en un lugar seguro o crea una copia de seguridad nueva justo después de cambiar tu contraseña.",
       "currentPasswordLabel2": "Contraseña actual",
       "currentPasswordPlaceholder2": "Ingresa la contraseña actual",
       "newPasswordLabel": "Nueva contraseña",
@@ -463,7 +467,11 @@
       "resetDoubleConfirmMessage": "Esta es tu última oportunidad. ¿Estás absolutamente seguro de que quieres eliminar todas tus entradas del diario?",
       "resetDoubleConfirmTitle": "Restablecer diario — Advertencia final",
       "changeDirectoryTitle": "Elegir directorio del diario",
-      "resetFailedAlert": "Error al restablecer el diario: {{ message }}"
+      "resetFailedAlert": "Error al restablecer el diario: {{ message }}",
+      "moveBackupsConfirmTitle": "¿Mover también las copias de seguridad?",
+      "moveBackupsConfirmMessage": "Este diario tiene copias de seguridad existentes. ¿Deseas moverlas a la nueva ubicación junto con el diario? Si no lo haces, permanecerán donde están.",
+      "backupsStayedAlert": "Tus copias de seguridad existentes se dejaron en la ubicación anterior: {{ path }}",
+      "previousLocationFallback": "la carpeta anterior del diario"
     },
     "backups": {
       "title": "Copias de seguridad",
@@ -499,6 +507,7 @@
       "entryCount_one": "{{ count }} entrada",
       "entryCount_other": "{{ count }} entradas",
       "dateRange": "del {{ from }} al {{ to }}",
+      "requiredCredentialHint": "Requiere: {{ credentials }}",
       "verified": "Comprobada",
       "unverified": "Sin comprobar",
       "unverifiedHint": "Aún no se ha comprobado con la clave de este diario. Es normal en copias creadas por una versión anterior.",

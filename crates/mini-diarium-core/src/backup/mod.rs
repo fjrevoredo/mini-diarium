@@ -14,6 +14,7 @@
 //! | [`inspect`] | Reading a snapshot read-only without adopting it (Milestone 4). |
 //! | [`restore`] | Rolling the live journal back to a snapshot (Milestone 4). |
 //! | [`restore_entries`] | Restoring individual entries out of a snapshot (Milestone 4). |
+//! | [`relocate`] | Moving the backups directory when a journal moves (Milestone 5). |
 //! | this file | Orchestration — the sequence the layers run in. |
 //!
 //! # Why snapshots are not file copies
@@ -27,6 +28,7 @@
 pub mod inspect;
 pub mod manifest;
 pub mod policy;
+pub mod relocate;
 pub mod restore;
 pub mod restore_entries;
 pub mod store;
@@ -49,6 +51,7 @@ pub use policy::{
     SnapshotTrigger, DAILY_DAYS, MIN_AUTOMATIC_INTERVAL_SECS, MIN_STORAGE_BUDGET_BYTES,
     MONTHLY_MONTHS, RECENT_SNAPSHOTS, WEEKLY_WEEKS,
 };
+pub use relocate::relocate_backups;
 pub use restore::{restore_from_snapshot, RestoreOutcome};
 pub use restore_entries::{
     list_snapshot_entries_with_status, restore_entries_from_snapshot, EntryMatchStatus,

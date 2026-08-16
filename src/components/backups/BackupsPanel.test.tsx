@@ -1,7 +1,11 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { screen, waitFor, fireEvent, within } from '@solidjs/testing-library';
 import { renderWithI18n } from '../../test/i18n-test-utils';
-import BackupsPanel, { formatBytes, describeTrigger } from './BackupsPanel';
+import BackupsPanel, {
+  formatBytes,
+  describeTrigger,
+  describeRequiredCredential,
+} from './BackupsPanel';
 import { defaultT } from '../../i18n';
 import type { BackupHealth, SnapshotMeta } from '../../lib/tauri';
 
@@ -505,6 +509,9 @@ describe('BackupsPanel', () => {
 
       expect(screen.queryByText(/3 entries/)).not.toBeInTheDocument();
       expect(screen.queryByText(/2024-01-15 to 2024-03-20/)).not.toBeInTheDocument();
+      // Task 5.2's required-credential hint follows the same contract: it is one step closer
+      // to auth-history disclosure than plain metadata, so it is withheld here too.
+      expect(screen.queryByTestId('backups-required-credential')).not.toBeInTheDocument();
     });
 
     it('still allows opening the backups folder — the one useful action with no key', async () => {
@@ -547,5 +554,32 @@ describe('describeTrigger', () => {
 
   it('inlines the operation name for a destructive trigger', () => {
     expect(describeTrigger({ destructive: 'reset_diary' }, defaultT)).toBe('Before reset_diary');
+  });
+});
+
+describe('describeRequiredCredential', () => {
+  it('returns null when the only slot type is auto — already covered by the local-only notice', () => {
+    expect(describeRequiredCredential(['auto'], defaultT)).toBeNull();
+  });
+
+  it('returns null for an empty slot-type list (pre-auth-slot v1/v2 snapshots)', () => {
+    expect(describeRequiredCredential([], defaultT)).toBeNull();
+  });
+
+  it('names a single required credential type', () => {
+    expect(describeRequiredCredential(['password'], defaultT)).toBe('Requires: Password');
+    expect(describeRequiredCredential(['keypair'], defaultT)).toBe('Requires: Key File');
+  });
+
+  it('joins multiple required credential types with "or"', () => {
+    expect(describeRequiredCredential(['password', 'keypair'], defaultT)).toBe(
+      'Requires: Password or Key File',
+    );
+  });
+
+  it('drops auto from a mixed list and de-dupes repeated types', () => {
+    expect(describeRequiredCredential(['auto', 'keypair', 'keypair'], defaultT)).toBe(
+      'Requires: Key File',
+    );
   });
 });

@@ -366,9 +366,9 @@ Nothing decrypted is written to disk during either kind of restore.
 
 ### Custom journal locations
 
-When you move your journal to a different folder via Preferences, `diary.db` is physically moved to the new location and all future snapshots go into `{new location}/backups/{journal name}/`.
+When you move your journal to a different folder via Preferences, `diary.db` is physically moved to the new location and all future snapshots go into `{new location}/backups/{journal name}/`. If you have existing snapshots, you're asked whether to move them along with the journal.
 
-**Existing snapshots in the old folder are not moved.** If you want to keep your history, copy the old `backups/` folder to the new journal directory before or after the move.
+**If you decline, existing snapshots stay in the old folder** (you're told where before the move finishes). To keep that history later, copy the old `backups/` folder to the new journal directory by hand.
 
 ### Cloud-synced and external locations
 

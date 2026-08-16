@@ -236,7 +236,7 @@
       "@id": "https://mini-diarium.com/docs/backups/#article",
       "headline": "Backups",
       "description": "Mini Diarium snapshots your journal before risky changes, restores the whole journal or specific entries in-app, and keeps tiered history going back a year.",
-      "dateModified": "2026-08-11T00:00:00Z",
+      "dateModified": "2026-08-16T00:00:00Z",
       "keywords": "backups, data safety, backup rotation, storage, snapshots",
       "publisher": {
         "@type": "Organization",
@@ -474,8 +474,8 @@
         <p><strong>Per-entry restore</strong> recovers specific entries without touching the rest of your journal. Click <strong>Restore entries…</strong> on a backup to browse what it contains. Each entry is flagged if it is missing from your current journal, shorter there than in the backup, or already present, so it is clear what is worth recovering. Restoring an entry never overwrites anything — it is added alongside whatever your journal already holds for that date — and the result states how many entries were added. Tags on a recovered entry come back with it. This is the one that matters when you only lost a day or two, not the whole journal.</p>
         <p>Nothing decrypted is ever written to disk during either kind of restore.</p>
         <p><strong>Do not point Mini Diarium at a snapshot where it sits.</strong> A snapshot is a working database, so <strong>+ Open Existing</strong> would happily open one — and opening it as a journal writes to it, destroying the untouched restore point. The app refuses <code>backup-*.db</code> files and anything inside a <code>backups</code> folder for exactly that reason. Both restore paths above read snapshots safely; you never need to do this by hand.</p>
-        <h2 id="custom-journal-locations">Custom Journal Locations</h2><p>When you move your journal to a different folder via Preferences, <code>diary.db</code> is physically moved to the new location and all future snapshots go into <code>{new location}/backups/{journal name}/</code>.</p>
-        <p><strong>Existing snapshots in the old folder are not moved automatically.</strong> If you want to keep your history, copy the old <code>backups/</code> folder to the new journal directory before or after the move.</p>
+        <h2 id="custom-journal-locations">Custom Journal Locations</h2><p>When you move your journal to a different folder via Preferences, <code>diary.db</code> is physically moved to the new location and all future snapshots go into <code>{new location}/backups/{journal name}/</code>. If you have existing snapshots, Mini Diarium asks whether to move them along with the journal.</p>
+        <p><strong>If you decline, existing snapshots stay in the old folder.</strong> Mini Diarium tells you where before the move finishes. If you want to keep that history later, copy the old <code>backups/</code> folder to the new journal directory by hand.</p>
         <h2 id="cloud-synced-locations">Cloud-Synced Locations</h2><p>If you place your journal directory inside a cloud-synced folder (Dropbox, OneDrive, iCloud Drive, and so on), both <code>diary.db</code> and the <code>backups/</code> subfolder are included in the sync, giving you off-site backup on top of local snapshots.</p>
         <p>Keep in mind that Mini Diarium does not coordinate concurrent access. <strong>Do not open the same journal from two devices at the same time.</strong> The encrypted database file is not designed for simultaneous multi-device write access.</p>
         <h2 id="snapshots-are-encrypted-and-what-that-costs-you">Snapshots Are Encrypted, and What That Costs You</h2><p>Snapshots are fully encrypted with the same key as your live journal. A snapshot without your credentials is unreadable. That is the point, and it has three consequences worth knowing before you need them.</p>

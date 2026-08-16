@@ -78,9 +78,12 @@ describe('auth command wrappers (IPC contract)', () => {
     expect(mockInvoke).toHaveBeenCalledWith('get_diary_path');
   });
 
-  it('changeJournalDirectory → change_diary_directory { newDir } (camelCase)', async () => {
-    await changeJournalDirectory('/new/dir');
-    expect(mockInvoke).toHaveBeenCalledWith('change_diary_directory', { newDir: '/new/dir' });
+  it('changeJournalDirectory → change_diary_directory { newDir, moveBackups } (camelCase)', async () => {
+    await changeJournalDirectory('/new/dir', true);
+    expect(mockInvoke).toHaveBeenCalledWith('change_diary_directory', {
+      newDir: '/new/dir',
+      moveBackups: true,
+    });
   });
 
   it('changePassword → change_password { oldPassword, newPassword } (camelCase)', async () => {

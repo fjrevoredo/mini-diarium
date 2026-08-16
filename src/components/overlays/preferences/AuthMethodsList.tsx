@@ -8,6 +8,9 @@ import { useI18n } from '../../../i18n';
 
 interface AuthMethodsListProps {
   isOpen: Accessor<boolean>;
+  /** Switches Preferences to the Backups tab. Omitted where there is nowhere to switch to
+   * (e.g. a future non-Preferences host for this list). */
+  onReviewBackups?: () => void;
 }
 
 export function AuthMethodsList(props: AuthMethodsListProps) {
@@ -16,11 +19,16 @@ export function AuthMethodsList(props: AuthMethodsListProps) {
 
   const [removePassword, setRemovePassword] = createSignal('');
   const [removeError, setRemoveError] = createSignal<string | null>(null);
+  // Dismissible, not auto-timed: a removed credential still opening every existing backup is
+  // a genuine threat-model fact, not a convenience toast that can be allowed to disappear on
+  // its own.
+  const [showRemovedNotice, setShowRemovedNotice] = createSignal(false);
 
   createEffect(() => {
     if (props.isOpen()) {
       setRemovePassword('');
       setRemoveError(null);
+      setShowRemovedNotice(false);
     }
   });
 
@@ -51,9 +59,15 @@ export function AuthMethodsList(props: AuthMethodsListProps) {
       await tauri.removeAuthMethod(slotId, hasPasswordSlot() ? removePassword() : null);
       await loadAuthMethods();
       setRemovePassword('');
+      setShowRemovedNotice(true);
     } catch (err) {
       setRemoveError(mapTauriError(err, t));
     }
+  };
+
+  const handleReviewBackups = () => {
+    setShowRemovedNotice(false);
+    props.onReviewBackups?.();
   };
 
   return (
@@ -115,6 +129,37 @@ export function AuthMethodsList(props: AuthMethodsListProps) {
         <Show when={removeError()}>
           <p class="mb-4 text-sm text-error">{removeError()}</p>
         </Show>
+      </Show>
+
+      {/* Post-removal disclosure: dismissible, not auto-timed — see the signal above. */}
+      <Show when={showRemovedNotice()}>
+        <div
+          class="mb-4 flex items-start justify-between gap-3 rounded-md border border-primary bg-tertiary p-3"
+          data-testid="removed-method-notice"
+        >
+          <p class="text-xs text-secondary leading-relaxed">
+            {t('prefs.security.removedMethodStillValidWarning')}
+          </p>
+          <div class="flex shrink-0 items-center gap-2">
+            <Show when={props.onReviewBackups}>
+              <button
+                type="button"
+                onClick={handleReviewBackups}
+                class="text-xs font-medium text-primary underline focus:outline-none"
+              >
+                {t('prefs.security.reviewBackupsButton')}
+              </button>
+            </Show>
+            <button
+              type="button"
+              onClick={() => setShowRemovedNotice(false)}
+              aria-label={t('common.close')}
+              class="text-xs text-tertiary hover:text-secondary focus:outline-none"
+            >
+              {t('common.close')}
+            </button>
+          </div>
+        </div>
       </Show>
     </>
   );

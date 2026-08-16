@@ -19,7 +19,12 @@ import { ChangePasswordForm } from './ChangePasswordForm';
 
 const log = createLogger('Preferences');
 
-export default function PreferencesSecurityTab(props: TabProps) {
+interface PreferencesSecurityTabProps extends TabProps {
+  /** Switches Preferences to the Backups tab, for the post-removal "Review backups" action. */
+  onReviewBackups?: () => void;
+}
+
+export default function PreferencesSecurityTab(props: PreferencesSecurityTabProps) {
   const t = useI18n();
 
   const hasPasswordSlot = () => authMethods().some((m) => m.slot_type === 'password');
@@ -91,7 +96,7 @@ export default function PreferencesSecurityTab(props: TabProps) {
           {t('prefs.security.authMethodsHint')}
         </p>
 
-        <AuthMethodsList isOpen={props.isOpen} />
+        <AuthMethodsList isOpen={props.isOpen} onReviewBackups={props.onReviewBackups} />
 
         <Show when={!hasPasswordSlot()}>
           <AddPasswordForm isOpen={props.isOpen} />

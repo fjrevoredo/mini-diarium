@@ -165,6 +165,7 @@ These are used by E2E tests — **do not remove** from components.
 | `HeaderMoreMenu.tsx` | Import item in overflow menu | `header-more-menu-import-item` |
 | `HeaderMoreMenu.tsx` | Export item in overflow menu | `header-more-menu-export-item` |
 | `PreferencesOverlay.tsx` | Preferences dialog content | `preferences-overlay` |
+| `ChangePasswordForm.tsx` | Persistent snapshot-credential-drift notice (not the auto-dismissing success toast) | `change-password-snapshot-warning` |
 | `BackupsPanel.tsx` | Panel root (Preferences → Backups and the pre-auth view) | `backups-panel` |
 | `BackupsPanel.tsx` | One snapshot row | `backups-list-item` |
 | `BackupsPanel.tsx` | Empty-state message | `backups-empty` |
@@ -178,6 +179,7 @@ These are used by E2E tests — **do not remove** from components.
 | `BackupsPanel.tsx` | Passwordless-journal notice (UX-7) | `backups-local-only-notice` |
 | `BackupsPanel.tsx` | Reduced-mode explanation for disabled actions | `backups-locked-hint` |
 | `BackupsPanel.tsx` | Per-row "Restore entries…" button (opens `BackupInspectDialog`; hidden in reduced mode) | `backups-restore-entries-button` |
+| `BackupsPanel.tsx` | Per-row required-credential hint (from `auth_slot_types`; absent when only `auto`) | `backups-required-credential` |
 | `BackupsOverlay.tsx` | Standalone backups dialog (pre-auth) | `backups-overlay` |
 | `BackupInspectDialog.tsx` | Per-entry restore dialog root | `backup-inspect-dialog` |
 | `BackupInspectDialog.tsx` | Credential-differs notice (UX-3) | `backup-inspect-credential-differs` |

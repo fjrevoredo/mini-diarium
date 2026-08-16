@@ -27,6 +27,7 @@ const en = {
     browse: 'Browse',
     browseDotDotDot: 'Browse...',
     browseFolderDotDotDot: 'Browse Folder...',
+    or: 'or',
   },
 
   /** App-level and layout strings */
@@ -481,8 +482,12 @@ const en = {
       currentPwdRequired: 'Current Password (required to remove)',
       currentPwdPlaceholder: 'Enter current password',
       removeError: 'Current password is required to remove an auth method',
-      confirmRemoveMessage: 'Are you sure you want to remove this authentication method?',
+      confirmRemoveMessage:
+        'Are you sure you want to remove this authentication method? It will still open every backup taken while it was registered — removing it here does not revoke it from existing backups.',
       confirmRemoveTitle: 'Remove Authentication Method',
+      removedMethodStillValidWarning:
+        'The removed method still opens every backup taken before you removed it. If it was compromised, delete those backups too.',
+      reviewBackupsButton: 'Review backups',
       addPasswordTitle: 'Add Password Auth',
       addPasswordHint:
         'No password method is registered. Add one so you can unlock with a password.',
@@ -505,6 +510,8 @@ const en = {
       savePrivateKeyTitle: 'Save Private Key File',
       keypairFileCancelled: 'Key file save cancelled',
       changePasswordTitle: 'Change Password',
+      changePasswordSnapshotWarning:
+        'Backups taken before this change will still require your current (old) password to open. Keep it somewhere safe, or take a fresh backup right after changing your password.',
       currentPasswordLabel2: 'Current Password',
       currentPasswordPlaceholder2: 'Enter current password',
       newPasswordLabel: 'New Password',
@@ -550,6 +557,11 @@ const en = {
       resetDoubleConfirmTitle: 'Reset Journal — Final Warning',
       changeDirectoryTitle: 'Choose Journal Directory',
       resetFailedAlert: 'Failed to reset journal: {{ message }}',
+      moveBackupsConfirmTitle: 'Move Backups Too?',
+      moveBackupsConfirmMessage:
+        "This journal has existing backups. Move them to the new location along with the journal? If you don't, they will stay where they are.",
+      backupsStayedAlert: 'Your existing backups were left at the old location: {{ path }}',
+      previousLocationFallback: "the journal's previous folder",
     },
     backups: {
       title: 'Backups',
@@ -595,6 +607,7 @@ const en = {
       entryCount_one: '{{ count }} entry',
       entryCount_other: '{{ count }} entries',
       dateRange: '{{ from }} to {{ to }}',
+      requiredCredentialHint: 'Requires: {{ credentials }}',
       verified: 'Checked',
       unverified: 'Not checked',
       unverifiedHint:

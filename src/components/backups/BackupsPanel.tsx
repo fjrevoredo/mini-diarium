@@ -49,6 +49,29 @@ export function formatBytes(bytes: number): string {
   return `${value < 10 ? value.toFixed(1) : Math.round(value)} ${units[unit]}`;
 }
 
+/**
+ * Renders a snapshot's required-credential hint from its `auth_slot_types` — driven entirely
+ * by the manifest, no IPC of its own (finding B-11, Task 5.2). `auto` is filtered out: it is
+ * already covered by the local-only notice (scenario UX-7), so a second hint here would be
+ * redundant. Returns `null` when nothing remains to say, including for the legitimately empty
+ * array a pre-auth-slot v1/v2 snapshot carries.
+ */
+export function describeRequiredCredential(authSlotTypes: string[], t: T): string | null {
+  const labels = [
+    ...new Set(
+      authSlotTypes
+        .filter((type) => type !== 'auto')
+        .map((type) =>
+          type === 'password' ? t('prefs.security.password') : t('prefs.security.keyFile'),
+        ),
+    ),
+  ];
+  if (labels.length === 0) return null;
+  return t('prefs.backups.requiredCredentialHint', {
+    credentials: labels.join(` ${t('common.or')} `),
+  });
+}
+
 /** Renders a snapshot's trigger as translated prose. */
 export function describeTrigger(trigger: SnapshotTrigger, t: T): string {
   if (typeof trigger === 'object') {
@@ -430,6 +453,18 @@ export default function BackupsPanel(props: BackupsPanelProps) {
                     {(range) => (
                       <p class="text-xs text-tertiary mt-0.5">
                         {t('prefs.backups.dateRange', { from: range()[0], to: range()[1] })}
+                      </p>
+                    )}
+                  </Show>
+                  <Show
+                    when={!props.reduced && describeRequiredCredential(snapshot.auth_slot_types, t)}
+                  >
+                    {(hint) => (
+                      <p
+                        class="text-xs text-tertiary mt-0.5"
+                        data-testid="backups-required-credential"
+                      >
+                        {hint()}
                       </p>
                     )}
                   </Show>

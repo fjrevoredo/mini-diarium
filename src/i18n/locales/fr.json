@@ -8,7 +8,8 @@
     "open": "Ouvrir",
     "browse": "Parcourir",
     "browseDotDotDot": "Parcourir...",
-    "browseFolderDotDotDot": "Parcourir le dossier..."
+    "browseFolderDotDotDot": "Parcourir le dossier...",
+    "or": "ou"
   },
   "layout": {
     "loading": "Chargement...",
@@ -403,8 +404,10 @@
       "currentPwdRequired": "Mot de passe actuel (requis pour supprimer)",
       "currentPwdPlaceholder": "Entrez le mot de passe actuel",
       "removeError": "Le mot de passe actuel est requis pour supprimer une méthode d'authentification",
-      "confirmRemoveMessage": "Êtes-vous sûr de vouloir supprimer cette méthode d'authentification ?",
+      "confirmRemoveMessage": "Êtes-vous sûr de vouloir supprimer cette méthode d'authentification ? Elle continuera d'ouvrir toutes les sauvegardes effectuées pendant qu'elle était enregistrée : la supprimer ici ne la révoque pas des sauvegardes existantes.",
       "confirmRemoveTitle": "Supprimer la méthode d'authentification",
+      "removedMethodStillValidWarning": "La méthode supprimée continue d'ouvrir toutes les sauvegardes effectuées avant sa suppression. Si elle a été compromise, supprimez également ces sauvegardes.",
+      "reviewBackupsButton": "Vérifier les sauvegardes",
       "addPasswordTitle": "Ajouter l'authentification par mot de passe",
       "addPasswordHint": "Aucune méthode par mot de passe n'est enregistrée. Ajoutez-en une pour pouvoir déverrouiller avec un mot de passe.",
       "passwordLabel": "Mot de passe",
@@ -425,6 +428,7 @@
       "savePrivateKeyTitle": "Enregistrer le fichier de clé privée",
       "keypairFileCancelled": "Enregistrement du fichier clé annulé",
       "changePasswordTitle": "Changer le mot de passe",
+      "changePasswordSnapshotWarning": "Les sauvegardes effectuées avant ce changement nécessiteront toujours votre mot de passe actuel (ancien) pour être ouvertes. Conservez-le en lieu sûr, ou effectuez une nouvelle sauvegarde juste après avoir changé votre mot de passe.",
       "currentPasswordLabel2": "Mot de passe actuel",
       "currentPasswordPlaceholder2": "Entrez le mot de passe actuel",
       "newPasswordLabel": "Nouveau mot de passe",
@@ -463,7 +467,11 @@
       "resetDoubleConfirmMessage": "C'est votre dernière chance. Êtes-vous absolument sûr de vouloir supprimer toutes vos entrées de journal ?",
       "resetDoubleConfirmTitle": "Réinitialiser le journal — Avertissement final",
       "changeDirectoryTitle": "Choisir le répertoire du journal",
-      "resetFailedAlert": "Échec de la réinitialisation du journal : {{ message }}"
+      "resetFailedAlert": "Échec de la réinitialisation du journal : {{ message }}",
+      "moveBackupsConfirmTitle": "Déplacer aussi les sauvegardes ?",
+      "moveBackupsConfirmMessage": "Ce journal possède des sauvegardes existantes. Voulez-vous les déplacer vers le nouvel emplacement avec le journal ? Si vous ne le faites pas, elles resteront à leur emplacement actuel.",
+      "backupsStayedAlert": "Vos sauvegardes existantes ont été laissées à l'ancien emplacement : {{ path }}",
+      "previousLocationFallback": "l'ancien dossier du journal"
     },
     "backups": {
       "title": "Sauvegardes",
@@ -499,6 +507,7 @@
       "entryCount_one": "{{ count }} entrée",
       "entryCount_other": "{{ count }} entrées",
       "dateRange": "du {{ from }} au {{ to }}",
+      "requiredCredentialHint": "Nécessite : {{ credentials }}",
       "verified": "Vérifiée",
       "unverified": "Non vérifiée",
       "unverifiedHint": "Pas encore vérifiée avec la clé de ce journal. C’est normal pour les sauvegardes créées par une version antérieure.",

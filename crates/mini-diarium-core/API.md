@@ -322,6 +322,23 @@ number describes it.
 - `create_pre_v3_snapshot(db, backups_dir) -> Result<String, String>` — the reduced form for
   v1/v2 journals, which have no auth slots to verify against.
 
+### Relocation (`backup::relocate`, re-exported at the `backup` root)
+
+Moves an existing backups directory tree when the journal it belongs to moves (TODO-0098
+Task 5.1) — what keeps `change_diary_directory` from silently stranding a journal's history at
+the old location.
+
+- `relocate_backups(old_dir: &Path, new_dir: &Path) -> Result<(), String>` — copies every
+  snapshot from `old_dir` to `new_dir` (skip-don't-clobber on a same-name collision, byte-length
+  verified after each copy), merges the two directories' manifests so no snapshot's
+  `trigger`/`verified`/`sqlite_change_counter` is lost or silently re-adopted as `Adopted`, and
+  only then removes `old_dir` — the one irreversible step, always last. A no-op when `old_dir`
+  does not exist, which is also what makes a retry after a partial failure safe: nothing is
+  deleted from `old_dir` until every file has copied successfully and the merged manifest is
+  durable at the destination. Both paths are the *nested* backups directory a journal actually
+  uses (`{journal dir}/backups/{db stem}`), the same value `BackupContext::backups_dir` holds —
+  not the flat `{journal dir}/backups` parent.
+
 ### Inspection (`backup::inspect`, re-exported at the `backup` root)
 
 Reading a snapshot **without** adopting it as a journal. The distinction matters because a

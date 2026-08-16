@@ -3,7 +3,7 @@ title: Backups
 slug: backups
 description: Mini Diarium snapshots your journal before risky changes, restores the whole journal or specific entries in-app, and keeps tiered history going back a year.
 order: 10
-updated: 2026-08-11
+updated: 2026-08-16
 tags: backups, data safety, backup rotation, storage, snapshots
 ---
 
@@ -101,9 +101,9 @@ Nothing decrypted is ever written to disk during either kind of restore.
 
 ## Custom Journal Locations
 
-When you move your journal to a different folder via Preferences, `diary.db` is physically moved to the new location and all future snapshots go into `{new location}/backups/{journal name}/`.
+When you move your journal to a different folder via Preferences, `diary.db` is physically moved to the new location and all future snapshots go into `{new location}/backups/{journal name}/`. If you have existing snapshots, Mini Diarium asks whether to move them along with the journal.
 
-**Existing snapshots in the old folder are not moved automatically.** If you want to keep your history, copy the old `backups/` folder to the new journal directory before or after the move.
+**If you decline, existing snapshots stay in the old folder.** Mini Diarium tells you where before the move finishes. If you want to keep that history later, copy the old `backups/` folder to the new journal directory by hand.
 
 ## Cloud-Synced Locations
 

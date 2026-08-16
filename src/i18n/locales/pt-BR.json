@@ -8,7 +8,8 @@
     "open": "Abrir",
     "browse": "Procurar",
     "browseDotDotDot": "Procurar...",
-    "browseFolderDotDotDot": "Procurar pasta..."
+    "browseFolderDotDotDot": "Procurar pasta...",
+    "or": "ou"
   },
   "layout": {
     "loading": "Carregando...",
@@ -403,8 +404,10 @@
       "currentPwdRequired": "Senha atual (obrigatória para remover)",
       "currentPwdPlaceholder": "Digite a senha atual",
       "removeError": "A senha atual é obrigatória para remover um método de autenticação",
-      "confirmRemoveMessage": "Tem certeza de que deseja remover este método de autenticação?",
+      "confirmRemoveMessage": "Tem certeza de que deseja remover este método de autenticação? Ele continuará abrindo todos os backups feitos enquanto estava registrado — removê-lo aqui não o revoga dos backups existentes.",
       "confirmRemoveTitle": "Remover método de autenticação",
+      "removedMethodStillValidWarning": "O método removido continua abrindo todos os backups feitos antes da remoção. Se ele foi comprometido, exclua também esses backups.",
+      "reviewBackupsButton": "Revisar backups",
       "addPasswordTitle": "Adicionar autenticação por senha",
       "addPasswordHint": "Nenhum método de senha está registrado. Adicione um para poder desbloquear com senha.",
       "passwordLabel": "Senha",
@@ -425,6 +428,7 @@
       "savePrivateKeyTitle": "Salvar arquivo de chave privada",
       "keypairFileCancelled": "Salvamento do arquivo de chave cancelado",
       "changePasswordTitle": "Alterar senha",
+      "changePasswordSnapshotWarning": "Os backups feitos antes desta alteração ainda exigirão sua senha atual (antiga) para serem abertos. Guarde-a em local seguro ou faça um novo backup logo após alterar sua senha.",
       "currentPasswordLabel2": "Senha atual",
       "currentPasswordPlaceholder2": "Digite a senha atual",
       "newPasswordLabel": "Nova senha",
@@ -463,7 +467,11 @@
       "resetDoubleConfirmMessage": "Esta é sua última chance. Tem certeza absoluta de que deseja excluir todas as suas entradas do diário?",
       "resetDoubleConfirmTitle": "Redefinir diário — Aviso final",
       "changeDirectoryTitle": "Escolher diretório do diário",
-      "resetFailedAlert": "Falha ao redefinir o diário: {{ message }}"
+      "resetFailedAlert": "Falha ao redefinir o diário: {{ message }}",
+      "moveBackupsConfirmTitle": "Mover os backups também?",
+      "moveBackupsConfirmMessage": "Este diário possui backups existentes. Deseja movê-los para o novo local junto com o diário? Se não, eles permanecerão onde estão.",
+      "backupsStayedAlert": "Seus backups existentes foram deixados no local antigo: {{ path }}",
+      "previousLocationFallback": "a pasta anterior do diário"
     },
     "backups": {
       "title": "Backups",
@@ -499,6 +507,7 @@
       "entryCount_one": "{{ count }} entrada",
       "entryCount_other": "{{ count }} entradas",
       "dateRange": "de {{ from }} a {{ to }}",
+      "requiredCredentialHint": "Requer: {{ credentials }}",
       "verified": "Verificado",
       "unverified": "Não verificado",
       "unverifiedHint": "Ainda não verificado com a chave deste diário. Isso é normal em backups feitos por uma versão anterior.",

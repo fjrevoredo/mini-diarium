@@ -8,7 +8,8 @@
     "open": "Apri",
     "browse": "Sfoglia",
     "browseDotDotDot": "Sfoglia...",
-    "browseFolderDotDotDot": "Sfoglia cartella..."
+    "browseFolderDotDotDot": "Sfoglia cartella...",
+    "or": "o"
   },
   "layout": {
     "loading": "Caricamento...",
@@ -403,8 +404,10 @@
       "currentPwdRequired": "Password attuale (richiesta per rimuovere)",
       "currentPwdPlaceholder": "Inserisci la password attuale",
       "removeError": "La password attuale è necessaria per rimuovere un metodo di autenticazione",
-      "confirmRemoveMessage": "Sei sicuro di voler rimuovere questo metodo di autenticazione?",
+      "confirmRemoveMessage": "Sei sicuro di voler rimuovere questo metodo di autenticazione? Continuerà ad aprire ogni backup effettuato mentre era registrato: rimuoverlo qui non lo revoca dai backup esistenti.",
       "confirmRemoveTitle": "Rimuovi metodo di autenticazione",
+      "removedMethodStillValidWarning": "Il metodo rimosso continua ad aprire ogni backup effettuato prima della rimozione. Se è stato compromesso, elimina anche quei backup.",
+      "reviewBackupsButton": "Controlla i backup",
       "addPasswordTitle": "Aggiungi autenticazione con password",
       "addPasswordHint": "Nessun metodo password registrato. Aggiungine uno per poter sbloccare con password.",
       "passwordLabel": "Password",
@@ -425,6 +428,7 @@
       "savePrivateKeyTitle": "Salva file chiave privata",
       "keypairFileCancelled": "Salvataggio file chiave annullato",
       "changePasswordTitle": "Cambia password",
+      "changePasswordSnapshotWarning": "I backup effettuati prima di questa modifica richiederanno ancora la tua password attuale (precedente) per essere aperti. Conservala in un luogo sicuro oppure crea un nuovo backup subito dopo aver cambiato la password.",
       "currentPasswordLabel2": "Password attuale",
       "currentPasswordPlaceholder2": "Inserisci la password attuale",
       "newPasswordLabel": "Nuova password",
@@ -463,7 +467,11 @@
       "resetDoubleConfirmMessage": "Questa è la tua ultima opportunità. Sei assolutamente sicuro di voler eliminare tutte le voci del tuo diario?",
       "resetDoubleConfirmTitle": "Reimposta diario — Avviso finale",
       "changeDirectoryTitle": "Scegli cartella del diario",
-      "resetFailedAlert": "Errore nella reimpostazione del diario: {{ message }}"
+      "resetFailedAlert": "Errore nella reimpostazione del diario: {{ message }}",
+      "moveBackupsConfirmTitle": "Spostare anche i backup?",
+      "moveBackupsConfirmMessage": "Questo diario ha backup esistenti. Vuoi spostarli nella nuova posizione insieme al diario? In caso contrario, resteranno dove sono.",
+      "backupsStayedAlert": "I tuoi backup esistenti sono stati lasciati nella posizione precedente: {{ path }}",
+      "previousLocationFallback": "la cartella precedente del diario"
     },
     "backups": {
       "title": "Backup",
@@ -499,6 +507,7 @@
       "entryCount_one": "{{ count }} voce",
       "entryCount_other": "{{ count }} voci",
       "dateRange": "dal {{ from }} al {{ to }}",
+      "requiredCredentialHint": "Richiede: {{ credentials }}",
       "verified": "Verificato",
       "unverified": "Non verificato",
       "unverifiedHint": "Non ancora verificato con la chiave di questo diario. È normale per i backup creati da una versione precedente.",

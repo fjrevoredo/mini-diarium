@@ -4,7 +4,7 @@
 
 - Plan Status: IN PROGRESS
 - Created: 2026-08-04
-- Last Updated: 2026-08-15 (First CI run of Task 4.4's spec failed on Linux/WebKitGTK — diagnosed and fixed, see "CI run #1 failed and was diagnosed" under Task 4.4; Task 4.4 still IN PROGRESS pending the next CI run; Milestone 4 remains IN PROGRESS — whole-journal restore's end-to-end rehearsal is still deferred to Task 6.3; Milestone 3 still open on the Linux half of Task 3.4)
+- Last Updated: 2026-08-16 (Milestone 5 COMPLETED — Tasks 5.1–5.4 all closed: backups now follow a relocated journal, credential-drift warnings shipped, the local-only key-material test closed the last gap in an already-shipped disclosure, and the restore-procedure docs were confirmed already accurate; Task 4.4 also closed this session — CI run `31909824100` on PR #254 came back green; Milestone 4 remains IN PROGRESS pending Task 6.3's whole-journal restore rehearsal; Milestone 3 still open on the Linux half of Task 3.4; Milestone 6 is the next and final milestone)
 - Owner: Coding agent
 - Approval: APPROVED (2026-08-04)
 - Tracking: [TODO-0098](todo/TODO.md)
@@ -353,10 +353,10 @@ title-bar issue).
 
 ### Milestone 4: Restore
 
-- Status: IN PROGRESS (Tasks 4.1–4.3 complete; Task 4.4 in progress pending CI validation — see its own status line; UX gate signed off 2026-08-10 — see the Sign-off Record; exit criteria not yet fully met — see note)
+- Status: IN PROGRESS (Tasks 4.1–4.4 complete; UX gate signed off 2026-08-10 — see the Sign-off Record; exit criteria not yet fully met — see note)
 - Purpose: Deliver the capability whose absence made the incident recovery manual: getting data back out of a snapshot, in-app, without writing plaintext to disk.
 - Exit Criteria: All seven UX-GATE scenarios signed off; a whole-journal restore and a per-entry restore both demonstrated end-to-end against a snapshot the app produced itself; no code path in the restore flow writes decrypted content to the filesystem; an E2E scenario covers the round trip.
-- Note (2026-08-15): Task 4.4's new E2E spec demonstrates the **per-entry** restore path end-to-end against a real snapshot. It does not touch whole-journal restore (`BackupsPanel`'s "Restore" button) — Task 4.2's own implementation record deliberately deferred that rehearsal to Task 6.3 step 2, "one combined rehearsal covering both per-entry and whole-journal restore." So this milestone's exit criteria remain open on that one point until Task 6.3 runs; do not mark this milestone COMPLETED before that.
+- Note (2026-08-16): Task 4.4's E2E spec is now CI-green (run `31909824100`, PR #254) and closed. It demonstrates the **per-entry** restore path end-to-end against a real snapshot. It does not touch whole-journal restore (`BackupsPanel`'s "Restore" button) — Task 4.2's own implementation record deliberately deferred that rehearsal to Task 6.3 step 2, "one combined rehearsal covering both per-entry and whole-journal restore." So this milestone's exit criteria remain open on that one point until Task 6.3 runs; do not mark this milestone COMPLETED before that.
 
 #### Task 4.1: Read-only snapshot inspection
 
@@ -415,12 +415,12 @@ The dev-app rehearsal (create entry → snapshot → delete entry → open the n
 
 #### Task 4.4: E2E coverage for the restore round trip
 
-- Status: IN PROGRESS
+- Status: COMPLETED
 - Objective: The critical recovery flow is covered end-to-end against the real binary.
 - Steps:
   1. Add a WebdriverIO scenario: create entries, take a manual snapshot, delete an entry, restore it from the snapshot, assert it is back.
   2. Follow `e2e/CLAUDE.md` conventions, including `typeText()` (`e2e/specs/helpers.ts:128`) for seeded text per gotcha 5.
-- Validation: `cmd.exe /c bun run test:e2e` green locally and in CI.
+- Validation: `cmd.exe /c bun run test:e2e` green locally and, after the `textContent`-vs-`getText()` fix, in CI — GitHub Actions run [`31909824100`](https://github.com/fjrevoredo/mini-diarium/actions/runs/31909824100) on PR #254 (commit `8f68b2c7`), Linux/WebKitGTK, green.
 - Notes: E2E runs on Linux/WebKitGTK in CI; keep the scenario free of platform-specific file-manager interaction.
 - Implemented 2026-08-15. New `e2e/specs/backup-restore.spec.ts`: writes an entry on a previous-month date, opens Preferences → Backups, takes a manual snapshot (`SnapshotTrigger::Manual` always bypasses the dedup/interval rules, so the newest row is deterministically the one just taken), deletes the entry via the same debounced auto-delete `multi-entry.spec.ts` already exercises (clearing title + body, not the entry nav bar's trash button, which is gated behind a native OS confirm dialog outside WebDriver's reach), reopens the panel, opens the snapshot via `BackupInspectDialog` with the journal password, confirms the entry shows `backup-inspect-status-missing`, restores it, and confirms the title and body are back in the live editor. `cmd.exe /c bun run test:e2e` green (6 spec files, 12 tests, including this one) both in isolation and as part of the full local suite; CI (Linux/WebKitGTK) coverage pending the next push. `typeText()` was not needed: `ENTRY_BODY` contains no doubled letters, so plain `browser.keys()` already satisfies gotcha 5's actual requirement. (The restore step originally used "Select all missing or shorter" → "Restore selected"; the same-day review's Finding 2 replaced that with selecting only the row matching this test's own title and date — see "Review findings addressed" below.)
 
@@ -495,31 +495,46 @@ on CI — that is the one open item before Task 4.4 can close.
 
 ### Next steps for a new session
 
-- **Push and wait for Linux/WebKitGTK CI**, then flip Task 4.4's status to `COMPLETED` and update its Validation line to record the CI result. Do not mark it complete on local Windows/WebView2 runs alone — that is exactly the inconsistency the 2026-08-15 review caught, and exactly why CI run #1 above still needs a rerun before this task can close.
-- Milestone 4's remaining exit criterion (whole-journal restore's end-to-end rehearsal) is still deferred by design to Task 6.3 — do not expect Milestone 4 to reach `COMPLETED` from Task 4.4 alone, even after CI passes.
+- Task 4.4 closed 2026-08-16: CI run [`31909824100`](https://github.com/fjrevoredo/mini-diarium/actions/runs/31909824100) on PR #254 (commit `8f68b2c7`) came back green on Linux/WebKitGTK, confirming the `textContent`-vs-`getText()` fix. Status flipped to `COMPLETED` above.
+- Milestone 4's remaining exit criterion (whole-journal restore's end-to-end rehearsal) is still deferred by design to Task 6.3 — Milestone 4 does not reach `COMPLETED` from Task 4.4 alone.
 - Milestone 3's Task 3.4 is still `BLOCKED` on Linux verification, independent of this task.
+- Next actionable work is Milestone 5 (Tasks 5.1–5.4).
 
 ---
 
 ### Milestone 5: Remaining Triggers, Warnings, And Documentation
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Purpose: Close the remaining Medium and Low findings and make the documented threat model honest.
 - Exit Criteria: Findings B-9, B-11, B-13 closed; the backups documentation describes restore; `cargo test --workspace` and the full frontend gate green.
+- Completed 2026-08-16. All four tasks (5.1–5.4) COMPLETED — see each task's own implementation note. Findings B-9 (Task 5.3), B-11 (Task 5.2), and B-13 (Task 5.1) are closed. Milestone 6 (cleanup and final verification) is the only remaining milestone besides Milestone 3's Task 3.4, still `BLOCKED` on Linux verification.
 
 #### Task 5.1: Backups follow the journal
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Objective: Moving a journal no longer silently strands its backup history (finding B-13).
 - Steps:
   1. In `change_diary_directory` (`auth_directory.rs:62`), offer to move the existing backups directory alongside the database.
   2. If the user declines, state plainly in the UI that the history stays at the old location.
 - Validation: Tests `test_change_directory_moves_backups_when_requested` and its declining counterpart.
 - Notes: The move must be all-or-nothing or resumable; a half-moved backup set is worse than either outcome. This interacts with the `Destructive` trigger added for the same command in Task 1.6 — snapshot first, then move.
+- Implemented 2026-08-16. New core module `crates/mini-diarium-core/src/backup/relocate.rs` (`relocate_backups(old_dir, new_dir)`, 6 tests — the write-permission variant of the partial-failure guard is `#[cfg(unix)]` since jsdom-equivalent Windows file-permission fault injection is not available and runs in CI on Linux; a portable sibling forces the same "source survives" invariant on every platform via a destination `create_dir_all` failure). Algorithm: reconcile both directories' manifests first (recovering each snapshot's real `trigger`/`verified`/`sqlite_change_counter` before anything is copied — the step that prevents the "silently downgraded to `Adopted`" regression), copy every snapshot with a post-copy byte-length check (skip-don't-clobber on a same-name collision — covered by its own test), merge the manifests, and only then `remove_dir_all` the source — the one irreversible step, always last. `pub mod relocate;` + `pub use relocate::relocate_backups;` in `mod.rs`, matching the existing `restore`/`inspect` pattern; documented in `API.md`.
+
+  App crate: `move_backups: bool` threaded through `change_diary_directory_inner` → `change_diary_directory_with_auto_lock_inner` → the `#[tauri::command]`. Verified the pre-relocation ordering is race-free: the pre-move `Destructive` snapshot runs synchronously (`snapshot_blocking`) and the subsequent lock-time `Lock` snapshot is awaited via `LockCompletion::AwaitFileRelease`'s `done.recv()`, so both writers into the old backups directory have completed and dropped their connection before relocation starts.
+
+  **A defect found in this task's own self-check, and fixed.** The plan's implementation text (and the first cut of this task) placed backup relocation immediately after the same-directory no-op check and *before* the destination file-presence match — reasoning only about "relocation itself fails → abort before the database is touched," which is correct as far as it goes. It missed the reverse case: `relocate_backups` permanently `remove_dir_all`s the source on success, so if the *subsequent* destination-collision check then found a `diary.db` already at the destination and returned `Err`, the backups had already been silently relocated into that colliding folder — and `backups_dir_slot` was left pointing at a directory that no longer existed. Fixed by moving the collision check (`current_db_path.exists() && new_db_path.exists()`) ahead of relocation, since it has no side effects and costs nothing to do first; the actual `diary.db` copy+delete still runs after relocation, unchanged. Pinned by `test_change_directory_does_not_relocate_backups_when_the_destination_already_has_a_diary`. This residual risk is not fully closed: if the *copy itself* fails after relocation has succeeded (a rare disk-I/O fault, not the common collision case), `backups_dir_slot` would still go stale — closing that would need staging the database move as well, which is out of this task's scope and no worse than the pre-existing (non-backup) partial-failure behavior of this function.
+
+  7 existing `auth_directory.rs` tests updated for the new parameter, 3 new tests added (move-requested, move-declined, and the collision regression above).
+
+  Frontend: `changeJournalDirectory(newDir, moveBackups)` in `auth.ts`; `PreferencesDataTab.tsx`'s `handleChangeJournalDirectory` calls `listBackups()` first, shows a confirm dialog only when snapshots exist, and shows a plain `alert()` naming the old location when the user declines (falling back to a generic phrase if `journalPath()` itself failed to load) — new file `PreferencesDataTab.test.tsx` (8 tests; this component had no test file before). 3 new i18n keys in `en.ts` + all 6 locale JSONs. Updated the now-stale "existing snapshots are not moved automatically" claim in `website/docs-src/09-backups.md` and `docs/USER_GUIDE.md`.
+
+  **Manual dev-app check completed 2026-08-16** via `tauri-agent-dev`, against a real sandbox journal (native folder dialog driven by direct Win32 mouse-click coordinates, captured from a full desktop screenshot — CDP cannot see or drive a native OS dialog, only the WebView content). Full round trip: created a journal, wrote an entry, took a manual snapshot, opened **Data → Change Location**, picked a real empty destination folder, confirmed the real **"Move Backups Too?"** native dialog (exact text match to `moveBackupsConfirmMessage`) with OK. On disk: `diary.db` and both snapshots (the manual one plus the `Before change_diary_directory` pre-move `Destructive` snapshot the same action triggers) landed at the new location under `backups/{stem}/`, the old nested backups directory was gone, and the flat `backups/` parent was left behind empty (expected — only the nested directory is `old_dir`). The app auto-locked and reloaded to the unlock screen at the new path, exactly as designed. After unlocking there, the Backups panel showed **both snapshots with their real triggers intact** ("Before change_diary_directory" and "Manual", not downgraded to "Made by an earlier version"/`Adopted`) and both **`Checked`** — the live confirmation of the regression this task's core test (`test_relocate_backups_preserves_trigger_and_verified_fields`) guards in isolation. Also incidentally confirmed Task 5.2's required-credential hint rendering correctly against real data ("Requires: Password") on every row. The cancel path (native dialog dismissed via Escape) was also verified live: no state change, button re-enabled. Session cleaned up with `agent:dev:stop`.
+
+  `cargo test --workspace` 745 passed, `cargo clippy --workspace --all-targets -- -D warnings` clean, `cargo fmt --all` applied, `bun run test:run` 950 passed, `type-check`/`lint`/`validate:locales` green, `coverage:diff -- --working-tree` 90%+ combined against the 80% gate (re-run after `git add -N` on the two new untracked files, which plain `git diff` otherwise cannot see at all).
 
 #### Task 5.2: Credential-drift warnings
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Objective: Users learn that snapshots keep the credential they were taken with (finding B-11), in both its usability and security forms.
 - Steps:
   1. Warn on `change_password` (`auth_core.rs:350`) that existing snapshots will still require the current password.
@@ -527,10 +542,11 @@ on CI — that is the one open item before Task 4.4 can close.
   3. Show the required-credential hint per snapshot in the Backups panel, driven by the manifest's `auth_slot_types`.
 - Validation: Component tests asserting both warnings render; the manifest-driven hint covered by a unit test.
 - Notes: Point 2 is a genuine threat-model disclosure, not a convenience message. `PHILOSOPHY.md`'s "Honest threat documentation" non-negotiable applies.
+- Implemented 2026-08-16. No backend signature changes for any of the three pieces — `auth_slot_types` was already threaded core → manifest → frontend `SnapshotMeta`. **Point 3**: `describeRequiredCredential(authSlotTypes, t)` added to `BackupsPanel.tsx`, filtering out `auto` (already covered by the UX-7 local-only notice) and de-duping/joining the rest with a new `common.or` connector; rendered per-row (`data-testid="backups-required-credential"`) right after the existing `entry_date_range` block, gated behind `!props.reduced` the same way `entry_date_range` is — Task 3.3's reduced-mode contract is "dates, sizes, triggers, and health only," and a required-credential type is a step closer to auth-history disclosure than the plan text anticipated, so this hint is withheld from the pre-auth screen rather than defaulting to showing it; 5 unit tests including the empty-array case (pre-auth-slot v1/v2 snapshots). **Point 1**: a persistent, non-auto-dismissing notice (`data-testid="change-password-snapshot-warning"`) in `ChangePasswordForm.tsx`, gated the same way the form already is (`hasPasswordSlot()` in the parent) so it never shows for a keypair-only journal. **Point 2**: folded into the *existing* pre-removal `dialogConfirm` in `AuthMethodsList.tsx`'s `handleRemoveAuthMethod` (extended `confirmRemoveMessage` in place, rather than adding a second dialog) so the user has to accept the disclosure before the removal proceeds; a dismissible (not auto-timed) post-removal notice with an optional "Review backups" button was added, wired via a new `onReviewBackups?: () => void` prop threaded `PreferencesOverlay.tsx` (`() => setActiveTab('backups')`) → `PreferencesSecurityTab.tsx` (its own extended props interface, not a change to the shared `TabProps`) → `AuthMethodsList.tsx`. 4 new i18n keys (`prefs.security.changePasswordSnapshotWarning`, `removedMethodStillValidWarning`, `reviewBackupsButton`, `prefs.backups.requiredCredentialHint`) plus `common.or`, in `en.ts` and all 6 locale JSONs. Tests: 5 new in `BackupsPanel.test.tsx`, 1 new in `ChangePasswordForm.test.tsx`, 3 new in `AuthMethodsList.test.tsx` (post-removal notice, no-callback case, callback + dismiss). `bun run test:run` 950 passed, `type-check`/`lint`/`validate:locales` green.
 
 #### Task 5.3: Local-only journal disclosure
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Objective: Local-only users understand the limit of their backups before they need them (finding B-9, Assumption 2).
 - Steps:
   1. Persistent notice in the Backups panel for auto-key journals (scenario UX-7).
@@ -538,10 +554,11 @@ on CI — that is the one open item before Task 4.4 can close.
   3. Verify no code path writes `auto_key` or any wrapped key into the backups directory.
 - Validation: Test `test_backups_directory_never_contains_key_material` — run a full snapshot cycle on an auto-key journal and scan every file written for the journal's `auto_key` bytes.
 - Notes: The step-3 test is the durable guard for Assumption 2 and should never be deleted.
+- Implemented 2026-08-16. Steps 1 and 2 shipped already, as a side effect of Milestone 3/4 UI and doc work: `BackupsPanel.tsx:292-303` renders the persistent `data-testid="backups-local-only-notice"` (i18n keys `prefs.backups.localOnlyTitle`/`localOnlyNotice`, translated into all 6 locales, tested in `BackupsPanel.test.tsx:247-266`); `website/docs-src/09-backups.md:114-122` and `docs/decisions/2026-04-passwordless-journal.md:34` both state the limitation. Only step 3 was net-new: `test_backups_directory_never_contains_key_material` in `crates/mini-diarium-core/src/backup/store.rs` (co-located with the store tests, following `test_manifest_contains_no_user_content`'s shape) creates an auto-key journal, runs two snapshot cycles, and scans every file in the backups directory (`manifest.json` plus every `backup-*.db`) for the raw 32-byte `auto_key` value as a byte subslice — not for the *absence* of key-shaped data, since the snapshot `.db` legitimately contains the wrapped master key (ciphertext) in `auth_slots`.
 
 #### Task 5.4: Document the restore procedure
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Objective: The repository finally contains a written restore procedure.
 - Steps:
   1. Extend `website/docs-src/09-backups.md` with both restore paths, when to use each, and the safety-snapshot behavior.
@@ -549,6 +566,7 @@ on CI — that is the one open item before Task 4.4 can close.
   3. Regenerate the site via the PowerShell tool.
 - Validation: `bun run website:build-static` completes; both restore paths described; internal links resolve.
 - Notes: Per root `CLAUDE.md`, `docs-src/` is the authoritative user reference — write it there first.
+- Implemented 2026-08-16. Both target docs already had a full restore section, written incrementally during Milestone 4 (`## Restoring` introduced in `490380c4`, extended through `2bab6b19`): `website/docs-src/09-backups.md:90-100` covers both restore paths, when to use each, and safety-snapshot behavior, with front matter still in contract (`description` 156 characters, `updated: 2026-08-11`); `docs/USER_GUIDE.md:358-365` mirrors the essentials. Both cross-checked against the shipped UI strings (`BackupsPanel.tsx`, `BackupInspectDialog.tsx`) and confirmed accurate. No new prose was needed. Ran `bun run website:build-static` via the PowerShell tool: it completed cleanly and regenerated `website/docs/backups/` (and every other page, via the shared asset-fingerprint step) with no unrelated churn — the only file changed was `website/sitemap.xml`'s `lastmod` stamp, the one documented exception to byte-reproducibility.
 
 ---
 

@@ -236,7 +236,11 @@ export default function PreferencesOverlay(props: PreferencesOverlayProps) {
                     <PreferencesWritingTab isOpen={isOpenAccessor} onClose={props.onClose} />
                   </div>
                   <div hidden={activeTab() !== 'security'}>
-                    <PreferencesSecurityTab isOpen={isOpenAccessor} onClose={props.onClose} />
+                    <PreferencesSecurityTab
+                      isOpen={isOpenAccessor}
+                      onClose={props.onClose}
+                      onReviewBackups={() => setActiveTab('backups')}
+                    />
                   </div>
                 </Show>
                 <div hidden={activeTab() !== 'data'}>

@@ -8,7 +8,8 @@
     "open": "Öffnen",
     "browse": "Durchsuchen",
     "browseDotDotDot": "Durchsuchen...",
-    "browseFolderDotDotDot": "Ordner durchsuchen..."
+    "browseFolderDotDotDot": "Ordner durchsuchen...",
+    "or": "oder"
   },
   "layout": {
     "loading": "Lädt...",
@@ -403,8 +404,10 @@
       "currentPwdRequired": "Aktuelles Passwort (erforderlich zum Entfernen)",
       "currentPwdPlaceholder": "Gib das aktuelle Passwort ein",
       "removeError": "Das aktuelle Passwort ist erforderlich, um eine Authentifizierungsmethode zu entfernen",
-      "confirmRemoveMessage": "Bist du sicher, dass du diese Authentifizierungsmethode entfernen möchtest?",
+      "confirmRemoveMessage": "Bist du sicher, dass du diese Authentifizierungsmethode entfernen möchtest? Sie öffnet weiterhin jede Sicherung, die während ihrer Registrierung erstellt wurde — das Entfernen hier widerruft sie nicht aus bestehenden Sicherungen.",
       "confirmRemoveTitle": "Authentifizierungsmethode entfernen",
+      "removedMethodStillValidWarning": "Die entfernte Methode öffnet weiterhin jede Sicherung, die vor der Entfernung erstellt wurde. Wenn sie kompromittiert wurde, lösche auch diese Sicherungen.",
+      "reviewBackupsButton": "Sicherungen überprüfen",
       "addPasswordTitle": "Passwort-Authentifizierung hinzufügen",
       "addPasswordHint": "Es ist keine Passwort-Methode registriert. Füge eine hinzu, um mit Passwort entsperren zu können.",
       "passwordLabel": "Passwort",
@@ -425,6 +428,7 @@
       "savePrivateKeyTitle": "Private Schlüsseldatei speichern",
       "keypairFileCancelled": "Speichern der Schlüsseldatei abgebrochen",
       "changePasswordTitle": "Passwort ändern",
+      "changePasswordSnapshotWarning": "Sicherungen, die vor dieser Änderung erstellt wurden, benötigen weiterhin Ihr aktuelles (altes) Passwort zum Öffnen. Bewahren Sie es sicher auf, oder erstellen Sie direkt nach der Passwortänderung eine neue Sicherung.",
       "currentPasswordLabel2": "Aktuelles Passwort",
       "currentPasswordPlaceholder2": "Gib das aktuelle Passwort ein",
       "newPasswordLabel": "Neues Passwort",
@@ -463,7 +467,11 @@
       "resetDoubleConfirmMessage": "Dies ist deine letzte Chance. Bist du absolut sicher, dass du alle Einträge löschen möchtest?",
       "resetDoubleConfirmTitle": "Tagebuch zurücksetzen — letzte Warnung",
       "changeDirectoryTitle": "Tagebuchverzeichnis wählen",
-      "resetFailedAlert": "Fehler beim Zurücksetzen des Tagebuchs: {{ message }}"
+      "resetFailedAlert": "Fehler beim Zurücksetzen des Tagebuchs: {{ message }}",
+      "moveBackupsConfirmTitle": "Auch Backups verschieben?",
+      "moveBackupsConfirmMessage": "Für dieses Tagebuch sind bereits Backups vorhanden. Sollen sie zusammen mit dem Tagebuch an den neuen Ort verschoben werden? Wenn nicht, bleiben sie am bisherigen Ort.",
+      "backupsStayedAlert": "Ihre vorhandenen Backups wurden am alten Ort belassen: {{ path }}",
+      "previousLocationFallback": "dem vorherigen Ordner des Tagebuchs"
     },
     "backups": {
       "title": "Sicherungen",
@@ -499,6 +507,7 @@
       "entryCount_one": "{{ count }} Eintrag",
       "entryCount_other": "{{ count }} Einträge",
       "dateRange": "{{ from }} bis {{ to }}",
+      "requiredCredentialHint": "Erfordert: {{ credentials }}",
       "verified": "Geprüft",
       "unverified": "Nicht geprüft",
       "unverifiedHint": "Noch nicht mit dem Schlüssel dieses Tagebuchs geprüft. Bei Sicherungen aus einer älteren Version ist das normal.",
