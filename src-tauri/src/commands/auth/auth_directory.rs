@@ -51,24 +51,67 @@ fn change_diary_directory_inner(
             .to_string());
     }
 
-    // Relocate the backup history before the database file is touched: a failed relocation
-    // must abort here, leaving the irreplaceable `diary.db` untouched at its current location,
-    // rather than after the database has already been moved.
+    // Stage and verify the destination database copy *before* anything irreversible runs —
+    // including backup relocation, which permanently deletes the old backups directory on
+    // success. Staging first means a failed copy leaves both `diary.db` and the old backups
+    // directory completely untouched, and a failed relocation (after staging) still leaves the
+    // old `diary.db` in place, so either failure is safe to retry.
+    let staged_db_path = new_dir_path.join(format!("{db_filename}.staging"));
+    let db_staged = if current_db_path.exists() {
+        let source_len = std::fs::metadata(&current_db_path)
+            .map_err(|e| format!("Failed to read journal file: {}", e))?
+            .len();
+        let copied_bytes = std::fs::copy(&current_db_path, &staged_db_path)
+            .map_err(|e| format!("Failed to copy journal file: {}", e))?;
+        if copied_bytes != source_len {
+            let _ = std::fs::remove_file(&staged_db_path);
+            return Err(format!(
+                "Copy of the journal file was incomplete ({copied_bytes} of {source_len} bytes) \
+                 — the journal was not moved"
+            ));
+        }
+        true
+    } else {
+        false
+    };
+    // else: no existing diary to move — just update the path.
+
     if move_backups {
         let old_backups_dir = backups_dir_slot
             .lock()
             .map_err(|_| "State lock poisoned".to_string())?
             .clone();
-        crate::backup::relocate_backups(&old_backups_dir, &new_backups_dir)?;
+        if let Err(e) = crate::backup::relocate_backups(&old_backups_dir, &new_backups_dir) {
+            if db_staged {
+                let _ = std::fs::remove_file(&staged_db_path);
+            }
+            return Err(e);
+        }
     }
 
-    if current_db_path.exists() {
-        std::fs::copy(&current_db_path, &new_db_path)
-            .map_err(|e| format!("Failed to copy journal file: {}", e))?;
-        std::fs::remove_file(&current_db_path)
-            .map_err(|e| format!("Failed to remove old journal file: {}", e))?;
+    if db_staged {
+        std::fs::rename(&staged_db_path, &new_db_path).map_err(|e| {
+            let _ = std::fs::remove_file(&staged_db_path);
+            format!("Failed to move journal file to destination: {}", e)
+        })?;
+        // The one step with no earlier safe rollback: the destination now holds a verified
+        // copy, so a failure here is not data loss, but it does leave two copies of the
+        // journal on disk until the user resolves it manually.
+        std::fs::remove_file(&current_db_path).map_err(|e| {
+            format!(
+                "The journal was copied to the new location{}, but the old file at {} could \
+                 not be removed: {}. Verify the journal opens correctly at the new location, \
+                 then manually delete the old file before retrying.",
+                if move_backups {
+                    " and its backups were relocated"
+                } else {
+                    ""
+                },
+                current_db_path.display(),
+                e
+            )
+        })?;
     }
-    // else: no existing diary to move — just update the path.
 
     // Persist choice and update in-memory state
     crate::config::save_diary_dir(app_data_dir, &new_dir_path)?;
@@ -547,6 +590,152 @@ mod tests {
             list_snapshots(&src_backups).unwrap().len(),
             1,
             "the source snapshot must remain intact"
+        );
+        assert_eq!(
+            *backups_mutex.lock().unwrap(),
+            src_backups,
+            "state must still point at the original backups directory"
+        );
+    }
+
+    #[test]
+    fn test_change_diary_directory_leaves_everything_untouched_when_the_staged_db_copy_fails() {
+        use crate::backup::{create_snapshot, list_snapshots, BackupContext, SnapshotTrigger};
+        use crate::db::create_database;
+
+        let src = tempfile::tempdir().unwrap();
+        let dst = tempfile::tempdir().unwrap();
+        let cfg = tempfile::tempdir().unwrap();
+
+        let src_db = src.path().join("diary.db");
+        let src_backups = src.path().join("backups").join("diary");
+        let db = create_database(src_db.to_str().unwrap(), "test".to_string()).unwrap();
+        create_snapshot(
+            &db,
+            &BackupContext {
+                db_path: &src_db,
+                backups_dir: &src_backups,
+                app_version: Some("0.7.0"),
+            },
+            SnapshotTrigger::Manual,
+        )
+        .unwrap();
+        drop(db);
+
+        // Occupy the staged copy's destination path with a directory, so `fs::copy` into it
+        // fails on every platform without needing a permissions trick.
+        std::fs::create_dir_all(dst.path().join("diary.db.staging")).unwrap();
+
+        let db_path_mutex = Mutex::new(src_db.clone());
+        let backups_mutex = Mutex::new(src_backups.clone());
+
+        let result = change_diary_directory_inner(
+            dst.path().to_path_buf(),
+            src_db.clone(),
+            "diary.db",
+            &db_path_mutex,
+            &backups_mutex,
+            cfg.path(),
+            true,
+        );
+
+        assert!(result.is_err(), "Expected Err, got: {:?}", result);
+        assert!(
+            src_db.exists(),
+            "the old journal file must be untouched when the staged copy fails"
+        );
+        assert!(
+            src_backups.exists(),
+            "the old backups directory must be untouched when the staged copy fails"
+        );
+        assert_eq!(
+            list_snapshots(&src_backups).unwrap().len(),
+            1,
+            "the source snapshot must remain intact"
+        );
+        assert_eq!(
+            *db_path_mutex.lock().unwrap(),
+            src_db,
+            "state must still point at the original journal path"
+        );
+        assert_eq!(
+            *backups_mutex.lock().unwrap(),
+            src_backups,
+            "state must still point at the original backups directory"
+        );
+    }
+
+    #[test]
+    fn test_change_diary_directory_leaves_the_old_db_and_backups_untouched_when_relocation_fails_after_staging(
+    ) {
+        use crate::backup::{create_snapshot, list_snapshots, BackupContext, SnapshotTrigger};
+        use crate::db::create_database;
+
+        let src = tempfile::tempdir().unwrap();
+        let dst = tempfile::tempdir().unwrap();
+        let cfg = tempfile::tempdir().unwrap();
+
+        let src_db = src.path().join("diary.db");
+        let src_backups = src.path().join("backups").join("diary");
+        let db = create_database(src_db.to_str().unwrap(), "test".to_string()).unwrap();
+        create_snapshot(
+            &db,
+            &BackupContext {
+                db_path: &src_db,
+                backups_dir: &src_backups,
+                app_version: Some("0.7.0"),
+            },
+            SnapshotTrigger::Manual,
+        )
+        .unwrap();
+        drop(db);
+
+        // A regular file occupying the path `new_backups_dir`'s ancestor needs to be makes
+        // `relocate_backups`'s `create_dir_all` fail on every platform — reusing the same
+        // trick `relocate.rs`'s own
+        // `test_relocate_backups_leaves_the_source_untouched_when_the_destination_cannot_be_created`
+        // test uses.
+        std::fs::write(dst.path().join("backups"), b"not a directory").unwrap();
+
+        let db_path_mutex = Mutex::new(src_db.clone());
+        let backups_mutex = Mutex::new(src_backups.clone());
+
+        let result = change_diary_directory_inner(
+            dst.path().to_path_buf(),
+            src_db.clone(),
+            "diary.db",
+            &db_path_mutex,
+            &backups_mutex,
+            cfg.path(),
+            true,
+        );
+
+        assert!(result.is_err(), "Expected Err, got: {:?}", result);
+        assert!(
+            src_db.exists(),
+            "the old journal file must be untouched when relocation fails after staging"
+        );
+        assert!(
+            src_backups.exists(),
+            "the old backups directory must be untouched when relocation fails after staging"
+        );
+        assert_eq!(
+            list_snapshots(&src_backups).unwrap().len(),
+            1,
+            "the source snapshot must remain intact"
+        );
+        assert!(
+            !dst.path().join("diary.db.staging").exists(),
+            "the staged database copy must be cleaned up when relocation fails"
+        );
+        assert!(
+            !dst.path().join("diary.db").exists(),
+            "no journal file must be left at the destination when relocation fails"
+        );
+        assert_eq!(
+            *db_path_mutex.lock().unwrap(),
+            src_db,
+            "state must still point at the original journal path"
         );
         assert_eq!(
             *backups_mutex.lock().unwrap(),

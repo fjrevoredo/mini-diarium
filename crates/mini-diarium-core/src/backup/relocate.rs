@@ -4,6 +4,7 @@
 //! history follow along, instead of being silently stranded at the old location.
 
 use std::fs;
+use std::io::Read;
 use std::path::Path;
 
 use log::{info, warn};
@@ -32,6 +33,14 @@ use super::store::FsSnapshotStore;
 /// `remove_dir_all(old_dir)` at the end removes anything left in the directory, snapshot or
 /// not. That is deliberate: this directory is created and populated exclusively by the backup
 /// engine, so nothing else has a reason to be there.
+///
+/// A same-named file already at the destination is **not** assumed to be an already-relocated
+/// copy just because the name matches — file names are timestamp-derived, so a collision is an
+/// edge case, but a naive "skip if it exists" would silently discard a genuinely different
+/// snapshot the moment the source directory is removed. Every collision is compared by content
+/// (length first, then a chunked streaming byte comparison) before a decision is made: identical
+/// content is skipped as redundant, differing content aborts the whole relocation with both
+/// copies left intact.
 pub fn relocate_backups(old_dir: &Path, new_dir: &Path) -> Result<(), String> {
     if !old_dir.is_dir() {
         // Nothing to move. Also what makes a retry after a partial failure cheap: the source
@@ -57,10 +66,20 @@ pub fn relocate_backups(old_dir: &Path, new_dir: &Path) -> Result<(), String> {
         let source = old_dir.join(&snapshot.file_name);
         let dest = new_dir.join(&snapshot.file_name);
         if dest.exists() {
-            // A same-named file already at the destination — leave it alone rather than
-            // clobbering whatever is already there. File names are timestamp-derived, so this
-            // is an edge case, not the common path.
-            continue;
+            // A same-named file already at the destination. Names are timestamp-derived, so
+            // this is an edge case, not the common path — but a same name is not proof of same
+            // content: compare before deciding whether to skip (identical) or abort (differing),
+            // rather than clobbering or silently discarding either snapshot.
+            let identical = files_have_identical_content(&source, &dest, snapshot.byte_size)
+                .map_err(|e| format!("Failed to compare backup {}: {e}", snapshot.file_name))?;
+            if identical {
+                continue;
+            }
+            return Err(format!(
+                "A different file already exists at the destination for backup {} — the move \
+                 was aborted to avoid discarding either snapshot",
+                snapshot.file_name
+            ));
         }
 
         let copied_bytes = fs::copy(&source, &dest)
@@ -109,6 +128,47 @@ fn merge_manifests(mut dest: Manifest, mut src: Manifest) -> Manifest {
     };
 
     dest.sorted()
+}
+
+/// Compares two files' content without reading either fully into memory — snapshots are whole
+/// SQLite database files and can run to hundreds of MB (`src-tauri/CLAUDE.md` gotcha #6).
+/// `expected_len` is the source snapshot's already-known byte size: a length mismatch against
+/// `b` is checked first as a cheap short-circuit before any streaming comparison runs.
+fn files_have_identical_content(a: &Path, b: &Path, expected_len: u64) -> std::io::Result<bool> {
+    if fs::metadata(b)?.len() != expected_len {
+        return Ok(false);
+    }
+
+    const CHUNK_SIZE: usize = 64 * 1024;
+    let mut reader_a = fs::File::open(a)?;
+    let mut reader_b = fs::File::open(b)?;
+    let mut buf_a = [0u8; CHUNK_SIZE];
+    let mut buf_b = [0u8; CHUNK_SIZE];
+
+    loop {
+        let filled_a = read_full(&mut reader_a, &mut buf_a)?;
+        let filled_b = read_full(&mut reader_b, &mut buf_b)?;
+        if filled_a != filled_b || buf_a[..filled_a] != buf_b[..filled_b] {
+            return Ok(false);
+        }
+        if filled_a == 0 {
+            return Ok(true);
+        }
+    }
+}
+
+/// Reads into `buf` until it is full or the reader is exhausted, unlike a single `Read::read`
+/// call, which is free to return fewer bytes than requested even mid-file.
+fn read_full(reader: &mut impl Read, buf: &mut [u8]) -> std::io::Result<usize> {
+    let mut filled = 0;
+    while filled < buf.len() {
+        let n = reader.read(&mut buf[filled..])?;
+        if n == 0 {
+            break;
+        }
+        filled += n;
+    }
+    Ok(filled)
 }
 
 #[cfg(test)]
@@ -235,15 +295,17 @@ mod tests {
     }
 
     #[test]
-    fn test_relocate_backups_skips_a_same_name_collision_at_the_destination() {
+    fn test_relocate_backups_aborts_on_a_same_name_different_content_collision() {
         let seeded = seed("collision");
         let file_name = list_snapshots(&seeded.backups_dir).unwrap()[0]
             .file_name
             .clone();
+        let source_content = fs::read(seeded.backups_dir.join(&file_name)).unwrap();
 
         // A file already occupying the exact destination name the relocated snapshot would
-        // use. Names are timestamp-derived, so this is an edge case, not the common path —
-        // but the collision must be skipped, not clobbered.
+        // use, but with different content. Names are timestamp-derived, so this is an edge
+        // case, not the common path — but a genuine content collision must abort the move
+        // rather than silently discard either snapshot.
         let new_dir = seeded
             ._dir
             .path()
@@ -253,16 +315,61 @@ mod tests {
         fs::create_dir_all(&new_dir).unwrap();
         fs::write(new_dir.join(&file_name), b"already here, untouched").unwrap();
 
-        relocate_backups(&seeded.backups_dir, &new_dir).unwrap();
+        let result = relocate_backups(&seeded.backups_dir, &new_dir);
 
+        assert!(
+            result.is_err(),
+            "a same-name collision with differing content must abort the move"
+        );
+        assert!(
+            result.unwrap_err().contains(&file_name),
+            "the error must name the colliding file"
+        );
         assert_eq!(
             fs::read(new_dir.join(&file_name)).unwrap(),
             b"already here, untouched",
-            "a same-name collision at the destination must not be overwritten"
+            "the destination's original (different) content must be unchanged"
         );
         assert!(
+            seeded.backups_dir.exists(),
+            "the source directory must survive an aborted relocation"
+        );
+        assert_eq!(
+            fs::read(seeded.backups_dir.join(&file_name)).unwrap(),
+            source_content,
+            "the source snapshot's content must be unchanged"
+        );
+    }
+
+    #[test]
+    fn test_relocate_backups_skips_a_same_name_identical_content_collision() {
+        let seeded = seed("identical-collision");
+        let file_name = list_snapshots(&seeded.backups_dir).unwrap()[0]
+            .file_name
+            .clone();
+        let source_content = fs::read(seeded.backups_dir.join(&file_name)).unwrap();
+
+        // The exact same snapshot bytes, under the same name, already at the destination —
+        // e.g. a retried relocation that copied this file before an earlier attempt failed.
+        let new_dir = seeded
+            ._dir
+            .path()
+            .join("elsewhere")
+            .join("backups")
+            .join("diary");
+        fs::create_dir_all(&new_dir).unwrap();
+        fs::write(new_dir.join(&file_name), &source_content).unwrap();
+
+        relocate_backups(&seeded.backups_dir, &new_dir).unwrap();
+
+        assert!(
             !seeded.backups_dir.exists(),
-            "the source is still fully relocated even though one file collided"
+            "the source is still fully relocated when the only collision is byte-identical"
+        );
+        assert_eq!(
+            fs::read(new_dir.join(&file_name)).unwrap(),
+            source_content,
+            "the destination must retain the identical snapshot content"
         );
     }
 

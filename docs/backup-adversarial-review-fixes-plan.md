@@ -133,13 +133,13 @@ Additionally, `docs/backup-system-redesign-plan.md`'s own Task 5.1 implementatio
 
 ### Milestone B: Journal And Backup Relocation Integrity
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Purpose: Moving a journal with its backups is atomic in the failure windows the report identifies, and relocation never silently discards a differing snapshot based on filename alone. Addresses Findings 2 and 3.
 - Exit Criteria: A database-copy or backup-relocation failure during `change_diary_directory` never leaves `backups_dir_slot` pointing at a deleted directory while the source journal is still at its old location; a same-named-but-content-differing snapshot collision during relocation aborts the move with both copies intact rather than discarding one. `cargo test --workspace` passes.
 
 #### Task B1: Stage and verify the destination database copy before relocating backups
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Objective: `change_diary_directory_inner` never deletes the old backups directory (via `relocate_backups`) before the destination database copy exists and is verified, closing the failure window where a database-copy failure leaves the journal at its old location with its backup history already moved.
 - Steps:
   1. In `src-tauri/src/commands/auth/auth_directory.rs::change_diary_directory_inner`, reorder the operation: (a) keep the existing collision check first (unchanged — it has no side effects and must stay first per the existing regression test and comment at `:41-52`); (b) if `current_db_path.exists()`, copy it to a staged temporary path inside `new_dir_path` (e.g. `new_db_path.with_extension("db.staging")`) and verify the copied byte length matches the source's (same pattern `relocate_backups` already uses for snapshot copies); (c) only after the staged copy is verified, call `relocate_backups` (if `move_backups`); (d) then finalize: rename the staged file to `new_db_path` and remove `current_db_path`; (e) persist config and update `db_path_slot`/`backups_dir_slot` last, as today.
@@ -155,7 +155,7 @@ Additionally, `docs/backup-system-redesign-plan.md`'s own Task 5.1 implementatio
 
 #### Task B2: Compare colliding backup filenames by content during relocation
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Objective: `relocate_backups` never silently discards a same-named-but-content-differing source snapshot; a genuine collision aborts the relocation with both the source and destination copies intact.
 - Steps:
   1. In `crates/mini-diarium-core/src/backup/relocate.rs`, in the copy loop (`:56-76`), when `dest.exists()`: instead of unconditionally `continue`-ing, compare `source` and `dest` content. Byte-length mismatch is a fast pre-check (already need `snapshot.byte_size` for the copy verification). If lengths match, compare content via **chunked streaming** (buffered `Read` in fixed-size chunks, e.g. 64KB, comparing as you go and returning on the first mismatch) rather than a full `fs::read` of both files — snapshots are whole SQLite database files, and `src-tauri/CLAUDE.md` gotcha #6 already notes an image-heavy journal can run to hundreds of MB, so a same-name collision between two such snapshots could otherwise mean holding up to ~1GB in memory for one comparison.
