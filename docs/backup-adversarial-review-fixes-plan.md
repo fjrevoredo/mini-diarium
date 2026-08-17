@@ -2,7 +2,7 @@
 
 ## Metadata
 
-- Plan Status: IN PROGRESS
+- Plan Status: COMPLETED
 - Created: 2026-08-16
 - Last Updated: 2026-08-17
 - Owner: Coding agent
@@ -223,41 +223,58 @@ Additionally, `docs/backup-system-redesign-plan.md`'s own Task 5.1 implementatio
 
 ### Milestone E: Cleanup And Final Verification
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Purpose: Ensure the repository contains only intentional final artifacts, every workstream's own tests pass together, and the full backup recovery rehearsal the report calls for is performed manually.
 - Exit Criteria: Intermediate artifacts are removed, all final verification (automated and manual) passes, and the plan status is COMPLETED.
 
 #### Task E.1: Cleanup Intermediate Artifacts
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Objective: Remove artifacts created only to support implementation across Milestones A–D.
 - Steps:
   1. Inspect the worktree diff for any temporary debug output, scratch test fixtures, or stray files left over from constructing the mutex-poisoning tests (Task C1) or the failure-injection tests (Tasks A1, B1, B2).
   2. Remove anything not part of the intended final change; keep every test added by this plan (they are permanent regression coverage, not scratch artifacts).
   3. Add a `CHANGELOG.md` entry (or the project's current latest-changelog location) summarizing the fix: restore now preserves a recoverable pre-migration copy across a failed post-restore migration; backup-directory mutations (create/verify/delete/restore) are now serialized in both backend and UI; journal relocation no longer discards a differing same-named backup snapshot or strands backup history ahead of a failed database copy; a poisoned lock during auto-lock no longer silently drops the live connection; the Backups panel no longer shows stale data after a slow refresh; snapshot inspection now shows its entry count.
 - Validation: `git status`/`git diff` shows only the intended final changes across all four milestones plus the CHANGELOG entry.
-- Notes: This plan did not originate from a `docs/todo/TODO.md` item, so there is no TODO checkbox to close. If the user wants this remediation tracked as a TODO going forward, that is a separate follow-up, not part of this cleanup task.
+- Notes: Re-confirmed at the start of Milestone E (not re-searched from scratch — this was already verified before the plan was written): `git status` is clean and `git diff 95dd5a7..fd33ee2 --stat` (the span covering exactly Milestones A–D) shows only files the plan's own tasks name, plus one undocumented but legitimate hardening change to `.githooks/pre-commit` (PATH fallback + a clearer error when `bunx` is missing) — not a stray/debug artifact. Nothing to remove. `CHANGELOG.md`'s `[0.7.0]` → `Fixed` section had entries only for Findings 1, 4, 7 (Milestone A); added 5 new bullets for Findings 2, 3, 5, 6, 8 (Milestones B, C, D), each sourced from its own task's Notes in this plan and matching the existing bullets' voice/style. This plan did not originate from a `docs/todo/TODO.md` item, so there is no TODO checkbox to close.
 
 #### Task E.2: Full Automated Verification
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Objective: Every workstream's changes pass together, not just in isolation.
 - Steps:
   1. Run the full backend test suite.
   2. Run the full frontend test/type-check/lint suite.
   3. Fix any interaction failures between milestones (e.g. a Milestone A test relying on `RestoreSummary`'s old shape that Milestone A itself already updated — should not occur if each task's own validation passed, but confirm here).
 - Validation: `cargo test --workspace` passes with zero failures; `cmd.exe /c bun run test:run` passes; `cmd.exe /c bun run type-check` passes; `cmd.exe /c bun run lint` passes.
-- Notes: None.
+- Notes: Ran the full Pre-flight Checks list (broader than this task's own Validation line), all green, no cross-milestone interaction failures found:
+  - `cargo clippy --workspace --all-targets`: zero warnings.
+  - `cargo test --workspace`: 757 passed, 0 failed (261 app crate `mini_diarium_lib` + 454 `mini-diarium-core` + 42 `mini-diarium-crypto`; includes `test_lock_diary_surfaces_a_poisoned_path_mutex_as_an_error_not_a_silent_lock` from Task C1 and the Task A1/B1/B2 tests all present and passing).
+  - `cmd.exe /c bun run type-check`: clean (`tsc --noEmit`, no output).
+  - `cmd.exe /c bun run lint`: clean (`eslint src --ext .ts,.tsx`, no output).
+  - `cmd.exe /c bun run build`: succeeded (`vite build`, 8.24s; pre-existing >500kB chunk-size warning is unrelated to this plan).
+  - `cmd.exe /c bun run format`: every file reported `(unchanged)` — no diff produced.
+  - `cmd.exe /c bun run test:run`: 964 passed across 94 test files, 0 failed.
+  - `backup-inspect-entry-count` confirmed present in `src/CLAUDE.md:187`'s canonical testid table (Task D2).
+  - `cmd.exe /c bun run validate:locales`: all 6 non-English locale files OK at 649 keys each, matching `en.ts` — no new i18n keys were introduced beyond the pre-existing `entryCount_one`/`entryCount_other`.
+  - No interaction failures found between milestones; each task's own validation held under the combined run.
 
 #### Task E.3: Manual Backup Recovery Rehearsal
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Objective: Perform the report's recommended post-implementation rehearsal in the real dev app, since Findings 4 and 6 are UI-timing bugs that unit tests only approximate.
 - Steps:
   1. Using the `tauri-agent-dev` skill (or an equivalent manual dev-app session), exercise: (a) a whole-journal restore from an older-schema (pre-migration) snapshot, confirming the success message names the safety snapshot and the journal is on the current schema afterward; (b) a per-entry restore via `BackupInspectDialog`, confirming the entry count now shows; (c) attempting a second destructive backup action (delete, verify, another restore) while a restore is in flight, confirming the UI blocks it rather than queuing a stale-consent action; (d) a relocation failure/retry — e.g. force a backup-relocation failure via a blocked destination directory and confirm the journal and its backups remain usable at the original location, then retry successfully; (e) all three auto-lock paths (idle timer, OS session lock, focus loss) still correctly lock and emit `journal-locked` in the normal (non-poisoned) case.
   2. Record the outcome of each scenario (pass/fail plus any follow-up needed) in this task's Notes before marking it COMPLETED.
 - Validation: Manual self-check — each of the 5 scenarios above observed to behave as described, with no regression versus pre-fix behavior for the non-poisoned/non-collision happy paths.
-- Notes: None yet — fill in after the rehearsal is run.
+- Notes:
+  - **(a) Pre-migration-snapshot restore: not agent-driven.** The running dev app has no user-facing way to produce a pre-migration (pre-`SCHEMA_VERSION`) backup snapshot — every snapshot the live app takes is already on the current schema. Per your decision, this scenario is recorded as covered by Task A1's own automated tests instead of attempting an out-of-band fixture injection: `test_restore_migrates_a_pre_migration_snapshot_to_the_current_schema` and `test_restore_of_a_pre_migration_snapshot_preserves_it_if_the_migration_fails_afterward` (`crates/mini-diarium-core/src/backup/restore.rs`), both passing under the Task E.2 `cargo test --workspace` run. **Not independently re-verified in the live dev app.**
+  - **(b) Per-entry restore entry count: PASS, agent-verified.** In the dev app: created a journal, wrote one entry ("Milestone E Rehearsal Entry"), took a manual backup, opened it via **Restore entries…**, entered the credential. The dialog rendered `Viewing entries from Aug 17, 2026, 9:30 PM` followed by `1 entry` (the `backup-inspect-entry-count` element), matching the panel's own "1 entry" count. Confirms Task D2 in the live app, not just its component tests.
+  - **(c) Second destructive action blocked mid-restore: PASS, agent-verified.** Clicked **Restore** on one backup row, then — in the same synchronous script tick, before any await could yield — read every mutating control's `disabled` state. Result: `backups-create-button` (Back up now) was disabled, and **every** row's Check/Restore/Delete/Restore entries… buttons were disabled, including the row *not* being restored — confirming Task A3's panel-wide `panelBusy` gate, not just per-row gating. (Tested via disabled-state assertion at the moment of click, per the advisor's suggested cheap-but-honest method, rather than a second click that would only prove the button was inert.) As a side effect, this also re-confirmed Task A4 twice: both restores in this session produced a success message naming the safety snapshot's exact timestamp directly (e.g. "Journal restored to the backup from Aug 17, 2026, 9:30 PM. Your previous state was saved as a new backup from Aug 17, 2026, 9:31 PM...").
+  - **(d) Relocation failure/retry: not agent-driven.** A permission-based blocked-destination-directory test is unreliable on Windows against the same user account running the dev app (may silently pass without proving anything). Per your decision, recorded as covered by Task B1's own automated tests instead: `test_change_diary_directory_leaves_everything_untouched_when_the_staged_db_copy_fails` and `test_change_diary_directory_leaves_the_old_db_and_backups_untouched_when_relocation_fails_after_staging` (`src-tauri/src/commands/auth/auth_directory.rs`), both passing under Task E.2's `cargo test --workspace`. **Not independently re-verified in the live dev app.**
+  - **(e) Auto-lock paths — idle timer: PASS, agent-verified.** Set **Lock after inactivity** to the minimum (5s) via the real Preferences → Security UI (confirmed the live `preferences` signal updated, not just `localStorage`), then waited 9 seconds issuing **no** CDP calls at all (per the `tauri-agent-dev` skill's own warning that `eval` calls don't count as activity and would falsely suppress the timer). The app correctly returned to the unlock screen — the idle-timer auto-lock path fires correctly in the non-poisoned case.
+  - **(e) Auto-lock paths — OS session lock and focus loss: PASS, user-verified.** Handed off with the dev app running, unlocked, `autoLockTimeout` at 900s, `autoLockOnFocusLoss` enabled. User confirmed both: (1) Win+L → unlock Windows again → Mini Diarium showed its own lock screen; (2) minimize/alt-tab away and back → the journal had locked. Both auto-lock paths fire correctly in the normal (non-poisoned) case.
+  - **Environment note (not a product bug):** the dev app's Vite server twice reported itself `ready` while its HTTP port silently stopped responding (TCP connections established, no request ever completed) — a stale dependency-optimizer cache issue. Fixed by stopping the session, deleting `node_modules/.vite`, and restarting. Not raised as a finding since it's a local dev-server cache artifact, not application behavior.
 
 ## Approval Gate
 
@@ -268,15 +285,15 @@ Implementation must not start until the user approves this plan.
 Run these commands before marking the plan COMPLETED or requesting final approval.
 Fix all failures before proceeding.
 
-- [ ] `cargo clippy --workspace` passes with zero warnings
-- [ ] `cargo test --workspace` passes with zero failures
-- [ ] `cmd.exe /c bun run type-check` passes
-- [ ] `cmd.exe /c bun run lint` passes
-- [ ] `cmd.exe /c bun run build` succeeds
-- [ ] `cmd.exe /c bun run format` succeeds
-- [ ] New `data-testid` (`backup-inspect-entry-count`) added to `src/CLAUDE.md`'s canonical table (Task D2)
-- [ ] No new i18n keys need adding beyond reusing `entryCount_one`/`entryCount_other` (confirm during Task D2 — add to every locale file via `bun run validate:locales` if any new key was actually introduced)
-- [ ] Plan status updated to COMPLETED
+- [x] `cargo clippy --workspace` passes with zero warnings
+- [x] `cargo test --workspace` passes with zero failures
+- [x] `cmd.exe /c bun run type-check` passes
+- [x] `cmd.exe /c bun run lint` passes
+- [x] `cmd.exe /c bun run build` succeeds
+- [x] `cmd.exe /c bun run format` succeeds
+- [x] New `data-testid` (`backup-inspect-entry-count`) added to `src/CLAUDE.md`'s canonical table (Task D2)
+- [x] No new i18n keys need adding beyond reusing `entryCount_one`/`entryCount_other` (confirm during Task D2 — add to every locale file via `bun run validate:locales` if any new key was actually introduced)
+- [x] Plan status updated to COMPLETED
 
 ## Plan Self-Check
 

@@ -238,10 +238,28 @@ Typical checks:
 
 **Auto-lock timer interference**: If `autoLockTimeout` is short (< 30 s), the journal will lock
 between CDP roundtrips — `eval` calls do not dispatch DOM activity events and therefore do not
-reset the idle timer. Patch the timeout in localStorage before starting a multi-step test:
+reset the idle timer.
+
+**A bare `localStorage.setItem('preferences', ...)` write does not fix this** — confirmed empirically,
+not just by reading the source. `preferences` (`src/state/preferences.ts`) is a Solid signal created
+once at module load (`createSignal(loadPreferences())`); the running app never re-reads `localStorage`
+on its own, so writing to it directly changes only what a *future* page load will pick up, not the
+live in-memory value the idle timer effect (`App.tsx`) actually reads. A session that patches
+`localStorage` this way and keeps driving the UI will still hit the original timeout and lock
+mid-session, which looks like a flaky app rather than a stale-write bug.
+
+Two ways to actually change the live value:
+
+1. **Drive the real Preferences → Security UI** (reliable, no reload needed): open Preferences,
+   click `#pref-tab-security`, toggle the "Lock after inactivity" checkbox and/or set the timeout
+   input via the native-setter + `input`/`blur`-event pattern (see "Compound Eval for Atomic UI
+   Chains"). This calls the app's own `setPreferences()`, so the live signal updates immediately.
+2. **Write `localStorage` then reload the page** (`agent-browser reload` or `eval location.reload()`):
+   the fresh module load re-reads the patched value. Necessary when the app is on the lock screen
+   and the Security tab isn't reachable yet.
 
 ```javascript
-// Extend timeout so the journal stays unlocked during the session
+// Extend timeout so the journal stays unlocked during the session — pairs with either method above
 (function() {
   const p = JSON.parse(localStorage.getItem('preferences') ?? '{}');
   p.autoLockTimeout = 600;
@@ -249,8 +267,8 @@ reset the idle timer. Patch the timeout in localStorage before starting a multi-
 })();
 ```
 
-Run this eval immediately after unlocking, before taking the first snapshot. Restore the original
-value when done if needed.
+Run this eval immediately after unlocking, before taking the first snapshot, and reload afterward if
+you used method 2. Restore the original value when done if needed.
 
 ### Navigate A Scrollable Preferences Dialog
 
@@ -354,7 +372,8 @@ If `agent:dev:stop` fails during sandbox deletion with a transient WebView file 
 - If probe says the managed PIDs are not alive, the dev session is gone. Start a new one.
 - If a stop attempt fails, do not delete `.agent-dev/state.json` by hand until you understand which root is still alive.
 - If `agent:dev:stop` fails with `EBUSY` while deleting a WebView cache file, rerun `bun run agent:dev:stop -- --keep-sandbox`. Verify that the reported port is closed; if it is, the session shutdown is good enough for task cleanup.
-- **Journal locks repeatedly during session**: If the app is configured with a short `autoLockTimeout` (< 30 s), the idle timer fires between CDP roundtrips. `eval` calls do not count as user activity. Patch `autoLockTimeout` to 600 in localStorage immediately after the first unlock (see "Read Or Verify Preferences" recipe above).
+- **Journal locks repeatedly during session**: If the app is configured with a short `autoLockTimeout` (< 30 s), the idle timer fires between CDP roundtrips. `eval` calls do not count as user activity. A bare `localStorage` patch does **not** fix this on its own — it only changes what a future page load reads, not the live in-memory value the idle timer effect actually uses. Drive the real Preferences → Security UI to change it live, or patch `localStorage` and then reload — see "Auto-lock timer interference" under "Read Or Verify Preferences" above.
+- **Dev server reports `ready` but the page never loads past "Loading Mini Diarium..." / `agent-browser` snapshot returns `(empty page)` forever**: seen twice — Vite's dependency optimizer can wedge itself into a state where it logs `ready in NNN ms` and accepts the TCP connection (`Get-NetTCPConnection -LocalPort 1420` shows `Listen`/`Established`), but never actually completes an HTTP response for `/src/index.tsx` or any other module — `curl`/`Invoke-WebRequest` to `http://localhost:1420/` hang and time out even though the port is open. This is a stale `node_modules/.vite` optimizer cache, not a CDP/agent-browser problem or an app bug — confirm with a direct request to the dev server port before assuming the browser side is at fault. Fix: `bun run agent:dev:stop`, delete `node_modules/.vite`, then `bun run agent:dev:start` again. The next start takes longer (full dependency re-bundle) but comes up clean.
 
 ## What This Skill Does Not Do
 
