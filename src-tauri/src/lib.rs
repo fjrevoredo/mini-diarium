@@ -118,16 +118,20 @@ fn install_exit_snapshot_hook(window: &tauri::WebviewWindow) {
             std::thread::spawn(move || {
                 use tauri::Manager;
                 let state = app.state::<commands::auth::DiaryState>();
-                if let Some(done) = commands::backup_triggers::take_connection_and_snapshot(
+                match commands::backup_triggers::take_connection_and_snapshot(
                     &state,
                     backup::SnapshotTrigger::Lock,
                 ) {
-                    if done
-                        .recv_timeout(commands::backup_triggers::SHUTDOWN_SNAPSHOT_BUDGET)
-                        .is_err()
-                    {
-                        warn!("Exit snapshot exceeded its budget; closing without waiting");
+                    Ok(Some(done)) => {
+                        if done
+                            .recv_timeout(commands::backup_triggers::SHUTDOWN_SNAPSHOT_BUDGET)
+                            .is_err()
+                        {
+                            warn!("Exit snapshot exceeded its budget; closing without waiting");
+                        }
                     }
+                    Ok(None) => {}
+                    Err(error) => warn!("Failed to take the exit snapshot: {error}"),
                 }
                 let _ = window.destroy();
             });

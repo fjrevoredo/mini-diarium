@@ -4,7 +4,7 @@
 
 - Plan Status: IN PROGRESS
 - Created: 2026-08-16
-- Last Updated: 2026-08-16
+- Last Updated: 2026-08-17
 - Owner: Coding agent
 - Approval: Approved by user to start Milestone A (2026-08-16)
 
@@ -170,13 +170,13 @@ Additionally, `docs/backup-system-redesign-plan.md`'s own Task 5.1 implementatio
 
 ### Milestone C: Lock-State Security
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Purpose: A poisoned path mutex cannot silently drop the live database connection while leaving the frontend showing an unlocked screen. Addresses Finding 5.
 - Exit Criteria: `take_connection_and_snapshot` never removes the connection from `DiaryState` unless the paths needed to snapshot it were read successfully; a poisoned `db_path`/`backups_dir` mutex surfaces as an explicit error to the caller instead of being silently mapped to "already locked". `cargo test --workspace` passes.
 
 #### Task C1: Read paths before removing the connection; propagate state-lock errors
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Objective: `take_connection_and_snapshot` reads `db_path` and `backups_dir` before taking the connection out of `state.db`, and any lock failure (db, db_path, or backups_dir) is returned as an explicit error rather than collapsed into the "already locked" `None` case.
 - Steps:
   1. In `src-tauri/src/commands/backup_triggers.rs`, change `take_connection_and_snapshot`'s signature from `-> Option<mpsc::Receiver<()>>` to `-> Result<Option<mpsc::Receiver<()>>, String>`.
@@ -188,7 +188,7 @@ Additionally, `docs/backup-system-redesign-plan.md`'s own Task 5.1 implementatio
   - Add `test_lock_diary_surfaces_a_poisoned_path_mutex_as_an_error_not_a_silent_lock` in `auth/mod.rs`'s test module: same poisoning setup, call `lock_diary_inner`, assert it returns `Err(_)`.
   - Confirm the existing `test_taking_the_connection_locks_the_journal_before_the_snapshot_finishes` and `test_taking_the_connection_of_a_locked_journal_is_a_no_op` still pass with the new `Result`-wrapped signature (update their call sites to unwrap the `Ok(...)` layer).
   - `cargo test --manifest-path src-tauri/Cargo.toml`, then full `cargo test --workspace`.
-- Notes: Affected files: `src-tauri/src/commands/backup_triggers.rs`, `src-tauri/src/commands/auth/mod.rs`, and any other call site of `take_connection_and_snapshot`/`lock_diary_inner_with` touched by the signature change (search with `rg "take_connection_and_snapshot|lock_diary_inner"` under `src-tauri/src/commands/` before starting). Preserve the existing auto-lock event contract (`journal-locking`/`journal-locked`) for the success path — this task only changes the failure path. **User-visible behavior change:** `change_diary_directory_with_auto_lock_inner` (`auth_directory.rs:122`) calls `lock_diary_inner_with(..., LockCompletion::AwaitFileRelease)` and propagates its `Result` with `?`. Previously, a poisoned `db_path`/`backups_dir` mutex there silently dropped the live connection but reported "already locked" (`Ok(false)`), so `change_diary_directory` proceeded with the file move anyway (harmlessly, since the connection really was gone by then). After this fix, the same poisoned-mutex case now surfaces as an `Err` and aborts `change_diary_directory` before any file is touched — correct and desirable, but worth calling out explicitly: a journal-directory change can now fail with a state-lock error in a case where it previously (accidentally) succeeded.
+- Notes: Affected files: `src-tauri/src/commands/backup_triggers.rs`, `src-tauri/src/commands/auth/mod.rs`, and any other call site of `take_connection_and_snapshot`/`lock_diary_inner_with` touched by the signature change (search with `rg "take_connection_and_snapshot|lock_diary_inner"` under `src-tauri/src/commands/` before starting). Preserve the existing auto-lock event contract (`journal-locking`/`journal-locked`) for the success path — this task only changes the failure path. **User-visible behavior change:** `change_diary_directory_with_auto_lock_inner` (`auth_directory.rs:122`) calls `lock_diary_inner_with(..., LockCompletion::AwaitFileRelease)` and propagates its `Result` with `?`. Previously, a poisoned `db_path`/`backups_dir` mutex there silently dropped the live connection but reported "already locked" (`Ok(false)`), so `change_diary_directory` proceeded with the file move anyway (harmlessly, since the connection really was gone by then). After this fix, the same poisoned-mutex case now surfaces as an `Err` and aborts `change_diary_directory` before any file is touched — correct and desirable, but worth calling out explicitly: a journal-directory change can now fail with a state-lock error in a case where it previously (accidentally) succeeded. **Additional call site found during implementation, not listed above:** `src-tauri/src/lib.rs`'s `on_window_event(CloseRequested)` shutdown handler calls `take_connection_and_snapshot` directly (not through `lock_diary_inner_with`) to take the exit-time snapshot. Updated to `match` on the new `Result`, logging `warn!("Failed to take the exit snapshot: {error}")` on `Err` and proceeding to `window.destroy()` regardless — shutdown must never hang or abort on a poisoned mutex.
 
 ### Milestone D: Backup UI State And Inspection Clarity
 

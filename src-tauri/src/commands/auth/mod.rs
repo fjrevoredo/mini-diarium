@@ -85,14 +85,8 @@ fn lock_diary_inner_with(state: &DiaryState, completion: LockCompletion) -> Resu
     let Some(done) = crate::commands::backup_triggers::take_connection_and_snapshot(
         state,
         crate::backup::SnapshotTrigger::Lock,
-    ) else {
-        // Distinguish "already locked" from "the state lock is poisoned", which the caller
-        // must still see as an error.
-        let db_state = state
-            .db
-            .lock()
-            .map_err(|_| "Failed to access journal state".to_string())?;
-        debug_assert!(db_state.is_none());
+    )?
+    else {
         return Ok(false);
     };
 
@@ -195,6 +189,29 @@ mod tests {
         *state.db.lock().unwrap() = Some(db);
         let result: Result<i32, String> = with_unlocked_db(&state, |_db| Ok(42));
         assert_eq!(result.unwrap(), 42);
+    }
+
+    #[test]
+    fn test_lock_diary_surfaces_a_poisoned_path_mutex_as_an_error_not_a_silent_lock() {
+        let (_fixture, state, db_path, _backups) = test_helpers::make_state("lock_poisoned_path");
+        let db = create_database(&db_path, "test".to_string()).unwrap();
+        *state.db.lock().unwrap() = Some(db);
+
+        let result = std::thread::scope(|scope| {
+            scope
+                .spawn(|| {
+                    let _guard = state.db_path.lock().unwrap();
+                    panic!("deliberately poisoning this mutex for a test");
+                })
+                .join()
+        });
+        assert!(result.is_err());
+
+        assert!(lock_diary_inner(&state).is_err());
+        assert!(
+            state.db.lock().unwrap().is_some(),
+            "the connection must not be dropped when a path mutex is poisoned"
+        );
     }
 }
 
