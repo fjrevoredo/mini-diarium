@@ -60,7 +60,7 @@
     "fast-xml-parser": "^5.10.1"
   },
   "dependencies": {
-    "@kobalte/core": "^0.13.12",
+    "@kobalte/core": "^0.13.13",
     "@solid-primitives/i18n": "^2.2.1",
     "@tailwindcss/typography": "^0.5.20",
     "@tauri-apps/api": "^2.11.1",
