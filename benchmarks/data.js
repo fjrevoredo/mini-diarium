@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1786985864932,
+  "lastUpdate": 1786987913087,
   "repoUrl": "https://github.com/fjrevoredo/mini-diarium",
   "entries": {
     "Benchmark": [
@@ -35434,6 +35434,36 @@ window.BENCHMARK_DATA = {
           {
             "name": "ci_pipeline_duration",
             "value": 722000000000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "committer": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "distinct": true,
+          "id": "f0a31e54bde9e7946545e3521d6ee402dc029088",
+          "message": "chore: retrigger CodeQL after GitHub outage",
+          "timestamp": "2026-08-17T19:22:25+02:00",
+          "tree_id": "430b87b1d4f3d8f87b2e7d2d7ad46bbc9d6f3d1a",
+          "url": "https://github.com/fjrevoredo/mini-diarium/commit/f0a31e54bde9e7946545e3521d6ee402dc029088"
+        },
+        "date": 1786987912074,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "ci_pipeline_duration",
+            "value": 556000000000,
             "range": "± 0",
             "unit": "ns/iter"
           }
