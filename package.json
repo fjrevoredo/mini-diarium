@@ -87,7 +87,7 @@
     "@mermaid-js/mermaid-cli": "11.16.0",
     "@solidjs/testing-library": "^0.8.10",
     "@tauri-apps/cli": "^2.11.3",
-    "@testing-library/jest-dom": "^7.0.0",
+    "@testing-library/jest-dom": "^7.0.1",
     "@testing-library/user-event": "^14.6.3",
     "@types/dompurify": "^3.2.0",
     "@types/node": "^26.1.2",
