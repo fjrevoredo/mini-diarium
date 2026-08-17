@@ -1,7 +1,7 @@
 use crate::db::DatabaseConnection;
 use log::{info, warn};
 use std::path::PathBuf;
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 use tauri::{AppHandle, Emitter, State, Wry};
 
 /// Shared state for the database connection
@@ -20,18 +20,19 @@ pub struct DiaryState {
     /// an invariant enforced by the call graph does not depend on a future caller
     /// remembering a second teardown.
     pub inspection: Mutex<Option<crate::commands::backup_inspect::InspectedSnapshot>>,
-    /// Serializes the four IPC-reachable backup commands (`create_backup_now`,
-    /// `verify_backup`, `delete_backup`, `restore_backup`) against each other, so their
-    /// backups-directory filesystem mutations cannot interleave.
+    /// Serializes every backups-directory-mutating path — the four IPC-reachable backup
+    /// commands (`create_backup_now`, `verify_backup`, `delete_backup`, `restore_backup`) and
+    /// the trigger paths in `commands/backup_triggers.rs` (unlock, lock, shutdown, and
+    /// destructive-operation snapshots) — against each other, so no two filesystem mutations
+    /// against one journal's backups directory can interleave.
     ///
-    /// Acquired **before** `db` in those four commands — `backup_ops` → `db` is the only
-    /// lock order used there. The background trigger paths in `commands/backup_triggers.rs`
-    /// (unlock/lock/destructive snapshots) deliberately do not take this lock: they already
-    /// acquire `db` first (or, for the detached-thread case, no lock at all), and acquiring
-    /// `backup_ops` there too would risk the opposite order and a two-lock deadlock. See
-    /// Task A2 in `docs/backup-adversarial-review-fixes-plan.md` for the accepted residual
-    /// gap this leaves (trigger-path snapshots can still race the four IPC commands).
-    pub backup_ops: Mutex<()>,
+    /// Acquired **before** `db` everywhere: `backup_ops` → `db` is the only lock order used
+    /// against these two. `Arc`-wrapped because the lock-time and shutdown snapshots run on a
+    /// detached thread that owns a moved `DatabaseConnection` rather than a borrow of
+    /// `DiaryState` — a `MutexGuard` cannot cross that move, so the detached worker clones this
+    /// `Arc` and acquires its own guard immediately before writing. See Task F3 in
+    /// `docs/backup-adversarial-review-fixes-plan.md`.
+    pub backup_ops: Arc<Mutex<()>>,
 }
 
 impl DiaryState {
@@ -42,7 +43,7 @@ impl DiaryState {
             backups_dir: Mutex::new(backups_dir),
             app_data_dir,
             inspection: Mutex::new(None),
-            backup_ops: Mutex::new(()),
+            backup_ops: Arc::new(Mutex::new(())),
         }
     }
 }
@@ -242,5 +243,69 @@ pub(crate) mod test_helpers {
             _temp_dir: temp_dir,
         };
         (fixture, state, db_path, backups_dir)
+    }
+
+    /// Spawns a thread that holds `state.backup_ops`, then runs `probe` **on its own thread**
+    /// and proves it genuinely blocks on the same lock — not just "happened to finish after
+    /// some flag got set", which is true of *any* slow-enough probe regardless of whether it
+    /// touches `backup_ops` at all (an earlier version of this helper made exactly that
+    /// mistake: `create_backup_now_inner`'s own I/O routinely takes longer than a 50ms
+    /// window, so the assertion passed even with the lock acquisition deleted).
+    ///
+    /// The structural proof is two-sided: while the holder still has `backup_ops`, `probe`
+    /// must **not** have completed within a generous window (a probe that skips the lock
+    /// completes almost immediately, well inside it); once the holder releases, `probe` must
+    /// complete promptly. Only a probe that actually blocks on `backup_ops` satisfies both.
+    ///
+    /// Shared by `commands::backup`'s own tests (the four IPC commands) and
+    /// `commands::backup_triggers`'s tests (Task F3: the trigger paths) — both need the exact
+    /// same structural proof against the exact same lock.
+    pub fn assert_serializes_on_backup_ops(state: &DiaryState, probe: impl FnOnce() + Send) {
+        let (holder_ready_tx, holder_ready_rx) = std::sync::mpsc::channel::<()>();
+        let (release_tx, release_rx) = std::sync::mpsc::channel::<()>();
+        let (probe_done_tx, probe_done_rx) = std::sync::mpsc::channel::<()>();
+
+        std::thread::scope(|scope| {
+            scope.spawn(move || {
+                let guard = state.backup_ops.lock().unwrap();
+                holder_ready_tx.send(()).unwrap();
+                release_rx.recv().unwrap();
+                drop(guard);
+            });
+
+            holder_ready_rx
+                .recv()
+                .expect("the backup_ops holder thread must signal acquisition");
+
+            scope.spawn(move || {
+                probe();
+                let _ = probe_done_tx.send(());
+            });
+
+            let completed_while_locked =
+                probe_done_rx.recv_timeout(std::time::Duration::from_millis(300));
+
+            // Release the holder *before* asserting: `thread::scope` joins every spawned
+            // thread before returning, including on a panic unwinding through this block, so
+            // asserting first (and panicking on a regression) would leave the holder thread
+            // blocked on `release_rx.recv()` forever with nothing left to send it — hanging
+            // the test instead of failing it.
+            release_tx
+                .send(())
+                .expect("the backup_ops holder thread must still be waiting to release");
+
+            assert!(
+                completed_while_locked.is_err(),
+                "the probe completed while a concurrent thread still held backup_ops — it did \
+                 not actually wait for the lock"
+            );
+
+            probe_done_rx
+                .recv_timeout(std::time::Duration::from_secs(5))
+                .expect(
+                    "the probe did not complete even after the backup_ops holder released the \
+                     lock",
+                );
+        });
     }
 }

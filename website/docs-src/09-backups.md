@@ -69,7 +69,7 @@ Above the list is the state of the whole folder: whether backups are working, wh
 Four things you can do from here:
 
 - **Back up now** takes a snapshot immediately. Unlike the automatic ones, it ignores the once-per-hour limit and the "nothing changed" rule, so it always produces a snapshot.
-- **Check** re-opens one snapshot and confirms your journal's key still decrypts it. Snapshots taken by an older version of Mini Diarium start as *Not checked*, which means "not confirmed yet", not "broken". A snapshot that fails the check is reported, never deleted: it may still open with the credential it was taken with.
+- **Check** re-opens one snapshot and confirms your journal's key still decrypts every entry's title, text, tags, and any attached images inside it — not just a sample. Snapshots taken by an older version of Mini Diarium start as *Not checked*, which means "not confirmed yet", not "broken". A snapshot that fails the check is reported, never deleted: it may still open with the credential it was taken with.
 - **Delete** removes one snapshot.
 - **Open backups folder** opens the folder in your file manager.
 

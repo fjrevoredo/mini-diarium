@@ -22,6 +22,9 @@ use crate::crypto::cipher;
 use crate::db::schema::open_connection_readonly;
 use crate::db::DatabaseConnection;
 
+use super::inspect::has_column;
+use super::restore_entries::has_table;
+
 /// Prefix every snapshot file carries. Unchanged from the pre-upgrade format so files
 /// written by older versions are still recognised.
 pub const SNAPSHOT_PREFIX: &str = "backup-";
@@ -474,8 +477,10 @@ fn vacuum_into(db: &DatabaseConnection, target: &Path) -> Result<(), String> {
 /// Flushes the snapshot's own bytes to stable storage.
 ///
 /// The handle must be opened for **write**: Windows rejects `FlushFileBuffers` (what
-/// `sync_all` calls) on a read-only handle with `ERROR_ACCESS_DENIED`.
-fn fsync_file(path: &Path) -> Result<(), String> {
+/// `sync_all` calls) on a read-only handle with `ERROR_ACCESS_DENIED`. `pub(crate)` so
+/// [`super::relocate`] can reuse it for its own stage → fsync → rename sequence instead of
+/// duplicating the Windows/Unix branching.
+pub(crate) fn fsync_file(path: &Path) -> Result<(), String> {
     let file = fs::OpenOptions::new()
         .write(true)
         .open(path)
@@ -488,8 +493,8 @@ fn fsync_file(path: &Path) -> Result<(), String> {
 ///
 /// Best-effort by design: only Unix lets a directory be opened as a file. On Windows
 /// `File::open` on a directory fails, and NTFS metadata journaling covers the rename, so
-/// there is nothing to do and nothing to report.
-fn fsync_dir(dir: &Path) {
+/// there is nothing to do and nothing to report. `pub(crate)` — see [`fsync_file`].
+pub(crate) fn fsync_dir(dir: &Path) {
     #[cfg(unix)]
     {
         if let Ok(handle) = File::open(dir) {
@@ -515,10 +520,11 @@ fn fsync_dir(dir: &Path) {
 /// **Note on check 3.** The plan phrases this as "the master key unwraps an auth slot",
 /// which is not achievable: a slot's `wrapped_key` is unwrapped *by a credential*
 /// (Argon2id-derived password key, X25519 private key, or the device auto key) to *produce*
-/// the master key — holding the master key does not let you reverse that. Decrypting an
-/// encrypted row instead proves the property that actually matters, and proves it against
-/// the same key the entries were written with. A journal with no encrypted content yet has
-/// nothing to check, so checks 1–2 stand alone in that case.
+/// the master key — holding the master key does not let you reverse that. Decrypting every
+/// supported encrypted value instead proves the property that actually matters, and proves
+/// it against the same key the entries were written with — not just a single sample, since a
+/// snapshot can be openable and pass a sample check while a later field is corrupt. A journal
+/// with no encrypted content yet has nothing to check, so checks 1–2 stand alone in that case.
 pub(crate) fn verify_snapshot(path: &Path, key: &cipher::Key) -> Result<(), String> {
     let conn = open_connection_readonly(path)
         .map_err(|e| format!("Snapshot verification failed to open the file: {e}"))?;
@@ -541,37 +547,120 @@ pub(crate) fn verify_snapshot(path: &Path, key: &cipher::Key) -> Result<(), Stri
     verify_key_decrypts(&conn, key)
 }
 
-/// Decrypts one encrypted field with `key`, if the snapshot has any.
-fn verify_key_decrypts(conn: &rusqlite::Connection, key: &cipher::Key) -> Result<(), String> {
-    // Entry titles first (the common case), tag names as the fallback for a journal that
-    // holds tags but no entries.
-    let sample: Option<Vec<u8>> = conn
-        .query_row(
-            "SELECT title_encrypted FROM entries WHERE title_encrypted IS NOT NULL LIMIT 1",
-            [],
-            |row| row.get(0),
-        )
-        .or_else(|_| {
-            conn.query_row(
-                "SELECT name_encrypted FROM tags WHERE name_encrypted IS NOT NULL LIMIT 1",
-                [],
-                |row| row.get(0),
-            )
-        })
-        .ok();
+/// Column matrix this verifier adapts to, mirroring the read paths in `db::queries` and
+/// `backup::inspect`/`backup::restore_entries` that already handle a pre-migration snapshot:
+///
+/// | Column                                  | Introduced | Required? |
+/// |------------------------------------------|-----------|-----------|
+/// | `entries.title_encrypted`/`text_encrypted`| v1        | always (when `entries` exists) |
+/// | `entries.entry_metadata_encrypted`        | v9        | when column exists and non-NULL |
+/// | `entries.preview_enc`                     | v12       | when column exists and non-NULL |
+/// | `tags.name_encrypted`                     | pre-v3    | when `tags` table exists |
+/// | `images.data`                             | pre-v3    | when `images` table exists |
+/// | `images.thumbnail_data`                   | v11       | when column exists and non-NULL |
+///
+/// Every encrypted value the current schema can hold is decrypted, not just a single sample —
+/// a snapshot must not be marked `verified` while a later field (a second entry's text, an
+/// image's bytes, a thumbnail) is silently corrupt. A structural failure (a required table
+/// missing, a row that cannot be read) is a verification failure, never downgraded to the
+/// empty-journal case: that case applies only when a table exists and is genuinely empty.
+/// One entry row's encrypted columns, exactly as selected by the adaptive query below:
+/// `(title_encrypted, text_encrypted, entry_metadata_encrypted, preview_enc)`.
+type EntryVerificationRow = (Vec<u8>, Vec<u8>, Option<Vec<u8>>, Option<Vec<u8>>);
 
-    let Some(ciphertext) = sample else {
-        // Nothing encrypted in the journal yet — checks 1 and 2 are the whole guarantee.
-        return Ok(());
+fn verify_key_decrypts(conn: &rusqlite::Connection, key: &cipher::Key) -> Result<(), String> {
+    let decrypt_failed = || {
+        "Snapshot verification failed: the journal's master key does not decrypt the \
+         snapshot's content"
+            .to_string()
     };
 
-    crate::format::decrypt_utf8(key, &ciphertext, "snapshot verification sample").map_err(
-        |_| {
-            "Snapshot verification failed: the journal's master key does not decrypt the \
-         snapshot's content"
-                .to_string()
-        },
-    )?;
+    if !has_table(conn, "entries")? {
+        return Err("Snapshot verification failed: the snapshot has no entries table".to_string());
+    }
+
+    let metadata_col = if has_column(conn, "entries", "entry_metadata_encrypted")? {
+        "entry_metadata_encrypted"
+    } else {
+        "NULL"
+    };
+    let preview_col = if has_column(conn, "entries", "preview_enc")? {
+        "preview_enc"
+    } else {
+        "NULL"
+    };
+
+    let entry_sql = format!(
+        "SELECT title_encrypted, text_encrypted, {metadata_col}, {preview_col} FROM entries"
+    );
+    let mut stmt = conn
+        .prepare(&entry_sql)
+        .map_err(|e| format!("Snapshot verification could not read entries: {e}"))?;
+    let entry_rows: Vec<EntryVerificationRow> = stmt
+        .query_map([], |row| {
+            Ok((
+                row.get::<_, Vec<u8>>(0)?,
+                row.get::<_, Vec<u8>>(1)?,
+                row.get::<_, Option<Vec<u8>>>(2)?,
+                row.get::<_, Option<Vec<u8>>>(3)?,
+            ))
+        })
+        .map_err(|e| format!("Snapshot verification could not read entries: {e}"))?
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| format!("Snapshot verification could not read entries: {e}"))?;
+
+    for (title_enc, text_enc, metadata_enc, preview_enc) in &entry_rows {
+        crate::format::decrypt_utf8(key, title_enc, "title").map_err(|_| decrypt_failed())?;
+        crate::format::decrypt_utf8(key, text_enc, "text").map_err(|_| decrypt_failed())?;
+        if let Some(enc) = metadata_enc {
+            crate::format::decrypt_utf8(key, enc, "entry_metadata")
+                .map_err(|_| decrypt_failed())?;
+        }
+        if let Some(enc) = preview_enc {
+            crate::format::decrypt_utf8(key, enc, "preview").map_err(|_| decrypt_failed())?;
+        }
+    }
+
+    if has_table(conn, "tags")? {
+        let mut stmt = conn
+            .prepare("SELECT name_encrypted FROM tags")
+            .map_err(|e| format!("Snapshot verification could not read tags: {e}"))?;
+        let names: Vec<Vec<u8>> = stmt
+            .query_map([], |row| row.get::<_, Vec<u8>>(0))
+            .map_err(|e| format!("Snapshot verification could not read tags: {e}"))?
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|e| format!("Snapshot verification could not read tags: {e}"))?;
+        for name_enc in &names {
+            crate::format::decrypt_utf8(key, name_enc, "tag name").map_err(|_| decrypt_failed())?;
+        }
+    }
+
+    if has_table(conn, "images")? {
+        let thumbnail_col = if has_column(conn, "images", "thumbnail_data")? {
+            "thumbnail_data"
+        } else {
+            "NULL"
+        };
+        let images_sql = format!("SELECT data, {thumbnail_col} FROM images");
+        let mut stmt = conn
+            .prepare(&images_sql)
+            .map_err(|e| format!("Snapshot verification could not read images: {e}"))?;
+        let image_rows: Vec<(Vec<u8>, Option<Vec<u8>>)> = stmt
+            .query_map([], |row| {
+                Ok((row.get::<_, Vec<u8>>(0)?, row.get::<_, Option<Vec<u8>>>(1)?))
+            })
+            .map_err(|e| format!("Snapshot verification could not read images: {e}"))?
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|e| format!("Snapshot verification could not read images: {e}"))?;
+        for (data_enc, thumbnail_enc) in &image_rows {
+            crate::format::decrypt_bytes(key, data_enc, "image").map_err(|_| decrypt_failed())?;
+            if let Some(enc) = thumbnail_enc {
+                crate::format::decrypt_bytes(key, enc, "image thumbnail")
+                    .map_err(|_| decrypt_failed())?;
+            }
+        }
+    }
+
     Ok(())
 }
 
@@ -812,6 +901,138 @@ mod tests {
         // A brand-new journal has auth slots but no entries and no tags.
         store.write(&db, "backup-2026-08-04-12h00m00.db").unwrap();
         assert_eq!(store.list().unwrap().len(), 1);
+    }
+
+    // ── Task F1: full-content verification ────────────────────────────────────────────
+
+    /// A 1×1 white PNG, base64-encoded. Small enough to embed inline; large enough to be a
+    /// real, decodable image so thumbnail generation actually runs.
+    const TINY_PNG_B64: &str =
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
+
+    #[test]
+    fn test_verification_rejects_corruption_in_a_non_first_encrypted_entry_field() {
+        let (dir, _db_path, db) = seeded_journal("corrupt-non-first-field");
+        let store = FsSnapshotStore::new(dir.path().join("backups"));
+        store.write(&db, "backup-2026-08-04-12h00m00.db").unwrap();
+        let path = store.read("backup-2026-08-04-12h00m00.db").unwrap();
+
+        // Corrupt the *second* entry's text only. The old single-sample verifier checked
+        // only the first entry's title, which stays perfectly decryptable here.
+        let conn = rusqlite::Connection::open(&path).unwrap();
+        let updated = conn
+            .execute(
+                "UPDATE entries SET text_encrypted = x'ffffffffffffffff' WHERE date = '2024-03-20'",
+                [],
+            )
+            .unwrap();
+        assert_eq!(updated, 1);
+        drop(conn);
+
+        let result = verify_snapshot(&path, db.key());
+        assert!(
+            result.is_err(),
+            "verification passed even though a non-first entry's text is corrupt"
+        );
+    }
+
+    #[test]
+    fn test_verification_checks_tags_metadata_previews_images_and_thumbnails() {
+        use crate::db::{add_tag_to_entry, create_tag, insert_entry_with_images, EntryMetadata};
+
+        let dir = tempfile::Builder::new()
+            .prefix("mini-diarium-store-full-verify-")
+            .tempdir()
+            .unwrap();
+        let db_path = dir.path().join("diary.db");
+        let db = create_database(&db_path, "test_password".to_string()).unwrap();
+
+        let entry = DiaryEntry {
+            id: 0,
+            date: "2024-05-01".to_string(),
+            title: "With image".to_string(),
+            text: format!(r#"<p>Photo</p><img src="data:image/png;base64,{TINY_PNG_B64}">"#),
+            word_count: 1,
+            date_created: "2024-05-01T00:00:00Z".to_string(),
+            date_updated: "2024-05-01T00:00:00Z".to_string(),
+            metadata: Some(EntryMetadata {
+                font_family: Some("Serif".to_string()),
+                font_size: Some(16.0),
+            }),
+            locked: false,
+        };
+        let entry_id = insert_entry_with_images(&db, &entry).unwrap();
+        let tag = create_tag(&db, "personal").unwrap();
+        add_tag_to_entry(&db, entry_id, tag.id).unwrap();
+
+        let store = FsSnapshotStore::new(dir.path().join("backups"));
+        // The write itself already runs full verification — if it fails here, one of the
+        // new fields is wrongly rejected on genuinely valid content.
+        store.write(&db, "backup-2026-08-04-12h00m00.db").unwrap();
+        let path = store.read("backup-2026-08-04-12h00m00.db").unwrap();
+
+        let columns: [(&str, &str, &str); 5] = [
+            ("entries", "entry_metadata_encrypted", "date = '2024-05-01'"),
+            ("entries", "preview_enc", "date = '2024-05-01'"),
+            ("tags", "name_encrypted", "1 = 1"),
+            ("images", "data", "1 = 1"),
+            ("images", "thumbnail_data", "1 = 1"),
+        ];
+
+        for (table, column, predicate) in columns {
+            // A fresh scratch copy per column so each corruption is tested against an
+            // otherwise-intact snapshot, not one already broken by a previous iteration.
+            let scratch = dir.path().join(format!("scratch-{table}-{column}.db"));
+            fs::copy(&path, &scratch).unwrap();
+
+            let conn = rusqlite::Connection::open(&scratch).unwrap();
+            let updated = conn
+                .execute(
+                    &format!("UPDATE {table} SET {column} = x'ffffffffffffffff' WHERE {predicate}"),
+                    [],
+                )
+                .unwrap();
+            assert!(
+                updated >= 1,
+                "no {table}.{column} row was available to corrupt"
+            );
+            drop(conn);
+
+            let result = verify_snapshot(&scratch, db.key());
+            assert!(
+                result.is_err(),
+                "verification passed with a corrupt {table}.{column}"
+            );
+        }
+    }
+
+    #[test]
+    fn test_verification_rejects_a_missing_required_entries_table() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("no-entries.db");
+        let conn = rusqlite::Connection::open(&path).unwrap();
+        conn.execute_batch(
+            "CREATE TABLE schema_version (version INTEGER NOT NULL);
+             INSERT INTO schema_version (version) VALUES (13);
+             CREATE TABLE auth_slots (
+                 id INTEGER PRIMARY KEY,
+                 type TEXT NOT NULL,
+                 public_key BLOB,
+                 wrapped_key BLOB NOT NULL
+             );
+             INSERT INTO auth_slots (type, wrapped_key) VALUES ('password', x'00');",
+        )
+        .unwrap();
+        drop(conn);
+
+        let key = cipher::Key::from_slice(&[1u8; 32]).unwrap();
+        let err = verify_snapshot(&path, &key)
+            .expect_err("verification passed on a snapshot with no entries table at all");
+        assert!(
+            err.contains("entries table"),
+            "a missing required table must fail structurally, not be treated as an empty \
+             journal: got {err:?}"
+        );
     }
 
     #[test]

@@ -4,9 +4,9 @@
 
 - Plan Status: COMPLETED
 - Created: 2026-08-16
-- Last Updated: 2026-08-17
+- Last Updated: 2026-08-18
 - Owner: Coding agent
-- Approval: Approved by user to start Milestone A (2026-08-16)
+- Approval: Approved by user to start Milestone A (2026-08-16); Milestone F implemented per direct user instruction to execute the plan (2026-08-18)
 
 ## Status Legend
 
@@ -15,7 +15,7 @@
 
 ## Goal
 
-Close all 8 findings from `docs/reports/2026-08-16-backup-system-redesign-adversarial-review.md` (TODO-0098 backup-system redesign). Every finding was independently re-verified against the current source on `todo-0098-backups-panel` before this plan was written — see the "Finding Verification" section below. The plan mirrors the report's four independent workstreams (A–D) so each can be committed separately, per the report's own "Implementation Organization" guidance.
+Close all 8 findings from `docs/reports/2026-08-16-backup-system-redesign-adversarial-review.md` (TODO-0098 backup-system redesign), plus the three remaining recovery-integrity gaps found by the final post-implementation review. Every original finding was independently re-verified against the source before this plan was written — see the "Finding Verification" section below. All milestones (A–F) are complete.
 
 ## Scope
 
@@ -28,12 +28,15 @@ Close all 8 findings from `docs/reports/2026-08-16-backup-system-redesign-advers
 - Make `BackupsPanel.tsx`'s `load()` latest-wins so a stale in-flight refresh cannot overwrite a newer one (Finding 6).
 - Render the inspected snapshot's entry count in `BackupInspectDialog.tsx` (Finding 8).
 - A full manual backup-recovery rehearsal after all four workstreams land.
+- Verify every present encrypted snapshot field and required table before marking a snapshot verified (post-implementation Finding F1).
+- Make backup relocation crash-safe and retryable by staging, syncing, comparing, and atomically finalizing every copied snapshot (post-implementation Finding F2).
+- Serialize every backup-directory mutation, including unlock, lock, and destructive-trigger snapshots, behind `DiaryState::backup_ops` without introducing an ABBA deadlock (post-implementation Finding F3).
 
 ## Non-Goals
 
 - No new backup features (retention policy changes, new snapshot triggers, new UI surfaces beyond what each finding requires).
 - No rename/restructuring of the backup subsystem beyond what each fix needs.
-- Not building a generic optimistic-concurrency framework — the mutation lock is scoped to the Backups panel and its backend commands only.
+- Not building a generic concurrency framework outside one journal's backup-directory operations.
 - Not addressing anything in the report explicitly excluded from its own findings (the report already excluded low-priority documentation/wording issues).
 
 ## Assumptions
@@ -42,6 +45,9 @@ Close all 8 findings from `docs/reports/2026-08-16-backup-system-redesign-advers
 - `cargo test --workspace` and the frontend test/lint/type-check suite are the primary automated gates; the manual rehearsal in the Final Verification section is required in addition because several findings (4, 6) are concurrency/timing bugs that unit tests approximate with deferred promises but a real dev-app run is the only way to see the panel behave correctly end to end.
 - Fixing Finding 3 by aborting relocation on a genuine content-differing collision (rather than allocating a unique destination filename) is preferred: it is the simpler, safer of the report's two suggested fixes, and same-name collisions are already documented as a rare edge case (interrupted move / manual recovery), so aborting the whole relocation with a clear error is an acceptable UX cost for a case expected to happen close to never.
 - Fixing Finding 2 by staging the destination database copy (verify byte-for-byte, keep the source until the copy is verified) is preferred over a fully resumable multi-step protocol, because it removes the specific failure window the finding identifies (relocated backups + un-copied database) without introducing new persisted "resume" state.
+- A relocated snapshot must not become visible under a `backup-*.db` final name until its bytes are complete and durable. A retry may find an already-finalized, byte-identical file from an interrupted prior attempt, but it must never be blocked by a partial final file.
+- A snapshot marked `verified` promises that all encrypted content recoverable through the supported schema is readable with the live master key. Checking one sample is insufficient because whole-journal restore can otherwise report success before corrupted rows are accessed.
+- `backup_ops` remains journal-local. Trigger paths and IPC commands must use the same `backup_ops` then `db` ordering; detached lock snapshots may acquire `backup_ops` in their worker after the connection is removed, because no command can mutate a locked journal's backups directory.
 
 ## Open Questions
 
@@ -100,7 +106,7 @@ Additionally, `docs/backup-system-redesign-plan.md`'s own Task 5.1 implementatio
   - Add tests to `src-tauri/src/commands/backup.rs`'s existing `tests` module (which already constructs `DiaryState` directly via `make_state`/`seeded`, avoiding the `State<T>`-cannot-be-constructed-outside-Tauri problem the existing tests already work around): a shared `assert_serializes_on_backup_ops` helper spawns a thread that holds `state.backup_ops`, signals acquisition, then runs the probe **on its own thread** and proves it blocks structurally — the probe must not complete within a bounded window while the holder still has the lock (a probe that skips the lock completes almost instantly, well inside that window), and must complete promptly once the holder releases. (An earlier boolean-flag-based version of this helper was empirically a false pass: `create_backup_now_inner`'s own I/O routinely took longer than the flag-set window regardless of whether the lock was held, so the assertion passed even with the lock acquisition deleted — caught by deliberately removing the lock and confirming the test failed, then fixed to the block/release structural check.) Covers all **four** commands (`create_backup_now_inner`, `verify_backup_inner`, `delete_backup_inner`, `restore_backup_inner`), not just the two named above.
   - Confirm `restore_backup_inner`'s existing tests still pass unmodified (it already existed; only its lock-acquisition order changes).
   - `cargo test --manifest-path src-tauri/Cargo.toml`, then full `cargo test --workspace`.
-- Notes: Affected files: `src-tauri/src/commands/auth/mod.rs`, `src-tauri/src/commands/backup.rs`. This lock is additive — it does not replace the existing `state.db` locking, which still governs whether the journal is unlocked. **Accepted residual gap:** a lock/unlock/destructive-trigger snapshot (`backup_triggers.rs`) can still filesystem-race with a concurrent `create_backup_now`/`verify_backup`/`delete_backup`/`restore_backup` call, since those triggers intentionally stay outside `backup_ops` per step 1. This is a narrower fix than "no two backup-directory-mutating operations can ever race" — it closes the concrete window Finding 4 identifies (the Backups panel's own four actions racing each other), not every theoretical racer. Folding the trigger paths in would require a separate task that first resolves the lock-ordering conflict (e.g. by having the triggers acquire `backup_ops` without holding `db`, which likely requires restructuring `snapshot_before_destructive`/`snapshot_after_unlock` to release `db` before the snapshot call — out of scope here).
+- Notes: Affected files: `src-tauri/src/commands/auth/mod.rs`, `src-tauri/src/commands/backup.rs`. This lock is additive — it does not replace the existing `state.db` locking, which still governs whether the journal is unlocked. **Residual gap closed by Task F3:** at the time this task shipped, a lock/unlock/destructive-trigger snapshot (`backup_triggers.rs`) could still filesystem-race with a concurrent `create_backup_now`/`verify_backup`/`delete_backup`/`restore_backup` call, since those triggers intentionally stayed outside `backup_ops` per step 1 above. Task F3 (Milestone F) closed that gap by restructuring the trigger paths to acquire `backup_ops` before `db` (reordering, not just adding, their internal lock nesting) and by giving the detached lock/shutdown worker its own `Arc`-cloned guard, acquired immediately before it writes, since a `MutexGuard` cannot move onto a spawned thread. All backup-directory mutations — the four IPC commands and every trigger path — now serialize on the same `backup_ops` lock, acquired in the same order everywhere.
 
 #### Task A3: Panel-wide frontend mutation lock
 
@@ -276,9 +282,107 @@ Additionally, `docs/backup-system-redesign-plan.md`'s own Task 5.1 implementatio
   - **(e) Auto-lock paths — OS session lock and focus loss: PASS, user-verified.** Handed off with the dev app running, unlocked, `autoLockTimeout` at 900s, `autoLockOnFocusLoss` enabled. User confirmed both: (1) Win+L → unlock Windows again → Mini Diarium showed its own lock screen; (2) minimize/alt-tab away and back → the journal had locked. Both auto-lock paths fire correctly in the normal (non-poisoned) case.
   - **Environment note (not a product bug):** the dev app's Vite server twice reported itself `ready` while its HTTP port silently stopped responding (TCP connections established, no request ever completed) — a stale dependency-optimizer cache issue. Fixed by stopping the session, deleting `node_modules/.vite`, and restarting. Not raised as a finding since it's a local dev-server cache artifact, not application behavior.
 
+### Milestone F: Post-Implementation Recovery Hardening
+
+- Status: COMPLETED
+- Purpose: Close the recovery-integrity gaps found after Milestones A–E: incomplete verification, non-retryable partial relocation, and trigger-path snapshot races.
+- Exit Criteria: A snapshot cannot be marked verified unless every supported encrypted field can be decrypted; an interrupted relocation leaves only hidden temporary files or complete final snapshots and retries successfully; no trigger or IPC path can mutate one journal's backups directory concurrently; all new fault-injection tests and the full backend suite pass.
+
+#### Task F1: Verify Complete Snapshot Content
+
+- Status: COMPLETED
+- Objective: A successful `verify_snapshot` proves that every encrypted value in a supported snapshot can be read with the live master key, while preserving support for empty journals and older supported schemas.
+- Steps:
+  1. Read the current schema DDL and the read paths for entries, tags, images, metadata, previews, and thumbnail fields before changing verification. Record the supported-schema column matrix in a concise comment near `verify_snapshot`; do not query a column that a pre-migration snapshot cannot contain.
+  2. Replace `verify_key_decrypts` in `crates/mini-diarium-core/src/backup/store.rs` with a full read-only verifier. Require the `entries` table for v3+ snapshots, iterate every entry row, and decrypt `title_encrypted` and `text_encrypted`; when their columns exist and are non-NULL, also decrypt `entry_metadata_encrypted` and `preview_enc` using their normal encryption contexts.
+  3. When supported tables exist, iterate and decrypt every `tags.name_encrypted`, `images.data_encrypted`, and non-NULL `images.thumbnail_data` value with the same contexts used by the normal database read helpers. Structural query failures must return verification failure, not be converted into the empty-journal case. Keep the existing auth-slot and schema-version checks.
+  4. Preserve the valid empty-journal case only when the expected tables exist but contain no encrypted rows. Keep verification read-only and do not expose ciphertext, key material, entry content, or filesystem paths in errors or logs.
+- Validation:
+  - Add `test_verification_rejects_corruption_in_a_non_first_encrypted_entry_field` after snapshot creation and prove `verify_snapshot` fails.
+  - Add `test_verification_checks_tags_metadata_previews_images_and_thumbnails` when the relevant schema columns/tables exist.
+  - Add `test_verification_rejects_a_missing_required_entries_table` and prove verification fails rather than passing as an empty journal.
+  - Keep `test_verification_accepts_a_journal_with_no_encrypted_content` passing.
+  - Run `cargo test --manifest-path crates/mini-diarium-core/Cargo.toml backup::store` and `cargo test --workspace`.
+- Notes: Affected files: `crates/mini-diarium-core/src/backup/store.rs` (verifier rewrite + 3 new tests), `crates/mini-diarium-core/src/backup/restore_entries.rs` (`has_table` promoted from private to `pub(crate)`, moved beside `has_column`'s sibling doc reference). Corrected against current source before implementation: the images table's encrypted-bytes column is `images.data`, not `images.data_encrypted` (no such column exists) — used `data` per the column matrix now documented in `verify_key_decrypts`'s doc comment. Reused `crate::backup::inspect::has_column` and the newly-promoted `has_table` rather than re-deriving `sqlite_master`/`PRAGMA table_info` queries; reused `crate::format::decrypt_utf8`/`decrypt_bytes` (no new cryptography). `verify_key_decrypts` is not part of the public API surface (only `verify_snapshot_file` is documented in `crates/mini-diarium-core/API.md`), so no API-contract update was needed. All 4 named tests added and passing: `test_verification_rejects_corruption_in_a_non_first_encrypted_entry_field`, `test_verification_checks_tags_metadata_previews_images_and_thumbnails` (covers metadata/preview/tags/image-data/thumbnail via per-column corruption of a real snapshot with all fields populated), `test_verification_rejects_a_missing_required_entries_table`, and the pre-existing `test_verification_accepts_a_journal_with_no_encrypted_content` kept green. `cargo test --manifest-path crates/mini-diarium-core/Cargo.toml backup::store`: 21 passed, 0 failed. `cargo test --workspace`: all green (see Task F4 for the final combined count).
+
+#### Task F2: Make Relocation Crash-Safe And Retryable
+
+- Status: COMPLETED
+- Objective: A power loss, I/O failure, or interrupted relocation cannot leave a partial `backup-*.db` at the destination or make a retry fail on a false content collision.
+- Steps:
+  1. In `crates/mini-diarium-core/src/backup/relocate.rs`, replace direct `fs::copy(source, dest)` with a per-file staged copy in `new_dir` using a name that cannot pass the snapshot listing filter, such as `relocating-{file_name}.tmp`. Remove a stale temporary for that file only after confirming it is not a final snapshot.
+  2. After copying, compare the staged file against the source using the existing chunked comparison, fsync the staged file, atomically rename it to the final `backup-*.db` name, then fsync the destination directory where supported. Move or expose narrowly scoped store helpers instead of duplicating platform-specific fsync logic.
+  3. On a copy, comparison, sync, or rename failure, remove only the staged temporary and return an error. Do not delete source snapshots, destination final snapshots, or either manifest. A crash before final rename leaves a non-listed temporary; a crash after final rename leaves a complete file that a retry recognizes as byte-identical.
+  4. Keep the existing differing-content collision behavior: a complete final file with the same name but different bytes aborts the relocation and preserves both copies. Do not merge or save manifests until every source snapshot has a complete destination counterpart.
+  5. Update the relocation module documentation to state the exact retry guarantees and the treatment of stale temporary files.
+- Validation:
+  - Add a deterministic failure-injection seam for the copy/finalize phases if direct filesystem faults cannot reliably reach each phase on all platforms. The seam must be test-only or private to the core crate.
+  - Add `test_relocate_backups_failed_staged_copy_leaves_no_final_file_and_retries`: source remains untouched, no final destination snapshot exists, and a retry succeeds.
+  - Add `test_relocate_backups_resumes_from_a_complete_final_file_before_manifest_save`: retry recognizes the file as identical, completes the relocation, and preserves its manifest metadata.
+  - Add `test_relocate_backups_ignores_and_replaces_stale_temporary_files`.
+  - Keep the existing same-name identical and differing-content collision tests passing.
+  - Run `cargo test --manifest-path crates/mini-diarium-core/Cargo.toml backup::relocate` and `cargo test --workspace`.
+- Notes: Affected files: `crates/mini-diarium-core/src/backup/relocate.rs` (new `relocate_one_file` staged-copy helper, `RELOCATE_TEMP_PREFIX`/`RELOCATE_TEMP_SUFFIX` constants, updated module doc), `crates/mini-diarium-core/src/backup/store.rs` (`fsync_file`/`fsync_dir` widened from private to `pub(crate)` and reused directly — no duplicated Windows/Unix branching). `manifest.json` privacy rules and `manifest::save` itself were left untouched, exactly as scoped; only *when* it's called changed (already true pre-F2 — confirmed unchanged). No test-only fault-injection seam was needed: all 3 new tests use real filesystem faults (a directory occupying the staged temp name) or real prior-state reconstruction (pre-placing a byte-identical final file / a stale garbage temp file), matching the existing collision tests' own style, per the plan's own preference for real faults over a new seam. All 3 named tests added and passing: `test_relocate_backups_failed_staged_copy_leaves_no_final_file_and_retries`, `test_relocate_backups_resumes_from_a_complete_final_file_before_manifest_save` (redesigned during implementation from directly pre-placing a manifest-less final file — which, given the existing dest-wins-on-collision manifest-merge semantics, legitimately downgrades the entry to `Adopted` and is not a bug — to simulating a crash *after* a first fully successful relocation, recreating `old_dir` with byte-identical content, so the resumed retry's manifest-preservation assertions test a scenario the design actually guarantees), `test_relocate_backups_ignores_and_replaces_stale_temporary_files`. All pre-existing same-name collision tests kept passing. `cargo test --manifest-path crates/mini-diarium-core/Cargo.toml backup::relocate`: 9 passed, 0 failed. `cargo test --workspace`: all green.
+
+#### Task F3: Serialize Trigger-Path Snapshots
+
+- Status: COMPLETED
+- Objective: Backup snapshots triggered by unlock, lock, shutdown, and destructive operations cannot race create, verify, delete, or restore operations for the same journal.
+- Steps:
+  1. Before editing, inspect every caller of `snapshot_after_unlock`, `snapshot_before_destructive`, `take_connection_and_snapshot`, and `snapshot_detached`, and document the resulting lock order in `backup_triggers.rs`. Confirm that no path holds `db` while waiting for `backup_ops`.
+  2. Change synchronous trigger paths so they acquire `backup_ops` before acquiring `db`, retain it through `create_snapshot`, and use the canonical poisoned-lock error or warning behavior appropriate to their existing failure semantics. Do not change the intentional rule that failed non-migration snapshots are logged and do not block the user operation.
+  3. In `take_connection_and_snapshot`, acquire `backup_ops` before taking `db`, then release it after the connection is removed. In the detached worker, acquire `backup_ops` immediately before calling `create_snapshot` and retain it until the snapshot completes. This makes a pending IPC operation fail its unlocked-state check after the lock path takes the connection, while the worker waits for any already-running IPC filesystem mutation to finish.
+  4. Keep `backup_ops` before `db` in every IPC command and trigger path. Do not hold `db_path` or `backups_dir` mutexes across another `DiaryState` mutex; retain the poisoned-path fix from Milestone C.
+  5. Remove the accepted-residual-gap wording from Task A2's notes and update the relevant backend guidance to state that all backup-directory mutations are serialized.
+- Validation:
+  - Extend the structural `backup_ops` blocking test helper with `test_backup_ops_serializes_unlock_and_destructive_triggers` and `test_backup_ops_serializes_detached_lock_snapshot`, proving each waits while another operation owns `backup_ops`.
+  - Add `test_lock_snapshot_waits_for_delete_after_the_unlocked_check`: pause `delete_backup_inner` after its unlocked check, request a lock snapshot, then prove the snapshot starts only after delete releases `backup_ops`, with no manifest corruption or deadlock.
+  - Add `test_trigger_and_ipc_backup_ops_lock_order_completes_after_release` using bounded channels/timeouts.
+  - Run `cargo test --manifest-path src-tauri/Cargo.toml commands::backup commands::backup_triggers` and `cargo test --workspace`.
+- Notes: Affected files: `src-tauri/src/commands/auth/mod.rs` (`backup_ops` widened from `Mutex<()>` to `Arc<Mutex<()>>` so the detached worker can clone a handle onto its own thread; field doc comment rewritten to drop the residual-gap wording; `assert_serializes_on_backup_ops` moved here into `test_helpers`, shared with `commands::backup`'s own Task A2 tests, since Task F3's tests needed the exact same structural helper against the same lock), `src-tauri/src/commands/backup_triggers.rs` (module doc extended with the lock-order rule; `snapshot_after_unlock`/`snapshot_before_destructive` reordered to acquire `backup_ops` before their existing `db` lock — a real nesting change, not just an added line; `take_connection_and_snapshot` acquires `backup_ops` before its `db_path`→`backups_dir`→`db` sequence and drops it once the connection is out of `state.db`; `snapshot_detached` gained a `backup_ops: Arc<Mutex<()>>` parameter and acquires its own guard immediately before `create_snapshot`, poisoned-lock case logged and skipped per the existing best-effort asymmetry), `src-tauri/src/commands/backup.rs` (removed its private copy of `assert_serializes_on_backup_ops`, now calls the shared one). `docs/backup-adversarial-review-fixes-plan.md` Task A2's Notes updated to record the gap as closed (see Task A2 above) instead of accepted.
+  - Call-site audit (step 1) confirmed empirically, not just by inspection: all 8 call sites of the 3 non-internal trigger functions (`auth_core.rs:257,554` for `snapshot_after_unlock`; `auth_core.rs:408`, `auth_directory.rs:159`, `auth_slots.rs:202`, `plugin.rs:43` for `snapshot_before_destructive`; `auth/mod.rs:85`, `lib.rs:121` for `take_connection_and_snapshot`) hold zero `DiaryState` locks at the call — the two `snapshot_after_unlock` sites explicitly `drop(db_state)` first (`auth_core.rs:249`, `:546`), and every other site never held one to begin with. `snapshot_detached` is only ever called internally from `take_connection_and_snapshot`. No path holds `db` while waiting for `backup_ops`.
+  - All 4 named tests added and passing: `test_backup_ops_serializes_unlock_and_destructive_triggers`, `test_backup_ops_serializes_detached_lock_snapshot` (calls `snapshot_detached` directly rather than through `take_connection_and_snapshot`, so it isolates the detached worker's *own* guard acquisition from the synchronous hand-off's — the two turned out not to be interchangeable, see the verification note below), `test_lock_snapshot_waits_for_delete_after_the_unlocked_check` (uses a manually-held `backup_ops` guard as a deterministic stand-in for "`delete_backup_inner`, past its unlocked check", then performs the real `crate::backup::delete_snapshot` call while still holding it, rather than adding a production pause hook to `delete_backup_inner`), `test_trigger_and_ipc_backup_ops_lock_order_completes_after_release` (plain, unscoped `thread::spawn` + bounded `recv_timeout`, not a scoped join, so a real lock-order regression would fail the test instead of hanging the process).
+  - **Verification per the user's request:** each of the 4 new `backup_ops` acquisitions (`snapshot_after_unlock`, `snapshot_before_destructive`, `take_connection_and_snapshot`'s synchronous guard, `snapshot_detached`'s own guard) was individually removed and confirmed to fail its dedicated test, then restored. One false-pass was caught and fixed during this process, mirroring Task A2's own precedent: removing `take_connection_and_snapshot`'s synchronous guard alone did **not** fail `test_backup_ops_serializes_detached_lock_snapshot` as originally written, because that test drove the whole pipeline through `take_connection_and_snapshot`, and the still-present detached-worker lock alone was sufficient to make the probe wait — the synchronous guard's own removal was invisible to it. Fixed by rewriting that test to call `snapshot_detached` directly, which isolates the detached worker's guard from the synchronous hand-off and does fail when *its own* lock is removed (confirmed). A second, unrelated flaw surfaced in `test_lock_snapshot_waits_for_delete_after_the_unlocked_check`'s original final assertion (checking that the deleted file's *name* was not relisted): same-second snapshot naming can legitimately reuse a just-deleted name regardless of lock correctness, so the assertion was replaced with a manifest-readability + count check that does not depend on name identity.
+  - `cargo test --manifest-path src-tauri/Cargo.toml commands::backup commands::backup_triggers`: 38 passed, 0 failed (run as two separate substring-filtered invocations; `commands::backup` alone already includes `commands::backup_triggers` and `commands::backup_inspect` as prefix matches). `cargo test --workspace`: all green.
+  - `MutexGuard` was indeed impossible to move into the detached thread (confirmed by the compiler when first attempted); the worker acquires its own guard via `Arc::clone`. The per-journal mutex was not replaced with a global lock — `backup_ops` remains one field on the per-journal `DiaryState`.
+
+#### Task F4: Cleanup And Final Verification
+
+- Status: COMPLETED
+- Objective: Leave no test seams, stale documentation, or unverified recovery claims after Milestone F.
+- Steps:
+  1. Inspect the final diff and remove only temporary fault-injection code, fixtures, logs, and generated artifacts that are not permanent regression coverage.
+  2. Update `CHANGELOG.md` with the completed hardening behavior. Update `website/docs-src/09-backups.md` only if the user-visible verification or recovery behavior changes; regenerate static documentation when it does.
+  3. Update this plan's status ledger, Task A2 residual-gap note, Milestone F task statuses, and final verification notes with exact command results. Do not mark the plan complete until all validations pass.
+- Validation:
+  - `cargo clippy --workspace --all-targets`
+  - `cargo test --workspace`
+  - `cmd.exe /c bun run type-check`
+  - `cmd.exe /c bun run lint`
+  - `cmd.exe /c bun run test:run`
+  - `cmd.exe /c bun run validate:locales`
+  - `git diff --check` and `git status --short`
+- Notes:
+  - **Step 1 (fault-injection inspection):** none of F1–F3's new tests use a test-only fault-injection seam — every one drives a real filesystem fault (a directory occupying a temp/staged path) or reconstructs a real prior-state scenario (a pre-placed byte-identical final file, a stale garbage temp file, a manually-held real lock guard performing a real deletion). Nothing to remove.
+  - **Step 2 (docs):** `CHANGELOG.md` gained 3 new `[0.7.0] - Unreleased` → `### Fixed` bullets for F1/F2/F3 under the existing TODO-0098 heading, following the same "(post-implementation review of TODO-0098, Milestone F)" citation style the earlier adversarial-review bullets use. `website/docs-src/09-backups.md`'s **Check** bullet was updated — F1 changes what re-checking an existing "verified" backup can now report (previously-undetected corruption in a non-title/tag field now surfaces as a failed check), which is user-visible — then regenerated via `bun run website:build-static` (run through the PowerShell tool per root `CLAUDE.md`); `git diff website/docs/backups/index.html` confirmed only the intended paragraph changed, everything else in the full rebuild reproduced byte-identical.
+  - **Step 3 (status ledger):** Task A2's Notes and Milestone F's own task statuses updated above; this Task F4 entry and the pre-flight checklist below are the final piece.
+  - **Final verification, all green:**
+    - `cargo clippy --workspace --all-targets`: zero warnings (one `clippy::type_complexity` warning surfaced on `verify_key_decrypts`'s new query row type during this pass and was fixed with a named `EntryVerificationRow` type alias in `store.rs`, then reconfirmed clean).
+    - `cargo fmt --check`: clean after running `cargo fmt` once (F1–F3's new code had several long lines `rustfmt` wanted reflowed — applied, then re-verified `--check` passes and `cargo clippy`/`cargo test` were rerun on the reformatted code).
+    - `cargo test --workspace`: 767 passed, 0 failed (265 app crate `mini_diarium_lib` + 460 `mini-diarium-core` + 42 `mini-diarium-crypto`), rerun a final time after the `cargo fmt` pass — still all green.
+    - `cmd.exe /c bun run type-check`: clean (`tsc --noEmit`, no output).
+    - `cmd.exe /c bun run lint`: clean (`eslint src --ext .ts,.tsx`, no output).
+    - `cmd.exe /c bun run build`: succeeded (`vite build`, 34.67s; the pre-existing >500kB chunk-size warning is unrelated to this plan).
+    - `cmd.exe /c bun run format`: every `src/**/*.{ts,tsx,css}` file reported `(unchanged)` — this milestone touched no frontend source.
+    - `cmd.exe /c bun run test:run`: 964 passed across 94 test files, 0 failed — matching Milestone E's own baseline, confirming no frontend regression from Rust-only changes.
+    - `PreferencesOverlay.integration.test.tsx` (the previously-flaky file the frontend suite had a history of timing out in): re-ran once in isolation after the full suite — 2 passed, 0 failed, no timeout. Not flaky this round.
+    - `cmd.exe /c bun run validate:locales`: all 6 non-English locale files OK at 649 keys each, matching `en.ts` — Milestone F introduced no new i18n keys.
+    - `git diff --check`: exit 0 (only pre-existing LF→CRLF line-ending advisories on the 3 touched Rust files, not whitespace errors).
+    - `git status --short`: exactly the 10 files this milestone touched (`CHANGELOG.md`, `docs/backup-adversarial-review-fixes-plan.md`, `crates/mini-diarium-core/src/backup/{relocate,restore_entries,store}.rs`, `src-tauri/src/commands/{auth/mod,backup,backup_triggers}.rs`, `website/docs-src/09-backups.md`, `website/docs/backups/index.html`); a transient untracked `crates/mini-diarium-core/test_legacy_backups_migration_v1_v3/` directory observed once during the test-suite churn was gone by the next `git status` check and is not part of this diff.
+
 ## Approval Gate
 
-Implementation must not start until the user approves this plan.
+Milestone F implementation must not start until the user approves this updated plan. **Satisfied 2026-08-18**: the user directly instructed execution of this plan's Milestone F (with 13 corrections to the plan text verified against current source first); see Metadata.
 
 ## Pre-flight Checks
 
@@ -293,26 +397,27 @@ Fix all failures before proceeding.
 - [x] `cmd.exe /c bun run format` succeeds
 - [x] New `data-testid` (`backup-inspect-entry-count`) added to `src/CLAUDE.md`'s canonical table (Task D2)
 - [x] No new i18n keys need adding beyond reusing `entryCount_one`/`entryCount_other` (confirm during Task D2 — add to every locale file via `bun run validate:locales` if any new key was actually introduced)
-- [x] Plan status updated to COMPLETED
+- [x] Milestone F verification commands pass and the plan status is updated to COMPLETED
 
 ## Plan Self-Check
 
 - [x] Plan location follows the default location rule (`docs/`).
 - [x] Scope, non-goals, assumptions, and open questions are explicit.
 - [x] No unresolved open questions (none were needed — the report's suggested fixes and this plan's assumptions cover every design choice).
-- [x] Tasks are grouped into milestones matching the report's four independent workstreams, plus a final cleanup/verification milestone.
+- [x] Tasks are grouped into milestones matching the report's four independent workstreams, the original cleanup/verification milestone, and the pending post-implementation hardening milestone.
 - [x] Every task has concrete steps (file paths, function names, line-anchored where the code was read) and validation (named tests plus the exact test commands).
 - [x] Every milestone has exit criteria broader than a single task.
-- [x] Cleanup and final verification are included (Milestone E).
+- [x] Cleanup and final verification are included for the pending work (Task F4).
 - [x] The plan avoids vague actions — every task names the exact function/file/lines and the exact new test names to add.
 - [x] The plan can be executed by a coding agent without reading the original conversation — the Finding Verification section reproduces the necessary evidence inline.
 - [x] Not a dialog/interaction *feature* requiring a fresh UX-GATE sign-off — this plan fixes bugs in already-approved UX-1/UX-2 flows (`docs/backup-system-redesign-plan.md`'s Milestone 4 UX Gate) without changing their approved interaction shape, so no new UX-GATE sign-off is required. Task D2 explicitly implements the wording of an already-signed-off requirement (UX-1) rather than proposing new UI.
 - [x] No new Tauri WebView navigation/link/new-window behavior is introduced, so no PLATFORM-VERIFY step is needed.
-- [x] Reviewed by `advisor` before approval. Four blocking issues were found and fixed in this version: (1) Task A2 originally risked a lock-ordering deadlock between the new `backup_ops` lock and `backup_triggers.rs`'s existing `db`-holding snapshot paths — fixed by scoping `backup_ops` to the four IPC commands only and narrowing Milestone A's exit criteria accordingly, with the residual gap recorded explicitly in Task A2's Notes. (2) Task A1's original failure-injection method (an out-of-range schema version) was self-contradictory with `migrate_with_pre_migration_snapshot`'s own guard condition — replaced with a deterministic duplicate-column `ALTER TABLE` failure, mirroring the file's existing `roll_back`-direct-call precedent. (3) Task A1 originally said to "extend" an existing test assertion that asserts the opposite of this task's own behavior change — fixed to explicitly delete and invert it, plus updated the corresponding note in `docs/backup-system-redesign-plan.md`. (4) Task A2's originally-specified test called `#[tauri::command]` functions directly, which cannot be constructed outside a Tauri app (the file's own existing tests already document this constraint) — fixed by extracting `_inner` functions mirroring the existing `restore_backup_inner` pattern. Two non-blocking suggestions were also incorporated: B2 uses chunked streaming comparison instead of a full-file read (snapshots can run to hundreds of MB), and C1 documents the user-visible behavior change where a poisoned path mutex now correctly aborts `change_diary_directory` instead of silently proceeding.
+- [x] Milestone F has no unanswered design questions. The chosen staged-copy design preserves the prior differing-content collision safeguard, and its explicit `backup_ops` order resolves the residual race without a global lock.
+- [x] Milestone F adds no dialog, interaction, WebView navigation, capability, network, cryptography, or schema behavior. UX-GATE and PLATFORM-VERIFY are not required.
 
 ## Execution Notes
 
 - Update milestone and task status before starting and after validation.
 - Update each task to COMPLETED immediately after its validation passes, including the specific named tests listed in each task's Validation section — a green `cargo test --workspace` alone does not confirm those specific tests were added; check by name.
 - Mark tasks or milestones BLOCKED with a short reason when progress cannot continue.
-- Recommended execution order: Milestone A, then B, then C, then D, then E — matching the report's "Recommended Order" section. B and C have no dependency on A and could be reordered ahead of A if useful, but do not start D before A, since D's exit criteria assumes A3's `panelBusy` groundwork exists in the same file it edits (coordinate to avoid merge conflicts even though the two tasks are logically independent).
+- Completed historical order: Milestones A, B, C, D, E, then F (F1, F2, F3, F4 in sequence). F1 and F2 were core-only and independent of each other; F3 followed its own lock-order inspection as its first step, per plan.

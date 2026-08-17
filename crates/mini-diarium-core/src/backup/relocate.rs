@@ -10,7 +10,18 @@ use std::path::Path;
 use log::{info, warn};
 
 use super::manifest::{self, Manifest};
-use super::store::FsSnapshotStore;
+use super::store::{fsync_dir, fsync_file, FsSnapshotStore};
+
+/// Prefix+suffix for a relocation's staged, in-flight copy. Cannot pass
+/// [`super::store::is_snapshot_file_name`] (wrong prefix, wrong suffix), so an interrupted
+/// relocation is never mistaken for a real snapshot, and this scheme is distinct from
+/// [`FsSnapshotStore`]'s own unrelated `snapshot-*.tmp` write-in-progress convention.
+const RELOCATE_TEMP_PREFIX: &str = "relocating-";
+const RELOCATE_TEMP_SUFFIX: &str = ".tmp";
+
+fn relocate_temp_name(file_name: &str) -> String {
+    format!("{RELOCATE_TEMP_PREFIX}{file_name}{RELOCATE_TEMP_SUFFIX}")
+}
 
 /// Moves an existing backups directory tree to `new_dir`, merging into whatever the
 /// destination already contains and preserving every snapshot's manifest record — trigger,
@@ -23,7 +34,18 @@ use super::store::FsSnapshotStore;
 /// everything in, delete the source last" is naturally safe to retry after a crash or a
 /// partial failure — a second call sees an already-relocated (and by then deleted) source and
 /// no-ops. The one irreversible step, deleting `old_dir`, runs last and only after every file
-/// has been copied and its byte length verified.
+/// has been copied, staged, verified, and atomically renamed into place, and the merged
+/// manifest has been saved.
+///
+/// **Per-file retry guarantee.** Each snapshot is copied through a hidden staged name
+/// (`relocating-{file_name}.tmp`, see [`relocate_one_file`]) before being atomically renamed
+/// to its final `backup-*.db` name — never copied directly to the final name. A crash or
+/// failure mid-copy therefore leaves only a staged temp file that no listing or collision check
+/// can ever mistake for a real snapshot; a crash after the rename leaves a complete final file
+/// that a retry's same-name collision check recognizes as byte-identical and resumes past
+/// without re-copying. A stale staged temp file from a previous attempt is always discarded
+/// before a new attempt for that same file begins — it is never treated as a partial result to
+/// resume from, since a partial copy cannot be trusted to be one.
 ///
 /// `old_dir` and `new_dir` are both the *nested* backups directory a journal actually uses
 /// (`{journal dir}/backups/{db stem}`, the same level `manifest.json` and every `backup-*.db`
@@ -82,16 +104,7 @@ pub fn relocate_backups(old_dir: &Path, new_dir: &Path) -> Result<(), String> {
             ));
         }
 
-        let copied_bytes = fs::copy(&source, &dest)
-            .map_err(|e| format!("Failed to copy backup {}: {e}", snapshot.file_name))?;
-        if copied_bytes != snapshot.byte_size {
-            let _ = fs::remove_file(&dest);
-            return Err(format!(
-                "Copy of backup {} was incomplete ({copied_bytes} of {} bytes) — the backups \
-                 directory was not moved",
-                snapshot.file_name, snapshot.byte_size
-            ));
-        }
+        relocate_one_file(&source, new_dir, &snapshot.file_name, snapshot.byte_size)?;
     }
 
     let merged = merge_manifests(new_manifest, old_manifest);
@@ -111,6 +124,66 @@ pub fn relocate_backups(old_dir: &Path, new_dir: &Path) -> Result<(), String> {
     );
 
     Ok(())
+}
+
+/// Copies `source` into `dest_dir` under `file_name`, crash-safely.
+///
+/// Mirrors [`super::store::finalize_restore`]'s stage → fsync → rename → fsync-dir shape,
+/// aimed at a fresh copy instead of a restore: copy to a staged temp name in `dest_dir`,
+/// verify the staged copy is byte-identical to `source`, fsync it, atomically rename it to
+/// `file_name`, then fsync `dest_dir` where the platform supports it.
+///
+/// **Retry guarantee.** A crash or I/O failure at any point before the rename leaves only the
+/// hidden `relocating-{file_name}.tmp` staged file — never a partial `backup-*.db` a retry
+/// could mistake for a real (and differently-contented) snapshot. A crash after the rename
+/// leaves a complete final file, which the caller's own same-name collision check recognizes
+/// as byte-identical to the source and resumes past without re-copying. Either way, retrying
+/// this function (or the whole [`relocate_backups`] call) with the same arguments converges.
+/// A stale temp file left by a previous attempt for this exact file is removed unconditionally
+/// before staging begins — its name can never pass `is_snapshot_file_name`, so it is never a
+/// final snapshot, only ever a previous attempt's leftovers.
+fn relocate_one_file(
+    source: &Path,
+    dest_dir: &Path,
+    file_name: &str,
+    expected_len: u64,
+) -> Result<(), String> {
+    let dest = dest_dir.join(file_name);
+    let staged = dest_dir.join(relocate_temp_name(file_name));
+
+    let _ = fs::remove_file(&staged);
+
+    let result = (|| -> Result<(), String> {
+        let copied_bytes = fs::copy(source, &staged)
+            .map_err(|e| format!("Failed to copy backup {file_name}: {e}"))?;
+        if copied_bytes != expected_len {
+            return Err(format!(
+                "Copy of backup {file_name} was incomplete ({copied_bytes} of {expected_len} \
+                 bytes) — the backups directory was not moved"
+            ));
+        }
+        let identical = files_have_identical_content(source, &staged, expected_len)
+            .map_err(|e| format!("Failed to verify the staged copy of backup {file_name}: {e}"))?;
+        if !identical {
+            return Err(format!(
+                "The staged copy of backup {file_name} did not match its source after copying \
+                 — the backups directory was not moved"
+            ));
+        }
+
+        fsync_file(&staged)?;
+        fs::rename(&staged, &dest)
+            .map_err(|e| format!("Failed to finalize relocated backup {file_name}: {e}"))?;
+        fsync_dir(dest_dir);
+        Ok(())
+    })();
+
+    if result.is_err() {
+        // Never touch `source` or a final `dest`; only the staged temp is ours to discard.
+        let _ = fs::remove_file(&staged);
+    }
+
+    result
 }
 
 /// Unions two manifests' snapshot lists by file name. `dest`'s own record wins on a collision
@@ -399,6 +472,168 @@ mod tests {
             "the source snapshot must survive when the destination cannot even be created"
         );
         assert!(!new_dir.exists());
+    }
+
+    // ── Task F2: crash-safe, retryable relocation ─────────────────────────────────────
+
+    #[test]
+    fn test_relocate_backups_failed_staged_copy_leaves_no_final_file_and_retries() {
+        let seeded = seed("failed-staged-copy");
+        let file_name = list_snapshots(&seeded.backups_dir).unwrap()[0]
+            .file_name
+            .clone();
+        let source_content = fs::read(seeded.backups_dir.join(&file_name)).unwrap();
+
+        let new_dir = seeded
+            ._dir
+            .path()
+            .join("elsewhere")
+            .join("backups")
+            .join("diary");
+        fs::create_dir_all(&new_dir).unwrap();
+
+        // Fault injection: occupy the staged temp name with a directory, so the copy into it
+        // fails outright, cross-platform, before any final `backup-*.db` is ever written.
+        let staged_path = new_dir.join(format!("relocating-{file_name}.tmp"));
+        fs::create_dir_all(&staged_path).unwrap();
+
+        let result = relocate_backups(&seeded.backups_dir, &new_dir);
+        assert!(
+            result.is_err(),
+            "a failed staged copy must fail the relocation"
+        );
+        assert!(
+            !new_dir.join(&file_name).exists(),
+            "no final snapshot must exist after a failed staged copy — a partial copy must \
+             never reach the final name"
+        );
+        assert!(
+            seeded.backups_dir.join(&file_name).exists(),
+            "the source must survive a failed staged copy"
+        );
+
+        // Clear the fault (the transient condition a real crash would not have left behind)
+        // and retry — a fresh attempt must now succeed cleanly.
+        fs::remove_dir_all(&staged_path).unwrap();
+        relocate_backups(&seeded.backups_dir, &new_dir).unwrap();
+
+        assert_eq!(
+            fs::read(new_dir.join(&file_name)).unwrap(),
+            source_content,
+            "the retry must relocate the real snapshot content"
+        );
+        assert!(
+            !seeded.backups_dir.exists(),
+            "a successful retry must remove the source directory"
+        );
+        assert!(
+            !new_dir.join(format!("relocating-{file_name}.tmp")).exists(),
+            "no staged temp file must survive a successful relocation"
+        );
+    }
+
+    #[test]
+    fn test_relocate_backups_resumes_from_a_complete_final_file_before_manifest_save() {
+        let seeded = seed("resume-from-final-file");
+        let before = list_snapshots(&seeded.backups_dir).unwrap();
+        assert_eq!(before.len(), 1);
+        let file_name = before[0].file_name.clone();
+
+        let new_dir = seeded
+            ._dir
+            .path()
+            .join("elsewhere")
+            .join("backups")
+            .join("diary");
+
+        // A first attempt completes in full: file staged, verified, renamed, manifest saved,
+        // source removed.
+        relocate_backups(&seeded.backups_dir, &new_dir).unwrap();
+        assert!(!seeded.backups_dir.exists());
+        let source_content = fs::read(new_dir.join(&file_name)).unwrap();
+
+        // Simulate a crash on the very last line of a second relocation attempt against the
+        // same source — after the destination file and its manifest record are both already
+        // correct and durable, but before `old_dir` itself was removed — by recreating the
+        // source directory with byte-identical content, exactly what that crash window leaves
+        // behind for the next retry to find.
+        fs::create_dir_all(&seeded.backups_dir).unwrap();
+        fs::copy(
+            new_dir.join(&file_name),
+            seeded.backups_dir.join(&file_name),
+        )
+        .unwrap();
+
+        relocate_backups(&seeded.backups_dir, &new_dir).unwrap();
+
+        assert!(
+            !seeded.backups_dir.exists(),
+            "the resumed retry must remove the source directory again"
+        );
+        assert_eq!(
+            fs::read(new_dir.join(&file_name)).unwrap(),
+            source_content,
+            "the already-complete final file must be left as-is, not re-copied"
+        );
+        let after = list_snapshots(&new_dir).unwrap();
+        assert_eq!(
+            after.len(),
+            1,
+            "resuming past an already-complete file must not duplicate its manifest entry"
+        );
+        assert_eq!(
+            after[0].trigger, before[0].trigger,
+            "resuming past an already-complete file must still preserve its manifest trigger"
+        );
+        assert_eq!(
+            after[0].verified, before[0].verified,
+            "resuming past an already-complete file must still preserve its verified flag"
+        );
+        assert_eq!(
+            after[0].sqlite_change_counter, before[0].sqlite_change_counter,
+            "resuming past an already-complete file must still preserve its change counter"
+        );
+        assert!(
+            !new_dir.join(format!("relocating-{file_name}.tmp")).exists(),
+            "no staged temp file must be left behind by a resumed relocation"
+        );
+    }
+
+    #[test]
+    fn test_relocate_backups_ignores_and_replaces_stale_temporary_files() {
+        let seeded = seed("stale-temp");
+        let file_name = list_snapshots(&seeded.backups_dir).unwrap()[0]
+            .file_name
+            .clone();
+        let source_content = fs::read(seeded.backups_dir.join(&file_name)).unwrap();
+
+        let new_dir = seeded
+            ._dir
+            .path()
+            .join("elsewhere")
+            .join("backups")
+            .join("diary");
+        fs::create_dir_all(&new_dir).unwrap();
+        // A leftover staged file for this exact snapshot name, from some earlier interrupted
+        // attempt — garbage bytes, not a valid partial copy.
+        fs::write(
+            new_dir.join(format!("relocating-{file_name}.tmp")),
+            b"stale leftover, not a real copy",
+        )
+        .unwrap();
+
+        relocate_backups(&seeded.backups_dir, &new_dir).unwrap();
+
+        assert_eq!(
+            fs::read(new_dir.join(&file_name)).unwrap(),
+            source_content,
+            "the stale temp file's garbage content must never reach the final name"
+        );
+        assert!(
+            !new_dir.join(format!("relocating-{file_name}.tmp")).exists(),
+            "the stale temp file must not survive a successful relocation"
+        );
+        assert!(!seeded.backups_dir.exists());
     }
 
     #[cfg(unix)]

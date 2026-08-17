@@ -243,7 +243,9 @@ fn read_word_counts(conn: &Connection) -> Result<HashMap<i64, i32>, String> {
     Ok(rows.into_iter().collect())
 }
 
-fn has_table(conn: &Connection, table: &str) -> Result<bool, String> {
+/// Shared with [`super::store`], which needs the same schema-adaptive table check for
+/// snapshot content verification.
+pub(crate) fn has_table(conn: &Connection, table: &str) -> Result<bool, String> {
     conn.query_row(
         "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?1",
         params![table],
