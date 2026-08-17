@@ -184,6 +184,7 @@ These are used by E2E tests — **do not remove** from components.
 | `BackupInspectDialog.tsx` | Per-entry restore dialog root | `backup-inspect-dialog` |
 | `BackupInspectDialog.tsx` | Credential-differs notice (UX-3) | `backup-inspect-credential-differs` |
 | `BackupInspectDialog.tsx` | "View entries" submit button | `backup-inspect-open-button` |
+| `BackupInspectDialog.tsx` | Entry count in snapshot metadata | `backup-inspect-entry-count` |
 | `BackupInspectDialog.tsx` | Empty-state message | `backup-inspect-empty` |
 | `BackupInspectDialog.tsx` | "Select all missing or shorter" button | `backup-inspect-select-all` |
 | `BackupInspectDialog.tsx` | One snapshot entry row | `backup-inspect-entry-item` |

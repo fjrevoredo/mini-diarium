@@ -112,23 +112,34 @@ export default function BackupsPanel(props: BackupsPanelProps) {
   const isAutoProtected = () =>
     journals().find((j) => j.id === activeJournalId())?.auto_protected ?? false;
 
+  // A slow, stale in-flight refresh must never overwrite the result of a more recent one (e.g.
+  // the initial visibility-triggered load racing a post-mutation refresh) — only the call that
+  // is still the latest generation when its await settles is allowed to touch state.
+  let loadGeneration = 0;
+
   const load = async () => {
+    const myGeneration = ++loadGeneration;
     setIsLoading(true);
     setError(null);
     try {
       if (props.reduced) {
         const overview = await tauri.listBackupsUnauthenticated();
+        if (myGeneration !== loadGeneration) return;
         setSnapshots(overview.snapshots);
         setHealth(overview.health);
       } else {
         const [list, state] = await Promise.all([tauri.listBackups(), tauri.getBackupHealth()]);
+        if (myGeneration !== loadGeneration) return;
         setSnapshots(list);
         setHealth(state);
       }
     } catch (err) {
+      if (myGeneration !== loadGeneration) return;
       setError(mapTauriError(err, t));
     } finally {
-      setIsLoading(false);
+      if (myGeneration === loadGeneration) {
+        setIsLoading(false);
+      }
     }
   };
 

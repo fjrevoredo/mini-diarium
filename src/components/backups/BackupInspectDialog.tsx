@@ -417,6 +417,16 @@ export default function BackupInspectDialog(props: BackupInspectDialogProps) {
                       when: formatInstant(props.snapshot.created_at),
                     })}
                   </p>
+                  <p data-testid="backup-inspect-entry-count">
+                    {props.snapshot.entry_count === null
+                      ? '—'
+                      : t(
+                          props.snapshot.entry_count === 1
+                            ? 'prefs.backups.entryCount_one'
+                            : 'prefs.backups.entryCount_other',
+                          { count: props.snapshot.entry_count },
+                        )}
+                  </p>
                   <p>{t('prefs.backups.readOnlyNotice')}</p>
                 </div>
 

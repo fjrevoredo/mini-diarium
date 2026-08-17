@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { createSignal } from 'solid-js';
 import { screen, waitFor, fireEvent, within } from '@solidjs/testing-library';
 import { renderWithI18n } from '../../test/i18n-test-utils';
 import BackupsPanel, {
@@ -123,6 +124,18 @@ function health(overrides: Partial<BackupHealth> = {}): BackupHealth {
 }
 
 const visible = () => true;
+
+// A deferred promise lets a test hold an in-flight call and observe the panel's state before
+// deciding whether to let it resolve (or reject).
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  let reject!: (reason?: unknown) => void;
+  const promise = new Promise<T>((res, rej) => {
+    resolve = res;
+    reject = rej;
+  });
+  return { promise, resolve, reject };
+}
 
 describe('BackupsPanel', () => {
   beforeEach(() => {
@@ -447,16 +460,6 @@ describe('BackupsPanel', () => {
   });
 
   describe('panel-wide mutation lock (Task A3)', () => {
-    // A deferred promise lets each test hold a mutation "in flight" and observe the panel's
-    // disabled state before deciding whether to let it resolve.
-    function deferred<T>() {
-      let resolve!: (value: T) => void;
-      const promise = new Promise<T>((res) => {
-        resolve = res;
-      });
-      return { promise, resolve };
-    }
-
     function twoRows() {
       return [
         snapshot({ file_name: 'backup-row-a.db', created_at: '2026-08-06T09:30:00Z' }),
@@ -615,6 +618,177 @@ describe('BackupsPanel', () => {
       deletePromise.resolve();
       await waitFor(() => expect(createButton).not.toBeDisabled());
       vi.restoreAllMocks();
+    });
+  });
+
+  describe('latest-wins loading (Task D1)', () => {
+    it('keeps the fresher load result even when a stale load resolves later with different data', async () => {
+      const staleListD = deferred<SnapshotMeta[]>();
+      const staleHealthD = deferred<BackupHealth>();
+      const freshListD = deferred<SnapshotMeta[]>();
+      const freshHealthD = deferred<BackupHealth>();
+
+      mockListBackups
+        .mockReturnValueOnce(staleListD.promise)
+        .mockReturnValueOnce(freshListD.promise);
+      mockGetBackupHealth
+        .mockReturnValueOnce(staleHealthD.promise)
+        .mockReturnValueOnce(freshHealthD.promise);
+      mockCreateBackupNow.mockResolvedValue(undefined);
+
+      renderWithI18n(() => <BackupsPanel isVisible={visible} />);
+      // The visibility effect's load() (generation 1, "stale") is now in flight.
+      await waitFor(() => expect(mockListBackups).toHaveBeenCalledTimes(1));
+
+      // handleBackUpNow's own load() (generation 2, "fresh") starts once createBackupNow
+      // resolves — unguarded by isLoading(), only by actionsDisabled()/panelBusy().
+      fireEvent.click(screen.getByTestId('backups-create-button'));
+      await waitFor(() => expect(mockListBackups).toHaveBeenCalledTimes(2));
+
+      const freshSnapshots = [
+        snapshot({ file_name: 'fresh-a.db' }),
+        snapshot({ file_name: 'fresh-b.db' }),
+      ];
+      freshListD.resolve(freshSnapshots);
+      freshHealthD.resolve(health({ snapshot_count: 2 }));
+      await freshListD.promise;
+      await freshHealthD.promise;
+      await waitFor(() => expect(screen.getAllByTestId('backups-list-item')).toHaveLength(2));
+      expect(screen.queryByText(/Loading backups/)).not.toBeInTheDocument();
+
+      // The stale (generation 1) response now resolves with different data. Without the
+      // per-branch guard this would overwrite the fresh render with a single stale row.
+      const staleSnapshots = [snapshot({ file_name: 'stale.db' })];
+      staleListD.resolve(staleSnapshots);
+      staleHealthD.resolve(health({ snapshot_count: 1 }));
+      await staleListD.promise;
+      await staleHealthD.promise;
+      // Resolving a promise does not synchronously run its `.then()` — without this settle
+      // tick, asserting an absence below would pass vacuously even with the guard removed.
+      await Promise.resolve();
+
+      expect(screen.getAllByTestId('backups-list-item')).toHaveLength(2);
+    });
+
+    it('does not clear isLoading when a stale load resolves while a fresher one is still in flight', async () => {
+      const staleListD = deferred<SnapshotMeta[]>();
+      const staleHealthD = deferred<BackupHealth>();
+      const freshListD = deferred<SnapshotMeta[]>();
+      const freshHealthD = deferred<BackupHealth>();
+
+      mockListBackups
+        .mockReturnValueOnce(staleListD.promise)
+        .mockReturnValueOnce(freshListD.promise);
+      mockGetBackupHealth
+        .mockReturnValueOnce(staleHealthD.promise)
+        .mockReturnValueOnce(freshHealthD.promise);
+      mockCreateBackupNow.mockResolvedValue(undefined);
+
+      renderWithI18n(() => <BackupsPanel isVisible={visible} />);
+      await waitFor(() => expect(mockListBackups).toHaveBeenCalledTimes(1));
+
+      fireEvent.click(screen.getByTestId('backups-create-button'));
+      await waitFor(() => expect(mockListBackups).toHaveBeenCalledTimes(2));
+
+      // The stale (generation 1) call resolves first, while generation 2 is still pending.
+      // Without an independent `finally` guard, generation 1's setIsLoading(false) would
+      // prematurely clear the loading state even though generation 2 is still in flight.
+      staleListD.resolve([snapshot({ file_name: 'stale.db' })]);
+      staleHealthD.resolve(health({ snapshot_count: 1 }));
+      await staleListD.promise;
+      await staleHealthD.promise;
+      await Promise.resolve();
+
+      expect(screen.getByText('Loading backups…')).toBeInTheDocument();
+      expect(screen.queryByTestId('backups-list-item')).not.toBeInTheDocument();
+
+      const freshSnapshots = [
+        snapshot({ file_name: 'fresh-a.db' }),
+        snapshot({ file_name: 'fresh-b.db' }),
+      ];
+      freshListD.resolve(freshSnapshots);
+      freshHealthD.resolve(health({ snapshot_count: 2 }));
+
+      await waitFor(() => expect(screen.queryByText('Loading backups…')).not.toBeInTheDocument());
+      expect(screen.getAllByTestId('backups-list-item')).toHaveLength(2);
+    });
+
+    it('does not surface a stale rejection once a fresher load has already succeeded', async () => {
+      const staleListD = deferred<SnapshotMeta[]>();
+      const staleHealthD = deferred<BackupHealth>();
+      const freshListD = deferred<SnapshotMeta[]>();
+      const freshHealthD = deferred<BackupHealth>();
+
+      mockListBackups
+        .mockReturnValueOnce(staleListD.promise)
+        .mockReturnValueOnce(freshListD.promise);
+      mockGetBackupHealth
+        .mockReturnValueOnce(staleHealthD.promise)
+        .mockReturnValueOnce(freshHealthD.promise);
+      mockCreateBackupNow.mockResolvedValue(undefined);
+
+      renderWithI18n(() => <BackupsPanel isVisible={visible} />);
+      await waitFor(() => expect(mockListBackups).toHaveBeenCalledTimes(1));
+
+      fireEvent.click(screen.getByTestId('backups-create-button'));
+      await waitFor(() => expect(mockListBackups).toHaveBeenCalledTimes(2));
+
+      // The fresher (generation 2) call succeeds first.
+      const freshSnapshots = [
+        snapshot({ file_name: 'fresh-a.db' }),
+        snapshot({ file_name: 'fresh-b.db' }),
+      ];
+      freshListD.resolve(freshSnapshots);
+      freshHealthD.resolve(health({ snapshot_count: 2 }));
+      await waitFor(() => expect(screen.getAllByTestId('backups-list-item')).toHaveLength(2));
+
+      // The stale (generation 1) call now rejects. Without the `catch` block's own guard, this
+      // would paint an error banner over the already-correct, more recent render.
+      staleListD.reject(new Error('stale request aborted'));
+      staleHealthD.resolve(health({ snapshot_count: 1 }));
+      await staleListD.promise.catch(() => undefined);
+      await Promise.resolve();
+
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+      expect(screen.getAllByTestId('backups-list-item')).toHaveLength(2);
+    });
+
+    it('applies latest-wins in reduced (pre-auth) mode too, via the unauthenticated branch', async () => {
+      // Reduced mode disables every mutation button, so the only way to trigger a second
+      // load() here is a second visibility transition — not a button click as in the tests
+      // above. This exercises the `props.reduced` branch's own guard, not the non-reduced one.
+      const staleD = deferred<{ snapshots: SnapshotMeta[]; health: BackupHealth }>();
+      const freshD = deferred<{ snapshots: SnapshotMeta[]; health: BackupHealth }>();
+      mockListBackupsUnauthenticated
+        .mockReturnValueOnce(staleD.promise)
+        .mockReturnValueOnce(freshD.promise);
+
+      const [isVisible, setIsVisible] = createSignal(true);
+      renderWithI18n(() => <BackupsPanel isVisible={isVisible} reduced />);
+      await waitFor(() => expect(mockListBackupsUnauthenticated).toHaveBeenCalledTimes(1));
+
+      // A visibility drop-then-return re-fires the effect's `if (props.isVisible()) void load()`
+      // guard, starting a second (fresher) load without ever going through a mutation handler.
+      setIsVisible(false);
+      setIsVisible(true);
+      await waitFor(() => expect(mockListBackupsUnauthenticated).toHaveBeenCalledTimes(2));
+
+      const freshSnapshots = [
+        snapshot({ file_name: 'fresh-a.db' }),
+        snapshot({ file_name: 'fresh-b.db' }),
+      ];
+      freshD.resolve({ snapshots: freshSnapshots, health: health({ snapshot_count: 2 }) });
+      await waitFor(() => expect(screen.getAllByTestId('backups-list-item')).toHaveLength(2));
+
+      // The stale (generation 1) response now resolves with different data.
+      staleD.resolve({
+        snapshots: [snapshot({ file_name: 'stale.db' })],
+        health: health({ snapshot_count: 1 }),
+      });
+      await staleD.promise;
+      await Promise.resolve();
+
+      expect(screen.getAllByTestId('backups-list-item')).toHaveLength(2);
     });
   });
 

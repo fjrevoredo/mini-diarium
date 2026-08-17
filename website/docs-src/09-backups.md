@@ -3,7 +3,7 @@ title: Backups
 slug: backups
 description: Mini Diarium snapshots your journal before risky changes, restores the whole journal or specific entries in-app, and keeps tiered history going back a year.
 order: 10
-updated: 2026-08-16
+updated: 2026-08-17
 tags: backups, data safety, backup rotation, storage, snapshots
 ---
 
@@ -93,7 +93,7 @@ Restoring is now built into the app, in two forms, both reachable from **Prefere
 
 **Whole-journal restore** rolls your entire journal back to the moment a snapshot was taken. Click **Restore** on a backup: Mini Diarium names the date, warns that entries written since then will be replaced, and takes a safety snapshot of your *current* state before touching anything — so restoring is reversible even if you picked the wrong one. No password or key file is asked for: a password change only re-wraps your existing key, so whatever unlocked the journal a moment ago also opens every snapshot it ever produced.
 
-**Per-entry restore** recovers specific entries without touching the rest of your journal. Click **Restore entries…** on a backup to browse what it contains. Each entry is flagged if it is missing from your current journal, shorter there than in the backup, or already present, so it is clear what is worth recovering. Restoring an entry never overwrites anything — it is added alongside whatever your journal already holds for that date — and the result states how many entries were added. Tags on a recovered entry come back with it. This is the one that matters when you only lost a day or two, not the whole journal.
+**Per-entry restore** recovers specific entries without touching the rest of your journal. Click **Restore entries…** on a backup to browse what it contains. The dialog names the snapshot's date and entry count before listing anything, so you know exactly which backup you are looking at. Each entry is flagged if it is missing from your current journal, shorter there than in the backup, or already present, so it is clear what is worth recovering. Restoring an entry never overwrites anything — it is added alongside whatever your journal already holds for that date — and the result states how many entries were added. Tags on a recovered entry come back with it. This is the one that matters when you only lost a day or two, not the whole journal.
 
 Nothing decrypted is ever written to disk during either kind of restore.
 

@@ -192,13 +192,13 @@ Additionally, `docs/backup-system-redesign-plan.md`'s own Task 5.1 implementatio
 
 ### Milestone D: Backup UI State And Inspection Clarity
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Purpose: The Backups panel always presents current status, and snapshot inspection meets the approved UX-1 requirement. Addresses Findings 6 and 8.
 - Exit Criteria: A slow, stale `load()` response can never overwrite a newer one in `BackupsPanel.tsx`; `BackupInspectDialog.tsx` renders the inspected snapshot's entry count (or an explicit unknown-state fallback) beside its date. `cmd.exe /c bun run test:run` passes for both affected component test suites.
 
 #### Task D1: Latest-wins loading in BackupsPanel
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Objective: `load()` in `BackupsPanel.tsx` ignores the result of a stale in-flight call, so a slow initial load cannot overwrite the result of a more recent create/delete/restore refresh (or vice versa).
 - Steps:
   1. In `src/components/backups/BackupsPanel.tsx`, add a module-scope-per-instance monotonic counter, e.g. `let loadGeneration = 0;` captured in a closure variable at component scope (not a signal — it does not need to be reactive).
@@ -206,11 +206,11 @@ Additionally, `docs/backup-system-redesign-plan.md`'s own Task 5.1 implementatio
 - Validation:
   - Add a component test using two deferred promises: start `load()` once (visibility effect), let it stall on an unresolved promise; trigger a second `load()` via a mutation handler (e.g. `handleBackUpNow`) whose promise resolves and completes first; then resolve the *first* (stale) promise with different data; assert the panel's rendered list/health reflects the second (more recently started) call's result, not the first's.
   - Run `cmd.exe /c bun run test:run` for `BackupsPanel.test.tsx`.
-- Notes: Affected file: `src/components/backups/BackupsPanel.tsx`. Does not need to coordinate with Task A3's `panelBusy` signal — they solve different problems (button gating vs. stale-response ordering) and can land independently, though both touch the same file so should be reviewed together for merge conflicts if worked in parallel.
+- Notes: Affected file: `src/components/backups/BackupsPanel.tsx`. Does not need to coordinate with Task A3's `panelBusy` signal — they solve different problems (button gating vs. stale-response ordering) and can land independently, though both touch the same file so should be reviewed together for merge conflicts if worked in parallel. Implemented with an independent `finally` guard (not a shared early-`return`) so only the current generation clears `isLoading`. Four tests added under `describe('latest-wins loading (Task D1)', ...)` in `BackupsPanel.test.tsx`, one per guard: the two per-branch guards (non-reduced `Promise.all` branch and the `reduced`/pre-auth `listBackupsUnauthenticated` branch — the latter driven by toggling `isVisible` rather than a mutation button, since reduced mode disables every mutation control), the `catch` guard (a stale rejection must not paint an error banner over a fresher successful render), and the `finally` guard (a stale resolution must not clear `isLoading` while a fresher call is still in flight). The shared `deferred<T>()` helper was relocated to module scope (it previously lived nested inside the Task A3 describe block) and extended to expose `reject` alongside `resolve`. Per the plan's mandatory guard-deletion check, each of the four guards was individually deleted and confirmed to fail its own dedicated test (not just the batch of tests as a whole), then restored. All 47 tests in `BackupsPanel.test.tsx` pass. Manually verified in the real dev app (`tauri-agent-dev` skill): taking a backup via "Back up now" (a single sequential create against a fast local backend) correctly refreshed the list with no stale-data artifact. This did not exercise the concurrent stale-vs-fresh race itself — that scenario relies on deferred-promise timing the manual dev app can't easily reproduce, and remains covered by the component tests above plus Milestone E's Task E.3 scenario (c) for a real end-to-end rehearsal.
 
 #### Task D2: Render entry count in snapshot inspection
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Objective: `BackupInspectDialog.tsx` shows the inspected snapshot's entry count beside its date, satisfying UX-1 (`docs/backup-system-redesign-plan.md:77-80`: "Panel clearly shows... its date and entry count").
 - Steps:
   1. In `src/components/backups/BackupInspectDialog.tsx`'s `entries` phase section (around `:413-421`), add a line rendering `props.snapshot.entry_count` next to or below the existing date line, using the same `entryCount_one`/`entryCount_other` i18n pattern already used in `BackupsPanel.tsx:440-447`, with `'—'` (or an equivalent existing fallback string) when `entry_count` is `null`.
@@ -219,7 +219,7 @@ Additionally, `docs/backup-system-redesign-plan.md`'s own Task 5.1 implementatio
 - Validation:
   - Add component tests in `BackupInspectDialog.test.tsx`: one asserting the entry count renders correctly for a populated snapshot (`entry_count: 5` renders the pluralized count), one for an empty snapshot (`entry_count: 0`), and one for `entry_count: null` rendering the fallback.
   - Run `cmd.exe /c bun run test:run` for `BackupInspectDialog.test.tsx`.
-- Notes: Affected files: `src/components/backups/BackupInspectDialog.tsx`, its test file, `src/CLAUDE.md`. No backend change needed — `SnapshotMeta.entry_count` already exists and is already passed to this component as `props.snapshot`.
+- Notes: Affected files: `src/components/backups/BackupInspectDialog.tsx`, its test file, `src/CLAUDE.md`. No backend change needed — `SnapshotMeta.entry_count` already exists and is already passed to this component as `props.snapshot`. Implemented exactly as planned; no new i18n keys needed (`entryCount_one`/`entryCount_other` already existed in every locale file). All 11 tests in `BackupInspectDialog.test.tsx` pass. Manually verified in the real dev app: the inspect dialog's entries phase now shows "1 entry" beneath the "Viewing entries from..." line for a snapshot with one entry. Per root `CLAUDE.md`'s docs-sync rule, also updated `website/docs-src/09-backups.md` (per-entry restore section) to mention the dialog now names the snapshot's date and entry count before listing entries, and regenerated the static site (`bun run website:build-static`) so `website/docs/backups/index.html`, `website/docs/index.html`, and `website/sitemap.xml` picked up the change.
 
 ### Milestone E: Cleanup And Final Verification
 

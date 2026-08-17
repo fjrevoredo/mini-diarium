@@ -241,6 +241,65 @@ describe('BackupInspectDialog', () => {
     expect(mockListBackupEntriesWithStatus).not.toHaveBeenCalled();
   });
 
+  describe('entry count display (Task D2)', () => {
+    it('shows the pluralized entry count for a populated snapshot', async () => {
+      renderWithI18n(() => (
+        <BackupInspectDialog
+          isOpen={true}
+          snapshot={{ ...snapshot, entry_count: 5 }}
+          onClose={vi.fn()}
+        />
+      ));
+
+      fireEvent.input(screen.getByPlaceholderText('Enter your password'), {
+        target: { value: 'pw' },
+      });
+      fireEvent.click(screen.getByText('View entries'));
+
+      await waitFor(() =>
+        expect(screen.getByTestId('backup-inspect-entry-count')).toHaveTextContent('5 entries'),
+      );
+    });
+
+    it('takes the plural branch for a zero entry count', async () => {
+      renderWithI18n(() => (
+        <BackupInspectDialog
+          isOpen={true}
+          snapshot={{ ...snapshot, entry_count: 0 }}
+          onClose={vi.fn()}
+        />
+      ));
+
+      fireEvent.input(screen.getByPlaceholderText('Enter your password'), {
+        target: { value: 'pw' },
+      });
+      fireEvent.click(screen.getByText('View entries'));
+
+      await waitFor(() =>
+        expect(screen.getByTestId('backup-inspect-entry-count')).toHaveTextContent('0 entries'),
+      );
+    });
+
+    it('shows the unknown-state fallback when entry_count is null', async () => {
+      renderWithI18n(() => (
+        <BackupInspectDialog
+          isOpen={true}
+          snapshot={{ ...snapshot, entry_count: null }}
+          onClose={vi.fn()}
+        />
+      ));
+
+      fireEvent.input(screen.getByPlaceholderText('Enter your password'), {
+        target: { value: 'pw' },
+      });
+      fireEvent.click(screen.getByText('View entries'));
+
+      await waitFor(() =>
+        expect(screen.getByTestId('backup-inspect-entry-count')).toHaveTextContent('—'),
+      );
+    });
+  });
+
   it('opens a local-only journal with no credential form at all', async () => {
     renderWithI18n(() => (
       <BackupInspectDialog
