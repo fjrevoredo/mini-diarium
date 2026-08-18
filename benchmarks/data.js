@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1786987913087,
+  "lastUpdate": 1787089603732,
   "repoUrl": "https://github.com/fjrevoredo/mini-diarium",
   "entries": {
     "Benchmark": [
@@ -35464,6 +35464,36 @@ window.BENCHMARK_DATA = {
           {
             "name": "ci_pipeline_duration",
             "value": 556000000000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "39350477+fjrevoredo@users.noreply.github.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "4d489846502d1a2ef6385868dfa6cab4946de246",
+          "message": "Todo 0098 revamped backup system (#254)",
+          "timestamp": "2026-08-18T23:36:05+02:00",
+          "tree_id": "a0a390fe4532ee1ab4dbd60392ed83bcfd222282",
+          "url": "https://github.com/fjrevoredo/mini-diarium/commit/4d489846502d1a2ef6385868dfa6cab4946de246"
+        },
+        "date": 1787089601980,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "ci_pipeline_duration",
+            "value": 622000000000,
             "range": "± 0",
             "unit": "ns/iter"
           }
