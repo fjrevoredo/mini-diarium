@@ -45,6 +45,16 @@ export default defineConfig(async () => ({
   optimizeDeps: {
     include: ['solid-js', '@tiptap/core'],
     entries: ['index.html'],
+    // Never trust a previous optimizer cache for Tauri dev. An interrupted
+    // `tauri dev` can leave a syntactically valid but unusable cache: Vite
+    // reports ready, while WebView2 waits indefinitely for module responses.
+    // Rebundling is bounded (about ten seconds on this workspace) and is
+    // preferable to a multi-minute black window or loading spinner.
+    force: true,
+    // The explicit SPA entry above covers the static graph. Let the first
+    // page requests proceed while Vite finishes the optimizer crawl instead
+    // of holding the WebView on a blank document until the crawl completes.
+    holdUntilCrawlEnd: false,
   },
 
   // Vite options tailored for Tauri development and only applied in `tauri dev` or `tauri build`
