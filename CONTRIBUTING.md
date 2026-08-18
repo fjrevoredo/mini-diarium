@@ -27,6 +27,11 @@ Most contributors never need this — `bun run diagrams:check` (part of the chec
 ### Troubleshooting (Windows)
 
 - **A newly installed tool isn't found (`git`, `d2`, etc.)**: open a **new terminal window**. PATH changes made by an installer are broadcast to new processes only — a shell (or agent session) that was already running won't pick them up.
+- **`bun tauri dev` is still slow to become interactive after a cold start**: Windows Defender's real-time protection intercepts file reads/writes during a full dependency scan, and Vite's optimizer walks the whole `node_modules` tree on a cold start. If startup is still slow after pulling the latest `vite.config.ts` (which avoids forcing a cold scan on every run), try excluding the repo from real-time scanning (run elevated):
+  ```powershell
+  Add-MpPreference -ExclusionPath "D:\Repos\mini-diarium"
+  ```
+  This is optional and diagnostic, not a required setup step — most contributors won't need it.
 
 #### Wayland (Linux)
 

@@ -36,24 +36,25 @@ export default defineConfig(async () => ({
   },
 
   // Optimize dependencies
-  // `entries` narrows Vite's esbuild/rolldown dependency scan to the real SPA
-  // entry point. Without it, Vite's default `computeEntries()` globs `**/*.html`
-  // from the repo root (ignoring only `outDir` and `node_modules`, and NOT
-  // honoring .gitignore), sweeping in the 30+ GB `/target/` Cargo build output
-  // and `.reference/` vendor checkout as scan "entry points" and stalling
-  // `bun tauri dev` startup for minutes.
+  // `entries` pins Vite's dependency scan to the real SPA entry point. This matches
+  // the installed Vite's own default (it already crawls just `index.html`), so it's
+  // a defensive pin against that default ever changing back to a repo-root glob —
+  // not an active workaround. (It was an active fix on an older Vite that defaulted
+  // to a `**/*.html` crawl of the repo root, sweeping in the 30+ GB `/target/` Cargo
+  // build output; that default no longer exists in the installed version.)
+  //
+  // Deliberately NOT setting `force: true` here: forcing a full re-optimization on
+  // every `bun tauri dev` run discards Vite's normal lockfile/config-hash cache and
+  // was itself the cause of a multi-minute cold-scan stall on Windows (walking the
+  // full `node_modules` tree, incl. TipTap's ~9 nested subpackages, is expensive
+  // under NTFS + antivirus real-time scanning). Vite's built-in cache invalidation
+  // already handles the common case; if a cache is ever suspected corrupt, pass
+  // `--force` manually: `bun run tauri dev -- --force`.
   optimizeDeps: {
     include: ['solid-js', '@tiptap/core'],
     entries: ['index.html'],
-    // Never trust a previous optimizer cache for Tauri dev. An interrupted
-    // `tauri dev` can leave a syntactically valid but unusable cache: Vite
-    // reports ready, while WebView2 waits indefinitely for module responses.
-    // Rebundling is bounded (about ten seconds on this workspace) and is
-    // preferable to a multi-minute black window or loading spinner.
-    force: true,
-    // The explicit SPA entry above covers the static graph. Let the first
-    // page requests proceed while Vite finishes the optimizer crawl instead
-    // of holding the WebView on a blank document until the crawl completes.
+    // Let the first page requests proceed while Vite finishes the optimizer crawl
+    // instead of holding the WebView on a blank document until the crawl completes.
     holdUntilCrawlEnd: false,
   },
 
