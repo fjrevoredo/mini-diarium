@@ -11,6 +11,7 @@ import { open } from '../../lib/dialog';
 import { useI18n } from '../../i18n';
 import { peekAuthSlotTypes, type JournalPeek, type MultiAuthCredential } from '../../lib/tauri';
 import { mapTauriError } from '../../lib/errors';
+import PreAuthTools from './PreAuthTools';
 
 type UnlockMode = 'password' | 'keyfile';
 
@@ -430,6 +431,9 @@ export default function PasswordPrompt() {
               </form>
             </Show>
           </Show>
+
+          {/* Reachable without a key — and most needed when the journal will not open. */}
+          <PreAuthTools />
         </div>
       </div>
     </div>

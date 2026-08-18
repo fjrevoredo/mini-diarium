@@ -118,16 +118,20 @@ fn install_exit_snapshot_hook(window: &tauri::WebviewWindow) {
             std::thread::spawn(move || {
                 use tauri::Manager;
                 let state = app.state::<commands::auth::DiaryState>();
-                if let Some(done) = commands::backup_triggers::take_connection_and_snapshot(
+                match commands::backup_triggers::take_connection_and_snapshot(
                     &state,
                     backup::SnapshotTrigger::Lock,
                 ) {
-                    if done
-                        .recv_timeout(commands::backup_triggers::SHUTDOWN_SNAPSHOT_BUDGET)
-                        .is_err()
-                    {
-                        warn!("Exit snapshot exceeded its budget; closing without waiting");
+                    Ok(Some(done)) => {
+                        if done
+                            .recv_timeout(commands::backup_triggers::SHUTDOWN_SNAPSHOT_BUDGET)
+                            .is_err()
+                        {
+                            warn!("Exit snapshot exceeded its budget; closing without waiting");
+                        }
                     }
+                    Ok(None) => {}
+                    Err(error) => warn!("Failed to take the exit snapshot: {error}"),
                 }
                 let _ = window.destroy();
             });
@@ -435,6 +439,21 @@ pub fn run() {
             commands::plugin::list_export_plugins,
             commands::plugin::run_import_plugin,
             commands::plugin::run_export_plugin,
+            // Backups
+            commands::backup::list_backups,
+            commands::backup::list_backups_unauthenticated,
+            commands::backup::get_backup_health,
+            commands::backup::create_backup_now,
+            commands::backup::verify_backup,
+            commands::backup::delete_backup,
+            commands::backup::reveal_backups_folder,
+            commands::backup::restore_backup,
+            commands::backup_inspect::check_backup_credentials,
+            commands::backup_inspect::open_backup_readonly,
+            commands::backup_inspect::list_backup_entries,
+            commands::backup_inspect::list_backup_entries_with_status,
+            commands::backup_inspect::restore_entries_from_backup,
+            commands::backup_inspect::close_backup,
             // Debug
             commands::debug::generate_debug_dump,
             // Menu locale

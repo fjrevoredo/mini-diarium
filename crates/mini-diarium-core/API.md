@@ -308,8 +308,105 @@ number describes it.
 - `list_snapshots(backups_dir) -> Result<Vec<SnapshotMeta>, String>` — newest first. Needs
   **no key and no open journal**: it reconciles the manifest against the directory and
   describes anything new from the snapshot's plaintext columns.
+- `backup_health(backups_dir, db_path) -> BackupHealth` — aggregate state for a health
+  indicator. Like `list_snapshots`, needs **no key and no open journal**: `db_path` is only
+  `stat`ed, for the storage budget and to tell "never backed up yet" (normal) from "the
+  journal's directory is gone" (broken).
+- `verify_snapshot_file(db, backups_dir, file_name) -> Result<SnapshotMeta, String>` —
+  re-checks one snapshot against the live master key and persists the result. A snapshot that
+  fails is **reported, not deleted**: it may still be readable with the credential it was
+  taken with.
+- `delete_snapshot(backups_dir, file_name) -> Result<(), String>` — deletes the file and its
+  record. The name is validated against the engine's naming rule first, so a caller cannot
+  address anything outside the backups directory (snapshot names arrive from the frontend).
 - `create_pre_v3_snapshot(db, backups_dir) -> Result<String, String>` — the reduced form for
   v1/v2 journals, which have no auth slots to verify against.
+
+### Relocation (`backup::relocate`, re-exported at the `backup` root)
+
+Moves an existing backups directory tree when the journal it belongs to moves (TODO-0098
+Task 5.1) — what keeps `change_diary_directory` from silently stranding a journal's history at
+the old location.
+
+- `relocate_backups(old_dir: &Path, new_dir: &Path) -> Result<(), String>` — copies every
+  snapshot from `old_dir` to `new_dir` (skip-don't-clobber on a same-name collision, byte-length
+  verified after each copy), merges the two directories' manifests so no snapshot's
+  `trigger`/`verified`/`sqlite_change_counter` is lost or silently re-adopted as `Adopted`, and
+  only then removes `old_dir` — the one irreversible step, always last. A no-op when `old_dir`
+  does not exist, which is also what makes a retry after a partial failure safe: nothing is
+  deleted from `old_dir` until every file has copied successfully and the merged manifest is
+  durable at the destination. Both paths are the *nested* backups directory a journal actually
+  uses (`{journal dir}/backups/{db stem}`), the same value `BackupContext::backups_dir` holds —
+  not the flat `{journal dir}/backups` parent.
+
+### Inspection (`backup::inspect`, re-exported at the `backup` root)
+
+Reading a snapshot **without** adopting it as a journal. The distinction matters because a
+snapshot is an ordinary openable database: opening one the normal way writes to it
+(`update_slot_last_used` alone is enough), which destroys the restore point being examined.
+
+- `open_snapshot_file(backups_dir, file_name, SnapshotCredential) -> Result<DatabaseConnection, String>`
+  — validates the name like `delete_snapshot` does, then opens the snapshot
+  `SQLITE_OPEN_READ_ONLY`. **No migration runs** and nothing is registered; the caller owns
+  the returned connection and dropping it zeroizes the key.
+- `check_snapshot_credentials(backups_dir, file_name, live_db_path) -> Result<SnapshotCredentialReport, String>`
+  — needs **no key**: auth-slot rows are plaintext. Answers "will today's password open this
+  snapshot?" before the user is asked to type one (finding B-11).
+- `list_snapshot_entries(db) -> Result<Vec<SnapshotEntry>, String>` — id, date, title, and a
+  200-character preview only. Adapts to the snapshot's schema version, since `preview_enc`
+  (v12) and `locked` (v13) are absent from exactly the pre-migration snapshots that matter
+  most.
+- `open_snapshot_readonly(path, SnapshotCredential)` / `compare_snapshot_credentials(snapshot_path, live_db_path)`
+  — the same two operations addressed by path rather than by name.
+- `SnapshotCredential::{Password(String), PrivateKey([u8; 32]), AutoKey([u8; 32])}` —
+  zeroize-on-drop, and its `Debug` prints the variant only.
+- `SnapshotEntry { id, date, title, preview }`
+- `SnapshotCredentialReport { snapshot_slot_types, live_slot_types, differs_from_live, compared }`
+  — `compared: false` means the live journal could not be read, which makes
+  `differs_from_live` moot rather than merely `false`.
+
+### Whole-journal restore (`backup::restore`, re-exported at the `backup` root)
+
+Rolls the live journal back to a snapshot: a `PreRestore` safety snapshot of the current
+state first, then an atomic file swap (the same write-then-rename primitive `store` uses for
+*taking* a snapshot, aimed the other direction), then a reopen that migrates the result if the
+restored snapshot predates the current schema.
+
+- `restore_from_snapshot(db: DatabaseConnection, &BackupContext, file_name) -> RestoreOutcome`
+  — takes the live connection **by value**: owning it proves nothing else can reach the
+  journal while the file underneath it is being replaced. No credential is asked for —
+  `change_password` re-wraps the master key rather than re-encrypting entries, so the key the
+  live connection already holds is the key every snapshot this journal ever produced was
+  encrypted with.
+- `RestoreOutcome { db: Option<DatabaseConnection>, safety_snapshot: Option<SnapshotMeta>, restored: bool, error: Option<String> }`
+  — deliberately not a `Result`: every path (success, an aborted attempt, or a rolled-back
+  failure) hands back a connection the caller should reinstall. `db` is `None` only in the
+  unrecoverable case where neither the restored file nor the safety snapshot could be
+  reopened; the safety snapshot's file name is still included so there is always something to
+  act on.
+
+### Per-entry restore (`backup::restore_entries`, re-exported at the `backup` root)
+
+Copies individual entries out of an already-open inspection connection (see Inspection above)
+and into the live journal, in-process — no plaintext ever touches disk.
+
+- `list_snapshot_entries_with_status(snapshot_db, live_db) -> Result<Vec<SnapshotEntryDiff>, String>`
+  — the same fields `list_snapshot_entries` returns, plus an `EntryMatchStatus`. Matched by
+  date + title (entry ids are not stable across databases — each database assigns its own
+  AUTOINCREMENT sequence), falling back to "another blank-titled live entry on the same date"
+  when the title itself is blank. `word_count` — already an unencrypted column — stands in for
+  "how much content survived", so the comparison costs no decryption beyond what listing the
+  snapshot and reading the live day's entries already do.
+- `restore_entries_from_snapshot(live_db, snapshot_db, entry_ids: &[i64]) -> Result<RestoreEntriesOutcome, String>`
+  — never overwrites: every entry is a fresh `INSERT`, so a date that already holds live
+  entries gets an additional one alongside them. `image-id://N` refs are resolved against the
+  *snapshot's* image store before the text crosses into the live database, where those ids
+  name something else entirely; tags are restored by decrypted name, sidestepping the
+  fingerprint mismatch a live-keyed comparison would hit. A restored entry is never locked,
+  regardless of the snapshot's own `locked` flag.
+- `EntryMatchStatus::{Missing, ShorterInLive, Present}`
+- `SnapshotEntryDiff { id, date, title, preview, status }`
+- `RestoreEntriesOutcome { added_count }`
 
 ### Types
 - `BackupContext { db_path, backups_dir, app_version: Option<&str> }` — `db_path` is required
@@ -322,7 +419,16 @@ number describes it.
 - `SnapshotMeta` — the manifest record (see below).
 - `RetentionPolicy` (+ `for_journal_size`), `RetentionDecision { keep, evict, budget_exceeded }`,
   `SnapshotDecision::{Take, Skip}`
-- `Manifest { schema_version, snapshots }`, `MANIFEST_FILE`, `MANIFEST_SCHEMA_VERSION`
+- `BackupHealth { snapshot_count, verified_count, total_bytes, budget_bytes, budget_exceeded,
+  newest_created_at, oldest_created_at, last_failure, directory_accessible, recent,
+  daily_days, weekly_weeks, monthly_months }` — the retention numbers travel with it so a UI
+  can render the policy as translated text instead of pinning strings to constants.
+- `BackupFailure { at, trigger }` — deliberately carries **no message**: it is persisted in
+  the plaintext manifest, where an arbitrary I/O error string is the easiest way to leak a
+  filesystem path by accident. The underlying error is in the log at `warn`.
+- `Manifest { schema_version, snapshots, last_failure }`, `MANIFEST_FILE`,
+  `MANIFEST_SCHEMA_VERSION` — `last_failure` is `#[serde(default)]`, so manifests written
+  before it stay readable.
 - `SnapshotStore` trait (`list`, `write`, `read`, `delete`, `stat`) + `FsSnapshotStore`,
   `StoredSnapshot` — the storage boundary, so retention is reusable against other backends.
 
@@ -336,6 +442,7 @@ number describes it.
 ### Pure policy (no I/O, no clock — `now` is always a parameter)
 - `plan_retention(&[SnapshotMeta], &RetentionPolicy, now) -> RetentionDecision`
 - `should_snapshot(&[SnapshotMeta], &SnapshotTrigger, current_change_counter, &RetentionPolicy, now) -> SnapshotDecision`
+- `summarize_health(&[SnapshotMeta], &RetentionPolicy, last_failure, directory_accessible) -> BackupHealth`
 - Constants: `RECENT_SNAPSHOTS`, `DAILY_DAYS`, `WEEKLY_WEEKS`, `MONTHLY_MONTHS`,
   `MIN_AUTOMATIC_INTERVAL_SECS`, `MIN_STORAGE_BUDGET_BYTES`
 

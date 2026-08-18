@@ -10,9 +10,14 @@ const DEFAULT_FAIL_UNDER = 80;
 const IS_WIN = process.platform === 'win32';
 
 const C = {
-  reset: '\x1b[0m', bold: '\x1b[1m', dim: '\x1b[2m',
-  red: '\x1b[31m', green: '\x1b[32m', yellow: '\x1b[33m',
-  cyan: '\x1b[36m', gray: '\x1b[90m',
+  reset: '\x1b[0m',
+  bold: '\x1b[1m',
+  dim: '\x1b[2m',
+  red: '\x1b[31m',
+  green: '\x1b[32m',
+  yellow: '\x1b[33m',
+  cyan: '\x1b[36m',
+  gray: '\x1b[90m',
 };
 
 function paint(color, msg) {
@@ -210,13 +215,20 @@ function resolveBase(base) {
 function generateCoverage() {
   const errors = [];
   console.log(paint('cyan', 'Generating coverage (this runs the full test suites)...'));
-  const fe = spawnSync('bun', ['run', 'test:coverage'], { stdio: 'inherit' }); // NOSONAR — developer-controlled PATH: known toolchain executable
-  if (fe.status !== 0) errors.push('frontend coverage generation failed (tests failed or lcov not written)');
+  // On Windows, "bun" resolves to a .cmd shim; spawnSync can't exec that directly
+  // (CreateProcess has no PATHEXT resolution), so it fails silently (no output, non-zero
+  // or errored status) even though `bun run test:coverage` works from a shell. Routing
+  // through cmd.exe /c fixes this the same way scripts/render-diagrams.mjs does.
+  const feCommand = IS_WIN ? 'cmd.exe' : 'bun';
+  const feArgs = IS_WIN
+    ? ['/d', '/s', '/c', 'bun', 'run', 'test:coverage']
+    : ['run', 'test:coverage'];
+  const fe = spawnSync(feCommand, feArgs, { stdio: 'inherit' }); // NOSONAR — developer-controlled PATH: known toolchain executable
+  if (fe.status !== 0)
+    errors.push('frontend coverage generation failed (tests failed or lcov not written)');
   const covCheck = spawnSync('cargo', ['llvm-cov', '--version'], { encoding: 'utf8' }); // NOSONAR — developer-controlled PATH: known toolchain executable
   if (covCheck.status !== 0) {
-    console.log(
-      paint('yellow', '  ⚠ cargo-llvm-cov not installed — skipping backend coverage.'),
-    );
+    console.log(paint('yellow', '  ⚠ cargo-llvm-cov not installed — skipping backend coverage.'));
     console.log(paint('dim', '    Install with: cargo install cargo-llvm-cov --locked'));
   } else {
     const res = spawnSync(
@@ -279,16 +291,29 @@ function render(result, mb, base, failUnder, workingTree = false) {
     return;
   }
   if (totalPct >= failUnder) {
-    console.log(paint('green', ` ✓ Diff coverage ${totalPct.toFixed(1)}% meets threshold ${failUnder}%`));
+    console.log(
+      paint('green', ` ✓ Diff coverage ${totalPct.toFixed(1)}% meets threshold ${failUnder}%`),
+    );
     return;
   }
-  console.log(paint('red', ` ✗ Diff coverage ${totalPct.toFixed(1)}% below threshold ${failUnder}%`));
+  console.log(
+    paint('red', ` ✗ Diff coverage ${totalPct.toFixed(1)}% below threshold ${failUnder}%`),
+  );
   console.log(paint('red', ' Uncovered new lines:'));
   for (const loc of uncovered) console.log(paint('red', `   ${loc}`));
 }
 
 function parseArgs(argv) {
-  const out = { files: DEFAULT_FILES.slice(), base: DEFAULT_BASE, failUnder: DEFAULT_FAIL_UNDER, noFail: false, generate: false, workingTree: false, selfTest: false, help: false };
+  const out = {
+    files: DEFAULT_FILES.slice(),
+    base: DEFAULT_BASE,
+    failUnder: DEFAULT_FAIL_UNDER,
+    noFail: false,
+    generate: false,
+    workingTree: false,
+    selfTest: false,
+    help: false,
+  };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === '--help' || a === '-h') out.help = true;
@@ -359,7 +384,8 @@ function main() {
 
   if (args.generate) {
     const errs = generateCoverage();
-    if (errs.length) console.log(paint('yellow', `⚠ Coverage generation issues: ${errs.join('; ')}`));
+    if (errs.length)
+      console.log(paint('yellow', `⚠ Coverage generation issues: ${errs.join('; ')}`));
   }
 
   let mb;
@@ -384,7 +410,9 @@ function main() {
     );
   }
   if (present.length === 0) {
-    console.error(paint('red', '✗ No lcov files found. Generate coverage first or pass --generate.'));
+    console.error(
+      paint('red', '✗ No lcov files found. Generate coverage first or pass --generate.'),
+    );
     return 1;
   }
 
@@ -429,7 +457,9 @@ function runSelfTest() {
   const eq = (label, got, want) => {
     const pass = JSON.stringify(got) === JSON.stringify(want);
     if (!pass) ok = false;
-    console.log(`${pass ? paint('green', '✓') : paint('red', '✗')} ${label}${pass ? '' : ` (got ${JSON.stringify(got)}, want ${JSON.stringify(want)})`}`);
+    console.log(
+      `${pass ? paint('green', '✓') : paint('red', '✗')} ${label}${pass ? '' : ` (got ${JSON.stringify(got)}, want ${JSON.stringify(want)})`}`,
+    );
   };
 
   eq('parseLcov skips empty SF blocks', byFile.size, 1);
@@ -448,7 +478,11 @@ function runSelfTest() {
   ].join('\n');
   const added = parseUnifiedDiff(diff, rootNorm);
   eq('parseUnifiedDiff file count', added.size, 1);
-  eq('parseUnifiedDiff added lines', [...added.get('src/widgets.ts')].sort((a, b) => a - b), [10, 11, 22]);
+  eq(
+    'parseUnifiedDiff added lines',
+    [...added.get('src/widgets.ts')].sort((a, b) => a - b),
+    [10, 11, 22],
+  );
 
   const result = computePatch(byFile, added);
   eq('computePatch ignores non-instrumented added lines', result.totalInst, 2);
@@ -469,8 +503,16 @@ function runSelfTest() {
 
   eq('classifyGroup frontend', classifyGroup('src/App.tsx'), 'frontend');
   eq('classifyGroup backend', classifyGroup('src-tauri/src/commands/auth.rs'), 'backend');
-  eq('classifyGroup core crate backend', classifyGroup('crates/mini-diarium-core/src/db/queries/mod.rs'), 'backend');
-  eq('classifyGroup crypto crate backend', classifyGroup('crates/mini-diarium-crypto/src/crypto/cipher.rs'), 'backend');
+  eq(
+    'classifyGroup core crate backend',
+    classifyGroup('crates/mini-diarium-core/src/db/queries/mod.rs'),
+    'backend',
+  );
+  eq(
+    'classifyGroup crypto crate backend',
+    classifyGroup('crates/mini-diarium-crypto/src/crypto/cipher.rs'),
+    'backend',
+  );
   eq('classifyGroup other', classifyGroup('scripts/x.mjs'), 'other');
 
   const subByFile = new Map([['src/commands/auth.rs', new Map([[1, 0]])]]);

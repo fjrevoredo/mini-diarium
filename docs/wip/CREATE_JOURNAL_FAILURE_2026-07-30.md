@@ -1,9 +1,154 @@
 # Handoff: user report — "A file operation failed" on Create Journal (Flatpak)
 
-**Status:** diagnosis in progress, no code changed. Blocked on two validations.
-**Date:** 2026-07-30
-**Next action:** run the Windows reproduction in [§5](#5-validation-to-run-on-windows), and
-ask the user for his `config.json` ([§6](#6-data-needed-from-the-user)).
+**Status:** **root cause identified** from user screenshots. It is neither Bug 1 nor a
+permissions problem, and §4.3's central claim is falsified. See [§0](#0-status-update-2026-08-06).
+**Date:** 2026-07-30 · **Last updated:** 2026-08-07
+**Next action:** implement the portal-path guard ([§0.4](#04-what-must-change)). The §5
+Windows run is now optional and no longer decisive.
+
+---
+
+## 0. Status update (2026-08-06)
+
+### 0.1 The user's reply
+
+1. **He updated to the latest release; the issue persisted.** Expected — `git log` on
+   `crates/mini-diarium-core/src/config.rs`, `src-tauri/src/commands/auth/auth_journals.rs`,
+   and `src/state/auth.ts` shows **none of the seven §7 changes were ever implemented**. No
+   fix has shipped, so no release could have helped him.
+2. **He has removed the Flatpak permanently and now runs the AppImage only.**
+3. **He asked how to update the AppImage without losing data.** Answered: no self-updater
+   on any platform (no updater plugin, no `updater` block, no updater artifacts in
+   `tauri.conf.json:21`; "no update checks" is a `CLAUDE.md` security rule, stated publicly
+   in `website/docs-src/10-faq.md`). Manual file swap; the journal folder and
+   `~/.local/share/com.minidiarium/` both sit outside the AppImage.
+
+### 0.2 The screenshots — root cause
+
+He also sent six screenshots (taken 2026-07-31, reviewed 2026-08-06). **They identify the
+cause, and it is not what §3 or §4 predicted.**
+
+> **Evidence handling:** the screenshots are user-supplied and stay **out of the repo** —
+> `docs/wip/` is tracked and this repository is public. They are gitignored at the root as
+> `reminidiarium.zip`. Everything they prove is transcribed below, so the report does not
+> depend on them.
+
+| Screenshot | What it shows |
+|---|---|
+| `22-03-56` | Picker: journal **`diary`** at path **`/run/user/1000/doc/acaee348`** |
+| `22-03-43` | Unlock screen for that journal → *"A file operation failed"* |
+| `22-04-05` | Remove Journal confirmation |
+| `22-04-11` | After removal: **"No journals yet"** empty-state picker |
+| `22-05-27` | Create New Journal, Location prefilled **`/run/user/1000/doc/22c50e87/Diarys & Jou…`** |
+| `22-06-35` | Password entered → *"A file operation failed"* on Create Journal |
+
+**`/run/user/1000/doc/<hash>` is the XDG document-portal FUSE mount.** The Flatpak file
+chooser hands back a portal document handle, and **the app persists that handle into
+`config.json` as the journal's permanent location.** Two distinct failures follow from that
+single cause, and Bug 2 (the collapsed error message) is why they look identical:
+
+1. **Unlock fails in a later session.** `/run/user/1000` is a tmpfs and portal document
+   handles are per-grant, per-session. The recorded path simply does not exist at the next
+   login, so every file operation against it fails → `22-03-43`. The two different hashes
+   in the screenshots (`acaee348`, `22c50e87`) for what is evidently the same physical
+   folder are the portal minting a fresh id per grant.
+2. **Creation fails even with a live grant** → `22-06-35`. Mechanism **probable, not
+   proven**: the document-portal FUSE does not support the full set of operations SQLite
+   needs to bring up a new database inside a directory grant (creating sidecar
+   `-journal`/`-wal` files, the rename/fsync patterns). This should be confirmed on Linux
+   before being written up as fact.
+
+**The real backing folder is visible in the evidence.** Screenshot `22-05-27` shows
+`/run/user/1000/doc/22c50e87/Diarys & Jou…`: the portal preserves the **basename of the
+exported directory**, so the host folder is named something like `Diarys & Journals`. That
+is where his data physically lives, not anywhere under `~/.var/app`. It also means the two
+handles are grants over a real, persistent host directory rather than scratch space.
+
+**Only the Flatpak is affected.** The AppImage, `.deb`, and Nix builds are unsandboxed, so
+the GTK chooser returns real filesystem paths and no portal handle is ever stored. The bug
+is specific to the Flathub build. This is why the user's platform switch incidentally
+resolved his problem.
+
+### 0.3 What this falsifies
+
+- **§4.3 is wrong.** It states the picker "is not portal-based… it cannot reach host paths
+  and grants no document-portal access." The screenshots show portal paths, so it plainly
+  does. The lockfile facts in §4.3 are still accurate — `ashpd` is genuinely absent and
+  `rfd 0.16.0` uses the gtk3 backend (both re-verified) — but the conclusion drawn from
+  them does not hold: the portal is being reached **through GTK inside the sandbox**, not
+  through a Rust-side portal crate. *The exact GTK mechanism has not been verified and
+  should not be asserted without checking.*
+- **§3 Bug 1's user-visible symptom did not reproduce.** After removing the last journal he
+  landed on the **empty-state picker** (`22-04-11`), not the Create Journal screen — which
+  is precisely the "Bug 1 does not reproduce as described" outcome §5 defines. Caveat:
+  those screenshots may be from a single app session, and Bug 1's claim is about the *next
+  launch*, so this weakens the routing claim without formally killing it. The underlying
+  `config.json` defect (empty `active_journal_id`, stale `diary_dir`) is still real and
+  still worth fixing — it is simply **not what broke his journal**.
+- **This was never a permissions problem**, which is what the error text told him for two
+  weeks. §4.1's writability check would not have caught it either: a live portal directory
+  *is* writable at the moment it is probed.
+
+### 0.4 What must change
+
+Ranked by what actually fixes his bug:
+
+| # | Change | Note |
+|---|---|---|
+| A | **Reject or resolve portal paths when a journal directory is chosen.** A path under `/run/user/*/doc/` must never be stored in `config.json` as a permanent location — either resolve it to the real backing path or refuse it with an explanatory error | **the fix**; new, not in §7 |
+| B | Detect an already-stored portal path at load and surface a specific, actionable message instead of "A file operation failed" | recovery for existing installs |
+| C | §7 items 2 and 3 (log the real cause; stop collapsing six errors into one sentence) | **why this took two weeks to diagnose** — highest value after A |
+| D | §7 items 1, 4, 5, 6 | still real defects, no longer urgent |
+
+**Data loss: probably none, not yet proven.** Three things point the same way. The document
+portal is a passthrough over real host files rather than scratch storage; the grant's
+basename resolves to a real host folder (`Diarys & Journals`); and his `diary` journal had
+been created successfully at some earlier point, since it reached the *unlock* screen
+rather than failing at creation. So a `diary.db` most likely sits in that folder right now,
+encrypted and intact, orphaned only because `config.json` recorded the handle instead of
+the path.
+
+What is **not** established is whether a portal *directory* grant passes new-file writes
+through to the backing directory. Until that is tested (§9 Q3), "his data survived" is a
+strong prior, not a fact, and should not be stated to a user as certainty.
+
+### 0.5 What the user has been told
+
+Two emails sent 2026-08-06/07, in this order:
+
+1. **AppImage updating.** No self-updater on any platform, manual file swap, journal folder
+   and `~/.local/share/com.minidiarium/` both sit outside the AppImage so an update cannot
+   touch them. Also suggested checking `~/.var/app/io.github.fjrevoredo.mini-diarium/` for
+   surviving Flatpak data. **That pointer was wrong** and is retracted in the second email.
+2. **The root cause,** framed as a second pass over his screenshots: the stored portal path,
+   why it fails only after a logout, that the AppImage is unaffected, and where to actually
+   look for his data (`find ~ -name 'diary.db'`, then **+ Open Existing**). Recovery worded
+   as "probably still on your disk" to match the evidence, per §0.4.
+
+He has **not** been told a fix is coming, and no timeline was given. Nothing in either
+email needs correcting if §9 Q3 later shows the data did not survive; the wording already
+allows for it.
+
+### 0.6 Found in passing
+
+`docs/INSTALLATION.md` documents updating for WinGet, Homebrew, and Flatpak, but has **no
+AppImage update instructions** — which is why he had to ask. Worth an "Updating"
+subsection in the Linux part. Unrelated to this bug; do not bundle it into the fix commit.
+
+The `config.json` requested in §6 would still be useful confirmation but is **no longer
+needed to diagnose** — the screenshots carry the path.
+
+### 0.7 Not yet done
+
+Deliberately left for a follow-up, so this handoff is not mistaken for a finished task:
+
+- **No code changed.** Item A in §0.4 (the portal-path guard) is unimplemented.
+- **No TODO item created** for the fix. Use `todo-manager`; do not hand-assign an ID.
+- **No `docs/KNOWN_ISSUES.md` entry**, though this now warrants one: it affects every
+  Flathub user who picks a folder through the file chooser, and the workaround
+  (reopen the journal from its real path after each login) is worth documenting.
+- **No CHANGELOG entry**, correctly, since nothing has been fixed yet.
+- **§9 Q3 and Q4 untested** — both need a Linux box with a Flatpak build.
 
 ---
 
@@ -42,6 +187,11 @@ not the cause.
 ## 3. What is provable from the code
 
 ### Bug 1 — removing all journals leaves the app on a stale directory and skips the picker
+
+⚠️ **Not his bug — see [§0.3](#03-what-this-falsifies).** Screenshot `22-04-11` shows him
+landing on the empty-state picker after removing the last journal, not the Create Journal
+screen. The `config.json` defect described below is still real and still worth fixing; the
+user-visible routing symptom in row 4 did not reproduce.
 
 Platform-independent, and it matches step 4 of his sequence exactly.
 
@@ -88,7 +238,12 @@ sits just below the crop of his screenshot. It returns him to the picker.
 2. **First run requires a file dialog.** `JournalPicker.tsx:76,346` — both create paths open
    the folder dialog and Add stays disabled until a folder is set. No default location is
    ever offered.
-3. **The picker is not portal-based.** `tauri-plugin-dialog` 2.7.1 is `default = ["gtk3"]`
+3. **The picker is not portal-based.** ⚠️ **FALSIFIED 2026-08-06 — see [§0.3](#03-what-this-falsifies).**
+   The user's screenshots show `/run/user/1000/doc/<hash>` paths, which are document-portal
+   mounts, so the picker *does* reach the portal (via GTK in-sandbox, not via a Rust crate).
+   The lockfile facts below remain correct; the conclusion drawn from them does not. This
+   inverted the whole diagnosis: the portal path is the **cause**, not a missing capability.
+   `tauri-plugin-dialog` 2.7.1 is `default = ["gtk3"]`
    (verified in the vendored `Cargo.toml`), `src-tauri/Cargo.toml:35` takes defaults, and
    `ashpd` is absent from `Cargo.lock`. So it is an in-sandbox `GtkFileChooserDialog` — it
    cannot reach host paths and grants no document-portal access. `--filesystem=home` was
@@ -149,6 +304,11 @@ leave a same-named read-only one) and try to create. Confirms the §4.1 path end
 
 ## 6. Data needed from the user
 
+> **Superseded by [§0](#0-status-update-2026-08-06) (2026-08-06).** He has uninstalled the
+> Flatpak, so all three items below exist only if `~/.var/app/<id>` survived the uninstall.
+> Requested, but treat as unlikely to arrive. The relief options at the end of this section
+> are obsolete — he is on the AppImage now.
+
 Nothing in §3 identifies *his* specific failure. Ask for:
 
 1. **`config.json`** — `cat ~/.var/app/io.github.fjrevoredo.mini-diarium/data/com.minidiarium/config.json`.
@@ -204,7 +364,8 @@ Flatpak caveat (then `bun run website:build-static` via the **PowerShell tool**)
 - **A code fix only reaches Flathub users through a new tagged release** — the manifest pins
   a `type: git` commit, and `docs/FLATPAK_MAINTENANCE.md` checklist item 6 is explicit that
   post-tag fixes on `master` do not help that release's PR. The §6 workarounds are the only
-  near-term relief.
+  near-term relief. *(Still true for other Flathub users; no longer relevant to Jon, who is
+  on the AppImage — see §0.)*
 - **Add no new crates.** Any `Cargo.lock` change forces `cargo-sources.json` regeneration
   (`FLATPAK_MAINTENANCE.md:146`) and stale vendored sources are the top Flathub build
   failure. Hence the probe filename reuses `generate_journal_id()`. Same reason the
@@ -215,13 +376,22 @@ Flatpak caveat (then `bun run website:build-static` via the **PowerShell tool**)
 
 ## 9. Open questions
 
-1. Does Bug 1 reproduce on Windows as described in §5? *(decisive — run this first)*
-2. Is Jon's failure Bug 1's stale directory, or a different `create_database` error?
-   Only his `config.json` or a log line answers it. **Do not report the issue as resolved
-   until one of them confirms which.**
-3. Is a Flatpak sandbox's `$HOME` writable-but-ephemeral (tmpfs) or read-only? Unresolved,
-   and it decides whether a journal created at the sandbox home silently vanishes on restart
-   — a separate potential data-loss bug worth its own check.
+> **Questions 1 and 2 are answered as of [§0](#0-status-update-2026-08-06).** Q1: Bug 1's
+> symptom did not reproduce for him. Q2: his failure was neither — it was the stored
+> document-portal path. Both are kept below for the record. Question 3 was the closest to
+> the truth and is now the most urgent one.
+
+1. ~~Does Bug 1 reproduce on Windows as described in §5?~~ Superseded — his screenshots show
+   the empty-state picker, the §5 "does not reproduce" outcome. The §5 run is now optional.
+2. ~~Is Jon's failure Bug 1's stale directory, or a different `create_database` error?~~
+   **Neither.** It is a `/run/user/1000/doc/<hash>` portal path stored as the journal
+   location (§0.2).
+3. **Does a document-portal directory grant pass writes through to the real backing
+   directory, or do they land on the tmpfs?** Now the decisive open question — it determines
+   whether his entries still exist somewhere recoverable or are gone. Testable on Linux with
+   a directory grant; does not need the user.
+4. **What exactly does the portal FUSE reject when SQLite creates a new database?** Needed
+   to write up §0.2 failure 2 as fact rather than a probable mechanism.
 
 ## 10. Verification commands (for when the fix lands)
 

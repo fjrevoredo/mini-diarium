@@ -22,6 +22,9 @@ use crate::crypto::cipher;
 use crate::db::schema::open_connection_readonly;
 use crate::db::DatabaseConnection;
 
+use super::inspect::has_column;
+use super::restore_entries::has_table;
+
 /// Prefix every snapshot file carries. Unchanged from the pre-upgrade format so files
 /// written by older versions are still recognised.
 pub const SNAPSHOT_PREFIX: &str = "backup-";
@@ -115,10 +118,14 @@ impl FsSnapshotStore {
 
 impl SnapshotStore for FsSnapshotStore {
     fn list(&self) -> Result<Vec<StoredSnapshot>, String> {
-        let Ok(entries) = fs::read_dir(&self.dir) else {
-            // A backups directory that does not exist yet holds no snapshots. That is a
-            // normal first-run state, not an error.
-            return Ok(Vec::new());
+        let entries = match fs::read_dir(&self.dir) {
+            Ok(entries) => entries,
+            // A backups directory that does not exist yet holds no snapshots — a normal
+            // first-run state, not an error.
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(Vec::new()),
+            // Anything else is a real fault. Reporting it as "no snapshots" is how a blocked
+            // backups path came to read as healthy.
+            Err(e) => return Err(format!("Failed to read the backups directory: {e}")),
         };
 
         let mut snapshots = Vec::new();
@@ -147,6 +154,9 @@ impl SnapshotStore for FsSnapshotStore {
     }
 
     fn read(&self, file_name: &str) -> Result<PathBuf, String> {
+        if !is_snapshot_file_name(file_name) {
+            return Err("Snapshot not found".to_string());
+        }
         let path = self.dir.join(file_name);
         if !path.is_file() {
             return Err("Snapshot not found".to_string());
@@ -155,6 +165,11 @@ impl SnapshotStore for FsSnapshotStore {
     }
 
     fn delete(&self, file_name: &str) -> Result<(), String> {
+        if !is_snapshot_file_name(file_name) {
+            return Err(format!(
+                "Refusing to delete a non-snapshot file: {file_name}"
+            ));
+        }
         let path = self.dir.join(file_name);
         match fs::remove_file(&path) {
             Ok(()) => {
@@ -167,6 +182,9 @@ impl SnapshotStore for FsSnapshotStore {
     }
 
     fn stat(&self, file_name: &str) -> Result<u64, String> {
+        if !is_snapshot_file_name(file_name) {
+            return Err("Snapshot not found".to_string());
+        }
         fs::metadata(self.dir.join(file_name))
             .map(|m| m.len())
             .map_err(|e| format!("Failed to stat snapshot: {e}"))
@@ -250,6 +268,58 @@ impl FsSnapshotStore {
     }
 }
 
+// ── Restore ───────────────────────────────────────────────────────────────────────────
+
+/// Copies `source` into a private temp file beside `db_path`, touching nothing at `db_path`
+/// itself.
+///
+/// Staging happens before anything else in the restore flow touches the backups directory:
+/// the safety snapshot taken between this call and [`finalize_restore`] runs retention on
+/// every call, and retention can evict the very snapshot file being restored (an older
+/// snapshot losing its day-bucket slot to the new safety snapshot, for instance). Once
+/// staged, eviction of the original is irrelevant — this copy is now the one that matters.
+pub(crate) fn stage_restore_copy(db_path: &Path, source: &Path) -> Result<PathBuf, String> {
+    let parent = db_path
+        .parent()
+        .ok_or_else(|| "Journal path has no parent directory".to_string())?;
+    let file_name = db_path
+        .file_name()
+        .and_then(|n| n.to_str())
+        .ok_or_else(|| "Journal path is not valid UTF-8".to_string())?;
+    let temp_path = parent.join(format!("{file_name}.restoring.tmp"));
+
+    // A leftover from a previous interrupted restore would otherwise make this copy fail.
+    let _ = fs::remove_file(&temp_path);
+    fs::copy(source, &temp_path)
+        .map_err(|e| format!("Failed to stage the restored journal: {e}"))?;
+    Ok(temp_path)
+}
+
+/// Fsyncs the staged file and atomically renames it over `db_path`.
+///
+/// The write-then-rename half of [`FsSnapshotStore::write_atomic`], aimed the other
+/// direction: a snapshot is already a complete, valid database, so restoring is a full-file
+/// swap, not a second `VACUUM INTO` pass. The caller must have already released every
+/// handle to `db_path` — on Windows an open handle makes the rename fail outright
+/// (`os error 32`).
+pub(crate) fn finalize_restore(db_path: &Path, staged: &Path) -> Result<(), String> {
+    let result = (|| -> Result<(), String> {
+        fsync_file(staged)?;
+        fs::rename(staged, db_path).map_err(|e| format!("Failed to finalize the restore: {e}"))?;
+        if let Some(parent) = db_path.parent() {
+            fsync_dir(parent);
+        }
+        Ok(())
+    })();
+
+    if result.is_err() {
+        // Leave nothing behind that could be mistaken for the journal or block a retry.
+        let _ = fs::remove_file(staged);
+    }
+
+    result
+}
+
 /// Size of a file in bytes, or `None` if it cannot be read.
 ///
 /// Lives here rather than at the call site because this module owns every `std::fs` call in
@@ -258,14 +328,67 @@ pub(crate) fn file_size(path: &Path) -> Option<u64> {
     fs::metadata(path).map(|m| m.len()).ok()
 }
 
+/// What the backups directory looks like on disk, as far as writing snapshots is concerned.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub(crate) enum DirState {
+    /// Exists, is a directory, and can be enumerated.
+    Usable,
+    /// Nothing exists at this path yet — the normal first-run state. The engine creates it
+    /// on the first write.
+    Absent,
+    /// Something exists that stops it being used: a file occupying the path or one of its
+    /// parents, or a directory that cannot be read.
+    Blocked,
+}
+
+/// Classifies `dir` by walking up from it to the deepest path that actually exists.
+///
+/// The walk is what makes this portable. A file occupying a *parent* of `dir` surfaces as
+/// `NotFound` on Windows and `NotADirectory` on Unix when `dir` itself is probed, so neither
+/// error kind can be trusted at the leaf; climbing until something exists finds the offending
+/// file either way. It also matches the shape the app actually uses, `{journal dir}/backups/{db stem}`,
+/// where the intermediate level is created by the engine too.
+pub(crate) fn dir_state(dir: &Path) -> DirState {
+    for (depth, ancestor) in dir.ancestors().enumerate() {
+        match fs::metadata(ancestor) {
+            // Nothing readable here, and no way to learn more from a deeper probe.
+            Err(e) if e.kind() == std::io::ErrorKind::PermissionDenied => return DirState::Blocked,
+            // This level tells us nothing yet — keep climbing.
+            Err(_) => continue,
+            // A file where a directory has to be. `create_dir_all` can never get past it.
+            Ok(meta) if !meta.is_dir() => return DirState::Blocked,
+            // The backups directory itself exists. Enumerating it is the only honest proof
+            // that it can be used.
+            Ok(_) if depth == 0 => {
+                return if fs::read_dir(dir).is_ok() {
+                    DirState::Usable
+                } else {
+                    DirState::Blocked
+                }
+            }
+            // An ancestor exists and is a directory, so the rest can still be created.
+            Ok(_) => return DirState::Absent,
+        }
+    }
+    DirState::Absent
+}
+
 // ── Naming ────────────────────────────────────────────────────────────────────────────
 
 /// Whether `name` is a snapshot file this engine owns.
 ///
-/// Exported through the crate façade so the app can *refuse* to register a snapshot as a
-/// journal without duplicating the `"backup-"` literal.
+/// Every method that turns a caller-supplied name into a path goes through this, because
+/// snapshot names reach the store from the frontend once the `backup` command group exists
+/// (`delete_backup`, `verify_backup`). The prefix and suffix are the ownership test; the
+/// separator and `..` rejections are what keep `dir.join(name)` inside `dir` — without them
+/// `backup-../../diary.db` satisfies both affixes and escapes.
 pub fn is_snapshot_file_name(name: &str) -> bool {
-    name.starts_with(SNAPSHOT_PREFIX) && name.ends_with(SNAPSHOT_SUFFIX)
+    name.starts_with(SNAPSHOT_PREFIX)
+        && name.ends_with(SNAPSHOT_SUFFIX)
+        && !name.contains('/')
+        && !name.contains('\\')
+        && !name.contains("..")
+        && !name.contains('\0')
 }
 
 /// Builds the snapshot file name for `at`, avoiding collisions with existing files.
@@ -354,8 +477,10 @@ fn vacuum_into(db: &DatabaseConnection, target: &Path) -> Result<(), String> {
 /// Flushes the snapshot's own bytes to stable storage.
 ///
 /// The handle must be opened for **write**: Windows rejects `FlushFileBuffers` (what
-/// `sync_all` calls) on a read-only handle with `ERROR_ACCESS_DENIED`.
-fn fsync_file(path: &Path) -> Result<(), String> {
+/// `sync_all` calls) on a read-only handle with `ERROR_ACCESS_DENIED`. `pub(crate)` so
+/// [`super::relocate`] can reuse it for its own stage → fsync → rename sequence instead of
+/// duplicating the Windows/Unix branching.
+pub(crate) fn fsync_file(path: &Path) -> Result<(), String> {
     let file = fs::OpenOptions::new()
         .write(true)
         .open(path)
@@ -368,8 +493,8 @@ fn fsync_file(path: &Path) -> Result<(), String> {
 ///
 /// Best-effort by design: only Unix lets a directory be opened as a file. On Windows
 /// `File::open` on a directory fails, and NTFS metadata journaling covers the rename, so
-/// there is nothing to do and nothing to report.
-fn fsync_dir(dir: &Path) {
+/// there is nothing to do and nothing to report. `pub(crate)` — see [`fsync_file`].
+pub(crate) fn fsync_dir(dir: &Path) {
     #[cfg(unix)]
     {
         if let Ok(handle) = File::open(dir) {
@@ -395,11 +520,12 @@ fn fsync_dir(dir: &Path) {
 /// **Note on check 3.** The plan phrases this as "the master key unwraps an auth slot",
 /// which is not achievable: a slot's `wrapped_key` is unwrapped *by a credential*
 /// (Argon2id-derived password key, X25519 private key, or the device auto key) to *produce*
-/// the master key — holding the master key does not let you reverse that. Decrypting an
-/// encrypted row instead proves the property that actually matters, and proves it against
-/// the same key the entries were written with. A journal with no encrypted content yet has
-/// nothing to check, so checks 1–2 stand alone in that case.
-fn verify_snapshot(path: &Path, key: &cipher::Key) -> Result<(), String> {
+/// the master key — holding the master key does not let you reverse that. Decrypting every
+/// supported encrypted value instead proves the property that actually matters, and proves
+/// it against the same key the entries were written with — not just a single sample, since a
+/// snapshot can be openable and pass a sample check while a later field is corrupt. A journal
+/// with no encrypted content yet has nothing to check, so checks 1–2 stand alone in that case.
+pub(crate) fn verify_snapshot(path: &Path, key: &cipher::Key) -> Result<(), String> {
     let conn = open_connection_readonly(path)
         .map_err(|e| format!("Snapshot verification failed to open the file: {e}"))?;
 
@@ -421,37 +547,120 @@ fn verify_snapshot(path: &Path, key: &cipher::Key) -> Result<(), String> {
     verify_key_decrypts(&conn, key)
 }
 
-/// Decrypts one encrypted field with `key`, if the snapshot has any.
-fn verify_key_decrypts(conn: &rusqlite::Connection, key: &cipher::Key) -> Result<(), String> {
-    // Entry titles first (the common case), tag names as the fallback for a journal that
-    // holds tags but no entries.
-    let sample: Option<Vec<u8>> = conn
-        .query_row(
-            "SELECT title_encrypted FROM entries WHERE title_encrypted IS NOT NULL LIMIT 1",
-            [],
-            |row| row.get(0),
-        )
-        .or_else(|_| {
-            conn.query_row(
-                "SELECT name_encrypted FROM tags WHERE name_encrypted IS NOT NULL LIMIT 1",
-                [],
-                |row| row.get(0),
-            )
-        })
-        .ok();
+/// Column matrix this verifier adapts to, mirroring the read paths in `db::queries` and
+/// `backup::inspect`/`backup::restore_entries` that already handle a pre-migration snapshot:
+///
+/// | Column                                  | Introduced | Required? |
+/// |------------------------------------------|-----------|-----------|
+/// | `entries.title_encrypted`/`text_encrypted`| v1        | always (when `entries` exists) |
+/// | `entries.entry_metadata_encrypted`        | v9        | when column exists and non-NULL |
+/// | `entries.preview_enc`                     | v12       | when column exists and non-NULL |
+/// | `tags.name_encrypted`                     | pre-v3    | when `tags` table exists |
+/// | `images.data`                             | pre-v3    | when `images` table exists |
+/// | `images.thumbnail_data`                   | v11       | when column exists and non-NULL |
+///
+/// Every encrypted value the current schema can hold is decrypted, not just a single sample —
+/// a snapshot must not be marked `verified` while a later field (a second entry's text, an
+/// image's bytes, a thumbnail) is silently corrupt. A structural failure (a required table
+/// missing, a row that cannot be read) is a verification failure, never downgraded to the
+/// empty-journal case: that case applies only when a table exists and is genuinely empty.
+/// One entry row's encrypted columns, exactly as selected by the adaptive query below:
+/// `(title_encrypted, text_encrypted, entry_metadata_encrypted, preview_enc)`.
+type EntryVerificationRow = (Vec<u8>, Vec<u8>, Option<Vec<u8>>, Option<Vec<u8>>);
 
-    let Some(ciphertext) = sample else {
-        // Nothing encrypted in the journal yet — checks 1 and 2 are the whole guarantee.
-        return Ok(());
+fn verify_key_decrypts(conn: &rusqlite::Connection, key: &cipher::Key) -> Result<(), String> {
+    let decrypt_failed = || {
+        "Snapshot verification failed: the journal's master key does not decrypt the \
+         snapshot's content"
+            .to_string()
     };
 
-    crate::format::decrypt_utf8(key, &ciphertext, "snapshot verification sample").map_err(
-        |_| {
-            "Snapshot verification failed: the journal's master key does not decrypt the \
-         snapshot's content"
-                .to_string()
-        },
-    )?;
+    if !has_table(conn, "entries")? {
+        return Err("Snapshot verification failed: the snapshot has no entries table".to_string());
+    }
+
+    let metadata_col = if has_column(conn, "entries", "entry_metadata_encrypted")? {
+        "entry_metadata_encrypted"
+    } else {
+        "NULL"
+    };
+    let preview_col = if has_column(conn, "entries", "preview_enc")? {
+        "preview_enc"
+    } else {
+        "NULL"
+    };
+
+    let entry_sql = format!(
+        "SELECT title_encrypted, text_encrypted, {metadata_col}, {preview_col} FROM entries"
+    );
+    let mut stmt = conn
+        .prepare(&entry_sql)
+        .map_err(|e| format!("Snapshot verification could not read entries: {e}"))?;
+    let entry_rows: Vec<EntryVerificationRow> = stmt
+        .query_map([], |row| {
+            Ok((
+                row.get::<_, Vec<u8>>(0)?,
+                row.get::<_, Vec<u8>>(1)?,
+                row.get::<_, Option<Vec<u8>>>(2)?,
+                row.get::<_, Option<Vec<u8>>>(3)?,
+            ))
+        })
+        .map_err(|e| format!("Snapshot verification could not read entries: {e}"))?
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| format!("Snapshot verification could not read entries: {e}"))?;
+
+    for (title_enc, text_enc, metadata_enc, preview_enc) in &entry_rows {
+        crate::format::decrypt_utf8(key, title_enc, "title").map_err(|_| decrypt_failed())?;
+        crate::format::decrypt_utf8(key, text_enc, "text").map_err(|_| decrypt_failed())?;
+        if let Some(enc) = metadata_enc {
+            crate::format::decrypt_utf8(key, enc, "entry_metadata")
+                .map_err(|_| decrypt_failed())?;
+        }
+        if let Some(enc) = preview_enc {
+            crate::format::decrypt_utf8(key, enc, "preview").map_err(|_| decrypt_failed())?;
+        }
+    }
+
+    if has_table(conn, "tags")? {
+        let mut stmt = conn
+            .prepare("SELECT name_encrypted FROM tags")
+            .map_err(|e| format!("Snapshot verification could not read tags: {e}"))?;
+        let names: Vec<Vec<u8>> = stmt
+            .query_map([], |row| row.get::<_, Vec<u8>>(0))
+            .map_err(|e| format!("Snapshot verification could not read tags: {e}"))?
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|e| format!("Snapshot verification could not read tags: {e}"))?;
+        for name_enc in &names {
+            crate::format::decrypt_utf8(key, name_enc, "tag name").map_err(|_| decrypt_failed())?;
+        }
+    }
+
+    if has_table(conn, "images")? {
+        let thumbnail_col = if has_column(conn, "images", "thumbnail_data")? {
+            "thumbnail_data"
+        } else {
+            "NULL"
+        };
+        let images_sql = format!("SELECT data, {thumbnail_col} FROM images");
+        let mut stmt = conn
+            .prepare(&images_sql)
+            .map_err(|e| format!("Snapshot verification could not read images: {e}"))?;
+        let image_rows: Vec<(Vec<u8>, Option<Vec<u8>>)> = stmt
+            .query_map([], |row| {
+                Ok((row.get::<_, Vec<u8>>(0)?, row.get::<_, Option<Vec<u8>>>(1)?))
+            })
+            .map_err(|e| format!("Snapshot verification could not read images: {e}"))?
+            .collect::<Result<Vec<_>, _>>()
+            .map_err(|e| format!("Snapshot verification could not read images: {e}"))?;
+        for (data_enc, thumbnail_enc) in &image_rows {
+            crate::format::decrypt_bytes(key, data_enc, "image").map_err(|_| decrypt_failed())?;
+            if let Some(enc) = thumbnail_enc {
+                crate::format::decrypt_bytes(key, enc, "image thumbnail")
+                    .map_err(|_| decrypt_failed())?;
+            }
+        }
+    }
+
     Ok(())
 }
 
@@ -694,6 +903,138 @@ mod tests {
         assert_eq!(store.list().unwrap().len(), 1);
     }
 
+    // ── Task F1: full-content verification ────────────────────────────────────────────
+
+    /// A 1×1 white PNG, base64-encoded. Small enough to embed inline; large enough to be a
+    /// real, decodable image so thumbnail generation actually runs.
+    const TINY_PNG_B64: &str =
+        "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
+
+    #[test]
+    fn test_verification_rejects_corruption_in_a_non_first_encrypted_entry_field() {
+        let (dir, _db_path, db) = seeded_journal("corrupt-non-first-field");
+        let store = FsSnapshotStore::new(dir.path().join("backups"));
+        store.write(&db, "backup-2026-08-04-12h00m00.db").unwrap();
+        let path = store.read("backup-2026-08-04-12h00m00.db").unwrap();
+
+        // Corrupt the *second* entry's text only. The old single-sample verifier checked
+        // only the first entry's title, which stays perfectly decryptable here.
+        let conn = rusqlite::Connection::open(&path).unwrap();
+        let updated = conn
+            .execute(
+                "UPDATE entries SET text_encrypted = x'ffffffffffffffff' WHERE date = '2024-03-20'",
+                [],
+            )
+            .unwrap();
+        assert_eq!(updated, 1);
+        drop(conn);
+
+        let result = verify_snapshot(&path, db.key());
+        assert!(
+            result.is_err(),
+            "verification passed even though a non-first entry's text is corrupt"
+        );
+    }
+
+    #[test]
+    fn test_verification_checks_tags_metadata_previews_images_and_thumbnails() {
+        use crate::db::{add_tag_to_entry, create_tag, insert_entry_with_images, EntryMetadata};
+
+        let dir = tempfile::Builder::new()
+            .prefix("mini-diarium-store-full-verify-")
+            .tempdir()
+            .unwrap();
+        let db_path = dir.path().join("diary.db");
+        let db = create_database(&db_path, "test_password".to_string()).unwrap();
+
+        let entry = DiaryEntry {
+            id: 0,
+            date: "2024-05-01".to_string(),
+            title: "With image".to_string(),
+            text: format!(r#"<p>Photo</p><img src="data:image/png;base64,{TINY_PNG_B64}">"#),
+            word_count: 1,
+            date_created: "2024-05-01T00:00:00Z".to_string(),
+            date_updated: "2024-05-01T00:00:00Z".to_string(),
+            metadata: Some(EntryMetadata {
+                font_family: Some("Serif".to_string()),
+                font_size: Some(16.0),
+            }),
+            locked: false,
+        };
+        let entry_id = insert_entry_with_images(&db, &entry).unwrap();
+        let tag = create_tag(&db, "personal").unwrap();
+        add_tag_to_entry(&db, entry_id, tag.id).unwrap();
+
+        let store = FsSnapshotStore::new(dir.path().join("backups"));
+        // The write itself already runs full verification — if it fails here, one of the
+        // new fields is wrongly rejected on genuinely valid content.
+        store.write(&db, "backup-2026-08-04-12h00m00.db").unwrap();
+        let path = store.read("backup-2026-08-04-12h00m00.db").unwrap();
+
+        let columns: [(&str, &str, &str); 5] = [
+            ("entries", "entry_metadata_encrypted", "date = '2024-05-01'"),
+            ("entries", "preview_enc", "date = '2024-05-01'"),
+            ("tags", "name_encrypted", "1 = 1"),
+            ("images", "data", "1 = 1"),
+            ("images", "thumbnail_data", "1 = 1"),
+        ];
+
+        for (table, column, predicate) in columns {
+            // A fresh scratch copy per column so each corruption is tested against an
+            // otherwise-intact snapshot, not one already broken by a previous iteration.
+            let scratch = dir.path().join(format!("scratch-{table}-{column}.db"));
+            fs::copy(&path, &scratch).unwrap();
+
+            let conn = rusqlite::Connection::open(&scratch).unwrap();
+            let updated = conn
+                .execute(
+                    &format!("UPDATE {table} SET {column} = x'ffffffffffffffff' WHERE {predicate}"),
+                    [],
+                )
+                .unwrap();
+            assert!(
+                updated >= 1,
+                "no {table}.{column} row was available to corrupt"
+            );
+            drop(conn);
+
+            let result = verify_snapshot(&scratch, db.key());
+            assert!(
+                result.is_err(),
+                "verification passed with a corrupt {table}.{column}"
+            );
+        }
+    }
+
+    #[test]
+    fn test_verification_rejects_a_missing_required_entries_table() {
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("no-entries.db");
+        let conn = rusqlite::Connection::open(&path).unwrap();
+        conn.execute_batch(
+            "CREATE TABLE schema_version (version INTEGER NOT NULL);
+             INSERT INTO schema_version (version) VALUES (13);
+             CREATE TABLE auth_slots (
+                 id INTEGER PRIMARY KEY,
+                 type TEXT NOT NULL,
+                 public_key BLOB,
+                 wrapped_key BLOB NOT NULL
+             );
+             INSERT INTO auth_slots (type, wrapped_key) VALUES ('password', x'00');",
+        )
+        .unwrap();
+        drop(conn);
+
+        let key = cipher::Key::from_slice(&[1u8; 32]).unwrap();
+        let err = verify_snapshot(&path, &key)
+            .expect_err("verification passed on a snapshot with no entries table at all");
+        assert!(
+            err.contains("entries table"),
+            "a missing required table must fail structurally, not be treated as an empty \
+             journal: got {err:?}"
+        );
+    }
+
     #[test]
     fn test_temp_files_are_never_listed_as_snapshots() {
         let dir = tempfile::tempdir().unwrap();
@@ -722,6 +1063,76 @@ mod tests {
             "sweep must not touch unrelated files"
         );
     }
+
+    #[test]
+    fn test_list_distinguishes_a_missing_directory_from_an_unusable_one() {
+        // Collapsing both into "no snapshots" is how a blocked backups path came to read as
+        // healthy: the listing looked like a first run, so nothing else had reason to object.
+        let dir = tempfile::tempdir().unwrap();
+
+        let missing = FsSnapshotStore::new(dir.path().join("never-created"));
+        assert!(
+            missing.list().unwrap().is_empty(),
+            "a backups directory that does not exist yet is a first run, not a fault"
+        );
+        assert_eq!(dir_state(missing.dir()), DirState::Absent);
+
+        let occupied = dir.path().join("occupied");
+        fs::write(&occupied, "not a directory").unwrap();
+        let blocked = FsSnapshotStore::new(&occupied);
+        assert!(
+            blocked.list().is_err(),
+            "a backups path that cannot be enumerated must surface as an error"
+        );
+        assert_eq!(dir_state(&occupied), DirState::Blocked);
+        assert_eq!(
+            dir_state(&occupied.join("diary")),
+            DirState::Blocked,
+            "a file occupying a parent blocks the nested path the app actually uses"
+        );
+
+        assert_eq!(dir_state(dir.path()), DirState::Usable);
+    }
+
+    #[test]
+    fn test_every_name_taking_method_refuses_to_escape_the_backups_directory() {
+        // Snapshot names arrive from the frontend once the `backup` command group exists,
+        // so `dir.join(name)` is joining untrusted input. The prefix/suffix affixes alone do
+        // not contain it: `backup-../../diary.db` satisfies both.
+        let dir = tempfile::tempdir().unwrap();
+        let backups = dir.path().join("backups");
+        fs::create_dir_all(&backups).unwrap();
+        let outside = dir.path().join("diary.db");
+        fs::write(&outside, "the live journal").unwrap();
+        fs::write(backups.join(MANIFEST_FILE_FOR_TEST), "{}").unwrap();
+
+        let store = FsSnapshotStore::new(&backups);
+
+        for hostile in [
+            "backup-../diary.db",
+            "backup-..\\diary.db",
+            "../diary.db",
+            "..\\diary.db",
+            "/etc/passwd",
+            MANIFEST_FILE_FOR_TEST,
+        ] {
+            assert!(store.read(hostile).is_err(), "read accepted {hostile:?}");
+            assert!(
+                store.delete(hostile).is_err(),
+                "delete accepted {hostile:?}"
+            );
+            assert!(store.stat(hostile).is_err(), "stat accepted {hostile:?}");
+        }
+
+        assert!(outside.exists(), "a hostile name reached outside the store");
+        assert!(
+            backups.join(MANIFEST_FILE_FOR_TEST).exists(),
+            "the manifest is not a snapshot and must not be deletable as one"
+        );
+    }
+
+    /// Local copy so this test does not reach into the `manifest` module for one constant.
+    const MANIFEST_FILE_FOR_TEST: &str = "manifest.json";
 
     // ── Naming ───────────────────────────────────────────────────────────────────────
 
@@ -787,5 +1198,174 @@ mod tests {
             read_change_counter(Path::new("definitely-not-a-file.db")),
             None
         );
+    }
+
+    // ── Task 4.2: the restore primitives ─────────────────────────────────────────────
+
+    #[test]
+    fn test_stage_and_finalize_restore_swaps_the_journal() {
+        let dir = tempfile::tempdir().unwrap();
+        let db_path = dir.path().join("diary.db");
+        fs::write(&db_path, b"old content").unwrap();
+        let source = dir.path().join("backup-2026-08-04-12h00m00.db");
+        fs::write(&source, b"new content").unwrap();
+
+        let staged = stage_restore_copy(&db_path, &source).unwrap();
+        assert_eq!(fs::read(&staged).unwrap(), b"new content");
+        // Staging must not touch the live file yet.
+        assert_eq!(fs::read(&db_path).unwrap(), b"old content");
+
+        finalize_restore(&db_path, &staged).unwrap();
+
+        assert_eq!(fs::read(&db_path).unwrap(), b"new content");
+        assert!(
+            !staged.exists(),
+            "the staged temp file must not survive a successful restore"
+        );
+    }
+
+    #[test]
+    fn test_stage_restore_copy_overwrites_a_leftover_temp_file() {
+        // A previous restore attempt that never reached finalize would otherwise poison
+        // every subsequent one.
+        let dir = tempfile::tempdir().unwrap();
+        let db_path = dir.path().join("diary.db");
+        fs::write(&db_path, b"live").unwrap();
+        fs::write(dir.path().join("diary.db.restoring.tmp"), b"stale leftover").unwrap();
+
+        let source = dir.path().join("backup-2026-08-04-12h00m00.db");
+        fs::write(&source, b"fresh copy").unwrap();
+
+        let staged = stage_restore_copy(&db_path, &source).unwrap();
+        assert_eq!(fs::read(&staged).unwrap(), b"fresh copy");
+    }
+
+    #[test]
+    fn test_finalize_restore_leaves_no_temp_file_on_failure() {
+        let dir = tempfile::tempdir().unwrap();
+        // A directory occupying the target name makes the rename fail.
+        let db_path = dir.path().join("diary.db");
+        fs::create_dir_all(&db_path).unwrap();
+        let staged = dir.path().join("diary.db.restoring.tmp");
+        fs::write(&staged, b"content").unwrap();
+
+        assert!(finalize_restore(&db_path, &staged).is_err());
+        assert!(
+            !staged.exists(),
+            "a failed finalize left the temp file behind"
+        );
+    }
+
+    // ── Task 5.3: local-only journals keep key-less backups ──────────────────────────
+
+    #[test]
+    fn test_backups_directory_never_contains_key_material() {
+        // Plan Assumption 2 / finding B-9: a local-only (passwordless) journal's `auto_key`
+        // lives only in `config.json`, on this device, and must never be written into the
+        // backups directory. The wrapped *master* key legitimately appears in every snapshot's
+        // `auth_slots` table — that ciphertext is not the secret this test guards. Scanning for
+        // the raw `auto_key` bytes specifically is what keeps this test from being satisfied by
+        // encryption alone.
+        use crate::backup::{create_snapshot, BackupContext, SnapshotTrigger};
+        use crate::db::{create_database_auto, insert_entry, DiaryEntry};
+
+        let dir = tempfile::Builder::new()
+            .prefix("mini-diarium-store-no-key-leak-")
+            .tempdir()
+            .unwrap();
+        let db_path = dir.path().join("diary.db");
+        let backups_dir = dir.path().join("backups");
+        let auto_key: [u8; 32] = [
+            0x4b, 0x9a, 0x1c, 0x7d, 0xe2, 0x33, 0x88, 0x0f, 0x56, 0xa7, 0xd1, 0x64, 0xf2, 0x3e,
+            0x91, 0x0c, 0x5d, 0xb8, 0x27, 0x4a, 0x9e, 0x61, 0x3b, 0xc0, 0xf7, 0x1a, 0x85, 0x2d,
+            0x69, 0xe4, 0x0b, 0x93,
+        ];
+
+        let db = create_database_auto(&db_path, &auto_key).unwrap();
+        insert_entry(
+            &db,
+            &DiaryEntry {
+                id: 0,
+                date: "2024-06-01".to_string(),
+                title: "Local only entry".to_string(),
+                text: "body".to_string(),
+                word_count: 1,
+                date_created: "2024-06-01T00:00:00Z".to_string(),
+                date_updated: "2024-06-01T00:00:00Z".to_string(),
+                metadata: None,
+                locked: false,
+            },
+        )
+        .unwrap();
+
+        create_snapshot(
+            &db,
+            &BackupContext {
+                db_path: &db_path,
+                backups_dir: &backups_dir,
+                app_version: Some("0.6.4"),
+            },
+            SnapshotTrigger::Manual,
+        )
+        .unwrap();
+
+        // A second snapshot, so the change-counter dedup path and retention both run at least
+        // once against real state before the scan.
+        insert_entry(
+            &db,
+            &DiaryEntry {
+                id: 0,
+                date: "2024-06-02".to_string(),
+                title: "Second".to_string(),
+                text: "body".to_string(),
+                word_count: 1,
+                date_created: "2024-06-02T00:00:00Z".to_string(),
+                date_updated: "2024-06-02T00:00:00Z".to_string(),
+                metadata: None,
+                locked: false,
+            },
+        )
+        .unwrap();
+        create_snapshot(
+            &db,
+            &BackupContext {
+                db_path: &db_path,
+                backups_dir: &backups_dir,
+                app_version: Some("0.6.4"),
+            },
+            SnapshotTrigger::Manual,
+        )
+        .unwrap();
+
+        assert!(
+            backups_dir.exists(),
+            "the scan below would silently pass over nothing if snapshots were never written"
+        );
+
+        let mut scanned_files = 0;
+        for entry in fs::read_dir(&backups_dir).unwrap() {
+            let path = entry.unwrap().path();
+            if !path.is_file() {
+                continue;
+            }
+            scanned_files += 1;
+            let bytes = fs::read(&path).unwrap();
+            assert!(
+                !contains_subslice(&bytes, &auto_key),
+                "the raw auto_key bytes were found in {}",
+                path.display()
+            );
+        }
+        assert!(
+            scanned_files >= 3,
+            "expected manifest.json plus at least two backup-*.db files, found {scanned_files}"
+        );
+    }
+
+    fn contains_subslice(haystack: &[u8], needle: &[u8]) -> bool {
+        if needle.is_empty() || haystack.len() < needle.len() {
+            return false;
+        }
+        haystack.windows(needle.len()).any(|w| w == needle)
     }
 }

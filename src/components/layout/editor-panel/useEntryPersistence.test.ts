@@ -125,6 +125,19 @@ describe('useEntryPersistence', () => {
       s.dispose();
     });
 
+    it('returns no snapshot when pendingEntryId is null — the invariant a post-restore discard relies on', () => {
+      // Task 4.2: after a whole-journal restore, the editor's in-memory entry state must be
+      // discarded rather than flushed, or pre-restore content would be written back over the
+      // restored entry. `clearEntryFromEditor` sets pendingEntryId to null before the reload;
+      // this is what makes the flushCurrent call inside the subsequent loadEntriesForDate a
+      // guaranteed no-op instead of a stale write.
+      const s = setup({ entryId: 7 });
+      s.hook.setHydratedEntryId(7);
+      s.setPendingEntryId(null);
+      expect(s.hook.captureCurrentSnapshot()).toBeNull();
+      s.dispose();
+    });
+
     it('snapshots id, title, body, and metadata together once hydration agrees', () => {
       const meta: EntryMetadata = { font_family: 'Inter' } as EntryMetadata;
       const s = setup({ entryId: 7, title: 'A title', content: '<p>body</p>' });
@@ -288,6 +301,16 @@ describe('useEntryPersistence', () => {
       await vi.advanceTimersByTimeAsync(600);
       expect(mocks.saveEntry).toHaveBeenCalledTimes(1);
       expect(mocks.saveEntry).toHaveBeenCalledWith(7, '', '<p>body</p>', null);
+      s.dispose();
+    });
+
+    it('writes nothing once pendingEntryId has been cleared (Task 4.2 discard-and-reload)', async () => {
+      const s = setup({ entryId: 7, content: '<p>pre-restore body</p>' });
+      s.hook.setHydratedEntryId(7);
+      s.setPendingEntryId(null); // what clearEntryFromEditor does, before any reload
+      await s.hook.flushCurrent('loadEntriesForDate');
+      expect(mocks.saveEntry).not.toHaveBeenCalled();
+      expect(mocks.deleteEntryIfEmpty).not.toHaveBeenCalled();
       s.dispose();
     });
   });

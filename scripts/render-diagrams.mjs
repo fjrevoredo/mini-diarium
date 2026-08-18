@@ -1,26 +1,26 @@
-import { createHash } from "node:crypto";
-import { spawnSync } from "node:child_process";
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { tmpdir } from "node:os";
-import path from "node:path";
+import { createHash } from 'node:crypto';
+import { spawnSync } from 'node:child_process';
+import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import path from 'node:path';
 
-const DIAGRAMS_DIR = path.resolve("docs/diagrams");
+const DIAGRAMS_DIR = path.resolve('docs/diagrams');
 
 const MERMAID_DIAGRAMS = [
-  { source: "unlock.mmd", outputBase: "unlock.svg", transparent: false },
-  { source: "unlock-dark.mmd", outputBase: "unlock-dark.svg", transparent: true },
-  { source: "save-entry.mmd", outputBase: "save-entry.svg", transparent: false },
-  { source: "save-entry-dark.mmd", outputBase: "save-entry-dark.svg", transparent: true },
-  { source: "context.mmd", outputBase: "context.svg", transparent: false },
-  { source: "context-dark.mmd", outputBase: "context-dark.svg", transparent: true },
+  { source: 'unlock.mmd', outputBase: 'unlock.svg', transparent: false },
+  { source: 'unlock-dark.mmd', outputBase: 'unlock-dark.svg', transparent: true },
+  { source: 'save-entry.mmd', outputBase: 'save-entry.svg', transparent: false },
+  { source: 'save-entry-dark.mmd', outputBase: 'save-entry-dark.svg', transparent: true },
+  { source: 'context.mmd', outputBase: 'context.svg', transparent: false },
+  { source: 'context-dark.mmd', outputBase: 'context-dark.svg', transparent: true },
 ];
 
 const D2_DIAGRAMS = [
-  { source: "architecture.d2", outputBase: "architecture.svg" },
-  { source: "architecture-dark.d2", outputBase: "architecture-dark.svg" },
+  { source: 'architecture.d2', outputBase: 'architecture.svg' },
+  { source: 'architecture-dark.d2', outputBase: 'architecture-dark.svg' },
 ];
 
-function getArgValue(name, fallbackValue = "") {
+function getArgValue(name, fallbackValue = '') {
   const prefixed = `${name}=`;
   const args = process.argv.slice(2);
 
@@ -42,7 +42,7 @@ function withSuffix(fileName, suffix) {
     return fileName;
   }
 
-  if (!fileName.endsWith(".svg")) {
+  if (!fileName.endsWith('.svg')) {
     throw new Error(`Expected .svg output file, got: ${fileName}`);
   }
 
@@ -50,7 +50,15 @@ function withSuffix(fileName, suffix) {
 }
 
 function runOrExit(command, args) {
-  const result = spawnSync(command, args, { stdio: "inherit" });
+  // On Windows, "bun" resolves to a .cmd shim; spawnSync can't exec that directly
+  // (CreateProcess has no PATHEXT resolution) so it fails with ENOENT even though
+  // `bun run diagrams` works. Routing through cmd.exe /c fixes this without the
+  // shell: true option, which triggers Node's DEP0190 argv-escaping warning.
+  const isWindows = process.platform === 'win32';
+  const resolvedCommand = isWindows ? 'cmd.exe' : command;
+  const resolvedArgs = isWindows ? ['/d', '/s', '/c', command, ...args] : args;
+
+  const result = spawnSync(resolvedCommand, resolvedArgs, { stdio: 'inherit' });
 
   if (result.error) {
     throw result.error;
@@ -61,25 +69,25 @@ function runOrExit(command, args) {
   }
 }
 
-const suffix = getArgValue("--suffix", "");
-const explicitPuppeteerConfig = getArgValue("--puppeteer-config", "").trim();
-let generatedPuppeteerDir = "";
-let puppeteerConfigPath = explicitPuppeteerConfig || process.env.MMDC_PUPPETEER_CONFIG || "";
+const suffix = getArgValue('--suffix', '');
+const explicitPuppeteerConfig = getArgValue('--puppeteer-config', '').trim();
+let generatedPuppeteerDir = '';
+let puppeteerConfigPath = explicitPuppeteerConfig || process.env.MMDC_PUPPETEER_CONFIG || '';
 
 if (!puppeteerConfigPath) {
-  generatedPuppeteerDir = mkdtempSync(path.join(tmpdir(), "mini-diarium-mmdc-"));
-  puppeteerConfigPath = path.join(generatedPuppeteerDir, "puppeteer-config.json");
+  generatedPuppeteerDir = mkdtempSync(path.join(tmpdir(), 'mini-diarium-mmdc-'));
+  puppeteerConfigPath = path.join(generatedPuppeteerDir, 'puppeteer-config.json');
 
   writeFileSync(
     puppeteerConfigPath,
     `${JSON.stringify(
       {
-        args: ["--no-sandbox", "--disable-setuid-sandbox"],
+        args: ['--no-sandbox', '--disable-setuid-sandbox'],
       },
       null,
       2,
     )}\n`,
-    "utf8",
+    'utf8',
   );
 }
 
@@ -88,24 +96,24 @@ try {
     const inputPath = path.join(DIAGRAMS_DIR, diagram.source);
     const outputPath = path.join(DIAGRAMS_DIR, withSuffix(diagram.outputBase, suffix));
 
-    const args = ["run", "mmdc", "--", "-i", inputPath, "-o", outputPath];
+    const args = ['run', 'mmdc', '--', '-i', inputPath, '-o', outputPath];
 
     if (puppeteerConfigPath) {
-      args.push("-p", puppeteerConfigPath);
+      args.push('-p', puppeteerConfigPath);
     }
 
     if (diagram.transparent) {
-      args.push("--backgroundColor", "transparent");
+      args.push('--backgroundColor', 'transparent');
     }
 
-    runOrExit("bun", args);
+    runOrExit('bun', args);
   }
 
   for (const diagram of D2_DIAGRAMS) {
     const inputPath = path.join(DIAGRAMS_DIR, diagram.source);
     const outputPath = path.join(DIAGRAMS_DIR, withSuffix(diagram.outputBase, suffix));
 
-    runOrExit("d2", [inputPath, outputPath]);
+    runOrExit('d2', [inputPath, outputPath]);
   }
 } finally {
   if (generatedPuppeteerDir) {
@@ -117,10 +125,12 @@ try {
 const hashes = {};
 for (const diagram of [...MERMAID_DIAGRAMS, ...D2_DIAGRAMS]) {
   const sourcePath = path.join(DIAGRAMS_DIR, diagram.source);
-  hashes[diagram.source] = createHash("sha256").update(readFileSync(sourcePath, "utf8").replace(/\r\n/g, "\n")).digest("hex");
+  hashes[diagram.source] = createHash('sha256')
+    .update(readFileSync(sourcePath, 'utf8').replace(/\r\n/g, '\n'))
+    .digest('hex');
 }
 writeFileSync(
-  path.join(DIAGRAMS_DIR, ".source-hashes.json"),
-  JSON.stringify(hashes, null, 2) + "\n",
-  "utf8",
+  path.join(DIAGRAMS_DIR, '.source-hashes.json'),
+  JSON.stringify(hashes, null, 2) + '\n',
+  'utf8',
 );

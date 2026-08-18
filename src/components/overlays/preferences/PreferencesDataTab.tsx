@@ -58,9 +58,37 @@ export default function PreferencesDataTab(props: TabProps) {
       title: t('prefs.data.changeDirectoryTitle'),
     });
     if (!selected || typeof selected !== 'string') return;
+
+    const oldPath = journalPath();
+    let hadBackups = false;
+    let moveBackups = false;
+    try {
+      const snapshots = await tauri.listBackups();
+      hadBackups = snapshots.length > 0;
+      if (hadBackups) {
+        moveBackups = await dialogConfirm(t('prefs.data.moveBackupsConfirmMessage'), {
+          title: t('prefs.data.moveBackupsConfirmTitle'),
+        });
+      }
+    } catch (err) {
+      // Not fatal to the move itself — worst case the user is not offered the choice and
+      // the history stays behind, which is what already happened before this feature existed.
+      log.error('Failed to check for existing backups before moving the journal:', err);
+    }
+
     setIsChangingDir(true);
     try {
-      await tauri.changeJournalDirectory(selected);
+      await tauri.changeJournalDirectory(selected, moveBackups);
+      if (hadBackups && !moveBackups) {
+        // `journalPath()` can still be empty if its own load failed silently (see the
+        // createEffect above) — fall back rather than showing a message that trails off
+        // after the colon.
+        alert(
+          t('prefs.data.backupsStayedAlert', {
+            path: oldPath || t('prefs.data.previousLocationFallback'),
+          }),
+        );
+      }
       window.location.reload();
     } catch (err) {
       setChangeDirError(mapTauriError(err, t));

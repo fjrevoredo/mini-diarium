@@ -27,6 +27,7 @@ const en = {
     browse: 'Browse',
     browseDotDotDot: 'Browse...',
     browseFolderDotDotDot: 'Browse Folder...',
+    or: 'or',
   },
 
   /** App-level and layout strings */
@@ -153,6 +154,8 @@ const en = {
       /** Used as "Unlock <name>" — only the prefix word */
       unlockPrefix: 'Unlock',
       backToJournals: '← Back to Journals',
+      toolsAria: 'Tools available without unlocking',
+      viewBackups: 'View backups',
       passwordMode: 'Password',
       keyFileMode: 'Key File',
       unlockMethodAria: 'Unlock method',
@@ -363,6 +366,7 @@ const en = {
     tabWriting: 'Writing',
     tabSecurity: 'Security',
     tabData: 'Data',
+    tabBackups: 'Backups',
     tabAdvanced: 'Advanced',
     general: {
       themeLabel: 'Theme',
@@ -478,8 +482,12 @@ const en = {
       currentPwdRequired: 'Current Password (required to remove)',
       currentPwdPlaceholder: 'Enter current password',
       removeError: 'Current password is required to remove an auth method',
-      confirmRemoveMessage: 'Are you sure you want to remove this authentication method?',
+      confirmRemoveMessage:
+        'Are you sure you want to remove this authentication method? It will still open every backup taken while it was registered — removing it here does not revoke it from existing backups.',
       confirmRemoveTitle: 'Remove Authentication Method',
+      removedMethodStillValidWarning:
+        'The removed method still opens every backup taken before you removed it. If it was compromised, delete those backups too.',
+      reviewBackupsButton: 'Review backups',
       addPasswordTitle: 'Add Password Auth',
       addPasswordHint:
         'No password method is registered. Add one so you can unlock with a password.',
@@ -502,6 +510,8 @@ const en = {
       savePrivateKeyTitle: 'Save Private Key File',
       keypairFileCancelled: 'Key file save cancelled',
       changePasswordTitle: 'Change Password',
+      changePasswordSnapshotWarning:
+        'Backups taken before this change will still require your current (old) password to open. Keep it somewhere safe, or take a fresh backup right after changing your password.',
       currentPasswordLabel2: 'Current Password',
       currentPasswordPlaceholder2: 'Enter current password',
       newPasswordLabel: 'New Password',
@@ -547,6 +557,100 @@ const en = {
       resetDoubleConfirmTitle: 'Reset Journal — Final Warning',
       changeDirectoryTitle: 'Choose Journal Directory',
       resetFailedAlert: 'Failed to reset journal: {{ message }}',
+      moveBackupsConfirmTitle: 'Move Backups Too?',
+      moveBackupsConfirmMessage:
+        "This journal has existing backups. Move them to the new location along with the journal? If you don't, they will stay where they are.",
+      backupsStayedAlert: 'Your existing backups were left at the old location: {{ path }}',
+      previousLocationFallback: "the journal's previous folder",
+    },
+    backups: {
+      title: 'Backups',
+      hint: 'A backup is a complete, encrypted copy of this journal, taken automatically before anything risky and kept on this device only.',
+      retentionPolicy:
+        'Kept: the {{ recent }} most recent, plus one per day for {{ dailyDays }} days, one per week for {{ weeklyWeeks }} weeks, and one per month for {{ monthlyMonths }} months.',
+      loading: 'Loading backups…',
+      loadError: 'Could not read the backups folder.',
+      empty: 'No backups yet. One is taken automatically the first time this journal changes.',
+      emptyLocked: 'No backups found for this journal.',
+
+      backUpNow: 'Back up now',
+      backingUp: 'Backing up…',
+      verify: 'Check',
+      verifying: 'Checking…',
+      delete: 'Delete',
+      restore: 'Restore',
+      restoring: 'Restoring…',
+      revealFolder: 'Open backups folder',
+      confirmDelete: 'Delete this backup? This cannot be undone.',
+      confirmRestore:
+        'Restore the journal to the backup from {{ when }}? Entries written since then will be replaced. A safety snapshot of the current state will be taken first, so this can be undone.',
+      restoreSuccess:
+        'Journal restored to the backup from {{ when }}. Your previous state was saved as a new backup from {{ safetyWhen }} in case you need to undo this.',
+      restoreSuccessGeneric:
+        'Journal restored to the backup from {{ when }}. Your previous state was saved as a new backup in case you need to undo this.',
+      actionsNeedUnlock: 'Unlock this journal to create, check, restore, or delete backups.',
+
+      statusTitle: 'Status',
+      lastBackup: 'Last backup: {{ when }}',
+      lastBackupNever: 'No backup has been taken yet.',
+      totalSize: 'Using {{ used }} of {{ budget }}.',
+      countSummary_one: '{{ count }} backup',
+      countSummary_other: '{{ count }} backups',
+      healthOk: 'Backups are working.',
+      healthFailed:
+        'The last backup attempt failed ({{ when }}). Open the backups folder to check it is reachable and has free space.',
+      healthUnreachable:
+        'The backups folder cannot be used. If the journal is on a removable or synced drive, reconnect it; otherwise check that the folder still exists and nothing has taken its place.',
+      healthBudget:
+        'Backups are over their storage limit. The most recent ones will be trimmed first; older ones are kept.',
+
+      entryCount_one: '{{ count }} entry',
+      entryCount_other: '{{ count }} entries',
+      dateRange: '{{ from }} to {{ to }}',
+      requiredCredentialHint: 'Requires: {{ credentials }}',
+      verified: 'Checked',
+      unverified: 'Not checked',
+      unverifiedHint:
+        'Not yet checked against this journal’s key. This is normal for backups made by an older version.',
+
+      triggerUnlock: 'After unlocking',
+      triggerLock: 'On locking',
+      triggerMigration: 'Before a database upgrade',
+      triggerManual: 'Manual',
+      triggerPreRestore: 'Before a restore',
+      triggerAdopted: 'Made by an earlier version',
+      triggerDestructive: 'Before {{ operation }}',
+
+      localOnlyTitle: 'This journal has no password',
+      localOnlyNotice:
+        'Its backups are encrypted with a key stored in this app’s settings on this device. Copying the backups folder to another machine is not enough to open them there.',
+
+      listAria: 'Backups, newest first',
+
+      restoreEntriesButton: 'Restore entries…',
+      restoreEntriesTitle: 'Restore individual entries',
+      restoreEntriesDescription:
+        'Browse this backup and copy specific entries into your journal, without touching anything else.',
+      credentialPrompt: 'Enter the credential this backup was taken with.',
+      credentialDiffersNotice:
+        'This backup was taken with a different password or key than your journal uses today. Enter the one it was taken with, not today’s.',
+      viewEntriesButton: 'View entries',
+      viewingEntriesFor: 'Viewing entries from {{ when }}',
+      readOnlyNotice: 'Read-only. Nothing changes until you choose to restore.',
+      loadingEntries: 'Loading entries…',
+      noEntries: 'This backup has no entries.',
+      statusMissing: 'Missing from your journal',
+      statusShorter: 'Shorter in your journal',
+      statusPresent: 'Already in your journal',
+      selectAllMissing: 'Select all missing or shorter',
+      entriesSelectedCount_one: '{{ count }} entry selected',
+      entriesSelectedCount_other: '{{ count }} entries selected',
+      restoreSelectedButton: 'Restore selected',
+      restoringEntries: 'Restoring…',
+      restoreEntriesSuccess_one:
+        '{{ count }} entry added. Nothing already in your journal was overwritten.',
+      restoreEntriesSuccess_other:
+        '{{ count }} entries added. Nothing already in your journal was overwritten.',
     },
     advanced: {
       themeOverridesTitle: 'Theme Overrides',

@@ -1,9 +1,9 @@
 ---
 title: Backups
 slug: backups
-description: Mini Diarium snapshots your encrypted journal before risky changes, verifies every copy it writes, and keeps tiered backup history going back a year.
+description: Mini Diarium snapshots your journal before risky changes, restores the whole journal or specific entries in-app, and keeps tiered history going back a year.
 order: 10
-updated: 2026-08-04
+updated: 2026-08-17
 tags: backups, data safety, backup rotation, storage, snapshots
 ---
 
@@ -60,19 +60,50 @@ On top of that sits a storage budget of 2 GB, or three times the size of your jo
 
 Only files matching the `backup-*.db` naming pattern are managed. Anything else you put in the folder is left alone. Snapshots created by earlier versions of Mini Diarium are adopted automatically on first run, not discarded.
 
+## Seeing Your Backups
+
+Open **Preferences → Backups**. The panel lists every snapshot, newest first, with the date it was taken, why it was taken, how many entries it holds, its size, and the range of entry dates inside it.
+
+Above the list is the state of the whole folder: whether backups are working, when the last one was taken, how much space they use against the storage budget, and the retention policy in words.
+
+Four things you can do from here:
+
+- **Back up now** takes a snapshot immediately. Unlike the automatic ones, it ignores the once-per-hour limit and the "nothing changed" rule, so it always produces a snapshot.
+- **Check** re-opens one snapshot and confirms your journal's key still decrypts every entry's title, text, tags, and any attached images inside it — not just a sample. Snapshots taken by an older version of Mini Diarium start as *Not checked*, which means "not confirmed yet", not "broken". A snapshot that fails the check is reported, never deleted: it may still open with the credential it was taken with.
+- **Delete** removes one snapshot.
+- **Open backups folder** opens the folder in your file manager.
+
+### When the journal will not open
+
+The same panel is reachable from the unlock screen, before you enter anything, via **View backups**. This is deliberate. The moment you most need to know which backups exist is the moment your journal will not open.
+
+Everything you need to answer "is there a backup, and how recent is it?" still works there, because none of it needs your key: the dates, sizes, and reasons are readable from the snapshots and their manifest without decrypting anything. Entry counts and date ranges are held back until you unlock, so a passer-by at the lock screen learns that backups exist without learning how much you have written or over what span. The actions that do need the key (taking, checking, and deleting backups) are disabled until you unlock.
+
+### When something is wrong
+
+The panel replaces "Backups are working." with a plain-language cause when it can find one:
+
+- **The last attempt failed.** Backups taken as the app locks or exits run in the background, so a failure has nowhere to appear at the time. It is recorded and shown here instead. Open the backups folder and check it is reachable and has free space.
+- **The folder cannot be used.** Usually a journal on a removable or synced drive that is disconnected, so reconnect it. It also covers the case where the backups folder still has an address but nothing usable at it: something else, a file for instance, has taken its place, or the folder itself can no longer be read. That second case is worth stating separately because no failure record can be written into a folder that cannot be written to, so this line is the only warning you get.
+- **Backups are over their storage limit.** Not an error. Mini Diarium trims the most recent snapshots first and keeps the older ones.
+
 ## Restoring
 
-Restoring from within the app is not available yet. Today, restoring means closing Mini Diarium, copying the snapshot you want over your `diary.db`, and reopening the app. Keep a copy of the file you are replacing until you have confirmed the snapshot has what you expected.
+Restoring is now built into the app, in two forms, both reachable from **Preferences → Backups**.
 
-**Do not point Mini Diarium at a snapshot where it sits.** A snapshot is a working database, so **+ Open Existing** would happily open one — and opening it as a journal writes to it, destroying the untouched restore point. The app now refuses `backup-*.db` files and anything inside a `backups` folder for exactly that reason. To look inside a snapshot, copy it somewhere else first, rename the copy to `diary.db`, and open that.
+**Whole-journal restore** rolls your entire journal back to the moment a snapshot was taken. Click **Restore** on a backup: Mini Diarium names the date, warns that entries written since then will be replaced, and takes a safety snapshot of your *current* state before touching anything — so restoring is reversible even if you picked the wrong one. No password or key file is asked for: a password change only re-wraps your existing key, so whatever unlocked the journal a moment ago also opens every snapshot it ever produced.
 
-An in-app restore, including recovering individual entries out of a snapshot, is the next stage of this work.
+**Per-entry restore** recovers specific entries without touching the rest of your journal. Click **Restore entries…** on a backup to browse what it contains. The dialog names the snapshot's date and entry count before listing anything, so you know exactly which backup you are looking at. Each entry is flagged if it is missing from your current journal, shorter there than in the backup, or already present, so it is clear what is worth recovering. Restoring an entry never overwrites anything — it is added alongside whatever your journal already holds for that date — and the result states how many entries were added. Tags on a recovered entry come back with it. This is the one that matters when you only lost a day or two, not the whole journal.
+
+Nothing decrypted is ever written to disk during either kind of restore.
+
+**Do not point Mini Diarium at a snapshot where it sits.** A snapshot is a working database, so **+ Open Existing** would happily open one — and opening it as a journal writes to it, destroying the untouched restore point. The app refuses `backup-*.db` files and anything inside a `backups` folder for exactly that reason. Both restore paths above read snapshots safely; you never need to do this by hand.
 
 ## Custom Journal Locations
 
-When you move your journal to a different folder via Preferences, `diary.db` is physically moved to the new location and all future snapshots go into `{new location}/backups/{journal name}/`.
+When you move your journal to a different folder via Preferences, `diary.db` is physically moved to the new location and all future snapshots go into `{new location}/backups/{journal name}/`. If you have existing snapshots, Mini Diarium asks whether to move them along with the journal.
 
-**Existing snapshots in the old folder are not moved automatically.** If you want to keep your history, copy the old `backups/` folder to the new journal directory before or after the move.
+**If you decline, existing snapshots stay in the old folder.** Mini Diarium tells you where before the move finishes. If you want to keep that history later, copy the old `backups/` folder to the new journal directory by hand.
 
 ## Cloud-Synced Locations
 

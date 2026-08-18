@@ -14,6 +14,11 @@ pub use open::{open_database, open_database_auto, open_database_with_keypair};
 // re-export.
 pub(crate) use create::{open_connection, open_connection_readonly};
 
+// `mod open` is private to `schema`; the restore path (`backup::restore::reopen_current`)
+// needs this to take a pre-migration snapshot on its post-swap reopen, the same way every
+// normal-open path does.
+pub(crate) use open::migrate_with_pre_migration_snapshot;
+
 /// Wrapper for database connection with encryption key
 #[derive(Debug)]
 pub struct DatabaseConnection {

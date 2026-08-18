@@ -357,13 +357,18 @@ A storage budget of 2 GB (or three times your journal's size, whichever is large
 
 ### Restoring
 
-In-app restore is not available yet. To restore today, close Mini Diarium, copy the snapshot over your `diary.db`, and reopen the app. Keep a copy of the file you replace until you have confirmed the snapshot has what you expected.
+Restoring is built into the app, from **Preferences → Backups**, in two forms:
+
+- **Restore** rolls the whole journal back to a snapshot. It names the date, warns that entries written since will be replaced, and takes a safety snapshot of the current state first — so it can be undone. No password is asked for; the master key never changes across a password change.
+- **Restore entries…** recovers specific entries from a snapshot without touching the rest of the journal. It flags entries missing from, or shorter in, the live journal, and never overwrites — a recovered entry is added alongside whatever the date already holds.
+
+Nothing decrypted is written to disk during either kind of restore.
 
 ### Custom journal locations
 
-When you move your journal to a different folder via Preferences, `diary.db` is physically moved to the new location and all future snapshots go into `{new location}/backups/{journal name}/`.
+When you move your journal to a different folder via Preferences, `diary.db` is physically moved to the new location and all future snapshots go into `{new location}/backups/{journal name}/`. If you have existing snapshots, you're asked whether to move them along with the journal.
 
-**Existing snapshots in the old folder are not moved.** If you want to keep your history, copy the old `backups/` folder to the new journal directory before or after the move.
+**If you decline, existing snapshots stay in the old folder** (you're told where before the move finishes). To keep that history later, copy the old `backups/` folder to the new journal directory by hand.
 
 ### Cloud-synced and external locations
 

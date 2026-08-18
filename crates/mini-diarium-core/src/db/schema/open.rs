@@ -18,7 +18,7 @@ use x25519_dalek::{PublicKey, StaticSecret};
 /// in place, so proceeding without a recoverable copy is the unrecoverable outcome. A
 /// journal that is already at the current schema version needs no snapshot — nothing is
 /// about to be rewritten — so the common unlock path is untouched.
-fn migrate_with_pre_migration_snapshot(
+pub(crate) fn migrate_with_pre_migration_snapshot(
     db: &DatabaseConnection,
     db_path: &Path,
     backups_dir: &Path,

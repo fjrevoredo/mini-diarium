@@ -165,6 +165,34 @@ These are used by E2E tests — **do not remove** from components.
 | `HeaderMoreMenu.tsx` | Import item in overflow menu | `header-more-menu-import-item` |
 | `HeaderMoreMenu.tsx` | Export item in overflow menu | `header-more-menu-export-item` |
 | `PreferencesOverlay.tsx` | Preferences dialog content | `preferences-overlay` |
+| `ChangePasswordForm.tsx` | Persistent snapshot-credential-drift notice (not the auto-dismissing success toast) | `change-password-snapshot-warning` |
+| `BackupsPanel.tsx` | Panel root (Preferences → Backups and the pre-auth view) | `backups-panel` |
+| `BackupsPanel.tsx` | One snapshot row | `backups-list-item` |
+| `BackupsPanel.tsx` | Empty-state message | `backups-empty` |
+| `BackupsPanel.tsx` | "Backups are working" line | `backups-health-ok` |
+| `BackupsPanel.tsx` | Degraded-health line (unreachable folder / failed attempt / over budget) | `backups-health-problem` |
+| `BackupsPanel.tsx` | Back up now button | `backups-create-button` |
+| `BackupsPanel.tsx` | Open backups folder button | `backups-reveal-button` |
+| `BackupsPanel.tsx` | Per-row checked / not-checked badge | `backups-item-verified` / `backups-item-unverified` |
+| `BackupsPanel.tsx` | Per-row Restore button | `backups-restore-button` |
+| `BackupsPanel.tsx` | Restore success message, naming the safety snapshot | `backups-restore-success` |
+| `BackupsPanel.tsx` | Passwordless-journal notice (UX-7) | `backups-local-only-notice` |
+| `BackupsPanel.tsx` | Reduced-mode explanation for disabled actions | `backups-locked-hint` |
+| `BackupsPanel.tsx` | Per-row "Restore entries…" button (opens `BackupInspectDialog`; hidden in reduced mode) | `backups-restore-entries-button` |
+| `BackupsPanel.tsx` | Per-row required-credential hint (from `auth_slot_types`; absent when only `auto`) | `backups-required-credential` |
+| `BackupsOverlay.tsx` | Standalone backups dialog (pre-auth) | `backups-overlay` |
+| `BackupInspectDialog.tsx` | Per-entry restore dialog root | `backup-inspect-dialog` |
+| `BackupInspectDialog.tsx` | Credential-differs notice (UX-3) | `backup-inspect-credential-differs` |
+| `BackupInspectDialog.tsx` | "View entries" submit button | `backup-inspect-open-button` |
+| `BackupInspectDialog.tsx` | Entry count in snapshot metadata | `backup-inspect-entry-count` |
+| `BackupInspectDialog.tsx` | Empty-state message | `backup-inspect-empty` |
+| `BackupInspectDialog.tsx` | "Select all missing or shorter" button | `backup-inspect-select-all` |
+| `BackupInspectDialog.tsx` | One snapshot entry row | `backup-inspect-entry-item` |
+| `BackupInspectDialog.tsx` | Per-entry status badge (UX-4) | `backup-inspect-status-missing` / `backup-inspect-status-shorter_in_live` / `backup-inspect-status-present` |
+| `BackupInspectDialog.tsx` | Restore-selected button | `backup-inspect-restore-button` |
+| `BackupInspectDialog.tsx` | Restore success message | `backup-inspect-success` |
+| `PreAuthTools.tsx` | Row of tools reachable without unlocking | `pre-auth-tools` |
+| `PreAuthTools.tsx` | View-backups entry point on the unlock screen | `pre-auth-backups-button` |
 | `StatsOverlay.tsx` | Statistics dialog content | `stats-overlay` |
 | `ImportOverlay.tsx` | Import dialog content | `import-overlay` |
 | `ExportOverlay.tsx` | Export dialog content | `export-overlay` |

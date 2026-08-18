@@ -31,6 +31,15 @@ describe('ChangePasswordForm', () => {
     mockChangePassword.mockResolvedValue(undefined);
   });
 
+  it('shows the persistent snapshot-credential warning unconditionally', () => {
+    renderForm();
+    expect(
+      screen.getByText(
+        'Backups taken before this change will still require your current (old) password to open. Keep it somewhere safe, or take a fresh backup right after changing your password.',
+      ),
+    ).toBeInTheDocument();
+  });
+
   it('shows error when any field is empty', async () => {
     renderForm();
     fireEvent.click(screen.getByRole('button', { name: 'Change Password' }));

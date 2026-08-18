@@ -7,6 +7,7 @@ export * from './statistics';
 export * from './export';
 export * from './plugins';
 export * from './files';
+export * from './backup';
 export * from './debug';
 export * from './menu';
 export * from './spellcheck';
