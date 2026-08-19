@@ -1,0 +1,49 @@
+{
+  "skill_name": "exploration-mode",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I have a vague idea about adding real-time collaboration to our app. Can we explore it?",
+      "expected_output": "Agent enters exploration mode, uses ASCII diagrams / open threads to frame the problem space, asks clarifying questions via the native question tool, and produces no code.",
+      "assertions": [
+        "Agent does not write or modify any source code file",
+        "Agent offers clarifying questions rather than implementing",
+        "Agent frames the topic with options or diagrams, not a code plan"
+      ],
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "The auth system is a mess. Help me investigate what's going wrong before I touch it.",
+      "expected_output": "Agent reads the codebase and maps the current auth flow, surfaces problem areas, and discusses them without modifying any code.",
+      "assertions": [
+        "Agent reads/inspects existing code (e.g. via Read/Grep/Glob) rather than guessing",
+        "Agent produces no code changes",
+        "Agent identifies specific areas of complexity with evidence (file paths)"
+      ],
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "Should we use Postgres or SQLite for a local CLI tool? Help me think it through.",
+      "expected_output": "Agent asks about context, then compares options with a tradeoff table, grounding the recommendation in the stated constraints. No code.",
+      "assertions": [
+        "Agent asks clarifying context questions before concluding",
+        "Agent presents a comparison (table or diagram) of options",
+        "Agent writes no implementation code"
+      ],
+      "files": []
+    },
+    {
+      "id": 4,
+      "prompt": "Explore how our caching layer works and whether we should redesign it. Don't write any code.",
+      "expected_output": "Agent investigates the codebase and official docs, explains the current design, and proposes a direction as a discussion/proposal. Confirmed no code written.",
+      "assertions": [
+        "Agent consults both the codebase and external/official sources",
+        "Agent explicitly respects the no-code constraint",
+        "Agent offers to capture findings as a doc/proposal rather than implementing"
+      ],
+      "files": []
+    }
+  ]
+}
