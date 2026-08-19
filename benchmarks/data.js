@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1787092982843,
+  "lastUpdate": 1787156999931,
   "repoUrl": "https://github.com/fjrevoredo/mini-diarium",
   "entries": {
     "Benchmark": [
@@ -35524,6 +35524,36 @@ window.BENCHMARK_DATA = {
           {
             "name": "ci_pipeline_duration",
             "value": 537000000000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "committer": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "distinct": true,
+          "id": "6ed26467bbe523736deb0ae2b597e89a550665f5",
+          "message": "Two docs/tooling drift findings from the backup redesign are corrected",
+          "timestamp": "2026-08-19T18:20:30+02:00",
+          "tree_id": "79c53fdb97ea9b2e0b88ecc55be841f7c31b614a",
+          "url": "https://github.com/fjrevoredo/mini-diarium/commit/6ed26467bbe523736deb0ae2b597e89a550665f5"
+        },
+        "date": 1787156998895,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "ci_pipeline_duration",
+            "value": 557000000000,
             "range": "± 0",
             "unit": "ns/iter"
           }
