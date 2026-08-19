@@ -95,7 +95,7 @@ Compact form of `SECURITY.md:30-43`. This is the "what can I honestly promise?" 
 | Schema version | `pub const SCHEMA_VERSION: i32 = 7;` | `crates/mini-diarium-core/src/db/schema/mod.rs:32` | Bump on every breaking schema change |
 | Max import file size | 100 MB (`MAX_IMPORT_FILE_SIZE`) | `src-tauri/src/commands/import.rs:5` | Too high → memory DoS; too low → legitimate imports fail |
 | Max text file read | 1 MiB (`MAX_TEXT_FILE_BYTES`) | `src-tauri/src/commands/files.rs:19` | Same DoS class |
-| Max backups retained | 30 (`MAX_BACKUPS`) | `crates/mini-diarium-core/src/backup.rs:6` | Affects rotation; not a crypto invariant but a disk-use guarantee |
+| Backup retention policy | tiered: 10 recent + 1/day × 14 d + 1/week × 8 w + 1/month × 12 mo; storage budget `max(2 GiB, 3 × journal size)` | `crates/mini-diarium-core/src/backup/policy.rs:25-37` | Disk-use guarantee, not a crypto invariant; changing it is a user-facing policy change |
 
 **Rule for any change to a row in this table:**
 

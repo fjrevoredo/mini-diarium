@@ -34,6 +34,7 @@ Operational rule for agents in this environment:
   - `cargo test --manifest-path src-tauri/Cargo.toml` — app crate only
 - Use repo-local Tauri CLI through `cmd.exe /c bun run tauri ...`; do not assume `cargo tauri` is globally installed.
 - Treat generic shell snippets in docs as human-oriented unless they already say "Run from this Codex shell".
+- **Git Bash/MSYS caveat:** if the agent's Bash tool is Git Bash/MSYS (not PowerShell or WSL), `cmd.exe /c "..."` silently no-ops — MSYS path-conversion rewrites the literal `/c` argument into a Windows path before `cmd.exe` sees it, so the command never runs and `cmd.exe` just prints its banner and exits 0. That is a false pass indistinguishable from a silently-successful tool. Use `MSYS_NO_PATHCONV=1 cmd.exe /c "..."`, or run the verified commands below from the PowerShell tool instead.
 
 Commands verified to work from this shell via Windows:
 
