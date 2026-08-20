@@ -483,8 +483,12 @@ describe('Multi-entry workflow', () => {
 
     // UX-GATE scenario #15: an outside backdrop click must also be inert. The dialog card
     // is a centered max-w-md box; a click near the viewport's top-left corner lands on the
-    // dimmed overlay behind it, not the card.
-    await $('body').click({ x: -350, y: -280 });
+    // dimmed overlay behind it, not the card. Kobalte's modal sets `pointer-events: none`
+    // on <body> while open (only the overlay div gets `auto` back), so a WebDriver element
+    // click — on body or the overlay — fails actionability checks; dispatch a raw
+    // viewport-origin pointer action instead, which targets no element and so isn't
+    // subject to that check (see e2e/CLAUDE.md gotcha #9).
+    await browser.action('pointer').move({ x: 50, y: 50, origin: 'viewport' }).down().up().perform();
     await browser.pause(300);
     expect(await $('[data-testid="confirm-dialog"]').isDisplayed()).toBe(true);
 
