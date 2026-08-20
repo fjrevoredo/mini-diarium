@@ -1,7 +1,7 @@
 import { Show, createEffect, onCleanup } from 'solid-js';
 import { X, Calendar as CalendarIcon } from 'lucide-solid';
 import Calendar from '../calendar/Calendar';
-import { selectedDate, setSelectedDate } from '../../state/ui';
+import { selectedDate, requestDateChange } from '../../state/ui';
 import { getTodayString } from '../../lib/dates';
 import { useI18n } from '../../i18n';
 import { activeTagFilter, clearTagFilter } from '../../state/tags';
@@ -114,7 +114,7 @@ export default function Sidebar(props: SidebarProps) {
               {/* Go to Today button */}
               <div class="flex justify-start">
                 <button
-                  onClick={() => setSelectedDate(getTodayString())}
+                  onClick={() => void requestDateChange(getTodayString())}
                   disabled={selectedDate() === getTodayString()}
                   class="flex items-center gap-1 rounded-md bg-tertiary px-3 py-2 text-sm font-medium text-secondary hover:bg-active disabled:opacity-50 disabled:cursor-not-allowed"
                   aria-label={t('layout.sidebar.goToToday')}

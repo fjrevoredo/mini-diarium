@@ -1,4 +1,4 @@
-import { selectedDate, setSelectedDate } from '../state/ui';
+import { selectedDate, requestDateChange } from '../state/ui';
 import { preferences } from '../state/preferences';
 import {
   navigatePreviousDay,
@@ -27,7 +27,7 @@ function clampToToday(date: string): string {
 export async function goToPreviousDay(): Promise<void> {
   try {
     const newDate = await navigatePreviousDay(selectedDate());
-    setSelectedDate(newDate);
+    await requestDateChange(newDate);
   } catch (error) {
     log.error('Failed to navigate to previous day:', error);
   }
@@ -43,7 +43,7 @@ export async function goToPreviousDay(): Promise<void> {
 export async function goToNextDay(): Promise<void> {
   try {
     const newDate = await navigateNextDay(selectedDate());
-    setSelectedDate(clampToToday(newDate));
+    await requestDateChange(clampToToday(newDate));
   } catch (error) {
     log.error('Failed to navigate to next day:', error);
   }
@@ -57,7 +57,7 @@ export async function goToNextDay(): Promise<void> {
 export async function goToToday(): Promise<void> {
   try {
     const newDate = await navigateToToday();
-    setSelectedDate(newDate);
+    await requestDateChange(newDate);
   } catch (error) {
     log.error('Failed to navigate to today:', error);
   }
@@ -69,7 +69,7 @@ export async function goToToday(): Promise<void> {
 export async function goToPreviousMonth(): Promise<void> {
   try {
     const newDate = await navigatePreviousMonth(selectedDate());
-    setSelectedDate(newDate);
+    await requestDateChange(newDate);
   } catch (error) {
     log.error('Failed to navigate to previous month:', error);
   }
@@ -82,7 +82,7 @@ export async function goToPreviousMonth(): Promise<void> {
 export async function goToNextMonth(): Promise<void> {
   try {
     const newDate = await navigateNextMonth(selectedDate());
-    setSelectedDate(clampToToday(newDate));
+    await requestDateChange(clampToToday(newDate));
   } catch (error) {
     log.error('Failed to navigate to next month:', error);
   }

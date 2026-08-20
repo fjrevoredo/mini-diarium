@@ -3,7 +3,7 @@ import { createEntry, deleteEntry, getEntriesForDate, getAllEntryDates } from '.
 import type { DiaryEntry } from '../../../lib/tauri';
 import { setEntryDates } from '../../../state/entries';
 import { createLogger } from '../../../lib/logger';
-import { confirm } from '../../../lib/dialog';
+import { confirmInApp } from '../../../state/confirm-dialog';
 import { useI18n } from '../../../i18n';
 import type { EditorEmptyCheckHook } from './useEditorEmptyCheck';
 import type { EntryLifecycleHook } from './useEntryLifecycle';
@@ -51,10 +51,21 @@ export function useMultiEntryNav(opts: UseMultiEntryNavOptions): MultiEntryNavHo
 
   const navigateToEntry = async (newIndex: number) => {
     const token = ++navToken;
+    // Captured before anything below can mutate dayEntries — canLeaveCurrentEntry may
+    // delete the *current* entry (never the target), which shifts every later index by
+    // one. Re-finding the target by id after the refresh (below) is what keeps the user
+    // landing on the entry they actually clicked instead of its new neighbor. See TODO-0104.
+    const targetEntryId = opts.dayEntries()[newIndex]?.id ?? null;
+
     // Flush an in-flight createEntry() first — defensive: pendingEntryId is null while a
     // creation is in flight, so the currentId flush below would otherwise no-op and any
     // typed content would be lost/misattributed. See TODO-0089.
     await opts.lifecycle.flushPendingCreation();
+    if (opts.lifecycle.isDisposed() || token !== navToken) return;
+
+    // Ask before silently erasing real content (TODO-0104). flushCurrent still runs
+    // after this — canLeaveCurrentEntry only writes on its own delete-and-confirmed branch.
+    if (!(await opts.lifecycle.canLeaveCurrentEntry('navigateToEntry'))) return;
     if (opts.lifecycle.isDisposed() || token !== navToken) return;
 
     // Save current first — snapshot-based, so the id, title, body, and the
@@ -70,8 +81,10 @@ export function useMultiEntryNav(opts: UseMultiEntryNavOptions): MultiEntryNavHo
       if (opts.lifecycle.isDisposed() || token !== navToken) return;
       opts.setDayEntries(refreshed);
 
-      // Filter to entries that still exist
-      const validIndex = Math.min(newIndex, refreshed.length - 1);
+      // Prefer the target's own id — correct even when canLeaveCurrentEntry deleted the
+      // entry that used to sit before it, which the clamp below cannot detect on its own.
+      const byId = targetEntryId !== null ? refreshed.findIndex((e) => e.id === targetEntryId) : -1;
+      const validIndex = byId >= 0 ? byId : Math.min(newIndex, refreshed.length - 1);
       if (validIndex < 0) {
         clearEntryFromEditor(opts.lifecycle.entryCommitTargets);
         return;
@@ -96,6 +109,12 @@ export function useMultiEntryNav(opts: UseMultiEntryNavOptions): MultiEntryNavHo
     opts.setIsCreatingEntry(true);
 
     try {
+      // Ask before silently erasing real content (TODO-0104). Structural consistency with
+      // navigateToEntry/toggleLock — the isContentEmpty() gate above already keeps this
+      // guard's delete branch unreachable through normal UI flow.
+      if (!(await opts.lifecycle.canLeaveCurrentEntry('addEntry'))) return;
+      if (opts.lifecycle.isDisposed()) return;
+
       // Save current first — snapshot-based, see navigateToEntry.
       await opts.lifecycle.flushCurrent('addEntry');
       if (opts.lifecycle.isDisposed()) return;
@@ -131,9 +150,8 @@ export function useMultiEntryNav(opts: UseMultiEntryNavOptions): MultiEntryNavHo
   const handleDeleteEntry = async () => {
     if (opts.dayEntries().length <= 1) return;
 
-    const confirmed = await confirm(opts.t('editor.deleteConfirmMessage'), {
+    const confirmed = await confirmInApp(opts.t('editor.deleteConfirmMessage'), {
       title: opts.t('editor.deleteConfirmTitle'),
-      kind: 'warning',
     });
 
     if (!confirmed) return;

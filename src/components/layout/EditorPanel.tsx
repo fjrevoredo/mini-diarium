@@ -43,6 +43,7 @@ export default function EditorPanel() {
   const emptyCheck = useEditorEmptyCheck({ editorInstance, content });
 
   const lifecycle = useEntryLifecycle({
+    t,
     selectedDate,
     editorInstance,
     title,
@@ -187,6 +188,12 @@ export default function EditorPanel() {
     const next = !currentLocked();
     try {
       if (next) {
+        // Ask before silently erasing real content (TODO-0104).
+        if (!(await lifecycle.canLeaveCurrentEntry('toggleLock'))) return;
+        // A confirmed delete inside the guard removes this exact entry and clears the
+        // editor (pendingEntryId -> null) — there is nothing left to lock. Bail rather
+        // than calling setEntryLocked on a now-deleted id.
+        if (pendingEntryId() !== id) return;
         // Flush current content before locking. The entry is still unlocked in the DB
         // here, so the save succeeds and no in-flight edit is lost.
         await lifecycle.flushCurrent('toggleLock');

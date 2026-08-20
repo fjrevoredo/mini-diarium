@@ -8,7 +8,7 @@ import {
   setFocusedResultIndex,
   MIN_QUERY_LENGTH,
 } from '../../state/search';
-import { setSelectedDate, setSelectedEntryId, setMainView, setIsSearchOpen } from '../../state/ui';
+import { setSelectedEntryId, setIsSearchOpen, requestDateAndViewChange } from '../../state/ui';
 import { preferences } from '../../state/preferences';
 import { useI18n } from '../../i18n';
 
@@ -27,14 +27,21 @@ export default function SearchResults() {
     }
   });
 
-  const handleResultClick = (id: number, date: string) => {
+  const handleResultClick = async (id: number, date: string) => {
     // Set the entry deep-link before the date so the editor's date effect opens this exact
     // entry (a day can hold multiple entries) rather than the day's newest.
     setSelectedEntryId(id);
-    setSelectedDate(date);
-    // Switch to the editor (the user may have clicked from the Timeline view) and close
-    // the overlay so the entry is visible underneath.
-    setMainView('editor');
+    // Guarded, single-fire date+view change (TODO-0104) — a denied navigation leaves the
+    // search overlay open rather than closing it over nothing having happened.
+    if (!(await requestDateAndViewChange(date, 'editor'))) {
+      // Clear the deep-link set above: a cancelled click must not leave a stale target
+      // sitting in selectedEntryId, since the next unrelated date load anywhere in the app
+      // (loadEntriesForDate) consumes it unconditionally and would deep-link into this
+      // entry instead of that day's default/newest one, resurfacing a click the user
+      // explicitly backed out of.
+      setSelectedEntryId(null);
+      return;
+    }
     setIsSearchOpen(false);
   };
 
@@ -83,7 +90,7 @@ export default function SearchResults() {
                 ref={(el) => {
                   resultRefs[index()] = el;
                 }}
-                onClick={() => handleResultClick(result.id, result.date)}
+                onClick={() => void handleResultClick(result.id, result.date)}
                 onKeyDown={(e: KeyboardEvent) => {
                   const idx = index();
                   if (e.key === 'ArrowDown') {

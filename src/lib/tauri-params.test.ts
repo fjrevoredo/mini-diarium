@@ -8,6 +8,7 @@ import {
   saveEntry,
   getEntriesForDate,
   deleteEntryIfEmpty,
+  entryHasContent,
 } from './tauri';
 import { invoke } from '@tauri-apps/api/core';
 import { makeEntry } from '../test/fixtures';
@@ -133,5 +134,13 @@ describe('Tauri Entry Command Parameter Names', () => {
       title: '',
       text: '',
     });
+  });
+
+  it('entryHasContent should pass id parameter', async () => {
+    mockInvoke.mockResolvedValue(true);
+
+    await entryHasContent(7);
+
+    expect(mockInvoke).toHaveBeenCalledWith('entry_has_content', { id: 7 });
   });
 });

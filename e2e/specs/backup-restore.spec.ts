@@ -4,16 +4,26 @@
  * Exercises the recovery flow the whole backup redesign exists for, against the real
  * Tauri binary and real SQLite DB:
  *
- *   write an entry → take a manual snapshot → delete the entry (auto-delete-when-blank,
- *   not the trash-can button — see below) → restore it from the snapshot via the
- *   per-entry restore dialog → confirm the content is back.
+ *   write an entry → take a manual snapshot → delete the entry (clear it, then confirm
+ *   the entry-persistence consent-gate dialog — see below) → restore it from the
+ *   snapshot via the per-entry restore dialog → confirm the content is back.
  *
- * Why auto-delete instead of the entry nav bar's trash button (`entry-delete-button`):
- * that button is gated behind a native OS confirm dialog (`src/lib/dialog.ts`'s
- * `confirm()`, backed by `@tauri-apps/plugin-dialog`), which is a separate OS window
- * outside WebDriver's reach via `tauri-driver`. Clearing the title and body instead
- * routes through `deleteEntryIfEmpty` — the same debounced auto-delete that removes a
- * blank second entry in `multi-entry.spec.ts` — with no dialog involved.
+ * Why clear-then-confirm-via-Timeline-toggle instead of the entry nav bar's trash button
+ * (`entry-delete-button`): that button is hidden whenever a day holds only one entry
+ * (`EntryNavBar.tsx`'s `<Show when={total > 1}>`), which this test's single-entry day
+ * always is. Toggling Timeline is the simplest available navigation trigger that reaches
+ * the same in-app confirm dialog the trash button itself now uses.
+ *
+ * Historical note: an earlier version of this test cleared the entry and let the
+ * debounced autosave silently auto-delete it via `deleteEntryIfEmpty`, with no dialog
+ * involved at all — because at the time, the trash button's confirm was a native OS
+ * dialog (`src/lib/dialog.ts`'s `confirm()`) outside WebDriver's reach, so no delete path
+ * in the app was WebDriver-testable through a real confirmation click. TODO-0104's
+ * entry-persistence-consent-gate plan changed both halves of that picture at once: the
+ * backend now refuses to silently auto-delete an entry that still holds real on-disk
+ * content (so the old clear-and-wait approach no longer deletes anything), and the trash
+ * button's confirm was migrated to the same in-app dialog exercised here — which, unlike
+ * the native dialog it replaced, is ordinary WebView content WebDriver can click through.
  *
  * Per-entry restore (`BackupInspectDialog`) needs no confirm dialog either: unlike
  * whole-journal restore, it only adds entries and never overwrites (UX-5), so the plan
@@ -106,7 +116,7 @@ describe('Backup restore round trip', () => {
       reverse: true,
     });
 
-    // ── 3. Delete the entry (clear title + body, let the debounce auto-delete it) ──
+    // ── 3. Delete the entry: clear title + body, then confirm the consent-gate dialog ──
     // Both fields are cleared with real keystrokes, not `.setValue('')`: clearing to an empty
     // string does not reliably dispatch the `input` event Solid's `onInput` binding needs on
     // this WebView2/msedgedriver setup — confirmed empirically via the app's own write-audit
@@ -140,7 +150,27 @@ describe('Backup restore round trip', () => {
     for (let i = 0; i < currentBody.length; i++) {
       await browser.keys(['Backspace']);
     }
-    await browser.pause(1500); // 500 ms debounce + buffer
+    // 500 ms debounce + buffer. The debounce's own deleteEntryIfEmpty attempt fires here and
+    // is refused by Milestone 1's backend on-disk check — the on-disk row still holds the
+    // real content typed in step 1, so the entry survives until explicitly confirmed below.
+    await browser.pause(1500);
+
+    // Toggling Timeline is a navigation action, so it asks the entry-persistence consent
+    // gate (TODO-0104) before leaving the now-blank entry — the entry nav bar's trash button
+    // is unavailable here (single-entry day), so this is the simplest reachable trigger.
+    await $('[data-testid="timeline-toggle-button"]').waitForClickable({ timeout: 5000 });
+    await $('[data-testid="timeline-toggle-button"]').click();
+    await $('[data-testid="confirm-dialog"]').waitForDisplayed({ timeout: 5000 });
+    await $('[data-testid="confirm-dialog-confirm-button"]').waitForClickable({ timeout: 5000 });
+    await $('[data-testid="confirm-dialog-confirm-button"]').click();
+    await $('[data-testid="confirm-dialog"]').waitForDisplayed({ timeout: 5000, reverse: true });
+
+    // Confirming left mainView on Timeline (the navigation the dialog was gating). Toggle
+    // back to the editor view now, with nothing left to confirm, so step 5 below has an
+    // editor panel to find the restored entry in.
+    await $('[data-testid="timeline-toggle-button"]').waitForClickable({ timeout: 5000 });
+    await $('[data-testid="timeline-toggle-button"]').click();
+    await $('[data-testid="title-input"]').waitForDisplayed({ timeout: 5000 });
 
     await browser.waitUntil(
       async () => {
@@ -149,7 +179,7 @@ describe('Backup restore round trip', () => {
         );
         return !(label ?? '').includes('has entry');
       },
-      { timeout: 10000, timeoutMsg: 'Entry was not deleted within 10s of clearing it' },
+      { timeout: 10000, timeoutMsg: 'Entry was not deleted within 10s of confirming the dialog' },
     );
 
     // ── 4. Reopen Preferences → Backups and restore the entry via the inspect dialog ──

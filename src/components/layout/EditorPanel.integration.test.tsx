@@ -53,6 +53,7 @@ const mocks = vi.hoisted(() => ({
   saveEntry: vi.fn(),
   deleteEntry: vi.fn(),
   deleteEntryIfEmpty: vi.fn(),
+  entryHasContent: vi.fn(),
   getEntriesForDate: vi.fn(),
   getAllEntryDates: vi.fn(),
   getEntryImages: vi.fn(),
@@ -71,6 +72,7 @@ vi.mock('../../lib/tauri', async () => {
     saveEntry: mocks.saveEntry,
     deleteEntry: mocks.deleteEntry,
     deleteEntryIfEmpty: mocks.deleteEntryIfEmpty,
+    entryHasContent: mocks.entryHasContent,
     getEntriesForDate: mocks.getEntriesForDate,
     getAllEntryDates: mocks.getAllEntryDates,
     getEntryImages: mocks.getEntryImages,
@@ -82,8 +84,20 @@ vi.mock('../../lib/tauri', async () => {
 
 vi.mock('@tauri-apps/plugin-dialog', () => ({
   open: mocks.open,
-  confirm: mocks.confirm,
 }));
+
+// handleDeleteEntry's confirm was migrated from the native confirm() to the in-app
+// confirmInApp() (Task 2.3) — mock only that export; isConfirmDialogOpen() etc. stay
+// real so state/ui.ts's isAnyOverlayOpen() (imported by this suite) keeps working.
+vi.mock('../../state/confirm-dialog', async () => {
+  const actual = await vi.importActual<typeof import('../../state/confirm-dialog')>(
+    '../../state/confirm-dialog',
+  );
+  return {
+    ...actual,
+    confirmInApp: mocks.confirm,
+  };
+});
 
 vi.mock('../editor/DiaryEditor', () => {
   return {
@@ -158,7 +172,7 @@ vi.mock('../editor/DiaryEditor', () => {
 
 import EditorPanel from './EditorPanel';
 import { setSelectedDate, selectedEntryId, setSelectedEntryId } from '../../state/ui';
-import { setIsSaving } from '../../state/entries';
+import { setIsSaving, requestNavigationConsent } from '../../state/entries';
 import { setHasFocusedEditorOnUnlock } from '../../state/session';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -207,6 +221,7 @@ describe('EditorPanel integration', () => {
     mocks.saveEntry.mockResolvedValue(undefined);
     mocks.deleteEntryIfEmpty.mockResolvedValue(true);
     mocks.deleteEntry.mockResolvedValue(undefined);
+    mocks.entryHasContent.mockResolvedValue(false);
     mocks.setEntryLocked.mockResolvedValue(undefined);
     mocks.getLockedEntryDates.mockResolvedValue([]);
     mocks.confirm.mockResolvedValue(true);
@@ -279,6 +294,34 @@ describe('EditorPanel integration', () => {
     // The delete button (visible only for multi-entry days) is gone here, but the lock
     // button now advertises the "unlock" affordance.
     expect(screen.getByTestId('entry-lock-button').getAttribute('aria-label')).toBe('Unlock entry');
+  });
+
+  it('lock-toggle: aborts without locking when the guard denies navigation (TODO-0104)', async () => {
+    const existing = makeEntry({ id: 56, title: 'Keep me', text: '<p>Body</p>' });
+    mocks.getEntriesForDate.mockResolvedValue([existing]);
+    mocks.entryHasContent.mockResolvedValue(true); // on-disk row still has the old content
+    mocks.confirm.mockResolvedValue(false); // user cancels the confirm dialog
+
+    renderWithI18n(() => <EditorPanel />);
+    await waitFor(() => expect(mocks.getEntriesForDate).toHaveBeenCalledWith('2026-04-23'));
+    await flushMicrotasks();
+
+    // Erase title and body — the debounce is not awaited, so no save/delete fires here.
+    const titleInput = screen.getByTestId('title-input') as HTMLInputElement;
+    fireEvent.input(titleInput, { target: { value: '' } });
+    typeIntoEditor('<p></p>');
+    await flushMicrotasks();
+
+    const lockBtn = screen.getByTestId('entry-lock-button') as HTMLButtonElement;
+    fireEvent.click(lockBtn);
+
+    await waitFor(() => expect(mocks.entryHasContent).toHaveBeenCalledWith(56));
+    await flushMicrotasks();
+
+    expect(mocks.confirm).toHaveBeenCalled();
+    expect(mocks.setEntryLocked).not.toHaveBeenCalled();
+    // Lock button still advertises "lock" (not "unlock") — nothing was locked.
+    expect(screen.getByTestId('entry-lock-button').getAttribute('aria-label')).toBe('Lock entry');
   });
 
   it('switch-day-while-unsaved: flushes pending save before loading the new day', async () => {
@@ -743,6 +786,99 @@ describe('EditorPanel integration', () => {
     expect(selectedEntryId()).toBeNull();
   });
 
+  // ── TODO-0104: canLeaveCurrentEntry via navigateToEntry ──────────────────────
+
+  it('navigateToEntry: cancelling the confirm dialog leaves dayEntries/currentIndex unchanged', async () => {
+    const older = makeEntry({ id: 42, title: 'Keep', text: '<p>Keep</p>' });
+    const current = makeEntry({ id: 43, title: 'Erase me', text: '<p>Real content</p>' });
+    mocks.getEntriesForDate.mockResolvedValue([current, older]);
+    mocks.entryHasContent.mockResolvedValue(true); // on-disk row still has the old content
+    mocks.confirm.mockResolvedValue(false); // user cancels
+
+    renderWithI18n(() => <EditorPanel />);
+    await waitFor(() => expect(mocks.getEntriesForDate).toHaveBeenCalledWith('2026-04-23'));
+    await flushMicrotasks();
+    // No deep link → lands on the newest (button 2, id 43).
+    await waitFor(() =>
+      expect((screen.getByTestId('title-input') as HTMLInputElement).value).toBe('Erase me'),
+    );
+
+    // Erase title and body (debounce not awaited — no save/delete fires here).
+    fireEvent.input(screen.getByTestId('title-input'), { target: { value: '' } });
+    typeIntoEditor('<p></p>');
+    await flushMicrotasks();
+
+    fireEvent.click(screen.getByTestId('entry-number-button-1')); // navigate to `older`
+    await waitFor(() => expect(mocks.entryHasContent).toHaveBeenCalledWith(43));
+    await flushMicrotasks();
+
+    expect(mocks.confirm).toHaveBeenCalled();
+    expect(mocks.deleteEntry).not.toHaveBeenCalled();
+    // Still on the erased entry — navigation was denied.
+    expect((screen.getByTestId('title-input') as HTMLInputElement).value).toBe('');
+    expect(screen.getByTestId('entry-number-button-2').getAttribute('aria-current')).toBe('true');
+  });
+
+  it('navigateToEntry: confirming the dialog hard-deletes the entry and navigates to the target', async () => {
+    const older = makeEntry({ id: 42, title: 'Keep', text: '<p>Keep</p>' });
+    const current = makeEntry({ id: 43, title: 'Erase me', text: '<p>Real content</p>' });
+    mocks.getEntriesForDate
+      .mockResolvedValueOnce([current, older]) // initial load
+      .mockResolvedValueOnce([older]); // refresh after the confirmed delete
+    mocks.entryHasContent.mockResolvedValue(true);
+    mocks.confirm.mockResolvedValue(true); // user confirms
+
+    renderWithI18n(() => <EditorPanel />);
+    await waitFor(() => expect(mocks.getEntriesForDate).toHaveBeenCalledWith('2026-04-23'));
+    await flushMicrotasks();
+    await waitFor(() =>
+      expect((screen.getByTestId('title-input') as HTMLInputElement).value).toBe('Erase me'),
+    );
+
+    fireEvent.input(screen.getByTestId('title-input'), { target: { value: '' } });
+    typeIntoEditor('<p></p>');
+    await flushMicrotasks();
+
+    fireEvent.click(screen.getByTestId('entry-number-button-1'));
+    await waitFor(() => expect(mocks.deleteEntry).toHaveBeenCalledWith(43));
+    await flushMicrotasks();
+
+    await waitFor(() =>
+      expect((screen.getByTestId('title-input') as HTMLInputElement).value).toBe('Keep'),
+    );
+  });
+
+  it('navigateToEntry: a genuinely blank entry (never had content) navigates away silently, no dialog', async () => {
+    const blank = makeEntry({ id: 44, title: '', text: '' });
+    const other = makeEntry({ id: 45, title: 'Other', text: '<p>Other</p>' });
+    mocks.getEntriesForDate.mockResolvedValue([other, blank]);
+    // Default beforeEach value (entryHasContent → false) is exactly the case under test —
+    // asserted explicitly here rather than relied on implicitly.
+    mocks.entryHasContent.mockResolvedValue(false);
+
+    // Deep-link onto the blank entry so it is the one being navigated away FROM.
+    setSelectedEntryId(44);
+
+    renderWithI18n(() => <EditorPanel />);
+    await waitFor(() => expect(mocks.getEntriesForDate).toHaveBeenCalledWith('2026-04-23'));
+    await flushMicrotasks();
+    await waitFor(() =>
+      expect((screen.getByTestId('title-input') as HTMLInputElement).value).toBe(''),
+    );
+
+    fireEvent.click(screen.getByTestId('entry-number-button-2')); // navigate to `other`
+    await waitFor(() => expect(mocks.entryHasContent).toHaveBeenCalledWith(44));
+    await flushMicrotasks();
+
+    expect(mocks.confirm).not.toHaveBeenCalled();
+    // The soft-delete path (not canLeaveCurrentEntry's own hard delete) removed it.
+    expect(mocks.deleteEntryIfEmpty).toHaveBeenCalled();
+    expect(mocks.deleteEntry).not.toHaveBeenCalled();
+    await waitFor(() =>
+      expect((screen.getByTestId('title-input') as HTMLInputElement).value).toBe('Other'),
+    );
+  });
+
   it('deep-link-not-found: falls back to the day newest when the target id is absent', async () => {
     const newest = makeEntry({ id: 20, title: 'Newest', text: '<p>Newest</p>' });
     const older = makeEntry({ id: 10, title: 'Older', text: '<p>Older</p>' });
@@ -809,6 +945,57 @@ describe('EditorPanel integration', () => {
     // Still on the newest; the target was NOT cleared by the same-day effect.
     expect((screen.getByTestId('title-input') as HTMLInputElement).value).toBe('Newest');
     expect(selectedEntryId()).toBe(777);
+  });
+
+  // Regression: reproduces SearchResults.tsx's handleResultClick exactly — a click on a
+  // same-day search result sets the deep-link id, which synchronously fires the same-day
+  // effect above (→ navigateToEntry → canLeaveCurrentEntry), and then — without awaiting
+  // that — the click's own guarded requestDateAndViewChange calls the guard again via
+  // requestNavigationConsent. Both calls used to run canLeaveCurrentEntry independently,
+  // each producing its own confirmInApp() call; the second silently overwrote the first's
+  // pendingResolve (confirm-dialog.ts), permanently hanging the first caller and leaving
+  // the same-day navigation stuck on the just-deleted entry even though the delete itself
+  // completed. The fix coalesces concurrent callers (useEntryLifecycle.ts's
+  // `leaveCheckInFlight`) so this now shows one dialog and completes the navigation.
+  it('same-day deep-link raced with a concurrent guard call shows exactly one dialog and completes the navigation', async () => {
+    const newest = makeEntry({ id: 20, title: 'Newest', text: '<p>Newest</p>' });
+    const older = makeEntry({ id: 10, title: 'Older', text: '<p>Older</p>' });
+    mocks.getEntriesForDate
+      .mockResolvedValueOnce([newest, older]) // initial load
+      .mockResolvedValueOnce([older]); // refresh after the confirmed delete
+    mocks.entryHasContent.mockResolvedValue(true); // on-disk row still has the old content
+    mocks.confirm.mockResolvedValue(true); // user confirms
+
+    renderWithI18n(() => <EditorPanel />);
+    await waitFor(() => expect(mocks.getEntriesForDate).toHaveBeenCalledWith('2026-04-23'));
+    await flushMicrotasks();
+    await waitFor(() =>
+      expect((screen.getByTestId('title-input') as HTMLInputElement).value).toBe('Newest'),
+    );
+
+    // Erase the open entry's content, as a real search-result click would find it.
+    fireEvent.input(screen.getByTestId('title-input'), { target: { value: '' } });
+    typeIntoEditor('<p></p>');
+    await flushMicrotasks();
+
+    // The race: set the deep-link target, then — without awaiting the effect it triggers —
+    // call the same guard a second, concurrent time, exactly as handleResultClick's own
+    // requestDateAndViewChange does.
+    setSelectedEntryId(10);
+    const guardResult = requestNavigationConsent();
+
+    await waitFor(() => expect(mocks.deleteEntry).toHaveBeenCalledWith(20));
+    expect(await guardResult).toBe(true);
+
+    // Exactly one dialog for the one user action, not one orphaned per concurrent caller.
+    expect(mocks.confirm).toHaveBeenCalledTimes(1);
+    // The same-day effect's own navigateToEntry call must have actually completed — not
+    // hung awaiting a never-resolving confirmInApp promise — landing on the deep-link
+    // target rather than staying stuck on the just-deleted entry.
+    await waitFor(() =>
+      expect((screen.getByTestId('title-input') as HTMLInputElement).value).toBe('Older'),
+    );
+    expect(selectedEntryId()).toBeNull();
   });
 
   it('focus-on-unlock: does not focus an editor destroyed between scheduling and the frame', async () => {

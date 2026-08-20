@@ -192,7 +192,20 @@ fn is_blank_html(text: &str) -> bool {
         .is_empty()
 }
 
+/// Returns true when both `title` and `text` carry no user-visible content.
+///
+/// The title stays a plain-text check: it is not HTML, and running it through the
+/// tag stripper would read a literal title like "<3" as blank.
+fn entry_is_blank(title: &str, text: &str) -> bool {
+    title.trim().is_empty() && is_blank_html(text)
+}
+
 /// Pure inner of `delete_entry_if_empty` — takes `&DiaryState` so it can be tested without Tauri.
+///
+/// Deletes only when **both** the incoming arguments and the entry's currently-persisted
+/// row are blank. The on-disk check is what protects against a stale or wrong-context
+/// frontend flush that sends blank arguments for an entry that actually holds real content
+/// (TODO-0104) — the argument check alone trusts the caller completely.
 pub(crate) fn delete_entry_if_empty_inner(
     id: i64,
     title: &str,
@@ -200,15 +213,23 @@ pub(crate) fn delete_entry_if_empty_inner(
     state: &DiaryState,
 ) -> Result<bool, String> {
     with_unlocked_db(state, |db| {
-        // The title stays a plain-text check: it is not HTML, and running it through the
-        // tag stripper would read a literal title like "<3" as blank.
-        if title.trim().is_empty() && is_blank_html(text) {
-            debug!("Deleting empty entry id={}", id);
-            db::delete_entry_by_id(db, id)
-        } else {
+        if !entry_is_blank(title, text) {
             debug!("Refusing to delete non-empty entry id={}", id);
-            Ok(false)
+            return Ok(false);
         }
+        let existing = match db::get_entry_by_id(db, id)? {
+            Some(entry) => entry,
+            None => return Ok(false),
+        };
+        if !entry_is_blank(&existing.title, &existing.text) {
+            debug!(
+                "Refusing to delete entry id={} — on-disk row still has content",
+                id
+            );
+            return Ok(false);
+        }
+        debug!("Deleting empty entry id={}", id);
+        db::delete_entry_by_id(db, id)
     })
 }
 
@@ -241,6 +262,23 @@ pub fn delete_entry(id: i64, state: State<DiaryState>) -> Result<(), String> {
         }
         Ok(())
     })
+}
+
+/// Pure inner of `entry_has_content` — takes `&DiaryState` so it can be tested without Tauri.
+pub(crate) fn entry_has_content_inner(id: i64, state: &DiaryState) -> Result<bool, String> {
+    with_unlocked_db(state, |db| {
+        let entry = db::get_entry_by_id(db, id)?.ok_or_else(|| "Entry not found".to_string())?;
+        Ok(!entry_is_blank(&entry.title, &entry.text))
+    })
+}
+
+/// Returns whether an entry's on-disk row currently holds real content.
+///
+/// Read-only — mutates nothing. Lets the frontend guard check before deciding whether to
+/// show a confirm dialog, without trusting its own possibly-stale in-memory copy (TODO-0104).
+#[tauri::command]
+pub fn entry_has_content(id: i64, state: State<DiaryState>) -> Result<bool, String> {
+    entry_has_content_inner(id, &state)
 }
 
 /// Sets the per-entry `locked` flag (UX affordance against accidental edits).
@@ -529,13 +567,192 @@ mod tests {
                 .is_some());
         }
 
-        // An empty HTML shell with no title → deleted.
+        // TODO-0104: blank incoming args alone are no longer sufficient — the on-disk row
+        // still holds "Real content" at this point, so this must also be refused. This is
+        // the exact silent-content-loss case Milestone 1 closes.
         let deleted = delete_entry_if_empty_inner(entry_id, "", "<p></p>", &state).unwrap();
-        assert!(deleted, "empty HTML shell must auto-delete");
+        assert!(
+            !deleted,
+            "blank args must not delete an entry whose on-disk row still has content"
+        );
+        {
+            let guard = state.db.lock().unwrap();
+            assert!(db::get_entry_by_id(guard.as_ref().unwrap(), entry_id)
+                .unwrap()
+                .is_some());
+        }
+
+        // Once the on-disk row itself is actually blank, the same blank args do delete it.
+        save_entry_inner(entry_id, "", "<p></p>", None, &state).unwrap();
+        let deleted = delete_entry_if_empty_inner(entry_id, "", "<p></p>", &state).unwrap();
+        assert!(
+            deleted,
+            "empty HTML shell must auto-delete once on-disk row is blank"
+        );
         let guard = state.db.lock().unwrap();
         assert!(db::get_entry_by_id(guard.as_ref().unwrap(), entry_id)
             .unwrap()
             .is_none());
+    }
+
+    /// TODO-0104: a stale/blank frontend payload must not be able to delete an entry whose
+    /// on-disk row still has real content — the argument check alone trusts the caller.
+    #[test]
+    fn test_delete_entry_if_empty_refuses_when_disk_row_still_has_content() {
+        use crate::commands::auth::DiaryState;
+        use std::path::PathBuf;
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+        let now = chrono::Utc::now().to_rfc3339();
+        let entry = DiaryEntry {
+            id: 0,
+            date: "2024-08-01".to_string(),
+            title: "Real title".to_string(),
+            text: "<p>Real content</p>".to_string(),
+            word_count: 2,
+            date_created: now.clone(),
+            date_updated: now,
+            metadata: None,
+            locked: false,
+        };
+        let entry_id = db::insert_entry(&db, &entry).unwrap();
+
+        let state = DiaryState::new(
+            PathBuf::from("test_delete_disk_row_content.db"),
+            PathBuf::from("test_delete_disk_row_content_backups"),
+            PathBuf::from("."),
+        );
+        *state.db.lock().unwrap() = Some(db);
+
+        // Simulate a stale/blank frontend payload for an entry that still has real content.
+        let deleted = delete_entry_if_empty_inner(entry_id, "", "", &state).unwrap();
+        assert!(
+            !deleted,
+            "must refuse when the on-disk row still has content"
+        );
+
+        let guard = state.db.lock().unwrap();
+        assert!(db::get_entry_by_id(guard.as_ref().unwrap(), entry_id)
+            .unwrap()
+            .is_some());
+    }
+
+    /// Guards against a regression of the pre-existing "abandoned new entry" cleanup:
+    /// a genuinely blank entry must still auto-delete.
+    #[test]
+    fn test_delete_entry_if_empty_still_allows_genuinely_blank_entry() {
+        use crate::commands::auth::DiaryState;
+        use std::path::PathBuf;
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+        let now = chrono::Utc::now().to_rfc3339();
+        let entry = DiaryEntry {
+            id: 0,
+            date: "2024-08-02".to_string(),
+            title: String::new(),
+            text: String::new(),
+            word_count: 0,
+            date_created: now.clone(),
+            date_updated: now,
+            metadata: None,
+            locked: false,
+        };
+        let entry_id = db::insert_entry(&db, &entry).unwrap();
+
+        let state = DiaryState::new(
+            PathBuf::from("test_delete_genuinely_blank.db"),
+            PathBuf::from("test_delete_genuinely_blank_backups"),
+            PathBuf::from("."),
+        );
+        *state.db.lock().unwrap() = Some(db);
+
+        let deleted = delete_entry_if_empty_inner(entry_id, "", "", &state).unwrap();
+        assert!(deleted, "a genuinely blank entry must still auto-delete");
+
+        let guard = state.db.lock().unwrap();
+        assert!(db::get_entry_by_id(guard.as_ref().unwrap(), entry_id)
+            .unwrap()
+            .is_none());
+    }
+
+    #[test]
+    fn test_entry_has_content_true_for_entry_with_real_content() {
+        use crate::commands::auth::DiaryState;
+        use std::path::PathBuf;
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+        let now = chrono::Utc::now().to_rfc3339();
+        let entry = DiaryEntry {
+            id: 0,
+            date: "2024-08-03".to_string(),
+            title: "Has content".to_string(),
+            text: "<p>Real content</p>".to_string(),
+            word_count: 2,
+            date_created: now.clone(),
+            date_updated: now,
+            metadata: None,
+            locked: false,
+        };
+        let entry_id = db::insert_entry(&db, &entry).unwrap();
+
+        let state = DiaryState::new(
+            PathBuf::from("test_entry_has_content_true.db"),
+            PathBuf::from("test_entry_has_content_true_backups"),
+            PathBuf::from("."),
+        );
+        *state.db.lock().unwrap() = Some(db);
+
+        let has_content = entry_has_content_inner(entry_id, &state).unwrap();
+        assert!(has_content);
+    }
+
+    #[test]
+    fn test_entry_has_content_false_for_blank_entry() {
+        use crate::commands::auth::DiaryState;
+        use std::path::PathBuf;
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+        let now = chrono::Utc::now().to_rfc3339();
+        let entry = DiaryEntry {
+            id: 0,
+            date: "2024-08-04".to_string(),
+            title: String::new(),
+            text: String::new(),
+            word_count: 0,
+            date_created: now.clone(),
+            date_updated: now,
+            metadata: None,
+            locked: false,
+        };
+        let entry_id = db::insert_entry(&db, &entry).unwrap();
+
+        let state = DiaryState::new(
+            PathBuf::from("test_entry_has_content_false.db"),
+            PathBuf::from("test_entry_has_content_false_backups"),
+            PathBuf::from("."),
+        );
+        *state.db.lock().unwrap() = Some(db);
+
+        let has_content = entry_has_content_inner(entry_id, &state).unwrap();
+        assert!(!has_content);
+    }
+
+    #[test]
+    fn test_entry_has_content_errors_for_missing_entry() {
+        use crate::commands::auth::DiaryState;
+        use std::path::PathBuf;
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+
+        let state = DiaryState::new(
+            PathBuf::from("test_entry_has_content_missing.db"),
+            PathBuf::from("test_entry_has_content_missing_backups"),
+            PathBuf::from("."),
+        );
+        *state.db.lock().unwrap() = Some(db);
+
+        let err = entry_has_content_inner(9999, &state).unwrap_err();
+        assert!(err.contains("Entry not found"), "got: {}", err);
     }
 
     #[test]

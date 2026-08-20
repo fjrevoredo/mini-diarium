@@ -14,6 +14,12 @@
  *   Scenario E — Regression (TODO-0089): typing into an entry and immediately toggling the
  *                Timeline must not wipe the body. Uses real TipTap, which the Vitest suite
  *                cannot: the mock editor there cannot reproduce real destroy/teardown timing.
+ *   Scenario F — Entry persistence consent gate (TODO-0104): erasing a real entry's content
+ *                and toggling Timeline must show an in-app confirm dialog that resists
+ *                Escape/backdrop dismissal (UX-GATE #15), only acting on an explicit
+ *                Cancel/Confirm click. Real dialog round trip, which the Vitest suite cannot
+ *                fully substitute for — see the plan's Decision History for why this dialog
+ *                is in-app DOM content rather than a native OS window.
  *
  * Prerequisites:
  *   - `bun run tauri build --` must have been run
@@ -41,6 +47,7 @@ const MULTI_DATE_1 = `${lmYear}-${lmMonth}-01`; // scenario A: persistence
 const MULTI_DATE_2 = `${lmYear}-${lmMonth}-02`; // scenario B: variant-1 regression
 const MULTI_DATE_3 = `${lmYear}-${lmMonth}-03`; // scenario C: variant-2 regression
 const MULTI_DATE_4 = `${lmYear}-${lmMonth}-04`; // scenario E: TODO-0089 body-wipe regression
+const MULTI_DATE_5 = `${lmYear}-${lmMonth}-05`; // scenario F: TODO-0104 consent gate
 
 const ENTRY_1_BODY = 'First entry for multi-entry test.';
 // Second entry uses the title field (via setValue) rather than the ProseMirror body.
@@ -53,6 +60,8 @@ const ENTRY_2_TITLE = 'Second entry (persistence check)';
 // emptied the body, so both must be asserted.
 const SCENARIO_E_TITLE = 'Body wipe regression';
 const SCENARIO_E_BODY = 'This body must survive a Timeline toggle.';
+const SCENARIO_F_TITLE = 'Consent gate regression';
+const SCENARIO_F_BODY = 'This entry must not vanish without asking first.';
 
 describe('Multi-entry workflow', () => {
   it('creates multiple entries, persists them, and guards the "+" button across navigation', async () => {
@@ -387,6 +396,120 @@ describe('Multi-entry workflow', () => {
         timeout: 10000,
         timeoutMsg: 'Scenario E: the last typed text was dropped instead of flushed on unmount',
       },
+    );
+
+    // ── Scenario F: entry persistence consent gate (TODO-0104) ────────────────
+    // A user erases real content and toggles Timeline — before this plan the entry was
+    // silently deleted. An in-app confirm dialog must appear, resist Escape/backdrop
+    // dismissal (UX-GATE #15), and only act on an explicit Cancel/Confirm click.
+    //
+    // Sequencing choice: waits past the 500 ms autosave debounce before toggling
+    // Timeline, rather than toggling immediately after clearing. This deliberately lets
+    // the debounce's own deleteEntryIfEmpty attempt fire and get refused by Milestone 1's
+    // backend on-disk check FIRST, so the guard's subsequent entryHasContent() read is
+    // exercised against a real prior refusal — the strongest test of how the backend
+    // safety net and the frontend guard interact — rather than a body that was typed and
+    // immediately toggled away from before any write was ever attempted.
+
+    const clearTitleInput = async () => {
+      const titleInput = $('[data-testid="title-input"]');
+      await titleInput.click();
+      // Two distinct keystrokes (Ctrl+A, then Backspace) — reliable for a plain <input>.
+      // See e2e/CLAUDE.md gotcha #6: .setValue('') is not reliable for clearing to empty.
+      await browser.keys(['Control', 'a']);
+      await browser.keys(['Backspace']);
+    };
+
+    const clearProseMirrorBody = async () => {
+      const editorToClear = $('.ProseMirror');
+      // Measure actual current content rather than assuming it equals a fixture length —
+      // see e2e/CLAUDE.md gotcha #7.
+      const currentText = (await editorToClear.getText()) ?? '';
+      await editorToClear.click();
+      await browser.keys(['Control', 'End']);
+      // One Backspace per character in its own browser.keys() call — avoids gotcha #5's
+      // key-repeat coalescing hazard on WebKitGTK.
+      for (let i = 0; i < currentText.length; i++) {
+        await browser.keys(['Backspace']);
+      }
+    };
+
+    await clickCalendarDay(MULTI_DATE_5);
+    await $('[data-testid="title-input"]').waitForDisplayed({ timeout: 5000 });
+    await browser.pause(1000); // let loadEntriesForDate(MULTI_DATE_5) settle before seeding
+
+    // Seed a persisted entry with real content.
+    await $('[data-testid="title-input"]').setValue(SCENARIO_F_TITLE);
+    const editorF = await $('.ProseMirror');
+    await editorF.click();
+    await typeText(SCENARIO_F_BODY);
+    await browser.pause(2500); // flush autosave debounce
+
+    // Seed sanity-check: without this, a seeding failure is indistinguishable from the
+    // deletion the rest of this scenario is meant to guard against.
+    await browser.waitUntil(
+      async () => (await $('[data-testid="title-input"]').getValue()) === SCENARIO_F_TITLE,
+      { timeout: 5000, timeoutMsg: 'Scenario F: seed title never reached the editor' },
+    );
+    await browser.waitUntil(
+      async () => ((await $('.ProseMirror').getText()) ?? '').includes(SCENARIO_F_BODY),
+      { timeout: 5000, timeoutMsg: 'Scenario F: seed body never reached the editor' },
+    );
+
+    // Erase both fields via real keystrokes.
+    await clearTitleInput();
+    await clearProseMirrorBody();
+    await browser.waitUntil(
+      async () => (await $('[data-testid="title-input"]').getValue()) === '',
+      { timeout: 5000, timeoutMsg: 'Scenario F: title did not clear' },
+    );
+    await browser.waitUntil(
+      async () => ((await $('.ProseMirror').getText()) ?? '').trim() === '',
+      { timeout: 5000, timeoutMsg: 'Scenario F: body did not clear' },
+    );
+
+    // Wait past the debounce (see sequencing note above) before toggling.
+    await browser.pause(700);
+
+    await toggleTimeline();
+
+    // The confirm dialog must appear.
+    await $('[data-testid="confirm-dialog"]').waitForDisplayed({ timeout: 5000 });
+
+    // UX-GATE scenario #15: Escape must be inert — dialog stays open.
+    await browser.keys(['Escape']);
+    await browser.pause(300);
+    expect(await $('[data-testid="confirm-dialog"]').isDisplayed()).toBe(true);
+
+    // UX-GATE scenario #15: an outside backdrop click must also be inert. The dialog card
+    // is a centered max-w-md box; a click near the viewport's top-left corner lands on the
+    // dimmed overlay behind it, not the card.
+    await $('body').click({ x: -350, y: -280 });
+    await browser.pause(300);
+    expect(await $('[data-testid="confirm-dialog"]').isDisplayed()).toBe(true);
+
+    // Cancel — the app stays on the editor; the entry (still blank in the live editor,
+    // but never actually deleted on disk) is untouched.
+    await $('[data-testid="confirm-dialog-cancel-button"]').click();
+    await $('[data-testid="confirm-dialog"]').waitForDisplayed({ timeout: 5000, reverse: true });
+    expect(await $('[data-testid="title-input"]').isDisplayed()).toBe(true);
+    expect(await $('[data-testid="timeline-toggle-button"]').getAttribute('aria-pressed')).toBe(
+      'false',
+    );
+
+    // Toggling again re-asks — the entry still exists (Cancel denied the earlier
+    // navigation), so the guard's on-disk check still finds real content.
+    await toggleTimeline();
+    await $('[data-testid="confirm-dialog"]').waitForDisplayed({ timeout: 5000 });
+    await $('[data-testid="confirm-dialog-confirm-button"]').click();
+    await $('[data-testid="confirm-dialog"]').waitForDisplayed({ timeout: 5000, reverse: true });
+
+    // Confirm — Timeline is now showing; the entry was hard-deleted.
+    await browser.waitUntil(
+      async () =>
+        (await $('[data-testid="timeline-toggle-button"]').getAttribute('aria-pressed')) ===
+        'true',
+      { timeout: 5000, timeoutMsg: 'Scenario F: Timeline did not show after confirming the delete' },
     );
   });
 });

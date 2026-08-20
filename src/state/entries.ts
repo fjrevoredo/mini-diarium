@@ -69,6 +69,36 @@ export async function executeReloadCallbacks(): Promise<void> {
   }
 }
 
+/**
+ * Navigation-guard registry (TODO-0104). Mirrors the cleanup-/reload-callback systems
+ * above, but for a third situation: a navigation-away action wants to ask "may I proceed?"
+ * before mutating navigation state, because proceeding would silently erase real content.
+ *
+ * A registered guard returns `false` to deny the navigation (the caller must abort and
+ * leave state untouched) or `true` to allow it. In practice only one guard is ever
+ * registered at a time (one live `EditorPanel` instance), but the array-based registry
+ * keeps this consistent with `registerCleanupCallback`/`registerReloadCallback` rather
+ * than introducing a single-callback special case.
+ */
+const [navigationGuards, setNavigationGuards] = createSignal<(() => Promise<boolean>)[]>([]);
+
+export function registerNavigationGuard(callback: () => Promise<boolean>): () => void {
+  setNavigationGuards((prev) => [...prev, callback]);
+  return () => setNavigationGuards((prev) => prev.filter((cb) => cb !== callback));
+}
+
+/**
+ * Awaits every registered guard in sequence, short-circuiting the instant one denies —
+ * subsequent guards are never invoked once a denial is found. Resolves `true` when the
+ * registry is empty or every guard approves.
+ */
+export async function requestNavigationConsent(): Promise<boolean> {
+  for (const guard of navigationGuards()) {
+    if (!(await guard())) return false;
+  }
+  return true;
+}
+
 export {
   entryDates,
   setEntryDates,

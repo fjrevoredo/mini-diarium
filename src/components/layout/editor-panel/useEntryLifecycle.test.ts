@@ -1,7 +1,246 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { createSignal } from 'solid-js';
 import type { Editor } from '@tiptap/core';
 import { computeIsEmpty } from './useEditorEmptyCheck';
 import { hasImageRefs, resolveImageRefs } from '../../../lib/image-refs';
+import type { DiaryEntry, EntryMetadata } from '../../../lib/tauri';
+import type { EditorEmptyCheckHook } from './useEditorEmptyCheck';
+
+// ---------------------------------------------------------------------------
+// canLeaveCurrentEntry (TODO-0104) — real hook, mocked backend + confirm dialog
+// ---------------------------------------------------------------------------
+
+const mocks = vi.hoisted(() => ({
+  createEntry: vi.fn(),
+  deleteEntry: vi.fn(),
+  entryHasContent: vi.fn(),
+  confirmInApp: vi.fn(),
+  getAllEntryDates: vi.fn(),
+}));
+
+vi.mock('../../../lib/tauri', async () => {
+  const actual = await vi.importActual<typeof import('../../../lib/tauri')>('../../../lib/tauri');
+  return {
+    ...actual,
+    createEntry: mocks.createEntry,
+    deleteEntry: mocks.deleteEntry,
+    entryHasContent: mocks.entryHasContent,
+    getAllEntryDates: mocks.getAllEntryDates,
+  };
+});
+
+vi.mock('../../../state/confirm-dialog', async () => {
+  const actual = await vi.importActual<typeof import('../../../state/confirm-dialog')>(
+    '../../../state/confirm-dialog',
+  );
+  return { ...actual, confirmInApp: mocks.confirmInApp };
+});
+
+import { useEntryLifecycle, type UseEntryLifecycleOptions } from './useEntryLifecycle';
+import type { T as I18nT } from '../../../i18n';
+
+const fakeT: I18nT = (key) => key;
+
+const fakeEmptyCheck: EditorEmptyCheckHook = {
+  editorIsEmpty: () => true,
+  setEditorIsEmpty: () => true,
+  isContentEmpty: () => true,
+};
+
+/**
+ * Builds a real `useEntryLifecycle` instance backed by plain SolidJS signals, so
+ * `canLeaveCurrentEntry` exercises the actual hook rather than a mirrored function.
+ * `editorInstance` stays `null` throughout — `captureCurrentSnapshot` falls back to the
+ * `content` signal, computeIsEmpty(null, content) === !content.trim().
+ */
+function makeLifecycle(initial: { title?: string; content?: string; pendingEntryId?: number }) {
+  const [title, setTitle] = createSignal(initial.title ?? '');
+  const [content, setContent] = createSignal(initial.content ?? '');
+  const [dayEntries, setDayEntries] = createSignal<DiaryEntry[]>([]);
+  const [currentIndex, setCurrentIndex] = createSignal(0);
+  const [pendingEntryId, setPendingEntryId] = createSignal<number | null>(
+    initial.pendingEntryId ?? null,
+  );
+  const [isCreatingEntry, setIsCreatingEntry] = createSignal(false);
+  const [entryMetadata, setEntryMetadata] = createSignal<EntryMetadata | null>(null);
+
+  const opts: UseEntryLifecycleOptions = {
+    t: fakeT,
+    selectedDate: () => '2026-01-01',
+    editorInstance: () => null,
+    title,
+    setTitle,
+    content,
+    setContent,
+    setWordCount: () => 0,
+    dayEntries,
+    setDayEntries,
+    currentIndex,
+    setCurrentIndex,
+    pendingEntryId,
+    setPendingEntryId,
+    isCreatingEntry,
+    setIsCreatingEntry,
+    emptyCheck: fakeEmptyCheck,
+    entryMetadata,
+    setEntryMetadata,
+  };
+
+  const lifecycle = useEntryLifecycle(opts);
+  // Satisfy captureCurrentSnapshot's hydration-identity guard directly — these tests
+  // exercise canLeaveCurrentEntry in isolation, not the load path that normally sets it.
+  if (initial.pendingEntryId !== undefined) {
+    lifecycle.entryCommitTargets.setHydratedEntryId(initial.pendingEntryId);
+  }
+  return { lifecycle, setPendingEntryId, dayEntries };
+}
+
+describe('canLeaveCurrentEntry (TODO-0104)', () => {
+  beforeEach(() => {
+    mocks.createEntry.mockReset();
+    mocks.deleteEntry.mockReset().mockResolvedValue(undefined);
+    mocks.entryHasContent.mockReset();
+    mocks.confirmInApp.mockReset();
+    mocks.getAllEntryDates.mockReset().mockResolvedValue([]);
+  });
+
+  it('canLeaveCurrentEntry allows navigation when there is no pending entry', async () => {
+    const { lifecycle } = makeLifecycle({});
+    const result = await lifecycle.canLeaveCurrentEntry('test');
+    expect(result).toBe(true);
+    expect(mocks.entryHasContent).not.toHaveBeenCalled();
+    expect(mocks.confirmInApp).not.toHaveBeenCalled();
+  });
+
+  it('canLeaveCurrentEntry allows navigation when the edit is an ordinary save (not a delete)', async () => {
+    const { lifecycle } = makeLifecycle({
+      pendingEntryId: 1,
+      title: 'Real title',
+      content: '<p>Real content</p>',
+    });
+    const result = await lifecycle.canLeaveCurrentEntry('test');
+    expect(result).toBe(true);
+    expect(mocks.entryHasContent).not.toHaveBeenCalled();
+    expect(mocks.confirmInApp).not.toHaveBeenCalled();
+  });
+
+  it('canLeaveCurrentEntry allows navigation without a dialog when the on-disk entry was already blank', async () => {
+    mocks.entryHasContent.mockResolvedValue(false);
+    const { lifecycle } = makeLifecycle({ pendingEntryId: 2, title: '', content: '' });
+    const result = await lifecycle.canLeaveCurrentEntry('test');
+    expect(result).toBe(true);
+    expect(mocks.entryHasContent).toHaveBeenCalledWith(2);
+    expect(mocks.confirmInApp).not.toHaveBeenCalled();
+    expect(mocks.deleteEntry).not.toHaveBeenCalled();
+  });
+
+  it('canLeaveCurrentEntry shows the confirm dialog and denies navigation on cancel, leaving the entry unmodified', async () => {
+    mocks.entryHasContent.mockResolvedValue(true);
+    mocks.confirmInApp.mockResolvedValue(false);
+    const { lifecycle } = makeLifecycle({ pendingEntryId: 3, title: '', content: '' });
+    const result = await lifecycle.canLeaveCurrentEntry('test');
+    expect(result).toBe(false);
+    expect(mocks.confirmInApp).toHaveBeenCalledWith('editor.deleteConfirmMessage', {
+      title: 'editor.deleteConfirmTitle',
+    });
+    expect(mocks.deleteEntry).not.toHaveBeenCalled();
+  });
+
+  it('canLeaveCurrentEntry shows the confirm dialog, hard-deletes and clears the editor on confirm, then allows navigation', async () => {
+    mocks.entryHasContent.mockResolvedValue(true);
+    mocks.confirmInApp.mockResolvedValue(true);
+    mocks.getAllEntryDates.mockResolvedValue(['2026-01-01']);
+    const { lifecycle } = makeLifecycle({ pendingEntryId: 4, title: '', content: '' });
+    const result = await lifecycle.canLeaveCurrentEntry('test');
+    expect(result).toBe(true);
+    expect(mocks.deleteEntry).toHaveBeenCalledWith(4);
+    // Regression: a confirmed hard delete must refresh entryDates the same way the
+    // soft-delete path does, or the calendar's "has entry" indicator goes stale for
+    // this date (caught by e2e/specs/backup-restore.spec.ts).
+    expect(mocks.getAllEntryDates).toHaveBeenCalled();
+  });
+
+  // Regression: a real E2E race (multi-entry.spec.ts Scenario C) hit this — an
+  // independent debounced autosave can auto-delete the same blank entry via
+  // deleteEntryIfEmpty before this guard's own entryHasContent() call runs, so the
+  // entry is legitimately gone by the time the guard checks it.
+  it('canLeaveCurrentEntry allows navigation when entryHasContent rejects with "Entry not found" (entry already deleted by a race)', async () => {
+    mocks.entryHasContent.mockRejectedValue('Entry not found');
+    const { lifecycle } = makeLifecycle({ pendingEntryId: 5, title: '', content: '' });
+    const result = await lifecycle.canLeaveCurrentEntry('test');
+    expect(result).toBe(true);
+    expect(mocks.confirmInApp).not.toHaveBeenCalled();
+  });
+
+  it('canLeaveCurrentEntry denies navigation when entryHasContent rejects with an unrelated error', async () => {
+    mocks.entryHasContent.mockRejectedValue(new Error('network error'));
+    const { lifecycle } = makeLifecycle({ pendingEntryId: 6, title: '', content: '' });
+    const result = await lifecycle.canLeaveCurrentEntry('test');
+    expect(result).toBe(false);
+  });
+
+  // Regression: a same-day search-result click races two independent callers of this
+  // function for one user action — SearchResults.tsx's own guarded requestDateAndViewChange,
+  // and EditorPanel's same-day deep-link effect (fired synchronously by the
+  // `setSelectedEntryId` write that click makes) calling `navigateToEntry`, which calls this
+  // guard too. Before coalescing, the second caller's `confirmInApp()` silently overwrote the
+  // first's `pendingResolve` (see confirm-dialog.ts), permanently hanging the first caller's
+  // promise — `navigateToEntry` never continued, so the search click's intended entry switch
+  // silently never happened even though the delete itself was confirmed and completed.
+  it('canLeaveCurrentEntry coalesces two concurrent callers into a single check-and-confirm cycle', async () => {
+    mocks.entryHasContent.mockResolvedValue(true);
+    let resolveConfirm!: (value: boolean) => void;
+    mocks.confirmInApp.mockImplementation(
+      () =>
+        new Promise<boolean>((resolve) => {
+          resolveConfirm = resolve;
+        }),
+    );
+    mocks.getAllEntryDates.mockResolvedValue(['2026-01-01']);
+    const { lifecycle } = makeLifecycle({ pendingEntryId: 7, title: '', content: '' });
+
+    // Two callers racing for the same click, neither awaited before the other starts.
+    const first = lifecycle.canLeaveCurrentEntry('navigateToEntry');
+    const second = lifecycle.canLeaveCurrentEntry('navigationGuard');
+
+    // Let entryHasContent's own mocked promise settle before the dialog appears.
+    await vi.waitFor(() => expect(mocks.confirmInApp).toHaveBeenCalledTimes(1));
+    // The second caller must not have started its own independent check-and-confirm cycle.
+    expect(mocks.entryHasContent).toHaveBeenCalledTimes(1);
+
+    resolveConfirm(true);
+    const [firstResult, secondResult] = await Promise.all([first, second]);
+
+    // Both callers see the same outcome, and the delete itself only ran once.
+    expect(firstResult).toBe(true);
+    expect(secondResult).toBe(true);
+    expect(mocks.deleteEntry).toHaveBeenCalledTimes(1);
+    expect(mocks.confirmInApp).toHaveBeenCalledTimes(1);
+  });
+
+  // Regression guard for the coalescing fix itself: it must only merge genuinely
+  // concurrent callers, not silently reuse a stale result for an unrelated later call —
+  // that would deny/allow navigation based on a snapshot of a different entry entirely.
+  it('canLeaveCurrentEntry starts a fresh check for a later, non-concurrent call rather than reusing a coalesced result', async () => {
+    mocks.entryHasContent.mockResolvedValue(true);
+    mocks.confirmInApp.mockResolvedValue(true);
+    mocks.getAllEntryDates.mockResolvedValue(['2026-01-01']);
+    const { lifecycle } = makeLifecycle({ pendingEntryId: 8, title: '', content: '' });
+
+    // First check fully resolves (deletes entry 8) before the second call is made at all.
+    const first = await lifecycle.canLeaveCurrentEntry('navigateToEntry');
+    expect(first).toBe(true);
+    expect(mocks.entryHasContent).toHaveBeenCalledTimes(1);
+
+    // No pending entry remains after the delete above, so this second call is allowed
+    // without even reaching entryHasContent — the coalescing must not have left the
+    // in-flight slot permanently occupied by the first call's already-settled promise.
+    const second = await lifecycle.canLeaveCurrentEntry('navigationGuard');
+    expect(second).toBe(true);
+    expect(mocks.entryHasContent).toHaveBeenCalledTimes(1);
+    expect(mocks.confirmInApp).toHaveBeenCalledTimes(1);
+  });
+});
 
 /**
  * Tests for the save/create/delete branching logic owned by the

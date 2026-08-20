@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { screen, fireEvent } from '@solidjs/testing-library';
+import { screen, fireEvent, waitFor } from '@solidjs/testing-library';
 import { renderWithI18n } from '../../test/i18n-test-utils';
 import * as uiState from '../../state/ui';
 import * as datesLib from '../../lib/dates';
@@ -66,13 +66,13 @@ describe('GoToDateOverlay', () => {
     expect(screen.getByRole('button', { name: 'Go to Date' })).not.toBeDisabled();
   });
 
-  it('submit navigates to the new date and closes the dialog on a valid change', () => {
+  it('submit navigates to the new date and closes the dialog on a valid change', async () => {
     renderWithI18n(() => <GoToDateOverlay />);
     const input = screen.getByLabelText('Select Date');
     // '2026-01-14' is valid, different from selectedDate, and not a future date
     fireEvent.input(input, { target: { value: '2026-01-14' } });
     fireEvent.click(screen.getByRole('button', { name: 'Go to Date' }));
-    expect(uiState.selectedDate()).toBe('2026-01-14');
+    await waitFor(() => expect(uiState.selectedDate()).toBe('2026-01-14'));
     expect(uiState.isGoToDateOpen()).toBe(false);
   });
 
@@ -80,5 +80,20 @@ describe('GoToDateOverlay', () => {
     renderWithI18n(() => <GoToDateOverlay />);
     fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
     expect(uiState.isGoToDateOpen()).toBe(false);
+  });
+
+  // ── TODO-0104: guarded navigation ──
+
+  it('submit leaves the overlay open and does not close it when requestDateChange denies', async () => {
+    const denySpy = vi.spyOn(uiState, 'requestDateChange').mockResolvedValue(false);
+    renderWithI18n(() => <GoToDateOverlay />);
+    const input = screen.getByLabelText('Select Date');
+    fireEvent.input(input, { target: { value: '2026-01-14' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Go to Date' }));
+
+    await waitFor(() => expect(denySpy).toHaveBeenCalledWith('2026-01-14'));
+    expect(uiState.isGoToDateOpen()).toBe(true);
+    // The user's typed date is still in the input — the overlay was not reset.
+    expect((screen.getByLabelText('Select Date') as HTMLInputElement).value).toBe('2026-01-14');
   });
 });

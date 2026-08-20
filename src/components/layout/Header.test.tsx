@@ -35,7 +35,7 @@ describe('Header timeline toggle', () => {
     resetUiState();
   });
 
-  it('reflects and switches the main view via aria-pressed', () => {
+  it('reflects and switches the main view via aria-pressed', async () => {
     renderWithI18n(() => <Header />);
 
     const toggle = screen.getByTestId('timeline-toggle-button');
@@ -48,11 +48,26 @@ describe('Header timeline toggle', () => {
     fireEvent.click(toggle);
 
     // Now showing the timeline: pressed, labelled "Show editor".
-    expect(mainView()).toBe('timeline');
+    await waitFor(() => expect(mainView()).toBe('timeline'));
     expect(toggle).toHaveAttribute('aria-pressed', 'true');
     expect(toggle).toHaveAttribute('aria-label', 'Show editor');
 
     fireEvent.click(toggle);
+
+    await waitFor(() => expect(mainView()).toBe('editor'));
+    expect(toggle).toHaveAttribute('aria-pressed', 'false');
+  });
+
+  // ── TODO-0104: guarded navigation ──
+
+  it('does not change the view when requestMainViewChange resolves false', async () => {
+    const uiState = await import('../../state/ui');
+    const denySpy = vi.spyOn(uiState, 'requestMainViewChange').mockResolvedValue(false);
+    renderWithI18n(() => <Header />);
+    const toggle = screen.getByTestId('timeline-toggle-button');
+
+    fireEvent.click(toggle);
+    await waitFor(() => expect(denySpy).toHaveBeenCalledWith('timeline'));
 
     expect(mainView()).toBe('editor');
     expect(toggle).toHaveAttribute('aria-pressed', 'false');

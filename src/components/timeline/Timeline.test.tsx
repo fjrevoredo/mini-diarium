@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { screen, waitFor } from '@solidjs/testing-library';
 import { renderWithI18n } from '../../test/i18n-test-utils';
-import { setEntryDates } from '../../state/entries';
+import { setEntryDates, registerNavigationGuard } from '../../state/entries';
 import { selectedDate, mainView, setMainView, resetUiState } from '../../state/ui';
 import { setPreferences } from '../../state/preferences';
 import type { TimelineEntry } from '../../lib/tauri';
@@ -67,8 +67,52 @@ describe('Timeline', () => {
       expect(screen.getByRole('button')).toBeInTheDocument();
     });
     screen.getByRole('button').click();
-    expect(selectedDate()).toBe('2026-03-15');
+    await waitFor(() => expect(selectedDate()).toBe('2026-03-15'));
     expect(mainView()).toBe('editor');
+  });
+
+  // ── TODO-0104: guarded navigation ──
+
+  it('openEntry calls requestNavigationConsent exactly once for the combined date+view change', async () => {
+    const guard = vi.fn(async () => true);
+    const unregister = registerNavigationGuard(guard);
+    try {
+      mocks.getTimelineEntries.mockResolvedValue([
+        { id: 1, date: '2026-03-15', title: 'Test', preview: 'Preview text' },
+      ]);
+      setMainView('timeline');
+      renderWithI18n(() => <Timeline />);
+      await waitFor(() => expect(screen.getByRole('button')).toBeInTheDocument());
+
+      screen.getByRole('button').click();
+
+      await waitFor(() => expect(selectedDate()).toBe('2026-03-15'));
+      expect(guard).toHaveBeenCalledTimes(1);
+      expect(mainView()).toBe('editor');
+    } finally {
+      unregister();
+    }
+  });
+
+  it('a denying guard leaves selectedDate and mainView unchanged', async () => {
+    const unregister = registerNavigationGuard(async () => false);
+    try {
+      mocks.getTimelineEntries.mockResolvedValue([
+        { id: 1, date: '2026-03-15', title: 'Test', preview: 'Preview text' },
+      ]);
+      setMainView('timeline');
+      const before = selectedDate();
+      renderWithI18n(() => <Timeline />);
+      await waitFor(() => expect(screen.getByRole('button')).toBeInTheDocument());
+
+      screen.getByRole('button').click();
+      await Promise.resolve();
+
+      expect(selectedDate()).toBe(before);
+      expect(mainView()).toBe('timeline');
+    } finally {
+      unregister();
+    }
   });
 
   it('shows Untitled for entries with empty title', async () => {

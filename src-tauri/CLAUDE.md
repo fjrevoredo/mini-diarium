@@ -80,9 +80,10 @@ For command design rules that should not regress, see:
 - [Tauri best practices](../docs/best-practices/TAURI_BEST_PRACTICES.md) for command registration, IPC validation, mapped error strings, and testable command cores.
 - [Rust best practices](../docs/best-practices/RUST_BEST_PRACTICES.md) for backend-owned invariants, lock scope, encrypted row helpers, migrations, and compatibility shims.
 
-**Two delete commands — use the right one:**
-- `delete_entry_if_empty(id, title, text)` — soft delete: only removes the entry if both title and text are blank. Returns `bool`. Used by the editor on blur/navigation to silently clean up orphaned blank entries.
-- `delete_entry(id)` — hard delete: unconditional removal, returns an error if the entry is not found. Used for explicit user-initiated "delete entry" actions.
+**Two delete commands, plus a read-only content check — use the right one:**
+- `delete_entry_if_empty(id, title, text)` — soft delete: only removes the entry if both the incoming `title`/`text` arguments **and** the entry's currently-persisted on-disk row are blank (TODO-0104 added the on-disk check; previously it trusted the incoming arguments alone). Returns `bool`. Used by the editor on blur/navigation to silently clean up orphaned blank entries — this on-disk check is the safety net that protects paths which can never show a confirm dialog (auto-lock, `beforeunload`/app close).
+- `delete_entry(id)` — hard delete: unconditional removal, returns an error if the entry is not found. Used for explicit user-initiated "delete entry" actions, and by the frontend's entry-persistence consent-gate guard (TODO-0104) after the user confirms an in-app dialog.
+- `entry_has_content(id)` — read-only: returns whether the entry's on-disk row currently holds real content, without mutating anything. Lets the frontend guard decide whether to show the consent dialog before calling `delete_entry`, using the same on-disk truth `delete_entry_if_empty` checks — not the frontend's in-memory copy, which can be stale.
 
 ### Error Handling
 

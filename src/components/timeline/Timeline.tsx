@@ -2,7 +2,7 @@ import { createResource, For, Show, Suspense } from 'solid-js';
 import { Lock } from 'lucide-solid';
 import { getTimelineEntries } from '../../lib/tauri';
 import type { TimelineEntry } from '../../lib/tauri';
-import { setSelectedDate, setMainView } from '../../state/ui';
+import { requestDateAndViewChange } from '../../state/ui';
 import { entryDates, lockVersion } from '../../state/entries';
 import { formatDate, formatDateWithStyle } from '../../lib/dates';
 import { preferences } from '../../state/preferences';
@@ -25,9 +25,8 @@ export default function Timeline() {
     () => getTimelineEntries(),
   );
 
-  const openEntry = (entry: TimelineEntry) => {
-    setSelectedDate(entry.date);
-    setMainView('editor');
+  const openEntry = async (entry: TimelineEntry) => {
+    await requestDateAndViewChange(entry.date, 'editor');
   };
 
   return (
@@ -48,7 +47,7 @@ export default function Timeline() {
                         column uses 'short'/'iso' — those forms are ambiguous read aloud. */}
                     <button
                       type="button"
-                      onClick={() => openEntry(entry)}
+                      onClick={() => void openEntry(entry)}
                       class="flex w-full gap-4 px-4 py-3 text-left hover:bg-hover"
                       aria-label={t('timeline.openEntry', {
                         date: formatDate(entry.date, preferences().language),

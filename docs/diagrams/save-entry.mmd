@@ -20,10 +20,14 @@ flowchart TB
   CREATE["create_entry(date)"]
   SAVE["save_entry(id, title, text)"]
   EMPTY{"Title + content<br/>blank?"}
-  DELETE["delete_entry_if_empty(id, title, text)"]
+  DELETE["delete_entry_if_empty(id, title, text)<br/>also refuses if the on-disk row<br/>still holds real content"]
   DATES["get_all_entry_dates()<br/>refresh calendar indicators"]
   ENC["DB query layer encrypts title/text<br/>AES-256-GCM with master key"]
   DB1["SQLite entries<br/>(id-based, multiple entries per date)"]
+  NAV["Navigation away from a blank entry<br/>(entry switch, day change, lock toggle,<br/>Go To Date, Timeline/search jump, etc.)"]
+  GUARD{"canLeaveCurrentEntry():<br/>entry_has_content(id)?"}
+  CONFIRM["In-app confirm dialog<br/>(ConfirmDialog / confirmInApp)"]
+  HARDDEL["delete_entry(id)<br/>explicit hard delete"]
 
   DATE --> LOAD --> STATE --> EDITOR --> CHECK
   CHECK -- Yes --> SAVE
@@ -33,7 +37,13 @@ flowchart TB
   EMPTY -- Yes --> DELETE --> DATES
   CREATE --> DATES
 
-  class DATE,LOAD,STATE,EDITOR,DATES ui;
-  class CREATE,SAVE,DELETE,ENC backend;
+  EDITOR --> NAV --> GUARD
+  GUARD -- "No content (blank)" --> DATES
+  GUARD -- "Has real content" --> CONFIRM
+  CONFIRM -- Cancel --> EDITOR
+  CONFIRM -- Confirm --> HARDDEL --> DATES
+
+  class DATE,LOAD,STATE,EDITOR,DATES,NAV,CONFIRM ui;
+  class CREATE,SAVE,DELETE,ENC,HARDDEL backend;
   class DB1 data;
-  class CHECK,EMPTY decision;
+  class CHECK,EMPTY,GUARD decision;

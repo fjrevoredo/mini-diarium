@@ -102,6 +102,7 @@ describe('SearchOverlay', () => {
 
     const resultButton = await screen.findByText('Picnic plans');
     fireEvent.click(resultButton);
+    await flush();
 
     expect(selectedEntryId()).toBe(42);
     expect(selectedDate()).toBe('2026-06-26');

@@ -36,6 +36,18 @@ vi.mock('./tauri', async () => {
   };
 });
 
+// TODO-0104: day-navigation now routes selectedDate writes through the guarded
+// requestDateChange() — mock only that export so a denying guard can be simulated
+// directly, without going through the navigation-guard registry.
+const { mockRequestDateChange } = vi.hoisted(() => ({
+  mockRequestDateChange: vi.fn<(date: string) => Promise<boolean>>(),
+}));
+
+vi.mock('../state/ui', async () => {
+  const actual = await vi.importActual<typeof import('../state/ui')>('../state/ui');
+  return { ...actual, requestDateChange: mockRequestDateChange };
+});
+
 describe('day-navigation', () => {
   beforeEach(() => {
     mockNavigatePreviousDay.mockReset();
@@ -43,6 +55,12 @@ describe('day-navigation', () => {
     mockNavigateToToday.mockReset();
     mockNavigatePreviousMonth.mockReset();
     mockNavigateNextMonth.mockReset();
+    // Default: behaves like the real (unguarded) requestDateChange — writes the date
+    // and approves. Individual TODO-0104 deny-path tests below override this per-call.
+    mockRequestDateChange.mockReset().mockImplementation(async (date: string) => {
+      setSelectedDate(date);
+      return true;
+    });
   });
 
   it('goToPreviousDay sets selectedDate to the backend-resolved previous day', async () => {
@@ -172,6 +190,59 @@ describe('day-navigation', () => {
     setPreferences({ allowFutureEntries: true });
     setSelectedDate('2024-01-15');
     mockNavigateNextMonth.mockRejectedValue(new Error('boom'));
+
+    await goToNextMonth();
+
+    expect(selectedDate()).toBe('2024-01-15');
+  });
+
+  // ── TODO-0104: guarded navigation — denying requestDateChange leaves the date alone ──
+
+  it('goToPreviousDay leaves selectedDate unchanged when requestDateChange denies', async () => {
+    setSelectedDate('2024-01-15');
+    mockNavigatePreviousDay.mockResolvedValue('2024-01-14');
+    mockRequestDateChange.mockResolvedValue(false);
+
+    await goToPreviousDay();
+
+    expect(selectedDate()).toBe('2024-01-15');
+  });
+
+  it('goToNextDay leaves selectedDate unchanged when requestDateChange denies', async () => {
+    setSelectedDate('2024-01-15');
+    mockNavigateNextDay.mockResolvedValue('2024-01-16');
+    mockRequestDateChange.mockResolvedValue(false);
+
+    await goToNextDay();
+
+    expect(selectedDate()).toBe('2024-01-15');
+  });
+
+  it('goToToday leaves selectedDate unchanged when requestDateChange denies', async () => {
+    setSelectedDate('2024-01-15');
+    mockNavigateToToday.mockResolvedValue('2026-07-25');
+    mockRequestDateChange.mockResolvedValue(false);
+
+    await goToToday();
+
+    expect(selectedDate()).toBe('2024-01-15');
+  });
+
+  it('goToPreviousMonth leaves selectedDate unchanged when requestDateChange denies', async () => {
+    setSelectedDate('2024-03-15');
+    mockNavigatePreviousMonth.mockResolvedValue('2024-02-15');
+    mockRequestDateChange.mockResolvedValue(false);
+
+    await goToPreviousMonth();
+
+    expect(selectedDate()).toBe('2024-03-15');
+  });
+
+  it('goToNextMonth leaves selectedDate unchanged when requestDateChange denies', async () => {
+    setPreferences({ allowFutureEntries: true });
+    setSelectedDate('2024-01-15');
+    mockNavigateNextMonth.mockResolvedValue('2024-02-15');
+    mockRequestDateChange.mockResolvedValue(false);
 
     await goToNextMonth();
 

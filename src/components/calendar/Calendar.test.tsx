@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { screen, fireEvent } from '@solidjs/testing-library';
+import { screen, fireEvent, waitFor } from '@solidjs/testing-library';
 import { renderWithI18n } from '../../test/i18n-test-utils';
 import * as uiState from '../../state/ui';
 import * as entriesState from '../../state/entries';
@@ -45,11 +45,11 @@ describe('Calendar', () => {
     expect(screen.getByTestId('calendar-day-2026-05-17')).toHaveAttribute('aria-selected', 'true');
   });
 
-  it('clicking a non-disabled day updates selectedDate', () => {
+  it('clicking a non-disabled day updates selectedDate', async () => {
     renderWithI18n(() => <Calendar />);
     // May 1, 2026 is a past, non-selected, non-disabled day
     fireEvent.click(screen.getByTestId('calendar-day-2026-05-01'));
-    expect(uiState.selectedDate()).toBe('2026-05-01');
+    await waitFor(() => expect(uiState.selectedDate()).toBe('2026-05-01'));
   });
 
   it('a date in entryDates has an aria-label containing the has-entry indicator', () => {
@@ -105,7 +105,7 @@ describe('Calendar', () => {
     expect(btnAfter.querySelector('[aria-hidden="true"].rounded-full')).not.toBeNull();
   });
 
-  it('selection highlight follows clicks without remounting day buttons (same month)', () => {
+  it('selection highlight follows clicks without remounting day buttons (same month)', async () => {
     renderWithI18n(() => <Calendar />);
     const oldSelected = screen.getByTestId('calendar-day-2026-05-17');
     const newSelected = screen.getByTestId('calendar-day-2026-05-01');
@@ -116,9 +116,24 @@ describe('Calendar', () => {
 
     // Same DOM nodes — the highlight moved via the inline-reactive isSelected() read,
     // not via a <For> remount.
+    await waitFor(() => expect(newSelected).toHaveAttribute('aria-selected', 'true'));
     expect(screen.getByTestId('calendar-day-2026-05-17')).toBe(oldSelected);
     expect(screen.getByTestId('calendar-day-2026-05-01')).toBe(newSelected);
     expect(oldSelected).toHaveAttribute('aria-selected', 'false');
-    expect(newSelected).toHaveAttribute('aria-selected', 'true');
+  });
+
+  // ── TODO-0104: guarded navigation ──
+
+  it('handleDayClick asks requestDateChange first and skips focus/sidebar updates when it denies', async () => {
+    const denySpy = vi.spyOn(uiState, 'requestDateChange').mockResolvedValue(false);
+    renderWithI18n(() => <Calendar />);
+
+    fireEvent.click(screen.getByTestId('calendar-day-2026-05-01'));
+    await Promise.resolve();
+
+    expect(denySpy).toHaveBeenCalledWith('2026-05-01');
+    // Denied — the pre-click selection stays highlighted.
+    expect(screen.getByTestId('calendar-day-2026-05-17')).toHaveAttribute('aria-selected', 'true');
+    expect(screen.getByTestId('calendar-day-2026-05-01')).toHaveAttribute('aria-selected', 'false');
   });
 });

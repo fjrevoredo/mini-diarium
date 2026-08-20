@@ -1,5 +1,7 @@
 import { createSignal } from 'solid-js';
 import { getTodayString } from '../lib/dates';
+import { isConfirmDialogOpen } from './confirm-dialog';
+import { requestNavigationConsent } from './entries';
 
 // Selected date (YYYY-MM-DD format)
 const [selectedDate, setSelectedDate] = createSignal<string>(getTodayString());
@@ -71,10 +73,43 @@ export function isAnyOverlayOpen(): boolean {
     isTagManagerOpen() ||
     isImagePickerOpen() ||
     isSearchOpen() ||
-    isMoreMenuOpen()
+    isMoreMenuOpen() ||
+    isConfirmDialogOpen()
   );
 }
 
+/**
+ * Guarded date-change entry point (TODO-0104): asks every registered navigation guard
+ * before writing `selectedDate`. Resolves `false` (and leaves the date unchanged) when a
+ * guard denies — e.g. the user cancelled the in-app confirm dialog for erased content.
+ */
+export async function requestDateChange(date: string): Promise<boolean> {
+  if (!(await requestNavigationConsent())) return false;
+  setSelectedDate(date);
+  return true;
+}
+
+/** Guarded main-view-change entry point (TODO-0104) — same contract as `requestDateChange`. */
+export async function requestMainViewChange(view: MainView): Promise<boolean> {
+  if (!(await requestNavigationConsent())) return false;
+  setMainView(view);
+  return true;
+}
+
+/**
+ * Guarded combined date+view change (TODO-0104) — for call sites that change both
+ * together (Timeline row click, search result click), so the guard fires exactly once
+ * for the one user action instead of twice via two separate guarded calls.
+ */
+export async function requestDateAndViewChange(date: string, view: MainView): Promise<boolean> {
+  if (!(await requestNavigationConsent())) return false;
+  setSelectedDate(date);
+  setMainView(view);
+  return true;
+}
+
+// resetUiState() bypasses the guard deliberately: it runs during lock cleanup (session.ts),
+// which already flushes via registerCleanupCallback and must never wait on a dialog.
 export function resetUiState(): void {
   setSelectedDate(getTodayString());
   setSelectedEntryId(null);

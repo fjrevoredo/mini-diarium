@@ -1,6 +1,193 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { createSignal } from 'solid-js';
 import type { Editor } from '@tiptap/core';
 import { computeIsEmpty } from './useEditorEmptyCheck';
+import type { DiaryEntry, EntryMetadata } from '../../../lib/tauri';
+import type { EntryLifecycleHook } from './useEntryLifecycle';
+import type { EditorEmptyCheckHook } from './useEditorEmptyCheck';
+import type { T as I18nT } from '../../../i18n';
+
+// ---------------------------------------------------------------------------
+// navigateToEntry / addEntry — real hook, mocked backend + fake lifecycle
+// (TODO-0104: canLeaveCurrentEntry wiring, Tasks 4.1/4.2)
+// ---------------------------------------------------------------------------
+
+const mocks = vi.hoisted(() => ({
+  createEntry: vi.fn(),
+  getEntriesForDate: vi.fn(),
+  getAllEntryDates: vi.fn(),
+}));
+
+vi.mock('../../../lib/tauri', async () => {
+  const actual = await vi.importActual<typeof import('../../../lib/tauri')>('../../../lib/tauri');
+  return {
+    ...actual,
+    createEntry: mocks.createEntry,
+    getEntriesForDate: mocks.getEntriesForDate,
+    getAllEntryDates: mocks.getAllEntryDates,
+  };
+});
+
+import { useMultiEntryNav } from './useMultiEntryNav';
+
+const fakeT: I18nT = (key) => key;
+
+const fakeEmptyCheck: EditorEmptyCheckHook = {
+  editorIsEmpty: () => false,
+  setEditorIsEmpty: () => false,
+  isContentEmpty: () => false,
+};
+
+function makeEntry(overrides: Partial<DiaryEntry> = {}): DiaryEntry {
+  return {
+    id: 1,
+    date: '2026-01-01',
+    title: 'Title',
+    text: '<p>Text</p>',
+    word_count: 1,
+    date_created: '2026-01-01T00:00:00Z',
+    date_updated: '2026-01-01T00:00:00Z',
+    metadata: null,
+    locked: false,
+    ...overrides,
+  };
+}
+
+/**
+ * Builds a real `useMultiEntryNav` instance with a hand-built fake `lifecycle` — the
+ * hook only calls a handful of `EntryLifecycleHook` methods, so a fake is more direct
+ * here than instantiating the real `useEntryLifecycle`.
+ */
+function makeNav(initialEntries: DiaryEntry[], canLeaveCurrentEntry: () => Promise<boolean>) {
+  const [dayEntries, setDayEntries] = createSignal<DiaryEntry[]>(initialEntries);
+  const [currentIndex, setCurrentIndex] = createSignal(0);
+  const [pendingEntryId, setPendingEntryId] = createSignal<number | null>(
+    initialEntries[0]?.id ?? null,
+  );
+  const [isCreatingEntry, setIsCreatingEntry] = createSignal(false);
+  const [_title, setTitle] = createSignal('');
+  const [_content, setContent] = createSignal('');
+  const [_wordCount, setWordCount] = createSignal(0);
+  const [_entryMetadata, setEntryMetadata] = createSignal<EntryMetadata | null>(null);
+  const [_hydratedEntryId, setHydratedEntryId] = createSignal<number | null>(null);
+
+  const flushCurrent = vi.fn(async () => {});
+  const flushPendingCreation = vi.fn(async () => {});
+
+  const lifecycle: EntryLifecycleHook = {
+    loadEntriesForDate: vi.fn(async () => {}),
+    startEntryCreation: vi.fn(),
+    flushPendingCreation,
+    flushCurrent,
+    discardAndReload: vi.fn(async () => {}),
+    canLeaveCurrentEntry: vi.fn(canLeaveCurrentEntry),
+    debouncedSave: Object.assign(vi.fn(), { cancel: vi.fn() }),
+    entryCommitTargets: {
+      setCurrentIndex,
+      setPendingEntryId,
+      setTitle,
+      setContent,
+      setWordCount,
+      setEntryMetadata,
+      setHydratedEntryId,
+    },
+    getJustCreatedEntryId: () => null,
+    setJustCreatedEntryId: vi.fn(),
+    isLoadInFlight: () => false,
+    isDisposed: () => false,
+    dispose: vi.fn(),
+  };
+
+  const nav = useMultiEntryNav({
+    t: fakeT,
+    selectedDate: () => '2026-01-01',
+    dayEntries,
+    setDayEntries,
+    currentIndex,
+    pendingEntryId,
+    isCreatingEntry,
+    setIsCreatingEntry,
+    emptyCheck: fakeEmptyCheck,
+    lifecycle,
+  });
+
+  return { nav, dayEntries, currentIndex, pendingEntryId, flushCurrent };
+}
+
+describe('navigateToEntry — canLeaveCurrentEntry gate (TODO-0104)', () => {
+  beforeEach(() => {
+    mocks.createEntry.mockReset();
+    mocks.getEntriesForDate.mockReset();
+    mocks.getAllEntryDates.mockReset();
+  });
+
+  it('aborts without changing dayEntries or currentIndex when the guard denies navigation', async () => {
+    const entries = [makeEntry({ id: 1 }), makeEntry({ id: 2 })];
+    const { nav, dayEntries, currentIndex, flushCurrent } = makeNav(entries, async () => false);
+
+    await nav.navigateToEntry(1);
+
+    expect(dayEntries()).toEqual(entries);
+    expect(currentIndex()).toBe(0);
+    expect(flushCurrent).not.toHaveBeenCalled();
+    expect(mocks.getEntriesForDate).not.toHaveBeenCalled();
+  });
+
+  it('proceeds normally when the guard approves', async () => {
+    const entries = [makeEntry({ id: 1 }), makeEntry({ id: 2 })];
+    mocks.getEntriesForDate.mockResolvedValue(entries.slice().reverse());
+    const { nav, currentIndex, flushCurrent } = makeNav(entries, async () => true);
+
+    await nav.navigateToEntry(1);
+
+    expect(flushCurrent).toHaveBeenCalledWith('navigateToEntry');
+    expect(currentIndex()).toBe(1);
+  });
+
+  it('lands on the id-correct entry when the guard deleted the entry before the target', async () => {
+    // Old list: A(1), B(2, current — about to be confirmed-deleted), C(3), D(4).
+    // User clicks "next" from B → newIndex=2 (targets C). Backend truth after B's
+    // deletion no longer includes it — the fix must land on C, not D.
+    const entries = [
+      makeEntry({ id: 1, title: 'A' }),
+      makeEntry({ id: 2, title: 'B' }),
+      makeEntry({ id: 3, title: 'C' }),
+      makeEntry({ id: 4, title: 'D' }),
+    ];
+    // fetchEntriesOrdered reverses the backend's newest-first order — feed already
+    // oldest-first here so the reversal inside fetchEntriesOrdered lands back on `entries`.
+    mocks.getEntriesForDate.mockResolvedValue(
+      [entries[0], entries[2], entries[3]].slice().reverse(),
+    );
+    const { nav, currentIndex } = makeNav(entries, async () => true);
+
+    await nav.navigateToEntry(2);
+
+    expect(currentIndex()).toBe(1); // C's new position after B's removal
+  });
+});
+
+describe('addEntry — canLeaveCurrentEntry gate (TODO-0104)', () => {
+  beforeEach(() => {
+    mocks.createEntry.mockReset();
+    mocks.getEntriesForDate.mockReset();
+    mocks.getAllEntryDates.mockReset();
+  });
+
+  it("still creates a new entry when the guard approves (the common case — the existing isContentEmpty gate keeps the guard's delete branch unreachable here)", async () => {
+    const existing = makeEntry({ id: 1 });
+    const created = makeEntry({ id: 2, title: '', text: '' });
+    mocks.createEntry.mockResolvedValue(created);
+    mocks.getEntriesForDate.mockResolvedValue([created, existing]);
+    mocks.getAllEntryDates.mockResolvedValue(['2026-01-01']);
+    const { nav, dayEntries } = makeNav([existing], async () => true);
+
+    await nav.addEntry();
+
+    expect(mocks.createEntry).toHaveBeenCalledWith('2026-01-01');
+    expect(dayEntries().some((e) => e.id === 2)).toBe(true);
+  });
+});
 
 /**
  * Tests for the per-day navigation logic owned by the useMultiEntryNav hook.

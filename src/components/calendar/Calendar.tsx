@@ -1,6 +1,6 @@
 import { createSignal, createEffect, untrack, For, createMemo, Show } from 'solid-js';
 import { ChevronLeft, ChevronRight, Lock } from 'lucide-solid';
-import { selectedDate, setSelectedDate, setIsSidebarCollapsed } from '../../state/ui';
+import { selectedDate, requestDateChange, setIsSidebarCollapsed } from '../../state/ui';
 import { entryDates, lockedDates } from '../../state/entries';
 import { tagFilteredDates } from '../../state/tags';
 import { preferences } from '../../state/preferences';
@@ -183,9 +183,9 @@ export default function Calendar() {
     setFocusedDate(selectedDate());
   });
 
-  const handleDayClick = (day: CalendarDay) => {
+  const handleDayClick = async (day: CalendarDay) => {
     if (day.isDisabled) return;
-    setSelectedDate(day.date);
+    if (!(await requestDateChange(day.date))) return;
     setFocusedDate(day.date);
     setIsSidebarCollapsed(true);
   };
@@ -245,7 +245,7 @@ export default function Calendar() {
 
     if (e.key === 'Enter' || e.key === ' ') {
       const day = calendarDays().find((d) => d.date === current);
-      if (day && !day.isDisabled) handleDayClick(day);
+      if (day && !day.isDisabled) void handleDayClick(day);
       return;
     }
 
@@ -406,7 +406,7 @@ export default function Calendar() {
                           <div role="gridcell">
                             <button
                               data-testid={`calendar-day-${day.date}`}
-                              onClick={() => handleDayClick(day)}
+                              onClick={() => void handleDayClick(day)}
                               tabIndex={focusedDate() === day.date ? 0 : -1}
                               aria-selected={isSelected()}
                               aria-current={day.isToday ? 'date' : undefined}

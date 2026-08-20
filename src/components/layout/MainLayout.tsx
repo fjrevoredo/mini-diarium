@@ -15,6 +15,7 @@ import NotificationsOverlay from '../overlays/NotificationsOverlay';
 import TagManager from '../overlays/TagManager';
 import OnboardingTour from '../overlays/OnboardingOverlay';
 import SearchOverlay from '../search/SearchOverlay';
+import ConfirmDialog from '../overlays/ConfirmDialog';
 import {
   mainView,
   isSidebarCollapsed,
@@ -119,6 +120,7 @@ export default function MainLayout() {
       <TagManager isOpen={isTagManagerOpen()} onClose={() => setIsTagManagerOpen(false)} />
       <OnboardingTour />
       <SearchOverlay />
+      <ConfirmDialog />
     </div>
   );
 }

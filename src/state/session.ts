@@ -9,6 +9,7 @@ import {
 import { resetSearchState } from './search';
 import { resetUiState } from './ui';
 import { resetTagsState, loadAllTags } from './tags';
+import { resetConfirmDialogState } from './confirm-dialog';
 
 const [hasFocusedEditorOnUnlock, setHasFocusedEditorOnUnlock] = createSignal(false);
 
@@ -17,6 +18,7 @@ export function resetSessionState(): void {
   resetSearchState();
   resetUiState();
   resetTagsState();
+  resetConfirmDialogState();
   setHasFocusedEditorOnUnlock(false);
 }
 

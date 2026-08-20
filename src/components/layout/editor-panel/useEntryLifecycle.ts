@@ -1,10 +1,17 @@
 import { batch, createSignal, untrack, type Accessor, type Setter } from 'solid-js';
 import type { Editor } from '@tiptap/core';
-import { createEntry } from '../../../lib/tauri';
+import { createEntry, deleteEntry, entryHasContent, getAllEntryDates } from '../../../lib/tauri';
 import type { DiaryEntry, EntryMetadata } from '../../../lib/tauri';
-import { registerCleanupCallback, registerReloadCallback } from '../../../state/entries';
+import {
+  registerCleanupCallback,
+  registerReloadCallback,
+  registerNavigationGuard,
+  setEntryDates,
+} from '../../../state/entries';
 import { selectedEntryId, setSelectedEntryId } from '../../../state/ui';
+import { confirmInApp } from '../../../state/confirm-dialog';
 import { createLogger } from '../../../lib/logger';
+import type { useI18n } from '../../../i18n';
 import { computeIsEmpty, type EditorEmptyCheckHook } from './useEditorEmptyCheck';
 import { fetchEntriesOrdered } from './useMultiEntryNav';
 import { useEntryPersistence, type DebouncedSaveFn } from './useEntryPersistence';
@@ -18,6 +25,7 @@ import {
 const log = createLogger('Editor');
 
 export interface UseEntryLifecycleOptions {
+  t: ReturnType<typeof useI18n>;
   selectedDate: Accessor<string>;
   editorInstance: Accessor<Editor | null>;
   title: Accessor<string>;
@@ -58,6 +66,15 @@ export interface EntryLifecycleHook {
    * automatically; exposed for direct use and for tests.
    */
   discardAndReload: () => Promise<void>;
+  /**
+   * Asks "may I leave the current entry?" (TODO-0104). Returns `true` immediately when
+   * there is nothing to protect (no pending entry, or an ordinary save). When leaving
+   * would silently erase real on-disk content, shows the in-app confirm dialog and:
+   * on cancel, returns `false` (deny); on confirm, hard-deletes the entry, clears the
+   * editor, and returns `true` (allow). Also registered as a navigation guard so
+   * out-of-`EditorPanel` navigation call sites (Phase 2) go through it too.
+   */
+  canLeaveCurrentEntry: (path: string) => Promise<boolean>;
   debouncedSave: DebouncedSaveFn;
   /** Setters that must be written together whenever the displayed entry changes. */
   entryCommitTargets: EntryCommitTargets;
@@ -84,6 +101,21 @@ export function useEntryLifecycle(opts: UseEntryLifecycleOptions): EntryLifecycl
   let loadRequestId = 0;
   let pendingCreationPromise: Promise<DiaryEntry> | null = null;
   let justCreatedEntryId: number | null = null;
+  /**
+   * Coalesces concurrent `canLeaveCurrentEntry` callers into one check (TODO-0104
+   * follow-up). Two call sites can legitimately race for the same click: a search-result
+   * click on an entry already on the open day sets `selectedEntryId` before awaiting its
+   * own guarded date/view change, and that write synchronously fires EditorPanel's
+   * same-day deep-link effect, which calls `navigateToEntry` — invoking this function a
+   * second time for the same "may I leave the current entry?" question before the first
+   * call has resolved. Since both callers are asking about the exact same current-entry
+   * snapshot, coalescing is correct, not just a race workaround: there is only ever one
+   * real answer to ask for. Without this, `confirmInApp()`'s single-pending-call design
+   * (see its own doc comment) means the second call's dialog silently overwrites the
+   * first's `pendingResolve`, permanently orphaning the first caller's promise — which
+   * left `navigateToEntry` hung mid-flight and the intended entry switch never happening.
+   */
+  let leaveCheckInFlight: Promise<boolean> | null = null;
   /**
    * A keystroke that arrived while a load was in flight. The creation it asked for is
    * re-evaluated once the load settles rather than acted on immediately. See TODO-0089.
@@ -345,6 +377,74 @@ export function useEntryLifecycle(opts: UseEntryLifecycleOptions): EntryLifecycl
     await persistence.writeSnapshot({ entryId: newEntry.id, ...captured }, 'flushPendingCreation');
   };
 
+  /**
+   * Asks "may I leave the current entry?" — see the `EntryLifecycleHook.canLeaveCurrentEntry`
+   * doc comment for the contract. TODO-0104.
+   *
+   * Coalesces with any concurrent caller via `leaveCheckInFlight` — see that field's doc
+   * comment for why two independent call sites can legitimately race for one user action.
+   */
+  const canLeaveCurrentEntry = (path: string): Promise<boolean> => {
+    if (leaveCheckInFlight) return leaveCheckInFlight;
+    const run = async (): Promise<boolean> => {
+      try {
+        return await checkCanLeaveCurrentEntry(path);
+      } finally {
+        leaveCheckInFlight = null;
+      }
+    };
+    leaveCheckInFlight = run();
+    return leaveCheckInFlight;
+  };
+
+  const checkCanLeaveCurrentEntry = async (path: string): Promise<boolean> => {
+    try {
+      const snap = persistence.captureCurrentSnapshot();
+      if (snap === null) return true;
+
+      // Same save-vs-delete decision saveCurrentById uses — an ordinary save needs no consent.
+      const shouldDelete = snap.title.trim() === '' && snap.isEmpty;
+      if (!shouldDelete) return true;
+
+      let hasContent: boolean;
+      try {
+        hasContent = await entryHasContent(snap.entryId);
+      } catch (error) {
+        // The entry can legitimately be gone by the time this runs: the debounced
+        // autosave (independent of this guard) may already have auto-deleted it via
+        // deleteEntryIfEmpty in the ~500ms before this call. "Entry not found" means
+        // there is nothing left to protect — allow navigation rather than denying it,
+        // or every such race would silently freeze the calling UI action (e.g. leave
+        // the Sidebar open on a denied calendar-day click). Any other failure still
+        // falls through to the outer catch and denies.
+        const message =
+          typeof error === 'string' ? error : error instanceof Error ? error.message : '';
+        if (/entry not found/i.test(message)) return true;
+        throw error;
+      }
+      if (!hasContent) return true; // on-disk row is already blank — nothing to protect
+
+      const confirmed = await confirmInApp(opts.t('editor.deleteConfirmMessage'), {
+        title: opts.t('editor.deleteConfirmTitle'),
+      });
+      if (!confirmed) return false;
+
+      persistence.debouncedSave.cancel();
+      await deleteEntry(snap.entryId);
+      clearEntryFromEditor(entryCommitTargets);
+      // Mirrors saveCurrentById's soft-delete branch: the calendar/timeline indicators
+      // read entryDates as a separate global signal, so a hard delete outside that path
+      // must refresh it too or "has entry" goes stale for this date.
+      const dates = await getAllEntryDates();
+      if (!persistence.isDisposed()) setEntryDates(dates);
+      log.info(`${path}: canLeaveCurrentEntry confirmed delete of entry ${snap.entryId}`);
+      return true;
+    } catch (error) {
+      log.error(`${path}: canLeaveCurrentEntry failed — denying navigation:`, error);
+      return false;
+    }
+  };
+
   // Register journal-lock cleanup. Fires when the journal is being locked: we flush any
   // in-flight creation + save so typed content is not lost when the DB closes.
 
@@ -356,6 +456,12 @@ export function useEntryLifecycle(opts: UseEntryLifecycleOptions): EntryLifecycl
   // Register the discard-and-reload callback (Task 4.2). Unlike the cleanup callback above,
   // this one must never flush — see discardAndReload's doc comment.
   const unregisterReload = registerReloadCallback(discardAndReload);
+
+  // Register the navigation guard so Phase 2 call sites (outside EditorPanel) go through
+  // canLeaveCurrentEntry too, via requestNavigationConsent(). TODO-0104.
+  const unregisterNavigationGuard = registerNavigationGuard(() =>
+    canLeaveCurrentEntry('navigationGuard'),
+  );
 
   const dispose = () => {
     // Capture BEFORE flipping isDisposed and before cancelling the debounce. Teardown
@@ -369,6 +475,7 @@ export function useEntryLifecycle(opts: UseEntryLifecycleOptions): EntryLifecycl
     persistence.debouncedSave.cancel();
     unregister();
     unregisterReload();
+    unregisterNavigationGuard();
     // Unmount must flush, not drop: the <Show> swap in MainLayout is the Timeline toggle,
     // and every other navigation-away path already flushes before proceeding. writeSnapshot
     // has no disposal guard for exactly this reason.
@@ -384,6 +491,7 @@ export function useEntryLifecycle(opts: UseEntryLifecycleOptions): EntryLifecycl
     flushPendingCreation,
     flushCurrent: persistence.flushCurrent,
     discardAndReload,
+    canLeaveCurrentEntry,
     debouncedSave: persistence.debouncedSave,
     entryCommitTargets,
     getJustCreatedEntryId: () => justCreatedEntryId,

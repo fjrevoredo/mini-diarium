@@ -411,6 +411,7 @@ pub fn run() {
             commands::entries::save_entry,
             commands::entries::get_entries_for_date,
             commands::entries::delete_entry_if_empty,
+            commands::entries::entry_has_content,
             commands::entries::delete_entry,
             commands::entries::set_entry_locked,
             commands::entries::get_locked_entry_dates,

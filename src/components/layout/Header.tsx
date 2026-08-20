@@ -16,7 +16,7 @@ import {
   isSidebarCollapsed,
   setIsNotificationsOpen,
   mainView,
-  setMainView,
+  requestMainViewChange,
   setIsSearchOpen,
   setIsGoToDateOpen,
 } from '../../state/ui';
@@ -110,7 +110,9 @@ export default function Header(props: HeaderProps) {
       {/* Right: Timeline toggle + About + Notifications + Lock */}
       <div class="flex items-center gap-1">
         <button
-          onClick={() => setMainView(mainView() === 'timeline' ? 'editor' : 'timeline')}
+          onClick={() =>
+            void requestMainViewChange(mainView() === 'timeline' ? 'editor' : 'timeline')
+          }
           class="rounded p-2 hover:bg-hover text-tertiary transition-colors"
           aria-label={
             mainView() === 'timeline'

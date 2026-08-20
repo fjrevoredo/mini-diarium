@@ -48,6 +48,11 @@ export async function deleteEntry(id: number): Promise<void> {
   return invoke('delete_entry', { id });
 }
 
+/** Read-only: whether an entry's on-disk row currently holds real content. See TODO-0104. */
+export async function entryHasContent(id: number): Promise<boolean> {
+  return await invoke('entry_has_content', { id });
+}
+
 /** Toggle the per-entry lock flag. Targeted UPDATE — does not re-encrypt entry content. */
 export async function setEntryLocked(id: number, locked: boolean): Promise<void> {
   await invoke('set_entry_locked', { id, locked });

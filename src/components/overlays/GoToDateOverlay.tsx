@@ -1,6 +1,6 @@
 import { createSignal } from 'solid-js';
 import { Dialog } from '@kobalte/core/dialog';
-import { isGoToDateOpen, setIsGoToDateOpen, selectedDate, setSelectedDate } from '../../state/ui';
+import { isGoToDateOpen, setIsGoToDateOpen, selectedDate, requestDateChange } from '../../state/ui';
 import { getTodayString, isValidDate } from '../../lib/dates';
 import { preferences } from '../../state/preferences';
 import { useI18n } from '../../i18n';
@@ -43,11 +43,11 @@ export default function GoToDateOverlay() {
   };
 
   // Handle form submission
-  const handleSubmit = (e: Event) => {
+  const handleSubmit = async (e: Event) => {
     e.preventDefault();
 
     if (!isSubmitDisabled()) {
-      setSelectedDate(dateInput());
+      if (!(await requestDateChange(dateInput()))) return;
       setIsGoToDateOpen(false);
     }
   };
