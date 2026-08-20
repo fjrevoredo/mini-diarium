@@ -275,6 +275,46 @@ export function useEntryLifecycle(opts: UseEntryLifecycleOptions): EntryLifecycl
     await loadEntriesForDate(untrack(opts.selectedDate));
   };
 
+  /**
+   * Re-fetches the given entry's on-disk content and commits it into the editor, without
+   * touching `selectedEntryId` — that signal is a shared one-shot deep-link consumed
+   * synchronously by EditorPanel's same-day deep-link effect, so writing it here would
+   * race that consumer and lose the target before loadEntriesForDate ever reads it back
+   * (see docs/entry-persistence-cancel-restore-plan.md's "Multi-Entry Wrinkle" section).
+   * Used by canLeaveCurrentEntry's cancel branch (TODO-0104 addendum) to restore real
+   * content the user just erased, instead of leaving the editor showing the blank state
+   * that triggered the confirm dialog.
+   *
+   * Shares `loadRequestId` with `loadEntriesForDate` (same staleness token, same
+   * increment-then-compare pattern) so a concurrent unrelated load — e.g. a lock/unlock
+   * or a whole-journal restore firing while these awaits are in flight — cannot have its
+   * result stomped by this one committing late. If the two awaits below reject (a
+   * transient IPC failure, or the DB going away mid-teardown), the rejection propagates
+   * to checkCanLeaveCurrentEntry's own try/catch, which already denies navigation and
+   * logs — the editor is simply left as it was, not worse off than before this function
+   * existed.
+   */
+  const restoreEntryFromDisk = async (entryId: number): Promise<void> => {
+    persistence.debouncedSave.cancel();
+    const requestId = ++loadRequestId;
+    const isStale = () => persistence.isDisposed() || requestId !== loadRequestId;
+    const date = untrack(opts.selectedDate);
+    const entries = await fetchEntriesOrdered(date);
+    if (isStale()) return;
+    opts.setDayEntries(entries);
+    const idx = entries.findIndex((e) => e.id === entryId);
+    if (idx < 0) {
+      // Entry vanished between entryHasContent's check and now (shouldn't happen in
+      // practice) — clear rather than commit a mismatched index.
+      clearEntryFromEditor(entryCommitTargets);
+      return;
+    }
+    const entry = entries[idx];
+    const html = await resolveEntryHtml(entry);
+    if (isStale()) return;
+    commitEntryToEditor(entryCommitTargets, entry, html, idx);
+  };
+
   const startEntryCreation = (reason: string) => {
     if (untrack(opts.isCreatingEntry)) {
       log.debug(`${reason}: isCreatingEntry guard fired — skipping duplicate creation`);
@@ -427,7 +467,13 @@ export function useEntryLifecycle(opts: UseEntryLifecycleOptions): EntryLifecycl
       const confirmed = await confirmInApp(opts.t('editor.deleteConfirmMessage'), {
         title: opts.t('editor.deleteConfirmTitle'),
       });
-      if (!confirmed) return false;
+      if (!confirmed) {
+        await restoreEntryFromDisk(snap.entryId);
+        log.info(
+          `${path}: canLeaveCurrentEntry cancelled — restored entry ${snap.entryId} from disk`,
+        );
+        return false;
+      }
 
       persistence.debouncedSave.cancel();
       await deleteEntry(snap.entryId);

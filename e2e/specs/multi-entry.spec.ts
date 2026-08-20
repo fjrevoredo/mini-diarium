@@ -488,17 +488,54 @@ describe('Multi-entry workflow', () => {
     await browser.pause(300);
     expect(await $('[data-testid="confirm-dialog"]').isDisplayed()).toBe(true);
 
-    // Cancel — the app stays on the editor; the entry (still blank in the live editor,
-    // but never actually deleted on disk) is untouched.
+    // Cancel — the app stays on the editor, the entry was never deleted on disk, and the
+    // editor now shows the real seeded content again instead of the blank state that
+    // triggered the dialog (entry-persistence-cancel-restore-plan.md).
     await $('[data-testid="confirm-dialog-cancel-button"]').click();
     await $('[data-testid="confirm-dialog"]').waitForDisplayed({ timeout: 5000, reverse: true });
-    expect(await $('[data-testid="title-input"]').isDisplayed()).toBe(true);
     expect(await $('[data-testid="timeline-toggle-button"]').getAttribute('aria-pressed')).toBe(
       'false',
     );
+    await browser.waitUntil(
+      async () => (await $('[data-testid="title-input"]').getValue()) === SCENARIO_F_TITLE,
+      { timeout: 5000, timeoutMsg: 'Scenario F: title was not restored after Cancel' },
+    );
+    await browser.waitUntil(
+      async () => ((await $('.ProseMirror').getText()) ?? '').includes(SCENARIO_F_BODY),
+      { timeout: 5000, timeoutMsg: 'Scenario F: body was not restored after Cancel' },
+    );
 
-    // Toggling again re-asks — the entry still exists (Cancel denied the earlier
-    // navigation), so the guard's on-disk check still finds real content.
+    // Toggling again immediately (without re-erasing) must NOT re-ask: Cancel's restore
+    // put the editor's live title/body back in sync with what's on disk, so this is now
+    // an ordinary navigation away from unmodified content, not a silent-loss risk. This
+    // is a direct, necessary consequence of the cancel-restore fix — see
+    // entry-persistence-cancel-restore-plan.md's Task 10 Decision Notes for why the
+    // original "toggling again re-asks" assumption in this plan's Task 5 no longer holds.
+    await toggleTimeline();
+    await browser.waitUntil(
+      async () =>
+        (await $('[data-testid="timeline-toggle-button"]').getAttribute('aria-pressed')) ===
+        'true',
+      { timeout: 5000, timeoutMsg: 'Scenario F: Timeline did not show after the no-op re-toggle' },
+    );
+    expect(await $('[data-testid="confirm-dialog"]').isExisting()).toBe(false);
+
+    // Toggle back to the editor, erase the (still-real, restored) content again, and this
+    // time confirm the delete — exercising the Confirm/hard-delete branch end-to-end.
+    await toggleTimeline();
+    await $('[data-testid="title-input"]').waitForDisplayed({ timeout: 5000 });
+    await clearTitleInput();
+    await clearProseMirrorBody();
+    await browser.waitUntil(
+      async () => (await $('[data-testid="title-input"]').getValue()) === '',
+      { timeout: 5000, timeoutMsg: 'Scenario F: title did not clear on the second erase' },
+    );
+    await browser.waitUntil(
+      async () => ((await $('.ProseMirror').getText()) ?? '').trim() === '',
+      { timeout: 5000, timeoutMsg: 'Scenario F: body did not clear on the second erase' },
+    );
+    await browser.pause(700); // past the debounce, same rationale as the first erase above
+
     await toggleTimeline();
     await $('[data-testid="confirm-dialog"]').waitForDisplayed({ timeout: 5000 });
     await $('[data-testid="confirm-dialog-confirm-button"]').click();

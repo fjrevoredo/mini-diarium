@@ -788,7 +788,7 @@ describe('EditorPanel integration', () => {
 
   // ── TODO-0104: canLeaveCurrentEntry via navigateToEntry ──────────────────────
 
-  it('navigateToEntry: cancelling the confirm dialog leaves dayEntries/currentIndex unchanged', async () => {
+  it("navigateToEntry: cancelling the confirm dialog restores the erased entry's real content and leaves dayEntries/currentIndex unchanged", async () => {
     const older = makeEntry({ id: 42, title: 'Keep', text: '<p>Keep</p>' });
     const current = makeEntry({ id: 43, title: 'Erase me', text: '<p>Real content</p>' });
     mocks.getEntriesForDate.mockResolvedValue([current, older]);
@@ -814,9 +814,46 @@ describe('EditorPanel integration', () => {
 
     expect(mocks.confirm).toHaveBeenCalled();
     expect(mocks.deleteEntry).not.toHaveBeenCalled();
-    // Still on the erased entry — navigation was denied.
-    expect((screen.getByTestId('title-input') as HTMLInputElement).value).toBe('');
+    // Restored from disk — no longer blank.
+    await waitFor(() =>
+      expect((screen.getByTestId('title-input') as HTMLInputElement).value).toBe('Erase me'),
+    );
+    expect(bus.mockEditor.getHTML()).toBe('<p>Real content</p>');
     expect(screen.getByTestId('entry-number-button-2').getAttribute('aria-current')).toBe('true');
+  });
+
+  it("navigateToEntry: cancelling the confirm dialog restores the correct entry when it is not the day's newest", async () => {
+    const newest = makeEntry({ id: 50, title: 'Newest', text: '<p>Newest content</p>' });
+    const older = makeEntry({ id: 20, title: 'Erase me', text: '<p>Real older content</p>' });
+    // Backend newest-first: [50, 20] -> fetchEntriesOrdered reverses to [older (idx 0), newest (idx 1)].
+    mocks.getEntriesForDate.mockResolvedValue([newest, older]);
+    mocks.entryHasContent.mockResolvedValue(true);
+    mocks.confirm.mockResolvedValue(false);
+
+    // Deep-link to the older entry so it is the one open, not the day's default newest.
+    setSelectedEntryId(20);
+    renderWithI18n(() => <EditorPanel />);
+    await waitFor(() => expect(mocks.getEntriesForDate).toHaveBeenCalledWith('2026-04-23'));
+    await flushMicrotasks();
+    await waitFor(() =>
+      expect((screen.getByTestId('title-input') as HTMLInputElement).value).toBe('Erase me'),
+    );
+
+    fireEvent.input(screen.getByTestId('title-input'), { target: { value: '' } });
+    typeIntoEditor('<p></p>');
+    await flushMicrotasks();
+
+    fireEvent.click(screen.getByTestId('entry-number-button-2')); // navigate to the newest
+    await waitFor(() => expect(mocks.entryHasContent).toHaveBeenCalledWith(20));
+    await flushMicrotasks();
+
+    expect(mocks.deleteEntry).not.toHaveBeenCalled();
+    // Restored entry 20's real content on entry-number-button-1 (idx 0) — not entry 50's.
+    await waitFor(() =>
+      expect((screen.getByTestId('title-input') as HTMLInputElement).value).toBe('Erase me'),
+    );
+    expect(bus.mockEditor.getHTML()).toBe('<p>Real older content</p>');
+    expect(screen.getByTestId('entry-number-button-1').getAttribute('aria-current')).toBe('true');
   });
 
   it('navigateToEntry: confirming the dialog hard-deletes the entry and navigates to the target', async () => {

@@ -28,6 +28,7 @@ flowchart TB
   GUARD{"canLeaveCurrentEntry():<br/>entry_has_content(id)?"}
   CONFIRM["In-app confirm dialog<br/>(ConfirmDialog / confirmInApp)"]
   HARDDEL["delete_entry(id)<br/>explicit hard delete"]
+  RESTORE["restoreEntryFromDisk(id)<br/>re-fetch + commit real content"]
 
   DATE --> LOAD --> STATE --> EDITOR --> CHECK
   CHECK -- Yes --> SAVE
@@ -40,10 +41,10 @@ flowchart TB
   EDITOR --> NAV --> GUARD
   GUARD -- "No content (blank)" --> DATES
   GUARD -- "Has real content" --> CONFIRM
-  CONFIRM -- Cancel --> EDITOR
+  CONFIRM -- Cancel --> RESTORE --> EDITOR
   CONFIRM -- Confirm --> HARDDEL --> DATES
 
-  class DATE,LOAD,STATE,EDITOR,DATES,NAV,CONFIRM ui;
+  class DATE,LOAD,STATE,EDITOR,DATES,NAV,CONFIRM,RESTORE ui;
   class CREATE,SAVE,DELETE,ENC,HARDDEL backend;
   class DB1 data;
   class CHECK,EMPTY,GUARD decision;

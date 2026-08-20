@@ -16,6 +16,7 @@ const mocks = vi.hoisted(() => ({
   entryHasContent: vi.fn(),
   confirmInApp: vi.fn(),
   getAllEntryDates: vi.fn(),
+  getEntriesForDate: vi.fn(),
 }));
 
 vi.mock('../../../lib/tauri', async () => {
@@ -26,6 +27,7 @@ vi.mock('../../../lib/tauri', async () => {
     deleteEntry: mocks.deleteEntry,
     entryHasContent: mocks.entryHasContent,
     getAllEntryDates: mocks.getAllEntryDates,
+    getEntriesForDate: mocks.getEntriesForDate,
   };
 });
 
@@ -92,7 +94,7 @@ function makeLifecycle(initial: { title?: string; content?: string; pendingEntry
   if (initial.pendingEntryId !== undefined) {
     lifecycle.entryCommitTargets.setHydratedEntryId(initial.pendingEntryId);
   }
-  return { lifecycle, setPendingEntryId, dayEntries };
+  return { lifecycle, setPendingEntryId, dayEntries, title, content, currentIndex };
 }
 
 describe('canLeaveCurrentEntry (TODO-0104)', () => {
@@ -102,6 +104,7 @@ describe('canLeaveCurrentEntry (TODO-0104)', () => {
     mocks.entryHasContent.mockReset();
     mocks.confirmInApp.mockReset();
     mocks.getAllEntryDates.mockReset().mockResolvedValue([]);
+    mocks.getEntriesForDate.mockReset();
   });
 
   it('canLeaveCurrentEntry allows navigation when there is no pending entry', async () => {
@@ -134,15 +137,130 @@ describe('canLeaveCurrentEntry (TODO-0104)', () => {
     expect(mocks.deleteEntry).not.toHaveBeenCalled();
   });
 
-  it('canLeaveCurrentEntry shows the confirm dialog and denies navigation on cancel, leaving the entry unmodified', async () => {
+  it("canLeaveCurrentEntry shows the confirm dialog and, on cancel, restores the entry's real content from disk while still denying navigation", async () => {
     mocks.entryHasContent.mockResolvedValue(true);
     mocks.confirmInApp.mockResolvedValue(false);
-    const { lifecycle } = makeLifecycle({ pendingEntryId: 3, title: '', content: '' });
-    const result = await lifecycle.canLeaveCurrentEntry('test');
-    expect(result).toBe(false);
-    expect(mocks.confirmInApp).toHaveBeenCalledWith('editor.deleteConfirmMessage', {
-      title: 'editor.deleteConfirmTitle',
+    mocks.getEntriesForDate.mockResolvedValue([
+      {
+        id: 3,
+        date: '2026-01-01',
+        title: 'Real title',
+        text: '<p>Real content</p>',
+        word_count: 2,
+        date_created: '2026-01-01T00:00:00Z',
+        date_updated: '2026-01-01T00:00:00Z',
+        metadata: null,
+        locked: false,
+      },
+    ]);
+    const { lifecycle, title, content, currentIndex } = makeLifecycle({
+      pendingEntryId: 3,
+      title: '',
+      content: '',
     });
+
+    const result = await lifecycle.canLeaveCurrentEntry('test');
+
+    expect(result).toBe(false);
+    expect(mocks.deleteEntry).not.toHaveBeenCalled();
+    expect(mocks.getEntriesForDate).toHaveBeenCalledWith('2026-01-01');
+    expect(title()).toBe('Real title');
+    expect(content()).toBe('<p>Real content</p>');
+    expect(currentIndex()).toBe(0);
+  });
+
+  it("canLeaveCurrentEntry restores the correct entry on cancel when it is not the day's newest entry", async () => {
+    mocks.entryHasContent.mockResolvedValue(true);
+    mocks.confirmInApp.mockResolvedValue(false);
+    // Backend returns newest-first: id 10 is the day's newest, id 3 is older.
+    // fetchEntriesOrdered reverses this to [id 3 (idx 0), id 10 (idx 1)].
+    mocks.getEntriesForDate.mockResolvedValue([
+      {
+        id: 10,
+        date: '2026-01-01',
+        title: 'Newest',
+        text: '<p>Newest content</p>',
+        word_count: 2,
+        date_created: '2026-01-01T00:00:00Z',
+        date_updated: '2026-01-01T00:00:00Z',
+        metadata: null,
+        locked: false,
+      },
+      {
+        id: 3,
+        date: '2026-01-01',
+        title: 'Erased entry real title',
+        text: '<p>Erased entry real content</p>',
+        word_count: 3,
+        date_created: '2026-01-01T00:00:00Z',
+        date_updated: '2026-01-01T00:00:00Z',
+        metadata: null,
+        locked: false,
+      },
+    ]);
+    // The user was editing entry 3 (not the day's newest) and erased it.
+    const { lifecycle, title, content, currentIndex } = makeLifecycle({
+      pendingEntryId: 3,
+      title: '',
+      content: '',
+    });
+
+    const result = await lifecycle.canLeaveCurrentEntry('test');
+
+    expect(result).toBe(false);
+    // Restored entry 3's own content (idx 0 after reversal) — not entry 10's, even
+    // though entry 10 is the day's newest and would be loadEntriesForDate's own default.
+    expect(title()).toBe('Erased entry real title');
+    expect(content()).toBe('<p>Erased entry real content</p>');
+    expect(currentIndex()).toBe(0);
+  });
+
+  it('canLeaveCurrentEntry clears the editor on cancel if the entry no longer exists on disk', async () => {
+    mocks.entryHasContent.mockResolvedValue(true);
+    mocks.confirmInApp.mockResolvedValue(false);
+    mocks.getEntriesForDate.mockResolvedValue([]); // entry 3 is gone by the time of the reload
+    const { lifecycle, title, content } = makeLifecycle({
+      pendingEntryId: 3,
+      title: '',
+      content: '',
+    });
+
+    const result = await lifecycle.canLeaveCurrentEntry('test');
+
+    expect(result).toBe(false);
+    // title()/content() are already '' before this call (they were blank — that's what
+    // triggered the dialog), so asserting them alone would pass identically whether or
+    // not a restore was ever attempted. Assert the restore fetch actually ran — that is
+    // the only way this test can fail against the pre-fix implementation, which never
+    // calls getEntriesForDate from the cancel branch at all.
+    expect(mocks.getEntriesForDate).toHaveBeenCalledWith('2026-01-01');
+    expect(title()).toBe('');
+    expect(content()).toBe('');
+  });
+
+  it('canLeaveCurrentEntry attempts the restore and still denies navigation if the restore fetch itself fails', async () => {
+    mocks.entryHasContent.mockResolvedValue(true);
+    mocks.confirmInApp.mockResolvedValue(false);
+    mocks.getEntriesForDate.mockRejectedValue(new Error('network error'));
+    const { lifecycle, title, content } = makeLifecycle({
+      pendingEntryId: 9,
+      title: '',
+      content: '',
+    });
+
+    const result = await lifecycle.canLeaveCurrentEntry('test');
+
+    expect(result).toBe(false);
+    // Same reasoning as the previous test: assert the restore was actually attempted
+    // (this is what makes the test meaningful pre- vs. post-fix), not just that nothing
+    // crashed — a no-op cancel branch would also trivially satisfy the assertions below.
+    expect(mocks.getEntriesForDate).toHaveBeenCalledWith('2026-01-01');
+    // The restore itself failed — this degrades to the pre-fix visual state (blank, but
+    // nothing was deleted) rather than throwing past the caller. Deliberate, narrow
+    // fallback: this failure is rare, and the entry is still safe on disk regardless —
+    // deny only blocks navigation, it deletes nothing.
+    expect(title()).toBe('');
+    expect(content()).toBe('');
     expect(mocks.deleteEntry).not.toHaveBeenCalled();
   });
 
