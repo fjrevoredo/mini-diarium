@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1787156999931,
+  "lastUpdate": 1787246683754,
   "repoUrl": "https://github.com/fjrevoredo/mini-diarium",
   "entries": {
     "Benchmark": [
@@ -35554,6 +35554,192 @@ window.BENCHMARK_DATA = {
           {
             "name": "ci_pipeline_duration",
             "value": 557000000000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "committer": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "distinct": true,
+          "id": "bfddf341a9a637dd11b021bfeb4a4a6dc281d5dd",
+          "message": "Fixed: Cancelling that confirmation dialog left the editor showing blank instead of your actual entry",
+          "timestamp": "2026-08-20T19:11:18+02:00",
+          "tree_id": "7b93a1c01b85f633f3dbe496f3963ba076cc34c9",
+          "url": "https://github.com/fjrevoredo/mini-diarium/commit/bfddf341a9a637dd11b021bfeb4a4a6dc281d5dd"
+        },
+        "date": 1787246682865,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "auth_argon2/wrap_master_key",
+            "value": 77403571,
+            "range": "± 1129164",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "auth_argon2/unwrap_master_key",
+            "value": 77047735,
+            "range": "± 81500",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "backup_snapshot/create_snapshot/small_143360B",
+            "value": 4930175,
+            "range": "± 1917273",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "backup_snapshot/create_snapshot/large_8343552B",
+            "value": 104041472,
+            "range": "± 35259433",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "backup_snapshot/create_snapshot/image_heavy_40230912B",
+            "value": 410104655,
+            "range": "± 74662985",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_encrypt/1024",
+            "value": 1287,
+            "range": "± 23",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_encrypt/10240",
+            "value": 5678,
+            "range": "± 55",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_encrypt/102400",
+            "value": 51401,
+            "range": "± 182",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_decrypt/1024",
+            "value": 657,
+            "range": "± 2",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_decrypt/10240",
+            "value": 4923,
+            "range": "± 113",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_decrypt/102400",
+            "value": 49009,
+            "range": "± 122",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_insert_entry",
+            "value": 62042,
+            "range": "± 3981",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_update_entry",
+            "value": 12325,
+            "range": "± 308",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_delete_entry",
+            "value": 86968,
+            "range": "± 6059",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_entries_by_date",
+            "value": 13360,
+            "range": "± 54",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_all_entry_dates/100",
+            "value": 26369,
+            "range": "± 328",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_all_entry_dates/500",
+            "value": 93216,
+            "range": "± 1332",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_all_entries/100",
+            "value": 130146,
+            "range": "± 825",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_all_entries/500",
+            "value": 593933,
+            "range": "± 2860",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_all_entries/1000",
+            "value": 1167455,
+            "range": "± 15011",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_all_entries/3650",
+            "value": 4225026,
+            "range": "± 21697",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_search_entries/500",
+            "value": 10349630,
+            "range": "± 41926",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_search_entries/1000",
+            "value": 21374054,
+            "range": "± 69019",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_search_entries/3650",
+            "value": 77926189,
+            "range": "± 3243671",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "count_words_plain_500w",
+            "value": 4575,
+            "range": "± 60",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "count_words_html_500w",
+            "value": 6207,
+            "range": "± 225",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "ci_pipeline_duration",
+            "value": 790000000000,
             "range": "± 0",
             "unit": "ns/iter"
           }
