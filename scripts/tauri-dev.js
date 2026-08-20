@@ -20,7 +20,10 @@ function terminateChild() {
     // `child` is the cmd.exe shell created by `spawn(..., { shell: true })`.
     // Kill its complete tree so Tauri's cargo watcher and Vite beforeDevCommand
     // cannot survive a Ctrl+C or a parent-process shutdown.
-    spawnSync('taskkill', ['/pid', String(child.pid), '/t', '/f'], {
+    // Absolute path (not a bare 'taskkill' PATH lookup) so a writable directory
+    // earlier in PATH can't substitute a malicious binary (SonarCloud S4036).
+    const taskkillPath = `${process.env.SystemRoot ?? 'C:\\Windows'}\\System32\\taskkill.exe`;
+    spawnSync(taskkillPath, ['/pid', String(child.pid), '/t', '/f'], {
       stdio: 'inherit',
     });
   } else {
