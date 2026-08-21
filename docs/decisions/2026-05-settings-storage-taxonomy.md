@@ -103,7 +103,7 @@ Q5: Is this a security enforcement setting or integrity-critical?
 
 **Key: `'project-support-checklist'`** — global (not per-journal) JSON array of `SupportChecklistItem` self-tap "I did this" completions (star/review/share/newsletter/contribute/donate), managed by `src/state/project-support.ts`. Deliberately global: actions like starring the GitHub repo aren't per-journal, so scoping this per journal would re-show an unchecked box for someone with multiple journals.
 
-The two per-journal keys above (`first-seen-${journalId}`, `support-milestone-shown-${journalId}`) follow the `localStorage` precedent already set by `'onboarding-shown-${journalId}'` (`src/state/onboarding.ts`) rather than this ADR's own flowchart, which would route a new per-journal, non-security, post-unlock-only setting to `db_settings` (Q4/Q5 above). This was a deliberate, scoped choice (2026-08-21) to keep the Project Support feature backend-free — see `docs/project-support-overlay-plan.md` Assumptions.
+The two per-journal keys above (`first-seen-${journalId}`, `support-milestone-shown-${journalId}`) follow the `localStorage` precedent already set by `'onboarding-shown-${journalId}'` (`src/state/onboarding.ts`) rather than this ADR's own flowchart, which would route a new per-journal, non-security, post-unlock-only setting to `db_settings` (Q4/Q5 above). This was a deliberate, scoped choice (2026-08-21) to keep the Project Support feature backend-free — see `docs/archive/project-support-overlay-plan.md` Assumptions.
 
 ### `config.json` (`{app_data_dir}/config.json`)
 

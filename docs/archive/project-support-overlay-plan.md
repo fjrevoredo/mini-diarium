@@ -29,7 +29,7 @@ goes looking on their own. Both routes open one shared, ascending-friction check
 
 This plan implements **Proposal 4** (streak-anchored trigger + dedicated header icon) and
 **Proposal 5** (`ProjectSupportOverlay` destination) from
-[`docs/explorations/in-app-donation-nudge-proposals.md`](explorations/in-app-donation-nudge-proposals.md),
+[`in-app-donation-nudge-proposals.md`](in-app-donation-nudge-proposals.md),
 as refined across that exploration session (2026-08-21). Proposals 1–3 in that document are
 superseded and are not implemented as originally written; see that doc's "Recommended Direction"
 for the full reasoning trail.
@@ -756,16 +756,18 @@ Assumptions above.
      off once this plan is approved and execution begins).
 - Validation: `git status` / `git diff --stat` shows only the files listed in this plan's Scope
   section (plus the exploration doc's checklist update and the TODO/CHANGELOG entries).
-- Notes: Do not remove `docs/project-support-overlay-plan.md` itself or the exploration doc —
-  both are intentional final artifacts.
+- Notes: Do not remove this archived plan or the exploration doc — both are intentional final
+  artifacts.
 
 #### Task 5.4: Final verification
 
 - Status: COMPLETED
 - Objective: The complete, integrated change passes every project-level gate.
 - Steps:
-  1. Run `cmd.exe /c bun run coverage:diff` (or `coverage:check` if lcov files are stale) — the
-     local mirror of Codecov's patch-coverage gate (≥80% of new/changed lines).
+  1. Run `cmd.exe /d /s /c "bun run coverage:diff -- --working-tree"` — the local mirror of
+     Codecov's patch-coverage gate (≥80% of new/changed lines) against the staged working-tree
+     patch. If lcov files must be regenerated, run `cmd.exe /d /s /c "bun run coverage:check -- --working-tree"`
+     instead.
   2. Run `cmd.exe /c bun run validate:locales` — informational only; new `support.*` keys will be
      reported missing from community JSON locales, which is expected (see Task 3.1 Notes) and
      must not be treated as a failure.

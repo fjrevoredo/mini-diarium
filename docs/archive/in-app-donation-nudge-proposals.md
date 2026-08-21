@@ -606,7 +606,7 @@ whether the others are offered with equal seriousness.
       milestone is actually pending, and doesn't remix milestone content into the
       release-news channel Proposal 2 deliberately keeps separate
 - [x] Capture a formal implementation plan (still no code) — see
-      [`docs/project-support-overlay-plan.md`](../project-support-overlay-plan.md)
+      [`project-support-overlay-plan.md`](project-support-overlay-plan.md)
 - [x] Pick the specific icon/glyph and its position — decided (2026-08-21): a `Heart` icon
       (lucide-solid, already the icon family every other Header glyph uses), placed at the
       **end of the left-hand group** in `Header.tsx` (after `header-next-day-button`), not
@@ -617,4 +617,4 @@ whether the others are offered with equal seriousness.
       visual middle, rather than blending into the right-side icon row. Conditionally
       rendered (`<Show when={hasPendingMilestone()}>`), same as the rest of Proposal 4.
 - [x] Exit exploration mode to implement — implemented per
-      [`docs/project-support-overlay-plan.md`](../project-support-overlay-plan.md), TODO-0106
+      [`project-support-overlay-plan.md`](project-support-overlay-plan.md), TODO-0106

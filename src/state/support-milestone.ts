@@ -29,36 +29,71 @@ export function computePendingMilestone(
   return null;
 }
 
-const [pendingRung, setPendingRung] = createSignal<number | null>(null);
+const [pendingRungState, setPendingRung] = createSignal<number | null>(null);
+let pendingJournalId: string | null = null;
+let checkGeneration = 0;
+
+function clearPendingMilestone(): void {
+  pendingJournalId = null;
+  setPendingRung(null);
+}
+
+function isCurrentCheck(generation: number, journalId: string): boolean {
+  return generation === checkGeneration && activeJournalId() === journalId;
+}
 
 export async function checkSupportMilestone(): Promise<void> {
+  const generation = ++checkGeneration;
   const journalId = activeJournalId();
-  if (journalId === null) return;
+  if (journalId === null) {
+    clearPendingMilestone();
+    return;
+  }
 
-  const stats = await getStatistics();
-  const firstSeenRaw = localStorage.getItem(firstSeenKey(journalId));
-  const firstSeenMs = firstSeenRaw !== null ? Number(firstSeenRaw) : Date.now();
-  const highestShownRung = Number(localStorage.getItem(shownKey(journalId)) ?? '0');
+  try {
+    const stats = await getStatistics();
+    if (!isCurrentCheck(generation, journalId)) return;
 
-  setPendingRung(
-    computePendingMilestone(stats.best_streak, firstSeenMs, Date.now(), highestShownRung),
-  );
+    const firstSeenRaw = localStorage.getItem(firstSeenKey(journalId));
+    const firstSeenMs = firstSeenRaw !== null ? Number(firstSeenRaw) : Date.now();
+    const highestShownRung = Number(localStorage.getItem(shownKey(journalId)) ?? '0');
+    const rung = computePendingMilestone(
+      stats.best_streak,
+      firstSeenMs,
+      Date.now(),
+      highestShownRung,
+    );
+
+    pendingJournalId = rung === null ? null : journalId;
+    setPendingRung(rung);
+  } catch {
+    // Statistics are optional support-prompt data. A transient IPC failure should not
+    // interrupt unlock or become an unhandled rejection from App's fire-and-forget call.
+    if (isCurrentCheck(generation, journalId)) clearPendingMilestone();
+  }
 }
 
 export function dismissSupportMilestone(): void {
   const rung = pendingRung();
   const journalId = activeJournalId();
-  if (rung !== null && journalId !== null) {
+  if (rung !== null && journalId !== null && pendingJournalId === journalId) {
     localStorage.setItem(shownKey(journalId), rung.toString());
   }
-  setPendingRung(null);
+  clearPendingMilestone();
 }
 
 // Session-scoped, per-journal state — must be cleared on lock (session.ts:resetSessionState())
 // so a pending rung from one journal can't survive into another journal's session and be
 // wrongly attributed/dismissed there.
 export function resetSupportMilestoneState(): void {
-  setPendingRung(null);
+  checkGeneration++;
+  clearPendingMilestone();
 }
 
-export { pendingRung };
+// Keep the consumer contract as a number-or-null getter, but make the journal ownership
+// check reactive so a journal switch cannot render an old journal's pending rung before
+// its session reset completes.
+export function pendingRung(): number | null {
+  const journalId = activeJournalId();
+  return journalId !== null && pendingJournalId === journalId ? pendingRungState() : null;
+}

@@ -54,7 +54,7 @@ const [isSearchOpen, setIsSearchOpen] = createSignal(false);
 const [isMoreMenuOpen, setIsMoreMenuOpen] = createSignal(false);
 
 // Project Support overlay state — shared by the streak-triggered Header icon and the
-// permanent About-screen entry point (docs/project-support-overlay-plan.md).
+// permanent About-screen entry point (docs/archive/project-support-overlay-plan.md).
 const [isProjectSupportOpen, setIsProjectSupportOpen] = createSignal(false);
 const [projectSupportEntry, setProjectSupportEntry] = createSignal<'milestone' | 'about'>('about');
 

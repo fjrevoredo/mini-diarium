@@ -66,7 +66,7 @@ function App() {
 
   // Records the journal's first-seen timestamp once, then recomputes whether a
   // support-milestone rung is pending. Runs once per unlock (not per keystroke) —
-  // see docs/project-support-overlay-plan.md Assumptions.
+  // see docs/archive/project-support-overlay-plan.md Assumptions.
   createEffect(() => {
     if (authState() !== 'unlocked') return;
     const journalId = activeJournalId();

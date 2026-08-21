@@ -21,11 +21,31 @@ import {
 
 const DAY_MS = 86_400_000;
 
+function makeStats(bestStreak: number) {
+  return {
+    total_entries: 10,
+    entries_per_week: 7,
+    best_streak: bestStreak,
+    current_streak: bestStreak,
+    total_words: 1000,
+    avg_words_per_entry: 100,
+  };
+}
+
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  const promise = new Promise<T>((promiseResolve) => {
+    resolve = promiseResolve;
+  });
+  return { promise, resolve };
+}
+
 describe('state/support-milestone', () => {
   beforeEach(() => {
     localStorage.clear();
     journalState.activeId = null;
     statsMock.getStatistics.mockReset();
+    resetSupportMilestoneState();
   });
 
   describe('recordFirstSeenIfAbsent', () => {
@@ -78,14 +98,7 @@ describe('state/support-milestone', () => {
       journalState.activeId = 'journal-1';
       const firstSeen = Date.now() - 10 * DAY_MS;
       localStorage.setItem('first-seen-journal-1', firstSeen.toString());
-      statsMock.getStatistics.mockResolvedValue({
-        total_entries: 10,
-        entries_per_week: 7,
-        best_streak: 7,
-        current_streak: 7,
-        total_words: 1000,
-        avg_words_per_entry: 100,
-      });
+      statsMock.getStatistics.mockResolvedValue(makeStats(7));
 
       await checkSupportMilestone();
       expect(pendingRung()).toBe(7);
@@ -95,14 +108,7 @@ describe('state/support-milestone', () => {
       journalState.activeId = 'journal-1';
       const firstSeen = Date.now() - 10 * DAY_MS;
       localStorage.setItem('first-seen-journal-1', firstSeen.toString());
-      statsMock.getStatistics.mockResolvedValue({
-        total_entries: 10,
-        entries_per_week: 7,
-        best_streak: 7,
-        current_streak: 7,
-        total_words: 1000,
-        avg_words_per_entry: 100,
-      });
+      statsMock.getStatistics.mockResolvedValue(makeStats(7));
 
       await checkSupportMilestone();
       dismissSupportMilestone();
@@ -117,19 +123,58 @@ describe('state/support-milestone', () => {
       journalState.activeId = 'journal-1';
       const firstSeen = Date.now() - 10 * DAY_MS;
       localStorage.setItem('first-seen-journal-1', firstSeen.toString());
-      statsMock.getStatistics.mockResolvedValue({
-        total_entries: 10,
-        entries_per_week: 7,
-        best_streak: 7,
-        current_streak: 7,
-        total_words: 1000,
-        avg_words_per_entry: 100,
-      });
+      statsMock.getStatistics.mockResolvedValue(makeStats(7));
 
       await checkSupportMilestone();
       expect(pendingRung()).toBe(7);
 
       resetSupportMilestoneState();
+
+      expect(pendingRung()).toBeNull();
+      expect(localStorage.getItem('support-milestone-shown-journal-1')).toBeNull();
+    });
+
+    it('ignores a late lookup after the session resets and the active journal changes', async () => {
+      journalState.activeId = 'journal-a';
+      localStorage.setItem('first-seen-journal-a', (Date.now() - 10 * DAY_MS).toString());
+      const statistics = deferred<ReturnType<typeof makeStats>>();
+      statsMock.getStatistics.mockReturnValue(statistics.promise);
+
+      const check = checkSupportMilestone();
+      resetSupportMilestoneState();
+      journalState.activeId = 'journal-b';
+      statistics.resolve(makeStats(7));
+
+      await check;
+      expect(pendingRung()).toBeNull();
+
+      dismissSupportMilestone();
+      expect(localStorage.getItem('support-milestone-shown-journal-b')).toBeNull();
+    });
+
+    it('lets only the newest overlapping lookup publish its rung', async () => {
+      journalState.activeId = 'journal-1';
+      localStorage.setItem('first-seen-journal-1', (Date.now() - 400 * DAY_MS).toString());
+      const older = deferred<ReturnType<typeof makeStats>>();
+      const newer = deferred<ReturnType<typeof makeStats>>();
+      statsMock.getStatistics.mockReturnValueOnce(older.promise).mockReturnValueOnce(newer.promise);
+
+      const olderCheck = checkSupportMilestone();
+      const newerCheck = checkSupportMilestone();
+      newer.resolve(makeStats(66));
+      await newerCheck;
+      expect(pendingRung()).toBe(66);
+
+      older.resolve(makeStats(7));
+      await olderCheck;
+      expect(pendingRung()).toBe(66);
+    });
+
+    it('contains statistics failures without leaving a pending prompt', async () => {
+      journalState.activeId = 'journal-1';
+      statsMock.getStatistics.mockRejectedValue(new Error('statistics unavailable'));
+
+      await expect(checkSupportMilestone()).resolves.toBeUndefined();
 
       expect(pendingRung()).toBeNull();
       expect(localStorage.getItem('support-milestone-shown-journal-1')).toBeNull();
