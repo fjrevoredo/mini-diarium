@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1787349330617,
+  "lastUpdate": 1787349938822,
   "repoUrl": "https://github.com/fjrevoredo/mini-diarium",
   "entries": {
     "Benchmark": [
@@ -35860,6 +35860,36 @@ window.BENCHMARK_DATA = {
           {
             "name": "ci_pipeline_duration",
             "value": 604000000000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "committer": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "distinct": true,
+          "id": "4a69237944a7939f3f06e43eed7d25e99acafc29",
+          "message": "visual tweaks to the donation overlay",
+          "timestamp": "2026-08-21T23:55:51+02:00",
+          "tree_id": "4f4676f3f57ac64a95b760d3e8c775fce1ce26d3",
+          "url": "https://github.com/fjrevoredo/mini-diarium/commit/4a69237944a7939f3f06e43eed7d25e99acafc29"
+        },
+        "date": 1787349937872,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "ci_pipeline_duration",
+            "value": 575000000000,
             "range": "± 0",
             "unit": "ns/iter"
           }
