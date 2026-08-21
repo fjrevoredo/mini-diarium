@@ -27,12 +27,17 @@ export interface FocusLossAutoLockOptions {
 // The lock does not fire immediately on focus loss: it's debounced by
 // FOCUS_LOSS_DEBOUNCE_MS so a quick misclick outside the window doesn't lock the
 // journal (the same "window-focused" event that fires when a native dialog opened
-// via src/lib/dialog.ts steals focus, then closes, cancels the pending lock too —
-// `isDialogOpen()` is still checked at the moment the debounce fires as a second
-// layer, for a dialog left open longer than the debounce). This does not cover
-// focus stolen by the native menu bar or other focus-stealers outside the app's
-// own dialog call sites — a known, narrower gap than a full "which process owns
-// the active window" check, which is unreliable on Linux/Wayland.
+// via src/lib/dialog.ts steals focus, then closes, cancels the pending lock too).
+// `isDialogOpen()` is checked when the debounce fires — but rather than abandoning
+// the check when it's true, the check reschedules itself and re-checks every
+// debounceMs until `isDialogOpen()` returns false, at which point it locks if the
+// window is still unfocused and the journal still unlocked. This bounds a dialog
+// (or `dialog.ts`'s time-bounded `openUrlSuppressingFocusLoss()` suppression) left
+// open a long time while the user is away: the lock is delayed, not skipped. This
+// does not cover focus stolen by the native menu bar or other focus-stealers
+// outside the app's own dialog call sites — a known, narrower gap than a full
+// "which process owns the active window" check, which is unreliable on
+// Linux/Wayland.
 export function createFocusLossAutoLock(options: FocusLossAutoLockOptions): void {
   createEffect(() => {
     if (!options.enabled() || !options.isUnlocked()) return;
@@ -49,14 +54,24 @@ export function createFocusLossAutoLock(options: FocusLossAutoLockOptions): void
       }
     }
 
-    void listen('window-unfocused', () => {
-      clearDebounce();
+    function scheduleCheck(delay: number) {
       debounceTimer = setTimeout(() => {
         debounceTimer = undefined;
-        if (isDialogOpen()) return; // suppress: our own dialog stole focus, not the user
+        if (isDialogOpen()) {
+          // Our own dialog (or an external-link handoff) still owns focus —
+          // reschedule instead of abandoning the check, so a long-open dialog
+          // delays the lock rather than disabling it.
+          scheduleCheck(options.debounceMs ?? FOCUS_LOSS_DEBOUNCE_MS);
+          return;
+        }
         if (!options.isUnlocked()) return; // inline guard: state may have changed during the wait
         options.lock();
-      }, options.debounceMs ?? FOCUS_LOSS_DEBOUNCE_MS);
+      }, delay);
+    }
+
+    void listen('window-unfocused', () => {
+      clearDebounce();
+      scheduleCheck(options.debounceMs ?? FOCUS_LOSS_DEBOUNCE_MS);
     }).then((fn) => {
       if (disposed) {
         fn();

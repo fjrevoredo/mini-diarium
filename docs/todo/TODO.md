@@ -13,13 +13,15 @@ TODO entry format:
 - After creating a new TODO, update the `Latest TODO ID` marker to reflect the new highest ID
 - Use the `todo-manager` skill (`.agents/skills/todo-manager/`) for creation, tracking, archival, and validation
 
-**Latest TODO ID: TODO-0105** — next new TODO should be TODO-0106
+**Latest TODO ID: TODO-0106** — next new TODO should be TODO-0107
 
 ---
 
 ## High Priority
 
 ---
+
+- [x] **TODO-0106: In-app Project Support overlay + streak-triggered header icon** — give users an in-app way to discover how to support Mini Diarium (star, review, share, subscribe, contribute, donate) without ever interrupting the editor. A conditionally-rendered `Heart` header icon invites users who have demonstrably formed a journaling habit (a real `best_streak` milestone at 7/66/365 days, gated on wall-clock journal age so it cannot be triggered by bulk import); a permanent About-screen link invites anyone who goes looking on their own. Both routes open one shared, ascending-friction `ProjectSupportOverlay` checklist. 100% frontend — no backend/Rust changes (`get_statistics()` already returns `best_streak`). Origin: [`docs/explorations/in-app-donation-nudge-proposals.md`](../explorations/in-app-donation-nudge-proposals.md). Full design, milestones, and the UX-GATE walkthrough live in [`docs/project-support-overlay-plan.md`](../project-support-overlay-plan.md).
 
 - [x] **TODO-0105: Cancelling the delete-confirmation dialog restores the entry's real content instead of leaving the editor blank** — TODO-0104 shipped a confirm dialog that blocks navigation away from an entry whose real, on-disk content was just erased in the editor. Clicking Cancel correctly denies navigation and never deletes the entry, but leaves the editor showing the blank state that triggered the dialog, even though the disk row underneath is intact — with no visible way back to the real content short of manually undoing the edit. Acceptance: on Cancel, the editor reloads and displays the entry's actual on-disk content (the exact entry being restored, not just the day's newest, in multi-entry days) before denying the navigation. Full design and TDD task breakdown live in [`docs/entry-persistence-cancel-restore-plan.md`](../entry-persistence-cancel-restore-plan.md).
 - [ ] **TODO-0008: Cursor height too tall after Shift+Enter on macOS (#118)** — the text caret (cursor) height becomes extra long starting on the second line, but only when inserting a soft line break with Shift+Enter (Enter alone works fine); macOS-only (v0.4.20); likely a `line-height` or `font-family` mismatch in ProseMirror's `<br>` handling introduced with new editor fonts in v0.4.20; audit soft-break styling in `src/styles/editor.css` and the `--editor-font-family` / `--editor-font-size` CSS custom properties

@@ -12,6 +12,7 @@ import StatsOverlay from '../overlays/StatsOverlay';
 import ImportOverlay from '../overlays/ImportOverlay';
 import ExportOverlay from '../overlays/ExportOverlay';
 import NotificationsOverlay from '../overlays/NotificationsOverlay';
+import ProjectSupportOverlay from '../overlays/ProjectSupportOverlay';
 import TagManager from '../overlays/TagManager';
 import OnboardingTour from '../overlays/OnboardingOverlay';
 import SearchOverlay from '../search/SearchOverlay';
@@ -117,6 +118,7 @@ export default function MainLayout() {
       />
       <ExportOverlay isOpen={isExportOpen()} onClose={() => setIsExportOpen(false)} />
       <NotificationsOverlay />
+      <ProjectSupportOverlay />
       <TagManager isOpen={isTagManagerOpen()} onClose={() => setIsTagManagerOpen(false)} />
       <OnboardingTour />
       <SearchOverlay />

@@ -8,6 +8,8 @@ import { setLocale, useI18n } from './i18n';
 import { setSpellcheckEnabled, updateMenuLocale } from './lib/tauri';
 import { isAboutOpen, setIsAboutOpen } from './state/ui';
 import { loadNotifications } from './state/notifications';
+import { activeJournalId } from './state/journals';
+import { recordFirstSeenIfAbsent, checkSupportMilestone } from './state/support-milestone';
 import JournalPicker from './components/auth/JournalPicker';
 import PasswordCreation from './components/auth/PasswordCreation';
 import PasswordPrompt from './components/auth/PasswordPrompt';
@@ -60,6 +62,18 @@ function App() {
       }
       ACTIVITY_EVENTS.forEach((e) => document.removeEventListener(e, handleActivity));
     });
+  });
+
+  // Records the journal's first-seen timestamp once, then recomputes whether a
+  // support-milestone rung is pending. Runs once per unlock (not per keystroke) —
+  // see docs/project-support-overlay-plan.md Assumptions.
+  createEffect(() => {
+    if (authState() !== 'unlocked') return;
+    const journalId = activeJournalId();
+    if (journalId === null) return;
+
+    recordFirstSeenIfAbsent(journalId);
+    void checkSupportMilestone();
   });
 
   createFocusLossAutoLock({

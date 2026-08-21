@@ -53,6 +53,11 @@ const [isSearchOpen, setIsSearchOpen] = createSignal(false);
 // Escape/search-shortcut guards can detect it and avoid firing underneath it.
 const [isMoreMenuOpen, setIsMoreMenuOpen] = createSignal(false);
 
+// Project Support overlay state — shared by the streak-triggered Header icon and the
+// permanent About-screen entry point (docs/project-support-overlay-plan.md).
+const [isProjectSupportOpen, setIsProjectSupportOpen] = createSignal(false);
+const [projectSupportEntry, setProjectSupportEntry] = createSignal<'milestone' | 'about'>('about');
+
 /**
  * True while any modal overlay owns the screen. Single source of truth for the
  * "don't fire underneath a dialog" guard used by the global Escape handler and by
@@ -74,6 +79,7 @@ export function isAnyOverlayOpen(): boolean {
     isImagePickerOpen() ||
     isSearchOpen() ||
     isMoreMenuOpen() ||
+    isProjectSupportOpen() ||
     isConfirmDialogOpen()
   );
 }
@@ -126,6 +132,8 @@ export function resetUiState(): void {
   setIsImagePickerOpen(false);
   setIsSearchOpen(false);
   setIsMoreMenuOpen(false);
+  setIsProjectSupportOpen(false);
+  setProjectSupportEntry('about');
 }
 
 export {
@@ -159,4 +167,8 @@ export {
   setIsSearchOpen,
   isMoreMenuOpen,
   setIsMoreMenuOpen,
+  isProjectSupportOpen,
+  setIsProjectSupportOpen,
+  projectSupportEntry,
+  setProjectSupportEntry,
 };

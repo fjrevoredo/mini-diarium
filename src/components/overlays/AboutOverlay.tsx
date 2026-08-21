@@ -3,8 +3,9 @@ import { Dialog } from '@kobalte/core/dialog';
 import { getVersion } from '@tauri-apps/api/app';
 import { openUrl } from '@tauri-apps/plugin-opener';
 import { useI18n } from '../../i18n';
-import { X, GitFork, BookOpen, Compass } from 'lucide-solid';
+import { X, GitFork, BookOpen, Compass, Heart } from 'lucide-solid';
 import { replayOnboarding } from '../../state/onboarding';
+import { setIsProjectSupportOpen, setProjectSupportEntry } from '../../state/ui';
 
 interface AboutOverlayProps {
   isOpen: boolean;
@@ -91,6 +92,21 @@ export default function AboutOverlay(props: AboutOverlayProps) {
                 </button>
               </div>
               <p class="text-xs text-tertiary">{t('about.opensInBrowser')}</p>
+            </div>
+
+            {/* Support Mini Diarium */}
+            <div class="flex justify-center mb-6">
+              <button
+                onClick={() => {
+                  setProjectSupportEntry('about');
+                  setIsProjectSupportOpen(true);
+                  props.onClose();
+                }}
+                class="flex items-center gap-2 rounded-full border border-primary px-4 py-2 text-sm text-secondary hover:bg-hover hover:text-primary transition-colors"
+              >
+                <Heart size={15} />
+                {t('about.supportLink')}
+              </button>
             </div>
 
             {/* Footer: tour shortcut + close */}

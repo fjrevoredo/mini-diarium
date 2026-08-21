@@ -739,6 +739,7 @@ const en = {
     docsLink: 'Documentation',
     opensInBrowser: 'opens in system browser',
     showTour: 'Show Welcome Tour',
+    supportLink: 'Support Mini Diarium',
   },
 
   /** NotificationsOverlay */
@@ -752,6 +753,35 @@ const en = {
     typeRelease: 'Release',
     typeAnnouncement: 'Announcement',
     typeTip: 'Tip',
+  },
+
+  /** ProjectSupportOverlay — reached via the streak-triggered Header icon or the
+   * About screen's "Support Mini Diarium" button. */
+  support: {
+    title: 'Support Mini Diarium',
+    closeAria: 'Close',
+    headerIconAria: 'Support Mini Diarium',
+    openingLineAbout:
+      'Mini Diarium is free, encrypted, and has no ads or tracking. If it has been useful to you, here are a few ways to help it keep going.',
+    openingLineMilestone:
+      "You've journaled a {{ streak }}-day streak and written {{ words }} words. If Mini Diarium has helped you keep that habit, here are a few ways to support it.",
+    footerDefault: 'Any one of these helps more than you might think.',
+    footerThanked: 'Thank you for supporting Mini Diarium!',
+    itemStarLabel: 'Star the project on GitHub',
+    itemStarButton: 'Star on GitHub',
+    itemReviewLabel: 'Leave a review on the Microsoft Store',
+    itemReviewButton: 'Leave a review',
+    itemShareLabel: 'Share Mini Diarium with a friend',
+    itemShareButton: 'Copy share message',
+    itemNewsletterLabel: 'Subscribe to the newsletter',
+    itemNewsletterButton: 'Subscribe',
+    itemContributeLabel: 'Contribute code, translations, or ideas',
+    itemContributeButton: 'Contribute',
+    itemDonateLabel: 'Make a donation',
+    itemDonateButton: 'Donate',
+    shareMessage:
+      "I've been using Mini Diarium, a free encrypted journaling app with no ads or tracking. Worth a look: https://mini-diarium.com/",
+    shareCopyFailed: "Couldn't copy — copy this yourself: {{ message }}",
   },
 
   /** TimestampOverlay */

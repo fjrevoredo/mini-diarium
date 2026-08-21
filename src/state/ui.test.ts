@@ -8,6 +8,8 @@ import {
   mainView,
   setSelectedDate,
   setMainView,
+  isAnyOverlayOpen,
+  setIsProjectSupportOpen,
 } from './ui';
 import { registerNavigationGuard } from './entries';
 
@@ -100,5 +102,13 @@ describe('guarded navigation entry points (TODO-0104)', () => {
     resetUiState();
 
     expect(guard).not.toHaveBeenCalled();
+  });
+
+  it('isAnyOverlayOpen becomes true when isProjectSupportOpen is set', () => {
+    expect(isAnyOverlayOpen()).toBe(false);
+    setIsProjectSupportOpen(true);
+    expect(isAnyOverlayOpen()).toBe(true);
+    setIsProjectSupportOpen(false);
+    expect(isAnyOverlayOpen()).toBe(false);
   });
 });

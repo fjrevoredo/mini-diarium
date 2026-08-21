@@ -97,6 +97,14 @@ Q5: Is this a security enforcement setting or integrity-critical?
 
 **Key: `'feature-flags'`** — open `Record<string, boolean>` of runtime feature flags, managed by `src/state/feature-flags.ts`. Migration-free by design: unknown keys are dropped and absent flags fall back to defaults, so no `loadPreferences`-style migration block is ever needed. Not wiped by `resetPreferences` and not part of settings export (experimental flags are ephemeral, like the theme keys). See `docs/decisions/2026-06-feature-flags.md` (Tier 2).
 
+**Key: `'first-seen-${journalId}'`** — per-journal wall-clock timestamp (ms) recorded the first time that journal is ever unlocked in this install, managed by `src/state/support-milestone.ts`. Gates the Project Support streak-milestone trigger against bulk-import gaming (a rung only fires once real time has passed since first-seen, not just once `best_streak` reaches it).
+
+**Key: `'support-milestone-shown-${journalId}'`** — per-journal highest streak-milestone rung (`7`/`66`/`365`) already shown to the user, managed by `src/state/support-milestone.ts`. Suppresses re-showing a rung already dismissed.
+
+**Key: `'project-support-checklist'`** — global (not per-journal) JSON array of `SupportChecklistItem` self-tap "I did this" completions (star/review/share/newsletter/contribute/donate), managed by `src/state/project-support.ts`. Deliberately global: actions like starring the GitHub repo aren't per-journal, so scoping this per journal would re-show an unchecked box for someone with multiple journals.
+
+The two per-journal keys above (`first-seen-${journalId}`, `support-milestone-shown-${journalId}`) follow the `localStorage` precedent already set by `'onboarding-shown-${journalId}'` (`src/state/onboarding.ts`) rather than this ADR's own flowchart, which would route a new per-journal, non-security, post-unlock-only setting to `db_settings` (Q4/Q5 above). This was a deliberate, scoped choice (2026-08-21) to keep the Project Support feature backend-free — see `docs/project-support-overlay-plan.md` Assumptions.
+
 ### `config.json` (`{app_data_dir}/config.json`)
 
 Managed by `crates/mini-diarium-core/src/config.rs`. The file contains an `AppConfig` struct:

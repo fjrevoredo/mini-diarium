@@ -10,6 +10,7 @@ import { resetSearchState } from './search';
 import { resetUiState } from './ui';
 import { resetTagsState, loadAllTags } from './tags';
 import { resetConfirmDialogState } from './confirm-dialog';
+import { resetSupportMilestoneState } from './support-milestone';
 
 const [hasFocusedEditorOnUnlock, setHasFocusedEditorOnUnlock] = createSignal(false);
 
@@ -19,6 +20,7 @@ export function resetSessionState(): void {
   resetUiState();
   resetTagsState();
   resetConfirmDialogState();
+  resetSupportMilestoneState();
   setHasFocusedEditorOnUnlock(false);
 }
 

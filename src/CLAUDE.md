@@ -158,6 +158,7 @@ These are used by E2E tests — **do not remove** from components.
 | `SearchOverlay.tsx` | Search dialog content | `search-overlay` |
 | `Header.tsx` | Lock button | `lock-journal-button` |
 | `Header.tsx` | Timeline toggle button | `timeline-toggle-button` |
+| `Header.tsx` | Streak-milestone Support icon (rendered only when a milestone is pending) | `support-milestone-button` |
 | `HeaderMoreMenu.tsx` | Overflow menu trigger (⋮); also carries `data-tour-target="import"` for the onboarding tour | `header-more-menu-trigger` |
 | `HeaderMoreMenu.tsx` | Overflow menu dropdown content | `header-more-menu-content` |
 | `HeaderMoreMenu.tsx` | Preferences item in overflow menu | `header-more-menu-preferences-item` |
@@ -210,6 +211,8 @@ These are used by E2E tests — **do not remove** from components.
 | `ConfirmDialog.tsx` | Dialog content root | `confirm-dialog` |
 | `ConfirmDialog.tsx` | Cancel button | `confirm-dialog-cancel-button` |
 | `ConfirmDialog.tsx` | Confirm button | `confirm-dialog-confirm-button` |
+| `ProjectSupportOverlay.tsx` | Dialog content root | `project-support-overlay` |
+| `ProjectSupportOverlay.tsx` | Per-item action button | `support-item-{star\|review\|share\|newsletter\|contribute\|donate}` |
 
 ## Gotchas and Pitfalls
 

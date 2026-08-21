@@ -10,9 +10,16 @@ import {
   isImportOpen,
   isExportOpen,
   isGoToDateOpen,
+  isProjectSupportOpen,
+  projectSupportEntry,
   selectedDate,
   setSelectedDate,
 } from '../../state/ui';
+
+const supportMilestoneState = vi.hoisted(() => ({ pendingRung: null as number | null }));
+vi.mock('../../state/support-milestone', () => ({
+  pendingRung: () => supportMilestoneState.pendingRung,
+}));
 
 import Header from './Header';
 
@@ -153,5 +160,30 @@ describe('Header more menu', () => {
     await user.click(item);
 
     await waitFor(() => expect(isOpen()).toBe(true));
+  });
+});
+
+describe('Header support milestone icon', () => {
+  beforeEach(() => {
+    resetUiState();
+    supportMilestoneState.pendingRung = null;
+  });
+
+  it('is absent when no milestone is pending', () => {
+    renderWithI18n(() => <Header />);
+    expect(screen.queryByTestId('support-milestone-button')).not.toBeInTheDocument();
+  });
+
+  it('is present when a milestone is pending and opens the overlay with milestone context', () => {
+    supportMilestoneState.pendingRung = 7;
+    renderWithI18n(() => <Header />);
+
+    const button = screen.getByTestId('support-milestone-button');
+    expect(button).toBeInTheDocument();
+
+    fireEvent.click(button);
+
+    expect(isProjectSupportOpen()).toBe(true);
+    expect(projectSupportEntry()).toBe('milestone');
   });
 });

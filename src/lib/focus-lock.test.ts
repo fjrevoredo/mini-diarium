@@ -139,7 +139,7 @@ describe('createFocusLossAutoLock', () => {
     dispose();
   });
 
-  it('does not call lock() when a native dialog is open at the time the debounce fires', async () => {
+  it('does not call lock() while isDialogOpen() stays true, but locks once it becomes false (reschedule)', async () => {
     const { getHandler } = mockListenCapturing();
     const lock = vi.fn();
     const dispose = createRoot((dispose) => {
@@ -156,8 +156,41 @@ describe('createFocusLossAutoLock', () => {
     mockIsDialogOpen.mockReturnValue(true);
     getHandler('window-unfocused')!();
 
+    // Still open — the check reschedules itself rather than abandoning the lock.
     await wait(TEST_DEBOUNCE_MS * 2);
     expect(lock).not.toHaveBeenCalled();
+
+    // Dialog closes (or the suppression window elapses) — the next reschedule locks.
+    mockIsDialogOpen.mockReturnValue(false);
+    await wait(TEST_DEBOUNCE_MS * 2);
+    expect(lock).toHaveBeenCalledTimes(1);
+    dispose();
+  });
+
+  it('reschedules across several consecutive isDialogOpen()===true cycles and locks exactly once', async () => {
+    const { getHandler } = mockListenCapturing();
+    const lock = vi.fn();
+    const dispose = createRoot((dispose) => {
+      createFocusLossAutoLock({
+        enabled: () => true,
+        isUnlocked: () => true,
+        lock,
+        debounceMs: TEST_DEBOUNCE_MS,
+      });
+      return dispose;
+    });
+
+    await vi.waitFor(() => expect(getHandler('window-unfocused')).toBeDefined());
+    mockIsDialogOpen.mockReturnValue(true);
+    getHandler('window-unfocused')!();
+
+    // Several reschedule cycles while still "open".
+    await wait(TEST_DEBOUNCE_MS * 5);
+    expect(lock).not.toHaveBeenCalled();
+
+    mockIsDialogOpen.mockReturnValue(false);
+    await wait(TEST_DEBOUNCE_MS * 2);
+    expect(lock).toHaveBeenCalledTimes(1);
     dispose();
   });
 

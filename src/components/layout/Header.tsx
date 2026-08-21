@@ -9,6 +9,7 @@ import {
   Search,
   ChevronLeft,
   ChevronRight,
+  Heart,
 } from 'lucide-solid';
 import {
   selectedDate,
@@ -19,7 +20,10 @@ import {
   requestMainViewChange,
   setIsSearchOpen,
   setIsGoToDateOpen,
+  setIsProjectSupportOpen,
+  setProjectSupportEntry,
 } from '../../state/ui';
+import { pendingRung } from '../../state/support-milestone';
 import { goToPreviousDay, goToNextDay } from '../../lib/day-navigation';
 import { lockJournal } from '../../state/auth';
 import { preferences } from '../../state/preferences';
@@ -105,6 +109,19 @@ export default function Header(props: HeaderProps) {
         >
           <ChevronRight size={20} />
         </button>
+        <Show when={pendingRung() !== null}>
+          <button
+            onClick={() => {
+              setProjectSupportEntry('milestone');
+              setIsProjectSupportOpen(true);
+            }}
+            data-testid="support-milestone-button"
+            class="rounded p-2 hover:bg-hover text-tertiary transition-colors"
+            aria-label={t('support.headerIconAria')}
+          >
+            <Heart size={20} />
+          </button>
+        </Show>
       </div>
 
       {/* Right: Timeline toggle + About + Notifications + Lock */}

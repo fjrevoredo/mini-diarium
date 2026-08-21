@@ -1,9 +1,10 @@
-import { describe, it, expect, vi, afterEach } from 'vitest';
+import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 
-const { mockOpen, mockSave, mockConfirm } = vi.hoisted(() => ({
+const { mockOpen, mockSave, mockConfirm, mockOpenUrl } = vi.hoisted(() => ({
   mockOpen: vi.fn(),
   mockSave: vi.fn(),
   mockConfirm: vi.fn(),
+  mockOpenUrl: vi.fn(() => Promise.resolve()),
 }));
 
 vi.mock('@tauri-apps/plugin-dialog', () => ({
@@ -12,10 +13,26 @@ vi.mock('@tauri-apps/plugin-dialog', () => ({
   confirm: mockConfirm,
 }));
 
-import { open, save, confirm, isDialogOpen } from './dialog';
+vi.mock('@tauri-apps/plugin-opener', () => ({
+  openUrl: mockOpenUrl,
+}));
+
+import {
+  open,
+  save,
+  confirm,
+  isDialogOpen,
+  suppressFocusLossLock,
+  openUrlSuppressingFocusLoss,
+} from './dialog';
+
+beforeEach(() => {
+  vi.useFakeTimers();
+});
 
 afterEach(() => {
   vi.clearAllMocks();
+  vi.useRealTimers();
 });
 
 describe('dialog guard', () => {
@@ -87,5 +104,27 @@ describe('dialog guard', () => {
     await expect(open()).rejects.toThrow('dialog failed');
 
     expect(isDialogOpen()).toBe(false);
+  });
+});
+
+describe('suppressFocusLossLock / openUrlSuppressingFocusLoss', () => {
+  it('makes isDialogOpen() return true immediately and false after the suppress window elapses', () => {
+    expect(isDialogOpen()).toBe(false);
+
+    suppressFocusLossLock();
+    expect(isDialogOpen()).toBe(true);
+
+    vi.advanceTimersByTime(3499);
+    expect(isDialogOpen()).toBe(true);
+
+    vi.advanceTimersByTime(1);
+    expect(isDialogOpen()).toBe(false);
+  });
+
+  it('openUrlSuppressingFocusLoss calls both suppressFocusLossLock and openUrl with the given URL', () => {
+    openUrlSuppressingFocusLoss('https://example.com/');
+
+    expect(isDialogOpen()).toBe(true);
+    expect(mockOpenUrl).toHaveBeenCalledWith('https://example.com/');
   });
 });
