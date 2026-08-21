@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1787254838713,
+  "lastUpdate": 1787332532209,
   "repoUrl": "https://github.com/fjrevoredo/mini-diarium",
   "entries": {
     "Benchmark": [
@@ -35800,6 +35800,36 @@ window.BENCHMARK_DATA = {
           {
             "name": "ci_pipeline_duration",
             "value": 572000000000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "committer": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "distinct": true,
+          "id": "1171b652f695346cf4b1ffd6deb569b84e14491a",
+          "message": "`bun tauri dev` no longer stalls for minutes on startup",
+          "timestamp": "2026-08-21T19:05:03+02:00",
+          "tree_id": "4ada564236ed18920a7ec9f9c73f6d9c847320a0",
+          "url": "https://github.com/fjrevoredo/mini-diarium/commit/1171b652f695346cf4b1ffd6deb569b84e14491a"
+        },
+        "date": 1787332530987,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "ci_pipeline_duration",
+            "value": 614000000000,
             "range": "± 0",
             "unit": "ns/iter"
           }
