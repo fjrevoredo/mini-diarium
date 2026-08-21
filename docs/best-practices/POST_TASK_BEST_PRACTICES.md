@@ -54,6 +54,14 @@ Add a bullet under `## [Unreleased]` (the current unreleased version block) in [
 
 Entry style: `- **Bold title** (TODO-XXXX): one-paragraph description.` Cross-link the GitHub issue/PR when relevant.
 
+Selection and consolidation rules:
+
+- **Apply the audience test before picking a section.** A published section (`Added` / `Fixed` / `Changed` / `Removed`) is for content a user of the released app would act on. If only developers care, use `Internal`. Most changelog consumers do not publish `Internal`, so that is where developer-facing material belongs.
+- **Pre-release findings are not standalone `Fixed` entries.** A defect found and fixed inside the current unreleased cycle never reached a released build. Fold it into the feature's own entry or an `Internal` hardening point that cites the review, keeping milestone or finding tags as compact suffixes.
+- **One subsystem, one point.** Related entries about the same subsystem merge into a single bold-titled point with sub-bullets. A shared explanation (root cause, mechanism) is written once, not repeated per bullet. Every fact survives: inline, or via a pointer to its durable record (archived plan, RCA doc, gotcha list).
+- **Same audience test for `Security`.** A security-labeled change with no user-facing surface (for example a dev-only script flagged by a scanner) goes under `Internal` with the finding ID cited.
+- **Prose follows the style guide.** Changelog text obeys [Writing Style Guide](WRITING_STYLE.md): no em dashes as sentence connectors, active voice, varied sentence length, concrete wording.
+
 - **Owner**: [`CHANGELOG.md`](../../CHANGELOG.md) — the template block at the top shows the exact format. The `pre-release` runbook owns the date-stamping workflow at release time.
 - **Skip condition**: change is truly trivial (typo, formatting-only). Say so explicitly with a reason. If it shipped, it gets an entry.
 
