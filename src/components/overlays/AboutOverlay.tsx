@@ -104,7 +104,7 @@ export default function AboutOverlay(props: AboutOverlayProps) {
                 }}
                 class="flex items-center gap-2 rounded-full border border-primary px-4 py-2 text-sm text-secondary hover:bg-hover hover:text-primary transition-colors"
               >
-                <Heart size={15} />
+                <Heart size={15} class="text-pink-500" />
                 {t('about.supportLink')}
               </button>
             </div>

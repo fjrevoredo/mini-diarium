@@ -1,6 +1,7 @@
 import { createSignal, createEffect, For, Show } from 'solid-js';
+import { Dynamic } from 'solid-js/web';
 import { Dialog } from '@kobalte/core/dialog';
-import { X } from 'lucide-solid';
+import { HandCoins, HandHelping, MailPlus, Share2, Star, Store, X } from 'lucide-solid';
 import { useI18n, type T } from '../../i18n';
 import { getStatistics, type Statistics } from '../../lib/tauri/statistics';
 import { openUrlSuppressingFocusLoss } from '../../lib/dialog';
@@ -24,23 +25,46 @@ interface ChecklistRow {
   item: SupportChecklistItem;
   labelKey: TranslationKey;
   buttonKey: TranslationKey;
+  icon: typeof Star;
 }
 
 const CHECKLIST_ROWS: ChecklistRow[] = [
-  { item: 'star', labelKey: 'support.itemStarLabel', buttonKey: 'support.itemStarButton' },
-  { item: 'review', labelKey: 'support.itemReviewLabel', buttonKey: 'support.itemReviewButton' },
-  { item: 'share', labelKey: 'support.itemShareLabel', buttonKey: 'support.itemShareButton' },
+  {
+    item: 'star',
+    labelKey: 'support.itemStarLabel',
+    buttonKey: 'support.itemStarButton',
+    icon: Star,
+  },
+  {
+    item: 'review',
+    labelKey: 'support.itemReviewLabel',
+    buttonKey: 'support.itemReviewButton',
+    icon: Store,
+  },
+  {
+    item: 'share',
+    labelKey: 'support.itemShareLabel',
+    buttonKey: 'support.itemShareButton',
+    icon: Share2,
+  },
   {
     item: 'newsletter',
     labelKey: 'support.itemNewsletterLabel',
     buttonKey: 'support.itemNewsletterButton',
+    icon: MailPlus,
   },
   {
     item: 'contribute',
     labelKey: 'support.itemContributeLabel',
     buttonKey: 'support.itemContributeButton',
+    icon: HandHelping,
   },
-  { item: 'donate', labelKey: 'support.itemDonateLabel', buttonKey: 'support.itemDonateButton' },
+  {
+    item: 'donate',
+    labelKey: 'support.itemDonateLabel',
+    buttonKey: 'support.itemDonateButton',
+    icon: HandCoins,
+  },
 ];
 
 export default function ProjectSupportOverlay() {
@@ -146,8 +170,14 @@ export default function ProjectSupportOverlay() {
                           <button
                             onClick={() => handleAction(row.item)}
                             data-testid={`support-item-${row.item}`}
-                            class="rounded-full border border-primary px-3 py-1 text-xs text-secondary hover:bg-hover hover:text-primary transition-colors"
+                            class="flex items-center gap-1.5 rounded-full border border-primary px-3 py-1 text-xs text-secondary hover:bg-hover hover:text-primary transition-colors"
                           >
+                            <Dynamic
+                              component={row.icon}
+                              size={14}
+                              class="text-interactive shrink-0"
+                              aria-hidden="true"
+                            />
                             {t(row.buttonKey)}
                           </button>
                         }
@@ -155,8 +185,14 @@ export default function ProjectSupportOverlay() {
                         <button
                           onClick={() => void handleShare()}
                           data-testid="support-item-share"
-                          class="rounded-full border border-primary px-3 py-1 text-xs text-secondary hover:bg-hover hover:text-primary transition-colors"
+                          class="flex items-center gap-1.5 rounded-full border border-primary px-3 py-1 text-xs text-secondary hover:bg-hover hover:text-primary transition-colors"
                         >
+                          <Dynamic
+                            component={row.icon}
+                            size={14}
+                            class="text-interactive shrink-0"
+                            aria-hidden="true"
+                          />
                           {t('support.itemShareButton')}
                         </button>
                       </Show>

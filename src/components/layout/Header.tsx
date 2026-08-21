@@ -119,7 +119,7 @@ export default function Header(props: HeaderProps) {
             class="rounded p-2 hover:bg-hover text-tertiary transition-colors"
             aria-label={t('support.headerIconAria')}
           >
-            <Heart size={20} />
+            <Heart size={20} class="text-pink-500" />
           </button>
         </Show>
       </div>

@@ -105,6 +105,22 @@ describe('ProjectSupportOverlay', () => {
   });
 
   it.each([
+    'support-item-star',
+    'support-item-review',
+    'support-item-share',
+    'support-item-newsletter',
+    'support-item-contribute',
+    'support-item-donate',
+  ])('renders an action icon for %s', (testId) => {
+    openOverlay('about');
+    renderWithI18n(() => <ProjectSupportOverlay />);
+
+    const icon = screen.getByTestId(testId).querySelector('svg');
+    expect(icon).toBeInTheDocument();
+    expect(icon).toHaveAttribute('aria-hidden', 'true');
+  });
+
+  it.each([
     ['support-item-star', 'https://github.com/fjrevoredo/mini-diarium'],
     ['support-item-review', 'https://apps.microsoft.com/detail/9PJFTX44ZS43'],
     ['support-item-newsletter', 'https://mini-diarium.com/newsletter/'],

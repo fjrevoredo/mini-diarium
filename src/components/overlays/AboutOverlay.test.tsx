@@ -16,7 +16,9 @@ describe('AboutOverlay', () => {
     const onClose = vi.fn();
     renderWithI18n(() => <AboutOverlay isOpen={true} onClose={onClose} />);
 
-    fireEvent.click(screen.getByText('Support Mini Diarium'));
+    const supportButton = screen.getByRole('button', { name: 'Support Mini Diarium' });
+    expect(supportButton.querySelector('svg')).toHaveClass('text-pink-500');
+    fireEvent.click(supportButton);
 
     expect(uiState.projectSupportEntry()).toBe('about');
     expect(uiState.isProjectSupportOpen()).toBe(true);

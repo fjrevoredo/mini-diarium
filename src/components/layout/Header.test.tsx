@@ -180,6 +180,7 @@ describe('Header support milestone icon', () => {
 
     const button = screen.getByTestId('support-milestone-button');
     expect(button).toBeInTheDocument();
+    expect(button.querySelector('svg')).toHaveClass('text-pink-500');
 
     fireEvent.click(button);
 
