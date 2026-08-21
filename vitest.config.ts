@@ -36,6 +36,17 @@ export default defineConfig({
       },
     },
   },
+  server: {
+    watch: {
+      // Same exposure as vite.config.ts: Vite hands chokidar the repo root, and its
+      // built-in ignore list does not cover the 40 GB Cargo `target/` tree that sits
+      // there since the M1 workspace split. `vitest run` sets `server.watch = null`
+      // so CI is unaffected, but `bun run test` (watch mode) would otherwise register
+      // ~61k watch handles over build output. See
+      // docs/archive/2026-08-21-tauri-dev-startup-slowness-rca.md.
+      ignored: ['**/src-tauri/**', '**/target/**', '**/.agent-dev/**'],
+    },
+  },
   resolve: {
     conditions: ['development', 'browser'],
   },

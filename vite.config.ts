@@ -43,13 +43,13 @@ export default defineConfig(async () => ({
   // to a `**/*.html` crawl of the repo root, sweeping in the 30+ GB `/target/` Cargo
   // build output; that default no longer exists in the installed version.)
   //
-  // Deliberately NOT setting `force: true` here: forcing a full re-optimization on
-  // every `bun tauri dev` run discards Vite's normal lockfile/config-hash cache and
-  // was itself the cause of a multi-minute cold-scan stall on Windows (walking the
-  // full `node_modules` tree, incl. TipTap's ~9 nested subpackages, is expensive
-  // under NTFS + antivirus real-time scanning). Vite's built-in cache invalidation
-  // already handles the common case; if a cache is ever suspected corrupt, pass
-  // `--force` manually: `bun run tauri dev -- --force`.
+  // Deliberately NOT setting `force: true` here: it discards Vite's lockfile/config-hash
+  // cache and pays a full re-optimize on every run instead of only when the lockfile or
+  // config hash actually changes. Measured cold and isolated on Windows, that re-optimize
+  // costs ~13s (scan + bundle) — worth avoiding per run, but note it was NOT the cause of
+  // the multi-minute startup stalls this file's `server.watch.ignored` comment describes;
+  // an earlier CHANGELOG entry attributed them here and was wrong. If a cache is ever
+  // suspected corrupt, pass `--force` manually: `bun run tauri dev -- --force`.
   optimizeDeps: {
     include: ['solid-js', '@tiptap/core'],
     entries: ['index.html'],
@@ -81,7 +81,16 @@ export default defineConfig(async () => ({
       // `Cookies` file. Vite's fs watcher crashes the whole dev server with EBUSY the moment it
       // tries to watch that file, so this directory must stay excluded the same way `src-tauri`
       // is.
-      ignored: ['**/src-tauri/**', '**/.agent-dev/**'],
+      // `target/**`: the Cargo workspace build output sits at the repo root since the M1
+      // workspace split, and Vite hands chokidar the repo root — its built-in ignore list
+      // covers `.git`/`node_modules`/`dist` but not `target`. Left in, the dev server
+      // registers ~61k watch handles over ~40 GB of build output (91% of everything it
+      // watches), and a concurrent `cargo build` both floods it with thousands of events
+      // and can kill it outright with the same EBUSY crash as above, on the `.dll` the
+      // linker is mid-write. This starves the dependency scan and module transforms and
+      // is the root cause of the multi-minute `bun tauri dev` startup stalls.
+      // Full RCA: docs/archive/2026-08-21-tauri-dev-startup-slowness-rca.md
+      ignored: ['**/src-tauri/**', '**/.agent-dev/**', '**/target/**'],
     },
   },
 }));
