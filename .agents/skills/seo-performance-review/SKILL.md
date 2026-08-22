@@ -2,7 +2,7 @@
 name: seo-performance-review
 description: Applies to Mini Diarium's marketing site (`website/`) and its SEO data under `docs/seo/`. Use this recurring, data-driven review when the user has fresh (or wants to pull) Google Search Console / Bing Webmaster performance exports and asks to turn them into ranked, actionable recommendations. Triggers include "SEO performance review," "GSC data," "Search Console export," "Bing keyword report," "how are we ranking now," "what should I write next," "SEO content briefs," "striking distance," "CTR gaps," "update the SEO action plan," or "run the SEO cycle." This is distinct from `seo-audit` (technical on-page auditing): this skill analyzes performance data over time and produces content briefs and an updated action plan. If the user wants a technical/on-page audit instead, use `seo-audit`.
 metadata:
-  version: 1.0.0
+  version: 1.1.0
   cadence: bi-weekly (weekly is noise at current volume)
 ---
 
@@ -32,32 +32,49 @@ Do not re-derive the strategy. Apply it.
 
 ## Step 1 - Locate the latest exports (by pattern, never hardcoded names)
 
-Exports live under `docs/seo/performance/`. **Match by filename pattern**, because names have
-changed before (the Bing overview file was renamed once, and a GSC
-`*-Performance-on-Search-*.zip` bulk export also lands here). Expect four surfaces:
+Exports live under `docs/seo/performance/`, one dated subfolder per cycle:
+`docs/seo/performance/<YYYY-MM-DD>/`, holding every file for that pull under its original
+downloaded filename. **Match by filename pattern within the newest dated folder**, never
+hardcode names — the pattern already changed once (Bing renamed the overview file), and
+zips are kept unextracted. Expect up to five files per cycle:
 
-- **GSC per-dimension CSVs**, usually inside a `google-search-console_YYYY-MM-DD/` folder or a
-  `*-Performance-on-Search-*.zip` bulk export: `Queries.csv`, `Pages.csv`, `Countries.csv`,
-  `Devices.csv` (also `Chart.csv`, `Filters.csv`). If only the `.zip` is present, extract it to
-  a temp dir; do not commit the extraction (the folder form is the tracked copy).
-- **Bing overview CSV**: `*SearchPerformanceOverview*.csv` (daily clicks/impressions/CTR).
-- **Bing query-level CSV**: `*KeywordReport*.csv` (per-keyword impressions/clicks/CTR/position).
+- **GSC main export** — `*-Performance-on-Search-<date>.zip` (not `*Generative-AI*`): contains
+  `Queries.csv`, `Pages.csv`, `Countries.csv`, `Devices.csv`, `Chart.csv`, `Filters.csv`,
+  `Search appearance.csv`. Extract to a temp dir to read; do not commit the extraction — the
+  zip as downloaded is the tracked copy.
+- **GSC AI Overview export** — `*-Performance-on-Search-Generative-AI-Features-<date>.zip`: same
+  shape minus `Queries.csv` (Google does not break this report out by query). Impressions-only —
+  no clicks/CTR/position. See Step 3.
+- **Bing overview CSV** — `*SearchPerformanceOverview*.csv` (daily clicks/impressions/CTR).
+- **Bing query-level CSV** — `*KeywordReport*.csv` (per-keyword impressions/clicks/CTR/position).
+- **Bing AI/Copilot citations CSV** — `*AIPerformanceOverviewStats*.csv` (daily `Citations` /
+  `Cited Pages` counts). See Step 3.
 
-Find the newest set and the immediately prior snapshot (the last STATUS_REPORT and its dated
-performance folder). If the newest export is older than ~3 weeks, it is **stale**: guide the
+A folder may also hold stray non-export files (e.g. leftover placeholder text files from manual
+reorganization) — ignore anything that doesn't match these patterns rather than erroring, but
+flag unrecognized files to the user instead of silently treating them as data.
+
+Older cycles (pre-2026-08) may still use the legacy layout: GSC CSVs extracted into a nested
+`google-search-console_<date>/` folder, Bing CSVs loose directly under `docs/seo/performance/`
+with no dated wrapper, and no AI-performance exports at all. Treat those as historical — read
+them for the prior-cycle comparison in Step 2/3, but do not rewrite them into the new layout.
+
+Find the newest dated folder and the immediately prior one (the last STATUS_REPORT names which
+cycle it came from). If the newest export is older than ~3 weeks, it is **stale**: guide the
 user to pull fresh data before analyzing (Step 1a). Do not analyze stale data silently.
 
 ### Step 1a - Guide a fresh pull when stale
 
 If exports are stale or missing, walk the user through it (this is manual; the skill cannot
-authenticate):
+authenticate). Save everything under one new `docs/seo/performance/<today>/` folder, original
+filenames, zips left unextracted:
 - **Google Search Console** (search.google.com/search-console): Performance > Search results >
-  set date range to Last 3 months > Export > download the zip, or export each of Queries /
-  Pages / Countries / Devices. Save under `docs/seo/performance/google-search-console_<today>/`
-  (or drop the `*-Performance-on-Search-*.zip` in `docs/seo/performance/`).
+  set date range to Last 3 months > Export > download the zip. Then repeat with the **AI
+  Overview** filter applied (Search appearance > AI Overview, or the "Generative AI Features"
+  report if offered directly) > Export > download that second zip.
 - **Bing Webmaster Tools** (bing.com/webmasters): Search Performance > export the overview CSV;
-  then the **Keyword** report > export the query-level CSV. Save both under
-  `docs/seo/performance/` with their default names.
+  then the **Keyword** report > export the query-level CSV; then the **AI** / Copilot performance
+  view > export the citations CSV.
 
 ## Step 2 - Run the analysis framework, per engine
 
@@ -84,20 +101,35 @@ Produce these tables (Google from `Queries.csv`/`Pages.csv`, Bing from `KeywordR
    encrypted diary") demand that Google under-reports. Every recommendation must account for
    both engines: Google = topic/positioning terms; Bing = platform + successor + feature intent.
 
-## Step 3 - GEO citation spot-check
+## Step 3 - GEO citation check
 
-Run the fixed ~30-query set in [`references/geo-citation-queries.md`](references/geo-citation-queries.md)
-across **ChatGPT, Google AI Overviews, Perplexity, and Copilot**. This is a separate KPI from
-GSC (citation visibility, not ranking) per `STRATEGY.md` §5.
+Since 2026-08, two real measured data sources exist per cycle (Step 1) and are the **primary**
+signal for the engines they cover — prefer them over the manual spot-check where they overlap:
+
+- **Google AI Overviews** — the AI-Overview zip's `Pages.csv` (which URLs surfaced in an AI
+  Overview and how often, impressions-only) and `Chart.csv` (daily trend). No query breakdown
+  and no clicks/CTR/position — Google does not expose that for this surface. Compare a page's
+  AI-Overview impressions against its total impressions in the main export's `Pages.csv` to see
+  what share of its visibility is AI-Overview-driven.
+- **Bing / Copilot** — the `*AIPerformanceOverviewStats*.csv`'s daily `Citations` and
+  `Cited Pages` counts. A direct, comparable-cycle-over-cycle citation-volume KPI.
+
+Still run the fixed ~30-query set in
+[`references/geo-citation-queries.md`](references/geo-citation-queries.md) for **ChatGPT and
+Perplexity**, which publish no exportable performance data:
 
 - **Attempt automation** with the available web/browser tools where possible (e.g. Perplexity
-  and Google AI Overviews via the browser tool). Record, per engine and per query: (a) whether
-  mini-diarium.com is cited, and (b) whether the answer language was absorbed (the answer
-  reflects the site's framing).
+  via the browser tool). Record, per engine and per query: (a) whether mini-diarium.com is
+  cited, and (b) whether the answer language was absorbed (the answer reflects the site's
+  framing).
 - **Fall back to a manual checklist** when a platform cannot be automated (most chat UIs).
   Present the query set as a checklist for the user to run and paste back.
-- Do not overstate. AI citation is volatile and engine-specific; report presence/absorption as
-  a directional baseline, compared to the prior cycle, not as a precise metric.
+- Also use the spot-check to sanity-check *which* queries are plausibly driving the Google/Bing
+  AI numbers, since neither export breaks out by query.
+
+Report all four engines together. This is a separate KPI from GSC ranking (`STRATEGY.md` §5). Do
+not overstate: the Google/Bing counts are real but still small-sample at this traffic volume, and
+the ChatGPT/Perplexity spot-check stays a directional baseline, not a precise metric.
 
 ## Step 4 - Output prioritized content briefs (do not auto-draft)
 

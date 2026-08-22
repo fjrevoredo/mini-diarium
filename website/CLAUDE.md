@@ -237,8 +237,9 @@ volume). It ingests the latest Google Search Console + Bing exports, runs the an
 framework in [`docs/seo/STRATEGY.md`](../docs/seo/STRATEGY.md) §5, produces content briefs, and
 updates the action plan. Run it each cycle rather than doing this by hand.
 
-- Export Google Search Console (3-month window) and Bing (overview + query-level Keyword report)
-  to [`docs/seo/performance/`](../docs/seo/performance/) each cycle. The review skill guides the
+- Export Google Search Console (3-month window, main + AI-Overview report) and Bing (overview +
+  query-level Keyword report + AI/Copilot citations) to a new dated folder under
+  [`docs/seo/performance/`](../docs/seo/performance/) each cycle. The review skill guides the
   pull when data is stale.
 - Compare against the most recent snapshot: the latest `docs/seo/STATUS_REPORT_*.md` and the
   prior dated folder under `docs/seo/performance/` (do not inline numbers here; they go stale).

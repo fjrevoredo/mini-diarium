@@ -249,10 +249,13 @@ cycle by movement. The pragmatic default regime:
    `/blog/private-journal-app-how-to-choose/`.)
 3. **Topical-coverage scoring.** Map the owned topic into subtopics + question angles; score
    coverage; prioritize procedural/comparison gaps (highest absorption [corpus §3.1]).
-4. **GEO citation spot-check.** A fixed ~30-query set (see the review skill's
-   `references/geo-citation-queries.md`) run across **ChatGPT, Google AI Overviews, Perplexity,
-   and Copilot** on each cycle. Record citation presence *and* answer absorption per engine.
-   This is a separate KPI from GSC position/CTR [corpus §4.5].
+4. **GEO citation check.** Since 2026-08, Google's AI-Overview export and Bing's
+   `AIPerformanceOverviewStats` export give real measured citation/impression counts each cycle
+   (see the review skill's Step 3) — the primary signal for those two engines. A fixed
+   ~30-query set (see the review skill's `references/geo-citation-queries.md`) still runs across
+   **ChatGPT and Perplexity**, which publish no exportable data, and cross-checks which queries
+   plausibly drive the Google/Bing numbers. Record citation presence *and* answer absorption per
+   engine. This is a separate KPI from GSC position/CTR [corpus §4.5].
 5. **Google-vs-Bing divergence check.** The two engines want different emphasis (Google =
    topic/positioning terms; Bing = platform + successor + feature intent). Every recommendation
    must account for both.
