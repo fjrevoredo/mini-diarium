@@ -618,7 +618,8 @@
     "githubLink": "GitHub",
     "docsLink": "Documentazione",
     "opensInBrowser": "si apre nel browser di sistema",
-    "showTour": "Mostra il tour di benvenuto"
+    "showTour": "Mostra il tour di benvenuto",
+    "supportLink": "Sostieni Mini Diarium"
   },
   "notifications": {
     "title": "Novità",
@@ -630,6 +631,29 @@
     "typeRelease": "Versione",
     "typeAnnouncement": "Annuncio",
     "typeTip": "Suggerimento"
+  },
+  "support": {
+    "title": "Sostieni Mini Diarium",
+    "closeAria": "Chiudi",
+    "headerIconAria": "Sostieni Mini Diarium",
+    "openingLineAbout": "Mini Diarium è gratuito, crittografato e senza pubblicità né tracciamento. Se ti è stato utile, ecco alcuni modi per aiutarlo a continuare.",
+    "openingLineMilestone": "Hai scritto per {{ streak }} giorni consecutivi e hai scritto {{ words }} parole. Se Mini Diarium ti ha aiutato a mantenere questa abitudine, ecco alcuni modi per sostenerlo.",
+    "footerDefault": "Ognuno di questi gesti aiuta più di quanto potresti pensare.",
+    "footerThanked": "Grazie per sostenere Mini Diarium!",
+    "itemStarLabel": "Metti una stella al progetto su GitHub",
+    "itemStarButton": "Metti una stella su GitHub",
+    "itemReviewLabel": "Lascia una recensione sul Microsoft Store",
+    "itemReviewButton": "Lascia una recensione",
+    "itemShareLabel": "Condividi Mini Diarium con un amico",
+    "itemShareButton": "Copia il messaggio da condividere",
+    "itemNewsletterLabel": "Iscriviti alla newsletter",
+    "itemNewsletterButton": "Iscriviti",
+    "itemContributeLabel": "Contribuisci con codice, traduzioni o idee",
+    "itemContributeButton": "Contribuisci",
+    "itemDonateLabel": "Fai una donazione",
+    "itemDonateButton": "Dona",
+    "shareMessage": "Sto usando Mini Diarium, un'app gratuita e crittografata per scrivere un diario, senza pubblicità né tracciamento. Vale la pena provarla: https://mini-diarium.com/",
+    "shareCopyFailed": "Impossibile copiare — copia questo messaggio: {{ message }}"
   },
   "timestamp": {
     "popupTitle": "Inserisci timestamp",

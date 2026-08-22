@@ -618,7 +618,8 @@
     "githubLink": "GitHub",
     "docsLink": "Dokumentation",
     "opensInBrowser": "Öffnet im Systembrowser",
-    "showTour": "Willkommenstour anzeigen"
+    "showTour": "Willkommenstour anzeigen",
+    "supportLink": "Mini Diarium unterstützen"
   },
   "notifications": {
     "title": "Neuigkeiten",
@@ -630,6 +631,29 @@
     "typeRelease": "Version",
     "typeAnnouncement": "Ankündigung",
     "typeTip": "Tipp"
+  },
+  "support": {
+    "title": "Mini Diarium unterstützen",
+    "closeAria": "Schließen",
+    "headerIconAria": "Mini Diarium unterstützen",
+    "openingLineAbout": "Mini Diarium ist kostenlos, verschlüsselt und enthält keine Werbung oder Tracking. Wenn es dir nützlich war, kannst du mit diesen Möglichkeiten helfen, das Projekt fortzuführen.",
+    "openingLineMilestone": "Du hast eine {{ streak }}-Tage-Serie geführt und {{ words }} Wörter geschrieben. Wenn Mini Diarium dir geholfen hat, diese Gewohnheit beizubehalten, kannst du es auf einige Arten unterstützen.",
+    "footerDefault": "Jede dieser Möglichkeiten hilft mehr, als du vielleicht denkst.",
+    "footerThanked": "Vielen Dank für deine Unterstützung von Mini Diarium!",
+    "itemStarLabel": "Das Projekt auf GitHub mit einem Stern versehen",
+    "itemStarButton": "Auf GitHub markieren",
+    "itemReviewLabel": "Eine Bewertung im Microsoft Store hinterlassen",
+    "itemReviewButton": "Bewertung hinterlassen",
+    "itemShareLabel": "Mini Diarium mit einem Freund teilen",
+    "itemShareButton": "Nachricht zum Teilen kopieren",
+    "itemNewsletterLabel": "Den Newsletter abonnieren",
+    "itemNewsletterButton": "Abonnieren",
+    "itemContributeLabel": "Code, Übersetzungen oder Ideen beitragen",
+    "itemContributeButton": "Beitragen",
+    "itemDonateLabel": "Eine Spende machen",
+    "itemDonateButton": "Spenden",
+    "shareMessage": "Ich nutze Mini Diarium, eine kostenlose verschlüsselte Tagebuch-App ohne Werbung oder Tracking. Einen Blick wert: https://mini-diarium.com/",
+    "shareCopyFailed": "Kopieren nicht möglich — kopiere dies selbst: {{ message }}"
   },
   "timestamp": {
     "popupTitle": "Zeitstempel einfügen",

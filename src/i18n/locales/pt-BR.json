@@ -618,7 +618,8 @@
     "githubLink": "GitHub",
     "docsLink": "Documentação",
     "opensInBrowser": "abre no navegador do sistema",
-    "showTour": "Mostrar tour de boas-vindas"
+    "showTour": "Mostrar tour de boas-vindas",
+    "supportLink": "Apoie o Mini Diarium"
   },
   "notifications": {
     "title": "Novidades",
@@ -630,6 +631,29 @@
     "typeRelease": "Versão",
     "typeAnnouncement": "Anúncio",
     "typeTip": "Dica"
+  },
+  "support": {
+    "title": "Apoie o Mini Diarium",
+    "closeAria": "Fechar",
+    "headerIconAria": "Apoie o Mini Diarium",
+    "openingLineAbout": "O Mini Diarium é gratuito, criptografado e não tem anúncios nem rastreamento. Se ele foi útil para você, veja algumas formas de ajudar o projeto a continuar.",
+    "openingLineMilestone": "Você manteve uma sequência de {{ streak }} dias e escreveu {{ words }} palavras. Se o Mini Diarium ajudou você a manter esse hábito, veja algumas formas de apoiá-lo.",
+    "footerDefault": "Qualquer uma dessas ações ajuda mais do que você imagina.",
+    "footerThanked": "Obrigado por apoiar o Mini Diarium!",
+    "itemStarLabel": "Dê uma estrela ao projeto no GitHub",
+    "itemStarButton": "Dar estrela no GitHub",
+    "itemReviewLabel": "Deixe uma avaliação na Microsoft Store",
+    "itemReviewButton": "Deixar uma avaliação",
+    "itemShareLabel": "Compartilhe o Mini Diarium com um amigo",
+    "itemShareButton": "Copiar mensagem para compartilhar",
+    "itemNewsletterLabel": "Assine a newsletter",
+    "itemNewsletterButton": "Assinar",
+    "itemContributeLabel": "Contribua com código, traduções ou ideias",
+    "itemContributeButton": "Contribuir",
+    "itemDonateLabel": "Faça uma doação",
+    "itemDonateButton": "Doar",
+    "shareMessage": "Estou usando o Mini Diarium, um aplicativo de diário gratuito e criptografado, sem anúncios nem rastreamento. Vale a pena conhecer: https://mini-diarium.com/",
+    "shareCopyFailed": "Não foi possível copiar — copie isto manualmente: {{ message }}"
   },
   "timestamp": {
     "popupTitle": "Inserir carimbo de data/hora",

@@ -618,7 +618,8 @@
     "githubLink": "GitHub",
     "docsLink": "दस्तावेज़ीकरण",
     "opensInBrowser": "सिस्टम ब्राउज़र में खुलता है",
-    "showTour": "स्वागत टूर दिखाएं"
+    "showTour": "स्वागत टूर दिखाएं",
+    "supportLink": "Mini Diarium का समर्थन करें"
   },
   "notifications": {
     "title": "नया क्या है",
@@ -630,6 +631,29 @@
     "typeRelease": "रिलीज़",
     "typeAnnouncement": "घोषणा",
     "typeTip": "टिप"
+  },
+  "support": {
+    "title": "Mini Diarium का समर्थन करें",
+    "closeAria": "बंद करें",
+    "headerIconAria": "Mini Diarium का समर्थन करें",
+    "openingLineAbout": "Mini Diarium मुफ़्त, एन्क्रिप्टेड है और इसमें विज्ञापन या ट्रैकिंग नहीं है। अगर यह आपके लिए उपयोगी रहा है, तो इसे जारी रखने में मदद करने के कुछ तरीके यहां दिए गए हैं।",
+    "openingLineMilestone": "आपने {{ streak }} दिनों की लगातार लेखन-श्रृंखला पूरी की है और {{ words }} शब्द लिखे हैं। अगर Mini Diarium ने यह आदत बनाए रखने में आपकी मदद की है, तो इसका समर्थन करने के कुछ तरीके यहां दिए गए हैं।",
+    "footerDefault": "इनमें से कोई भी तरीका आपकी सोच से अधिक मदद करता है।",
+    "footerThanked": "Mini Diarium का समर्थन करने के लिए धन्यवाद!",
+    "itemStarLabel": "GitHub पर प्रोजेक्ट को स्टार दें",
+    "itemStarButton": "GitHub पर स्टार दें",
+    "itemReviewLabel": "Microsoft Store पर समीक्षा लिखें",
+    "itemReviewButton": "समीक्षा लिखें",
+    "itemShareLabel": "Mini Diarium को किसी मित्र के साथ साझा करें",
+    "itemShareButton": "साझा करने का संदेश कॉपी करें",
+    "itemNewsletterLabel": "न्यूज़लेटर की सदस्यता लें",
+    "itemNewsletterButton": "सदस्यता लें",
+    "itemContributeLabel": "कोड, अनुवाद या विचारों से योगदान दें",
+    "itemContributeButton": "योगदान दें",
+    "itemDonateLabel": "दान करें",
+    "itemDonateButton": "दान करें",
+    "shareMessage": "मैं Mini Diarium इस्तेमाल कर रहा हूं, यह विज्ञापन या ट्रैकिंग के बिना एक मुफ़्त एन्क्रिप्टेड जर्नल ऐप है। इसे ज़रूर देखें: https://mini-diarium.com/",
+    "shareCopyFailed": "कॉपी नहीं हो सका — इसे खुद कॉपी करें: {{ message }}"
   },
   "timestamp": {
     "popupTitle": "टाइमस्टैम्प डालें",

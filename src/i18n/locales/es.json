@@ -618,7 +618,8 @@
     "githubLink": "GitHub",
     "docsLink": "Documentación",
     "opensInBrowser": "se abre en el navegador del sistema",
-    "showTour": "Mostrar tour de bienvenida"
+    "showTour": "Mostrar tour de bienvenida",
+    "supportLink": "Apoyar a Mini Diarium"
   },
   "notifications": {
     "title": "Novedades",
@@ -630,6 +631,29 @@
     "typeRelease": "Lanzamiento",
     "typeAnnouncement": "Anuncio",
     "typeTip": "Consejo"
+  },
+  "support": {
+    "title": "Apoyar a Mini Diarium",
+    "closeAria": "Cerrar",
+    "headerIconAria": "Apoyar a Mini Diarium",
+    "openingLineAbout": "Mini Diarium es gratuito, está cifrado y no tiene anuncios ni seguimiento. Si te ha sido útil, aquí tienes algunas formas de ayudar a que siga adelante.",
+    "openingLineMilestone": "Has mantenido una racha de {{ streak }} días y has escrito {{ words }} palabras. Si Mini Diarium te ha ayudado a mantener ese hábito, aquí tienes algunas formas de apoyarlo.",
+    "footerDefault": "Cualquiera de estas opciones ayuda más de lo que imaginas.",
+    "footerThanked": "¡Gracias por apoyar a Mini Diarium!",
+    "itemStarLabel": "Darle una estrella al proyecto en GitHub",
+    "itemStarButton": "Dar estrella en GitHub",
+    "itemReviewLabel": "Dejar una reseña en Microsoft Store",
+    "itemReviewButton": "Dejar una reseña",
+    "itemShareLabel": "Compartir Mini Diarium con un amigo",
+    "itemShareButton": "Copiar mensaje para compartir",
+    "itemNewsletterLabel": "Suscribirse al boletín",
+    "itemNewsletterButton": "Suscribirse",
+    "itemContributeLabel": "Contribuir con código, traducciones o ideas",
+    "itemContributeButton": "Contribuir",
+    "itemDonateLabel": "Hacer una donación",
+    "itemDonateButton": "Donar",
+    "shareMessage": "Estoy usando Mini Diarium, una aplicación de diario cifrada y gratuita, sin anuncios ni seguimiento. Vale la pena echarle un vistazo: https://mini-diarium.com/",
+    "shareCopyFailed": "No se pudo copiar — copia esto manualmente: {{ message }}"
   },
   "timestamp": {
     "popupTitle": "Insertar marca de tiempo",

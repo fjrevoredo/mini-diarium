@@ -618,7 +618,8 @@
     "githubLink": "GitHub",
     "docsLink": "Documentation",
     "opensInBrowser": "s'ouvre dans le navigateur système",
-    "showTour": "Afficher le tour de bienvenue"
+    "showTour": "Afficher le tour de bienvenue",
+    "supportLink": "Soutenir Mini Diarium"
   },
   "notifications": {
     "title": "Nouveautés",
@@ -630,6 +631,29 @@
     "typeRelease": "Version",
     "typeAnnouncement": "Annonce",
     "typeTip": "Astuce"
+  },
+  "support": {
+    "title": "Soutenir Mini Diarium",
+    "closeAria": "Fermer",
+    "headerIconAria": "Soutenir Mini Diarium",
+    "openingLineAbout": "Mini Diarium est gratuit, chiffré et sans publicités ni suivi. Si l’application vous a été utile, voici quelques façons de l’aider à continuer.",
+    "openingLineMilestone": "Vous avez tenu une série de {{ streak }} jours et écrit {{ words }} mots. Si Mini Diarium vous a aidé à garder cette habitude, voici quelques façons de le soutenir.",
+    "footerDefault": "Chacune de ces actions aide plus que vous ne l’imaginez.",
+    "footerThanked": "Merci de soutenir Mini Diarium !",
+    "itemStarLabel": "Ajouter une étoile au projet sur GitHub",
+    "itemStarButton": "Ajouter une étoile sur GitHub",
+    "itemReviewLabel": "Laisser un avis sur le Microsoft Store",
+    "itemReviewButton": "Laisser un avis",
+    "itemShareLabel": "Partager Mini Diarium avec un ami",
+    "itemShareButton": "Copier le message à partager",
+    "itemNewsletterLabel": "S’abonner à la newsletter",
+    "itemNewsletterButton": "S’abonner",
+    "itemContributeLabel": "Contribuer avec du code, des traductions ou des idées",
+    "itemContributeButton": "Contribuer",
+    "itemDonateLabel": "Faire un don",
+    "itemDonateButton": "Faire un don",
+    "shareMessage": "J’utilise Mini Diarium, une application de journal gratuite et chiffrée, sans publicités ni suivi. À découvrir : https://mini-diarium.com/",
+    "shareCopyFailed": "Impossible de copier — copiez ceci vous-même : {{ message }}"
   },
   "timestamp": {
     "popupTitle": "Insérer un horodatage",
