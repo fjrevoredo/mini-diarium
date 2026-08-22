@@ -151,6 +151,40 @@ Typical failure signature:
 | --- | --- |
 | `perhaps a crate was updated and forgotten to be re-vendored?` | `cargo-sources.json` is stale. |
 
+### Upstream Flathub outages (SDK dependency install)
+
+The CI job installs its runtime, SDK, and SDK extensions from the Flathub remote before building.
+A 404 during that install is an upstream Flathub problem, not a defect in this repository:
+
+| Error | Meaning |
+| --- | --- |
+| `Failed to install org.freedesktop.Sdk.Extension.<name>: While pulling runtime/...: Server returned HTTP 404` | The Flathub summary advertises a commit whose objects are missing or not yet propagated on `dl.flathub.org`. Typically follows a fresh republish of that SDK extension. Nothing in this repo can fix it; wait for Flathub to repair the repo, then re-run the job. |
+
+Diagnosis steps:
+
+1. Copy the `objects/<xx>/<hash>.filez` URL from the error and check it directly (HTTP HEAD). A 404
+   confirmed outside the runner proves the object is gone from Flathub's CDN.
+2. Compare the failing object hash across runs. Identical hashes across hours rule out a transient
+   blip and point at a bad publish on Flathub's side.
+3. Check [builds.flathub.org](https://builds.flathub.org) for a recent stable build of the affected
+   extension; a publish shortly before the failures started is the trigger.
+
+Mitigation in `.github/workflows/ci.yml`: the `flatpak` job pre-installs all four refs
+(GNOME Platform/Sdk plus the `rust-stable` and `node20` extensions) with five attempts and
+increasing backoff before invoking the pinned `flatpak-builder` action, which installs dependencies
+only once with no retry of its own. Retries absorb short CDN hiccups; a persistently broken object
+still fails loudly after ~5 minutes of backoff.
+
+Incident history:
+
+- **2026-08-21 → 2026-08-22**: every run failed with a byte-identical 404 for object
+  `06/0fdf65e0a1042c0db51bf9d009048f9f07e047b422e0e736c5d8ad35ac3a9c.filez` while pulling
+  `org.freedesktop.Sdk.Extension.rust-stable/x86_64/25.08`, starting right after Flathub's
+  stable republish of that extension (commit `7c4a7fd`, vorarbeiter run 32437698732).
+  Independently hit by another project ([Dasher-GTK #52](https://github.com/dasher-project/Dasher-GTK/issues/52)).
+  This outage motivated the retry pre-install step above; retries cannot help while the object
+  itself is missing.
+
 ### Metadata / store listing changes
 
 If desktop integration, screenshots, releases, or app identity changes:
