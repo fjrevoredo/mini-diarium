@@ -69,7 +69,7 @@ Selection and consolidation rules:
 
 Run the test suites, type checker, and linters you identified as mandatory in step 1.
 
-The comprehensive path is `bun run pre-commit` (~40-60 s), which runs type-check, ESLint, Prettier, UI-error sanitization, frontend tests with coverage, backend tests with coverage, clippy, rustfmt, and the patch-coverage gate in one command — and generates the lcov files the coverage gate consumes.
+The comprehensive path is `bun run pre-commit` (~40-60 s), which runs type-check, ESLint, Prettier, locale validation, UI-error sanitization, frontend tests with coverage, backend tests with coverage, clippy, rustfmt, and the patch-coverage gate in one command — and generates the lcov files the coverage gate consumes.
 
 Or run individual checks for faster iteration:
 

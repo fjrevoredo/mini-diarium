@@ -95,7 +95,18 @@ async function main() {
     results.failed.push('Prettier');
   }
 
-  // 4. UI error sanitization guard
+  // 4. Locale completeness
+  header('Locale Validation');
+  const locales = run('bun run validate:locales', 'Validating locale key parity');
+  if (locales.success) {
+    success('All locale files match the canonical English key set');
+    results.passed.push('Locales');
+  } else {
+    error('Locale files are missing or contain extra keys');
+    results.failed.push('Locales');
+  }
+
+  // 5. UI error sanitization guard
   header('UI Error Sanitization');
   const uiErrors = run('bun run check:ui-errors', 'Checking raw error display patterns');
   if (uiErrors.success) {
@@ -106,7 +117,7 @@ async function main() {
     results.failed.push('UI Error Sanitization');
   }
 
-  // 4b. Stale pre-workspace build path guard
+  // 5b. Stale pre-workspace build path guard
   header('Stale Build Paths');
   const buildPaths = run('bun run check:build-paths', 'Checking pre-workspace target/ paths');
   if (buildPaths.success) {
@@ -117,7 +128,7 @@ async function main() {
     results.failed.push('Stale Build Paths');
   }
 
-  // 4c. Donation address drift guard
+  // 5c. Donation address drift guard
   header('Donation Addresses');
   const donationAddresses = run(
     'bun run check:donation-addresses',
@@ -131,7 +142,7 @@ async function main() {
     results.failed.push('Donation Addresses');
   }
 
-  // 5. Frontend Tests (with coverage)
+  // 6. Frontend Tests (with coverage)
   header('Frontend Tests');
   const frontendTest = run('bun run test:coverage', 'Running tests with coverage');
   if (frontendTest.success) {
@@ -142,7 +153,7 @@ async function main() {
     results.failed.push('Frontend Tests');
   }
 
-  // 6. Backend Tests (Rust) — with coverage when cargo-llvm-cov is available
+  // 7. Backend Tests (Rust) — with coverage when cargo-llvm-cov is available
   header('Backend Tests (Rust)');
   const cargoPath = 'src-tauri';
   if (existsSync(cargoPath)) {
@@ -178,7 +189,7 @@ async function main() {
     results.warnings.push('Backend tests skipped');
   }
 
-  // 7. Rust Clippy
+  // 8. Rust Clippy
   if (existsSync(cargoPath)) {
     header('Rust Clippy');
     const clippy = run('cargo clippy --workspace --all-targets --quiet -- -D warnings', 'Running clippy', { cwd: cargoPath });
@@ -191,7 +202,7 @@ async function main() {
     }
   }
 
-  // 8. Rust Format Check
+  // 9. Rust Format Check
   if (existsSync(cargoPath)) {
     header('Rust Format Check');
     const rustfmt = run('cargo fmt --all --check', 'Checking Rust formatting', { cwd: cargoPath });
@@ -204,7 +215,7 @@ async function main() {
     }
   }
 
-  // 6. Build check (optional, can be slow)
+  // 10. Build check (optional, can be slow)
   // Uncomment if you want to check if the build works
   // header('Build Check');
   // const build = run('bun run build', 'Building', { silent: true });
@@ -216,7 +227,7 @@ async function main() {
   //   results.failed.push('Build');
   // }
 
-  // 9. Patch Coverage (local Codecov mirror — fails if <80% of new/changed lines)
+  // 11. Patch Coverage (local Codecov mirror — fails if <80% of new/changed lines)
   header('Patch Coverage (Codecov mirror)');
   const hasFrontendCov = existsSync('coverage/lcov.info');
   const hasBackendCov = existsSync('src-tauri/lcov.info');

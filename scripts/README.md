@@ -8,8 +8,8 @@ The full task-completion checklist (tests, formatting, CHANGELOG, TODO closure, 
 
 | Script | Purpose | Duration |
 |--------|---------|----------|
-| `bun run check` | Type-check + ESLint + Prettier (no tests) | ~5-10 s |
-| `bun run pre-commit` | The above + frontend tests + backend tests + clippy + rustfmt + patch-coverage gate | ~40-60 s |
+| `bun run check` | Type-check + ESLint + Prettier + locale validation (no tests) | ~5-10 s |
+| `bun run pre-commit` | The above + locale validation + frontend tests + backend tests + clippy + rustfmt + patch-coverage gate | ~40-60 s |
 
 Use `bun run check` for fast feedback during development; use `bun run pre-commit` before pushing.
 
@@ -22,7 +22,7 @@ Use `bun run check` for fast feedback during development; use `bun run pre-commi
 - Skips silently when no relevant files are staged.
 - Skips Rust formatting with a warning if `cargo` is not in `PATH`.
 
-The hook is intentionally fast (formatting only, scoped to staged files). The full check suite (type-check, lint, tests, clippy, patch coverage) lives in `bun run pre-commit` and is meant to run before pushing.
+The hook is intentionally fast (formatting only, scoped to staged files). The full check suite (type-check, lint, locale validation, tests, clippy, patch coverage) lives in `bun run pre-commit` and is meant to run before pushing.
 
 **Manual install** (escape hatch): `bun run hooks:install` (or `node scripts/install-hooks.js`).
 
