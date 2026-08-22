@@ -14,7 +14,7 @@ Read in this order:
    skills read this first.
 2. [`STRATEGY.md`](STRATEGY.md) - the durable strategy: what to do next, the keyword and
    topic-cluster map (§3), the budget model (§4), and the measurement regime (§5).
-3. The latest [`STATUS_REPORT_2026-07.md`](STATUS_REPORT_2026-07.md) plus
+3. The latest [`STATUS_REPORT_2026-08.md`](STATUS_REPORT_2026-08.md) plus
    [`action-plan.md`](action-plan.md) - the current state and the live fix queue.
 
 ## Where SEO / GEO + growth material lives now
@@ -23,7 +23,7 @@ Read in this order:
 |---|---|
 | Durable strategy + keyword/cluster map (§3) + budget/measurement regimes | [`STRATEGY.md`](STRATEGY.md) |
 | Brand facts, ICP, voice, competitors, accuracy guardrail | [`product-marketing-context.md`](product-marketing-context.md) |
-| Dated point-in-time health snapshots (append-only) | [`STATUS_REPORT_2026-07.md`](STATUS_REPORT_2026-07.md) (latest `STATUS_REPORT_*.md`) |
+| Dated point-in-time health snapshots (append-only) | [`STATUS_REPORT_2026-08.md`](STATUS_REPORT_2026-08.md) (latest `STATUS_REPORT_*.md`) |
 | Live prioritized fix queue + hypothesis log | [`action-plan.md`](action-plan.md) |
 | Evidence base (corpus, source tiers, open questions) | [`research/`](research/) |
 | Raw performance exports (GSC + Bing) | [`performance/`](performance/) |

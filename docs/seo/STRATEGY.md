@@ -11,7 +11,7 @@ comes up, it should resolve to a concrete next action in this document.
   large-N transparent method; **B** = practitioner large-scale study; **C** = synthesis /
   leak-derived (directional only).
 - Point-in-time health: latest `STATUS_REPORT_*.md` (currently
-  [`STATUS_REPORT_2026-07.md`](STATUS_REPORT_2026-07.md)).
+  [`STATUS_REPORT_2026-08.md`](STATUS_REPORT_2026-08.md)).
 - Live fix queue: [`action-plan.md`](action-plan.md).
 - Brand context both SEO skills read first: [`product-marketing-context.md`](product-marketing-context.md).
 - Recurring review: run the `seo-performance-review` skill each cycle to regenerate the status
@@ -191,14 +191,17 @@ exactly what AI Overviews surface (60% of AI Overviews are question queries [cor
 
 | Target query | Pos | Impr | Engine | Notes |
 |---|---|---|---|---|
-| mini diary | ~3.0 | 95 (8 clicks) | Bing | Real predecessor demand |
-| mini diary app / mini diary download | ~8.9 / ~1.5 | few | both | |
+| mini diary | ~3.0 (Bing) | 95 (8 clicks) | Bing | Real predecessor demand |
+| mini diary | ~11.4 (Google) | 14 (0 clicks) | Google | New in the 2026-08 data; not yet converting |
+| mini diary app | ~8.9 (Bing) / ~8.6 (Google) | few / 13 | both | Real volume on **both** engines as of 2026-08 |
+| mini diary download | ~1.5 | few | Bing | |
 | minidiary open source journal app | ~1 | 1 | Bing | |
 | mini diary open source encrypted journal github abandoned | ~2.5 | 2 | Bing | Successor intent, explicit |
 
-Bing surfaces clear predecessor demand that Google under-shows. Owning page exists
-(`mini-diary-alternative`); the review skill decides refresh-vs-new each cycle. Given the
-existing page, this is usually a **strengthen**, not a new post.
+Both engines surface predecessor demand as of the 2026-08 cycle (this was previously read as
+"Bing under-shows on Google," which is no longer accurate — see `STATUS_REPORT_2026-08.md` §4).
+Owning page exists (`mini-diary-alternative`); the review skill decides refresh-vs-new each
+cycle. Given the existing page, this is usually a **strengthen**, not a new post.
 
 ---
 
