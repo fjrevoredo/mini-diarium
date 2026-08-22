@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1787371138886,
+  "lastUpdate": 1787373490120,
   "repoUrl": "https://github.com/fjrevoredo/mini-diarium",
   "entries": {
     "Benchmark": [
@@ -35980,6 +35980,36 @@ window.BENCHMARK_DATA = {
           {
             "name": "ci_pipeline_duration",
             "value": 542000000000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "committer": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "distinct": true,
+          "id": "a1956ed1f81f1eb85ccbb6113748b42be729165c",
+          "message": "The Flatpak CI job now retries its SDK dependency install",
+          "timestamp": "2026-08-22T06:27:33+02:00",
+          "tree_id": "ffca294f36eeb0246e36acddfc57fe8e9eb8cad2",
+          "url": "https://github.com/fjrevoredo/mini-diarium/commit/a1956ed1f81f1eb85ccbb6113748b42be729165c"
+        },
+        "date": 1787373488825,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "ci_pipeline_duration",
+            "value": 622000000000,
             "range": "± 0",
             "unit": "ns/iter"
           }
