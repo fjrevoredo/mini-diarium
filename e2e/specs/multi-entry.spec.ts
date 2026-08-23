@@ -76,6 +76,14 @@ describe('Multi-entry workflow', () => {
       );
     };
 
+    const waitForSidebarSettled = async () => {
+      const sidebar = $('#sidebar');
+      await browser.waitUntil(async () => (await sidebar.getLocation('x')) >= 0, {
+        timeout: 2000,
+        timeoutMsg: 'Sidebar was marked open but did not finish its slide-in transition',
+      });
+    };
+
     const openSidebar = async () => {
       const toggle = $('[data-testid="toggle-sidebar-button"]');
       await toggle.waitForExist({ timeout: 10000 });
@@ -85,9 +93,17 @@ describe('Multi-entry workflow', () => {
         await toggle.click();
         await waitForSidebarExpanded(true, 'Sidebar did not open in time');
       }
+      // aria-expanded updates before the CSS transform finishes. WebKitGTK can report a
+      // day button as clickable while the overlay is still moving, then deliver the
+      // pointer event to neither the button nor the sidebar handler. Wait for the actual
+      // transformed position before interacting with calendar controls.
+      await waitForSidebarSettled();
     };
 
-    const clickCalendarDay = async (date: string, waitForDay: 'clickable' | 'displayed' = 'clickable') => {
+    const clickCalendarDay = async (
+      date: string,
+      waitForDay: 'clickable' | 'displayed' = 'clickable',
+    ) => {
       await openSidebar();
       const dayButton = $(`[data-testid="calendar-day-${date}"]`);
       if (waitForDay === 'clickable') {
