@@ -30,7 +30,7 @@ describe('StatsOverlay', () => {
     expect(screen.queryByText('Total Entries')).not.toBeInTheDocument();
   });
 
-  it('displays all six stat rows once getStatistics resolves', async () => {
+  it('displays the streak hero card and all four remaining stat rows once getStatistics resolves', async () => {
     renderWithI18n(() => <StatsOverlay isOpen={true} onClose={vi.fn()} />);
     await waitFor(() => expect(screen.getByText('Total Entries')).toBeInTheDocument());
     expect(screen.getByText('Entries per Week')).toBeInTheDocument();

@@ -112,6 +112,26 @@ export default function StatsOverlay(props: StatsOverlayProps) {
             </Show>
 
             <Show when={!loading() && !error() && stats()}>
+              {/* Current Streak hero card — the streak is the stat most worth glancing at */}
+              <div class="mb-4 rounded-md bg-tertiary p-4 text-center">
+                <div class="text-3xl font-bold text-interactive">
+                  {t(stats()!.current_streak === 1 ? 'stats.day_one' : 'stats.day_other', {
+                    count: stats()!.current_streak,
+                  })}
+                </div>
+                <div class="mt-1 text-sm font-medium text-secondary">
+                  {t('stats.currentStreak')}
+                </div>
+                <div class="mt-3 flex items-center justify-center gap-1 text-sm text-tertiary">
+                  <span>{t('stats.bestStreak')}</span>
+                  <span class="font-medium text-secondary">
+                    {t(stats()!.best_streak === 1 ? 'stats.day_one' : 'stats.day_other', {
+                      count: stats()!.best_streak,
+                    })}
+                  </span>
+                </div>
+              </div>
+
               <div class="space-y-4">
                 {/* Total Entries */}
                 <div class="flex items-center justify-between border-b border-primary pb-3">
@@ -128,26 +148,6 @@ export default function StatsOverlay(props: StatsOverlayProps) {
                   </span>
                   <span class="text-lg font-semibold text-primary">
                     {formatDecimal(stats()!.entries_per_week)}
-                  </span>
-                </div>
-
-                {/* Best Streak */}
-                <div class="flex items-center justify-between border-b border-primary pb-3">
-                  <span class="text-sm font-medium text-secondary">{t('stats.bestStreak')}</span>
-                  <span class="text-lg font-semibold text-primary">
-                    {t(stats()!.best_streak === 1 ? 'stats.day_one' : 'stats.day_other', {
-                      count: stats()!.best_streak,
-                    })}
-                  </span>
-                </div>
-
-                {/* Current Streak */}
-                <div class="flex items-center justify-between border-b border-primary pb-3">
-                  <span class="text-sm font-medium text-secondary">{t('stats.currentStreak')}</span>
-                  <span class="text-lg font-semibold text-primary">
-                    {t(stats()!.current_streak === 1 ? 'stats.day_one' : 'stats.day_other', {
-                      count: stats()!.current_streak,
-                    })}
                   </span>
                 </div>
 
