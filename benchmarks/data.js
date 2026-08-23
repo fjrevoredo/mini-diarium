@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1787501575857,
+  "lastUpdate": 1787512449781,
   "repoUrl": "https://github.com/fjrevoredo/mini-diarium",
   "entries": {
     "Benchmark": [
@@ -36040,6 +36040,36 @@ window.BENCHMARK_DATA = {
           {
             "name": "ci_pipeline_duration",
             "value": 575000000000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "committer": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "distinct": true,
+          "id": "dc7da80eccdfa8bb3cec83dd00260559a6d52556",
+          "message": "Fix flaky e2e test",
+          "timestamp": "2026-08-23T21:04:19+02:00",
+          "tree_id": "4b321b2d86872dce821b6be9e08ed9cce75fe4bc",
+          "url": "https://github.com/fjrevoredo/mini-diarium/commit/dc7da80eccdfa8bb3cec83dd00260559a6d52556"
+        },
+        "date": 1787512448797,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "ci_pipeline_duration",
+            "value": 578000000000,
             "range": "± 0",
             "unit": "ns/iter"
           }
