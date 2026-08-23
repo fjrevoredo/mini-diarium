@@ -91,6 +91,26 @@ describe('Calendar', () => {
     expect(screen.getByTestId('calendar-day-2026-05-18')).toBeDisabled();
   });
 
+  it('a disabled future day has the future-disabled hint as a title on its gridcell and in aria-label', () => {
+    renderWithI18n(() => <Calendar />);
+    const btn = screen.getByTestId('calendar-day-2026-05-18');
+    // title lives on the wrapping gridcell, not the disabled button itself — disabled form
+    // controls suppress hover in some browsers, so the tooltip must not depend on the button.
+    expect(btn.closest('[role="gridcell"]')).toHaveAttribute(
+      'title',
+      'Future entries are disabled — enable them in Preferences → Writing',
+    );
+    expect(btn.getAttribute('aria-label')).toContain(
+      'Future entries are disabled — enable them in Preferences → Writing',
+    );
+  });
+
+  it('an enabled (non-future) day has no title attribute on its gridcell', () => {
+    renderWithI18n(() => <Calendar />);
+    const btn = screen.getByTestId('calendar-day-2026-05-17');
+    expect(btn.closest('[role="gridcell"]')).not.toHaveAttribute('title');
+  });
+
   it('updating entryDates after mount shows the entry dot without remounting day buttons', async () => {
     renderWithI18n(() => <Calendar />);
     const btnBefore = screen.getByTestId('calendar-day-2026-05-10');

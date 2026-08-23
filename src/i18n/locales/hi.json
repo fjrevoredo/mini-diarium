@@ -79,6 +79,7 @@
     "closePicker": "महीना चुनने वाला बंद करें",
     "hasEntry": ", एंट्री है",
     "hasLockedEntry": ", लॉक की गई प्रविष्टि है",
+    "futureDisabledHint": "भविष्य की प्रविष्टियाँ अक्षम हैं — उन्हें प्राथमिकताएं → लेखन में सक्षम करें",
     "monthYearAria": "{{ name }} {{ year }}"
   },
   "auth": {

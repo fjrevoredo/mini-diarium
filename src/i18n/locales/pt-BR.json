@@ -79,6 +79,7 @@
     "closePicker": "Fechar seletor de mês",
     "hasEntry": ", possui entrada",
     "hasLockedEntry": ", tem entrada bloqueada",
+    "futureDisabledHint": "Entradas futuras estão desativadas — ative-as em Preferências → Escrita",
     "monthYearAria": "{{ name }} de {{ year }}"
   },
   "auth": {

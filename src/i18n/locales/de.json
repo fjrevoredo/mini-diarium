@@ -79,6 +79,7 @@
     "closePicker": "Monatsauswahl schließen",
     "hasEntry": ", hat Eintrag",
     "hasLockedEntry": ", hat gesperrten Eintrag",
+    "futureDisabledHint": "Zukünftige Einträge sind deaktiviert — aktiviere sie unter Einstellungen → Schreiben",
     "monthYearAria": "{{ name }} {{ year }}"
   },
   "auth": {

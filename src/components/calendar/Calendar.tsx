@@ -403,14 +403,17 @@ export default function Calendar() {
                         const hasLocked = createMemo(() => lockedDates().includes(day.date));
                         const isSelected = () => day.date === selectedDate();
                         return (
-                          <div role="gridcell">
+                          <div
+                            role="gridcell"
+                            title={day.isDisabled ? t('calendar.futureDisabledHint') : undefined}
+                          >
                             <button
                               data-testid={`calendar-day-${day.date}`}
                               onClick={() => void handleDayClick(day)}
                               tabIndex={focusedDate() === day.date ? 0 : -1}
                               aria-selected={isSelected()}
                               aria-current={day.isToday ? 'date' : undefined}
-                              aria-label={`${formatDateLabel(day.date, preferences().language)}${hasEntry() ? t('calendar.hasEntry') : ''}${hasLocked() ? t('calendar.hasLockedEntry') : ''}`}
+                              aria-label={`${formatDateLabel(day.date, preferences().language)}${hasEntry() ? t('calendar.hasEntry') : ''}${hasLocked() ? t('calendar.hasLockedEntry') : ''}${day.isDisabled ? ', ' + t('calendar.futureDisabledHint') : ''}`}
                               class={`
                             relative h-8 w-full rounded text-sm flex flex-col items-center justify-center
                             ${day.isCurrentMonth ? 'text-primary' : 'text-muted'}

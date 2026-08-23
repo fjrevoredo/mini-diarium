@@ -109,6 +109,8 @@ const en = {
     hasEntry: ', has entry',
     /** Appended to calendar day aria-label when the day has a locked entry */
     hasLockedEntry: ', has locked entry',
+    /** Title/aria-label hint shown on a disabled future day when future entries are off */
+    futureDisabledHint: 'Future entries are disabled — enable them in Preferences → Writing',
     /** Month + year aria-label used in month picker button: e.g. "Jan 2026" */
     monthYearAria: '{{ name }} {{ year }}',
   },
@@ -597,6 +599,7 @@ const en = {
       countSummary_one: '{{ count }} backup',
       countSummary_other: '{{ count }} backups',
       healthOk: 'Backups are working.',
+      pendingFirstBackup: 'Backups will start automatically after your first change.',
       healthFailed:
         'The last backup attempt failed ({{ when }}). Open the backups folder to check it is reachable and has free space.',
       healthUnreachable:

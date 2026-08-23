@@ -79,6 +79,7 @@
     "closePicker": "Chiudi selettore mese",
     "hasEntry": ", ha una voce",
     "hasLockedEntry": ", ha una voce bloccata",
+    "futureDisabledHint": "Le voci future sono disabilitate — abilitale in Preferenze → Scrittura",
     "monthYearAria": "{{ name }} {{ year }}"
   },
   "auth": {
