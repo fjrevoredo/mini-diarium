@@ -136,7 +136,7 @@ export default function PreferencesDataTab(props: TabProps) {
         <button
           type="button"
           onClick={handleResetJournal}
-          class="px-4 py-2 text-sm font-medium text-destructive bg-primary border border-primary rounded-md hover:bg-hover focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          class="text-sm font-medium text-destructive hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500 rounded"
         >
           {t('prefs.data.resetJournal')}
         </button>
