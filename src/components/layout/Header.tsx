@@ -29,6 +29,7 @@ import { lockJournal } from '../../state/auth';
 import { preferences } from '../../state/preferences';
 import { useI18n } from '../../i18n';
 import { hasUnread, unreadCount } from '../../state/notifications';
+import { onboardingMode } from '../../state/onboarding';
 import HeaderMoreMenu from './HeaderMoreMenu';
 
 interface HeaderProps {
@@ -39,6 +40,7 @@ interface HeaderProps {
 export default function Header(props: HeaderProps) {
   const t = useI18n();
   const [isLocking, setIsLocking] = createSignal(false);
+  const showUnreadBadge = () => hasUnread() && onboardingMode() !== 'tour';
 
   // Format date: "Tuesday, January 1, 2019"
   const formattedDate = () => {
@@ -155,14 +157,14 @@ export default function Header(props: HeaderProps) {
           onClick={() => setIsNotificationsOpen(true)}
           class="relative rounded p-2 hover:bg-hover text-tertiary transition-colors"
           aria-label={
-            hasUnread()
+            showUnreadBadge()
               ? t('layout.header.notificationsUnread', { count: unreadCount() })
               : t('layout.header.notificationsNone')
           }
           data-testid="notifications-button"
         >
           <Bell size={20} />
-          <Show when={hasUnread()}>
+          <Show when={showUnreadBadge()}>
             <span
               class="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-interactive text-xs font-bold leading-none"
               style={{ color: 'var(--btn-primary-text)' }}

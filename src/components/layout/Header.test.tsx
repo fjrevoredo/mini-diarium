@@ -21,6 +21,19 @@ vi.mock('../../state/support-milestone', () => ({
   pendingRung: () => supportMilestoneState.pendingRung,
 }));
 
+const notificationsState = vi.hoisted(() => ({ hasUnread: false, unreadCount: 0 }));
+vi.mock('../../state/notifications', () => ({
+  hasUnread: () => notificationsState.hasUnread,
+  unreadCount: () => notificationsState.unreadCount,
+}));
+
+const onboardingState = vi.hoisted(() => ({
+  mode: 'dismissed' as 'tour' | 'minimized' | 'dismissed',
+}));
+vi.mock('../../state/onboarding', () => ({
+  onboardingMode: () => onboardingState.mode,
+}));
+
 import Header from './Header';
 
 const { mockNavigatePreviousDay, mockNavigateNextDay } = vi.hoisted(() => ({
@@ -186,5 +199,36 @@ describe('Header support milestone icon', () => {
 
     expect(isProjectSupportOpen()).toBe(true);
     expect(projectSupportEntry()).toBe('milestone');
+  });
+});
+
+describe('Header notifications badge vs. onboarding tour', () => {
+  beforeEach(() => {
+    resetUiState();
+    notificationsState.hasUnread = false;
+    notificationsState.unreadCount = 0;
+    onboardingState.mode = 'dismissed';
+  });
+
+  it('shows the unread badge when not mid-tour', () => {
+    notificationsState.hasUnread = true;
+    notificationsState.unreadCount = 3;
+    onboardingState.mode = 'dismissed';
+    renderWithI18n(() => <Header />);
+
+    const button = screen.getByTestId('notifications-button');
+    expect(button).toHaveAttribute('aria-label', 'Notifications, 3 unread');
+    expect(button.querySelector('span[aria-hidden="true"]')).toHaveTextContent('3');
+  });
+
+  it('hides the unread badge while onboardingMode is "tour"', () => {
+    notificationsState.hasUnread = true;
+    notificationsState.unreadCount = 3;
+    onboardingState.mode = 'tour';
+    renderWithI18n(() => <Header />);
+
+    const button = screen.getByTestId('notifications-button');
+    expect(button).toHaveAttribute('aria-label', 'Notifications');
+    expect(button.querySelector('span[aria-hidden="true"]')).not.toBeInTheDocument();
   });
 });
