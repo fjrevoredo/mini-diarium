@@ -118,7 +118,7 @@ export default function SearchResults() {
                       {/* Safe: snippet comes from our own backend search with controlled <mark>
                           tags and HTML-escaped surrounding text (see escape_html in search.rs). */}
                       <div
-                        class="mt-2 text-sm text-secondary"
+                        class="mt-2 text-sm text-secondary search-snippet"
                         // eslint-disable-next-line solid/no-innerhtml
                         innerHTML={result.snippet}
                       />

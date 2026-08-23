@@ -132,7 +132,7 @@ export default function PreferencesCustomFontsSection(props: PreferencesCustomFo
               type="button"
               onClick={() => handleDeleteFont(font.family)}
               aria-label={t('prefs.writing.customFontDeleteAriaLabel', { family: font.family })}
-              class="text-xs text-red-500 hover:text-red-700 ml-4 shrink-0"
+              class="text-xs text-destructive ml-4 shrink-0"
             >
               {t('prefs.writing.customFontDeleteButton')}
             </button>

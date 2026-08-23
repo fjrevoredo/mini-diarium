@@ -227,7 +227,7 @@ export default function ImagePickerOverlay(props: ImagePickerOverlayProps) {
 
             <Show when={loadError() || insertError()}>
               <div
-                class="mb-4 rounded-md border border-red-300/60 bg-red-500/10 px-3 py-2 text-sm text-error"
+                class="mb-4 rounded-md border border-error bg-error px-3 py-2 text-sm text-error"
                 role="alert"
               >
                 {loadError() ?? insertError()}
