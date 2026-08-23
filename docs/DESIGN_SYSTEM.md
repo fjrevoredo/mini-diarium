@@ -83,6 +83,10 @@ All interactive elements in the app — buttons, focus rings, selected states, c
 
 The text highlight mark (`<mark>`) uses amber: `#b45309` (amber-700) in light mode and `#fbbf24` (amber-400) in dark mode. Amber is visually distinct from both blue (interactive) and the gray palette, making highlighted text immediately recognisable. Outside the editor, amber appears only in warning status messages.
 
+**Support accent — Pink:**
+
+`text-pink-500` is used for the heart icon on the two "support the project" entry points (`AboutOverlay.tsx`, `Header.tsx`'s streak-milestone Support icon). This is a deliberate, narrowly-scoped exception to the blue/gray/amber palette above: pink reads as a distinct, warm "donate/support" affordance that would be lost if it shared blue's interactive meaning. It is pinned by both components' tests. Do not extend pink to any other UI element — it is reserved for these two support entry points only.
+
 **Status colors:**
 
 | State | Semantic meaning | Hue family |
@@ -177,7 +181,7 @@ All theme-aware colors are defined as CSS custom properties in `src/index.css`:
 
 Components use the CSS variables (via utility classes or inline styles) and Tailwind/UnoCSS utility classes. Hard-coded hex values in component files should be treated as technical debt; new code must use the variable system.
 
-**Exception — `src/styles/critical-auth.css`:** This file duplicates a subset of Tailwind utility classes as static CSS and is loaded synchronously (via `<link>`) before UnoCSS hydrates. Its purpose is to prevent a flash of unstyled content (FOUC) on auth screens during cold launch. It uses light-mode hard-coded hex values only. This is intentional: auth screens are always rendered in light mode regardless of theme preference (the `.dark` class is applied to `<html>` only after the main app mounts). Do not convert this file to CSS variables.
+**Exception — `src/styles/critical-auth.css`:** This file duplicates a subset of Tailwind utility classes as static CSS and is loaded synchronously (via `<link>`) before UnoCSS hydrates. Its purpose is to prevent a flash of unstyled content (FOUC) on auth screens during cold launch. It uses light-mode hard-coded hex values only. This is intentional, but only for the pre-hydration window: `critical-auth.css`'s hardcoded light values cover the FOUC gap before the SolidJS app mounts and the `.dark` class (if applicable) is applied to `<html>`. Once mounted, `JournalPicker`/`PasswordCreation`/`PasswordPrompt` follow the normal theme system like the rest of the app — auth screens are not forced to light mode after that point. Do not convert this file to CSS variables.
 
 **Unused color scale — `uno.config.ts` `primary`:** The UnoCSS config defines a `primary` color scale (`primary-500: #0ea5e9`, sky/cyan blue) that is **not used anywhere in the codebase**. Do not confuse this with the interactive blue (`#3b82f6`, Tailwind `blue-500`). If you are looking for the interactive color, use `blue-*` classes, not `primary-*`.
 
