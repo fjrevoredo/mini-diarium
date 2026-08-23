@@ -358,9 +358,20 @@ export default function BackupsPanel(props: BackupsPanelProps) {
           when={problem()}
           fallback={
             <Show when={health()}>
-              <p class="text-sm text-success" data-testid="backups-health-ok">
-                {t('prefs.backups.healthOk')}
-              </p>
+              {(state) => (
+                <Show
+                  when={state().newest_created_at}
+                  fallback={
+                    <p class="text-sm text-secondary" data-testid="backups-health-pending">
+                      {t('prefs.backups.pendingFirstBackup')}
+                    </p>
+                  }
+                >
+                  <p class="text-sm text-success" data-testid="backups-health-ok">
+                    {t('prefs.backups.healthOk')}
+                  </p>
+                </Show>
+              )}
             </Show>
           }
         >

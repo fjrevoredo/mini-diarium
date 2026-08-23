@@ -171,6 +171,7 @@ These are used by E2E tests — **do not remove** from components.
 | `BackupsPanel.tsx` | One snapshot row | `backups-list-item` |
 | `BackupsPanel.tsx` | Empty-state message | `backups-empty` |
 | `BackupsPanel.tsx` | "Backups are working" line | `backups-health-ok` |
+| `BackupsPanel.tsx` | Pending-first-backup line (healthy journal, no snapshot taken yet) | `backups-health-pending` |
 | `BackupsPanel.tsx` | Degraded-health line (unreachable folder / failed attempt / over budget) | `backups-health-problem` |
 | `BackupsPanel.tsx` | Back up now button | `backups-create-button` |
 | `BackupsPanel.tsx` | Open backups folder button | `backups-reveal-button` |

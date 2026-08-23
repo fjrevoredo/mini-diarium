@@ -245,7 +245,8 @@ describe('BackupsPanel', () => {
 
     await waitFor(() => expect(screen.getByTestId('backups-empty')).toBeInTheDocument());
     expect(screen.queryByTestId('backups-health-problem')).not.toBeInTheDocument();
-    expect(screen.getByTestId('backups-health-ok')).toBeInTheDocument();
+    expect(screen.queryByTestId('backups-health-ok')).not.toBeInTheDocument();
+    expect(screen.getByTestId('backups-health-pending')).toBeInTheDocument();
   });
 
   it('reports an exceeded storage budget', async () => {

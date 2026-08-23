@@ -502,6 +502,7 @@
       "countSummary_one": "{{ count }} backup",
       "countSummary_other": "{{ count }} backup",
       "healthOk": "I backup funzionano.",
+      "pendingFirstBackup": "I backup inizieranno automaticamente dopo la tua prima modifica.",
       "healthFailed": "L’ultimo tentativo di backup non è riuscito ({{ when }}). Apri la cartella dei backup per verificare che sia raggiungibile e che ci sia spazio libero.",
       "healthUnreachable": "La cartella dei backup non può essere usata. Se il diario si trova su un’unità rimovibile o sincronizzata, ricollegala; altrimenti verifica che la cartella esista ancora e che nulla ne abbia preso il posto.",
       "healthBudget": "I backup superano il limite di spazio. Verranno ridotti prima i più recenti; i più vecchi vengono conservati.",

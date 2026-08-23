@@ -502,6 +502,7 @@
       "countSummary_one": "{{ count }} backup",
       "countSummary_other": "{{ count }} backups",
       "healthOk": "Os backups estão funcionando.",
+      "pendingFirstBackup": "Os backups começarão automaticamente após sua primeira alteração.",
       "healthFailed": "A última tentativa de backup falhou ({{ when }}). Abra a pasta de backups para conferir se ela está acessível e tem espaço livre.",
       "healthUnreachable": "Não é possível usar a pasta de backups. Se o diário estiver em uma unidade removível ou sincronizada, reconecte-a; caso contrário, verifique se a pasta ainda existe e se nada tomou o lugar dela.",
       "healthBudget": "Os backups ultrapassaram o limite de armazenamento. Os mais recentes serão reduzidos primeiro; os mais antigos são mantidos.",

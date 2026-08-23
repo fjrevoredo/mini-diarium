@@ -502,6 +502,7 @@
       "countSummary_one": "{{ count }} sauvegarde",
       "countSummary_other": "{{ count }} sauvegardes",
       "healthOk": "Les sauvegardes fonctionnent.",
+      "pendingFirstBackup": "Les sauvegardes démarreront automatiquement après votre première modification.",
       "healthFailed": "La dernière tentative de sauvegarde a échoué ({{ when }}). Ouvrez le dossier des sauvegardes pour vérifier qu’il est accessible et qu’il reste de l’espace libre.",
       "healthUnreachable": "Le dossier des sauvegardes ne peut pas être utilisé. Si le journal se trouve sur un disque amovible ou synchronisé, reconnectez-le ; sinon, vérifiez que le dossier existe toujours et que rien n’a pris sa place.",
       "healthBudget": "Les sauvegardes dépassent leur limite de stockage. Les plus récentes seront réduites en premier ; les plus anciennes sont conservées.",

@@ -502,6 +502,7 @@
       "countSummary_one": "{{ count }} copia de seguridad",
       "countSummary_other": "{{ count }} copias de seguridad",
       "healthOk": "Las copias de seguridad funcionan correctamente.",
+      "pendingFirstBackup": "Las copias de seguridad comenzarán automáticamente después de tu primer cambio.",
       "healthFailed": "El último intento de copia de seguridad falló ({{ when }}). Abre la carpeta de copias para comprobar que es accesible y tiene espacio libre.",
       "healthUnreachable": "No se puede usar la carpeta de copias de seguridad. Si el diario está en una unidad extraíble o sincronizada, vuelve a conectarla; si no, comprueba que la carpeta siga existiendo y que nada haya ocupado su lugar.",
       "healthBudget": "Las copias de seguridad superan su límite de almacenamiento. Se recortarán primero las más recientes; las antiguas se conservan.",
