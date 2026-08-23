@@ -432,6 +432,15 @@ rg -n "data-testid|isSidebarCollapsed|is[A-Za-z]+Open" src e2e
 - Dialogs and overlays must have a clear close path and must not leave stale draft state in a later session.
 - Keep layout behavior stable at the E2E viewport and common desktop widths before refining visual polish.
 
+### Use Design-System Tokens, Not Invented Ad Hoc Styles
+
+Every recurring visual pattern (primary/destructive buttons, status text, surfaces, borders) already has a predefined class in `docs/DESIGN_SYSTEM.md` / `src/index.css` — `.interactive-primary`, `.interactive-destructive`, `.text-destructive`, `.text-interactive`, `.btn-active`, the `bg-*`/`text-*`/`border-*` theme tokens, and the status `bg/border/text-{success,error,warning,info}` set. Before writing a `class` string:
+
+- Check `DESIGN_SYSTEM.md`'s utility list and this file's "Preferences Panel UI Patterns" section for an existing match, and reuse it verbatim.
+- Never substitute a raw hex color, a raw Tailwind palette shade (`bg-red-600`, `text-blue-500`), or a one-off combination (custom opacity, `hover:underline`, a new weight) that happens to look similar to a token that already exists.
+- Similar-looking tokens are not interchangeable: `.interactive-destructive` (filled button) and `.text-destructive` (text-only link) both signal "destructive," but swapping one for the other changes the control's visual weight and must be a deliberate design call, not a drive-by substitution — this exact mix-up downgraded the Reset Journal button from a filled destructive button to a link and had to be reverted.
+- If no existing token fits, that is a design-system gap, not license to style the one component by hand: add the token to `src/index.css` (see "Registering a new semantic theme token" above) and document it in `DESIGN_SYSTEM.md` in the same change.
+
 ### Use The Standard Overlay Surface Pattern
 
 Dialog and overlay surfaces should follow the existing tokenized pattern used by `ImportOverlay`, `ExportOverlay`, `PreferencesOverlay`, `LinkOverlay`, and other working dialogs:
@@ -487,4 +496,5 @@ Use this checklist for frontend PRs:
 - Editor: TipTap content remains HTML, editor effects do not create load/save loops, extension behavior is constrained and tested.
 - Testing: characterization tests cover risky refactors, async UI uses `waitFor`, E2E selectors and viewport reachability are preserved.
 - Accessibility: inputs, dialogs, icon buttons, and errors expose stable accessible names or roles.
+- Styling: new `class` strings reuse existing `DESIGN_SYSTEM.md` tokens (no raw hex, raw Tailwind palette shades, or invented one-offs for a pattern that already has a predefined class).
 - File size: files above soft limits have a clear responsibility boundary; files above hard limits have an explicit justification or split plan.

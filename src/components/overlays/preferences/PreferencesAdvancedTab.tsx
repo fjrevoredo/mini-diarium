@@ -117,7 +117,7 @@ export default function PreferencesAdvancedTab(props: TabProps) {
           <button
             type="button"
             onClick={handleResetOverrides}
-            class="px-3 py-1.5 text-sm font-medium text-destructive bg-primary border border-primary rounded-md hover:bg-hover focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            class="px-3 py-1.5 text-sm font-medium interactive-destructive rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
           >
             {t('prefs.advanced.resetToDefault')}
           </button>
