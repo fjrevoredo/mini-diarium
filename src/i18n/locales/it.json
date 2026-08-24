@@ -632,7 +632,10 @@
     "dismissAll": "Segna tutto come letto",
     "typeRelease": "Versione",
     "typeAnnouncement": "Annuncio",
-    "typeTip": "Suggerimento"
+    "typeTip": "Suggerimento",
+    "readMore": "Leggi di più",
+    "readMoreAria": "Leggi di più su {{ title }}",
+    "detailCloseAria": "Chiudi dettaglio notifica"
   },
   "support": {
     "title": "Sostieni Mini Diarium",

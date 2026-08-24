@@ -632,7 +632,10 @@
     "dismissAll": "Alle als gelesen markieren",
     "typeRelease": "Version",
     "typeAnnouncement": "Ankündigung",
-    "typeTip": "Tipp"
+    "typeTip": "Tipp",
+    "readMore": "Mehr lesen",
+    "readMoreAria": "Mehr über {{ title }} lesen",
+    "detailCloseAria": "Benachrichtigungsdetails schließen"
   },
   "support": {
     "title": "Mini Diarium unterstützen",

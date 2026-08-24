@@ -79,8 +79,15 @@ describe('markAllRead', () => {
         json: () =>
           Promise.resolve({
             entries: [
-              { id: 'a', type: 'release', version: '1', title: 'A', body: '', date: '2026-04-01' },
-              { id: 'b', type: 'tip', version: '1', title: 'B', body: '', date: '2026-04-02' },
+              {
+                id: 'a',
+                type: 'release',
+                version: '1',
+                title: 'A',
+                summary: '',
+                date: '2026-04-01',
+              },
+              { id: 'b', type: 'tip', version: '1', title: 'B', summary: '', date: '2026-04-02' },
             ],
           }),
       } as Response),
@@ -124,7 +131,7 @@ describe('isRead / unreadCount / hasUnread', () => {
                   type: 'release',
                   version: '1',
                   title: 'N1',
-                  body: '',
+                  summary: '',
                   date: '2026-04-01',
                 },
                 {
@@ -132,7 +139,7 @@ describe('isRead / unreadCount / hasUnread', () => {
                   type: 'tip',
                   version: '1',
                   title: 'N2',
-                  body: '',
+                  summary: '',
                   date: '2026-04-02',
                 },
               ],
@@ -181,7 +188,7 @@ describe('loadNotifications', () => {
                   type: 'release',
                   version: '1.0',
                   title: 'V1',
-                  body: 'body',
+                  summary: 'body',
                   date: '2026-04-01',
                 },
               ],
@@ -193,6 +200,44 @@ describe('loadNotifications', () => {
     expect(mod.allNotifications().length).toBe(1);
     expect(mod.allNotifications()[0].id).toBe('v1');
     expect(mod.isLoading()).toBe(false);
+  });
+
+  it('passes an entry with a body field through unchanged, and leaves body undefined when absent', async () => {
+    const mod = await import('./notifications');
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(() =>
+        Promise.resolve({
+          ok: true,
+          json: () =>
+            Promise.resolve({
+              entries: [
+                {
+                  id: 'with-body',
+                  type: 'release',
+                  version: '1.0',
+                  title: 'With body',
+                  summary: 'short summary',
+                  body: '## Full detail\n\n- one\n- two',
+                  date: '2026-04-01',
+                },
+                {
+                  id: 'without-body',
+                  type: 'tip',
+                  version: '1.0',
+                  title: 'Without body',
+                  summary: 'short summary',
+                  date: '2026-04-02',
+                },
+              ],
+            }),
+        } as Response),
+      ),
+    );
+    await mod.loadNotifications();
+    const [withBody, withoutBody] = mod.allNotifications();
+    expect(withBody.body).toBe('## Full detail\n\n- one\n- two');
+    expect(withoutBody.body).toBeUndefined();
   });
 
   it('sets allNotifications to [] on non-ok status', async () => {
@@ -257,7 +302,7 @@ describe('loadNotifications', () => {
                   type: 'tip',
                   version: '1',
                   title: 'Old',
-                  body: '',
+                  summary: '',
                   date: oldDateStr,
                 },
                 {
@@ -265,7 +310,7 @@ describe('loadNotifications', () => {
                   type: 'release',
                   version: '1',
                   title: 'Recent',
-                  body: '',
+                  summary: '',
                   date: recentDateStr,
                 },
               ],
@@ -297,7 +342,7 @@ describe('loadNotifications', () => {
                   type: 'release',
                   version: '1',
                   title: 'Fresh',
-                  body: '',
+                  summary: '',
                   date: '2026-04-19',
                 },
               ],
@@ -329,7 +374,7 @@ describe('loadNotifications', () => {
                   type: 'tip',
                   version: '1',
                   title: 'Stale',
-                  body: '',
+                  summary: '',
                   date: oldDateStr,
                 },
               ],

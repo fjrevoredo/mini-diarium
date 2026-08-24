@@ -632,7 +632,10 @@
     "dismissAll": "Tout marquer comme lu",
     "typeRelease": "Version",
     "typeAnnouncement": "Annonce",
-    "typeTip": "Astuce"
+    "typeTip": "Astuce",
+    "readMore": "Lire la suite",
+    "readMoreAria": "En savoir plus sur {{ title }}",
+    "detailCloseAria": "Fermer le détail de la notification"
   },
   "support": {
     "title": "Soutenir Mini Diarium",

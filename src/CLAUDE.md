@@ -214,6 +214,15 @@ These are used by E2E tests — **do not remove** from components.
 | `ConfirmDialog.tsx` | Confirm button | `confirm-dialog-confirm-button` |
 | `ProjectSupportOverlay.tsx` | Dialog content root | `project-support-overlay` |
 | `ProjectSupportOverlay.tsx` | Per-item action button | `support-item-{star\|review\|share\|newsletter\|contribute\|donate}` |
+| `NotificationsOverlay.tsx` | Unread dot on one entry | `unread-dot-{id}` |
+| `NotificationsOverlay.tsx` | External link button on one entry | `link-{id}` |
+| `NotificationsOverlay.tsx` | "Read more" button (visible only when `entry.body` is set; opens `NotificationDetailDialog`) | `read-more-{id}` |
+| `NotificationsOverlay.tsx` | Mark-read button on one entry | `mark-read-{id}` |
+| `NotificationsOverlay.tsx` | "Mark all read" footer button | `mark-all-read-button` |
+| `NotificationsOverlay.tsx` | Close button | `notifications-close-button` |
+| `NotificationDetailDialog.tsx` | Dialog content root | `notification-detail-dialog` |
+| `NotificationDetailDialog.tsx` | External link button | `notification-detail-link` |
+| `NotificationDetailDialog.tsx` | Close button | `notification-detail-close-button` |
 
 ## Gotchas and Pitfalls
 

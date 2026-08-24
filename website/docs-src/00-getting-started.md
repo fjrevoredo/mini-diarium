@@ -3,7 +3,7 @@ title: Getting Started
 slug: getting-started
 description: System requirements, creating your first encrypted journal, setting a password, the welcome tour, multiple journals, key file auth, and local-only mode.
 order: 1
-updated: 2026-08-08
+updated: 2026-08-24
 tags: setup, password, first launch, system requirements
 ---
 
@@ -48,7 +48,7 @@ To resume or permanently dismiss the tour, click the `?` icon and choose **Resum
 
 Your journal is encrypted whenever it is locked. After selecting a journal, enter your password to unlock it. The journal locks automatically when you close the app, and you can also lock it manually using the lock icon in the header at any time.
 
-The header also shows an **About** button (ⓘ) and a **bell icon** for the notification center. The bell displays an unread badge when a new release ships; click it to read what changed and mark notifications as read.
+The header also shows an **About** button (ⓘ) and a **bell icon** for the notification center. The bell displays an unread badge when a new release ships; click it to read what changed and mark notifications as read. Entries with more to say show a **Read more** button that opens the full write-up, with headings and lists, without leaving the app.
 
 As an alternative to your password, you can register a key file in **Preferences → Authentication Methods**. Once registered, use the "Key File" tab on the unlock screen and select your `.key` file to unlock without typing your password.
 

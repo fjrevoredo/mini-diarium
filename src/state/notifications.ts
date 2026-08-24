@@ -10,7 +10,8 @@ export interface NotificationEntry {
   type: NotificationType;
   version: string;
   title: string;
-  body: string;
+  summary: string;
+  body?: string;
   date: string;
   linkUrl?: string;
   linkLabel?: string;

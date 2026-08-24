@@ -632,7 +632,10 @@
     "dismissAll": "सभी पढ़ा गया चिह्नित करें",
     "typeRelease": "रिलीज़",
     "typeAnnouncement": "घोषणा",
-    "typeTip": "टिप"
+    "typeTip": "टिप",
+    "readMore": "और पढ़ें",
+    "readMoreAria": "{{ title }} के बारे में और पढ़ें",
+    "detailCloseAria": "सूचना विवरण बंद करें"
   },
   "support": {
     "title": "Mini Diarium का समर्थन करें",

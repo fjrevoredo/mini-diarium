@@ -5,7 +5,8 @@
       "type": "release",
       "version": "0.6.4",
       "title": "What's new in 0.6.4",
-      "body": "Fixed a potential content-loss bug when editing and quickly navigating to the timeline or another entry, fixed text that could jump into the title field on blank days, and brought the debug dump up to date with current app features.",
+      "summary": "Fixed a **potential content-loss bug** when editing and quickly navigating to the timeline or another entry, fixed text that could jump into the title field on blank days, and brought the debug dump up to date with current app features.",
+      "body": "## What's new in 0.6.4\n\n- Fixed a potential content-loss bug when editing and quickly navigating to the timeline or another entry\n- Fixed text that could jump into the title field on blank days\n- Brought the debug dump up to date with current app features",
       "date": "2026-07-30",
       "linkUrl": "https://github.com/fjrevoredo/mini-diarium/releases/tag/v0.6.4",
       "linkLabel": "Full release notes"
@@ -15,7 +16,7 @@
       "type": "announcement",
       "version": "0.6.4",
       "title": "Automatic backups have you covered!",
-      "body": "If you ever suspect data loss or corruption in your journal, locate your automatic backup folder right away and copy it somewhere safe. Then report the issue at https://github.com/fjrevoredo/mini-diarium/issues or to minidiarium@gmail.com. Learn more about how backups work at the link below.",
+      "summary": "If you ever suspect data loss or corruption in your journal, locate your automatic backup folder right away and copy it somewhere safe. Then report the issue at https://github.com/fjrevoredo/mini-diarium/issues or to minidiarium@gmail.com. Learn more about how backups work at the link below.",
       "date": "2026-07-30",
       "linkUrl": "https://mini-diarium.com/docs/backups/",
       "linkLabel": "How backups work"
@@ -25,7 +26,7 @@
       "type": "release",
       "version": "0.6.3",
       "title": "What's new in 0.6.3",
-      "body": "This release completes the in-app navigation migration with header day controls and a ⋮ menu, adds timeline display preferences and a donation page, and fixes Linux spell check. Internally, the backend is now a three-crate open-core workspace with a sealed API façade, and the Microsoft Store update pipeline is live.",
+      "summary": "This release completes the in-app navigation migration with header day controls and a ⋮ menu, adds timeline display preferences and a donation page, and fixes Linux spell check. Internally, the backend is now a three-crate open-core workspace with a sealed API façade, and the Microsoft Store update pipeline is live.",
       "date": "2026-07-27",
       "linkUrl": "https://github.com/fjrevoredo/mini-diarium/releases/tag/v0.6.3",
       "linkLabel": "Full release notes"
@@ -35,7 +36,7 @@
       "type": "release",
       "version": "0.6.2",
       "title": "What's new in 0.6.2",
-      "body": "Mini Diarium 0.6.2 brings two new locking controls: auto-lock when the window loses focus so you can minimize or switch away without leaving your journal open, and a per-entry lock that makes individual entries read-only so you can browse without worrying about accidental edits. The auto-lock timeout now enforces a 5-second minimum to keep the app usable.",
+      "summary": "Mini Diarium 0.6.2 brings two new locking controls: auto-lock when the window loses focus so you can minimize or switch away without leaving your journal open, and a per-entry lock that makes individual entries read-only so you can browse without worrying about accidental edits. The auto-lock timeout now enforces a 5-second minimum to keep the app usable.",
       "date": "2026-07-12",
       "linkUrl": "https://github.com/fjrevoredo/mini-diarium/releases/tag/v0.6.2",
       "linkLabel": "Full release notes"
@@ -45,7 +46,7 @@
       "type": "release",
       "version": "0.6.0",
       "title": "What's new in 0.6.0",
-      "body": "Mini Diarium 0.6.0 brings full-text search across every entry to everyone, plus a new timeline view that lists your entries newest-first with clickable previews. Nix flake packaging is now available for NixOS and Linux users, and several fixes also ship: the editor no longer crashes on lock/unlock, link tooltips now respond to keyboard focus, font family names sort correctly per locale, and the Flatpak manifest script validates commit SHAs.",
+      "summary": "Mini Diarium 0.6.0 brings full-text search across every entry to everyone, plus a new timeline view that lists your entries newest-first with clickable previews. Nix flake packaging is now available for NixOS and Linux users, and several fixes also ship: the editor no longer crashes on lock/unlock, link tooltips now respond to keyboard focus, font family names sort correctly per locale, and the Flatpak manifest script validates commit SHAs.",
       "date": "2026-06-27",
       "linkUrl": "https://github.com/fjrevoredo/mini-diarium/releases/tag/v0.6.0",
       "linkLabel": "Full release notes"
@@ -55,7 +56,7 @@
       "type": "release",
       "version": "0.5.4",
       "title": "What's new in 0.5.4",
-      "body": "You can now export your journal as a PDF. Bullet points and numbered lists are properly visible in the editor again, and the export dialog no longer carries over old errors when reopened.",
+      "summary": "You can now export your journal as a PDF. Bullet points and numbered lists are properly visible in the editor again, and the export dialog no longer carries over old errors when reopened.",
       "date": "2026-06-17",
       "linkUrl": "https://github.com/fjrevoredo/mini-diarium/releases/tag/v0.5.4",
       "linkLabel": "Full release notes"
@@ -65,7 +66,7 @@
       "type": "release",
       "version": "0.5.3",
       "title": "What's new in 0.5.3",
-      "body": "Thank you for using Mini Diarium. We hope you're enjoying it so far. If you are, please consider starring the project on GitHub or leaving a review on Flathub. It takes just a moment and it genuinely helps more people discover the app. (This release brings image deduplication, a visual media picker, per-entry fonts, and named links. Details in the full notes below.)",
+      "summary": "Thank you for using Mini Diarium. We hope you're enjoying it so far. If you are, please consider starring the project on GitHub or leaving a review on Flathub. It takes just a moment and it genuinely helps more people discover the app. (This release brings image deduplication, a visual media picker, per-entry fonts, and named links. Details in the full notes below.)",
       "date": "2026-06-04",
       "linkUrl": "https://github.com/fjrevoredo/mini-diarium/releases/tag/v0.5.3",
       "linkLabel": "Full release notes"
@@ -75,7 +76,7 @@
       "type": "release",
       "version": "0.5.0",
       "title": "What's new in 0.5.0",
-      "body": "The biggest Mini Diarium update yet. Tags are here: label your entries and click a tag to filter the sidebar calendar to only dates with that tag. The editor toolbar is now fully configurable: enable, disable, and reorder any of the 17 formatting controls in Preferences → Writing, with optional font family and size pickers available directly in the toolbar. Cross-app image drag-and-drop now works with Electron editors and apps like Typora, locking and unlocking play smooth blur animations, and new journals get a three-step welcome tour on first launch. A multi-auth duplicate-credential vulnerability has also been fixed.",
+      "summary": "The biggest Mini Diarium update yet. Tags are here: label your entries and click a tag to filter the sidebar calendar to only dates with that tag. The editor toolbar is now fully configurable: enable, disable, and reorder any of the 17 formatting controls in Preferences → Writing, with optional font family and size pickers available directly in the toolbar. Cross-app image drag-and-drop now works with Electron editors and apps like Typora, locking and unlocking play smooth blur animations, and new journals get a three-step welcome tour on first launch. A multi-auth duplicate-credential vulnerability has also been fixed.",
       "date": "2026-05-24",
       "linkUrl": "https://github.com/fjrevoredo/mini-diarium/releases/tag/v0.5.0",
       "linkLabel": "Full release notes"
@@ -85,7 +86,7 @@
       "type": "release",
       "version": "0.4.22",
       "title": "What's new in 0.4.22",
-      "body": "Mini Diarium v0.4.22 bundles two new open-source Arabic-capable fonts (Amiri and Tajawal), replaces the folder picker with a direct `.db` file selector for opening existing journals, caps the journal picker list to 5 visible items with scrolling, and optimizes word-count calculation to sub-microsecond performance on both plain text and TipTap HTML paths.",
+      "summary": "Mini Diarium v0.4.22 bundles two new open-source Arabic-capable fonts (Amiri and Tajawal), replaces the folder picker with a direct `.db` file selector for opening existing journals, caps the journal picker list to 5 visible items with scrolling, and optimizes word-count calculation to sub-microsecond performance on both plain text and TipTap HTML paths.",
       "date": "2026-05-13",
       "linkUrl": "https://github.com/fjrevoredo/mini-diarium/releases/tag/v0.4.22",
       "linkLabel": "Full release notes"
@@ -95,7 +96,7 @@
       "type": "release",
       "version": "0.4.21",
       "title": "What's new in 0.4.21",
-      "body": "v0.4.21 adds text color and highlight formatting, export date/month filters, auto-focus on unlock, and a French locale. It fixes bundled fonts not loading in macOS/Windows release builds, moves Underline to the basic toolbar, and makes the Preferences dialog responsive.",
+      "summary": "v0.4.21 adds text color and highlight formatting, export date/month filters, auto-focus on unlock, and a French locale. It fixes bundled fonts not loading in macOS/Windows release builds, moves Underline to the basic toolbar, and makes the Preferences dialog responsive.",
       "date": "2026-05-09",
       "linkUrl": "https://github.com/fjrevoredo/mini-diarium/releases/tag/v0.4.21",
       "linkLabel": "Full release notes"
@@ -105,7 +106,7 @@
       "type": "release",
       "version": "0.4.19",
       "title": "What's new in 0.4.19",
-      "body": "New setting to require all authentication methods at once, native right-to-left text support in the editor, and a fix for German users seeing English interface text.",
+      "summary": "New setting to require all authentication methods at once, native right-to-left text support in the editor, and a fix for German users seeing English interface text.",
       "date": "2026-04-27",
       "linkUrl": "https://github.com/fjrevoredo/mini-diarium/releases/tag/v0.4.19",
       "linkLabel": "Full release notes"
@@ -115,7 +116,7 @@
       "type": "release",
       "version": "0.4.17",
       "title": "What's new in 0.4.17",
-      "body": "Introduced the in-app notification center and applied security hardening fixes.",
+      "summary": "Introduced the in-app notification center and applied security hardening fixes.",
       "date": "2026-04-19",
       "linkUrl": "https://github.com/fjrevoredo/mini-diarium/releases/tag/v0.4.17",
       "linkLabel": "Full release notes"
@@ -125,7 +126,7 @@
       "type": "announcement",
       "version": "0.4.16",
       "title": "Documentation website is live",
-      "body": "A full user guide is now available online — covering every feature from writing entries and navigating your journal to import/export, plugins, and security.",
+      "summary": "A full user guide is now available online — covering every feature from writing entries and navigating your journal to import/export, plugins, and security.",
       "date": "2026-04-17",
       "linkUrl": "https://mini-diarium.com/docs/",
       "linkLabel": "Open documentation"
@@ -135,7 +136,7 @@
       "type": "announcement",
       "version": "0.4.15",
       "title": "Mini Diarium is on Flathub",
-      "body": "Linux users can now install Mini Diarium directly from Flathub. The Flatpak package is sandboxed, uses no network access, and integrates with XDG portals for file dialogs.",
+      "summary": "Linux users can now install Mini Diarium directly from Flathub. The Flatpak package is sandboxed, uses no network access, and integrates with XDG portals for file dialogs.",
       "date": "2026-04-06",
       "linkUrl": "https://flathub.org/apps/io.github.fjrevoredo.mini-diarium",
       "linkLabel": "Get it on Flathub"

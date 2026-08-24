@@ -632,7 +632,10 @@
     "dismissAll": "Marcar todo como leído",
     "typeRelease": "Lanzamiento",
     "typeAnnouncement": "Anuncio",
-    "typeTip": "Consejo"
+    "typeTip": "Consejo",
+    "readMore": "Leer más",
+    "readMoreAria": "Leer más sobre {{ title }}",
+    "detailCloseAria": "Cerrar detalle de la notificación"
   },
   "support": {
     "title": "Apoyar a Mini Diarium",

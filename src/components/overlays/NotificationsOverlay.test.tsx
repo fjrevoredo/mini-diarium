@@ -12,10 +12,16 @@ const sampleEntry = {
   type: 'release' as const,
   version: '1.0',
   title: 'Test notification',
-  body: 'This is the body text.',
+  summary: 'This is the body text.',
   date: '2026-04-19',
   linkUrl: 'https://example.com/release',
   linkLabel: 'See release',
+};
+
+const sampleEntryWithBody = {
+  ...sampleEntry,
+  id: 'test-notif-with-body',
+  body: '## Full detail\n\n- one\n- two',
 };
 
 function openOverlay() {
@@ -103,5 +109,33 @@ describe('NotificationsOverlay', () => {
     renderWithI18n(() => <NotificationsOverlay />);
     fireEvent.click(screen.getByTestId('notifications-close-button'));
     expect(uiState.isNotificationsOpen()).toBe(false);
+  });
+
+  it('does not show a Read more button when entry.body is absent', () => {
+    vi.spyOn(notifState, 'allNotifications').mockReturnValue([sampleEntry]);
+    openOverlay();
+    renderWithI18n(() => <NotificationsOverlay />);
+    expect(screen.queryByTestId(`read-more-${sampleEntry.id}`)).not.toBeInTheDocument();
+  });
+
+  it('shows a Read more button when entry.body is present and opens the detail dialog', () => {
+    vi.spyOn(notifState, 'allNotifications').mockReturnValue([sampleEntryWithBody]);
+    openOverlay();
+    renderWithI18n(() => <NotificationsOverlay />);
+    expect(screen.queryByTestId('notification-detail-dialog')).not.toBeInTheDocument();
+    fireEvent.click(screen.getByTestId(`read-more-${sampleEntryWithBody.id}`));
+    expect(screen.getByTestId('notification-detail-dialog')).toBeInTheDocument();
+  });
+
+  it('closing the detail dialog removes it while the list dialog stays open', () => {
+    vi.spyOn(notifState, 'allNotifications').mockReturnValue([sampleEntryWithBody]);
+    openOverlay();
+    renderWithI18n(() => <NotificationsOverlay />);
+    fireEvent.click(screen.getByTestId(`read-more-${sampleEntryWithBody.id}`));
+    expect(screen.getByTestId('notification-detail-dialog')).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId('notification-detail-close-button'));
+    expect(screen.queryByTestId('notification-detail-dialog')).not.toBeInTheDocument();
+    expect(uiState.isNotificationsOpen()).toBe(true);
+    expect(screen.getByText('Test notification')).toBeInTheDocument();
   });
 });

@@ -756,6 +756,9 @@ const en = {
     typeRelease: 'Release',
     typeAnnouncement: 'Announcement',
     typeTip: 'Tip',
+    readMore: 'Read more',
+    readMoreAria: 'Read more about {{ title }}',
+    detailCloseAria: 'Close notification detail',
   },
 
   /** ProjectSupportOverlay — reached via the streak-triggered Header icon or the
