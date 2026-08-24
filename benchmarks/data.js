@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1787603887022,
+  "lastUpdate": 1787605093802,
   "repoUrl": "https://github.com/fjrevoredo/mini-diarium",
   "entries": {
     "Benchmark": [
@@ -36100,6 +36100,36 @@ window.BENCHMARK_DATA = {
           {
             "name": "ci_pipeline_duration",
             "value": 543000000000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "committer": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "distinct": true,
+          "id": "cf2edcfebf5da330b29b734d97c14ec429542d2e",
+          "message": "docs: archive dependency-pr-integration plan",
+          "timestamp": "2026-08-24T22:47:34+02:00",
+          "tree_id": "3f5a4eee8c808dc372a693f9f2100dec4e2e4e4e",
+          "url": "https://github.com/fjrevoredo/mini-diarium/commit/cf2edcfebf5da330b29b734d97c14ec429542d2e"
+        },
+        "date": 1787605092016,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "ci_pipeline_duration",
+            "value": 580000000000,
             "range": "± 0",
             "unit": "ns/iter"
           }
