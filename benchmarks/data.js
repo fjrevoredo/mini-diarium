@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1787691436093,
+  "lastUpdate": 1787694743508,
   "repoUrl": "https://github.com/fjrevoredo/mini-diarium",
   "entries": {
     "Benchmark": [
@@ -36160,6 +36160,36 @@ window.BENCHMARK_DATA = {
           {
             "name": "ci_pipeline_duration",
             "value": 573000000000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "41898282+github-actions[bot]@users.noreply.github.com",
+            "name": "github-actions[bot]",
+            "username": "github-actions[bot]"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "83cadbba0eeaac889202b85496d1d9a8f30f2950",
+          "message": "chore(release): clear latest changelog after v0.7.0 (#272)\n\nAutomated cleanup PR created after publishing v0.7.0. Removes\nlatest-changelog.md so the next release must create a fresh copy from\nlatest-changelog.example.md.\n\nCo-authored-by: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>",
+          "timestamp": "2026-08-25T23:42:04+02:00",
+          "tree_id": "10b654cde0948d13fb3b099995e40d6d881a3e6f",
+          "url": "https://github.com/fjrevoredo/mini-diarium/commit/83cadbba0eeaac889202b85496d1d9a8f30f2950"
+        },
+        "date": 1787694740761,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "ci_pipeline_duration",
+            "value": 605000000000,
             "range": "± 0",
             "unit": "ns/iter"
           }
