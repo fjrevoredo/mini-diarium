@@ -1,6 +1,17 @@
 {
   "entries": [
     {
+      "id": "v0.7.0-release",
+      "type": "release",
+      "version": "0.7.0",
+      "title": "What's new in 0.7.0",
+      "summary": "Mini Diarium has taken automatic backups since early versions, but they lived entirely in the background. This release makes them visible, checkable, and restorable from inside the app, reachable even from the lock screen before you unlock. New guards close the same gap from the editor side: erasing an entry's content and navigating away no longer deletes it without asking first.",
+      "body": "## What's new in 0.7.0\n\nMini Diarium has taken automatic backups since early versions, but they lived entirely in the background, with no way to see one existed or use it without digging through files by hand. That gap closes here: backups now have a real interface, reachable from Preferences after you unlock and from the lock screen itself before you do. From there you can check a backup's health, restore the whole journal to it, or pull back just the entries you're missing without disturbing anything already there.\n\nThe same problem also showed up earlier, before a backup would ever be needed: erasing a real entry's content and navigating away used to delete it silently. That's fixed too. The app now asks first, everywhere it can reach you before it happens.\n\n- **Design-review fixes** across search highlighting, calendar clarity, statistics layout, and destructive-action styling\n- **Rich notifications**: summaries support light markdown, with a full detail view for release notes\n- **A quiet way to support Mini Diarium**: a heart icon appears once a journaling habit forms",
+      "date": "2026-08-25",
+      "linkUrl": "https://github.com/fjrevoredo/mini-diarium/releases/tag/v0.7.0",
+      "linkLabel": "Full release notes"
+    },
+    {
       "id": "v0.6.4-release",
       "type": "release",
       "version": "0.6.4",
