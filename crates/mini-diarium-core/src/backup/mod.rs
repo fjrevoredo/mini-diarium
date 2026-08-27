@@ -403,7 +403,7 @@ pub fn create_pre_v3_snapshot(
 mod tests {
     use super::*;
     use crate::db::{create_database, insert_entry, DiaryEntry};
-    use chrono::Duration;
+    use chrono::{Duration, Months};
 
     fn entry(date: &str, title: &str) -> DiaryEntry {
         DiaryEntry {
@@ -544,7 +544,11 @@ mod tests {
         for month in 1..=12u32 {
             let mut old = real.clone();
             old.file_name = format!("backup-old-{month:02}.db");
-            old.created_at = Utc::now() - Duration::days(30 * month as i64);
+            // A small forward buffer keeps the oldest (12-month) snapshot clear of the
+            // monthly-tier cutoff: retention below is checked against a live `Utc::now()`
+            // taken later, after the burst loop's real elapsed time, which would otherwise
+            // push the cutoff past an exact `now - 12 months` timestamp and evict it.
+            old.created_at = Utc::now() - Months::new(month) + Duration::minutes(5);
             std::fs::copy(
                 fixture.backups_dir.join(&real.file_name),
                 fixture.backups_dir.join(&old.file_name),
