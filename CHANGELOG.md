@@ -34,6 +34,11 @@ Template:
 
 # Versions
 
+## [0.7.1] - Unreleased
+
+### Fixed
+- **Enter key silently did nothing at the end of a paragraph (#273)**: pressing Enter with the cursor at the true end of a paragraph produced no new line, with no visible error. The root cause was a duplicate `prosemirror-model` install introduced by the `@tiptap/*` ^3.30.1 bump (07bff56, shipped in v0.7.0). `bun install`'s hoisting left one copy at the top level and a second, older copy nested under `prosemirror-state`, `prosemirror-view`, `prosemirror-transform`, `prosemirror-commands`, `prosemirror-gapcursor`, `prosemirror-schema-list`, and `prosemirror-tables`. TipTap's node-splitting and node-wrapping code (`Transaction.split`, used by Enter, list toggling, and blockquote toggling) throws `RangeError: Can not convert <> to a Fragment` when it crosses that module boundary, and the exception escaped uncaught before `preventDefault()` ran, so the keystroke silently no-opped instead of surfacing an error. Only operations that construct a brand-new empty node hit the failing path (Enter at the true end produces an empty trailing paragraph); splitting content that leaves text on both sides worked fine, which is why the bug looked position-specific. Fixed by pinning `prosemirror-model` in `package.json`'s `overrides` block so a single copy resolves. A regression test (`src/test/prosemirror-dedup.test.ts`) guards against the duplicate returning. Full investigation: [docs/archive/2026-08-27-issue-273-enter-key-rca.md](docs/archive/2026-08-27-issue-273-enter-key-rca.md).
+
 ## [0.7.0] - 25-08-2026
 
 ### Added
