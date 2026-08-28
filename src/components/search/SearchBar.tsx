@@ -9,7 +9,7 @@ import {
   setTotalMatches,
   focusedResultIndex,
   setFocusedResultIndex,
-  MIN_QUERY_LENGTH,
+  meetsMinQueryLength,
 } from '../../state/search';
 import { searchEntries } from '../../lib/tauri';
 import { debounce } from '../../lib/debounce';
@@ -52,7 +52,7 @@ export default function SearchBar() {
   // Search when query meets the minimum length; clear immediately when it drops below.
   createEffect(() => {
     const query = searchQuery();
-    if (query.trim().length >= MIN_QUERY_LENGTH) {
+    if (meetsMinQueryLength(query)) {
       debouncedSearch(query);
     } else {
       setSearchResults([]);

@@ -6,7 +6,7 @@ import {
   totalMatches,
   focusedResultIndex,
   setFocusedResultIndex,
-  MIN_QUERY_LENGTH,
+  meetsMinQueryLength,
 } from '../../state/search';
 import { setSelectedEntryId, setIsSearchOpen, requestDateAndViewChange } from '../../state/ui';
 import { preferences } from '../../state/preferences';
@@ -62,11 +62,7 @@ export default function SearchResults() {
       </Show>
 
       <Show
-        when={
-          !isSearching() &&
-          searchQuery().trim().length >= MIN_QUERY_LENGTH &&
-          searchResults().length === 0
-        }
+        when={!isSearching() && meetsMinQueryLength(searchQuery()) && searchResults().length === 0}
       >
         <div class="rounded-md bg-warning p-4 text-sm text-warning">
           {t('search.noResults', { query: searchQuery() })}

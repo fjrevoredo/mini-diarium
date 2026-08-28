@@ -354,3 +354,31 @@ These are runtime `TypeError`s in specific features, not a dead-on-arrival bundl
 5. **Does the planned MiniDiarium+ web tier make this moot?** Mostly no, and the reasoning should not be re-derived later. (a) The browser tiers are the *paid* separate product ([`OPEN_CORE_STRATEGY.md` §2](../OPEN_CORE_STRATEGY.md)), so pointing a free-app user at them is not a real answer. (b) On Mojave, Safari caps at 14.1.2 and WKWebView *is* that engine, so opening a web tier in Safari on the same machine hits the identical Safari 14 wall — the gain only exists if the user installs a third-party browser. (c) That escape hatch is closing: Firefox ESR 115 is the last Firefox for macOS 10.12–10.14 (extended to March 2026, re-evaluated February 2026) and Chrome dropped 10.14 at Chrome 117. A user on an unpatched browser typing a decryption password is a worse position than a native binary, and the served-code caveat (§6) means we would have to document the web tier as a *downgrade* from the desktop guarantee, not an upgrade. (d) The WASM SQLite substitute is explicitly deferred out of the open-core roadmap (§10), so the timeline does not fit either. The genuine structural insight still holds for other old hardware: WKWebView is welded to the OS version, and a user-installed browser breaks that coupling — it just does not rescue Mojave.
 
 ---
+
+## TODO-0110-01: CJK word count and search min-length implementation notes
+
+Parent: [`TODO-0110: Fix CJK (Chinese/Japanese) word count and search usability (issue #275)`](TODO.md)
+
+**Context**: Reported in [issue #275](https://github.com/fjrevoredo/mini-diarium/issues/275) by a Chinese-text user. The reporter's own "proposed by AI" fix (frontend-only `Intl.Segmenter`, plus a claim that search matching/snippets rely on regex `\b` word-boundary anchors) was independently investigated rather than taken at face value — see the decisions below for what actually holds up.
+
+### Word count — algorithm decision
+
+- **Do not use `Intl.Segmenter` on the frontend.** It needs a per-platform WebView runtime check before it can be relied on: WebView2 (Windows) and Safari 14.1+ (macOS 10.15+) are fine, but the Linux floor this project supports (`webkit2gtk` on Ubuntu 20.04) ships a JavaScriptCore that may predate `Intl.Segmenter` with no bundled fallback. Per root `CLAUDE.md` agent rule #5 (verify third-party/WebView assumptions before relying on them), this would need confirming against the actual bundled webkit2gtk version — the chosen approach below sidesteps the question by not depending on the API at all.
+- **Do not fix only the Rust side with the `unicode-segmentation` crate either**, even though it is a cheap add (already resolves transitively in `Cargo.lock` at 1.13.3). Its `unicode_words()` follows UAX #29, which merges consecutive **Katakana** characters into one word while still splitting Han/Hiragana per character. The TS live-typing counter cannot pull in the same crate, so a hand-rolled TS approximation would disagree with the Rust output specifically on Katakana runs — a visible live-count-vs-saved-count mismatch while typing Japanese.
+- **Chosen approach**: extend the existing single-pass state machine identically in both `count_words` (`crates/mini-diarium-core/src/db/queries/entries/mod.rs`) and `countWordsInHtml`/`countWordsFromText` (`src/lib/wordcount.ts`) — no new dependency, no ICU/WebView reliance, both sides trivially auditable side by side. Add one rule: a character in the ranges below always closes the current word and counts as one word by itself, and never merges with an adjacent character from these ranges (deliberately simpler than UAX #29 — no Katakana-run merging — chosen specifically so the two hand-written implementations stay in lockstep):
+  - Han: U+4E00–U+9FFF, U+3400–U+4DBF, U+F900–U+FAFF
+  - Hiragana: U+3040–U+309F
+  - Katakana: U+30A0–U+30FF, U+31F0–U+31FF
+- **Korean is explicitly out of scope.** Hangul is written with spaces between words, like Latin text, so the existing whitespace-delimited counting already produces a correct word count for it. Do not add Hangul syllable ranges (U+AC00–U+D7A3) to the per-character rule — that would inflate Korean counts by splitting every syllable block into its own "word."
+- **Acceptance**: a shared fixture list (pure Chinese, pure Japanese with mixed kanji/hiragana/katakana, mixed CJK+Latin, Korean-with-spaces as a control, plus the existing HTML-tag and base64-image edge cases) produces identical counts from `count_words` and from `countWordsInHtml`/`countWordsFromText`. Add the fixtures to the Rust test module in `crates/mini-diarium-core/src/db/queries/entries/mod.rs` (or its `test_support`) and to `src/lib/wordcount.test.ts`.
+
+### Search — the `\b` claim (no fix needed)
+
+- `crates/mini-diarium-core/src/search/text.rs` (`matches_all`, `build_snippet`) matches terms with plain `str::contains` / `str::find` on case/accent-folded strings — there is no regex anywhere in this module, so no `\b` word-boundary anchors to break on. A CJK query like "你好" matches as a plain substring wherever it occurs in the decrypted title/text, with no word-boundary assumption involved. Verified by reading the implementation end to end; no code change needed here. Recording this so a future pass doesn't go hunting for a regex that isn't there.
+
+### Search — `MIN_QUERY_LENGTH`
+
+- `src/state/search.ts` defines `MIN_QUERY_LENGTH = 3`, gating `SearchBar.tsx`'s search-trigger effect (`query.trim().length >= MIN_QUERY_LENGTH`). Many complete CJK words/phrases are 1–2 characters (e.g. "你好", "我"), so the fixed threshold of 3 silently blocks legitimate short searches for CJK users, while 3 remains a reasonable noise filter for Latin-script queries (avoids firing a search on every single keystroke of a longer word).
+- **Fix**: lower the effective minimum to 1 when the trimmed query contains at least one character in the CJK ranges listed above; keep 3 otherwise. `crates/mini-diarium-core/src/search/mod.rs` has no length gate today (verified — `search_entries` only checks `terms.is_empty()`), so this is a frontend-only change confined to `src/state/search.ts` / `SearchBar.tsx`.
+
+---

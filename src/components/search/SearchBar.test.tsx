@@ -207,7 +207,7 @@ describe('SearchBar keyboard navigation', () => {
     expect(focusedResultIndex()).toBe(-1);
   });
 
-  it('query shorter than MIN_QUERY_LENGTH does not trigger a search', async () => {
+  it('query shorter than the minimum length does not trigger a search', async () => {
     renderWithI18n(() => <SearchBar />);
     await flushMicrotasks();
 
@@ -216,5 +216,15 @@ describe('SearchBar keyboard navigation', () => {
 
     expect(harness.deferreds).toHaveLength(0);
     expect(searchResults()).toEqual([]);
+  });
+
+  it('a 2-character CJK query triggers a search (CJK minimum is 1 character)', async () => {
+    renderWithI18n(() => <SearchBar />);
+    await flushMicrotasks();
+
+    setSearchQuery('你好');
+    await flushMicrotasks();
+
+    expect(harness.deferreds).toHaveLength(1);
   });
 });

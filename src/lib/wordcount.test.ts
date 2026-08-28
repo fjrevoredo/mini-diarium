@@ -40,6 +40,15 @@ describe('countWordsInHtml', () => {
   it('returns 0 for HTML tags only', () => {
     expect(countWordsInHtml('<p></p><div></div><br />')).toBe(0);
   });
+
+  it('counts CJK characters inside tags, each as its own word', () => {
+    expect(countWordsInHtml('<p>你好</p><p>world</p>')).toBe(3);
+  });
+
+  it('counts CJK adjacent to a base64 image tag', () => {
+    const html = '<p>你好</p><img src="data:image/png;base64,abc123==" /><p>world</p>';
+    expect(countWordsInHtml(html)).toBe(3);
+  });
 });
 
 describe('countWordsFromText', () => {
@@ -65,6 +74,23 @@ describe('countWordsFromText', () => {
 
   it('handles unicode text', () => {
     expect(countWordsFromText('café résumé')).toBe(2);
-    expect(countWordsFromText('你好 世界')).toBe(2);
+    expect(countWordsFromText('你好 世界')).toBe(4);
+    expect(countWordsFromText('word\u{00A0}with\u{2003}unicode\u{3000}spaces')).toBe(4);
+  });
+
+  it('counts pure Chinese text with no spaces, one word per character', () => {
+    expect(countWordsFromText('我今天很开心')).toBe(6);
+  });
+
+  it('counts mixed kanji/hiragana/katakana Japanese text with no spaces', () => {
+    expect(countWordsFromText('私はコーヒーが好きです')).toBe(11);
+  });
+
+  it('counts CJK and Latin mixed across a space boundary', () => {
+    expect(countWordsFromText('Hello 世界')).toBe(3);
+  });
+
+  it('does not split Korean text per-syllable (Hangul is excluded from the CJK rule)', () => {
+    expect(countWordsFromText('안녕 하세요')).toBe(2);
   });
 });

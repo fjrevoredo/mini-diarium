@@ -3,13 +3,13 @@ title: Search
 slug: search
 description: Mini Diarium has full-text search across all encrypted entries. Learn how to find past entries with the search overlay and keyboard shortcut, and how searching stays fully encrypted and offline.
 order: 4
-updated: 2026-06-27
+updated: 2026-08-28
 tags: search, find, full-text, encrypted
 ---
 
 ## Search Your Entries
 
-Mini Diarium includes full-text search across every entry in the current journal. Open the search overlay from the magnifier button in the header, or press **Ctrl+F** (Cmd+F on macOS). Type at least three characters and matching entries appear, newest first, with the matching text highlighted in a short snippet. Nothing is searched until the query reaches that minimum — no results appear for one or two characters.
+Mini Diarium includes full-text search across every entry in the current journal. Open the search overlay from the magnifier button in the header, or press **Ctrl+F** (Cmd+F on macOS). Type at least three characters and matching entries appear, newest first, with the matching text highlighted in a short snippet. Nothing is searched until the query reaches that minimum — no results appear for one or two characters. For Chinese and Japanese text, the minimum drops to a single character, since many complete words in those languages are one or two characters long.
 
 Clicking a result jumps straight to that entry in the editor, even on a day that holds several entries.
 
