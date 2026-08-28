@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1787903516926,
+  "lastUpdate": 1787904137438,
   "repoUrl": "https://github.com/fjrevoredo/mini-diarium",
   "entries": {
     "Benchmark": [
@@ -36310,6 +36310,36 @@ window.BENCHMARK_DATA = {
           {
             "name": "ci_pipeline_duration",
             "value": 565000000000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "committer": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "distinct": true,
+          "id": "7b479b8f651b200b8a8d41083a17516b404af3b2",
+          "message": "docs: record extract-zip analysis and add TODO-0108 re-evaluation\n\nExtends the 2026-08-28 security review with the CVE-2026-56876 criticality assessment (unmaintained upstream, dev-only exposure, mitigation paths). TODO-0108 tracks the re-evaluation trigger (WebdriverIO bumping @puppeteer/browsers to 3.x) and the dismiss-vs-alternative decision.",
+          "timestamp": "2026-08-28T09:49:02+02:00",
+          "tree_id": "a82ebde89084ba2d0601caeefb2817cb21a66cc5",
+          "url": "https://github.com/fjrevoredo/mini-diarium/commit/7b479b8f651b200b8a8d41083a17516b404af3b2"
+        },
+        "date": 1787904135735,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "ci_pipeline_duration",
+            "value": 605000000000,
             "range": "± 0",
             "unit": "ns/iter"
           }
