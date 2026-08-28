@@ -137,13 +137,25 @@ Get-AuthenticodeSignature .\Mini-Diarium-*-windows.exe
 Expect a signature chain rooted at the **SignPath test root** — not trusted by Windows by
 default, which is expected until the production certificate lands (see below).
 
+Verified working this way on 2026-08-28 (run
+[33190184892](https://github.com/fjrevoredo/mini-diarium/actions/runs/33190184892)):
+both installers came back signed by `Test certificate for 'Mini Diarium [OSS]'`.
+
 ## Production cutover
 
 The signing policy `release-signing` already exists for the production certificate but
-shows **INVALID / CSR PENDING** until SignPath issues it. Once SignPath confirms the
-certificate is live, follow TODO-0109 in `docs/todo/TODO.md` (or its archived record) to
-switch `SIGNPATH_SIGNING_POLICY_SLUG` from `test-signing` to `release-signing` and verify a
-real (non-test) Authenticode signature.
+shows **INVALID / CSR PENDING** until SignPath issues it. Getting past CSR PENDING is a
+manual step on SignPath's side, not something triggerable from this repo or the dashboard
+by the project owner — per SignPath Foundation's process, production signing only starts
+after they review the working test-cert setup and import the real certificate into the
+organization. If the pipeline has been verified working with the test certificate (see
+"Verify" above) and CSR PENDING is still showing after a reasonable wait, follow up with
+SignPath directly (reply to the Foundation acceptance thread, e.g. with Phillip Deng, or
+their support channel) referencing a successful test-signed run as evidence.
+
+Once SignPath confirms the certificate is live, follow TODO-0109 in `docs/todo/TODO.md` (or
+its archived record) to switch `SIGNPATH_SIGNING_POLICY_SLUG` from `test-signing` to
+`release-signing` and verify a real (non-test) Authenticode signature.
 
 ## Not covered here (optional, not required for this pipeline)
 

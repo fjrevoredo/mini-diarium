@@ -564,14 +564,23 @@ follow if this ever needs to be rebuilt (new project, lost access, migrating org
 | Artifact-configuration slugs (hardcoded in the workflow, not secret) | `windows-msi`, `windows-exe` |
 | Repository secrets | `SIGNPATH_API_TOKEN`, `SIGNPATH_ORGANIZATION_ID`, `SIGNPATH_PROJECT_SLUG`, `SIGNPATH_SIGNING_POLICY_SLUG` — Settings → Secrets and variables → Actions |
 
-**Status: test certificate, confirmed working.** SignPath's GitHub Actions integration
-authenticates with an API token secret (not OIDC), so no `id-token: write` permission is
-needed — only `actions: read`, which the job's `permissions:` block grants alongside its
-existing `contents: write`.
+**Status: test certificate, confirmed working end-to-end (2026-08-28).** A manual
+`workflow_dispatch` run ([33190184892](https://github.com/fjrevoredo/mini-diarium/actions/runs/33190184892))
+built the Windows leg, submitted both signing requests, and returned signed artifacts;
+`Get-AuthenticodeSignature` on the downloaded `.msi`/`.exe` confirmed a valid Authenticode
+chain signed by `Test certificate for 'Mini Diarium [OSS]'`. SignPath's GitHub Actions
+integration authenticates with an API token secret (not OIDC), so no `id-token: write`
+permission is needed — only `actions: read`, which the job's `permissions:` block grants
+alongside its existing `contents: write`.
 
 > **Test-signed builds are not release-ready.** Until SignPath reviews this setup and
 > imports the production signing certificate into the organization, installers signed
 > through this pipeline carry a **test** Authenticode signature that Windows does not
 > trust by default. Do not point users at a tagged release signed only with the test
-> certificate as if it were production-signed. The cutover to the production certificate
-> is tracked as a follow-up TODO.
+> certificate as if it were production-signed.
+>
+> **Current blocker:** the `release-signing` policy (paired with the production
+> certificate) shows **CSR PENDING** in the SignPath dashboard. Per SignPath's process this
+> requires SignPath to review and import the certificate on their side — it cannot be
+> advanced from this repo or the dashboard by the project owner. The cutover is tracked in
+> TODO-0109, which also records the next step (following up with SignPath).
