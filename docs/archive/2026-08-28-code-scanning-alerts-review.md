@@ -86,6 +86,21 @@ Context: `mermaid` is a dev-only dependency of the diagram toolchain (`bun run d
 
 ## Remaining: `extract-zip` (high, #51)
 
-No fixed version is released (2.0.1 is latest on npm; advisory GHSA-jmr9-qjv8-65gv has no patched range). Options when it ships: bump `@puppeteer/browsers` when it raises its `extract-zip` requirement, or add an `overrides` entry. Risk is low in practice: the zips extract-zip handles come from trusted browser CDNs, and the package is dev-only. Not dismissed, pending the upstream fix.
+**Advisory (CVE-2026-56876, GHSA-jmr9-qjv8-65gv):** unvalidated symlink path traversal (CWE-22) when extracting a malicious zip — an archive containing a symlink like `../../../../etc/passwd` can make extract-zip read or write arbitrary files. CVSS 3.1 = **8.1**, CVSS 4.0 = **8.6**. Both vectors require **user interaction** (the victim must process an attacker-supplied archive). EPSS ≈ **0.004%** — no meaningful active exploitation.
 
-**Status:** 8 of 9 open alerts become `fixed` automatically once the changes land on the default branch; #51 remains open awaiting upstream. Dependabot security updates (PRs) were intentionally not auto-applied for this session.
+**Upstream status — effectively unmaintained, fix will never come:** npm last published 2023-03-04 (2.0.1 is the final release), GitHub repo (`maxogden/extract-zip`) last pushed 2022-02-06, 60 open issues. There is no maintainer releasing fixes; `first_patched_version` is empty and will likely stay empty.
+
+**Exposure assessment (why it is not critical for this project):**
+1. **Dev-only, never shipped** — absent from the app, website, and installers.
+2. **Single reachable path:** `@puppeteer/browsers@2.13.2` (via WebdriverIO) extracts browser binaries during `bun run test:e2e*`. The archives come from official Chrome/Firefox/Edge CDNs over HTTPS with pinned URLs — an attacker would need to compromise those CDNs or MITM the developer's traffic to deliver a malicious zip.
+3. **Half the consumers are already unaffected:** `puppeteer@25.3.0` (diagram rendering) uses `@puppeteer/browsers@3.0.6`, which dropped `extract-zip` in favour of `modern-tar`. Only the WDIO chain (`@wdio/utils` → `@puppeteer/browsers@2.13.2`) still pulls it.
+4. Runs only on a developer machine during manual E2E runs; browsers are cached after the first download (`puppeteer.skipDownload: true`).
+
+**Realistic mitigation paths (in order of preference):**
+1. **Track WebdriverIO adoption of `@puppeteer/browsers` 3.x** — this is the only true fix, and it is upstream: today `@wdio/utils` pins `@puppeteer/browsers: ^2.2.0`, which cannot resolve to 3.x. When WDIO raises the requirement, the vulnerability disappears from the dependency tree without any `extract-zip` release.
+2. **Override to a maintained fork** if a trustworthy patched fork appears; not recommended while option 1 is pending.
+3. **Dismiss as `won't fix`** — justified given the zero realistic exposure above; the dismissal comment should cite this record.
+
+**Decision taken:** keep the alert **open** as the tracking mechanism; do not dismiss and do not depend on `extract-zip` upstream. Revisit when WDIO bumps `@puppeteer/browsers`, or when Dependabot reports `first_patched_version` for extract-zip (unlikely). A `won't fix` dismissal remains defensible at any later point if the alert noise outweighs its tracker value.
+
+**Status:** 8 of 9 open alerts become `fixed` automatically once the changes land on the default branch; #51 remains open pending WebdriverIO's `@puppeteer/browsers` upgrade (upstream fix for extract-zip itself will never come — the package is unmaintained). Dependabot security updates (PRs) were intentionally not auto-applied for this session.
