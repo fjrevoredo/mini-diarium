@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1787871520438,
+  "lastUpdate": 1787903516926,
   "repoUrl": "https://github.com/fjrevoredo/mini-diarium",
   "entries": {
     "Benchmark": [
@@ -36280,6 +36280,36 @@ window.BENCHMARK_DATA = {
           {
             "name": "ci_pipeline_duration",
             "value": 571000000000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "committer": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "distinct": true,
+          "id": "ead23487945fb3439f9017e4ff1f1f12d8bb0fb0",
+          "message": "deps: bump mermaid 11.16.1 and ip-address 10.5.0 (Dependabot)\n\nClears 8 of 9 open Dependabot advisories (dev-only tooling: diagram rendering + E2E browser downloads). extract-zip (GHSA-jmr9-qjv8-65gv) has no upstream fix and stays open. Regenerates the 6 mermaid SVGs (renderer output churn only). Records both the code-scanning and Dependabot reviews in docs/archive/2026-08-28-code-scanning-alerts-review.md.",
+          "timestamp": "2026-08-28T09:41:39+02:00",
+          "tree_id": "cba4b1689260ed70601b60140e69676f5cf9f522",
+          "url": "https://github.com/fjrevoredo/mini-diarium/commit/ead23487945fb3439f9017e4ff1f1f12d8bb0fb0"
+        },
+        "date": 1787903515551,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "ci_pipeline_duration",
+            "value": 565000000000,
             "range": "± 0",
             "unit": "ns/iter"
           }
