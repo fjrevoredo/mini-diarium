@@ -47,6 +47,10 @@ Supporting changes:
 - **Buttondown config (external):** account, sending-domain verification for `mini-diarium.com`, tint, description, and the subscriber list all live in Buttondown's UI, not in this repo.
 - **Add a `/newsletter` link to the nav** (currently footer only): the nav lives in 6 synced places (4 manual pages + `buildNav()` in both generators).
 
+## Sent broadcasts
+
+Every broadcast that has actually gone out is archived under [`docs/newsletter/`](../../newsletter/), one file per send, named `YYYY-MM-DD-slug.md` with the sent date, app version, and subject line at the top. Buttondown itself is the delivery record of truth; this archive exists so past wording and framing can be reused or referenced without digging through Buttondown's UI.
+
 ## Open items
 
 - Verify `news@mini-diarium.com` sending in Buttondown (domain DNS records).
