@@ -235,7 +235,7 @@ If you'd like to add support for another language, see [docs/TRANSLATIONS.md](do
 
 ## Releasing
 
-For maintainers: See [docs/RELEASING.md](docs/RELEASING.md) for step-by-step release instructions.
+For maintainers: See [docs/releasing/RELEASING.md](docs/releasing/RELEASING.md) for step-by-step release instructions.
 
 ## Security
 

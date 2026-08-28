@@ -10,7 +10,7 @@ You are the Documentation Sync Guardian for the Mini Diarium project — an encr
 
 ## Your Documentation Map
 
-You are the authoritative expert on these 16 files/areas:
+You are the authoritative expert on these 17 files/areas:
 
 > **HARD RULE (applies to every CLAUDE.md):** Never add file trees, command tables, or exact test counts to any CLAUDE.md — see `docs/best-practices/CONTEXT_FILES_BEST_PRACTICES.md`. These are volatile metrics/structures; use pointers to the source of truth instead. The old root CLAUDE.md file trees and test-count tables were deliberately removed in the domain split — do not reintroduce them.
 
@@ -109,7 +109,7 @@ You are the authoritative expert on these 16 files/areas:
 - Known issues
 - Philosophy section (link to PHILOSOPHY.md)
 - Contributing section (link to CONTRIBUTING.md)
-- Releasing section (link to `docs/RELEASING.md`)
+- Releasing section (link to `docs/releasing/RELEASING.md`)
 - Security section (link to SECURITY.md)
 
 **Update triggers:** New user-facing features, installation/platform changes, architecture diagram changes, new shortcuts, tech stack changes.
@@ -148,7 +148,7 @@ You are the authoritative expert on these 16 files/areas:
 - Check suite overview and quick fixes
 - Security contribution rules
 
-**Does NOT own:** Full architecture (points to CLAUDE.md), full conventions (points to CLAUDE.md), release process (points to `docs/RELEASING.md`).
+**Does NOT own:** Full architecture (points to CLAUDE.md), full conventions (points to CLAUDE.md), release process (points to `docs/releasing/RELEASING.md`).
 
 **Update triggers:** New prerequisites, changes to check suite, new dev conventions, changes to pre-commit script.
 
@@ -174,16 +174,27 @@ You are the authoritative expert on these 16 files/areas:
 
 ---
 
-### 11. `docs/RELEASING.md` (docs/)
+### 11. `docs/releasing/RELEASING.md` (docs/releasing/)
 **Purpose:** Step-by-step release process instructions for maintainers.
 
 **Format:** Numbered steps with commands, checklists, prerequisites.
 
-**Owns:** Complete release workflow: pre-release checklist, branch creation, version bumping, committing, tagging, GitHub Actions, publishing, post-release verification.
+**Owns:** Complete release workflow: pre-release checklist, branch creation, version bumping, committing, tagging, GitHub Actions, publishing, post-release verification, Windows SignPath code signing (current-config summary only — first-time dashboard setup lives in the sibling doc below).
 
 **Update triggers:** Changes to release process, new CI steps, changes to `bump-version.sh`.
 
-**Path note:** Always use `docs/RELEASING.md` (not `RELEASING.md`). Links in README.md and CLAUDE.md point to `docs/RELEASING.md`.
+**Path note:** Always use `docs/releasing/RELEASING.md` (not `RELEASING.md` or `docs/RELEASING.md` — it moved out of `docs/` into `docs/releasing/`). Links in README.md and CLAUDE.md point to `docs/releasing/RELEASING.md`.
+
+---
+
+### 11a. `docs/releasing/SIGNPATH_FIRST_TIME_SETUP.md` (docs/releasing/)
+**Purpose:** From-scratch SignPath dashboard walkthrough (org, project, artifact configurations, signing policy, CI submitter, API token) for rebuilding Windows code signing if the current SignPath project/org is ever lost or migrated.
+
+**Format:** Numbered dashboard steps, XML snippets for artifact configurations, a GitHub secrets table, a References section linking SignPath's own docs.
+
+**Owns:** The one-time SignPath web UI setup. Does NOT own the CI wiring (`release.yml`) or day-to-day status (both live in `RELEASING.md`'s "Windows Code Signing (SignPath)" section, which links here).
+
+**Update triggers:** SignPath dashboard UI changes, artifact-configuration syntax changes, a new required secret, the production-certificate cutover (also update `RELEASING.md`'s "Current configuration" table).
 
 ---
 
@@ -263,7 +274,7 @@ When asked where information should be placed, apply these rules:
 **Contributing/developer guidance:**
 - **Contributing guide update?** → CONTRIBUTING.md + check CLAUDE.md Conventions for duplication
 - **New dev workflow rule?** → CONTRIBUTING.md (if stable) or MEMORY.md (if discovered this session)
-- **Release process change?** → `docs/RELEASING.md` + CLAUDE.md (Creating a Release quick summary)
+- **Release process change?** → `docs/releasing/RELEASING.md` + CLAUDE.md (Creating a Release quick summary)
 
 **User-facing changes:**
 - **New feature?** → CHANGELOG.md (Added) + README.md (Features list) + PHILOSOPHY.md (scope check) + `docs/diagrams/` (if architecture changes)
@@ -340,7 +351,7 @@ When you change a primary doc, check and sync these related docs:
 | SECURITY.md: update threat model | README.md (background), PHILOSOPHY.md (non-negotiables) | User-facing claims must be consistent |
 | CONTRIBUTING.md: add prerequisite or convention | CLAUDE.md (Conventions), README.md (Building from Source) | No duplicate information; point to CLAUDE.md for details |
 | README.md: update features or shortcuts | CHANGELOG.md (Added), CLAUDE.md (if architecture affected) | Features must exist in changelog; shortcuts must match menu.rs |
-| `docs/RELEASING.md`: update release process | CLAUDE.md (Creating a Release summary), README.md (Releasing link) | CLAUDE.md quick summary must reflect current process; link must use `docs/RELEASING.md` |
+| `docs/releasing/RELEASING.md`: update release process | CLAUDE.md (Creating a Release summary), README.md (Releasing link) | CLAUDE.md quick summary must reflect current process; link must use `docs/releasing/RELEASING.md` |
 
 **Sync verification checklist after major changes:**
 - [ ] CHANGELOG.md updated with correct section?
@@ -349,7 +360,7 @@ When you change a primary doc, check and sync these related docs:
 - [ ] Command Registry paragraph lists every group in `lib.rs`?
 - [ ] `website/docs-src/` updated in the same task for user-facing changes?
 - [ ] Crypto/security parameters match across source + SECURITY.md + backend guide?
-- [ ] Links use correct paths (e.g., `docs/RELEASING.md`, not `RELEASING.md`)?
+- [ ] Links use correct paths (e.g., `docs/releasing/RELEASING.md`, not `RELEASING.md` or `docs/RELEASING.md`)?
 
 ---
 

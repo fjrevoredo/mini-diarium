@@ -34,9 +34,10 @@ Template:
 
 # Versions
 
-## [Unreleased]
+## [0.7.2] - [Unreleased]
 
 ### Internal
+- **SignPath code signing for Windows release artifacts**: wired SignPath's GitHub Actions trusted-build-system integration into the Windows leg of `release.yml` so `Mini-Diarium-X.Y.Z-windows.msi`/`.exe` are signed in CI (SignPath Foundation OSS program, test certificate). Test-signed builds are not release-ready until SignPath imports the production certificate — see `docs/releasing/RELEASING.md` "Windows Code Signing (SignPath)".
 - **Security: clear Dependabot dev-dependency alerts** (GHSA-rhh3-jpg6-66xh, GHSA-c4c3-pg64-4m4v, GHSA-6x64-9x62-f2gx, GHSA-3rrr-jr9j-h3q3, GHSA-2v8p-3f2j-5mp7, GHSA-mwp4-54f8-5fhr, GHSA-4xrf-jv44-h6hh, GHSA-22jq-vg5j-6vgg): bumped the `mermaid` npm override to 11.16.1 and pinned `ip-address` to ^10.5.0 (transitive via `socks`, dev-only). All affected packages are development tooling (diagram rendering, E2E browser downloads); no shipped runtime dependency was affected. `extract-zip` (GHSA-jmr9-qjv8-65gv, high) has no upstream fix yet and remains open. Full record: [docs/archive/2026-08-28-code-scanning-alerts-review.md](docs/archive/2026-08-28-code-scanning-alerts-review.md).
 
 ## [0.7.1] - 28-08-2026

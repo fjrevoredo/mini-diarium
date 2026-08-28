@@ -6,7 +6,7 @@ name: Publish to Microsoft Store
 # done by hand in Partner Center — it cannot be automated. This workflow only automates
 # subsequent package updates, mirroring winget-publish.yml.
 #
-# Prerequisites (one-time — see docs/RELEASING.md "Microsoft Store (MSIX)"):
+# Prerequisites (one-time — see docs/releasing/RELEASING.md "Microsoft Store (MSIX)"):
 #   * msix/Package.appxmanifest identity filled in from Partner Center (done — the product
 #     is live as 9PJFTX44ZS43).
 #   * Azure AD (Entra) app registration associated with the Partner Center account.
@@ -178,7 +178,7 @@ jobs:
           # product id positionally makes the CLI treat it as a project path/URL and fail.
           # Ref: learn.microsoft.com/en-us/windows/apps/publish/msstore-dev-cli/github-actions
           # If `publish` still cannot consume a standalone MSIX, fall back to the
-          # `msstore submission` sub-commands (see docs/RELEASING.md "Microsoft Store (MSIX)").
+          # `msstore submission` sub-commands (see docs/releasing/RELEASING.md "Microsoft Store (MSIX)").
           $publishArgs = @('publish', $msix, '-id', $env:PRODUCT_ID, '--verbose')
           if ($env:DRY_RUN -eq 'true') {
             Write-Host "DRY RUN: creating/updating a draft submission (no commit)."

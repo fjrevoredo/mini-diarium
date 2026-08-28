@@ -124,7 +124,7 @@ Copy this block verbatim and fill the placeholders. Omit no field; if a check do
 
 ## What This Checklist Does Not Cover
 
-- **Releasing** — `pre-release` runbook + [`docs/RELEASING.md`](../RELEASING.md), runs at release time, not per-task.
+- **Releasing** — `pre-release` runbook + [`docs/releasing/RELEASING.md`](../releasing/RELEASING.md), runs at release time, not per-task.
 - **Opening a PR** — [`.github/pull_request_template.md`](../../.github/pull_request_template.md) is the pre-merge gate; this doc is the pre-report gate.
 - **Domain-specific review rules** — see [Rust](RUST_BEST_PRACTICES.md), [Tauri](TAURI_BEST_PRACTICES.md), [Frontend](FRONTEND_BEST_PRACTICES.md), [CI](CI_BEST_PRACTICES.md) best practices when changing that layer.
 - **Plan creation and step-by-step procedures** — those belong in skills (`manual-planning`, `todo-manager`, `runbooks`).

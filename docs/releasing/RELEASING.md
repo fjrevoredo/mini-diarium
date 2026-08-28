@@ -124,7 +124,7 @@ This automatically updates:
 - `website/index.html` version badge, structured-data `softwareVersion`, and direct website download URLs
 - `data/linux/io.github.fjrevoredo.mini-diarium.metainfo.xml` release entry
 
-> **Note:** the two **library** crates — `mini-diarium-core` (`crates/mini-diarium-core/Cargo.toml`) and `mini-diarium-crypto` (`crates/mini-diarium-crypto/Cargo.toml`) — each carry their own fixed `version = "0.1.0"`, **intentionally decoupled** from the app version and **not** bumped per release. Do not add them to `bump-version.sh`/`.ps1` or the version-consistency checks. This is now a settled decision, not a provisional one: open-core **M4a** (2026-07-24) chose a **tagged git dependency** over crates.io publication, so an app release never bumps, tags, or publishes a library crate, and there is no library release track to run here. See [`docs/decisions/2026-07-core-crate-distribution.md`](decisions/2026-07-core-crate-distribution.md) and [`OPEN_CORE_STRATEGY.md`](OPEN_CORE_STRATEGY.md).
+> **Note:** the two **library** crates — `mini-diarium-core` (`crates/mini-diarium-core/Cargo.toml`) and `mini-diarium-crypto` (`crates/mini-diarium-crypto/Cargo.toml`) — each carry their own fixed `version = "0.1.0"`, **intentionally decoupled** from the app version and **not** bumped per release. Do not add them to `bump-version.sh`/`.ps1` or the version-consistency checks. This is now a settled decision, not a provisional one: open-core **M4a** (2026-07-24) chose a **tagged git dependency** over crates.io publication, so an app release never bumps, tags, or publishes a library crate, and there is no library release track to run here. See [`docs/decisions/2026-07-core-crate-distribution.md`](../decisions/2026-07-core-crate-distribution.md) and [`OPEN_CORE_STRATEGY.md`](../OPEN_CORE_STRATEGY.md).
 
 ### Step 3: Prepare the Release Notes File
 
@@ -258,6 +258,15 @@ Mini Diarium uses [Semantic Versioning](https://semver.org/):
 - **Cause**: Build artifacts not found
 - **Fix**: Check Tauri build succeeded for all platforms in workflow logs
 
+### Windows leg fails at the SignPath signing step
+
+- **Cause**: A `SIGNPATH_*` repository secret is missing/misnamed, or the SignPath
+  artifact-configuration slug (`windows-msi` / `windows-exe`) doesn't match what's
+  configured in the SignPath dashboard for the project
+- **Fix**: Check the "Verify SignPath secrets are set" step output for which secret is
+  missing, and confirm the artifact-configuration slugs in the SignPath dashboard exactly
+  match `windows-msi` / `windows-exe` — see "Windows Code Signing (SignPath)" above
+
 ### Tag already exists
 
 ```bash
@@ -351,6 +360,7 @@ The following happens automatically when you push a tag:
 ✅ Publish the release automatically after artifact verification
 ✅ Open a cleanup PR removing `latest-changelog.md` when it is safe to do so
 ✅ Dispatch WinGet, Homebrew, Flathub, and Microsoft Store publish workflows
+✅ Sign Windows `.msi`/`.exe` installers via SignPath (see "Windows Code Signing (SignPath)" below)
 
 You only need to:
 
@@ -401,7 +411,7 @@ When the release workflow publishes a release, the `flathub-publish.yml` workflo
 - Repository secret `FLATHUB_TOKEN` must be configured (one-time setup — see below)
 - The Flathub repo `flathub/io.github.fjrevoredo.mini-diarium` must exist (created by Flathub after initial submission)
 
-**Important:** the workflow is not the source of truth for Flatpak correctness. Flatpak dependency vendoring, AppStream metadata, runtime assumptions, and permissions are documented in [FLATPAK_MAINTENANCE.md](FLATPAK_MAINTENANCE.md). Read that guide before changing anything Flatpak-related.
+**Important:** the workflow is not the source of truth for Flatpak correctness. Flatpak dependency vendoring, AppStream metadata, runtime assumptions, and permissions are documented in [FLATPAK_MAINTENANCE.md](../FLATPAK_MAINTENANCE.md). Read that guide before changing anything Flatpak-related.
 
 **After the release:**
 
@@ -415,7 +425,7 @@ When the release workflow publishes a release, the `flathub-publish.yml` workflo
 
 ### Flatpak Maintenance
 
-The initial Flathub submission work is already complete. For future changes, debugging, or release upkeep, use [FLATPAK_MAINTENANCE.md](FLATPAK_MAINTENANCE.md).
+The initial Flathub submission work is already complete. For future changes, debugging, or release upkeep, use [FLATPAK_MAINTENANCE.md](../FLATPAK_MAINTENANCE.md).
 
 ---
 
@@ -426,9 +436,9 @@ The **Store signs the package and manages updates** — there is no paid code-si
 certificate and no in-app updater, so this channel stays compatible with the app's
 no-network / no-telemetry non-negotiables (see `PHILOSOPHY.md`).
 
-Packaging sources live in [`../msix/`](../msix/) (`Package.appxmanifest`) and
-[`../scripts/build-msix.ps1`](../scripts/build-msix.ps1). Read
-[`../msix/README.md`](../msix/README.md) before changing anything Store-related — it
+Packaging sources live in [`../../msix/`](../../msix/) (`Package.appxmanifest`) and
+[`../../scripts/build-msix.ps1`](../../scripts/build-msix.ps1). Read
+[`../../msix/README.md`](../../msix/README.md) before changing anything Store-related — it
 covers the identity manifest, the local build recipe, the smoke-test checklist, and the
 AppData-virtualization limitation.
 
@@ -449,7 +459,7 @@ cannot be automated, so the first submission was done by hand in Partner Center:
 
 1. Filled the identity values in `msix/Package.appxmanifest` from Partner Center →
    Product management → Product identity, and committed them. They are stable for the
-   life of the app — see [`../msix/README.md`](../msix/README.md) → "Product identity".
+   life of the app — see [`../../msix/README.md`](../../msix/README.md) → "Product identity".
 2. Built and smoke-tested a local MSIX (`msix/README.md` → "Local build + smoke test").
 3. Created the submission in Partner Center, uploaded the **unsigned** `.msix` (the Store
    signs it), and filled the listing: description (reuse `longDescription` from
@@ -458,7 +468,7 @@ cannot be automated, so the first submission was done by hand in Partner Center:
 4. Submitted for certification and recorded the **Product ID** (needed for CI).
 5. Once live, captured the Store listing URL and Package Family Name and added the "Get it
    from the Microsoft Store" option to the install surfaces: `website/index.html` (hero
-   badge + Windows platform card) and [`INSTALLATION.md`](INSTALLATION.md). Both are
+   badge + Windows platform card) and [`INSTALLATION.md`](../INSTALLATION.md). Both are
    hand-edited; `website/index.html` still needs `bun run website:build-static` afterwards
    so asset fingerprints stay in sync.
 
@@ -520,3 +530,48 @@ gh workflow run msstore-publish.yml --ref master \
 This creates/updates a **draft** submission (`--noCommit`) without publishing; confirm
 with `msstore submission status <productId>`. Once the draft looks right, a real tagged
 release auto-dispatches the workflow and publishes the update.
+
+---
+
+## Windows Code Signing (SignPath)
+
+Windows release artifacts (`Mini-Diarium-X.Y.Z-windows.msi` / `.exe`) are signed in CI by
+[SignPath](https://signpath.io/), via its GitHub Actions "trusted build system"
+integration. Mini Diarium was accepted into the **SignPath Foundation** program for open
+source projects, which provides free code signing — this stays compatible with the app's
+no-cost, no-network non-negotiables (see `PHILOSOPHY.md`).
+
+The signing step lives in `.github/workflows/release.yml`, inside the Windows leg of the
+`build-release` job: each installer is uploaded as a temporary GitHub Actions artifact,
+submitted to SignPath with `signpath/github-action-submit-signing-request@v2`, and the
+signed file returned by SignPath replaces the unsigned one before checksums are computed.
+No changes were needed to `tauri.conf.json` — SignPath signs the finished installer after
+the Tauri build, rather than through a native Tauri signing hook.
+
+**One-time SignPath dashboard setup** (org, project, artifact configurations, signing
+policy, CI submitter, API token) is **not done in this repo** and is not repeated here —
+see [`SIGNPATH_FIRST_TIME_SETUP.md`](SIGNPATH_FIRST_TIME_SETUP.md) for the full
+from-scratch walkthrough, verified against SignPath's own docs. That guide is what you
+follow if this ever needs to be rebuilt (new project, lost access, migrating orgs).
+
+**Current configuration for Mini Diarium:**
+
+| Item | Value |
+|------|-------|
+| SignPath project slug | `mini-diarium` |
+| Signing policy slug (test cert, in use) | `test-signing` |
+| Signing policy slug (production cert, not yet issued — SignPath shows it as `INVALID` / `CSR PENDING`) | `release-signing` |
+| Artifact-configuration slugs (hardcoded in the workflow, not secret) | `windows-msi`, `windows-exe` |
+| Repository secrets | `SIGNPATH_API_TOKEN`, `SIGNPATH_ORGANIZATION_ID`, `SIGNPATH_PROJECT_SLUG`, `SIGNPATH_SIGNING_POLICY_SLUG` — Settings → Secrets and variables → Actions |
+
+**Status: test certificate, confirmed working.** SignPath's GitHub Actions integration
+authenticates with an API token secret (not OIDC), so no `id-token: write` permission is
+needed — only `actions: read`, which the job's `permissions:` block grants alongside its
+existing `contents: write`.
+
+> **Test-signed builds are not release-ready.** Until SignPath reviews this setup and
+> imports the production signing certificate into the organization, installers signed
+> through this pipeline carry a **test** Authenticode signature that Windows does not
+> trust by default. Do not point users at a tagged release signed only with the test
+> certificate as if it were production-signed. The cutover to the production certificate
+> is tracked as a follow-up TODO.

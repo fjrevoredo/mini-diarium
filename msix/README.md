@@ -161,5 +161,5 @@ Paste this into the Partner Center justification field:
   automated). The product is live as `9PJFTX44ZS43`.
 - **Subsequent package updates are automated** by `msstore-publish.yml`.
 
-See the "Microsoft Store (MSIX)" section of [`../docs/RELEASING.md`](../docs/RELEASING.md)
+See the "Microsoft Store (MSIX)" section of [`../docs/releasing/RELEASING.md`](../docs/releasing/RELEASING.md)
 for the full manual-first + CI-update procedure and the required GitHub secrets.

@@ -49,7 +49,7 @@ The book argues that an OSS project should make participation possible from day 
 - public repo and releases
 - [CONTRIBUTING.md](../CONTRIBUTING.md), [SECURITY.md](../SECURITY.md), and issue templates
 - website plus blog and RSS feed under `website/blog/`
-- release process documented in [docs/RELEASING.md](./RELEASING.md)
+- release process documented in [docs/RELEASING.md](../releasing/RELEASING.md)
 
 Assessment: for the current project size, this is enough infrastructure. There is no obvious need for mailing lists, forums, or more formal governance yet.
 
@@ -179,7 +179,7 @@ For a project like this, release notes are not just marketing. They are part of 
 ### Highest leverage now
 
 1. Refresh [CONTRIBUTING.md](../CONTRIBUTING.md) so it matches current architecture, test counts, and project terminology.
-2. Add a lightweight docs-freshness pass to the release checklist in [docs/RELEASING.md](./RELEASING.md).
+2. Add a lightweight docs-freshness pass to the release checklist in [docs/RELEASING.md](../releasing/RELEASING.md).
 3. Add contributor-onramp labels and a small "start here" section for non-core contributors.
 4. Start a tiny decision-log folder for major architectural or policy choices.
 5. Cross-link release notes, changelog entries, and deep-dive docs when a release includes meaningful design changes.

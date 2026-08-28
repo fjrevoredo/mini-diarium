@@ -79,6 +79,9 @@ jobs:
     runs-on: ${{ matrix.os }}
     permissions:
       contents: write
+      # Required by SignPath's GitHub Actions trusted-build-system integration when the
+      # SignPath GitHub App is not installed on the repo (it isn't here).
+      actions: read
     strategy:
       fail-fast: false
       matrix:
@@ -195,6 +198,86 @@ jobs:
           find target/release/bundle -name "*.msi" -exec cp {} release-artifacts/Mini-Diarium-${VERSION}-windows.msi \;
           find target/release/bundle/nsis -name "*.exe" -exec cp {} release-artifacts/Mini-Diarium-${VERSION}-windows.exe \; || true
 
+      # SignPath Foundation OSS code signing (test certificate — see
+      # docs/releasing/RELEASING.md "Windows Code Signing (SignPath)"). Each installer is uploaded as a GitHub Actions
+      # artifact, submitted to SignPath for signing, and the signed file is copied back
+      # over the unsigned one before checksums are computed.
+      - name: Verify SignPath secrets are set
+        if: matrix.platform == 'windows'
+        shell: bash
+        run: |
+          missing=()
+          for name in SIGNPATH_API_TOKEN SIGNPATH_ORGANIZATION_ID SIGNPATH_PROJECT_SLUG SIGNPATH_SIGNING_POLICY_SLUG; do
+            if [ -z "${!name}" ]; then
+              missing+=("$name")
+            fi
+          done
+          if [ "${#missing[@]}" -gt 0 ]; then
+            echo "Missing required SignPath secrets: ${missing[*]}. Add them at Settings -> Secrets and variables -> Actions." >&2
+            exit 1
+          fi
+          echo "All SignPath secrets are configured."
+        env:
+          SIGNPATH_API_TOKEN: ${{ secrets.SIGNPATH_API_TOKEN }}
+          SIGNPATH_ORGANIZATION_ID: ${{ secrets.SIGNPATH_ORGANIZATION_ID }}
+          SIGNPATH_PROJECT_SLUG: ${{ secrets.SIGNPATH_PROJECT_SLUG }}
+          SIGNPATH_SIGNING_POLICY_SLUG: ${{ secrets.SIGNPATH_SIGNING_POLICY_SLUG }}
+
+      - name: Upload unsigned MSI for signing
+        if: matrix.platform == 'windows'
+        id: upload-msi-unsigned
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: unsigned-windows-msi
+          path: release-artifacts/Mini-Diarium-*-windows.msi
+          retention-days: 1
+
+      - name: Submit MSI signing request (SignPath)
+        if: matrix.platform == 'windows'
+        uses: signpath/github-action-submit-signing-request@c92b958760219087e01f8d67a1669ed57afe2627 # v2
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ secrets.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ secrets.SIGNPATH_PROJECT_SLUG }}
+          signing-policy-slug: ${{ secrets.SIGNPATH_SIGNING_POLICY_SLUG }}
+          artifact-configuration-slug: windows-msi
+          github-artifact-id: ${{ steps.upload-msi-unsigned.outputs.artifact-id }}
+          wait-for-completion: true
+          output-artifact-directory: signed-windows/msi
+
+      - name: Upload unsigned EXE for signing
+        if: matrix.platform == 'windows'
+        id: upload-exe-unsigned
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: unsigned-windows-exe
+          path: release-artifacts/Mini-Diarium-*-windows.exe
+          retention-days: 1
+
+      - name: Submit EXE signing request (SignPath)
+        if: matrix.platform == 'windows'
+        uses: signpath/github-action-submit-signing-request@c92b958760219087e01f8d67a1669ed57afe2627 # v2
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ secrets.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ secrets.SIGNPATH_PROJECT_SLUG }}
+          signing-policy-slug: ${{ secrets.SIGNPATH_SIGNING_POLICY_SLUG }}
+          artifact-configuration-slug: windows-exe
+          github-artifact-id: ${{ steps.upload-exe-unsigned.outputs.artifact-id }}
+          wait-for-completion: true
+          output-artifact-directory: signed-windows/exe
+
+      - name: Replace unsigned installers with signed ones
+        if: matrix.platform == 'windows'
+        shell: bash
+        run: |
+          cp signed-windows/msi/*.msi release-artifacts/
+          cp signed-windows/exe/*.exe release-artifacts/
+
+      - name: Compute Windows checksums
+        if: matrix.platform == 'windows'
+        shell: bash
+        run: |
           cd release-artifacts
           sha256sum * > checksums-windows.txt
           cat checksums-windows.txt

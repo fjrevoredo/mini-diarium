@@ -21,7 +21,7 @@ build diagnosis, and long-term runtime maintenance.
 ## Load These Files First
 
 1. `docs/FLATPAK_MAINTENANCE.md` — file inventory, invariants, failure signatures, validation checklist, runtime docs
-2. `docs/RELEASING.md` — "Automated Flathub Publishing" section explains the publish workflow
+2. `docs/releasing/RELEASING.md` — "Automated Flathub Publishing" section explains the publish workflow
 3. `.github/workflows/flathub-publish.yml` — the actual automation that generates sources and opens the Flathub PR
 4. `flatpak/rewrite-manifest.py` — transforms the local `type: dir` manifest into a pinned `type: git` manifest
 5. `flatpak/io.github.fjrevoredo.mini-diarium.yml` — the local Flatpak manifest (source of truth)
