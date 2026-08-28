@@ -56,8 +56,9 @@
     "serialize-javascript": "7.0.5",
     "uuid": "^11.1.1",
     "basic-ftp": "^5.3.1",
-    "mermaid": "11.15.0",
+    "mermaid": "11.16.1",
     "fast-xml-parser": "^5.10.1",
+    "ip-address": "^10.5.0",
     "prosemirror-model": "^1.25.11"
   },
   "dependencies": {
