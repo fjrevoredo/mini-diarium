@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1787904137438,
+  "lastUpdate": 1787934975613,
   "repoUrl": "https://github.com/fjrevoredo/mini-diarium",
   "entries": {
     "Benchmark": [
@@ -36340,6 +36340,36 @@ window.BENCHMARK_DATA = {
           {
             "name": "ci_pipeline_duration",
             "value": 605000000000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "committer": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "distinct": true,
+          "id": "c9dc709f143f3483af56bf233b0ffabd13e469a1",
+          "message": "ci: sign Windows release artifacts via SignPath (test certificate)\n\nWire SignPath's GitHub Actions trusted-build-system integration into the\nWindows leg of release.yml so Mini-Diarium-X.Y.Z-windows.msi/.exe are\nsigned in CI. Uses the Foundation OSS test certificate until SignPath\nimports the production cert (tracked in TODO-0109).\n\nMove docs/RELEASING.md to docs/releasing/RELEASING.md and add\ndocs/releasing/SIGNPATH_FIRST_TIME_SETUP.md, a from-scratch dashboard\nsetup guide for rebuilding the SignPath project if it's ever lost.\nUpdates every cross-reference to the old path.",
+          "timestamp": "2026-08-28T18:25:50+02:00",
+          "tree_id": "014910832d9d69cecaaae64843f23ce8f5b745dc",
+          "url": "https://github.com/fjrevoredo/mini-diarium/commit/c9dc709f143f3483af56bf233b0ffabd13e469a1"
+        },
+        "date": 1787934974452,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "ci_pipeline_duration",
+            "value": 571000000000,
             "range": "± 0",
             "unit": "ns/iter"
           }
