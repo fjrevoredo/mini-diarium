@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1788280124427,
+  "lastUpdate": 1788292698198,
   "repoUrl": "https://github.com/fjrevoredo/mini-diarium",
   "entries": {
     "Benchmark": [
@@ -36520,6 +36520,36 @@ window.BENCHMARK_DATA = {
           {
             "name": "ci_pipeline_duration",
             "value": 593000000000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "committer": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "distinct": true,
+          "id": "699612067712709b03252b56b3410b5977dfb30a",
+          "message": "workaround for microsoft store publishing bug",
+          "timestamp": "2026-09-01T21:49:02+02:00",
+          "tree_id": "62e69dc9e05e1bc6135eb648bc8f71c71b9dbad3",
+          "url": "https://github.com/fjrevoredo/mini-diarium/commit/699612067712709b03252b56b3410b5977dfb30a"
+        },
+        "date": 1788292697262,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "ci_pipeline_duration",
+            "value": 542000000000,
             "range": "± 0",
             "unit": "ns/iter"
           }
