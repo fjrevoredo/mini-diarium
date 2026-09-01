@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1788292698198,
+  "lastUpdate": 1788300042826,
   "repoUrl": "https://github.com/fjrevoredo/mini-diarium",
   "entries": {
     "Benchmark": [
@@ -36550,6 +36550,36 @@ window.BENCHMARK_DATA = {
           {
             "name": "ci_pipeline_duration",
             "value": 542000000000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "committer": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "distinct": true,
+          "id": "ae462e32b590ef6567c45c1fe0a730f97954c181",
+          "message": "Dependency Update: log, aes-gcm, browserslist, @tiptap/extension-text-style, dompurify, lucide-solid, marked, solid-js, and dev tooling (eslint, vite, unocss, vitest, wdio, webdriverio, happy-dom)\n\nnix/package.nix npmDepsHash refresh skipped (Windows host); Nix CI patches it on push.",
+          "timestamp": "2026-09-01T23:14:57+02:00",
+          "tree_id": "d930ad629a2a0294332636ad876114748e34a2c4",
+          "url": "https://github.com/fjrevoredo/mini-diarium/commit/ae462e32b590ef6567c45c1fe0a730f97954c181"
+        },
+        "date": 1788300041429,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "ci_pipeline_duration",
+            "value": 821000000000,
             "range": "± 0",
             "unit": "ns/iter"
           }
