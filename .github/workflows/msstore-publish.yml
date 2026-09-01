@@ -179,7 +179,10 @@ jobs:
           # Ref: learn.microsoft.com/en-us/windows/apps/publish/msstore-dev-cli/github-actions
           # If `publish` still cannot consume a standalone MSIX, fall back to the
           # `msstore submission` sub-commands (see docs/releasing/RELEASING.md "Microsoft Store (MSIX)").
-          $publishArgs = @('publish', $msix, '-id', $env:PRODUCT_ID, '--verbose')
+          # --uploadTimeout works around a msstore CLI bug: omitting it leaves the Azure
+          # blob upload's NetworkTimeout at 0, so every upload fails instantly.
+          # https://github.com/microsoft/msstore-cli/issues/162 (fixed upstream, unreleased)
+          $publishArgs = @('publish', $msix, '-id', $env:PRODUCT_ID, '--verbose', '--uploadTimeout', '300')
           if ($env:DRY_RUN -eq 'true') {
             Write-Host "DRY RUN: creating/updating a draft submission (no commit)."
             $publishArgs += '--noCommit'

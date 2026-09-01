@@ -478,6 +478,13 @@ The `msstore-publish.yml` workflow builds the MSIX and pushes a package update,
 dispatched from the release workflow alongside WinGet/Homebrew/Flathub. It is
 **non-blocking**: a failure never fails the core release.
 
+**Upload timeout workaround:** the "Publish package update to the Store" step passes
+`--uploadTimeout 300` to `msstore publish`. Without it, a bug in `msstore-cli` v0.4.0/v0.4.1
+leaves the Azure blob upload's network timeout at 0 seconds, so every upload fails
+instantly (`Uploading Bundle to Azure blob: 0%` → error). Fixed upstream
+([microsoft/msstore-cli#163](https://github.com/microsoft/msstore-cli/issues/163)) but not
+yet in a release as of 2026-09-01 — drop this flag once a release containing the fix ships.
+
 **Requirements (one-time):**
 
 - An Azure AD (Microsoft Entra) app registration associated with the Partner Center
