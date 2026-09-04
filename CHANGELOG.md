@@ -34,6 +34,11 @@ Template:
 
 # Versions
 
+## [0.7.3] - Unreleased
+
+### Added
+- **Manual word count recalculation (TODO-0111, #275)**: Settings → Advanced now has a "Recalculate Word Counts" button that rescans every entry in the journal and rewrites any stale `word_count`. Locked entries are skipped, and an entry's last-modified date is never touched by the recalculation. Manual/on-demand only — there is no automatic or background recalculation.
+
 ## [0.7.2] - 01-09-2026
 
 ### Fixed

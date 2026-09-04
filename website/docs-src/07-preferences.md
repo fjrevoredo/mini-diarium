@@ -3,7 +3,7 @@ title: Preferences
 slug: preferences
 description: Configure Mini Diarium from the Preferences panel: choose a theme, set auto-lock timeout, adjust editor font and size, manage authentication methods, and more.
 order: 8
-updated: 2026-07-27
+updated: 2026-09-04
 tags: preferences, settings, theme, auto-lock, configuration
 ---
 
@@ -94,6 +94,7 @@ You can change your journal's storage location from Preferences. The `diary.db` 
 | Theme Overrides | Advanced JSON-based CSS token overrides (see below) |
 | Custom fonts | Upload/remove custom `.ttf`, `.otf`, `.woff`, or `.woff2` font families used by the editor |
 | Generate Debug Dump | Export a privacy-safe diagnostic JSON file (see below) |
+| Recalculate Word Counts | Rescan every entry and fix any stale word count (see below) |
 
 Custom font upload and delete stay explicit button-driven actions. If you delete the currently selected custom font, the editor font falls back to System Default immediately.
 
@@ -122,6 +123,17 @@ What it contains:
 What it never contains: your password, any encryption key, the device key for a passwordless journal, diary entry content, entry titles, tag names, unlock-method labels, journal names, or any file or folder path. Paths are stripped from log records before they are written, and the app deliberately does not record entry-level detail at the log levels that end up in the file.
 
 The file is plain, readable JSON. Open it in any text editor before sending it if you want to check it yourself.
+
+## Recalculate Word Counts
+
+Word counts only update automatically when you open and save an individual entry. If you imported entries from another app, or wrote entries before a word-counting fix, their stored word count can go stale until you open each one by hand.
+
+**Preferences → Advanced → Recalculate Word Counts** rescans every entry in the current journal and fixes any word count that no longer matches its text. Two things it deliberately does not do:
+
+- **Locked entries are skipped.** A locked entry's word count is left exactly as it is.
+- **Last-modified dates are untouched.** Fixing a stale count is not treated as editing the entry.
+
+This is a manual, on-demand action only — there is no automatic or background recalculation.
 
 ## Theme Overrides (Advanced)
 

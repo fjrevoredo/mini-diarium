@@ -23,8 +23,6 @@ TODO entry format:
 
 - [ ] **TODO-0008: Cursor height too tall after Shift+Enter on macOS (#118)** — the text caret (cursor) height becomes extra long starting on the second line, but only when inserting a soft line break with Shift+Enter (Enter alone works fine); macOS-only (v0.4.20); likely a `line-height` or `font-family` mismatch in ProseMirror's `<br>` handling introduced with new editor fonts in v0.4.20; audit soft-break styling in `src/styles/editor.css` and the `--editor-font-family` / `--editor-font-size` CSS custom properties
 
-- [ ] **TODO-0111: Add manual word count recalculation button in advanced settings** — GitHub issue #275 (last comment): previously existing entries only get word count updated when opened individually, which is inconvenient for journals with hundreds of entries. Add a button in Settings > Advanced to trigger a manual bulk recalculation of word counts for the entire journal; this allows users to pick up word count fixes without manually opening every entry. Do not enable automatic recalculation as it would be expensive and wasteful.
-
 ---
 
 ## Website Priority

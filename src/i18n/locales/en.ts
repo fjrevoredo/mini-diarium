@@ -670,6 +670,16 @@ const en = {
       generateDump: 'Generate Debug Dump',
       generating: 'Generating…',
       dumpSuccess: 'Debug dump saved successfully.',
+      recalculateTitle: 'Word Counts',
+      recalculateHint:
+        "Recalculates the word count for every entry in this journal. Locked entries are skipped, and this does not change any entry's last-modified date.",
+      recalculateButton: 'Recalculate Word Counts',
+      recalculating: 'Recalculating…',
+      recalculateSummary_one: 'Checked {{ scanned }} entry, updated {{ updated }}.',
+      recalculateSummary_other: 'Checked {{ scanned }} entries, updated {{ updated }}.',
+      recalculateSkippedLocked_one: '{{ count }} locked entry was skipped.',
+      recalculateSkippedLocked_other: '{{ count }} locked entries were skipped.',
+      recalculateError: 'Failed to recalculate word counts.',
       experimentalTitle: 'Experimental Features',
       experimentalHint:
         'These features are still in development and may change or be removed. Enable them at your own risk.',

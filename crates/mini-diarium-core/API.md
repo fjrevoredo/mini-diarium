@@ -78,12 +78,13 @@ Blanket rules, so individual entries below do not repeat them:
   operates on an already-unlocked journal; obtaining one is the job of the
   `create_database*` / `open_database*` constructors. The single exception is
   `db::peek_auth_slot_types`, which takes a **path** and needs neither a handle nor a key.
-- **Transactions.** `insert_entry_with_images`, `update_entry_with_images`, and
-  `delete_entry_by_id` wrap their work in `BEGIN IMMEDIATE` / `COMMIT` with an explicit
-  `ROLLBACK` on any failure (`db/queries/entries/{insert,update,delete}.rs`), so the
-  long-lived connection is never left in a half-open transaction. The lower-level
-  `insert_entry` / `update_entry` are single-statement writes with no transaction of their
-  own — they are the primitives the `*_with_images` variants compose.
+- **Transactions.** `insert_entry_with_images`, `update_entry_with_images`,
+  `delete_entry_by_id`, and `recalculate_all_word_counts` wrap their work in
+  `BEGIN IMMEDIATE` / `COMMIT` with an explicit `ROLLBACK` on any failure
+  (`db/queries/entries/{insert,update,delete,recalculate}.rs`), so the long-lived
+  connection is never left in a half-open transaction. The lower-level `insert_entry` /
+  `update_entry` are single-statement writes with no transaction of their own — they are
+  the primitives the `*_with_images` variants compose.
 - **Foreign keys.** Connections are always opened through `db::schema`'s `open_connection`,
   which sets the per-connection `PRAGMA foreign_keys = ON` that all `ON DELETE CASCADE` /
   `RESTRICT` declarations depend on.
@@ -145,7 +146,7 @@ sealed (`pub(crate)`); the names below are re-exported at `db`.
 
 ### Types
 `DiaryEntry`, `EntryMetadata`, `TimelineRow`, `Tag`, `ImageData`, `ImageSummary`,
-`ImageSummaryPage`, `ImageSummarySort`.
+`ImageSummaryPage`, `ImageSummarySort`, `WordCountRecalculationResult`.
 
 ### Open / create (unlock)
 - `create_database`, `create_database_auto`
@@ -157,6 +158,8 @@ sealed (`pub(crate)`); the names below are re-exported at `db`.
 - `get_entry_by_id`, `get_entries_by_date`, `get_all_entries`, `get_entries_in_range`
 - `get_all_entry_dates`, `get_locked_entry_dates`, `get_entries_for_timeline`
 - `delete_entry_by_id`, `is_entry_locked`, `set_entry_locked`, `count_words`
+- `recalculate_all_word_counts(db) -> Result<WordCountRecalculationResult, String>` — bulk
+  on-demand rescan; skips locked entries and never touches `date_updated`
 
 ### Tags
 - `create_tag`, `get_all_tags`, `rename_tag`, `delete_tag`

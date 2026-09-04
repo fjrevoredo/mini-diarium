@@ -417,6 +417,7 @@ pub fn run() {
             commands::entries::get_locked_entry_dates,
             commands::entries::get_all_entry_dates,
             commands::entries::get_timeline_entries,
+            commands::entries::recalculate_word_counts,
             // Search
             commands::search::search_entries,
             // Navigation

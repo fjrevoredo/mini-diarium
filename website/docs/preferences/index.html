@@ -236,7 +236,7 @@
       "@id": "https://mini-diarium.com/docs/preferences/#article",
       "headline": "Preferences",
       "description": "Configure Mini Diarium from the Preferences panel: choose a theme, set auto-lock timeout, adjust editor font and size, manage authentication methods, and more.",
-      "dateModified": "2026-07-27T00:00:00Z",
+      "dateModified": "2026-09-04T00:00:00Z",
       "keywords": "preferences, settings, theme, auto-lock, configuration",
       "publisher": {
         "@type": "Organization",
@@ -507,6 +507,10 @@
         <td>Generate Debug Dump</td>
         <td>Export a privacy-safe diagnostic JSON file (see below)</td>
         </tr>
+        <tr>
+        <td>Recalculate Word Counts</td>
+        <td>Rescan every entry and fix any stale word count (see below)</td>
+        </tr>
         </tbody></table>
         <p>Custom font upload and delete stay explicit button-driven actions. If you delete the currently selected custom font, the editor font falls back to System Default immediately.</p>
         <h2 id="debug-dump">Debug dump</h2><p><strong>Preferences → Advanced → Diagnostics → Generate Debug Dump</strong> writes a single JSON file you can attach to a bug report. Your journal must be unlocked, because most of what the file describes is read from the open database.</p>
@@ -573,6 +577,13 @@
         </tbody></table>
         <p>What it never contains: your password, any encryption key, the device key for a passwordless journal, diary entry content, entry titles, tag names, unlock-method labels, journal names, or any file or folder path. Paths are stripped from log records before they are written, and the app deliberately does not record entry-level detail at the log levels that end up in the file.</p>
         <p>The file is plain, readable JSON. Open it in any text editor before sending it if you want to check it yourself.</p>
+        <h2 id="recalculate-word-counts">Recalculate Word Counts</h2><p>Word counts only update automatically when you open and save an individual entry. If you imported entries from another app, or wrote entries before a word-counting fix, their stored word count can go stale until you open each one by hand.</p>
+        <p><strong>Preferences → Advanced → Recalculate Word Counts</strong> rescans every entry in the current journal and fixes any word count that no longer matches its text. Two things it deliberately does not do:</p>
+        <ul>
+        <li><strong>Locked entries are skipped.</strong> A locked entry&#39;s word count is left exactly as it is.</li>
+        <li><strong>Last-modified dates are untouched.</strong> Fixing a stale count is not treated as editing the entry.</li>
+        </ul>
+        <p>This is a manual, on-demand action only — there is no automatic or background recalculation.</p>
         <h2 id="theme-overrides-advanced">Theme Overrides (Advanced)</h2><p>Advanced users can customize the app&#39;s color palette by overriding individual CSS theme tokens.</p>
         <p>Open <strong>Preferences → Advanced</strong>, then enter a JSON object with <code>light</code> and/or <code>dark</code> keys, each mapping CSS variable names to color values:</p>
         <pre><code class="language-json">{
@@ -644,6 +655,7 @@
           <li class="docs-toc-h2"><a href="#data-settings">Data Settings</a></li>
           <li class="docs-toc-h2"><a href="#advanced-settings">Advanced Settings</a></li>
           <li class="docs-toc-h2"><a href="#debug-dump">Debug dump</a></li>
+          <li class="docs-toc-h2"><a href="#recalculate-word-counts">Recalculate Word Counts</a></li>
           <li class="docs-toc-h2"><a href="#theme-overrides-advanced">Theme Overrides (Advanced)</a></li>
           <li class="docs-toc-h3"><a href="#supported-token-families">Supported Token Families</a></li>
           <li class="docs-toc-h2"><a href="#reset-journal">Reset Journal</a></li>

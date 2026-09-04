@@ -81,3 +81,14 @@ export interface TimelineEntry {
 export async function getTimelineEntries(): Promise<TimelineEntry[]> {
   return await invoke('get_timeline_entries');
 }
+
+export interface WordCountRecalculationResult {
+  scanned: number;
+  updated: number;
+  skipped_locked: number;
+}
+
+/** Manual, on-demand bulk word-count recalculation. Skips locked entries. See TODO-0111. */
+export async function recalculateWordCounts(): Promise<WordCountRecalculationResult> {
+  return await invoke('recalculate_word_counts');
+}
