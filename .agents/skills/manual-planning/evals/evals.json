@@ -1,0 +1,168 @@
+{
+  "skill_name": "manual-planning",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Write an implementation plan for splitting the billing service out of the monolith. I want it as a file I can hand to an agent.",
+      "should_trigger": true,
+      "expected_output": "Agent creates docs/plans/YYYY-MM-DD-<name>-plan.md with new-plan.py, fills in the v2 sections, runs check-plan.py, pastes its output into Plan Self-Check, and stops at READY FOR APPROVAL.",
+      "assertions": [
+        "A file matching ^\\d{4}-\\d{2}-\\d{2}-[a-z0-9-]+-plan\\.md$ exists under docs/plans/",
+        "python3 scripts/check-plan.py on the created file reports zero E-level findings",
+        "The metadata block contains exactly Plan Status, Plan Format, Template and Tracking",
+        "The metadata block contains none of Created, Last Updated, Owner, Approval",
+        "Plan Status is READY FOR APPROVAL or earlier, never APPROVED or IN PROGRESS"
+      ],
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "Break this into steps I can hand to an agent tomorrow, with checkpoints so I can tell what's done.",
+      "should_trigger": true,
+      "expected_output": "Agent recognises the request as a plan file even though the word 'plan' names no artifact, creates one, and gives every task a Validation and a Depends On.",
+      "assertions": [
+        "A plan file is created rather than the steps being printed only in the conversation",
+        "Every task carries Status, Depends On, Objective, Steps, Validation and Notes",
+        "check-plan.py reports no E006 finding"
+      ],
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "Pick up the plan in docs/plans and keep going.",
+      "should_trigger": true,
+      "expected_output": "Agent reads the plan, runs plan-status.py show to establish true state, sets the next task IN PROGRESS, and works from Depends On rather than task numbering.",
+      "assertions": [
+        "Agent reads the existing plan file instead of creating a new one",
+        "Exactly one task's Status line changes per transition",
+        "The task the agent starts has all its Depends On tasks COMPLETED or SKIPPED"
+      ],
+      "files": ["docs/plans/2026-09-02-sample-refactor-plan.md"]
+    },
+    {
+      "id": 4,
+      "prompt": "Mark task 2.3 done and tell me what's left.",
+      "should_trigger": true,
+      "expected_output": "Agent runs plan-status.py set 2.3 COMPLETED then plan-status.py show, and surfaces any E005 warning rather than silently promoting the plan status.",
+      "assertions": [
+        "The plan file differs by exactly one line after the update",
+        "The status written is COMPLETED, from the closed vocabulary",
+        "Plan Status is not changed by the agent as a side effect"
+      ],
+      "files": ["docs/plans/2026-09-02-sample-refactor-plan.md"]
+    },
+    {
+      "id": 5,
+      "prompt": "This plan is a mess — half the tasks say TO BE DONE but it's marked completed. Can you check it?",
+      "should_trigger": true,
+      "expected_output": "Agent runs check-plan.py, reports the E005 finding by ID, and reconciles the statuses rather than editing the plan status to hide the contradiction.",
+      "assertions": [
+        "Agent runs check-plan.py rather than reviewing by eye",
+        "The E005 finding is named by its ID in the response",
+        "Task statuses are corrected to reflect reality, not the plan status flipped to match"
+      ],
+      "files": ["docs/plans/2026-09-02-sample-refactor-plan.md"]
+    },
+    {
+      "id": 6,
+      "prompt": "I changed approach on task 4 — used a different module than the plan said. Record that.",
+      "should_trigger": true,
+      "expected_output": "Agent appends a DEC-NNN entry to the plan's Decision Log with Date, Task, Decision and Rationale, before moving on.",
+      "assertions": [
+        "A new ### DEC-NNN heading is appended to the Decision Log section",
+        "The entry carries all four of Date, Task, Decision and Rationale",
+        "Existing DEC entries are not renumbered"
+      ],
+      "files": ["docs/plans/2026-09-02-sample-refactor-plan.md"]
+    },
+    {
+      "id": 7,
+      "prompt": "Set up a roadmap document for the Q4 migration with milestones and exit criteria, and an approval gate before anyone starts.",
+      "should_trigger": true,
+      "expected_output": "Agent creates a milestoned plan, gives every milestone Exit Criteria broader than a single task validation, and leaves the Approval Gate boilerplate in place until approval is actually given.",
+      "assertions": [
+        "The milestoned template is used and Plan Format reads manual-planning v2.0.0",
+        "Every milestone has Status, Purpose and Exit Criteria",
+        "check-plan.py reports no E008 finding"
+      ],
+      "files": []
+    },
+    {
+      "id": 8,
+      "prompt": "Add a TODO for fixing the flaky upload test and archive the ones we finished this week.",
+      "should_trigger": false,
+      "expected_output": "Backlog item management. This is todo-manager's job — a TODO list is not a plan file with statuses, validations and an approval gate.",
+      "assertions": [
+        "No plan file is created under docs/plans/",
+        "manual-planning is not invoked"
+      ],
+      "files": []
+    },
+    {
+      "id": 9,
+      "prompt": "Explore whether moving to event sourcing makes sense for the orders service. Don't write anything yet.",
+      "should_trigger": false,
+      "expected_output": "Open-ended research. This is exploration-mode: the user is deciding whether to act, not sequencing work they have committed to.",
+      "assertions": [
+        "No plan file is created",
+        "The response investigates and compares rather than producing tasks with validations"
+      ],
+      "files": []
+    },
+    {
+      "id": 10,
+      "prompt": "Review MR 482 and tell me what needs fixing before it merges.",
+      "should_trigger": false,
+      "expected_output": "Code review of an existing diff. This is mr-review, even though the output is a list of things to do.",
+      "assertions": [
+        "No plan file is created",
+        "The output is review findings against a diff, not a task list with statuses"
+      ],
+      "files": []
+    },
+    {
+      "id": 11,
+      "prompt": "What's the plan here? I don't follow how these two services talk to each other.",
+      "should_trigger": false,
+      "expected_output": "Conversational use of the word 'plan'. The user wants an explanation of existing behaviour, not a planning document.",
+      "assertions": [
+        "No plan file is created",
+        "The response explains the current system rather than proposing tasks"
+      ],
+      "files": []
+    },
+    {
+      "id": 12,
+      "prompt": "Rename the getUser helper to fetchUser everywhere and run the tests.",
+      "should_trigger": false,
+      "expected_output": "A single mechanical change. Writing a plan file for it is ceremony that costs more than the edit.",
+      "assertions": [
+        "No plan file is created",
+        "The rename is performed directly"
+      ],
+      "files": []
+    },
+    {
+      "id": 13,
+      "prompt": "Draft a project timeline with milestones for the client — when each phase ships and who signs off.",
+      "should_trigger": false,
+      "expected_output": "A scheduling and communication document for people. It shares the vocabulary (milestones, sign-off) but has no tasks a coding agent executes and no per-task validation.",
+      "assertions": [
+        "No plan file is created under docs/plans/",
+        "The output is dates and owners, not tasks with Validation commands"
+      ],
+      "files": []
+    },
+    {
+      "id": 14,
+      "prompt": "Our CI config keeps drifting from what the README documents. Fix the README.",
+      "should_trigger": false,
+      "expected_output": "A documentation edit with a known target. No planning artifact is warranted.",
+      "assertions": [
+        "No plan file is created",
+        "The README is edited directly"
+      ],
+      "files": []
+    }
+  ]
+}

@@ -3,15 +3,43 @@
 ## Metadata
 
 - Plan Status: DRAFT
-- Created: YYYY-MM-DD
-- Last Updated: YYYY-MM-DD
-- Owner: Coding agent
-- Approval: PENDING
+- Plan Format: manual-planning v2.0.0
+- Template: milestoned
+- Tracking: untracked
 
 ## Status Legend
 
 - Plan Status values: DRAFT, QUESTIONS PENDING, READY FOR APPROVAL, APPROVED, IN PROGRESS, COMPLETED, BLOCKED
 - Task/Milestone Status values: TO BE DONE, IN PROGRESS, COMPLETED, BLOCKED, SKIPPED
+
+## Context For A Clean Session
+
+<!--
+This section is what makes the plan executable without the originating conversation.
+An agent picking this plan up cold gets everything it needs from here. Restate facts inline
+even when they are "obvious" from the conversation that produced the plan — that conversation
+is gone by the time the plan is executed.
+-->
+
+- Repository: [absolute path], branch `[branch]`, clean at `[commit]`.
+- Stack and versions that matter: [language/runtime versions, frameworks, anything pinned].
+- Exact commands:
+  - Test: `[command]`
+  - Lint: `[command]`
+  - Build: `[command]`
+  - (Write `none` where the project genuinely has no such command — that is itself context.)
+
+### Repository facts
+
+| Fact | Value | How it was verified |
+| --- | --- | --- |
+| [e.g. no CI] | [e.g. `.github/workflows` absent] | [`ls .github/workflows`] |
+
+### Hard constraints
+
+<!-- Each entry states the *consequence* of violating it, not just the prohibition. -->
+
+1. [Constraint] — [what breaks if it is violated].
 
 ## Goal
 
@@ -27,11 +55,11 @@
 
 ## Assumptions
 
-- [Assumption]
+- [Assumption, with the command that verified it where one exists.]
 
 ## Open Questions
 
-- [Question surfaced to the user, or `None`]
+- [Question surfaced to the user, with the answer once given, or `None`.]
 
 ## Milestones
 
@@ -44,30 +72,38 @@
 #### Task 1.1: [Name]
 
 - Status: TO BE DONE
+- Depends On: none
 - Objective: [Observable outcome.]
 - Steps:
   1. [Concrete step.]
 - Validation: [Command, test, inspection, or observable self-check.]
-- Notes: [Constraints, dependencies, affected files, or `None`.]
+- Notes: [Constraints, affected files, or `None`.]
 
 #### Task 1.2: [Name]
 
 - Status: TO BE DONE
+- Depends On: 1.1
 - Objective: [Observable outcome.]
 - Steps:
   1. [Concrete step.]
 - Validation: [Command, test, inspection, or observable self-check.]
-- Notes: [Constraints, dependencies, affected files, or `None`.]
+- Notes: [Constraints, affected files, or `None`.]
+
+<!--
+`Depends On` takes `none` or a list of task numbers. Task numbering is **not** an ordering:
+Task 3.1 may be runnable before Task 2.2. Execute by following `Depends On`, not by counting up.
+-->
 
 ### Milestone N: Cleanup And Final Verification
 
 - Status: TO BE DONE
 - Purpose: Ensure the repository contains only intentional final artifacts and the complete change is verified.
-- Exit Criteria: Intermediate artifacts are removed, all final verification passes, and the plan status is COMPLETED.
+- Exit Criteria: Intermediate artifacts are removed, the `## Pre-flight Checks` list passes, all final verification passes, and the plan status is COMPLETED.
 
 #### Task N.1: Cleanup Intermediate Artifacts
 
 - Status: TO BE DONE
+- Depends On: [tasks producing the artifacts being cleaned up]
 - Objective: Remove artifacts created only to support implementation.
 - Steps:
   1. Inspect the worktree for temporary documentation, one-off scripts, scratch tests, generated data, logs, and obsolete plan fragments.
@@ -79,68 +115,86 @@
 #### Task N.2: Final Verification
 
 - Status: TO BE DONE
+- Depends On: N.1
 - Objective: Validate the integrated change after cleanup.
 - Steps:
-  1. Run the final verification commands or inspections listed below.
-  2. Fix failures and rerun until verification passes, or record the blocker.
+  1. Run every item in `## Pre-flight Checks`.
+  2. Run the final verification commands or inspections listed under `## Final Verification`.
+  3. Fix failures and rerun until verification passes, or record the blocker.
 - Validation: [Final command or inspection that validates the whole change.]
 - Notes: [Known limitations or `None`.]
 
+## Project Gates
+
+<!--
+This is where project-specific rules live, so that no project needs to fork this skill.
+Fill it from the repository's own conventions: per-project lint/build/test commands, manual
+verification requirements, changelog or backlog bookkeeping, review or sign-off rules.
+Write `none` for a category the project genuinely does not have.
+-->
+
+- [Gate, as a runnable command or an explicit manual check.]
+
+## Pre-flight Checks
+
+Run before the plan may reach `COMPLETED`. This is a named checklist of this project's actual
+commands, distinct from per-task validation: per-task validation proves one task worked, these
+prove the repository as a whole is in a shippable state.
+
+- [ ] [`command`]
+- [ ] [`command`]
+
 ## Decision Log
 
-<!-- CONDITIONAL: Include this section only when the user requested a decision log companion file. Delete it otherwise. -->
+Write an entry **before moving to the next task**, never retrospectively.
+An entry is required when implementation diverges from what this plan specifies (different path,
+signature, or approach), when a validation failure forces the plan to adapt, when an unplanned
+problem is found, or when a validation is deliberately deferred.
+No entry is needed when execution matches the plan.
 
-Pre-implementation decisions are recorded in [`<plan-name>-decisions.md`](<plan-name>-decisions.md).
+<!--
+Once this section passes ~10 entries, move it to a companion
+`YYYY-MM-DD-<name>-decisions.md` and leave a pointer here. `check-plan.py` warns (`W005`)
+at that threshold.
+-->
 
-**During execution:** write a new entry in that file **before moving to the next task** whenever implementation diverges from what this plan specifies. Do not log deviations retrospectively.
+### DEC-001 — <short title>
 
-A log entry is required when:
-- A different file path, rule, function signature, or approach was used than what the plan specified.
-- A validation step reveals the plan's approach is incorrect and you adapt.
-- A step is skipped for a reason not already covered by the task's BLOCKED handling.
+- Date: YYYY-MM-DD
+- Task: <task number>
+- Decision: <what was chosen>
+- Rationale: <why>
 
-A log entry is **not** required for:
-- Execution that matches the plan exactly.
-- Trivial wording differences that don't change meaning or outcome.
+## Final Verification
 
----
+[The end-to-end check that the whole change works, or a pointer to the task that performs it.]
 
 ## Approval Gate
 
 Implementation must not start until the user approves this plan.
 
-## Pre-flight Checks
-
-Run these commands before marking the plan COMPLETED or requesting final approval.
-Fix all failures before proceeding.
-
-- [ ] `cargo clippy` passes with zero warnings
-- [ ] `cargo test` passes with zero failures
-- [ ] `tsc --noEmit` passes
-- [ ] `bun run lint` passes
-- [ ] `bun run build` succeeds
-- [ ] `bun run format` succeeds
-- [ ] All new i18n keys added to every locale file (verify with `grep`)
-- [ ] Any text-processing function tested with non-ASCII strings (ASCII + RTL + CJK minimum)
-- [ ] Plan status updated to COMPLETED
+<!--
+Once approval is given, replace the sentence above with the record:
+`Approved by <who> on <date>.`
+Leaving the boilerplate in place after approval trips `W002`.
+-->
 
 ## Plan Self-Check
 
-- [ ] Plan location follows the default location rule.
-- [ ] Scope, non-goals, assumptions, and open questions are explicit.
-- [ ] Any unresolved open questions have been surfaced to the user.
-- [ ] Tasks are grouped into milestones because the plan has more than 10 tasks.
-- [ ] Every task has concrete steps and validation.
-- [ ] Every milestone has exit criteria.
-- [ ] Cleanup and final verification are included.
-- [ ] The plan avoids vague actions without concrete targets.
-- [ ] The plan can be executed by a coding agent without reading the original conversation.
-- [ ] (If dialog/interaction feature) UX-GATE: each scenario listed and user confirmed against actual behavior, not just a description.
-- [ ] (If Tauri WebView behavior) PLATFORM-VERIFY step listed in exit criteria for each WebView interaction.
+Paste the output of `check-plan.py` here, with the date it was run:
+
+```
+$ python3 scripts/check-plan.py <this-file>
+[output]
+```
+
+Run: YYYY-MM-DD
 
 ## Execution Notes
 
 - Update milestone and task status before starting and after validation.
 - Update each task to COMPLETED immediately after its validation passes.
 - Mark tasks or milestones BLOCKED with a short reason when progress cannot continue.
-- If implementation diverges from the plan, write a new entry in the decision log file **before starting the next task** (see Decision Log section above for what qualifies).
+- Task numbering is not an execution order. Follow `Depends On`.
+- Write a `## Decision Log` entry **before starting the next task** whenever execution diverges from
+  this plan, an unplanned problem is found, or a validation is deferred — never retrospectively.

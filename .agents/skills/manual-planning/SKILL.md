@@ -1,220 +1,298 @@
 ---
 name: manual-planning
-description: Create, update, review, and execute manual Markdown implementation plans when harness planning mode is not being used. Use when the user asks for a plan file, manual plan, implementation plan, execution plan, roadmap, task checklist, planning document, or agent-maintained plan with statuses, validations, milestones, approval gates, and cleanup steps.
+description: |
+  Create, update, review, and execute manual Markdown implementation plans when harness planning
+  mode is not being used. Use when the user asks for a plan file, manual plan, implementation plan,
+  execution plan, roadmap, task checklist, planning document, or agent-maintained plan with
+  statuses, validations, milestones, approval gates, and cleanup steps. Also use when resuming or
+  maintaining an existing plan — marking a task complete, checking plan status, recording a
+  decision, or validating a plan file — even when the user does not say "plan file".
+  Triggers: plan file, manual plan, implementation plan, execution plan, planning document, plan
+  template, resume plan, update the plan, continue the plan, plan status, task checklist, roadmap,
+  milestones, exit criteria, approval gate, decision log, cleanup phase, check-plan, new-plan.
+metadata:
+  version: "2.0.0"
 ---
 
 # Manual Planning
 
-Use this skill to produce Markdown plans that another coding agent can execute without reinterpreting the original conversation. Keep plans stable, explicit, and easy to update mechanically.
+Produce Markdown plans that another coding agent can execute without reinterpreting the original
+conversation. A plan is an execution ledger, not a proposal: it has to stay accurate while it is
+being worked through, and it has to be readable cold by a session that was not there when it was
+written.
+
+Anything that can be checked mechanically is checked by a script. Do not hand-verify what
+`check-plan.py` verifies.
+
+## Scripts
+
+Standard library Python 3 only — no install step. Run with `python3` or `uv run`.
+
+```bash
+# Create a plan: correct name, correct directory, version stamped from this SKILL.md
+python3 scripts/new-plan.py "<title>" [--milestoned] [--dir docs/plans]
+                                      [--exclude-locally | --tracked] [--force]
+
+# Validate a plan (read-only). exit 0 = clean, 1 = errors, 2 = warnings only
+python3 scripts/check-plan.py <plan-file> [--json] [--strict] [--dir docs/plans]
+
+# Change one task's status, or read every status back
+python3 scripts/plan-status.py <plan-file> set <task-id> "<STATUS>"
+python3 scripts/plan-status.py <plan-file> show
+```
+
+Each answers `--help`, which lists every check ID and exit code. Quote the status argument: three
+of the five task statuses contain a space.
 
 ## Default Location
 
-Create the plan in `docs/` when that directory exists. Otherwise create it at the repository root.
+`docs/plans/YYYY-MM-DD-<name>-plan.md`.
 
-Use a descriptive kebab-case filename such as `docs/payment-refactor-plan.md` or `manual-plan.md`. Avoid temporary names like `notes.md`, `scratch.md`, or `todo.md`.
+The date in the filename is the date of record, which is why the metadata block carries no
+`Created` or `Last Updated` field. `new-plan.py` produces both the directory and the filename, so
+neither is a rule you have to remember. Avoid names like `notes.md`, `scratch.md` or `todo.md`.
+
+## Plan Tracking
+
+Default to not committing the plan. Follow the repo instead when it already has a convention: if
+the plan directory holds tracked plans, this project commits them. Commit the plan when the user
+asks.
+
+If the plan stays untracked and its `??` entry interferes — a plan's own cleanup task validates with
+`git status --porcelain` — add the plan directory to `.git/info/exclude` rather than `.gitignore`;
+`.gitignore` is itself a tracked file, so editing it creates the commit you were avoiding.
+`new-plan.py --exclude-locally` does this and stamps `Tracking: untracked (locally excluded)`.
 
 ## Plan Creation Workflow
 
-1. Gather enough repository context to identify scope, dependencies, test surfaces, and likely risks.
-2. Draft the plan as a Markdown file using one of:
-   - `assets/simple-plan-template.md` for 10 or fewer tasks.
-   - `assets/milestoned-plan-template.md` for more than 10 tasks.
-3. Set `Plan Status` to `QUESTIONS PENDING` if clarification is required, then surface all clarifying questions to the user. Put the same unresolved questions in the plan under `Open Questions`.
-4. Incorporate the answers, then self-check the whole plan before requesting final approval.
-5. Set `Plan Status` to `READY FOR APPROVAL` only when the self-check passes and the only remaining gate is user approval.
+1. Gather enough repository context to identify scope, dependencies, test surfaces, and likely
+   risks. Everything you learn here goes in `## Context For A Clean Session` — see
+   `references/context-and-evidence.md`.
+2. Create the file with `new-plan.py`, choosing `--milestoned` for more than 10 tasks.
+3. Fill in the template. Every factual claim carries evidence: a `file:line` reference, a section
+   reference (`SKILL_RULES.md §5`), or a re-runnable command.
+4. Set `Plan Status` to `QUESTIONS PENDING` if clarification is required, then surface the
+   questions to the user. Mirror them in `Open Questions`.
+5. Incorporate the answers, run `check-plan.py`, and paste its output into `## Plan Self-Check`.
+6. Set `Plan Status` to `READY FOR APPROVAL` only when the checker is clean and the only remaining
+   gate is user approval.
 
-Do not begin implementation until the user approves the plan, unless the user explicitly asks to proceed without approval.
+Do not begin implementation until the user approves the plan, unless the user explicitly asks to
+proceed without approval. When approval is given, replace the `## Approval Gate` boilerplate with
+`Approved by <who> on <date>.` — the section is a record, not a standing instruction.
 
 ## Open Question Handling
 
-Open questions are not plan-only notes. When clarification is needed, actively ask the user before marking the plan `READY FOR APPROVAL`.
+Open questions are not plan-only notes. When clarification is needed, actively ask the user before
+marking the plan `READY FOR APPROVAL`.
 
-Use this order:
+1. **Use the native question-asking tool** (`question`, `ask-user`, `request-input`, or whatever the
+   current harness exposes). Always prefer a structured tool over plain text.
+2. If no such tool is available, send a concise formatted message in the conversation.
+3. Record both the question and the user's answer in `Open Questions`.
+4. After the user answers, replace the entry with the resolved answer, or the section with `None`.
 
-1. **Use the native question-asking tool** (e.g. `question`, `ask-user`, `request-input`, or equivalent tool exposed by the current harness). This is the primary and preferred method — always prefer a structured tool over plain text.
-2. If no native question-asking tool is available, send a concise formatted message in the conversation as a fallback.
-3. Record both the question and the user's answer in the plan's `Open Questions` section.
-4. After the user answers, update `Open Questions` with the resolved answer or replace the section with `None`.
+Ask only questions that affect correctness, scope, risk, validation, sequencing, or approval. Do not
+ask what the repository can answer or what can safely become a stated assumption.
 
-Ask only questions that affect correctness, scope, risk, validation, sequencing, or user approval. Do not ask questions whose answers can be discovered from the repository or safely handled as explicit assumptions.
+**All open questions must be answered before the plan can transition to `READY FOR APPROVAL`.**
 
-**All open questions must be answered before the plan can transition to `READY FOR APPROVAL`. Unanswered questions block approval.**
-
-Fallback message format (only when no tool is available):
-
-```markdown
-I drafted the plan, but need these clarifications before it is ready for approval:
-
-1. [Question]
-2. [Question]
-```
-
-Do not combine unresolved clarifying questions and final approval in the same user prompt. Ask for final approval only after the questions are answered and the self-check passes.
+Do not combine unresolved clarifying questions and final approval in the same user prompt.
 
 ## Plan State Lifecycle
 
-Treat `Plan Status` in the metadata block as the authoritative plan-level state.
-
-Use this lifecycle unless the user explicitly asks for a different one:
+`Plan Status` in the metadata block is the authoritative plan-level state. It is modelled once —
+there is no separate `Approval` field, because in the surveyed corpus the two contradicted each
+other in 11 of 32 plans.
 
 1. `DRAFT` while creating the first version.
 2. `QUESTIONS PENDING` while waiting for required clarification.
-3. `READY FOR APPROVAL` after clarification is incorporated and self-check passes.
+3. `READY FOR APPROVAL` after clarification is incorporated and the checker is clean.
 4. `APPROVED` after the user approves execution.
 5. `IN PROGRESS` while implementation is underway.
-6. `COMPLETED` after cleanup and final verification pass.
+6. `COMPLETED` after cleanup, `## Pre-flight Checks` and final verification all pass.
 
-Use `BLOCKED` when implementation or planning cannot continue. Record the blocker in `Open Questions`, task notes, or milestone notes as appropriate.
+Use `BLOCKED` when planning or implementation cannot continue, and record the blocker.
 
 ## Plan Format Rules
 
-Every plan must include:
+Every plan has these top-level sections, which is what `check-plan.py` `E009` enforces:
 
-- Title and metadata block.
-- Goal, scope, and non-goals.
-- Current status.
-- Assumptions and open questions.
-- Task list, optionally grouped by milestones.
-- Validation command/check for every task.
-- Cleanup phase after implementation.
-- Final verification section.
-- Decision Log section with execution protocol (milestoned plans only, and only when a decision log companion file was requested; omit for simple plans and when no companion file was requested).
-- Approval gate.
+`Metadata`, `Status Legend`, `Context For A Clean Session`, `Goal`, `Scope`, `Non-Goals`,
+`Assumptions`, `Open Questions`, `Milestones` (or `Tasks` in a simple plan), `Project Gates`,
+`Pre-flight Checks`, `Decision Log`, `Final Verification`, `Approval Gate`, `Plan Self-Check`,
+`Execution Notes`.
 
-Use exactly these task statuses:
+The metadata block is exactly four fields:
 
-- `TO BE DONE`
-- `IN PROGRESS`
-- `COMPLETED`
-- `BLOCKED`
-- `SKIPPED`
+```markdown
+- Plan Status: DRAFT
+- Plan Format: manual-planning v2.0.0
+- Template: milestoned
+- Tracking: untracked
+```
 
-Use exactly these plan statuses:
+Use exactly these task statuses: `TO BE DONE`, `IN PROGRESS`, `COMPLETED`, `BLOCKED`, `SKIPPED`.
 
-- `DRAFT`
-- `QUESTIONS PENDING`
-- `READY FOR APPROVAL`
-- `APPROVED`
-- `IN PROGRESS`
-- `COMPLETED`
-- `BLOCKED`
+Use exactly these plan statuses: `DRAFT`, `QUESTIONS PENDING`, `READY FOR APPROVAL`, `APPROVED`,
+`IN PROGRESS`, `COMPLETED`, `BLOCKED`.
 
-If there are more than 10 tasks, group tasks into milestones. Each milestone must have a status and exit criteria. If there are 10 or fewer tasks, omit milestones unless they clarify independent delivery phases.
+A status may carry a trailing annotation (`COMPLETED — 381/381 passing`); the vocabulary applies to
+the leading token.
+
+More than 10 tasks requires milestones. With 10 or fewer, omit milestones unless they clarify
+independent delivery phases.
+
+`## Project Gates` is where project-specific rules live — per-project lint/build/test commands,
+manual-verification requirements, changelog or backlog bookkeeping. Put them there rather than
+forking this skill for a project.
+
+`## Pre-flight Checks` is a named checklist of the project's actual commands, run before the plan may
+reach `COMPLETED`. It is distinct from per-task validation: per-task validation proves one task
+worked, pre-flight checks prove the repository is shippable.
 
 ## Task Rules
-
-Each task must be concrete enough for an agent to execute from the plan alone.
 
 Each task must include:
 
 - `Status`: one of the task statuses.
+- `Depends On`: `none`, or a list of task numbers.
 - `Objective`: the observable outcome.
-- `Steps`: one or more concrete implementation steps.
+- `Steps`: concrete implementation steps.
 - `Validation`: commands, tests, inspections, or self-checks that prove completion.
-- `Notes`: constraints, dependencies, or affected files when known.
+- `Notes`: constraints, affected files, or `None`.
 
-Prefer validation that can be run deterministically, such as a unit test, integration test, build command, linter, rendered artifact check, or exact file inspection. If deterministic validation is impossible, state the manual self-check in observable terms.
+**Task numbering is not an execution order.** `Depends On` is the order. Task 3.1 may be runnable
+before Task 2.2.
+
+Prefer deterministic validation — a test, build, linter, or exact file inspection. Where none is
+possible, state the manual check in observable terms. Say explicitly when a validation passes by
+producing no output: `grep` finding nothing exits 1, and so does `diff` on files that are meant to
+differ. An executing agent that branches on `$?` will read those as failures.
 
 ## Milestone Rules
 
-Each milestone must include:
-
-- `Status`: one of the task statuses.
-- `Purpose`: why the group exists.
-- `Exit Criteria`: observable conditions that prove the milestone is complete.
-- Tasks owned by the milestone.
-
-Milestone exit criteria must be broader than a single task validation. They should confirm that the completed tasks work together and that the next milestone can safely start.
+Each milestone must include `Status`, `Purpose`, `Exit Criteria`, and its tasks. Exit criteria must
+be broader than any single task validation: they confirm the completed tasks work together and that
+the next milestone can safely start.
 
 ## Implementation Workflow
 
-When executing a manual plan:
-
 1. Set the plan status to `IN PROGRESS` before starting implementation.
-2. Before starting a task, update that task to `IN PROGRESS`.
+2. Before starting a task, set it to `IN PROGRESS` — `plan-status.py <plan> set <id> "IN PROGRESS"`.
 3. Complete the task.
-4. Run the task validation. Before declaring the validation passed, check the task's **Steps** and **Validation** sections for any explicitly named tests (e.g. "add a test `test_foo_bar`"). A green test suite does not mean those tests were written — verify by name.
-5. Fix issues until validation passes or mark the task `BLOCKED` with a reason.
-6. Immediately update the task status to `COMPLETED` after validation passes.
-7. Update the milestone status when all tasks in the milestone satisfy its exit criteria.
+4. Run the task validation. Before declaring it passed, check the task's `Steps` and `Validation`
+   for explicitly named tests (e.g. "add a test `test_foo_bar`"). **A green test suite does not mean
+   those tests were written — verify by name.**
+5. Fix issues until validation passes, or mark the task `BLOCKED` with a reason.
+6. Set the task to `COMPLETED` immediately after validation passes.
+7. Update the milestone status when its tasks satisfy its exit criteria.
 8. Start the next task only after the plan file reflects the current state.
 
-If validation was intentionally deferred earlier in execution, reconcile the plan text after the deferred checks actually run. Do not leave stale phrases like "validation pending" or self-check statements that describe an earlier plan state once the plan has moved forward.
+If validation was intentionally deferred earlier, reconcile the plan text once the deferred checks
+actually run. Leave no stale "validation pending" phrasing describing a state the plan has moved past.
 
-The plan file is the execution ledger. Keep it accurate before moving forward.
+**Discovered issues.** If a bug or unplanned problem is identified while working on a task, choose
+one path immediately — do not defer via a mental note:
 
-**Discovered issues during implementation:** If a bug or unplanned problem is identified while working on a task, choose one path immediately — do not defer via a mental note:
-- Fix it in the current task if it is small and in-scope.
+- Fix it in the current task if it is small and in scope.
 - Create a new task in the plan with status `BLOCKED` if it is out of scope for the current task.
 
 A bug that is noticed but neither fixed nor recorded will be forgotten. There is no third option.
 
-**Decision logs:** If the user requested a decision log file alongside the plan, update it at the point of each deviation — not retrospectively at the end. A decision log entry must be written before moving to the next task whenever the implementation diverges from what the plan specified (different file location, different function signature, different approach). Log entries written after the fact are unreliable.
+## Decision Log
+
+`## Decision Log` is always present, in simple and milestoned plans alike. Deviations, discovered
+issues and deferred validations are the same shape of event and all land in this one append-only
+section.
+
+Write an entry **before moving to the next task**, never retrospectively. Entries written after the
+fact are unreliable.
+
+An entry is required when implementation diverges from what the plan specifies (different path,
+signature, or approach), when a validation failure forces the plan to adapt, when an unplanned
+problem is found, or when a validation is deliberately deferred. No entry is needed when execution
+matches the plan, or for wording differences that change no outcome.
+
+```markdown
+### DEC-001 — <short title>
+
+- Date: YYYY-MM-DD
+- Task: <task number>
+- Decision: <what was chosen>
+- Rationale: <why>
+```
+
+Read `references/decision-log.md` when the inline log passes ~10 entries (`check-plan.py` warns with
+`W005`), when the user asks for a companion decisions file, or when you are unsure whether something
+qualifies as an entry.
 
 ## Cleanup Phase
 
-Every plan must include a cleanup task near the end. It must remove intermediate artifacts that should not ship, including temporary documentation, one-off test cases, scratch scripts, temporary fixtures, generated data, debug logs, local-only outputs, and obsolete plan fragments.
+Every plan must include a cleanup task near the end, removing intermediate artifacts that should not
+ship: temporary documentation, one-off test cases, scratch scripts, temporary fixtures, generated
+data, debug logs, local-only outputs, and obsolete plan fragments.
 
-Do not remove artifacts that the user asked to keep, artifacts required for future maintainability, or generated files that are part of the repository contract.
+Do not remove artifacts the user asked to keep, artifacts required for future maintainability, or
+generated files that are part of the repository contract.
 
-If the plan originated from a TODO item in `docs/todo/TODO.md`, the cleanup phase must check off that TODO (mark the checkbox as `[x]`).
+**Changelog steps are conditional.** Add one only when the project actually has a changelog file.
+`check-plan.py` `E010` looks for `CHANGELOG*` at the repository root and requires a task step
+mentioning it only when one exists — a project without a changelog needs no changelog step.
 
-If the plan delivers a user-facing feature, bug fix, or behavior change, the cleanup phase must create or update a changelog entry (e.g. append to `CHANGELOG.md` or the project's latest-changelog file) summarizing what changed.
+## Plan Retirement
 
-## Decision Log Section Rules
+Untracked plans need no retirement step; deleting the file is enough.
 
-Decision logs apply to **milestoned plans only**. Simple plans (10 or fewer tasks) are by definition small enough that deviations can be noted inline in task notes; a companion file adds overhead without benefit.
-
-Include `## Decision Log` in a milestoned plan only when the user also requests a decision log companion file. When included, the section must contain all four of the following — a bare link to the companion file is not enough:
-
-1. **Link** to the companion file by name.
-2. **Timing rule**: entries must be written **before moving to the next task**, not retrospectively at the end of the plan.
-3. **What qualifies**: a different file path, CSS rule, function signature, or approach than what the plan specified; a validation failure that forces a plan adaptation; a step skipped for a reason not already covered by the task's BLOCKED handling.
-4. **What does not qualify**: execution that matches the plan exactly; trivial wording differences that don't change meaning or outcome.
-
-A Decision Log section that only links to the companion file without this protocol gives an executing agent no guidance on when to write entries, so deviations go unrecorded.
-
-Also add a one-line reminder to the plan's `## Execution Notes` that cross-references the Decision Log section, so the protocol is visible at the point of execution:
-
-> If implementation diverges from the plan, write a new entry in the decision log file **before starting the next task** (see Decision Log section for what qualifies).
+Where plans are committed, the project owns the retirement convention, and `check-plan.py` must pass
+before a plan is retired: in a tracked repo a misleading final state is permanent.
 
 ## Self-Check Before Approval
 
-Before asking for final approval, verify:
+Run the checker and paste its output into `## Plan Self-Check` with the date:
 
-- The plan location follows the default location rule.
-- The plan status is `READY FOR APPROVAL`.
-- Scope, non-goals, and assumptions are explicit.
-- All open questions have been asked via the native question-asking tool (or chat fallback if no tool exists), answered by the user, and recorded in the plan
-- Zero unanswered questions remain
-- If the plan describes a dialog or multi-step user interaction: the plan is tagged `UX-GATE: REQUIRED`, and each interaction scenario is listed with expected user feedback confirmed against actual behavior (mockup, prototype walkthrough, or explicit per-scenario sign-off from the user — not just a description of behavior).
-- If the plan includes a Tauri WebView interaction (link clicks, navigation, new-window): an explicit `PLATFORM-VERIFY` manual-verification step is listed in the exit criteria for each such interaction.
-- Every task has concrete steps and validation.
-- More than 10 tasks are grouped into milestones.
-- Every milestone has exit criteria when milestones exist.
-- Cleanup and final verification are included.
-- The plan avoids vague actions like "improve", "handle errors", or "write tests" without concrete targets.
-- The plan can be executed by a coding agent without reading the original conversation.
-- If this is a milestoned plan and a decision log was requested: the `## Decision Log` section exists, links to the companion file, states entries must be written before the next task (not retrospectively), and lists qualifying deviations and non-qualifying cases. The `## Execution Notes` section contains a cross-reference bullet pointing back to it. (Simple plans never include a Decision Log section.)
+```bash
+python3 scripts/check-plan.py docs/plans/<plan>.md
+```
 
-Record the self-check result inside the plan before asking for approval. If any item fails, keep the plan out of `READY FOR APPROVAL`.
+Fix every error before requesting approval. Judge each warning on its merits and say in the plan why
+any surviving warning is acceptable.
+
+Do not replace this with a hand-ticked list. The v1 hand-ticked self-check passed in 32 of 32
+surveyed plans and failed in none — including on a plan with no `Open Questions` section that still
+claimed its open questions were explicit. It was a signature, not a gate.
+
+## Gotchas
+
+- **A deployed skill copy can be older than its repository.** Editing a repo changes nothing about
+  what runs if the deployed path is a copy rather than a symlink into it. Check what the path
+  actually resolves to (`readlink`, then read the file that comes back) before assuming an edit took
+  effect.
+- **Task numbering is not an execution order.** That is what `Depends On` is for. Reading the
+  numbers as a sequence serialises work that was designed to run in any dependency-respecting order.
+- **`.gitignore` versus `.git/info/exclude`.** `.gitignore` is tracked, so excluding an untracked
+  plan there produces the very commit the untracked default avoids. Use `.git/info/exclude`.
+- **A plan that reaches `COMPLETED` with tasks still `TO BE DONE` is the single most common way a
+  plan ends up lying.** Three surveyed plans were closed with every one of their 18–26 tasks still
+  `TO BE DONE`. `E005` catches it; `plan-status.py` warns as soon as a write creates it.
+- **Statuses are scattered.** A 26-task plan has 27+ status lines. Use `plan-status.py set`, which
+  rewrites exactly one line, rather than editing by hand and missing some.
+- **A validation that passes by producing no output exits non-zero.** Read what the validation
+  asserts rather than branching on `$?`.
+- **Greenfield plans cannot cite line numbers in files that do not exist yet.** That is why the
+  evidence check only hardens (`E011`) when the plan names files that already exist, and otherwise
+  only warns (`W003`).
+
+## References
+
+- `references/context-and-evidence.md` — read before writing `## Context For A Clean Session`, or
+  when a plan is being written for a session that will not have the originating conversation.
+- `references/decision-log.md` — read when the inline decision log passes ~10 entries, when a
+  companion decisions file is requested, or when deciding whether an event qualifies as an entry.
 
 ## Resources
 
-Copy and adapt one template into the target repository plan file:
+`new-plan.py` copies the right one; copy by hand only if the script cannot run.
 
-- `assets/simple-plan-template.md` for plans with 10 or fewer tasks.
-- `assets/milestoned-plan-template.md` for plans with more than 10 tasks.
-
-## Known Platform Traps (Tauri + TipTap)
-
-Before writing or approving a plan step that involves TipTap extensions or Tauri WebView behavior, check these known traps:
-
-| Trap | Risk | Rule |
-|------|------|------|
-| `target="_blank"` in TipTap Link extension | Triggers WebView new-window handoff, bypasses `openOnClick: false` | Override in `addAttributes()`, not `configure()` |
-| `configure({ HTMLAttributes: {...} })` | Deep merge — does not replace defaults | Read `addOptions()` in installed source first (see `FRONTEND_BEST_PRACTICES.md`) |
-| `openOnClick: false` vs WebView navigation | Stops JS click handler, not WebView platform routing | Requires `addAttributes()` default override |
-| Dialog + `autofocus` input | TipTap collapses selection on focus loss | Use snapshot pattern (see Gotcha #8 in `src/CLAUDE.md`) |
-
-For TipTap extension tasks, include this pre-implementation step in the plan: "Read installed extension source at `node_modules/@tiptap/<extension>/dist/index.js`. Confirm `addOptions()` defaults and `configure()` merge behavior before writing configuration code."
+- `assets/simple-plan-template.md` — 10 or fewer tasks.
+- `assets/milestoned-plan-template.md` — more than 10 tasks.
