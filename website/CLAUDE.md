@@ -321,28 +321,32 @@ See `website/docs-src/_template.md` for the starter template.
 
 ### Agent-Friendly Mirrors (Copy Page, `llms-full.txt`)
 
-Each docs **section** page (not the hub) ships a Mintlify-style "Copy page" dropdown next to
-its title (Copy page, View as Markdown, Open in ChatGPT/Claude/Perplexity), a per-page Markdown
-mirror at `docs/<slug>.md`, and a `<link rel="alternate" type="text/markdown">` discovery tag in
-its `<head>`. All three are generated — never hand-edit `docs/*.md`. `website/llms-full.txt` is
-the full-text sibling of the curated `llms.txt`: every section's Markdown, concatenated, for
-single-file ingestion by AI assistants. Like `docs/*/index.html` and `llms.txt`, `docs/*.md` and
-`llms-full.txt` are generated **and committed** — `bun run website:build-static` regenerates
-them, and the diff goes into the same commit as the `docs-src/` change that produced it.
+Each docs **section** page (not the hub) ships a Mintlify-style "Copy page" split-button
+dropdown, a per-page Markdown mirror at `docs/<slug>.md`, and a
+`<link rel="alternate" type="text/markdown">` discovery tag in its `<head>`. The button sits
+beside the article's **first heading**, not the page `<h1>` in the hero — see
+`scripts/generate-website-docs.mjs` for the current rendering. `website/llms-full.txt` is the
+full-text sibling of the curated `llms.txt` (every section's Markdown, concatenated).
 
 - **Canonicalization, not `noindex`:** each `.md` mirror is near-duplicate content of its HTML
   page, so `nginx.conf` sends an HTTP `Link: <...>; rel="canonical"` header pointing at the HTML
-  page (Google's documented method for canonicalizing a non-HTML resource) instead of blocking
-  it with `X-Robots-Tag: noindex`. This follows the `seo-audit` skill's duplicate-content
-  guidance — consolidate ranking signal onto one page rather than just hiding the duplicate.
-  Keep the header's target in exact sync with that section's `<link rel="canonical">`.
-- **The three AI deep-links are unofficial.** `chatgpt.com/?q=`, `claude.ai/new?q=`, and
-  `perplexity.ai/search?q=` are reverse-engineered query params, not a stable contract. If a
-  provider changes its chat UI and a link stops prefilling, drop that one entry from
-  `buildAiLinks()` in `scripts/generate-website-docs.mjs` rather than leaving a dead button.
-- This is a user-initiated referral affordance (a reader sends a page to their own chat
-  assistant) — distinct from the GEO-citation measurement in `docs/seo/STRATEGY.md` §5
-  (AI-Overview citation rate via GSC/Bing exports).
+  page instead of blocking it with `X-Robots-Tag: noindex` — consolidates ranking signal per the
+  `seo-audit` skill's duplicate-content guidance. Keep the header's target in sync with that
+  section's `<link rel="canonical">`.
+- **The three AI deep-links are unofficial** (`chatgpt.com/?q=`, `claude.ai/new?q=`,
+  `perplexity.ai/search?q=`) — reverse-engineered query params, not a stable contract. If one
+  stops prefilling, drop that entry from `buildAiLinks()` rather than leaving a dead button. A
+  Cloudflare-style bot-check can block a headless verification browser on one provider (seen on
+  claude.ai) while the others pass — that's the check failing, not the link.
+- **Testing "Copy page" locally:** the mirror URL is always the absolute
+  `https://mini-diarium.com/...` production URL, so a fetch from the local Docker preview is
+  cross-origin and fails — that is expected, not a bug. Verify the fetch/guard/clipboard-write
+  mechanism with a same-origin URL instead of chasing the cross-origin failure.
+
+When implementing a UI pattern the user names by reference ("like the dropdown on X"), screenshot
+that reference before writing CSS, and verify placement in the local Docker preview rather than
+from container-width arithmetic on paper — a shared class (e.g. `.hero-sub`) can carry a rule
+from an unrelated page context that only looks inert until something restructures its parent.
 
 ---
 
@@ -399,6 +403,31 @@ The nginx config uses `server_name mini-diarium.com`. Browsers and curl reject r
   Invoke-WebRequest -Uri "http://localhost:80/" -Headers @{"Host"="mini-diarium.com"} -UseBasicParsing
   ```
 - Or add `127.0.0.1 mini-diarium.com` to your hosts file (`C:\Windows\System32\drivers\etc\hosts` on Windows, `/etc/hosts` on Linux/macOS) for full browser testing.
+
+For a browser-based screenshot check, neither trick is needed: the nginx config's second
+`server` block matches literal `server_name ... localhost;` too, so an automated browser
+(`agent-browser`, `claude-in-chrome`) can open `http://localhost/docs/getting-started/` etc.
+directly. Reach for the `Host` header / hosts-file route only when a check specifically needs
+`mini-diarium.com` in the request (e.g. confirming the `www.` → apex redirect, or a header like
+the docs `.md` mirror's `Link: rel="canonical"` whose value is the literal production domain).
+
+### Screenshot-Verifying a Visual Change
+
+Any task that changes rendered output (`css/style.css`, `website/js/*.js`, a generator's inline
+`<style>` or markup, a static page's HTML) must be checked with a real screenshot before it is
+reported done — see [`POST_TASK_BEST_PRACTICES.md`](../docs/best-practices/POST_TASK_BEST_PRACTICES.md)
+for the gate. Mechanics:
+
+1. `bun run website:build-static`, then `docker compose up --build -d` from `website/`.
+2. Open every affected page with `agent-browser` (or `claude-in-chrome`) at `http://localhost/...`
+   and screenshot it — at desktop width and at the relevant mobile breakpoint (899px for docs
+   pages; check `website/css/style.css` media queries for other sections).
+3. Screenshot any interactive state the change touches (a dropdown open, a hover, a toggled
+   modal), not just the page at rest.
+4. Look at the screenshot with the `Read` tool before deciding the change matches the request —
+   reasoning from CSS values on paper is not a substitute; it produced three rounds of placement
+   mistakes on the docs "Copy page" dropdown that a screenshot caught immediately once taken.
+5. `docker compose down` when done, and don't leave screenshot files committed in the repo.
 
 ### Troubleshooting
 

@@ -21,8 +21,11 @@ Identify what kind of change this task made. The scope decides which checks belo
 | **CI/build config** (`.github/`, `vite.config.ts`, `tauri.conf.json`) | Run the affected pipeline once (CI workflow or `bun run build`) |
 | **Docs-only** (`*.md`, `docs/`, `CLAUDE.md`) | Proofread; verify any new links resolve |
 | **Refactor** (no behavior change) | All tests still pass |
+| **Website — visible change** (`website/css/`, `website/js/`, `website/*.html`, a generator's inline styles/markup in `scripts/generate-website-*.mjs`) | Screenshot verification — see the callout below |
 
 Anything not listed as Mandatory for your scope can be skipped. If the task crossed scopes (e.g. backend Rust change plus a CI workflow tweak), take the union of mandatory checks from each row.
+
+**Website visual rule**: a task touching website scope above is not complete until a real screenshot from the local Docker preview has been taken *and reviewed* — automated tests do not cover visual regressions or layout placement, and reasoning from CSS values on paper is not a substitute (a naive guess at where an element lands has repeatedly been wrong). See [`website/CLAUDE.md`](../../website/CLAUDE.md) → "Screenshot-Verifying a Visual Change" for the mechanics (build, `docker compose up`, `agent-browser`/`claude-in-chrome`, breakpoints, teardown).
 
 **E2E rule**: `cmd.exe /c bun run test:e2e:local` is slow (builds binary + runs full WebdriverIO suite). Run it locally when ANY of these apply:
 - Scope is full-stack or dependency update
@@ -118,6 +121,7 @@ Copy this block verbatim and fill the placeholders. Omit no field; if a check do
 - **Changelog**: <`Section` entry added under `[X.Y.Z] - Unreleased`, or `n/a — <reason>`>
 - **Tests**: <for each suite identified as mandatory in step 1: `cmd` ✓ (N passed); for skipped suites: `n/a — <reason>`>
 - **Format**: <`pre-commit hook ran on staged files` | `format + cargo fmt clean (full sweep)` | `n/a — docs-only`>
+- **Visual check**: <screenshot taken + reviewed, listing pages/breakpoints/states covered, or `n/a — no rendered-output change`>
 - **Files**: <comma-separated list of files touched>
 ---
 ````
