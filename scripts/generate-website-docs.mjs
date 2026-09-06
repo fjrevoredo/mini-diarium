@@ -246,8 +246,24 @@ renderer.link = function link(token) {
   const targetAttributes = isExternal ? ' target="_blank" rel="noopener noreferrer"' : '';
   return `<a href="${escapeHtml(href)}"${titleAttribute}${targetAttributes}>${text}</a>`;
 };
+renderer.image = function image(token) {
+  const src = escapeHtml(token.href ?? '');
+  const alt = escapeHtml(token.text ?? '');
+  const figcaption = token.title ? `<figcaption>${escapeHtml(token.title)}</figcaption>` : '';
+  return `<figure class="prose-figure"><img src="${src}" alt="${alt}" loading="lazy" />${figcaption}</figure>`;
+};
 
 marked.use({ renderer });
+
+// A standalone image (its own markdown paragraph) is parsed by marked as
+// `<p><img></p>`, so the renderer.image override above produces invalid
+// `<p><figure>...</figure></p>` nesting. Unwrap it back out to a bare figure.
+function unwrapFigureParagraphs(html) {
+  return html.replace(
+    /<p>\s*(<figure class="prose-figure">[\s\S]*?<\/figure>)\s*<\/p>/g,
+    '$1',
+  );
+}
 
 function isoDate(value) {
   return `${value}T00:00:00Z`;
@@ -769,7 +785,7 @@ function renderSectionPage(section, sections) {
   const prevSection = sectionIndex > 0 ? sections[sectionIndex - 1] : null;
   const nextSection = sectionIndex < sections.length - 1 ? sections[sectionIndex + 1] : null;
 
-  const htmlBody = marked.parse(section.body);
+  const htmlBody = unwrapFigureParagraphs(marked.parse(section.body));
   const tocHtml = buildToc(htmlBody);
   const hasToc = tocHtml !== '';
 

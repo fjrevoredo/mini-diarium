@@ -3,7 +3,7 @@ title: Preferences
 slug: preferences
 description: Configure Mini Diarium from the Preferences panel: choose a theme, set auto-lock timeout, adjust editor font and size, manage authentication methods, and more.
 order: 8
-updated: 2026-09-04
+updated: 2026-09-06
 tags: preferences, settings, theme, auto-lock, configuration
 ---
 
@@ -37,6 +37,8 @@ Preferences are now **close-only**: there is no Save/Cancel footer. Reversible s
 | Timeline → Show entry preview | Show or hide the first line of each entry underneath its title in the Timeline view. When turned off, each row collapses to just the date and the title, which fits more entries on screen. On by default. |
 
 Timestamp format and precision are configured from the editor timestamp popup (clock button), not from Preferences.
+
+![Writing preferences tab with First Day of Week, spellcheck, and the toolbar item customization list](/assets/docs/preferences-03-writing.webp "The Writing preferences tab")
 
 ### Spell check on Linux
 
@@ -80,6 +82,8 @@ Name them after the locale you want checked, for example `nl_NL.aff` and `nl_NL.
 | Lock when the window loses focus | Lock the journal a few seconds after the window loses focus — minimizing, switching to another app, or clicking another window — independent of the idle timeout. Off by default. A brief misclick outside the window doesn't trigger it if focus returns quickly, and opening a native file dialog from within Mini Diarium (export/import/key file) does not trigger this. |
 | Change password | Re-encrypt your journal with a new password |
 | Authentication Methods | View registered unlock methods; add a new key file or remove existing ones |
+
+![Security preferences tab showing registered authentication methods and the key file registration form](/assets/docs/preferences-01-security.webp "The Security preferences tab")
 
 At least one authentication method must remain registered. Removing the last one is blocked.
 

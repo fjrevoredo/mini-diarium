@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" width="800" height="450" role="img" aria-labelledby="sbTitle sbDesc">
+  <title id="sbTitle">Plugin sandbox boundary</title>
+  <desc id="sbDesc">A Rhai plugin script runs inside a sandbox with no file system or network access. It can only exchange plain text with the Import and Export dialogs.</desc>
+  <defs>
+    <marker id="arrowGold" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#F5C94D"/>
+    </marker>
+  </defs>
+
+  <style>
+    .sb-font { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; }
+    .sb-label { fill: #f0ede6; font-size: 15px; font-weight: 600; }
+    .sb-sub { fill: #888; font-size: 12px; }
+    .sb-flow { fill: #F5C94D; font-size: 11px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
+    .sb-deny { fill: #b3564f; font-size: 11px; font-weight: 600; }
+  </style>
+
+  <rect x="0" y="0" width="800" height="450" fill="#0e0e0e"/>
+
+  <!-- Sandbox boundary -->
+  <rect x="255" y="150" width="290" height="150" rx="16" fill="#161616" stroke="#F5C94D" stroke-width="2" stroke-dasharray="6 5"/>
+  <text x="400" y="140" text-anchor="middle" class="sb-font sb-sub">SANDBOX BOUNDARY</text>
+  <text x="400" y="210" text-anchor="middle" class="sb-font sb-label">Rhai Plugin Script</text>
+  <text x="400" y="232" text-anchor="middle" class="sb-font sb-sub">your .rhai file</text>
+  <text x="400" y="262" text-anchor="middle" class="sb-font sb-sub">no file system access</text>
+  <text x="400" y="280" text-anchor="middle" class="sb-font sb-sub">no network access</text>
+
+  <!-- File System (denied) -->
+  <rect x="40" y="185" width="150" height="60" rx="10" fill="#161616" stroke="#2a2a2a" stroke-width="1.5"/>
+  <text x="115" y="220" text-anchor="middle" class="sb-font sb-label" font-size="14">File System</text>
+
+  <line x1="255" y1="215" x2="196" y2="215" stroke="#555" stroke-width="1.5" stroke-dasharray="4 4"/>
+  <circle cx="225" cy="215" r="11" fill="#161616" stroke="#b3564f" stroke-width="2"/>
+  <line x1="217" y1="207" x2="233" y2="223" stroke="#b3564f" stroke-width="2"/>
+  <text x="225" y="248" text-anchor="middle" class="sb-font sb-deny">blocked</text>
+
+  <!-- Network (denied) -->
+  <rect x="610" y="185" width="150" height="60" rx="10" fill="#161616" stroke="#2a2a2a" stroke-width="1.5"/>
+  <text x="685" y="220" text-anchor="middle" class="sb-font sb-label" font-size="14">Network</text>
+
+  <line x1="545" y1="215" x2="604" y2="215" stroke="#555" stroke-width="1.5" stroke-dasharray="4 4"/>
+  <circle cx="575" cy="215" r="11" fill="#161616" stroke="#b3564f" stroke-width="2"/>
+  <line x1="567" y1="207" x2="583" y2="223" stroke="#b3564f" stroke-width="2"/>
+  <text x="575" y="248" text-anchor="middle" class="sb-font sb-deny">blocked</text>
+
+  <!-- Import (allowed, plain text in) -->
+  <rect x="70" y="345" width="170" height="62" rx="10" fill="#161616" stroke="#F5C94D" stroke-width="1.5"/>
+  <text x="155" y="382" text-anchor="middle" class="sb-font sb-label" font-size="14">Import dialog</text>
+
+  <path d="M190,343 C230,325 300,325 300,300" fill="none" stroke="#F5C94D" stroke-width="2" marker-end="url(#arrowGold)"/>
+  <text x="205" y="318" text-anchor="middle" class="sb-font sb-flow">file text in</text>
+
+  <!-- Export (allowed, plain text out) -->
+  <rect x="560" y="345" width="170" height="62" rx="10" fill="#161616" stroke="#F5C94D" stroke-width="1.5"/>
+  <text x="645" y="382" text-anchor="middle" class="sb-font sb-label" font-size="14">Export dialog</text>
+
+  <path d="M500,300 C500,325 570,325 610,343" fill="none" stroke="#F5C94D" stroke-width="2" marker-end="url(#arrowGold)"/>
+  <text x="595" y="318" text-anchor="middle" class="sb-font sb-flow">formatted text out</text>
+</svg>

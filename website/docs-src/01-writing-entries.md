@@ -3,7 +3,7 @@ title: Writing Entries
 slug: writing-entries
 description: Mini Diarium's rich text editor supports formatting, images, named links, tags, and multiple entries per day. Auto-save and RTL language support are built in.
 order: 2
-updated: 2026-07-10
+updated: 2026-09-06
 tags: editor, formatting, entries, writing
 ---
 
@@ -23,6 +23,8 @@ Mini Diarium uses a rich text editor with support for a full set of formatting o
 
 The toolbar above the editor provides buttons for each formatting option. Standard keyboard shortcuts also work: `Ctrl+B` for bold, `Ctrl+I` for italic, and so on. On macOS, use `Cmd` instead of `Ctrl`.
 
+![Editor toolbar above a formatted entry with a heading, bold text, and a bullet list](/assets/docs/writing-entries-01-toolbar-formatted.webp "Heading, bold, and bullet list applied with the toolbar")
+
 ## Titles
 
 Each entry can have an optional title. If you prefer a cleaner look without titles, hide them in **Preferences → Writing → Hide Titles**.
@@ -36,6 +38,8 @@ Each date can contain multiple separate entries. This is useful for writing at d
 - Use `+` to create a new blank entry on the same date.
 - Use `−` to delete the current entry.
 - If a day has only one entry, the navigation bar stays hidden.
+
+![Timeline view showing three separate entries stacked under the same date](/assets/docs/writing-entries-02-timeline-multientry.webp "Multiple entries on the same date, grouped together in the Timeline")
 
 ## Locking an Entry Against Accidental Edits
 

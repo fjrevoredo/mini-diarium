@@ -35,7 +35,7 @@
   <link rel="icon" href="/favicon-32x32.png" type="image/png" sizes="32x32" />
   <link rel="icon" href="/favicon-128x128.png" type="image/png" sizes="128x128" />
   <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
-  <link rel="stylesheet" href="/css/style.82ae551a.css" />
+  <link rel="stylesheet" href="/css/style.93884b86.css" />
   <style>
     .container { max-width: 1400px; }
     .docs-layout {
@@ -429,6 +429,7 @@
         <p>The default location is a <code>Mini Diarium</code> folder inside your Documents folder, or a folder inside the app&#39;s own data directory where Documents is not writable. On the Flathub build, where the app is sandboxed, a save dialog cannot reliably remember a folder outside the sandbox, so <strong>+ Create New Journal</strong> shows a form directly instead — with an editable Filename field plus <strong>Browse…</strong> and <strong>Use default location</strong> to choose where the file goes.</p>
         <p>If you create a new journal, you will be asked to create a password. This password encrypts your entire journal using AES-256-GCM encryption.</p>
         <p><strong>There is no password recovery.</strong> If you forget your password, your entries cannot be recovered. Choose something memorable and keep it safe.</p>
+        <figure class="prose-figure"><img src="/assets/docs/getting-started-01-journal-creation.webp" alt="Journal creation screen with password and confirm password fields" loading="lazy" /><figcaption>Setting a password for a new journal</figcaption></figure>
         <h2 id="welcome-tour">Welcome Tour</h2><p>The first time you create a journal, a <strong>three-step overlay tour</strong> appears to highlight key features:</p>
         <ol>
         <li><strong>Enable the advanced toolbar</strong>: turn on extra formatting controls in <strong>Preferences → Writing</strong>.</li>
@@ -438,6 +439,7 @@
         <p>Each step shows a callout card with a direct action link. You can navigate with <strong>Back</strong> and <strong>Next</strong>, or click the <strong>Minimize</strong> (<code>⊟</code>) button in the card header to collapse the tour into a floating help icon (<code>?</code>) at the bottom-right of the window. Pressing <strong>Escape</strong> while the tour is open minimizes it rather than closing the app.</p>
         <p>To resume or permanently dismiss the tour, click the <code>?</code> icon and choose <strong>Resume Tour</strong> or <strong>Dismiss</strong>. Completing all three steps also dismisses it automatically. The tour only ever appears once per app profile. It does not repeat on subsequent launches or when adding new journals.</p>
         <h2 id="locking-and-unlocking">Locking and Unlocking</h2><p>Your journal is encrypted whenever it is locked. After selecting a journal, enter your password to unlock it. The journal locks automatically when you close the app, and you can also lock it manually using the lock icon in the header at any time.</p>
+        <figure class="prose-figure"><img src="/assets/docs/getting-started-02-main-app.webp" alt="Mini Diarium main window with the calendar sidebar and an unlocked journal entry open in the editor" loading="lazy" /><figcaption>The main window after writing your first entry</figcaption></figure>
         <p>The header also shows an <strong>About</strong> button (ⓘ) and a <strong>bell icon</strong> for the notification center. The bell displays an unread badge when a new release ships; click it to read what changed and mark notifications as read. Entries with more to say show a <strong>Read more</strong> button that opens the full write-up, with headings and lists, without leaving the app.</p>
         <p>As an alternative to your password, you can register a key file in <strong>Preferences → Authentication Methods</strong>. Once registered, use the &quot;Key File&quot; tab on the unlock screen and select your <code>.key</code> file to unlock without typing your password.</p>
         <p>You can also enable <strong>idle auto-lock</strong> in <strong>Preferences → Security → Auto-Lock</strong>. When enabled, Mini Diarium locks automatically after the configured period of inactivity.</p>

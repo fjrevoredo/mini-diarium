@@ -3,7 +3,7 @@ title: Plugins
 slug: plugins
 description: Extend Mini Diarium with Rhai script plugins for custom import and export formats. Covers the plugins folder, writing your first plugin, and API helpers.
 order: 7
-updated: 2026-06-27
+updated: 2026-09-06
 tags: plugins, Rhai, import, export, customization
 ---
 
@@ -12,6 +12,8 @@ tags: plugins, Rhai, import, export, customization
 Mini Diarium supports custom import and export formats through Rhai script plugins. Rhai is a simple, sandboxed scripting language that runs inside the app. You can write a plugin to handle any file format that the built-in options do not cover.
 
 Plugins appear in the Import and Export overlay dropdowns alongside the built-in formats.
+
+![Export Entries dialog with a custom plugin format, "Plain Text Timeline", selected in the Format dropdown](/assets/docs/plugins-01-export-dropdown.webp "A Rhai plugin listed alongside the built-in export formats")
 
 ## Where Is the Plugins Folder?
 
@@ -75,6 +77,8 @@ fn format_entries(entries) {
 | `html_to_markdown(string)` | Convert HTML to Markdown |
 
 ## Rules and Limitations
+
+![Diagram of the plugin sandbox boundary: a Rhai script has no file system or network access, and can only exchange plain text with the Import and Export dialogs](/assets/docs/diagrams/plugins-sandbox-boundary.svg "The plugin sandbox boundary")
 
 - Import scripts must define `fn parse(content)` returning an array of entry maps.
 - Export scripts must define `fn format_entries(entries)` returning a string. (`export` is a reserved word in Rhai, so the function is named `format_entries`.)

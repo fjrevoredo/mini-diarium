@@ -300,6 +300,16 @@ Required front matter: `title`, `slug`, `description`, `order` (integer), `updat
 - Dev iteration: `bun run website:docs` (docs only)
 - Full deploy build: `bun run website:build-static` (blog → docs → fingerprinter, in that order)
 
+### Adding Images to a Docs Page
+
+Standard Markdown syntax works: `![alt text](src "optional caption")`. The generator's `image` renderer (`scripts/generate-website-docs.mjs`, next to the `heading`/`link` overrides) wraps the output in `<figure class="prose-figure"><img loading="lazy" ...></figure>`, adding a `<figcaption>` only when the optional title (the `"..."` part) is present — the `alt` text is never duplicated into a caption. Styling lives in `website/css/style.css` next to the other `.prose` rules.
+
+- **Screenshots**: `website/assets/docs/<page-slug>-<NN>-<short-description>.webp`. Live-capture from the real dev app via the `tauri-agent-dev` skill — never reuse old promotional PNGs, they drift from the current UI. Target WebP quality 78-82. PNG is acceptable if a screenshot needs pixel-exact detail (e.g. thin text on a dense table), but WebP is the default.
+- **Diagrams**: `website/assets/docs/diagrams/<page-slug>-<short-description>.svg`. Hand-build these (not Mermaid's default theme) using the site's own dark/gold palette (`--bg:#0e0e0e`, `--bg-card:#161616`, `--accent:#F5C94D`, `--text:#f0ede6`, `--text-muted:#888`, `--border:#2a2a2a`) so they read as part of the site, not a pasted-in export. Give every SVG an explicit `viewBox` plus matching `width`/`height` and a system font stack — treat the first draft as a draft, not a shipped asset, and re-render it (e.g. open the raw `file://` path in a browser and screenshot it) to check for label/arrow overlap before committing.
+- **No fingerprinting**: `fingerprint-website-assets.mjs` only hashes `css/js`. Changing an image's content later needs a **new filename** — overwriting one in place will not bust any cache.
+- Insert each image immediately after the paragraph or step it illustrates, not bunched at the top or bottom of the page. Don't force one image per H2 — a thin page might only need one, a long tabbed page might need several.
+- After adding images, verify every `<img src="...">` and `<figure>`'s image path in the built `website/docs/*/index.html` resolves to a real file — the generator does not validate image paths, so a typo is a silently broken image on a green build.
+
 See `website/docs-src/_template.md` for the starter template.
 
 ---

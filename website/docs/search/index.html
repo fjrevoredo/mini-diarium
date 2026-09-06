@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="Mini Diarium has full-text search across all encrypted entries. Learn how to find past entries with the search overlay and keyboard shortcut, and how searching stays fully encrypted and offline." />
+  <meta name="description" content="Full-text search across every encrypted entry via the search overlay or Ctrl+F, with instant highlighted results, and how it stays fully encrypted and offline." />
   <meta name="robots" content="index,follow,max-snippet:-1,max-image-preview:large,max-video-preview:-1" />
   <meta name="theme-color" content="#0e0e0e" />
   <meta name="author" content="Francisco J. Revoredo" />
@@ -12,7 +12,7 @@
   <meta property="og:locale" content="en_US" />
   <meta property="og:url" content="https://mini-diarium.com/docs/search/" />
   <meta property="og:title" content="Search — Mini Diarium Documentation" />
-  <meta property="og:description" content="Mini Diarium has full-text search across all encrypted entries. Learn how to find past entries with the search overlay and keyboard shortcut, and how searching stays fully encrypted and offline." />
+  <meta property="og:description" content="Full-text search across every encrypted entry via the search overlay or Ctrl+F, with instant highlighted results, and how it stays fully encrypted and offline." />
   <meta property="og:image" content="https://mini-diarium.com/assets/og-cover.png" />
   <meta property="og:image:type" content="image/png" />
   <meta property="og:image:width" content="1200" />
@@ -22,7 +22,7 @@
   <meta name="twitter:site" content="@MiniDiarium" />
   <meta name="twitter:creator" content="@MiniDiarium" />
   <meta name="twitter:title" content="Search — Mini Diarium Documentation" />
-  <meta name="twitter:description" content="Mini Diarium has full-text search across all encrypted entries. Learn how to find past entries with the search overlay and keyboard shortcut, and how searching stays fully encrypted and offline." />
+  <meta name="twitter:description" content="Full-text search across every encrypted entry via the search overlay or Ctrl+F, with instant highlighted results, and how it stays fully encrypted and offline." />
   <meta name="twitter:image" content="https://mini-diarium.com/assets/og-cover.png" />
   
   <title>Search — Mini Diarium Documentation</title>
@@ -35,7 +35,7 @@
   <link rel="icon" href="/favicon-32x32.png" type="image/png" sizes="32x32" />
   <link rel="icon" href="/favicon-128x128.png" type="image/png" sizes="128x128" />
   <link rel="apple-touch-icon" href="/apple-touch-icon.png" sizes="180x180" />
-  <link rel="stylesheet" href="/css/style.82ae551a.css" />
+  <link rel="stylesheet" href="/css/style.93884b86.css" />
   <style>
     .container { max-width: 1400px; }
     .docs-layout {
@@ -235,8 +235,8 @@
       "@type": "TechArticle",
       "@id": "https://mini-diarium.com/docs/search/#article",
       "headline": "Search",
-      "description": "Mini Diarium has full-text search across all encrypted entries. Learn how to find past entries with the search overlay and keyboard shortcut, and how searching stays fully encrypted and offline.",
-      "dateModified": "2026-08-28T00:00:00Z",
+      "description": "Full-text search across every encrypted entry via the search overlay or Ctrl+F, with instant highlighted results, and how it stays fully encrypted and offline.",
+      "dateModified": "2026-09-06T00:00:00Z",
       "keywords": "search, find, full-text, encrypted",
       "publisher": {
         "@type": "Organization",
@@ -320,7 +320,7 @@
     <div class="post-header">
       <p class="hero-eyebrow">Mini Diarium documentation</p>
       <h1>Search</h1>
-      <p class="hero-sub">Mini Diarium has full-text search across all encrypted entries. Learn how to find past entries with the search overlay and keyboard shortcut, and how searching stays fully encrypted and offline.</p>
+      <p class="hero-sub">Full-text search across every encrypted entry via the search overlay or Ctrl+F, with instant highlighted results, and how it stays fully encrypted and offline.</p>
     </div>
   </div>
 </section>
@@ -380,6 +380,7 @@
         <p>Clicking a result jumps straight to that entry in the editor, even on a day that holds several entries.</p>
         <p>The overlay displays the total number of results found (&quot;12 results found&quot;). When results exceed 200, a truncation notice appears: &quot;Showing first 200 — refine your query to see more&quot;. This cap keeps search responsive on large journals; refining with additional keywords narrows results.</p>
         <p>Navigate results with your keyboard: <strong>ArrowDown</strong> and <strong>ArrowUp</strong> move between results, and pressing <strong>ArrowDown</strong> from the search input focuses the first result.</p>
+        <figure class="prose-figure"><img src="/assets/docs/search-01-overlay-results.webp" alt="Search overlay with a query and three matching results, each with the matched word highlighted" loading="lazy" /><figcaption>Searching for &#39;morning&#39; across the journal</figcaption></figure>
         <h2 id="how-search-works-without-compromising-encryption">How Search Works Without Compromising Encryption</h2><p>Mini Diarium stores every entry encrypted at rest with AES-256-GCM. Search does <strong>not</strong> keep a separate plaintext index on disk, because that would expose your writing to anyone with access to the file.</p>
         <p>Instead, when you run a search the app decrypts your entries in memory, scans them, and discards everything when it is done. Nothing searchable is ever written to disk, and the search never makes a network request. It is as private as reading the entries yourself.</p>
         <p>Search is case- and accent-insensitive: typing &quot;cafe&quot; will match &quot;Café&quot;, and &quot;RUST&quot; will match &quot;rust&quot;. Multiple words use AND semantics, so every word must appear in the title or body of an entry for it to match.</p>
