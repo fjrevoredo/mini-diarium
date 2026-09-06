@@ -2,7 +2,7 @@ import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { marked } from 'marked';
-import { escapeHtml, slugify } from './website-generator-utils.mjs';
+import { escapeHtml, readImageDimensions, slugify } from './website-generator-utils.mjs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -247,10 +247,15 @@ renderer.link = function link(token) {
   return `<a href="${escapeHtml(href)}"${titleAttribute}${targetAttributes}>${text}</a>`;
 };
 renderer.image = function image(token) {
-  const src = escapeHtml(token.href ?? '');
+  const href = token.href ?? '';
+  const src = escapeHtml(href);
   const alt = escapeHtml(token.text ?? '');
   const figcaption = token.title ? `<figcaption>${escapeHtml(token.title)}</figcaption>` : '';
-  return `<figure class="prose-figure"><img src="${src}" alt="${alt}" loading="lazy" />${figcaption}</figure>`;
+  const dimensions = readImageDimensions(path.join(WEBSITE_DIR, href));
+  const dimensionAttributes = dimensions
+    ? ` width="${dimensions.width}" height="${dimensions.height}"`
+    : '';
+  return `<figure class="prose-figure"><img src="${src}" alt="${alt}" loading="lazy"${dimensionAttributes} />${figcaption}</figure>`;
 };
 
 marked.use({ renderer });

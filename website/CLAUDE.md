@@ -24,6 +24,13 @@ The only files you should edit manually are:
 - `donate/index.html` — the donation page
 - `css/`, `js/` — styles and scripts
 
+Each static manual page has an `updated` date in its `STATIC_PAGES` entry in
+`scripts/generate-website-blog.mjs` (the homepage uses the separate `HOMEPAGE_UPDATED` constant
+near `INDEX_PATH`) — this drives its `sitemap.xml` `lastmod`, deliberately decoupled from file
+mtime so an unrelated CSS/JS rebuild doesn't bump it. **Whenever one of these pages' actual
+content changes, bump its `updated` constant (or `HOMEPAGE_UPDATED`) in the same change**, the
+same way `updated:` front matter is bumped for blog posts and docs pages.
+
 When editing any of the static manual pages above, ensure these elements stay consistent:
 - **Navigation** — every manual page shares the same nav structure. If you add or remove a nav item, update all of them plus the generator's `buildNav()` in `scripts/generate-website-blog.mjs`.
 - **Footer** — the footer is duplicated the same way the nav is: once per manual page, plus `buildFooter()` in **both** `scripts/generate-website-blog.mjs` and `scripts/generate-website-docs.mjs` (those two are byte-identical, so any footer edit goes into both). Changing a footer link means editing every manual page and both generators, then re-running `bun run website:build-static` so `blog/` and `docs/` pick it up.
@@ -206,7 +213,7 @@ When creating a new static HTML page (not generated from Markdown), ensure:
 5. OG and Twitter card meta tags (title, description, image)
 6. JSON-LD structured data (at minimum Organization + WebPage; add FAQPage or BreadcrumbList if the content supports it)
 7. Navigation matches the existing nav structure on all other pages
-8. Added to `STATIC_PAGES` array in `scripts/generate-website-blog.mjs` (ensures inclusion in `llms.txt` and sitemap)
+8. Added to `STATIC_PAGES` array in `scripts/generate-website-blog.mjs` (ensures inclusion in `llms.txt` and sitemap), including an `updated: 'YYYY-MM-DD'` field — required for `sitemap.xml` `lastmod`, validated by `ensureDate()`
 
 ### Navigation Consistency
 
@@ -302,7 +309,7 @@ Required front matter: `title`, `slug`, `description`, `order` (integer), `updat
 
 ### Adding Images to a Docs Page
 
-Standard Markdown syntax works: `![alt text](src "optional caption")`. The generator's `image` renderer (`scripts/generate-website-docs.mjs`, next to the `heading`/`link` overrides) wraps the output in `<figure class="prose-figure"><img loading="lazy" ...></figure>`, adding a `<figcaption>` only when the optional title (the `"..."` part) is present — the `alt` text is never duplicated into a caption. Styling lives in `website/css/style.css` next to the other `.prose` rules.
+Standard Markdown syntax works: `![alt text](src "optional caption")`. The generator's `image` renderer (`scripts/generate-website-docs.mjs`, next to the `heading`/`link` overrides) wraps the output in `<figure class="prose-figure"><img loading="lazy" ...></figure>`, adding a `<figcaption>` only when the optional title (the `"..."` part) is present — the `alt` text is never duplicated into a caption. The renderer also reads the image's real pixel dimensions at build time (`readImageDimensions()` in `scripts/website-generator-utils.mjs`, supports `.svg` and `.webp`) and emits matching `width`/`height` on the `<img>` tag to reserve layout space and avoid CLS; it degrades to no attributes (never fails the build) if the file is missing or unrecognized. Styling lives in `website/css/style.css` next to the other `.prose` rules.
 
 - **Screenshots**: `website/assets/docs/<page-slug>-<NN>-<short-description>.webp`. Live-capture from the real dev app via the `tauri-agent-dev` skill — never reuse old promotional PNGs, they drift from the current UI. Target WebP quality 78-82. PNG is acceptable if a screenshot needs pixel-exact detail (e.g. thin text on a dense table), but WebP is the default.
 - **Diagrams**: `website/assets/docs/diagrams/<page-slug>-<short-description>.svg`. Hand-build these (not Mermaid's default theme) using the site's own dark/gold palette (`--bg:#0e0e0e`, `--bg-card:#161616`, `--accent:#F5C94D`, `--text:#f0ede6`, `--text-muted:#888`, `--border:#2a2a2a`) so they read as part of the site, not a pasted-in export. Give every SVG an explicit `viewBox` plus matching `width`/`height` and a system font stack — treat the first draft as a draft, not a shipped asset, and re-render it (e.g. open the raw `file://` path in a browser and screenshot it) to check for label/arrow overlap before committing.

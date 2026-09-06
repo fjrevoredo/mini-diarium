@@ -38,6 +38,9 @@ Template:
 
 ### Added
 - **Manual word count recalculation (TODO-0111, #275)**: Settings → Advanced now has a "Recalculate Word Counts" button that rescans every entry in the journal and rewrites any stale `word_count`. Locked entries are skipped, and an entry's last-modified date is never touched by the recalculation. Manual/on-demand only — there is no automatic or background recalculation.
+
+### Fixed
+- **Docs screenshot layout shift + sitemap freshness drift (SEO audit)**: `generate-website-docs.mjs` now emits `width`/`height` on every docs `<img>` tag (read from the shipped SVG/WebP file at build time) to reserve layout space and prevent CLS. `generate-website-blog.mjs` now stamps the homepage and `STATIC_PAGES` `sitemap.xml` `lastmod` from a manually-maintained `updated` date instead of file mtime, so an unrelated CSS/JS rebuild no longer bumps those pages' freshness signal.
 - **Website docs**: Added screenshots and diagrams to 10 of the 11 user guide pages (FAQ excluded as reference-only). Screenshots are live-captured from the real dev app — journal creation, the editor toolbar and multi-entry Timeline, calendar/search/import/export, three Preferences tabs, Statistics, and two Backups panel states — plus two hand-built SVG diagrams (the plugin sandbox boundary and the backup retention/rotation lifecycle) in the site's own dark/gold palette. Images ship as WebP (q80) via a new `renderer.image` override in `generate-website-docs.mjs` that wraps each in a captioned `<figure class="prose-figure">`; convention documented in `website/CLAUDE.md`.
 
 ### Changed

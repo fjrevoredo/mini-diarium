@@ -1,4 +1,4 @@
-import { mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { marked } from 'marked';
@@ -15,6 +15,9 @@ const DEFAULT_AUTHOR = 'Francisco J. Revoredo';
 const DEFAULT_AUTHOR_URL = 'https://fjrevoredo.com';
 const DEFAULT_OG_IMAGE = `${SITE_URL}/assets/og-cover.png`;
 const INDEX_PATH = path.join(WEBSITE_DIR, 'index.html');
+// Manually bumped whenever the homepage's actual content changes — see
+// STATIC_PAGES for the same discipline on the other manual static pages.
+const HOMEPAGE_UPDATED = '2026-09-06';
 const SITEMAP_PATH = path.join(WEBSITE_DIR, 'sitemap.xml');
 const LLMS_PATH = path.join(WEBSITE_DIR, 'llms.txt');
 
@@ -108,36 +111,36 @@ const STATIC_PAGES = [
   {
     title: 'Compare',
     url: `${SITE_URL}/compare/`,
-    filePath: path.join(WEBSITE_DIR, 'compare', 'index.html'),
     summary:
       'Feature comparison of Mini Diarium vs. Day One, Notion, Obsidian, Standard Notes, and other journal apps.',
+    updated: '2026-09-06',
   },
   {
     title: 'Privacy Policy',
     url: `${SITE_URL}/privacy/`,
-    filePath: path.join(WEBSITE_DIR, 'privacy', 'index.html'),
     summary: "Mini Diarium's privacy policy: no telemetry, no cloud storage, no analytics.",
+    updated: '2026-09-06',
   },
   {
     title: 'Encrypted Journal App Guide',
     url: `${SITE_URL}/encrypted-journal/`,
-    filePath: path.join(WEBSITE_DIR, 'encrypted-journal', 'index.html'),
     summary:
       'A direct overview of what an encrypted journal app should do, how Mini Diarium handles offline storage, and why local-first ownership matters.',
+    updated: '2026-09-06',
   },
   {
     title: 'Newsletter',
     url: `${SITE_URL}/newsletter/`,
-    filePath: path.join(WEBSITE_DIR, 'newsletter', 'index.html'),
     summary:
       "Mini Diarium's email newsletter: occasional new releases, milestones, and launch news for the encrypted offline journal app. No spam, unsubscribe anytime.",
+    updated: '2026-09-06',
   },
   {
     title: 'Donate',
     url: `${SITE_URL}/donate/`,
-    filePath: path.join(WEBSITE_DIR, 'donate', 'index.html'),
     summary:
       'Ways to support Mini Diarium: Ko-fi, Monero, Bitcoin, and Bitcoin over Lightning.',
+    updated: '2026-09-06',
   },
 ];
 
@@ -239,10 +242,6 @@ function formatDate(value) {
 
 function isoDate(value) {
   return `${value}T00:00:00Z`;
-}
-
-function fileLastModified(filePath) {
-  return statSync(filePath).mtime.toISOString().slice(0, 10);
 }
 
 function readPosts() {
@@ -717,15 +716,19 @@ function updateHomePage(posts) {
 }
 
 function writeSitemap(posts) {
+  ensureDate(HOMEPAGE_UPDATED, 'HOMEPAGE_UPDATED', 'generate-website-blog.mjs');
+  for (const page of STATIC_PAGES) {
+    ensureDate(page.updated, `updated (${page.title})`, 'STATIC_PAGES');
+  }
+
   const latestHomeUpdate = posts[0]?.updated ?? '2026-03-06';
-  const indexLastModified = fileLastModified(INDEX_PATH);
   const homeLastmod =
-    indexLastModified.localeCompare(latestHomeUpdate) > 0 ? indexLastModified : latestHomeUpdate;
+    HOMEPAGE_UPDATED.localeCompare(latestHomeUpdate) > 0 ? HOMEPAGE_UPDATED : latestHomeUpdate;
   const urls = [
     { loc: `${SITE_URL}/`, lastmod: homeLastmod },
     ...STATIC_PAGES.map((page) => ({
       loc: page.url,
-      lastmod: fileLastModified(page.filePath),
+      lastmod: page.updated,
     })),
     { loc: `${SITE_URL}/blog/`, lastmod: latestHomeUpdate },
     ...posts.map((post) => ({

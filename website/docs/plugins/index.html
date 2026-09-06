@@ -378,7 +378,7 @@
       <article class="blog-post prose" aria-label="Plugins">
         <h2 id="what-are-plugins">What Are Plugins?</h2><p>Mini Diarium supports custom import and export formats through Rhai script plugins. Rhai is a simple, sandboxed scripting language that runs inside the app. You can write a plugin to handle any file format that the built-in options do not cover.</p>
         <p>Plugins appear in the Import and Export overlay dropdowns alongside the built-in formats.</p>
-        <figure class="prose-figure"><img src="/assets/docs/plugins-01-export-dropdown.webp" alt="Export Entries dialog with a custom plugin format, &quot;Plain Text Timeline&quot;, selected in the Format dropdown" loading="lazy" /><figcaption>A Rhai plugin listed alongside the built-in export formats</figcaption></figure>
+        <figure class="prose-figure"><img src="/assets/docs/plugins-01-export-dropdown.webp" alt="Export Entries dialog with a custom plugin format, &quot;Plain Text Timeline&quot;, selected in the Format dropdown" loading="lazy" width="560" height="480" /><figcaption>A Rhai plugin listed alongside the built-in export formats</figcaption></figure>
         <h2 id="where-is-the-plugins-folder">Where Is the Plugins Folder?</h2><p>The <code>plugins/</code> folder is shared across all journals and lives in the app data directory (this location is fixed and does not change when you configure a different journal path in Preferences):</p>
         <ul>
         <li><strong>Windows</strong>: <code>%APPDATA%\com.minidiarium\plugins\</code></li>
@@ -441,7 +441,7 @@
         <td>Convert HTML to Markdown</td>
         </tr>
         </tbody></table>
-        <h2 id="rules-and-limitations">Rules and Limitations</h2><figure class="prose-figure"><img src="/assets/docs/diagrams/plugins-sandbox-boundary.svg" alt="Diagram of the plugin sandbox boundary: a Rhai script has no file system or network access, and can only exchange plain text with the Import and Export dialogs" loading="lazy" /><figcaption>The plugin sandbox boundary</figcaption></figure>
+        <h2 id="rules-and-limitations">Rules and Limitations</h2><figure class="prose-figure"><img src="/assets/docs/diagrams/plugins-sandbox-boundary.svg" alt="Diagram of the plugin sandbox boundary: a Rhai script has no file system or network access, and can only exchange plain text with the Import and Export dialogs" loading="lazy" width="800" height="450" /><figcaption>The plugin sandbox boundary</figcaption></figure>
         <ul>
         <li>Import scripts must define <code>fn parse(content)</code> returning an array of entry maps.</li>
         <li>Export scripts must define <code>fn format_entries(entries)</code> returning a string. (<code>export</code> is a reserved word in Rhai, so the function is named <code>format_entries</code>.)</li>
