@@ -24,10 +24,11 @@ updates:
           - version-update:semver-major
 
   - package-ecosystem: cargo
-    # Repo-root virtual Cargo workspace: the Cargo.lock and both member
-    # manifests (src-tauri/Cargo.toml + crates/mini-diarium-core/Cargo.toml)
-    # live under /, so point Dependabot at the workspace root to cover both
-    # crates. Pointing at /src-tauri would miss the core crate's crypto/db deps.
+    # Repo-root virtual Cargo workspace: the Cargo.lock and all three member
+    # manifests (src-tauri/Cargo.toml, crates/mini-diarium-core/Cargo.toml,
+    # crates/mini-diarium-crypto/Cargo.toml) live under /, so point Dependabot
+    # at the workspace root to cover all three crates. Pointing at /src-tauri
+    # would miss the core/crypto crates' deps.
     directory: /
     schedule:
       interval: weekly
@@ -61,3 +62,14 @@ updates:
       - dependency-name: awalsh128/cache-apt-pkgs-action
         versions:
           - ">= 1.6.2, < 1.7"
+
+  - package-ecosystem: docker
+    # website/Dockerfile (FROM nginx:alpine) is the only Dockerfile in the
+    # shipped repo — .reference/ is gitignored and out of scope.
+    directory: /website
+    schedule:
+      interval: weekly
+      day: monday
+    # Prevent PRs for Docker base images newer than 7 days
+    cooldown:
+      default-days: 7
