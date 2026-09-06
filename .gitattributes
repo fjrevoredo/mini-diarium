@@ -19,3 +19,5 @@ website/**/*.html     text eol=lf
 website/sitemap.xml   text eol=lf
 website/blog/feed.xml text eol=lf
 website/llms.txt      text eol=lf
+website/docs/*.md      text eol=lf
+website/llms-full.txt  text eol=lf

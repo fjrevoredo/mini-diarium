@@ -37,6 +37,7 @@ Template:
 ## [0.7.3] - Unreleased
 
 ### Added
+- **Agent-friendly docs mirrors (Copy page, `llms-full.txt`)**: Each documentation section page now has a "Copy page" dropdown (Copy page, View as Markdown, Open in ChatGPT/Claude/Perplexity), a per-page Markdown mirror at `website/docs/<slug>.md`, and a `<link rel="alternate" type="text/markdown">` discovery tag. `website/llms-full.txt` adds the full concatenated Markdown text of every docs section as a sibling to the curated `llms.txt`. Markdown mirrors are canonicalized to their HTML page via an nginx `Link: rel="canonical"` header rather than `noindex`, so ranking signal consolidates onto the HTML page.
 - **Manual word count recalculation (TODO-0111, #275)**: Settings → Advanced now has a "Recalculate Word Counts" button that rescans every entry in the journal and rewrites any stale `word_count`. Locked entries are skipped, and an entry's last-modified date is never touched by the recalculation. Manual/on-demand only — there is no automatic or background recalculation.
 
 ### Fixed

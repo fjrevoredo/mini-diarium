@@ -1,0 +1,1012 @@
+# Mini Diarium — Full Documentation
+
+> Complete Markdown text of every Mini Diarium documentation section, concatenated for full-text ingestion by AI assistants and crawlers.
+
+Canonical documentation hub: https://mini-diarium.com/docs/
+
+# Getting Started
+
+> System requirements, creating your first encrypted journal, setting a password, the welcome tour, multiple journals, key file auth, and local-only mode.
+
+Source: https://mini-diarium.com/docs/getting-started/
+
+## System Requirements
+
+| Platform | Minimum version |
+| --- | --- |
+| Windows | Windows 10 (1809) or later, 64-bit |
+| macOS | macOS 10.15 Catalina or later (Intel and Apple Silicon) |
+| Linux | Ubuntu 20.04+, Fedora 36+, Arch, or equivalent (`glibc` 2.31+, WebKitGTK 4.1) |
+
+The macOS download is a universal binary, so one `.dmg` covers both Intel and Apple Silicon Macs.
+
+macOS releases older than Catalina (Mojave 10.14 and earlier) are **not supported**. The app declares
+a minimum system version, so macOS will refuse to launch it rather than starting and failing partway.
+
+## First Launch
+
+When you open Mini Diarium, the app starts at the **Journal Picker**. From there you can create a new journal or open an existing `diary.db` file.
+
+**+ Create New Journal** opens a save dialog pre-filled with a default location and the filename `diary.db`. Pick where to save it — the default location works as-is — give the journal a name, and click **Add**.
+
+The default location is a `Mini Diarium` folder inside your Documents folder, or a folder inside the app's own data directory where Documents is not writable. On the Flathub build, where the app is sandboxed, a save dialog cannot reliably remember a folder outside the sandbox, so **+ Create New Journal** shows a form directly instead — with an editable Filename field plus **Browse…** and **Use default location** to choose where the file goes.
+
+If you create a new journal, you will be asked to create a password. This password encrypts your entire journal using AES-256-GCM encryption.
+
+**There is no password recovery.** If you forget your password, your entries cannot be recovered. Choose something memorable and keep it safe.
+
+![Journal creation screen with password and confirm password fields](https://mini-diarium.com/assets/docs/getting-started-01-journal-creation.webp "Setting a password for a new journal")
+
+## Welcome Tour
+
+The first time you create a journal, a **three-step overlay tour** appears to highlight key features:
+
+1. **Enable the advanced toolbar**: turn on extra formatting controls in **Preferences → Writing**.
+2. **Import your entries**: bring in content from Day One, Obsidian, or plain text files via the Import panel.
+3. **Read the documentation**: links to the online guides and keyboard shortcut reference.
+
+Each step shows a callout card with a direct action link. You can navigate with **Back** and **Next**, or click the **Minimize** (`⊟`) button in the card header to collapse the tour into a floating help icon (`?`) at the bottom-right of the window. Pressing **Escape** while the tour is open minimizes it rather than closing the app.
+
+To resume or permanently dismiss the tour, click the `?` icon and choose **Resume Tour** or **Dismiss**. Completing all three steps also dismisses it automatically. The tour only ever appears once per app profile. It does not repeat on subsequent launches or when adding new journals.
+
+## Locking and Unlocking
+
+Your journal is encrypted whenever it is locked. After selecting a journal, enter your password to unlock it. The journal locks automatically when you close the app, and you can also lock it manually using the lock icon in the header at any time.
+
+![Mini Diarium main window with the calendar sidebar and an unlocked journal entry open in the editor](https://mini-diarium.com/assets/docs/getting-started-02-main-app.webp "The main window after writing your first entry")
+
+The header also shows an **About** button (ⓘ) and a **bell icon** for the notification center. The bell displays an unread badge when a new release ships; click it to read what changed and mark notifications as read. Entries with more to say show a **Read more** button that opens the full write-up, with headings and lists, without leaving the app.
+
+As an alternative to your password, you can register a key file in **Preferences → Authentication Methods**. Once registered, use the "Key File" tab on the unlock screen and select your `.key` file to unlock without typing your password.
+
+You can also enable **idle auto-lock** in **Preferences → Security → Auto-Lock**. When enabled, Mini Diarium locks automatically after the configured period of inactivity.
+
+## Multiple Journals
+
+You can maintain separate journals for different purposes: personal, work, travel, and so on. Each journal is an independent encrypted database file. Several journals can share one folder as long as they use different filenames — the save dialog (or the Filename field on Flatpak) lets you rename a new journal to avoid a clash.
+
+**Adding a journal:** Use the Journal Picker's add actions. You can create a new journal — in the default location or a folder you choose — or add an existing `diary.db`.
+
+**Where a journal can live:** any ordinary folder you can write to. Three cases are refused, with an explanation:
+
+- **A journal already in your list.** Two journals pointing at the exact same file — the same folder *and* the same filename — are refused with "already in your list", since unlocking the second one would really be asking for the first journal's password under a different name. Journals with different filenames can share a folder without any conflict.
+
+- **A backup snapshot.** Files named `backup-*.db`, and anything inside a `backups` folder, cannot be opened as a journal, because opening one would write to it and destroy the restore point. To read an old snapshot, copy it out of the `backups` folder first and open the copy.
+- **A temporary sandbox location (Flatpak only).** On the Flathub build, browsing to a folder outside the app's sandbox returns a temporary path under `/run/user/…/doc/` rather than the real one. It works at first and stops working later, so it is refused. Use the default location, or grant the app permanent access to the folder you want with [Flatseal](https://flathub.org/apps/com.github.tchx84.Flatseal) before selecting it.
+
+**Switching journals:** Open the Journal Picker, choose the journal you want, and then unlock it. On a shared device, this lets each person select their own journal before any authentication prompt appears.
+
+**Removing a journal:** Remove a journal entry from the Journal Picker. This only removes it from the configured list; the journal files on disk are not deleted. Removing the last configured journal is allowed and leaves the picker in an empty state.
+
+If you only have one journal, the Journal Picker simply shows that single journal as the only choice.
+
+## Local-Only Journals (No Password)
+
+When creating a new journal, you can choose the **Local-only** mode. Instead of a user-chosen password, the app generates a random key at creation time and stores it in the OS-managed app data directory. The journal auto-unlocks on each open without a password prompt.
+
+This mode still encrypts your entries with AES-256-GCM. The protection trade-off is important to understand: copying only the `diary.db` file to another machine will not be readable there, but anyone with access to your OS account can open the journal without any additional authentication. A risk acknowledgment checkbox is shown before creation to confirm you understand this.
+
+You can upgrade a local-only journal to password protection at any time using **Preferences → Authentication Methods**.
+
+---
+
+# Writing Entries
+
+> Mini Diarium's rich text editor supports formatting, images, named links, tags, and multiple entries per day. Auto-save and RTL language support are built in.
+
+Source: https://mini-diarium.com/docs/writing-entries/
+
+## The Editor
+
+Mini Diarium uses a rich text editor with support for a full set of formatting options:
+
+- Bold and italic text
+- Headings (levels 1–3)
+- Bullet lists and numbered lists
+- Blockquotes
+- Inline code and code blocks
+- Strikethrough and underline
+- Horizontal rules
+- [Links](#links)
+- Images (drag-drop, paste, or file picker)
+
+The toolbar above the editor provides buttons for each formatting option. Standard keyboard shortcuts also work: `Ctrl+B` for bold, `Ctrl+I` for italic, and so on. On macOS, use `Cmd` instead of `Ctrl`.
+
+![Editor toolbar above a formatted entry with a heading, bold text, and a bullet list](https://mini-diarium.com/assets/docs/writing-entries-01-toolbar-formatted.webp "Heading, bold, and bullet list applied with the toolbar")
+
+## Titles
+
+Each entry can have an optional title. If you prefer a cleaner look without titles, hide them in **Preferences → Writing → Hide Titles**.
+
+## Multiple Entries Per Day
+
+Each date can contain multiple separate entries. This is useful for writing at different times of day or keeping different threads of thought separate.
+
+- When a date has more than one entry, an entry navigation bar appears above the editor.
+- Use `←` and `→` to step between entries, or click the **numbered buttons** (`1 2 3`) to jump directly to a specific entry. The active entry is shown in bold.
+- Use `+` to create a new blank entry on the same date.
+- Use `−` to delete the current entry.
+- If a day has only one entry, the navigation bar stays hidden.
+
+![Timeline view showing three separate entries stacked under the same date](https://mini-diarium.com/assets/docs/writing-entries-02-timeline-multientry.webp "Multiple entries on the same date, grouped together in the Timeline")
+
+## Locking an Entry Against Accidental Edits
+
+When you reread an older day from the calendar or timeline, you can lock the entry so a stray keystroke never changes it. Click the **lock button** in the entry navigation bar to make the current entry read-only, then click it again to unlock and resume editing. The lock control lives only in the editor, not on the calendar or timeline.
+
+A locked entry cannot be edited, deleted, or re-tagged:
+
+- The editor and title field become read-only.
+- The formatting toolbar and the delete button are disabled.
+- The add-tag and remove-tag controls are hidden. You can still click a tag to filter by it, since filtering navigates without changing the entry.
+
+Days that contain a locked entry show a small lock indicator on their calendar cell and their timeline row, so you can see which entries are protected without opening them.
+
+This lock guards against accidental edits. It is not a security feature, and it is separate from the journal's password and auto-lock. The locked state is stored as ordinary, unencrypted entry metadata, so anyone who can unlock the journal can also unlock an individual entry. The lock persists across app restarts and journal unlocks.
+
+## Auto-Save
+
+Entries save automatically as you type with a short debounce delay. You do not need to manually save anything. If you clear out an entry completely (emptying both the title and the body), it is automatically deleted after the debounce completes.
+
+## Word Count
+
+A live word count is displayed below the editor and updates as you write.
+
+## Inserting Images
+
+You can add images to your entries in several ways:
+
+- **Drag and drop** from your file manager. The editor shows a blue border when you hover a draggable image over it.
+- **Drag from other desktop apps**: images from Electron-based editors (sent as inline `data:image/...` base64 payloads) and from apps like Typora that reference images via local `file://` paths are both supported.
+- **Paste** an image from the clipboard.
+- Use the **Insert Image** button in the advanced toolbar to pick a file.
+- Use the **Insert Existing Image** button to pick from images already stored in the journal (see below).
+
+All dropped or pasted images are resized to a maximum of 1200 px on either side and re-encoded as JPEG or PNG before being embedded. Supported source formats are JPG, PNG, GIF, WebP, and BMP.
+
+### How images are stored
+
+Images are encrypted and stored in a dedicated content-addressed table inside the same `diary.db` database. Each unique image is stored exactly once. If you insert the same image into multiple entries (using the image picker), only one copy is kept. All image data is encrypted with your master key, the same as entry text.
+
+### Insert Existing Image
+
+The **Insert Existing Image** button (stack-of-photos icon) in the advanced toolbar opens a visual picker for images already stored in the journal.
+
+- The picker shows encrypted thumbnails in a grid so you can recognize saved images at a glance.
+- Use the **Sort** control to switch between newest, oldest, and most-used images.
+- Use the **Month** filter to narrow the grid to one month when your journal contains many images.
+- A single click selects an image and shows a larger preview with saved date, dimensions, format, size, usage count, and linked entry dates.
+- Double-click an image, or select it and press **Insert**, to place it at the current cursor position.
+
+The selected image is inserted without re-encoding, so the stored copy is reused with no duplication.
+
+Images added before this feature was introduced (prior to v0.5.3) continue to display correctly. Existing saved entries that still embed image data directly are migrated to the new storage the next time their entry is saved. JSON imports that contain embedded `data:image/...` content are normalized into the encrypted image store immediately during import.
+
+If you drag an image from a web browser, the editor will show a banner explaining that embedding is not possible, because it would require a network request, which the app never makes. Use **right-click → Copy Image** and paste instead.
+
+## Links
+
+You can insert hyperlinks with custom display text. The visible label and the underlying URL are independent (the `[label](url)` model used by Markdown and most modern editors).
+
+**Inserting a link**: click the **Link button** in the toolbar (chain-link icon) or press `Ctrl+K` (`Cmd+K` on macOS). The dialog has two fields:
+
+- **URL**: the link's target. You can paste a full URL (`https://example.com`) or just a bare domain (`example.com`); the editor auto-prepends `https://` for you. Email addresses become `mailto:` links and phone numbers become `tel:` links automatically.
+- **Display text** (optional): the visible text. Leave empty to use the URL itself as the visible text; the user will see `example.com` (not `https://example.com`) when the domain was typed bare.
+
+**What gets inserted depends on what you have selected:**
+
+- **No selection**: the dialog inserts new text at the cursor. If you left the Display text field empty, the URL is used as the visible text; if you typed a Display text, that's used instead.
+- **Text selected**: the dialog replaces the selected text with the link. The Display text field is pre-filled with the selected text. You can keep it as-is (the selection becomes the link label) or change it.
+- **Cursor on an existing link**: the dialog opens with the current URL and Display text pre-filled. You can change either, or click **Remove link** to strip the link mark and leave the underlying text untouched.
+
+A confirmation message below the fields reminds you of the click-to-open behavior (see below).
+
+**Opening a link**: a plain click inside a link places the cursor for editing (as in any other editable surface). To open a link in your default browser, hold `Ctrl` (`Cmd` on macOS) and click. You can also click the **Open link** button in the dialog after typing a URL, useful when you want to verify a link before applying it.
+
+Only standard external targets are opened: `http`, `https`, `mailto`, and `tel`. Unsupported or unsafe protocols are ignored and are not passed to the operating system.
+
+**Auto-linking**: typing a recognizable URL (for example `https://example.com`) and pressing space converts it to a clickable link automatically. Pasting a URL onto a text selection wraps the selection as a link to that URL.
+
+**Markdown round-trip**: links are exported as standard `[label](url)` syntax in Markdown exports, and re-imported back into clickable links when you import a Markdown file. JSON exports preserve the raw HTML, so the link survives round-trips through that format as well.
+
+## Right-to-Left and Bidirectional Text
+
+Mini Diarium supports right-to-left (RTL) writing in Arabic, Hebrew, Syriac, and other RTL scripts. Direction is handled per block: each paragraph and heading carries its own `dir` attribute, so you can freely mix RTL and LTR content in the same entry.
+
+**Auto-detection**: as you type, the editor reads the first strongly-directional character in each paragraph or heading and sets the direction automatically. Arabic and Hebrew script trigger `dir="rtl"`; Latin script triggers `dir="ltr"`. Once a block's direction is set it is locked and will not change if you later add neutral characters (numbers, punctuation, emoji) to the same block.
+
+**Manual override**: press `Ctrl+Shift+D` (or `Cmd+Shift+D` on macOS) to toggle the current block between RTL and LTR, or use the **¶R / ¶L toggle button** (pilcrow icon with directional arrow) in the advanced formatting toolbar. This is useful for paragraphs that start with neutral characters such as numbers or quotation marks that the auto-detector cannot classify. The button icon shows the current direction and the direction you will switch to when clicked.
+
+**Alignment toolbar**: when the cursor is in an RTL paragraph, the alignment toolbar reflects the browser's actual rendering and shows **Right** as the active alignment (not Left). Clicking an alignment button writes an explicit `text-align` override as normal.
+
+**Persistence**: the `dir` attribute is stored in the encrypted HTML content of each entry, so direction is preserved across save, export, and re-open cycles.
+
+## Inserting the Current Time
+
+The advanced toolbar includes a **clock button** that inserts the current time at the cursor position. Clicking the button opens a popup where you can choose between **12-hour** and **24-hour** format and select hours:minutes or hours:minutes:seconds precision. Both selections are remembered across sessions.
+
+## Editor Font: Three-Level System
+
+Mini Diarium uses a three-level font system so you can control fonts at multiple scopes:
+
+### 1. App Default (Preferences)
+
+You can change the font used app-wide via **Preferences → Writing → Editor font**. The selector shows two groups:
+
+- **Bundled fonts**: five open-source families (Noto Sans, Source Sans 3, Noto Serif, JetBrains Mono, Fira Mono) bundled with the app. Loaded on demand and work fully offline.
+- **Custom fonts**: font files you have uploaded yourself (see below). Only families with at least a Regular weight appear here.
+
+Font family and font size are also available as optional controls in the editor toolbar itself. Enable them in **Preferences → Writing → Toolbar items**. They appear as compact dropdowns directly in the toolbar, but they now apply inline formatting (see below) instead of changing the Preferences.
+
+### 2. Entry Default (Per-Entry Override)
+
+When you have the font dropdown enabled in the editor toolbar, two new buttons appear next to it:
+
+- **Set as entry default**: saves the current font family and size as the default for this entry only, overriding the app default. This is useful when a particular entry needs a different font than your usual preference.
+- **Clear entry default**: removes the entry default and reverts this entry to use the app default.
+
+Entry font defaults are stored encrypted inside the entry's metadata and survive save, lock/unlock, and navigation cycles.
+
+### 3. Inline Formatting (Selection)
+
+The font family and font size dropdowns in the editor toolbar apply **inline formatting** to selected text or the cursor. This is different from changing preferences. It wraps the selection in a styled span so different parts of the same entry can have different fonts.
+
+To apply inline formatting:
+1. Select the text you want to format (or place the cursor where you want inline formatting to start)
+2. Use the font family or font size dropdown to apply the style
+
+Inline formatting is stored in the encrypted HTML of your entry and exports to JSON with full formatting preserved.
+
+### Custom Fonts
+
+You can upload your own `.ttf`, `.otf`, `.woff`, or `.woff2` font files from **Preferences → Advanced → Custom fonts**.
+
+- **Regular weight** (required) and **Bold weight** (optional) are uploaded separately. The Bold field is optional; if you skip it, the browser will synthesize bold text from the Regular file, which may look slightly different from a true bold variant.
+- A **Bold weight missing** warning appears in the custom fonts list whenever a family has only a Regular weight uploaded.
+- Custom fonts are stored inside your journal (`diary.db`) as unencrypted blobs. They travel with the journal to other devices automatically and do not require a separate installation step.
+- Because fonts are stored in the journal, they increase the size of your database file and backups.
+- Uploading a new Regular or Bold for an existing family **replaces** the previous file for that weight.
+- Deleting a custom font family removes **all weights** immediately. If that font was selected, the editor reverts to System Default right away with no Save required.
+
+## Tags
+
+Each entry can have one or more tags. Tags appear as small chips below the editor body.
+
+- Click **+ Add tag** to open a dropdown. Type to filter existing tags or create a new one; press **Enter** or click **Create "…"** to save.
+- Click **×** on a chip to remove a tag from the current entry.
+- Click **Manage tags** (at the end of the tag row) to open the Tag Manager, where you can rename or delete tags globally across all entries.
+
+### Browsing entries by tag
+
+Click a tag chip's **name** (not the × button) to activate a tag filter. While a filter is active:
+
+- The sidebar opens automatically so the calendar is visible.
+- Calendar dot indicators narrow to show only dates that have entries tagged with that tag.
+- A banner above the calendar shows the active tag name and a `×` button to clear the filter.
+
+Click the same chip again, or press `×` in the banner, to return to the full unfiltered calendar. The filter persists across month navigation and is cleared automatically when you lock the journal or delete the filtered tag in Tag Manager.
+
+Tag names are encrypted with the same key as your diary entries. They are never stored as readable text in the database file.
+
+## Importing a Markdown File
+
+The advanced toolbar includes an **Import Markdown** button. This lets you import a `.md` file from disk into the active entry. If the entry is empty, the imported content replaces it. If the entry already has content, the Markdown is appended after a horizontal rule separator. File size is capped at 1 MB.
+
+---
+
+# Navigating Your Journal
+
+> Navigate your journal using the sidebar calendar, keyboard shortcuts, and day-navigation buttons. Jump to any date, go to today, and browse your entry history.
+
+Source: https://mini-diarium.com/docs/navigating/
+
+## Calendar
+
+The sidebar shows a monthly calendar. Days that have at least one entry are marked with a dot indicator. Click any date to jump to that day's entries.
+
+You can narrow the dot indicators to a specific tag by clicking a tag chip's name on any entry. See [Browsing entries by tag](writing-entries#browsing-entries-by-tag) for details.
+
+Days that contain a [locked entry](writing-entries#locking-an-entry-against-accidental-edits) also show a small lock indicator on their calendar cell, so you can see which days hold a locked entry before opening them.
+
+![Calendar sidebar with entry dots and a lock indicator, next to an open journal entry](https://mini-diarium.com/assets/docs/navigating-01-calendar-sidebar.webp "The sidebar calendar, with a locked entry marked on August 30")
+
+## Keyboard Navigation
+
+Mini Diarium supports keyboard shortcuts for all navigation actions. On macOS, use `Cmd` instead of `Ctrl`.
+
+| Action | Shortcut |
+|--------|----------|
+| Previous day with an entry | `Ctrl+[` |
+| Next day with an entry | `Ctrl+]` |
+| Go to today | `Ctrl+T` |
+| Go to a specific date | `Ctrl+G` |
+| Previous month | `Ctrl+Shift+[` |
+| Next month | `Ctrl+Shift+]` |
+| Open preferences | `Ctrl+,` |
+
+## Go to Date
+
+Press `Ctrl+G` to open the date picker and jump directly to any date. This is the fastest way to navigate to a specific day without scrolling through the calendar month by month. You can also click the date title in the header to open the same date picker.
+
+![Go to Date dialog with day, month, and year fields, over an entry that has multiple entries for the same date](https://mini-diarium.com/assets/docs/writing-entries-03-goto-date.webp "The Go to Date dialog")
+
+## Header Day Controls
+
+The header shows the current day's date, flanked by a `◀` previous-day button and a `▶` next-day button. Click them to step one day at a time. When [future entries are disabled](preferences), the next-day button stops at today. Clicking the date title itself opens the Go to Date picker.
+
+## Month Navigation
+
+Click the `‹` and `›` arrows on the calendar header to move to the previous or next month. The keyboard shortcuts `Ctrl+Shift+[` and `Ctrl+Shift+]` do the same.
+
+---
+
+# Search
+
+> Full-text search across every encrypted entry via the search overlay or Ctrl+F, with instant highlighted results, and how it stays fully encrypted and offline.
+
+Source: https://mini-diarium.com/docs/search/
+
+## Search Your Entries
+
+Mini Diarium includes full-text search across every entry in the current journal. Open the search overlay from the magnifier button in the header, or press **Ctrl+F** (Cmd+F on macOS). Type at least three characters and matching entries appear, newest first, with the matching text highlighted in a short snippet. Nothing is searched until the query reaches that minimum — no results appear for one or two characters. For Chinese and Japanese text, the minimum drops to a single character, since many complete words in those languages are one or two characters long.
+
+Clicking a result jumps straight to that entry in the editor, even on a day that holds several entries.
+
+The overlay displays the total number of results found ("12 results found"). When results exceed 200, a truncation notice appears: "Showing first 200 — refine your query to see more". This cap keeps search responsive on large journals; refining with additional keywords narrows results.
+
+Navigate results with your keyboard: **ArrowDown** and **ArrowUp** move between results, and pressing **ArrowDown** from the search input focuses the first result.
+
+![Search overlay with a query and three matching results, each with the matched word highlighted](https://mini-diarium.com/assets/docs/search-01-overlay-results.webp "Searching for 'morning' across the journal")
+
+## How Search Works Without Compromising Encryption
+
+Mini Diarium stores every entry encrypted at rest with AES-256-GCM. Search does **not** keep a separate plaintext index on disk, because that would expose your writing to anyone with access to the file.
+
+Instead, when you run a search the app decrypts your entries in memory, scans them, and discards everything when it is done. Nothing searchable is ever written to disk, and the search never makes a network request. It is as private as reading the entries yourself.
+
+Search is case- and accent-insensitive: typing "cafe" will match "Café", and "RUST" will match "rust". Multiple words use AND semantics, so every word must appear in the title or body of an entry for it to match.
+
+## Other Ways to Find Entries
+
+Search is fastest when you remember specific words. When you only remember roughly when you wrote something, these alternatives help:
+
+- **Calendar** in the sidebar, for browsing by date.
+- **Go to Date** dialog with Ctrl+G (Cmd+G on macOS), to jump to a known date.
+- **Timeline** view (toggled from the header), a chronological list of every entry with an optional one-line preview (see Preferences → Writing → Timeline).
+- **Export** to Markdown or JSON and use your operating system's file search. Exported files are not encrypted, so do this only on a trusted device.
+
+---
+
+# Importing Data
+
+> Import journal entries from Mini Diary, Day One, jrnl, or plain text files. Mini Diarium includes built-in importers and supports custom Rhai import plugins.
+
+Source: https://mini-diarium.com/docs/import/
+
+## Opening the Import Dialog
+
+Click the **⋮** menu in the header and select **Import...**.
+
+![Import Entries dialog with a format dropdown and a file picker](https://mini-diarium.com/assets/docs/import-01-dialog.webp "The Import Entries dialog")
+
+## Built-In Import Formats
+
+Mini Diarium can import entries from several popular journaling apps:
+
+| Format | Source App | How to Export |
+|--------|-----------|---------------|
+| Mini Diary JSON | Mini Diary | Use the built-in export feature in Mini Diary |
+| Day One JSON | Day One | Use "Export → JSON" in Day One |
+| Day One TXT | Day One | Use the plain-text export option in Day One |
+| jrnl JSON | jrnl | Run `jrnl --export json > export.json` |
+
+## How Imports Work
+
+Imports are **additive**. If an imported entry falls on a date that already has entries in Mini Diarium, the imported content is added as an additional entry for that date rather than merging or replacing existing content.
+
+This means you can safely import without worrying about overwriting your existing writing.
+
+## Migrating from Mini Diary
+
+Mini Diary users can migrate all their entries to Mini Diarium:
+
+1. Open Mini Diary and export your journal as JSON.
+2. Open Mini Diarium and go to **Journal → Import...**.
+3. Select **Mini Diary JSON** from the format dropdown.
+4. Choose the exported file.
+
+All your entries will be imported with their original dates preserved.
+
+## Custom Import Formats via Plugins
+
+If your source application is not in the built-in list, you can write a custom Rhai import plugin. See the [Plugins](../plugins/) section for details.
+
+---
+
+# Exporting Data
+
+> Export your journal as JSON, Markdown, or PDF. JSON preserves IDs, tags, and metadata; Markdown is human-readable; PDF creates a formatted A4 document.
+
+Source: https://mini-diarium.com/docs/export/
+
+## Opening the Export Dialog
+
+Click the **⋮** menu in the header and select **Export...**.
+
+![Export Entries dialog with format and filter dropdowns](https://mini-diarium.com/assets/docs/export-01-dialog.webp "The Export Entries dialog")
+
+## Built-In Export Formats
+
+### JSON Export
+
+The JSON format is the primary structural export. It outputs a `metadata` block and an array of entries under the `"entries"` key:
+
+```json
+{
+  "metadata": {
+    "application": "Mini Diarium",
+    "version": "0.5.0",
+    "exportedAt": "2024-01-15T12:00:00Z"
+  },
+  "entries": [
+    {
+      "id": 1,
+      "date": "2024-01-15",
+      "title": "My Entry",
+      "text": "<p>Entry content as HTML...</p>",
+      "dateUpdated": "2024-01-15T10:05:00Z",
+      "tags": ["travel", "work"],
+      "metadata": {
+        "fontFamily": "Noto Serif",
+        "fontSize": 16.0
+      }
+    }
+  ]
+}
+```
+
+Every entry includes a `"tags"` array (empty `[]` if the entry has no tags; tags are listed in alphabetical order). Entries with font metadata include a `"metadata"` object containing `fontFamily` and `fontSize`; entries without entry-level font defaults have no `metadata` field.
+
+This format preserves entry IDs, timestamps, tags, and font metadata. It can be re-imported into Mini Diarium. The JSON importer automatically handles both the old Mini Diary date-keyed format and the new array format with optional metadata for backward compatibility. If the JSON contains embedded `data:image/...` content, Mini Diarium normalizes those images into its encrypted image store during import while preserving the visible content of the entry.
+
+### Markdown Export
+
+The Markdown export produces a human-readable text file, grouped by date. If a day has multiple entries, each appears under its own sub-heading.
+
+If an entry has tags, a `*Tags: …*` line is written immediately after the title (or date heading when there is no title) and before the entry body:
+
+```markdown
+## 2024-01-15
+**My Entry**
+*Tags: travel, work*
+
+Entry content here...
+```
+
+Entries with no tags have no tags line. Tags appear in alphabetical order.
+
+Markdown is a best-effort, text-focused conversion of the stored HTML editor content. Bold, italic, strikethrough, inline code, and links convert to native Markdown syntax. Underline, highlighted/background color, text color, and font family/size have no standard Markdown equivalent, so the formatting is dropped while the text itself is always kept. Complex formatting (tables, images) may not convert perfectly, but the text is always readable. **For full-fidelity export including font metadata, use JSON instead.**
+
+### Print / PDF
+
+The **Print / PDF** option opens a save dialog and creates a formatted A4 PDF directly at the path you choose.
+
+The print output uses a clean, readable layout with:
+- A "Mini Diarium" header and the generation date
+- Entries grouped by date, with each date on its own page
+- Entry titles, tags (when present), and the full entry content
+- Standard formatting for headings, lists, blockquotes, and code blocks
+
+Date range filtering works the same as for file exports. Select "All entries", a custom date range, or a specific month before clicking **Print**.
+
+If you cancel the save dialog, no file is written. PDF generation happens locally and no data leaves the app.
+
+## Why Export?
+
+- **Backup**: Export a copy of your entries for safekeeping before changing devices or reinstalling.
+- **Migration**: Move your writing to another app or format.
+- **Archiving**: Create a readable offline archive of your journal.
+- **Processing**: Use JSON for programmatic processing of your entries.
+
+Note that exported files are not encrypted. Store them securely if they contain sensitive content.
+
+## Custom Export Formats via Plugins
+
+If you need a specific export format not covered by the built-in options, you can write a custom Rhai export plugin. See the [Plugins](../plugins/) section for details.
+
+---
+
+# Plugins
+
+> Extend Mini Diarium with Rhai script plugins for custom import and export formats. Covers the plugins folder, writing your first plugin, and API helpers.
+
+Source: https://mini-diarium.com/docs/plugins/
+
+## What Are Plugins?
+
+Mini Diarium supports custom import and export formats through Rhai script plugins. Rhai is a simple, sandboxed scripting language that runs inside the app. You can write a plugin to handle any file format that the built-in options do not cover.
+
+Plugins appear in the Import and Export overlay dropdowns alongside the built-in formats.
+
+![Export Entries dialog with a custom plugin format, "Plain Text Timeline", selected in the Format dropdown](https://mini-diarium.com/assets/docs/plugins-01-export-dropdown.webp "A Rhai plugin listed alongside the built-in export formats")
+
+## Where Is the Plugins Folder?
+
+The `plugins/` folder is shared across all journals and lives in the app data directory (this location is fixed and does not change when you configure a different journal path in Preferences):
+
+- **Windows**: `%APPDATA%\com.minidiarium\plugins\`
+- **macOS**: `~/Library/Application Support/com.minidiarium/plugins/`
+- **Linux**: `~/.local/share/com.minidiarium/plugins/`
+
+A `README.md` file with templates and API documentation is auto-generated in the plugins folder on first launch. If you previously had `.rhai` scripts in a per-journal `plugins/` folder, they are automatically copied to this central location on first launch after upgrading.
+
+## Writing a Plugin
+
+Each plugin is a single `.rhai` file with a metadata comment header and one entry-point function.
+
+### Import Plugin
+
+```rhai
+// @name: My Custom Format
+// @type: import
+// @extensions: json
+
+fn parse(content) {
+    let data = parse_json(content);
+    let entries = [];
+    for item in data {
+        entries += #{
+            date: item.date,       // must be YYYY-MM-DD
+            title: item.title,
+            text: item.body,       // should be HTML
+        };
+    }
+    entries
+}
+```
+
+### Export Plugin
+
+```rhai
+// @name: Plain Text
+// @type: export
+// @extensions: txt
+
+fn format_entries(entries) {
+    let output = "";
+    for entry in entries {
+        output += entry.date + " - " + entry.title + "\n";
+        output += html_to_markdown(entry.text) + "\n\n";
+    }
+    output
+}
+```
+
+## Available Helper Functions
+
+| Function | Description |
+|----------|-------------|
+| `parse_json(string)` | Parse a JSON string into a map or array |
+| `count_words(string)` | Count words in a string |
+| `now_rfc3339()` | Current timestamp in RFC 3339 format |
+| `html_to_markdown(string)` | Convert HTML to Markdown |
+
+## Rules and Limitations
+
+![Diagram of the plugin sandbox boundary: a Rhai script has no file system or network access, and can only exchange plain text with the Import and Export dialogs](https://mini-diarium.com/assets/docs/diagrams/plugins-sandbox-boundary.svg "The plugin sandbox boundary")
+
+- Import scripts must define `fn parse(content)` returning an array of entry maps.
+- Export scripts must define `fn format_entries(entries)` returning a string. (`export` is a reserved word in Rhai, so the function is named `format_entries`.)
+- The `date` field must be in `YYYY-MM-DD` format.
+- The `text` field should contain HTML (the editor uses HTML internally).
+- Scripts run in a sandbox: no file system access, no network access.
+- Scripts are limited to 1,000,000 operations to prevent infinite loops.
+- **Tags are not currently passed to Rhai export scripts.** Each entry map contains `date`, `title`, `text`, `word_count`, `date_created`, and `date_updated`. Tag support for Rhai plugins will be added in a future release.
+
+## Official Example
+
+An official example plugin is included in the repository at `docs/user-plugins/plain-text-timeline.rhai`.
+
+---
+
+# Preferences
+
+> Configure Mini Diarium from the Preferences panel: choose a theme, set auto-lock timeout, adjust editor font and size, manage authentication methods, and more.
+
+Source: https://mini-diarium.com/docs/preferences/
+
+## Opening Preferences
+
+Press `Ctrl+,` (or `Cmd+,` on macOS) to open the Preferences dialog, or click the **⋮** menu in the header and select Preferences.
+
+Preferences are now **close-only**: there is no Save/Cancel footer. Reversible settings apply immediately as you change them.
+
+## General Settings
+
+| Setting | Description |
+|---------|-------------|
+| Theme | Light, dark, or follow system (auto) |
+| Language | Interface language: English, French, German, Hindi, Italian, Portuguese (Brazil), or Spanish |
+| ESC key action | Do nothing or quit the app when pressing Escape |
+
+## Writing Settings
+
+| Setting | Description |
+|---------|-------------|
+| First day of week | Sunday, Monday, another weekday, or auto-detect from locale |
+| Allow future entries | Write entries for dates that have not happened yet |
+| Hide titles | Remove the title field for a minimal, distraction-free look |
+| Show entry timestamps | Display creation and last-updated timestamps on each entry |
+| Spellcheck | Toggle spellcheck in the editor. The dictionary follows your interface language. See "Spell check on Linux" below if you are on Linux |
+| Toolbar items | Configure which formatting controls appear in the editor toolbar and their order. Each of the 17 controls (Headings, Underline, Strikethrough, Text color, Highlight color, Blockquote, Inline code, Bullet list, Numbered list, Horizontal rule, Insert image, Import Markdown, Insert timestamp, Text direction, Alignment, Font family, Font size) can be enabled/disabled individually and reordered with ↑/↓ buttons. "Select all" and "Select none" toggle all controls at once. Bold and Italic are always present at the start of the toolbar and cannot be removed. Font family and Font size are disabled by default; enable them to get compact dropdown pickers directly in the toolbar. Note: when enabled, these dropdowns apply inline formatting to selected text (not changing this preference). To change the app-wide font default, use the "Editor font" setting below. |
+| Editor font size | Adjust the app-wide default body text size in the editor (12–24 px). When an entry has an entry-specific font default or inline font formatting applied to the selection, those take precedence over this app default. |
+| Editor font | Choose an app-wide default font family for the editor body from bundled options or uploaded custom fonts. When an entry has an entry-specific font default or inline font formatting applied to the selection, those take precedence over this app default. See Writing Entries for the full three-level font system. |
+| Timeline → Date format | Choose how the date is written next to each row in the Timeline view: Full ("Monday, January 15, 2024"), Long ("January 15, 2024"), Medium ("Jan 15, 2024"), Short ("1/15/24"), or ISO ("2024-01-15"). Every style except ISO follows your interface language; ISO is always `YYYY-MM-DD`, which keeps the date column a fixed width. Each option in the dropdown shows a live example using today's date. The default is Full. |
+| Timeline → Show entry preview | Show or hide the first line of each entry underneath its title in the Timeline view. When turned off, each row collapses to just the date and the title, which fits more entries on screen. On by default. |
+
+Timestamp format and precision are configured from the editor timestamp popup (clock button), not from Preferences.
+
+![Writing preferences tab with First Day of Week, spellcheck, and the toolbar item customization list](https://mini-diarium.com/assets/docs/preferences-03-writing.webp "The Writing preferences tab")
+
+### Spell check on Linux
+
+Windows and macOS handle spell checking for you. On Linux, Mini Diarium uses spelling language packs installed on your computer. It does not download them automatically, but you only need to add a language pack once.
+
+If Preferences shows a spell-check warning, start with your computer's **Software** app. Search for your language followed by “spell checking”, such as “Spanish spell checking”, install the suggested language support, then close and reopen Mini Diarium.
+
+#### Example: Spanish spell checking on Ubuntu or Debian
+
+Using a terminal is optional. If you prefer it, open **Terminal** (on Ubuntu, press `Ctrl` + `Alt` + `T`) and run:
+
+```bash
+sudo apt update
+sudo apt install hunspell-es
+```
+
+Enter your computer password when asked. Nothing is shown while you type the password; that is normal. When the command finishes, close and reopen Mini Diarium.
+
+#### Flatpak
+
+Flatpak installs include dictionaries for all seven interface languages (English, Spanish, German, French, Italian, Portuguese (Brazil), and Hindi). If you see a warning, open your computer's Software app, update Mini Diarium, and restart it. If the warning remains, reinstall Mini Diarium.
+
+#### Need more help?
+
+Email [minidiarium@gmail.com](mailto:minidiarium@gmail.com) with your Linux distribution and the language selected in Mini Diarium, or [report the problem on GitHub](https://github.com/fjrevoredo/mini-diarium/issues).
+
+#### Advanced: use another language
+
+To use a language that is not bundled, place its `.aff` and `.dic` files in:
+
+- Flatpak: `~/.var/app/io.github.fjrevoredo.mini-diarium/config/enchant/hunspell/`
+- Everything else: `~/.config/enchant/hunspell/`
+
+Name them after the locale you want checked, for example `nl_NL.aff` and `nl_NL.dic`.
+
+## Security Settings
+
+| Setting | Description |
+|---------|-------------|
+| Auto-Lock | Lock automatically after a configurable idle timeout |
+| Lock when the window loses focus | Lock the journal a few seconds after the window loses focus — minimizing, switching to another app, or clicking another window — independent of the idle timeout. Off by default. A brief misclick outside the window doesn't trigger it if focus returns quickly, and opening a native file dialog from within Mini Diarium (export/import/key file) does not trigger this. |
+| Change password | Re-encrypt your journal with a new password |
+| Authentication Methods | View registered unlock methods; add a new key file or remove existing ones |
+
+![Security preferences tab showing registered authentication methods and the key file registration form](https://mini-diarium.com/assets/docs/preferences-01-security.webp "The Security preferences tab")
+
+At least one authentication method must remain registered. Removing the last one is blocked.
+
+## Data Settings
+
+You can change your journal's storage location from Preferences. The `diary.db` file is moved to the new location, and future backups go into `{new location}/backups/`.
+
+## Advanced Settings
+
+| Setting | Description |
+|---------|-------------|
+| Theme Overrides | Advanced JSON-based CSS token overrides (see below) |
+| Custom fonts | Upload/remove custom `.ttf`, `.otf`, `.woff`, or `.woff2` font families used by the editor |
+| Generate Debug Dump | Export a privacy-safe diagnostic JSON file (see below) |
+| Recalculate Word Counts | Rescan every entry and fix any stale word count (see below) |
+
+Custom font upload and delete stay explicit button-driven actions. If you delete the currently selected custom font, the editor font falls back to System Default immediately.
+
+## Debug dump
+
+**Preferences → Advanced → Diagnostics → Generate Debug Dump** writes a single JSON file you can attach to a bug report. Your journal must be unlocked, because most of what the file describes is read from the open database.
+
+What it contains:
+
+| Group | Fields |
+|---------|-------------|
+| App and platform | App version, Tauri version, debug/release build, OS, OS version, CPU architecture, WebView version |
+| Database | Stored schema version, the schema version this build expects, SQLite version, database file size |
+| Journals | How many journals are configured, an 8-character prefix of the active journal's id, and per journal: whether it is passwordless and whether it uses the default `diary.db` filename |
+| Security settings | Whether the active journal requires all unlock methods, and whether a deprecated copy of that flag is still in `config.json` |
+| Storage location | Whether the journal appears to sit inside a cloud-sync folder, and which tool it looks like (a name only, never the folder) |
+| Entry statistics | Entry count, distinct days written, total words, first and last entry dates |
+| Feature counts | Number of tags, tag links, images, image links, images without a thumbnail, custom font families and files, locked entries, entries with metadata, entries without a stored preview |
+| Unlock methods | For each: its type (password or key file), when it was created, when it was last used |
+| Backups | How many backups exist, the retention limit, the oldest and newest backup filenames, total size on disk |
+| Plugins | Number of `.rhai` script files, and each registered plugin's id, whether it imports or exports, and whether it is built in |
+| Spell checking | On Linux only: the resolved dictionary language and whether it is installed |
+| Your settings | Your preferences, theme choice, theme overrides, and experimental flags |
+| Recent activity | The last 200 app log records and the last 200 in-app log records |
+
+What it never contains: your password, any encryption key, the device key for a passwordless journal, diary entry content, entry titles, tag names, unlock-method labels, journal names, or any file or folder path. Paths are stripped from log records before they are written, and the app deliberately does not record entry-level detail at the log levels that end up in the file.
+
+The file is plain, readable JSON. Open it in any text editor before sending it if you want to check it yourself.
+
+## Recalculate Word Counts
+
+Word counts only update automatically when you open and save an individual entry. If you imported entries from another app, or wrote entries before a word-counting fix, their stored word count can go stale until you open each one by hand.
+
+**Preferences → Advanced → Recalculate Word Counts** rescans every entry in the current journal and fixes any word count that no longer matches its text. Two things it deliberately does not do:
+
+- **Locked entries are skipped.** A locked entry's word count is left exactly as it is.
+- **Last-modified dates are untouched.** Fixing a stale count is not treated as editing the entry.
+
+This is a manual, on-demand action only — there is no automatic or background recalculation.
+
+## Theme Overrides (Advanced)
+
+Advanced users can customize the app's color palette by overriding individual CSS theme tokens.
+
+Open **Preferences → Advanced**, then enter a JSON object with `light` and/or `dark` keys, each mapping CSS variable names to color values:
+
+```json
+{
+  "light": {
+    "--bg-primary": "#fffde0",
+    "--text-primary": "#1a1a1a"
+  },
+  "dark": {
+    "--bg-primary": "#0d1117",
+    "--text-primary": "#c9d1d9"
+  }
+}
+```
+
+Valid JSON applies immediately and is saved automatically. If JSON is invalid, an inline error is shown and the last valid saved overrides remain active. **Reset to Default** clears overrides immediately.
+
+Overrides are re-applied automatically every time you open the app. They layer on top of the selected built-in theme.
+
+### Supported Token Families
+
+| Family | Example tokens |
+|--------|---------------|
+| Background | `--bg-primary`, `--bg-secondary`, `--bg-tertiary`, `--bg-hover`, `--bg-active` |
+| Text | `--text-primary`, `--text-secondary`, `--text-tertiary`, `--text-muted`, `--text-inverse` |
+| Border | `--border-primary`, `--border-secondary`, `--border-focus` |
+| Interactive | `--interactive-primary`, `--interactive-primary-hover`, `--interactive-secondary`, `--interactive-secondary-hover` |
+| Buttons | `--btn-primary-bg`, `--btn-primary-text`, `--btn-destructive-bg`, `--btn-destructive-text` |
+| Editor | `--editor-body-text`, `--editor-heading-text`, `--editor-placeholder-text`, `--editor-blockquote-border`, `--editor-link-color` |
+| Status | `--status-success-bg`, `--status-error-bg`, `--status-warning-bg`, `--status-info-bg` |
+
+Only documented token names are accepted; unrecognized names are silently ignored. Auth and pre-unlock screens are not affected by theme overrides.
+
+## Reset Journal
+
+**Preferences → Data → Reset Journal** deletes all entries and recreates the database. This is irreversible. Use export to make a backup before resetting.
+
+---
+
+# Statistics
+
+> View your writing statistics: total entry and word counts, current and longest streaks, and a breakdown of your most active writing days, months, and years.
+
+Source: https://mini-diarium.com/docs/statistics/
+
+## Opening Statistics
+
+Click the **⋮** menu in the header and select **Statistics...**.
+
+![Statistics overlay showing an 8-day current streak, total entries, total words, and average words per entry](https://mini-diarium.com/assets/docs/statistics-01-overlay.webp "The Statistics overlay")
+
+## What Is Tracked
+
+Mini Diarium calculates the following statistics from your journal:
+
+| Stat | Description |
+|------|-------------|
+| Total entries | The total number of entries across all dates |
+| Total words | The total word count across all entries |
+| Average words per entry | Total words divided by total entries |
+| Longest streak | The longest run of consecutive days with at least one entry |
+| Current streak | How many consecutive days (ending today) you have written |
+| Entries by weekday | A breakdown of how many entries fall on each day of the week |
+
+## Streaks
+
+A streak is a consecutive sequence of calendar days where you have at least one journal entry. Gaps (days with no entries) break a streak.
+
+- **Current streak** counts backwards from today. If you have not written anything today, the streak may already show as broken even if you wrote yesterday.
+- **Longest streak** is the maximum consecutive-day run found anywhere in your history.
+
+## Privacy
+
+All statistics are computed locally from your decrypted data. Nothing is sent off-device. The statistics panel is only accessible when your journal is unlocked.
+
+---
+
+# Backups
+
+> Mini Diarium snapshots your journal before risky changes, restores the whole journal or specific entries in-app, and keeps tiered history going back a year.
+
+Source: https://mini-diarium.com/docs/backups/
+
+## What a Backup Is
+
+A backup is a **snapshot**: a complete, ordinary Mini Diarium database file, encrypted exactly like your live journal with exactly the same key. There is no separate backup format. If you can open your journal, you can open its snapshots.
+
+Snapshots are written with SQLite's `VACUUM INTO`, which rebuilds a clean copy rather than copying the file byte by byte. The copy is flushed to disk, moved into place atomically, and then reopened and checked before Mini Diarium reports it as created. A snapshot that exists is a snapshot that works.
+
+## When Snapshots Are Created
+
+| Trigger | When |
+|---|---|
+| **Before a schema migration** | Whenever a new version of Mini Diarium needs to upgrade your journal's internal format. This is the important one. |
+| **Before a destructive action** | Resetting a journal, importing a file, removing an authentication method, or moving your journal to another folder. |
+| **On unlock** | After you successfully unlock, if the journal changed since the last snapshot. |
+| **On lock and on exit** | When you lock the journal or close the app, if it changed while it was open. |
+
+Two rules keep this from filling your disk:
+
+- **Nothing changed, nothing written.** Mini Diarium compares the database's internal change counter against the last snapshot. Opening your journal to read something produces no new snapshot at all.
+- **At most one automatic snapshot per hour.** Explicit actions (a migration, a destructive command) ignore this and always snapshot.
+
+The pre-migration snapshot is the one exception to "backups never get in the way": if it cannot be written, the migration is **refused** and your journal is left untouched. Proceeding with an upgrade that has no recoverable copy is the one failure you cannot undo.
+
+## Backup Location
+
+Snapshots are stored in a `backups/{journal name}/` subfolder inside the same directory as your `diary.db`, where `{journal name}` is your database filename without its extension (`diary` by default). Each journal gets its own folder. Default journal directories by operating system:
+
+- **Windows**: `%APPDATA%\com.minidiarium\backups\diary\`
+- **macOS**: `~/Library/Application Support/com.minidiarium/backups/diary/`
+- **Linux**: `~/.local/share/com.minidiarium/backups/diary/`
+
+If you have changed your journal location in Preferences, snapshots are created in `{your chosen directory}/backups/{journal name}/` instead.
+
+## Backup Filenames
+
+Each snapshot is named `backup-YYYY-MM-DD-HHhMMmSS.db`, for example `backup-2026-08-04-14h30m07.db`. The timestamp reflects local time at the moment the snapshot was taken.
+
+Alongside them sits a `manifest.json` file recording when each snapshot was taken, why, how large it is, how many entries it holds, and which kinds of credential it accepts. It holds no entry text, no titles, no tag names, and no journal names. Deleting it is harmless: Mini Diarium rebuilds it by scanning the folder.
+
+## How Long Snapshots Are Kept
+
+Retention is **tiered**, so how much history you have does not depend on how often you open the app:
+
+- the **10 most recent** snapshots, whatever their age
+- **one per day** for the last 14 days
+- **one per week** for the last 8 weeks
+- **one per month** for the last 12 months
+
+A snapshot that qualifies for more than one tier occupies one slot, not several. A burst of activity in a single afternoon cannot push out last month's copy.
+
+![Diagram of the four retention tiers along a timeline, with any kept snapshot leading to Restore, and the Most Recent tier leading to Prune if the storage budget is exceeded](https://mini-diarium.com/assets/docs/diagrams/backups-rotation-lifecycle.svg "Snapshot retention tiers and what happens to a kept snapshot")
+
+On top of that sits a storage budget of 2 GB, or three times the size of your journal, whichever is larger. If the snapshots exceed it, Mini Diarium thins the *most recent* tier first and protects the older ones, because those are the ones you cannot recreate.
+
+Only files matching the `backup-*.db` naming pattern are managed. Anything else you put in the folder is left alone. Snapshots created by earlier versions of Mini Diarium are adopted automatically on first run, not discarded.
+
+## Seeing Your Backups
+
+Open **Preferences → Backups**. The panel lists every snapshot, newest first, with the date it was taken, why it was taken, how many entries it holds, its size, and the range of entry dates inside it.
+
+Above the list is the state of the whole folder: whether backups are working, when the last one was taken, how much space they use against the storage budget, and the retention policy in words.
+
+![Backups panel listing three manual snapshots with their entry counts, sizes, and Check, Restore, Delete, and Restore entries actions](https://mini-diarium.com/assets/docs/backups-01-panel-populated.webp "The Backups panel with a few snapshots")
+
+Four things you can do from here:
+
+- **Back up now** takes a snapshot immediately. Unlike the automatic ones, it ignores the once-per-hour limit and the "nothing changed" rule, so it always produces a snapshot.
+- **Check** re-opens one snapshot and confirms your journal's key still decrypts every entry's title, text, tags, and any attached images inside it — not just a sample. Snapshots taken by an older version of Mini Diarium start as *Not checked*, which means "not confirmed yet", not "broken". A snapshot that fails the check is reported, never deleted: it may still open with the credential it was taken with.
+- **Delete** removes one snapshot.
+- **Open backups folder** opens the folder in your file manager.
+
+### When the journal will not open
+
+The same panel is reachable from the unlock screen, before you enter anything, via **View backups**. This is deliberate. The moment you most need to know which backups exist is the moment your journal will not open.
+
+Everything you need to answer "is there a backup, and how recent is it?" still works there, because none of it needs your key: the dates, sizes, and reasons are readable from the snapshots and their manifest without decrypting anything. Entry counts and date ranges are held back until you unlock, so a passer-by at the lock screen learns that backups exist without learning how much you have written or over what span. The actions that do need the key (taking, checking, and deleting backups) are disabled until you unlock.
+
+### When something is wrong
+
+The panel replaces "Backups are working." with a plain-language cause when it can find one:
+
+- **The last attempt failed.** Backups taken as the app locks or exits run in the background, so a failure has nowhere to appear at the time. It is recorded and shown here instead. Open the backups folder and check it is reachable and has free space.
+- **The folder cannot be used.** Usually a journal on a removable or synced drive that is disconnected, so reconnect it. It also covers the case where the backups folder still has an address but nothing usable at it: something else, a file for instance, has taken its place, or the folder itself can no longer be read. That second case is worth stating separately because no failure record can be written into a folder that cannot be written to, so this line is the only warning you get.
+- **Backups are over their storage limit.** Not an error. Mini Diarium trims the most recent snapshots first and keeps the older ones.
+
+## Restoring
+
+Restoring is now built into the app, in two forms, both reachable from **Preferences → Backups**.
+
+**Whole-journal restore** rolls your entire journal back to the moment a snapshot was taken. Click **Restore** on a backup: Mini Diarium names the date, warns that entries written since then will be replaced, and takes a safety snapshot of your *current* state before touching anything — so restoring is reversible even if you picked the wrong one. No password or key file is asked for: a password change only re-wraps your existing key, so whatever unlocked the journal a moment ago also opens every snapshot it ever produced.
+
+**Per-entry restore** recovers specific entries without touching the rest of your journal. Click **Restore entries…** on a backup to browse what it contains. The dialog names the snapshot's date and entry count before listing anything, so you know exactly which backup you are looking at. Each entry is flagged if it is missing from your current journal, shorter there than in the backup, or already present, so it is clear what is worth recovering. Restoring an entry never overwrites anything — it is added alongside whatever your journal already holds for that date — and the result states how many entries were added. Tags on a recovered entry come back with it. This is the one that matters when you only lost a day or two, not the whole journal.
+
+![Restore individual entries dialog listing ten entries from a snapshot, each marked "Already in your journal"](https://mini-diarium.com/assets/docs/backups-02-inspect-dialog.webp "Browsing a snapshot's entries before restoring")
+
+Nothing decrypted is ever written to disk during either kind of restore.
+
+**Do not point Mini Diarium at a snapshot where it sits.** A snapshot is a working database, so **+ Open Existing** would happily open one — and opening it as a journal writes to it, destroying the untouched restore point. The app refuses `backup-*.db` files and anything inside a `backups` folder for exactly that reason. Both restore paths above read snapshots safely; you never need to do this by hand.
+
+## Custom Journal Locations
+
+When you move your journal to a different folder via Preferences, `diary.db` is physically moved to the new location and all future snapshots go into `{new location}/backups/{journal name}/`. If you have existing snapshots, Mini Diarium asks whether to move them along with the journal.
+
+**If you decline, existing snapshots stay in the old folder.** Mini Diarium tells you where before the move finishes. If you want to keep that history later, copy the old `backups/` folder to the new journal directory by hand.
+
+## Cloud-Synced Locations
+
+If you place your journal directory inside a cloud-synced folder (Dropbox, OneDrive, iCloud Drive, and so on), both `diary.db` and the `backups/` subfolder are included in the sync, giving you off-site backup on top of local snapshots.
+
+Keep in mind that Mini Diarium does not coordinate concurrent access. **Do not open the same journal from two devices at the same time.** The encrypted database file is not designed for simultaneous multi-device write access.
+
+## Snapshots Are Encrypted, and What That Costs You
+
+Snapshots are fully encrypted with the same key as your live journal. A snapshot without your credentials is unreadable. That is the point, and it has three consequences worth knowing before you need them.
+
+**A snapshot keeps the credentials it was taken with.** If you change your password, snapshots taken before the change still require the **old** password. Keep it somewhere safe, or take a fresh snapshot right after changing it.
+
+**Removing an authentication method does not revoke it retroactively.** A key file you removed still unlocks every snapshot taken while it was registered. If you removed it because it was compromised, delete the snapshots that predate the removal too.
+
+**Local-only journals need this device.** A journal with no password is protected by a device-bound key stored in Mini Diarium's `config.json`, which lives in the app data directory and is **not** part of the backups folder. Copying the backups folder to another machine is not enough to restore it there. If that matters to you, add a password or a key file to the journal so its snapshots are portable.
+
+---
+
+# FAQ
+
+> Answers to common questions about Mini Diarium: password recovery, encryption model, cross-device sync, key files, authentication slots, and mobile support.
+
+Source: https://mini-diarium.com/docs/faq/
+
+## I forgot my password. Can I recover my entries?
+
+No, unless you registered a key file as an authentication method. If you have a key file, you can still unlock your journal using the "Key File" tab on the unlock screen. If you have neither your password nor your key file, your entries cannot be recovered. This is by design: the encryption key is derived from your password, and no backup of it is stored anywhere.
+
+## Where is my data stored?
+
+Locally on your machine in an SQLite database. See the [Backups](../backups/) section for the exact default path on your operating system.
+
+## Does Mini Diarium connect to the internet?
+
+Never. Mini Diarium makes no network requests, collects no analytics, sends no telemetry, and does not check for updates automatically. All data stays on your device.
+
+Release notes for each version are bundled with the app itself and displayed in the **notification center** (bell icon in the header). No network call is made. The notes ship as a local file inside the application bundle.
+
+## Can I sync across devices?
+
+Not directly. Mini Diarium is local-only by design. You could manually copy the `diary.db` file to another device, but simultaneous access from multiple devices is not supported and could corrupt the database. If you want cloud backup, place your journal directory inside a synced folder (Dropbox, OneDrive, iCloud Drive) and only open it from one device at a time.
+
+## I used Mini Diary before. Can I migrate?
+
+Yes. Export your journal from Mini Diary as JSON, then import it in Mini Diarium from **Journal → Import...** using the Mini Diary JSON format. All entries are imported with their original dates.
+
+## How does the encryption work?
+
+Mini Diarium encrypts each journal entry using AES-256-GCM with a random master key. The master key is never stored in plaintext. It is wrapped (encrypted) by a key derived from your password using Argon2id, and only the wrapped version is saved to disk. When you unlock, your password re-derives the wrapping key, which decrypts the master key in memory. The master key is held only in RAM and discarded when you lock.
+
+## Can I use multiple passwords or unlock methods?
+
+Yes. Mini Diarium supports multiple authentication slots. You can register a password and one or more key files. Each method independently wraps the same master key. You can add or remove methods in **Preferences → Authentication Methods** without re-encrypting your entries. At least one method must remain active.
+
+For stronger security, you can enable **Require All Authentication Methods** in **Preferences → Security**. When active, every registered method must be provided at unlock, for example both your password and your key file. This prevents access even if one credential is compromised.
+
+## What is a key file?
+
+A key file is a private key stored as a file on disk (or a USB drive, or a password manager). It plays the same role as a password but is a file you present instead of something you type. Key files use X25519 ECDH internally. Generate one from **Preferences → Authentication Methods → Add Key File**, then keep the `.key` file somewhere safe.
+
+## What happens if I delete or lose my key file?
+
+If you have another authentication method (a password, or another key file) still registered, you can still unlock your journal. If the key file was your only method, the journal is permanently inaccessible. Always register at least two authentication methods if you rely on key files.
+
+## Is there a mobile app?
+
+Not currently. Mini Diarium is a desktop app for Windows, macOS, and Linux. A mobile version is in our long-term vision if there is enough demand, but it is a significant development and maintenance effort. We are currently focused on keeping the desktop experience at the highest quality standards.
+
+## Where can I report a security issue?
+
+See the [Security Policy](https://github.com/fjrevoredo/mini-diarium/blob/master/SECURITY.md) in the repository. Do not open a public GitHub issue for security vulnerabilities.
+

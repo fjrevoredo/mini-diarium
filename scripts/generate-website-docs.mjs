@@ -12,6 +12,7 @@ const DOCS_SRC_DIR = path.join(WEBSITE_DIR, 'docs-src');
 const DOCS_DIR = path.join(WEBSITE_DIR, 'docs');
 const SITEMAP_PATH = path.join(WEBSITE_DIR, 'sitemap.xml');
 const LLMS_PATH = path.join(WEBSITE_DIR, 'llms.txt');
+const LLMS_FULL_PATH = path.join(WEBSITE_DIR, 'llms-full.txt');
 const SITE_URL = 'https://mini-diarium.com';
 const DEFAULT_AUTHOR = 'Francisco J. Revoredo';
 const DEFAULT_OG_IMAGE = `${SITE_URL}/assets/og-cover.png`;
@@ -272,6 +273,106 @@ function unwrapFigureParagraphs(html) {
 
 function isoDate(value) {
   return `${value}T00:00:00Z`;
+}
+
+// Rewrites root-relative markdown link/image targets to absolute URLs so a
+// mirror is self-contained once it leaves the site (llms-full.txt, "View as
+// Markdown", AI chat prefill).
+function absolutizeMarkdownPaths(body) {
+  return body.replace(/\]\((\/[^)]+)\)/g, (_match, target) => `](${SITE_URL}${target})`);
+}
+
+function buildMarkdownMirror(section) {
+  return `# ${section.title}
+
+> ${section.description}
+
+Source: ${section.canonical}
+
+${absolutizeMarkdownPaths(section.body)}
+`;
+}
+
+function buildAiPrompt(mirrorUrl) {
+  return `Read ${mirrorUrl} so I can ask questions about it.`;
+}
+
+function buildAiLinks(mirrorUrl) {
+  const prompt = encodeURIComponent(buildAiPrompt(mirrorUrl));
+  return [
+    { label: 'Open in ChatGPT', href: `https://chatgpt.com/?q=${prompt}`, icon: 'chatgpt' },
+    { label: 'Open in Claude', href: `https://claude.ai/new?q=${prompt}`, icon: 'claude' },
+    {
+      label: 'Open in Perplexity',
+      href: `https://www.perplexity.ai/search?q=${prompt}`,
+      icon: 'perplexity',
+    },
+  ];
+}
+
+const DOCS_COPY_ICON_PATHS = {
+  clipboard:
+    '<rect x="8" y="2" width="8" height="4" rx="1"/><path d="M9 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-3"/>',
+  markdown: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/>',
+  chatgpt: '<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.2"/>',
+  claude:
+    '<line x1="12" y1="3" x2="12" y2="21"/><line x1="4.5" y1="7.5" x2="19.5" y2="16.5"/><line x1="19.5" y1="7.5" x2="4.5" y2="16.5"/>',
+  perplexity: '<rect x="7" y="7" width="10" height="10" rx="1.5" transform="rotate(45 12 12)"/>',
+};
+
+function docsCopyIcon(name, className) {
+  return `<svg class="${className}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${DOCS_COPY_ICON_PATHS[name]}</svg>`;
+}
+
+const DOCS_EXTERNAL_ICON =
+  '<svg class="docs-copy-external" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>';
+
+function buildCopyDropdown(section) {
+  const mirrorUrl = `${SITE_URL}/docs/${section.slug}.md`;
+  const menuId = `docs-copy-menu-${escapeHtml(section.slug)}`;
+
+  const aiItemsHtml = buildAiLinks(mirrorUrl)
+    .map(
+      (link) => `    <a class="docs-copy-menu-item" href="${escapeHtml(link.href)}" target="_blank" rel="noopener">
+      ${docsCopyIcon(link.icon, 'docs-copy-menu-icon')}
+      <span class="docs-copy-menu-text">
+        <span class="docs-copy-menu-title">${escapeHtml(link.label)}${DOCS_EXTERNAL_ICON}</span>
+        <span class="docs-copy-menu-desc">Ask questions about this page</span>
+      </span>
+    </a>`,
+    )
+    .join('\n');
+
+  return `<div class="docs-copy-wrap">
+  <div class="docs-copy-split">
+    <button class="docs-copy-main" type="button" data-copy-target="${escapeHtml(mirrorUrl)}">
+      ${docsCopyIcon('clipboard', 'docs-copy-main-icon')}
+      <span class="docs-copy-label">Copy page</span>
+    </button>
+    <button class="docs-copy-chevron" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="${menuId}" aria-label="More copy options">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+        <polyline points="6 9 12 15 18 9" />
+      </svg>
+    </button>
+  </div>
+  <div class="docs-copy-menu" id="${menuId}">
+    <button class="docs-copy-menu-item" type="button" data-copy-target="${escapeHtml(mirrorUrl)}">
+      ${docsCopyIcon('clipboard', 'docs-copy-menu-icon')}
+      <span class="docs-copy-menu-text">
+        <span class="docs-copy-menu-title">Copy page</span>
+        <span class="docs-copy-menu-desc">Copy page as Markdown for LLMs</span>
+      </span>
+    </button>
+    <a class="docs-copy-menu-item" href="/docs/${escapeHtml(section.slug)}.md" target="_blank" rel="noopener">
+      ${docsCopyIcon('markdown', 'docs-copy-menu-icon')}
+      <span class="docs-copy-menu-text">
+        <span class="docs-copy-menu-title">View as Markdown${DOCS_EXTERNAL_ICON}</span>
+        <span class="docs-copy-menu-desc">View this page as plain text</span>
+      </span>
+    </a>
+${aiItemsHtml}
+  </div>
+</div>`;
 }
 
 function readSections() {
@@ -600,6 +701,115 @@ function buildHead({
     .docs-card h2 { font-size: .95rem; font-weight: 700; color: var(--text, #f0ede6); margin: 0; }
     .docs-card p { font-size: .825rem; color: var(--text-muted, #888); margin: 0; line-height: 1.5; }
     .docs-card-icon { font-size: 1.1rem; }
+    .post-header .hero-sub { margin: 0; }
+    .docs-copy-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-bottom: 0.85rem;
+    }
+    .docs-copy-bar.docs-copy-bar-solo { justify-content: flex-end; }
+    .docs-copy-bar h2,
+    .docs-copy-bar h3 { margin: 0; }
+    .docs-copy-wrap {
+      position: relative;
+      flex-shrink: 0;
+    }
+    .docs-copy-split {
+      display: flex;
+      align-items: stretch;
+      background: var(--bg-card, #161616);
+      border: 1px solid var(--border, #2a2a2a);
+      border-radius: var(--radius, 8px);
+      overflow: hidden;
+    }
+    .docs-copy-main,
+    .docs-copy-chevron {
+      display: flex;
+      align-items: center;
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: background .15s, color .15s;
+    }
+    .docs-copy-main {
+      gap: .4rem;
+      font-size: .8rem;
+      font-weight: 600;
+      padding: .5rem .75rem;
+    }
+    .docs-copy-chevron {
+      padding: .5rem .55rem;
+      border-left: 1px solid var(--border, #2a2a2a);
+    }
+    .docs-copy-main:hover,
+    .docs-copy-chevron:hover,
+    .docs-copy-chevron[aria-expanded="true"] {
+      background: rgba(245,201,77,.1);
+      color: #f5c94d;
+    }
+    .docs-copy-main-icon { width: 14px; height: 14px; flex-shrink: 0; }
+    .docs-copy-menu {
+      position: absolute;
+      top: calc(100% + .5rem);
+      right: 0;
+      min-width: 300px;
+      display: none;
+      flex-direction: column;
+      background: var(--bg-card, #161616);
+      border: 1px solid var(--border, #2a2a2a);
+      border-radius: var(--radius, 8px);
+      padding: .4rem;
+      box-shadow: 0 12px 32px rgba(0,0,0,.5);
+      z-index: 100;
+    }
+    .docs-copy-menu.open { display: flex; }
+    .docs-copy-menu-item {
+      display: flex;
+      align-items: flex-start;
+      gap: .65rem;
+      width: 100%;
+      text-align: left;
+      font: inherit;
+      color: var(--text, #f0ede6);
+      background: none;
+      border: none;
+      border-radius: 6px;
+      padding: .5rem .6rem;
+      text-decoration: none;
+      cursor: pointer;
+      transition: background .15s;
+    }
+    .docs-copy-menu-item:hover { background: rgba(245,201,77,.1); }
+    .docs-copy-menu-icon {
+      flex-shrink: 0;
+      width: 18px;
+      height: 18px;
+      margin-top: .1rem;
+      color: var(--text-muted, #888);
+    }
+    .docs-copy-menu-text {
+      display: flex;
+      flex-direction: column;
+      gap: .15rem;
+      min-width: 0;
+    }
+    .docs-copy-menu-title {
+      display: flex;
+      align-items: center;
+      gap: .3rem;
+      font-size: .825rem;
+      font-weight: 600;
+    }
+    .docs-copy-menu-desc {
+      font-size: .72rem;
+      color: var(--text-muted, #888);
+      line-height: 1.3;
+    }
+    .docs-copy-external { width: 11px; height: 11px; opacity: .6; }
     @media (max-width: 1099px) {
       .docs-layout { grid-template-columns: 240px 1fr; }
       .docs-toc { display: none; }
@@ -794,6 +1004,18 @@ function renderSectionPage(section, sections) {
   const tocHtml = buildToc(htmlBody);
   const hasToc = tocHtml !== '';
 
+  // Pair the copy dropdown with the article's first heading on one row when
+  // the body starts with one (true for every section today); otherwise fall
+  // back to a standalone row so a future intro paragraph doesn't break.
+  const firstHeadingMatch = htmlBody.match(/^<h([23])\s+id="([^"]+)">([\s\S]*?)<\/h\1>/);
+  const bodyAfterHeading = firstHeadingMatch
+    ? htmlBody.slice(firstHeadingMatch[0].length)
+    : htmlBody;
+  const copyBarHeading = firstHeadingMatch
+    ? `<h${firstHeadingMatch[1]} id="${firstHeadingMatch[2]}">${firstHeadingMatch[3]}</h${firstHeadingMatch[1]}>`
+    : '';
+  const copyBarClass = firstHeadingMatch ? 'docs-copy-bar' : 'docs-copy-bar docs-copy-bar-solo';
+
   const structuredData = {
     '@context': 'https://schema.org',
     '@graph': [
@@ -852,12 +1074,15 @@ function renderSectionPage(section, sections) {
     ],
   };
 
+  const mirrorUrl = `${SITE_URL}/docs/${section.slug}.md`;
+
   const head = buildHead({
     pageTitle: `${section.title} — Mini Diarium Documentation`,
     description: section.description,
     canonical: section.canonical,
     ogType: 'article',
     structuredData,
+    extraMeta: `<link rel="alternate" type="text/markdown" href="${escapeHtml(mirrorUrl)}" />`,
   });
 
   let prevNextHtml = '';
@@ -918,7 +1143,14 @@ ${buildSidebar(sections, section.slug)
   .map((line) => `      ${line}`)
   .join('\n')}
       <article class="blog-post prose" aria-label="${escapeHtml(section.title)}">
-${htmlBody
+        <div class="${copyBarClass}">
+          ${copyBarHeading}
+${buildCopyDropdown(section)
+  .split('\n')
+  .map((line) => `          ${line}`)
+  .join('\n')}
+        </div>
+${bodyAfterHeading
   .split('\n')
   .map((line) => `        ${line}`)
   .join('\n')}
@@ -934,6 +1166,7 @@ ${prevNextHtml
   const sectionDir = path.join(DOCS_DIR, section.slug);
   mkdirSync(sectionDir, { recursive: true });
   writeFileSync(path.join(sectionDir, 'index.html'), buildShell({ head, content }));
+  writeFileSync(path.join(DOCS_DIR, `${section.slug}.md`), buildMarkdownMirror(section));
 }
 
 function ensureDirectories() {
@@ -946,6 +1179,8 @@ function ensureDirectories() {
 
     if (entry.isDirectory()) {
       rmSync(path.join(DOCS_DIR, entry.name), { recursive: true, force: true });
+    } else if (entry.isFile() && entry.name.endsWith('.md')) {
+      rmSync(path.join(DOCS_DIR, entry.name), { force: true });
     }
   }
 }
@@ -1017,6 +1252,20 @@ function updateLlms(sections) {
   writeFileSync(LLMS_PATH, `${content}${docsBlock}\n`);
 }
 
+function writeLlmsFull(sections) {
+  const header = [
+    '# Mini Diarium — Full Documentation',
+    '',
+    '> Complete Markdown text of every Mini Diarium documentation section, concatenated for full-text ingestion by AI assistants and crawlers.',
+    '',
+    `Canonical documentation hub: ${SITE_URL}/docs/`,
+  ].join('\n');
+
+  const body = sections.map((section) => buildMarkdownMirror(section)).join('\n---\n\n');
+
+  writeFileSync(LLMS_FULL_PATH, `${header}\n\n${body}\n`);
+}
+
 function main() {
   const sections = readSections();
   ensureDirectories();
@@ -1024,6 +1273,7 @@ function main() {
   for (const section of sections) {
     renderSectionPage(section, sections);
   }
+  writeLlmsFull(sections);
   updateSitemap(sections);
   updateLlms(sections);
   console.log(`Generated static docs with ${sections.length} section(s)`);

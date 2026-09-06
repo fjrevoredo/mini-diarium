@@ -24,7 +24,7 @@
   <meta name="twitter:title" content="Plugins — Mini Diarium Documentation" />
   <meta name="twitter:description" content="Extend Mini Diarium with Rhai script plugins for custom import and export formats. Covers the plugins folder, writing your first plugin, and API helpers." />
   <meta name="twitter:image" content="https://mini-diarium.com/assets/og-cover.png" />
-  
+  <link rel="alternate" type="text/markdown" href="https://mini-diarium.com/docs/plugins.md" />
   <title>Plugins — Mini Diarium Documentation</title>
   <link rel="canonical" href="https://mini-diarium.com/docs/plugins/" />
   <link rel="alternate" hreflang="x-default" href="https://mini-diarium.com/docs/plugins/" />
@@ -217,6 +217,115 @@
     .docs-card h2 { font-size: .95rem; font-weight: 700; color: var(--text, #f0ede6); margin: 0; }
     .docs-card p { font-size: .825rem; color: var(--text-muted, #888); margin: 0; line-height: 1.5; }
     .docs-card-icon { font-size: 1.1rem; }
+    .post-header .hero-sub { margin: 0; }
+    .docs-copy-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      flex-wrap: wrap;
+      margin-bottom: 0.85rem;
+    }
+    .docs-copy-bar.docs-copy-bar-solo { justify-content: flex-end; }
+    .docs-copy-bar h2,
+    .docs-copy-bar h3 { margin: 0; }
+    .docs-copy-wrap {
+      position: relative;
+      flex-shrink: 0;
+    }
+    .docs-copy-split {
+      display: flex;
+      align-items: stretch;
+      background: var(--bg-card, #161616);
+      border: 1px solid var(--border, #2a2a2a);
+      border-radius: var(--radius, 8px);
+      overflow: hidden;
+    }
+    .docs-copy-main,
+    .docs-copy-chevron {
+      display: flex;
+      align-items: center;
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: background .15s, color .15s;
+    }
+    .docs-copy-main {
+      gap: .4rem;
+      font-size: .8rem;
+      font-weight: 600;
+      padding: .5rem .75rem;
+    }
+    .docs-copy-chevron {
+      padding: .5rem .55rem;
+      border-left: 1px solid var(--border, #2a2a2a);
+    }
+    .docs-copy-main:hover,
+    .docs-copy-chevron:hover,
+    .docs-copy-chevron[aria-expanded="true"] {
+      background: rgba(245,201,77,.1);
+      color: #f5c94d;
+    }
+    .docs-copy-main-icon { width: 14px; height: 14px; flex-shrink: 0; }
+    .docs-copy-menu {
+      position: absolute;
+      top: calc(100% + .5rem);
+      right: 0;
+      min-width: 300px;
+      display: none;
+      flex-direction: column;
+      background: var(--bg-card, #161616);
+      border: 1px solid var(--border, #2a2a2a);
+      border-radius: var(--radius, 8px);
+      padding: .4rem;
+      box-shadow: 0 12px 32px rgba(0,0,0,.5);
+      z-index: 100;
+    }
+    .docs-copy-menu.open { display: flex; }
+    .docs-copy-menu-item {
+      display: flex;
+      align-items: flex-start;
+      gap: .65rem;
+      width: 100%;
+      text-align: left;
+      font: inherit;
+      color: var(--text, #f0ede6);
+      background: none;
+      border: none;
+      border-radius: 6px;
+      padding: .5rem .6rem;
+      text-decoration: none;
+      cursor: pointer;
+      transition: background .15s;
+    }
+    .docs-copy-menu-item:hover { background: rgba(245,201,77,.1); }
+    .docs-copy-menu-icon {
+      flex-shrink: 0;
+      width: 18px;
+      height: 18px;
+      margin-top: .1rem;
+      color: var(--text-muted, #888);
+    }
+    .docs-copy-menu-text {
+      display: flex;
+      flex-direction: column;
+      gap: .15rem;
+      min-width: 0;
+    }
+    .docs-copy-menu-title {
+      display: flex;
+      align-items: center;
+      gap: .3rem;
+      font-size: .825rem;
+      font-weight: 600;
+    }
+    .docs-copy-menu-desc {
+      font-size: .72rem;
+      color: var(--text-muted, #888);
+      line-height: 1.3;
+    }
+    .docs-copy-external { width: 11px; height: 11px; opacity: .6; }
     @media (max-width: 1099px) {
       .docs-layout { grid-template-columns: 240px 1fr; }
       .docs-toc { display: none; }
@@ -376,7 +485,60 @@
         </div>
       </nav>
       <article class="blog-post prose" aria-label="Plugins">
-        <h2 id="what-are-plugins">What Are Plugins?</h2><p>Mini Diarium supports custom import and export formats through Rhai script plugins. Rhai is a simple, sandboxed scripting language that runs inside the app. You can write a plugin to handle any file format that the built-in options do not cover.</p>
+        <div class="docs-copy-bar">
+          <h2 id="what-are-plugins">What Are Plugins?</h2>
+          <div class="docs-copy-wrap">
+            <div class="docs-copy-split">
+              <button class="docs-copy-main" type="button" data-copy-target="https://mini-diarium.com/docs/plugins.md">
+                <svg class="docs-copy-main-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M9 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-3"/></svg>
+                <span class="docs-copy-label">Copy page</span>
+              </button>
+              <button class="docs-copy-chevron" type="button" aria-haspopup="true" aria-expanded="false" aria-controls="docs-copy-menu-plugins" aria-label="More copy options">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+                  <polyline points="6 9 12 15 18 9" />
+                </svg>
+              </button>
+            </div>
+            <div class="docs-copy-menu" id="docs-copy-menu-plugins">
+              <button class="docs-copy-menu-item" type="button" data-copy-target="https://mini-diarium.com/docs/plugins.md">
+                <svg class="docs-copy-menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M9 4H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2h-3"/></svg>
+                <span class="docs-copy-menu-text">
+                  <span class="docs-copy-menu-title">Copy page</span>
+                  <span class="docs-copy-menu-desc">Copy page as Markdown for LLMs</span>
+                </span>
+              </button>
+              <a class="docs-copy-menu-item" href="/docs/plugins.md" target="_blank" rel="noopener">
+                <svg class="docs-copy-menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>
+                <span class="docs-copy-menu-text">
+                  <span class="docs-copy-menu-title">View as Markdown<svg class="docs-copy-external" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></span>
+                  <span class="docs-copy-menu-desc">View this page as plain text</span>
+                </span>
+              </a>
+              <a class="docs-copy-menu-item" href="https://chatgpt.com/?q=Read%20https%3A%2F%2Fmini-diarium.com%2Fdocs%2Fplugins.md%20so%20I%20can%20ask%20questions%20about%20it." target="_blank" rel="noopener">
+                <svg class="docs-copy-menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.2"/></svg>
+                <span class="docs-copy-menu-text">
+                  <span class="docs-copy-menu-title">Open in ChatGPT<svg class="docs-copy-external" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></span>
+                  <span class="docs-copy-menu-desc">Ask questions about this page</span>
+                </span>
+              </a>
+              <a class="docs-copy-menu-item" href="https://claude.ai/new?q=Read%20https%3A%2F%2Fmini-diarium.com%2Fdocs%2Fplugins.md%20so%20I%20can%20ask%20questions%20about%20it." target="_blank" rel="noopener">
+                <svg class="docs-copy-menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="12" y1="3" x2="12" y2="21"/><line x1="4.5" y1="7.5" x2="19.5" y2="16.5"/><line x1="19.5" y1="7.5" x2="4.5" y2="16.5"/></svg>
+                <span class="docs-copy-menu-text">
+                  <span class="docs-copy-menu-title">Open in Claude<svg class="docs-copy-external" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></span>
+                  <span class="docs-copy-menu-desc">Ask questions about this page</span>
+                </span>
+              </a>
+              <a class="docs-copy-menu-item" href="https://www.perplexity.ai/search?q=Read%20https%3A%2F%2Fmini-diarium.com%2Fdocs%2Fplugins.md%20so%20I%20can%20ask%20questions%20about%20it." target="_blank" rel="noopener">
+                <svg class="docs-copy-menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="1.5" transform="rotate(45 12 12)"/></svg>
+                <span class="docs-copy-menu-text">
+                  <span class="docs-copy-menu-title">Open in Perplexity<svg class="docs-copy-external" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg></span>
+                  <span class="docs-copy-menu-desc">Ask questions about this page</span>
+                </span>
+              </a>
+            </div>
+          </div>
+        </div>
+        <p>Mini Diarium supports custom import and export formats through Rhai script plugins. Rhai is a simple, sandboxed scripting language that runs inside the app. You can write a plugin to handle any file format that the built-in options do not cover.</p>
         <p>Plugins appear in the Import and Export overlay dropdowns alongside the built-in formats.</p>
         <figure class="prose-figure"><img src="/assets/docs/plugins-01-export-dropdown.webp" alt="Export Entries dialog with a custom plugin format, &quot;Plain Text Timeline&quot;, selected in the Format dropdown" loading="lazy" width="560" height="480" /><figcaption>A Rhai plugin listed alongside the built-in export formats</figcaption></figure>
         <h2 id="where-is-the-plugins-folder">Where Is the Plugins Folder?</h2><p>The <code>plugins/</code> folder is shared across all journals and lives in the app data directory (this location is fixed and does not change when you configure a different journal path in Preferences):</p>
@@ -513,6 +675,6 @@
     </div>
   </div>
 </footer>
-<script src="/js/main.1ba3bbe1.js"></script>
+<script src="/js/main.b9809e79.js"></script>
 </body>
 </html>

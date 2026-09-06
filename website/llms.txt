@@ -15,6 +15,7 @@
 - Security policy: https://github.com/fjrevoredo/mini-diarium/blob/master/SECURITY.md
 - Privacy policy: https://github.com/fjrevoredo/mini-diarium/blob/master/docs/PRIVACY.md
 - AI crawler policy: https://mini-diarium.com/ai-crawlers.txt
+- Full documentation text (single file): https://mini-diarium.com/llms-full.txt
 - Contact: minidiarium@gmail.com
 
 ## Product Facts

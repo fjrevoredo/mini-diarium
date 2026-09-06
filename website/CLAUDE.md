@@ -11,7 +11,7 @@ Both the blog and the docs sections are generated from Markdown sources. Editing
 | Source (edit these) | Generated output (never edit) |
 |---------------------|-------------------------------|
 | `posts-src/*.md` | `blog/*/index.html`, `blog/index.html`, `blog/feed.xml`, `sitemap.xml`, `llms.txt` |
-| `docs-src/*.md` | `docs/*/index.html`, `docs/index.html` |
+| `docs-src/*.md` | `docs/*/index.html`, `docs/index.html`, `docs/*.md` (per-page Markdown mirror), `llms-full.txt` |
 
 The only files you should edit manually are:
 - `posts-src/*.md` — blog post sources (the canonical input)
@@ -319,6 +319,31 @@ Standard Markdown syntax works: `![alt text](src "optional caption")`. The gener
 
 See `website/docs-src/_template.md` for the starter template.
 
+### Agent-Friendly Mirrors (Copy Page, `llms-full.txt`)
+
+Each docs **section** page (not the hub) ships a Mintlify-style "Copy page" dropdown next to
+its title (Copy page, View as Markdown, Open in ChatGPT/Claude/Perplexity), a per-page Markdown
+mirror at `docs/<slug>.md`, and a `<link rel="alternate" type="text/markdown">` discovery tag in
+its `<head>`. All three are generated — never hand-edit `docs/*.md`. `website/llms-full.txt` is
+the full-text sibling of the curated `llms.txt`: every section's Markdown, concatenated, for
+single-file ingestion by AI assistants. Like `docs/*/index.html` and `llms.txt`, `docs/*.md` and
+`llms-full.txt` are generated **and committed** — `bun run website:build-static` regenerates
+them, and the diff goes into the same commit as the `docs-src/` change that produced it.
+
+- **Canonicalization, not `noindex`:** each `.md` mirror is near-duplicate content of its HTML
+  page, so `nginx.conf` sends an HTTP `Link: <...>; rel="canonical"` header pointing at the HTML
+  page (Google's documented method for canonicalizing a non-HTML resource) instead of blocking
+  it with `X-Robots-Tag: noindex`. This follows the `seo-audit` skill's duplicate-content
+  guidance — consolidate ranking signal onto one page rather than just hiding the duplicate.
+  Keep the header's target in exact sync with that section's `<link rel="canonical">`.
+- **The three AI deep-links are unofficial.** `chatgpt.com/?q=`, `claude.ai/new?q=`, and
+  `perplexity.ai/search?q=` are reverse-engineered query params, not a stable contract. If a
+  provider changes its chat UI and a link stops prefilling, drop that one entry from
+  `buildAiLinks()` in `scripts/generate-website-docs.mjs` rather than leaving a dead button.
+- This is a user-initiated referral affordance (a reader sends a page to their own chat
+  assistant) — distinct from the GEO-citation measurement in `docs/seo/STRATEGY.md` §5
+  (AI-Overview citation rate via GSC/Bing exports).
+
 ---
 
 ## How the build pipeline works
@@ -352,7 +377,7 @@ See `website/docs-src/_template.md` for the starter template.
 | `index.html` | Edit | Homepage — edit static sections directly; blog teaser block is auto-updated |
 | `encrypted-journal/`, `compare/`, `privacy/`, `newsletter/`, `donate/` | Edit | Static guide / comparison / policy / signup / donation pages |
 | `css/`, `js/` | Edit | Site stylesheet and scripts |
-| `nginx.conf` | Edit | Local Docker preview only — does not affect production |
+| `nginx.conf` | Edit | Ships to production (Coolify builds `Dockerfile`, which `COPY`s this to `/etc/nginx/conf.d/default.conf`); only redirect/TLS/canonical-host enforcement is Coolify-overridden |
 | `../docs/seo/` | Edit | SEO/GEO + growth hub (outside `website/`) — start at [`../docs/seo/README.md`](../docs/seo/README.md) |
 
 ---
@@ -384,4 +409,4 @@ The nginx config uses `server_name mini-diarium.com`. Browsers and curl reject r
 | Container starts but returns 404 | Check that `bun run website:build-static` ran and `website/docs/` and `website/blog/` are populated |
 | `www.mini-diarium.com` redirects | The nginx config redirects `www.*` to the non-www host — expected behavior |
 
-> **Note:** This compose file is for local preview only. Production runs through Coolify with separate TLS, redirect, and caching configuration. Changes to `nginx.conf` here do not affect production.
+> **Note:** This compose file is for local preview only. `nginx.conf` itself ships to production via `Dockerfile` (Coolify builds it) — Coolify only overrides TLS termination and redirect/canonical-host enforcement on top of it. Use this compose setup to verify routing and header changes before they reach production.
