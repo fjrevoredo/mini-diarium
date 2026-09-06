@@ -23,9 +23,9 @@ You can also enable **idle auto-lock** in Preferences → Security → Auto-Lock
 
 ### Multiple Journals
 
-You can maintain separate journals for different purposes (personal, work, travel, etc.). Each journal is an independent encrypted file in its own folder.
+You can maintain separate journals for different purposes (personal, work, travel, etc.). Each journal is an independent encrypted database file. Several journals can share one folder as long as they use different filenames.
 
-**Adding a journal:** Use the Journal Picker's add actions. You can create a new journal in a chosen folder or add an existing `diary.db`.
+**Adding a journal:** Use the Journal Picker's add actions. You can create a new journal — in the default location or a folder you choose — or add an existing `diary.db`.
 
 **Switching journals:** Open the Journal Picker, choose the journal you want, and then unlock it. On a shared device, this lets each person select their own journal before any authentication prompt appears.
 

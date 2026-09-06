@@ -136,14 +136,17 @@ const en = {
       journalNamePlaceholder: 'Journal name',
       locationLabel: 'Location',
       useDefaultLocation: 'Use default location',
-      defaultLocationHint:
-        'The default location gives each journal a folder of its own. You only need to browse if you want a different folder.',
+      defaultLocationHint: 'You only need to browse if you want a different folder.',
+      filenameLabel: 'Filename',
+      createSaveDialogTitle: 'Save New Journal',
+      alreadyExistsError:
+        'A database file already exists at this location. Choose a different name or location.',
+      chooseAnotherLocation: 'Choose a different location…',
       confirmRemoveMessage:
         'Remove this journal from the list? The journal file will not be deleted.',
       confirmRemoveTitle: 'Remove Journal',
       noJournalFound: 'The selected file is not a valid diary database.',
       nameRequired: 'Journal name is required',
-      folderRequired: 'Please choose a folder first',
       chooseFolderTitle: 'Choose Location',
       selectFolderTitle: 'Select Journal File',
       creating: 'Creating...',

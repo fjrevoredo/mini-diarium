@@ -39,6 +39,9 @@ Template:
 ### Added
 - **Manual word count recalculation (TODO-0111, #275)**: Settings → Advanced now has a "Recalculate Word Counts" button that rescans every entry in the journal and rewrites any stale `word_count`. Locked entries are skipped, and an entry's last-modified date is never touched by the recalculation. Manual/on-demand only — there is no automatic or background recalculation.
 
+### Changed
+- **File-based "Create New Journal" flow (TODO-0112)**: Creating a journal no longer forces a new folder per journal. On Windows/macOS/non-Flatpak Linux, **+ Create New Journal** now opens a native Save dialog (pre-filled with the default location and `diary.db`) so you pick or rename the exact file, the same way Open Existing already worked. On the Flathub build, Create still shows a dialog-free form (a native save dialog there can return an unusable temporary path), now with an editable Filename field so a second journal can be created in the same default folder. Attempting to create a journal at a location where a database file already exists is refused with a clear error instead of a raw filesystem failure.
+
 ## [0.7.2] - 01-09-2026
 
 ### Fixed

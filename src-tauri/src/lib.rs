@@ -391,7 +391,7 @@ pub fn run() {
             commands::auth::get_active_journal_id,
             commands::auth::add_journal,
             commands::auth::get_default_journal_dir,
-            commands::auth::prepare_journal_dir,
+            commands::platform::is_flatpak_sandbox,
             commands::auth::remove_journal,
             commands::auth::rename_journal,
             commands::auth::switch_journal,

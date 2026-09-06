@@ -3,7 +3,7 @@ title: Getting Started
 slug: getting-started
 description: System requirements, creating your first encrypted journal, setting a password, the welcome tour, multiple journals, key file auth, and local-only mode.
 order: 1
-updated: 2026-08-24
+updated: 2026-09-06
 tags: setup, password, first launch, system requirements
 ---
 
@@ -24,9 +24,9 @@ a minimum system version, so macOS will refuse to launch it rather than starting
 
 When you open Mini Diarium, the app starts at the **Journal Picker**. From there you can create a new journal or open an existing `diary.db` file.
 
-**+ Create New Journal** opens a short form with the location already filled in. You only need to give the journal a name and click **Add**; picking a folder yourself is optional. **Browse…** lets you choose a different one, and **Use default location** puts it back.
+**+ Create New Journal** opens a save dialog pre-filled with a default location and the filename `diary.db`. Pick where to save it — the default location works as-is — give the journal a name, and click **Add**.
 
-The default location is a `Mini Diarium` folder inside your Documents folder, or a folder inside the app's own data directory where Documents is not writable — as on the Flathub build, where the app is sandboxed. Whichever it resolves to is shown in the form before you create anything. Each journal created there gets a folder of its own, named after the journal. A folder you browse to is used exactly as you chose it, and the journal is created directly inside it.
+The default location is a `Mini Diarium` folder inside your Documents folder, or a folder inside the app's own data directory where Documents is not writable. On the Flathub build, where the app is sandboxed, a save dialog cannot reliably remember a folder outside the sandbox, so **+ Create New Journal** shows a form directly instead — with an editable Filename field plus **Browse…** and **Use default location** to choose where the file goes.
 
 If you create a new journal, you will be asked to create a password. This password encrypts your entire journal using AES-256-GCM encryption.
 
@@ -56,13 +56,13 @@ You can also enable **idle auto-lock** in **Preferences → Security → Auto-Lo
 
 ## Multiple Journals
 
-You can maintain separate journals for different purposes: personal, work, travel, and so on. Each journal is an independent encrypted file in its own folder.
+You can maintain separate journals for different purposes: personal, work, travel, and so on. Each journal is an independent encrypted database file. Several journals can share one folder as long as they use different filenames — the save dialog (or the Filename field on Flatpak) lets you rename a new journal to avoid a clash.
 
 **Adding a journal:** Use the Journal Picker's add actions. You can create a new journal — in the default location or a folder you choose — or add an existing `diary.db`.
 
 **Where a journal can live:** any ordinary folder you can write to. Three cases are refused, with an explanation:
 
-- **A journal already in your list.** Every journal uses the same `diary.db` filename, so two entries in one folder would be two names for a single journal. Adding one again is refused with "already in your list" — open it from the list instead.
+- **A journal already in your list.** Two journals pointing at the exact same file — the same folder *and* the same filename — are refused with "already in your list", since unlocking the second one would really be asking for the first journal's password under a different name. Journals with different filenames can share a folder without any conflict.
 
 - **A backup snapshot.** Files named `backup-*.db`, and anything inside a `backups` folder, cannot be opened as a journal, because opening one would write to it and destroy the restore point. To read an old snapshot, copy it out of the `backups` folder first and open the copy.
 - **A temporary sandbox location (Flatpak only).** On the Flathub build, browsing to a folder outside the app's sandbox returns a temporary path under `/run/user/…/doc/` rather than the real one. It works at first and stops working later, so it is refused. Use the default location, or grant the app permanent access to the folder you want with [Flatseal](https://flathub.org/apps/com.github.tchx84.Flatseal) before selecting it.

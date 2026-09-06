@@ -283,12 +283,13 @@ deciding what to do when it cannot.
   `<app_data>/journals` when no documents directory is available. A *preference*, not a
   guarantee: it does not check that the result is writable. The app crate probes it and falls
   back to the `None` form when the preferred location cannot be created or written to.
-- `journal_dir_name(name: &str) -> String` — sanitises a user-chosen journal name into a safe
-  single folder name for use under that directory. Strips path separators and the rest of the
-  Windows reserved set, collapses whitespace, trims trailing dots and spaces, sidesteps the
-  reserved device names (`CON`, `NUL`, `COM1`…), caps the length, and returns `"Journal"` when
-  nothing survives. The result is a **name**, never a path: it contains no separator and is
-  never empty, so it cannot escape the parent the caller chose.
+- `journal_dir_name(name: &str) -> String` — sanitises free-text input (a journal name, or a
+  user-typed `db_filename`) into a safe single filesystem path component. Strips path
+  separators and the rest of the Windows reserved set, collapses whitespace, trims trailing
+  dots and spaces, sidesteps the reserved device names (`CON`, `NUL`, `COM1`…), caps the
+  length, and returns `"Journal"` when nothing survives. The result is a single path
+  **component**, never a path: it contains no separator and is never empty, so it cannot escape
+  the parent the caller chose.
 
 ---
 
