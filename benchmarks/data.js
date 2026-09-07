@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1788706272374,
+  "lastUpdate": 1788814427087,
   "repoUrl": "https://github.com/fjrevoredo/mini-diarium",
   "entries": {
     "Benchmark": [
@@ -36976,6 +36976,36 @@ window.BENCHMARK_DATA = {
           {
             "name": "ci_pipeline_duration",
             "value": 584000000000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "committer": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "distinct": true,
+          "id": "860c04059ad2146d9d77acaf1b81718bcf4b397a",
+          "message": "Dependency Update: bump toml to 4.3.0 in .opencode\n\nDependabot PR #285 (transitive resolution, npm lockfile-only).",
+          "timestamp": "2026-09-07T20:28:03+02:00",
+          "tree_id": "201b6cedf0263362776eac6ed1eb33bb27447859",
+          "url": "https://github.com/fjrevoredo/mini-diarium/commit/860c04059ad2146d9d77acaf1b81718bcf4b397a"
+        },
+        "date": 1788814425979,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "ci_pipeline_duration",
+            "value": 600000000000,
             "range": "± 0",
             "unit": "ns/iter"
           }
