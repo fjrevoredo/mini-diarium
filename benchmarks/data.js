@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1788821641591,
+  "lastUpdate": 1788823581147,
   "repoUrl": "https://github.com/fjrevoredo/mini-diarium",
   "entries": {
     "Benchmark": [
@@ -37096,6 +37096,36 @@ window.BENCHMARK_DATA = {
           {
             "name": "ci_pipeline_duration",
             "value": 566000000000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "committer": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "distinct": true,
+          "id": "bfccfcbfc5ea49344134b7ff70ae9d71da597edd",
+          "message": "Day One TXT import didn't recognize the current export date format",
+          "timestamp": "2026-09-08T01:15:16+02:00",
+          "tree_id": "1ae9e1379e99b32a9a05a1df8b305f35c3b9d7c4",
+          "url": "https://github.com/fjrevoredo/mini-diarium/commit/bfccfcbfc5ea49344134b7ff70ae9d71da597edd"
+        },
+        "date": 1788823579802,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "ci_pipeline_duration",
+            "value": 647000000000,
             "range": "± 0",
             "unit": "ns/iter"
           }
