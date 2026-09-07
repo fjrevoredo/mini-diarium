@@ -63,11 +63,48 @@ select this file. Expected result: 6 entries imported across 6 distinct dates.
 | Field | Value |
 |-------|-------|
 | Format | Day One TXT export |
-| Entries | 3 |
+| Entries | 4 raw (3 import, 1 is blank/metadata-only and skipped) |
+| Used by | `src/import/dayone_txt.rs::tests::test_parse_dayone_txt_sample_fixture` (automated) |
+
+Minimal fixture covering the Day One TXT date header in both the modern format
+(`Date:\t<Month> <D>, <YYYY> at <time> <TZ>`, confirmed against Day One's own
+current export guide — see the format reference below) and the legacy format
+(`Date:\t<DD> <Month> <YYYY>`, seen in older exports), plus tab-delimited
+`Weather:`/`Location:` metadata lines directly after a date line, the
+`29 February 2024` leap-year date edge case, and an entry that carries only
+metadata (no title/body) to prove such entries are skipped rather than
+imported blank.
+
+**Do not change this file without updating the matching assertions in
+`test_parse_dayone_txt_sample_fixture`.**
+
+---
+
+### `dayone-txt-realistic.txt`
+
+| Field | Value |
+|-------|-------|
+| Format | Day One TXT export |
+| Entries | 5 raw (4 import, 1 is blank/metadata-only and skipped) |
 | Used by | Manual testing via Import overlay |
 
-Covers the Day One TXT format header (`Date:\t<day> <Month> <YYYY>`), title line,
-body paragraphs, and the `29 February 2024` leap-year date edge case.
+Comprehensive fixture grounded in Day One's documented TXT export format and
+independent parsers' corroborating behavior (see the format reference below —
+**unlike the JSON fixtures, no byte-exact real Day One TXT export sample was
+available**, so this is built from documented format + corroboration, not a
+verified real file):
+
+| Scenario | Entry |
+|----------|-------|
+| Modern date format + Weather/Location metadata | "Coffee with an old friend" |
+| Legacy date format, same calendar date as the entry above | "Quick note: forgot my umbrella again." |
+| Metadata-only entry (Weather line, no title/body) | (skipped) |
+| Unicode/emoji text | "Feeling grateful 🌻" |
+| Leading inline Markdown image reference (`![](path)`) | title imported as `![](photos/sunset.jpg)`, "Evening walk" lands in the body text — a known artifact of `extract_title_and_text` splitting on the first `\n\n`, same pass-through behavior as `dayone-moment://` references in the JSON fixtures |
+
+**To use for manual testing:** open the app, go to Import, choose Day One TXT,
+and select this file. Expected result: 4 entries imported (the metadata-only
+entry is silently skipped), two of them sharing the date 2023-04-03.
 
 ---
 
@@ -193,3 +230,52 @@ Key properties:
 - Media identifiers in `photos`/`videos`/`audios` are referenced from `text` by
   `dayone-moment://` URLs, not by array position — Mini Diarium doesn't resolve
   these today, so they pass through as literal Markdown image syntax.
+
+## Day One TXT format reference
+
+**Confidence caveat:** unlike the JSON fixtures above (built from real,
+byte-exact GitHub-hosted export samples), there is no byte-exact real Day One
+TXT export file backing these fixtures — only Day One's own documented format
+plus independent parsers' corroborating behavior, cross-referenced below:
+
+- [Day One's official import/export guide](https://dayoneapp.com/guides/import-export/importing-data-from-plain-text/) —
+  authoritative and current. Documents the per-entry date line as
+  `Date: June 24, 2016 at 10:59:06 AM MDT` (`"MMMM D, YYYY at H:MM:SS AM/PM TZ"`)
+  and the "two carriage returns separate entries" rule that this importer's
+  `\n\n`-based splitting already assumes correctly.
+- A DEVONthink community forum thread confirms a **tab** precedes `Date:` in
+  real exports (matching this importer's existing `"\tDate:\t"` delimiter) and
+  separately shows real exports carrying additional tab-delimited
+  `Weather:`/`Location:` metadata lines per entry.
+- Christian Tietze's blog post on parsing Day One TXT exports, built against
+  real exported files, uses a generic `/\A\t(?<key>\w+):\t(?<value>.*+)$/`
+  regex — independent confirmation that **any** tab-delimited `Key:\tValue`
+  line can appear after the date (not just `Date:`/`Weather:`/`Location:`),
+  and that images appear inline as literal `![](path)` Markdown at the top of
+  an entry's content.
+- One source notes that Day One Classic (the older app generation) "doesn't
+  export dates in a standard format, unlike Day One 2.x" — suggesting the
+  original `"DD MMMM YYYY"` (e.g. `"15 January 2024"`) assumption in this
+  importer may be a legacy/guessed format rather than one confirmed against a
+  current, real Day One export; it's kept as a fallback for compatibility.
+- A German-locale forum report shows a translated header
+  (`Datum: ... um ... MEZ`) — locale-dependent date labels exist in some Day
+  One installs, but there is no verified translation set to test against, so
+  locale-specific `Date:` labels are explicitly **out of scope**.
+- Metadata-line stripping only looks *after* the `Date:` line, matching the
+  official guide's documented entry layout (date first). A hypothetical export
+  that placed a `Weather:`/`Location:` line *before* `Date:` would attach to
+  the end of the *previous* entry's body instead (this importer splits on the
+  literal `"\tDate:\t"` delimiter first) — also explicitly **out of scope**,
+  since no source shows Day One ordering metadata before the date.
+
+Key properties:
+- The date line's time-of-day and timezone abbreviation (everything from
+  `" at "` onward) are discarded before parsing — only the calendar date
+  (`YYYY-MM-DD`) is ever used, since `date_created`/`date_updated` are set from
+  the import moment, not from the parsed date.
+- A tab-delimited `\tKey:\tValue` line appearing directly after the date line
+  is treated as metadata and skipped (no key allowlist), not imported as
+  entry content.
+- An entry whose title and body are both empty after metadata-stripping is
+  skipped, matching the policy already used for the Day One JSON importer.

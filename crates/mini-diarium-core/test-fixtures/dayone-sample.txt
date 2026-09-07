@@ -1,6 +1,8 @@
 This text before the first date marker is ignored.
 
-	Date:	15 January 2024
+	Date:	June 24, 2016 at 10:59:06 AM MDT
+	Weather:	Clear, 72°F
+	Location:	Denver, CO
 
 Morning Reflections
 
@@ -11,6 +13,10 @@ Started the day with a beautiful sunrise. The sky was painted in shades of orang
 Project Milestone
 
 We finally completed the first phase of the project today. The team worked incredibly hard, and it feels great to see our efforts paying off. Next week we'll start planning phase two.
+
+	Date:	17 January 2024
+
+	Weather:	Cloudy, 40°F
 
 	Date:	29 February 2024
 
