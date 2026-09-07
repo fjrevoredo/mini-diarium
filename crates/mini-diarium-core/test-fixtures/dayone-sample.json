@@ -1,0 +1,28 @@
+{
+  "metadata": {
+    "version": "1.0"
+  },
+  "entries": [
+    {
+      "creationDate": "2024-01-15T14:30:00Z",
+      "text": "First Entry\n\nThis is the body of the first entry.",
+      "timeZone": "America/New_York"
+    },
+    {
+      "creationDate": "2024-01-16T09:00:00Z",
+      "timeZone": "America/New_York",
+      "starred": false,
+      "tags": ["untitled"]
+    },
+    {
+      "creationDate": "2024-01-16T20:15:00Z",
+      "text": "   ",
+      "timeZone": "America/New_York"
+    },
+    {
+      "creationDate": "2024-01-17T18:00:00Z",
+      "text": "Second Entry\n\nThis is the body of the second entry.",
+      "timeZone": "America/New_York"
+    }
+  ]
+}

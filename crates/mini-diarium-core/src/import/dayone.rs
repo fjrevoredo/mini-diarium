@@ -32,7 +32,10 @@ pub struct DayOneEntry {
     /// ISO 8601 timestamp with timezone
     pub creation_date: String,
 
-    /// Full entry text (may include title in first line/paragraph)
+    /// Full entry text (may include title in first line/paragraph).
+    /// Day One omits this key entirely for entries with no text content
+    /// (e.g. a blank entry), so it must default rather than fail parsing.
+    #[serde(default)]
     pub text: String,
 
     /// Optional timezone identifier
@@ -66,6 +69,11 @@ pub fn parse_dayone_json(json_str: &str) -> Result<Vec<DiaryEntry>, String> {
     let mut entries = Vec::new();
 
     for entry in dayone.entries {
+        // Day One omits "text" for blank entries; skip rather than importing an empty entry.
+        if entry.text.trim().is_empty() {
+            continue;
+        }
+
         // Parse ISO 8601 timestamp to extract date (YYYY-MM-DD)
         let date = parse_iso8601_to_date(&entry.creation_date)?;
 
@@ -315,6 +323,72 @@ mod tests {
         let result = parse_dayone_json("not valid json");
         assert!(result.is_err());
         assert!(result.unwrap_err().contains("Failed to parse Day One JSON"));
+    }
+
+    #[test]
+    fn test_entry_missing_text_key_is_skipped_not_a_parse_error() {
+        // Day One omits "text" entirely for blank entries (issue #294).
+        let json = r#"{
+            "entries": [
+                {
+                    "creationDate": "2024-01-15T14:30:00Z"
+                },
+                {
+                    "creationDate": "2024-01-16T10:00:00Z",
+                    "text": "Kept\n\nThis entry has content."
+                }
+            ]
+        }"#;
+
+        let result = parse_dayone_json(json);
+        assert!(result.is_ok());
+
+        let entries = result.unwrap();
+        assert_eq!(entries.len(), 1);
+        assert_eq!(entries[0].date, "2024-01-16");
+        assert_eq!(entries[0].title, "Kept");
+    }
+
+    #[test]
+    fn test_entry_with_blank_text_is_skipped() {
+        let json = r#"{
+            "entries": [
+                {
+                    "creationDate": "2024-01-15T14:30:00Z",
+                    "text": "   "
+                }
+            ]
+        }"#;
+
+        let entries = parse_dayone_json(json).unwrap();
+        assert_eq!(entries.len(), 0);
+    }
+
+    #[test]
+    fn test_parse_dayone_sample_fixture() {
+        // Real-world-shaped fixture (issue #294): mixes normal entries with a
+        // blank entry that omits "text" entirely and one with whitespace-only
+        // text, plus fields Day One includes that we don't import (timeZone,
+        // starred, tags) to prove they're safely ignored.
+        let json = include_str!("../../test-fixtures/dayone-sample.json");
+        let result = parse_dayone_json(json);
+
+        assert!(result.is_ok(), "Failed to parse dayone-sample.json");
+
+        let entries = result.unwrap();
+        assert_eq!(
+            entries.len(),
+            2,
+            "Expected 2 importable entries out of 4 (2 are blank and skipped)"
+        );
+
+        assert_eq!(entries[0].date, "2024-01-15");
+        assert_eq!(entries[0].title, "First Entry");
+        assert_eq!(entries[0].text, "This is the body of the first entry.");
+
+        assert_eq!(entries[1].date, "2024-01-17");
+        assert_eq!(entries[1].title, "Second Entry");
+        assert_eq!(entries[1].text, "This is the body of the second entry.");
     }
 
     #[test]

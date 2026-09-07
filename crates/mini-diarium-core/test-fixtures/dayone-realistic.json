@@ -1,0 +1,156 @@
+{
+  "metadata": {
+    "version": "1.0"
+  },
+  "entries": [
+    {
+      "uuid": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+      "creationDate": "2024-03-10T08:15:00Z",
+      "modifiedDate": "2024-03-10T08:20:00Z",
+      "timeZone": "Europe/London",
+      "creationDevice": "Example iPhone",
+      "creationDeviceType": "iPhone",
+      "creationDeviceModel": "iPhone15,2",
+      "creationOSName": "iOS",
+      "creationOSVersion": "17.4",
+      "isAllDay": false,
+      "isPinned": false,
+      "starred": true,
+      "duration": 0,
+      "editingTime": 42.5,
+      "tags": ["morning", "coffee"],
+      "userActivity": {
+        "activityName": "Walking"
+      },
+      "location": {
+        "placeName": "Example Cafe",
+        "localityName": "Shoreditch",
+        "administrativeArea": "England",
+        "country": "United Kingdom",
+        "latitude": 51.5265,
+        "longitude": -0.0786,
+        "region": {
+          "center": { "latitude": 51.5265, "longitude": -0.0786 },
+          "radius": 75
+        }
+      },
+      "weather": {
+        "conditionsDescription": "Partly Cloudy",
+        "temperatureCelsius": 9.5,
+        "weatherCode": "partly-cloudy-day",
+        "weatherServiceName": "Example Weather"
+      },
+      "richText": "{\"contents\":[{\"text\":\"Morning walk\\n\\nStopped for coffee before the commute.\"}],\"meta\":{\"version\":1}}",
+      "text": "Morning walk\n\nStopped for coffee before the commute."
+    },
+    {
+      "uuid": "BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB",
+      "creationDate": "2024-03-11T19:30:00+05:00",
+      "modifiedDate": "2024-03-11T19:35:00+05:00",
+      "timeZone": "Asia/Karachi",
+      "isAllDay": false,
+      "starred": false,
+      "duration": 0,
+      "text": "Single line title only, no paragraph break follows on the next line."
+    },
+    {
+      "uuid": "CCCCCCCCCCCCCCCCCCCCCCCCCCCCCCCC",
+      "creationDate": "2024-03-12T12:00:00Z",
+      "modifiedDate": "2024-03-12T12:00:00Z",
+      "timeZone": "Europe/London",
+      "isAllDay": false,
+      "starred": false,
+      "duration": 0,
+      "photos": [
+        {
+          "identifier": "1111111111111111111111111111111A",
+          "md5": "00000000000000000000000000000001",
+          "type": "jpeg",
+          "width": 1600,
+          "height": 1200,
+          "orderInEntry": 0,
+          "favorite": false,
+          "isSketch": false,
+          "fileSize": 245678
+        }
+      ],
+      "text": "Lunch spot\n\nFound a great view today.\n\n![](dayone-moment://1111111111111111111111111111111A)"
+    },
+    {
+      "uuid": "DDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDD",
+      "creationDate": "2024-03-13T21:05:00Z",
+      "modifiedDate": "2024-03-13T21:06:00Z",
+      "timeZone": "Europe/London",
+      "isAllDay": false,
+      "starred": false,
+      "duration": 5.7,
+      "videos": [
+        {
+          "identifier": "2222222222222222222222222222222B",
+          "md5": "00000000000000000000000000000002",
+          "type": "mp4",
+          "width": 1920,
+          "height": 1080,
+          "duration": 5.7,
+          "orderInEntry": 0,
+          "favorite": false,
+          "fileSize": 3456789
+        }
+      ],
+      "audios": [
+        {
+          "identifier": "3333333333333333333333333333333C",
+          "md5": "00000000000000000000000000000003",
+          "format": "aac",
+          "duration": 4.2,
+          "orderInEntry": 1,
+          "favorite": false,
+          "fileSize": 51234
+        }
+      ],
+      "text": "![](dayone-moment:/video/2222222222222222222222222222222B)\n\n![](dayone-moment:/audio/3333333333333333333333333333333C)"
+    },
+    {
+      "uuid": "EEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE",
+      "creationDate": "2024-03-14T22:45:00Z",
+      "modifiedDate": "2024-03-14T22:45:00Z",
+      "timeZone": "Europe/London",
+      "isAllDay": true,
+      "starred": false,
+      "duration": 0,
+      "text": "\"Quoted line\"\nThis\\-text\\-is\\-hyphenated\\.\n\\(Parenthetical\\.\\)\n\nDay One backslash-escapes punctuation like periods and hyphens in plain-text exports\\. Mini Diarium keeps the escaping as-is rather than stripping it\\."
+    },
+    {
+      "uuid": "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF",
+      "creationDate": "2024-03-15T07:00:00Z",
+      "modifiedDate": "2024-03-15T07:00:00Z",
+      "timeZone": "Europe/London",
+      "isAllDay": true,
+      "starred": false,
+      "duration": 0,
+      "tags": ["blank"]
+    },
+    {
+      "uuid": "AAAABBBBCCCCDDDDEEEEFFFF11112222",
+      "creationDate": "2024-03-16T07:00:00Z",
+      "modifiedDate": "2024-03-16T07:00:00Z",
+      "timeZone": "Europe/London",
+      "isAllDay": true,
+      "starred": false,
+      "duration": 0,
+      "text": "   "
+    },
+    {
+      "uuid": "99998888777766665555444433332222",
+      "creationDate": "2024-03-17T16:20:00Z",
+      "modifiedDate": "2024-03-17T16:25:00Z",
+      "timeZone": "Europe/London",
+      "isAllDay": false,
+      "starred": true,
+      "isPinned": true,
+      "duration": 0,
+      "tags": ["work", "milestone", "team"],
+      "text": "Shipped v2\n\nThe team finally shipped the release we've been working toward all quarter."
+    }
+  ]
+}
