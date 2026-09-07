@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1788818836422,
+  "lastUpdate": 1788819669693,
   "repoUrl": "https://github.com/fjrevoredo/mini-diarium",
   "entries": {
     "Benchmark": [
@@ -37036,6 +37036,36 @@ window.BENCHMARK_DATA = {
           {
             "name": "ci_pipeline_duration",
             "value": 568000000000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "committer": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "distinct": true,
+          "id": "65295463caf3e19a4d4ef39800d00954e2b13e29",
+          "message": "chore(sonar): exclude generated website/js/ from CPD\n\nfingerprint-website-assets.mjs writes content-addressed copies (js/main.<hash>.js) that are byte-identical to the source js/main.js by construction. Excluding website/js/** from copy-paste detection mirrors the existing website/**/*.html exclusion for generated output; the pair was the largest contributor to the master duplication gate (3.2% vs 3% limit).",
+          "timestamp": "2026-09-08T00:10:45+02:00",
+          "tree_id": "cc482338d04574e0fcc827c33d39273725d13405",
+          "url": "https://github.com/fjrevoredo/mini-diarium/commit/65295463caf3e19a4d4ef39800d00954e2b13e29"
+        },
+        "date": 1788819668115,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "ci_pipeline_duration",
+            "value": 611000000000,
             "range": "± 0",
             "unit": "ns/iter"
           }
