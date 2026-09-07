@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1788814427087,
+  "lastUpdate": 1788818836422,
   "repoUrl": "https://github.com/fjrevoredo/mini-diarium",
   "entries": {
     "Benchmark": [
@@ -37006,6 +37006,36 @@ window.BENCHMARK_DATA = {
           {
             "name": "ci_pipeline_duration",
             "value": 600000000000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "committer": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "distinct": true,
+          "id": "831161232dc1d3968e2da77008b11038c833e465",
+          "message": "Dependency Update: bump @tiptap/* to 3.30.6\n\nApplies Dependabot PR #295. nix/package.nix npmDepsHash refresh omitted (Linux+Nix only); the Nix CI workflow patches it on push.",
+          "timestamp": "2026-09-07T23:52:37+02:00",
+          "tree_id": "2c28341c31959db329a60e5296fc989976abfd29",
+          "url": "https://github.com/fjrevoredo/mini-diarium/commit/831161232dc1d3968e2da77008b11038c833e465"
+        },
+        "date": 1788818835225,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "ci_pipeline_duration",
+            "value": 568000000000,
             "range": "± 0",
             "unit": "ns/iter"
           }
