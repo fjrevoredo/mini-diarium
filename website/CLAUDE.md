@@ -11,7 +11,7 @@ Both the blog and the docs sections are generated from Markdown sources. Editing
 | Source (edit these) | Generated output (never edit) |
 |---------------------|-------------------------------|
 | `posts-src/*.md` | `blog/*/index.html`, `blog/index.html`, `blog/feed.xml`, `sitemap.xml`, `llms.txt` |
-| `docs-src/*.md` | `docs/*/index.html`, `docs/index.html` |
+| `docs-src/*.md` | `docs/*/index.html`, `docs/index.html`, `docs/*.md` (per-page Markdown mirror), `llms-full.txt` |
 
 The only files you should edit manually are:
 - `posts-src/*.md` — blog post sources (the canonical input)
@@ -23,6 +23,13 @@ The only files you should edit manually are:
 - `newsletter/index.html` — the newsletter signup page
 - `donate/index.html` — the donation page
 - `css/`, `js/` — styles and scripts
+
+Each static manual page has an `updated` date in its `STATIC_PAGES` entry in
+`scripts/generate-website-blog.mjs` (the homepage uses the separate `HOMEPAGE_UPDATED` constant
+near `INDEX_PATH`) — this drives its `sitemap.xml` `lastmod`, deliberately decoupled from file
+mtime so an unrelated CSS/JS rebuild doesn't bump it. **Whenever one of these pages' actual
+content changes, bump its `updated` constant (or `HOMEPAGE_UPDATED`) in the same change**, the
+same way `updated:` front matter is bumped for blog posts and docs pages.
 
 When editing any of the static manual pages above, ensure these elements stay consistent:
 - **Navigation** — every manual page shares the same nav structure. If you add or remove a nav item, update all of them plus the generator's `buildNav()` in `scripts/generate-website-blog.mjs`.
@@ -206,7 +213,7 @@ When creating a new static HTML page (not generated from Markdown), ensure:
 5. OG and Twitter card meta tags (title, description, image)
 6. JSON-LD structured data (at minimum Organization + WebPage; add FAQPage or BreadcrumbList if the content supports it)
 7. Navigation matches the existing nav structure on all other pages
-8. Added to `STATIC_PAGES` array in `scripts/generate-website-blog.mjs` (ensures inclusion in `llms.txt` and sitemap)
+8. Added to `STATIC_PAGES` array in `scripts/generate-website-blog.mjs` (ensures inclusion in `llms.txt` and sitemap), including an `updated: 'YYYY-MM-DD'` field — required for `sitemap.xml` `lastmod`, validated by `ensureDate()`
 
 ### Navigation Consistency
 
@@ -300,7 +307,46 @@ Required front matter: `title`, `slug`, `description`, `order` (integer), `updat
 - Dev iteration: `bun run website:docs` (docs only)
 - Full deploy build: `bun run website:build-static` (blog → docs → fingerprinter, in that order)
 
+### Adding Images to a Docs Page
+
+Standard Markdown syntax works: `![alt text](src "optional caption")`. The generator's `image` renderer (`scripts/generate-website-docs.mjs`, next to the `heading`/`link` overrides) wraps the output in `<figure class="prose-figure"><img loading="lazy" ...></figure>`, adding a `<figcaption>` only when the optional title (the `"..."` part) is present — the `alt` text is never duplicated into a caption. The renderer also reads the image's real pixel dimensions at build time (`readImageDimensions()` in `scripts/website-generator-utils.mjs`, supports `.svg` and `.webp`) and emits matching `width`/`height` on the `<img>` tag to reserve layout space and avoid CLS; it degrades to no attributes (never fails the build) if the file is missing or unrecognized. Styling lives in `website/css/style.css` next to the other `.prose` rules.
+
+- **Screenshots**: `website/assets/docs/<page-slug>-<NN>-<short-description>.webp`. Live-capture from the real dev app via the `tauri-agent-dev` skill — never reuse old promotional PNGs, they drift from the current UI. Target WebP quality 78-82. PNG is acceptable if a screenshot needs pixel-exact detail (e.g. thin text on a dense table), but WebP is the default.
+- **Diagrams**: `website/assets/docs/diagrams/<page-slug>-<short-description>.svg`. Hand-build these (not Mermaid's default theme) using the site's own dark/gold palette (`--bg:#0e0e0e`, `--bg-card:#161616`, `--accent:#F5C94D`, `--text:#f0ede6`, `--text-muted:#888`, `--border:#2a2a2a`) so they read as part of the site, not a pasted-in export. Give every SVG an explicit `viewBox` plus matching `width`/`height` and a system font stack — treat the first draft as a draft, not a shipped asset, and re-render it (e.g. open the raw `file://` path in a browser and screenshot it) to check for label/arrow overlap before committing.
+- **No fingerprinting**: `fingerprint-website-assets.mjs` only hashes `css/js`. Changing an image's content later needs a **new filename** — overwriting one in place will not bust any cache.
+- Insert each image immediately after the paragraph or step it illustrates, not bunched at the top or bottom of the page. Don't force one image per H2 — a thin page might only need one, a long tabbed page might need several.
+- After adding images, verify every `<img src="...">` and `<figure>`'s image path in the built `website/docs/*/index.html` resolves to a real file — the generator does not validate image paths, so a typo is a silently broken image on a green build.
+
 See `website/docs-src/_template.md` for the starter template.
+
+### Agent-Friendly Mirrors (Copy Page, `llms-full.txt`)
+
+Each docs **section** page (not the hub) ships a Mintlify-style "Copy page" split-button
+dropdown, a per-page Markdown mirror at `docs/<slug>.md`, and a
+`<link rel="alternate" type="text/markdown">` discovery tag in its `<head>`. The button sits
+beside the article's **first heading**, not the page `<h1>` in the hero — see
+`scripts/generate-website-docs.mjs` for the current rendering. `website/llms-full.txt` is the
+full-text sibling of the curated `llms.txt` (every section's Markdown, concatenated).
+
+- **Canonicalization, not `noindex`:** each `.md` mirror is near-duplicate content of its HTML
+  page, so `nginx.conf` sends an HTTP `Link: <...>; rel="canonical"` header pointing at the HTML
+  page instead of blocking it with `X-Robots-Tag: noindex` — consolidates ranking signal per the
+  `seo-audit` skill's duplicate-content guidance. Keep the header's target in sync with that
+  section's `<link rel="canonical">`.
+- **The three AI deep-links are unofficial** (`chatgpt.com/?q=`, `claude.ai/new?q=`,
+  `perplexity.ai/search?q=`) — reverse-engineered query params, not a stable contract. If one
+  stops prefilling, drop that entry from `buildAiLinks()` rather than leaving a dead button. A
+  Cloudflare-style bot-check can block a headless verification browser on one provider (seen on
+  claude.ai) while the others pass — that's the check failing, not the link.
+- **Testing "Copy page" locally:** the mirror URL is always the absolute
+  `https://mini-diarium.com/...` production URL, so a fetch from the local Docker preview is
+  cross-origin and fails — that is expected, not a bug. Verify the fetch/guard/clipboard-write
+  mechanism with a same-origin URL instead of chasing the cross-origin failure.
+
+When implementing a UI pattern the user names by reference ("like the dropdown on X"), screenshot
+that reference before writing CSS, and verify placement in the local Docker preview rather than
+from container-width arithmetic on paper — a shared class (e.g. `.hero-sub`) can carry a rule
+from an unrelated page context that only looks inert until something restructures its parent.
 
 ---
 
@@ -335,7 +381,7 @@ See `website/docs-src/_template.md` for the starter template.
 | `index.html` | Edit | Homepage — edit static sections directly; blog teaser block is auto-updated |
 | `encrypted-journal/`, `compare/`, `privacy/`, `newsletter/`, `donate/` | Edit | Static guide / comparison / policy / signup / donation pages |
 | `css/`, `js/` | Edit | Site stylesheet and scripts |
-| `nginx.conf` | Edit | Local Docker preview only — does not affect production |
+| `nginx.conf` | Edit | Ships to production (Coolify builds `Dockerfile`, which `COPY`s this to `/etc/nginx/conf.d/default.conf`); only redirect/TLS/canonical-host enforcement is Coolify-overridden |
 | `../docs/seo/` | Edit | SEO/GEO + growth hub (outside `website/`) — start at [`../docs/seo/README.md`](../docs/seo/README.md) |
 
 ---
@@ -358,6 +404,31 @@ The nginx config uses `server_name mini-diarium.com`. Browsers and curl reject r
   ```
 - Or add `127.0.0.1 mini-diarium.com` to your hosts file (`C:\Windows\System32\drivers\etc\hosts` on Windows, `/etc/hosts` on Linux/macOS) for full browser testing.
 
+For a browser-based screenshot check, neither trick is needed: the nginx config's second
+`server` block matches literal `server_name ... localhost;` too, so an automated browser
+(`agent-browser`, `claude-in-chrome`) can open `http://localhost/docs/getting-started/` etc.
+directly. Reach for the `Host` header / hosts-file route only when a check specifically needs
+`mini-diarium.com` in the request (e.g. confirming the `www.` → apex redirect, or a header like
+the docs `.md` mirror's `Link: rel="canonical"` whose value is the literal production domain).
+
+### Screenshot-Verifying a Visual Change
+
+Any task that changes rendered output (`css/style.css`, `website/js/*.js`, a generator's inline
+`<style>` or markup, a static page's HTML) must be checked with a real screenshot before it is
+reported done — see [`POST_TASK_BEST_PRACTICES.md`](../docs/best-practices/POST_TASK_BEST_PRACTICES.md)
+for the gate. Mechanics:
+
+1. `bun run website:build-static`, then `docker compose up --build -d` from `website/`.
+2. Open every affected page with `agent-browser` (or `claude-in-chrome`) at `http://localhost/...`
+   and screenshot it — at desktop width and at the relevant mobile breakpoint (899px for docs
+   pages; check `website/css/style.css` media queries for other sections).
+3. Screenshot any interactive state the change touches (a dropdown open, a hover, a toggled
+   modal), not just the page at rest.
+4. Look at the screenshot with the `Read` tool before deciding the change matches the request —
+   reasoning from CSS values on paper is not a substitute; it produced three rounds of placement
+   mistakes on the docs "Copy page" dropdown that a screenshot caught immediately once taken.
+5. `docker compose down` when done, and don't leave screenshot files committed in the repo.
+
 ### Troubleshooting
 
 | Symptom | Fix |
@@ -367,4 +438,4 @@ The nginx config uses `server_name mini-diarium.com`. Browsers and curl reject r
 | Container starts but returns 404 | Check that `bun run website:build-static` ran and `website/docs/` and `website/blog/` are populated |
 | `www.mini-diarium.com` redirects | The nginx config redirects `www.*` to the non-www host — expected behavior |
 
-> **Note:** This compose file is for local preview only. Production runs through Coolify with separate TLS, redirect, and caching configuration. Changes to `nginx.conf` here do not affect production.
+> **Note:** This compose file is for local preview only. `nginx.conf` itself ships to production via `Dockerfile` (Coolify builds it) — Coolify only overrides TLS termination and redirect/canonical-host enforcement on top of it. Use this compose setup to verify routing and header changes before they reach production.

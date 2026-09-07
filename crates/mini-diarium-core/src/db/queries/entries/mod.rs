@@ -4,6 +4,7 @@ pub mod delete;
 pub mod insert;
 pub mod lock;
 pub mod read;
+pub mod recalculate;
 pub mod timeline;
 pub mod update;
 
@@ -11,6 +12,7 @@ pub use delete::*;
 pub use insert::*;
 pub use lock::*;
 pub use read::*;
+pub use recalculate::*;
 pub use timeline::*;
 pub use update::*;
 

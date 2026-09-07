@@ -307,6 +307,23 @@ pub fn get_all_entry_dates(state: State<DiaryState>) -> Result<Vec<String>, Stri
     with_unlocked_db(&state, db::get_all_entry_dates)
 }
 
+/// Pure inner of `recalculate_word_counts` — takes `&DiaryState` so it can be tested without Tauri.
+pub(crate) fn recalculate_word_counts_inner(
+    state: &DiaryState,
+) -> Result<db::WordCountRecalculationResult, String> {
+    with_unlocked_db(state, db::recalculate_all_word_counts)
+}
+
+/// Recomputes `word_count` for every entry in the journal, skipping locked entries.
+///
+/// Manual, on-demand only (TODO-0111) — no automatic/background recalculation.
+#[tauri::command]
+pub fn recalculate_word_counts(
+    state: State<DiaryState>,
+) -> Result<db::WordCountRecalculationResult, String> {
+    recalculate_word_counts_inner(&state)
+}
+
 /// Gets a lightweight, newest-first list of all entries for the timeline view.
 ///
 /// Decrypts only title and preview per entry — never the full entry text.
@@ -949,5 +966,82 @@ mod tests {
             .unwrap()
             .unwrap();
         assert_eq!(retrieved.title, "Original");
+    }
+
+    #[test]
+    fn test_recalculate_word_counts_locked_journal_errors() {
+        use crate::commands::auth::DiaryState;
+        use std::path::PathBuf;
+        let state = DiaryState::new(
+            PathBuf::from("test_recalculate_locked_journal.db"),
+            PathBuf::from("test_recalculate_locked_journal_backups"),
+            PathBuf::from("."),
+        );
+        let err = recalculate_word_counts_inner(&state).unwrap_err();
+        assert!(err.contains("Journal must be unlocked"), "got: {}", err);
+    }
+
+    #[test]
+    fn test_recalculate_word_counts_delegates_and_returns_counts() {
+        use crate::commands::auth::DiaryState;
+        use std::path::PathBuf;
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+        let now = chrono::Utc::now().to_rfc3339();
+
+        // Stale entry — should be updated.
+        let stale = DiaryEntry {
+            id: 0,
+            date: "2024-09-10".to_string(),
+            title: "Stale".to_string(),
+            text: "Some words here".to_string(),
+            word_count: 999,
+            date_created: now.clone(),
+            date_updated: now.clone(),
+            metadata: None,
+            locked: false,
+        };
+        db::insert_entry(&db, &stale).unwrap();
+
+        // Already-correct entry — should not be counted as updated.
+        let correct = DiaryEntry {
+            id: 0,
+            date: "2024-09-11".to_string(),
+            title: "Correct".to_string(),
+            text: "Two words".to_string(),
+            word_count: db::count_words("Two words"),
+            date_created: now.clone(),
+            date_updated: now.clone(),
+            metadata: None,
+            locked: false,
+        };
+        db::insert_entry(&db, &correct).unwrap();
+
+        // Locked entry with a stale count — should be skipped, not updated.
+        let locked = DiaryEntry {
+            id: 0,
+            date: "2024-09-12".to_string(),
+            title: "Locked".to_string(),
+            text: "Locked content here".to_string(),
+            word_count: 999,
+            date_created: now.clone(),
+            date_updated: now,
+            metadata: None,
+            locked: false,
+        };
+        let locked_id = db::insert_entry(&db, &locked).unwrap();
+        db::set_entry_locked(&db, locked_id, true).unwrap();
+
+        let state = DiaryState::new(
+            PathBuf::from("test_recalculate_delegates.db"),
+            PathBuf::from("test_recalculate_delegates_backups"),
+            PathBuf::from("."),
+        );
+        *state.db.lock().unwrap() = Some(db);
+
+        let result = recalculate_word_counts_inner(&state).unwrap();
+        assert_eq!(result.scanned, 3);
+        assert_eq!(result.updated, 1);
+        assert_eq!(result.skipped_locked, 1);
     }
 }

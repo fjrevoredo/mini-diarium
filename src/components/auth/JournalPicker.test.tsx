@@ -9,6 +9,7 @@ import type { JournalConfig } from '../../lib/tauri';
 const [journals, setJournals] = createSignal<JournalConfig[]>([]);
 const [activeJournalId] = createSignal<string | null>(null);
 const [authError] = createSignal<string | null>(null);
+const [isFlatpak, setIsFlatpak] = createSignal(false);
 
 const mocks = vi.hoisted(() => ({
   switchJournal: vi.fn(),
@@ -18,7 +19,7 @@ const mocks = vi.hoisted(() => ({
   refreshAuthState: vi.fn(),
   checkJournalPath: vi.fn(),
   getDefaultJournalDir: vi.fn(),
-  prepareJournalDir: vi.fn(),
+  loadPlatformInfo: vi.fn(),
 }));
 
 vi.mock('../../state/journals', () => ({
@@ -41,10 +42,16 @@ vi.mock('../../state/auth', () => ({
   refreshAuthState: mocks.refreshAuthState,
 }));
 
+vi.mock('../../state/platform', () => ({
+  get isFlatpak() {
+    return isFlatpak;
+  },
+  loadPlatformInfo: mocks.loadPlatformInfo,
+}));
+
 vi.mock('../../lib/tauri', () => ({
   checkJournalPath: mocks.checkJournalPath,
   getDefaultJournalDir: mocks.getDefaultJournalDir,
-  prepareJournalDir: mocks.prepareJournalDir,
 }));
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -55,6 +62,7 @@ describe('JournalPicker component', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     setJournals([]);
+    setIsFlatpak(false);
     mocks.switchJournal.mockResolvedValue(undefined);
     mocks.addJournal.mockResolvedValue({
       id: 'new',
@@ -69,15 +77,17 @@ describe('JournalPicker component', () => {
     mocks.refreshAuthState.mockResolvedValue(undefined);
     mocks.checkJournalPath.mockResolvedValue(false);
     mocks.getDefaultJournalDir.mockResolvedValue('/home/testuser/Documents/Mini Diarium');
-    mocks.prepareJournalDir.mockImplementation(async (base: string, name: string) =>
-      Promise.resolve(`${base}/${name}`),
-    );
+    mocks.loadPlatformInfo.mockResolvedValue(undefined);
   });
 
-  /** Fills in the create form and submits it. */
+  /** Fills in and submits the non-Flatpak create form after the save dialog resolves. */
   const createJournalNamed = async (name: string) => {
+    const dialogMock = await import('@tauri-apps/plugin-dialog');
+    vi.mocked(dialogMock.save).mockResolvedValueOnce(
+      '/home/testuser/Documents/Mini Diarium/diary.db',
+    );
     fireEvent.click(screen.getByText(/create new journal/i));
-    await vi.waitFor(() => expect(mocks.getDefaultJournalDir).toHaveBeenCalled());
+    await vi.waitFor(() => expect(dialogMock.save).toHaveBeenCalled());
 
     const nameInput = screen.getByPlaceholderText(/e\.g\. my journal/i);
     fireEvent.input(nameInput, { target: { value: name } });
@@ -156,102 +166,212 @@ describe('JournalPicker component', () => {
     });
   });
 
-  // Creating a journal used to open the folder chooser unconditionally, which under Flatpak
-  // is what handed back an unusable document-portal path. The chooser must now be optional.
-  it('pre-fills the default location when Create New Journal is clicked, without a dialog', async () => {
-    const dialogMock = await import('@tauri-apps/plugin-dialog');
-    renderWithI18n(() => <JournalPicker />);
+  describe('Create New Journal — non-Flatpak', () => {
+    it('opens a native save dialog pre-filled with the default location', async () => {
+      const dialogMock = await import('@tauri-apps/plugin-dialog');
+      renderWithI18n(() => <JournalPicker />);
 
-    fireEvent.click(screen.getByText(/create new journal/i));
+      fireEvent.click(screen.getByText(/create new journal/i));
 
-    await vi.waitFor(() => {
-      expect(screen.getByTitle('/home/testuser/Documents/Mini Diarium')).toBeInTheDocument();
+      await vi.waitFor(() => expect(dialogMock.save).toHaveBeenCalled());
+      expect(mocks.getDefaultJournalDir).toHaveBeenCalled();
+      expect(dialogMock.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          defaultPath: '/home/testuser/Documents/Mini Diarium/diary.db',
+        }),
+      );
     });
-    expect(mocks.getDefaultJournalDir).toHaveBeenCalled();
-    expect(dialogMock.open).not.toHaveBeenCalled();
+
+    it('returns to the initial screen when the save dialog is cancelled', async () => {
+      const dialogMock = await import('@tauri-apps/plugin-dialog');
+      vi.mocked(dialogMock.save).mockResolvedValueOnce(null);
+
+      renderWithI18n(() => <JournalPicker />);
+      fireEvent.click(screen.getByText(/create new journal/i));
+
+      await vi.waitFor(() => expect(dialogMock.save).toHaveBeenCalled());
+      expect(screen.getByText(/create new journal/i)).toBeInTheDocument();
+      expect(screen.getByText(/open existing/i)).toBeInTheDocument();
+      expect(screen.queryByPlaceholderText(/e\.g\. my journal/i)).not.toBeInTheDocument();
+    });
+
+    it('derives the name and shows a read-only path hint after confirming the save dialog', async () => {
+      const dialogMock = await import('@tauri-apps/plugin-dialog');
+      vi.mocked(dialogMock.save).mockResolvedValueOnce('/home/testuser/elsewhere/work.db');
+
+      renderWithI18n(() => <JournalPicker />);
+      fireEvent.click(screen.getByText(/create new journal/i));
+
+      await vi.waitFor(() => {
+        expect(screen.getByPlaceholderText(/e\.g\. my journal/i)).toHaveValue('work');
+      });
+      const hint = screen.getByText('/home/testuser/elsewhere');
+      expect(hint).not.toHaveAttribute('title');
+
+      fireEvent.click(screen.getByRole('button', { name: /^add$/i }));
+
+      await vi.waitFor(() => {
+        expect(mocks.checkJournalPath).toHaveBeenCalledWith('/home/testuser/elsewhere/work.db');
+        expect(mocks.addJournal).toHaveBeenCalledWith(
+          'work',
+          '/home/testuser/elsewhere',
+          'work.db',
+        );
+      });
+    });
+
+    it('shows a friendly error and does not create the journal when a file already exists there', async () => {
+      const dialogMock = await import('@tauri-apps/plugin-dialog');
+      vi.mocked(dialogMock.save).mockResolvedValueOnce('/home/testuser/elsewhere/work.db');
+      mocks.checkJournalPath.mockResolvedValue(true);
+
+      renderWithI18n(() => <JournalPicker />);
+      fireEvent.click(screen.getByText(/create new journal/i));
+      await vi.waitFor(() => expect(dialogMock.save).toHaveBeenCalled());
+
+      fireEvent.click(screen.getByRole('button', { name: /^add$/i }));
+
+      await vi.waitFor(() => {
+        expect(screen.getByRole('alert')).toHaveTextContent(/already exists/i);
+      });
+      expect(mocks.addJournal).not.toHaveBeenCalled();
+
+      // Non-Flatpak has no inline field to change the filename — "Choose a different
+      // location…" must re-open the save dialog rather than leaving the user stuck.
+      vi.mocked(dialogMock.save).mockResolvedValueOnce('/home/testuser/elsewhere/other.db');
+      fireEvent.click(screen.getByText(/choose a different location/i));
+
+      await vi.waitFor(() => {
+        expect(dialogMock.save).toHaveBeenCalledTimes(2);
+        expect(screen.getByPlaceholderText(/e\.g\. my journal/i)).toHaveValue('other');
+      });
+    });
+
+    it('Cancel clears a pending path conflict so it does not leak into the next attempt', async () => {
+      const dialogMock = await import('@tauri-apps/plugin-dialog');
+      vi.mocked(dialogMock.save).mockResolvedValueOnce('/home/testuser/elsewhere/work.db');
+      mocks.checkJournalPath.mockResolvedValue(true);
+
+      renderWithI18n(() => <JournalPicker />);
+      fireEvent.click(screen.getByText(/create new journal/i));
+      await vi.waitFor(() => expect(dialogMock.save).toHaveBeenCalled());
+      fireEvent.click(screen.getByRole('button', { name: /^add$/i }));
+      await vi.waitFor(() => {
+        expect(screen.getByText(/choose a different location/i)).toBeInTheDocument();
+      });
+
+      fireEvent.click(screen.getByRole('button', { name: /^cancel$/i }));
+      expect(screen.getByText(/create new journal/i)).toBeInTheDocument();
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+
+      mocks.checkJournalPath.mockResolvedValue(false);
+      vi.mocked(dialogMock.save).mockResolvedValueOnce('/home/testuser/elsewhere/fresh.db');
+      fireEvent.click(screen.getByText(/create new journal/i));
+      await vi.waitFor(() => {
+        expect(screen.getByPlaceholderText(/e\.g\. my journal/i)).toHaveValue('fresh');
+      });
+      expect(screen.queryByText(/choose a different location/i)).not.toBeInTheDocument();
+    });
+
+    it('shows a sanitized error when the default location cannot be resolved', async () => {
+      const dialogMock = await import('@tauri-apps/plugin-dialog');
+      mocks.getDefaultJournalDir.mockRejectedValue(
+        new Error('Could not prepare the default journal folder: Access is denied. (os error 5)'),
+      );
+
+      renderWithI18n(() => <JournalPicker />);
+      fireEvent.click(screen.getByText(/create new journal/i));
+
+      await vi.waitFor(() => {
+        expect(screen.getByRole('alert')).toBeInTheDocument();
+      });
+      // The raw OS detail must not reach the user.
+      expect(screen.getByRole('alert')).not.toHaveTextContent(/os error/i);
+      // The dialog must never open when the default location itself could not be resolved.
+      expect(dialogMock.save).not.toHaveBeenCalled();
+    });
   });
 
-  it('shows a sanitized error when the default location cannot be prepared', async () => {
-    mocks.getDefaultJournalDir.mockRejectedValue(
-      new Error('Could not prepare the default journal folder: Access is denied. (os error 5)'),
-    );
-
-    renderWithI18n(() => <JournalPicker />);
-    fireEvent.click(screen.getByText(/create new journal/i));
-
-    await vi.waitFor(() => {
-      expect(screen.getByRole('alert')).toBeInTheDocument();
-    });
-    // The raw OS detail must not reach the user.
-    expect(screen.getByRole('alert')).not.toHaveTextContent(/os error/i);
-  });
-
-  it('lets Browse… override the pre-filled default location', async () => {
-    const dialogMock = await import('@tauri-apps/plugin-dialog');
-    vi.mocked(dialogMock.open).mockResolvedValueOnce('/home/testuser/elsewhere');
-
-    renderWithI18n(() => <JournalPicker />);
-    fireEvent.click(screen.getByText(/create new journal/i));
-
-    await vi.waitFor(() => {
-      expect(screen.getByTitle('/home/testuser/Documents/Mini Diarium')).toBeInTheDocument();
+  describe('Create New Journal — Flatpak', () => {
+    beforeEach(() => {
+      setIsFlatpak(true);
     });
 
-    fireEvent.click(screen.getByRole('button', { name: /^browse/i }));
+    it('shows the dialog-free form with a Filename field instead of opening a dialog', async () => {
+      const dialogMock = await import('@tauri-apps/plugin-dialog');
+      renderWithI18n(() => <JournalPicker />);
 
-    await vi.waitFor(() => {
-      expect(screen.getByTitle('/home/testuser/elsewhere')).toBeInTheDocument();
+      fireEvent.click(screen.getByText(/create new journal/i));
+
+      await vi.waitFor(() => {
+        expect(screen.getByText('/home/testuser/Documents/Mini Diarium')).toBeInTheDocument();
+      });
+      expect(mocks.getDefaultJournalDir).toHaveBeenCalled();
+      expect(dialogMock.save).not.toHaveBeenCalled();
+      expect(screen.getByDisplayValue('diary.db')).toBeInTheDocument();
     });
-    expect(screen.queryByTitle('/home/testuser/Documents/Mini Diarium')).not.toBeInTheDocument();
-  });
 
-  // P1 regression: every default-location create used to receive the *same* directory, so a
-  // second journal was registered against the first one's diary.db — and unlocking it asked
-  // for the first journal's password under the second journal's name.
-  it('gives each journal created at the default location a folder of its own', async () => {
-    mocks.prepareJournalDir
-      .mockResolvedValueOnce('/home/testuser/Documents/Mini Diarium/Work')
-      .mockResolvedValueOnce('/home/testuser/Documents/Mini Diarium/Personal');
+    it('lets Browse… override the pre-filled default location', async () => {
+      const dialogMock = await import('@tauri-apps/plugin-dialog');
+      vi.mocked(dialogMock.open).mockResolvedValueOnce('/home/testuser/elsewhere');
 
-    const first = renderWithI18n(() => <JournalPicker />);
-    await createJournalNamed('Work');
-    await vi.waitFor(() => expect(mocks.addJournal).toHaveBeenCalledTimes(1));
-    first.unmount();
+      renderWithI18n(() => <JournalPicker />);
+      fireEvent.click(screen.getByText(/create new journal/i));
 
-    renderWithI18n(() => <JournalPicker />);
-    await createJournalNamed('Personal');
-    await vi.waitFor(() => expect(mocks.addJournal).toHaveBeenCalledTimes(2));
+      await vi.waitFor(() => {
+        expect(screen.getByText('/home/testuser/Documents/Mini Diarium')).toBeInTheDocument();
+      });
 
-    expect(mocks.prepareJournalDir).toHaveBeenNthCalledWith(
-      1,
-      '/home/testuser/Documents/Mini Diarium',
-      'Work',
-    );
-    const [firstPath, secondPath] = mocks.addJournal.mock.calls.map((call) => call[1]);
-    expect(firstPath).toBe('/home/testuser/Documents/Mini Diarium/Work');
-    expect(secondPath).toBe('/home/testuser/Documents/Mini Diarium/Personal');
-    expect(firstPath).not.toBe(secondPath);
-  });
+      fireEvent.click(screen.getByRole('button', { name: /^browse/i }));
 
-  it('creates the journal directly in a browsed folder, allocating nothing', async () => {
-    const dialogMock = await import('@tauri-apps/plugin-dialog');
-    vi.mocked(dialogMock.open).mockResolvedValueOnce('/home/testuser/elsewhere');
-
-    renderWithI18n(() => <JournalPicker />);
-    fireEvent.click(screen.getByText(/create new journal/i));
-    await vi.waitFor(() => expect(mocks.getDefaultJournalDir).toHaveBeenCalled());
-
-    fireEvent.click(screen.getByRole('button', { name: /^browse/i }));
-    await vi.waitFor(() => {
-      expect(screen.getByTitle('/home/testuser/elsewhere')).toBeInTheDocument();
+      await vi.waitFor(() => {
+        expect(screen.getByText('/home/testuser/elsewhere')).toBeInTheDocument();
+      });
+      expect(screen.queryByText('/home/testuser/Documents/Mini Diarium')).not.toBeInTheDocument();
     });
-    fireEvent.click(screen.getByRole('button', { name: /^add$/i }));
 
-    await vi.waitFor(() => {
-      expect(mocks.addJournal).toHaveBeenCalledWith('elsewhere', '/home/testuser/elsewhere');
+    it('creates the journal with the typed name and filename', async () => {
+      renderWithI18n(() => <JournalPicker />);
+      fireEvent.click(screen.getByText(/create new journal/i));
+      await vi.waitFor(() => expect(mocks.getDefaultJournalDir).toHaveBeenCalled());
+
+      fireEvent.input(screen.getByPlaceholderText(/e\.g\. my journal/i), {
+        target: { value: 'Work' },
+      });
+      fireEvent.input(screen.getByDisplayValue('diary.db'), {
+        target: { value: 'work.db' },
+      });
+      fireEvent.click(screen.getByRole('button', { name: /^add$/i }));
+
+      await vi.waitFor(() => {
+        expect(mocks.checkJournalPath).toHaveBeenCalledWith(
+          '/home/testuser/Documents/Mini Diarium/work.db',
+        );
+        expect(mocks.addJournal).toHaveBeenCalledWith(
+          'Work',
+          '/home/testuser/Documents/Mini Diarium',
+          'work.db',
+        );
+      });
     });
-    // Browsing means "put it here", so the chosen folder is used verbatim.
-    expect(mocks.prepareJournalDir).not.toHaveBeenCalled();
+
+    it('shows a friendly error and does not create the journal when a file already exists there', async () => {
+      mocks.checkJournalPath.mockResolvedValue(true);
+
+      renderWithI18n(() => <JournalPicker />);
+      fireEvent.click(screen.getByText(/create new journal/i));
+      await vi.waitFor(() => expect(mocks.getDefaultJournalDir).toHaveBeenCalled());
+
+      fireEvent.input(screen.getByPlaceholderText(/e\.g\. my journal/i), {
+        target: { value: 'Work' },
+      });
+      fireEvent.click(screen.getByRole('button', { name: /^add$/i }));
+
+      await vi.waitFor(() => {
+        expect(screen.getByRole('alert')).toHaveTextContent(/already exists/i);
+      });
+      expect(mocks.addJournal).not.toHaveBeenCalled();
+    });
   });
 
   it('shows a friendly error when the journal is already in the list', async () => {

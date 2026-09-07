@@ -6,6 +6,7 @@ import {
   getTimelineEntries,
   setEntryLocked,
   getLockedEntryDates,
+  recalculateWordCounts,
 } from './entries';
 import { makeTimelineEntry } from '../../test/fixtures';
 
@@ -48,5 +49,12 @@ describe('entries command wrappers (IPC contract)', () => {
     mockInvoke.mockResolvedValue(['2024-01-01']);
     await expect(getLockedEntryDates()).resolves.toEqual(['2024-01-01']);
     expect(mockInvoke).toHaveBeenCalledWith('get_locked_entry_dates');
+  });
+
+  it('recalculateWordCounts → recalculate_word_counts with no args, passes result through', async () => {
+    const result = { scanned: 10, updated: 3, skipped_locked: 1 };
+    mockInvoke.mockResolvedValue(result);
+    await expect(recalculateWordCounts()).resolves.toEqual(result);
+    expect(mockInvoke).toHaveBeenCalledWith('recalculate_word_counts');
   });
 });

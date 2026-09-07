@@ -44,6 +44,18 @@ vi.mock('./PreferencesCustomFontsSection', () => ({
   default: () => <div data-testid="custom-fonts-section" />,
 }));
 
+const { mockRecalculateWordCounts } = vi.hoisted(() => ({
+  mockRecalculateWordCounts: vi.fn(),
+}));
+
+vi.mock('../../../lib/tauri', async () => {
+  const actual = await vi.importActual<typeof import('../../../lib/tauri')>('../../../lib/tauri');
+  return {
+    ...actual,
+    recalculateWordCounts: mockRecalculateWordCounts,
+  };
+});
+
 // The real FEATURE_FLAGS registry is empty (see feature-flags.test.ts), so the
 // Experimental section is hidden in production today. Mocking the module with a
 // mutable array lets both branches be exercised: tests mutate `mockFlagDefs` in place
@@ -71,6 +83,58 @@ describe('PreferencesAdvancedTab', () => {
     mockGetThemeOverridesJson.mockReturnValue('{}');
     mockFlagDefs.length = 0;
     mockIsFeatureEnabled.mockReturnValue(false);
+  });
+
+  describe('word count recalculation', () => {
+    it('renders the button and hint', () => {
+      renderTab();
+      expect(screen.getByText('Word Counts')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Recalculate Word Counts' })).toBeInTheDocument();
+    });
+
+    it('shows the summary on success, with the skipped-locked clause when locked entries exist', async () => {
+      mockRecalculateWordCounts.mockResolvedValue({ scanned: 5, updated: 2, skipped_locked: 1 });
+      renderTab();
+
+      fireEvent.click(screen.getByRole('button', { name: 'Recalculate Word Counts' }));
+
+      expect(
+        await screen.findByText('Checked 5 entries, updated 2.', { exact: false }),
+      ).toBeInTheDocument();
+      expect(screen.getByText(/1 locked entry was skipped\./)).toBeInTheDocument();
+    });
+
+    it('omits the skipped-locked clause when no entries were skipped', async () => {
+      mockRecalculateWordCounts.mockResolvedValue({ scanned: 3, updated: 0, skipped_locked: 0 });
+      renderTab();
+
+      fireEvent.click(screen.getByRole('button', { name: 'Recalculate Word Counts' }));
+
+      expect(
+        await screen.findByText('Checked 3 entries, updated 0.', { exact: false }),
+      ).toBeInTheDocument();
+      expect(screen.queryByText(/was skipped|were skipped/)).not.toBeInTheDocument();
+    });
+
+    it('shows the mapped error and re-enables the button on failure', async () => {
+      mockRecalculateWordCounts.mockRejectedValue('Journal must be unlocked');
+      renderTab();
+
+      const button = screen.getByRole('button', { name: 'Recalculate Word Counts' });
+      fireEvent.click(button);
+
+      expect(await screen.findByText('Please unlock your journal first.')).toBeInTheDocument();
+      expect((button as HTMLButtonElement).disabled).toBe(false);
+    });
+
+    it('shows the generic recalculate error for an unmapped internal failure', async () => {
+      mockRecalculateWordCounts.mockRejectedValue('BEGIN failed: cannot start a transaction');
+      renderTab();
+
+      fireEvent.click(screen.getByRole('button', { name: 'Recalculate Word Counts' }));
+
+      expect(await screen.findByText('Failed to recalculate word counts.')).toBeInTheDocument();
+    });
   });
 
   it('auto-applies valid JSON without an Apply Overrides button', () => {

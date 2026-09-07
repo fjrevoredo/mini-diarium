@@ -391,7 +391,7 @@ pub fn run() {
             commands::auth::get_active_journal_id,
             commands::auth::add_journal,
             commands::auth::get_default_journal_dir,
-            commands::auth::prepare_journal_dir,
+            commands::platform::is_flatpak_sandbox,
             commands::auth::remove_journal,
             commands::auth::rename_journal,
             commands::auth::switch_journal,
@@ -417,6 +417,7 @@ pub fn run() {
             commands::entries::get_locked_entry_dates,
             commands::entries::get_all_entry_dates,
             commands::entries::get_timeline_entries,
+            commands::entries::recalculate_word_counts,
             // Search
             commands::search::search_entries,
             // Navigation

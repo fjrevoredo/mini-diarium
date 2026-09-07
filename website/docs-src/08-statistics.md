@@ -3,13 +3,15 @@ title: Statistics
 slug: statistics
 description: View your writing statistics: total entry and word counts, current and longest streaks, and a breakdown of your most active writing days, months, and years.
 order: 9
-updated: 2026-07-25
+updated: 2026-09-06
 tags: statistics, streaks, word count, writing habits
 ---
 
 ## Opening Statistics
 
 Click the **⋮** menu in the header and select **Statistics...**.
+
+![Statistics overlay showing an 8-day current streak, total entries, total words, and average words per entry](/assets/docs/statistics-01-overlay.webp "The Statistics overlay")
 
 ## What Is Tracked
 

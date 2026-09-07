@@ -119,6 +119,11 @@ fn add_journal_inner(
     if !dir.is_absolute() {
         return Err("Path must be absolute".to_string());
     }
+    // A native save dialog already refuses the characters this strips, so this is a no-op for
+    // that path. Free-text filename entry (the Flatpak create form) has no such guarantee, so
+    // this is what actually protects it — same sanitizer the folder-per-journal flow used to
+    // apply to folder names, now applied to the filename instead.
+    let db_filename = db_filename.map(|f| config::journal_dir_name(&f));
     // Before `is_dir`, deliberately: an *expired* portal handle no longer exists on disk, so
     // probing the filesystem first would report "Directory does not exist" and never reach the
     // message that explains what actually went wrong — the exact case this guard is for.
@@ -232,8 +237,10 @@ fn get_default_journal_dir_inner(
 
 /// Returns a ready-to-use folder for a new journal, creating it if needed.
 ///
-/// The picker pre-fills its Location field from this so **creating a journal never requires
-/// the folder chooser**. Browsing is still offered and still overrides the prefill.
+/// Non-Flatpak platforms use this to pre-fill a native save dialog's `defaultPath`, which the
+/// user still sees and can redirect. Flatpak's dialog-free create form pre-fills its Location
+/// field from this instead, since a native save dialog there can hand back an unusable
+/// temporary portal path (KI-10) — Browse… is still offered there and still overrides it.
 #[tauri::command]
 pub fn get_default_journal_dir(
     app: AppHandle<Wry>,
@@ -243,56 +250,6 @@ pub fn get_default_journal_dir(
         &state.app_data_dir,
         app.path().document_dir().ok().as_deref(),
     )
-}
-
-/// Whether `path` is available to become a new journal's folder — free, or an empty directory.
-fn is_free_journal_dir(path: &Path) -> bool {
-    match std::fs::read_dir(path) {
-        // An empty leftover directory is reusable: starting a create and cancelling it should
-        // not litter the default location with `Work-2`, `Work-3`, …
-        Ok(mut entries) => entries.next().is_none(),
-        Err(_) => !path.exists(),
-    }
-}
-
-/// Allocates a distinct folder under `base` for a journal called `name`, and creates it.
-///
-/// Every journal uses the same `diary.db` filename, so they cannot share a directory —
-/// registering a second one in the same folder would point two config entries at one database.
-fn prepare_journal_dir_inner(base: &Path, name: &str) -> Result<String, String> {
-    const MAX_ATTEMPTS: u32 = 100;
-
-    let folder = config::journal_dir_name(name);
-    for attempt in 1..=MAX_ATTEMPTS {
-        let candidate = if attempt == 1 {
-            base.join(&folder)
-        } else {
-            base.join(format!("{folder}-{attempt}"))
-        };
-        if !is_free_journal_dir(&candidate) {
-            continue;
-        }
-        std::fs::create_dir_all(&candidate)
-            .map_err(|e| format!("Failed to create the journal folder: {e}"))?;
-        return candidate
-            .to_str()
-            .map(str::to_string)
-            .ok_or_else(|| "Journal folder path is not valid UTF-8".to_string());
-    }
-    Err("Could not find a free folder for this journal".to_string())
-}
-
-/// Returns a folder of this journal's own under `base`, creating it.
-///
-/// The picker calls this only for the pre-filled default location. A folder the user browsed
-/// to keeps its existing meaning: the journal is created directly in the folder they picked.
-#[tauri::command]
-pub fn prepare_journal_dir(base: String, name: String) -> Result<String, String> {
-    let base_dir = PathBuf::from(&base);
-    if !base_dir.is_absolute() {
-        return Err("Path must be absolute".to_string());
-    }
-    prepare_journal_dir_inner(&base_dir, &name)
 }
 
 fn remove_journal_inner(id: String, state: &DiaryState) -> Result<(), String> {
@@ -679,48 +636,6 @@ mod tests {
     }
 
     #[test]
-    fn test_prepare_journal_dir_allocates_a_distinct_folder_per_journal() {
-        let env = make_test_env("prepare_dir");
-        let base = env.temp_dir.path();
-
-        let first = prepare_journal_dir_inner(base, "Work").unwrap();
-        // Non-empty, so the next allocation must move aside rather than reuse it.
-        fs::write(std::path::Path::new(&first).join("diary.db"), b"db").unwrap();
-        let second = prepare_journal_dir_inner(base, "Work").unwrap();
-
-        assert_ne!(first, second, "two journals must not share a folder");
-        assert_eq!(std::path::Path::new(&first), base.join("Work"));
-        assert_eq!(std::path::Path::new(&second), base.join("Work-2"));
-        assert!(std::path::Path::new(&second).is_dir());
-    }
-
-    #[test]
-    fn test_prepare_journal_dir_reuses_an_empty_leftover_folder() {
-        let env = make_test_env("prepare_dir_empty");
-        let base = env.temp_dir.path();
-
-        // Starting a create and cancelling it must not litter the default location.
-        let first = prepare_journal_dir_inner(base, "Work").unwrap();
-        let second = prepare_journal_dir_inner(base, "Work").unwrap();
-
-        assert_eq!(first, second);
-    }
-
-    #[test]
-    fn test_prepare_journal_dir_sanitises_the_name() {
-        let env = make_test_env("prepare_dir_sanitise");
-        let base = env.temp_dir.path();
-
-        let dir = prepare_journal_dir_inner(base, "../escape").unwrap();
-
-        assert_eq!(
-            std::path::Path::new(&dir).parent(),
-            Some(base),
-            "the folder must stay under the chosen base"
-        );
-    }
-
-    #[test]
     fn test_add_journal_rejects_a_snapshot_end_to_end() {
         let env = make_test_env("add_backup_name");
         let journal_dir = make_journal_dir(&env, "journal");
@@ -752,6 +667,26 @@ mod tests {
             &env.app_dir,
         );
         assert!(result.is_ok(), "unexpected rejection: {result:?}");
+    }
+
+    /// Free-text filename input (the Flatpak create form) carries none of the validation a
+    /// native save dialog would have applied — `add_journal_inner` must sanitize it itself.
+    #[test]
+    fn test_add_journal_sanitises_a_free_text_db_filename() {
+        let env = make_test_env("add_sanitise_filename");
+        let journal_dir = make_journal_dir(&env, "journal");
+
+        let journal = add_journal_inner(
+            "Escaped".to_string(),
+            journal_dir.to_str().unwrap().to_string(),
+            Some("../../etc/passwd.db".to_string()),
+            &env.app_dir,
+        )
+        .unwrap();
+
+        let stored = config::load_journals(&env.app_dir)[0].db_filename.clone();
+        assert_eq!(stored.as_deref(), Some("....etcpasswd.db"));
+        assert_eq!(journal.db_filename, "....etcpasswd.db");
     }
 
     #[test]

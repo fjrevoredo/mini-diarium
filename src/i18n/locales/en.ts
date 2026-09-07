@@ -136,14 +136,17 @@ const en = {
       journalNamePlaceholder: 'Journal name',
       locationLabel: 'Location',
       useDefaultLocation: 'Use default location',
-      defaultLocationHint:
-        'The default location gives each journal a folder of its own. You only need to browse if you want a different folder.',
+      defaultLocationHint: 'You only need to browse if you want a different folder.',
+      filenameLabel: 'Filename',
+      createSaveDialogTitle: 'Save New Journal',
+      alreadyExistsError:
+        'A database file already exists at this location. Choose a different name or location.',
+      chooseAnotherLocation: 'Choose a different location…',
       confirmRemoveMessage:
         'Remove this journal from the list? The journal file will not be deleted.',
       confirmRemoveTitle: 'Remove Journal',
       noJournalFound: 'The selected file is not a valid diary database.',
       nameRequired: 'Journal name is required',
-      folderRequired: 'Please choose a folder first',
       chooseFolderTitle: 'Choose Location',
       selectFolderTitle: 'Select Journal File',
       creating: 'Creating...',
@@ -670,6 +673,16 @@ const en = {
       generateDump: 'Generate Debug Dump',
       generating: 'Generating…',
       dumpSuccess: 'Debug dump saved successfully.',
+      recalculateTitle: 'Word Counts',
+      recalculateHint:
+        "Recalculates the word count for every entry in this journal. Locked entries are skipped, and this does not change any entry's last-modified date.",
+      recalculateButton: 'Recalculate Word Counts',
+      recalculating: 'Recalculating…',
+      recalculateSummary_one: 'Checked {{ scanned }} entry, updated {{ updated }}.',
+      recalculateSummary_other: 'Checked {{ scanned }} entries, updated {{ updated }}.',
+      recalculateSkippedLocked_one: '{{ count }} locked entry was skipped.',
+      recalculateSkippedLocked_other: '{{ count }} locked entries were skipped.',
+      recalculateError: 'Failed to recalculate word counts.',
       experimentalTitle: 'Experimental Features',
       experimentalHint:
         'These features are still in development and may change or be removed. Enable them at your own risk.',

@@ -1,9 +1,9 @@
 ---
 title: Search
 slug: search
-description: Mini Diarium has full-text search across all encrypted entries. Learn how to find past entries with the search overlay and keyboard shortcut, and how searching stays fully encrypted and offline.
+description: Full-text search across every encrypted entry via the search overlay or Ctrl+F, with instant highlighted results, and how it stays fully encrypted and offline.
 order: 4
-updated: 2026-08-28
+updated: 2026-09-06
 tags: search, find, full-text, encrypted
 ---
 
@@ -16,6 +16,8 @@ Clicking a result jumps straight to that entry in the editor, even on a day that
 The overlay displays the total number of results found ("12 results found"). When results exceed 200, a truncation notice appears: "Showing first 200 — refine your query to see more". This cap keeps search responsive on large journals; refining with additional keywords narrows results.
 
 Navigate results with your keyboard: **ArrowDown** and **ArrowUp** move between results, and pressing **ArrowDown** from the search input focuses the first result.
+
+![Search overlay with a query and three matching results, each with the matched word highlighted](/assets/docs/search-01-overlay-results.webp "Searching for 'morning' across the journal")
 
 ## How Search Works Without Compromising Encryption
 

@@ -1,5 +1,5 @@
-import { createSignal, For, Show } from 'solid-js';
-import { confirm, open } from '../../lib/dialog';
+import { createSignal, onMount, For, Show } from 'solid-js';
+import { confirm, open, save } from '../../lib/dialog';
 import {
   journals,
   activeJournalId,
@@ -9,11 +9,20 @@ import {
   renameJournal,
 } from '../../state/journals';
 import { refreshAuthState, error as authError } from '../../state/auth';
-import { checkJournalPath, getDefaultJournalDir, prepareJournalDir } from '../../lib/tauri';
+import { isFlatpak, loadPlatformInfo } from '../../state/platform';
+import { checkJournalPath, getDefaultJournalDir } from '../../lib/tauri';
 import { mapTauriError } from '../../lib/errors';
 import { useI18n } from '../../i18n';
 
 type AddMode = null | 'create' | 'open';
+
+/** Joins a directory and filename using the directory's own path-separator style. */
+function joinPath(dir: string, filename: string): string {
+  const separator = dir.includes('\\') ? '\\' : '/';
+  return dir.endsWith('/') || dir.endsWith('\\')
+    ? `${dir}${filename}`
+    : `${dir}${separator}${filename}`;
+}
 
 export default function JournalPicker() {
   const t = useI18n();
@@ -24,12 +33,16 @@ export default function JournalPicker() {
   const [newName, setNewName] = createSignal('');
   const [newDir, setNewDir] = createSignal('');
   const [dbFilename, setDbFilename] = createSignal<string | undefined>(undefined);
-  // Whether newDir() is the backend's default location rather than a folder the user browsed
-  // to. Only the default is a shared parent that every journal is created under, so only the
-  // default needs a per-journal subfolder allocated inside it.
-  const [usingDefaultLocation, setUsingDefaultLocation] = createSignal(false);
+  // Whether the existence guard just refused the save-dialog result. Non-Flatpak's create form
+  // has no inline way to change the filename — only Cancel — so this drives a "Choose a
+  // different location…" action that re-opens the save dialog instead of leaving the user stuck.
+  const [pathConflict, setPathConflict] = createSignal(false);
   const [renamingId, setRenamingId] = createSignal<string | null>(null);
   const [renameValue, setRenameValue] = createSignal('');
+
+  onMount(() => {
+    void loadPlatformInfo();
+  });
 
   const handleOpen = async (id: string) => {
     setLocalError(null);
@@ -81,27 +94,13 @@ export default function JournalPicker() {
     setLocalError(null);
     try {
       setNewDir(await getDefaultJournalDir());
-      setUsingDefaultLocation(true);
     } catch (err) {
       setLocalError(mapTauriError(err, t));
     }
   };
 
-  /**
-   * Opens the create form with a working location already filled in.
-   *
-   * The button used to call `handleBrowseCreate` directly, which made the folder chooser
-   * unavoidable — and under Flatpak the chooser is what hands back an unusable document-portal
-   * path. Browse… is still one click away and still overrides this prefill.
-   */
-  const handleStartCreate = async () => {
-    setLocalError(null);
-    setAddMode('create');
-    // Never clobber a folder the user already chose in this session.
-    if (!newDir()) await handleUseDefaultLocation();
-  };
-
-  const handleBrowseCreate = async () => {
+  /** Flatpak-only: overrides the pre-filled default location for the dialog-free create form. */
+  const handleBrowseCreateFolder = async () => {
     setLocalError(null);
     const selected = await open({
       directory: true,
@@ -109,14 +108,49 @@ export default function JournalPicker() {
       title: t('auth.picker.chooseFolderTitle'),
     });
     if (!selected || typeof selected !== 'string') return;
-    const folderName =
-      selected
-        .replace(/[/\\]+$/, '')
-        .split(/[/\\]/)
-        .pop() || 'My Journal';
     setNewDir(selected);
-    setUsingDefaultLocation(false);
-    if (!newName()) setNewName(folderName);
+  };
+
+  /**
+   * Opens the create flow.
+   *
+   * Non-Flatpak platforms go straight to a native save dialog — the same guarantee Open
+   * Existing already gives, so the user always sees and confirms the exact save location.
+   * Under Flatpak's zero-`--filesystem=` sandbox that same dialog can hand back a temporary
+   * document-portal path instead of a real one (KI-10), so Flatpak shows a dialog-free form
+   * with an editable Filename field instead.
+   */
+  const handleStartCreate = async () => {
+    setLocalError(null);
+    setPathConflict(false);
+
+    if (isFlatpak()) {
+      setAddMode('create');
+      if (!dbFilename()) setDbFilename('diary.db');
+      if (!newDir()) await handleUseDefaultLocation();
+      return;
+    }
+
+    let defaultDir: string;
+    try {
+      defaultDir = await getDefaultJournalDir();
+    } catch (err) {
+      setLocalError(mapTauriError(err, t));
+      return;
+    }
+    const selected = await save({
+      defaultPath: joinPath(defaultDir, 'diary.db'),
+      filters: [{ name: 'Database Files', extensions: ['db'] }],
+      title: t('auth.picker.createSaveDialogTitle'),
+    });
+    if (!selected) return;
+
+    const parentDir = selected.replace(/[/\\][^/\\]*$/, '');
+    const filename = selected.split(/[/\\]/).pop() || 'diary.db';
+    const stemName = filename.replace(/\.db$/i, '') || 'My Journal';
+    setNewDir(parentDir);
+    setDbFilename(filename);
+    if (!newName()) setNewName(stemName);
     setAddMode('create');
   };
 
@@ -127,18 +161,19 @@ export default function JournalPicker() {
       setLocalError(t('auth.picker.nameRequired'));
       return;
     }
-    if (!dir) {
-      setLocalError(t('auth.picker.folderRequired'));
-      return;
-    }
+    const filename = isFlatpak() ? dbFilename()?.trim() || 'diary.db' : dbFilename();
     setLocalError(null);
+    setPathConflict(false);
     setIsWorking(true);
     try {
-      // The default location is a shared parent — every journal created without browsing
-      // lands in it, and they all use the same diary.db filename. Give each one its own
-      // subfolder; a browsed folder is used as-is, which is what the user asked for.
-      const target = usingDefaultLocation() ? await prepareJournalDir(dir, name) : dir;
-      const journal = await addJournal(name, target);
+      const exists = await checkJournalPath(joinPath(dir, filename ?? 'diary.db'));
+      if (exists) {
+        setLocalError(t('auth.picker.alreadyExistsError'));
+        setPathConflict(true);
+        setIsWorking(false);
+        return;
+      }
+      const journal = await addJournal(name, dir, filename);
       await switchJournal(journal.id);
       await refreshAuthState();
     } catch (err) {
@@ -168,7 +203,6 @@ export default function JournalPicker() {
     const filename = selected.split(/[/\\]/).pop() || 'diary.db';
     const stemName = filename.replace(/\.db$/i, '') || 'My Journal';
     setNewDir(parentDir);
-    setUsingDefaultLocation(false);
     setDbFilename(filename);
     if (!newName()) setNewName(stemName);
     setAddMode('open');
@@ -179,10 +213,6 @@ export default function JournalPicker() {
     const dir = newDir();
     if (!name) {
       setLocalError(t('auth.picker.nameRequired'));
-      return;
-    }
-    if (!dir) {
-      setLocalError(t('auth.picker.folderRequired'));
       return;
     }
     setLocalError(null);
@@ -201,8 +231,8 @@ export default function JournalPicker() {
     setAddMode(null);
     setNewName('');
     setNewDir('');
-    setUsingDefaultLocation(false);
     setDbFilename(undefined);
+    setPathConflict(false);
     setLocalError(null);
   };
 
@@ -355,33 +385,75 @@ export default function JournalPicker() {
                     placeholder={t('auth.picker.namePlaceholder')}
                   />
                 </div>
-                <div>
-                  <label class="block text-xs font-medium text-secondary mb-1">
-                    {t('auth.picker.locationLabel')}
-                  </label>
-                  <div class="flex gap-2 items-center">
-                    <button
-                      type="button"
-                      onClick={() => handleBrowseCreate()}
-                      class="rounded-md border border-primary px-3 py-1.5 text-xs font-medium text-secondary hover:bg-hover focus:outline-none"
-                    >
-                      {t('common.browseDotDotDot')}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleUseDefaultLocation()}
-                      class="rounded-md border border-primary px-3 py-1.5 text-xs font-medium text-secondary hover:bg-hover focus:outline-none"
-                    >
-                      {t('auth.picker.useDefaultLocation')}
-                    </button>
-                    <Show when={newDir()}>
-                      <p class="text-xs text-tertiary font-mono truncate" title={newDir()}>
-                        {newDir()}
-                      </p>
-                    </Show>
+
+                {/* Flatpak: no native dialog was used, so the filename and location are
+                    still editable here (KI-10). */}
+                <Show when={isFlatpak()}>
+                  <div>
+                    <label class="block text-xs font-medium text-secondary mb-1">
+                      {t('auth.picker.filenameLabel')}
+                    </label>
+                    <input
+                      type="text"
+                      value={dbFilename() ?? ''}
+                      onInput={(e) => setDbFilename(e.currentTarget.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') void handleConfirmCreate();
+                      }}
+                      class="w-full rounded-md border border-primary px-3 py-2 text-sm text-primary bg-primary focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
                   </div>
-                  <p class="mt-1 text-xs text-tertiary">{t('auth.picker.defaultLocationHint')}</p>
-                </div>
+                  <div>
+                    <label class="block text-xs font-medium text-secondary mb-1">
+                      {t('auth.picker.locationLabel')}
+                    </label>
+                    <div class="flex gap-2 items-center">
+                      <button
+                        type="button"
+                        onClick={() => handleBrowseCreateFolder()}
+                        class="rounded-md border border-primary px-3 py-1.5 text-xs font-medium text-secondary hover:bg-hover focus:outline-none"
+                      >
+                        {t('common.browseDotDotDot')}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleUseDefaultLocation()}
+                        class="rounded-md border border-primary px-3 py-1.5 text-xs font-medium text-secondary hover:bg-hover focus:outline-none"
+                      >
+                        {t('auth.picker.useDefaultLocation')}
+                      </button>
+                      <Show when={newDir()}>
+                        <p class="text-xs text-tertiary font-mono truncate" title={newDir()}>
+                          {newDir()}
+                        </p>
+                      </Show>
+                    </div>
+                    <p class="mt-1 text-xs text-tertiary">{t('auth.picker.defaultLocationHint')}</p>
+                  </div>
+                </Show>
+
+                {/* Everywhere else: the location was already confirmed in the native save
+                    dialog, so this is a read-only reminder, not an editable field. When the
+                    existence guard refuses it, this is the only way back to a different one —
+                    there is no inline Filename field to edit instead. */}
+                <Show when={!isFlatpak() && newDir()}>
+                  <p class="mt-1 text-xs text-tertiary font-mono break-all">{newDir()}</p>
+                  <Show when={pathConflict()}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        // Clear the auto-filled name too — it was derived from the rejected
+                        // file, so keeping it would pair a stale name with the new one.
+                        setNewName('');
+                        void handleStartCreate();
+                      }}
+                      class="text-xs text-tertiary hover:text-secondary underline focus:outline-none"
+                    >
+                      {t('auth.picker.chooseAnotherLocation')}
+                    </button>
+                  </Show>
+                </Show>
+
                 <div class="flex gap-2">
                   <button
                     type="button"

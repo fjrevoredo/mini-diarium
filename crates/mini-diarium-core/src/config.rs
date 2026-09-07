@@ -153,11 +153,12 @@ pub fn save_journals(
 
 /// The folder a brand-new journal should be created in when the user has not picked one.
 ///
-/// Exists so creating a journal never *requires* the folder chooser. On Flatpak the chooser
-/// opens the XDG document portal for anything outside the sandbox, and the `/run/user/*/doc/`
-/// handle it hands back is per-grant: stored as a journal's permanent location it stops
-/// resolving later. Offering a known-good default is the fix; `add_journal` separately
-/// refuses portal handles.
+/// Exists so Flatpak's dialog-free create form always has a known-good starting point without
+/// ever touching a folder chooser. On Flatpak the chooser opens the XDG document portal for
+/// anything outside the sandbox, and the `/run/user/*/doc/` handle it hands back is per-grant:
+/// stored as a journal's permanent location it stops resolving later. Everywhere else this is
+/// only the pre-filled `defaultPath` of a native save dialog the user still sees and can
+/// redirect; `add_journal` separately refuses portal handles regardless of how a path arrived.
 ///
 /// `documents_dir` is a parameter rather than being resolved here so this stays pure and
 /// directly testable — the caller supplies the platform lookup.
@@ -168,10 +169,10 @@ pub fn default_journal_dir(app_data_dir: &Path, documents_dir: Option<&Path>) ->
     }
 }
 
-/// Longest folder name `journal_dir_name` will produce, in characters.
+/// Longest path component `journal_dir_name` will produce, in characters.
 ///
-/// Well below every filesystem's per-component limit, leaving room for the `-2`/`-3` suffix
-/// the caller may append and for the `backups/<stem>` tree created inside the folder.
+/// Well below every filesystem's per-component limit, leaving room for the `backups/<stem>`
+/// tree a journal's folder gets alongside its database file.
 const MAX_JOURNAL_DIR_NAME_LEN: usize = 64;
 
 /// Windows device names. A path component matching one of these — with or without an
@@ -181,16 +182,18 @@ const RESERVED_DEVICE_NAMES: [&str; 22] = [
     "COM9", "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9",
 ];
 
-/// Turns a user-chosen journal name into a safe single folder name.
+/// Turns free-text input into a safe single filesystem path component.
 ///
-/// Each journal needs its **own** directory: they all use the same `diary.db` filename, so two
-/// journals sharing a folder are two config entries pointing at one database. The name is user
-/// input and goes straight into a path, so everything a filesystem can choke on is removed —
-/// path separators (which would silently escape the intended parent), the rest of the Windows
-/// reserved set, control characters, trailing dots and spaces (Windows strips them, so
-/// `"Work."` and `"Work"` would collide), and the device names.
+/// Journals no longer need a folder of their own — several can now share a directory,
+/// distinguished by `db_filename` — but a filename typed into a plain text field (the Flatpak
+/// create form's Filename input) carries none of the validation a native save dialog would
+/// have applied. The input goes straight into a path, so everything a filesystem can choke on
+/// is removed — path separators (which would silently escape the intended parent), the rest of
+/// the Windows reserved set, control characters, trailing dots and spaces (Windows strips them,
+/// so `"Work."` and `"Work"` would collide), and the device names.
 ///
-/// The result is a *name*, never a path: it contains no separator, and is never empty.
+/// The result is a single path *component*, never a path: it contains no separator, and is
+/// never empty.
 pub fn journal_dir_name(name: &str) -> String {
     let mut cleaned = String::new();
     let mut pending_space = false;

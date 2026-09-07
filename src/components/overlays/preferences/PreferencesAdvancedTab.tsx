@@ -12,6 +12,7 @@ import {
   parseOverridesJson,
 } from '../../../lib/theme-overrides';
 import * as tauri from '../../../lib/tauri';
+import type { WordCountRecalculationResult } from '../../../lib/tauri';
 import { mapTauriError } from '../../../lib/errors';
 import { useI18n } from '../../../i18n';
 import type { TabProps } from './shared';
@@ -29,6 +30,11 @@ export default function PreferencesAdvancedTab(props: TabProps) {
   const [dumpStatus, setDumpStatus] = createSignal<'idle' | 'success' | 'error'>('idle');
   const [dumpError, setDumpError] = createSignal('');
 
+  // Word count recalculation state
+  const [recalcRunning, setRecalcRunning] = createSignal(false);
+  const [recalcResult, setRecalcResult] = createSignal<WordCountRecalculationResult | null>(null);
+  const [recalcError, setRecalcError] = createSignal('');
+
   createEffect(() => {
     if (props.isOpen()) {
       setLocalOverridesJson(getThemeOverridesJson());
@@ -36,6 +42,9 @@ export default function PreferencesAdvancedTab(props: TabProps) {
       setDumpGenerating(false);
       setDumpStatus('idle');
       setDumpError('');
+      setRecalcRunning(false);
+      setRecalcResult(null);
+      setRecalcError('');
     }
   });
 
@@ -77,6 +86,30 @@ export default function PreferencesAdvancedTab(props: TabProps) {
       setDumpStatus('error');
     } finally {
       setDumpGenerating(false);
+    }
+  };
+
+  const handleRecalculateWordCounts = async () => {
+    setRecalcRunning(true);
+    setRecalcResult(null);
+    setRecalcError('');
+    try {
+      const result = await tauri.recalculateWordCounts();
+      setRecalcResult(result);
+    } catch (err) {
+      // recalculate_all_word_counts's own failure paths ("BEGIN failed: …", "COMMIT
+      // failed: …", "Failed to update word count: …") wrap a raw rusqlite Display string
+      // that mapTauriError's pattern table does not recognize and would otherwise pass
+      // through verbatim. Every other failure (e.g. "Journal must be unlocked") is a
+      // canonical string mapTauriError already localizes.
+      const raw = typeof err === 'string' ? err : err instanceof Error ? err.message : String(err);
+      setRecalcError(
+        /^(BEGIN|COMMIT) failed:|^Failed to update word count:/.test(raw)
+          ? t('prefs.advanced.recalculateError')
+          : mapTauriError(err, t),
+      );
+    } finally {
+      setRecalcRunning(false);
     }
   };
 
@@ -144,6 +177,48 @@ export default function PreferencesAdvancedTab(props: TabProps) {
           </Show>
           <Show when={dumpStatus() === 'error'}>
             <p class="text-sm text-error">{dumpError()}</p>
+          </Show>
+        </div>
+      </div>
+      <div class="border-t border-primary pt-4 mt-4">
+        <h3 class="text-sm font-medium text-primary mb-3">
+          {t('prefs.advanced.recalculateTitle')}
+        </h3>
+        <p class="text-xs text-tertiary mb-3 leading-relaxed">
+          {t('prefs.advanced.recalculateHint')}
+        </p>
+        <div class="space-y-2">
+          <button
+            type="button"
+            onClick={handleRecalculateWordCounts}
+            disabled={recalcRunning()}
+            class="px-4 py-2 text-sm font-medium interactive-primary rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {recalcRunning()
+              ? t('prefs.advanced.recalculating')
+              : t('prefs.advanced.recalculateButton')}
+          </button>
+          <Show when={recalcResult() !== null}>
+            <p class="text-sm text-success">
+              {t(
+                recalcResult()!.scanned === 1
+                  ? 'prefs.advanced.recalculateSummary_one'
+                  : 'prefs.advanced.recalculateSummary_other',
+                { scanned: recalcResult()!.scanned, updated: recalcResult()!.updated },
+              )}
+              <Show when={recalcResult()!.skipped_locked > 0}>
+                {' '}
+                {t(
+                  recalcResult()!.skipped_locked === 1
+                    ? 'prefs.advanced.recalculateSkippedLocked_one'
+                    : 'prefs.advanced.recalculateSkippedLocked_other',
+                  { count: recalcResult()!.skipped_locked },
+                )}
+              </Show>
+            </p>
+          </Show>
+          <Show when={recalcError() !== ''}>
+            <p class="text-sm text-error">{recalcError()}</p>
           </Show>
         </div>
       </div>

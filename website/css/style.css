@@ -1151,6 +1151,27 @@ section {
   padding: 0;
 }
 
+.prose-figure {
+  margin: 1.75rem 0;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 0.75rem;
+}
+
+.prose-figure img {
+  border-radius: calc(var(--radius-lg) - 0.75rem);
+  margin: 0 auto;
+}
+
+.prose-figure figcaption {
+  margin-top: 0.6rem;
+  padding: 0 0.25rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  text-align: center;
+}
+
 /* ===== BLUF (Bottom Line Up Front) ===== */
 .bluf {
   font-size: 1.05em;

@@ -227,8 +227,9 @@ flatpak run io.github.fjrevoredo.mini-diarium
 - the app launches
 - the UI loads in release mode
 - journal open/save flows still work
-- **+ Create New Journal** pre-fills a location and creates a journal **without opening the
-  folder chooser** — this is the path most users take, and it must not depend on the portal
+- **+ Create New Journal** shows a dialog-free form (Name, Filename, and Location fields)
+  pre-filled with the default location and `diary.db` — it must **never open a native save
+  dialog** on Flatpak; this is the path most users take, and it must not depend on the portal
 - file picking still works through portals — open an import/export dialog and confirm a file
   is actually read or written afterwards. Note what this check does **not** prove: browsing to
   a folder *outside* the sandbox returns a `/run/user/<uid>/doc/` handle that resolves now and
@@ -254,12 +255,17 @@ returns `None` when that file is absent) is exactly what these steps establish.
 
 1. Build and install **without any Flatseal override** — a granted `--filesystem` permission
    invalidates the whole test, since it is the absence of one that produces the failure.
-2. **+ Create New Journal**: the Location field must be pre-filled and the journal must be
-   creatable **with no folder chooser at any point**. Record which path it resolved to —
-   `~/Documents/Mini Diarium/<name>` or `~/.var/app/io.github.fjrevoredo.mini-diarium/data/…`.
-   Either is a pass; which one it is answers the open question.
-3. Create a **second** journal the same way. It must land on password creation, not on the
-   first journal's unlock prompt, and must occupy a different folder.
+2. **+ Create New Journal**: the dialog-free form must appear directly — Name, Filename
+   (pre-filled `diary.db`), and Location (pre-filled, Browse…/Use default location available)
+   — and the journal must be creatable **with no native save dialog at any point**. Record
+   which path the Location field resolved to — `~/Documents/Mini Diarium` or
+   `~/.var/app/io.github.fjrevoredo.mini-diarium/data/…`. Either is a pass; which one it is
+   answers the open question.
+3. Create a **second** journal the same way, in the same default folder, but change the
+   Filename field (e.g. `work.db`) — journals now share a folder by distinct filename rather
+   than each getting an auto-allocated folder of its own. It must land on password creation,
+   not on the first journal's unlock prompt. Leaving the Filename as `diary.db` unchanged
+   must instead be refused with an "already exists" error before anything is created.
 4. Quit, relaunch, and unlock both journals.
 5. Inspect `~/.var/app/io.github.fjrevoredo.mini-diarium/data/config.json`: each entry's `path`
    must be a durable location and **must not** be under `/run/user/*/doc/` or

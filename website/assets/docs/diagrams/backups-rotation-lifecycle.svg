@@ -1,0 +1,120 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 450" width="800" height="450" role="img" aria-labelledby="brTitle brDesc">
+  <title id="brTitle">Backup snapshot retention and lifecycle</title>
+  <desc id="brDesc">Snapshots are kept in four tiers: the 10 most recent, one per day for 14 days, one per week for 8 weeks, and one per month for 12 months. Any kept snapshot can be restored. If the backup folder passes its storage budget, the most-recent tier is trimmed first.</desc>
+
+  <style>
+    .br-font { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; }
+    .br-tier { fill: #f0ede6; font-size: 13px; font-weight: 700; }
+    .br-sub { fill: #888; font-size: 11px; }
+    .br-end { fill: #888; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; }
+    .br-box-title { fill: #f0ede6; font-size: 15px; font-weight: 700; }
+    .br-box-sub { fill: #888; font-size: 11.5px; }
+    .br-flow { fill: #F5C94D; font-size: 11px; font-weight: 600; letter-spacing: .03em; text-transform: uppercase; }
+    .br-warn { fill: #d99a4e; font-size: 11px; font-weight: 600; letter-spacing: .03em; text-transform: uppercase; }
+  </style>
+
+  <defs>
+    <marker id="arrowGold2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#F5C94D"/>
+    </marker>
+    <marker id="arrowWarn" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#d99a4e"/>
+    </marker>
+    <marker id="arrowTimeline" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#F5C94D"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="800" height="450" fill="#0e0e0e"/>
+
+  <!-- Timeline -->
+  <line x1="70" y1="150" x2="726" y2="150" stroke="#F5C94D" stroke-width="2" marker-end="url(#arrowTimeline)"/>
+  <text x="70" y="130" class="br-font br-end">older</text>
+  <text x="726" y="130" text-anchor="end" class="br-font br-end">today</text>
+
+  <!-- Monthly dots (sparse) -->
+  <g fill="#666">
+    <circle cx="95" cy="150" r="3"/>
+    <circle cx="140" cy="150" r="3"/>
+    <circle cx="185" cy="150" r="3"/>
+    <circle cx="230" cy="150" r="3"/>
+  </g>
+  <!-- Weekly dots -->
+  <g fill="#888">
+    <circle cx="285" cy="150" r="3.5"/>
+    <circle cx="320" cy="150" r="3.5"/>
+    <circle cx="355" cy="150" r="3.5"/>
+    <circle cx="390" cy="150" r="3.5"/>
+  </g>
+  <!-- Daily dots -->
+  <g fill="#aaa">
+    <circle cx="440" cy="150" r="4"/>
+    <circle cx="465" cy="150" r="4"/>
+    <circle cx="490" cy="150" r="4"/>
+    <circle cx="545" cy="150" r="4"/>
+    <circle cx="570" cy="150" r="4"/>
+  </g>
+  <!-- Highlighted kept snapshot -->
+  <circle cx="518" cy="150" r="7" fill="#F5C94D" stroke="#0e0e0e" stroke-width="2"/>
+  <!-- Recent dots (always kept) -->
+  <g fill="#F5C94D" fill-opacity=".55">
+    <circle cx="620" cy="150" r="5"/>
+    <circle cx="645" cy="150" r="5"/>
+    <circle cx="670" cy="150" r="5"/>
+    <circle cx="695" cy="150" r="5"/>
+  </g>
+
+  <!-- Tier brackets -->
+  <path d="M90,168 L90,178 L232,178 L232,168" fill="none" stroke="#2a2a2a" stroke-width="1.5"/>
+  <path d="M280,168 L280,178 L392,178 L392,168" fill="none" stroke="#2a2a2a" stroke-width="1.5"/>
+  <path d="M435,168 L435,178 L572,178 L572,168" fill="none" stroke="#2a2a2a" stroke-width="1.5"/>
+  <path d="M615,168 L615,178 L698,178 L698,168" fill="none" stroke="#2a2a2a" stroke-width="1.5"/>
+
+  <!-- Branch connector lines (drawn under the tier labels, which get an opaque halo below) -->
+  <path d="M518,157 L518,296" fill="none" stroke="#F5C94D" stroke-width="2"/>
+  <path d="M518,296 C518,300 400,300 400,300 L340,300" fill="none" stroke="#F5C94D" stroke-width="2" marker-end="url(#arrowGold2)"/>
+  <path d="M656,178 L656,296" fill="none" stroke="#d99a4e" stroke-width="2"/>
+  <path d="M656,296 C656,300 620,300 600,300" fill="none" stroke="#d99a4e" stroke-width="2" marker-end="url(#arrowWarn)"/>
+
+  <!-- Tier label halos (opaque, painted over the connector lines) + labels -->
+  <g>
+    <rect x="118" y="188" width="86" height="16" fill="#0e0e0e"/>
+    <rect x="100" y="203" width="122" height="14" fill="#0e0e0e"/>
+    <text x="161" y="200" text-anchor="middle" class="br-font br-tier">Monthly</text>
+    <text x="161" y="216" text-anchor="middle" class="br-font br-sub">1 / month, 12 months</text>
+
+    <rect x="298" y="188" width="76" height="16" fill="#0e0e0e"/>
+    <rect x="280" y="203" width="112" height="14" fill="#0e0e0e"/>
+    <text x="336" y="200" text-anchor="middle" class="br-font br-tier">Weekly</text>
+    <text x="336" y="216" text-anchor="middle" class="br-font br-sub">1 / week, 8 weeks</text>
+
+    <rect x="475" y="188" width="56" height="16" fill="#0e0e0e"/>
+    <rect x="450" y="203" width="106" height="14" fill="#0e0e0e"/>
+    <text x="503" y="200" text-anchor="middle" class="br-font br-tier">Daily</text>
+    <text x="503" y="216" text-anchor="middle" class="br-font br-sub">1 / day, 14 days</text>
+
+    <rect x="600" y="188" width="112" height="16" fill="#0e0e0e"/>
+    <rect x="590" y="203" width="132" height="14" fill="#0e0e0e"/>
+    <text x="656" y="200" text-anchor="middle" class="br-font br-tier">Most Recent</text>
+    <text x="656" y="216" text-anchor="middle" class="br-font br-sub">always the last 10</text>
+  </g>
+
+  <!-- Flow labels (halo + text) sitting on the connector lines -->
+  <rect x="326" y="242" width="120" height="16" fill="#0e0e0e"/>
+  <text x="386" y="254" text-anchor="middle" class="br-font br-flow">any kept snapshot</text>
+
+  <rect x="596" y="242" width="100" height="16" fill="#0e0e0e"/>
+  <text x="646" y="254" text-anchor="middle" class="br-font br-warn">if over budget</text>
+
+  <!-- Restore box -->
+  <rect x="220" y="305" width="240" height="80" rx="12" fill="#161616" stroke="#F5C94D" stroke-width="1.5"/>
+  <text x="340" y="335" text-anchor="middle" class="br-font br-box-title">Restore</text>
+  <text x="340" y="356" text-anchor="middle" class="br-font br-box-sub">Load the whole journal, or</text>
+  <text x="340" y="371" text-anchor="middle" class="br-font br-box-sub">copy individual entries out</text>
+
+  <!-- Prune box -->
+  <rect x="480" y="305" width="240" height="80" rx="12" fill="#161616" stroke="#d99a4e" stroke-width="1.5"/>
+  <text x="600" y="335" text-anchor="middle" class="br-font br-box-title">Prune</text>
+  <text x="600" y="356" text-anchor="middle" class="br-font br-box-sub">Past 2 GB (or 3x journal size),</text>
+  <text x="600" y="371" text-anchor="middle" class="br-font br-box-sub">the Most Recent tier is trimmed first</text>
+</svg>

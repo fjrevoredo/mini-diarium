@@ -34,6 +34,24 @@ Template:
 
 # Versions
 
+## [0.7.3] - Unreleased
+
+### Added
+- **Agent-friendly docs mirrors (Copy page, `llms-full.txt`)**: Each documentation section page now has a "Copy page" dropdown (Copy page, View as Markdown, Open in ChatGPT/Claude/Perplexity), a per-page Markdown mirror at `website/docs/<slug>.md`, and a `<link rel="alternate" type="text/markdown">` discovery tag. `website/llms-full.txt` adds the full concatenated Markdown text of every docs section as a sibling to the curated `llms.txt`. Markdown mirrors are canonicalized to their HTML page via an nginx `Link: rel="canonical"` header rather than `noindex`, so ranking signal consolidates onto the HTML page.
+- **Manual word count recalculation (TODO-0111, #275)**: Settings → Advanced now has a "Recalculate Word Counts" button that rescans every entry in the journal and rewrites any stale `word_count`. Locked entries are skipped, and an entry's last-modified date is never touched by the recalculation. Manual/on-demand only — there is no automatic or background recalculation.
+
+### Fixed
+- **Day One JSON import failed on entries with no text (#294)**: Day One omits the `"text"` key entirely for blank entries, but the importer's `DayOneEntry` struct required it, so `serde_json` rejected the whole file with `missing field "text"` instead of importing anything. `text` now defaults to empty when absent, and entries with no text content (after trimming) are skipped rather than imported as blank entries.
+- **Docs screenshot layout shift + sitemap freshness drift (SEO audit)**: `generate-website-docs.mjs` now emits `width`/`height` on every docs `<img>` tag (read from the shipped SVG/WebP file at build time) to reserve layout space and prevent CLS. `generate-website-blog.mjs` now stamps the homepage and `STATIC_PAGES` `sitemap.xml` `lastmod` from a manually-maintained `updated` date instead of file mtime, so an unrelated CSS/JS rebuild no longer bumps those pages' freshness signal.
+- **Website docs**: Added screenshots and diagrams to 10 of the 11 user guide pages (FAQ excluded as reference-only). Screenshots are live-captured from the real dev app — journal creation, the editor toolbar and multi-entry Timeline, calendar/search/import/export, three Preferences tabs, Statistics, and two Backups panel states — plus two hand-built SVG diagrams (the plugin sandbox boundary and the backup retention/rotation lifecycle) in the site's own dark/gold palette. Images ship as WebP (q80) via a new `renderer.image` override in `generate-website-docs.mjs` that wraps each in a captioned `<figure class="prose-figure">`; convention documented in `website/CLAUDE.md`.
+
+### Changed
+- **File-based "Create New Journal" flow (TODO-0112)**: Creating a journal no longer forces a new folder per journal. On Windows/macOS/non-Flatpak Linux, **+ Create New Journal** now opens a native Save dialog (pre-filled with the default location and `diary.db`) so you pick or rename the exact file, the same way Open Existing already worked. On the Flathub build, Create still shows a dialog-free form (a native save dialog there can return an unusable temporary path), now with an editable Filename field so a second journal can be created in the same default folder. Attempting to create a journal at a location where a database file already exists is refused with a clear error instead of a raw filesystem failure.
+
+### Internal
+- **Dependency updates (Dependabot #295)**: Bumped all nine `@tiptap/*` frontend packages from 3.30.5 to 3.30.6 (`core`, `extension-color`, `extension-highlight`, `extension-image`, `extension-placeholder`, `extension-text-align`, `extension-text-style`, `pm`, `starter-kit`); both lockfiles regenerated and aligned at 3.30.6. The `nix/package.nix` `npmDepsHash` needs a Linux-side refresh — the Nix CI workflow patches it automatically on push.
+- **Dependency updates (Dependabot #285, #286, #287, #290, #291, #292)**: Frontend bumps for `@tauri-apps/plugin-dialog` (2.7.3), `@tauri-apps/plugin-opener` (2.5.5), `@tiptap/*` (3.30.5), `@vitest/ui` and `vitest` (4.1.11), `eslint-plugin-solid` (0.17.0), and `undici` (8.10.x); patch bumps for `tauri-plugin-dialog`/`tauri-plugin-opener`/`tauri-plugin-fs` in `Cargo.lock`; CI action bumps for `softprops/action-gh-release` (3.0.3) and `flatpak-builder` (6.8); and `toml` 4.3.0 in the `.opencode` tooling lockfile. The `nix/package.nix` `npmDepsHash` needs a Linux-side refresh — the Nix CI workflow patches it automatically on push.
+
 ## [0.7.2] - 01-09-2026
 
 ### Fixed

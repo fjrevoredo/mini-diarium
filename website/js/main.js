@@ -104,3 +104,59 @@ document.querySelectorAll('.copy-btn').forEach(btn => {
     }, 2000);
   });
 });
+
+// Docs-specific: "Copy page" split button + dropdown on section pages (not the hub)
+document.querySelectorAll('.docs-copy-wrap').forEach(wrap => {
+  const chevron = wrap.querySelector('.docs-copy-chevron');
+  const menu = wrap.querySelector('.docs-copy-menu');
+
+  const closeMenu = () => {
+    if (!menu || !chevron) return;
+    menu.classList.remove('open');
+    chevron.setAttribute('aria-expanded', 'false');
+  };
+
+  if (chevron && menu) {
+    chevron.addEventListener('click', () => {
+      const isOpen = menu.classList.toggle('open');
+      chevron.setAttribute('aria-expanded', isOpen);
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!wrap.contains(e.target)) closeMenu();
+    });
+  }
+
+  const mirrorUrl =
+    document.querySelector('link[rel="alternate"][type="text/markdown"]')?.href ||
+    wrap.querySelector('[data-copy-target]')?.dataset.copyTarget;
+
+  wrap.querySelectorAll('[data-copy-target]').forEach(btn => {
+    const labelEl = btn.querySelector('.docs-copy-label, .docs-copy-menu-title');
+    if (!labelEl) return;
+    const idleLabel = labelEl.textContent;
+
+    btn.addEventListener('click', async () => {
+      let copied = false;
+      try {
+        if (navigator.clipboard && window.isSecureContext) {
+          const response = await fetch(mirrorUrl);
+          const text = await response.text();
+          if (!response.ok || !text.trimStart().startsWith('#')) {
+            throw new Error('Unexpected markdown mirror response');
+          }
+          await navigator.clipboard.writeText(text);
+          copied = true;
+        }
+      } catch {
+        copied = false;
+      }
+
+      labelEl.textContent = copied ? 'Copied' : 'Copy failed';
+      closeMenu();
+      setTimeout(() => {
+        labelEl.textContent = idleLabel;
+      }, 2000);
+    });
+  });
+});

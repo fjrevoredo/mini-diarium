@@ -108,6 +108,61 @@ after any `posts-src/` or static-page change with `cmd.exe /c bun run website:bu
   stays flat or thins out, drop it from the watch list.
 ---
 
+## P2: 2026-09 cycle — new items
+
+### ☐ 16. Add width/height to docs page screenshots (CLS risk)
+- **Data:** found during a manual SEO/CWV audit of the 2026-09-06 "Add screenshots to the Website
+  docs" commit (`e64590e`), not from GSC/Bing exports. `renderer.image` in
+  `scripts/generate-website-docs.mjs` emits `<img src=... loading="lazy" />` with no `width`/
+  `height`; `.prose-figure img` in `website/css/style.css` only inherits the global
+  `img { max-width: 100% }` reset, with no `aspect-ratio` reservation. Measured native pixel
+  dimensions of the shipped WebP files vary per image (500×660 to 1440×900, no common ratio), so
+  the browser reserves zero layout space until each image loads — a Core Web Vitals CLS
+  regression on every docs page that carries one.
+- **Change:** read each image's real pixel dimensions at build time and emit matching `width`/
+  `height` attributes on the `<img>` tag (CSS `max-width:100%` still scales it down responsively;
+  the intrinsic ratio reserves the correct box). See the paired implementation change in the same
+  cycle.
+- **Expected effect:** eliminates layout shift on all ten docs pages currently carrying images
+  (`getting-started`, `writing-entries`, `navigating`, `search`, `import`, `export`, `plugins`,
+  `preferences`, `statistics`, `backups` — confirmed via `grep -l '!\[' website/docs-src/*.md`);
+  protects CWV hygiene per `STRATEGY.md` §4.
+- **Verify:** `grep -o '<img src="/assets/docs/[^>]*"' website/docs/getting-started/index.html`
+  shows `width=` and `height=` attributes on every match after rebuild.
+
+### ☐ 17. Decouple static-page `lastmod` from file mtime (freshness-signal integrity)
+- **Data:** found in the same audit. `fileLastModified()` in `scripts/generate-website-blog.mjs`
+  stamps every `STATIC_PAGES` sitemap entry (and the homepage, via `indexLastModified`) from the
+  file's on-disk mtime. The 2026-09-06 screenshots commit added `.prose-figure` CSS, which changed
+  the fingerprinted stylesheet hash; the fingerprinter then rewrote the `<link>` tag in all six
+  static pages, bumping their mtime and pushing their `sitemap.xml` `lastmod` to 2026-09-06 even
+  though none of their content changed. This is structural, not a one-off — any future shared
+  CSS/JS edit reproduces it. Docs pages and blog posts already avoid this by using the
+  front-matter `updated:` date, not mtime.
+- **Change:** give the homepage and each `STATIC_PAGES` entry an explicit, manually-maintained
+  `updated` date (mirroring the blog/docs front-matter convention) and use it for `lastmod`
+  instead of `fileLastModified()`.
+- **Expected effect:** `lastmod` on `/`, `/compare/`, `/privacy/`, `/encrypted-journal/`,
+  `/newsletter/`, `/donate/` only moves when someone deliberately bumps it for a real content
+  change, restoring the field as a genuine freshness signal.
+- **Verify:** rebuild after touching only shared CSS/JS and confirm `sitemap.xml` `lastmod` for
+  the six static URLs does not change; confirm it does change after bumping a page's `updated`
+  constant.
+
+### Ruled out, no action needed
+- **Image sitemap extension** — 14 screenshots don't justify it, and it is exactly the "more
+  infrastructure" `STRATEGY.md`'s thesis paragraph says to stop adding.
+- **`image` on `HowTo`/`TechArticle` JSON-LD** — Google retired HowTo rich results; that schema
+  block is already inert, so wiring images into it buys nothing.
+- **Horizontal overflow** — ruled out; the global `img { max-width: 100% }` reset already
+  prevents it.
+- **`robots.txt`** — does not block `/assets/docs/`; no issue.
+- **Unconditional `loading="lazy"`** — correct today since every current docs image sits below the
+  fold. Flagged as a latent risk only: if a future docs page puts an image above the fold, the
+  renderer will still mark it lazy, which would hurt LCP. No fix needed until that happens.
+
+---
+
 ## Closed — 2026-07 cycle
 
 ## P1: Highest-leverage CTR / rank moves
@@ -280,3 +335,5 @@ next cycle by directional movement (we cannot prove causation at this traffic sc
 | 2026-08-22 | New hypothesis: `password protected journal app` reaching position 5 (#11) will hold or improve once internal links are reinforced | Position holds ≥ page 1 and starts converting clicks as impressions accumulate | pending |
 | 2026-08-22 | Added `/encrypted-journal/` → `/blog/password-protected-journal-app/` internal link (#11), closing the last gap in the secure/password cluster's interlinking (how-to-choose → password post already existed since 2026-07-14) | Reinforces the post's new position 5 ranking; expect it to hold or improve, and for clicks to start appearing as impressions accumulate | pending |
 | 2026-08-22 | Baseline only (no hypothesis yet): first-ever Google AI-Overview (~3,309 impr) and Bing/Copilot citation (175 citations/78 cited-page-days) data pulled this cycle | N/A — establishes the comparison point for 2026-08 onward | baseline |
+| 2026-09-06 | Added `width`/`height` to docs screenshot `<img>` tags (#16) | CLS on all ten image-bearing docs pages drops to ~0 in field/lab data (PageSpeed Insights / CrUX next cycle) | pending |
+| 2026-09-06 | Switched homepage + `STATIC_PAGES` `lastmod` from file mtime to a manual `updated` constant (#17) | `lastmod` for those six URLs stops moving on unrelated CSS/JS rebuilds; only moves on deliberate content bumps | pending |
