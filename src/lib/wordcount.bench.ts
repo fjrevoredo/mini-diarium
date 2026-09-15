@@ -1,4 +1,4 @@
-import { bench, describe } from 'vitest';
+import { test } from 'vitest';
 import { countWordsFromText, countWordsInHtml } from './wordcount';
 
 const REALISTIC_HTML = concat(
@@ -58,14 +58,14 @@ function concat(...parts: string[]): string {
   return parts.join('');
 }
 
-describe('countWordsFromText', () => {
-  bench('~500w plain prose', () => {
+test('countWordsFromText', async ({ bench }) => {
+  await bench('~500w plain prose', () => {
     countWordsFromText(PLAIN_TEXT);
-  });
+  }).run();
 });
 
-describe('countWordsInHtml', () => {
-  bench('~600w TipTap HTML', () => {
+test('countWordsInHtml', async ({ bench }) => {
+  await bench('~600w TipTap HTML', () => {
     countWordsInHtml(REALISTIC_HTML.repeat(3));
-  });
+  }).run();
 });
