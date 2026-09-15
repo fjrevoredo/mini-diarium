@@ -1,3 +1,17 @@
+// Rebrand announcement banner dismiss
+const rebrandBanner = document.getElementById('rebrand-banner');
+const rebrandBannerClose = document.getElementById('rebrand-banner-close');
+if (rebrandBanner && rebrandBannerClose) {
+  rebrandBannerClose.addEventListener('click', () => {
+    rebrandBanner.hidden = true;
+    try {
+      localStorage.setItem('rebrand-banner-dismissed', '1');
+    } catch {
+      // storage unavailable (private mode, blocked): dismissal just won't persist
+    }
+  });
+}
+
 // Mobile nav toggle
 const navToggle = document.getElementById('nav-toggle');
 const navLinks = document.getElementById('nav-links');

@@ -17,7 +17,7 @@ const DEFAULT_OG_IMAGE = `${SITE_URL}/assets/og-cover.png`;
 const INDEX_PATH = path.join(WEBSITE_DIR, 'index.html');
 // Manually bumped whenever the homepage's actual content changes — see
 // STATIC_PAGES for the same discipline on the other manual static pages.
-const HOMEPAGE_UPDATED = '2026-09-06';
+const HOMEPAGE_UPDATED = '2026-09-15';
 const SITEMAP_PATH = path.join(WEBSITE_DIR, 'sitemap.xml');
 const LLMS_PATH = path.join(WEBSITE_DIR, 'llms.txt');
 

@@ -58,6 +58,71 @@ section {
   padding: clamp(3rem, 8vw, 6rem) 0;
 }
 
+/* ===== Rebrand Banner ===== */
+.rebrand-banner {
+  background: linear-gradient(rgba(245, 201, 77, 0.1), rgba(245, 201, 77, 0.1)), var(--bg-card);
+  border-bottom: 1px solid var(--accent-dim);
+}
+
+.rebrand-banner-inner {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 1.1rem 0;
+}
+
+.rebrand-banner-message {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  margin: 0 auto;
+  max-width: 720px;
+}
+
+.rebrand-banner-icon {
+  flex-shrink: 0;
+  margin-top: 0.15rem;
+  width: 26px;
+  height: 26px;
+  color: var(--accent);
+}
+
+.rebrand-banner-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  text-align: left;
+}
+
+.rebrand-banner-inner p {
+  font-size: 0.95rem;
+  color: var(--text);
+  line-height: 1.5;
+}
+
+.rebrand-banner-inner p strong.rebrand-banner-lead {
+  color: var(--accent);
+}
+
+.rebrand-banner-close {
+  flex-shrink: 0;
+  background: none;
+  border: none;
+  padding: 0.25rem 0.5rem;
+  color: var(--text-muted);
+  font-size: 1.4rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.rebrand-banner-close:hover {
+  color: var(--text);
+}
+
+.rebrand-banner[hidden] {
+  display: none;
+}
+
 /* ===== Nav ===== */
 .nav {
   position: sticky;
@@ -1422,6 +1487,27 @@ section {
 }
 
 @media (max-width: 768px) {
+  .rebrand-banner-inner {
+    padding: 0.9rem 0;
+  }
+
+  .rebrand-banner-message {
+    gap: 0.6rem;
+  }
+
+  .rebrand-banner-icon {
+    width: 22px;
+    height: 22px;
+  }
+
+  .rebrand-banner-text {
+    gap: 0.45rem;
+  }
+
+  .rebrand-banner-inner p {
+    font-size: 0.85rem;
+  }
+
   .nav-links {
     display: none;
     flex-direction: column;
