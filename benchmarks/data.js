@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1789503529252,
+  "lastUpdate": 1789509634712,
   "repoUrl": "https://github.com/fjrevoredo/mini-diarium",
   "entries": {
     "Benchmark": [
@@ -37312,6 +37312,36 @@ window.BENCHMARK_DATA = {
           {
             "name": "ci_pipeline_duration",
             "value": 785000000000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "committer": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "distinct": true,
+          "id": "e8a13d15457e725244d6ca4d90b7f2776985b715",
+          "message": "Dependency Update: bump prod and dev dependencies (Vitest 5, @tiptap 3.31.3, js-yaml 4.3.2)\n\nApplies Dependabot #298 (prod deps), #297 (dev deps, incl. Vitest 4 -> 5), and #296\n(js-yaml 4.3.2 in both lockfiles). Both lockfiles regenerated and aligned.\n\nVitest 5 migration: the two src/lib/*.bench.ts files move to the new { bench }\nfixture API, and src/test/jest-dom-vitest.d.ts re-declares the jest-dom matchers\nagainst Vitest 5's two-parameter Matchers/Assertion because @testing-library/\njest-dom 7.0.1 does not yet ship a Vitest 5 augmentation.\n\nnix/package.nix npmDepsHash needs a Linux-side refresh; the Nix CI workflow\npatches it automatically on push.",
+          "timestamp": "2026-09-15T22:44:13+02:00",
+          "tree_id": "a743411105f2eed19d3f8f3687c385bbf726aace",
+          "url": "https://github.com/fjrevoredo/mini-diarium/commit/e8a13d15457e725244d6ca4d90b7f2776985b715"
+        },
+        "date": 1789509633532,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "ci_pipeline_duration",
+            "value": 558000000000,
             "range": "± 0",
             "unit": "ns/iter"
           }
