@@ -155,14 +155,14 @@ jobs:
           # The version suffix ties the cache to the exact Playwright version
           # installed below. Bump BOTH this key suffix AND the install pin
           # alongside the @playwright/test dependency in package.json.
-          key: playwright-chromium-1.62.1-${{ hashFiles('bun.lock') }}
+          key: playwright-chromium-1.63.0-${{ hashFiles('bun.lock') }}
           restore-keys: playwright-chromium-
 
       - name: Install Playwright Chromium
         if: steps.cache-playwright.outputs.cache-hit != 'true'
         # Pin Playwright to the exact version resolved in bun.lock (S8543).
         # Bump alongside the @playwright/test dependency in package.json.
-        run: bunx playwright@1.62.1 install --with-deps chromium
+        run: bunx playwright@1.63.0 install --with-deps chromium
 
       - name: Cache nextest binary
         id: cache-nextest
