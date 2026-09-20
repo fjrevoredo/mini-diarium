@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1789749858411,
+  "lastUpdate": 1789931141298,
   "repoUrl": "https://github.com/fjrevoredo/mini-diarium",
   "entries": {
     "Benchmark": [
@@ -37432,6 +37432,36 @@ window.BENCHMARK_DATA = {
           {
             "name": "ci_pipeline_duration",
             "value": 565000000000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "committer": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "distinct": true,
+          "id": "68dcda9bfc656a91bd41c9399476b94174632ac3",
+          "message": "add grilling skill",
+          "timestamp": "2026-09-20T20:55:24+02:00",
+          "tree_id": "c5c0ee4ffbff027e85f9c63f06f5895e6ce047c7",
+          "url": "https://github.com/fjrevoredo/mini-diarium/commit/68dcda9bfc656a91bd41c9399476b94174632ac3"
+        },
+        "date": 1789931140237,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "ci_pipeline_duration",
+            "value": 568000000000,
             "range": "± 0",
             "unit": "ns/iter"
           }
