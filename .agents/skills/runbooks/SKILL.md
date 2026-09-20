@@ -32,6 +32,7 @@ This library is manual-first. Do not guess a runbook when the user's request doe
 | `add-locale` | Adding a brand-new Mini Diarium locale end to end | `skills/add-locale/ENTRY.md` |
 | `apply-dependency-prs` | Applying dependency-update pull requests safely | `skills/apply-dependency-prs/ENTRY.md` |
 | `diagram-maintainer` | Updating and validating Mermaid or D2 documentation diagrams | `skills/diagram-maintainer/ENTRY.md` |
+| `grilling` | Interviewing a user relentlessly toward shared understanding via design-tree rounds, then optionally recording an ADR | `skills/grilling/ENTRY.md` |
 | `implementation-review` | Reviewing a completed implementation against its plan and validations | `skills/implementation-review/ENTRY.md` |
 | `integrate-stale-pr` | Manually integrating an external PR that can no longer merge cleanly | `skills/integrate-stale-pr/ENTRY.md` |
 | `pre-release` | Running the pre-release checklist before tagging | `skills/pre-release/ENTRY.md` |
