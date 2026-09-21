@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1790002337206,
+  "lastUpdate": 1790005790943,
   "repoUrl": "https://github.com/fjrevoredo/mini-diarium",
   "entries": {
     "Benchmark": [
@@ -37492,6 +37492,36 @@ window.BENCHMARK_DATA = {
           {
             "name": "ci_pipeline_duration",
             "value": 570000000000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "committer": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "distinct": true,
+          "id": "24f9af126370844998335cafeb115ced87a2da72",
+          "message": "Dependency Update: marked, @types/node, eslint-plugin-solid, typescript-eslint, vite, rhai, codecov-action, signpath action\n\nBoth npm lockfiles regenerated and aligned; Cargo.lock updated for rhai 1.26.1; codecov/codecov-action bumped 6.0.1 -> 7.1.0 and signpath/github-action-submit-signing-request 2.3 -> 3.0. nix/package.nix npmDepsHash needs a Linux-side refresh; the Nix CI workflow patches it automatically on push.",
+          "timestamp": "2026-09-21T17:30:09+02:00",
+          "tree_id": "560d8ee433e6c3ffa507e4da2ad2bea6f4a45cb1",
+          "url": "https://github.com/fjrevoredo/mini-diarium/commit/24f9af126370844998335cafeb115ced87a2da72"
+        },
+        "date": 1790005789261,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "ci_pipeline_duration",
+            "value": 629000000000,
             "range": "± 0",
             "unit": "ns/iter"
           }
