@@ -22,6 +22,7 @@ pub use queries::{
     // Types
     DiaryEntry, EntryMetadata, TimelineRow, Tag,
     ImageData, ImageSummary, ImageSummaryPage, ImageSummarySort,
+    AttachmentSummary,
     WordCountRecalculationResult,
     // Entry CRUD
     count_words, delete_entry_by_id, get_all_entries, get_all_entry_dates, get_entries_by_date,
@@ -34,6 +35,11 @@ pub use queries::{
     // Images
     get_image_by_id, get_images_for_entry, list_image_summaries_filtered,
     resolve_image_refs_in_entries,
+    // Attachments
+    add_attachment_to_entry, cleanup_orphaned_attachments, entry_has_attachments,
+    get_attachments_map, link_attachment, list_entry_attachments, mime_for_extension,
+    read_attachment_bytes, remove_attachment_from_entry, upsert_attachment_blob,
+    DEFAULT_ATTACHMENT_MIME, MAX_STORED_BLOB_BYTES,
     // Auth slots
     count_auth_slots, delete_auth_slot, get_auth_slot_type, get_keypair_slot_by_pubkey,
     get_password_slot, insert_auth_slot, list_auth_slots, update_auth_slot_wrapped_key,

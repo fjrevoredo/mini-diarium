@@ -7,17 +7,17 @@ use crate::db::schema::DatabaseConnection;
 use base64::{engine::general_purpose, Engine as _};
 use rusqlite::params;
 
-const MAX_STORED_IMAGE_BYTES: usize = 20 * 1024 * 1024;
+use crate::db::queries::MAX_STORED_BLOB_BYTES;
 
 fn validate_image_for_storage(mime_type: &str, plaintext_bytes: &[u8]) -> Result<(), String> {
     if plaintext_bytes.is_empty() {
         return Err("Image data is empty".to_string());
     }
 
-    if plaintext_bytes.len() > MAX_STORED_IMAGE_BYTES {
+    if plaintext_bytes.len() > MAX_STORED_BLOB_BYTES {
         return Err(format!(
             "Image is too large. Maximum supported size is {} MB.",
-            MAX_STORED_IMAGE_BYTES / 1_048_576
+            MAX_STORED_BLOB_BYTES / 1_048_576
         ));
     }
 
@@ -377,7 +377,7 @@ mod tests {
     fn test_upsert_image_rejects_oversized_bytes() {
         let (_tmp, db) = make_db();
         let mut bytes = valid_png_bytes();
-        bytes.resize(MAX_STORED_IMAGE_BYTES + 1, 0);
+        bytes.resize(MAX_STORED_BLOB_BYTES + 1, 0);
         let err = upsert_image(&db, "image/png", &bytes).unwrap_err();
         assert!(err.contains("too large"), "got: {}", err);
     }

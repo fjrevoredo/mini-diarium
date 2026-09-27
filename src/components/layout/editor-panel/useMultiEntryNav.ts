@@ -4,6 +4,7 @@ import type { DiaryEntry } from '../../../lib/tauri';
 import { setEntryDates } from '../../../state/entries';
 import { createLogger } from '../../../lib/logger';
 import { confirmInApp } from '../../../state/confirm-dialog';
+import { entryHasLoadedAttachments } from '../../../state/entryAttachments';
 import { useI18n } from '../../../i18n';
 import type { EditorEmptyCheckHook } from './useEditorEmptyCheck';
 import type { EntryLifecycleHook } from './useEntryLifecycle';
@@ -105,7 +106,9 @@ export function useMultiEntryNav(opts: UseMultiEntryNavOptions): MultiEntryNavHo
     // Only allow adding a second entry when the current one has real content.
     // An empty pendingEntryId means no entry yet (typing auto-creates the first one).
     // An empty title+body means the entry hasn't been filled in yet.
-    if (opts.pendingEntryId() === null || opts.emptyCheck.isContentEmpty()) return;
+    // Attachments count as content (TODO-0114).
+    const id = opts.pendingEntryId();
+    if (id === null || (opts.emptyCheck.isContentEmpty() && !entryHasLoadedAttachments(id))) return;
     opts.setIsCreatingEntry(true);
 
     try {

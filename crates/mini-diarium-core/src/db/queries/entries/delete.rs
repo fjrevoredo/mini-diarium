@@ -1,11 +1,14 @@
 use crate::db::schema::DatabaseConnection;
 use rusqlite::params;
 
-/// Deletes an entry from the database by id, removing any now-orphaned images.
+/// Deletes an entry from the database by id, removing any now-orphaned images and
+/// attachments.
 ///
-/// The `ON DELETE CASCADE` on `entry_images.entry_id` removes association rows when the
-/// entry is deleted (requires `PRAGMA foreign_keys = ON`, set by `configure_connection`).
-/// `cleanup_orphaned_images` then removes any images with no remaining associations.
+/// The `ON DELETE CASCADE` on `entry_images.entry_id` / `entry_attachments.entry_id` removes
+/// association rows when the entry is deleted (requires `PRAGMA foreign_keys = ON`, set by
+/// `configure_connection`).
+/// `cleanup_orphaned_images` / `cleanup_orphaned_attachments` then remove any blobs with no
+/// remaining associations.
 /// Both steps are wrapped in a `BEGIN IMMEDIATE / COMMIT` transaction.
 ///
 /// # Returns
@@ -23,6 +26,7 @@ pub fn delete_entry_by_id(db: &DatabaseConnection, id: i64) -> Result<bool, Stri
 
         // ON DELETE CASCADE removes entry_images rows; cleanup removes orphaned images.
         crate::db::queries::images::cleanup_orphaned_images(db)?;
+        crate::db::queries::attachments::cleanup_orphaned_attachments(db)?;
 
         db.conn()
             .execute("COMMIT", [])

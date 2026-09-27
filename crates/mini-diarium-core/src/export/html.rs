@@ -1,3 +1,4 @@
+use super::attachments::{attachment_names, print_rewrite_refs, AttachmentsMap};
 use crate::db::queries::DiaryEntry;
 use std::collections::{BTreeMap, HashMap};
 
@@ -5,6 +6,10 @@ use std::collections::{BTreeMap, HashMap};
 pub struct PrintLabels {
     pub generated_label: String,
     pub tags_label: String,
+    /// Label before an entry's attachment names. Defaults to English when the caller omits
+    /// it, so an older frontend payload still deserializes.
+    #[serde(default)]
+    pub attachments_label: String,
     pub no_entries_label: String,
     pub months: Vec<String>,
 }
@@ -35,6 +40,7 @@ fn format_date(date: &str, months: &[String]) -> String {
 pub fn generate_print_html(
     entries: Vec<DiaryEntry>,
     tags: &HashMap<i64, Vec<String>>,
+    attachments: &AttachmentsMap,
     generated_at: &str,
     labels: &PrintLabels,
 ) -> String {
@@ -91,8 +97,23 @@ pub fn generate_print_html(
 
             html.push_str(&format!(
                 r#"<div class="md-print-entry-content">{}</div>"#,
-                entry.text
+                print_rewrite_refs(entry.id, &entry.text, attachments)
             ));
+
+            let names = attachment_names(entry.id, attachments);
+            if !names.is_empty() {
+                let label = if labels.attachments_label.is_empty() {
+                    "Attachments:"
+                } else {
+                    labels.attachments_label.as_str()
+                };
+                let escaped: Vec<String> = names.iter().map(|n| escape_html(n)).collect();
+                html.push_str(&format!(
+                    r#"<div class="md-print-entry-attachments">{} {}</div>"#,
+                    escape_html(label),
+                    escaped.join(", ")
+                ));
+            }
 
             html.push_str("</div>"); // .md-print-entry
         }
@@ -111,6 +132,7 @@ mod tests {
         PrintLabels {
             generated_label: "Generated:".to_string(),
             tags_label: "Tags:".to_string(),
+            attachments_label: "Attachments:".to_string(),
             no_entries_label: "No entries found.".to_string(),
             months: vec![
                 "January".to_string(),
@@ -151,7 +173,13 @@ mod tests {
             make_entry(2, "2024-02-20", "Entry B", "<p>Content B</p>"),
         ];
         let tags = HashMap::new();
-        let html = generate_print_html(entries, &tags, "2024-03-01", &make_labels());
+        let html = generate_print_html(
+            entries,
+            &tags,
+            &HashMap::new(),
+            "2024-03-01",
+            &make_labels(),
+        );
         let count = html.matches("md-print-day\"").count();
         assert_eq!(count, 2, "Expected 2 day divs, got {}", count);
     }
@@ -160,7 +188,13 @@ mod tests {
     fn test_output_contains_no_style_tag() {
         // CSS lives in index.css; the HTML fragment must not embed a <style> block.
         let entries = vec![make_entry(1, "2024-01-15", "Test", "<p>Hello</p>")];
-        let html = generate_print_html(entries, &HashMap::new(), "2024-03-01", &make_labels());
+        let html = generate_print_html(
+            entries,
+            &HashMap::new(),
+            &HashMap::new(),
+            "2024-03-01",
+            &make_labels(),
+        );
         assert!(
             !html.contains("<style>"),
             "HTML fragment must not embed a <style> block"
@@ -179,7 +213,13 @@ mod tests {
             "<script>alert(1)</script>",
             "<p>ok</p>",
         )];
-        let html = generate_print_html(entries, &HashMap::new(), "2024-03-01", &make_labels());
+        let html = generate_print_html(
+            entries,
+            &HashMap::new(),
+            &HashMap::new(),
+            "2024-03-01",
+            &make_labels(),
+        );
         assert!(
             html.contains("&lt;script&gt;"),
             "Title should be HTML-escaped"
@@ -194,7 +234,13 @@ mod tests {
     fn test_entry_content_is_verbatim() {
         let raw_html = "<p>Hello <strong>world</strong></p>";
         let entries = vec![make_entry(1, "2024-01-15", "Title", raw_html)];
-        let html = generate_print_html(entries, &HashMap::new(), "2024-03-01", &make_labels());
+        let html = generate_print_html(
+            entries,
+            &HashMap::new(),
+            &HashMap::new(),
+            "2024-03-01",
+            &make_labels(),
+        );
         assert!(
             html.contains(raw_html),
             "Entry content must be embedded verbatim"
@@ -213,7 +259,13 @@ mod tests {
         ];
         for raw_html in cases {
             let entries = vec![make_entry(1, "2024-01-15", "Title", raw_html)];
-            let html = generate_print_html(entries, &HashMap::new(), "2024-03-01", &make_labels());
+            let html = generate_print_html(
+                entries,
+                &HashMap::new(),
+                &HashMap::new(),
+                "2024-03-01",
+                &make_labels(),
+            );
             assert!(
                 html.contains(raw_html),
                 "expected '{}' embedded verbatim in: {}",
@@ -232,7 +284,13 @@ mod tests {
         let mut tags = HashMap::new();
         tags.insert(1i64, vec!["travel".to_string(), "work".to_string()]);
 
-        let html = generate_print_html(entries, &tags, "2024-03-01", &make_labels());
+        let html = generate_print_html(
+            entries,
+            &tags,
+            &HashMap::new(),
+            "2024-03-01",
+            &make_labels(),
+        );
         // Count the div elements (not CSS rule occurrences) by matching the opening div tag
         let div_count = html.matches(r#"<div class="md-print-entry-tags">"#).count();
         assert_eq!(div_count, 1, "Only one entry should have a tags div");
@@ -241,7 +299,13 @@ mod tests {
     #[test]
     fn test_generated_label_appears() {
         let entries = vec![make_entry(1, "2024-01-15", "T", "<p>c</p>")];
-        let html = generate_print_html(entries, &HashMap::new(), "2024-06-10", &make_labels());
+        let html = generate_print_html(
+            entries,
+            &HashMap::new(),
+            &HashMap::new(),
+            "2024-06-10",
+            &make_labels(),
+        );
         assert!(
             html.contains("Generated:"),
             "generated_label should appear in output"
@@ -254,7 +318,13 @@ mod tests {
 
     #[test]
     fn test_empty_entries_returns_no_entries_message() {
-        let html = generate_print_html(vec![], &HashMap::new(), "2024-03-01", &make_labels());
+        let html = generate_print_html(
+            vec![],
+            &HashMap::new(),
+            &HashMap::new(),
+            "2024-03-01",
+            &make_labels(),
+        );
         assert!(
             html.contains("No entries found."),
             "Empty diary should show 'No entries found.' message"
@@ -271,7 +341,13 @@ mod tests {
         // format_date returns the raw string when the date isn't YYYY-MM-DD
         // "invalid" has no '-', so split('-') produces 1 part — triggers the early return
         let entries = vec![make_entry(1, "invalid", "Title", "<p>c</p>")];
-        let html = generate_print_html(entries, &HashMap::new(), "2024-03-01", &make_labels());
+        let html = generate_print_html(
+            entries,
+            &HashMap::new(),
+            &HashMap::new(),
+            "2024-03-01",
+            &make_labels(),
+        );
         assert!(
             html.contains("invalid"),
             "Malformed date should appear verbatim in output"
@@ -284,7 +360,13 @@ mod tests {
             make_entry(1, "2024-01-15", "Entry A", "<p>Content A</p>"),
             make_entry(2, "2024-01-15", "Entry B", "<p>Content B</p>"),
         ];
-        let html = generate_print_html(entries, &HashMap::new(), "2024-03-01", &make_labels());
+        let html = generate_print_html(
+            entries,
+            &HashMap::new(),
+            &HashMap::new(),
+            "2024-03-01",
+            &make_labels(),
+        );
         let count = html.matches(r#"<div class="md-print-day">"#).count();
         assert_eq!(
             count, 1,
@@ -299,7 +381,13 @@ mod tests {
             make_entry(1, "2024-03-10", "Later", "<p>Later content</p>"),
             make_entry(2, "2024-01-05", "Earlier", "<p>Earlier content</p>"),
         ];
-        let html = generate_print_html(entries, &HashMap::new(), "2024-03-01", &make_labels());
+        let html = generate_print_html(
+            entries,
+            &HashMap::new(),
+            &HashMap::new(),
+            "2024-03-01",
+            &make_labels(),
+        );
         let pos_earlier = html
             .find("January 5, 2024")
             .expect("Earlier date not found");
@@ -315,7 +403,13 @@ mod tests {
         let entries = vec![make_entry(1, "2024-01-15", "T", "<p>c</p>")];
         let mut tags = HashMap::new();
         tags.insert(1i64, vec!["zebra".to_string(), "apple".to_string()]);
-        let html = generate_print_html(entries, &tags, "2024-03-01", &make_labels());
+        let html = generate_print_html(
+            entries,
+            &tags,
+            &HashMap::new(),
+            "2024-03-01",
+            &make_labels(),
+        );
         assert!(
             html.contains("apple, zebra"),
             "Tags should be sorted alphabetically: expected 'apple, zebra'"
@@ -325,10 +419,74 @@ mod tests {
     #[test]
     fn test_empty_title_omits_title_div() {
         let entries = vec![make_entry(1, "2024-01-15", "", "<p>Content</p>")];
-        let html = generate_print_html(entries, &HashMap::new(), "2024-03-01", &make_labels());
+        let html = generate_print_html(
+            entries,
+            &HashMap::new(),
+            &HashMap::new(),
+            "2024-03-01",
+            &make_labels(),
+        );
         assert!(
             !html.contains(r#"<div class="md-print-entry-title">"#),
             "Empty title should not emit a title div"
         );
+    }
+
+    #[test]
+    fn test_attachments_listed_after_content_and_refs_rewritten() {
+        use crate::export::attachments::test_support::summary;
+        let entries = vec![
+            make_entry(
+                1,
+                "2024-01-15",
+                "With files",
+                r#"<p>See <span data-attachment-ref="5"></span></p>"#,
+            ),
+            make_entry(2, "2024-01-16", "No files", "<p>B</p>"),
+        ];
+        let attachments = HashMap::from([(
+            1i64,
+            vec![summary(5, "a<b>.pdf", 10), summary(6, "clip.mp4", 20)],
+        )]);
+        let mut labels = make_labels();
+        labels.attachments_label = "Anhänge:".to_string();
+
+        let html = generate_print_html(
+            entries,
+            &HashMap::new(),
+            &attachments,
+            "2024-03-01",
+            &labels,
+        );
+
+        assert_eq!(
+            html.matches(r#"<div class="md-print-entry-attachments">"#)
+                .count(),
+            1,
+            "only the entry with attachments gets a list"
+        );
+        assert!(html.contains(
+            r#"<div class="md-print-entry-attachments">Anhänge: a&lt;b&gt;.pdf, clip.mp4</div>"#
+        ));
+        assert!(html.contains(r#"<span class="md-print-attachment-ref">📎 a&lt;b&gt;.pdf</span>"#));
+        assert!(!html.contains("data-attachment-ref"));
+    }
+
+    #[test]
+    fn test_blank_attachments_label_falls_back_to_english() {
+        use crate::export::attachments::test_support::summary;
+        let entries = vec![make_entry(1, "2024-01-15", "T", "<p>A</p>")];
+        let attachments = HashMap::from([(1i64, vec![summary(5, "a.pdf", 10)])]);
+        let mut labels = make_labels();
+        labels.attachments_label = String::new();
+
+        let html = generate_print_html(
+            entries,
+            &HashMap::new(),
+            &attachments,
+            "2024-03-01",
+            &labels,
+        );
+        assert!(html.contains("Attachments: a.pdf"));
     }
 }

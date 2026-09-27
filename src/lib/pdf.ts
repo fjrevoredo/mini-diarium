@@ -17,6 +17,8 @@ const SCREEN_PRINT_STYLES = `
   #mini-diarium-print-layer .md-print-entry { margin-bottom: 2em; }
   #mini-diarium-print-layer .md-print-entry-title { font-size: 13pt; font-weight: bold; margin-bottom: 0.2em; }
   #mini-diarium-print-layer .md-print-entry-tags { font-size: 9pt; color: #666; font-style: italic; margin-bottom: 0.75em; }
+  #mini-diarium-print-layer .md-print-entry-attachments { font-size: 9pt; color: #666; font-style: italic; margin-top: 0.75em; }
+  #mini-diarium-print-layer .md-print-attachment-ref { font-style: italic; }
   #mini-diarium-print-layer .md-print-entry-content { font-size: 11pt; }
   #mini-diarium-print-layer .md-print-entry-content p { margin: 0.5em 0; }
   #mini-diarium-print-layer .md-print-entry-content h1 { font-size: 2em; font-weight: bold; margin: 0.67em 0; }

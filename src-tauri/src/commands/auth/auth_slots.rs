@@ -251,7 +251,10 @@ mod tests {
         // Unlock with private key
         let db2 = open_database_with_keypair(&db_path, priv_key, &backups_dir).unwrap();
 
-        assert_eq!(crate::db::read_schema_version(&db2).unwrap(), 13);
+        assert_eq!(
+            crate::db::read_schema_version(&db2).unwrap(),
+            crate::db::SCHEMA_VERSION
+        );
 
         // Verify entry is decryptable with the master key unwrapped via keypair
         let entries = crate::db::get_entries_by_date(&db2, "2024-03-15").unwrap();
@@ -406,7 +409,10 @@ mod tests {
         let mut priv_key = [0u8; 32];
         priv_key.copy_from_slice(&priv_bytes_vec);
         let db2 = open_database_with_keypair(&db_path, priv_key, &backups_dir).unwrap();
-        assert_eq!(crate::db::read_schema_version(&db2).unwrap(), 13);
+        assert_eq!(
+            crate::db::read_schema_version(&db2).unwrap(),
+            crate::db::SCHEMA_VERSION
+        );
     }
 
     #[test]

@@ -231,6 +231,29 @@ fn create_schema(conn: &Connection) -> Result<(), String> {
             FOREIGN KEY (image_id) REFERENCES images(id)   ON DELETE RESTRICT
         );
         CREATE INDEX IF NOT EXISTS idx_entry_images_image_id ON entry_images(image_id);
+
+        -- Attachments: content-addressed encrypted store for non-image files
+        CREATE TABLE IF NOT EXISTS attachments (
+            id          INTEGER PRIMARY KEY AUTOINCREMENT,
+            fingerprint TEXT    NOT NULL UNIQUE,
+            mime_type   TEXT    NOT NULL,
+            byte_size   INTEGER NOT NULL,
+            data        BLOB    NOT NULL,
+            created_at  TEXT    NOT NULL
+        );
+
+        -- Entry-attachment links; the (encrypted) file name is per entry
+        CREATE TABLE IF NOT EXISTS entry_attachments (
+            entry_id       INTEGER NOT NULL,
+            attachment_id  INTEGER NOT NULL,
+            name_encrypted BLOB    NOT NULL,
+            created_at     TEXT    NOT NULL,
+            PRIMARY KEY (entry_id, attachment_id),
+            FOREIGN KEY (entry_id)      REFERENCES entries(id)     ON DELETE CASCADE,
+            FOREIGN KEY (attachment_id) REFERENCES attachments(id) ON DELETE RESTRICT
+        );
+        CREATE INDEX IF NOT EXISTS idx_entry_attachments_attachment_id
+            ON entry_attachments(attachment_id);
         "#,
     )
     .map_err(|e| format!("Failed to create schema: {}", e))?;

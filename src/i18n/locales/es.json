@@ -602,6 +602,7 @@
     "printing": "Imprimiendo...",
     "printGeneratedLabel": "Generado:",
     "printTagsLabel": "Etiquetas:",
+    "printAttachmentsLabel": "Adjuntos:",
     "printNoEntries": "No se encontraron entradas."
   },
   "import": {
@@ -723,6 +724,21 @@
     "filterActiveLabel": "Filtro de etiqueta:",
     "clearFilter": "Quitar filtro de etiqueta"
   },
+  "attachments": {
+    "attachFile": "Adjuntar archivo",
+    "attachFileTitle": "Adjuntar archivos a esta entrada (hasta 20 MB cada uno)",
+    "listAria": "Adjuntos",
+    "actionsAria": "Acciones para {{ name }}",
+    "saveCopy": "Guardar una copia…",
+    "insertRef": "Insertar referencia en el texto",
+    "remove": "Quitar",
+    "confirmRemoveTitle": "Quitar adjunto",
+    "confirmRemove": "¿Quitar «{{ name }}» de esta entrada?",
+    "confirmRemoveWithRefs": "¿Quitar «{{ name }}» de esta entrada? Las referencias en el texto se mostrarán como ausentes.",
+    "addFailed": "No se pudo adjuntar «{{ name }}»: {{ error }}",
+    "missing": "Adjunto ausente",
+    "refTitle": "Haz clic para guardar una copia de {{ name }}"
+  },
   "onboarding": {
     "title": "Bienvenido a Mini Diarium",
     "subtitle": "Algunas cosas para empezar:",
@@ -749,6 +765,11 @@
     "decryptionFailed": "No se pudo descifrar. El archivo de clave puede ser incorrecto o los datos pueden estar dañados.",
     "journalNotUnlocked": "Por favor desbloquea tu diario primero.",
     "entryLocked": "Esta entrada está bloqueada. Desbloquéala para hacer cambios.",
+    "attachmentTooLarge": "Este archivo es demasiado grande. Los adjuntos pueden ocupar hasta 20 MB.",
+    "attachmentEmpty": "Este archivo está vacío.",
+    "attachmentNotAFile": "Solo se pueden adjuntar archivos, no carpetas.",
+    "attachmentNotFound": "Este adjunto ya no existe.",
+    "attachmentExtensionMismatch": "Guarda la copia con la misma extensión de archivo que el adjunto.",
     "cannotRemoveLastAuth": "No se puede eliminar el último método de autenticación.",
     "cannotReadKeyFile": "No se pudo leer el archivo de clave. Verifica que el archivo exista y tengas permiso para leerlo.",
     "cannotSaveKeyFile": "No se pudo guardar el archivo de clave. Verifica los permisos de la carpeta.",

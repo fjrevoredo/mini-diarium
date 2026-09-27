@@ -478,6 +478,10 @@ pub fn run() {
             commands::tags::remove_tag_from_entry,
             commands::tags::get_tags_for_entry,
             commands::tags::get_entry_dates_by_tag,
+            commands::attachments::list_entry_attachments,
+            commands::attachments::add_entry_attachment,
+            commands::attachments::remove_entry_attachment,
+            commands::attachments::save_attachment_copy,
             // Images
             commands::images::get_entry_images,
             commands::images::list_journal_image_summaries,

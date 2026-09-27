@@ -15,6 +15,9 @@
 //!    database, so [`crate::db::insert_entry_with_images`] re-extracts and stores fresh image
 //!    rows there instead of dropping the reference or colliding with an unrelated live image
 //!    that happens to share the id.
+//! 3. **Attachment ids have the same problem.** A snapshot entry's attachments are copied
+//!    blob-by-blob into the live store first, then its inline `data-attachment-ref` spans are
+//!    remapped from snapshot ids to the new live ids before the entry is inserted and linked.
 //!
 //! Nothing here writes a file: every intermediate value (resolved HTML, decrypted tag names)
 //! lives in memory only, on its way from one encrypted connection to another.
@@ -23,10 +26,12 @@ use std::collections::{HashMap, HashSet};
 
 use rusqlite::{params, Connection, OptionalExtension};
 
+use crate::db::queries::attachments::{attachment_ref_span, rewrite_attachment_refs};
 use crate::db::{
-    add_tag_to_entry, create_tag, get_entries_by_date, get_tags_for_entry,
-    insert_entry_with_images, resolve_image_refs_in_entries, DatabaseConnection, DiaryEntry,
-    EntryMetadata,
+    add_tag_to_entry, cleanup_orphaned_attachments, create_tag, get_entries_by_date,
+    get_tags_for_entry, insert_entry_with_images, link_attachment, list_entry_attachments,
+    read_attachment_bytes, resolve_image_refs_in_entries, upsert_attachment_blob,
+    DatabaseConnection, DiaryEntry, EntryMetadata,
 };
 
 use super::inspect::{has_column, list_snapshot_entries};
@@ -135,6 +140,8 @@ pub fn restore_entries_from_snapshot(
     entry_ids: &[i64],
 ) -> Result<RestoreEntriesOutcome, String> {
     let restore_tags = has_table(snapshot_db.conn(), "tags")?;
+    // Snapshots taken before schema v14 have no attachment tables at all.
+    let restore_attachments = has_table(snapshot_db.conn(), "entry_attachments")?;
 
     for &id in entry_ids {
         let entry = read_full_snapshot_entry(snapshot_db, id)?.ok_or_else(|| {
@@ -144,9 +151,29 @@ pub fn restore_entries_from_snapshot(
         // Resolve image-id refs against the snapshot's own image store before the text
         // crosses into the live database, where those ids name something else entirely.
         let mut resolved = resolve_image_refs_in_entries(snapshot_db, vec![entry])?;
-        let to_insert = resolved.remove(0);
+        let mut to_insert = resolved.remove(0);
 
-        let new_id = insert_entry_with_images(live_db, &to_insert)?;
+        let attachments = if restore_attachments {
+            copy_attachment_blobs(live_db, snapshot_db, id)?
+        } else {
+            Vec::new()
+        };
+        if restore_attachments {
+            to_insert.text = remap_attachment_refs(&to_insert.text, &attachments);
+        }
+
+        let new_id = match insert_entry_with_images(live_db, &to_insert) {
+            Ok(new_id) => new_id,
+            Err(e) => {
+                // The blobs copied above have no link yet; do not leave them behind.
+                let _ = cleanup_orphaned_attachments(live_db);
+                return Err(e);
+            }
+        };
+
+        for copied in &attachments {
+            link_attachment(live_db, new_id, copied.live_id, &copied.name)?;
+        }
 
         if restore_tags {
             for tag in get_tags_for_entry(snapshot_db, id)? {
@@ -158,6 +185,48 @@ pub fn restore_entries_from_snapshot(
 
     Ok(RestoreEntriesOutcome {
         added_count: entry_ids.len(),
+    })
+}
+
+/// One snapshot attachment after its blob was copied into the live store.
+struct CopiedAttachment {
+    snapshot_id: i64,
+    live_id: i64,
+    name: String,
+}
+
+/// Copies every attachment blob of snapshot entry `entry_id` into the live store (deduped by
+/// fingerprint there), returning the snapshot-id → live-id mapping. Links are made later,
+/// once the live entry exists.
+fn copy_attachment_blobs(
+    live_db: &DatabaseConnection,
+    snapshot_db: &DatabaseConnection,
+    entry_id: i64,
+) -> Result<Vec<CopiedAttachment>, String> {
+    let mut copied = Vec::new();
+    for summary in list_entry_attachments(snapshot_db, entry_id)? {
+        let bytes = read_attachment_bytes(snapshot_db, entry_id, summary.id)?
+            .ok_or_else(|| "This backup's attachment could not be read.".to_string())?;
+        let live_id = upsert_attachment_blob(live_db, &bytes, &summary.mime_type)?;
+        copied.push(CopiedAttachment {
+            snapshot_id: summary.id,
+            live_id,
+            name: summary.name,
+        });
+    }
+    Ok(copied)
+}
+
+/// Rewrites ref spans from snapshot attachment ids to live ids. A ref to an attachment the
+/// snapshot entry did not link is dropped: its id means nothing in the live journal and
+/// could collide with an unrelated live attachment.
+fn remap_attachment_refs(html: &str, attachments: &[CopiedAttachment]) -> String {
+    rewrite_attachment_refs(html, |snapshot_id| {
+        attachments
+            .iter()
+            .find(|a| a.snapshot_id == snapshot_id)
+            .map(|a| attachment_ref_span(a.live_id))
+            .unwrap_or_default()
     })
 }
 
@@ -446,6 +515,72 @@ mod tests {
             base64_of(&distinct_png_bytes()),
             "restored image bytes must match the snapshot's own image, not the unrelated live one"
         );
+    }
+
+    #[test]
+    fn test_restore_entries_copies_attachments_and_remaps_refs() {
+        // Attachment ids, like image ids, differ per database. The live journal already
+        // holds an unrelated attachment (anchored by its own entry), so the snapshot's ids
+        // cannot be reused: the restored entry must get its own blobs, names, and refs.
+        let fixture = Fixture::new("attachments");
+
+        let anchor_id = insert_entry(&fixture.live, &entry("2024-01-01", "Anchor", "a")).unwrap();
+        crate::db::add_attachment_to_entry(&fixture.live, anchor_id, "anchor.txt", b"anchor")
+            .unwrap();
+
+        let source_id = insert_entry(&fixture.live, &entry("2024-03-01", "Has files", "")).unwrap();
+        let pdf = crate::db::add_attachment_to_entry(
+            &fixture.live,
+            source_id,
+            "Report.pdf",
+            b"%PDF snapshot bytes",
+        )
+        .unwrap();
+        let txt =
+            crate::db::add_attachment_to_entry(&fixture.live, source_id, "notes.txt", b"notes")
+                .unwrap();
+        let mut with_refs = crate::db::get_entry_by_id(&fixture.live, source_id)
+            .unwrap()
+            .unwrap();
+        with_refs.text = format!(
+            "<p>See {} and {} and {}</p>",
+            attachment_ref_span(pdf.id),
+            attachment_ref_span(txt.id),
+            attachment_ref_span(999)
+        );
+        crate::db::update_entry(&fixture.live, &with_refs).unwrap();
+
+        let snapshot = fixture.snapshot_and_open();
+
+        crate::db::delete_entry_by_id(&fixture.live, source_id).unwrap();
+        // Shift the live id space so snapshot ids and live ids cannot coincide by accident.
+        let filler = insert_entry(&fixture.live, &entry("2024-02-01", "Filler", "f")).unwrap();
+        crate::db::add_attachment_to_entry(&fixture.live, filler, "f1.txt", b"f1").unwrap();
+        crate::db::add_attachment_to_entry(&fixture.live, filler, "f2.txt", b"f2").unwrap();
+
+        restore_entries_from_snapshot(&fixture.live, &snapshot, &[source_id]).unwrap();
+
+        let restored = get_entries_by_date(&fixture.live, "2024-03-01").unwrap();
+        assert_eq!(restored.len(), 1);
+        let live_list = list_entry_attachments(&fixture.live, restored[0].id).unwrap();
+        let names: Vec<&str> = live_list.iter().map(|a| a.name.as_str()).collect();
+        assert_eq!(names, vec!["Report.pdf", "notes.txt"]);
+
+        let live_pdf = &live_list[0];
+        let live_txt = &live_list[1];
+        assert_eq!(
+            restored[0].text,
+            format!(
+                "<p>See {} and {} and </p>",
+                attachment_ref_span(live_pdf.id),
+                attachment_ref_span(live_txt.id)
+            ),
+            "refs must point at live ids; the unknown ref must be dropped"
+        );
+        let bytes = read_attachment_bytes(&fixture.live, restored[0].id, live_pdf.id)
+            .unwrap()
+            .unwrap();
+        assert_eq!(bytes.as_slice(), b"%PDF snapshot bytes");
     }
 
     #[test]

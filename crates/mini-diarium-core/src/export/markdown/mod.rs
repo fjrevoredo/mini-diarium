@@ -4,6 +4,9 @@
 //! [`convert`] (stage tables + driver), [`blocks`] (lists, code blocks, blockquotes),
 //! [`links`] (`<a>` → `[label](url)`), and [`assets`] (embedded `<img>` data URIs).
 
+use super::attachments::{
+    markdown_metadata_only, markdown_with_asset_links, AttachmentAsset, AttachmentsMap,
+};
 use crate::db::queries::DiaryEntry;
 use std::collections::HashMap;
 
@@ -117,27 +120,52 @@ where
     output
 }
 
+/// Appends an entry's `*Attachments:*` section (if any) after its converted text.
+fn with_attachments_section(text: String, section: String) -> String {
+    if section.is_empty() {
+        return text;
+    }
+    if text.is_empty() {
+        return section;
+    }
+    format!("{}\n\n{}", text.trim_end_matches('\n'), section)
+}
+
+/// Output of [`export_entries_to_markdown_with_assets`]: the Markdown text, the embedded
+/// image files as `(filename, bytes)`, and the attachment files the caller must decrypt.
+pub type MarkdownWithAssets = (String, Vec<(String, Vec<u8>)>, Vec<AttachmentAsset>);
+
 // --- Image-aware export variants ---
 
 /// Exports diary entries to Markdown, extracting embedded base64 images to
 /// separate asset files.
 ///
-/// Returns `(markdown_string, assets)` where `assets` is a list of
-/// `(filename, bytes)` pairs to be written to a sibling `assets/` directory.
-/// Image references in the markdown use `![Image N](assets/image-N.ext)`.
+/// Returns `(markdown_string, assets, attachment_assets)`:
+/// - `assets` is a list of `(filename, bytes)` image pairs to be written to a sibling
+///   `assets/` directory. Image references use `![Image N](assets/image-N.ext)`.
+/// - `attachment_assets` names each attachment file the caller must decrypt into the same
+///   `assets/` directory (this writer never sees attachment bytes). Inline attachment refs
+///   become `[name](assets/attachment-N-name)` and each entry gets an `*Attachments:*` list.
 pub fn export_entries_to_markdown_with_assets(
     entries: Vec<DiaryEntry>,
     tags: &HashMap<i64, Vec<String>>,
-) -> (String, Vec<(String, Vec<u8>)>) {
+    attachments: &AttachmentsMap,
+) -> MarkdownWithAssets {
     let mut all_assets: Vec<(String, Vec<u8>)> = Vec::new();
+    let mut attachment_assets: Vec<AttachmentAsset> = Vec::new();
     let mut image_counter: usize = 0;
+    let mut attachment_counter: usize = 0;
     let markdown = walk_date_groups(&entries, tags, |entry| {
+        // Refs first: the converter strips unknown spans, so a ref left in place vanishes.
+        let (html, section, entry_attachment_assets) =
+            markdown_with_asset_links(entry.id, &entry.text, attachments, &mut attachment_counter);
+        attachment_assets.extend(entry_attachment_assets);
         let (processed_html, entry_assets) =
-            extract_and_replace_with_assets(&entry.text, &mut image_counter);
+            extract_and_replace_with_assets(&html, &mut image_counter);
         all_assets.extend(entry_assets);
-        html_to_markdown(&processed_html)
+        with_attachments_section(html_to_markdown(&processed_html), section)
     });
-    (markdown, all_assets)
+    (markdown, all_assets, attachment_assets)
 }
 
 /// Exports diary entries to Markdown, embedding base64 images as inline data URIs.
@@ -145,15 +173,18 @@ pub fn export_entries_to_markdown_with_assets(
 /// Each `<img src="data:image/TYPE;base64,DATA">` becomes
 /// `![Image N](data:image/TYPE;base64,DATA)` — readable by editors that support
 /// embedded data URIs (e.g. Obsidian, VS Code preview). Produces a single file
-/// with no external assets.
+/// with no external assets. Attachments are listed by name and size only (their bytes
+/// are not exported); inline refs become `📎 name`.
 pub fn export_entries_to_markdown_inline(
     entries: Vec<DiaryEntry>,
     tags: &HashMap<i64, Vec<String>>,
+    attachments: &AttachmentsMap,
 ) -> String {
     let mut image_counter: usize = 0;
     walk_date_groups(&entries, tags, |entry| {
-        let processed_html = inline_replace_images(&entry.text, &mut image_counter);
-        html_to_markdown(&processed_html)
+        let (html, section) = markdown_metadata_only(entry.id, &entry.text, attachments);
+        let processed_html = inline_replace_images(&html, &mut image_counter);
+        with_attachments_section(html_to_markdown(&processed_html), section)
     })
 }
 
@@ -161,6 +192,7 @@ pub fn export_entries_to_markdown_inline(
 mod tests {
     use super::test_support::{create_test_entry, empty_tags, entry_with_id};
     use super::*;
+    use crate::export::attachments::test_support::{empty_attachments, summary};
 
     #[test]
     fn test_export_empty_list() {
@@ -225,8 +257,73 @@ mod tests {
     fn test_export_markdown_with_assets_includes_tags() {
         let entries = vec![entry_with_id(2, "2024-01-15", "Title", "<p>Hi</p>")];
         let tags = HashMap::from([(2i64, vec!["journal".to_string()])]);
-        let (markdown, _) = export_entries_to_markdown_with_assets(entries, &tags);
+        let (markdown, _, _) =
+            export_entries_to_markdown_with_assets(entries, &tags, &empty_attachments());
         assert!(markdown.contains("*Tags: journal*"), "got: {}", markdown);
+    }
+
+    #[test]
+    fn test_export_markdown_with_assets_rewrites_attachment_refs_and_lists_files() {
+        let entries = vec![entry_with_id(
+            3,
+            "2024-01-15",
+            "Title",
+            r#"<p>Read <span data-attachment-ref="11"></span> today.</p>"#,
+        )];
+        let attachments = HashMap::from([(
+            3i64,
+            vec![summary(11, "Report.pdf", 100), summary(12, "clip.mp4", 200)],
+        )]);
+        let (markdown, images, planned) =
+            export_entries_to_markdown_with_assets(entries, &empty_tags(), &attachments);
+
+        assert!(images.is_empty());
+        assert!(
+            markdown.contains("Read [Report.pdf](assets/attachment-1-Report.pdf) today."),
+            "got: {}",
+            markdown
+        );
+        assert!(
+            markdown.contains(
+                "*Attachments:*\n- [Report.pdf](assets/attachment-1-Report.pdf)\n- [clip.mp4](assets/attachment-2-clip.mp4)"
+            ),
+            "got: {}",
+            markdown
+        );
+        assert_eq!(
+            planned,
+            vec![
+                AttachmentAsset {
+                    entry_id: 3,
+                    attachment_id: 11,
+                    filename: "attachment-1-Report.pdf".into()
+                },
+                AttachmentAsset {
+                    entry_id: 3,
+                    attachment_id: 12,
+                    filename: "attachment-2-clip.mp4".into()
+                },
+            ]
+        );
+    }
+
+    #[test]
+    fn test_export_markdown_inline_lists_attachment_metadata_only() {
+        let entries = vec![entry_with_id(
+            3,
+            "2024-01-15",
+            "",
+            r#"<p><span data-attachment-ref="11"></span></p>"#,
+        )];
+        let attachments = HashMap::from([(3i64, vec![summary(11, "Report.pdf", 2048)])]);
+        let markdown = export_entries_to_markdown_inline(entries, &empty_tags(), &attachments);
+        assert!(markdown.contains("📎 Report.pdf"), "got: {}", markdown);
+        assert!(
+            markdown.contains("- Report.pdf (2 KB)"),
+            "got: {}",
+            markdown
+        );
+        assert!(!markdown.contains("assets/"), "got: {}", markdown);
     }
 
     #[test]

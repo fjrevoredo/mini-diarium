@@ -9,6 +9,7 @@ pub use builtins::register_all;
 pub use registry::PluginRegistry;
 
 use crate::db::DiaryEntry;
+use crate::export::{AttachmentAsset, AttachmentsMap};
 use std::collections::HashMap;
 
 /// Metadata about a plugin, returned to the frontend
@@ -30,10 +31,14 @@ pub trait ImportPlugin: Send + Sync {
 ///
 /// Most plugins return only `content`. The built-in Markdown exporter additionally
 /// returns `assets` — a list of `(filename, bytes)` pairs to be written to a
-/// sibling `assets/` directory alongside the main output file.
+/// sibling `assets/` directory alongside the main output file — and
+/// `attachment_assets`, the attachment files the caller must decrypt into that same
+/// directory (plugins never receive attachment bytes).
+#[derive(Default)]
 pub struct ExportOutput {
     pub content: String,
     pub assets: Vec<(String, Vec<u8>)>,
+    pub attachment_assets: Vec<AttachmentAsset>,
 }
 
 /// A plugin that can export diary entries to a formatted output.
@@ -43,5 +48,6 @@ pub trait ExportPlugin: Send + Sync {
         &self,
         entries: Vec<DiaryEntry>,
         tags: &HashMap<i64, Vec<String>>,
+        attachments: &AttachmentsMap,
     ) -> Result<ExportOutput, String>;
 }

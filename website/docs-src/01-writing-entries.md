@@ -1,10 +1,10 @@
 ---
 title: Writing Entries
 slug: writing-entries
-description: Mini Diarium's rich text editor supports formatting, images, named links, tags, and multiple entries per day. Auto-save and RTL language support are built in.
+description: Mini Diarium's rich text editor supports formatting, images, file attachments, named links, tags, and multiple entries per day. Auto-save and RTL language support are built in.
 order: 2
-updated: 2026-09-06
-tags: editor, formatting, entries, writing
+updated: 2026-09-27
+tags: editor, formatting, entries, writing, attachments
 ---
 
 ## The Editor
@@ -50,6 +50,7 @@ A locked entry cannot be edited, deleted, or re-tagged:
 - The editor and title field become read-only.
 - The formatting toolbar and the delete button are disabled.
 - The add-tag and remove-tag controls are hidden. You can still click a tag to filter by it, since filtering navigates without changing the entry.
+- The attach, remove, and insert-reference controls for attachments are hidden. You can still save a copy of an attachment.
 
 Days that contain a locked entry show a small lock indicator on their calendar cell and their timeline row, so you can see which entries are protected without opening them.
 
@@ -57,7 +58,7 @@ This lock guards against accidental edits. It is not a security feature, and it 
 
 ## Auto-Save
 
-Entries save automatically as you type with a short debounce delay. You do not need to manually save anything. If you clear out an entry completely (emptying both the title and the body), it is automatically deleted after the debounce completes.
+Entries save automatically as you type with a short debounce delay. You do not need to manually save anything. If you clear out an entry completely (emptying both the title and the body), it is automatically deleted after the debounce completes. An entry that has file attachments is never deleted this way, even when its title and body are empty.
 
 ## Word Count
 
@@ -94,6 +95,26 @@ The selected image is inserted without re-encoding, so the stored copy is reused
 Images added before this feature was introduced (prior to v0.5.3) continue to display correctly. Existing saved entries that still embed image data directly are migrated to the new storage the next time their entry is saved. JSON imports that contain embedded `data:image/...` content are normalized into the encrypted image store immediately during import.
 
 If you drag an image from a web browser, the editor will show a banner explaining that embedding is not possible, because it would require a network request, which the app never makes. Use **right-click → Copy Image** and paste instead.
+
+## Attaching Files
+
+You can attach documents, PDFs, short videos, and any other file to an entry. Attachments appear as chips under the editor, next to the tags. The strip is shown once the entry exists, so type something first on a new day.
+
+- Click **Attach file** and select one or more files. Each file can be up to **20 MB**. Empty files and folders are refused. If one file fails, the others are still attached and the strip tells you which file failed and why.
+- Click an attachment's name (or its download icon) to **save a copy** to a location you choose. The copy must keep the same file extension as the attachment.
+- Click the remove (×) icon to detach a file. You are asked to confirm first.
+
+Mini Diarium never opens attachments itself. To view a file, save a copy and open it with another app.
+
+### Inline references
+
+Click the insert-reference icon on a chip to place a small 📎 reference at the cursor in the entry text. The reference only points to the attachment; the chip in the strip remains the source of truth. Click a reference to save a copy of its file. If you remove the attachment, its references stay in the text and show as a missing attachment.
+
+### How attachments are stored
+
+Attachment contents and file names are encrypted with your master key inside `diary.db`, like entry text and images. Each unique file is stored once, even if you attach it to several entries. The file type (for example `application/pdf`) and the size are stored unencrypted, the same as for images. Saving a copy decrypts the file straight to the path you choose; no temporary unencrypted copy is written anywhere else.
+
+Large attachments make the journal file and its backups larger. Deleting an entry deletes its attachments when no other entry uses them.
 
 ## Links
 

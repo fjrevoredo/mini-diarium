@@ -14,7 +14,7 @@ import { createLogger } from '../../../lib/logger';
 import type { useI18n } from '../../../i18n';
 import { computeIsEmpty, type EditorEmptyCheckHook } from './useEditorEmptyCheck';
 import { fetchEntriesOrdered } from './useMultiEntryNav';
-import { useEntryPersistence, type DebouncedSaveFn } from './useEntryPersistence';
+import { useEntryPersistence, isBlankEntry, type DebouncedSaveFn } from './useEntryPersistence';
 import {
   clearEntryFromEditor,
   commitEntryToEditor,
@@ -443,7 +443,7 @@ export function useEntryLifecycle(opts: UseEntryLifecycleOptions): EntryLifecycl
       if (snap === null) return true;
 
       // Same save-vs-delete decision saveCurrentById uses — an ordinary save needs no consent.
-      const shouldDelete = snap.title.trim() === '' && snap.isEmpty;
+      const shouldDelete = isBlankEntry(snap.entryId, snap.title, snap.isEmpty);
       if (!shouldDelete) return true;
 
       let hasContent: boolean;

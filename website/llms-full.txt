@@ -92,7 +92,7 @@ You can upgrade a local-only journal to password protection at any time using **
 
 # Writing Entries
 
-> Mini Diarium's rich text editor supports formatting, images, named links, tags, and multiple entries per day. Auto-save and RTL language support are built in.
+> Mini Diarium's rich text editor supports formatting, images, file attachments, named links, tags, and multiple entries per day. Auto-save and RTL language support are built in.
 
 Source: https://mini-diarium.com/docs/writing-entries/
 
@@ -139,6 +139,7 @@ A locked entry cannot be edited, deleted, or re-tagged:
 - The editor and title field become read-only.
 - The formatting toolbar and the delete button are disabled.
 - The add-tag and remove-tag controls are hidden. You can still click a tag to filter by it, since filtering navigates without changing the entry.
+- The attach, remove, and insert-reference controls for attachments are hidden. You can still save a copy of an attachment.
 
 Days that contain a locked entry show a small lock indicator on their calendar cell and their timeline row, so you can see which entries are protected without opening them.
 
@@ -146,7 +147,7 @@ This lock guards against accidental edits. It is not a security feature, and it 
 
 ## Auto-Save
 
-Entries save automatically as you type with a short debounce delay. You do not need to manually save anything. If you clear out an entry completely (emptying both the title and the body), it is automatically deleted after the debounce completes.
+Entries save automatically as you type with a short debounce delay. You do not need to manually save anything. If you clear out an entry completely (emptying both the title and the body), it is automatically deleted after the debounce completes. An entry that has file attachments is never deleted this way, even when its title and body are empty.
 
 ## Word Count
 
@@ -183,6 +184,26 @@ The selected image is inserted without re-encoding, so the stored copy is reused
 Images added before this feature was introduced (prior to v0.5.3) continue to display correctly. Existing saved entries that still embed image data directly are migrated to the new storage the next time their entry is saved. JSON imports that contain embedded `data:image/...` content are normalized into the encrypted image store immediately during import.
 
 If you drag an image from a web browser, the editor will show a banner explaining that embedding is not possible, because it would require a network request, which the app never makes. Use **right-click → Copy Image** and paste instead.
+
+## Attaching Files
+
+You can attach documents, PDFs, short videos, and any other file to an entry. Attachments appear as chips under the editor, next to the tags. The strip is shown once the entry exists, so type something first on a new day.
+
+- Click **Attach file** and select one or more files. Each file can be up to **20 MB**. Empty files and folders are refused. If one file fails, the others are still attached and the strip tells you which file failed and why.
+- Click an attachment's name (or its download icon) to **save a copy** to a location you choose. The copy must keep the same file extension as the attachment.
+- Click the remove (×) icon to detach a file. You are asked to confirm first.
+
+Mini Diarium never opens attachments itself. To view a file, save a copy and open it with another app.
+
+### Inline references
+
+Click the insert-reference icon on a chip to place a small 📎 reference at the cursor in the entry text. The reference only points to the attachment; the chip in the strip remains the source of truth. Click a reference to save a copy of its file. If you remove the attachment, its references stay in the text and show as a missing attachment.
+
+### How attachments are stored
+
+Attachment contents and file names are encrypted with your master key inside `diary.db`, like entry text and images. Each unique file is stored once, even if you attach it to several entries. The file type (for example `application/pdf`) and the size are stored unencrypted, the same as for images. Saving a copy decrypts the file straight to the path you choose; no temporary unencrypted copy is written anywhere else.
+
+Large attachments make the journal file and its backups larger. Deleting an entry deletes its attachments when no other entry uses them.
 
 ## Links
 
@@ -465,7 +486,7 @@ The JSON format is the primary structural export. It outputs a `metadata` block 
 }
 ```
 
-Every entry includes a `"tags"` array (empty `[]` if the entry has no tags; tags are listed in alphabetical order). Entries with font metadata include a `"metadata"` object containing `fontFamily` and `fontSize`; entries without entry-level font defaults have no `metadata` field.
+Every entry includes a `"tags"` array (empty `[]` if the entry has no tags; tags are listed in alphabetical order) and an `"attachments"` array of `{ "name", "mime_type", "byte_size" }` objects (empty `[]` when there are none). The JSON file lists attachments by name only; it does not contain the file contents. Entries with font metadata include a `"metadata"` object containing `fontFamily` and `fontSize`; entries without entry-level font defaults have no `metadata` field.
 
 This format preserves entry IDs, timestamps, tags, and font metadata. It can be re-imported into Mini Diarium. The JSON importer automatically handles both the old Mini Diary date-keyed format and the new array format with optional metadata for backward compatibility. If the JSON contains embedded `data:image/...` content, Mini Diarium normalizes those images into its encrypted image store during import while preserving the visible content of the entry.
 
@@ -485,6 +506,8 @@ Entry content here...
 
 Entries with no tags have no tags line. Tags appear in alphabetical order.
 
+Attachments are written as decrypted files into an `assets/` folder next to the Markdown file (named `attachment-<n>-<file name>`), and each entry with attachments ends with an `*Attachments:*` list that links to them. Inline attachment references in the text become links to the same files. **The `assets/` folder contains your attachments unencrypted**, like the export itself.
+
 Markdown is a best-effort, text-focused conversion of the stored HTML editor content. Bold, italic, strikethrough, inline code, and links convert to native Markdown syntax. Underline, highlighted/background color, text color, and font family/size have no standard Markdown equivalent, so the formatting is dropped while the text itself is always kept. Complex formatting (tables, images) may not convert perfectly, but the text is always readable. **For full-fidelity export including font metadata, use JSON instead.**
 
 ### Print / PDF
@@ -495,6 +518,7 @@ The print output uses a clean, readable layout with:
 - A "Mini Diarium" header and the generation date
 - Entries grouped by date, with each date on its own page
 - Entry titles, tags (when present), and the full entry content
+- The names of an entry's attachments (the files themselves are not printed); inline references show as 📎 and the file name
 - Standard formatting for headings, lists, blockquotes, and code blocks
 
 Date range filtering works the same as for file exports. Select "All entries", a custom date range, or a specific month before clicking **Print**.
@@ -512,7 +536,7 @@ Note that exported files are not encrypted. Store them securely if they contain 
 
 ## Custom Export Formats via Plugins
 
-If you need a specific export format not covered by the built-in options, you can write a custom Rhai export plugin. See the [Plugins](../plugins/) section for details.
+If you need a specific export format not covered by the built-in options, you can write a custom Rhai export plugin. See the [Plugins](../plugins/) section for details. Custom Rhai export plugins do not receive attachment data.
 
 ---
 

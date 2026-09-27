@@ -79,6 +79,8 @@ vi.mock('../../lib/tauri', async () => {
     setEntryLocked: mocks.setEntryLocked,
     getLockedEntryDates: mocks.getLockedEntryDates,
     readTextFile: mocks.readTextFile,
+    // No attachments in these scenarios; the strip mounts once an entry exists.
+    listEntryAttachments: vi.fn(() => Promise.resolve([])),
   };
 });
 

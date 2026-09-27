@@ -602,6 +602,7 @@
     "printing": "Impression...",
     "printGeneratedLabel": "Généré :",
     "printTagsLabel": "Tags :",
+    "printAttachmentsLabel": "Pièces jointes :",
     "printNoEntries": "Aucune entrée trouvée."
   },
   "import": {
@@ -723,6 +724,21 @@
     "filterActiveLabel": "Filtre de tag :",
     "clearFilter": "Effacer le filtre de tag"
   },
+  "attachments": {
+    "attachFile": "Joindre un fichier",
+    "attachFileTitle": "Joindre des fichiers à cette entrée (20 Mo maximum chacun)",
+    "listAria": "Pièces jointes",
+    "actionsAria": "Actions pour {{ name }}",
+    "saveCopy": "Enregistrer une copie…",
+    "insertRef": "Insérer une référence dans le texte",
+    "remove": "Retirer",
+    "confirmRemoveTitle": "Retirer la pièce jointe",
+    "confirmRemove": "Retirer « {{ name }} » de cette entrée ?",
+    "confirmRemoveWithRefs": "Retirer « {{ name }} » de cette entrée ? Les références dans le texte apparaîtront comme manquantes.",
+    "addFailed": "Impossible de joindre « {{ name }} » : {{ error }}",
+    "missing": "Pièce jointe manquante",
+    "refTitle": "Cliquez pour enregistrer une copie de {{ name }}"
+  },
   "onboarding": {
     "title": "Bienvenue dans Mini Diarium",
     "subtitle": "Quelques choses pour commencer :",
@@ -749,6 +765,11 @@
     "decryptionFailed": "Impossible de déchiffrer. Le fichier clé peut être incorrect ou les données peuvent être corrompues.",
     "journalNotUnlocked": "Veuillez d'abord déverrouiller votre journal.",
     "entryLocked": "Cette entrée est verrouillée. Déverrouillez-la pour la modifier.",
+    "attachmentTooLarge": "Ce fichier est trop volumineux. Les pièces jointes peuvent atteindre 20 Mo.",
+    "attachmentEmpty": "Ce fichier est vide.",
+    "attachmentNotAFile": "Seuls les fichiers peuvent être joints, pas les dossiers.",
+    "attachmentNotFound": "Cette pièce jointe n'existe plus.",
+    "attachmentExtensionMismatch": "Enregistrez la copie avec la même extension de fichier que la pièce jointe.",
     "cannotRemoveLastAuth": "Impossible de supprimer la dernière méthode d'authentification.",
     "cannotReadKeyFile": "Impossible de lire le fichier clé. Vérifiez que le fichier existe et que vous avez l'autorisation de le lire.",
     "cannotSaveKeyFile": "Impossible d'enregistrer le fichier clé. Vérifiez les permissions du dossier.",

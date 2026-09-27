@@ -76,6 +76,27 @@ describe('mapTauriError', () => {
       expect(mapTauriError('entry is locked')).toBe(en('errors.entryLocked'));
     });
 
+    it('maps the attachment validation errors', () => {
+      expect(mapTauriError('Attachment is too large. Maximum supported size is 20 MB.')).toBe(
+        en('errors.attachmentTooLarge'),
+      );
+      expect(mapTauriError('Attachment file is empty')).toBe(en('errors.attachmentEmpty'));
+      expect(mapTauriError('Attachment path is not a file')).toBe(en('errors.attachmentNotAFile'));
+      expect(mapTauriError('Attachment not found')).toBe(en('errors.attachmentNotFound'));
+      expect(mapTauriError('Destination file must have the .pdf extension')).toBe(
+        en('errors.attachmentExtensionMismatch'),
+      );
+      expect(mapTauriError('Destination file must have no extension')).toBe(
+        en('errors.attachmentExtensionMismatch'),
+      );
+    });
+
+    it('does not leak the path from an attachment write failure', () => {
+      expect(mapTauriError('Failed to write attachment copy: Access is denied. (os error 5)')).toBe(
+        en('errors.fileOperationFailed'),
+      );
+    });
+
     it('maps the last-auth-method guard', () => {
       expect(mapTauriError('Cannot remove the last auth method')).toBe(
         en('errors.cannotRemoveLastAuth'),

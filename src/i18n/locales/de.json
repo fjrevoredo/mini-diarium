@@ -602,6 +602,7 @@
     "printing": "Drucken...",
     "printGeneratedLabel": "Erstellt:",
     "printTagsLabel": "Tags:",
+    "printAttachmentsLabel": "Anhänge:",
     "printNoEntries": "Keine Einträge gefunden."
   },
   "import": {
@@ -723,6 +724,21 @@
     "filterActiveLabel": "Schlagwort-Filter:",
     "clearFilter": "Schlagwort-Filter aufheben"
   },
+  "attachments": {
+    "attachFile": "Datei anhängen",
+    "attachFileTitle": "Dateien an diesen Eintrag anhängen (je bis zu 20 MB)",
+    "listAria": "Anhänge",
+    "actionsAria": "Aktionen für {{ name }}",
+    "saveCopy": "Kopie speichern…",
+    "insertRef": "Verweis in den Text einfügen",
+    "remove": "Entfernen",
+    "confirmRemoveTitle": "Anhang entfernen",
+    "confirmRemove": "„{{ name }}“ aus diesem Eintrag entfernen?",
+    "confirmRemoveWithRefs": "„{{ name }}“ aus diesem Eintrag entfernen? Verweise darauf im Text werden als fehlend angezeigt.",
+    "addFailed": "„{{ name }}“ konnte nicht angehängt werden: {{ error }}",
+    "missing": "Fehlender Anhang",
+    "refTitle": "Klicken, um eine Kopie von {{ name }} zu speichern"
+  },
   "onboarding": {
     "title": "Willkommen bei Mini Diarium",
     "subtitle": "Ein paar Dinge für den Einstieg:",
@@ -749,6 +765,11 @@
     "decryptionFailed": "Entschlüsselung fehlgeschlagen. Die Schlüsseldatei könnte falsch sein oder die Daten beschädigt.",
     "journalNotUnlocked": "Bitte entsperre zuerst dein Tagebuch.",
     "entryLocked": "Dieser Eintrag ist gesperrt. Entsperren Sie ihn, um Änderungen vorzunehmen.",
+    "attachmentTooLarge": "Diese Datei ist zu groß. Anhänge dürfen bis zu 20 MB groß sein.",
+    "attachmentEmpty": "Diese Datei ist leer.",
+    "attachmentNotAFile": "Nur Dateien können angehängt werden, keine Ordner.",
+    "attachmentNotFound": "Dieser Anhang existiert nicht mehr.",
+    "attachmentExtensionMismatch": "Speichern Sie die Kopie mit derselben Dateiendung wie der Anhang.",
     "cannotRemoveLastAuth": "Das letzte Authentifizierungsverfahren kann nicht entfernt werden.",
     "cannotReadKeyFile": "Die Schlüsseldatei konnte nicht gelesen werden. Überprüfe, ob die Datei existiert und du Leseberechtigung hast.",
     "cannotSaveKeyFile": "Die Schlüsseldatei konnte nicht gespeichert werden. Überprüfe die Berechtigungen des Ordners.",

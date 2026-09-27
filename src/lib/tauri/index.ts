@@ -14,4 +14,5 @@ export * from './spellcheck';
 export * from './fonts';
 export * from './tags';
 export * from './images';
+export * from './attachments';
 export * from './platform';

@@ -159,6 +159,8 @@ impl ExportPlugin for RhaiExportPlugin {
         &self,
         entries: Vec<DiaryEntry>,
         _tags: &HashMap<i64, Vec<String>>,
+        // User scripts do not receive attachments yet; they see raw ref spans in `text`.
+        _attachments: &crate::export::AttachmentsMap,
     ) -> Result<ExportOutput, String> {
         let engine = create_sandboxed_engine();
         let mut scope = Scope::new();
@@ -169,7 +171,7 @@ impl ExportPlugin for RhaiExportPlugin {
             .map_err(|e| format!("Rhai script error: {}", e))?;
         Ok(ExportOutput {
             content,
-            assets: vec![],
+            ..Default::default()
         })
     }
 }
@@ -253,7 +255,9 @@ fn format_entries(entries) {
             locked: false,
         }];
 
-        let result = plugin.export(entries, &HashMap::new()).unwrap();
+        let result = plugin
+            .export(entries, &HashMap::new(), &HashMap::new())
+            .unwrap();
         assert_eq!(result.content, "2024-06-15: My Day\n");
     }
 
@@ -338,7 +342,9 @@ fn format_entries(entries) {
             locked: false,
         }];
 
-        let result = plugin.export(entries, &HashMap::new()).unwrap();
+        let result = plugin
+            .export(entries, &HashMap::new(), &HashMap::new())
+            .unwrap();
         assert!(
             result.content.contains("[Visit site](https://example.com)"),
             "expected link in Rhai plugin output: {}",

@@ -1,3 +1,4 @@
+use super::attachments::AttachmentsMap;
 use crate::db::queries::DiaryEntry;
 use serde_json::{json, Value};
 use std::collections::HashMap;
@@ -9,7 +10,8 @@ use std::collections::HashMap;
 /// {
 ///   "metadata": { "exportedAt": "...", "version": "..." },
 ///   "entries": [
-///     { "id": 42, "date": "2024-01-15", "title": "...", "text": "...", "dateUpdated": "..." }
+///     { "id": 42, "date": "2024-01-15", "title": "...", "text": "...", "dateUpdated": "...",
+///       "tags": [], "attachments": [{ "name": "...", "mime_type": "...", "byte_size": 0 }] }
 ///   ]
 /// }
 /// ```
@@ -22,6 +24,7 @@ use std::collections::HashMap;
 pub fn export_entries_to_json(
     entries: Vec<DiaryEntry>,
     tags: &HashMap<i64, Vec<String>>,
+    attachments: &AttachmentsMap,
 ) -> Result<String, String> {
     let now = chrono::Utc::now().to_rfc3339();
 
@@ -36,6 +39,21 @@ pub fn export_entries_to_json(
                 "text": entry.text,
                 "dateUpdated": entry.date_updated,
                 "tags": tags.get(&entry.id).cloned().unwrap_or_default(),
+                // Metadata only: attachment bytes are never written into JSON.
+                "attachments": attachments
+                    .get(&entry.id)
+                    .map(|list| {
+                        list.iter()
+                            .map(|a| {
+                                json!({
+                                    "name": a.name,
+                                    "mime_type": a.mime_type,
+                                    "byte_size": a.byte_size,
+                                })
+                            })
+                            .collect::<Vec<_>>()
+                    })
+                    .unwrap_or_default(),
             });
             if let Some(ref meta) = entry.metadata {
                 obj["metadata"] = serde_json::to_value(meta).unwrap_or(Value::Null);
@@ -79,8 +97,31 @@ mod tests {
     }
 
     #[test]
+    fn test_export_includes_attachment_metadata() {
+        use crate::export::attachments::test_support::summary;
+        let entries = vec![
+            create_test_entry(1, "2024-01-15", "With", "<p>x</p>"),
+            create_test_entry(2, "2024-01-16", "Without", "<p>y</p>"),
+        ];
+        let attachments = HashMap::from([(1i64, vec![summary(9, "Report.pdf", 1234)])]);
+        let result = export_entries_to_json(entries, &empty_tags(), &attachments).unwrap();
+        let parsed: Value = serde_json::from_str(&result).unwrap();
+
+        let first = &parsed["entries"][0]["attachments"];
+        assert_eq!(first.as_array().unwrap().len(), 1);
+        assert_eq!(first[0]["name"], "Report.pdf");
+        assert_eq!(first[0]["mime_type"], "application/pdf");
+        assert_eq!(first[0]["byte_size"], 1234);
+        assert!(
+            first[0].get("id").is_none(),
+            "ids are internal, not exported"
+        );
+        assert_eq!(parsed["entries"][1]["attachments"], json!([]));
+    }
+
+    #[test]
     fn test_export_empty_list() {
-        let result = export_entries_to_json(vec![], &empty_tags()).unwrap();
+        let result = export_entries_to_json(vec![], &empty_tags(), &HashMap::new()).unwrap();
         let parsed: Value = serde_json::from_str(&result).unwrap();
 
         assert_eq!(parsed["metadata"]["application"], "Mini Diarium");
@@ -100,7 +141,7 @@ mod tests {
             "Entry content here",
         )];
 
-        let result = export_entries_to_json(entries, &empty_tags()).unwrap();
+        let result = export_entries_to_json(entries, &empty_tags(), &HashMap::new()).unwrap();
         let parsed: Value = serde_json::from_str(&result).unwrap();
 
         let entries_arr = parsed["entries"].as_array().unwrap();
@@ -121,7 +162,7 @@ mod tests {
             create_test_entry(3, "2024-01-03", "Third", "Content three"),
         ];
 
-        let result = export_entries_to_json(entries, &empty_tags()).unwrap();
+        let result = export_entries_to_json(entries, &empty_tags(), &HashMap::new()).unwrap();
         let parsed: Value = serde_json::from_str(&result).unwrap();
 
         let entries_arr = parsed["entries"].as_array().unwrap();
@@ -138,7 +179,7 @@ mod tests {
             create_test_entry(2, "2024-01-01", "Evening", "Had dinner"),
         ];
 
-        let result = export_entries_to_json(entries, &empty_tags()).unwrap();
+        let result = export_entries_to_json(entries, &empty_tags(), &HashMap::new()).unwrap();
         let parsed: Value = serde_json::from_str(&result).unwrap();
 
         let entries_arr = parsed["entries"].as_array().unwrap();
@@ -152,7 +193,7 @@ mod tests {
     #[test]
     fn test_export_entries_is_array_not_object() {
         let entries = vec![create_test_entry(1, "2024-01-15", "Test", "Content")];
-        let result = export_entries_to_json(entries, &empty_tags()).unwrap();
+        let result = export_entries_to_json(entries, &empty_tags(), &HashMap::new()).unwrap();
         let parsed: Value = serde_json::from_str(&result).unwrap();
 
         // entries must be an array, not an object
@@ -171,7 +212,7 @@ mod tests {
             "Some content here",
         )];
 
-        let json_string = export_entries_to_json(entries, &empty_tags()).unwrap();
+        let json_string = export_entries_to_json(entries, &empty_tags(), &HashMap::new()).unwrap();
         let parsed: Value = serde_json::from_str(&json_string).unwrap();
 
         let entries_arr = parsed["entries"].as_array().unwrap();
@@ -184,7 +225,7 @@ mod tests {
     fn test_export_entry_with_tags() {
         let entries = vec![create_test_entry(42, "2024-01-15", "My Entry", "Content")];
         let tags = HashMap::from([(42i64, vec!["travel".to_string(), "work".to_string()])]);
-        let result = export_entries_to_json(entries, &tags).unwrap();
+        let result = export_entries_to_json(entries, &tags, &HashMap::new()).unwrap();
         let parsed: Value = serde_json::from_str(&result).unwrap();
         let entry_tags = parsed["entries"][0]["tags"].as_array().unwrap();
         assert_eq!(entry_tags.len(), 2);
@@ -195,7 +236,7 @@ mod tests {
     #[test]
     fn test_export_entry_without_tags_has_empty_array() {
         let entries = vec![create_test_entry(1, "2024-01-15", "Entry", "Content")];
-        let result = export_entries_to_json(entries, &empty_tags()).unwrap();
+        let result = export_entries_to_json(entries, &empty_tags(), &HashMap::new()).unwrap();
         let parsed: Value = serde_json::from_str(&result).unwrap();
         let entry_tags = parsed["entries"][0]["tags"].as_array().unwrap();
         assert!(entry_tags.is_empty());
@@ -212,7 +253,7 @@ mod tests {
             "Entry",
             r#"<p>See <a href="https://example.com">Visit site</a> please</p>"#,
         )];
-        let result = export_entries_to_json(entries, &empty_tags()).unwrap();
+        let result = export_entries_to_json(entries, &empty_tags(), &HashMap::new()).unwrap();
 
         // The raw HTML appears verbatim in the JSON. The link's href and label
         // are both present.
@@ -252,7 +293,7 @@ mod tests {
 
         for (name, html) in cases {
             let entries = vec![create_test_entry(1, "2024-01-15", "Entry", html)];
-            let result = export_entries_to_json(entries, &empty_tags()).unwrap();
+            let result = export_entries_to_json(entries, &empty_tags(), &HashMap::new()).unwrap();
             let parsed: Value = serde_json::from_str(&result).unwrap();
             let text = parsed["entries"][0]["text"].as_str().unwrap();
             assert_eq!(text, *html, "mark '{}' did not survive verbatim", name);
@@ -268,7 +309,7 @@ mod tests {
             font_size: Some(18.0),
         });
 
-        let result = export_entries_to_json(vec![entry], &empty_tags()).unwrap();
+        let result = export_entries_to_json(vec![entry], &empty_tags(), &HashMap::new()).unwrap();
         let parsed: Value = serde_json::from_str(&result).unwrap();
         let meta = &parsed["entries"][0]["metadata"];
         assert_eq!(meta["fontFamily"], "Merriweather");
@@ -278,7 +319,7 @@ mod tests {
     #[test]
     fn test_export_entry_without_metadata_omits_field() {
         let entry = create_test_entry(1, "2024-01-01", "Plain", "<p>No font</p>");
-        let result = export_entries_to_json(vec![entry], &empty_tags()).unwrap();
+        let result = export_entries_to_json(vec![entry], &empty_tags(), &HashMap::new()).unwrap();
         let parsed: Value = serde_json::from_str(&result).unwrap();
         assert!(
             parsed["entries"][0]["metadata"].is_null()

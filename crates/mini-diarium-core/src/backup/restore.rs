@@ -660,7 +660,10 @@ mod tests {
         // Relabel back to current — the physical schema never changed (the `locked` column
         // was never dropped), only the version marker was toggled for the snapshot above.
         db.conn()
-            .execute("UPDATE schema_version SET version = 13", [])
+            .execute(
+                "UPDATE schema_version SET version = ?1",
+                [crate::db::SCHEMA_VERSION],
+            )
             .unwrap();
         insert_entry(&db, &entry("2024-06-01", "Live content before restore")).unwrap();
 

@@ -720,6 +720,7 @@ const en = {
     printing: 'Printing...',
     printGeneratedLabel: 'Generated:',
     printTagsLabel: 'Tags:',
+    printAttachmentsLabel: 'Attachments:',
     printNoEntries: 'No entries found.',
   },
 
@@ -863,6 +864,24 @@ const en = {
     clearFilter: 'Clear tag filter',
   },
 
+  /** Attachments — files attached to an entry (TODO-0114) */
+  attachments: {
+    attachFile: 'Attach file',
+    attachFileTitle: 'Attach files to this entry (up to 20 MB each)',
+    listAria: 'Attachments',
+    actionsAria: 'Actions for {{ name }}',
+    saveCopy: 'Save a copy…',
+    insertRef: 'Insert reference in text',
+    remove: 'Remove',
+    confirmRemoveTitle: 'Remove attachment',
+    confirmRemove: 'Remove "{{ name }}" from this entry?',
+    confirmRemoveWithRefs:
+      'Remove "{{ name }}" from this entry? References to it in the text will show as missing.',
+    addFailed: 'Could not attach "{{ name }}": {{ error }}',
+    missing: 'Missing attachment',
+    refTitle: 'Click to save a copy of {{ name }}',
+  },
+
   /** Onboarding tour — first-run step-by-step guide */
   onboarding: {
     title: 'Welcome to Mini Diarium',
@@ -899,6 +918,11 @@ const en = {
       'Could not decrypt. The key file may be incorrect or the data may be corrupted.',
     journalNotUnlocked: 'Please unlock your journal first.',
     entryLocked: 'This entry is locked. Unlock it to make changes.',
+    attachmentTooLarge: 'This file is too large. Attachments can be up to 20 MB.',
+    attachmentEmpty: 'This file is empty.',
+    attachmentNotAFile: 'Only files can be attached, not folders.',
+    attachmentNotFound: 'This attachment no longer exists.',
+    attachmentExtensionMismatch: 'Save the copy with the same file extension as the attachment.',
     cannotRemoveLastAuth: 'Cannot remove the last authentication method.',
     cannotReadKeyFile:
       'Could not read key file. Check that the file exists and you have permission to read it.',

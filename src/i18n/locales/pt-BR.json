@@ -602,6 +602,7 @@
     "printing": "Imprimindo...",
     "printGeneratedLabel": "Gerado em:",
     "printTagsLabel": "Etiquetas:",
+    "printAttachmentsLabel": "Anexos:",
     "printNoEntries": "Nenhuma entrada encontrada."
   },
   "import": {
@@ -723,6 +724,21 @@
     "filterActiveLabel": "Filtro de etiqueta:",
     "clearFilter": "Limpar filtro de etiqueta"
   },
+  "attachments": {
+    "attachFile": "Anexar arquivo",
+    "attachFileTitle": "Anexar arquivos a esta entrada (até 20 MB cada)",
+    "listAria": "Anexos",
+    "actionsAria": "Ações para {{ name }}",
+    "saveCopy": "Salvar uma cópia…",
+    "insertRef": "Inserir referência no texto",
+    "remove": "Remover",
+    "confirmRemoveTitle": "Remover anexo",
+    "confirmRemove": "Remover \"{{ name }}\" desta entrada?",
+    "confirmRemoveWithRefs": "Remover \"{{ name }}\" desta entrada? As referências no texto aparecerão como ausentes.",
+    "addFailed": "Não foi possível anexar \"{{ name }}\": {{ error }}",
+    "missing": "Anexo ausente",
+    "refTitle": "Clique para salvar uma cópia de {{ name }}"
+  },
   "onboarding": {
     "title": "Bem-vindo ao Mini Diarium",
     "subtitle": "Algumas coisas para você começar:",
@@ -749,6 +765,11 @@
     "decryptionFailed": "Não foi possível descriptografar. O arquivo de chave pode estar incorreto ou os dados podem estar corrompidos.",
     "journalNotUnlocked": "Por favor, desbloqueie seu diário primeiro.",
     "entryLocked": "Esta entrada está bloqueada. Desbloqueie-a para fazer alterações.",
+    "attachmentTooLarge": "Este arquivo é grande demais. Os anexos podem ter até 20 MB.",
+    "attachmentEmpty": "Este arquivo está vazio.",
+    "attachmentNotAFile": "Somente arquivos podem ser anexados, não pastas.",
+    "attachmentNotFound": "Este anexo não existe mais.",
+    "attachmentExtensionMismatch": "Salve a cópia com a mesma extensão de arquivo do anexo.",
     "cannotRemoveLastAuth": "Não é possível remover o último método de autenticação.",
     "cannotReadKeyFile": "Não foi possível ler o arquivo de chave. Verifique se o arquivo existe e se você tem permissão para lê-lo.",
     "cannotSaveKeyFile": "Não foi possível salvar o arquivo de chave. Verifique as permissões da pasta.",

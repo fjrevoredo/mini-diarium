@@ -9,6 +9,8 @@ import { EntryNavBar } from '../editor/EntryNavBar';
 import { selectedDate, selectedEntryId, setSelectedEntryId } from '../../state/ui';
 import { readTextFile, setEntryLocked } from '../../lib/tauri';
 import EntryTags from '../editor/EntryTags';
+import EntryAttachments from '../editor/EntryAttachments';
+import { entryAttachments } from '../../state/entryAttachments';
 import type { DiaryEntry, EntryMetadata } from '../../lib/tauri';
 import { formatTimestamp } from '../../lib/dates';
 import { isSaving, refreshLockedDates } from '../../state/entries';
@@ -182,6 +184,9 @@ export default function EditorPanel() {
   // title input, delete button, and lock toggle. See TODO-0071.
   const currentLocked = () => dayEntries()[currentIndex()]?.locked ?? false;
 
+  // Blank for the "+" button: no text and no attachments (TODO-0114).
+  const isEntryBlank = () => emptyCheck.isContentEmpty() && entryAttachments().length === 0;
+
   const handleToggleLock = async () => {
     const id = pendingEntryId();
     if (id === null) return;
@@ -274,11 +279,11 @@ export default function EditorPanel() {
         onNext={() => void nav.navigateToEntry(currentIndex() + 1)}
         onGoTo={(idx) => void nav.navigateToEntry(idx)}
         onAdd={() => void nav.addEntry()}
-        addDisabled={isCreatingEntry() || pendingEntryId() === null || emptyCheck.isContentEmpty()}
+        addDisabled={isCreatingEntry() || pendingEntryId() === null || isEntryBlank()}
         addTitle={
           isCreatingEntry()
             ? t('editor.addEntryCreating')
-            : pendingEntryId() === null || emptyCheck.isContentEmpty()
+            : pendingEntryId() === null || isEntryBlank()
               ? t('editor.addEntryHint')
               : t('editor.addEntryTitle')
         }
@@ -374,6 +379,11 @@ export default function EditorPanel() {
             />
             <Show when={pendingEntryId() !== null}>
               <EntryTags entryId={pendingEntryId()!} locked={currentLocked()} />
+              <EntryAttachments
+                entryId={pendingEntryId()!}
+                locked={currentLocked()}
+                editor={editorInstance()}
+              />
             </Show>
           </div>
         </div>

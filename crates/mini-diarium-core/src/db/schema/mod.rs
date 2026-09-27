@@ -60,7 +60,7 @@ impl DatabaseConnection {
 }
 
 /// Current schema version
-pub const SCHEMA_VERSION: i32 = 13;
+pub const SCHEMA_VERSION: i32 = 14;
 
 #[cfg(test)]
 mod tests {
@@ -153,7 +153,7 @@ mod tests {
             .unwrap();
 
         assert_eq!(version, SCHEMA_VERSION);
-        assert_eq!(SCHEMA_VERSION, 13);
+        assert_eq!(SCHEMA_VERSION, 14);
     }
 
     #[test]
@@ -187,7 +187,7 @@ mod tests {
             .conn()
             .query_row("SELECT version FROM schema_version", [], |row| row.get(0))
             .unwrap();
-        assert_eq!(version1, 13);
+        assert_eq!(version1, 14);
         drop(db1);
 
         let backup_count_before = std::fs::read_dir(&backups_dir)
@@ -199,14 +199,14 @@ mod tests {
             .conn()
             .query_row("SELECT version FROM schema_version", [], |row| row.get(0))
             .unwrap();
-        assert_eq!(version2, 13);
+        assert_eq!(version2, 14);
 
         let backup_count_after = std::fs::read_dir(&backups_dir)
             .map(|d| d.count())
             .unwrap_or(0);
         assert_eq!(
             backup_count_before, backup_count_after,
-            "No new backup should be created for v13→v13"
+            "No new backup should be created for v14→v14"
         );
 
         cleanup_backups_dir(&backups_dir);
@@ -265,7 +265,7 @@ mod tests {
             .conn()
             .query_row("SELECT version FROM schema_version", [], |row| row.get(0))
             .unwrap();
-        assert_eq!(version, 13);
+        assert_eq!(version, 14);
 
         cleanup_backups_dir(&backups_dir);
     }

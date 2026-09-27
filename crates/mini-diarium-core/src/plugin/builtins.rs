@@ -1,6 +1,6 @@
 use super::{ExportOutput, ExportPlugin, ImportPlugin, PluginInfo};
 use crate::db::queries::DiaryEntry;
-use crate::export::{json, markdown};
+use crate::export::{json, markdown, AttachmentsMap};
 use crate::import::{dayone, dayone_txt, jrnl, minidiary};
 use crate::plugin::registry::PluginRegistry;
 use std::collections::HashMap;
@@ -93,11 +93,12 @@ impl ExportPlugin for JsonExporter {
         &self,
         entries: Vec<DiaryEntry>,
         tags: &HashMap<i64, Vec<String>>,
+        attachments: &AttachmentsMap,
     ) -> Result<ExportOutput, String> {
-        let content = json::export_entries_to_json(entries, tags)?;
+        let content = json::export_entries_to_json(entries, tags, attachments)?;
         Ok(ExportOutput {
             content,
-            assets: vec![],
+            ..Default::default()
         })
     }
 }
@@ -118,9 +119,15 @@ impl ExportPlugin for MarkdownExporter {
         &self,
         entries: Vec<DiaryEntry>,
         tags: &HashMap<i64, Vec<String>>,
+        attachments: &AttachmentsMap,
     ) -> Result<ExportOutput, String> {
-        let (content, assets) = markdown::export_entries_to_markdown_with_assets(entries, tags);
-        Ok(ExportOutput { content, assets })
+        let (content, assets, attachment_assets) =
+            markdown::export_entries_to_markdown_with_assets(entries, tags, attachments);
+        Ok(ExportOutput {
+            content,
+            assets,
+            attachment_assets,
+        })
     }
 }
 
@@ -140,10 +147,11 @@ impl ExportPlugin for MarkdownInlineExporter {
         &self,
         entries: Vec<DiaryEntry>,
         tags: &HashMap<i64, Vec<String>>,
+        attachments: &AttachmentsMap,
     ) -> Result<ExportOutput, String> {
         Ok(ExportOutput {
-            content: markdown::export_entries_to_markdown_inline(entries, tags),
-            assets: vec![],
+            content: markdown::export_entries_to_markdown_inline(entries, tags, attachments),
+            ..Default::default()
         })
     }
 }
@@ -186,5 +194,55 @@ mod tests {
         register_all(&mut registry);
         assert_eq!(registry.list_importers().len(), 4);
         assert_eq!(registry.list_exporters().len(), 3);
+    }
+
+    fn entry_with_ref() -> DiaryEntry {
+        DiaryEntry {
+            id: 1,
+            date: "2024-01-15".into(),
+            title: "T".into(),
+            text: r#"<p>See <span data-attachment-ref="5"></span></p>"#.into(),
+            word_count: 1,
+            date_created: "2024-01-15T00:00:00Z".into(),
+            date_updated: "2024-01-15T00:00:00Z".into(),
+            metadata: None,
+            locked: false,
+        }
+    }
+
+    fn one_attachment() -> AttachmentsMap {
+        HashMap::from([(
+            1i64,
+            vec![crate::export::attachments::test_support::summary(
+                5,
+                "Report.pdf",
+                10,
+            )],
+        )])
+    }
+
+    #[test]
+    fn test_markdown_exporter_plans_attachment_assets() {
+        let output = MarkdownExporter
+            .export(vec![entry_with_ref()], &HashMap::new(), &one_attachment())
+            .unwrap();
+        assert_eq!(output.attachment_assets.len(), 1);
+        assert_eq!(output.attachment_assets[0].attachment_id, 5);
+        assert!(output
+            .content
+            .contains("[Report.pdf](assets/attachment-1-Report.pdf)"));
+    }
+
+    #[test]
+    fn test_markdown_inline_exporter_lists_attachments_without_assets() {
+        let output = MarkdownInlineExporter
+            .export(vec![entry_with_ref()], &HashMap::new(), &one_attachment())
+            .unwrap();
+        assert!(output.attachment_assets.is_empty());
+        assert!(output.assets.is_empty());
+        assert!(output.content.contains("📎 Report.pdf"));
+        assert!(output
+            .content
+            .contains("*Attachments:*\n- Report.pdf (10 B)"));
     }
 }

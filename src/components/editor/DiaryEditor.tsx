@@ -21,6 +21,7 @@ import { isDocumentChange } from './editorUpdateGuard';
 import { AlignableImage } from './extensions/AlignableImage';
 import { BidiExtension } from './extensions/BidiExtension';
 import { TimestampMark } from './extensions/TimestampMark';
+import { AttachmentRef } from './extensions/AttachmentRef';
 import {
   LinkWithDialog,
   handleEditorLinkClick,
@@ -247,6 +248,10 @@ export default function DiaryEditor(props: DiaryEditorProps) {
         BidiExtension,
         TimestampMark,
         LinkWithDialog,
+        AttachmentRef.configure({
+          missingLabel: () => t('attachments.missing'),
+          titleFor: (name) => t('attachments.refTitle', { name }),
+        }),
       ],
       content: props.content,
       // Start read-only when the entry is locked so typing is blocked before the

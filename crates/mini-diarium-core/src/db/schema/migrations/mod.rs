@@ -1,6 +1,7 @@
 mod v10_to_v11;
 mod v11_to_v12;
 mod v12_to_v13;
+mod v13_to_v14;
 mod v1_to_v2;
 mod v2_to_v3;
 mod v3_to_v4;
@@ -17,7 +18,7 @@ pub(crate) use v2_to_v3::migrate_v2_to_v3;
 use crate::db::schema::DatabaseConnection;
 use rusqlite::Connection;
 
-/// Applies all pending DDL-only migrations (v3→v4 through v12→v13) in order.
+/// Applies all pending DDL-only migrations (v3→v4 through v13→v14) in order.
 ///
 /// This covers the idempotent, transactionally-safe migrations. The v1→v2 and
 /// v2→v3 migrations have different signatures (require paths and password) and
@@ -33,6 +34,7 @@ pub(crate) fn apply_pending(db: &DatabaseConnection) -> Result<(), String> {
     v10_to_v11::migrate_v10_to_v11(db)?;
     v11_to_v12::migrate_v11_to_v12(db)?;
     v12_to_v13::migrate_v12_to_v13(db)?;
+    v13_to_v14::migrate_v13_to_v14(db)?;
     Ok(())
 }
 
@@ -79,7 +81,7 @@ mod tests {
     use rusqlite::Connection;
 
     #[test]
-    fn test_apply_pending_advances_v3_to_v13() {
+    fn test_apply_pending_advances_v3_to_v14() {
         // Minimal v3 schema: schema_version=3, entries (old style), auth_slots
         // entries_fts is absent — migrate_v3_to_v4 uses DROP TABLE IF EXISTS
         let conn = Connection::open_in_memory().unwrap();
@@ -116,20 +118,21 @@ mod tests {
             .conn()
             .query_row("SELECT version FROM schema_version", [], |row| row.get(0))
             .unwrap();
-        assert_eq!(version, 13, "apply_pending must advance schema to v13");
+        assert_eq!(version, 14, "apply_pending must advance schema to v14");
 
         let table_count: i64 = db
             .conn()
             .query_row(
                 "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name IN \
-                 ('db_settings','tags','entry_tags','custom_fonts','images','entry_images')",
+                 ('db_settings','tags','entry_tags','custom_fonts','images','entry_images', \
+                 'attachments','entry_attachments')",
                 [],
                 |row| row.get(0),
             )
             .unwrap();
         assert_eq!(
-            table_count, 6,
-            "db_settings, tags, entry_tags, custom_fonts, images, and entry_images must all exist after apply_pending"
+            table_count, 8,
+            "db_settings, tags, entry_tags, custom_fonts, images, entry_images, attachments, and entry_attachments must all exist after apply_pending"
         );
 
         let col_exists: i64 = db

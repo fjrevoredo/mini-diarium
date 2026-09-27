@@ -16,6 +16,18 @@ describe('ConfirmDialog', () => {
     expect(screen.getByText('Erase this content?')).toBeInTheDocument();
   });
 
+  it('labels the confirm button "Delete entry" by default and uses a custom label when given', async () => {
+    renderWithI18n(() => <ConfirmDialog />);
+    const first = confirmInApp('Erase this content?');
+    const button = await screen.findByTestId('confirm-dialog-confirm-button');
+    expect(button).toHaveTextContent('Delete entry');
+    fireEvent.click(button);
+    await first;
+
+    void confirmInApp('Remove this file?', { confirmLabel: 'Remove' });
+    expect(await screen.findByTestId('confirm-dialog-confirm-button')).toHaveTextContent('Remove');
+  });
+
   it('clicking Confirm calls respondToConfirm(true) and closes', async () => {
     renderWithI18n(() => <ConfirmDialog />);
     const promise = confirmInApp('Erase this content?', { title: 'Delete Entry' });

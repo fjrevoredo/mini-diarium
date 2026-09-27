@@ -228,6 +228,11 @@ pub(crate) fn delete_entry_if_empty_inner(
             );
             return Ok(false);
         }
+        // An attachment-only entry is not empty: deleting it would also GC its blobs.
+        if db::entry_has_attachments(db, id)? {
+            debug!("Refusing to delete entry id={} — it has attachments", id);
+            return Ok(false);
+        }
         debug!("Deleting empty entry id={}", id);
         db::delete_entry_by_id(db, id)
     })
@@ -268,7 +273,7 @@ pub fn delete_entry(id: i64, state: State<DiaryState>) -> Result<(), String> {
 pub(crate) fn entry_has_content_inner(id: i64, state: &DiaryState) -> Result<bool, String> {
     with_unlocked_db(state, |db| {
         let entry = db::get_entry_by_id(db, id)?.ok_or_else(|| "Entry not found".to_string())?;
-        Ok(!entry_is_blank(&entry.title, &entry.text))
+        Ok(!entry_is_blank(&entry.title, &entry.text) || db::entry_has_attachments(db, id)?)
     })
 }
 
@@ -690,6 +695,46 @@ mod tests {
         assert!(db::get_entry_by_id(guard.as_ref().unwrap(), entry_id)
             .unwrap()
             .is_none());
+    }
+
+    /// TODO-0114: an entry with only attachments is not empty — auto-delete would GC the
+    /// attachment blobs along with it.
+    #[test]
+    fn test_attachment_only_entry_is_not_empty() {
+        use crate::commands::auth::DiaryState;
+        use std::path::PathBuf;
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+        let now = chrono::Utc::now().to_rfc3339();
+        let entry = DiaryEntry {
+            id: 0,
+            date: "2024-08-05".to_string(),
+            title: String::new(),
+            text: String::new(),
+            word_count: 0,
+            date_created: now.clone(),
+            date_updated: now,
+            metadata: None,
+            locked: false,
+        };
+        let entry_id = db::insert_entry(&db, &entry).unwrap();
+        db::add_attachment_to_entry(&db, entry_id, "doc.pdf", b"%PDF").unwrap();
+
+        let state = DiaryState::new(
+            PathBuf::from("test_attachment_only_entry.db"),
+            PathBuf::from("test_attachment_only_entry_backups"),
+            PathBuf::from("."),
+        );
+        *state.db.lock().unwrap() = Some(db);
+
+        assert!(entry_has_content_inner(entry_id, &state).unwrap());
+        let deleted = delete_entry_if_empty_inner(entry_id, "", "", &state).unwrap();
+        assert!(!deleted, "an attachment-only entry must not auto-delete");
+
+        let guard = state.db.lock().unwrap();
+        let db = guard.as_ref().unwrap();
+        assert!(db::get_entry_by_id(db, entry_id).unwrap().is_some());
+        assert_eq!(db::list_entry_attachments(db, entry_id).unwrap().len(), 1);
     }
 
     #[test]

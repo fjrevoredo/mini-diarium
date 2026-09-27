@@ -7,7 +7,7 @@
 
 State modules live in `src/state/` — one file per domain, all SolidJS signals. See each file for current signals and exports.
 
-**Key invariant:** `session.ts:resetSessionState()` orchestrates lock cleanup — it calls reset functions from `entries`, `search`, `ui`, and `tags`. If you add a module that holds session-scoped data, add its reset call there.
+**Key invariant:** `session.ts:resetSessionState()` orchestrates lock cleanup — it calls reset functions from `entries`, `search`, `ui`, `tags`, and `entryAttachments` (also reset by `refreshAfterRestore()`). If you add a module that holds session-scoped data, add its reset call there.
 
 The `Preferences` interface (fields, types, defaults) is the source of truth in `src/state/preferences.ts`. Stored in `localStorage`.
 
@@ -207,6 +207,12 @@ These are used by E2E tests — **do not remove** from components.
 | `EntryNavBar.tsx` | Delete entry button (`−`) | `entry-delete-button` |
 | `EntryNavBar.tsx` | Add entry button (`+`) | `entry-add-button` |
 | `EntryNavBar.tsx` | Lock/unlock entry button; `aria-pressed` reflects locked state | `entry-lock-button` |
+| `EntryAttachments.tsx` | Attachment strip root (under the editor, beside tags) | `entry-attachments` |
+| `EntryAttachments.tsx` | One attachment chip | `entry-attachment-chip` |
+| `EntryAttachments.tsx` | Attach file button (hidden on a locked entry) | `entry-attachment-add-button` |
+| `EntryAttachments.tsx` | Chip name button (Save a copy…; stays on a locked entry) | `entry-attachment-save-button` |
+| `EntryAttachments.tsx` | Insert inline reference button (hidden on a locked entry) | `entry-attachment-insert-ref-button` |
+| `EntryAttachments.tsx` | Remove attachment button (hidden on a locked entry) | `entry-attachment-remove-button` |
 | `Timeline.tsx` | Passive lock indicator on a locked entry's row | `timeline-lock-indicator` |
 | `Calendar.tsx` | Passive lock glyph on a day with a locked entry | `calendar-lock-YYYY-MM-DD` |
 | `ConfirmDialog.tsx` | Dialog content root | `confirm-dialog` |

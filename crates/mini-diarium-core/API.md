@@ -110,18 +110,19 @@ Field names of the IPC-visible types **are frozen**: the frontend's TypeScript i
 | `ImageSummary` | `id`, `mime_type`, `created_at`, `thumbnail_mime_type`, `thumbnail_data_base64`, `width`, `height`, `byte_size`, `usage_count`, `first_entry_date`, `latest_entry_date` |
 | `ImageSummaryPage` | `items`, `has_more` |
 | `ImageSummarySort` | enum, `snake_case`: `newest`, `oldest`, `most_used` |
+| `AttachmentSummary` | `id`, `name` (decrypted per-entry file name), `mime_type`, `byte_size`, `created_at` — metadata only, never the bytes |
 | `AuthMethodInfo` | `id`, `slot_type`, `label`, `public_key_hex` (`null` for password slots), `created_at`, `last_used` |
-| `ContentCounts` | `tags`, `entry_tag_links`, `images`, `entry_image_links`, `images_missing_thumbnail`, `custom_font_families`, `custom_font_rows`, `locked_entries`, `entries_with_metadata`, `entries_missing_preview` — all `i64`. Serialized into the debug dump file, so this is also a **support-artifact** contract |
+| `ContentCounts` | `tags`, `entry_tag_links`, `images`, `entry_image_links`, `images_missing_thumbnail`, `custom_font_families`, `custom_font_rows`, `locked_entries`, `entries_with_metadata`, `entries_missing_preview`, `attachments`, `entry_attachment_links` — all `i64`. Serialized into the debug dump file, so this is also a **support-artifact** contract |
 | `KeypairFiles` | `public_key_hex`, `private_key_hex` |
 | `JournalPeek` | `slots`, `require_all_auth` |
 | `AuthSlotPeek` | `id`, `slot_type`, `label` |
 | `PluginInfo` | `id`, `name`, `file_extensions`, `builtin` |
-| `ExportOutput` | not serialized — a plain Rust struct with `content: String` and `assets: Vec<(String, Vec<u8>)>` |
+| `ExportOutput` | not serialized — a plain Rust struct (`Default`) with `content: String`, `assets: Vec<(String, Vec<u8>)>`, and `attachment_assets: Vec<AttachmentAsset>` (attachment files the caller must decrypt and write to `assets/`) |
 | `SearchResult` | `id`, `date`, `title`, `snippet` |
 | `SearchResponse` | **`camelCase`**: `results`, `totalMatches` |
 | `JournalConfig` | `id`, `name`, `path`, `auto_key`, `db_filename`, `require_all_auth` (last three omitted when `None`) — this is the on-disk `config.json` shape, so it is also a **file-format** contract |
 | `JournalInfo` | `id`, `name`, `path`, `auto_protected`, `require_all_auth`, `db_filename` — the IPC-safe DTO; never carries the raw `auto_key` |
-| `PrintLabels` | **deserialize-only** input: `generated_label`, `tags_label`, `no_entries_label`, `months` |
+| `PrintLabels` | **deserialize-only** input: `generated_label`, `tags_label`, `no_entries_label`, `months`, `attachments_label` (`#[serde(default)]` → `"Attachments:"`) |
 
 ### Change rule
 
@@ -142,11 +143,13 @@ sealed (`pub(crate)`); the names below are re-exported at `db`.
   master key ever escape the crate. Bespoke SQL and master-key wrapping are exposed as
   dedicated functions instead.
 - `SCHEMA_VERSION: i32`
+- `MAX_STORED_BLOB_BYTES: usize` — 20 MB cap shared by images and attachments
+- `DEFAULT_ATTACHMENT_MIME` — `application/octet-stream`
 - `from_parts(conn, key)` — test-only constructor, gated behind `#[cfg(any(test, feature = "test-support"))]`.
 
 ### Types
 `DiaryEntry`, `EntryMetadata`, `TimelineRow`, `Tag`, `ImageData`, `ImageSummary`,
-`ImageSummaryPage`, `ImageSummarySort`, `WordCountRecalculationResult`.
+`ImageSummaryPage`, `ImageSummarySort`, `WordCountRecalculationResult`, `AttachmentSummary`.
 
 ### Open / create (unlock)
 - `create_database`, `create_database_auto`
@@ -170,6 +173,25 @@ sealed (`pub(crate)`); the names below are re-exported at `db`.
 - `get_images_for_entry`, `list_image_summaries_filtered`, `get_image_by_id`,
   `resolve_image_refs_in_entries`
 - (`upsert_image`, link/extract/cleanup helpers remain `pub(crate)`.)
+
+### Attachments (TODO-0114)
+Content-addressed encrypted file store (`attachments`) plus a per-entry link table
+(`entry_attachments`) that carries the encrypted file name. Only these functions touch the
+links — the entry save path never does.
+- `add_attachment_to_entry(db, entry_id, name, bytes) -> Result<AttachmentSummary, String>` —
+  one transaction over the two primitives below. Rejects empty and over-`MAX_STORED_BLOB_BYTES`
+  content and invalid names (blank, > 255 chars, `/`, `\`, NUL). The same bytes added twice to
+  one entry return the existing link; the first name is kept.
+- `upsert_attachment_blob(db, bytes, mime) -> Result<i64, String>`,
+  `link_attachment(db, entry_id, attachment_id, name) -> Result<AttachmentSummary, String>` —
+  split primitives (per-entry restore composes them).
+- `list_entry_attachments(db, entry_id)` (oldest link first), `get_attachments_map(db) ->
+  HashMap<i64, Vec<AttachmentSummary>>` (for exports), `entry_has_attachments(db, entry_id)`
+- `remove_attachment_from_entry(db, entry_id, attachment_id) -> Result<bool, String>` — unlinks and
+  deletes orphan blobs in one transaction; `false` when the link did not exist.
+- `read_attachment_bytes(db, entry_id, attachment_id) -> Result<Option<Zeroizing<Vec<u8>>>, String>`
+  — scoped to the entry's own links.
+- `cleanup_orphaned_attachments(db)` (also run by `delete_entry_by_id`), `mime_for_extension(name)`
 
 ### Auth-slot management
 - `get_password_slot`, `get_keypair_slot_by_pubkey`, `list_auth_slots`, `insert_auth_slot`,
@@ -408,6 +430,9 @@ and into the live journal, in-process — no plaintext ever touches disk.
   name something else entirely; tags are restored by decrypted name, sidestepping the
   fingerprint mismatch a live-keyed comparison would hit. A restored entry is never locked,
   regardless of the snapshot's own `locked` flag.
+  Attachments (schema v14+ snapshots) are copied blob-by-blob into the live store, re-linked
+  under their decrypted names, and inline `data-attachment-ref` ids are remapped to the live
+  ids; a ref with no matching attachment is dropped.
 - `EntryMatchStatus::{Missing, ShorterInLive, Present}`
 - `SnapshotEntryDiff { id, date, title, preview, status }`
 - `RestoreEntriesOutcome { added_count }`
@@ -476,8 +501,16 @@ corrupt manifest is rebuilt from a directory scan rather than erroring.
 
 The `export::{html, json, markdown}` sub-modules are sealed (`pub(crate)`).
 
-- `export_entries_to_json`, `export_entries_to_markdown_with_assets`, `generate_print_html`,
-  `PrintLabels`
+- `export_entries_to_json(entries, tags, attachments)`,
+  `export_entries_to_markdown_with_assets(entries, tags, attachments) -> MarkdownWithAssets`
+  (`(markdown, image_assets, attachment_assets)`),
+  `generate_print_html(entries, tags, attachments, generated_at, labels)`, `PrintLabels`
+- `AttachmentsMap` (= `HashMap<i64, Vec<AttachmentSummary>>`, from `db::get_attachments_map`),
+  `AttachmentAsset { entry_id, attachment_id, filename }`, `MarkdownWithAssets`
+- Exporters never receive attachment bytes. Inline `<span data-attachment-ref="N">` refs are
+  rewritten before HTML→Markdown conversion: to `[name](assets/attachment-<n>-<name>)` links
+  (Markdown with assets), `📎 name` (inline Markdown, print). JSON adds an additive
+  `attachments: [{name, mime_type, byte_size}]` array per entry.
 - (`export_entries_to_markdown_inline` / `html_to_markdown` remain `pub(crate)` — used only by
   `plugin::builtins`.)
 
@@ -497,6 +530,8 @@ builtin importers).
 - `PluginRegistry` (+ `new`, `register_importer`, `register_exporter`, `list_importers`,
   `list_exporters`, `find_importer`, `find_exporter`)
 - `PluginInfo`, `ImportPlugin`, `ExportPlugin`, `ExportOutput`
+- `ExportPlugin::export(entries, tags, attachments: &AttachmentsMap)` — the attachments map was
+  added in TODO-0114; Rhai export scripts ignore it (they still see no attachment data).
 - `register_all` (re-export of `builtins::register_all`)
 - `rhai_loader::{load_plugins, migrate_journal_plugins, ensure_plugins_dir}`
 - (The 7 concrete builtin plugin structs are `pub(crate)`.)

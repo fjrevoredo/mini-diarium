@@ -9,6 +9,7 @@ import {
 import { resetSearchState } from './search';
 import { resetUiState } from './ui';
 import { resetTagsState, loadAllTags } from './tags';
+import { resetEntryAttachmentsState } from './entryAttachments';
 import { resetConfirmDialogState } from './confirm-dialog';
 import { resetSupportMilestoneState } from './support-milestone';
 
@@ -19,6 +20,7 @@ export function resetSessionState(): void {
   resetSearchState();
   resetUiState();
   resetTagsState();
+  resetEntryAttachmentsState();
   resetConfirmDialogState();
   resetSupportMilestoneState();
   setHasFocusedEditorOnUnlock(false);
@@ -40,6 +42,7 @@ export async function refreshAfterRestore(): Promise<void> {
   resetEntriesState();
   resetSearchState();
   resetTagsState();
+  resetEntryAttachmentsState();
   await executeReloadCallbacks();
   const dates = await getAllEntryDates();
   setEntryDates(dates);

@@ -6,8 +6,17 @@ import { debounce } from '../../../lib/debounce';
 import { setEntryDates, setIsSaving } from '../../../state/entries';
 import { createLogger } from '../../../lib/logger';
 import { computeIsEmpty } from './useEditorEmptyCheck';
+import { entryHasLoadedAttachments } from '../../../state/entryAttachments';
 
 const log = createLogger('Editor');
+
+/**
+ * The save-vs-delete decision: blank title, blank body, and no attachments. An entry with
+ * attachments is kept and saved even when its text is cleared (TODO-0114).
+ */
+export function isBlankEntry(entryId: number, title: string, isEmpty: boolean): boolean {
+  return title.trim() === '' && isEmpty && !entryHasLoadedAttachments(entryId);
+}
 
 /**
  * A write payload captured atomically from live state. Safe to carry across an await:
@@ -161,7 +170,7 @@ export function useEntryPersistence(opts: UseEntryPersistenceOptions): EntryPers
    */
   const writeSnapshot = async (snap: SaveSnapshot, path: string): Promise<void> => {
     try {
-      if (snap.title.trim() === '' && snap.isEmpty) {
+      if (isBlankEntry(snap.entryId, snap.title, snap.isEmpty)) {
         logWrite(path, 'deleteEntryIfEmpty', snap.entryId, snap.title, snap.content, true);
         await deleteEntryIfEmpty(snap.entryId, snap.title, snap.content);
       } else {
@@ -197,7 +206,7 @@ export function useEntryPersistence(opts: UseEntryPersistenceOptions): EntryPers
 
     // save-vs-delete comes from the caller's snapshot, never from a live re-read: the
     // debounce fires up to 500 ms after the payload was captured.
-    const shouldDelete = currentTitle.trim() === '' && isEmpty;
+    const shouldDelete = isBlankEntry(entryId, currentTitle, isEmpty);
     if (shouldDelete) {
       try {
         logWrite(path, 'deleteEntryIfEmpty', entryId, currentTitle, currentContent, true);

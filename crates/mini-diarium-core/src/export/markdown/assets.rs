@@ -152,6 +152,7 @@ mod tests {
     };
     use super::super::{export_entries_to_markdown_inline, export_entries_to_markdown_with_assets};
     use super::*;
+    use std::collections::HashMap;
 
     #[test]
     fn test_extract_src_data_uri_jpeg() {
@@ -256,7 +257,8 @@ mod tests {
             "My Entry",
             &format!("<p>Hello</p>{}", img_tag),
         )];
-        let (markdown, assets) = export_entries_to_markdown_with_assets(entries, &empty_tags());
+        let (markdown, assets, _) =
+            export_entries_to_markdown_with_assets(entries, &empty_tags(), &HashMap::new());
 
         assert!(markdown.contains("## 2024-01-15"));
         assert!(markdown.contains("![Image 1](assets/image-1.png)"));
@@ -267,7 +269,8 @@ mod tests {
     #[test]
     fn test_export_entries_with_assets_no_images() {
         let entries = vec![create_test_entry("2024-01-15", "Entry", "<p>Text only</p>")];
-        let (markdown, assets) = export_entries_to_markdown_with_assets(entries, &empty_tags());
+        let (markdown, assets, _) =
+            export_entries_to_markdown_with_assets(entries, &empty_tags(), &HashMap::new());
 
         assert!(markdown.contains("Text only"));
         assert!(assets.is_empty());
@@ -310,7 +313,7 @@ mod tests {
             "",
             &format!("<p>Hi</p>{}", img_tag),
         )];
-        let markdown = export_entries_to_markdown_inline(entries, &empty_tags());
+        let markdown = export_entries_to_markdown_inline(entries, &empty_tags(), &HashMap::new());
 
         assert!(markdown.contains("## 2024-01-15"));
         assert!(
@@ -326,7 +329,7 @@ mod tests {
     #[test]
     fn test_export_entries_inline_no_images() {
         let entries = vec![create_test_entry("2024-01-15", "T", "<p>Text</p>")];
-        let markdown = export_entries_to_markdown_inline(entries, &empty_tags());
+        let markdown = export_entries_to_markdown_inline(entries, &empty_tags(), &HashMap::new());
         assert!(markdown.contains("Text"));
         // no data: URI in output
         assert!(!markdown.contains("data:"));

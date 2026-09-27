@@ -19,6 +19,8 @@ pub struct ContentCounts {
     pub entry_tag_links: i64,
     pub images: i64,
     pub entry_image_links: i64,
+    pub attachments: i64,
+    pub entry_attachment_links: i64,
     /// Images still awaiting the v11 lazy thumbnail backfill (`thumbnail_data IS NULL`).
     pub images_missing_thumbnail: i64,
     pub custom_font_families: i64,
@@ -45,6 +47,8 @@ pub fn read_content_counts(db: &DatabaseConnection) -> Result<ContentCounts, Str
         entry_tag_links: count("SELECT COUNT(*) FROM entry_tags")?,
         images: count("SELECT COUNT(*) FROM images")?,
         entry_image_links: count("SELECT COUNT(*) FROM entry_images")?,
+        attachments: count("SELECT COUNT(*) FROM attachments")?,
+        entry_attachment_links: count("SELECT COUNT(*) FROM entry_attachments")?,
         images_missing_thumbnail: count(
             "SELECT COUNT(*) FROM images WHERE thumbnail_data IS NULL",
         )?,

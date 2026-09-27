@@ -228,7 +228,9 @@ mod tests {
         load_plugins(dir.path(), &mut registry);
 
         let plugin = registry.find_exporter("rhai:plain-text-timeline").unwrap();
-        let output = plugin.export(sample_entries(), &HashMap::new()).unwrap();
+        let output = plugin
+            .export(sample_entries(), &HashMap::new(), &HashMap::new())
+            .unwrap();
         let expected = format!(
             "2024-01-01 | (untitled)\n{}\n---\n2024-01-02 | Second\n{}",
             crate::export::markdown::html_to_markdown("<p>First body</p>"),

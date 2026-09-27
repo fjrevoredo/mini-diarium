@@ -11,17 +11,24 @@ import { createSignal } from 'solid-js';
 const [isOpen, setIsOpen] = createSignal(false);
 const [message, setMessage] = createSignal('');
 const [dialogTitle, setDialogTitle] = createSignal('');
+const [confirmLabel, setConfirmLabel] = createSignal('');
 let pendingResolve: ((result: boolean) => void) | null = null;
 
 export const isConfirmDialogOpen = isOpen;
 export const confirmDialogMessage = message;
 export const confirmDialogTitle = dialogTitle;
+/** Label for the destructive button; empty means the dialog's default ("Delete entry"). */
+export const confirmDialogConfirmLabel = confirmLabel;
 
 /** Shows the confirm dialog and resolves with the user's choice. Mirrors native `confirm()`'s call shape. */
-export function confirmInApp(msg: string, options?: { title?: string }): Promise<boolean> {
+export function confirmInApp(
+  msg: string,
+  options?: { title?: string; confirmLabel?: string },
+): Promise<boolean> {
   return new Promise((resolve) => {
     setMessage(msg);
     setDialogTitle(options?.title ?? '');
+    setConfirmLabel(options?.confirmLabel ?? '');
     pendingResolve = resolve;
     setIsOpen(true);
   });

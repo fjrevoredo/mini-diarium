@@ -132,6 +132,28 @@
   text-decoration-thickness: 0.1em;
 }
 
+/* Inline attachment reference (TODO-0114): an atom chip, click saves a copy */
+.ProseMirror .attachment-ref {
+  display: inline-block;
+  padding: 0 0.35em;
+  border: 1px solid var(--border-primary);
+  border-radius: 0.25rem;
+  background: var(--bg-tertiary);
+  font-size: 0.9em;
+  cursor: pointer;
+  user-select: none;
+}
+
+.ProseMirror .attachment-ref.attachment-ref--missing {
+  cursor: default;
+  opacity: 0.6;
+  text-decoration: line-through;
+}
+
+.ProseMirror .attachment-ref.ProseMirror-selectednode {
+  outline: 2px solid var(--editor-link-color);
+}
+
 /* Explicit underline — WebKit/Blink can strip text-decoration inside contenteditable */
 .ProseMirror u {
   text-decoration: underline;

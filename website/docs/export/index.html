@@ -345,7 +345,7 @@
       "@id": "https://mini-diarium.com/docs/export/#article",
       "headline": "Exporting Data",
       "description": "Export your journal as JSON, Markdown, or PDF. JSON preserves IDs, tags, and metadata; Markdown is human-readable; PDF creates a formatted A4 document.",
-      "dateModified": "2026-09-06T00:00:00Z",
+      "dateModified": "2026-09-27T00:00:00Z",
       "keywords": "export, backup, JSON, Markdown, PDF, print, portability, tags",
       "publisher": {
         "@type": "Organization",
@@ -588,7 +588,7 @@
           ]
         }
         </code></pre>
-        <p>Every entry includes a <code>&quot;tags&quot;</code> array (empty <code>[]</code> if the entry has no tags; tags are listed in alphabetical order). Entries with font metadata include a <code>&quot;metadata&quot;</code> object containing <code>fontFamily</code> and <code>fontSize</code>; entries without entry-level font defaults have no <code>metadata</code> field.</p>
+        <p>Every entry includes a <code>&quot;tags&quot;</code> array (empty <code>[]</code> if the entry has no tags; tags are listed in alphabetical order) and an <code>&quot;attachments&quot;</code> array of <code>{ &quot;name&quot;, &quot;mime_type&quot;, &quot;byte_size&quot; }</code> objects (empty <code>[]</code> when there are none). The JSON file lists attachments by name only; it does not contain the file contents. Entries with font metadata include a <code>&quot;metadata&quot;</code> object containing <code>fontFamily</code> and <code>fontSize</code>; entries without entry-level font defaults have no <code>metadata</code> field.</p>
         <p>This format preserves entry IDs, timestamps, tags, and font metadata. It can be re-imported into Mini Diarium. The JSON importer automatically handles both the old Mini Diary date-keyed format and the new array format with optional metadata for backward compatibility. If the JSON contains embedded <code>data:image/...</code> content, Mini Diarium normalizes those images into its encrypted image store during import while preserving the visible content of the entry.</p>
         <h3 id="markdown-export">Markdown Export</h3><p>The Markdown export produces a human-readable text file, grouped by date. If a day has multiple entries, each appears under its own sub-heading.</p>
         <p>If an entry has tags, a <code>*Tags: …*</code> line is written immediately after the title (or date heading when there is no title) and before the entry body:</p>
@@ -599,6 +599,7 @@
         Entry content here...
         </code></pre>
         <p>Entries with no tags have no tags line. Tags appear in alphabetical order.</p>
+        <p>Attachments are written as decrypted files into an <code>assets/</code> folder next to the Markdown file (named <code>attachment-&lt;n&gt;-&lt;file name&gt;</code>), and each entry with attachments ends with an <code>*Attachments:*</code> list that links to them. Inline attachment references in the text become links to the same files. <strong>The <code>assets/</code> folder contains your attachments unencrypted</strong>, like the export itself.</p>
         <p>Markdown is a best-effort, text-focused conversion of the stored HTML editor content. Bold, italic, strikethrough, inline code, and links convert to native Markdown syntax. Underline, highlighted/background color, text color, and font family/size have no standard Markdown equivalent, so the formatting is dropped while the text itself is always kept. Complex formatting (tables, images) may not convert perfectly, but the text is always readable. <strong>For full-fidelity export including font metadata, use JSON instead.</strong></p>
         <h3 id="print-pdf">Print / PDF</h3><p>The <strong>Print / PDF</strong> option opens a save dialog and creates a formatted A4 PDF directly at the path you choose.</p>
         <p>The print output uses a clean, readable layout with:</p>
@@ -606,6 +607,7 @@
         <li>A &quot;Mini Diarium&quot; header and the generation date</li>
         <li>Entries grouped by date, with each date on its own page</li>
         <li>Entry titles, tags (when present), and the full entry content</li>
+        <li>The names of an entry&#39;s attachments (the files themselves are not printed); inline references show as 📎 and the file name</li>
         <li>Standard formatting for headings, lists, blockquotes, and code blocks</li>
         </ul>
         <p>Date range filtering works the same as for file exports. Select &quot;All entries&quot;, a custom date range, or a specific month before clicking <strong>Print</strong>.</p>
@@ -617,7 +619,7 @@
         <li><strong>Processing</strong>: Use JSON for programmatic processing of your entries.</li>
         </ul>
         <p>Note that exported files are not encrypted. Store them securely if they contain sensitive content.</p>
-        <h2 id="custom-export-formats-via-plugins">Custom Export Formats via Plugins</h2><p>If you need a specific export format not covered by the built-in options, you can write a custom Rhai export plugin. See the <a href="../plugins/">Plugins</a> section for details.</p>
+        <h2 id="custom-export-formats-via-plugins">Custom Export Formats via Plugins</h2><p>If you need a specific export format not covered by the built-in options, you can write a custom Rhai export plugin. See the <a href="../plugins/">Plugins</a> section for details. Custom Rhai export plugins do not receive attachment data.</p>
         
         
                 <div class="docs-prevnext">

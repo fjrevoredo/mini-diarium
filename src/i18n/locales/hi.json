@@ -602,6 +602,7 @@
     "printing": "प्रिंट हो रहा है...",
     "printGeneratedLabel": "बनाया गया:",
     "printTagsLabel": "टैग:",
+    "printAttachmentsLabel": "संलग्नक:",
     "printNoEntries": "कोई प्रविष्टि नहीं मिली."
   },
   "import": {
@@ -723,6 +724,21 @@
     "filterActiveLabel": "टैग फ़िल्टर:",
     "clearFilter": "टैग फ़िल्टर हटाएं"
   },
+  "attachments": {
+    "attachFile": "फ़ाइल संलग्न करें",
+    "attachFileTitle": "इस प्रविष्टि में फ़ाइलें संलग्न करें (प्रत्येक 20 MB तक)",
+    "listAria": "संलग्नक",
+    "actionsAria": "{{ name }} के लिए कार्य",
+    "saveCopy": "एक प्रति सहेजें…",
+    "insertRef": "टेक्स्ट में संदर्भ डालें",
+    "remove": "हटाएं",
+    "confirmRemoveTitle": "संलग्नक हटाएं",
+    "confirmRemove": "इस प्रविष्टि से \"{{ name }}\" हटाएं?",
+    "confirmRemoveWithRefs": "इस प्रविष्टि से \"{{ name }}\" हटाएं? टेक्स्ट में इसके संदर्भ अनुपलब्ध दिखेंगे।",
+    "addFailed": "\"{{ name }}\" संलग्न नहीं किया जा सका: {{ error }}",
+    "missing": "अनुपलब्ध संलग्नक",
+    "refTitle": "{{ name }} की प्रति सहेजने के लिए क्लिक करें"
+  },
   "onboarding": {
     "title": "Mini Diarium में आपका स्वागत है",
     "subtitle": "शुरू करने के लिए कुछ बातें:",
@@ -749,6 +765,11 @@
     "decryptionFailed": "डिक्रिप्ट नहीं किया जा सका। की फ़ाइल गलत हो सकती है या डेटा दूषित हो सकता है।",
     "journalNotUnlocked": "कृपया पहले अपनी जर्नल अनलॉक करें।",
     "entryLocked": "यह प्रविष्टि लॉक है। बदलाव करने के लिए इसे अनलॉक करें।",
+    "attachmentTooLarge": "यह फ़ाइल बहुत बड़ी है। संलग्नक 20 MB तक हो सकते हैं।",
+    "attachmentEmpty": "यह फ़ाइल खाली है।",
+    "attachmentNotAFile": "केवल फ़ाइलें संलग्न की जा सकती हैं, फ़ोल्डर नहीं।",
+    "attachmentNotFound": "यह संलग्नक अब मौजूद नहीं है।",
+    "attachmentExtensionMismatch": "प्रति को संलग्नक के समान फ़ाइल एक्सटेंशन के साथ सहेजें।",
     "cannotRemoveLastAuth": "अंतिम प्रमाणीकरण विधि नहीं हटाई जा सकती।",
     "cannotReadKeyFile": "की फ़ाइल नहीं पढ़ी जा सकी। जाँचें कि फ़ाइल मौजूद है और आपके पास पढ़ने की अनुमति है।",
     "cannotSaveKeyFile": "की फ़ाइल सेव नहीं की जा सकी। फ़ोल्डर अनुमतियाँ जाँचें।",

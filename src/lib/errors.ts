@@ -43,6 +43,22 @@ export function mapTauriError(err: unknown, t: T = defaultT): string {
   if (/^entry is locked$/i.test(raw)) {
     return t('errors.entryLocked');
   }
+  // Attachment validation (TODO-0114) — localize the raw backend strings.
+  if (/^attachment is too large/i.test(raw)) {
+    return t('errors.attachmentTooLarge');
+  }
+  if (/^attachment file is empty$/i.test(raw)) {
+    return t('errors.attachmentEmpty');
+  }
+  if (/^attachment path is not a file$/i.test(raw)) {
+    return t('errors.attachmentNotAFile');
+  }
+  if (/^attachment not found$/i.test(raw)) {
+    return t('errors.attachmentNotFound');
+  }
+  if (/^destination file must have/i.test(raw)) {
+    return t('errors.attachmentExtensionMismatch');
+  }
   if (/cannot remove.*(last|only)|minimum.*auth|last.*auth/i.test(raw)) {
     return t('errors.cannotRemoveLastAuth');
   }

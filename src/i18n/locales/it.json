@@ -602,6 +602,7 @@
     "printing": "Stampa in corso...",
     "printGeneratedLabel": "Generato:",
     "printTagsLabel": "Tag:",
+    "printAttachmentsLabel": "Allegati:",
     "printNoEntries": "Nessuna voce trovata."
   },
   "import": {
@@ -723,6 +724,21 @@
     "filterActiveLabel": "Filtro tag:",
     "clearFilter": "Rimuovi filtro tag"
   },
+  "attachments": {
+    "attachFile": "Allega file",
+    "attachFileTitle": "Allega file a questa voce (fino a 20 MB ciascuno)",
+    "listAria": "Allegati",
+    "actionsAria": "Azioni per {{ name }}",
+    "saveCopy": "Salva una copia…",
+    "insertRef": "Inserisci riferimento nel testo",
+    "remove": "Rimuovi",
+    "confirmRemoveTitle": "Rimuovi allegato",
+    "confirmRemove": "Rimuovere «{{ name }}» da questa voce?",
+    "confirmRemoveWithRefs": "Rimuovere «{{ name }}» da questa voce? I riferimenti nel testo verranno mostrati come mancanti.",
+    "addFailed": "Impossibile allegare «{{ name }}»: {{ error }}",
+    "missing": "Allegato mancante",
+    "refTitle": "Fai clic per salvare una copia di {{ name }}"
+  },
   "onboarding": {
     "title": "Benvenuto in Mini Diarium",
     "subtitle": "Alcune cose per iniziare:",
@@ -749,6 +765,11 @@
     "decryptionFailed": "Impossibile decifrare. Il file chiave potrebbe essere errato o i dati potrebbero essere danneggiati.",
     "journalNotUnlocked": "Sblocca prima il tuo diario.",
     "entryLocked": "Questa voce è bloccata. Sbloccala per apportare modifiche.",
+    "attachmentTooLarge": "Questo file è troppo grande. Gli allegati possono arrivare a 20 MB.",
+    "attachmentEmpty": "Questo file è vuoto.",
+    "attachmentNotAFile": "Si possono allegare solo file, non cartelle.",
+    "attachmentNotFound": "Questo allegato non esiste più.",
+    "attachmentExtensionMismatch": "Salva la copia con la stessa estensione di file dell'allegato.",
     "cannotRemoveLastAuth": "Impossibile rimuovere l'ultimo metodo di autenticazione.",
     "cannotReadKeyFile": "Impossibile leggere il file chiave. Verifica che il file esista e che tu abbia il permesso di leggerlo.",
     "cannotSaveKeyFile": "Impossibile salvare il file chiave. Verifica i permessi della cartella.",

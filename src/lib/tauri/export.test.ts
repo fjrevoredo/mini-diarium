@@ -48,6 +48,7 @@ describe('export command wrappers (IPC contract)', () => {
     const labels: PrintLabels = {
       generated_label: 'Generated',
       tags_label: 'Tags',
+      attachments_label: 'Attachments',
       no_entries_label: 'No entries',
       months: ['January'],
     };

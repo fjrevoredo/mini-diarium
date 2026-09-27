@@ -31,6 +31,8 @@ export async function exportMarkdown(
 export interface PrintLabels {
   generated_label: string;
   tags_label: string;
+  /** Heading for an entry's attachment list (TODO-0114). */
+  attachments_label: string;
   no_entries_label: string;
   months: string[];
 }

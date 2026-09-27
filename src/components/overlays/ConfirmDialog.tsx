@@ -3,6 +3,7 @@ import {
   isConfirmDialogOpen,
   confirmDialogMessage,
   confirmDialogTitle,
+  confirmDialogConfirmLabel,
   respondToConfirm,
 } from '../../state/confirm-dialog';
 import { useI18n } from '../../i18n';
@@ -55,7 +56,7 @@ export default function ConfirmDialog() {
                 onClick={() => respondToConfirm(true)}
                 class="px-4 py-2 text-sm font-medium interactive-destructive rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
               >
-                {t('editor.deleteEntry')}
+                {confirmDialogConfirmLabel() || t('editor.deleteEntry')}
               </button>
             </div>
           </Dialog.Content>

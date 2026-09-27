@@ -91,9 +91,12 @@ mod roundtrip_tests {
 
         let exported = get_all_entries(&source_db).unwrap();
         let exported = resolve_image_refs_in_entries(&source_db, exported).unwrap();
-        let json =
-            crate::export::export_entries_to_json(exported, &std::collections::HashMap::new())
-                .unwrap();
+        let json = crate::export::export_entries_to_json(
+            exported,
+            &std::collections::HashMap::new(),
+            &std::collections::HashMap::new(),
+        )
+        .unwrap();
 
         let parsed = super::minidiary::parse_minidiary_json(&json).unwrap();
 

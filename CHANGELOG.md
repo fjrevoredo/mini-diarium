@@ -36,6 +36,15 @@ Template:
 
 ## [0.7.4] - [Unreleased]
 
+### Added
+- **File attachments on entries (TODO-0114)**: Attach documents, PDFs, short videos, or any other file (up to 20 MB each) to an entry. Attachments show as email-style chips under the editor, next to the tags. Click a chip to save a decrypted copy to a location you choose; the copy must keep the attachment's file extension. You can also place an optional inline 📎 reference to an attachment in the entry text; the reference only points to the attachment and shows as missing if you remove it. A locked entry hides the attach, remove, and insert-reference controls but still allows saving a copy. An entry with attachments is never auto-deleted as empty.
+    - **Export**: Markdown export writes each attachment as a decrypted file into the `assets/` folder and links it from the entry. JSON export adds an `attachments` array (name, MIME type, size) per entry. Print / PDF lists the attachment names. Custom Rhai export plugins do not receive attachment data.
+    - **Restore**: Restoring entries from a backup snapshot also restores their attachments and remaps inline references.
+    - **Schema v14**: Adds the `attachments` table (content-addressed, deduplicated) and the `entry_attachments` link table. The migration runs automatically on unlock.
+
+### Security
+- **Attachment storage**: Attachment contents and file names are encrypted at rest with the journal master key (AES-256-GCM), like entry text and images. The MIME type and byte size of each attachment are stored unencrypted, the same leak level as the existing image store. File bytes never cross the IPC boundary: Rust reads, encrypts, decrypts, and writes them, and saving a copy writes the decrypted file only to the path the user chooses, with no temporary plaintext file.
+
 ### Internal
 - **Dependency updates (Dependabot #299, #302, #303, #304, #305)**: Frontend bumps for `marked` (18.0.13), `@types/node` (26.6.2), `eslint-plugin-solid` (0.18.0), `typescript-eslint` (8.70.0), and `vite` (8.3.0); both lockfiles regenerated and aligned. Backend patch bump for `rhai` (1.26.1) in `Cargo.lock`, with the workspace test suite and the release-feature build passing. CI action bumps for `codecov/codecov-action` (7.1.0) and `signpath/github-action-submit-signing-request` (3.0). The `nix/package.nix` `npmDepsHash` needs a Linux-side refresh; the Nix CI workflow patches it automatically on push.
 

@@ -78,10 +78,11 @@ mod tests {
             &self,
             _entries: Vec<DiaryEntry>,
             _tags: &HashMap<i64, Vec<String>>,
+            _attachments: &crate::export::AttachmentsMap,
         ) -> Result<crate::plugin::ExportOutput, String> {
             Ok(crate::plugin::ExportOutput {
                 content: String::new(),
-                assets: vec![],
+                ..Default::default()
             })
         }
     }

@@ -102,7 +102,7 @@ pub fn run_export_plugin(
         plugin_id, file_path
     );
 
-    let (entries, tags) = {
+    let (entries, tags, attachments) = {
         let db_state = state
             .db
             .lock()
@@ -115,7 +115,8 @@ pub fn run_export_plugin(
         let entries = super::export::fetch_entries(db, date_from.as_deref(), date_to.as_deref())?;
         let entries = crate::db::resolve_image_refs_in_entries(db, entries)?;
         let tags = crate::db::get_tags_names_map(db)?;
-        (entries, tags)
+        let attachments = crate::db::get_attachments_map(db)?;
+        (entries, tags, attachments)
     };
     let entries_exported = entries.len();
     debug!(
@@ -132,7 +133,7 @@ pub fn run_export_plugin(
             .find_exporter(&plugin_id)
             .ok_or_else(|| format!("Export plugin '{}' not found", plugin_id))?;
 
-        plugin.export(entries, &tags).map_err(|e| {
+        plugin.export(entries, &tags, &attachments).map_err(|e| {
             error!("Plugin export error: {}", e);
             e
         })?
@@ -144,23 +145,17 @@ pub fn run_export_plugin(
         err
     })?;
 
-    if !output.assets.is_empty() {
-        let assets_dir = std::path::Path::new(&file_path)
-            .parent()
-            .unwrap_or(std::path::Path::new("."))
-            .join("assets");
-        std::fs::create_dir_all(&assets_dir)
-            .map_err(|e| format!("Failed to create assets directory: {}", e))?;
-        for (filename, bytes) in &output.assets {
-            std::fs::write(assets_dir.join(filename), bytes)
-                .map_err(|e| format!("Failed to write asset '{}': {}", filename, e))?;
-        }
-        debug!(
-            "Wrote {} asset file(s) to {}",
-            output.assets.len(),
-            assets_dir.display()
-        );
-    }
+    // The DB lock was released for formatting; re-take it per attachment to decrypt it.
+    super::export::write_export_assets(
+        &file_path,
+        &output.assets,
+        &output.attachment_assets,
+        |asset| {
+            crate::commands::auth::with_unlocked_db(&state, |db| {
+                super::export::read_attachment_asset(db, asset)
+            })
+        },
+    )?;
 
     info!(
         "Plugin export complete: {} entries exported to {}",
@@ -226,7 +221,11 @@ mod tests {
             locked: false,
         }];
         let output = plugin
-            .export(entries, &std::collections::HashMap::new())
+            .export(
+                entries,
+                &std::collections::HashMap::new(),
+                &std::collections::HashMap::new(),
+            )
             .unwrap();
         assert!(output.content.contains("Test"));
         assert!(output.content.contains("2024-01-01"));
