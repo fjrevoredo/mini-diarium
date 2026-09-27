@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1790531145212,
+  "lastUpdate": 1790533903055,
   "repoUrl": "https://github.com/fjrevoredo/mini-diarium",
   "entries": {
     "Benchmark": [
@@ -37618,6 +37618,54 @@ window.BENCHMARK_DATA = {
           {
             "name": "ci_pipeline_duration",
             "value": 561000000000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "committer": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "distinct": true,
+          "id": "24e66c7c58b83c0be71927df29db6b3dd3b92c4e",
+          "message": "Schema v14",
+          "timestamp": "2026-09-27T20:20:51+02:00",
+          "tree_id": "6e85ea96c333ec93839b5c34397efe3e8cd305aa",
+          "url": "https://github.com/fjrevoredo/mini-diarium/commit/24e66c7c58b83c0be71927df29db6b3dd3b92c4e"
+        },
+        "date": 1790533901604,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "backup_snapshot/create_snapshot/small_172032B",
+            "value": 3556968,
+            "range": "± 68735",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "backup_snapshot/create_snapshot/large_8372224B",
+            "value": 29079901,
+            "range": "± 876989",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "backup_snapshot/create_snapshot/image_heavy_40259584B",
+            "value": 130471452,
+            "range": "± 608685",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "ci_pipeline_duration",
+            "value": 597000000000,
             "range": "± 0",
             "unit": "ns/iter"
           }
