@@ -116,6 +116,10 @@ Attachment contents and file names are encrypted with your master key inside `di
 
 Large attachments make the journal file and its backups larger. Deleting an entry deletes its attachments when no other entry uses them.
 
+### Older app versions
+
+Versions before 0.7.4 do not know attachments. If they open a journal that has attachments, they cannot delete an entry that has files. If they edit and save such an entry, they remove its inline 📎 references; the files in the strip are kept. Update Mini Diarium on every computer that shares the journal.
+
 ## Links
 
 You can insert hyperlinks with custom display text. The visible label and the underlying URL are independent (the `[label](url)` model used by Markdown and most modern editors).

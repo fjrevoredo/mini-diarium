@@ -242,14 +242,16 @@ fn create_schema(conn: &Connection) -> Result<(), String> {
             created_at  TEXT    NOT NULL
         );
 
-        -- Entry-attachment links; the (encrypted) file name is per entry
+        -- Entry-attachment links; the (encrypted) file name is per entry.
+        -- entry_id must not cascade: an older app that does not know attachments must not
+        -- delete an entry that has files. Its delete fails instead.
         CREATE TABLE IF NOT EXISTS entry_attachments (
             entry_id       INTEGER NOT NULL,
             attachment_id  INTEGER NOT NULL,
             name_encrypted BLOB    NOT NULL,
             created_at     TEXT    NOT NULL,
             PRIMARY KEY (entry_id, attachment_id),
-            FOREIGN KEY (entry_id)      REFERENCES entries(id)     ON DELETE CASCADE,
+            FOREIGN KEY (entry_id)      REFERENCES entries(id)     ON DELETE RESTRICT,
             FOREIGN KEY (attachment_id) REFERENCES attachments(id) ON DELETE RESTRICT
         );
         CREATE INDEX IF NOT EXISTS idx_entry_attachments_attachment_id

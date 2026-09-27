@@ -605,6 +605,7 @@
         <h3 id="inline-references">Inline references</h3><p>Click the insert-reference icon on a chip to place a small 📎 reference at the cursor in the entry text. The reference only points to the attachment; the chip in the strip remains the source of truth. Click a reference to save a copy of its file. If you remove the attachment, its references stay in the text and show as a missing attachment.</p>
         <h3 id="how-attachments-are-stored">How attachments are stored</h3><p>Attachment contents and file names are encrypted with your master key inside <code>diary.db</code>, like entry text and images. Each unique file is stored once, even if you attach it to several entries. The file type (for example <code>application/pdf</code>) and the size are stored unencrypted, the same as for images. Saving a copy decrypts the file straight to the path you choose; no temporary unencrypted copy is written anywhere else.</p>
         <p>Large attachments make the journal file and its backups larger. Deleting an entry deletes its attachments when no other entry uses them.</p>
+        <h3 id="older-app-versions">Older app versions</h3><p>Versions before 0.7.4 do not know attachments. If they open a journal that has attachments, they cannot delete an entry that has files. If they edit and save such an entry, they remove its inline 📎 references; the files in the strip are kept. Update Mini Diarium on every computer that shares the journal.</p>
         <h2 id="links">Links</h2><p>You can insert hyperlinks with custom display text. The visible label and the underlying URL are independent (the <code>[label](url)</code> model used by Markdown and most modern editors).</p>
         <p><strong>Inserting a link</strong>: click the <strong>Link button</strong> in the toolbar (chain-link icon) or press <code>Ctrl+K</code> (<code>Cmd+K</code> on macOS). The dialog has two fields:</p>
         <ul>
@@ -694,6 +695,7 @@
           <li class="docs-toc-h2"><a href="#attaching-files">Attaching Files</a></li>
           <li class="docs-toc-h3"><a href="#inline-references">Inline references</a></li>
           <li class="docs-toc-h3"><a href="#how-attachments-are-stored">How attachments are stored</a></li>
+          <li class="docs-toc-h3"><a href="#older-app-versions">Older app versions</a></li>
           <li class="docs-toc-h2"><a href="#links">Links</a></li>
           <li class="docs-toc-h2"><a href="#right-to-left-and-bidirectional-text">Right-to-Left and Bidirectional Text</a></li>
           <li class="docs-toc-h2"><a href="#inserting-the-current-time">Inserting the Current Time</a></li>

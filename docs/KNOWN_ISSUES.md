@@ -120,6 +120,21 @@ A snapshot is an ordinary encrypted Mini Diarium database, so **+ Open Existing*
 
 ---
 
+### KI-12 — Older app versions and journals with attachments
+**Status:** Mitigated in v0.7.4
+
+Versions before 0.7.4 open a journal that has attachments (schema v14), because they have no newer-schema guard. They do not know attachments, so they cannot show or maintain them.
+
+- An older version treats an entry with only attachments as empty and tries to delete it. The delete fails, so the entry and its files stay.
+- A delete that you start in an older version also fails for an entry that has attachments.
+- When an older version edits and saves an entry, it removes the entry's inline 📎 references. The files in the attachment strip are kept.
+
+**Mitigation (v0.7.4, TODO-0123):** the link from an entry to its attachments is `ON DELETE RESTRICT`, so an older version cannot delete an entry that has files. Version 0.7.4 and later refuse a journal from a newer app version (TODO-0122).
+
+**Workaround:** update Mini Diarium to 0.7.4 or later on every computer that shares the journal.
+
+---
+
 ## For Developers
 
 ### AT-1 — Single database connection; no concurrent read access
@@ -282,4 +297,4 @@ The app data directory resolution (`resolve_app_data_dir`) and legacy config det
 
 ---
 
-*Last updated: 2026-07-23. For the security threat model, see [SECURITY.md](../SECURITY.md). For open features and enhancements, see [OPEN_TASKS.md](OPEN_TASKS.md). For the full backend architectural assessment conducted at v0.4.9, see [BACKEND_ASSESSMENT_2026-03.md](BACKEND_ASSESSMENT_2026-03.md).*
+*Last updated: 2026-09-27. For the security threat model, see [SECURITY.md](../SECURITY.md). For open features and enhancements, see [OPEN_TASKS.md](OPEN_TASKS.md). For the full backend architectural assessment conducted at v0.4.9, see [BACKEND_ASSESSMENT_2026-03.md](BACKEND_ASSESSMENT_2026-03.md).*

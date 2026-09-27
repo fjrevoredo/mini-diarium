@@ -40,7 +40,7 @@ Rules for every `SCHEMA_VERSION` bump (the authoritative checklist is the module
 4. **Update the tripwire** (`MARKER_DECIDED_FOR_SCHEMA_VERSION`, `EXPECTED_MARKER` in the `compat.rs` tests). It fails on every bump until the decision is recorded, and a second test checks that fresh and migrated journals carry the same marker.
 5. Values below 14 mean nothing: versions before 0.7.4 have no guard.
 
-The v14 attachments migration would **not** have qualified: an older app deletes an attachment-only entry as empty and the links cascade away (TODO-0123).
+The v14 attachments migration does **not** qualify: an older app drops inline attachment references when it saves an entry, and it cannot maintain attachment links. The `ON DELETE RESTRICT` on `entry_attachments.entry_id` (TODO-0123) only stops an older app from deleting an attachment-only entry as empty, so files are not lost silently; it does not make v14 safe for older writers.
 
 ## Snapshots
 

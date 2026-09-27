@@ -4,12 +4,13 @@ use rusqlite::params;
 /// Deletes an entry from the database by id, removing any now-orphaned images and
 /// attachments.
 ///
-/// The `ON DELETE CASCADE` on `entry_images.entry_id` / `entry_attachments.entry_id` removes
-/// association rows when the entry is deleted (requires `PRAGMA foreign_keys = ON`, set by
-/// `configure_connection`).
+/// `entry_images` rows go with the entry through `ON DELETE CASCADE` (requires
+/// `PRAGMA foreign_keys = ON`, set by `configure_connection`). `entry_attachments.entry_id` is
+/// `ON DELETE RESTRICT`, so older apps cannot delete an entry that has files; this function
+/// removes the attachment links explicitly first.
 /// `cleanup_orphaned_images` / `cleanup_orphaned_attachments` then remove any blobs with no
 /// remaining associations.
-/// Both steps are wrapped in a `BEGIN IMMEDIATE / COMMIT` transaction.
+/// All steps are wrapped in a `BEGIN IMMEDIATE / COMMIT` transaction.
 ///
 /// # Returns
 /// `Ok(true)` if deleted, `Ok(false)` if entry didn't exist
@@ -19,12 +20,20 @@ pub fn delete_entry_by_id(db: &DatabaseConnection, id: i64) -> Result<bool, Stri
             .execute("BEGIN IMMEDIATE", [])
             .map_err(|e| format!("BEGIN failed: {}", e))?;
 
+        // The entry_id FK is RESTRICT, so the links must go before the entry.
+        db.conn()
+            .execute(
+                "DELETE FROM entry_attachments WHERE entry_id = ?1",
+                params![id],
+            )
+            .map_err(|e| format!("Failed to delete attachment links: {}", e))?;
+
         let rows_affected = db
             .conn()
             .execute("DELETE FROM entries WHERE id = ?1", params![id])
             .map_err(|e| format!("Failed to delete entry: {}", e))?;
 
-        // ON DELETE CASCADE removes entry_images rows; cleanup removes orphaned images.
+        // ON DELETE CASCADE removes entry_images rows; cleanup removes orphaned blobs.
         crate::db::queries::images::cleanup_orphaned_images(db)?;
         crate::db::queries::attachments::cleanup_orphaned_attachments(db)?;
 
@@ -47,6 +56,9 @@ pub fn delete_entry_by_id(db: &DatabaseConnection, id: i64) -> Result<bool, Stri
 mod tests {
     use super::super::test_support::*;
     use super::super::*;
+    use crate::db::queries::attachments::{
+        add_attachment_to_entry, list_entry_attachments, read_attachment_bytes,
+    };
     use crate::db::schema::create_database;
 
     #[test]
@@ -72,6 +84,43 @@ mod tests {
 
         let deleted = delete_entry_by_id(&db, 99999).unwrap();
         assert!(!deleted);
+    }
+
+    #[test]
+    fn test_raw_entry_delete_is_blocked_by_attachment_link() {
+        // An older app deletes with a plain `DELETE FROM entries`; it must fail, not cascade.
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+
+        let entry = create_test_entry("2024-09-05");
+        insert_entry(&db, &entry).unwrap();
+        let id = db.conn().last_insert_rowid();
+        let attachment = add_attachment_to_entry(&db, id, "keep.txt", b"keep").unwrap();
+
+        let err = db
+            .conn()
+            .execute("DELETE FROM entries WHERE id = ?1", [id])
+            .unwrap_err();
+        assert!(
+            err.to_string().contains("FOREIGN KEY constraint failed"),
+            "got: {}",
+            err
+        );
+
+        assert!(get_entry_by_id(&db, id).unwrap().is_some());
+        let names: Vec<String> = list_entry_attachments(&db, id)
+            .unwrap()
+            .into_iter()
+            .map(|a| a.name)
+            .collect();
+        assert_eq!(names, vec!["keep.txt"]);
+        assert_eq!(
+            read_attachment_bytes(&db, id, attachment.id)
+                .unwrap()
+                .as_deref()
+                .map(|b| b.as_slice()),
+            Some(&b"keep"[..])
+        );
     }
 
     #[test]

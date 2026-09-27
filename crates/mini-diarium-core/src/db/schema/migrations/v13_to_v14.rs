@@ -7,6 +7,11 @@ use log::info;
 /// row per unique file (same HKDF fingerprint scheme as `images`). `entry_attachments`
 /// links entries to attachments and carries the per-entry encrypted file name, so the same
 /// bytes attached to two entries are stored once but can have different names.
+///
+/// `entry_attachments.entry_id` is `ON DELETE RESTRICT`, not `CASCADE`. Older apps do not know
+/// attachments, so they can treat an attachment-only entry as empty and delete it. With
+/// RESTRICT that delete fails and the entry keeps its files; `delete_entry_by_id` removes the
+/// links explicitly.
 pub(super) fn migrate_v13_to_v14(db: &DatabaseConnection) -> Result<(), String> {
     let version = super::read_schema_version(db)?;
 
@@ -27,7 +32,8 @@ pub(super) fn migrate_v13_to_v14(db: &DatabaseConnection) -> Result<(), String> 
                      name_encrypted BLOB    NOT NULL,
                      created_at     TEXT    NOT NULL,
                      PRIMARY KEY (entry_id, attachment_id),
-                     FOREIGN KEY (entry_id)      REFERENCES entries(id)     ON DELETE CASCADE,
+                     -- No cascade: an older app must not delete an entry that has files.
+                     FOREIGN KEY (entry_id)      REFERENCES entries(id)     ON DELETE RESTRICT,
                      FOREIGN KEY (attachment_id) REFERENCES attachments(id) ON DELETE RESTRICT
                  );
                  CREATE INDEX IF NOT EXISTS idx_entry_attachments_attachment_id
@@ -94,6 +100,16 @@ mod tests {
         assert_eq!(version(&db), 14);
         assert!(table_exists(&db, "attachments"));
         assert!(table_exists(&db, "entry_attachments"));
+        let on_delete: String = db
+            .conn()
+            .query_row(
+                "SELECT on_delete FROM pragma_foreign_key_list('entry_attachments') \
+                 WHERE \"from\" = 'entry_id'",
+                [],
+                |row| row.get(0),
+            )
+            .unwrap();
+        assert_eq!(on_delete, "RESTRICT");
     }
 
     #[test]

@@ -503,7 +503,7 @@ mod tests {
     }
 
     #[test]
-    fn test_entry_delete_cascades_links_and_cleans_orphans() {
+    fn test_entry_delete_removes_links_and_cleans_orphans() {
         let (_tmp, db) = make_db();
         let entry_id = insert_blank_entry(&db);
         add_attachment_to_entry(&db, entry_id, "x.txt", b"x").unwrap();
@@ -514,6 +514,39 @@ mod tests {
         assert_eq!(count(&db, "entry_attachments"), 0);
         assert_eq!(count(&db, "attachments"), 0);
         assert!(!entry_has_attachments(&db, entry_id).unwrap());
+    }
+
+    #[test]
+    fn test_entry_delete_keeps_attachment_shared_with_other_entry() {
+        let (_tmp, db) = make_db();
+        let entry_a = insert_blank_entry(&db);
+        let entry_b = insert_blank_entry(&db);
+        let shared = add_attachment_to_entry(&db, entry_a, "a.txt", b"shared").unwrap();
+        add_attachment_to_entry(&db, entry_b, "b.txt", b"shared").unwrap();
+
+        assert!(crate::db::queries::delete_entry_by_id(&db, entry_a).unwrap());
+
+        assert_eq!(count(&db, "attachments"), 1, "blob still linked by entry B");
+        assert_eq!(count(&db, "entry_attachments"), 1);
+        let remaining = list_entry_attachments(&db, entry_b).unwrap();
+        assert_eq!(remaining.len(), 1);
+        assert_eq!(remaining[0].id, shared.id);
+        assert_eq!(remaining[0].name, "b.txt");
+    }
+
+    #[test]
+    fn test_fresh_schema_entry_attachments_entry_fk_is_restrict() {
+        let (_tmp, db) = make_db();
+        let on_delete: String = db
+            .conn()
+            .query_row(
+                "SELECT on_delete FROM pragma_foreign_key_list('entry_attachments') \
+                 WHERE \"from\" = 'entry_id'",
+                [],
+                |row| row.get(0),
+            )
+            .unwrap();
+        assert_eq!(on_delete, "RESTRICT");
     }
 
     #[test]
