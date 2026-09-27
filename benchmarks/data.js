@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1790005790943,
+  "lastUpdate": 1790529583912,
   "repoUrl": "https://github.com/fjrevoredo/mini-diarium",
   "entries": {
     "Benchmark": [
@@ -37522,6 +37522,54 @@ window.BENCHMARK_DATA = {
           {
             "name": "ci_pipeline_duration",
             "value": 629000000000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "committer": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "distinct": true,
+          "id": "7f7f2ef176489e3d5d747ee7c172839bab69803c",
+          "message": "Refuse journals and backups from a newer app version",
+          "timestamp": "2026-09-27T19:09:56+02:00",
+          "tree_id": "34b7fea1f9b8d4c6b442a9cf05bd2d1771e6bc7c",
+          "url": "https://github.com/fjrevoredo/mini-diarium/commit/7f7f2ef176489e3d5d747ee7c172839bab69803c"
+        },
+        "date": 1790529582441,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "backup_snapshot/create_snapshot/small_172032B",
+            "value": 3563749,
+            "range": "± 812830",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "backup_snapshot/create_snapshot/large_8372224B",
+            "value": 28321165,
+            "range": "± 386554",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "backup_snapshot/create_snapshot/image_heavy_40259584B",
+            "value": 126530198,
+            "range": "± 749596",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "ci_pipeline_duration",
+            "value": 569000000000,
             "range": "± 0",
             "unit": "ns/iter"
           }
