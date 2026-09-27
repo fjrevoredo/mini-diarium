@@ -56,6 +56,7 @@ Template:
     - The export error for a failed attachment write no longer contains the file name.
 
 ### Internal
+- **Backend CI reports every test failure**: the nextest step runs with `--no-fail-fast`. The attachment save-a-copy protection test now builds its case-variant destination portably, so it also passes on case-sensitive Linux file systems.
 - **Dependency updates (Dependabot #299, #302, #303, #304, #305)**: Frontend bumps for `marked` (18.0.13), `@types/node` (26.6.2), `eslint-plugin-solid` (0.18.0), `typescript-eslint` (8.70.0), and `vite` (8.3.0); both lockfiles regenerated and aligned. Backend patch bump for `rhai` (1.26.1) in `Cargo.lock`, with the workspace test suite and the release-feature build passing. CI action bumps for `codecov/codecov-action` (7.1.0) and `signpath/github-action-submit-signing-request` (3.0). The `nix/package.nix` `npmDepsHash` needs a Linux-side refresh; the Nix CI workflow patches it automatically on push.
 
 ## [0.7.3] - 15-09-2026

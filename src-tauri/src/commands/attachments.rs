@@ -460,10 +460,10 @@ mod tests {
 
         let protected = [
             (db_att.id, live_db.clone()),
-            (
-                db_att.id,
-                PathBuf::from(live_db.to_string_lossy().to_uppercase()),
-            ),
+            // Only the file name varies in case: upper-casing the whole path would name a
+            // temp directory that exists on case-insensitive Windows/macOS but not on Linux,
+            // so the guard would never see the journal's parent there.
+            (db_att.id, dir.join("DIARY.DB")),
             (wal_att.id, dir.join("diary.db-wal")),
             (sq_att.id, other_journal.clone()),
             (db_att.id, backups.join("new.db")),
