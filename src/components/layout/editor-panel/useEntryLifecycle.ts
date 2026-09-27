@@ -443,7 +443,10 @@ export function useEntryLifecycle(opts: UseEntryLifecycleOptions): EntryLifecycl
       if (snap === null) return true;
 
       // Same save-vs-delete decision saveCurrentById uses — an ordinary save needs no consent.
-      const shouldDelete = isBlankEntry(snap.entryId, snap.title, snap.isEmpty);
+      // Awaited: when the attachment list is not loaded for this entry, the backend decides.
+      // Without that, a cleared entry whose files were not listed yet would reach the
+      // hard-delete consent below, and "Delete entry" would silently take its files too.
+      const shouldDelete = await isBlankEntry(snap.entryId, snap.title, snap.isEmpty);
       if (!shouldDelete) return true;
 
       let hasContent: boolean;

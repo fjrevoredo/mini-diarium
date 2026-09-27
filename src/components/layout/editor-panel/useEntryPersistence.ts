@@ -6,16 +6,25 @@ import { debounce } from '../../../lib/debounce';
 import { setEntryDates, setIsSaving } from '../../../state/entries';
 import { createLogger } from '../../../lib/logger';
 import { computeIsEmpty } from './useEditorEmptyCheck';
-import { entryHasLoadedAttachments } from '../../../state/entryAttachments';
+import { entryHasAttachments } from '../../../state/entryAttachments';
 
 const log = createLogger('Editor');
 
 /**
  * The save-vs-delete decision: blank title, blank body, and no attachments. An entry with
  * attachments is kept and saved even when its text is cleared (TODO-0114).
+ *
+ * `title`/`isEmpty` come from the caller's snapshot. Attachments are not part of the editor
+ * snapshot, so they are resolved here per entry id: from the loaded list when it belongs to
+ * this entry, otherwise from the backend — never from whatever list happens to be loaded.
  */
-export function isBlankEntry(entryId: number, title: string, isEmpty: boolean): boolean {
-  return title.trim() === '' && isEmpty && !entryHasLoadedAttachments(entryId);
+export async function isBlankEntry(
+  entryId: number,
+  title: string,
+  isEmpty: boolean,
+): Promise<boolean> {
+  if (title.trim() !== '' || !isEmpty) return false;
+  return !(await entryHasAttachments(entryId));
 }
 
 /**
@@ -170,7 +179,7 @@ export function useEntryPersistence(opts: UseEntryPersistenceOptions): EntryPers
    */
   const writeSnapshot = async (snap: SaveSnapshot, path: string): Promise<void> => {
     try {
-      if (isBlankEntry(snap.entryId, snap.title, snap.isEmpty)) {
+      if (await isBlankEntry(snap.entryId, snap.title, snap.isEmpty)) {
         logWrite(path, 'deleteEntryIfEmpty', snap.entryId, snap.title, snap.content, true);
         await deleteEntryIfEmpty(snap.entryId, snap.title, snap.content);
       } else {
@@ -205,8 +214,10 @@ export function useEntryPersistence(opts: UseEntryPersistenceOptions): EntryPers
     const isStale = () => isDisposed || requestId !== saveRequestId;
 
     // save-vs-delete comes from the caller's snapshot, never from a live re-read: the
-    // debounce fires up to 500 ms after the payload was captured.
-    const shouldDelete = isBlankEntry(entryId, currentTitle, isEmpty);
+    // debounce fires up to 500 ms after the payload was captured. (Attachments are resolved
+    // per entry id — see isBlankEntry — and may ask the backend, hence the await.)
+    const shouldDelete = await isBlankEntry(entryId, currentTitle, isEmpty);
+    if (isStale()) return;
     if (shouldDelete) {
       try {
         logWrite(path, 'deleteEntryIfEmpty', entryId, currentTitle, currentContent, true);

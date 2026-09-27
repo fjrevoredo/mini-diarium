@@ -78,11 +78,30 @@ export function requestSaveAttachmentCopy(attachmentId: number): void {
 export { entryAttachments, attachmentsEntryId, attachmentsLoaded, attachmentsVersion };
 
 /**
- * Untracked: whether the loaded list says `entryId` has attachments. The editor's
- * save-vs-delete decision uses it, because an entry with attachments is never blank —
- * the backend refuses to auto-delete it (TODO-0114), so a "blank" verdict would only
- * drop the user's cleared text or offer a hard delete of the attachments.
+ * Untracked: what the loaded list says about `entryId`'s attachments. `'unknown'` when the
+ * list belongs to another entry or is still loading — callers that must not guess (the
+ * save-vs-delete decision) then ask the backend, see `entryHasAttachments`.
  */
-export function entryHasLoadedAttachments(entryId: number): boolean {
-  return untrack(() => attachmentsEntryId() === entryId && entryAttachments().length > 0);
+export function attachmentPresence(entryId: number): 'has' | 'none' | 'unknown' {
+  return untrack(() => {
+    if (attachmentsEntryId() !== entryId) return 'unknown';
+    if (entryAttachments().length > 0) return 'has';
+    return attachmentsLoaded() ? 'none' : 'unknown';
+  });
+}
+
+/**
+ * Whether `entryId` has attachments, from the loaded list when it is known for that entry,
+ * otherwise from the backend. An entry with attachments is never blank (TODO-0114), and a
+ * wrong "no" would send it down a delete path, so every doubt answers "yes": a failed
+ * backend check keeps the entry.
+ */
+export async function entryHasAttachments(entryId: number): Promise<boolean> {
+  const known = attachmentPresence(entryId);
+  if (known !== 'unknown') return known === 'has';
+  try {
+    return (await listEntryAttachments(entryId)).length > 0;
+  } catch {
+    return true;
+  }
 }

@@ -18,6 +18,7 @@ mod refs;
 mod storage;
 
 pub use mime::*;
+pub use refs::strip_attachment_refs;
 pub(crate) use refs::{attachment_ref_span, rewrite_attachment_refs};
 pub use storage::*;
 

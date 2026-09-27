@@ -770,6 +770,8 @@
     "attachmentNotAFile": "Seuls les fichiers peuvent être joints, pas les dossiers.",
     "attachmentNotFound": "Cette pièce jointe n'existe plus.",
     "attachmentExtensionMismatch": "Enregistrez la copie avec la même extension de fichier que la pièce jointe.",
+    "attachmentProtectedDestination": "Cet emplacement appartient au journal et ne peut pas être écrasé. Choisissez un autre emplacement.",
+    "exportJournalChanged": "Le journal a changé pendant l'export. Relancez l'export.",
     "cannotRemoveLastAuth": "Impossible de supprimer la dernière méthode d'authentification.",
     "cannotReadKeyFile": "Impossible de lire le fichier clé. Vérifiez que le fichier existe et que vous avez l'autorisation de le lire.",
     "cannotSaveKeyFile": "Impossible d'enregistrer le fichier clé. Vérifiez les permissions du dossier.",

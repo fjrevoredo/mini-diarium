@@ -923,6 +923,9 @@ const en = {
     attachmentNotAFile: 'Only files can be attached, not folders.',
     attachmentNotFound: 'This attachment no longer exists.',
     attachmentExtensionMismatch: 'Save the copy with the same file extension as the attachment.',
+    attachmentProtectedDestination:
+      'This location belongs to the journal and cannot be overwritten. Choose another location.',
+    exportJournalChanged: 'The journal changed during the export. Start the export again.',
     cannotRemoveLastAuth: 'Cannot remove the last authentication method.',
     cannotReadKeyFile:
       'Could not read key file. Check that the file exists and you have permission to read it.',

@@ -102,6 +102,13 @@ pub fn run_export_plugin(
         plugin_id, file_path
     );
 
+    // The journal this export reads, pinned for the asset step below (see there).
+    let export_db_path = state
+        .db_path
+        .lock()
+        .map_err(|_| "State lock poisoned".to_string())?
+        .clone();
+
     let (entries, tags, attachments) = {
         let db_state = state
             .db
@@ -145,12 +152,23 @@ pub fn run_export_plugin(
         err
     })?;
 
-    // The DB lock was released for formatting; re-take it per attachment to decrypt it.
+    // The DB lock was released for formatting; re-take it per attachment to decrypt it. The
+    // asset plan holds entry/attachment ids of the journal read above. Ids repeat across
+    // journals, so if the user switched journals meanwhile, reading them now would put the
+    // other journal's files into this export: refuse instead.
     super::export::write_export_assets(
         &file_path,
         &output.assets,
         &output.attachment_assets,
         |asset| {
+            let same_journal = *state
+                .db_path
+                .lock()
+                .map_err(|_| "State lock poisoned".to_string())?
+                == export_db_path;
+            if !same_journal {
+                return Err("The journal changed during the export".to_string());
+            }
             crate::commands::auth::with_unlocked_db(&state, |db| {
                 super::export::read_attachment_asset(db, asset)
             })

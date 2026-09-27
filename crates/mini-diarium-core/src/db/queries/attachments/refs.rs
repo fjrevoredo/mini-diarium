@@ -55,6 +55,15 @@ where
     out
 }
 
+/// Removes every attachment-ref span from `html`.
+///
+/// For text that arrives from outside this journal (import): its ref ids name attachments of
+/// another journal. Kept, one could later match an unrelated file attached to the same entry
+/// under the same id, and the reference would silently point at the wrong file.
+pub fn strip_attachment_refs(html: &str) -> String {
+    rewrite_attachment_refs(html, |_| String::new())
+}
+
 /// Serializes one ref span exactly as the editor does.
 pub(crate) fn attachment_ref_span(id: i64) -> String {
     format!("<span data-attachment-ref=\"{}\"></span>", id)
@@ -89,6 +98,18 @@ mod tests {
         let html = format!("<p>{}</p>", attachment_ref_span(1));
         let out = rewrite_attachment_refs(&html, |id| attachment_ref_span(id + 10));
         assert_eq!(out, format!("<p>{}</p>", attachment_ref_span(11)));
+    }
+
+    #[test]
+    fn test_strip_removes_only_ref_spans() {
+        let html = format!(
+            "<p>a {} b <span class=\"x\">c</span></p>",
+            attachment_ref_span(4)
+        );
+        assert_eq!(
+            strip_attachment_refs(&html),
+            "<p>a  b <span class=\"x\">c</span></p>"
+        );
     }
 
     #[test]

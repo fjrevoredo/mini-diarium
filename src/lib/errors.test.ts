@@ -91,6 +91,15 @@ describe('mapTauriError', () => {
       );
     });
 
+    it('maps the journal-protection and export-journal-changed errors', () => {
+      expect(mapTauriError('This location is used by the journal and cannot be overwritten')).toBe(
+        en('errors.attachmentProtectedDestination'),
+      );
+      expect(mapTauriError('The journal changed during the export')).toBe(
+        en('errors.exportJournalChanged'),
+      );
+    });
+
     it('does not leak the path from an attachment write failure', () => {
       expect(mapTauriError('Failed to write attachment copy: Access is denied. (os error 5)')).toBe(
         en('errors.fileOperationFailed'),

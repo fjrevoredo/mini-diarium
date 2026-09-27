@@ -26,6 +26,8 @@ vi.mock('../../../lib/tauri', async () => {
     saveEntry: mocks.saveEntry,
     deleteEntryIfEmpty: mocks.deleteEntryIfEmpty,
     getAllEntryDates: mocks.getAllEntryDates,
+    // No attachments: the blank-entry check asks the backend when no list is loaded.
+    listEntryAttachments: vi.fn(() => Promise.resolve([])),
   };
 });
 

@@ -53,6 +53,12 @@ export function mapTauriError(err: unknown, t: T = defaultT): string {
   if (/^attachment path is not a file$/i.test(raw)) {
     return t('errors.attachmentNotAFile');
   }
+  if (/^this location is used by the journal/i.test(raw)) {
+    return t('errors.attachmentProtectedDestination');
+  }
+  if (/^the journal changed during the export$/i.test(raw)) {
+    return t('errors.exportJournalChanged');
+  }
   if (/^attachment not found$/i.test(raw)) {
     return t('errors.attachmentNotFound');
   }

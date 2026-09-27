@@ -41,7 +41,11 @@ pub(crate) fn import_entries(
     let mut entries_imported = 0;
     let mut entries_skipped = 0;
 
-    for entry in entries {
+    for mut entry in entries {
+        // A re-imported Mini Diarium JSON export carries inline attachment refs whose ids
+        // belong to the exporting journal; the files themselves are not in the JSON. Drop
+        // the refs so they can never resolve to an unrelated attachment here.
+        entry.text = db::strip_attachment_refs(&entry.text);
         // Skip entries with no meaningful content
         if entry.title.trim().is_empty() && entry.text.trim().is_empty() {
             entries_skipped += 1;
@@ -92,6 +96,22 @@ mod tests {
 
         assert_eq!(result.entries_imported, 2);
         assert_eq!(result.entries_skipped, 0);
+    }
+
+    #[test]
+    fn test_import_drops_foreign_attachment_refs() {
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+
+        let entries = vec![create_test_entry(
+            "2024-01-01",
+            "Exported",
+            r#"<p>See <span data-attachment-ref="3"></span> here</p>"#,
+        )];
+        import_entries(&db, entries).unwrap();
+
+        let imported = db::get_entries_by_date(&db, "2024-01-01").unwrap();
+        assert_eq!(imported[0].text, "<p>See  here</p>");
     }
 
     #[test]

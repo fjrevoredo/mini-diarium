@@ -172,7 +172,11 @@ pub fn restore_entries_from_snapshot(
         };
 
         for copied in &attachments {
-            link_attachment(live_db, new_id, copied.live_id, &copied.name)?;
+            if let Err(e) = link_attachment(live_db, new_id, copied.live_id, &copied.name) {
+                // Blobs of this entry not linked yet would otherwise stay behind unowned.
+                let _ = cleanup_orphaned_attachments(live_db);
+                return Err(e);
+            }
         }
 
         if restore_tags {

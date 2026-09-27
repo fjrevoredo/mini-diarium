@@ -190,7 +190,7 @@ If you drag an image from a web browser, the editor will show a banner explainin
 You can attach documents, PDFs, short videos, and any other file to an entry. Attachments appear as chips under the editor, next to the tags. The strip is shown once the entry exists, so type something first on a new day.
 
 - Click **Attach file** and select one or more files. Each file can be up to **20 MB**. Empty files and folders are refused. If one file fails, the others are still attached and the strip tells you which file failed and why.
-- Click an attachment's name (or its download icon) to **save a copy** to a location you choose. The copy must keep the same file extension as the attachment.
+- Click an attachment's name (or its download icon) to **save a copy** to a location you choose. The copy must keep the same file extension as the attachment. You cannot save the copy over the journal's own files (the journal database or anything in its backups folder).
 - Click the remove (×) icon to detach a file. You are asked to confirm first.
 
 Mini Diarium never opens attachments itself. To view a file, save a copy and open it with another app.
@@ -488,7 +488,7 @@ The JSON format is the primary structural export. It outputs a `metadata` block 
 
 Every entry includes a `"tags"` array (empty `[]` if the entry has no tags; tags are listed in alphabetical order) and an `"attachments"` array of `{ "name", "mime_type", "byte_size" }` objects (empty `[]` when there are none). The JSON file lists attachments by name only; it does not contain the file contents. Entries with font metadata include a `"metadata"` object containing `fontFamily` and `fontSize`; entries without entry-level font defaults have no `metadata` field.
 
-This format preserves entry IDs, timestamps, tags, and font metadata. It can be re-imported into Mini Diarium. The JSON importer automatically handles both the old Mini Diary date-keyed format and the new array format with optional metadata for backward compatibility. If the JSON contains embedded `data:image/...` content, Mini Diarium normalizes those images into its encrypted image store during import while preserving the visible content of the entry.
+This format preserves entry IDs, timestamps, tags, and font metadata. It can be re-imported into Mini Diarium. The JSON importer automatically handles both the old Mini Diary date-keyed format and the new array format with optional metadata for backward compatibility. If the JSON contains embedded `data:image/...` content, Mini Diarium normalizes those images into its encrypted image store during import while preserving the visible content of the entry. Inline attachment references are removed on import, because the attachment files are not part of the JSON file.
 
 ### Markdown Export
 

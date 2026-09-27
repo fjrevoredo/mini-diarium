@@ -180,8 +180,8 @@ Content-addressed encrypted file store (`attachments`) plus a per-entry link tab
 links — the entry save path never does.
 - `add_attachment_to_entry(db, entry_id, name, bytes) -> Result<AttachmentSummary, String>` —
   one transaction over the two primitives below. Rejects empty and over-`MAX_STORED_BLOB_BYTES`
-  content and invalid names (blank, > 255 chars, `/`, `\`, NUL). The same bytes added twice to
-  one entry return the existing link; the first name is kept.
+  content and invalid names (blank, > 255 chars, `/`, `\`, or any control character). The same
+  bytes added twice to one entry return the existing link; the first name is kept.
 - `upsert_attachment_blob(db, bytes, mime) -> Result<i64, String>`,
   `link_attachment(db, entry_id, attachment_id, name) -> Result<AttachmentSummary, String>` —
   split primitives (per-entry restore composes them).
@@ -192,6 +192,9 @@ links — the entry save path never does.
 - `read_attachment_bytes(db, entry_id, attachment_id) -> Result<Option<Zeroizing<Vec<u8>>>, String>`
   — scoped to the entry's own links.
 - `cleanup_orphaned_attachments(db)` (also run by `delete_entry_by_id`), `mime_for_extension(name)`
+- `strip_attachment_refs(html) -> String` — removes every `data-attachment-ref` span. For text
+  from outside this journal (import): its ref ids belong to another journal and could otherwise
+  resolve to an unrelated attachment here.
 
 ### Auth-slot management
 - `get_password_slot`, `get_keypair_slot_by_pubkey`, `list_auth_slots`, `insert_auth_slot`,

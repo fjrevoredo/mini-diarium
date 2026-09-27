@@ -44,6 +44,15 @@ Template:
 
 ### Security
 - **Attachment storage**: Attachment contents and file names are encrypted at rest with the journal master key (AES-256-GCM), like entry text and images. The MIME type and byte size of each attachment are stored unencrypted, the same leak level as the existing image store. File bytes never cross the IPC boundary: Rust reads, encrypts, decrypts, and writes them, and saving a copy writes the decrypted file only to the path the user chooses, with no temporary plaintext file.
+- **Attachment data-integrity guards**: Several edge cases are closed before release.
+    - Save a copy refuses a destination that belongs to the journal: the journal database and its `-wal`/`-shm`/`-journal` files, any file in the backups folder, the app `config.json`, and any existing SQLite database. A wrong pick in the save dialog can no longer overwrite journal data.
+    - The file is read with a hard 20 MB bound, so a file that grows after the size check cannot bypass the limit. File names with control characters are refused.
+    - The save-vs-delete decision for a cleared entry asks the backend whether the entry has attachments when the frontend list is not loaded for that entry (or when the check fails). An attachment-only entry is never offered for a hard delete because of a stale or loading list.
+    - Attach, remove, and save-a-copy actions stop when the journal locks, switches, or restores while a dialog is open. They can never act on another journal's entry with the same id.
+    - Plugin exports refuse to write attachment files when the journal changed during the export.
+    - JSON import drops inline attachment references, because their ids belong to the exporting journal.
+    - A failed attachment link during per-entry restore cleans up the blobs it already copied.
+    - The export error for a failed attachment write no longer contains the file name.
 
 ### Internal
 - **Dependency updates (Dependabot #299, #302, #303, #304, #305)**: Frontend bumps for `marked` (18.0.13), `@types/node` (26.6.2), `eslint-plugin-solid` (0.18.0), `typescript-eslint` (8.70.0), and `vite` (8.3.0); both lockfiles regenerated and aligned. Backend patch bump for `rhai` (1.26.1) in `Cargo.lock`, with the workspace test suite and the release-feature build passing. CI action bumps for `codecov/codecov-action` (7.1.0) and `signpath/github-action-submit-signing-request` (3.0). The `nix/package.nix` `npmDepsHash` needs a Linux-side refresh; the Nix CI workflow patches it automatically on push.

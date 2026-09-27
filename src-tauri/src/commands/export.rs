@@ -60,8 +60,10 @@ where
     }
     for asset in attachments {
         let bytes = read_attachment(asset)?;
+        // No file name in the error: it contains the attachment's name, which is encrypted
+        // at rest and must not reach logs or the debug dump.
         std::fs::write(assets_dir.join(&asset.filename), bytes.as_slice())
-            .map_err(|e| format!("Failed to write asset '{}': {}", asset.filename, e))?;
+            .map_err(|e| format!("Failed to write attachment asset: {}", e))?;
     }
     debug!(
         "Wrote {} image and {} attachment asset file(s) to {}",

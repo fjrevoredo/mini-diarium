@@ -1,10 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { screen, waitFor, fireEvent } from '@solidjs/testing-library';
 import { renderWithI18n } from '../../test/i18n-test-utils';
-import {
-  resetEntryAttachmentsState,
-  entryHasLoadedAttachments,
-} from '../../state/entryAttachments';
+import { resetEntryAttachmentsState, attachmentPresence } from '../../state/entryAttachments';
 import type { AttachmentSummary } from '../../lib/tauri';
 
 const mocks = vi.hoisted(() => ({
@@ -60,8 +57,8 @@ describe('EntryAttachments', () => {
     await waitFor(() => expect(screen.getByText('Report.pdf')).toBeInTheDocument());
     expect(mocks.listEntryAttachments).toHaveBeenCalledWith(1);
     expect(screen.getByText('2.0 KB')).toBeInTheDocument();
-    expect(entryHasLoadedAttachments(1)).toBe(true);
-    expect(entryHasLoadedAttachments(2)).toBe(false);
+    expect(attachmentPresence(1)).toBe('has');
+    expect(attachmentPresence(2)).toBe('unknown');
   });
 
   it('adds every picked file and reports per-file failures without dropping the others', async () => {
@@ -82,6 +79,40 @@ describe('EntryAttachments', () => {
     expect(screen.getByRole('alert').textContent).toBe(
       'Could not attach "huge.mov": This file is too large. Attachments can be up to 20 MB.',
     );
+  });
+
+  // Regression guard: entry ids repeat across journals. A multi-file add that outlives a
+  // lock + journal switch would otherwise attach the remaining files to an unrelated entry.
+  it('stops a multi-file add when the session resets mid-way', async () => {
+    mocks.listEntryAttachments.mockResolvedValue([]);
+    mocks.open.mockResolvedValue(['C:\\docs\\Report.pdf', '/tmp/clip.mp4']);
+    mocks.addEntryAttachment.mockImplementationOnce(async () => {
+      resetEntryAttachmentsState(); // the journal locks while the first file is added
+      return PDF;
+    });
+
+    renderWithI18n(() => <EntryAttachments entryId={1} />);
+    fireEvent.click(screen.getByTestId('entry-attachment-add-button'));
+
+    await waitFor(() => expect(mocks.addEntryAttachment).toHaveBeenCalledTimes(1));
+    await waitFor(() =>
+      expect(screen.getByTestId('entry-attachment-add-button')).not.toBeDisabled(),
+    );
+    expect(mocks.addEntryAttachment).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not save a copy when the session resets while the save dialog is open', async () => {
+    mocks.save.mockImplementationOnce(async () => {
+      resetEntryAttachmentsState();
+      return 'C:\\out\\Report.pdf';
+    });
+    renderWithI18n(() => <EntryAttachments entryId={1} />);
+    await waitFor(() => expect(screen.getByText('Report.pdf')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByTestId('entry-attachment-save-button'));
+    await waitFor(() => expect(mocks.save).toHaveBeenCalled());
+    await Promise.resolve();
+    expect(mocks.saveAttachmentCopy).not.toHaveBeenCalled();
   });
 
   it('does nothing when the file dialog is cancelled', async () => {

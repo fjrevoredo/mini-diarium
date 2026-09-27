@@ -33,8 +33,13 @@ fn validate_attachment_name(name: &str) -> Result<(), String> {
     if name.chars().count() > MAX_ATTACHMENT_NAME_CHARS {
         return Err("Attachment name is too long".to_string());
     }
-    if name.contains(['/', '\\', '\0']) {
+    if name.contains(['/', '\\']) {
         return Err("Attachment name must be a file name, not a path".to_string());
+    }
+    // Linux allows newlines etc. in file names; in a name they would break the line-based
+    // Markdown export list and forge its structure.
+    if name.chars().any(char::is_control) {
+        return Err("Attachment name contains control characters".to_string());
     }
     Ok(())
 }

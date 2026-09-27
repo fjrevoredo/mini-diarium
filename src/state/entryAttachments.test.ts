@@ -14,7 +14,8 @@ import {
   upsertEntryAttachment,
   removeEntryAttachmentFromList,
   resetEntryAttachmentsState,
-  entryHasLoadedAttachments,
+  attachmentPresence,
+  entryHasAttachments,
 } from './entryAttachments';
 import { isBlankEntry } from '../components/layout/editor-panel/useEntryPersistence';
 
@@ -44,8 +45,8 @@ describe('entryAttachments state', () => {
     await first;
 
     expect(entryAttachments().map((a) => a.name)).toEqual(['second.txt']);
-    expect(entryHasLoadedAttachments(2)).toBe(true);
-    expect(entryHasLoadedAttachments(1)).toBe(false);
+    expect(attachmentPresence(2)).toBe('has');
+    expect(attachmentPresence(1)).toBe('unknown');
   });
 
   it('upsert replaces a deduplicated attachment instead of adding it twice', async () => {
@@ -67,15 +68,47 @@ describe('entryAttachments state', () => {
     resetEntryAttachmentsState();
     expect(entryAttachments()).toEqual([]);
     expect(attachmentsVersion()).toBe(before + 1);
-    expect(entryHasLoadedAttachments(5)).toBe(false);
+    expect(attachmentPresence(5)).toBe('unknown');
   });
 
   it('isBlankEntry: an entry with attachments is never blank', async () => {
-    expect(isBlankEntry(5, '  ', true)).toBe(true);
+    mocks.listEntryAttachments.mockResolvedValue([]);
+    await loadEntryAttachments(5);
+    expect(await isBlankEntry(5, '  ', true)).toBe(true);
+    expect(await isBlankEntry(5, 'Title', true)).toBe(false);
+    expect(await isBlankEntry(5, '', false)).toBe(false);
+
     mocks.listEntryAttachments.mockResolvedValue([summary(1, 'a.txt')]);
     await loadEntryAttachments(5);
-    expect(isBlankEntry(5, '', true)).toBe(false);
-    expect(isBlankEntry(6, '', true)).toBe(true);
-    expect(isBlankEntry(6, 'Title', true)).toBe(false);
+    expect(await isBlankEntry(5, '', true)).toBe(false);
+  });
+
+  // Regression: the verdict for entry A must not come from whatever list is loaded. After
+  // navigating to B, A's files are no longer in the list; reading "no attachments" from it
+  // sent a cleared A down the delete paths (incl. the hard-delete consent prompt).
+  it('isBlankEntry asks the backend when the loaded list belongs to another entry', async () => {
+    mocks.listEntryAttachments.mockResolvedValueOnce([]); // entry 6 is loaded, and empty
+    await loadEntryAttachments(6);
+    mocks.listEntryAttachments.mockResolvedValueOnce([summary(1, 'a.txt')]); // backend for 5
+
+    expect(await isBlankEntry(5, '', true)).toBe(false);
+    expect(mocks.listEntryAttachments).toHaveBeenLastCalledWith(5);
+  });
+
+  it('isBlankEntry asks the backend while the list for the same entry is still loading', async () => {
+    let resolveLoad!: (v: AttachmentSummary[]) => void;
+    mocks.listEntryAttachments.mockImplementationOnce(() => new Promise((r) => (resolveLoad = r)));
+    const loading = loadEntryAttachments(5);
+    expect(attachmentPresence(5)).toBe('unknown');
+
+    mocks.listEntryAttachments.mockResolvedValueOnce([summary(1, 'a.txt')]);
+    expect(await isBlankEntry(5, '', true)).toBe(false);
+    resolveLoad([summary(1, 'a.txt')]);
+    await loading;
+  });
+
+  it('entryHasAttachments answers yes when the backend check fails', async () => {
+    mocks.listEntryAttachments.mockRejectedValueOnce('Journal must be unlocked');
+    expect(await entryHasAttachments(9)).toBe(true);
   });
 });

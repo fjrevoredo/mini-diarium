@@ -17,6 +17,8 @@ const mocks = vi.hoisted(() => ({
   confirmInApp: vi.fn(),
   getAllEntryDates: vi.fn(),
   getEntriesForDate: vi.fn(),
+  // Default: no attachments. The blank-entry check asks the backend when no list is loaded.
+  listEntryAttachments: vi.fn(() => Promise.resolve([] as unknown[])),
 }));
 
 vi.mock('../../../lib/tauri', async () => {
@@ -28,6 +30,7 @@ vi.mock('../../../lib/tauri', async () => {
     entryHasContent: mocks.entryHasContent,
     getAllEntryDates: mocks.getAllEntryDates,
     getEntriesForDate: mocks.getEntriesForDate,
+    listEntryAttachments: mocks.listEntryAttachments,
   };
 });
 
@@ -276,6 +279,21 @@ describe('canLeaveCurrentEntry (TODO-0104)', () => {
     // soft-delete path does, or the calendar's "has entry" indicator goes stale for
     // this date (caught by e2e/specs/backup-restore.spec.ts).
     expect(mocks.getAllEntryDates).toHaveBeenCalled();
+  });
+
+  // Regression (TODO-0114): a cleared entry whose attachment list was not loaded in the
+  // strip reached the "Delete entry?" consent, and confirming it hard-deleted its files.
+  // Its files make it non-blank: navigation needs no consent and nothing is deleted.
+  it('canLeaveCurrentEntry never offers a hard delete for a cleared entry that has attachments', async () => {
+    mocks.listEntryAttachments.mockResolvedValueOnce([{ id: 1 }]);
+    mocks.entryHasContent.mockResolvedValue(true);
+    mocks.confirmInApp.mockResolvedValue(true);
+    const { lifecycle } = makeLifecycle({ pendingEntryId: 4, title: '', content: '' });
+    const result = await lifecycle.canLeaveCurrentEntry('test');
+    expect(result).toBe(true);
+    expect(mocks.listEntryAttachments).toHaveBeenCalledWith(4);
+    expect(mocks.confirmInApp).not.toHaveBeenCalled();
+    expect(mocks.deleteEntry).not.toHaveBeenCalled();
   });
 
   // Regression: a real E2E race (multi-entry.spec.ts Scenario C) hit this — an

@@ -98,7 +98,7 @@ If you drag an image from a web browser, the editor will show a banner explainin
 You can attach documents, PDFs, short videos, and any other file to an entry. Attachments appear as chips under the editor, next to the tags. The strip is shown once the entry exists, so type something first on a new day.
 
 - Click **Attach file** and select one or more files. Each file can be up to **20 MB**. Empty files and folders are refused. If one file fails, the others are still attached and the strip tells you which file failed and why.
-- Click an attachment's name (or its download icon) to **save a copy** to a location you choose. The copy must keep the same file extension as the attachment.
+- Click an attachment's name (or its download icon) to **save a copy** to a location you choose. The copy must keep the same file extension as the attachment. You cannot save the copy over the journal's own files (the journal database or anything in its backups folder).
 - Click the remove (×) icon to detach a file. You are asked to confirm first.
 
 Mini Diarium never opens attachments itself. To view a file, save a copy and open it with another app.

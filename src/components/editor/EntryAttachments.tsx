@@ -1,4 +1,4 @@
-import { createSignal, createEffect, For, Show, onCleanup, onMount } from 'solid-js';
+import { createSignal, createEffect, For, Show, onCleanup, onMount, untrack } from 'solid-js';
 import type { Editor } from '@tiptap/core';
 import {
   File as FileIcon,
@@ -75,9 +75,16 @@ export default function EntryAttachments(props: EntryAttachmentsProps) {
 
   onCleanup(() => clearEntryAttachments());
 
+  // Every action below awaits a dialog (or another file) before it calls the backend. If the
+  // session resets meanwhile — lock, journal switch, restore — the entry id it captured may
+  // name a different entry in a different journal, so it must stop instead of writing there.
+  // resetEntryAttachmentsState() bumps attachmentsVersion on each of those resets.
+  const sessionMark = () => untrack(attachmentsVersion);
+
   const handleSaveCopy = async (attachment: AttachmentSummary) => {
     setError(null);
     const entryId = props.entryId;
+    const mark = sessionMark();
     const ext = fileExtension(attachment.name);
     let dest: string | null;
     try {
@@ -89,7 +96,7 @@ export default function EntryAttachments(props: EntryAttachmentsProps) {
       setError(mapTauriError(err, t));
       return;
     }
-    if (!dest) return; // cancelled
+    if (!dest || sessionMark() !== mark) return; // cancelled, or the session changed
     try {
       await saveAttachmentCopy(entryId, attachment.id, dest);
     } catch (err) {
@@ -107,6 +114,7 @@ export default function EntryAttachments(props: EntryAttachmentsProps) {
   const handleAdd = async () => {
     setError(null);
     const entryId = props.entryId;
+    const mark = sessionMark();
     let selected: string | string[] | null;
     try {
       selected = await openDialog({ multiple: true });
@@ -121,6 +129,7 @@ export default function EntryAttachments(props: EntryAttachmentsProps) {
     try {
       // One invoke per file, so one bad file does not block the others.
       for (const path of paths) {
+        if (sessionMark() !== mark) return; // no error: the strip was reset with the session
         try {
           const added = await addEntryAttachment(entryId, path);
           upsertEntryAttachment(entryId, added);
@@ -145,6 +154,7 @@ export default function EntryAttachments(props: EntryAttachmentsProps) {
   const handleRemove = async (attachment: AttachmentSummary) => {
     setError(null);
     const entryId = props.entryId;
+    const mark = sessionMark();
     const message = hasInlineRefs(attachment.id)
       ? t('attachments.confirmRemoveWithRefs', { name: attachment.name })
       : t('attachments.confirmRemove', { name: attachment.name });
@@ -152,7 +162,7 @@ export default function EntryAttachments(props: EntryAttachmentsProps) {
       title: t('attachments.confirmRemoveTitle'),
       confirmLabel: t('attachments.remove'),
     });
-    if (!confirmed) return;
+    if (!confirmed || sessionMark() !== mark) return;
     try {
       await removeEntryAttachment(entryId, attachment.id);
       removeEntryAttachmentFromList(entryId, attachment.id);

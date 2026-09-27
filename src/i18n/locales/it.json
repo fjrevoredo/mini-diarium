@@ -770,6 +770,8 @@
     "attachmentNotAFile": "Si possono allegare solo file, non cartelle.",
     "attachmentNotFound": "Questo allegato non esiste più.",
     "attachmentExtensionMismatch": "Salva la copia con la stessa estensione di file dell'allegato.",
+    "attachmentProtectedDestination": "Questa posizione appartiene al diario e non può essere sovrascritta. Scegli un'altra posizione.",
+    "exportJournalChanged": "Il diario è cambiato durante l'esportazione. Avvia di nuovo l'esportazione.",
     "cannotRemoveLastAuth": "Impossibile rimuovere l'ultimo metodo di autenticazione.",
     "cannotReadKeyFile": "Impossibile leggere il file chiave. Verifica che il file esista e che tu abbia il permesso di leggerlo.",
     "cannotSaveKeyFile": "Impossibile salvare il file chiave. Verifica i permessi della cartella.",

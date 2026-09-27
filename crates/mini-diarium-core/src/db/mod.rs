@@ -38,7 +38,8 @@ pub use queries::{
     // Attachments
     add_attachment_to_entry, cleanup_orphaned_attachments, entry_has_attachments,
     get_attachments_map, link_attachment, list_entry_attachments, mime_for_extension,
-    read_attachment_bytes, remove_attachment_from_entry, upsert_attachment_blob,
+    read_attachment_bytes, remove_attachment_from_entry, strip_attachment_refs,
+    upsert_attachment_blob,
     DEFAULT_ATTACHMENT_MIME, MAX_STORED_BLOB_BYTES,
     // Auth slots
     count_auth_slots, delete_auth_slot, get_auth_slot_type, get_keypair_slot_by_pubkey,

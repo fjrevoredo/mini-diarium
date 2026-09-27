@@ -770,6 +770,8 @@
     "attachmentNotAFile": "Nur Dateien können angehängt werden, keine Ordner.",
     "attachmentNotFound": "Dieser Anhang existiert nicht mehr.",
     "attachmentExtensionMismatch": "Speichern Sie die Kopie mit derselben Dateiendung wie der Anhang.",
+    "attachmentProtectedDestination": "Dieser Speicherort gehört zum Tagebuch und kann nicht überschrieben werden. Wählen Sie einen anderen Ort.",
+    "exportJournalChanged": "Das Tagebuch wurde während des Exports gewechselt. Starten Sie den Export erneut.",
     "cannotRemoveLastAuth": "Das letzte Authentifizierungsverfahren kann nicht entfernt werden.",
     "cannotReadKeyFile": "Die Schlüsseldatei konnte nicht gelesen werden. Überprüfe, ob die Datei existiert und du Leseberechtigung hast.",
     "cannotSaveKeyFile": "Die Schlüsseldatei konnte nicht gespeichert werden. Überprüfe die Berechtigungen des Ordners.",
