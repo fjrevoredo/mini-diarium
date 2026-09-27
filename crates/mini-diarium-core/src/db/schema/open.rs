@@ -1,3 +1,4 @@
+use super::compat::ensure_journal_readable;
 use super::create::open_connection;
 use super::legacy::{derive_key_from_hash, get_metadata};
 use super::migrations::{apply_pending, migrate_v1_to_v2, migrate_v2_to_v3};
@@ -23,6 +24,11 @@ pub(crate) fn migrate_with_pre_migration_snapshot(
     db_path: &Path,
     backups_dir: &Path,
 ) -> Result<(), String> {
+    // Defense in depth: every open path already calls the guard before its first write, but
+    // this is the single choke point every writer passes through, so a future open path that
+    // forgets still refuses a too-new journal before `apply_pending` runs.
+    ensure_journal_readable(db.conn())?;
+
     let stored_version: i32 = db
         .conn()
         .query_row("SELECT version FROM schema_version", [], |row| row.get(0))
@@ -67,6 +73,9 @@ pub fn open_database<P1: AsRef<Path>, P2: AsRef<Path>>(
     let db_path_ref = db_path.as_ref();
 
     let conn = open_connection(db_path_ref)?;
+    // Before any write (`update_slot_last_used`) and before the KDF: a journal written by a
+    // newer app must stay byte-for-byte untouched.
+    ensure_journal_readable(&conn)?;
 
     let current_version: i32 = conn
         .query_row("SELECT version FROM schema_version", [], |row| row.get(0))
@@ -113,6 +122,9 @@ pub fn open_database_with_keypair<P1: AsRef<Path>, P2: AsRef<Path>>(
     let db_path_ref = db_path.as_ref();
 
     let conn = open_connection(db_path_ref)?;
+    // Before any write (`update_slot_last_used`) and before the KDF: a journal written by a
+    // newer app must stay byte-for-byte untouched.
+    ensure_journal_readable(&conn)?;
 
     let current_version: i32 = conn
         .query_row("SELECT version FROM schema_version", [], |row| row.get(0))
@@ -171,6 +183,7 @@ pub fn open_database_auto<P1: AsRef<Path>, P2: AsRef<Path>>(
     backups_dir: P2,
 ) -> Result<DatabaseConnection, String> {
     let conn = open_connection(db_path.as_ref())?;
+    ensure_journal_readable(&conn)?;
 
     let current_version: i32 = conn
         .query_row("SELECT version FROM schema_version", [], |row| row.get(0))
@@ -359,5 +372,145 @@ mod pre_migration_snapshot_tests {
             version, 12,
             "the migration ran despite the pre-migration snapshot failing"
         );
+    }
+}
+
+#[cfg(test)]
+mod too_new_tests {
+    use super::*;
+    use crate::db::schema::compat::{JOURNAL_TOO_NEW, MIN_READER_VERSION_KEY};
+    use std::path::PathBuf;
+
+    const PASSWORD: &str = "test_password";
+
+    /// Bumps `schema_version` past what this app knows, optionally writing the marker.
+    fn bump_past_current(db_path: &Path, marker: Option<&str>) {
+        let conn = open_connection(db_path).unwrap();
+        conn.execute(
+            "UPDATE schema_version SET version = ?1",
+            [SCHEMA_VERSION + 1],
+        )
+        .unwrap();
+        if let Some(m) = marker {
+            crate::db::queries::db_settings::set_db_setting_conn(&conn, MIN_READER_VERSION_KEY, m)
+                .unwrap();
+        }
+    }
+
+    /// A password journal written "by a newer app", plus its backups directory.
+    fn too_new_password_journal(marker: Option<&str>) -> (tempfile::TempDir, PathBuf, PathBuf) {
+        let dir = tempfile::tempdir().unwrap();
+        let db_path = dir.path().join("diary.db");
+        drop(crate::db::create_database(&db_path, PASSWORD.to_string()).unwrap());
+        bump_past_current(&db_path, marker);
+        let backups_dir = dir.path().join("backups");
+        (dir, db_path, backups_dir)
+    }
+
+    fn assert_refused_and_untouched(
+        result: Result<DatabaseConnection, String>,
+        db_path: &Path,
+        before: &[u8],
+        backups_dir: &Path,
+    ) {
+        assert_eq!(result.unwrap_err(), JOURNAL_TOO_NEW);
+        assert_eq!(
+            std::fs::read(db_path).unwrap(),
+            before,
+            "a refused journal must stay byte-for-byte unchanged"
+        );
+        assert!(
+            !backups_dir.exists(),
+            "a refused open must not take a snapshot"
+        );
+    }
+
+    #[test]
+    fn test_password_open_refuses_a_newer_journal() {
+        let (_dir, db_path, backups_dir) = too_new_password_journal(None);
+        let before = std::fs::read(&db_path).unwrap();
+        let result = open_database(&db_path, PASSWORD.to_string(), &backups_dir);
+        assert_refused_and_untouched(result, &db_path, &before, &backups_dir);
+    }
+
+    #[test]
+    fn test_password_open_refuses_a_newer_journal_before_checking_the_password() {
+        // The same message for a wrong password proves the guard runs before the KDF.
+        let (_dir, db_path, backups_dir) = too_new_password_journal(None);
+        let before = std::fs::read(&db_path).unwrap();
+        let result = open_database(&db_path, "wrong_password".to_string(), &backups_dir);
+        assert_refused_and_untouched(result, &db_path, &before, &backups_dir);
+    }
+
+    #[test]
+    fn test_keypair_open_refuses_a_newer_journal() {
+        // No keypair slot exists: the guard must answer before the slot lookup does.
+        let (_dir, db_path, backups_dir) = too_new_password_journal(None);
+        let before = std::fs::read(&db_path).unwrap();
+        let result = open_database_with_keypair(&db_path, [7u8; 32], &backups_dir);
+        assert_refused_and_untouched(result, &db_path, &before, &backups_dir);
+    }
+
+    #[test]
+    fn test_auto_open_refuses_a_newer_journal() {
+        let dir = tempfile::tempdir().unwrap();
+        let db_path = dir.path().join("diary.db");
+        let backups_dir = dir.path().join("backups");
+        let auto_key = [5u8; 32];
+        drop(crate::db::create_database_auto(&db_path, &auto_key).unwrap());
+        bump_past_current(&db_path, None);
+        let before = std::fs::read(&db_path).unwrap();
+
+        let result = open_database_auto(&db_path, &auto_key, &backups_dir);
+        assert_refused_and_untouched(result, &db_path, &before, &backups_dir);
+    }
+
+    #[test]
+    fn test_peek_refuses_a_newer_journal() {
+        let (_dir, db_path, _backups_dir) = too_new_password_journal(None);
+        let before = std::fs::read(&db_path).unwrap();
+        let err = crate::db::peek_auth_slot_types(&db_path).unwrap_err();
+        assert_eq!(err, JOURNAL_TOO_NEW);
+        assert_eq!(std::fs::read(&db_path).unwrap(), before);
+    }
+
+    #[test]
+    fn test_migration_choke_point_refuses_a_newer_journal() {
+        let (_dir, db_path, backups_dir) = too_new_password_journal(None);
+        let db = DatabaseConnection {
+            conn: open_connection(&db_path).unwrap(),
+            encryption_key: cipher::Key::from_slice(&[1u8; 32]).unwrap(),
+        };
+        let err = migrate_with_pre_migration_snapshot(&db, &db_path, &backups_dir).unwrap_err();
+        assert_eq!(err, JOURNAL_TOO_NEW);
+    }
+
+    #[test]
+    fn test_compatible_marker_opens_without_migrating_or_downgrading() {
+        let current = SCHEMA_VERSION.to_string();
+        let (_dir, db_path, backups_dir) = too_new_password_journal(Some(&current));
+
+        let db = open_database(&db_path, PASSWORD.to_string(), &backups_dir).unwrap();
+
+        assert_eq!(
+            crate::db::read_schema_version(&db).unwrap(),
+            SCHEMA_VERSION + 1,
+            "an opted-in newer journal must keep its version"
+        );
+        assert!(
+            !backups_dir.exists(),
+            "no migration snapshot for a journal ahead of the app"
+        );
+    }
+
+    #[test]
+    fn test_incompatible_or_garbage_marker_is_refused() {
+        let too_high = (SCHEMA_VERSION + 1).to_string();
+        for marker in [too_high.as_str(), "garbage"] {
+            let (_dir, db_path, backups_dir) = too_new_password_journal(Some(marker));
+            let before = std::fs::read(&db_path).unwrap();
+            let result = open_database(&db_path, PASSWORD.to_string(), &backups_dir);
+            assert_refused_and_untouched(result, &db_path, &before, &backups_dir);
+        }
     }
 }

@@ -764,6 +764,8 @@
     "incorrectPassword": "Senha incorreta.",
     "decryptionFailed": "Não foi possível descriptografar. O arquivo de chave pode estar incorreto ou os dados podem estar corrompidos.",
     "journalNotUnlocked": "Por favor, desbloqueie seu diário primeiro.",
+    "journalTooNew": "Este diário requer uma versão mais recente do aplicativo. Atualize o aplicativo para abri-lo.",
+    "backupTooNew": "Este backup requer uma versão mais recente do aplicativo. Atualize o aplicativo para inspecioná-lo ou restaurá-lo.",
     "entryLocked": "Esta entrada está bloqueada. Desbloqueie-a para fazer alterações.",
     "attachmentTooLarge": "Este arquivo é grande demais. Os anexos podem ter até 20 MB.",
     "attachmentEmpty": "Este arquivo está vazio.",

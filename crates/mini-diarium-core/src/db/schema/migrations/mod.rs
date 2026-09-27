@@ -20,6 +20,10 @@ use rusqlite::Connection;
 
 /// Applies all pending DDL-only migrations (v3→v4 through v13→v14) in order.
 ///
+/// **Adding a migration?** Besides registering it here and bumping `SCHEMA_VERSION`, decide
+/// the forward-compatibility marker `db_settings.min_reader_version` in the new step *and*
+/// in `create_schema`, then update the tripwire — see the checklist in `super::compat`.
+///
 /// This covers the idempotent, transactionally-safe migrations. The v1→v2 and
 /// v2→v3 migrations have different signatures (require paths and password) and
 /// are called explicitly from the v1/v2 open path in `open.rs`.

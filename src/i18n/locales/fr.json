@@ -764,6 +764,8 @@
     "incorrectPassword": "Mot de passe incorrect.",
     "decryptionFailed": "Impossible de déchiffrer. Le fichier clé peut être incorrect ou les données peuvent être corrompues.",
     "journalNotUnlocked": "Veuillez d'abord déverrouiller votre journal.",
+    "journalTooNew": "Ce journal nécessite une version plus récente de l'application. Mettez à jour l'application pour l'ouvrir.",
+    "backupTooNew": "Cette sauvegarde nécessite une version plus récente de l'application. Mettez à jour l'application pour l'inspecter ou la restaurer.",
     "entryLocked": "Cette entrée est verrouillée. Déverrouillez-la pour la modifier.",
     "attachmentTooLarge": "Ce fichier est trop volumineux. Les pièces jointes peuvent atteindre 20 Mo.",
     "attachmentEmpty": "Ce fichier est vide.",

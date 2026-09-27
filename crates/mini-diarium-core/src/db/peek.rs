@@ -9,6 +9,7 @@
 use std::path::Path;
 
 use super::queries::db_settings::get_db_setting_conn;
+use super::schema::compat::ensure_journal_readable;
 use super::schema::open_connection;
 
 /// Auth-slot metadata visible without unlocking the journal.
@@ -61,6 +62,8 @@ pub fn peek_auth_slot_types<P: AsRef<Path>>(db_path: P) -> Result<JournalPeek, S
     }
 
     let conn = open_connection(db_path).map_err(|e| format!("Failed to open journal: {}", e))?;
+    // The unlock screen shows this before the user types a credential.
+    ensure_journal_readable(&conn)?;
 
     let mut stmt = conn
         .prepare("SELECT id, type, label FROM auth_slots WHERE type != 'auto' ORDER BY id ASC")

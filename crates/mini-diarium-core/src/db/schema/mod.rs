@@ -1,6 +1,7 @@
 use crate::crypto::cipher;
 use rusqlite::Connection;
 
+pub(crate) mod compat;
 mod create;
 mod legacy;
 pub(crate) mod migrations;

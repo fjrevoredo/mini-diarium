@@ -157,6 +157,7 @@ See [Backend guide](src-tauri/CLAUDE.md) for the full auth architecture and per-
 
 - [`docs/decisions/2026-04-passwordless-journal.md`](docs/decisions/2026-04-passwordless-journal.md) — Local-only (passwordless) journals: why Option B-prime (device-bound key in `config.json`) shipped over Option C (OS keychain), threat model, and the migration path if keychain support is ever built.
 - [`docs/decisions/2026-05-settings-storage-taxonomy.md`](docs/decisions/2026-05-settings-storage-taxonomy.md) — Settings storage taxonomy: decision flowchart for where each type of setting belongs (`localStorage` vs. `config.json` vs. `db_settings` vs. in-memory), full inventory of current settings, and why `require_all_auth` was migrated from `config.json` to `db_settings` in schema v6.
+- [`docs/decisions/2026-09-schema-forward-compatibility.md`](docs/decisions/2026-09-schema-forward-compatibility.md) — Schema forward compatibility: every open path refuses a journal or backup whose `schema_version` is newer than the app's, unless the optional `db_settings.min_reader_version` marker opts older readers in; rules for when a migration may write or must delete that marker.
 - [`docs/decisions/2026-06-feature-flags.md`](docs/decisions/2026-06-feature-flags.md) — Feature flag strategy: two-tier model (build-time `experimental` Cargo feature + `VITE_EXPERIMENTAL` Vite define vs. deferred runtime opt-in), why Tier 2 is not built speculatively, worked example with `search_entries`, and the `generate_handler!` inner-attribute discovery.
 
 ## Known Issues / Technical Debt
@@ -175,7 +176,7 @@ See [Backend guide](src-tauri/CLAUDE.md) for the full auth architecture and per-
 6. **Keep implementation commits scoped.** Each commit should contain one logical change. If a task touches unrelated files (e.g. an opportunistic refactor during a feature task), put those changes in a separate commit.
 7. **Follow [`docs/best-practices/CONTEXT_FILES_BEST_PRACTICES.md`](docs/best-practices/CONTEXT_FILES_BEST_PRACTICES.md) when editing any CLAUDE.md.** Prefer pointers over copies; update gotchas, security rules, and conventions when behavior changes; do not reintroduce file trees or command tables. Specific triggers:
    - New `data-testid` used by E2E tests → add to the canonical table in `src/CLAUDE.md`.
-   - New schema migration → bump schema version description in `src-tauri/CLAUDE.md` Gotcha #1 and update the migration range comment.
+   - New schema migration → bump schema version description in `src-tauri/CLAUDE.md` Gotcha #1, update the migration range comment, and follow the forward-compatibility checklist in `crates/mini-diarium-core/src/db/schema/compat.rs` (Gotcha #14: decide `min_reader_version`).
    - New Tauri command group → add the group name to the Command Registry paragraph in root `CLAUDE.md`.
 
 ## Common Task Checklists

@@ -29,6 +29,15 @@ import { defaultT, type T } from '../i18n';
 export function mapTauriError(err: unknown, t: T = defaultT): string {
   const raw = typeof err === 'string' ? err : err instanceof Error ? err.message : String(err);
 
+  // Forward-compatibility guard (TODO-0122): a journal or backup written by a newer app.
+  // Must stay ahead of the generic internal-error bucket below.
+  if (/journal requires a newer version/i.test(raw)) {
+    return t('errors.journalTooNew');
+  }
+  if (/backup requires a newer version/i.test(raw)) {
+    return t('errors.backupTooNew');
+  }
+
   // Auth errors — safe to pass through, already user-friendly
   if (/wrong password|invalid password|incorrect password/i.test(raw)) {
     return t('errors.incorrectPassword');

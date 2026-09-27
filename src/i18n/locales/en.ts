@@ -917,6 +917,9 @@ const en = {
     decryptionFailed:
       'Could not decrypt. The key file may be incorrect or the data may be corrupted.',
     journalNotUnlocked: 'Please unlock your journal first.',
+    journalTooNew: 'This journal requires a newer version of the app. Update the app to open it.',
+    backupTooNew:
+      'This backup requires a newer version of the app. Update the app to inspect or restore it.',
     entryLocked: 'This entry is locked. Unlock it to make changes.',
     attachmentTooLarge: 'This file is too large. Attachments can be up to 20 MB.',
     attachmentEmpty: 'This file is empty.',

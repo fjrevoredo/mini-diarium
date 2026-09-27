@@ -764,6 +764,8 @@
     "incorrectPassword": "Falsches Passwort.",
     "decryptionFailed": "Entschlüsselung fehlgeschlagen. Die Schlüsseldatei könnte falsch sein oder die Daten beschädigt.",
     "journalNotUnlocked": "Bitte entsperre zuerst dein Tagebuch.",
+    "journalTooNew": "Dieses Tagebuch benötigt eine neuere Version der App. Aktualisiere die App, um es zu öffnen.",
+    "backupTooNew": "Diese Sicherung benötigt eine neuere Version der App. Aktualisiere die App, um sie anzusehen oder wiederherzustellen.",
     "entryLocked": "Dieser Eintrag ist gesperrt. Entsperren Sie ihn, um Änderungen vorzunehmen.",
     "attachmentTooLarge": "Diese Datei ist zu groß. Anhänge dürfen bis zu 20 MB groß sein.",
     "attachmentEmpty": "Diese Datei ist leer.",

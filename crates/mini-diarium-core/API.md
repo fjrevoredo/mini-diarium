@@ -53,14 +53,16 @@ any commit.
 
 There is exactly one honest exception, and it exists because the desktop app predates this
 contract: `mapTauriError` (`src/lib/errors.ts`) classifies backend errors by **regex
-heuristics** to pick a localized message. Core owns two of the phrases it keys on:
+heuristics** to pick a localized message. Core owns four of the phrases it keys on:
 
 | Phrase | Produced by | Consumer behaviour |
 |---|---|---|
 | `"Incorrect password"` | `auth/password.rs`, `db/schema/open.rs` | mapped to the localized "incorrect password" message |
 | any `rusqlite` / `sqlite` / `argon2` substring | propagated driver/KDF errors | collapsed into a generic "internal error" |
+| `"This journal requires a newer version of the app…"` | `db/schema/compat.rs` (`JOURNAL_TOO_NEW`) via every `open_*`, `peek_auth_slot_types` | mapped to the localized "update the app" message |
+| `"This backup requires a newer version of the app…"` | `db/schema/compat.rs` (`BACKUP_TOO_NEW`) via `backup::inspect`, `backup::restore` | mapped to the localized "update the app" message |
 
-Renaming either is a contract change and requires updating `src/lib/errors.ts` in the same
+Renaming any of them is a contract change and requires updating `src/lib/errors.ts` in the same
 commit. Every other error string is free-form.
 
 ### Secrets

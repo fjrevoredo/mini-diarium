@@ -764,6 +764,8 @@
     "incorrectPassword": "Password errata.",
     "decryptionFailed": "Impossibile decifrare. Il file chiave potrebbe essere errato o i dati potrebbero essere danneggiati.",
     "journalNotUnlocked": "Sblocca prima il tuo diario.",
+    "journalTooNew": "Questo diario richiede una versione più recente dell'app. Aggiorna l'app per aprirlo.",
+    "backupTooNew": "Questo backup richiede una versione più recente dell'app. Aggiorna l'app per esaminarlo o ripristinarlo.",
     "entryLocked": "Questa voce è bloccata. Sbloccala per apportare modifiche.",
     "attachmentTooLarge": "Questo file è troppo grande. Gli allegati possono arrivare a 20 MB.",
     "attachmentEmpty": "Questo file è vuoto.",

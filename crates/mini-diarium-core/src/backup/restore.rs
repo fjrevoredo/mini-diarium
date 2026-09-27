@@ -33,7 +33,10 @@ use std::path::Path;
 use zeroize::Zeroizing;
 
 use crate::crypto::cipher;
-use crate::db::schema::{migrate_with_pre_migration_snapshot, open_connection};
+use crate::db::schema::compat::ensure_backup_readable;
+use crate::db::schema::{
+    migrate_with_pre_migration_snapshot, open_connection, open_connection_readonly,
+};
 use crate::db::DatabaseConnection;
 
 use super::store::{self, FsSnapshotStore, SnapshotStore};
@@ -218,7 +221,8 @@ fn roll_back(
     }
 }
 
-/// Whether `path` can actually be restored: a v3+ journal the live master key decrypts.
+/// Whether `path` can actually be restored: a v3+ journal, no newer than this app
+/// understands, that the live master key decrypts.
 ///
 /// The version check exists for a clear message rather than the generic one
 /// `verify_snapshot`'s `auth_slots` query would produce for a table that predates v3.
@@ -226,6 +230,14 @@ fn roll_back(
 /// key, not a wrapped master key — the same reason [`super::inspect::open_snapshot_readonly`]
 /// refuses them, and restore cannot do it either: `apply_pending` only covers v3 onward.
 fn precheck_restorable(path: &Path, key: &cipher::Key) -> Result<(), String> {
+    // Checked on the staged copy, before the `PreRestore` safety snapshot and the swap: a
+    // snapshot written by a newer app must never replace the live journal.
+    {
+        let conn = open_connection_readonly(path)
+            .map_err(|_| "This backup could not be read.".to_string())?;
+        ensure_backup_readable(&conn)?;
+    }
+
     let description = store::describe_snapshot(path);
     let version = description
         .db_schema_version
@@ -558,6 +570,66 @@ mod tests {
         assert!(!outcome.restored);
         assert!(outcome.safety_snapshot.is_none());
         assert!(outcome.error.unwrap().contains("older than version 3"));
+    }
+
+    #[test]
+    fn test_restore_refuses_a_snapshot_from_a_newer_app() {
+        let fixture = Fixture::new("too-new");
+        let db = create_database(&fixture.db_path, "password".to_string()).unwrap();
+        insert_entry(&db, &entry("2024-01-15", "Seed")).unwrap();
+        create_snapshot(&db, &fixture.ctx(), SnapshotTrigger::Manual).unwrap();
+        let target = super::super::list_snapshots(&fixture.backups_dir).unwrap()[0]
+            .file_name
+            .clone();
+        {
+            let path = fixture.backups_dir.join(&target);
+            let conn = crate::db::schema::open_connection(&path).unwrap();
+            conn.execute(
+                "UPDATE schema_version SET version = ?1",
+                [crate::db::SCHEMA_VERSION + 1],
+            )
+            .unwrap();
+        }
+        let live_before = std::fs::read(&fixture.db_path).unwrap();
+        let snapshots_before = super::super::list_snapshots(&fixture.backups_dir)
+            .unwrap()
+            .len();
+
+        let outcome = restore_from_snapshot(db, &fixture.ctx(), &target);
+
+        assert!(!outcome.restored);
+        assert_eq!(
+            outcome.error.as_deref(),
+            Some(crate::db::schema::compat::BACKUP_TOO_NEW)
+        );
+        assert!(
+            outcome.db.is_some(),
+            "the caller must get a connection back"
+        );
+        assert!(
+            outcome.safety_snapshot.is_none(),
+            "must abort before the PreRestore safety snapshot"
+        );
+        drop(outcome);
+        assert_eq!(
+            super::super::list_snapshots(&fixture.backups_dir)
+                .unwrap()
+                .len(),
+            snapshots_before,
+            "no snapshot may be taken for a refused restore"
+        );
+        assert!(
+            !fixture
+                .db_path
+                .with_file_name("diary.db.restoring.tmp")
+                .exists(),
+            "the staged copy must be removed"
+        );
+        assert_eq!(
+            std::fs::read(&fixture.db_path).unwrap(),
+            live_before,
+            "the live journal must be untouched"
+        );
     }
 
     #[test]

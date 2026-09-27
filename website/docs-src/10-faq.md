@@ -25,6 +25,12 @@ Release notes for each version are bundled with the app itself and displayed in 
 
 Not directly. Mini Diarium is local-only by design. You could manually copy the `diary.db` file to another device, but simultaneous access from multiple devices is not supported and could corrupt the database. If you want cloud backup, place your journal directory inside a synced folder (Dropbox, OneDrive, iCloud Drive) and only open it from one device at a time.
 
+## Why does it say my journal or backup "requires a newer version of the app"?
+
+A newer version of Mini Diarium changed the journal format, and this copy of the app is older. This usually happens when two computers share a journal through a synced folder and one of them has not been updated yet. Mini Diarium refuses to open the journal, and does not change the file, so that the older app cannot damage data it does not understand. Update the app on this computer to open the journal again. The same message on a backup means the backup was made by a newer version; update the app to inspect or restore it.
+
+This protection starts with version 0.7.4. Versions before 0.7.4 cannot detect a newer journal, so update every computer that shares the journal.
+
 ## I used Mini Diary before. Can I migrate?
 
 Yes. Export your journal from Mini Diary as JSON, then import it in Mini Diarium from **Journal → Import...** using the Mini Diary JSON format. All entries are imported with their original dates.

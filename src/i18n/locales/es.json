@@ -764,6 +764,8 @@
     "incorrectPassword": "Contraseña incorrecta.",
     "decryptionFailed": "No se pudo descifrar. El archivo de clave puede ser incorrecto o los datos pueden estar dañados.",
     "journalNotUnlocked": "Por favor desbloquea tu diario primero.",
+    "journalTooNew": "Este diario requiere una versión más reciente de la aplicación. Actualiza la aplicación para abrirlo.",
+    "backupTooNew": "Esta copia de seguridad requiere una versión más reciente de la aplicación. Actualiza la aplicación para inspeccionarla o restaurarla.",
     "entryLocked": "Esta entrada está bloqueada. Desbloquéala para hacer cambios.",
     "attachmentTooLarge": "Este archivo es demasiado grande. Los adjuntos pueden ocupar hasta 20 MB.",
     "attachmentEmpty": "Este archivo está vacío.",

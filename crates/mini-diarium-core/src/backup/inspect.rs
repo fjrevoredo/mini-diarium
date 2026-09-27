@@ -28,6 +28,7 @@ use rusqlite::Connection;
 use zeroize::{Zeroize, ZeroizeOnDrop};
 
 use crate::crypto::cipher;
+use crate::db::schema::compat::ensure_backup_readable;
 use crate::db::schema::{open_connection_readonly, DatabaseConnection};
 
 /// The credential offered to a snapshot, mirroring the three ways a journal unlocks.
@@ -124,6 +125,10 @@ pub fn open_snapshot_readonly(
                 .to_string(),
         );
     }
+
+    // A snapshot written by a newer app: its layout is unknown here, so neither inspection
+    // nor per-entry restore (which reuses this handle) may read it.
+    ensure_backup_readable(&conn)?;
 
     let encryption_key = unwrap_master_key(&conn, &credential)?;
 
@@ -449,6 +454,29 @@ mod tests {
             err.contains("does not open this backup"),
             "the message should point at the credential, got: {err}"
         );
+    }
+
+    #[test]
+    fn test_inspect_refuses_a_snapshot_from_a_newer_app() {
+        let (_dir, _db_path, snapshot_path) = journal_with_snapshot("too_new");
+        {
+            let conn = crate::db::schema::open_connection(&snapshot_path).unwrap();
+            conn.execute(
+                "UPDATE schema_version SET version = ?1",
+                [crate::db::SCHEMA_VERSION + 1],
+            )
+            .unwrap();
+        }
+        let before = std::fs::read(&snapshot_path).unwrap();
+
+        let err = open_snapshot_readonly(
+            &snapshot_path,
+            SnapshotCredential::Password("test_password".to_string()),
+        )
+        .expect_err("a snapshot from a newer app must not open");
+
+        assert_eq!(err, crate::db::schema::compat::BACKUP_TOO_NEW);
+        assert_eq!(std::fs::read(&snapshot_path).unwrap(), before);
     }
 
     #[test]

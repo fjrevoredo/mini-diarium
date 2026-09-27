@@ -98,6 +98,8 @@ Migration ordering has one owner.
 - Open paths should call `apply_pending` instead of hand-listing every migration. Legacy bootstrap migrations may be exceptions, but the exception should be obvious and tested.
 - Expensive or data-rewriting migrations need explicit rollback/back-up reasoning.
 - DDL-only migrations can rely on SQLite transaction rollback only when this is documented.
+- Every `SCHEMA_VERSION` bump decides forward compatibility: the migration step and `create_schema` must both set or delete `db_settings.min_reader_version`, and the tripwire test in `db/schema/compat.rs` must be updated. Only a migration an older app can safely ignore while writing may keep older readers in; when in doubt, delete the marker. See the checklist in `db/schema/compat.rs` and `docs/decisions/2026-09-schema-forward-compatibility.md`.
+- New open paths call `ensure_journal_readable` / `ensure_backup_readable` directly after opening the file, before any write or credential work.
 
 Diagnostic check:
 

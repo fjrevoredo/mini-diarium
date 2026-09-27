@@ -20,7 +20,7 @@ Load when work touches any of:
 - Auth: `crates/mini-diarium-core/src/auth/mod.rs` (composed slot ops + `AuthMethodInfo`), `crates/mini-diarium-crypto/src/auth/{password,keypair,auto_key}.rs` (the pure wrapping methods), `src-tauri/src/commands/auth/`
 - IPC contract: `src/lib/tauri/`, `src/lib/errors.ts`, any new `#[tauri::command]`
 - Auto-lock paths: `src/App.tsx` idle timer, `src-tauri/src/screen_lock.rs`, `src/lib/focus-lock.ts`, `src-tauri/src/window_focus.rs`, `src/lib/dialog.ts`
-- DB schema / migrations: `crates/mini-diarium-core/src/db/schema/mod.rs` (`SCHEMA_VERSION` at line 32), `crates/mini-diarium-core/src/db/schema/migrations/`
+- DB schema / migrations: `crates/mini-diarium-core/src/db/schema/mod.rs` (`SCHEMA_VERSION`), `crates/mini-diarium-core/src/db/schema/compat.rs` (forward-compatibility guard), `crates/mini-diarium-core/src/db/schema/migrations/`
 - Backups & rotation: `crates/mini-diarium-core/src/backup.rs`
 - Journal config: `crates/mini-diarium-core/src/config.rs` (`JournalConfig`, `auto_key`, `require_all_auth`)
 - Import / export: `src-tauri/src/commands/import.rs`, `commands/export.rs`, `import/*.rs`, `export/*.rs`
@@ -92,7 +92,7 @@ Compact form of `SECURITY.md:30-43`. This is the "what can I honestly promise?" 
 | `SecretBytes` | `#[derive(ZeroizeOnDrop)]`; Debug shows `SecretBytes([REDACTED; N])` | `crates/mini-diarium-crypto/src/auth/mod.rs:21-53` | Keys linger in heap; `Debug` would leak bytes |
 | `Key` struct | `#[derive(Zeroize, ZeroizeOnDrop)]`; Debug shows `[REDACTED]` | `crates/mini-diarium-crypto/src/crypto/cipher.rs:14-22` | Same leak class |
 | Master-key generation | 32 random bytes from `aes_gcm::aead::OsRng.fill_bytes`, raw bytes zeroized after wrap | `crates/mini-diarium-core/src/db/schema/create.rs` | Predictable / reused master key would be catastrophic |
-| Schema version | `pub const SCHEMA_VERSION: i32 = 7;` | `crates/mini-diarium-core/src/db/schema/mod.rs:32` | Bump on every breaking schema change |
+| Schema version | `pub const SCHEMA_VERSION: i32` (current value in source) | `crates/mini-diarium-core/src/db/schema/mod.rs` | Bump on every schema change; each bump must decide `min_reader_version` (`db/schema/compat.rs`) |
 | Max import file size | 100 MB (`MAX_IMPORT_FILE_SIZE`) | `src-tauri/src/commands/import.rs:5` | Too high → memory DoS; too low → legitimate imports fail |
 | Max text file read | 1 MiB (`MAX_TEXT_FILE_BYTES`) | `src-tauri/src/commands/files.rs:19` | Same DoS class |
 | Backup retention policy | tiered: 10 recent + 1/day × 14 d + 1/week × 8 w + 1/month × 12 mo; storage budget `max(2 GiB, 3 × journal size)` | `crates/mini-diarium-core/src/backup/policy.rs:25-37` | Disk-use guarantee, not a crypto invariant; changing it is a user-facing policy change |
@@ -235,7 +235,7 @@ FTS was removed in v0.2.0 (schema v4) because the plaintext `entries_fts` table 
 **Constraints for any future implementation (non-negotiable):**
 
 1. **No plaintext on disk.** Encrypted index, or in-memory rebuilt at unlock, or SQLCipher-style encrypted FTS. Do not reintroduce a plaintext FTS5 table.
-2. **Schema migration required.** Bump `SCHEMA_VERSION` in `db/schema/mod.rs:32` and add a migration step.
+2. **Schema migration required.** Bump `SCHEMA_VERSION` in `db/schema/mod.rs`, add a migration step, and decide `min_reader_version` (`db/schema/compat.rs`).
 3. **All reindex hooks wired.** Every `// Search index hook:` site must call into the new module.
 4. **UI placement is undecided.** Wire `SearchBar`/`SearchResults` into `Sidebar.tsx` or a new component; do not assume the old layout. See `src-tauri/CLAUDE.md` "Implementing Search" for the design constraints.
 
@@ -323,7 +323,7 @@ window-state:default
   ```
   (This exact string — or one matched by `errors.ts:23` `journal (must be|is not) unlocked` — so `mapTauriError` can route it to `errors.journalNotUnlocked`.)
 - **Mutex poisoning must not panic.** Commands must propagate a string error rather than letting a panic escape the Tauri boundary (a panic in a command aborts the process). For DB-only commands, use `with_unlocked_db` (canonical errors: `"Journal state lock failed"` / `"Journal must be unlocked"`). For commands that must open-code the preamble, use `.map_err(|_| "Journal state lock failed".to_string())`. **Do not** use `.unwrap()` on a Mutex — that converts a poisoned lock into a process abort.
-- **Schema migrations** (`db/schema/migrations/`) must be idempotent and wrapped in a transaction. Historical v3→v4 and v4→v5 followed this; new migrations must too. Bump `SCHEMA_VERSION` (`db/schema/mod.rs:32`) and document the migration step inline.
+- **Schema migrations** (`db/schema/migrations/`) must be idempotent and wrapped in a transaction. Historical v3→v4 and v4→v5 followed this; new migrations must too. Bump `SCHEMA_VERSION` (`db/schema/mod.rs`) and document the migration step inline. Every bump must also decide the forward-compatibility marker `db_settings.min_reader_version` (set it in both the migration step and `create_schema`, or delete it) and update the tripwire in `db/schema/compat.rs` — see the checklist there and `docs/decisions/2026-09-schema-forward-compatibility.md`. Any new open path must call the compat guard before its first write.
 - New commands must be registered in **two** places: `src-tauri/src/commands/mod.rs` (module) and `lib.rs` `generate_handler![]`. Missing either causes silent failure or compile error. Add the typed wrapper in the matching command-category sub-file under `src/lib/tauri/`. See `src-tauri/CLAUDE.md` "Adding a New Tauri Command".
 - `unsafe` blocks outside crypto crates appear in four places: `screen_lock.rs` (Win32 subclass / WTS APIs), the two Rhai wrapper `Send + Sync` impls in `rhai_loader/runtime.rs:126-151`, and the two network-isolation platform handlers in `lib.rs` — `install_webresource_requested_handler` (Windows COM, `lib.rs:373+`) and `install_content_rule_list` (macOS ObjC2, `lib.rs:448+`). Each `unsafe` block has a `// SAFETY:` comment justifying it. **Any new `unsafe` block elsewhere requires explicit security review and a `SAFETY:` block matching that pattern.**
 
@@ -360,7 +360,7 @@ Run through this list when modifying anything in Section 1's load-trigger surfac
 - [ ] Does this touch auto-lock (App.tsx timer or screen_lock.rs)? Did I verify the **other** path still fires on Windows + macOS + Linux?
 - [ ] Does this add/remove a Tauri command? Does it call `db_state.as_ref().ok_or("Diary not unlocked")?` where applicable? Does it handle `Mutex` poisoning **without panicking**? Is it registered in both `commands/mod.rs` and `generate_handler![]`?
 - [ ] Does this touch search? Did I preserve the stub interface contract (Section 9)?
-- [ ] Does this add a schema migration? Is it idempotent, transactional, and does it bump `SCHEMA_VERSION`?
+- [ ] Does this add a schema migration? Is it idempotent, transactional, and does it bump `SCHEMA_VERSION`? Did I decide `min_reader_version` (migration step **and** `create_schema`) and update the `db/schema/compat.rs` tripwire?
 - [ ] Does this change CSP or `dangerousDisableAssetCspModification`? Did I test text alignment in a **production build** (not dev)?
 - [ ] Does this add a Tauri capability? Is it strictly necessary, scoped, and documented in `SECURITY.md`?
 - [ ] Does this read `MINI_DIARIUM_E2E*` env vars **outside** `src-tauri/src/lib.rs` setup? Move the read to `lib.rs`.

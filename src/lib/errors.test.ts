@@ -59,6 +59,24 @@ describe('mapTauriError', () => {
     });
   });
 
+  describe('forward-compatibility guard', () => {
+    it('maps a journal written by a newer app', () => {
+      expect(
+        mapTauriError(
+          'This journal requires a newer version of the app. Update the app to open it.',
+        ),
+      ).toBe(en('errors.journalTooNew'));
+    });
+
+    it('maps a backup written by a newer app', () => {
+      expect(
+        mapTauriError(
+          'This backup requires a newer version of the app. Update the app to inspect or restore it.',
+        ),
+      ).toBe(en('errors.backupTooNew'));
+    });
+  });
+
   describe('auth errors', () => {
     it('maps a wrong password', () => {
       expect(mapTauriError('Wrong password')).toBe(en('errors.incorrectPassword'));
