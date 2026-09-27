@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1790529583912,
+  "lastUpdate": 1790531145212,
   "repoUrl": "https://github.com/fjrevoredo/mini-diarium",
   "entries": {
     "Benchmark": [
@@ -37570,6 +37570,54 @@ window.BENCHMARK_DATA = {
           {
             "name": "ci_pipeline_duration",
             "value": 569000000000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "committer": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "distinct": true,
+          "id": "a001d69e0237fdcfd3f166b6fcd8080fcb33faa8",
+          "message": "Backend CI reports every test failure",
+          "timestamp": "2026-09-27T19:36:07+02:00",
+          "tree_id": "8228cf74a87ef47c36f41d5f9cb8bd0241f1909e",
+          "url": "https://github.com/fjrevoredo/mini-diarium/commit/a001d69e0237fdcfd3f166b6fcd8080fcb33faa8"
+        },
+        "date": 1790531143700,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "backup_snapshot/create_snapshot/small_172032B",
+            "value": 3357073,
+            "range": "± 43573",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "backup_snapshot/create_snapshot/large_8372224B",
+            "value": 27952625,
+            "range": "± 583618",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "backup_snapshot/create_snapshot/image_heavy_40259584B",
+            "value": 126074973,
+            "range": "± 1149418",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "ci_pipeline_duration",
+            "value": 561000000000,
             "range": "± 0",
             "unit": "ns/iter"
           }
