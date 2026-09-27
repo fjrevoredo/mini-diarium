@@ -13,7 +13,7 @@ TODO entry format:
 - After creating a new TODO, update the `Latest TODO ID` marker to reflect the new highest ID
 - Use the `todo-manager` skill (`.agents/skills/todo-manager/`) for creation, tracking, archival, and validation
 
-**Latest TODO ID: TODO-0115** — next new TODO should be TODO-0116
+**Latest TODO ID: TODO-0123** — next new TODO should be TODO-0124
 
 ---
 
@@ -22,6 +22,18 @@ TODO entry format:
 ---
 
 - [ ] **TODO-0008: Cursor height too tall after Shift+Enter on macOS (#118)** — the text caret (cursor) height becomes extra long starting on the second line, but only when inserting a soft line break with Shift+Enter (Enter alone works fine); macOS-only (v0.4.20); likely a `line-height` or `font-family` mismatch in ProseMirror's `<br>` handling introduced with new editor fonts in v0.4.20; audit soft-break styling in `src/styles/editor.css` and the `--editor-font-family` / `--editor-font-size` CSS custom properties
+- [ ] **TODO-0122: Refuse to open a journal with a newer schema than the app knows** — **0.7.4 release blocker.** `migrate_with_pre_migration_snapshot` (`crates/mini-diarium-core/src/db/schema/open.rs`) handles only `stored_version < SCHEMA_VERSION`, and each migration is a no-op on a higher version, so an older app opens a newer journal silently (verified at tag `v0.7.3`). This guard cannot protect the versions that are already out (for v14 that is TODO-0123). But every version that ships without it can open any future schema, so it must land in 0.7.4. The likely real-world trigger is two machines on one synced folder with different app versions, not a manual downgrade.
+  - [ ] **Refuse before any write** — every open path writes before the migration check: `update_slot_last_used` runs before `migrate_with_pre_migration_snapshot` (`open.rs:159`, `:209`), and `open.rs:246` writes with no migration check at all. The version check must run first on all paths: password, keypair, auto-key (local-only), journal switch, and the post-create open.
+  - [ ] **User-facing error** — a canonical backend string, mapped in `mapTauriError`, translated in all 7 locales, and telling the user to update the app. No path or journal name in the message.
+  - [ ] **Snapshots** — decide the behavior when snapshot inspection and per-entry restore (`backup/restore_entries.rs`, `backup::inspect`) meet a snapshot with a newer schema. Today they would silently drop data they do not know about (for example attachments). Refuse, or warn clearly.
+  - [ ] **Design choice** — a hard refuse, or a compatibility marker (for example a `min_reader_version` stored next to `schema_version`), so that a purely additive future bump does not lock out an older app on a second machine. Record the decision in `docs/decisions/`.
+  - [ ] **Tests** — a core test for each open path (a v`SCHEMA_VERSION + 1` journal is refused, and the file bytes are unchanged afterwards) and a frontend mapping test.
+- [ ] **TODO-0123: Make attachment links block entry deletion at the SQLite level (schema v14, before release)** — **0.7.4 release blocker; free only while v14 is unreleased.** v0.7.3 and earlier open a v14 journal silently (see TODO-0122). They do not know attachments, so their empty-entry auto-delete sees an attachment-only entry as blank. `entry_attachments.entry_id` is `ON DELETE CASCADE`, so the links vanish and the blobs become orphans. The next orphan cleanup in 0.7.4 then deletes the files for good. The fix is `ON DELETE RESTRICT`: every released version enables `PRAGMA foreign_keys` on every connection, so an old app's `DELETE FROM entries` fails for an entry that has attachments. Verified at tag `v0.7.3`: the soft-delete paths (`writeSnapshot`, `saveCurrentById`) catch and log the error, so the entry stays. The consent-gated hard delete fails and navigation is refused. That is awkward but loses nothing.
+  - [ ] **Schema** — change the FK to `ON DELETE RESTRICT` in `db/schema/create.rs` and `migrations/v13_to_v14.rs` (edit v14 in place; no v15, because v14 has never shipped). Add a comment that explains why the FK must not cascade.
+  - [ ] **Delete path** — `delete_entry_by_id` (`db/queries/entries/delete.rs`, the only `DELETE FROM entries`) deletes the entry's `entry_attachments` rows explicitly, inside its existing transaction, before it deletes the entry. Then it runs `cleanup_orphaned_attachments`. Update its doc comment.
+  - [ ] **Tests** — a raw `DELETE FROM entries` on an entry with a link fails (this simulates an old app); `delete_entry_by_id` still deletes that entry and removes its orphan blobs; the migration tests assert the RESTRICT clause.
+  - [ ] **Dev journals** — a journal that a dev build already migrated to v14 keeps `CASCADE`, because the migration does not run again. This affects dev and sandbox journals only (0.7.4 has not been pushed). Check that no real journal was opened with a dev build. If one was, add a one-time guarded table rebuild; otherwise accept the gap.
+  - [ ] **Release notes and docs** — in the CHANGELOG and `website/docs-src/`, say that versions before 0.7.4 cannot delete an entry that has attachments, and that they drop inline attachment references (the `attachmentRef` node is unknown to their editor) when they edit and save such an entry. The files in the strip are kept. Recommend that users update every machine that shares the journal.
 
 ---
 
