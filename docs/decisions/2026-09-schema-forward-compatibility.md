@@ -68,4 +68,4 @@ Neither contains a path or a journal name. Renaming either is a contract change 
 ## Consequences
 
 - Versions before 0.7.4 still open any newer journal silently. For v14 that gap is mitigated by TODO-0123 (`ON DELETE RESTRICT` on attachment links).
-- Every schema bump must now decide and explicitly write or delete `min_reader_version`, in the migration step and in `create_schema` (see `src-tauri/CLAUDE.md`, Gotcha #14). A tripwire test enforces that the decision is made.
+- Every schema bump must now decide and explicitly write or delete `min_reader_version`, in the migration step and in `create_schema` (see `src-tauri/CLAUDE.md`, Gotcha #13). A tripwire test enforces that the decision is made.

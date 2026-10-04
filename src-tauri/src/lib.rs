@@ -11,7 +11,6 @@ pub mod menu;
 pub mod screen_lock;
 pub mod spellcheck;
 pub mod sync_detect;
-mod wayland_titlebar;
 mod webview_security;
 mod window_focus;
 
@@ -360,12 +359,6 @@ pub fn run() {
             // Show after setup completes so the window-state plugin has already restored
             // the saved position/size (non-E2E) before the window becomes visible.
             let _ = win.show();
-
-            // Linux/Wayland only: lower the input-only overlay tao <=0.35 raises over
-            // its client-side title-bar buttons, which otherwise ignore every click
-            // (issue #238). Must run after show() — the overlay is re-raised on every
-            // map. Self-disabling; removed once Tauri ships tao >=0.36 (tao#1218).
-            wayland_titlebar::apply(&win);
 
             install_exit_snapshot_hook(&win);
 

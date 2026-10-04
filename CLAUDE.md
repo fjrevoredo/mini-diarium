@@ -176,7 +176,7 @@ See [Backend guide](src-tauri/CLAUDE.md) for the full auth architecture and per-
 6. **Keep implementation commits scoped.** Each commit should contain one logical change. If a task touches unrelated files (e.g. an opportunistic refactor during a feature task), put those changes in a separate commit.
 7. **Follow [`docs/best-practices/CONTEXT_FILES_BEST_PRACTICES.md`](docs/best-practices/CONTEXT_FILES_BEST_PRACTICES.md) when editing any CLAUDE.md.** Prefer pointers over copies; update gotchas, security rules, and conventions when behavior changes; do not reintroduce file trees or command tables. Specific triggers:
    - New `data-testid` used by E2E tests → add to the canonical table in `src/CLAUDE.md`.
-   - New schema migration → bump schema version description in `src-tauri/CLAUDE.md` Gotcha #1, update the migration range comment, and follow the forward-compatibility checklist in `crates/mini-diarium-core/src/db/schema/compat.rs` (Gotcha #14: decide `min_reader_version`).
+   - New schema migration → bump schema version description in `src-tauri/CLAUDE.md` Gotcha #1, update the migration range comment, and follow the forward-compatibility checklist in `crates/mini-diarium-core/src/db/schema/compat.rs` (Gotcha #13: decide `min_reader_version`).
    - New Tauri command group → add the group name to the Command Registry paragraph in root `CLAUDE.md`.
 
 ## Common Task Checklists
