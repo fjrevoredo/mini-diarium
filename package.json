@@ -78,7 +78,7 @@
     "@tiptap/pm": "^3.31.3",
     "@tiptap/starter-kit": "^3.31.3",
     "browserslist": "^4.28.9",
-    "dompurify": "^3.4.15",
+    "dompurify": "^3.4.16",
     "html2canvas": "^1.4.1",
     "jspdf": "^4.2.1",
     "lucide-solid": "^1.47.0",
