@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1791137546998,
+  "lastUpdate": 1791144646344,
   "repoUrl": "https://github.com/fjrevoredo/mini-diarium",
   "entries": {
     "Benchmark": [
@@ -37852,6 +37852,36 @@ window.BENCHMARK_DATA = {
           {
             "name": "ci_pipeline_duration",
             "value": 668000000000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "committer": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "distinct": true,
+          "id": "4dfe0b64a37865335777a75fd1943eefb8ca193b",
+          "message": "Dependency Update: lucide-solid, dev tooling, undici 8.11.2, tauri 2.11.6, rand 0.10.3, codecov-action 7.1.1, github-action-benchmark 1.22.2\n\nApplies Dependabot PRs #307, #308, #309, #310, #311, and #316. PR #285 (toml in .opencode) was already applied as 860c040. nix/package.nix npmDepsHash refresh omitted (Linux+Nix only); the Nix CI workflow patches it on push.",
+          "timestamp": "2026-10-04T21:51:53+02:00",
+          "tree_id": "0c2c1944b6b1e9dc4a398878440d8e6639a423c6",
+          "url": "https://github.com/fjrevoredo/mini-diarium/commit/4dfe0b64a37865335777a75fd1943eefb8ca193b"
+        },
+        "date": 1791144645231,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "ci_pipeline_duration",
+            "value": 608000000000,
             "range": "± 0",
             "unit": "ns/iter"
           }
