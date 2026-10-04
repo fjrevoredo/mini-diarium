@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1791144646344,
+  "lastUpdate": 1791152662186,
   "repoUrl": "https://github.com/fjrevoredo/mini-diarium",
   "entries": {
     "Benchmark": [
@@ -37882,6 +37882,36 @@ window.BENCHMARK_DATA = {
           {
             "name": "ci_pipeline_duration",
             "value": 608000000000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "committer": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "distinct": true,
+          "id": "75c1286bd7ea6fe7d7d57f4b374f61d1af4dd7ea",
+          "message": "Dependency Update: Tauri 2.12, prod/dev tooling, ip-address, brace-expansion; remove Wayland title-bar workaround (TODO-0097)\n\nApplies Dependabot PRs #317, #318, #319, #320, #321, and #322. Pins @tauri-apps/plugin-opener to ~2.6.0 so the JS and Rust plugin minors match (the Tauri CLI rejects a mismatch). nix/package.nix npmDepsHash refresh omitted (Linux+Nix only); the Nix CI workflow patches it on push.",
+          "timestamp": "2026-10-04T23:51:32+02:00",
+          "tree_id": "a1050ea714b4e12b4adbfc332a3272d8f42b7b93",
+          "url": "https://github.com/fjrevoredo/mini-diarium/commit/75c1286bd7ea6fe7d7d57f4b374f61d1af4dd7ea"
+        },
+        "date": 1791152661115,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "ci_pipeline_duration",
+            "value": 712000000000,
             "range": "± 0",
             "unit": "ns/iter"
           }
