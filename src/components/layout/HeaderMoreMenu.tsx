@@ -1,6 +1,14 @@
 import { DropdownMenu } from '@kobalte/core/dropdown-menu';
-import { EllipsisVertical, Settings, ChartColumn, FileUp, FileDown } from 'lucide-solid';
 import {
+  EllipsisVertical,
+  Settings,
+  ChartColumn,
+  FileUp,
+  FileDown,
+  MessageSquare,
+} from 'lucide-solid';
+import {
+  setIsFeedbackOpen,
   setIsPreferencesOpen,
   setIsStatsOpen,
   setIsImportOpen,
@@ -59,6 +67,14 @@ export default function HeaderMoreMenu() {
           >
             <FileDown size={16} />
             {t('layout.header.menuExport')}
+          </DropdownMenu.Item>
+          <DropdownMenu.Item
+            data-testid="header-more-menu-feedback-item"
+            class="flex w-full items-center gap-2 rounded px-3 py-2 text-left text-sm text-primary hover:bg-hover cursor-pointer outline-none"
+            onSelect={() => setIsFeedbackOpen(true)}
+          >
+            <MessageSquare size={16} />
+            {t('layout.header.menuFeedback')}
           </DropdownMenu.Item>
         </DropdownMenu.Content>
       </DropdownMenu.Portal>

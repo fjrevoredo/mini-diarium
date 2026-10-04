@@ -28,7 +28,8 @@
       "moreOptions": "Plus d'options",
       "menuStatistics": "Statistiques",
       "menuImport": "Importer",
-      "menuExport": "Exporter"
+      "menuExport": "Exporter",
+      "menuFeedback": "Envoyer un avis"
     },
     "sidebar": {
       "navigation": "Navigation",
@@ -122,6 +123,7 @@
       "backToJournals": "← Retour aux journaux",
       "toolsAria": "Outils accessibles sans déverrouiller",
       "viewBackups": "Voir les sauvegardes",
+      "sendFeedback": "Envoyer un avis",
       "passwordMode": "Mot de passe",
       "keyFileMode": "Fichier clé",
       "unlockMethodAria": "Méthode de déverrouillage",
@@ -635,6 +637,18 @@
     "opensInBrowser": "s'ouvre dans le navigateur système",
     "showTour": "Afficher le tour de bienvenue",
     "supportLink": "Soutenir Mini Diarium"
+  },
+  "feedback": {
+    "title": "Envoyer un avis",
+    "closeAria": "Fermer",
+    "intro": "Un problème ou une idée ? Choisissez comment contacter le développeur.",
+    "reportBug": "Signaler un bug",
+    "reportBugHint": "Ouvre un formulaire de ticket GitHub dans votre navigateur.",
+    "suggestFeature": "Suggérer une fonctionnalité",
+    "suggestFeatureHint": "Ouvre un formulaire de ticket GitHub dans votre navigateur.",
+    "emailDeveloper": "Écrire au développeur",
+    "emailDeveloperHint": "Ouvre votre client de messagerie. Aucun compte GitHub requis.",
+    "privacyNote": "L'application n'envoie rien. Vous relisez et envoyez le message vous-même."
   },
   "notifications": {
     "title": "Nouveautés",

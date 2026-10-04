@@ -28,7 +28,8 @@
       "moreOptions": "Weitere Optionen",
       "menuStatistics": "Statistik",
       "menuImport": "Importieren",
-      "menuExport": "Exportieren"
+      "menuExport": "Exportieren",
+      "menuFeedback": "Feedback senden"
     },
     "sidebar": {
       "navigation": "Navigation",
@@ -122,6 +123,7 @@
       "backToJournals": "← Zurück zu den Tagebüchern",
       "toolsAria": "Ohne Entsperren verfügbare Werkzeuge",
       "viewBackups": "Sicherungen ansehen",
+      "sendFeedback": "Feedback senden",
       "passwordMode": "Passwort",
       "keyFileMode": "Schlüsseldatei",
       "unlockMethodAria": "Entsperrmethode",
@@ -635,6 +637,18 @@
     "opensInBrowser": "Öffnet im Systembrowser",
     "showTour": "Willkommenstour anzeigen",
     "supportLink": "Mini Diarium unterstützen"
+  },
+  "feedback": {
+    "title": "Feedback senden",
+    "closeAria": "Schließen",
+    "intro": "Ein Problem gefunden oder eine Idee? Wähle, wie du den Entwickler erreichen möchtest.",
+    "reportBug": "Fehler melden",
+    "reportBugHint": "Öffnet ein GitHub-Issue-Formular in deinem Browser.",
+    "suggestFeature": "Funktion vorschlagen",
+    "suggestFeatureHint": "Öffnet ein GitHub-Issue-Formular in deinem Browser.",
+    "emailDeveloper": "E-Mail an den Entwickler",
+    "emailDeveloperHint": "Öffnet dein E-Mail-Programm. Kein GitHub-Konto nötig.",
+    "privacyNote": "Die App sendet nichts. Du prüfst und sendest die Nachricht selbst."
   },
   "notifications": {
     "title": "Neuigkeiten",

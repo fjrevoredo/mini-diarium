@@ -28,7 +28,8 @@
       "moreOptions": "और विकल्प",
       "menuStatistics": "आँकड़े",
       "menuImport": "आयात",
-      "menuExport": "निर्यात"
+      "menuExport": "निर्यात",
+      "menuFeedback": "प्रतिक्रिया भेजें"
     },
     "sidebar": {
       "navigation": "नेविगेशन",
@@ -122,6 +123,7 @@
       "backToJournals": "← जर्नल पर वापस जाएं",
       "toolsAria": "बिना अनलॉक किए उपलब्ध साधन",
       "viewBackups": "बैकअप देखें",
+      "sendFeedback": "प्रतिक्रिया भेजें",
       "passwordMode": "पासवर्ड",
       "keyFileMode": "की फ़ाइल",
       "unlockMethodAria": "अनलॉक विधि",
@@ -635,6 +637,18 @@
     "opensInBrowser": "सिस्टम ब्राउज़र में खुलता है",
     "showTour": "स्वागत टूर दिखाएं",
     "supportLink": "Mini Diarium का समर्थन करें"
+  },
+  "feedback": {
+    "title": "प्रतिक्रिया भेजें",
+    "closeAria": "बंद करें",
+    "intro": "कोई समस्या मिली या कोई विचार है? चुनें कि आप डेवलपर से कैसे संपर्क करना चाहते हैं।",
+    "reportBug": "बग रिपोर्ट करें",
+    "reportBugHint": "आपके ब्राउज़र में GitHub इश्यू फ़ॉर्म खोलता है।",
+    "suggestFeature": "सुविधा सुझाएँ",
+    "suggestFeatureHint": "आपके ब्राउज़र में GitHub इश्यू फ़ॉर्म खोलता है।",
+    "emailDeveloper": "डेवलपर को ईमेल करें",
+    "emailDeveloperHint": "आपका ईमेल ऐप खोलता है। GitHub खाते की आवश्यकता नहीं।",
+    "privacyNote": "ऐप कुछ भी नहीं भेजता। आप संदेश की समीक्षा करके स्वयं भेजते हैं।"
   },
   "notifications": {
     "title": "नया क्या है",

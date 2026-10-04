@@ -43,6 +43,7 @@ import { searchQuery, setIsSearching, setSearchQuery, setSearchResults } from '.
 import { resetSessionState } from './session';
 import {
   isAboutOpen,
+  isFeedbackOpen,
   isExportOpen,
   isGoToDateOpen,
   isImportOpen,
@@ -51,6 +52,7 @@ import {
   isStatsOpen,
   selectedDate,
   setIsAboutOpen,
+  setIsFeedbackOpen,
   setIsExportOpen,
   setIsGoToDateOpen,
   setIsImportOpen,
@@ -69,6 +71,7 @@ function primeTransientState(): void {
   setIsImportOpen(true);
   setIsExportOpen(true);
   setIsAboutOpen(true);
+  setIsFeedbackOpen(true);
   setEntryDates(['2024-01-15']);
   setIsSaving(true);
   setSearchQuery('query');
@@ -119,6 +122,7 @@ describe('auth session boundary reset', () => {
     expect(isImportOpen()).toBe(false);
     expect(isExportOpen()).toBe(false);
     expect(isAboutOpen()).toBe(false);
+    expect(isFeedbackOpen()).toBe(false);
     expect(entryDates()).toEqual([]);
     expect(searchQuery()).toBe('');
     expect(authMethods()).toEqual([]);

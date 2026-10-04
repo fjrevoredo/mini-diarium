@@ -49,6 +49,7 @@ const en = {
       menuStatistics: 'Statistics',
       menuImport: 'Import',
       menuExport: 'Export',
+      menuFeedback: 'Send feedback',
     },
     sidebar: {
       navigation: 'Navigation',
@@ -161,6 +162,7 @@ const en = {
       backToJournals: '← Back to Journals',
       toolsAria: 'Tools available without unlocking',
       viewBackups: 'View backups',
+      sendFeedback: 'Send feedback',
       passwordMode: 'Password',
       keyFileMode: 'Key File',
       unlockMethodAria: 'Unlock method',
@@ -757,6 +759,20 @@ const en = {
     opensInBrowser: 'opens in system browser',
     showTour: 'Show Welcome Tour',
     supportLink: 'Support Mini Diarium',
+  },
+
+  /** FeedbackOverlay */
+  feedback: {
+    title: 'Send feedback',
+    closeAria: 'Close',
+    intro: 'Found a problem or have an idea? Choose how you want to reach the developer.',
+    reportBug: 'Report a bug',
+    reportBugHint: 'Opens a GitHub issue form in your browser.',
+    suggestFeature: 'Suggest a feature',
+    suggestFeatureHint: 'Opens a GitHub issue form in your browser.',
+    emailDeveloper: 'Email the developer',
+    emailDeveloperHint: 'Opens your mail client. No GitHub account needed.',
+    privacyNote: 'Nothing is sent from the app. You review and send the message yourself.',
   },
 
   /** NotificationsOverlay */

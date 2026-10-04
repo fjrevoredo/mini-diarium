@@ -28,7 +28,8 @@
       "moreOptions": "Más opciones",
       "menuStatistics": "Estadísticas",
       "menuImport": "Importar",
-      "menuExport": "Exportar"
+      "menuExport": "Exportar",
+      "menuFeedback": "Enviar comentarios"
     },
     "sidebar": {
       "navigation": "Navegación",
@@ -122,6 +123,7 @@
       "backToJournals": "← Volver a los diarios",
       "toolsAria": "Herramientas disponibles sin desbloquear",
       "viewBackups": "Ver copias de seguridad",
+      "sendFeedback": "Enviar comentarios",
       "passwordMode": "Contraseña",
       "keyFileMode": "Archivo de clave",
       "unlockMethodAria": "Método de desbloqueo",
@@ -635,6 +637,18 @@
     "opensInBrowser": "se abre en el navegador del sistema",
     "showTour": "Mostrar tour de bienvenida",
     "supportLink": "Apoyar a Mini Diarium"
+  },
+  "feedback": {
+    "title": "Enviar comentarios",
+    "closeAria": "Cerrar",
+    "intro": "¿Encontraste un problema o tienes una idea? Elige cómo quieres contactar al desarrollador.",
+    "reportBug": "Informar de un error",
+    "reportBugHint": "Abre un formulario de incidencia de GitHub en tu navegador.",
+    "suggestFeature": "Sugerir una función",
+    "suggestFeatureHint": "Abre un formulario de incidencia de GitHub en tu navegador.",
+    "emailDeveloper": "Escribir al desarrollador",
+    "emailDeveloperHint": "Abre tu cliente de correo. No necesitas una cuenta de GitHub.",
+    "privacyNote": "La app no envía nada. Tú revisas y envías el mensaje."
   },
   "notifications": {
     "title": "Novedades",

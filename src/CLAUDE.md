@@ -165,6 +165,11 @@ These are used by E2E tests — **do not remove** from components.
 | `HeaderMoreMenu.tsx` | Statistics item in overflow menu | `header-more-menu-statistics-item` |
 | `HeaderMoreMenu.tsx` | Import item in overflow menu | `header-more-menu-import-item` |
 | `HeaderMoreMenu.tsx` | Export item in overflow menu | `header-more-menu-export-item` |
+| `HeaderMoreMenu.tsx` | Send feedback item in overflow menu (opens `FeedbackOverlay`) | `header-more-menu-feedback-item` |
+| `FeedbackOverlay.tsx` | Dialog content root | `feedback-overlay` |
+| `FeedbackOverlay.tsx` | Report a bug button | `feedback-bug` |
+| `FeedbackOverlay.tsx` | Suggest a feature button | `feedback-feature` |
+| `FeedbackOverlay.tsx` | Email the developer button (prefilled `mailto:`) | `feedback-email` |
 | `PreferencesOverlay.tsx` | Preferences dialog content | `preferences-overlay` |
 | `ChangePasswordForm.tsx` | Persistent snapshot-credential-drift notice (not the auto-dismissing success toast) | `change-password-snapshot-warning` |
 | `BackupsPanel.tsx` | Panel root (Preferences → Backups and the pre-auth view) | `backups-panel` |
@@ -195,6 +200,7 @@ These are used by E2E tests — **do not remove** from components.
 | `BackupInspectDialog.tsx` | Restore success message | `backup-inspect-success` |
 | `PreAuthTools.tsx` | Row of tools reachable without unlocking | `pre-auth-tools` |
 | `PreAuthTools.tsx` | View-backups entry point on the unlock screen | `pre-auth-backups-button` |
+| `PreAuthTools.tsx` | Send-feedback entry point on the unlock screen (opens `FeedbackOverlay`) | `pre-auth-feedback-button` |
 | `StatsOverlay.tsx` | Statistics dialog content | `stats-overlay` |
 | `ImportOverlay.tsx` | Import dialog content | `import-overlay` |
 | `ExportOverlay.tsx` | Export dialog content | `export-overlay` |

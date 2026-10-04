@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { screen, waitFor, fireEvent, within } from '@solidjs/testing-library';
 import { renderWithI18n } from '../../test/i18n-test-utils';
+import { isFeedbackOpen, setIsFeedbackOpen } from '../../state/ui';
 import PreAuthTools from './PreAuthTools';
 
 const {
@@ -119,6 +120,16 @@ describe('PreAuthTools', () => {
     await waitFor(() => expect(screen.getByTestId('backups-list-item')).toBeInTheDocument());
     expect(screen.queryByText(/2 entries/)).not.toBeInTheDocument();
     expect(screen.queryByText(/2024-01-15 to 2024-03-20/)).not.toBeInTheDocument();
+  });
+
+  it('opens the Feedback dialog with no journal unlocked', () => {
+    setIsFeedbackOpen(false);
+    renderWithI18n(() => <PreAuthTools />);
+
+    fireEvent.click(screen.getByTestId('pre-auth-feedback-button'));
+
+    expect(isFeedbackOpen()).toBe(true);
+    setIsFeedbackOpen(false);
   });
 
   it('does not render the panel until the entry point is used', () => {

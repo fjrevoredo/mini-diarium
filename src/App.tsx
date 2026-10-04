@@ -6,7 +6,7 @@ import { createFocusLossAutoLock } from './lib/focus-lock';
 import { preferences } from './state/preferences';
 import { setLocale, useI18n } from './i18n';
 import { setSpellcheckEnabled, updateMenuLocale } from './lib/tauri';
-import { isAboutOpen, setIsAboutOpen } from './state/ui';
+import { isAboutOpen, setIsAboutOpen, isFeedbackOpen, setIsFeedbackOpen } from './state/ui';
 import { loadNotifications } from './state/notifications';
 import { activeJournalId } from './state/journals';
 import { recordFirstSeenIfAbsent, checkSupportMilestone } from './state/support-milestone';
@@ -15,6 +15,7 @@ import PasswordCreation from './components/auth/PasswordCreation';
 import PasswordPrompt from './components/auth/PasswordPrompt';
 import MainLayout from './components/layout/MainLayout';
 import AboutOverlay from './components/overlays/AboutOverlay';
+import FeedbackOverlay from './components/overlays/FeedbackOverlay';
 
 const log = createLogger('App');
 
@@ -137,6 +138,7 @@ function App() {
       </Show>
 
       <AboutOverlay isOpen={isAboutOpen()} onClose={() => setIsAboutOpen(false)} />
+      <FeedbackOverlay isOpen={isFeedbackOpen()} onClose={() => setIsFeedbackOpen(false)} />
     </>
   );
 }

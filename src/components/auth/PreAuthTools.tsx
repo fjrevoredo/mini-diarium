@@ -1,6 +1,7 @@
 import { createSignal } from 'solid-js';
 import BackupsOverlay from '../backups/BackupsOverlay';
 import { useI18n } from '../../i18n';
+import { setIsFeedbackOpen } from '../../state/ui';
 
 /**
  * The row of things a user can reach *without* unlocking a journal.
@@ -32,6 +33,15 @@ export default function PreAuthTools() {
           class="text-sm text-tertiary hover:text-secondary underline focus:outline-none"
         >
           {t('auth.prompt.viewBackups')}
+        </button>
+        {/* Opens the app-wide FeedbackOverlay mounted in App.tsx; it needs no journal. */}
+        <button
+          type="button"
+          onClick={() => setIsFeedbackOpen(true)}
+          data-testid="pre-auth-feedback-button"
+          class="text-sm text-tertiary hover:text-secondary underline focus:outline-none"
+        >
+          {t('auth.prompt.sendFeedback')}
         </button>
       </div>
 

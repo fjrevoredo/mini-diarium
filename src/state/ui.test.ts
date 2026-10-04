@@ -10,6 +10,8 @@ import {
   setMainView,
   isAnyOverlayOpen,
   setIsProjectSupportOpen,
+  isFeedbackOpen,
+  setIsFeedbackOpen,
 } from './ui';
 import { registerNavigationGuard } from './entries';
 
@@ -109,6 +111,17 @@ describe('guarded navigation entry points (TODO-0104)', () => {
     setIsProjectSupportOpen(true);
     expect(isAnyOverlayOpen()).toBe(true);
     setIsProjectSupportOpen(false);
+    expect(isAnyOverlayOpen()).toBe(false);
+  });
+
+  it('isAnyOverlayOpen becomes true when isFeedbackOpen is set, and resetUiState closes it', () => {
+    expect(isAnyOverlayOpen()).toBe(false);
+    setIsFeedbackOpen(true);
+    expect(isAnyOverlayOpen()).toBe(true);
+
+    resetUiState();
+
+    expect(isFeedbackOpen()).toBe(false);
     expect(isAnyOverlayOpen()).toBe(false);
   });
 });

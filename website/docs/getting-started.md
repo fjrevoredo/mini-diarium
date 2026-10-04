@@ -51,6 +51,8 @@ Your journal is encrypted whenever it is locked. After selecting a journal, ente
 
 The header also shows an **About** button (ⓘ) and a **bell icon** for the notification center. The bell displays an unread badge when a new release ships; click it to read what changed and mark notifications as read. Entries with more to say show a **Read more** button that opens the full write-up, with headings and lists, without leaving the app.
 
+To reach the developer, choose **⋮ → Send feedback**, or click **Send feedback** on the unlock screen if you have not unlocked a journal yet. The dialog has three choices: **Report a bug** and **Suggest a feature** open a prefilled GitHub issue form in your browser, and **Email the developer** opens your mail client with a new message to minidiarium@gmail.com. The email subject includes only the app version. Nothing is sent from the app itself; you review and send the message yourself.
+
 As an alternative to your password, you can register a key file in **Preferences → Authentication Methods**. Once registered, use the "Key File" tab on the unlock screen and select your `.key` file to unlock without typing your password.
 
 You can also enable **idle auto-lock** in **Preferences → Security → Auto-Lock**. When enabled, Mini Diarium locks automatically after the configured period of inactivity.

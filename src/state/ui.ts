@@ -37,6 +37,9 @@ const [isExportOpen, setIsExportOpen] = createSignal(false);
 // About overlay state
 const [isAboutOpen, setIsAboutOpen] = createSignal(false);
 
+// Feedback overlay state
+const [isFeedbackOpen, setIsFeedbackOpen] = createSignal(false);
+
 // Notifications overlay state
 const [isNotificationsOpen, setIsNotificationsOpen] = createSignal(false);
 
@@ -74,6 +77,7 @@ export function isAnyOverlayOpen(): boolean {
     isImportOpen() ||
     isExportOpen() ||
     isAboutOpen() ||
+    isFeedbackOpen() ||
     isNotificationsOpen() ||
     isTagManagerOpen() ||
     isImagePickerOpen() ||
@@ -127,6 +131,7 @@ export function resetUiState(): void {
   setIsImportOpen(false);
   setIsExportOpen(false);
   setIsAboutOpen(false);
+  setIsFeedbackOpen(false);
   setIsNotificationsOpen(false);
   setIsTagManagerOpen(false);
   setIsImagePickerOpen(false);
@@ -157,6 +162,8 @@ export {
   setIsExportOpen,
   isAboutOpen,
   setIsAboutOpen,
+  isFeedbackOpen,
+  setIsFeedbackOpen,
   isNotificationsOpen,
   setIsNotificationsOpen,
   isTagManagerOpen,
