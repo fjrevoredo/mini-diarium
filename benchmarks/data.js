@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1791152662186,
+  "lastUpdate": 1791409717546,
   "repoUrl": "https://github.com/fjrevoredo/mini-diarium",
   "entries": {
     "Benchmark": [
@@ -37912,6 +37912,36 @@ window.BENCHMARK_DATA = {
           {
             "name": "ci_pipeline_duration",
             "value": 712000000000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "committer": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "distinct": true,
+          "id": "ed7693305931fc63c878449ce35c5464a8a021cc",
+          "message": "Add TODO-0124, TODO-0125, and TODO-0126: Timeline tag filter, ESC lock action, and entry-aware day navigation",
+          "timestamp": "2026-10-05T01:16:16+02:00",
+          "tree_id": "23cf56ce704c9ded50e027362d1c3c373e3760da",
+          "url": "https://github.com/fjrevoredo/mini-diarium/commit/ed7693305931fc63c878449ce35c5464a8a021cc"
+        },
+        "date": 1791409715923,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "ci_pipeline_duration",
+            "value": 584000000000,
             "range": "± 0",
             "unit": "ns/iter"
           }
