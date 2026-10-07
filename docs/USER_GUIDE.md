@@ -90,6 +90,8 @@ The sidebar shows a monthly calendar. Days with entries are marked with a dot in
 
 On macOS, use `Cmd` instead of `Ctrl`.
 
+`Ctrl+[` and `Ctrl+]` skip days without entries. While a tag filter is active, they visit only days with an entry that has that tag. At the first or last entry they do nothing. The header ◀/▶ buttons step one calendar day.
+
 ### Go to Date
 
 Press `Ctrl+G` to open the date picker and jump directly to any date.

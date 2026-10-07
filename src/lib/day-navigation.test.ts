@@ -2,12 +2,16 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
   goToPreviousDay,
   goToNextDay,
+  goToPreviousEntryDay,
+  goToNextEntryDay,
   goToToday,
   goToPreviousMonth,
   goToNextMonth,
 } from './day-navigation';
 import { selectedDate, setSelectedDate } from '../state/ui';
 import { setPreferences } from '../state/preferences';
+import { setEntryDates } from '../state/entries';
+import { setTagFilter, clearTagFilter } from '../state/tags';
 import { getTodayString, addDays } from './dates';
 
 const {
@@ -16,7 +20,9 @@ const {
   mockNavigateToToday,
   mockNavigatePreviousMonth,
   mockNavigateNextMonth,
+  mockGetEntryDatesByTag,
 } = vi.hoisted(() => ({
+  mockGetEntryDatesByTag: vi.fn<(tagId: number) => Promise<string[]>>(),
   mockNavigatePreviousDay: vi.fn<(currentDate: string) => Promise<string>>(),
   mockNavigateNextDay: vi.fn<(currentDate: string) => Promise<string>>(),
   mockNavigateToToday: vi.fn<() => Promise<string>>(),
@@ -33,6 +39,7 @@ vi.mock('./tauri', async () => {
     navigateToToday: mockNavigateToToday,
     navigatePreviousMonth: mockNavigatePreviousMonth,
     navigateNextMonth: mockNavigateNextMonth,
+    getEntryDatesByTag: mockGetEntryDatesByTag,
   };
 });
 
@@ -55,6 +62,9 @@ describe('day-navigation', () => {
     mockNavigateToToday.mockReset();
     mockNavigatePreviousMonth.mockReset();
     mockNavigateNextMonth.mockReset();
+    mockGetEntryDatesByTag.mockReset();
+    setEntryDates([]);
+    clearTagFilter();
     // Default: behaves like the real (unguarded) requestDateChange — writes the date
     // and approves. Individual TODO-0104 deny-path tests below override this per-call.
     mockRequestDateChange.mockReset().mockImplementation(async (date: string) => {
@@ -113,6 +123,93 @@ describe('day-navigation', () => {
     await goToPreviousDay();
 
     expect(selectedDate()).toBe('2024-01-15');
+  });
+
+  describe('entry-day navigation', () => {
+    it('skips gaps going back and forward', async () => {
+      setEntryDates(['2024-01-05', '2024-01-20']);
+      setSelectedDate('2024-01-15');
+
+      await goToPreviousEntryDay();
+      expect(selectedDate()).toBe('2024-01-05');
+
+      setSelectedDate('2024-01-15');
+      await goToNextEntryDay();
+      expect(selectedDate()).toBe('2024-01-20');
+      expect(mockNavigatePreviousDay).not.toHaveBeenCalled();
+      expect(mockNavigateNextDay).not.toHaveBeenCalled();
+    });
+
+    it('goes strictly before/after a date that itself has an entry', async () => {
+      setEntryDates(['2024-01-05', '2024-01-15', '2024-01-20']);
+      setSelectedDate('2024-01-15');
+
+      await goToPreviousEntryDay();
+      expect(selectedDate()).toBe('2024-01-05');
+
+      setSelectedDate('2024-01-15');
+      await goToNextEntryDay();
+      expect(selectedDate()).toBe('2024-01-20');
+    });
+
+    it('does not rely on array order', async () => {
+      setEntryDates(['2024-01-20', '2024-01-02', '2024-01-10', '2024-01-30']);
+      setSelectedDate('2024-01-15');
+
+      await goToPreviousEntryDay();
+      expect(selectedDate()).toBe('2024-01-10');
+
+      setSelectedDate('2024-01-15');
+      await goToNextEntryDay();
+      expect(selectedDate()).toBe('2024-01-20');
+    });
+
+    it('uses the tag-filtered dates when a tag filter is active', async () => {
+      setEntryDates(['2024-01-10', '2024-01-12', '2024-01-18', '2024-01-25']);
+      mockGetEntryDatesByTag.mockResolvedValue(['2024-01-05', '2024-01-25']);
+      await setTagFilter({ id: 1, name: 'work', created_at: '2024-01-01T00:00:00Z' });
+      setSelectedDate('2024-01-15');
+
+      await goToPreviousEntryDay();
+      expect(selectedDate()).toBe('2024-01-05');
+
+      setSelectedDate('2024-01-15');
+      await goToNextEntryDay();
+      expect(selectedDate()).toBe('2024-01-25');
+    });
+
+    it('does nothing when no earlier or later entry exists', async () => {
+      setEntryDates(['2024-01-15']);
+      setSelectedDate('2024-01-15');
+
+      await expect(goToPreviousEntryDay()).resolves.toBeUndefined();
+      await expect(goToNextEntryDay()).resolves.toBeUndefined();
+
+      expect(mockRequestDateChange).not.toHaveBeenCalled();
+      expect(selectedDate()).toBe('2024-01-15');
+    });
+
+    it('does nothing with no entries at all', async () => {
+      setSelectedDate('2024-01-15');
+
+      await goToPreviousEntryDay();
+      await goToNextEntryDay();
+
+      expect(mockRequestDateChange).not.toHaveBeenCalled();
+      expect(selectedDate()).toBe('2024-01-15');
+    });
+
+    it('leaves selectedDate unchanged when requestDateChange denies', async () => {
+      setEntryDates(['2024-01-05', '2024-01-20']);
+      setSelectedDate('2024-01-15');
+      mockRequestDateChange.mockResolvedValue(false);
+
+      await goToPreviousEntryDay();
+      await goToNextEntryDay();
+
+      expect(mockRequestDateChange).toHaveBeenCalledTimes(2);
+      expect(selectedDate()).toBe('2024-01-15');
+    });
   });
 
   it('goToToday sets selectedDate to the backend-resolved today', async () => {

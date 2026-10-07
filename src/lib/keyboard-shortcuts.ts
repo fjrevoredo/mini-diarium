@@ -1,7 +1,7 @@
 import { isAnyOverlayOpen, setIsGoToDateOpen, setIsSearchOpen } from '../state/ui';
 import {
-  goToPreviousDay,
-  goToNextDay,
+  goToPreviousEntryDay,
+  goToNextEntryDay,
   goToToday,
   goToPreviousMonth,
   goToNextMonth,
@@ -14,13 +14,13 @@ import {
  * saw the keystroke. The native menu was reduced to Preferences + Quit (TODO-0065), so
  * each one is now a plain `keydown` listener on `document`:
  *
- * | Combo               | Action                |
- * |---------------------|-----------------------|
- * | `Mod+[` / `Mod+]`   | previous / next day   |
- * | `Mod+Shift+[` / `]` | previous / next month |
- * | `Mod+T`             | go to today           |
- * | `Mod+G`             | Go to Date overlay    |
- * | `Mod+F`             | search overlay        |
+ * | Combo               | Action                            |
+ * |---------------------|-----------------------------------|
+ * | `Mod+[` / `Mod+]`   | previous / next day with an entry |
+ * | `Mod+Shift+[` / `]` | previous / next month             |
+ * | `Mod+T`             | go to today                       |
+ * | `Mod+G`             | Go to Date overlay                |
+ * | `Mod+F`             | search overlay                    |
  *
  * `Mod` is Cmd on macOS, Ctrl elsewhere. `CmdOrCtrl+,` (Preferences) is deliberately
  * *not* here — it remains a native accelerator on the surviving File/App menu.
@@ -42,12 +42,12 @@ export function handleAppShortcut(e: KeyboardEvent): void {
   // Bracket navigation: Shift selects month granularity.
   if (e.code === 'BracketLeft') {
     e.preventDefault();
-    void (e.shiftKey ? goToPreviousMonth() : goToPreviousDay());
+    void (e.shiftKey ? goToPreviousMonth() : goToPreviousEntryDay());
     return;
   }
   if (e.code === 'BracketRight') {
     e.preventDefault();
-    void (e.shiftKey ? goToNextMonth() : goToNextDay());
+    void (e.shiftKey ? goToNextMonth() : goToNextEntryDay());
     return;
   }
 

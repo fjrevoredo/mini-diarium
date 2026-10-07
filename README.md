@@ -148,15 +148,15 @@ For the diagrams and detailed data flows, see [docs/ARCHITECTURE.md](docs/ARCHIT
 
 ## Keyboard Shortcuts
 
-| Action         | Shortcut       |
-| -------------- | -------------- |
-| Previous Day   | `Ctrl+[`       |
-| Next Day       | `Ctrl+]`       |
-| Go to Today    | `Ctrl+T`       |
-| Go to Date     | `Ctrl+G`       |
-| Previous Month | `Ctrl+Shift+[` |
-| Next Month     | `Ctrl+Shift+]` |
-| Preferences    | `Ctrl+,`       |
+| Action                     | Shortcut       |
+| -------------------------- | -------------- |
+| Previous day with an entry | `Ctrl+[`       |
+| Next day with an entry     | `Ctrl+]`       |
+| Go to Today                | `Ctrl+T`       |
+| Go to Date                 | `Ctrl+G`       |
+| Previous Month             | `Ctrl+Shift+[` |
+| Next Month                 | `Ctrl+Shift+]` |
+| Preferences                | `Ctrl+,`       |
 
 Statistics, Import, and Export are available via the Journal menu (no default keyboard accelerators).
 

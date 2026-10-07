@@ -136,27 +136,38 @@ describe('Header in-app actions', () => {
     expect(await dateTitle.getText()).toBe(before);
   });
 
-  // The one keyboard-shortcut check (TODO-0065). Ctrl+[ used to be an OS-level
-  // menu accelerator that fired before the WebView saw the keystroke; it is now a
-  // JS keydown handler, and only a real WebView run can prove the swap works.
-  // Ctrl+] restores the original date so later checks start where they expect.
-  it('moves the day back via the Ctrl+[ keyboard shortcut', async () => {
+  // The one keyboard-shortcut check (TODO-0065, reworked for TODO-0126). Ctrl+[ used to
+  // be an OS-level menu accelerator; it is now a JS keydown handler, and only a real
+  // WebView run can prove the swap works. The shortcut jumps to the previous day *with
+  // an entry* (the ◀ button steps one calendar day), so it must not land on the empty
+  // calendar day directly before the current one. Unit tests cover the gap/tag-filter
+  // logic; this proves the real key event reaches the entry-day handler.
+  it('does not step onto an empty previous day via the Ctrl+[ keyboard shortcut', async () => {
     const dateTitle = $('[data-testid="header-date-title"]');
     await dateTitle.waitForDisplayed({ timeout: 10000 });
     const before = await dateTitle.getText();
 
-    await browser.keys([Key.Ctrl, '[']);
+    // Learn what "one calendar day back" looks like via the ◀ button, then return.
+    const prev = $('[data-testid="header-prev-day-button"]');
+    await prev.waitForClickable({ timeout: 5000 });
+    await prev.click();
     await browser.waitUntil(async () => (await dateTitle.getText()) !== before, {
       timeout: 5000,
-      timeoutMsg: 'Header date title did not change after pressing Ctrl+[',
+      timeoutMsg: 'Header date title did not change after clicking Previous day',
     });
-    expect(await dateTitle.getText()).not.toBe(before);
-
-    await browser.keys([Key.Ctrl, ']']);
+    const emptyDayBefore = await dateTitle.getText();
+    const next = $('[data-testid="header-next-day-button"]');
+    await next.click();
     await browser.waitUntil(async () => (await dateTitle.getText()) === before, {
       timeout: 5000,
-      timeoutMsg: 'Header date title did not return to the original date after pressing Ctrl+]',
+      timeoutMsg: 'Header date title did not return after clicking Next day',
     });
+
+    // Ctrl+[ either stays put (no earlier entry) or jumps to an older entry day; it must
+    // never land on the adjacent empty day. Give the handler time to (not) navigate.
+    await browser.keys([Key.Ctrl, '[']);
+    await browser.pause(500);
+    expect(await dateTitle.getText()).not.toBe(emptyDayBefore);
   });
 
   it('opens the Go to Date overlay when the Header date title is clicked', async () => {

@@ -28,6 +28,8 @@ Mini Diarium supports keyboard shortcuts for all navigation actions. On macOS, u
 | Next month | `Ctrl+Shift+]` |
 | Open preferences | `Ctrl+,` |
 
+`Ctrl+[` and `Ctrl+]` skip days without entries. While a [tag filter](writing-entries#browsing-entries-by-tag) is active, they only visit days that have an entry with that tag. At the first or last entry they do nothing.
+
 ## Go to Date
 
 Press `Ctrl+G` to open the date picker and jump directly to any date. This is the fastest way to navigate to a specific day without scrolling through the calendar month by month. You can also click the date title in the header to open the same date picker.
@@ -36,7 +38,7 @@ Press `Ctrl+G` to open the date picker and jump directly to any date. This is th
 
 ## Header Day Controls
 
-The header shows the current day's date, flanked by a `◀` previous-day button and a `▶` next-day button. Click them to step one day at a time. When [future entries are disabled](preferences), the next-day button stops at today. Clicking the date title itself opens the Go to Date picker.
+The header shows the current day's date, flanked by a `◀` previous-day button and a `▶` next-day button. Click them to step one calendar day at a time. Unlike `Ctrl+[` and `Ctrl+]`, they do not skip empty days. When [future entries are disabled](preferences), the next-day button stops at today. Clicking the date title itself opens the Go to Date picker.
 
 ## Month Navigation
 

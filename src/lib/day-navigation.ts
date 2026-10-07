@@ -1,5 +1,7 @@
 import { selectedDate, requestDateChange } from '../state/ui';
 import { preferences } from '../state/preferences';
+import { entryDates } from '../state/entries';
+import { tagFilteredDates } from '../state/tags';
 import {
   navigatePreviousDay,
   navigateNextDay,
@@ -19,10 +21,54 @@ function clampToToday(date: string): string {
 }
 
 /**
- * Move the selected date to the previous day.
+ * Dates the entry-day shortcuts may land on. Same expression the Calendar uses for its
+ * entry dots, so the shortcut and the dots always agree (including under a tag filter).
+ */
+function candidateEntryDates(): string[] {
+  return tagFilteredDates() ?? entryDates();
+}
+
+/** Move to `target` through the navigation guard; a null target means "stay put". */
+async function moveToEntryDay(target: string | null): Promise<void> {
+  if (target === null) return;
+  try {
+    await requestDateChange(target);
+  } catch (error) {
+    log.error('Failed to navigate to entry day:', error);
+  }
+}
+
+/**
+ * Jump to the closest earlier day that has an entry. Does nothing when there is none.
+ * Bound to `Mod+[`; the Header ◀ button steps one calendar day instead.
+ */
+export async function goToPreviousEntryDay(): Promise<void> {
+  const current = selectedDate();
+  let target: string | null = null;
+  for (const d of candidateEntryDates()) {
+    if (d < current && (target === null || d > target)) target = d;
+  }
+  await moveToEntryDay(target);
+}
+
+/**
+ * Jump to the closest later day that has an entry. Does nothing when there is none.
+ * No `clampToToday`: the target is an existing entry, so showing it is always safe.
+ * Bound to `Mod+]`; the Header ▶ button steps one calendar day instead.
+ */
+export async function goToNextEntryDay(): Promise<void> {
+  const current = selectedDate();
+  let target: string | null = null;
+  for (const d of candidateEntryDates()) {
+    if (d > current && (target === null || d < target)) target = d;
+  }
+  await moveToEntryDay(target);
+}
+
+/**
+ * Move the selected date to the previous calendar day.
  *
- * Single source of truth for previous-day navigation, shared by the Header ◀ button
- * and the `Mod+[` shortcut (`src/lib/keyboard-shortcuts.ts`).
+ * Used by the Header ◀ button. The `Mod+[` shortcut uses `goToPreviousEntryDay`.
  */
 export async function goToPreviousDay(): Promise<void> {
   try {
@@ -37,8 +83,7 @@ export async function goToPreviousDay(): Promise<void> {
  * Move the selected date to the next day, clamping to today when future entries
  * are disabled (`preferences().allowFutureEntries === false`).
  *
- * Single source of truth for next-day navigation, shared by the Header ▶ button
- * and the `Mod+]` shortcut (`src/lib/keyboard-shortcuts.ts`).
+ * Used by the Header ▶ button. The `Mod+]` shortcut uses `goToNextEntryDay`.
  */
 export async function goToNextDay(): Promise<void> {
   try {

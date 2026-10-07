@@ -11,6 +11,7 @@ import {
   setSelectedDate,
 } from '../../state/ui';
 import { setPreferences, resetPreferences } from '../../state/preferences';
+import { setEntryDates } from '../../state/entries';
 
 const mockClose = vi.hoisted(() => vi.fn(() => Promise.resolve()));
 
@@ -105,6 +106,7 @@ describe('MainLayout navigation wiring', () => {
     resetPreferences();
     eventMocks.listeners.clear();
     eventMocks.navigatePreviousDay.mockReset();
+    setEntryDates([]);
   });
 
   afterEach(() => {
@@ -112,8 +114,8 @@ describe('MainLayout navigation wiring', () => {
     resetPreferences();
   });
 
-  it('previous-day shortcut navigates from the CURRENT selected date, not the initial one', async () => {
-    eventMocks.navigatePreviousDay.mockResolvedValue('2024-01-19');
+  it('previous-entry-day shortcut navigates from the CURRENT selected date, not the initial one', async () => {
+    setEntryDates(['2024-01-10', '2024-01-19', '2024-01-25']);
 
     renderWithI18n(() => <MainLayout />);
 
@@ -125,8 +127,8 @@ describe('MainLayout navigation wiring', () => {
       new KeyboardEvent('keydown', { key: '[', code: 'BracketLeft', ctrlKey: true, bubbles: true }),
     );
 
-    await waitFor(() => expect(eventMocks.navigatePreviousDay).toHaveBeenCalledWith('2024-01-20'));
     await waitFor(() => expect(selectedDate()).toBe('2024-01-19'));
+    expect(eventMocks.navigatePreviousDay).not.toHaveBeenCalled();
   });
 
   it('registers the surviving menu-preferences listener and opens Preferences', async () => {

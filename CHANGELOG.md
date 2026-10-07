@@ -36,6 +36,9 @@ Template:
 
 ## [0.7.4] - [Unreleased]
 
+### Fixed
+- **`Ctrl+[` / `Ctrl+]` jump to the previous/next day with an entry (TODO-0126, #312)**: The shortcuts stepped one calendar day, so they landed on empty days, although the docs say "day with an entry". They now skip empty days. While a tag filter is active, they visit only days that have an entry with that tag. At the first or last entry they do nothing. The Header ◀/▶ buttons still step one day. `Ctrl+Shift+[` / `Ctrl+Shift+]` still move by month.
+
 ### Added
 - **File attachments on entries (TODO-0114)**: Attach documents, PDFs, short videos, or any other file (up to 20 MB each) to an entry. Attachments show as email-style chips under the editor, next to the tags. Click a chip to save a decrypted copy to a location you choose; the copy must keep the attachment's file extension. You can also place an optional inline 📎 reference to an attachment in the entry text; the reference only points to the attachment and shows as missing if you remove it. A locked entry hides the attach, remove, and insert-reference controls but still allows saving a copy. An entry with attachments is never auto-deleted as empty.
     - **Export**: Markdown export writes each attachment as a decrypted file into the `assets/` folder and links it from the entry. JSON export adds an `attachments` array (name, MIME type, size) per entry. Print / PDF lists the attachment names. Custom Rhai export plugins do not receive attachment data.

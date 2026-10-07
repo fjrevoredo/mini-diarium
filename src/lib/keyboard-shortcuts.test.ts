@@ -10,6 +10,7 @@ import {
   setSelectedDate,
 } from '../state/ui';
 import { setPreferences } from '../state/preferences';
+import { setEntryDates } from '../state/entries';
 
 const {
   mockNavigatePreviousDay,
@@ -53,6 +54,7 @@ beforeEach(() => {
   resetUiState();
   setPreferences({ allowFutureEntries: true });
   setSelectedDate('2024-01-15');
+  setEntryDates([]);
   mockNavigatePreviousDay.mockResolvedValue('2024-01-14');
   mockNavigateNextDay.mockResolvedValue('2024-01-16');
   mockNavigateToToday.mockResolvedValue('2026-07-25');
@@ -67,20 +69,33 @@ afterEach(() => {
 });
 
 describe('keyboard-shortcuts', () => {
-  it('Mod+[ navigates to the previous day', async () => {
+  it('Mod+[ navigates to the previous day with an entry', async () => {
+    setEntryDates(['2024-01-05', '2024-01-10', '2024-01-20']);
+
     expect(press({ key: '[', code: 'BracketLeft', ctrlKey: true })).toBe(true);
     await flush();
 
-    expect(mockNavigatePreviousDay).toHaveBeenCalledWith('2024-01-15');
-    expect(selectedDate()).toBe('2024-01-14');
+    expect(mockNavigatePreviousDay).not.toHaveBeenCalled();
+    expect(selectedDate()).toBe('2024-01-10');
   });
 
-  it('Mod+] navigates to the next day', async () => {
+  it('Mod+] navigates to the next day with an entry', async () => {
+    setEntryDates(['2024-01-05', '2024-01-10', '2024-01-20']);
+
     expect(press({ key: ']', code: 'BracketRight', ctrlKey: true })).toBe(true);
     await flush();
 
-    expect(mockNavigateNextDay).toHaveBeenCalledWith('2024-01-15');
-    expect(selectedDate()).toBe('2024-01-16');
+    expect(mockNavigateNextDay).not.toHaveBeenCalled();
+    expect(selectedDate()).toBe('2024-01-20');
+  });
+
+  it('Mod+[ stays put when no earlier day has an entry', async () => {
+    setEntryDates(['2024-01-20']);
+
+    expect(press({ key: '[', code: 'BracketLeft', ctrlKey: true })).toBe(true);
+    await flush();
+
+    expect(selectedDate()).toBe('2024-01-15');
   });
 
   // With Shift held, `e.key` is '{' on a US layout — matching on e.key would miss this
@@ -128,10 +143,12 @@ describe('keyboard-shortcuts', () => {
   });
 
   it('uses metaKey as the modifier too (macOS Cmd)', async () => {
+    setEntryDates(['2024-01-10']);
+
     expect(press({ key: '[', code: 'BracketLeft', metaKey: true })).toBe(true);
     await flush();
 
-    expect(mockNavigatePreviousDay).toHaveBeenCalledTimes(1);
+    expect(selectedDate()).toBe('2024-01-10');
   });
 
   it('ignores the bare key without a modifier', async () => {

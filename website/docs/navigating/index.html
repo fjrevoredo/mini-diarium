@@ -345,7 +345,7 @@
       "@id": "https://mini-diarium.com/docs/navigating/#article",
       "headline": "Navigating Your Journal",
       "description": "Navigate your journal using the sidebar calendar, keyboard shortcuts, and day-navigation buttons. Jump to any date, go to today, and browse your entry history.",
-      "dateModified": "2026-09-06T00:00:00Z",
+      "dateModified": "2026-10-08T00:00:00Z",
       "keywords": "navigation, calendar, keyboard shortcuts, dates",
       "publisher": {
         "@type": "Organization",
@@ -579,9 +579,10 @@
         <td><code>Ctrl+,</code></td>
         </tr>
         </tbody></table>
+        <p><code>Ctrl+[</code> and <code>Ctrl+]</code> skip days without entries. While a <a href="writing-entries#browsing-entries-by-tag">tag filter</a> is active, they only visit days that have an entry with that tag. At the first or last entry they do nothing.</p>
         <h2 id="go-to-date">Go to Date</h2><p>Press <code>Ctrl+G</code> to open the date picker and jump directly to any date. This is the fastest way to navigate to a specific day without scrolling through the calendar month by month. You can also click the date title in the header to open the same date picker.</p>
         <figure class="prose-figure"><img src="/assets/docs/writing-entries-03-goto-date.webp" alt="Go to Date dialog with day, month, and year fields, over an entry that has multiple entries for the same date" loading="lazy" width="1130" height="560" /><figcaption>The Go to Date dialog</figcaption></figure>
-        <h2 id="header-day-controls">Header Day Controls</h2><p>The header shows the current day&#39;s date, flanked by a <code>◀</code> previous-day button and a <code>▶</code> next-day button. Click them to step one day at a time. When <a href="preferences">future entries are disabled</a>, the next-day button stops at today. Clicking the date title itself opens the Go to Date picker.</p>
+        <h2 id="header-day-controls">Header Day Controls</h2><p>The header shows the current day&#39;s date, flanked by a <code>◀</code> previous-day button and a <code>▶</code> next-day button. Click them to step one calendar day at a time. Unlike <code>Ctrl+[</code> and <code>Ctrl+]</code>, they do not skip empty days. When <a href="preferences">future entries are disabled</a>, the next-day button stops at today. Clicking the date title itself opens the Go to Date picker.</p>
         <h2 id="month-navigation">Month Navigation</h2><p>Click the <code>‹</code> and <code>›</code> arrows on the calendar header to move to the previous or next month. The keyboard shortcuts <code>Ctrl+Shift+[</code> and <code>Ctrl+Shift+]</code> do the same.</p>
         
         
