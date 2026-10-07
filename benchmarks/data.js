@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1791409717546,
+  "lastUpdate": 1791415742632,
   "repoUrl": "https://github.com/fjrevoredo/mini-diarium",
   "entries": {
     "Benchmark": [
@@ -37942,6 +37942,36 @@ window.BENCHMARK_DATA = {
           {
             "name": "ci_pipeline_duration",
             "value": 584000000000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "committer": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "distinct": false,
+          "id": "3ddc537b2b778d4c6bac64c789ce0c0d804b956a",
+          "message": "Fix Ctrl+[ / Ctrl+] to jump to previous/next day with an entry (TODO-0126, #312)\n\nThe shortcuts stepped one calendar day, although the docs say \"day with an\nentry\". They now pick the closest earlier/later date from\ntagFilteredDates() ?? entryDates(), do nothing when none exists, and still go\nthrough requestDateChange. The Header buttons keep one-day stepping.\n\nUpdate docs, CHANGELOG, TODO, unit tests and the E2E shortcut check.",
+          "timestamp": "2026-10-08T01:16:07+02:00",
+          "tree_id": "3a618946859fa510cc454f9f9f843cc8622f86fe",
+          "url": "https://github.com/fjrevoredo/mini-diarium/commit/3ddc537b2b778d4c6bac64c789ce0c0d804b956a"
+        },
+        "date": 1791415741222,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "ci_pipeline_duration",
+            "value": 577000000000,
             "range": "± 0",
             "unit": "ns/iter"
           }
