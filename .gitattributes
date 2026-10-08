@@ -25,3 +25,11 @@ website/blog/feed.xml text eol=lf
 website/llms.txt      text eol=lf
 website/docs/*.md      text eol=lf
 website/llms-full.txt  text eol=lf
+
+# Prettier enforces LF (its default endOfLine) on everything `format:check` covers.
+# Without this pin, core.autocrlf=true on Windows rewrites these files as CRLF on
+# every checkout/pull, so `bun run format:check` fails locally on files nobody edited
+# while CI on Linux passes.
+src/**/*.ts   text eol=lf
+src/**/*.tsx  text eol=lf
+src/**/*.css  text eol=lf
