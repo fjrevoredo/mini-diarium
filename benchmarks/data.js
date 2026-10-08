@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1791500755685,
+  "lastUpdate": 1791501467395,
   "repoUrl": "https://github.com/fjrevoredo/mini-diarium",
   "entries": {
     "Benchmark": [
@@ -38092,6 +38092,36 @@ window.BENCHMARK_DATA = {
           {
             "name": "ci_pipeline_duration",
             "value": 572000000000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "committer": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "distinct": true,
+          "id": "eed457f5650c7a94c0b6a474882abde15e274fab",
+          "message": "Migrate local OpenCode plugins to the v2 plugin API\n\nOpenCode 2.x requires a default-exported plugin definition with an id and a setup function. The local kdco plugins used the v1 shape, so OpenCode reported three plugin failures.\n\n- notify.ts: default-export { id, setup, server }. setup re-registers the v1 hooks through ctx.tool.hook and ctx.event.subscribe. Read the session through a shape-tolerant helper that supports both v1 and v2.\n\n- kdco-primitives/index.ts: expose a no-op plugin definition because v2 loads every index entry under .opencode/plugins/.\n\n- worktree/terminal.ts: add the missing canUseCmuxWorkflow helper that notify/cmux.ts imports.",
+          "timestamp": "2026-10-09T01:07:16+02:00",
+          "tree_id": "43ac1b57ccd50a5ec2f8885c7dd777bdb72c9a86",
+          "url": "https://github.com/fjrevoredo/mini-diarium/commit/eed457f5650c7a94c0b6a474882abde15e274fab"
+        },
+        "date": 1791501466157,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "ci_pipeline_duration",
+            "value": 586000000000,
             "range": "± 0",
             "unit": "ns/iter"
           }
