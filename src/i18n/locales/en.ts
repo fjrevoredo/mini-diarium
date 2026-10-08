@@ -63,6 +63,7 @@ const en = {
   timeline: {
     title: 'Timeline',
     empty: 'No entries yet.',
+    emptyForTag: 'No entries with the tag "{{ name }}".',
     untitled: 'Untitled',
     openEntry: 'Open entry from {{ date }}',
     lockedIndicator: 'Locked entry',
@@ -478,6 +479,9 @@ const en = {
       timelinePreviewLabel: 'Show entry preview',
       timelinePreviewHint:
         'When disabled, each timeline row shows only the date and the title, without the first line of the entry.',
+      timelineTagsLabel: 'Show tags',
+      timelineTagsHint:
+        "Shows each entry's tags under its row. Click a tag to show only the entries that have it.",
     },
     security: {
       authMethodsTitle: 'Authentication Methods',

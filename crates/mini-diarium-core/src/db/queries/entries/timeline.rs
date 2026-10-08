@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::db::schema::DatabaseConnection;
 
 /// Maximum number of characters kept in a timeline preview.
@@ -53,6 +55,9 @@ pub struct TimelineRow {
     pub preview: String,
     /// UX-only per-entry lock flag (plaintext column; cheap to read here).
     pub locked: bool,
+    /// Ids of the tags on this entry, ascending. Read from the plaintext `entry_tags`
+    /// join table — no decryption. Callers resolve names from the decrypted tag list.
+    pub tag_ids: Vec<i64>,
 }
 
 /// Newest-first timeline query. Decrypts only title and preview_enc.
@@ -72,6 +77,8 @@ pub fn get_entries_for_timeline(db: &DatabaseConnection) -> Result<Vec<TimelineR
              FROM entries ORDER BY date DESC, id DESC",
         )
         .map_err(|e| format!("Failed to prepare timeline query: {}", e))?;
+
+    let mut tag_ids_by_entry = get_tag_ids_by_entry(db)?;
 
     let rows: Vec<TimelineRow> = stmt
         .query_map([], |row| {
@@ -110,12 +117,34 @@ pub fn get_entries_for_timeline(db: &DatabaseConnection) -> Result<Vec<TimelineR
                     title,
                     preview,
                     locked,
+                    tag_ids: tag_ids_by_entry.remove(&id).unwrap_or_default(),
                 })
             },
         )
         .collect::<Result<Vec<_>, String>>()?;
 
     Ok(rows)
+}
+
+/// Maps each tagged entry id to its tag ids (ascending). One query over the plaintext
+/// `entry_tags` join table, so the timeline needs no per-entry lookups.
+fn get_tag_ids_by_entry(db: &DatabaseConnection) -> Result<HashMap<i64, Vec<i64>>, String> {
+    let mut stmt = db
+        .conn()
+        .prepare("SELECT entry_id, tag_id FROM entry_tags ORDER BY entry_id, tag_id")
+        .map_err(|e| format!("Failed to prepare timeline tags query: {}", e))?;
+
+    let pairs = stmt
+        .query_map([], |row| Ok((row.get::<_, i64>(0)?, row.get::<_, i64>(1)?)))
+        .map_err(|e| format!("Failed to query timeline tags: {}", e))?
+        .collect::<Result<Vec<_>, _>>()
+        .map_err(|e| format!("Failed to read timeline tag row: {}", e))?;
+
+    let mut map: HashMap<i64, Vec<i64>> = HashMap::new();
+    for (entry_id, tag_id) in pairs {
+        map.entry(entry_id).or_default().push(tag_id);
+    }
+    Ok(map)
 }
 
 /// Returns the distinct dates (YYYY-MM-DD) that have at least one locked entry.
@@ -348,5 +377,56 @@ mod tests {
         let rows = get_entries_for_timeline(&db).unwrap();
         assert_eq!(rows.len(), 1);
         assert!(rows[0].locked, "timeline row must reflect locked flag");
+    }
+
+    #[test]
+    fn test_timeline_tag_ids_are_per_entry() {
+        use crate::db::queries::tags::{add_tag_to_entry, create_tag};
+
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+
+        let make = |date: &str, title: &str| DiaryEntry {
+            id: 0,
+            date: date.to_string(),
+            title: title.to_string(),
+            text: "<p>x</p>".to_string(),
+            word_count: 1,
+            date_created: "2024-01-01T00:00:00Z".to_string(),
+            date_updated: "2024-01-01T00:00:00Z".to_string(),
+            metadata: None,
+            locked: false,
+        };
+
+        // Two entries on the same day: only the first one carries the tag.
+        insert_entry(&db, &make("2024-05-01", "Tagged")).unwrap();
+        let tagged_id = db.conn().last_insert_rowid();
+        insert_entry(&db, &make("2024-05-01", "Sibling")).unwrap();
+        let sibling_id = db.conn().last_insert_rowid();
+        insert_entry(&db, &make("2024-06-01", "Two tags")).unwrap();
+        let two_tags_id = db.conn().last_insert_rowid();
+
+        let work = create_tag(&db, "work").unwrap();
+        let travel = create_tag(&db, "travel").unwrap();
+        add_tag_to_entry(&db, tagged_id, work.id).unwrap();
+        add_tag_to_entry(&db, two_tags_id, travel.id).unwrap();
+        add_tag_to_entry(&db, two_tags_id, work.id).unwrap();
+
+        let rows = get_entries_for_timeline(&db).unwrap();
+        let tags_of = |id: i64| {
+            rows.iter()
+                .find(|r| r.id == id)
+                .map(|r| r.tag_ids.clone())
+                .unwrap()
+        };
+
+        assert_eq!(tags_of(tagged_id), vec![work.id]);
+        assert!(
+            tags_of(sibling_id).is_empty(),
+            "untagged sibling on the same day must not inherit the tag"
+        );
+        let mut expected = vec![work.id, travel.id];
+        expected.sort_unstable();
+        assert_eq!(tags_of(two_tags_id), expected);
     }
 }

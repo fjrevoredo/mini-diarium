@@ -3,7 +3,7 @@ title: Preferences
 slug: preferences
 description: Configure Mini Diarium from the Preferences panel: choose a theme, set auto-lock timeout, adjust editor font and size, manage authentication methods, and more.
 order: 8
-updated: 2026-09-06
+updated: 2026-10-08
 tags: preferences, settings, theme, auto-lock, configuration
 ---
 
@@ -35,6 +35,7 @@ Preferences are now **close-only**: there is no Save/Cancel footer. Reversible s
 | Editor font | Choose an app-wide default font family for the editor body from bundled options or uploaded custom fonts. When an entry has an entry-specific font default or inline font formatting applied to the selection, those take precedence over this app default. See Writing Entries for the full three-level font system. |
 | Timeline → Date format | Choose how the date is written next to each row in the Timeline view: Full ("Monday, January 15, 2024"), Long ("January 15, 2024"), Medium ("Jan 15, 2024"), Short ("1/15/24"), or ISO ("2024-01-15"). Every style except ISO follows your interface language; ISO is always `YYYY-MM-DD`, which keeps the date column a fixed width. Each option in the dropdown shows a live example using today's date. The default is Full. |
 | Timeline → Show entry preview | Show or hide the first line of each entry underneath its title in the Timeline view. When turned off, each row collapses to just the date and the title, which fits more entries on screen. On by default. |
+| Timeline → Show tags | Show each entry's tags as chips under its row in the Timeline view. Click a chip to show only the entries that have that tag, and click it again to clear the filter. Turn the preview off and the tags on to see tags instead of the first line. Off by default. |
 
 Timestamp format and precision are configured from the editor timestamp popup (clock button), not from Preferences.
 

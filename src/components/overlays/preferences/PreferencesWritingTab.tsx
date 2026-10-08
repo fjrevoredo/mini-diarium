@@ -371,6 +371,24 @@ export default function PreferencesWritingTab(_props: TabProps) {
             {t('prefs.writing.timelinePreviewHint')}
           </p>
         </div>
+
+        <div class="space-y-2 mt-4">
+          <div class="flex items-center">
+            <input
+              type="checkbox"
+              id="show-timeline-tags"
+              checked={preferences().showTimelineTags}
+              onChange={(e) => setPreferences({ showTimelineTags: e.currentTarget.checked })}
+              class="h-4 w-4 rounded border-primary text-blue-600 focus:ring-blue-500"
+            />
+            <label for="show-timeline-tags" class="ml-3 text-sm text-secondary">
+              {t('prefs.writing.timelineTagsLabel')}
+            </label>
+          </div>
+          <p class="ml-7 text-xs text-tertiary leading-relaxed">
+            {t('prefs.writing.timelineTagsHint')}
+          </p>
+        </div>
       </div>
     </div>
   );

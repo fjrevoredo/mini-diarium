@@ -216,8 +216,14 @@ Click a tag chip's **name** (not the × button) to activate a tag filter. While 
 - The sidebar opens automatically so the calendar is visible.
 - Calendar dot indicators narrow to show only dates that have entries tagged with that tag.
 - A banner above the calendar shows the active tag name and a `×` button to clear the filter.
+- The Timeline view lists only the entries that have the tag. The filter applies to each entry, not to each day: if a day has two entries and only one has the tag, only that one is listed. When no entry has the tag, the Timeline says so.
+- On a narrow window, where the sidebar is hidden, the Timeline shows its own banner with the tag name and a `×` button.
 
-Click the same chip again, or press `×` in the banner, to return to the full unfiltered calendar. The filter persists across month navigation and is cleared automatically when you lock the journal or delete the filtered tag in Tag Manager.
+Click the same chip again, or press `×` in a banner, to return to the full unfiltered calendar and Timeline. The filter persists across month navigation and is cleared automatically when you lock the journal or delete the filtered tag in Tag Manager.
+
+Click a row in the Timeline to open that exact entry, even on a day with more than one entry.
+
+To see tags in the Timeline itself, turn on **Preferences → Writing → Timeline → Show tags**. Each row then shows its tags as chips. Click a chip to filter by that tag, and click it again to clear the filter.
 
 Tag names are encrypted with the same key as your diary entries. They are never stored as readable text in the database file.
 

@@ -41,6 +41,7 @@
   "timeline": {
     "title": "Cronología",
     "empty": "Aún no hay entradas.",
+    "emptyForTag": "No hay entradas con la etiqueta «{{ name }}».",
     "untitled": "Sin título",
     "lockedIndicator": "Entrada bloqueada",
     "openEntry": "Abrir la entrada del {{ date }}"
@@ -398,7 +399,9 @@
       "timelineDateFormatShort": "Corto",
       "timelineDateFormatIso": "ISO (AAAA-MM-DD)",
       "timelinePreviewLabel": "Mostrar vista previa de la entrada",
-      "timelinePreviewHint": "Cuando se desactiva, cada fila de la cronología muestra solo la fecha y el título, sin la primera línea de la entrada."
+      "timelinePreviewHint": "Cuando se desactiva, cada fila de la cronología muestra solo la fecha y el título, sin la primera línea de la entrada.",
+      "timelineTagsLabel": "Mostrar etiquetas",
+      "timelineTagsHint": "Muestra las etiquetas de cada entrada debajo de su fila. Haz clic en una etiqueta para ver solo las entradas que la tienen."
     },
     "security": {
       "authMethodsTitle": "Métodos de autenticación",

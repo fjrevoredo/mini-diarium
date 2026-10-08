@@ -41,6 +41,7 @@
   "timeline": {
     "title": "Linha do tempo",
     "empty": "Ainda não há entradas.",
+    "emptyForTag": "Nenhuma entrada com a etiqueta \"{{ name }}\".",
     "untitled": "Sem título",
     "lockedIndicator": "Entrada bloqueada",
     "openEntry": "Abrir entrada de {{ date }}"
@@ -398,7 +399,9 @@
       "timelineDateFormatShort": "Curto",
       "timelineDateFormatIso": "ISO (AAAA-MM-DD)",
       "timelinePreviewLabel": "Mostrar prévia da entrada",
-      "timelinePreviewHint": "Quando desativado, cada linha da linha do tempo mostra apenas a data e o título, sem a primeira linha da entrada."
+      "timelinePreviewHint": "Quando desativado, cada linha da linha do tempo mostra apenas a data e o título, sem a primeira linha da entrada.",
+      "timelineTagsLabel": "Mostrar etiquetas",
+      "timelineTagsHint": "Mostra as etiquetas de cada entrada abaixo da linha dela. Clique em uma etiqueta para ver só as entradas que a têm."
     },
     "security": {
       "authMethodsTitle": "Métodos de autenticação",

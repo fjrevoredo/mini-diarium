@@ -2,12 +2,16 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { screen, waitFor } from '@solidjs/testing-library';
 import { renderWithI18n } from '../../test/i18n-test-utils';
 import { setEntryDates, registerNavigationGuard } from '../../state/entries';
-import { selectedDate, mainView, setMainView, resetUiState } from '../../state/ui';
+import { selectedDate, selectedEntryId, mainView, setMainView, resetUiState } from '../../state/ui';
 import { setPreferences } from '../../state/preferences';
-import type { TimelineEntry } from '../../lib/tauri';
+import { activeTagFilter, loadAllTags, resetTagsState, setTagFilter } from '../../state/tags';
+import type { Tag, TimelineEntry } from '../../lib/tauri';
+import { makeTimelineEntry } from '../../test/fixtures';
 
 const mocks = vi.hoisted(() => ({
   getTimelineEntries: vi.fn(),
+  getAllTags: vi.fn(),
+  getEntryDatesByTag: vi.fn(),
 }));
 
 vi.mock('../../lib/tauri', async () => {
@@ -15,23 +19,44 @@ vi.mock('../../lib/tauri', async () => {
   return {
     ...actual,
     getTimelineEntries: mocks.getTimelineEntries,
+    getAllTags: mocks.getAllTags,
+    getEntryDatesByTag: mocks.getEntryDatesByTag,
   };
 });
 
 import Timeline from './Timeline';
 
 const ENTRIES: TimelineEntry[] = [
-  { id: 2, date: '2026-02-01', title: 'Second entry', preview: 'A later day', locked: false },
-  { id: 1, date: '2026-01-01', title: 'First entry', preview: 'The beginning', locked: false },
+  makeTimelineEntry({ id: 2, date: '2026-02-01', title: 'Second entry', preview: 'A later day' }),
+  makeTimelineEntry({ id: 1, date: '2026-01-01', title: 'First entry', preview: 'The beginning' }),
+];
+
+const WORK: Tag = { id: 10, name: 'Work', created_at: '2026-01-01T00:00:00Z' };
+const TRAVEL: Tag = { id: 11, name: 'Travel', created_at: '2026-01-01T00:00:00Z' };
+
+// Two entries on the same day, only one tagged: the filter must work per entry, not per date.
+const TAGGED_ENTRIES: TimelineEntry[] = [
+  makeTimelineEntry({ id: 3, date: '2026-03-01', title: 'Work trip', tag_ids: [10, 11] }),
+  makeTimelineEntry({ id: 2, date: '2026-03-01', title: 'Untagged sibling', tag_ids: [] }),
+  makeTimelineEntry({ id: 1, date: '2026-02-01', title: 'Holiday', tag_ids: [11] }),
 ];
 
 describe('Timeline', () => {
   beforeEach(() => {
     mocks.getTimelineEntries.mockReset();
+    mocks.getAllTags.mockReset();
+    mocks.getEntryDatesByTag.mockReset();
+    mocks.getEntryDatesByTag.mockResolvedValue([]);
     setEntryDates(['2026-01-01', '2026-02-01']);
     resetUiState();
+    resetTagsState();
     // Preference state is module-global and persisted, so leakage between tests is real.
-    setPreferences({ timelineDateFormat: 'full', showTimelinePreview: true, language: 'en' });
+    setPreferences({
+      timelineDateFormat: 'full',
+      showTimelinePreview: true,
+      showTimelineTags: false,
+      language: 'en',
+    });
   });
 
   it('renders the list of entries', async () => {
@@ -185,5 +210,133 @@ describe('Timeline', () => {
     expect(indicators).toHaveLength(1);
     // The indicator is a non-interactive badge, not a button.
     expect(indicators[0].tagName).not.toBe('BUTTON');
+  });
+
+  // ── TODO-0124: tag filter, tag chips, exact-entry deep-link ──
+
+  it('opening a row deep-links the clicked entry, not the day', async () => {
+    mocks.getTimelineEntries.mockResolvedValue(TAGGED_ENTRIES);
+    setMainView('timeline');
+    renderWithI18n(() => <Timeline />);
+    await waitFor(() => expect(screen.getByText('Untagged sibling')).toBeInTheDocument());
+
+    screen.getByText('Untagged sibling').click();
+
+    await waitFor(() => expect(mainView()).toBe('editor'));
+    expect(selectedEntryId()).toBe(2);
+    expect(selectedDate()).toBe('2026-03-01');
+  });
+
+  it('a denying guard leaves no stale deep-link behind', async () => {
+    const unregister = registerNavigationGuard(async () => false);
+    try {
+      mocks.getTimelineEntries.mockResolvedValue(TAGGED_ENTRIES);
+      setMainView('timeline');
+      renderWithI18n(() => <Timeline />);
+      await waitFor(() => expect(screen.getByText('Holiday')).toBeInTheDocument());
+
+      screen.getByText('Holiday').click();
+
+      await waitFor(() => expect(selectedEntryId()).toBeNull());
+      expect(mainView()).toBe('timeline');
+    } finally {
+      unregister();
+    }
+  });
+
+  it('an active tag filter hides the untagged sibling on the same day', async () => {
+    mocks.getTimelineEntries.mockResolvedValue(TAGGED_ENTRIES);
+    await setTagFilter(WORK);
+
+    renderWithI18n(() => <Timeline />);
+
+    await waitFor(() => expect(screen.getByText('Work trip')).toBeInTheDocument());
+    expect(screen.queryByText('Untagged sibling')).not.toBeInTheDocument();
+    expect(screen.queryByText('Holiday')).not.toBeInTheDocument();
+  });
+
+  it('shows the filter banner with the tag name, and clearing it restores the full list', async () => {
+    mocks.getTimelineEntries.mockResolvedValue(TAGGED_ENTRIES);
+    await setTagFilter(TRAVEL);
+
+    renderWithI18n(() => <Timeline />);
+
+    const banner = await screen.findByTestId('timeline-tag-filter-banner');
+    expect(banner).toHaveTextContent('Tag filter: Travel');
+    expect(screen.queryByText('Untagged sibling')).not.toBeInTheDocument();
+
+    screen.getByRole('button', { name: 'Clear tag filter' }).click();
+
+    await waitFor(() => expect(screen.getByText('Untagged sibling')).toBeInTheDocument());
+    expect(activeTagFilter()).toBeNull();
+    expect(screen.queryByTestId('timeline-tag-filter-banner')).not.toBeInTheDocument();
+  });
+
+  it('shows a tag-specific empty message when no entry has the filtered tag', async () => {
+    mocks.getTimelineEntries.mockResolvedValue(ENTRIES);
+    await setTagFilter(WORK);
+
+    renderWithI18n(() => <Timeline />);
+
+    await waitFor(() =>
+      expect(screen.getByText('No entries with the tag "Work".')).toBeInTheDocument(),
+    );
+    expect(screen.queryByText('No entries yet.')).not.toBeInTheDocument();
+  });
+
+  it('does not render tag chips while the preference is off', async () => {
+    mocks.getAllTags.mockResolvedValue([TRAVEL, WORK]);
+    await loadAllTags();
+    mocks.getTimelineEntries.mockResolvedValue(TAGGED_ENTRIES);
+
+    renderWithI18n(() => <Timeline />);
+
+    await waitFor(() => expect(screen.getByText('Work trip')).toBeInTheDocument());
+    expect(screen.queryByTestId('timeline-tag-chip')).not.toBeInTheDocument();
+  });
+
+  it('renders the tags of each entry as chips when the preference is on', async () => {
+    mocks.getAllTags.mockResolvedValue([TRAVEL, WORK]);
+    await loadAllTags();
+    mocks.getTimelineEntries.mockResolvedValue(TAGGED_ENTRIES);
+    setPreferences({ showTimelineTags: true });
+
+    renderWithI18n(() => <Timeline />);
+
+    await waitFor(() => expect(screen.getByText('Work trip')).toBeInTheDocument());
+    const chips = screen.getAllByTestId('timeline-tag-chip');
+    // "Work trip" carries Travel + Work (name order), "Holiday" carries Travel, the sibling none.
+    expect(chips.map((c) => c.textContent)).toEqual(['Travel', 'Work', 'Travel']);
+  });
+
+  it('clicking a chip sets the filter, and clicking it again clears it', async () => {
+    mocks.getAllTags.mockResolvedValue([TRAVEL, WORK]);
+    await loadAllTags();
+    mocks.getTimelineEntries.mockResolvedValue(TAGGED_ENTRIES);
+    setPreferences({ showTimelineTags: true });
+
+    renderWithI18n(() => <Timeline />);
+    await waitFor(() => expect(screen.getByText('Work trip')).toBeInTheDocument());
+
+    const workChip = screen
+      .getAllByTestId('timeline-tag-chip')
+      .find((c) => c.textContent === 'Work')!;
+    expect(workChip).toHaveAttribute('title', 'Filter by tag');
+    workChip.click();
+
+    await waitFor(() => expect(activeTagFilter()?.id).toBe(WORK.id));
+    expect(mocks.getEntryDatesByTag).toHaveBeenCalledWith(WORK.id);
+    // A chip click does not open the entry.
+    expect(selectedEntryId()).toBeNull();
+    await waitFor(() => expect(screen.queryByText('Holiday')).not.toBeInTheDocument());
+
+    const activeChip = screen
+      .getAllByTestId('timeline-tag-chip')
+      .find((c) => c.textContent === 'Work')!;
+    expect(activeChip).toHaveAttribute('title', 'Clear tag filter');
+    activeChip.click();
+
+    await waitFor(() => expect(activeTagFilter()).toBeNull());
+    await waitFor(() => expect(screen.getByText('Holiday')).toBeInTheDocument());
   });
 });

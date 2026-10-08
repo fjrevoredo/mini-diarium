@@ -41,6 +41,7 @@
   "timeline": {
     "title": "टाइमलाइन",
     "empty": "अभी तक कोई प्रविष्टि नहीं।",
+    "emptyForTag": "\"{{ name }}\" टैग वाली कोई प्रविष्टि नहीं।",
     "untitled": "शीर्षकहीन",
     "lockedIndicator": "लॉक की गई प्रविष्टि",
     "openEntry": "{{ date }} की प्रविष्टि खोलें"
@@ -398,7 +399,9 @@
       "timelineDateFormatShort": "छोटा",
       "timelineDateFormatIso": "ISO (YYYY-MM-DD)",
       "timelinePreviewLabel": "प्रविष्टि की झलक दिखाएँ",
-      "timelinePreviewHint": "बंद होने पर, टाइमलाइन की हर पंक्ति में केवल दिनांक और शीर्षक दिखते हैं, प्रविष्टि की पहली पंक्ति नहीं।"
+      "timelinePreviewHint": "बंद होने पर, टाइमलाइन की हर पंक्ति में केवल दिनांक और शीर्षक दिखते हैं, प्रविष्टि की पहली पंक्ति नहीं।",
+      "timelineTagsLabel": "टैग दिखाएं",
+      "timelineTagsHint": "हर प्रविष्टि के टैग उसकी पंक्ति के नीचे दिखाता है। केवल उस टैग वाली प्रविष्टियाँ देखने के लिए किसी टैग पर क्लिक करें।"
     },
     "security": {
       "authMethodsTitle": "प्रमाणीकरण विधियाँ",

@@ -32,6 +32,23 @@ export async function setTagFilter(tag: Tag): Promise<void> {
   }
 }
 
+/**
+ * Re-fetches the dates of the active tag filter, for example after a tag was added to
+ * or removed from an entry. No-op when no filter is active. The response is dropped if
+ * the user changed or cleared the filter while it was in flight; on error the current
+ * dates stay.
+ */
+export async function refreshTagFilter(): Promise<void> {
+  const filter = activeTagFilter();
+  if (!filter) return;
+  try {
+    const dates = await getEntryDatesByTag(filter.id);
+    if (activeTagFilter()?.id === filter.id) setTagFilteredDates(dates);
+  } catch {
+    // Keep the current dates: a stale filter is better than a cleared one.
+  }
+}
+
 export function clearTagFilter(): void {
   setActiveTagFilterSignal(null);
   setTagFilteredDates(null);

@@ -142,4 +142,13 @@ describe('preferences — loadPreferences migration', () => {
     // The spread backfill must not clobber unrelated stored values.
     expect(preferences().hideTitles).toBe(true);
   });
+
+  it('defaults showTimelineTags to false for a stored value that predates the field (TODO-0124)', async () => {
+    localStorage.setItem('preferences', JSON.stringify({ showTimelinePreview: false }));
+
+    const { preferences } = await import('./preferences');
+
+    expect(preferences().showTimelineTags).toBe(false);
+    expect(preferences().showTimelinePreview).toBe(false);
+  });
 });

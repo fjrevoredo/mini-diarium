@@ -41,6 +41,7 @@
   "timeline": {
     "title": "Chronologie",
     "empty": "Aucune entrée pour le moment.",
+    "emptyForTag": "Aucune entrée avec l'étiquette « {{ name }} ».",
     "untitled": "Sans titre",
     "lockedIndicator": "Entrée verrouillée",
     "openEntry": "Ouvrir l'entrée du {{ date }}"
@@ -398,7 +399,9 @@
       "timelineDateFormatShort": "Court",
       "timelineDateFormatIso": "ISO (AAAA-MM-JJ)",
       "timelinePreviewLabel": "Afficher l'aperçu de l'entrée",
-      "timelinePreviewHint": "Lorsque cette option est désactivée, chaque ligne de la chronologie n'affiche que la date et le titre, sans la première ligne de l'entrée."
+      "timelinePreviewHint": "Lorsque cette option est désactivée, chaque ligne de la chronologie n'affiche que la date et le titre, sans la première ligne de l'entrée.",
+      "timelineTagsLabel": "Afficher les étiquettes",
+      "timelineTagsHint": "Affiche les étiquettes de chaque entrée sous sa ligne. Cliquez sur une étiquette pour n'afficher que les entrées qui la portent."
     },
     "security": {
       "authMethodsTitle": "Méthodes d'authentification",

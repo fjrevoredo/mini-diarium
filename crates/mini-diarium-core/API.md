@@ -106,7 +106,7 @@ Field names of the IPC-visible types **are frozen**: the frontend's TypeScript i
 |---|---|
 | `DiaryEntry` | `id`, `date`, `title`, `text`, `word_count`, `date_created`, `date_updated`, `metadata` (omitted when `None`), `locked` |
 | `EntryMetadata` | `fontFamily`, `fontSize` (**renamed** from `font_family`/`font_size`; each omitted when `None`) |
-| `TimelineRow` | `id`, `date`, `title`, `preview`, `locked` |
+| `TimelineRow` | `id`, `date`, `title`, `preview`, `locked`, `tag_ids` |
 | `Tag` | `id`, `name`, `created_at` |
 | `ImageData` | `id`, `mime_type`, `data_base64` |
 | `ImageSummary` | `id`, `mime_type`, `created_at`, `thumbnail_mime_type`, `thumbnail_data_base64`, `width`, `height`, `byte_size`, `usage_count`, `first_entry_date`, `latest_entry_date` |

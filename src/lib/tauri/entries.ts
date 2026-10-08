@@ -76,6 +76,8 @@ export interface TimelineEntry {
   preview: string;
   /** UX-only lock flag — drives the passive timeline lock indicator. */
   locked: boolean;
+  /** Ids of the entry's tags. Resolve names from `allTags()` (ids of deleted tags drop out). */
+  tag_ids: number[];
 }
 
 export async function getTimelineEntries(): Promise<TimelineEntry[]> {

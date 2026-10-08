@@ -1,7 +1,13 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { screen, waitFor, fireEvent } from '@solidjs/testing-library';
 import { renderWithI18n } from '../../test/i18n-test-utils';
-import { loadAllTags, resetTagsState, activeTagFilter } from '../../state/tags';
+import {
+  loadAllTags,
+  resetTagsState,
+  activeTagFilter,
+  setTagFilter,
+  tagFilteredDates,
+} from '../../state/tags';
 import { setIsSidebarCollapsed } from '../../state/ui';
 import type { Tag } from '../../lib/tauri';
 
@@ -206,6 +212,44 @@ describe('EntryTags', () => {
 
     await waitFor(() => expect(activeTagFilter()?.id).toBe(1));
     expect(setIsSidebarCollapsed).toHaveBeenCalledWith(false);
+  });
+
+  it('refreshes the active filter dates after removing its tag from the entry', async () => {
+    mocks.getAllTags.mockResolvedValue([WORK_TAG]);
+    mocks.getTagsForEntry.mockResolvedValue([WORK_TAG]);
+    mocks.removeTagFromEntry.mockResolvedValue(undefined);
+    mocks.getEntryDatesByTag.mockResolvedValue(['2026-01-01', '2026-02-01']);
+    await loadAllTags();
+    await setTagFilter(WORK_TAG);
+    expect(tagFilteredDates()).toEqual(['2026-01-01', '2026-02-01']);
+
+    renderWithI18n(() => <EntryTags entryId={1} />);
+    await screen.findByText('Work');
+
+    mocks.getEntryDatesByTag.mockResolvedValue(['2026-02-01']);
+    fireEvent.click(screen.getByRole('button', { name: 'Remove tag Work' }));
+
+    await waitFor(() => expect(tagFilteredDates()).toEqual(['2026-02-01']));
+    expect(activeTagFilter()?.id).toBe(WORK_TAG.id);
+  });
+
+  it('refreshes the active filter dates after adding its tag to the entry', async () => {
+    mocks.getAllTags.mockResolvedValue([WORK_TAG, HOME_TAG]);
+    mocks.getTagsForEntry.mockResolvedValue([]);
+    mocks.addTagToEntry.mockResolvedValue(undefined);
+    mocks.getEntryDatesByTag.mockResolvedValue([]);
+    await loadAllTags();
+    await setTagFilter(HOME_TAG);
+
+    renderWithI18n(() => <EntryTags entryId={1} />);
+    await new Promise((r) => setTimeout(r, 0)); // settle initial load (see add-existing test)
+
+    mocks.getEntryDatesByTag.mockResolvedValue(['2026-03-01']);
+    fireEvent.click(screen.getByRole('button', { name: '+ Add tag' }));
+    fireEvent.click(await screen.findByRole('button', { name: 'Home' }));
+
+    await waitFor(() => expect(tagFilteredDates()).toEqual(['2026-03-01']));
+    expect(mocks.getEntryDatesByTag).toHaveBeenLastCalledWith(HOME_TAG.id);
   });
 
   it('renders a sanitized error (no path leak) when loading entry tags fails', async () => {

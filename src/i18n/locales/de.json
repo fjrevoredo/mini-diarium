@@ -41,6 +41,7 @@
   "timeline": {
     "title": "Zeitleiste",
     "empty": "Noch keine Einträge.",
+    "emptyForTag": "Keine Einträge mit dem Schlagwort „{{ name }}“.",
     "untitled": "Ohne Titel",
     "lockedIndicator": "Gesperrter Eintrag",
     "openEntry": "Eintrag vom {{ date }} öffnen"
@@ -398,7 +399,9 @@
       "timelineDateFormatShort": "Kurz",
       "timelineDateFormatIso": "ISO (JJJJ-MM-TT)",
       "timelinePreviewLabel": "Eintragsvorschau anzeigen",
-      "timelinePreviewHint": "Wenn deaktiviert, zeigt jede Zeile der Zeitleiste nur Datum und Titel, ohne die erste Zeile des Eintrags."
+      "timelinePreviewHint": "Wenn deaktiviert, zeigt jede Zeile der Zeitleiste nur Datum und Titel, ohne die erste Zeile des Eintrags.",
+      "timelineTagsLabel": "Schlagwörter anzeigen",
+      "timelineTagsHint": "Zeigt die Schlagwörter jedes Eintrags unter seiner Zeile. Klicke auf ein Schlagwort, um nur die Einträge mit diesem Schlagwort zu zeigen."
     },
     "security": {
       "authMethodsTitle": "Authentifizierungsmethoden",

@@ -37,6 +37,7 @@ export function makeTimelineEntry(overrides: Partial<TimelineEntry> = {}): Timel
     title: 'Entry title',
     preview: 'A short preview',
     locked: false,
+    tag_ids: [],
     ...overrides,
   };
 }

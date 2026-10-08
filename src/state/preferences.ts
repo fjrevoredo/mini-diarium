@@ -81,6 +81,7 @@ export interface Preferences {
   language: string; // locale code, e.g. 'en'
   timelineDateFormat: DateFormatStyle; // date style used per timeline row
   showTimelinePreview: boolean; // show the text preview under each timeline title
+  showTimelineTags: boolean; // show each entry's tags as clickable chips in the timeline
 }
 
 const DEFAULT_PREFERENCES: Preferences = {
@@ -101,6 +102,7 @@ const DEFAULT_PREFERENCES: Preferences = {
   language: 'en',
   timelineDateFormat: 'full',
   showTimelinePreview: true,
+  showTimelineTags: false,
 };
 
 // Items that were always visible before the per-item toolbar config was introduced

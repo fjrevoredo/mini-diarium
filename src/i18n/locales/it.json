@@ -41,6 +41,7 @@
   "timeline": {
     "title": "Cronologia",
     "empty": "Ancora nessuna voce.",
+    "emptyForTag": "Nessuna voce con il tag \"{{ name }}\".",
     "untitled": "Senza titolo",
     "lockedIndicator": "Voce bloccata",
     "openEntry": "Apri la voce del {{ date }}"
@@ -398,7 +399,9 @@
       "timelineDateFormatShort": "Breve",
       "timelineDateFormatIso": "ISO (AAAA-MM-GG)",
       "timelinePreviewLabel": "Mostra anteprima della voce",
-      "timelinePreviewHint": "Se disattivata, ogni riga della cronologia mostra solo la data e il titolo, senza la prima riga della voce."
+      "timelinePreviewHint": "Se disattivata, ogni riga della cronologia mostra solo la data e il titolo, senza la prima riga della voce.",
+      "timelineTagsLabel": "Mostra tag",
+      "timelineTagsHint": "Mostra i tag di ogni voce sotto la sua riga. Fai clic su un tag per vedere solo le voci che lo hanno."
     },
     "security": {
       "authMethodsTitle": "Metodi di autenticazione",

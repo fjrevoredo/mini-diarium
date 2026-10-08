@@ -47,6 +47,7 @@ describe('PreferencesWritingTab', () => {
       toolbarItems: DEFAULT_TOOLBAR_ITEMS.map((item) => ({ ...item })),
       timelineDateFormat: 'full',
       showTimelinePreview: true,
+      showTimelineTags: false,
     });
   });
 
@@ -169,6 +170,17 @@ describe('PreferencesWritingTab', () => {
 
     const stored = JSON.parse(localStorage.getItem('preferences') ?? '{}') as prefState.Preferences;
     expect(stored.showTimelinePreview).toBe(false);
+  });
+
+  it('toggling the timeline tags persists immediately', () => {
+    renderTab();
+
+    const checkbox = screen.getByLabelText(/show tags/i) as HTMLInputElement;
+    expect(checkbox.checked).toBe(false);
+    fireEvent.click(checkbox);
+
+    const stored = JSON.parse(localStorage.getItem('preferences') ?? '{}') as prefState.Preferences;
+    expect(stored.showTimelineTags).toBe(true);
   });
 
   it('select none persists a disabled toolbar-items list immediately', () => {

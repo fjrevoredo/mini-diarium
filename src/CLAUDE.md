@@ -220,6 +220,8 @@ These are used by E2E tests — **do not remove** from components.
 | `EntryAttachments.tsx` | Insert inline reference button (hidden on a locked entry) | `entry-attachment-insert-ref-button` |
 | `EntryAttachments.tsx` | Remove attachment button (hidden on a locked entry) | `entry-attachment-remove-button` |
 | `Timeline.tsx` | Passive lock indicator on a locked entry's row | `timeline-lock-indicator` |
+| `Timeline.tsx` | Active tag-filter banner (below `lg` only; the Sidebar shows its own above) | `timeline-tag-filter-banner` |
+| `Timeline.tsx` | Tag chip under a row (only with the `showTimelineTags` preference on); click toggles the tag filter | `timeline-tag-chip` |
 | `Calendar.tsx` | Passive lock glyph on a day with a locked entry | `calendar-lock-YYYY-MM-DD` |
 | `ConfirmDialog.tsx` | Dialog content root | `confirm-dialog` |
 | `ConfirmDialog.tsx` | Cancel button | `confirm-dialog-cancel-button` |

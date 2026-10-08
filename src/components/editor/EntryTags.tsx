@@ -13,6 +13,7 @@ import {
   setTagFilter,
   clearTagFilter,
   loadAllTags,
+  refreshTagFilter,
 } from '../../state/tags';
 import { setIsTagManagerOpen, setIsSidebarCollapsed } from '../../state/ui';
 import { mapTauriError } from '../../lib/errors';
@@ -75,6 +76,7 @@ export default function EntryTags(props: EntryTagsProps) {
     try {
       await removeTagFromEntry(props.entryId, tagId);
       setEntryTagIds((prev) => prev.filter((id) => id !== tagId));
+      void refreshTagFilter();
     } catch (err) {
       setError(mapTauriError(err, t));
     }
@@ -86,6 +88,7 @@ export default function EntryTags(props: EntryTagsProps) {
       setEntryTagIds((prev) => (prev.includes(tag.id) ? prev : [...prev, tag.id]));
       setIsDropdownOpen(false);
       setNewTagName('');
+      void refreshTagFilter();
     } catch (err) {
       setError(mapTauriError(err, t));
     }
@@ -101,6 +104,7 @@ export default function EntryTags(props: EntryTagsProps) {
       setEntryTagIds((prev) => (prev.includes(tag.id) ? prev : [...prev, tag.id]));
       setIsDropdownOpen(false);
       setNewTagName('');
+      void refreshTagFilter();
     } catch (err) {
       setError(mapTauriError(err, t));
     }

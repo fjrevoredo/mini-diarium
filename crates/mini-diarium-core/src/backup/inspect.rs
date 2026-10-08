@@ -59,8 +59,8 @@ impl std::fmt::Debug for SnapshotCredential {
 
 /// One entry as the inspector shows it.
 ///
-/// Deliberately the same four fields as [`crate::db::TimelineRow`] minus `locked`: title and
-/// a short preview, never the full entry text. The inspector is a browsing surface, and
+/// Deliberately the same four fields as [`crate::db::TimelineRow`] minus `locked` and
+/// `tag_ids`: title and a short preview, never the full entry text. The inspector is a browsing surface, and
 /// sending whole decrypted entries across an IPC boundary to render a list would put far
 /// more plaintext on the wire than the screen ever shows.
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize)]

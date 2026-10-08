@@ -345,7 +345,7 @@
       "@id": "https://mini-diarium.com/docs/writing-entries/#article",
       "headline": "Writing Entries",
       "description": "Mini Diarium's rich text editor supports formatting, images, file attachments, named links, tags, and multiple entries per day. Auto-save and RTL language support are built in.",
-      "dateModified": "2026-09-27T00:00:00Z",
+      "dateModified": "2026-10-08T00:00:00Z",
       "keywords": "editor, formatting, entries, writing, attachments",
       "publisher": {
         "@type": "Organization",
@@ -669,8 +669,12 @@
         <li>The sidebar opens automatically so the calendar is visible.</li>
         <li>Calendar dot indicators narrow to show only dates that have entries tagged with that tag.</li>
         <li>A banner above the calendar shows the active tag name and a <code>×</code> button to clear the filter.</li>
+        <li>The Timeline view lists only the entries that have the tag. The filter applies to each entry, not to each day: if a day has two entries and only one has the tag, only that one is listed. When no entry has the tag, the Timeline says so.</li>
+        <li>On a narrow window, where the sidebar is hidden, the Timeline shows its own banner with the tag name and a <code>×</code> button.</li>
         </ul>
-        <p>Click the same chip again, or press <code>×</code> in the banner, to return to the full unfiltered calendar. The filter persists across month navigation and is cleared automatically when you lock the journal or delete the filtered tag in Tag Manager.</p>
+        <p>Click the same chip again, or press <code>×</code> in a banner, to return to the full unfiltered calendar and Timeline. The filter persists across month navigation and is cleared automatically when you lock the journal or delete the filtered tag in Tag Manager.</p>
+        <p>Click a row in the Timeline to open that exact entry, even on a day with more than one entry.</p>
+        <p>To see tags in the Timeline itself, turn on <strong>Preferences → Writing → Timeline → Show tags</strong>. Each row then shows its tags as chips. Click a chip to filter by that tag, and click it again to clear the filter.</p>
         <p>Tag names are encrypted with the same key as your diary entries. They are never stored as readable text in the database file.</p>
         <h2 id="importing-a-markdown-file">Importing a Markdown File</h2><p>The advanced toolbar includes an <strong>Import Markdown</strong> button. This lets you import a <code>.md</code> file from disk into the active entry. If the entry is empty, the imported content replaces it. If the entry already has content, the Markdown is appended after a horizontal rule separator. File size is capped at 1 MB.</p>
         

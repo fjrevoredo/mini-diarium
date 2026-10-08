@@ -15,6 +15,8 @@ pub struct TimelineEntry {
     pub title: String,
     pub preview: String,
     pub locked: bool,
+    /// Ids of the entry's tags. The frontend resolves names from its decrypted tag list.
+    pub tag_ids: Vec<i64>,
 }
 
 /// Creates a new blank diary entry for the given date and returns it with its assigned id
@@ -345,6 +347,7 @@ pub fn get_timeline_entries(state: State<DiaryState>) -> Result<Vec<TimelineEntr
                 title: r.title,
                 preview: r.preview,
                 locked: r.locked,
+                tag_ids: r.tag_ids,
             })
             .collect())
     })
