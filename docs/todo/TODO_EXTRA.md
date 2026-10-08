@@ -382,3 +382,132 @@ Parent: [`TODO-0110: Fix CJK (Chinese/Japanese) word count and search usability 
 - **Fix**: lower the effective minimum to 1 when the trimmed query contains at least one character in the CJK ranges listed above; keep 3 otherwise. `crates/mini-diarium-core/src/search/mod.rs` has no length gate today (verified — `search_entries` only checks `terms.is_empty()`), so this is a frontend-only change confined to `src/state/search.ts` / `SearchBar.tsx`.
 
 ---
+
+## TODO-0127-01: Editor-local dialogs and the global Escape guard
+
+Parent: [`TODO-0127: Global Escape and app shortcuts must not fire underneath editor-local dialogs and popups`](TODO.md)
+
+**Context**: Found while exploring TODO-0125 (2026-10-08). **Reproduced 2026-10-08 in the real app**: ESC action = Quit → Ctrl+K (Insert Link) → Escape closes the app. The timestamp-dialog, tag-dropdown, and IME cases follow from the same code path but were not reproduced separately.
+
+### How the guard works today
+
+```
+keydown on document
+  ├─ MainLayout.handleGlobalEsc          (src/components/layout/MainLayout.tsx:47)
+  │    onboarding tour? → minimize · minimized? → stop
+  │    isAnyOverlayOpen()? → stop
+  │    escAction === 'quit' → getCurrentWindow().close()
+  └─ handleAppShortcut                    (src/lib/keyboard-shortcuts.ts:40)
+       isAnyOverlayOpen()? → stop
+```
+
+- `isAnyOverlayOpen()` (`src/state/ui.ts:72`) ORs the overlay signals that `ui.ts` owns. Its doc comment says: "Every overlay signal in this module belongs here." The two editor dialogs break this rule only because their signals live outside the module.
+- `MainLayout` adds its listener in `onMount`, before any editor dialog opens. Kobalte's `DismissableLayer` adds its own `document` keydown listener only when a dialog opens. Both listeners are on `document`, so `handleGlobalEsc` runs **first**. When it runs, the dialog is still open, but the guard cannot see it.
+- No dialog handler calls `stopPropagation()`. The one exception is `ImagePickerOverlay.tsx:114`, and its signal is in `ui.ts` already.
+
+### Gaps
+
+| Element | Open state | Escape handler | Covered by guard? |
+|---|---|---|---|
+| `LinkOverlay` (Kobalte Dialog) | `isLinkOpen`, local signal, `EditorToolbar.tsx:85` | `LinkOverlay.tsx:161` + Kobalte | **No** |
+| `TimestampOverlay` (Kobalte Dialog) | `isTimestampOpen`, local signal, `EditorToolbar.tsx:84` | `TimestampOverlay.tsx:29` + Kobalte | **No** |
+| `EntryTags` suggestion dropdown (not modal) | `isDropdownOpen`, local, `EntryTags.tsx` | `EntryTags.tsx:117` | **No** |
+| IME composition (any text field or the editor) | n/a | browser cancels composition | **No** (no `e.isComposing` check) |
+
+Already safe (checked): every overlay that `ui.ts` owns; `NotificationDetailDialog` (it opens only inside `NotificationsOverlay`); `BackupInspectDialog` (it opens only inside Preferences); `ConfirmDialog` (`isConfirmDialogOpen`, and Escape is inert); the native `<select>`s in the toolbar (the OS popup consumes Escape); the onboarding tour (handled explicitly).
+
+### Recommended fix
+
+1. **Lift the two dialog signals into `src/state/ui.ts`.** Add `isLinkDialogOpen` / `isTimestampDialogOpen` (with setters) next to `isImagePickerOpen`, and add both to `isAnyOverlayOpen()`. `EditorToolbar.tsx` then uses them instead of its local signals. The LinkWithDialog `openLinkDialog` storage callback (`EditorToolbar.tsx:153-163`) calls the new setter. **You must also reset both in `resetUiState()` (`ui.ts:123`)**. The local signals died when the editor unmounted on lock. A module-level signal survives the lock. If an auto-lock fires while the link dialog is open and the signal is not reset, `isAnyOverlayOpen()` stays `true` after the unlock, and Escape and every app shortcut stop working. Add a test for this case. This follows the pattern that `isImagePickerOpen` already set, and it also blocks the app shortcuts behind the dialogs. A registry such as "dialogs register themselves" would be more general, but it adds a new mechanism for two call sites. Do not add it.
+2. **The tag dropdown must claim its Escape.** In `EntryTags.tsx:117`, call `e.preventDefault()` when the dropdown is open, and make `handleGlobalEsc` return early on `e.defaultPrevented`. This is more general than `stopPropagation()`: any future component can mark an Escape as handled without knowing about the global handler. **Check first**: Solid delegates `onKeyDown` through a `document` listener, so the order against `MainLayout`'s native listener matters. Delegation registers when the first JSX event is created, which is usually before `MainLayout` mounts, so the delegated handler runs first and sets `defaultPrevented` in time. Confirm this with a test that dispatches a real `keydown` from inside the input. If the order is wrong, register `handleGlobalEsc` in the bubble phase on `window` instead of `document`, so it always runs after `document`-level handlers.
+3. **Ignore IME composition.** Add `if (e.isComposing) return;` at the top of `handleGlobalEsc`. Optionally add it to `handleAppShortcut` too.
+4. **Do not change**: `ConfirmDialog` stays outside `src/lib/dialog.ts` (`src/CLAUDE.md` gotcha #12). This fix does not touch focus-lock.
+
+### Tests
+
+- `src/components/layout/MainLayout.test.tsx` (it already has 2 `quit` cases with `setPreferences({ escAction: 'quit' })`): add cases. With `setIsLinkDialogOpen(true)` / `setIsTimestampDialogOpen(true)`, Escape does not call `close()`. A keydown with `isComposing: true` does not call `close()`. An Escape with `defaultPrevented` does not call `close()`.
+- `src/state/ui.test.ts` (or the existing `isAnyOverlayOpen` tests): each new signal makes `isAnyOverlayOpen()` true.
+- `EditorToolbar` / `LinkOverlay` tests: opening the dialog sets the shared signal, and closing it clears the signal.
+- `EntryTags` test: Escape in the tag input with the dropdown open calls `preventDefault()` and closes the dropdown.
+- `keyboard-shortcuts` test: Ctrl+F is inert while the link dialog is open.
+- E2E is optional. `header-actions.spec.ts` already presses Escape to close overlays, so a link-dialog Escape case with `quit` set would be the strongest guard. Seed `escAction` through `localStorage['preferences']`.
+
+### Docs
+
+- `src/CLAUDE.md` → *Keyboard Shortcuts*: state that every modal's open signal must live in `ui.ts` and be part of `isAnyOverlayOpen()`, and that a non-modal popup must `preventDefault()` the Escape it handles.
+- `CHANGELOG.md` → Fixed: "Pressing Escape to close the Insert Link or Insert Timestamp dialog, or the tag suggestions, no longer also quits the app when the ESC key action is set to Quit."
+- No `website/docs-src` change is needed. The documented behavior ("while no dialog is open") becomes true.
+
+### Relation to TODO-0125
+
+After TODO-0125, the same gap would **lock the journal** in place of quitting the app. Ship this TODO first. TODO-0125's Escape branch then needs only its own guards: skip unless `authState() === 'unlocked'` (this also blocks key-repeat re-entry during the 700 ms lock animation), and use `void lockJournal().catch(...)`.
+
+---
+
+## TODO-0125-01: Lock journal ESC action
+
+Parent: [`TODO-0125: Add a "Lock journal" option to the ESC key action (#313)`](TODO.md)
+
+**Context**: Explored 2026-10-08. **Prerequisite: TODO-0127 must ship first.** Without it, Escape pressed to close the Insert Link or Insert Timestamp dialog, or the tag dropdown, would also lock the journal. See [TODO-0127-01](#todo-0127-01-editor-local-dialogs-and-the-global-escape-guard). This section assumes that TODO-0127's guards are in place: the dialog signals are in `isAnyOverlayOpen()`, there is an `e.defaultPrevented` early return, and there is an `e.isComposing` early return.
+
+### Current flow and where the change goes
+
+```
+keydown "Escape" ──▶ MainLayout.handleGlobalEsc   (src/components/layout/MainLayout.tsx:47)
+                       ├─ onboarding tour?        → minimizeOnboarding(), stop
+                       ├─ onboarding minimized?   → stop
+                       ├─ (TODO-0127 guards: composing / defaultPrevented)
+                       ├─ isAnyOverlayOpen()?     → stop
+                       └─ escAction
+                            'quit' → getCurrentWindow().close()
+                            'lock' → lockJournal()   ← new branch
+```
+
+### The lock path: reuse it, do not copy it
+
+- `lockJournal()` in `src/state/auth.ts:242` is the shared lock path. The Header button, the idle timer (`App.tsx:53`) and focus-loss (`App.tsx:83`) all call it. It sets `authState('locking')` **synchronously**, then runs `executeCleanupCallbacks()`, which flushes the open entry, then `tauri.lockJournal()`. In parallel, it waits `LOCK_ANIMATION_MS = 700`. After that it calls `resetForLockedSession()`. On failure it goes back to `'unlocked'`, sets the auth error signal and **throws**.
+- The Header (`Header.tsx:56`) adds only a local `isLocking` signal, which disables the button. So the Escape branch gets the same lock and the same animation when it calls `lockJournal()` directly. Do not copy the Header's local signal.
+- `App.tsx:130` keeps `MainLayout` mounted while `authState` is `'locking'`. So the Escape listener stays active during the 700 ms animation. Key repeat sends many `keydown` events, and each one would call `lockJournal()` again. This repeats the cleanup flush and the `lock_diary` IPC call.
+
+### Implementation steps
+
+1. **`src/state/preferences.ts:11`**: `export type EscAction = 'none' | 'quit' | 'lock';`. No migration is needed. `loadPreferences()` spreads stored values over the defaults, and the default stays `'none'`.
+2. **`MainLayout.tsx` `handleGlobalEsc`**: add the branch.
+   - Guard it with `authState() === 'unlocked'`. This stops key-repeat re-entry, because `lockJournal` changes the state to `'locking'` synchronously. It also makes Escape do nothing during the animation. Import `authState` from `src/state/auth`. Also checking `e.repeat` is optional; the state guard is enough on its own.
+   - Call it as `void lockJournal().catch((err) => log.error('Failed to lock journal:', err))`. `lockJournal` already shows the sanitized error through the auth error signal, so the catch only stops an unhandled rejection.
+   - Keep the `quit` branch as it is. Use `if / else if`, or a `switch` over `escAction`.
+3. **`src/components/overlays/preferences/PreferencesGeneralTab.tsx:70`**: add `<option value="lock">{t('prefs.general.escLock')}</option>` after `quit`. The `as EscAction` cast already covers the new value.
+4. **i18n**: add `prefs.general.escLock` and rewrite `prefs.general.escHint` in `src/i18n/locales/en.ts:386-388` and in all 6 JSON locales (`es`, `de`, `fr`, `it`, `pt-BR`, `hi`, line ~317-319 in each). Suggested English:
+   - `escLock: 'Lock the journal'`
+   - `escHint: 'Pressing Escape quits the app or locks the journal, depending on this setting. It has no effect while a dialog is open.'`
+   - The current hint names only "Quit", so it must change. Run `cmd.exe /c bun run validate:locales`.
+5. **Docs**:
+   - `website/docs-src/07-preferences.md:22`: change the row to "Do nothing, quit the app, or lock the journal when pressing Escape". Then run `bun run website:build-static` from the PowerShell tool.
+   - `docs/decisions/2026-05-settings-storage-taxonomy.md:80`: change the type to `'none'|'quit'|'lock'`.
+   - `CHANGELOG.md` → Added, with a reference to #313.
+
+### Behavior decisions (already settled)
+
+- **Escape inside the editor body locks.** This is intended: the user asked for a quick lock key. Nothing is lost, because `executeCleanupCallbacks()` flushes the open entry before the backend lock, as it does for the Header button.
+- **No confirmation dialog.** The Header button has none, and locking is not destructive.
+- **No new keyboard shortcut.** This is a setting for the existing Escape behavior only. Do not add anything to `src/lib/keyboard-shortcuts.ts`.
+- The onboarding tour, overlays and dialogs keep priority, so Escape is unchanged while any of them is open.
+
+### Tests
+
+- `src/components/layout/MainLayout.test.tsx` (existing `quit` cases at ~line 72/82 use `setPreferences({ escAction: 'quit' })`). Mock `lockJournal` from `src/state/auth` and add these cases:
+  - With `escAction: 'lock'` and the journal unlocked, Escape calls `lockJournal` once and does **not** call `close()`.
+  - With `'lock'` and an overlay open, for example `setIsPreferencesOpen(true)`, Escape does not call `lockJournal`.
+  - With `'lock'` and the onboarding tour active, Escape minimizes the tour and does not lock.
+  - With `'lock'` and `authState` set to `'locking'`, Escape does not call `lockJournal`. This is the key-repeat guard.
+  - A rejected `lockJournal` does not cause an unhandled rejection.
+  - With `'none'`, Escape calls neither function. With `'quit'`, the behavior is the same as today.
+- `PreferencesOverlay.integration.test.tsx` (it already asserts `stored.escAction === 'quit'` at ~line 72): add a case where selecting "Lock the journal" persists `'lock'` to `localStorage['preferences']`.
+- Fixtures that list full `Preferences` objects (`EditorToolbar.test.tsx:78`, `PreferencesOverlay.integration.test.tsx:43`) need no change, because the default is still `'none'`.
+- E2E is optional. A clean-mode spec could seed `escAction: 'lock'` in `localStorage['preferences']`, press Escape, and wait for the unlock screen (`password-unlock-input`). This would confirm the full lock path, including the backend call.
+
+### Manual check (real app)
+
+ESC action = Lock → type in an entry → Escape → the lock animation plays, then the unlock screen shows → unlock → the text is saved. Then: open Ctrl+K → Escape closes only the dialog, and the journal stays unlocked (this is the TODO-0127 regression). Hold Escape down → only one lock happens, with no errors in the log.
+
+---
