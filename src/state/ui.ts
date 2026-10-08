@@ -49,6 +49,11 @@ const [isTagManagerOpen, setIsTagManagerOpen] = createSignal(false);
 // Image picker overlay state
 const [isImagePickerOpen, setIsImagePickerOpen] = createSignal(false);
 
+// Editor toolbar dialogs (Insert Link / Insert Timestamp). Owned by EditorToolbar but kept
+// here so the global Escape and shortcut guards see them through isAnyOverlayOpen().
+const [isLinkDialogOpen, setIsLinkDialogOpen] = createSignal(false);
+const [isTimestampDialogOpen, setIsTimestampDialogOpen] = createSignal(false);
+
 // Search overlay state
 const [isSearchOpen, setIsSearchOpen] = createSignal(false);
 
@@ -81,6 +86,8 @@ export function isAnyOverlayOpen(): boolean {
     isNotificationsOpen() ||
     isTagManagerOpen() ||
     isImagePickerOpen() ||
+    isLinkDialogOpen() ||
+    isTimestampDialogOpen() ||
     isSearchOpen() ||
     isMoreMenuOpen() ||
     isProjectSupportOpen() ||
@@ -135,6 +142,8 @@ export function resetUiState(): void {
   setIsNotificationsOpen(false);
   setIsTagManagerOpen(false);
   setIsImagePickerOpen(false);
+  setIsLinkDialogOpen(false);
+  setIsTimestampDialogOpen(false);
   setIsSearchOpen(false);
   setIsMoreMenuOpen(false);
   setIsProjectSupportOpen(false);
@@ -170,6 +179,10 @@ export {
   setIsTagManagerOpen,
   isImagePickerOpen,
   setIsImagePickerOpen,
+  isLinkDialogOpen,
+  setIsLinkDialogOpen,
+  isTimestampDialogOpen,
+  setIsTimestampDialogOpen,
   isSearchOpen,
   setIsSearchOpen,
   isMoreMenuOpen,

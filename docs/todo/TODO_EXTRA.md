@@ -438,6 +438,12 @@ Already safe (checked): every overlay that `ui.ts` owns; `NotificationDetailDial
 - `CHANGELOG.md` → Fixed: "Pressing Escape to close the Insert Link or Insert Timestamp dialog, or the tag suggestions, no longer also quits the app when the ESC key action is set to Quit."
 - No `website/docs-src` change is needed. The documented behavior ("while no dialog is open") becomes true.
 
+### Implementation outcome (2026-10-08)
+
+Steps 1–3 shipped as written, but step 1 alone did **not** fix the Ctrl+K → Escape repro. "How the guard works today" misses one handler: `LinkOverlay` and `TimestampOverlay` (and `StatsOverlay`, `GoToDateOverlay`, `ExportOverlay`, `ImportOverlay`) close themselves from an `onKeyDown` on `Dialog.Content`. Solid delegates that handler to `document`, and delegation registers at import time, before `MainLayout` mounts. So the dialog closes itself before `handleGlobalEsc` runs, and `isAnyOverlayOpen()` is already `false` there. A self-check reproduced this in jsdom by registering delegation first (`delegateEvents(['keydown'])`).
+
+Fix: `MainLayout` adds a `window` capture-phase keydown listener. It runs before every other handler and records, in a `WeakSet`, each Escape event that arrives while `isAnyOverlayOpen()` is true. `handleGlobalEsc` skips a recorded event. `MainLayout.test.tsx` covers this with the real `LinkOverlay` / `TimestampOverlay`; the tests fail without the snapshot. `handleAppShortcut` needs no snapshot, because no dialog closes on a modifier shortcut.
+
 ### Relation to TODO-0125
 
 After TODO-0125, the same gap would **lock the journal** in place of quitting the app. Ship this TODO first. TODO-0125's Escape branch then needs only its own guards: skip unless `authState() === 'unlocked'` (this also blocks key-repeat re-entry during the 700 ms lock animation), and use `void lockJournal().catch(...)`.

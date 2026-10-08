@@ -185,6 +185,34 @@ describe('EntryTags', () => {
     await waitFor(() => expect(screen.queryByPlaceholderText('New tag…')).not.toBeInTheDocument());
   });
 
+  it('marks the Escape it handles as claimed before a later document listener sees it', async () => {
+    mocks.getAllTags.mockResolvedValue([]);
+    mocks.getTagsForEntry.mockResolvedValue([]);
+    await loadAllTags();
+
+    renderWithI18n(() => <EntryTags entryId={1} />);
+    fireEvent.click(screen.getByRole('button', { name: '+ Add tag' }));
+    const input = await screen.findByPlaceholderText('New tag…');
+
+    // Added after render, like MainLayout's onMount handler: Solid's delegated keydown
+    // listener on document is already registered, so it must run first.
+    const seen: boolean[] = [];
+    const globalListener = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') seen.push(e.defaultPrevented);
+    };
+    document.addEventListener('keydown', globalListener);
+    try {
+      input.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }),
+      );
+    } finally {
+      document.removeEventListener('keydown', globalListener);
+    }
+
+    expect(seen).toEqual([true]);
+    await waitFor(() => expect(screen.queryByPlaceholderText('New tag…')).not.toBeInTheDocument());
+  });
+
   it('closes the dropdown when clicking outside (mousedown listener)', async () => {
     mocks.getAllTags.mockResolvedValue([]);
     mocks.getTagsForEntry.mockResolvedValue([]);

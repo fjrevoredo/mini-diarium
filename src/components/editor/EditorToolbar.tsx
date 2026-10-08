@@ -13,6 +13,12 @@ import { preferences } from '../../state/preferences';
 import type { EntryMetadata } from '../../lib/tauri';
 import type { ToolbarItemKey } from '../../state/preferences';
 import { customFontsVersion } from '../../state/fonts';
+import {
+  isLinkDialogOpen,
+  setIsLinkDialogOpen,
+  isTimestampDialogOpen,
+  setIsTimestampDialogOpen,
+} from '../../state/ui';
 import { listBundledFonts, listCustomFonts } from '../../lib/tauri';
 import { useI18n } from '../../i18n';
 import TimestampOverlay from './TimestampOverlay';
@@ -81,8 +87,6 @@ export default function EditorToolbar(props: EditorToolbarProps) {
   const [activeAlignment, setActiveAlignment] = createSignal<
     'left' | 'center' | 'right' | 'justify'
   >('left');
-  const [isTimestampOpen, setIsTimestampOpen] = createSignal(false);
-  const [isLinkOpen, setIsLinkOpen] = createSignal(false);
   const [isRtlActive, setIsRtlActive] = createSignal(false);
   const [activeFontFamily, setActiveFontFamily] = createSignal<string>('');
   // '' means no inline override; a number string like '16' means inline override active
@@ -150,6 +154,13 @@ export default function EditorToolbar(props: EditorToolbarProps) {
     });
   });
 
+  // The dialog signals are module state (src/state/ui.ts), so they outlive this toolbar.
+  // Clear them on unmount; a stale `true` would block every global shortcut and Escape.
+  onCleanup(() => {
+    setIsLinkDialogOpen(false);
+    setIsTimestampDialogOpen(false);
+  });
+
   // Wire the LinkWithDialog extension's Mod-k shortcut to open the LinkOverlay.
   // The storage object is created by the extension and owned by the editor;
   // overwriting the callback when the editor changes is safe — no manual cleanup
@@ -159,7 +170,7 @@ export default function EditorToolbar(props: EditorToolbarProps) {
     if (!editor) return;
     const storage = (editor.storage as { link?: LinkWithDialogStorage } | undefined) ?? {};
     if (storage.link) {
-      storage.link.openLinkDialog = () => setIsLinkOpen(true);
+      storage.link.openLinkDialog = () => setIsLinkDialogOpen(true);
     }
   });
 
@@ -313,7 +324,7 @@ export default function EditorToolbar(props: EditorToolbarProps) {
       case 'link':
         return (
           <button
-            onClick={() => setIsLinkOpen(true)}
+            onClick={() => setIsLinkDialogOpen(true)}
             class={btnClass(isLinkActive())}
             title={t('editor.toolbar.linkTitle')}
             aria-label={t('editor.toolbar.link')}
@@ -394,7 +405,7 @@ export default function EditorToolbar(props: EditorToolbarProps) {
       case 'insertTimestamp':
         return (
           <button
-            onClick={() => setIsTimestampOpen(true)}
+            onClick={() => setIsTimestampDialogOpen(true)}
             class={btnBase}
             title={t('editor.toolbar.insertTimestampTitle')}
             aria-label={t('editor.toolbar.insertTimestamp')}
@@ -625,13 +636,13 @@ export default function EditorToolbar(props: EditorToolbarProps) {
 
         <TimestampOverlay
           editor={props.editor}
-          isOpen={isTimestampOpen()}
-          onClose={() => setIsTimestampOpen(false)}
+          isOpen={isTimestampDialogOpen()}
+          onClose={() => setIsTimestampDialogOpen(false)}
         />
         <LinkOverlay
           editor={props.editor}
-          isOpen={isLinkOpen()}
-          onClose={() => setIsLinkOpen(false)}
+          isOpen={isLinkDialogOpen()}
+          onClose={() => setIsLinkDialogOpen(false)}
         />
       </div>
     </Show>

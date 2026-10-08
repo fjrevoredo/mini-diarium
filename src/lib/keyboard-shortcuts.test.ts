@@ -6,6 +6,8 @@ import {
   isSearchOpen,
   setIsStatsOpen,
   setIsImagePickerOpen,
+  setIsLinkDialogOpen,
+  setIsTimestampDialogOpen,
   selectedDate,
   setSelectedDate,
 } from '../state/ui';
@@ -202,6 +204,23 @@ describe('keyboard-shortcuts', () => {
 
     expect(mockNavigatePreviousDay).not.toHaveBeenCalled();
     expect(selectedDate()).toBe('2024-01-15');
+  });
+
+  it.each([
+    ['Insert Link', setIsLinkDialogOpen],
+    ['Insert Timestamp', setIsTimestampDialogOpen],
+  ] as const)('Mod+F is inert while the %s dialog is open', (_name, setOpen) => {
+    setOpen(true);
+
+    expect(press({ key: 'f', code: 'KeyF', ctrlKey: true })).toBe(false);
+
+    expect(isSearchOpen()).toBe(false);
+  });
+
+  it('ignores a shortcut pressed during IME composition', () => {
+    expect(press({ key: 'f', code: 'KeyF', ctrlKey: true, isComposing: true })).toBe(false);
+
+    expect(isSearchOpen()).toBe(false);
   });
 
   it('stops responding after the returned cleanup runs', async () => {

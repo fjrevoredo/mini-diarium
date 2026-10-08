@@ -35,6 +35,8 @@ import {
  *   bracket in the editor would navigate the journal.
  */
 export function handleAppShortcut(e: KeyboardEvent): void {
+  // Keys pressed during IME composition belong to the IME, not to the app.
+  if (e.isComposing) return;
   if (!(e.metaKey || e.ctrlKey) || e.altKey) return;
   // Overlays own the keyboard while they are open.
   if (isAnyOverlayOpen()) return;

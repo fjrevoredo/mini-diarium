@@ -37,6 +37,7 @@ Template:
 ## [0.7.4] - [Unreleased]
 
 ### Fixed
+- **Escape in editor dialogs no longer quits the app (TODO-0127)**: Pressing Escape to close the Insert Link or Insert Timestamp dialog, or the tag suggestions, no longer also quits the app when the ESC key action is set to Quit. App shortcuts no longer fire behind those dialogs. An Escape that cancels IME input also no longer triggers the ESC key action.
 - **`Ctrl+[` / `Ctrl+]` jump to the previous/next day with an entry (TODO-0126, #312)**: The shortcuts stepped one calendar day, so they landed on empty days, although the docs say "day with an entry". They now skip empty days. While a tag filter is active, they visit only days that have an entry with that tag. At the first or last entry they do nothing. The Header ◀/▶ buttons still step one day. `Ctrl+Shift+[` / `Ctrl+Shift+]` still move by month.
 - **Timeline row opens the clicked entry (TODO-0124)**: On a day with more than one entry, clicking a Timeline row opened the day's newest entry. It now opens the entry you clicked.
 - **Calendar tag filter refreshes after tag edits (TODO-0124)**: When you added or removed the filtered tag on an entry, the Calendar dots kept the old dates until you set the filter again. They now update at once.

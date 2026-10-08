@@ -44,15 +44,27 @@ export default function MainLayout() {
   const unlisteners: UnlistenFn[] = [];
   let unregisterShortcuts: (() => void) | undefined;
 
+  // Escape events that arrived while a dialog was open. A dialog's own Escape handler
+  // closes it during the same dispatch, and Solid's delegated listener on `document` can
+  // run before handleGlobalEsc, so reading isAnyOverlayOpen() there is too late. This
+  // window capture-phase listener runs before every handler and records the state.
+  const escWhileOverlayOpen = new WeakSet<KeyboardEvent>();
+  const recordOverlayOnEsc = (e: KeyboardEvent) => {
+    if (e.key === 'Escape' && isAnyOverlayOpen()) escWhileOverlayOpen.add(e);
+  };
+
   const handleGlobalEsc = (e: KeyboardEvent) => {
     if (e.key !== 'Escape') return;
+    // An IME uses Escape to cancel composition, and a non-modal popup (e.g. the tag
+    // dropdown) calls preventDefault() on the Escape it already handled.
+    if (e.isComposing || e.defaultPrevented) return;
     if (onboardingMode() === 'tour') {
       minimizeOnboarding();
       return;
     }
     if (onboardingMode() === 'minimized') return;
-    // Never fire when any dialog is open — they handle their own Escape
-    if (isAnyOverlayOpen()) return;
+    // Never fire when any dialog is or was open at keydown — they handle their own Escape
+    if (escWhileOverlayOpen.has(e) || isAnyOverlayOpen()) return;
     if (preferences().escAction === 'quit') {
       getCurrentWindow()
         .close()
@@ -61,6 +73,7 @@ export default function MainLayout() {
   };
 
   onMount(async () => {
+    window.addEventListener('keydown', recordOverlayOnEsc, true);
     document.addEventListener('keydown', handleGlobalEsc);
     unregisterShortcuts = registerKeyboardShortcuts();
 
@@ -76,6 +89,7 @@ export default function MainLayout() {
   // Cleanup on component unmount
   onCleanup(() => {
     unlisteners.forEach((unlisten) => unlisten());
+    window.removeEventListener('keydown', recordOverlayOnEsc, true);
     document.removeEventListener('keydown', handleGlobalEsc);
     unregisterShortcuts?.();
   });

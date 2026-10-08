@@ -1,8 +1,15 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { fireEvent, waitFor } from '@solidjs/testing-library';
+import { fireEvent, waitFor, screen } from '@solidjs/testing-library';
 import { renderWithI18n } from '../../test/i18n-test-utils';
 import EditorToolbar from './EditorToolbar';
 import { setPreferences, DEFAULT_TOOLBAR_ITEMS } from '../../state/preferences';
+import {
+  isAnyOverlayOpen,
+  isLinkDialogOpen,
+  isTimestampDialogOpen,
+  setIsTimestampDialogOpen,
+  resetUiState,
+} from '../../state/ui';
 import type { Editor } from '@tiptap/core';
 
 const { mockListBundledFonts, mockListCustomFonts } = vi.hoisted(() => ({
@@ -801,6 +808,71 @@ describe('EditorToolbar link button — visibility', () => {
     const { container } = renderWithI18n(() => <EditorToolbar editor={editor} />);
     const btn = container.querySelector('[data-testid="insert-link-button"]') as HTMLButtonElement;
     expect(btn.className).toContain('btn-active');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Link / Timestamp dialogs — shared open state in src/state/ui.ts (TODO-0127)
+// ---------------------------------------------------------------------------
+
+describe('EditorToolbar dialogs — shared overlay state', () => {
+  beforeEach(() => {
+    resetUiState();
+    setPreferences({
+      toolbarItems: DEFAULT_TOOLBAR_ITEMS.map((i) => ({
+        ...i,
+        enabled: i.key === 'link' || i.key === 'insertTimestamp',
+      })),
+    });
+  });
+
+  it('sets and clears the link dialog signal when the dialog opens and is cancelled', () => {
+    const { container } = renderWithI18n(() => <EditorToolbar editor={makeEditorMock()} />);
+
+    fireEvent.click(container.querySelector('[data-testid="insert-link-button"]')!);
+    expect(isLinkDialogOpen()).toBe(true);
+    expect(isAnyOverlayOpen()).toBe(true);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    expect(isLinkDialogOpen()).toBe(false);
+    expect(isAnyOverlayOpen()).toBe(false);
+  });
+
+  it('sets and clears the timestamp dialog signal when the dialog opens and is cancelled', () => {
+    const { container } = renderWithI18n(() => <EditorToolbar editor={makeEditorMock()} />);
+
+    fireEvent.click(container.querySelector('[aria-label="Insert timestamp"]')!);
+    expect(isTimestampDialogOpen()).toBe(true);
+    expect(isAnyOverlayOpen()).toBe(true);
+
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }));
+    expect(isTimestampDialogOpen()).toBe(false);
+    expect(isAnyOverlayOpen()).toBe(false);
+  });
+
+  it('opens the link dialog through the Mod-k storage callback', () => {
+    const storage = { link: {} as { openLinkDialog?: () => void } };
+    const editor = Object.assign(makeEditorMock(), { storage }) as unknown as Editor;
+    renderWithI18n(() => <EditorToolbar editor={editor} />);
+
+    expect(storage.link.openLinkDialog).toBeTypeOf('function');
+    storage.link.openLinkDialog!();
+
+    expect(isLinkDialogOpen()).toBe(true);
+  });
+
+  it('clears both dialog signals when the toolbar unmounts with a dialog open', () => {
+    const { container, unmount } = renderWithI18n(() => (
+      <EditorToolbar editor={makeEditorMock()} />
+    ));
+    fireEvent.click(container.querySelector('[data-testid="insert-link-button"]')!);
+    setIsTimestampDialogOpen(true);
+
+    unmount();
+
+    expect(isLinkDialogOpen()).toBe(false);
+    expect(isTimestampDialogOpen()).toBe(false);
+    expect(isAnyOverlayOpen()).toBe(false);
   });
 });
 

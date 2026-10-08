@@ -115,6 +115,8 @@ export default function EntryTags(props: EntryTagsProps) {
       e.preventDefault();
       void handleCreateTag();
     } else if (e.key === 'Escape') {
+      // Claim the key so MainLayout's global Escape action (e.g. Quit) skips it.
+      e.preventDefault();
       setIsDropdownOpen(false);
       setNewTagName('');
     }

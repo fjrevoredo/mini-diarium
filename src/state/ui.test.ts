@@ -12,6 +12,10 @@ import {
   setIsProjectSupportOpen,
   isFeedbackOpen,
   setIsFeedbackOpen,
+  isLinkDialogOpen,
+  setIsLinkDialogOpen,
+  isTimestampDialogOpen,
+  setIsTimestampDialogOpen,
 } from './ui';
 import { registerNavigationGuard } from './entries';
 
@@ -124,4 +128,21 @@ describe('guarded navigation entry points (TODO-0104)', () => {
     expect(isFeedbackOpen()).toBe(false);
     expect(isAnyOverlayOpen()).toBe(false);
   });
+
+  it.each([
+    ['link', isLinkDialogOpen, setIsLinkDialogOpen],
+    ['timestamp', isTimestampDialogOpen, setIsTimestampDialogOpen],
+  ] as const)(
+    'isAnyOverlayOpen becomes true when the %s dialog is open, and resetUiState closes it',
+    (_name, isOpen, setOpen) => {
+      expect(isAnyOverlayOpen()).toBe(false);
+      setOpen(true);
+      expect(isAnyOverlayOpen()).toBe(true);
+
+      resetUiState();
+
+      expect(isOpen()).toBe(false);
+      expect(isAnyOverlayOpen()).toBe(false);
+    },
+  );
 });
