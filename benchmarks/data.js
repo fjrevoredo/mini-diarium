@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1791493564684,
+  "lastUpdate": 1791499599160,
   "repoUrl": "https://github.com/fjrevoredo/mini-diarium",
   "entries": {
     "Benchmark": [
@@ -38002,6 +38002,36 @@ window.BENCHMARK_DATA = {
           {
             "name": "ci_pipeline_duration",
             "value": 570000000000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "committer": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "distinct": true,
+          "id": "d85996b33275c1a8a22ed0dcb4e691e607192836",
+          "message": "Keep Escape and app shortcuts from firing under editor dialogs (TODO-0127)",
+          "timestamp": "2026-10-09T00:03:57+02:00",
+          "tree_id": "28f92873bfed6fcae5be3b77bf88d75d178db0ef",
+          "url": "https://github.com/fjrevoredo/mini-diarium/commit/d85996b33275c1a8a22ed0dcb4e691e607192836"
+        },
+        "date": 1791499597828,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "ci_pipeline_duration",
+            "value": 495000000000,
             "range": "± 0",
             "unit": "ns/iter"
           }
