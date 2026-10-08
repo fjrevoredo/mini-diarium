@@ -219,15 +219,40 @@ function isQuietHours(config: NotifyConfig): boolean {
 // PARENT SESSION DETECTION
 // ==========================================
 
-async function isParentSession(client: OpencodeClient, sessionID: string): Promise<boolean> {
-	try {
-		const session = await client.session.get({ path: { id: sessionID } })
-		// No parentID means this IS the parent/root session
-		return !session.data?.parentID
-	} catch {
-		// If we can't fetch, assume it's a parent to be safe (notify rather than miss)
-		return true
+async function fetchSessionInfo(
+	client: OpencodeClient,
+	sessionID: string,
+): Promise<{ parentID?: string; title?: string } | null> {
+	// V2 uses `{ sessionID }` and returns the session directly; V1 used
+	// `{ path: { id } }` and wrapped the result in `{ data }`. Try both.
+	const argumentShapes: unknown[] = [{ sessionID }, { path: { id: sessionID } }]
+
+	for (const args of argumentShapes) {
+		try {
+			const result = (await client.session.get(args as never)) as {
+				data?: { parentID?: string; title?: string }
+				parentID?: string
+				title?: string
+			}
+			const info = result?.data ?? result
+			if (info && typeof info === "object") {
+				return info
+			}
+		} catch {
+			// Try the next argument shape.
+		}
 	}
+
+	return null
+}
+
+async function isParentSession(client: OpencodeClient, sessionID: string): Promise<boolean> {
+	const session = await fetchSessionInfo(client, sessionID)
+	// If we can't fetch, assume it's a parent to be safe (notify rather than miss)
+	if (!session) return true
+
+	// No parentID means this IS the parent/root session
+	return !session.parentID
 }
 
 // ==========================================
@@ -443,13 +468,9 @@ async function handleSessionIdle(
 
 	// Get session info for context
 	let sessionTitle = "Task"
-	try {
-		const session = await client.session.get({ path: { id: sessionID } })
-		if (session.data?.title) {
-			sessionTitle = session.data.title.slice(0, 50)
-		}
-	} catch {
-		// Use default title
+	const session = await fetchSessionInfo(client, sessionID)
+	if (session?.title) {
+		sessionTitle = session.title.slice(0, 50)
 	}
 
 	await sendNotification(
@@ -549,7 +570,8 @@ async function handleQuestionAsked(
 // ==========================================
 
 const NotifyPlugin: Plugin = async (ctx) => {
-	const { client } = ctx
+	// V2 passes the OpenCode client context directly; V1 nests it under `client`.
+	const client = (ctx.client ?? (ctx as unknown as OpencodeClient)) as OpencodeClient
 
 	// Load config once at startup
 	const config = await loadConfig()
@@ -991,4 +1013,56 @@ const NotifyPlugin: Plugin = async (ctx) => {
 	}
 }
 
-export default NotifyPlugin
+// OpenCode V2 entrypoint. V2 reads `id` and `setup`; it ignores `server`.
+// `setup` re-registers the V1 hooks through the V2 domain APIs.
+export default {
+	id: "kdco.notify",
+	async setup(ctx: {
+		tool: {
+			hook(
+				name: "execute.before",
+				callback: (event: {
+					tool: string
+					sessionID: string
+					id: string
+					input: unknown
+				}) => Promise<void> | void,
+			): Promise<unknown>
+		}
+		event: {
+			subscribe(options?: { signal?: AbortSignal }): AsyncIterable<{
+				type: string
+				properties: Record<string, unknown>
+			}>
+		}
+	}) {
+		const hooks = await NotifyPlugin(ctx as unknown as Parameters<typeof NotifyPlugin>[0])
+
+		const beforeExecute = hooks["tool.execute.before"]
+		if (beforeExecute) {
+			await ctx.tool.hook("execute.before", async (event) => {
+				await beforeExecute(
+					{ tool: event.tool, sessionID: event.sessionID, callID: event.id },
+					{ args: event.input },
+				)
+			})
+		}
+
+		const controller = new AbortController()
+		void (async () => {
+			try {
+				for await (const event of ctx.event.subscribe({ signal: controller.signal })) {
+					await hooks.event?.({ event } as never)
+				}
+			} catch {
+				// Subscription aborted on unload.
+			}
+		})()
+
+		return () => controller.abort()
+	},
+	// V1 (OpenCode 1.18.29+) entrypoint.
+	async server(ctx: unknown) {
+		return NotifyPlugin(ctx as Parameters<typeof NotifyPlugin>[0])
+	},
+}

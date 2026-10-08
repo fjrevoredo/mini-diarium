@@ -24,3 +24,16 @@ export { isInsideTmux } from "./terminal-detect"
 export type { OpencodeClient } from "./types"
 // Timeout handling
 export { TimeoutError, withTimeout } from "./with-timeout"
+
+/**
+ * OpenCode V2 loads every entry under `.opencode/plugins/` as a plugin,
+ * including a directory that contains an `index` file. This module is a shared
+ * utility library, not a plugin, so it exposes a no-op plugin definition to
+ * satisfy the V2 loader.
+ */
+export default {
+	id: "kdco.primitives",
+	setup() {
+		// Intentionally empty: this module only provides shared utilities.
+	},
+}
