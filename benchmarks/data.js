@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1791415742632,
+  "lastUpdate": 1791493564684,
   "repoUrl": "https://github.com/fjrevoredo/mini-diarium",
   "entries": {
     "Benchmark": [
@@ -37972,6 +37972,36 @@ window.BENCHMARK_DATA = {
           {
             "name": "ci_pipeline_duration",
             "value": 577000000000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "committer": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "distinct": true,
+          "id": "ba5d9c3df4552e7281778c0aaf8c525a4080f871",
+          "message": "Pin LF for Prettier-checked src files to fix format:check on Windows\n\ncore.autocrlf=true rewrote src/**/*.{ts,tsx,css} as CRLF on every checkout or pull,\nso `bun run format:check` failed locally on files nobody had edited while CI on\nLinux passed. Prettier enforces LF, so .gitattributes now pins eol=lf for them.",
+          "timestamp": "2026-10-08T22:48:37+02:00",
+          "tree_id": "5dcbca1d99db2080fcf2785d8c8aaa35702924cf",
+          "url": "https://github.com/fjrevoredo/mini-diarium/commit/ba5d9c3df4552e7281778c0aaf8c525a4080f871"
+        },
+        "date": 1791493562912,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "ci_pipeline_duration",
+            "value": 570000000000,
             "range": "± 0",
             "unit": "ns/iter"
           }
