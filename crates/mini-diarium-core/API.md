@@ -81,13 +81,30 @@ Blanket rules, so individual entries below do not repeat them:
   operates on an already-unlocked journal; obtaining one is the job of the
   `create_database*` / `open_database*` constructors. The single exception is
   `db::peek_auth_slot_types`, which takes a **path** and needs neither a handle nor a key.
-- **Transactions.** `insert_entry_with_images`, `update_entry_with_images`,
-  `delete_entry_by_id`, and `recalculate_all_word_counts` wrap their work in
-  `BEGIN IMMEDIATE` / `COMMIT` with an explicit `ROLLBACK` on any failure
-  (`db/queries/entries/{insert,update,delete,recalculate}.rs`), so the long-lived
-  connection is never left in a half-open transaction. The lower-level `insert_entry` /
-  `update_entry` are single-statement writes with no transaction of their own — they are
-  the primitives the `*_with_images` variants compose.
+- **Transactions.** Every composed write runs as one atomic write unit through the
+  crate-private `with_write_transaction` (`db/queries/transaction.rs`):
+  `insert_entry_with_images`, `update_entry_with_images`, `delete_entry_by_id`,
+  `recalculate_all_word_counts`, `add_tag_to_entry`, `remove_tag_from_entry`,
+  `add_attachment_to_entry`, `remove_attachment_from_entry`, and each entry of
+  `backup::restore_entries_from_snapshot`. Called alone, a unit opens `BEGIN IMMEDIATE` and
+  ends with `COMMIT`, or with `ROLLBACK` on an error or a panic, so the long-lived connection
+  is never left in a half-open transaction. Called inside another unit, it nests as a
+  `SAVEPOINT`: an inner failure undoes only the inner work, and the outermost unit owns the
+  final commit. Callers must propagate an inner error: when SQLite itself rolls back the whole
+  transaction (for example `SQLITE_FULL`), the outer unit is gone too, and continuing would write
+  in autocommit mode. The lower-level `insert_entry` / `update_entry` are single-statement writes
+  with no transaction of their own — they are the primitives the `*_with_images` variants
+  compose.
+- **Entry lock.** A locked entry is read-only. These writes check the lock inside their write
+  unit and return `Err(ERR_ENTRY_LOCKED)` (exactly `"entry is locked"`) without a change:
+  `update_entry_with_images`, `delete_entry_by_id`, `add_tag_to_entry`,
+  `remove_tag_from_entry`, `add_attachment_to_entry`, `remove_attachment_from_entry`.
+  `set_entry_locked` is the toggle and is not checked. `recalculate_all_word_counts` skips
+  locked rows. `insert_entry*` and per-entry restore create new rows, which are never locked.
+  `update_entry` does **not** check the lock: it is the primitive `insert_entry_with_images`
+  uses on its new row; call `update_entry_with_images` to edit an existing entry.
+  Journal-wide tag operations (`delete_tag`, `rename_tag`) also reach locked entries: deleting
+  a tag removes it from every entry through `ON DELETE CASCADE`.
 - **Foreign keys.** Connections are always opened through `db::schema`'s `open_connection`,
   which sets the per-connection `PRAGMA foreign_keys = ON` that all `ON DELETE CASCADE` /
   `RESTRICT` declarations depend on.
@@ -162,7 +179,8 @@ sealed (`pub(crate)`); the names below are re-exported at `db`.
 
 ### Entry CRUD
 - `insert_entry` → **`Result<i64, String>`** (returns the new AUTOINCREMENT row id)
-- `insert_entry_with_images`, `update_entry`, `update_entry_with_images`
+- `insert_entry_with_images`, `update_entry` (no lock check — see
+  [Entry lock](#handle--mutation-semantics)), `update_entry_with_images`
 - `get_entry_by_id`, `get_entries_by_date`, `get_all_entries`, `get_entries_in_range`
 - `get_all_entry_dates`, `get_locked_entry_dates`, `get_entries_for_timeline`
 - `delete_entry_by_id`, `is_entry_locked`, `set_entry_locked`, `count_words`
@@ -194,22 +212,23 @@ Content-addressed encrypted file store (`attachments`) plus a per-entry link tab
 (`entry_attachments`) that carries the encrypted file name. Only these functions touch the
 links — the entry save path never does.
 - `add_attachment_to_entry(db, entry_id, name, bytes) -> Result<AttachmentSummary, String>` —
-  one transaction over the two primitives below. Rejects empty and over-`MAX_STORED_BLOB_BYTES`
+  one write unit that stores the blob and links it. Rejects empty and over-`MAX_STORED_BLOB_BYTES`
   content and invalid names (blank, > 255 chars, `/`, `\`, or any control character). The same
-  bytes added twice to one entry return the existing link; the first name is kept.
-- `upsert_attachment_blob(db, bytes, mime) -> Result<i64, String>`,
-  `link_attachment(db, entry_id, attachment_id, name) -> Result<AttachmentSummary, String>` —
-  split primitives (per-entry restore composes them).
+  bytes added twice to one entry return the existing link; the first name is kept. The MIME type
+  comes from the name's extension.
 - `list_entry_attachments(db, entry_id)` (oldest link first), `get_attachments_map(db) ->
   HashMap<i64, Vec<AttachmentSummary>>` (for exports), `entry_has_attachments(db, entry_id)`
 - `remove_attachment_from_entry(db, entry_id, attachment_id) -> Result<bool, String>` — unlinks and
   deletes orphan blobs in one transaction; `false` when the link did not exist.
 - `read_attachment_bytes(db, entry_id, attachment_id) -> Result<Option<Zeroizing<Vec<u8>>>, String>`
   — scoped to the entry's own links.
-- `cleanup_orphaned_attachments(db)` (also run by `delete_entry_by_id`), `mime_for_extension(name)`
 - `strip_attachment_refs(html) -> String` — removes every `data-attachment-ref` span. For text
   from outside this journal (import): its ref ids belong to another journal and could otherwise
   resolve to an unrelated attachment here.
+- (The blob-store, link, orphan-cleanup, and extension→MIME helpers remain `pub(crate)`. They do
+  not check the entry lock and are not atomic alone; `add_attachment_to_entry`,
+  `remove_attachment_from_entry`, `delete_entry_by_id`, and per-entry restore compose them inside
+  one write unit.)
 
 ### Auth-slot management
 - `get_password_slot`, `get_keypair_slot_by_pubkey`, `list_auth_slots`, `insert_auth_slot`,
@@ -451,6 +470,9 @@ and into the live journal, in-process — no plaintext ever touches disk.
   Attachments (schema v14+ snapshots) are copied blob-by-blob into the live store, re-linked
   under their decrypted names, and inline `data-attachment-ref` ids are remapped to the live
   ids; a ref with no matching attachment is dropped.
+  Each entry (blobs, refs, row, links, tags) is restored as one write unit: an entry that
+  fails leaves nothing in the live journal. The batch is not one unit — entries restored
+  before the failing one stay, and the call returns the error.
 - `EntryMatchStatus::{Missing, ShorterInLive, Present}`
 - `SnapshotEntryDiff { id, date, title, preview, status }`
 - `RestoreEntriesOutcome { added_count }`

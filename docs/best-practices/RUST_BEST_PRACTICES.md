@@ -89,6 +89,20 @@ Current references:
 - `crates/mini-diarium-core/src/db/queries/entries/` (split into `insert.rs`, `update.rs`, `read.rs`, `timeline.rs`)
 - `crates/mini-diarium-core/src/db/queries/tags.rs`
 
+### Compose Multi-Step Writes Under One Write Unit
+
+Core write primitives do not open their own transaction. Compose them under `with_write_transaction`, so the outermost operation owns the transaction and multi-step operations stay atomic.
+
+- Do not write `BEGIN` / `COMMIT` / `ROLLBACK` by hand in `db/queries` or `backup/`. The helper nests as a `SAVEPOINT` when a unit is already open and rolls back on an error or a panic. Migrations keep `run_migration_transaction`.
+- Keep a primitive (for example `link_attachment`, `upsert_attachment_blob`) `pub(crate)`. A public write must be atomic alone and must enforce the rules for the rows it touches.
+- Enforce entry rules (the lock, `ERR_ENTRY_LOCKED`) in core, inside the write unit, so that the check and the write cannot be split. The app crate passes the error through; it does not add a second pre-check.
+- Propagate errors from a nested unit with `?`. If SQLite rolls back the whole transaction (for example `SQLITE_FULL`), a caller that swallows the error and keeps writing commits those writes in autocommit mode.
+
+Current references:
+
+- `crates/mini-diarium-core/src/db/queries/transaction.rs`
+- `crates/mini-diarium-core/src/backup/restore_entries.rs` (one unit per restored entry)
+
 ### Keep Migrations Linear And Auditable
 
 Migration ordering has one owner.
@@ -229,6 +243,7 @@ Ask these during Rust reviews:
 - Does a helper check distinct identity where identity matters, not just count or type?
 - Can a duplicated credential, duplicated row, or missing row bypass the intended rule?
 - Does an encrypted read fail closed?
+- Does a multi-step write run under one `with_write_transaction` unit, and does core (not the command) check the entry lock?
 - Is migration ordering centralized?
 - Are stale compatibility shims documented with a removal gate?
 - Did a file move leave living docs pointing to dead paths?
