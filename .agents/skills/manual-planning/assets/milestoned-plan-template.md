@@ -3,7 +3,7 @@
 ## Metadata
 
 - Plan Status: DRAFT
-- Plan Format: manual-planning v2.0.0
+- Plan Format: manual-planning v2.1.0
 - Template: milestoned
 - Tracking: untracked
 
@@ -11,6 +11,21 @@
 
 - Plan Status values: DRAFT, QUESTIONS PENDING, READY FOR APPROVAL, APPROVED, IN PROGRESS, COMPLETED, BLOCKED
 - Task/Milestone Status values: TO BE DONE, IN PROGRESS, COMPLETED, BLOCKED, SKIPPED
+
+## Resume
+
+<!--
+The session handover. Written only by `plan-status.py <plan> resume`.
+-->
+
+- Updated: never
+- State: not started
+- Green / Red: [last full build/lint/test result]
+- Next runnable: [task ids whose Depends On are all COMPLETED or SKIPPED]
+- Live environment: none
+- Next IDs: [next task id]; DEC-001
+- Risks: none
+- Stop: [done | ask | gate | question | context | limit] — [detail]
 
 ## Context For A Clean Session
 
@@ -77,7 +92,7 @@ is gone by the time the plan is executed.
 - Steps:
   1. [Concrete step.]
 - Validation: [Command, test, inspection, or observable self-check.]
-- Notes: [Constraints, affected files, or `None`.]
+- Notes: [Constraints, affected files, or `None`. When done: the result, at most 3 lines.]
 
 #### Task 1.2: [Name]
 
@@ -90,6 +105,7 @@ is gone by the time the plan is executed.
 - Notes: [Constraints, affected files, or `None`.]
 
 <!--
+A task should fit in one session. Write commits as steps: `Commit: <message scope>`.
 `Depends On` takes `none` or a list of task numbers. Task numbering is **not** an ordering:
 Task 3.1 may be runnable before Task 2.2. Execute by following `Depends On`, not by counting up.
 -->
@@ -192,9 +208,9 @@ Run: YYYY-MM-DD
 
 ## Execution Notes
 
-- Update milestone and task status before starting and after validation.
-- Update each task to COMPLETED immediately after its validation passes.
-- Mark tasks or milestones BLOCKED with a short reason when progress cannot continue.
-- Task numbering is not an execution order. Follow `Depends On`.
+- Start each session with `plan-status.py <plan> brief`. Before stopping, run `plan-status.py <plan>
+  resume` and end with `Stop: <reason> — <detail>`.
+- Set status with `plan-status.py set` before starting a task and right after its validation passes.
+- Follow `Depends On`, not task numbering.
 - Write a `## Decision Log` entry **before starting the next task** whenever execution diverges from
   this plan, an unplanned problem is found, or a validation is deferred — never retrospectively.

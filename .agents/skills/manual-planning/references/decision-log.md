@@ -37,6 +37,10 @@ alike. It is append-only.
 Number entries `DEC-001`, `DEC-002`, … in the order they are written. Do not renumber; the ids are
 referenced from task notes.
 
+IDs may carry a namespace (`REL-DEC-001`); use one per plan. `plan-status.py <plan> decision
+--task <id> --title T --decision D --rationale R` appends the next ID, to the companion file when
+one exists.
+
 ## Timing
 
 Write an entry **before moving to the next task**, never retrospectively.

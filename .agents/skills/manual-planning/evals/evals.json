@@ -81,7 +81,7 @@
       "should_trigger": true,
       "expected_output": "Agent creates a milestoned plan, gives every milestone Exit Criteria broader than a single task validation, and leaves the Approval Gate boilerplate in place until approval is actually given.",
       "assertions": [
-        "The milestoned template is used and Plan Format reads manual-planning v2.0.0",
+        "The milestoned template is used and Plan Format reads manual-planning v2.1.0",
         "Every milestone has Status, Purpose and Exit Criteria",
         "check-plan.py reports no E008 finding"
       ],
@@ -161,6 +161,57 @@
       "assertions": [
         "No plan file is created",
         "The README is edited directly"
+      ],
+      "files": []
+    },
+    {
+      "id": 15,
+      "prompt": "Continue docs/plans/2026-09-02-sample-refactor-plan.md from its Resume block",
+      "should_trigger": true,
+      "expected_output": "Agent runs plan-status.py brief, reads only the Resume block, the runnable tasks and the current task, and continues to the next runnable task without asking unless a Project Gate or a real question requires the user.",
+      "assertions": [
+        "plan-status.py <plan> brief is run before any full read of the plan file",
+        "The first task the agent starts is listed as runnable (all Depends On COMPLETED or SKIPPED)",
+        "The agent does not stop at a task boundary to ask whether to continue when no gate is named",
+        "If the session ends while the plan is IN PROGRESS, the final message ends with a `Stop: <reason>` line"
+      ],
+      "files": ["docs/plans/2026-09-02-sample-refactor-plan.md"]
+    },
+    {
+      "id": 16,
+      "prompt": "Wrap up this session on the plan and write the handover.",
+      "should_trigger": true,
+      "expected_output": "Agent runs plan-status.py resume with State, Next runnable and a stop reason from the closed vocabulary, rather than printing a free-form handover prompt, and ends with the one-line restart prompt and a Stop: line.",
+      "assertions": [
+        "The plan's ## Resume section is rewritten by plan-status.py resume, not by hand or by an ad-hoc script",
+        "The Stop field holds one of done, ask, gate, question, context, limit",
+        "The Resume block is under 3 KB",
+        "The final message ends with `Stop: <reason> — <detail>`",
+        "No multi-paragraph handover prompt is produced for the user to paste"
+      ],
+      "files": ["docs/plans/2026-09-02-sample-refactor-plan.md"]
+    },
+    {
+      "id": 17,
+      "prompt": "Record a decision on task 3: we kept the old serializer because the new one breaks the golden files.",
+      "should_trigger": true,
+      "expected_output": "Agent runs plan-status.py decision (or the Edit tool) to append an entry with the next ID in the plan's namespace, carrying Date, Task, Decision and Rationale.",
+      "assertions": [
+        "Exactly one new decision heading is appended with the next ID in the plan's namespace",
+        "The entry carries Date, Task 3, Decision and Rationale",
+        "No ad-hoc script edits the plan file",
+        "Existing entries are not renumbered"
+      ],
+      "files": ["docs/plans/2026-09-02-sample-refactor-plan.md"]
+    },
+    {
+      "id": 18,
+      "prompt": "Summarise this chat session for me in a few bullet points.",
+      "should_trigger": false,
+      "expected_output": "A plain conversational summary. No plan file is read, created or modified.",
+      "assertions": [
+        "No plan file is created or modified",
+        "plan-status.py is not run"
       ],
       "files": []
     }

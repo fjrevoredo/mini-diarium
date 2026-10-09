@@ -13,14 +13,32 @@ Exit codes:
 """
 
 import argparse
+import importlib.util
 import json
 import os
 import re
 import subprocess
 import sys
 
-VERSION = "2.0.0"
+VERSION = "2.1.0"
 HERE = os.path.dirname(os.path.realpath(__file__))
+
+
+def _load_events():
+    """Load the shared event-log helper without leaving a __pycache__ behind."""
+    spec = importlib.util.spec_from_file_location("_events", os.path.join(HERE, "_events.py"))
+    module = importlib.util.module_from_spec(spec)
+    previous = sys.dont_write_bytecode
+    sys.dont_write_bytecode = True
+    try:
+        spec.loader.exec_module(module)
+    finally:
+        sys.dont_write_bytecode = previous
+    return module
+
+
+EVENTS = _load_events()
+STOP_REASONS = EVENTS.STOP_REASONS
 TEMPLATE_NAMES = ("simple-plan-template.md", "milestoned-plan-template.md")
 
 PLAN_STATUSES = {
@@ -89,6 +107,15 @@ REMOVED_METADATA_FIELDS = ["Created", "Last Updated", "Owner", "Approval"]
 
 APPROVAL_BOILERPLATE = "Implementation must not start until the user approves this plan."
 
+FORMAT_RE = re.compile(r"manual-planning\s+v(\d+)\.(\d+)\.(\d+)")
+
+# The v2.1 limits. Sizes are UTF-8 bytes.
+PLAN_SIZE_LIMIT = 60 * 1024
+RESUME_SIZE_LIMIT = 3 * 1024
+RESUME_SECTION = "Resume"
+# Headings of Decision Log entries, namespaced (`POOL-DEC-001`) or not (`DEC-001`).
+DECISION_HEADING_RE = re.compile(r"^###\s+((?:[A-Z][A-Z0-9]*-)?DEC)-(\d+)")
+
 FILENAME_RE = re.compile(r"^\d{4}-\d{2}-\d{2}-[a-z0-9-]+-plan\.md$")
 
 # Evidence form 1: a file:line citation, e.g. agent-chat.component.ts:139
@@ -125,7 +152,7 @@ errors (exit 1)
   E006  every task has Status, Depends On, Objective, Steps, Validation, Notes
   E007  more than 10 tasks implies milestones exist
   E008  every milestone has Exit Criteria
-  E009  all required top-level sections are present
+  E009  all required top-level sections are present (`Resume` from v2.1.0 on)
   E010  conditional: a CHANGELOG at the repo root implies a task step mentions it
   E011  conditional: the plan edits files that exist but carries no evidence at all
   E012  metadata carries none of the fields v2 removes
@@ -135,7 +162,22 @@ warnings (exit 2)
   W002  Approval Gate still holds template boilerplate at APPROVED or later
   W003  no evidence in a plan of more than 5 tasks
   W004  a vague verb with no file, command or symbol on the same line
-  W005  the inline Decision Log holds more than 10 entries
+  W005  the inline Decision Log holds more than 10 entries (`DEC-` or `NS-DEC-`)
+  W006  the plan file is larger than 60 KB
+  W007  v2.1+ plan IN PROGRESS: the Resume block was never written, is over
+        3 KB, or has no valid `Stop:` value
+  W008  `## Execution Notes` is larger than all task bodies combined
+  W009  event log: a task has stayed IN PROGRESS across more than 3 resumes
+  W010  event log: the latest 2+ resumes stopped on `ask` with no gate named
+  W011  event log: the plan grew more than 25% between the last two resumes
+
+Stop reasons (W007): done, ask, gate, question, context, limit.
+
+W009-W011 read the status event log that plan-status.py appends to
+(`git rev-parse --git-path manual-planning/<plan-stem>.events.jsonl`); they are
+silent when no log exists.
+
+`--json` adds `sizes`: bytes per top-level section plus `total`.
 
 Evidence (E011/W003) counts in any of three forms: a file:line reference, a
 section reference (`SKILL_RULES.md §5`), or a fenced re-runnable inspection
@@ -272,8 +314,43 @@ class Plan:
                 self.section_order.append((title, i))
         self.metadata = self._metadata()
         self.plan_status = self.metadata.get("Plan Status")
+        m = FORMAT_RE.search(self.metadata.get("Plan Format", ""))
+        self.version = tuple(int(x) for x in m.groups()) if m else None
+        self.v21 = self.version is not None and self.version >= (2, 1, 0)
         self.tasks = self._tasks()
         self.milestones = self._milestones()
+
+    def section_span(self, title):
+        """(heading index, end index) of the first `## title` section, or None.
+
+        End is the index of the next level-1 or level-2 heading (masked, so a
+        heading inside a fenced example never ends a section), or len(lines).
+        """
+        start = self.sections.get(title)
+        if start is None:
+            return None
+        end = len(self.lines)
+        for i in range(start + 1, len(self.masked)):
+            if re.match(r"^#{1,2}\s", self.masked[i]):
+                end = i
+                break
+        return start, end
+
+    def raw_bytes(self, start, end):
+        return len("\n".join(self.lines[start:end]).encode("utf-8"))
+
+    def sizes(self):
+        """Bytes per top-level section, plus the whole file as `total`."""
+        out = {}
+        order = self.section_order + [(None, len(self.lines))]
+        for (title, start), (_, end) in zip(order, order[1:]):
+            out[title] = out.get(title, 0) + self.raw_bytes(start, end)
+        out["total"] = len(self.text.encode("utf-8"))
+        return out
+
+    def task_bytes(self, task):
+        end = task["body"][-1][0] + 1 if task["body"] else task["index"] + 1
+        return self.raw_bytes(task["index"], end)
 
     def _metadata(self):
         idx = self.sections.get("Metadata")
@@ -534,6 +611,9 @@ def check(plan, plan_dir, layout_root, git_root_path, root_is_guess, required):
 
     # E009
     for required_slot in required:
+        if required_slot == RESUME_SECTION and not plan.v21:
+            # v2.0.0 plans predate the Resume block; they must not gain an error.
+            continue
         options = ("Milestones", "Tasks") if required_slot == "Milestones or Tasks" else (required_slot,)
         if not any(o in plan.sections for o in options):
             add(
@@ -642,7 +722,7 @@ def check(plan, plan_dir, layout_root, git_root_path, root_is_guess, required):
         entries = [
             l
             for _, l in section_body(plan.masked, idx)
-            if re.match(r"^###\s+DEC-\d+", l)
+            if DECISION_HEADING_RE.match(l)
         ]
         if len(entries) > 10:
             add(
@@ -653,8 +733,128 @@ def check(plan, plan_dir, layout_root, git_root_path, root_is_guess, required):
                 % len(entries),
             )
 
+    # W006
+    total = len(plan.text.encode("utf-8"))
+    if total > PLAN_SIZE_LIMIT:
+        add(
+            "W006",
+            "warning",
+            0,
+            "plan is %d KB (> %d KB); move ledgers and evidence to the companion "
+            "notes file and decisions to the companion decisions file"
+            % (total // 1024, PLAN_SIZE_LIMIT // 1024),
+        )
+
+    # W007
+    if plan.v21 and plan_status == "IN PROGRESS":
+        problem = resume_problem(plan)
+        if problem:
+            add("W007", "warning", plan.sections.get(RESUME_SECTION, -1) + 1, problem)
+
+    # W008
+    span = plan.section_span("Execution Notes")
+    if span is not None and plan.tasks:
+        notes = plan.raw_bytes(*span)
+        tasks = sum(plan.task_bytes(t) for t in plan.tasks)
+        if notes > tasks:
+            add(
+                "W008",
+                "warning",
+                span[0] + 1,
+                "Execution Notes is %d bytes, more than all %d task bodies combined (%d); "
+                "keep a <=3-line result per task and move ledgers to the notes file"
+                % (notes, len(plan.tasks), tasks),
+            )
+
+    # W009-W011
+    for check_id, message in event_findings(plan, EVENTS.read(plan.path)):
+        add(check_id, "warning", 0, message)
+
     f.sort(key=lambda x: (x.id, x.line))
     return f
+
+
+def resume_problem(plan):
+    """W007: why the Resume block cannot serve as a handover, or None."""
+    span = plan.section_span(RESUME_SECTION)
+    if span is None:
+        return None  # E009 already reports the missing section
+    size = plan.raw_bytes(*span)
+    if size > RESUME_SIZE_LIMIT:
+        return "Resume block is %d bytes (> %d)" % (size, RESUME_SIZE_LIMIT)
+    body = section_body(plan.masked, span[0])
+    updated = field_value(body, "Updated") or ""
+    if not re.search(r"\d{4}-\d{2}-\d{2}", updated):
+        return (
+            "Resume block still holds the template; write it with "
+            "`plan-status.py <plan> resume --state ... --next ... --stop <reason>`"
+        )
+    stop = (field_value(body, "Stop") or "").strip("`* ")
+    token = re.split(r"[\s\u2014:;,(-]", stop, maxsplit=1)[0].lower() if stop else ""
+    if token not in STOP_REASONS:
+        return "Resume `Stop:` is %r; expected one of %s" % (
+            stop[:40],
+            " | ".join(STOP_REASONS),
+        )
+    return None
+
+
+def event_findings(plan, events):
+    """W009-W011 from the status event log. Returns [(check id, message)]."""
+    out = []
+    if not events:
+        return out
+    resumes = [e for e in events if e.get("event") == "resume"]
+
+    # W009: current IN PROGRESS tasks, counted from their latest IN PROGRESS event.
+    for t in plan.tasks:
+        if normalize_status(field_value(t["body"], "Status"), TASK_STATUSES) != "IN PROGRESS":
+            continue
+        started = None
+        for i, e in enumerate(events):
+            if e.get("event") == "status" and e.get("task") == t["id"] and e.get("to") == "IN PROGRESS":
+                started = i
+        if started is None:
+            continue
+        n = sum(1 for e in events[started + 1:] if e.get("event") == "resume")
+        if n > 3:
+            out.append(
+                (
+                    "W009",
+                    "Task %s has been IN PROGRESS across %d resumes; split it into "
+                    "session-sized subtasks (task shape)" % (t["id"], n),
+                )
+            )
+
+    # W010: trailing run of ungated `ask` stops.
+    run = 0
+    for e in reversed(resumes):
+        if e.get("stop") == "ask" and e.get("detail_empty"):
+            run += 1
+        else:
+            break
+    if run >= 2:
+        out.append(
+            (
+                "W010",
+                "the last %d resumes stopped on `ask` with no gate named; continue to the "
+                "next runnable task unless a Project Gate requires the user" % run,
+            )
+        )
+
+    # W011: growth between the last two resumes.
+    sized = [e for e in resumes if isinstance(e.get("bytes"), int) and e["bytes"] > 0]
+    if len(sized) >= 2:
+        before, after = sized[-2]["bytes"], sized[-1]["bytes"]
+        if after > before * 1.25:
+            out.append(
+                (
+                    "W011",
+                    "plan grew %d%% between the last two resumes (%d -> %d bytes)"
+                    % (round(100.0 * (after - before) / before), before, after),
+                )
+            )
+    return out
 
 
 class Parser(argparse.ArgumentParser):
@@ -736,6 +936,7 @@ def main(argv=None):
                     "errors": len(errors),
                     "warnings": len(warnings),
                     "checks": [x.as_dict() for x in findings],
+                    "sizes": plan.sizes(),
                 },
                 indent=2,
             )

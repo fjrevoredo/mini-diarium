@@ -11,7 +11,7 @@ description: |
   template, resume plan, update the plan, continue the plan, plan status, task checklist, roadmap,
   milestones, exit criteria, approval gate, decision log, cleanup phase, check-plan, new-plan.
 metadata:
-  version: "2.0.0"
+  version: "2.1.0"
 ---
 
 # Manual Planning
@@ -36,13 +36,21 @@ python3 scripts/new-plan.py "<title>" [--milestoned] [--dir docs/plans]
 # Validate a plan (read-only). exit 0 = clean, 1 = errors, 2 = warnings only
 python3 scripts/check-plan.py <plan-file> [--json] [--strict] [--dir docs/plans]
 
-# Change one task's status, or read every status back
-python3 scripts/plan-status.py <plan-file> set <task-id> "<STATUS>"
+# Read state: every status, or the session-start digest
 python3 scripts/plan-status.py <plan-file> show
+python3 scripts/plan-status.py <plan-file> brief
+
+# Write state
+python3 scripts/plan-status.py <plan-file> set <task-id> "<STATUS>"
+python3 scripts/plan-status.py <plan-file> set-plan "<PLAN STATUS>"
+python3 scripts/plan-status.py <plan-file> resume --state "..." --next <ids> --stop <reason>
+                               [--detail ...] [--green ...] [--env ...] [--risks ...] [--from-file F]
+python3 scripts/plan-status.py <plan-file> decision --task <id> --title T --decision D --rationale R
+python3 scripts/plan-status.py <plan-file> note --task <id> "<evidence line>"
 ```
 
-Each answers `--help`, which lists every check ID and exit code. Quote the status argument: three
-of the five task statuses contain a space.
+Each answers `--help`, which lists every check ID and exit code. Quote status arguments: three of
+the five task statuses contain a space.
 
 ## Default Location
 
@@ -118,7 +126,7 @@ Use `BLOCKED` when planning or implementation cannot continue, and record the bl
 
 Every plan has these top-level sections, which is what `check-plan.py` `E009` enforces:
 
-`Metadata`, `Status Legend`, `Context For A Clean Session`, `Goal`, `Scope`, `Non-Goals`,
+`Metadata`, `Status Legend`, `Resume`, `Context For A Clean Session`, `Goal`, `Scope`, `Non-Goals`,
 `Assumptions`, `Open Questions`, `Milestones` (or `Tasks` in a simple plan), `Project Gates`,
 `Pre-flight Checks`, `Decision Log`, `Final Verification`, `Approval Gate`, `Plan Self-Check`,
 `Execution Notes`.
@@ -127,7 +135,7 @@ The metadata block is exactly four fields:
 
 ```markdown
 - Plan Status: DRAFT
-- Plan Format: manual-planning v2.0.0
+- Plan Format: manual-planning v2.1.0
 - Template: milestoned
 - Tracking: untracked
 ```
@@ -151,6 +159,8 @@ forking this skill for a project.
 reach `COMPLETED`. It is distinct from per-task validation: per-task validation proves one task
 worked, pre-flight checks prove the repository is shippable.
 
+`## Resume` is the session handover. Only `plan-status.py resume` writes it.
+
 ## Task Rules
 
 Each task must include:
@@ -165,6 +175,13 @@ Each task must include:
 **Task numbering is not an execution order.** `Depends On` is the order. Task 3.1 may be runnable
 before Task 2.2.
 
+**A task should fit in one session.** Split long or paid verification into gated subtasks.
+
+**Commits are steps.** Write each commit where it belongs: `Commit: <message scope>`.
+
+**Results are at most 3 lines** in the task's `Notes`. Longer evidence goes to the companion
+`-notes.md` via `plan-status.py note`.
+
 Prefer deterministic validation — a test, build, linter, or exact file inspection. Where none is
 possible, state the manual check in observable terms. Say explicitly when a validation passes by
 producing no output: `grep` finding nothing exits 1, and so does `diff` on files that are meant to
@@ -178,16 +195,19 @@ the next milestone can safely start.
 
 ## Implementation Workflow
 
-1. Set the plan status to `IN PROGRESS` before starting implementation.
+1. Set the plan status to `IN PROGRESS` before starting implementation —
+   `plan-status.py <plan> set-plan "IN PROGRESS"`.
 2. Before starting a task, set it to `IN PROGRESS` — `plan-status.py <plan> set <id> "IN PROGRESS"`.
 3. Complete the task.
 4. Run the task validation. Before declaring it passed, check the task's `Steps` and `Validation`
    for explicitly named tests (e.g. "add a test `test_foo_bar`"). **A green test suite does not mean
    those tests were written — verify by name.**
+   A test or guard added for a fix must be seen failing before the fix and passing after.
 5. Fix issues until validation passes, or mark the task `BLOCKED` with a reason.
 6. Set the task to `COMPLETED` immediately after validation passes.
 7. Update the milestone status when its tasks satisfy its exit criteria.
-8. Start the next task only after the plan file reflects the current state.
+8. Start the next task only after the plan file reflects the current state, then continue to it
+   without asking (see `## Session Protocol`).
 
 If validation was intentionally deferred earlier, reconcile the plan text once the deferred checks
 actually run. Leave no stale "validation pending" phrasing describing a state the plan has moved past.
@@ -199,6 +219,20 @@ one path immediately — do not defer via a mental note:
 - Create a new task in the plan with status `BLOCKED` if it is out of scope for the current task.
 
 A bug that is noticed but neither fixed nor recorded will be forgotten. There is no third option.
+
+## Session Protocol
+
+1. **Start** with `plan-status.py <plan> brief`. Read only what it points to, not the whole plan.
+2. **Continue** to the next runnable task without asking. Stop only for a `## Project Gates` item,
+   a question only the user can answer, or context pressure.
+3. **Before stopping**, run `plan-status.py <plan> resume`, then end the final message with
+   `Stop: <done | ask | gate | question | context | limit> — <detail>`.
+
+The user restarts with `Continue <plan> from its Resume block`.
+
+## Plan Writes
+
+Change the plan only with the Edit tool or `plan-status.py`, never with an ad-hoc script.
 
 ## Decision Log
 
@@ -243,6 +277,9 @@ mentioning it only when one exists — a project without a changelog needs no ch
 ## Plan Retirement
 
 Untracked plans need no retirement step; deleting the file is enough.
+
+If the `session-telemetry` skill is installed, run `telemetry.py close <plan>` at `COMPLETED` and
+paste its summary into `## Final Verification`.
 
 Where plans are committed, the project owns the retirement convention, and `check-plan.py` must pass
 before a plan is retired: in a tracked repo a misleading final state is permanent.
@@ -289,6 +326,7 @@ claimed its open questions were explicit. It was a signature, not a gate.
   when a plan is being written for a session that will not have the originating conversation.
 - `references/decision-log.md` — read when the inline decision log passes ~10 entries, when a
   companion decisions file is requested, or when deciding whether an event qualifies as an entry.
+- `references/session-protocol.md` — read when writing the Resume block or choosing a stop reason.
 
 ## Resources
 
