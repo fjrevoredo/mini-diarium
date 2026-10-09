@@ -18,6 +18,8 @@
 //! 3. **Attachment ids have the same problem.** A snapshot entry's attachments are copied
 //!    blob-by-blob into the live store first, then its inline `data-attachment-ref` spans are
 //!    remapped from snapshot ids to the new live ids before the entry is inserted and linked.
+//!    All of that, plus the entry's tags, runs as one write unit per entry, so a failure
+//!    partway through leaves no unlinked blob and no half-restored entry behind.
 //!
 //! Nothing here writes a file: every intermediate value (resolved HTML, decrypted tag names)
 //! lives in memory only, on its way from one encrypted connection to another.
@@ -27,11 +29,12 @@ use std::collections::{HashMap, HashSet};
 use rusqlite::{params, Connection, OptionalExtension};
 
 use crate::db::queries::attachments::{attachment_ref_span, rewrite_attachment_refs};
+use crate::db::queries::with_write_transaction;
 use crate::db::{
-    add_tag_to_entry, cleanup_orphaned_attachments, create_tag, get_entries_by_date,
-    get_tags_for_entry, insert_entry_with_images, link_attachment, list_entry_attachments,
-    read_attachment_bytes, resolve_image_refs_in_entries, upsert_attachment_blob,
-    DatabaseConnection, DiaryEntry, EntryMetadata,
+    add_tag_to_entry, create_tag, get_entries_by_date, get_tags_for_entry,
+    insert_entry_with_images, link_attachment, list_entry_attachments, read_attachment_bytes,
+    resolve_image_refs_in_entries, upsert_attachment_blob, DatabaseConnection, DiaryEntry,
+    EntryMetadata,
 };
 
 use super::inspect::{has_column, list_snapshot_entries};
@@ -130,10 +133,11 @@ pub fn list_snapshot_entries_with_status(
 /// me from accidental edits" marker the user sets deliberately, not something a recovery
 /// action should reintroduce as a surprise.
 ///
-/// Stops at the first error. Each entry's own insert already commits its own transaction
-/// (`insert_entry_with_images`), so an error partway through leaves whatever was already
-/// inserted in place rather than rolling it back — and restoring the same ids again is safe,
-/// since it just adds those entries a second time, never overwrites the first attempt.
+/// Each entry is restored as one atomic unit: its attachment blobs, the entry itself, its
+/// attachment links, and its tags commit together or not at all. Stops at the first error:
+/// the entry that failed leaves nothing in the live journal, while entries restored before
+/// it in the same call stay. Restoring the same ids again is safe, since it just adds those
+/// entries a second time, never overwrites the first attempt.
 pub fn restore_entries_from_snapshot(
     live_db: &DatabaseConnection,
     snapshot_db: &DatabaseConnection,
@@ -144,52 +148,58 @@ pub fn restore_entries_from_snapshot(
     let restore_attachments = has_table(snapshot_db.conn(), "entry_attachments")?;
 
     for &id in entry_ids {
-        let entry = read_full_snapshot_entry(snapshot_db, id)?.ok_or_else(|| {
-            "One of the selected entries no longer exists in this backup.".to_string()
+        // The snapshot is a separate, read-only connection, so reading from it inside the
+        // live journal's transaction is safe.
+        with_write_transaction(live_db, || {
+            restore_one_entry(live_db, snapshot_db, id, restore_tags, restore_attachments)
         })?;
-
-        // Resolve image-id refs against the snapshot's own image store before the text
-        // crosses into the live database, where those ids name something else entirely.
-        let mut resolved = resolve_image_refs_in_entries(snapshot_db, vec![entry])?;
-        let mut to_insert = resolved.remove(0);
-
-        let attachments = if restore_attachments {
-            copy_attachment_blobs(live_db, snapshot_db, id)?
-        } else {
-            Vec::new()
-        };
-        if restore_attachments {
-            to_insert.text = remap_attachment_refs(&to_insert.text, &attachments);
-        }
-
-        let new_id = match insert_entry_with_images(live_db, &to_insert) {
-            Ok(new_id) => new_id,
-            Err(e) => {
-                // The blobs copied above have no link yet; do not leave them behind.
-                let _ = cleanup_orphaned_attachments(live_db);
-                return Err(e);
-            }
-        };
-
-        for copied in &attachments {
-            if let Err(e) = link_attachment(live_db, new_id, copied.live_id, &copied.name) {
-                // Blobs of this entry not linked yet would otherwise stay behind unowned.
-                let _ = cleanup_orphaned_attachments(live_db);
-                return Err(e);
-            }
-        }
-
-        if restore_tags {
-            for tag in get_tags_for_entry(snapshot_db, id)? {
-                let live_tag = create_tag(live_db, &tag.name)?;
-                add_tag_to_entry(live_db, new_id, live_tag.id)?;
-            }
-        }
     }
 
     Ok(RestoreEntriesOutcome {
         added_count: entry_ids.len(),
     })
+}
+
+/// Copies one snapshot entry into the live journal. Must run inside a write unit: it
+/// performs several writes that are only correct together.
+fn restore_one_entry(
+    live_db: &DatabaseConnection,
+    snapshot_db: &DatabaseConnection,
+    id: i64,
+    restore_tags: bool,
+    restore_attachments: bool,
+) -> Result<(), String> {
+    let entry = read_full_snapshot_entry(snapshot_db, id)?.ok_or_else(|| {
+        "One of the selected entries no longer exists in this backup.".to_string()
+    })?;
+
+    // Resolve image-id refs against the snapshot's own image store before the text
+    // crosses into the live database, where those ids name something else entirely.
+    let mut resolved = resolve_image_refs_in_entries(snapshot_db, vec![entry])?;
+    let mut to_insert = resolved.remove(0);
+
+    let attachments = if restore_attachments {
+        copy_attachment_blobs(live_db, snapshot_db, id)?
+    } else {
+        Vec::new()
+    };
+    if restore_attachments {
+        to_insert.text = remap_attachment_refs(&to_insert.text, &attachments);
+    }
+
+    let new_id = insert_entry_with_images(live_db, &to_insert)?;
+
+    for copied in &attachments {
+        link_attachment(live_db, new_id, copied.live_id, &copied.name)?;
+    }
+
+    if restore_tags {
+        for tag in get_tags_for_entry(snapshot_db, id)? {
+            let live_tag = create_tag(live_db, &tag.name)?;
+            add_tag_to_entry(live_db, new_id, live_tag.id)?;
+        }
+    }
+    Ok(())
 }
 
 /// One snapshot attachment after its blob was copied into the live store.
@@ -585,6 +595,232 @@ mod tests {
             .unwrap()
             .unwrap();
         assert_eq!(bytes.as_slice(), b"%PDF snapshot bytes");
+    }
+
+    /// A live journal for the fault-injection tests: an unrelated anchor entry with its own
+    /// attachment and tag, plus a snapshot of a source entry with two attachments and a tag
+    /// of its own. The source entry and its tag are then deleted from the live journal, so a
+    /// restore of `source_id` must add a new entry, two blobs, two links, a tag, and a link.
+    struct FaultFixture {
+        fixture: Fixture,
+        snapshot_file: String,
+        anchor_id: i64,
+        source_id: i64,
+        second_attachment_id: i64,
+    }
+
+    impl FaultFixture {
+        fn new(name: &str) -> Self {
+            let fixture = Fixture::new(name);
+            let live = &fixture.live;
+
+            let anchor_id = insert_entry(live, &entry("2024-01-01", "Anchor", "a")).unwrap();
+            crate::db::add_attachment_to_entry(live, anchor_id, "anchor.txt", b"anchor").unwrap();
+            let anchor_tag = db_create_tag(live, "anchor-tag").unwrap();
+            crate::db::add_tag_to_entry(live, anchor_id, anchor_tag.id).unwrap();
+
+            let source_id =
+                insert_entry(live, &entry("2024-03-01", "Has files", "source body")).unwrap();
+            crate::db::add_attachment_to_entry(live, source_id, "first.txt", b"first bytes")
+                .unwrap();
+            let second =
+                crate::db::add_attachment_to_entry(live, source_id, "second.txt", b"second bytes")
+                    .unwrap();
+            let source_tag = db_create_tag(live, "source-only").unwrap();
+            crate::db::add_tag_to_entry(live, source_id, source_tag.id).unwrap();
+
+            create_snapshot(live, &fixture.ctx(), SnapshotTrigger::Manual).unwrap();
+            let snapshot_file = list_snapshots(&fixture.backups_dir).unwrap()[0]
+                .file_name
+                .clone();
+
+            crate::db::delete_entry_by_id(live, source_id).unwrap();
+            crate::db::delete_tag(live, source_tag.id).unwrap();
+
+            Self {
+                fixture,
+                snapshot_file,
+                anchor_id,
+                source_id,
+                second_attachment_id: second.id,
+            }
+        }
+
+        fn live(&self) -> &DatabaseConnection {
+            &self.fixture.live
+        }
+
+        fn open_snapshot(&self) -> DatabaseConnection {
+            super::super::open_snapshot_file(
+                &self.fixture.backups_dir,
+                &self.snapshot_file,
+                super::super::SnapshotCredential::Password("test_password".to_string()),
+            )
+            .unwrap()
+        }
+
+        /// Makes the live database reject inserts into `table` from the second row of the
+        /// restored entry on, through a `BEFORE INSERT` trigger.
+        fn fail_second_insert_into(&self, table: &str) {
+            self.live()
+                .conn()
+                .execute_batch(&format!(
+                    "CREATE TRIGGER inject_fault BEFORE INSERT ON {table}
+                     WHEN (SELECT COUNT(*) FROM {table} WHERE entry_id = NEW.entry_id) >= 1
+                     BEGIN SELECT RAISE(ABORT, 'injected'); END;"
+                ))
+                .unwrap();
+        }
+
+        /// Makes the live database reject every insert into `table`.
+        fn fail_every_insert_into(&self, table: &str) {
+            self.live()
+                .conn()
+                .execute_batch(&format!(
+                    "CREATE TRIGGER inject_fault BEFORE INSERT ON {table}
+                     BEGIN SELECT RAISE(ABORT, 'injected'); END;"
+                ))
+                .unwrap();
+        }
+    }
+
+    type TableDump = Vec<(String, Vec<Vec<rusqlite::types::Value>>)>;
+
+    /// Every row of every user table, so a test can assert that a failed restore left the
+    /// database exactly as it was.
+    fn dump_tables(db: &DatabaseConnection) -> TableDump {
+        let conn = db.conn();
+        let mut names_stmt = conn
+            .prepare(
+                "SELECT name FROM sqlite_master \
+                 WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY name",
+            )
+            .unwrap();
+        let names: Vec<String> = names_stmt
+            .query_map([], |row| row.get(0))
+            .unwrap()
+            .collect::<Result<_, _>>()
+            .unwrap();
+        names
+            .into_iter()
+            .map(|name| {
+                let mut stmt = conn
+                    .prepare(&format!("SELECT * FROM \"{name}\" ORDER BY rowid"))
+                    .unwrap();
+                let columns = stmt.column_count();
+                let rows = stmt
+                    .query_map([], |row| {
+                        (0..columns)
+                            .map(|i| row.get::<_, rusqlite::types::Value>(i))
+                            .collect::<Result<Vec<_>, _>>()
+                    })
+                    .unwrap()
+                    .collect::<Result<Vec<_>, _>>()
+                    .unwrap();
+                (name, rows)
+            })
+            .collect()
+    }
+
+    /// Asserts table by table, so a failure names the table that changed.
+    fn assert_unchanged(before: &TableDump, after: &TableDump, which: &str) {
+        assert_eq!(
+            before.iter().map(|(n, _)| n).collect::<Vec<_>>(),
+            after.iter().map(|(n, _)| n).collect::<Vec<_>>(),
+            "{which}: table set changed"
+        );
+        for ((name, rows_before), (_, rows_after)) in before.iter().zip(after) {
+            assert_eq!(
+                rows_before, rows_after,
+                "{which}: table {name:?} changed after the failed restore"
+            );
+        }
+    }
+
+    #[test]
+    fn test_restore_rolls_back_entry_when_second_link_fails() {
+        let f = FaultFixture::new("second-link-fails");
+        f.fail_second_insert_into("entry_attachments");
+        let snapshot = f.open_snapshot();
+        let live_before = dump_tables(f.live());
+        let snapshot_before = dump_tables(&snapshot);
+
+        let err = restore_entries_from_snapshot(f.live(), &snapshot, &[f.source_id]).unwrap_err();
+
+        assert!(err.contains("injected"), "the fault must fire, got: {err}");
+        assert_unchanged(&live_before, &dump_tables(f.live()), "live journal");
+        assert_unchanged(&snapshot_before, &dump_tables(&snapshot), "snapshot");
+    }
+
+    #[test]
+    fn test_restore_leaves_no_blob_when_second_snapshot_blob_is_corrupt() {
+        let f = FaultFixture::new("corrupt-second-blob");
+        {
+            let path = f.fixture.backups_dir.join(&f.snapshot_file);
+            let raw = crate::db::schema::open_connection(&path).unwrap();
+            let changed = raw
+                .execute(
+                    "UPDATE attachments SET data = zeroblob(length(data)) WHERE id = ?1",
+                    params![f.second_attachment_id],
+                )
+                .unwrap();
+            assert_eq!(changed, 1, "fixture bug: the second blob must exist");
+        }
+        let snapshot = f.open_snapshot();
+        let live_before = dump_tables(f.live());
+        let snapshot_before = dump_tables(&snapshot);
+
+        let err = restore_entries_from_snapshot(f.live(), &snapshot, &[f.source_id]);
+
+        assert!(err.is_err(), "a corrupt blob must fail the restore");
+        assert_unchanged(&live_before, &dump_tables(f.live()), "live journal");
+        assert_unchanged(&snapshot_before, &dump_tables(&snapshot), "snapshot");
+    }
+
+    #[test]
+    fn test_restore_rolls_back_entry_when_tag_link_fails() {
+        let f = FaultFixture::new("tag-link-fails");
+        f.fail_every_insert_into("entry_tags");
+        let snapshot = f.open_snapshot();
+        let live_before = dump_tables(f.live());
+        let snapshot_before = dump_tables(&snapshot);
+
+        let err = restore_entries_from_snapshot(f.live(), &snapshot, &[f.source_id]).unwrap_err();
+
+        assert!(err.contains("injected"), "the fault must fire, got: {err}");
+        assert_unchanged(&live_before, &dump_tables(f.live()), "live journal");
+        assert_unchanged(&snapshot_before, &dump_tables(&snapshot), "snapshot");
+    }
+
+    #[test]
+    fn test_restore_keeps_earlier_entries_when_a_later_one_fails() {
+        // The anchor has one attachment, so the second-link fault fires only on the source.
+        let f = FaultFixture::new("earlier-entries-stay");
+        f.fail_second_insert_into("entry_attachments");
+        let snapshot = f.open_snapshot();
+
+        let err = restore_entries_from_snapshot(f.live(), &snapshot, &[f.anchor_id, f.source_id])
+            .unwrap_err();
+
+        assert!(err.contains("injected"), "the fault must fire, got: {err}");
+        let anchors = get_entries_by_date(f.live(), "2024-01-01").unwrap();
+        assert_eq!(anchors.len(), 2, "the restored anchor copy must stay");
+        let restored_anchor = anchors.iter().find(|e| e.id != f.anchor_id).unwrap();
+        let names: Vec<String> = list_entry_attachments(f.live(), restored_anchor.id)
+            .unwrap()
+            .into_iter()
+            .map(|a| a.name)
+            .collect();
+        assert_eq!(names, vec!["anchor.txt"]);
+        let tags = get_tags_for_entry(f.live(), restored_anchor.id).unwrap();
+        assert_eq!(tags.len(), 1);
+        assert_eq!(tags[0].name, "anchor-tag");
+        assert!(
+            get_entries_by_date(f.live(), "2024-03-01")
+                .unwrap()
+                .is_empty(),
+            "the failing entry must leave nothing"
+        );
     }
 
     #[test]
