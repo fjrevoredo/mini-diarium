@@ -39,6 +39,9 @@ Template:
 ### Fixed
 - **"Open backups folder" stays inside the journal's own folder (TODO-0113)**: When a journal had no snapshots yet, the button opened the shared `backups/` folder, which also shows the backups folders of other journals in the same directory. It now always opens the journal's own `backups/{name}/` folder, When there is nothing to open yet, it shows a translated "There are no backups to show yet" message, not the untranslated backend text. `SECURITY.md`, `docs/KNOWN_ISSUES.md` (KI-13), and the Backups docs now say that journals sharing one folder can see each other's filenames.
 
+### Internal
+- **Dependency updates (Dependabot #325, #324, #323)**: Frontend bumps for `solid-js` (1.9.17), which brings `seroval`/`seroval-plugins` (1.6.9), and the `@vitest` family (`@vitest/ui`, `vitest`, `@vitest/coverage-v8`) to a single 5.0.3. A `source-map-js` (1.2.2) override pins the transitive copy pulled by `postcss` and `css-tree`, which no direct range would move. Both lockfiles were regenerated and aligned. The `nix/package.nix` `npmDepsHash` needs a Linux-side refresh; the Nix CI workflow patches it automatically on push.
+
 ## [0.7.4] - 09-10-2026
 
 ### Fixed
