@@ -149,13 +149,13 @@ None. The design choices are recorded as DEC-001 and DEC-002 below; challenge th
 
 ### Milestone 3: Entry-protection policy in core
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Purpose: Fix R-05: core owns the lock rule and the empty rule, in one place each.
 - Exit Criteria: No `is_entry_locked` call and no `"entry is locked"` literal remain in `src-tauri/src/commands/*` outside tests; core write operations refuse a locked entry; all existing lock tests still pass.
 
 #### Task 3.1: Lock enforcement in core write operations
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Depends On: 1.2
 - Objective: The user-facing core writes refuse a locked entry with one exported constant.
 - Steps:
@@ -168,7 +168,7 @@ None. The design choices are recorded as DEC-001 and DEC-002 below; challenge th
 
 #### Task 3.2: Remove the app-crate copies
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Depends On: 3.1, 3.3
 - Objective: Commands rely on core for the lock rule and still return the exact string.
 - Steps:
@@ -181,7 +181,7 @@ None. The design choices are recorded as DEC-001 and DEC-002 below; challenge th
 
 #### Task 3.3: `entry_is_empty` in core
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Depends On: 1.2
 - Objective: One core predicate says whether a stored entry is empty: blank title, blank body, and no attachments.
 - Steps:
@@ -317,6 +317,48 @@ Run before the plan may reach `COMPLETED`.
 - Task: 1.1
 - Decision: Review finding P2 (a caller that swallows a nested unit's whole-transaction-rollback error and keeps writing commits those writes in autocommit mode) is accepted as a caller contract, documented on `with_write_transaction`, not detected in code.
 - Rationale: Every core caller propagates helper errors with `?`, so the case needs a caller that deliberately ignores the error. The outer `COMMIT` still reports failure. The helper cannot block later writes on a shared `&DatabaseConnection` without a stateful poison flag, which is out of proportion to the risk.
+
+### DEC-007 — Task 3.3 shape: `blank.rs`, two exported predicates, extra tests
+
+- Date: 2026-10-09
+- Task: 3.3
+- Decision: The rule lives in `crates/mini-diarium-core/src/db/queries/entries/blank.rs`. `BLANK_COMPATIBLE_TAGS` and `is_blank_html` moved unchanged and stay private; the façade exports `entry_is_empty(db, id) -> Result<Option<bool>, String>` and the text-only `is_blank_entry_text(title, text) -> bool` (the app's former `entry_is_blank`). The three `is_blank_html` tests moved with it. Three tests beyond the plan cover the new public surface: `test_is_blank_entry_text_needs_blank_title_and_body`, `test_entry_is_empty_for_missing_blank_and_content_entries`, `test_entry_is_empty_false_for_attachment_only_entry`. In `delete_entry_if_empty_inner`, the two separate "on-disk content" and "has attachments" debug lines are now one line, because `entry_is_empty` answers both. App tests 281 → 278 (three moved), core 554 → 560.
+- Rationale: The plan names the module path only as an example and asks for a text-only predicate without fixing its name; the new public functions need their own tests for the coverage gate.
+
+### DEC-008 — Task 3.1 lock inventory, `update_entry` stays public, tag writes get a write unit
+
+- Date: 2026-10-09
+- Task: 3.1
+- Decision: `ERR_ENTRY_LOCKED` and `pub(crate) ensure_entry_unlocked` live in `entries/lock.rs`; the constant is exported at `db` and listed in `API.md` (under "Handle & constants" and as a fifth row of the Error policy table, since the frontend matches it exactly). Inventory of every public core write that targets an existing entry (`Grep "pub fn" crates/mini-diarium-core/src/db/queries`, plus `Grep "UPDATE entries|DELETE FROM entr|INSERT … INTO entry_"` over core):
+
+  | Function | Stance | Note |
+  | --- | --- | --- |
+  | `update_entry_with_images` | enforces | check is the first step of its write unit |
+  | `delete_entry_by_id` | enforces | missing entry still returns `Ok(false)` |
+  | `add_tag_to_entry`, `remove_tag_from_entry` | enforces | now run under `with_write_transaction` so check and write are one unit (they had no transaction before) |
+  | `add_attachment_to_entry`, `remove_attachment_from_entry` | enforces | name/size validation still runs first, outside the unit |
+  | `recalculate_all_word_counts` | skips | counts locked rows in `skipped_locked` (unchanged) |
+  | `set_entry_locked` | exempt | it is the lock toggle |
+  | `insert_entry`, `insert_entry_with_images` | exempt | create new rows; `insert_entry` never writes `locked`, so a new row is always unlocked |
+  | `backup::restore_entries_from_snapshot` | exempt | inserts new rows; its `add_tag_to_entry` call targets that new, unlocked row and passes the check (constraint 6, pinned by `test_restore_of_entry_locked_in_snapshot_is_not_blocked_by_lock_enforcement`) |
+  | `update_entry` | unchecked primitive | used by `insert_entry_with_images` on its new row; doc comment says it does not check the lock |
+  | `link_attachment` | unchecked primitive | only caller is per-entry restore on its new row; becomes `pub(crate)` in Task 4.1 |
+  | `delete_tag`, `create_tag`, `rename_tag` | exempt (journal-wide) | `delete_tag`'s `ON DELETE CASCADE` also removes the tag from locked entries; doc comment says so |
+  | `upsert_attachment_blob`, `cleanup_orphaned_attachments` | exempt | do not target an entry (blob store / GC) |
+  | image link helpers (`replace_entry_image_links`, `cleanup_orphaned_images`, `upsert_image`) | not in the façade | run only inside `insert_entry_with_images` / `update_entry_with_images` / `delete_entry_by_id`, which own the check |
+
+  `update_entry` **stays `pub`** in the façade. Besides the two app-crate tests the plan names, `src-tauri/benches/db_bench.rs:90` (a criterion bench tracked in CI) calls it; `pub(crate)` would break that bench target, and moving the bench to `update_entry_with_images` changes what it measures. Milestone 4 (Task 4.2) should say in `API.md` that `update_entry` does not check the lock.
+  Tests: eight in `entries/lock.rs` (`test_lock_refuses_*` for each of the six functions, each asserting `Err(ERR_ENTRY_LOCKED)` and an unchanged row, tag set, and attachment list; `test_lock_released_entry_accepts_writes_again`; `test_lock_check_passes_missing_entry_through`) and one restore test. Core tests 560 → 569.
+  Intermediate state until Task 3.2: `delete_entry_if_empty` on a locked blank entry returns `Err("entry is locked")` from core instead of deleting the entry (the TODO-0132 bug). Task 3.2 turns that into `Ok(false)`.
+- Rationale: Task 3.1 Step 3 asks for the per-function inventory and a decision on `update_entry`; the bench caller was not in the plan's list.
+
+### DEC-009 — Task 3.2: map the core error, extract `delete_entry_inner`, add the TODO-0132 test here
+
+- Date: 2026-10-09
+- Task: 3.2
+- Decision: No app pre-check remains. Hard delete is extracted into `pub(crate) fn delete_entry_inner(id, &DiaryState)` (so it can be tested); it passes `db::ERR_ENTRY_LOCKED` through unchanged and wraps only other errors as `"Failed to delete entry: …"`. `delete_entry_if_empty_inner` calls `db::delete_entry_by_id` and maps `Err(ERR_ENTRY_LOCKED)` to `Ok(false)` with a debug line, so the lock rule stays in core and the cleanup paths (auto-lock, app close) never see an error. Two app tests are added: `test_delete_entry_if_empty_refuses_locked_blank_entry_without_error` (the TODO-0132 regression: `Ok(false)`, entry still present and locked) and `test_delete_entry_rejects_locked_entry_with_exact_lock_error` (exact string, plus `"Entry not found"` for a missing id). The five named lock tests pass unchanged; the attachments test imports `db::ERR_ENTRY_LOCKED` in place of the removed local constant. App tests 278 → 280.
+  Behavior change: `add_entry_attachment` now reads the source file before core checks the lock, so a bad source file on a locked entry reports the file error, not `entry is locked`. The journal is unchanged in both cases.
+- Rationale: The plan offers "map the error or keep a pre-check"; mapping keeps no lock logic in commands. The plan said TODO-0132 would supply the locked-blank test; it was not done, so the test is added here.
 
 ## Final Verification
 
