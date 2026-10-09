@@ -52,11 +52,8 @@ pub(crate) fn save_entry_inner(
     state: &DiaryState,
 ) -> Result<(), String> {
     with_unlocked_db(state, |db| {
-        // Defense-in-depth: reject content saves for locked entries. The UI already
-        // gates editing, so this is a safety net (e.g. against a raced autosave).
-        if db::is_entry_locked(db, id)? {
-            return Err("entry is locked".to_string());
-        }
+        // Core refuses a locked entry with `db::ERR_ENTRY_LOCKED`. The UI already gates
+        // editing, so this is the safety net against, for example, a raced autosave.
         db::update_entry_with_images(db, id, title, text, metadata)?;
         debug!("Saved entry id={}", id);
         Ok(())
@@ -84,130 +81,15 @@ pub fn get_entries_for_date(
     with_unlocked_db(&state, |db| db::get_entries_by_date(db, &date))
 }
 
-/// Tag names that may appear inside a document the user considers blank — the structural
-/// and inline-formatting wrappers TipTap leaves behind when a paragraph is emptied.
-///
-/// This is an **allowlist**, keyed on the tag name only, so attribute-bearing shells such
-/// as `<p dir="ltr">` (BidiExtension) and `<p style="text-align: center">` (TextAlign)
-/// still normalise to blank. Anything not named here — `<img>`, `<hr>`, `<table>`,
-/// `<canvas>`, `<object>`, `<embed>`, `<svg>`, a custom element — vetoes the delete.
-const BLANK_COMPATIBLE_TAGS: [&str; 27] = [
-    "p",
-    "br",
-    "div",
-    "span",
-    "h1",
-    "h2",
-    "h3",
-    "h4",
-    "h5",
-    "h6",
-    "ul",
-    "ol",
-    "li",
-    "blockquote",
-    "pre",
-    "code",
-    "strong",
-    "b",
-    "em",
-    "i",
-    "s",
-    "strike",
-    "u",
-    "mark",
-    "a",
-    "sub",
-    "sup",
-];
-
-/// Returns true when an editor HTML fragment carries no user-visible content.
-///
-/// The editor persists an "empty" document as an HTML shell (`<p></p>`, `<p><br></p>`,
-/// sometimes with `&nbsp;`), so a byte-level `trim().is_empty()` would refuse to
-/// auto-delete entries the user considers blank.
-///
-/// **Conservative by construction**: only the tag names in `BLANK_COMPATIBLE_TAGS` can
-/// appear in a fragment this function calls blank. Every unrecognised tag, comment,
-/// doctype, or malformed tag returns `false` — the command accepts an arbitrary IPC
-/// string and import paths can introduce foreign markup, and refusing to delete a real
-/// entry is the only safe direction to be wrong in. The two parser failure modes fail
-/// that way too: a `>` inside a quoted attribute spills the rest of the attribute out as
-/// residual text, and an unterminated tag is rejected outright.
-///
-/// This is the backend half of the TODO-0089 guard: the frontend now sends the real body
-/// instead of `""`, and this function is what makes that submission meaningful.
-fn is_blank_html(text: &str) -> bool {
-    let trimmed = text.trim();
-    if trimmed.is_empty() {
-        return true;
-    }
-
-    let chars: Vec<char> = trimmed.chars().collect();
-    let mut stripped = String::with_capacity(trimmed.len());
-    let mut i = 0;
-    while i < chars.len() {
-        if chars[i] != '<' {
-            stripped.push(chars[i]);
-            i += 1;
-            continue;
-        }
-        i += 1;
-        // `<!…` — a comment or doctype. The editor never emits one for a blank document.
-        if chars.get(i) == Some(&'!') {
-            return false;
-        }
-        if chars.get(i) == Some(&'/') {
-            i += 1;
-        }
-        let name_start = i;
-        while i < chars.len() && !chars[i].is_whitespace() && chars[i] != '/' && chars[i] != '>' {
-            i += 1;
-        }
-        let name = chars[name_start..i]
-            .iter()
-            .collect::<String>()
-            .to_ascii_lowercase();
-        if name.is_empty() || !BLANK_COMPATIBLE_TAGS.contains(&name.as_str()) {
-            return false;
-        }
-        // Skip attributes up to the terminator. A tag that never closes is malformed;
-        // consuming it silently would drop it from `stripped` and read as blank.
-        while i < chars.len() && chars[i] != '>' {
-            i += 1;
-        }
-        if i == chars.len() {
-            return false;
-        }
-        i += 1;
-    }
-
-    // Normalise the entities the editor emits for a blank line. Lowercased so the
-    // hex-entity spellings (`&#xA0;`) match too.
-    stripped
-        .to_ascii_lowercase()
-        .replace("&nbsp;", " ")
-        .replace("&#160;", " ")
-        .replace("&#xa0;", " ")
-        .replace('\u{a0}', " ")
-        .trim()
-        .is_empty()
-}
-
-/// Returns true when both `title` and `text` carry no user-visible content.
-///
-/// The title stays a plain-text check: it is not HTML, and running it through the
-/// tag stripper would read a literal title like "<3" as blank.
-fn entry_is_blank(title: &str, text: &str) -> bool {
-    title.trim().is_empty() && is_blank_html(text)
-}
-
 /// Pure inner of `delete_entry_if_empty` — takes `&DiaryState` so it can be tested without Tauri.
 ///
 /// Deletes only when **both** the incoming arguments and the entry's currently-persisted
 /// row are blank. The on-disk check is what protects against a stale or wrong-context
 /// frontend flush that sends blank arguments for an entry that actually holds real content
 /// (TODO-0104) — the argument check alone trusts the caller completely.
+///
+/// A locked entry is never deleted and returns `Ok(false)`, not an error: this runs on
+/// auto-lock and app-close paths that cannot show an error (TODO-0132).
 pub(crate) fn delete_entry_if_empty_inner(
     id: i64,
     title: &str,
@@ -215,28 +97,30 @@ pub(crate) fn delete_entry_if_empty_inner(
     state: &DiaryState,
 ) -> Result<bool, String> {
     with_unlocked_db(state, |db| {
-        if !entry_is_blank(title, text) {
+        if !db::is_blank_entry_text(title, text) {
             debug!("Refusing to delete non-empty entry id={}", id);
             return Ok(false);
         }
-        let existing = match db::get_entry_by_id(db, id)? {
-            Some(entry) => entry,
+        // The on-disk check includes attachments: an attachment-only entry is not empty.
+        match db::entry_is_empty(db, id)? {
             None => return Ok(false),
-        };
-        if !entry_is_blank(&existing.title, &existing.text) {
-            debug!(
-                "Refusing to delete entry id={} — on-disk row still has content",
-                id
-            );
-            return Ok(false);
-        }
-        // An attachment-only entry is not empty: deleting it would also GC its blobs.
-        if db::entry_has_attachments(db, id)? {
-            debug!("Refusing to delete entry id={} — it has attachments", id);
-            return Ok(false);
+            Some(false) => {
+                debug!(
+                    "Refusing to delete entry id={} — on-disk row still has content",
+                    id
+                );
+                return Ok(false);
+            }
+            Some(true) => {}
         }
         debug!("Deleting empty entry id={}", id);
-        db::delete_entry_by_id(db, id)
+        match db::delete_entry_by_id(db, id) {
+            Err(e) if e == db::ERR_ENTRY_LOCKED => {
+                debug!("Refusing to delete locked entry id={}", id);
+                Ok(false)
+            }
+            other => other,
+        }
     })
 }
 
@@ -253,17 +137,18 @@ pub fn delete_entry_if_empty(
     delete_entry_if_empty_inner(id, &title, &text, &state)
 }
 
-/// Deletes an entry by id
-#[tauri::command]
-pub fn delete_entry(id: i64, state: State<DiaryState>) -> Result<(), String> {
-    with_unlocked_db(&state, |db| {
-        // Locked entries are protected from deletion as well as editing. The UI disables
-        // the delete button when locked; this is the backend safety net.
-        if db::is_entry_locked(db, id)? {
-            return Err("entry is locked".to_string());
-        }
-        let deleted =
-            db::delete_entry_by_id(db, id).map_err(|e| format!("Failed to delete entry: {}", e))?;
+/// Pure inner of `delete_entry` — takes `&DiaryState` so it can be tested without Tauri.
+pub(crate) fn delete_entry_inner(id: i64, state: &DiaryState) -> Result<(), String> {
+    with_unlocked_db(state, |db| {
+        // Core refuses a locked entry with `db::ERR_ENTRY_LOCKED`. The frontend matches that
+        // string exactly, so it passes through unwrapped; every other error gets context.
+        let deleted = db::delete_entry_by_id(db, id).map_err(|e| {
+            if e == db::ERR_ENTRY_LOCKED {
+                e
+            } else {
+                format!("Failed to delete entry: {}", e)
+            }
+        })?;
         if !deleted {
             return Err("Entry not found".to_string());
         }
@@ -271,11 +156,18 @@ pub fn delete_entry(id: i64, state: State<DiaryState>) -> Result<(), String> {
     })
 }
 
+/// Deletes an entry by id
+#[tauri::command]
+pub fn delete_entry(id: i64, state: State<DiaryState>) -> Result<(), String> {
+    delete_entry_inner(id, &state)
+}
+
 /// Pure inner of `entry_has_content` — takes `&DiaryState` so it can be tested without Tauri.
 pub(crate) fn entry_has_content_inner(id: i64, state: &DiaryState) -> Result<bool, String> {
     with_unlocked_db(state, |db| {
-        let entry = db::get_entry_by_id(db, id)?.ok_or_else(|| "Entry not found".to_string())?;
-        Ok(!entry_is_blank(&entry.title, &entry.text) || db::entry_has_attachments(db, id)?)
+        db::entry_is_empty(db, id)?
+            .map(|empty| !empty)
+            .ok_or_else(|| "Entry not found".to_string())
     })
 }
 
@@ -480,76 +372,6 @@ mod tests {
         // Verify deletion
         let retrieved = db::get_entry_by_id(&db, id).unwrap();
         assert!(retrieved.is_none());
-    }
-
-    #[test]
-    fn test_is_blank_html_recognises_editor_empty_shells() {
-        for blank in [
-            "",
-            "   ",
-            "<p></p>",
-            "<p><br></p>",
-            "<p>&nbsp;</p>",
-            "<p>\u{a0}</p>",
-            "<p></p><p></p>",
-        ] {
-            assert!(is_blank_html(blank), "expected blank: {:?}", blank);
-        }
-        for content in ["<p>a</p>", "<p><img src=\"x\"></p>", "<hr>", "text"] {
-            assert!(!is_blank_html(content), "expected non-blank: {:?}", content);
-        }
-    }
-
-    /// The allowlist must stay attribute-tolerant: TextAlign and BidiExtension both leave
-    /// attributes on an otherwise-empty paragraph, and TipTap marks its trailing break.
-    /// Keying on the tag name (not the exact shell) is what keeps these auto-deletable —
-    /// an exact-string allowlist would let genuinely blank entries accumulate forever.
-    #[test]
-    fn test_is_blank_html_tolerates_attributes_on_empty_shells() {
-        for blank in [
-            "<p dir=\"ltr\"></p>",
-            "<p style=\"text-align:center\"></p>",
-            "<p><br class=\"ProseMirror-trailingBreak\"></p>",
-            "<P></P>",
-            "<div><p><span></span></p></div>",
-            // An empty bullet carries no user-visible content, same as an empty paragraph.
-            "<ul><li><p></p></li></ul>",
-        ] {
-            assert!(is_blank_html(blank), "expected blank: {:?}", blank);
-        }
-    }
-
-    /// TODO-0089 remediation: the classifier is an allowlist, so a node it does not know
-    /// vetoes the auto-delete rather than being stripped away as if it were formatting.
-    /// The IPC command takes an arbitrary string and import paths can carry foreign
-    /// markup, so "unrecognised" must mean "keep the entry", never "safe to delete".
-    #[test]
-    fn test_is_blank_html_refuses_unrecognised_markup() {
-        for content in [
-            "<canvas></canvas>",
-            "<object data=\"x\"></object>",
-            "<embed src=\"x\">",
-            "<svg><circle r=\"1\"/></svg>",
-            "<my-widget></my-widget>",
-            "<!-- just a comment -->",
-            "<!DOCTYPE html>",
-            "<video></video>",
-            "<audio></audio>",
-            "<iframe src=\"x\"></iframe>",
-            "<table><tr><td></td></tr></table>",
-            // An image-only entry — the shape the editor actually produces.
-            "<figure class=\"image-container\"><img src=\"data:image/png;base64,AAAA\"></figure>",
-            // Malformed: no terminator, so nothing can be verified about it.
-            "<p",
-            "<p></p><span",
-            // A `>` inside a quoted attribute desynchronises the scan; the spill-over
-            // text is what makes the result "not blank".
-            "<p title=\"a>b\"></p>",
-            // An empty tag name is not a tag we can classify.
-            "< p></p>",
-        ] {
-            assert!(!is_blank_html(content), "expected non-blank: {:?}", content);
-        }
     }
 
     /// The backend veto restored by TODO-0089: a delete request carrying real content
@@ -1014,6 +836,89 @@ mod tests {
             .unwrap()
             .unwrap();
         assert_eq!(retrieved.title, "Original");
+    }
+
+    /// TODO-0132: blank-entry cleanup runs on auto-lock and app close, which cannot show an
+    /// error. A locked blank entry must be refused with `Ok(false)` and stay.
+    #[test]
+    fn test_delete_entry_if_empty_refuses_locked_blank_entry_without_error() {
+        use crate::commands::auth::DiaryState;
+        use std::path::PathBuf;
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+        let now = chrono::Utc::now().to_rfc3339();
+        let entry = DiaryEntry {
+            id: 0,
+            date: "2024-08-06".to_string(),
+            title: String::new(),
+            text: "<p></p>".to_string(),
+            word_count: 0,
+            date_created: now.clone(),
+            date_updated: now,
+            metadata: None,
+            locked: false,
+        };
+        let entry_id = db::insert_entry(&db, &entry).unwrap();
+        db::set_entry_locked(&db, entry_id, true).unwrap();
+
+        let state = DiaryState::new(
+            PathBuf::from("test_delete_if_empty_locked.db"),
+            PathBuf::from("test_delete_if_empty_locked_backups"),
+            PathBuf::from("."),
+        );
+        *state.db.lock().unwrap() = Some(db);
+
+        let deleted = delete_entry_if_empty_inner(entry_id, "", "<p></p>", &state).unwrap();
+        assert!(!deleted, "a locked blank entry must not be auto-deleted");
+
+        let guard = state.db.lock().unwrap();
+        let db = guard.as_ref().unwrap();
+        assert!(db::get_entry_by_id(db, entry_id).unwrap().is_some());
+        assert!(db::is_entry_locked(db, entry_id).unwrap());
+    }
+
+    /// The lock refusal must reach the frontend as exactly `entry is locked`
+    /// (`src/lib/errors.ts` matches it with `^…$`), not wrapped as "Failed to delete entry: …".
+    #[test]
+    fn test_delete_entry_rejects_locked_entry_with_exact_lock_error() {
+        use crate::commands::auth::DiaryState;
+        use std::path::PathBuf;
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+        let now = chrono::Utc::now().to_rfc3339();
+        let entry = DiaryEntry {
+            id: 0,
+            date: "2024-08-07".to_string(),
+            title: "Keep me".to_string(),
+            text: "<p>Real content</p>".to_string(),
+            word_count: 2,
+            date_created: now.clone(),
+            date_updated: now,
+            metadata: None,
+            locked: false,
+        };
+        let entry_id = db::insert_entry(&db, &entry).unwrap();
+        db::set_entry_locked(&db, entry_id, true).unwrap();
+
+        let state = DiaryState::new(
+            PathBuf::from("test_delete_locked.db"),
+            PathBuf::from("test_delete_locked_backups"),
+            PathBuf::from("."),
+        );
+        *state.db.lock().unwrap() = Some(db);
+
+        assert_eq!(
+            delete_entry_inner(entry_id, &state).unwrap_err(),
+            "entry is locked"
+        );
+        assert_eq!(
+            delete_entry_inner(9999, &state).unwrap_err(),
+            "Entry not found"
+        );
+        let guard = state.db.lock().unwrap();
+        assert!(db::get_entry_by_id(guard.as_ref().unwrap(), entry_id)
+            .unwrap()
+            .is_some());
     }
 
     #[test]

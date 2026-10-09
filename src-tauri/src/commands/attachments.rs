@@ -15,16 +15,7 @@ use std::path::{Path, PathBuf};
 use tauri::State;
 use zeroize::Zeroizing;
 
-const ERR_ENTRY_LOCKED: &str = "entry is locked";
 const ERR_NOT_FOUND: &str = "Attachment not found";
-
-fn ensure_entry_unlocked(db: &db::DatabaseConnection, entry_id: i64) -> Result<(), String> {
-    // A locked entry is read-only, including its attachment links (TODO-0071).
-    if db::is_entry_locked(db, entry_id)? {
-        return Err(ERR_ENTRY_LOCKED.to_string());
-    }
-    Ok(())
-}
 
 /// Lowercased extension of a file name/path, or `None` when it has none.
 fn lower_extension(path: &Path) -> Option<String> {
@@ -154,8 +145,8 @@ pub(crate) fn add_entry_attachment_inner(
     path: &str,
     state: &DiaryState,
 ) -> Result<AttachmentSummary, String> {
+    // Core refuses a locked entry with `db::ERR_ENTRY_LOCKED` (TODO-0071).
     with_unlocked_db(state, |db| {
-        ensure_entry_unlocked(db, entry_id)?;
         let (name, bytes) = read_source_file(Path::new(path))?;
         db::add_attachment_to_entry(db, entry_id, &name, &bytes)
     })
@@ -178,8 +169,8 @@ pub(crate) fn remove_entry_attachment_inner(
     attachment_id: i64,
     state: &DiaryState,
 ) -> Result<(), String> {
+    // Core refuses a locked entry with `db::ERR_ENTRY_LOCKED` (TODO-0071).
     with_unlocked_db(state, |db| {
-        ensure_entry_unlocked(db, entry_id)?;
         if !db::remove_attachment_from_entry(db, entry_id, attachment_id)? {
             return Err(ERR_NOT_FOUND.to_string());
         }
@@ -246,7 +237,7 @@ pub fn save_attachment_copy(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::db::{create_database, DiaryEntry};
+    use crate::db::{create_database, DiaryEntry, ERR_ENTRY_LOCKED};
     use std::path::PathBuf;
 
     struct Fixture {

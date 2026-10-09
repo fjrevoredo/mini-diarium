@@ -28,13 +28,8 @@ pub(crate) fn add_tag_to_entry_inner(
     tag_id: i64,
     state: &DiaryState,
 ) -> Result<(), String> {
-    with_unlocked_db(state, |db| {
-        // A locked entry is read-only, including its tag associations (TODO-0071).
-        if db::is_entry_locked(db, entry_id)? {
-            return Err("entry is locked".to_string());
-        }
-        db::add_tag_to_entry(db, entry_id, tag_id)
-    })
+    // Core refuses a locked entry with `db::ERR_ENTRY_LOCKED` (TODO-0071).
+    with_unlocked_db(state, |db| db::add_tag_to_entry(db, entry_id, tag_id))
 }
 
 #[tauri::command]
@@ -52,13 +47,8 @@ pub(crate) fn remove_tag_from_entry_inner(
     tag_id: i64,
     state: &DiaryState,
 ) -> Result<(), String> {
-    with_unlocked_db(state, |db| {
-        // A locked entry is read-only, including its tag associations (TODO-0071).
-        if db::is_entry_locked(db, entry_id)? {
-            return Err("entry is locked".to_string());
-        }
-        db::remove_tag_from_entry(db, entry_id, tag_id)
-    })
+    // Core refuses a locked entry with `db::ERR_ENTRY_LOCKED` (TODO-0071).
+    with_unlocked_db(state, |db| db::remove_tag_from_entry(db, entry_id, tag_id))
 }
 
 #[tauri::command]
