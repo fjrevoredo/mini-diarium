@@ -135,6 +135,17 @@ Versions before 0.7.4 open a journal that has attachments (schema v14), because 
 
 ---
 
+### KI-13 — Journals that share a folder can see each other's filenames
+**Status:** Accepted limitation (TODO-0113)
+
+Several journals can live in one folder, told apart by their database filename. Anyone who browses that folder in a file manager sees every journal's database filename and its `backups/{name}` folder name. Entry content stays encrypted. Only the filenames you chose are visible.
+
+**Mitigation (TODO-0113):** **Open backups folder** always opens the journal's own `backups/{name}/` folder, never the shared `backups/` folder above it. Random backup-folder names were rejected: the sibling `.db` files would still show their real names one level higher, and the folder is not a security boundary.
+
+**Workaround:** if the filenames are sensitive, give each journal its own folder.
+
+---
+
 ## For Developers
 
 ### AT-1 — Single database connection; no concurrent read access
@@ -297,4 +308,4 @@ The app data directory resolution (`resolve_app_data_dir`) and legacy config det
 
 ---
 
-*Last updated: 2026-09-27. For the security threat model, see [SECURITY.md](../SECURITY.md). For open features and enhancements, see [OPEN_TASKS.md](OPEN_TASKS.md). For the full backend architectural assessment conducted at v0.4.9, see [BACKEND_ASSESSMENT_2026-03.md](BACKEND_ASSESSMENT_2026-03.md).*
+*Last updated: 2026-10-09. For the security threat model, see [SECURITY.md](../SECURITY.md). For open features and enhancements, see [OPEN_TASKS.md](OPEN_TASKS.md). For the full backend architectural assessment conducted at v0.4.9, see [BACKEND_ASSESSMENT_2026-03.md](BACKEND_ASSESSMENT_2026-03.md).*

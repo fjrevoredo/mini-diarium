@@ -34,6 +34,11 @@ Template:
 
 # Versions
 
+## [0.7.5] - Unreleased
+
+### Fixed
+- **"Open backups folder" stays inside the journal's own folder (TODO-0113)**: When a journal had no snapshots yet, the button opened the shared `backups/` folder, which also shows the backups folders of other journals in the same directory. It now always opens the journal's own `backups/{name}/` folder, When there is nothing to open yet, it shows a translated "There are no backups to show yet" message, not the untranslated backend text. `SECURITY.md`, `docs/KNOWN_ISSUES.md` (KI-13), and the Backups docs now say that journals sharing one folder can see each other's filenames.
+
 ## [0.7.4] - 09-10-2026
 
 ### Fixed

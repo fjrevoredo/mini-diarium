@@ -345,7 +345,7 @@
       "@id": "https://mini-diarium.com/docs/backups/#article",
       "headline": "Backups",
       "description": "Mini Diarium snapshots your journal before risky changes, restores the whole journal or specific entries in-app, and keeps tiered history going back a year.",
-      "dateModified": "2026-09-06T00:00:00Z",
+      "dateModified": "2026-10-09T00:00:00Z",
       "keywords": "backups, data safety, backup rotation, storage, snapshots",
       "publisher": {
         "@type": "Organization",
@@ -602,6 +602,7 @@
         <li><strong>Linux</strong>: <code>~/.local/share/com.minidiarium/backups/diary/</code></li>
         </ul>
         <p>If you have changed your journal location in Preferences, snapshots are created in <code>{your chosen directory}/backups/{journal name}/</code> instead.</p>
+        <p>If several journals share one folder, each still gets its own <code>backups/{journal name}/</code> folder, but anyone who browses that folder can see every journal&#39;s database filename and backups folder name. Entry content stays encrypted. If those names are sensitive, give each journal its own folder.</p>
         <h2 id="backup-filenames">Backup Filenames</h2><p>Each snapshot is named <code>backup-YYYY-MM-DD-HHhMMmSS.db</code>, for example <code>backup-2026-08-04-14h30m07.db</code>. The timestamp reflects local time at the moment the snapshot was taken.</p>
         <p>Alongside them sits a <code>manifest.json</code> file recording when each snapshot was taken, why, how large it is, how many entries it holds, and which kinds of credential it accepts. It holds no entry text, no titles, no tag names, and no journal names. Deleting it is harmless: Mini Diarium rebuilds it by scanning the folder.</p>
         <h2 id="how-long-snapshots-are-kept">How Long Snapshots Are Kept</h2><p>Retention is <strong>tiered</strong>, so how much history you have does not depend on how often you open the app:</p>
@@ -623,7 +624,7 @@
         <li><strong>Back up now</strong> takes a snapshot immediately. Unlike the automatic ones, it ignores the once-per-hour limit and the &quot;nothing changed&quot; rule, so it always produces a snapshot.</li>
         <li><strong>Check</strong> re-opens one snapshot and confirms your journal&#39;s key still decrypts every entry&#39;s title, text, tags, and any attached images inside it — not just a sample. Snapshots taken by an older version of Mini Diarium start as <em>Not checked</em>, which means &quot;not confirmed yet&quot;, not &quot;broken&quot;. A snapshot that fails the check is reported, never deleted: it may still open with the credential it was taken with.</li>
         <li><strong>Delete</strong> removes one snapshot.</li>
-        <li><strong>Open backups folder</strong> opens the folder in your file manager.</li>
+        <li><strong>Open backups folder</strong> opens this journal&#39;s own snapshot folder in your file manager. It never opens the shared <code>backups/</code> folder above it. Before the first snapshot exists, there is nothing to open yet.</li>
         </ul>
         <h3 id="when-the-journal-will-not-open">When the journal will not open</h3><p>The same panel is reachable from the unlock screen, before you enter anything, via <strong>View backups</strong>. This is deliberate. The moment you most need to know which backups exist is the moment your journal will not open.</p>
         <p>Everything you need to answer &quot;is there a backup, and how recent is it?&quot; still works there, because none of it needs your key: the dates, sizes, and reasons are readable from the snapshots and their manifest without decrypting anything. Entry counts and date ranges are held back until you unlock, so a passer-by at the lock screen learns that backups exist without learning how much you have written or over what span. The actions that do need the key (taking, checking, and deleting backups) are disabled until you unlock.</p>

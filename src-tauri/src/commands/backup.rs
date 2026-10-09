@@ -17,7 +17,7 @@
 //! on a snapshot. They are generated stamps carrying no user-chosen text, and every name
 //! coming back in is re-validated by the core store before it is joined onto a directory.
 
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 use log::{info, warn};
 use tauri::{AppHandle, Emitter, State, Wry};
@@ -194,22 +194,39 @@ pub(crate) fn delete_backup_inner(file_name: String, state: &DiaryState) -> Resu
 #[tauri::command]
 pub fn reveal_backups_folder(state: State<DiaryState>) -> Result<(), String> {
     let (_, backups_dir) = journal_paths(&state)?;
+    let target = reveal_target(&backups_dir)?;
+    tauri_plugin_opener::reveal_item_in_dir(&target)
+        .map_err(|e| format!("Failed to open the backups folder: {e}"))
+}
 
-    // `reveal_item_in_dir` selects an *item* inside its parent, so revealing the directory
-    // itself would open the journal folder with `backups` highlighted. Revealing a snapshot
-    // opens the backups folder, which is what the button promises. With no snapshots there
-    // is nothing to select, so fall back to the directory.
-    let target = backup::list_snapshots(&backups_dir)
-        .ok()
-        .and_then(|s| s.first().map(|meta| backups_dir.join(&meta.file_name)))
-        .unwrap_or_else(|| backups_dir.clone());
-
-    if !target.exists() {
+/// Picks the item [`reveal_backups_folder`] selects, which is always a file **inside**
+/// `backups_dir`: the newest snapshot, else the manifest.
+///
+/// `reveal_item_in_dir` opens the *parent* of what it is given. Revealing `backups_dir`
+/// itself would open `backups/`, and when several journals share one folder that directory
+/// also holds the other journals' `backups/{name}` folders (TODO-0113). So this never falls
+/// back to the directory. With nothing inside to select, it returns an error. Both error
+/// strings are matched verbatim by `mapTauriError` (`errors.noBackupsYet`), so keep them in
+/// sync with `src/lib/errors.ts`.
+fn reveal_target(backups_dir: &Path) -> Result<PathBuf, String> {
+    if !backups_dir.is_dir() {
         return Err("The backups folder does not exist yet".to_string());
     }
 
-    tauri_plugin_opener::reveal_item_in_dir(&target)
-        .map_err(|e| format!("Failed to open the backups folder: {e}"))
+    let newest = backup::list_snapshots(backups_dir)
+        .ok()
+        .and_then(|s| s.first().map(|meta| backups_dir.join(&meta.file_name)))
+        .filter(|path| path.is_file());
+    if let Some(path) = newest {
+        return Ok(path);
+    }
+
+    let manifest = backups_dir.join(backup::MANIFEST_FILE);
+    if manifest.is_file() {
+        return Ok(manifest);
+    }
+
+    Err("There are no backups to show yet".to_string())
 }
 
 /// What a completed restore attempt looked like, for the confirmation the frontend shows.
@@ -669,6 +686,81 @@ mod tests {
         assert!(
             state.inspection.lock().unwrap().is_none(),
             "restore must tear down any open inspection connection"
+        );
+    }
+
+    // ── TODO-0113: reveal_backups_folder never opens the shared `backups/` parent ──────
+
+    /// Two journals sharing one folder: `{root}/mine.db` and `{root}/other.db`, with backups
+    /// under `{root}/backups/mine` and `{root}/backups/other`. Returns `mine`'s paths.
+    fn shared_folder_layout() -> (tempfile::TempDir, PathBuf, PathBuf) {
+        let root = tempfile::tempdir().unwrap();
+        let db_path = root.path().join("mine.db");
+        let backups_dir = root.path().join("backups").join("mine");
+        std::fs::create_dir_all(&backups_dir).unwrap();
+        std::fs::create_dir_all(root.path().join("backups").join("other")).unwrap();
+        (root, db_path, backups_dir)
+    }
+
+    fn take_snapshot(db_path: &Path, backups_dir: &Path) -> String {
+        let db = create_database(db_path, "test".to_string()).unwrap();
+        insert_entry(&db, &entry("Seed")).unwrap();
+        let ctx = backup::BackupContext {
+            db_path,
+            backups_dir,
+            app_version: Some("0.6.6"),
+        };
+        backup::create_snapshot(&db, &ctx, SnapshotTrigger::Manual)
+            .unwrap()
+            .created()
+            .unwrap()
+            .file_name
+            .clone()
+    }
+
+    #[test]
+    fn test_reveal_target_selects_the_newest_snapshot_inside_the_journals_folder() {
+        let (_root, db_path, backups_dir) = shared_folder_layout();
+        let file_name = take_snapshot(&db_path, &backups_dir);
+
+        let target = reveal_target(&backups_dir).unwrap();
+
+        assert_eq!(target, backups_dir.join(&file_name));
+        assert_eq!(target.parent(), Some(backups_dir.as_path()));
+    }
+
+    #[test]
+    fn test_reveal_target_falls_back_to_the_manifest_not_the_directory() {
+        let (root, db_path, backups_dir) = shared_folder_layout();
+        let file_name = take_snapshot(&db_path, &backups_dir);
+        // The manifest outlives its snapshots when they are deleted outside the app.
+        std::fs::remove_file(backups_dir.join(&file_name)).unwrap();
+        assert!(backups_dir.join(backup::MANIFEST_FILE).is_file());
+
+        let target = reveal_target(&backups_dir).unwrap();
+
+        assert_eq!(target, backups_dir.join(backup::MANIFEST_FILE));
+        assert_ne!(target, backups_dir);
+        assert!(!target.starts_with(root.path().join("backups").join("other")));
+    }
+
+    #[test]
+    fn test_reveal_target_refuses_an_empty_folder_rather_than_revealing_it() {
+        let (_root, _db_path, backups_dir) = shared_folder_layout();
+
+        assert_eq!(
+            reveal_target(&backups_dir).unwrap_err(),
+            "There are no backups to show yet"
+        );
+    }
+
+    #[test]
+    fn test_reveal_target_reports_a_missing_folder() {
+        let root = tempfile::tempdir().unwrap();
+
+        assert_eq!(
+            reveal_target(&root.path().join("backups").join("mine")).unwrap_err(),
+            "The backups folder does not exist yet"
         );
     }
 }

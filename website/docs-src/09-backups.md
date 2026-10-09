@@ -3,7 +3,7 @@ title: Backups
 slug: backups
 description: Mini Diarium snapshots your journal before risky changes, restores the whole journal or specific entries in-app, and keeps tiered history going back a year.
 order: 10
-updated: 2026-09-06
+updated: 2026-10-09
 tags: backups, data safety, backup rotation, storage, snapshots
 ---
 
@@ -38,6 +38,8 @@ Snapshots are stored in a `backups/{journal name}/` subfolder inside the same di
 - **Linux**: `~/.local/share/com.minidiarium/backups/diary/`
 
 If you have changed your journal location in Preferences, snapshots are created in `{your chosen directory}/backups/{journal name}/` instead.
+
+If several journals share one folder, each still gets its own `backups/{journal name}/` folder, but anyone who browses that folder can see every journal's database filename and backups folder name. Entry content stays encrypted. If those names are sensitive, give each journal its own folder.
 
 ## Backup Filenames
 
@@ -75,7 +77,7 @@ Four things you can do from here:
 - **Back up now** takes a snapshot immediately. Unlike the automatic ones, it ignores the once-per-hour limit and the "nothing changed" rule, so it always produces a snapshot.
 - **Check** re-opens one snapshot and confirms your journal's key still decrypts every entry's title, text, tags, and any attached images inside it — not just a sample. Snapshots taken by an older version of Mini Diarium start as *Not checked*, which means "not confirmed yet", not "broken". A snapshot that fails the check is reported, never deleted: it may still open with the credential it was taken with.
 - **Delete** removes one snapshot.
-- **Open backups folder** opens the folder in your file manager.
+- **Open backups folder** opens this journal's own snapshot folder in your file manager. It never opens the shared `backups/` folder above it. Before the first snapshot exists, there is nothing to open yet.
 
 ### When the journal will not open
 

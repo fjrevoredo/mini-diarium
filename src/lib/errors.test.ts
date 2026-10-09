@@ -59,6 +59,22 @@ describe('mapTauriError', () => {
     });
   });
 
+  describe('reveal_backups_folder with nothing to open', () => {
+    it.each(['The backups folder does not exist yet', 'There are no backups to show yet'])(
+      'localizes %j',
+      (raw) => {
+        expect(mapTauriError(raw)).toBe(en('errors.noBackupsYet'));
+      },
+    );
+
+    it('uses the active locale, not the raw English string', () => {
+      const t = ((key: string) => `translated:${key}`) as Parameters<typeof mapTauriError>[1];
+      expect(mapTauriError('There are no backups to show yet', t)).toBe(
+        'translated:errors.noBackupsYet',
+      );
+    });
+  });
+
   describe('forward-compatibility guard', () => {
     it('maps a journal written by a newer app', () => {
       expect(

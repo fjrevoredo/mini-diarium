@@ -798,6 +798,7 @@
     "portalPathRejected": "Esa carpeta solo se comparte con Mini Diarium de forma temporal, así que un diario guardado ahí dejaría de abrirse más adelante. Usa la ubicación predeterminada.",
     "backupFileRejected": "Ese archivo es una copia de seguridad. Abrirlo directamente lo modificaría. Cópialo a otro lugar primero y abre la copia.",
     "journalAlreadyRegistered": "Ese diario ya está en tu lista. Ábrelo desde la lista de arriba en vez de añadirlo otra vez.",
+    "noBackupsYet": "Todavía no hay copias de seguridad. La carpeta aparece después de la primera copia.",
     "internalError": "Ocurrió un error interno.",
     "unexpectedError": "Ocurrió un error inesperado."
   }

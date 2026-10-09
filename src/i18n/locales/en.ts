@@ -960,6 +960,7 @@ const en = {
       'That file is a backup snapshot. Opening it directly would change it. Copy it somewhere else first, then open the copy.',
     journalAlreadyRegistered:
       'That journal is already in your list. Open it from the list above instead of adding it again.',
+    noBackupsYet: 'There are no backups to show yet. The folder appears after the first backup.',
     internalError: 'An internal error occurred.',
     unexpectedError: 'An unexpected error occurred.',
   },

@@ -798,6 +798,7 @@
     "portalPathRejected": "Dieser Ordner ist nur vorübergehend für Mini Diarium freigegeben, daher ließe sich ein dort gespeichertes Tagebuch später nicht mehr öffnen. Verwende stattdessen den Standardort.",
     "backupFileRejected": "Diese Datei ist eine Sicherungskopie. Sie direkt zu öffnen würde sie verändern. Kopiere sie zuerst an einen anderen Ort und öffne dann die Kopie.",
     "journalAlreadyRegistered": "Dieses Tagebuch ist bereits in deiner Liste. Öffne es oben aus der Liste, statt es erneut hinzuzufügen.",
+    "noBackupsYet": "Es gibt noch keine Sicherungen. Der Ordner erscheint nach der ersten Sicherung.",
     "internalError": "Ein interner Fehler ist aufgetreten.",
     "unexpectedError": "Ein unerwarteter Fehler ist aufgetreten."
   }
