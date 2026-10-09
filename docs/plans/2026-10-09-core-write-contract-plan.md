@@ -2,7 +2,7 @@
 
 ## Metadata
 
-- Plan Status: IN PROGRESS
+- Plan Status: COMPLETED
 - Plan Format: manual-planning v2.0.0
 - Template: milestoned
 - Tracking: tracked
@@ -226,13 +226,13 @@ None. The design choices are recorded as DEC-001 and DEC-002 below; challenge th
 
 ### Milestone 5: Cleanup And Final Verification
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Purpose: Ensure the repository contains only intentional final artifacts and the complete change is verified.
 - Exit Criteria: Intermediate artifacts are removed, the `## Pre-flight Checks` list passes, all final verification passes, and the plan status is COMPLETED.
 
 #### Task 5.1: Cleanup Intermediate Artifacts
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Depends On: 4.2
 - Objective: Remove artifacts created only to support implementation.
 - Steps:
@@ -244,7 +244,7 @@ None. The design choices are recorded as DEC-001 and DEC-002 below; challenge th
 
 #### Task 5.2: Final Verification
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Depends On: 5.1
 - Objective: Validate the integrated change after cleanup.
 - Steps:
@@ -267,12 +267,12 @@ None. The design choices are recorded as DEC-001 and DEC-002 below; challenge th
 
 Run before the plan may reach `COMPLETED`.
 
-- [ ] `cargo fmt --all -- --check`
-- [ ] `cargo clippy --workspace --all-targets -- -D warnings`
-- [ ] `cargo test --workspace`
-- [ ] `bun run pre-commit` (PowerShell tool) — includes type-check, lint, frontend tests, and `coverage:diff`
-- [ ] `Grep "rusqlite" src-tauri/src` — no matches expected (a pass produces no output)
-- [ ] `Grep "db::queries::|db::schema::|\.conn\(\)|\.key\(\)" src-tauri/src` — no matches expected
+- [x] `cargo fmt --all -- --check` — exit 0, no output (2026-10-09)
+- [x] `cargo clippy --workspace --all-targets -- -D warnings` — exit 0, no warnings
+- [x] `cargo test --workspace` — app 280, core 569, crypto 42 passed, 0 failed
+- [x] `bun run pre-commit` (PowerShell tool) — includes type-check, lint, frontend tests, and `coverage:diff` — exit 0, 12/12 checks passed; Vitest 1218 tests in 115 files passed; nextest 891/891 passed; patch coverage (working tree vs merge-base `4627248` with `origin/master`, which covers all 11 plan commits `7acfe90`..`0145671`) 830/838 = 99.0%. `bun run coverage:diff` (HEAD vs the same merge-base) gives the same 99.0%.
+- [x] `Grep "rusqlite" src-tauri/src` — no matches expected (a pass produces no output) — no matches
+- [x] `Grep "db::queries::|db::schema::|\.conn\(\)|\.key\(\)" src-tauri/src` — no matches expected — one hit, `commands/backup_triggers.rs:8`, a `//!` doc comment that names `db::schema::open` (added 2026-08-05 in `490380c`, before this plan); no code match, so not a regression
 
 ## Decision Log
 
@@ -374,22 +374,31 @@ Run before the plan may reach `COMPLETED`.
 - Decision: (1) `API.md` gets a separate "Entry lock" bullet next to "Transactions" (enforcing functions, `ERR_ENTRY_LOCKED`, the skip/exempt cases from DEC-008, and that `update_entry` does not check the lock), an inline pointer on `update_entry` in "Entry CRUD", and an atomicity paragraph under "Per-entry restore". `entry_is_empty` and `is_blank_entry_text` were already listed by Milestone 3 ("Entry-empty rule"), so nothing is added there. (2) `RUST_BEST_PRACTICES.md` gets the plan's sentence as a new section, "Compose Multi-Step Writes Under One Write Unit", with four short rules (no hand-written BEGIN, primitives stay `pub(crate)`, lock checked in core inside the unit, propagate nested errors per DEC-006) and one review question. (3) `src-tauri/CLAUDE.md` Gotcha #1 also says commands must not add a lock pre-check and that `delete_entry_if_empty` maps the lock error to `Ok(false)`. (4) `website/docs-src/09-backups.md` already had `updated: 2026-10-09`, so the date did not change. `bun run website:build-static` changed only `website/docs/backups.md`, `website/docs/backups/index.html`, and `website/llms-full.txt`. (5) The CHANGELOG top block is `[0.7.5] - Unreleased`; the bullet goes under its `### Fixed`.
 - Rationale: DEC-008 asked Milestone 4 to document the lock exemptions; the rest records what is already true so the reader does not reapply it.
 
+### DEC-012 — Task 5.2: TODO-0132 closed with TODO-0133
+
+- Date: 2026-10-09
+- Task: 5.2
+- Decision: TODO-0132 is closed (`[x]`, 2026-10-09) together with TODO-0133, and the CHANGELOG gets a separate `Fixed` bullet for it under `[0.7.5] - Unreleased`. Its two acceptance criteria are met by Milestone 3 (DEC-009): `delete_entry_if_empty_inner` maps core's `ERR_ENTRY_LOCKED` to `Ok(false)` with no error, and `test_delete_entry_if_empty_refuses_locked_blank_entry_without_error` creates a locked entry with an empty title, `<p></p>` body, and no attachments, asserts `Ok(false)`, and asserts that the entry is still present and locked. The test passes in `cargo test --workspace`.
+- Rationale: The plan listed the TODO-0132 app-crate fix as a Non-Goal on the assumption that it would ship first; it did not, and Task 3.2 delivered the behavior, so the item is done.
+- Task 5.1: `git status --porcelain` showed only the user's pre-existing `.agents/skills/manual-planning/*` changes (seven modified, two untracked). No intermediate artifact from this plan was present, so nothing was removed.
+
 ## Final Verification
 
 Task 5.2 runs the pre-flight list. The end-to-end proof of the main fix is the three Task 2.1 fault-injection tests passing together with the existing restore tests, and the locked-entry tests in both crates passing with the app-crate pre-checks removed.
 
 ## Approval Gate
 
-Implementation must not start until the user approves this plan.
+Approved by the user on 2026-10-09. The user approved the plan by telling the orchestrating agent to implement it; no separate written approval text is recorded.
 
 ## Plan Self-Check
 
 ```
 $ uv run --no-project python .agents/skills/manual-planning/scripts/check-plan.py docs/plans/2026-10-09-core-write-contract-plan.md
-0 error(s), 0 warning(s)
+W005 warning 277: 12 Decision Log entries; promote to YYYY-MM-DD-<name>-decisions.md
+0 error(s), 1 warning(s)
 ```
 
-Run: 2026-10-09
+Run: 2026-10-09 (at plan completion). W005 is left open: moving the Decision Log to a separate file is a structural change for the maintainer to decide.
 
 ## Execution Notes
 
