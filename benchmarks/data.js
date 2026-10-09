@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1791567516956,
+  "lastUpdate": 1791577604627,
   "repoUrl": "https://github.com/fjrevoredo/mini-diarium",
   "entries": {
     "Benchmark": [
@@ -38182,6 +38182,36 @@ window.BENCHMARK_DATA = {
           {
             "name": "ci_pipeline_duration",
             "value": 573000000000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "committer": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "distinct": true,
+          "id": "46272483282121814dfd1f21fff98119b0687329",
+          "message": "Triage the 0.7.3/0.7.4 internal review into TODO-0129..0139\n\nAdd the internal review of releases 0.7.3 and 0.7.4 and turn its findings\ninto backlog items: TODO-0129 to TODO-0139, plus updates to TODO-0050 and\nTODO-0093. Track the plan for TODO-0133 (atomic core write contract and\nentry-protection policy in core).",
+          "timestamp": "2026-10-09T22:16:10+02:00",
+          "tree_id": "287b659613ff89d748b3249de5524f06f8f75934",
+          "url": "https://github.com/fjrevoredo/mini-diarium/commit/46272483282121814dfd1f21fff98119b0687329"
+        },
+        "date": 1791577602888,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "ci_pipeline_duration",
+            "value": 599000000000,
             "range": "± 0",
             "unit": "ns/iter"
           }
