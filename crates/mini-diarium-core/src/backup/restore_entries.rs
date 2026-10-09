@@ -463,6 +463,38 @@ mod tests {
         assert_eq!(tags[0].name, "vacation");
     }
 
+    /// Lock enforcement must not block restore: restore only creates new rows, and the new
+    /// entry is unlocked before its tags and attachments are linked.
+    #[test]
+    fn test_restore_of_entry_locked_in_snapshot_is_not_blocked_by_lock_enforcement() {
+        let fixture = Fixture::new("locked-source");
+        let id = insert_entry(&fixture.live, &entry("2024-02-02", "Locked", "body text")).unwrap();
+        let tag = db_create_tag(&fixture.live, "kept").unwrap();
+        crate::db::add_tag_to_entry(&fixture.live, id, tag.id).unwrap();
+        crate::db::add_attachment_to_entry(&fixture.live, id, "notes.txt", b"notes").unwrap();
+        crate::db::set_entry_locked(&fixture.live, id, true).unwrap();
+        let snapshot = fixture.snapshot_and_open();
+
+        // A locked entry cannot be deleted, so unlock it first to simulate the loss.
+        crate::db::set_entry_locked(&fixture.live, id, false).unwrap();
+        crate::db::delete_entry_by_id(&fixture.live, id).unwrap();
+
+        restore_entries_from_snapshot(&fixture.live, &snapshot, &[id]).unwrap();
+
+        let restored = get_entries_by_date(&fixture.live, "2024-02-02").unwrap();
+        assert_eq!(restored.len(), 1);
+        assert!(!restored[0].locked, "a restored entry is never locked");
+        let tags = get_tags_for_entry(&fixture.live, restored[0].id).unwrap();
+        assert_eq!(tags.len(), 1);
+        assert_eq!(tags[0].name, "kept");
+        let names: Vec<String> = list_entry_attachments(&fixture.live, restored[0].id)
+            .unwrap()
+            .into_iter()
+            .map(|a| a.name)
+            .collect();
+        assert_eq!(names, vec!["notes.txt"]);
+    }
+
     #[test]
     fn test_restore_entries_resolves_image_refs_across_databases() {
         // The regression this test exists for: an `image-id://N` ref means something

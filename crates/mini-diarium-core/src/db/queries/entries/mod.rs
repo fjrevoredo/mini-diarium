@@ -1,5 +1,6 @@
 use crate::db::schema::DatabaseConnection;
 
+pub mod blank;
 pub mod delete;
 pub mod insert;
 pub mod lock;
@@ -8,6 +9,7 @@ pub mod recalculate;
 pub mod timeline;
 pub mod update;
 
+pub use blank::*;
 pub use delete::*;
 pub use insert::*;
 pub use lock::*;

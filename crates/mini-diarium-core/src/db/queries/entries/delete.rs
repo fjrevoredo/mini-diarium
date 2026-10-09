@@ -1,3 +1,4 @@
+use super::lock::ensure_entry_unlocked;
 use crate::db::queries::with_write_transaction;
 use crate::db::schema::DatabaseConnection;
 use rusqlite::params;
@@ -15,9 +16,11 @@ use rusqlite::params;
 /// transaction, inside a caller's unit it nests as a savepoint.
 ///
 /// # Returns
-/// `Ok(true)` if deleted, `Ok(false)` if entry didn't exist
+/// `Ok(true)` if deleted, `Ok(false)` if entry didn't exist, `Err(ERR_ENTRY_LOCKED)` if the
+/// entry is locked (nothing is deleted).
 pub fn delete_entry_by_id(db: &DatabaseConnection, id: i64) -> Result<bool, String> {
     with_write_transaction(db, || {
+        ensure_entry_unlocked(db, id)?;
         // The entry_id FK is RESTRICT, so the links must go before the entry.
         db.conn()
             .execute(

@@ -53,7 +53,7 @@ any commit.
 
 There is exactly one honest exception, and it exists because the desktop app predates this
 contract: `mapTauriError` (`src/lib/errors.ts`) classifies backend errors by **regex
-heuristics** to pick a localized message. Core owns four of the phrases it keys on:
+heuristics** to pick a localized message. Core owns five of the phrases it keys on:
 
 | Phrase | Produced by | Consumer behaviour |
 |---|---|---|
@@ -61,6 +61,7 @@ heuristics** to pick a localized message. Core owns four of the phrases it keys 
 | any `rusqlite` / `sqlite` / `argon2` substring | propagated driver/KDF errors | collapsed into a generic "internal error" |
 | `"This journal requires a newer version of the app…"` | `db/schema/compat.rs` (`JOURNAL_TOO_NEW`) via every `open_*`, `peek_auth_slot_types` | mapped to the localized "update the app" message |
 | `"This backup requires a newer version of the app…"` | `db/schema/compat.rs` (`BACKUP_TOO_NEW`) via `backup::inspect`, `backup::restore` | mapped to the localized "update the app" message |
+| `"entry is locked"` | `db::ERR_ENTRY_LOCKED`, returned by the lock-enforcing entry writes | matched **exactly** (`/^entry is locked$/i`), so it must reach the frontend unwrapped |
 
 Renaming any of them is a contract change and requires updating `src/lib/errors.ts` in the same
 commit. Every other error string is free-form.
@@ -147,6 +148,8 @@ sealed (`pub(crate)`); the names below are re-exported at `db`.
 - `SCHEMA_VERSION: i32`
 - `MAX_STORED_BLOB_BYTES: usize` — 20 MB cap shared by images and attachments
 - `DEFAULT_ATTACHMENT_MIME` — `application/octet-stream`
+- `ERR_ENTRY_LOCKED: &str` — `"entry is locked"`, the error a lock-enforcing write returns
+  for a locked entry (see [Error policy](#error-policy))
 - `from_parts(conn, key)` — test-only constructor, gated behind `#[cfg(any(test, feature = "test-support"))]`.
 
 ### Types
@@ -165,6 +168,16 @@ sealed (`pub(crate)`); the names below are re-exported at `db`.
 - `delete_entry_by_id`, `is_entry_locked`, `set_entry_locked`, `count_words`
 - `recalculate_all_word_counts(db) -> Result<WordCountRecalculationResult, String>` — bulk
   on-demand rescan; skips locked entries and never touches `date_updated`
+
+### Entry-empty rule
+- `entry_is_empty(db, id) -> Result<Option<bool>, String>` — whether the **stored** entry is
+  empty: blank title, blank body, and no attachments. `None` when the entry does not exist.
+- `is_blank_entry_text(title, text) -> bool` — the text-only half of the same rule, for
+  checking incoming arguments before a row is read. The body counts as blank only when it holds
+  nothing but an allowlist of empty editor wrappers (`<p></p>`, `<p><br></p>`, `&nbsp;`, …); any
+  unknown or malformed markup counts as content. The title is plain text, not HTML.
+- Blank-entry cleanup and hard delete stay separate: `delete_entry_by_id` does not consult this
+  rule.
 
 ### Tags
 - `create_tag`, `get_all_tags`, `rename_tag`, `delete_tag`

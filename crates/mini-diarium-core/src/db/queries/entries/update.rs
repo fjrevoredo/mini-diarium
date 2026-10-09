@@ -1,3 +1,4 @@
+use super::lock::ensure_entry_unlocked;
 use super::timeline::preview_from_html;
 use super::{count_words, encrypt_metadata, get_entry_by_id, DiaryEntry, EntryMetadata};
 use crate::db::queries::with_write_transaction;
@@ -6,6 +7,7 @@ use rusqlite::params;
 
 /// Updates an entry and atomically extracts any embedded images.
 ///
+/// Refuses a locked entry with `Err(ERR_ENTRY_LOCKED)` and changes nothing.
 /// Runs as one write unit (`with_write_transaction`): standalone it is its own transaction,
 /// inside a caller's unit it nests as a savepoint, and any failure rolls the unit back so the
 /// long-lived DiaryState connection is never left in a half-open transaction.
@@ -19,6 +21,7 @@ pub fn update_entry_with_images(
     metadata: Option<EntryMetadata>,
 ) -> Result<(), String> {
     with_write_transaction(db, || {
+        ensure_entry_unlocked(db, id)?;
         let (rewritten, image_ids) =
             crate::db::queries::images::extract_and_replace_image_refs(text, db)?;
         crate::db::queries::images::replace_entry_image_links(db, id, &image_ids)?;
@@ -38,6 +41,10 @@ pub fn update_entry_with_images(
 }
 
 /// Updates an existing entry in the database by id
+///
+/// A low-level primitive: it does **not** check the entry lock, because
+/// `insert_entry_with_images` uses it on the row it has just created. Content saves go
+/// through `update_entry_with_images`, which does.
 ///
 /// # Arguments
 /// * `db` - Database connection with encryption key

@@ -1,4 +1,6 @@
 use crate::crypto::cipher;
+use crate::db::queries::entries::lock::ensure_entry_unlocked;
+use crate::db::queries::with_write_transaction;
 use crate::db::schema::DatabaseConnection;
 use rusqlite::params;
 use std::collections::HashMap;
@@ -99,6 +101,9 @@ pub fn rename_tag(db: &DatabaseConnection, id: i64, new_name: &str) -> Result<()
 }
 
 /// Deletes a tag by id. Cascade removes its entry_tags rows.
+///
+/// A journal-wide operation: it does not check entry locks, so the cascade also removes the
+/// tag from locked entries.
 pub fn delete_tag(db: &DatabaseConnection, id: i64) -> Result<(), String> {
     db.conn()
         .execute("DELETE FROM tags WHERE id = ?1", params![id])
@@ -107,29 +112,41 @@ pub fn delete_tag(db: &DatabaseConnection, id: i64) -> Result<(), String> {
 }
 
 /// Associates a tag with an entry (idempotent — INSERT OR IGNORE).
+///
+/// A locked entry is read-only, including its tags: refuses it with
+/// `Err(ERR_ENTRY_LOCKED)`. The check and the insert run as one write unit.
 pub fn add_tag_to_entry(db: &DatabaseConnection, entry_id: i64, tag_id: i64) -> Result<(), String> {
-    db.conn()
-        .execute(
-            "INSERT OR IGNORE INTO entry_tags (entry_id, tag_id) VALUES (?1, ?2)",
-            params![entry_id, tag_id],
-        )
-        .map_err(|e| format!("Failed to add tag to entry: {}", e))?;
-    Ok(())
+    with_write_transaction(db, || {
+        ensure_entry_unlocked(db, entry_id)?;
+        db.conn()
+            .execute(
+                "INSERT OR IGNORE INTO entry_tags (entry_id, tag_id) VALUES (?1, ?2)",
+                params![entry_id, tag_id],
+            )
+            .map_err(|e| format!("Failed to add tag to entry: {}", e))?;
+        Ok(())
+    })
 }
 
 /// Removes the association between a tag and an entry.
+///
+/// A locked entry is read-only, including its tags: refuses it with
+/// `Err(ERR_ENTRY_LOCKED)`. The check and the delete run as one write unit.
 pub fn remove_tag_from_entry(
     db: &DatabaseConnection,
     entry_id: i64,
     tag_id: i64,
 ) -> Result<(), String> {
-    db.conn()
-        .execute(
-            "DELETE FROM entry_tags WHERE entry_id = ?1 AND tag_id = ?2",
-            params![entry_id, tag_id],
-        )
-        .map_err(|e| format!("Failed to remove tag from entry: {}", e))?;
-    Ok(())
+    with_write_transaction(db, || {
+        ensure_entry_unlocked(db, entry_id)?;
+        db.conn()
+            .execute(
+                "DELETE FROM entry_tags WHERE entry_id = ?1 AND tag_id = ?2",
+                params![entry_id, tag_id],
+            )
+            .map_err(|e| format!("Failed to remove tag from entry: {}", e))?;
+        Ok(())
+    })
 }
 
 /// Returns all tags for a given entry, decrypted and sorted alphabetically.

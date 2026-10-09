@@ -29,6 +29,9 @@ pub use queries::{
     get_entries_for_timeline, get_entries_in_range, get_entry_by_id, get_locked_entry_dates,
     insert_entry, insert_entry_with_images, is_entry_locked, recalculate_all_word_counts,
     set_entry_locked, update_entry, update_entry_with_images,
+    ERR_ENTRY_LOCKED,
+    // Entry-empty rule
+    entry_is_empty, is_blank_entry_text,
     // Tags
     add_tag_to_entry, create_tag, delete_tag, get_all_tags, get_entry_dates_by_tag,
     get_tags_for_entry, get_tags_names_map, remove_tag_from_entry, rename_tag,

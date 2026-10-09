@@ -3,6 +3,7 @@
 
 use super::{mime_for_extension, AttachmentSummary};
 use crate::crypto::cipher;
+use crate::db::queries::entries::lock::ensure_entry_unlocked;
 use crate::db::queries::{with_write_transaction, MAX_STORED_BLOB_BYTES};
 use crate::db::schema::DatabaseConnection;
 use rusqlite::{params, OptionalExtension};
@@ -85,6 +86,9 @@ pub fn upsert_attachment_blob(
 
 /// Links an attachment blob to an entry under `name`. Does not open a transaction.
 ///
+/// Does not check the entry lock: its one caller, per-entry restore, links only to the
+/// entry it has just inserted, which is never locked.
+///
 /// If the entry already links this attachment (same bytes added twice), the existing link
 /// is kept unchanged — including its first name — and returned.
 pub fn link_attachment(
@@ -114,7 +118,8 @@ pub fn link_attachment(
 /// Stores `plaintext_bytes` and links them to `entry_id` under `name`, atomically.
 ///
 /// The MIME type is derived from `name`'s extension. See [`link_attachment`] for the
-/// same-bytes-twice behavior.
+/// same-bytes-twice behavior. A locked entry is read-only, including its attachments:
+/// refuses it with `Err(ERR_ENTRY_LOCKED)` and stores nothing.
 pub fn add_attachment_to_entry(
     db: &DatabaseConnection,
     entry_id: i64,
@@ -125,6 +130,7 @@ pub fn add_attachment_to_entry(
     validate_attachment_bytes(plaintext_bytes)?;
 
     with_write_transaction(db, || {
+        ensure_entry_unlocked(db, entry_id)?;
         let attachment_id = upsert_attachment_blob(db, plaintext_bytes, mime_for_extension(name))?;
         link_attachment(db, entry_id, attachment_id, name)
     })
@@ -238,13 +244,15 @@ pub fn get_attachments_map(
 }
 
 /// Unlinks an attachment from an entry and removes the blob if no entry links it any
-/// more, atomically. Returns `Ok(false)` when the entry did not link that attachment.
+/// more, atomically. Returns `Ok(false)` when the entry did not link that attachment, and
+/// `Err(ERR_ENTRY_LOCKED)` (nothing removed) when the entry is locked.
 pub fn remove_attachment_from_entry(
     db: &DatabaseConnection,
     entry_id: i64,
     attachment_id: i64,
 ) -> Result<bool, String> {
     with_write_transaction(db, || {
+        ensure_entry_unlocked(db, entry_id)?;
         let rows = db
             .conn()
             .execute(

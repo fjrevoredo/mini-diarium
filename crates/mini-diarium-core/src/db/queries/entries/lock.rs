@@ -1,6 +1,25 @@
 use crate::db::schema::DatabaseConnection;
 use rusqlite::params;
 
+/// The error a lock-enforcing core write returns for a locked entry.
+///
+/// A contract string: the frontend's `mapTauriError` matches it exactly
+/// (`/^entry is locked$/i` in `src/lib/errors.ts`), so callers must pass it through
+/// unchanged, never wrapped in another message.
+pub const ERR_ENTRY_LOCKED: &str = "entry is locked";
+
+/// Returns `Err(ERR_ENTRY_LOCKED)` when entry `id` is locked.
+///
+/// A missing entry passes, so each write keeps its own not-found handling. Write
+/// operations call this inside their write unit, so no other writer can lock the entry
+/// between the check and the write.
+pub(crate) fn ensure_entry_unlocked(db: &DatabaseConnection, id: i64) -> Result<(), String> {
+    if is_entry_locked(db, id)? {
+        return Err(ERR_ENTRY_LOCKED.to_string());
+    }
+    Ok(())
+}
+
 /// Sets the per-entry `locked` flag via a targeted UPDATE.
 ///
 /// This deliberately touches only the `locked` column and never routes through the
@@ -105,5 +124,155 @@ mod tests {
             is_entry_locked(&db, id).unwrap(),
             "content save must preserve the locked flag"
         );
+    }
+
+    /// A locked entry with a tag and an attachment, plus a second tag not yet on it.
+    struct LockedFixture {
+        _tmp: tempfile::NamedTempFile,
+        db: DatabaseConnection,
+        id: i64,
+        tag_on_entry: i64,
+        other_tag: i64,
+        attachment_id: i64,
+    }
+
+    fn locked_fixture() -> LockedFixture {
+        use crate::db::queries::attachments::add_attachment_to_entry;
+        use crate::db::queries::tags::{add_tag_to_entry, create_tag};
+
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+        let id = insert_entry(&db, &create_test_entry("2024-05-03")).unwrap();
+        let tag_on_entry = create_tag(&db, "kept").unwrap().id;
+        let other_tag = create_tag(&db, "other").unwrap().id;
+        add_tag_to_entry(&db, id, tag_on_entry).unwrap();
+        let attachment_id = add_attachment_to_entry(&db, id, "keep.txt", b"keep")
+            .unwrap()
+            .id;
+        set_entry_locked(&db, id, true).unwrap();
+        LockedFixture {
+            _tmp: tmp,
+            db,
+            id,
+            tag_on_entry,
+            other_tag,
+            attachment_id,
+        }
+    }
+
+    impl LockedFixture {
+        /// Everything a refused write must leave unchanged: the decrypted row, the tag ids,
+        /// and the attachment names.
+        fn state(&self) -> (String, String, i32, String, bool, Vec<i64>, Vec<String>) {
+            let entry = get_entry_by_id(&self.db, self.id).unwrap().unwrap();
+            let tags = crate::db::queries::tags::get_tags_for_entry(&self.db, self.id)
+                .unwrap()
+                .into_iter()
+                .map(|t| t.id)
+                .collect();
+            let attachments =
+                crate::db::queries::attachments::list_entry_attachments(&self.db, self.id)
+                    .unwrap()
+                    .into_iter()
+                    .map(|a| a.name)
+                    .collect();
+            (
+                entry.title,
+                entry.text,
+                entry.word_count,
+                entry.date_updated,
+                entry.locked,
+                tags,
+                attachments,
+            )
+        }
+    }
+
+    #[test]
+    fn test_lock_refuses_update_entry_with_images() {
+        let f = locked_fixture();
+        let before = f.state();
+        let err =
+            update_entry_with_images(&f.db, f.id, "Changed", "<p>Changed</p>", None).unwrap_err();
+        assert_eq!(err, ERR_ENTRY_LOCKED);
+        assert_eq!(f.state(), before);
+    }
+
+    #[test]
+    fn test_lock_refuses_delete_entry_by_id() {
+        let f = locked_fixture();
+        let before = f.state();
+        let err = delete_entry_by_id(&f.db, f.id).unwrap_err();
+        assert_eq!(err, ERR_ENTRY_LOCKED);
+        assert_eq!(f.state(), before);
+    }
+
+    #[test]
+    fn test_lock_refuses_add_tag_to_entry() {
+        let f = locked_fixture();
+        let before = f.state();
+        let err = crate::db::queries::tags::add_tag_to_entry(&f.db, f.id, f.other_tag).unwrap_err();
+        assert_eq!(err, ERR_ENTRY_LOCKED);
+        assert_eq!(f.state(), before);
+    }
+
+    #[test]
+    fn test_lock_refuses_remove_tag_from_entry() {
+        let f = locked_fixture();
+        let before = f.state();
+        let err = crate::db::queries::tags::remove_tag_from_entry(&f.db, f.id, f.tag_on_entry)
+            .unwrap_err();
+        assert_eq!(err, ERR_ENTRY_LOCKED);
+        assert_eq!(f.state(), before);
+    }
+
+    #[test]
+    fn test_lock_refuses_add_attachment_to_entry() {
+        let f = locked_fixture();
+        let before = f.state();
+        let err = crate::db::queries::attachments::add_attachment_to_entry(
+            &f.db, f.id, "new.txt", b"new",
+        )
+        .unwrap_err();
+        assert_eq!(err, ERR_ENTRY_LOCKED);
+        assert_eq!(f.state(), before);
+        let blobs: i64 =
+            f.db.conn()
+                .query_row("SELECT COUNT(*) FROM attachments", [], |r| r.get(0))
+                .unwrap();
+        assert_eq!(blobs, 1, "the refused attachment's blob must not be stored");
+    }
+
+    #[test]
+    fn test_lock_refuses_remove_attachment_from_entry() {
+        let f = locked_fixture();
+        let before = f.state();
+        let err = crate::db::queries::attachments::remove_attachment_from_entry(
+            &f.db,
+            f.id,
+            f.attachment_id,
+        )
+        .unwrap_err();
+        assert_eq!(err, ERR_ENTRY_LOCKED);
+        assert_eq!(f.state(), before);
+    }
+
+    /// The refusal is per entry: once unlocked, the same writes go through again.
+    #[test]
+    fn test_lock_released_entry_accepts_writes_again() {
+        let f = locked_fixture();
+        set_entry_locked(&f.db, f.id, false).unwrap();
+        update_entry_with_images(&f.db, f.id, "Changed", "<p>Changed</p>", None).unwrap();
+        crate::db::queries::tags::add_tag_to_entry(&f.db, f.id, f.other_tag).unwrap();
+        assert!(delete_entry_by_id(&f.db, f.id).unwrap());
+    }
+
+    /// A missing entry is not "locked": each write keeps its own not-found result.
+    #[test]
+    fn test_lock_check_passes_missing_entry_through() {
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+        assert!(ensure_entry_unlocked(&db, 9999).is_ok());
+        assert!(!delete_entry_by_id(&db, 9999).unwrap());
     }
 }
