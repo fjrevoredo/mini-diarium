@@ -2,7 +2,7 @@
 
 ## Metadata
 
-- Plan Status: READY FOR APPROVAL
+- Plan Status: IN PROGRESS
 - Plan Format: manual-planning v2.0.0
 - Template: milestoned
 - Tracking: tracked
@@ -86,13 +86,13 @@ None. The design choices are recorded as DEC-001 and DEC-002 below; challenge th
 
 ### Milestone 1: Nest-safe transaction helper
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Purpose: Give core one way to run a write unit that works both alone and inside a larger one.
 - Exit Criteria: The helper exists with tests, the five hand-written blocks use it, and `cargo test --workspace` passes with no change to test expectations.
 
 #### Task 1.1: Add `with_write_transaction`
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Depends On: none
 - Objective: A `pub(crate)` helper in core runs a closure as one atomic unit and nests safely.
 - Steps:
@@ -107,7 +107,7 @@ None. The design choices are recorded as DEC-001 and DEC-002 below; challenge th
 
 #### Task 1.2: Replace the hand-written blocks
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Depends On: 1.1
 - Objective: `insert_entry_with_images`, `update_entry_with_images`, `delete_entry_by_id`, `recalculate_all_word_counts`, and the attachment `in_transaction` all use the helper.
 - Steps:
@@ -119,13 +119,13 @@ None. The design choices are recorded as DEC-001 and DEC-002 below; challenge th
 
 ### Milestone 2: Atomic per-entry restore
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Purpose: Fix R-02: one restored entry is never half-written.
 - Exit Criteria: The three fault cases from the review leave the live journal unchanged for the failing entry, and earlier entries in the batch keep the documented behavior.
 
 #### Task 2.1: Fault-injection tests first
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Depends On: 1.2
 - Objective: Tests that reproduce the three outcomes in the review table fail against the current restore code.
 - Steps:
@@ -137,7 +137,7 @@ None. The design choices are recorded as DEC-001 and DEC-002 below; challenge th
 
 #### Task 2.2: Wrap each entry's restore in one unit
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Depends On: 2.1
 - Objective: Everything one entry's restore writes commits together or not at all.
 - Steps:
@@ -289,6 +289,34 @@ Run before the plan may reach `COMPLETED`.
 - Task: 1.1
 - Decision: The helper issues `BEGIN IMMEDIATE` / `SAVEPOINT` itself and rolls back from a drop guard.
 - Rationale: rusqlite's types need `&mut Connection`, and every core function takes `&DatabaseConnection`. The drop guard gives the same rollback-on-panic property the review asked for without an API-wide signature change.
+
+### DEC-003 — Task 1.1 assumptions verified; extra helper tests
+
+- Date: 2026-10-09
+- Task: 1.1
+- Decision: The helper lives in `db/queries/transaction.rs`. Both rusqlite/SQLite assumptions hold and are pinned by tests: `test_transaction_is_autocommit_reports_open_transaction` (`is_autocommit()` is false inside `BEGIN` and inside a savepoint) and `test_transaction_two_levels_of_nesting` (stacked same-name `md_write` savepoints; the innermost `ROLLBACK TO` undoes only its own level). Beyond the six planned tests (a)–(f), two more cover Step 5 (`test_transaction_returns_original_error_after_sqlite_rolled_back_everything`, which simulates SQLite rolling back the whole transaction with an explicit `ROLLBACK`) and the BEGIN error shape (`test_transaction_begin_failure_is_reported`, a second connection holds the write lock). A nested failure reports `"SAVEPOINT failed: …"` / `"RELEASE failed: …"`, in the same shape as `"BEGIN failed: …"` / `"COMMIT failed: …"`.
+- Rationale: The plan asks to confirm the assumptions with tests; Step 5 and the error shape had no planned test.
+
+### DEC-004 — Task 2.1 fault tests fail before the fix (expected); fixture choices
+
+- Date: 2026-10-09
+- Task: 2.1
+- Decision: The three tests exist by name in `backup/restore_entries.rs` and all three fail against the restore code before Task 2.2 (`cargo test --manifest-path crates/mini-diarium-core/Cargo.toml restore_entries`: 7 passed, 3 failed). Each failure is on the live `attachments` table: the second-link and tag-link cases leave the new entry, its first link, and its blobs; the corrupt-blob case leaves the first copied blob unlinked. The tests compare a dump of every user table (live journal and snapshot) before and after the failed restore, so "no new entry / links / blobs / tags / tag links, existing entries and snapshot unchanged" is one table-by-table assertion. Two divergences from the plan text: (1) the fixtures use the file-backed `Fixture` (temp dir + `create_snapshot`) already in that file, not `open_connection_in_memory`, because a restore needs a real snapshot file; (2) the tag fault uses a trigger that rejects every `entry_tags` insert (the source entry has one tag), and the source tag is deleted from the live journal first, so a non-atomic restore would also leave a new `tags` row.
+- Rationale: Task 2.1 Step 3 asks to record the expected pre-fix failure; the fixture note in the plan did not match how restore tests in that file build a snapshot.
+
+### DEC-005 — Task 2.2 shape and an extra batch test
+
+- Date: 2026-10-09
+- Task: 2.2
+- Decision: The per-entry body moved into a private `restore_one_entry`, which `restore_entries_from_snapshot` runs under `with_write_transaction(live_db, …)` once per id. The whole body runs inside the unit, including the snapshot reads, because the snapshot is a separate read-only connection. `with_write_transaction` was already reachable as `crate::db::queries::with_write_transaction` (`pub(crate) use` in `db/queries/mod.rs`), so no visibility change was needed. Both `cleanup_orphaned_attachments` error paths are gone, and `restore_entries.rs` no longer imports it. One test beyond the plan, `test_restore_keeps_earlier_entries_when_a_later_one_fails`, pins the Milestone 2 exit criterion about batches: an earlier entry (with its attachment and tag) stays, and the failing later entry leaves nothing.
+- Rationale: The exit criterion names the batch behavior, and no planned test covered it.
+
+### DEC-006 — External review of Milestone 1: caught-and-continued auto-rollback is a documented caller contract
+
+- Date: 2026-10-09
+- Task: 1.1
+- Decision: Review finding P2 (a caller that swallows a nested unit's whole-transaction-rollback error and keeps writing commits those writes in autocommit mode) is accepted as a caller contract, documented on `with_write_transaction`, not detected in code.
+- Rationale: Every core caller propagates helper errors with `?`, so the case needs a caller that deliberately ignores the error. The outer `COMMIT` still reports failure. The helper cannot block later writes on a shared `&DatabaseConnection` without a stateful poison flag, which is out of proportion to the risk.
 
 ## Final Verification
 
