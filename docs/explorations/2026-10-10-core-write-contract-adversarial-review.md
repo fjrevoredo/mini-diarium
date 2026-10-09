@@ -40,6 +40,8 @@ The findings fall into four classes. Keep them apart when you plan the work:
 
 ## W-02 — Partial restore failure hides committed entries; a retry duplicates them (P2, existing)
 
+**Status:** fixed 2026-10-10. `restore_entries_from_snapshot` returns `Ok` with `restored_ids` and `failed`; the command and dialog clear only the restored ids, refresh their dates, and show the stopped error. Duplicate ids in one request are restored once.
+
 **Verdict:** CONFIRMED by both reviewers. Present at the merge-base `4627248`; these commits fixed incomplete *individual* entries, not hidden *batch* progress.
 
 ### Where
@@ -89,6 +91,8 @@ Second-opinion corrections applied:
 ---
 
 ## N-01 — Unresolved image refs bind to unrelated live images (P2, existing)
+
+**Status:** fixed 2026-10-10. Restore resolves each `image-id://N` by id against the snapshot (`rewrite_image_id_srcs` + `get_image_by_id`) and drops a tag the snapshot cannot resolve. Import calls `strip_image_id_refs` next to `strip_attachment_refs`.
 
 **Verdict:** found by the second opinion; CONFIRMED by code reading in both reviews. Present at the merge-base. It is a content-correctness defect, not plaintext disclosure, a network path, or a lock bypass. It is in scope because these commits move the restore body and add a stronger completeness claim ("an entry is restored completely or not at all").
 

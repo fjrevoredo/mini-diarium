@@ -345,7 +345,7 @@
       "@id": "https://mini-diarium.com/docs/import/#article",
       "headline": "Importing Data",
       "description": "Import journal entries from Mini Diary, Day One, jrnl, or plain text files. Mini Diarium includes built-in importers and supports custom Rhai import plugins.",
-      "dateModified": "2026-09-06T00:00:00Z",
+      "dateModified": "2026-10-10T00:00:00Z",
       "keywords": "import, migration, Mini Diary, Day One, jrnl",
       "publisher": {
         "@type": "Organization",
@@ -597,6 +597,7 @@
         </tbody></table>
         <h2 id="how-imports-work">How Imports Work</h2><p>Imports are <strong>additive</strong>. If an imported entry falls on a date that already has entries in Mini Diarium, the imported content is added as an additional entry for that date rather than merging or replacing existing content.</p>
         <p>This means you can safely import without worrying about overwriting your existing writing.</p>
+        <p>Images embedded in the import file as <code>data:</code> images are stored in your journal&#39;s encrypted image store. Two kinds of reference are removed on import, because they name files in a different journal: inline attachment references and stored image references (<code>image-id://</code> links). The rest of the entry is imported.</p>
         <h2 id="migrating-from-mini-diary">Migrating from Mini Diary</h2><p>Mini Diary users can migrate all their entries to Mini Diarium:</p>
         <ol>
         <li>Open Mini Diary and export your journal as JSON.</li>

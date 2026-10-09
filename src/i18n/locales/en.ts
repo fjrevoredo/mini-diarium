@@ -663,6 +663,8 @@ const en = {
         '{{ count }} entry added. Nothing already in your journal was overwritten.',
       restoreEntriesSuccess_other:
         '{{ count }} entries added. Nothing already in your journal was overwritten.',
+      restoreEntriesStopped:
+        'Restore stopped at an entry that could not be restored. The entries that are still selected were not added.',
     },
     advanced: {
       themeOverridesTitle: 'Theme Overrides',

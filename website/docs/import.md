@@ -27,6 +27,8 @@ Imports are **additive**. If an imported entry falls on a date that already has 
 
 This means you can safely import without worrying about overwriting your existing writing.
 
+Images embedded in the import file as `data:` images are stored in your journal's encrypted image store. Two kinds of reference are removed on import, because they name files in a different journal: inline attachment references and stored image references (`image-id://` links). The rest of the entry is imported.
+
 ## Migrating from Mini Diary
 
 Mini Diary users can migrate all their entries to Mini Diarium:

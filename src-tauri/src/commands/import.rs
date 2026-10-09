@@ -44,8 +44,11 @@ pub(crate) fn import_entries(
     for mut entry in entries {
         // A re-imported Mini Diarium JSON export carries inline attachment refs whose ids
         // belong to the exporting journal; the files themselves are not in the JSON. Drop
-        // the refs so they can never resolve to an unrelated attachment here.
+        // the refs so they can never resolve to an unrelated attachment here. Stored image
+        // refs (`image-id://N`) have the same problem, so drop those `<img>` tags too;
+        // exported images travel as `data:` URIs and are kept.
         entry.text = db::strip_attachment_refs(&entry.text);
+        entry.text = db::strip_image_id_refs(&entry.text);
         // Skip entries with no meaningful content
         if entry.title.trim().is_empty() && entry.text.trim().is_empty() {
             entries_skipped += 1;
@@ -112,6 +115,38 @@ mod tests {
 
         let imported = db::get_entries_by_date(&db, "2024-01-01").unwrap();
         assert_eq!(imported[0].text, "<p>See  here</p>");
+    }
+
+    #[test]
+    fn test_import_drops_foreign_image_id_refs() {
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+
+        // A live image the foreign ref's id would otherwise name.
+        let png = "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
+        let anchor = create_test_entry(
+            "2024-01-01",
+            "Anchor",
+            &format!(r#"<p><img src="data:image/png;base64,{png}" alt=""></p>"#),
+        );
+        let anchor_id = db::insert_entry_with_images(&db, &anchor).unwrap();
+        let live_image_id = db::get_images_for_entry(&db, anchor_id).unwrap()[0].id;
+
+        let entries = vec![create_test_entry(
+            "2024-01-02",
+            "Foreign",
+            &format!(r#"<p>Text<img src="image-id://{live_image_id}" alt=""></p>"#),
+        )];
+        import_entries(&db, entries).unwrap();
+
+        let imported = db::get_entries_by_date(&db, "2024-01-02").unwrap();
+        assert_eq!(imported[0].text, "<p>Text</p>");
+        assert!(
+            db::get_images_for_entry(&db, imported[0].id)
+                .unwrap()
+                .is_empty(),
+            "the imported entry must not link the unrelated live image"
+        );
     }
 
     #[test]

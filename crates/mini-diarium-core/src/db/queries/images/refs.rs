@@ -107,26 +107,99 @@ pub fn extract_and_replace_image_refs(
     Ok((result, image_ids))
 }
 
+/// Rewrites the `src` of every `<img src="image-id://N">` tag through `f`.
+///
+/// `f` receives `N` and returns `Some(new_src)` to replace only the src value, or `None` to
+/// drop the whole tag. Other `<img>` tags and all text outside them stay byte-identical, so a
+/// plain-text `image-id://N` mention is never touched.
+pub(crate) fn rewrite_image_id_srcs<F>(html: &str, mut f: F) -> Result<String, String>
+where
+    F: FnMut(i64) -> Result<Option<String>, String>,
+{
+    let mut result = String::with_capacity(html.len());
+    let mut remaining = html;
+
+    while let Some(img_start) = remaining.find("<img") {
+        let after_name = &remaining[img_start + 4..];
+        match after_name.chars().next() {
+            Some(c) if c.is_ascii_whitespace() || c == '>' || c == '/' => {}
+            _ => {
+                result.push_str(&remaining[..img_start + 4]);
+                remaining = after_name;
+                continue;
+            }
+        }
+
+        result.push_str(&remaining[..img_start]);
+        remaining = &remaining[img_start..];
+
+        match find_img_tag_end(remaining) {
+            Some(end) => {
+                let tag = &remaining[..end];
+                remaining = &remaining[end..];
+                match find_src_image_ref(tag) {
+                    Some((id, value)) => {
+                        if let Some(new_src) = f(id)? {
+                            // Splice at the exact span the id was read from, so the src that
+                            // is replaced is always the one that was resolved.
+                            result.push_str(&tag[..value.start]);
+                            result.push_str(&new_src);
+                            result.push_str(&tag[value.end..]);
+                        }
+                    }
+                    None => result.push_str(tag),
+                }
+            }
+            None => {
+                result.push('<');
+                remaining = &remaining[1..];
+            }
+        }
+    }
+    result.push_str(remaining);
+
+    Ok(result)
+}
+
+/// Removes every `<img src="image-id://N">` tag from `html`.
+///
+/// For HTML that comes from outside the journal (an import file): its `image-id://N` refs
+/// name images in some other database, and in this journal the same id could name an
+/// unrelated image.
+pub fn strip_image_id_refs(html: &str) -> String {
+    // The closure never fails, so the error arm cannot run.
+    rewrite_image_id_srcs(html, |_| Ok(None)).unwrap_or_else(|_| html.to_string())
+}
+
 /// Extracts an `image-id://N` image ID from the `src` attribute of an `<img>` tag.
 ///
 /// Returns `None` if the tag has no `src=` matching this pattern (e.g. data-URI or
 /// plain URL). Handles both single and double quotes.
 fn extract_src_image_ref(tag: &str) -> Option<i64> {
+    find_src_image_ref(tag).map(|(id, _)| id)
+}
+
+/// Like [`extract_src_image_ref`], plus the byte range of the src *value* inside `tag`
+/// (`image-id://N`, without the quotes).
+fn find_src_image_ref(tag: &str) -> Option<(i64, std::ops::Range<usize>)> {
     for quote in ['"', '\''] {
         let pattern = format!("src={}image-id://", quote);
         let Some(pos) = tag.find(&pattern) else {
             continue;
         };
-        let after = &tag[pos + pattern.len()..];
-        let id_str: String = after.chars().take_while(|c| c.is_ascii_digit()).collect();
-        if id_str.is_empty() {
+        let digits_start = pos + pattern.len();
+        let after = &tag[digits_start..];
+        let digits_len = after.chars().take_while(|c| c.is_ascii_digit()).count();
+        if digits_len == 0 {
             continue;
         }
         // Ensure the closing character is the same quote (guards against partial matches).
-        if !matches!(after[id_str.len()..].chars().next(), Some(q) if q == quote) {
+        if !matches!(after[digits_len..].chars().next(), Some(q) if q == quote) {
             continue;
         }
-        return id_str.parse::<i64>().ok();
+        let id = after[..digits_len].parse::<i64>().ok()?;
+        let value_start = pos + "src=".len() + quote.len_utf8();
+        return Some((id, value_start..digits_start + digits_len));
     }
     None
 }
@@ -341,6 +414,66 @@ mod tests {
         assert!(
             !resolved[0].text.contains("image-id://"),
             "no unresolved refs must remain in exported text"
+        );
+    }
+
+    #[test]
+    fn test_rewrite_image_id_srcs_replaces_src_in_both_quote_styles() {
+        let html = r#"<p>a<img src="image-id://3" alt="x">b<img src='image-id://4' alt=''>c</p>"#;
+        let out = rewrite_image_id_srcs(html, |id| Ok(Some(format!("new-{id}")))).unwrap();
+        assert_eq!(
+            out,
+            r#"<p>a<img src="new-3" alt="x">b<img src='new-4' alt=''>c</p>"#
+        );
+    }
+
+    #[test]
+    fn test_rewrite_image_id_srcs_drops_tag_on_none_and_keeps_the_rest() {
+        let html = concat!(
+            r#"<p>see image-id://9 here<img src="image-id://9" alt="">"#,
+            r#"<img src="data:image/png;base64,QUJD" alt=""><image-x></p>"#
+        );
+        let mut seen = Vec::new();
+        let out = rewrite_image_id_srcs(html, |id| {
+            seen.push(id);
+            Ok(None)
+        })
+        .unwrap();
+        assert_eq!(seen, vec![9], "only the img src ref reaches the closure");
+        assert_eq!(
+            out,
+            concat!(
+                r#"<p>see image-id://9 here"#,
+                r#"<img src="data:image/png;base64,QUJD" alt=""><image-x></p>"#
+            )
+        );
+    }
+
+    #[test]
+    fn test_rewrite_image_id_srcs_replaces_the_src_it_resolved() {
+        // The double-quoted src is not a valid ref, so the id comes from the single-quoted
+        // one; that is the src that must be replaced.
+        let html = r#"<img src="image-id://x" src='image-id://7'>"#;
+        let out = rewrite_image_id_srcs(html, |id| Ok(Some(format!("new-{id}")))).unwrap();
+        assert_eq!(out, r#"<img src="image-id://x" src='new-7'>"#);
+    }
+
+    #[test]
+    fn test_rewrite_image_id_srcs_propagates_closure_error() {
+        let err = rewrite_image_id_srcs(r#"<img src="image-id://1">"#, |_| Err("boom".into()))
+            .unwrap_err();
+        assert_eq!(err, "boom");
+    }
+
+    #[test]
+    fn test_strip_image_id_refs_removes_only_image_id_img_tags() {
+        let html = concat!(
+            r#"<p>Text image-id://5 <img src='image-id://5'>"#,
+            r#"<img src="https://example.com/a.png"></p>"#
+        );
+        assert_eq!(
+            strip_image_id_refs(html),
+            r#"<p>Text image-id://5 <img src="https://example.com/a.png"></p>"#
         );
     }
 

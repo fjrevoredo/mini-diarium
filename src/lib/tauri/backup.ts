@@ -225,8 +225,14 @@ export async function listBackupEntriesWithStatus(): Promise<BackupEntryDiff[]> 
 
 /** What one call to {@link restoreEntriesFromBackup} did. */
 export interface RestoreEntriesSummary {
-  /** How many of the requested entries were added. */
+  /** How many of the requested entries were added. Always `restored_ids.length`. */
   added_count: number;
+  /** Snapshot ids of the entries that were added. */
+  restored_ids: number[];
+  /** Snapshot id of the entry that stopped the restore; the entries after it were not tried. */
+  failed_entry_id: number | null;
+  /** Raw backend error for that entry. Pass it through `mapTauriError` before display. */
+  error: string | null;
 }
 
 /**
@@ -235,6 +241,9 @@ export interface RestoreEntriesSummary {
  * Never overwrites: each restored entry is added alongside whatever the live journal already
  * holds on that date, never replacing it. Nothing here writes a file — every intermediate
  * value (resolved image data, decrypted tag names) lives in memory only.
+ *
+ * Stops at the first entry that fails and still resolves: the summary names the entries that
+ * were added (`restored_ids`) and the one that failed. A rejection means nothing was added.
  */
 export async function restoreEntriesFromBackup(entryIds: number[]): Promise<RestoreEntriesSummary> {
   return await invoke<RestoreEntriesSummary>('restore_entries_from_backup', { entryIds });

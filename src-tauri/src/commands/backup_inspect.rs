@@ -16,7 +16,7 @@
 //! Nothing here registers a journal, writes to `config.json`, or opens the snapshot for
 //! writing.
 
-use log::info;
+use log::{info, warn};
 use tauri::State;
 
 use crate::backup::{
@@ -232,8 +232,15 @@ pub(crate) fn list_backup_entries_with_status_inner(
 /// What one call to [`restore_entries_from_backup`] did.
 #[derive(Debug, serde::Serialize)]
 pub struct RestoreEntriesSummary {
-    /// How many of the requested entries were added.
+    /// How many of the requested entries were added. Always `restored_ids.len()`.
     pub added_count: usize,
+    /// Snapshot ids of the entries that were added.
+    pub restored_ids: Vec<i64>,
+    /// Snapshot id of the entry that stopped the restore. The requested entries after it
+    /// were not tried.
+    pub failed_entry_id: Option<i64>,
+    /// Why that entry failed.
+    pub error: Option<String>,
 }
 
 /// Copies the selected entries out of the open snapshot and into the live journal.
@@ -243,6 +250,10 @@ pub struct RestoreEntriesSummary {
 /// are resolved against the snapshot's own image store before the text ever reaches the live
 /// database (see the core module doc), and tags are restored by decrypted name. Nothing here
 /// writes a file — every intermediate value lives in memory only.
+///
+/// When one entry fails, the restore stops there and still returns `Ok`: the summary names
+/// the entries that were added and the one that failed, so the UI can refresh the added
+/// dates and keep only the not-restored entries selected. `Err` means nothing was added.
 ///
 /// Requires an unlocked journal and an open inspection, the same requirements
 /// [`list_backup_entries_with_status`] has: this reads full entry content from the snapshot,
@@ -280,14 +291,29 @@ pub(crate) fn restore_entries_from_backup_inner(
 
     let outcome = backup::restore_entries_from_snapshot(live_db, &open.db, &entry_ids)?;
 
+    let added_count = outcome.restored_ids.len();
     info!(
         "Restored {} entr{} from a backup",
-        outcome.added_count,
-        if outcome.added_count == 1 { "y" } else { "ies" }
+        added_count,
+        if added_count == 1 { "y" } else { "ies" }
     );
+    if let Some(failed) = &outcome.failed {
+        // The id only: the error and the entry's title can carry user content.
+        warn!(
+            "Restore from a backup stopped at snapshot entry {}",
+            failed.entry_id
+        );
+    }
 
+    let (failed_entry_id, error) = match outcome.failed {
+        Some(failed) => (Some(failed.entry_id), Some(failed.error)),
+        None => (None, None),
+    };
     Ok(RestoreEntriesSummary {
-        added_count: outcome.added_count,
+        added_count,
+        restored_ids: outcome.restored_ids,
+        failed_entry_id,
+        error,
     })
 }
 
@@ -641,6 +667,9 @@ mod tests {
 
         let summary = restore_entries_from_backup_inner(vec![id], &state).unwrap();
         assert_eq!(summary.added_count, 1);
+        assert_eq!(summary.restored_ids, vec![id]);
+        assert_eq!(summary.failed_entry_id, None);
+        assert_eq!(summary.error, None);
 
         let on_date = crate::db::get_entries_by_date(
             state.db.lock().unwrap().as_ref().unwrap(),

@@ -203,12 +203,28 @@ describe('backup inspection wrappers (IPC contract)', () => {
   });
 
   it('restoreEntriesFromBackup → restore_entries_from_backup { entryIds } (camelCase)', async () => {
-    const summary: RestoreEntriesSummary = { added_count: 2 };
+    const summary: RestoreEntriesSummary = {
+      added_count: 2,
+      restored_ids: [7, 9],
+      failed_entry_id: null,
+      error: null,
+    };
     mockInvoke.mockResolvedValue(summary);
     await expect(restoreEntriesFromBackup([7, 9])).resolves.toEqual(summary);
     expect(mockInvoke).toHaveBeenCalledWith('restore_entries_from_backup', {
       entryIds: [7, 9],
     });
+  });
+
+  it('restoreEntriesFromBackup resolves a partial restore with the failed entry', async () => {
+    const summary: RestoreEntriesSummary = {
+      added_count: 1,
+      restored_ids: [7],
+      failed_entry_id: 9,
+      error: 'injected',
+    };
+    mockInvoke.mockResolvedValue(summary);
+    await expect(restoreEntriesFromBackup([7, 9, 11])).resolves.toEqual(summary);
   });
 
   it('restoreEntriesFromBackup rejects rather than resolving empty when the backend refuses', async () => {

@@ -37,7 +37,7 @@ pub use queries::{
     get_tags_for_entry, get_tags_names_map, remove_tag_from_entry, rename_tag,
     // Images
     get_image_by_id, get_images_for_entry, list_image_summaries_filtered,
-    resolve_image_refs_in_entries,
+    resolve_image_refs_in_entries, strip_image_id_refs,
     // Attachments
     add_attachment_to_entry, entry_has_attachments, get_attachments_map, list_entry_attachments,
     read_attachment_bytes, remove_attachment_from_entry, strip_attachment_refs,

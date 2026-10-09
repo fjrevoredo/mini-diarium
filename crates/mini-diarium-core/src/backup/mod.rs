@@ -55,7 +55,7 @@ pub use relocate::relocate_backups;
 pub use restore::{restore_from_snapshot, RestoreOutcome};
 pub use restore_entries::{
     list_snapshot_entries_with_status, restore_entries_from_snapshot, EntryMatchStatus,
-    RestoreEntriesOutcome, SnapshotEntryDiff,
+    RestoreEntriesOutcome, RestoreFailure, SnapshotEntryDiff,
 };
 pub use store::{
     is_snapshot_file_name, FsSnapshotStore, SnapshotStore, StoredSnapshot, SNAPSHOT_PREFIX,

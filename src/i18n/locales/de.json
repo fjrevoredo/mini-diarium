@@ -550,7 +550,8 @@
       "restoreSelectedButton": "Auswahl wiederherstellen",
       "restoringEntries": "Wird wiederhergestellt…",
       "restoreEntriesSuccess_one": "{{ count }} Eintrag hinzugefügt. Nichts, was bereits in deinem Tagebuch war, wurde überschrieben.",
-      "restoreEntriesSuccess_other": "{{ count }} Einträge hinzugefügt. Nichts, was bereits in deinem Tagebuch war, wurde überschrieben."
+      "restoreEntriesSuccess_other": "{{ count }} Einträge hinzugefügt. Nichts, was bereits in deinem Tagebuch war, wurde überschrieben.",
+      "restoreEntriesStopped": "Die Wiederherstellung wurde bei einem Eintrag gestoppt, der nicht wiederhergestellt werden konnte. Die noch ausgewählten Einträge wurden nicht hinzugefügt."
     },
     "advanced": {
       "themeOverridesTitle": "Theme-Overrides",

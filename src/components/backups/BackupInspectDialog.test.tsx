@@ -145,7 +145,12 @@ describe('BackupInspectDialog', () => {
   });
 
   it('restores the selected entries and reports how many were added, without overwriting', async () => {
-    mockRestoreEntriesFromBackup.mockResolvedValue({ added_count: 2 });
+    mockRestoreEntriesFromBackup.mockResolvedValue({
+      added_count: 2,
+      restored_ids: [1, 2],
+      failed_entry_id: null,
+      error: null,
+    });
 
     renderWithI18n(() => (
       <BackupInspectDialog isOpen={true} snapshot={snapshot} onClose={vi.fn()} />
@@ -180,7 +185,12 @@ describe('BackupInspectDialog', () => {
 
   it('does not discard the open editor when the restore lands on a different date', async () => {
     mockSelectedDate.mockReturnValue('2099-12-31');
-    mockRestoreEntriesFromBackup.mockResolvedValue({ added_count: 1 });
+    mockRestoreEntriesFromBackup.mockResolvedValue({
+      added_count: 1,
+      restored_ids: [1],
+      failed_entry_id: null,
+      error: null,
+    });
 
     renderWithI18n(() => (
       <BackupInspectDialog isOpen={true} snapshot={snapshot} onClose={vi.fn()} />
@@ -201,6 +211,84 @@ describe('BackupInspectDialog', () => {
     // editor at all — reloading would cancel any in-flight save on a completely unrelated
     // entry for no reason.
     expect(mockExecuteReloadCallbacks).not.toHaveBeenCalled();
+  });
+
+  it('on a partial restore, unselects only the restored entries and reports both outcomes', async () => {
+    // Entry 1 is restored, entry 2 stops the restore. Entry 2 must stay selected so a retry
+    // does not add entry 1 a second time.
+    mockRestoreEntriesFromBackup.mockResolvedValue({
+      added_count: 1,
+      restored_ids: [1],
+      failed_entry_id: 2,
+      error: 'injected',
+    });
+
+    renderWithI18n(() => (
+      <BackupInspectDialog isOpen={true} snapshot={snapshot} onClose={vi.fn()} />
+    ));
+
+    fireEvent.input(screen.getByPlaceholderText('Enter your password'), {
+      target: { value: 'pw' },
+    });
+    fireEvent.click(screen.getByText('View entries'));
+    await waitFor(() => expect(screen.getByText('Gone')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByTestId('backup-inspect-select-all'));
+    await waitFor(() => expect(screen.getByText('2 entries selected')).toBeInTheDocument());
+    fireEvent.click(screen.getByTestId('backup-inspect-restore-button'));
+
+    await waitFor(() =>
+      expect(screen.getByTestId('backup-inspect-success')).toHaveTextContent(
+        '1 entry added. Nothing already in your journal was overwritten.',
+      ),
+    );
+    expect(
+      screen.getByText(
+        'Restore stopped at an entry that could not be restored. The entries that are still selected were not added.',
+        { exact: false },
+      ),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText('Gone')).not.toBeChecked();
+    expect(screen.getByLabelText('Trimmed')).toBeChecked();
+    expect(mockSetEntryDates).toHaveBeenCalled();
+    // Only entry 1 (2024-01-15, the open date) was restored, so the editor is nudged.
+    expect(mockExecuteReloadCallbacks).toHaveBeenCalled();
+    expect(mockListBackupEntriesWithStatus).toHaveBeenCalledTimes(2);
+  });
+
+  it('on a restore that adds nothing, shows only the error and refreshes nothing', async () => {
+    mockRestoreEntriesFromBackup.mockResolvedValue({
+      added_count: 0,
+      restored_ids: [],
+      failed_entry_id: 1,
+      error: 'injected',
+    });
+
+    renderWithI18n(() => (
+      <BackupInspectDialog isOpen={true} snapshot={snapshot} onClose={vi.fn()} />
+    ));
+
+    fireEvent.input(screen.getByPlaceholderText('Enter your password'), {
+      target: { value: 'pw' },
+    });
+    fireEvent.click(screen.getByText('View entries'));
+    await waitFor(() => expect(screen.getByText('Gone')).toBeInTheDocument());
+
+    fireEvent.click(screen.getByLabelText('Gone'));
+    fireEvent.click(screen.getByTestId('backup-inspect-restore-button'));
+
+    await waitFor(() =>
+      expect(
+        screen.getByText('Restore stopped at an entry that could not be restored.', {
+          exact: false,
+        }),
+      ).toBeInTheDocument(),
+    );
+    expect(screen.queryByTestId('backup-inspect-success')).not.toBeInTheDocument();
+    expect(screen.getByLabelText('Gone')).toBeChecked();
+    expect(mockSetEntryDates).not.toHaveBeenCalled();
+    expect(mockExecuteReloadCallbacks).not.toHaveBeenCalled();
+    expect(mockListBackupEntriesWithStatus).toHaveBeenCalledTimes(1);
   });
 
   it('closes the inspection connection on close', async () => {

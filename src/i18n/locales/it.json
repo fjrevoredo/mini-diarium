@@ -550,7 +550,8 @@
       "restoreSelectedButton": "Ripristina selezionate",
       "restoringEntries": "Ripristino…",
       "restoreEntriesSuccess_one": "{{ count }} voce aggiunta. Nulla di già presente nel tuo diario è stato sovrascritto.",
-      "restoreEntriesSuccess_other": "{{ count }} voci aggiunte. Nulla di già presente nel tuo diario è stato sovrascritto."
+      "restoreEntriesSuccess_other": "{{ count }} voci aggiunte. Nulla di già presente nel tuo diario è stato sovrascritto.",
+      "restoreEntriesStopped": "Il ripristino si è interrotto su una voce che non è stato possibile ripristinare. Le voci ancora selezionate non sono state aggiunte."
     },
     "advanced": {
       "themeOverridesTitle": "Override tema",

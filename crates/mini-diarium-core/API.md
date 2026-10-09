@@ -205,7 +205,12 @@ sealed (`pub(crate)`); the names below are re-exported at `db`.
 ### Images
 - `get_images_for_entry`, `list_image_summaries_filtered`, `get_image_by_id`,
   `resolve_image_refs_in_entries`
-- (`upsert_image`, link/extract/cleanup helpers remain `pub(crate)`.)
+- `strip_image_id_refs(html) -> String` — removes every `<img src="image-id://N">` tag; other
+  `<img>` tags (e.g. `data:` URIs) and plain-text mentions stay. For text from outside this
+  journal (import): its stored image ids belong to another journal and could otherwise link an
+  unrelated image here — the image counterpart of `strip_attachment_refs`.
+- (`upsert_image`, link/extract/cleanup helpers, and the `<img>` src rewriter
+  `rewrite_image_id_srcs` remain `pub(crate)`.)
 
 ### Attachments (TODO-0114)
 Content-addressed encrypted file store (`attachments`) plus a per-entry link table
@@ -462,20 +467,25 @@ and into the live journal, in-process — no plaintext ever touches disk.
   snapshot and reading the live day's entries already do.
 - `restore_entries_from_snapshot(live_db, snapshot_db, entry_ids: &[i64]) -> Result<RestoreEntriesOutcome, String>`
   — never overwrites: every entry is a fresh `INSERT`, so a date that already holds live
-  entries gets an additional one alongside them. `image-id://N` refs are resolved against the
-  *snapshot's* image store before the text crosses into the live database, where those ids
-  name something else entirely; tags are restored by decrypted name, sidestepping the
+  entries gets an additional one alongside them. `image-id://N` refs are resolved by id against
+  the *snapshot's* image store into `data:` URIs before the text crosses into the live
+  database, where those ids name something else entirely; a ref the snapshot cannot resolve
+  is dropped (the whole `<img>` tag), never passed through. Tags are restored by decrypted name, sidestepping the
   fingerprint mismatch a live-keyed comparison would hit. A restored entry is never locked,
   regardless of the snapshot's own `locked` flag.
   Attachments (schema v14+ snapshots) are copied blob-by-blob into the live store, re-linked
   under their decrypted names, and inline `data-attachment-ref` ids are remapped to the live
   ids; a ref with no matching attachment is dropped.
   Each entry (blobs, refs, row, links, tags) is restored as one write unit: an entry that
-  fails leaves nothing in the live journal. The batch is not one unit — entries restored
-  before the failing one stay, and the call returns the error.
+  fails leaves nothing in the live journal. The batch is not one unit: the call stops at the
+  first failing entry and returns `Ok` with a partial outcome — the entries restored before it
+  stay (`restored_ids`), the failing one is reported in `failed`, and the entries after it are
+  not tried. A duplicate id in `entry_ids` is restored once. A later call with an id from
+  `restored_ids` adds a second copy. `Err` means nothing was restored.
 - `EntryMatchStatus::{Missing, ShorterInLive, Present}`
 - `SnapshotEntryDiff { id, date, title, preview, status }`
-- `RestoreEntriesOutcome { added_count }`
+- `RestoreEntriesOutcome { restored_ids: Vec<i64>, failed: Option<RestoreFailure> }` — snapshot ids
+- `RestoreFailure { entry_id, error }` — the snapshot id of the entry that stopped the restore
 
 ### Types
 - `BackupContext { db_path, backups_dir, app_version: Option<&str> }` — `db_path` is required

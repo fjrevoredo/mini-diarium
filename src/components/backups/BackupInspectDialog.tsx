@@ -198,52 +198,65 @@ export default function BackupInspectDialog(props: BackupInspectDialogProps) {
     if (ids.length === 0) return;
 
     // Captured before the restore call, while `entries()` still holds the pre-restore list,
-    // so this reflects which *dates* are about to gain a new entry.
-    const restoredDates = new Set(
-      entries()
-        .filter((entry) => ids.includes(entry.id))
-        .map((entry) => entry.date),
-    );
+    // so the restored ids can be mapped to the *dates* that gained a new entry.
+    const dateById = new Map(entries().map((entry) => [entry.id, entry.date]));
 
     setIsRestoring(true);
     setRestoreError(null);
     setRestoreSuccess(null);
     try {
       const summary = await tauri.restoreEntriesFromBackup(ids);
-      setSelected(new Set<number>());
+      // A partial restore keeps the failed entry and the ones after it selected, so a retry
+      // never adds the already-restored entries a second time.
+      const restoredIds = new Set(summary.restored_ids);
+      setSelected((current) => new Set([...current].filter((id) => !restoredIds.has(id))));
 
-      // Non-destructive by construction (nothing existing is touched), so unlike the
-      // whole-journal restore this does not unconditionally discard the editor's held entry
-      // — only the date list and tags, which the newly added entries may have changed.
-      try {
-        setEntryDates(await tauri.getAllEntryDates());
-        await Promise.all([refreshLockedDates(), loadAllTags()]);
-
-        // The one case that does need a nudge: a restored entry landed on the date already
-        // open in the editor. That editor fetched its day's entries before this restore
-        // happened, so its list (and EntryNavBar's count) is stale until something tells it
-        // to refetch — manually confirmed via the dev app: without this, the calendar shows
-        // "has entry" immediately but the open editor keeps showing its pre-restore state
-        // until the user navigates away and back. Scoped to only this date, not called
-        // unconditionally, because `executeReloadCallbacks` cancels any in-flight debounced
-        // save on the currently open (unrelated) entry — a cost worth paying only when the
-        // editor is actually stale.
-        if (restoredDates.has(selectedDate())) {
-          await executeReloadCallbacks();
-        }
-      } catch (err) {
-        log.warn('Post-restore state refresh failed:', err);
+      if (summary.error !== null) {
+        setRestoreError(
+          `${t('prefs.backups.restoreEntriesStopped')} ${mapTauriError(summary.error, t)}`,
+        );
       }
 
-      setRestoreSuccess(
-        t(
-          summary.added_count === 1
-            ? 'prefs.backups.restoreEntriesSuccess_one'
-            : 'prefs.backups.restoreEntriesSuccess_other',
-          { count: summary.added_count },
-        ),
-      );
-      await loadEntries();
+      if (restoredIds.size > 0) {
+        const restoredDates = new Set(
+          summary.restored_ids
+            .map((id) => dateById.get(id))
+            .filter((date): date is string => date !== undefined),
+        );
+
+        // Non-destructive by construction (nothing existing is touched), so unlike the
+        // whole-journal restore this does not unconditionally discard the editor's held entry
+        // — only the date list and tags, which the newly added entries may have changed.
+        try {
+          setEntryDates(await tauri.getAllEntryDates());
+          await Promise.all([refreshLockedDates(), loadAllTags()]);
+
+          // The one case that does need a nudge: a restored entry landed on the date already
+          // open in the editor. That editor fetched its day's entries before this restore
+          // happened, so its list (and EntryNavBar's count) is stale until something tells it
+          // to refetch — manually confirmed via the dev app: without this, the calendar shows
+          // "has entry" immediately but the open editor keeps showing its pre-restore state
+          // until the user navigates away and back. Scoped to only this date, not called
+          // unconditionally, because `executeReloadCallbacks` cancels any in-flight debounced
+          // save on the currently open (unrelated) entry — a cost worth paying only when the
+          // editor is actually stale.
+          if (restoredDates.has(selectedDate())) {
+            await executeReloadCallbacks();
+          }
+        } catch (err) {
+          log.warn('Post-restore state refresh failed:', err);
+        }
+
+        setRestoreSuccess(
+          t(
+            summary.added_count === 1
+              ? 'prefs.backups.restoreEntriesSuccess_one'
+              : 'prefs.backups.restoreEntriesSuccess_other',
+            { count: summary.added_count },
+          ),
+        );
+        await loadEntries();
+      }
     } catch (err) {
       setRestoreError(mapTauriError(err, t));
     } finally {

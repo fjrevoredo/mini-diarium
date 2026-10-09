@@ -550,7 +550,8 @@
       "restoreSelectedButton": "Restaurar selecionadas",
       "restoringEntries": "Restaurando…",
       "restoreEntriesSuccess_one": "{{ count }} entrada adicionada. Nada que já estava no seu diário foi sobrescrito.",
-      "restoreEntriesSuccess_other": "{{ count }} entradas adicionadas. Nada que já estava no seu diário foi sobrescrito."
+      "restoreEntriesSuccess_other": "{{ count }} entradas adicionadas. Nada que já estava no seu diário foi sobrescrito.",
+      "restoreEntriesStopped": "A restauração parou em uma entrada que não pôde ser restaurada. As entradas que continuam selecionadas não foram adicionadas."
     },
     "advanced": {
       "themeOverridesTitle": "Substituições de tema",

@@ -3,7 +3,7 @@ title: Importing Data
 slug: import
 description: Import journal entries from Mini Diary, Day One, jrnl, or plain text files. Mini Diarium includes built-in importers and supports custom Rhai import plugins.
 order: 5
-updated: 2026-09-06
+updated: 2026-10-10
 tags: import, migration, Mini Diary, Day One, jrnl
 ---
 
@@ -29,6 +29,8 @@ Mini Diarium can import entries from several popular journaling apps:
 Imports are **additive**. If an imported entry falls on a date that already has entries in Mini Diarium, the imported content is added as an additional entry for that date rather than merging or replacing existing content.
 
 This means you can safely import without worrying about overwriting your existing writing.
+
+Images embedded in the import file as `data:` images are stored in your journal's encrypted image store. Two kinds of reference are removed on import, because they name files in a different journal: inline attachment references and stored image references (`image-id://` links). The rest of the entry is imported.
 
 ## Migrating from Mini Diary
 

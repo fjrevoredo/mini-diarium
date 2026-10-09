@@ -550,7 +550,8 @@
       "restoreSelectedButton": "Restaurer la sélection",
       "restoringEntries": "Restauration…",
       "restoreEntriesSuccess_one": "{{ count }} entrée ajoutée. Rien de ce qui existait déjà dans votre journal n'a été écrasé.",
-      "restoreEntriesSuccess_other": "{{ count }} entrées ajoutées. Rien de ce qui existait déjà dans votre journal n'a été écrasé."
+      "restoreEntriesSuccess_other": "{{ count }} entrées ajoutées. Rien de ce qui existait déjà dans votre journal n'a été écrasé.",
+      "restoreEntriesStopped": "La restauration s'est arrêtée sur une entrée qui n'a pas pu être restaurée. Les entrées encore sélectionnées n'ont pas été ajoutées."
     },
     "advanced": {
       "themeOverridesTitle": "Remplacements de thème",
