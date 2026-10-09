@@ -1,3 +1,4 @@
+use crate::db::queries::with_write_transaction;
 use crate::db::schema::DatabaseConnection;
 use rusqlite::params;
 
@@ -10,16 +11,13 @@ use rusqlite::params;
 /// removes the attachment links explicitly first.
 /// `cleanup_orphaned_images` / `cleanup_orphaned_attachments` then remove any blobs with no
 /// remaining associations.
-/// All steps are wrapped in a `BEGIN IMMEDIATE / COMMIT` transaction.
+/// All steps run as one write unit (`with_write_transaction`): standalone it is its own
+/// transaction, inside a caller's unit it nests as a savepoint.
 ///
 /// # Returns
 /// `Ok(true)` if deleted, `Ok(false)` if entry didn't exist
 pub fn delete_entry_by_id(db: &DatabaseConnection, id: i64) -> Result<bool, String> {
-    let result: Result<bool, String> = (|| {
-        db.conn()
-            .execute("BEGIN IMMEDIATE", [])
-            .map_err(|e| format!("BEGIN failed: {}", e))?;
-
+    with_write_transaction(db, || {
         // The entry_id FK is RESTRICT, so the links must go before the entry.
         db.conn()
             .execute(
@@ -37,19 +35,10 @@ pub fn delete_entry_by_id(db: &DatabaseConnection, id: i64) -> Result<bool, Stri
         crate::db::queries::images::cleanup_orphaned_images(db)?;
         crate::db::queries::attachments::cleanup_orphaned_attachments(db)?;
 
-        db.conn()
-            .execute("COMMIT", [])
-            .map_err(|e| format!("COMMIT failed: {}", e))?;
-
         // Search index hook: call search module's remove_entry() here when implemented.
 
         Ok(rows_affected > 0)
-    })();
-
-    if result.is_err() {
-        let _ = db.conn().execute("ROLLBACK", []);
-    }
-    result
+    })
 }
 
 #[cfg(test)]

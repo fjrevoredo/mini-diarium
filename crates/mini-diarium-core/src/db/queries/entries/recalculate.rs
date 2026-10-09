@@ -1,4 +1,5 @@
 use super::{count_words, get_all_entries};
+use crate::db::queries::with_write_transaction;
 use crate::db::schema::DatabaseConnection;
 use rusqlite::params;
 
@@ -16,18 +17,14 @@ pub struct WordCountRecalculationResult {
 /// `text_encrypted`, `date_updated`, `entry_metadata_encrypted`, or `preview_enc`, so this
 /// is not a content edit. Locked entries are counted in `skipped_locked` and left
 /// untouched, consistent with the invariant that a locked row is only ever changed via
-/// `set_entry_locked`. Wraps the writes in `BEGIN IMMEDIATE` / `COMMIT` with an explicit
-/// `ROLLBACK` on failure, mirroring `update_entry_with_images`.
+/// `set_entry_locked`. The writes run as one write unit (`with_write_transaction`), so a
+/// failure rolls back every word-count change of the pass.
 pub fn recalculate_all_word_counts(
     db: &DatabaseConnection,
 ) -> Result<WordCountRecalculationResult, String> {
     let entries = get_all_entries(db)?;
 
-    let result: Result<WordCountRecalculationResult, String> = (|| {
-        db.conn()
-            .execute("BEGIN IMMEDIATE", [])
-            .map_err(|e| format!("BEGIN failed: {}", e))?;
-
+    with_write_transaction(db, || {
         let mut outcome = WordCountRecalculationResult::default();
         for entry in &entries {
             outcome.scanned += 1;
@@ -47,16 +44,8 @@ pub fn recalculate_all_word_counts(
             }
         }
 
-        db.conn()
-            .execute("COMMIT", [])
-            .map_err(|e| format!("COMMIT failed: {}", e))?;
         Ok(outcome)
-    })();
-
-    if result.is_err() {
-        let _ = db.conn().execute("ROLLBACK", []);
-    }
-    result
+    })
 }
 
 #[cfg(test)]

@@ -1,5 +1,6 @@
 use super::timeline::preview_from_html;
 use super::{count_words, encrypt_metadata, get_entry_by_id, update_entry, DiaryEntry};
+use crate::db::queries::with_write_transaction;
 use crate::db::schema::DatabaseConnection;
 use rusqlite::params;
 
@@ -45,15 +46,13 @@ pub fn insert_entry(db: &DatabaseConnection, entry: &DiaryEntry) -> Result<i64, 
 ///
 /// This preserves the low-level `insert_entry()` helper for tests and fixtures while giving
 /// user-facing import paths the same image-store invariant as normal editor saves.
+/// Runs as one write unit (`with_write_transaction`): standalone it is its own transaction,
+/// inside a caller's unit it nests as a savepoint.
 pub fn insert_entry_with_images(
     db: &DatabaseConnection,
     entry: &DiaryEntry,
 ) -> Result<i64, String> {
-    let result: Result<i64, String> = (|| {
-        db.conn()
-            .execute("BEGIN IMMEDIATE", [])
-            .map_err(|e| format!("BEGIN failed: {}", e))?;
-
+    with_write_transaction(db, || {
         let entry_id = insert_entry(db, entry)?;
 
         let (rewritten, image_ids) =
@@ -70,18 +69,8 @@ pub fn insert_entry_with_images(
             crate::db::queries::images::cleanup_orphaned_images(db)?;
         }
 
-        db.conn()
-            .execute("COMMIT", [])
-            .map_err(|e| format!("COMMIT failed: {}", e))?;
-
         Ok(entry_id)
-    })();
-
-    if result.is_err() {
-        let _ = db.conn().execute("ROLLBACK", []);
-    }
-
-    result
+    })
 }
 
 #[cfg(test)]
@@ -322,6 +311,33 @@ mod tests {
             )
             .unwrap();
         assert_eq!(link_count, 1, "one entry_images row must link to the entry");
+    }
+
+    #[test]
+    fn test_insert_entry_with_images_rolls_back_with_failing_outer_unit() {
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+
+        let mut entry = create_test_entry("2024-10-03");
+        entry.text = tiny_png_html();
+        let mut inserted_id = None;
+        let err = crate::db::queries::with_write_transaction(&db, || -> Result<(), String> {
+            inserted_id = Some(insert_entry_with_images(&db, &entry)?);
+            Err("outer unit failed".to_string())
+        })
+        .unwrap_err();
+        assert_eq!(err, "outer unit failed");
+
+        let id = inserted_id.expect("nested insert must have succeeded before the outer failure");
+        assert!(get_entry_by_id(&db, id).unwrap().is_none());
+        for table in ["entries", "images", "entry_images"] {
+            let n: i64 = db
+                .conn()
+                .query_row(&format!("SELECT COUNT(*) FROM {}", table), [], |r| r.get(0))
+                .unwrap();
+            assert_eq!(n, 0, "{} must be empty after the outer rollback", table);
+        }
+        assert!(db.conn().is_autocommit());
     }
 
     #[test]

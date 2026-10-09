@@ -3,7 +3,7 @@
 
 use super::{mime_for_extension, AttachmentSummary};
 use crate::crypto::cipher;
-use crate::db::queries::MAX_STORED_BLOB_BYTES;
+use crate::db::queries::{with_write_transaction, MAX_STORED_BLOB_BYTES};
 use crate::db::schema::DatabaseConnection;
 use rusqlite::{params, OptionalExtension};
 use std::collections::HashMap;
@@ -42,28 +42,6 @@ fn validate_attachment_name(name: &str) -> Result<(), String> {
         return Err("Attachment name contains control characters".to_string());
     }
     Ok(())
-}
-
-/// Runs `action` inside `BEGIN IMMEDIATE` / `COMMIT`, rolling back on error.
-fn in_transaction<T>(
-    db: &DatabaseConnection,
-    action: impl FnOnce() -> Result<T, String>,
-) -> Result<T, String> {
-    let result = (|| {
-        db.conn()
-            .execute("BEGIN IMMEDIATE", [])
-            .map_err(|e| format!("BEGIN failed: {}", e))?;
-        let value = action()?;
-        db.conn()
-            .execute("COMMIT", [])
-            .map_err(|e| format!("COMMIT failed: {}", e))?;
-        Ok(value)
-    })();
-
-    if result.is_err() {
-        let _ = db.conn().execute("ROLLBACK", []);
-    }
-    result
 }
 
 /// Stores an attachment blob (or returns the existing one if identical bytes are already
@@ -146,7 +124,7 @@ pub fn add_attachment_to_entry(
     validate_attachment_name(name)?;
     validate_attachment_bytes(plaintext_bytes)?;
 
-    in_transaction(db, || {
+    with_write_transaction(db, || {
         let attachment_id = upsert_attachment_blob(db, plaintext_bytes, mime_for_extension(name))?;
         link_attachment(db, entry_id, attachment_id, name)
     })
@@ -266,7 +244,7 @@ pub fn remove_attachment_from_entry(
     entry_id: i64,
     attachment_id: i64,
 ) -> Result<bool, String> {
-    in_transaction(db, || {
+    with_write_transaction(db, || {
         let rows = db
             .conn()
             .execute(

@@ -1,13 +1,15 @@
 use super::timeline::preview_from_html;
 use super::{count_words, encrypt_metadata, get_entry_by_id, DiaryEntry, EntryMetadata};
+use crate::db::queries::with_write_transaction;
 use crate::db::schema::DatabaseConnection;
 use rusqlite::params;
 
 /// Updates an entry and atomically extracts any embedded images.
 ///
-/// Wraps the full update in `BEGIN IMMEDIATE / COMMIT` with an explicit `ROLLBACK`
-/// on any failure so the long-lived DiaryState connection is never left in a half-open
-/// transaction. `update_entry` is called internally (not a hand-rolled UPDATE) so
+/// Runs as one write unit (`with_write_transaction`): standalone it is its own transaction,
+/// inside a caller's unit it nests as a savepoint, and any failure rolls the unit back so the
+/// long-lived DiaryState connection is never left in a half-open transaction.
+/// `update_entry` is called internally (not a hand-rolled UPDATE) so
 /// `entry_metadata_encrypted` is preserved correctly.
 pub fn update_entry_with_images(
     db: &DatabaseConnection,
@@ -16,11 +18,7 @@ pub fn update_entry_with_images(
     text: &str,
     metadata: Option<EntryMetadata>,
 ) -> Result<(), String> {
-    let result: Result<(), String> = (|| {
-        db.conn()
-            .execute("BEGIN IMMEDIATE", [])
-            .map_err(|e| format!("BEGIN failed: {}", e))?;
-
+    with_write_transaction(db, || {
         let (rewritten, image_ids) =
             crate::db::queries::images::extract_and_replace_image_refs(text, db)?;
         crate::db::queries::images::replace_entry_image_links(db, id, &image_ids)?;
@@ -35,18 +33,8 @@ pub fn update_entry_with_images(
         entry.word_count = word_count;
         entry.date_updated = now;
         entry.metadata = metadata;
-        update_entry(db, &entry)?;
-
-        db.conn()
-            .execute("COMMIT", [])
-            .map_err(|e| format!("COMMIT failed: {}", e))?;
-        Ok(())
-    })();
-
-    if result.is_err() {
-        let _ = db.conn().execute("ROLLBACK", []);
-    }
-    result
+        update_entry(db, &entry)
+    })
 }
 
 /// Updates an existing entry in the database by id
