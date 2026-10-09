@@ -6,6 +6,9 @@ pub mod fonts;
 pub mod images;
 pub mod meta;
 pub mod tags;
+mod transaction;
+
+pub(crate) use transaction::with_write_transaction;
 
 pub use attachments::*;
 pub use auth_slots::*;
