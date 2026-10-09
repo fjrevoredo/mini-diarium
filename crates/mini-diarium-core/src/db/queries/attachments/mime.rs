@@ -9,7 +9,7 @@ pub const DEFAULT_ATTACHMENT_MIME: &str = "application/octet-stream";
 
 /// Returns the MIME type for a file name's extension (case-insensitive), or
 /// [`DEFAULT_ATTACHMENT_MIME`] when the extension is unknown or missing.
-pub fn mime_for_extension(file_name: &str) -> &'static str {
+pub(crate) fn mime_for_extension(file_name: &str) -> &'static str {
     let ext = match std::path::Path::new(file_name)
         .extension()
         .and_then(|e| e.to_str())

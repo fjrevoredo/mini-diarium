@@ -49,7 +49,7 @@ fn validate_attachment_name(name: &str) -> Result<(), String> {
 /// stored). Does not open a transaction — callers compose it with [`link_attachment`].
 ///
 /// Returns the id of the existing or newly inserted `attachments` row.
-pub fn upsert_attachment_blob(
+pub(crate) fn upsert_attachment_blob(
     db: &DatabaseConnection,
     plaintext_bytes: &[u8],
     mime_type: &str,
@@ -91,7 +91,7 @@ pub fn upsert_attachment_blob(
 ///
 /// If the entry already links this attachment (same bytes added twice), the existing link
 /// is kept unchanged — including its first name — and returned.
-pub fn link_attachment(
+pub(crate) fn link_attachment(
     db: &DatabaseConnection,
     entry_id: i64,
     attachment_id: i64,
@@ -305,7 +305,7 @@ pub fn entry_has_attachments(db: &DatabaseConnection, entry_id: i64) -> Result<b
 /// Removes attachment blobs that no `entry_attachments` row references.
 ///
 /// Safe to call after deleting entries or unlinking attachments.
-pub fn cleanup_orphaned_attachments(db: &DatabaseConnection) -> Result<(), String> {
+pub(crate) fn cleanup_orphaned_attachments(db: &DatabaseConnection) -> Result<(), String> {
     db.conn()
         .execute(
             "DELETE FROM attachments WHERE id NOT IN \

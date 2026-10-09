@@ -29,12 +29,11 @@ use std::collections::{HashMap, HashSet};
 use rusqlite::{params, Connection, OptionalExtension};
 
 use crate::db::queries::attachments::{attachment_ref_span, rewrite_attachment_refs};
-use crate::db::queries::with_write_transaction;
+use crate::db::queries::{link_attachment, upsert_attachment_blob, with_write_transaction};
 use crate::db::{
     add_tag_to_entry, create_tag, get_entries_by_date, get_tags_for_entry,
-    insert_entry_with_images, link_attachment, list_entry_attachments, read_attachment_bytes,
-    resolve_image_refs_in_entries, upsert_attachment_blob, DatabaseConnection, DiaryEntry,
-    EntryMetadata,
+    insert_entry_with_images, list_entry_attachments, read_attachment_bytes,
+    resolve_image_refs_in_entries, DatabaseConnection, DiaryEntry, EntryMetadata,
 };
 
 use super::inspect::{has_column, list_snapshot_entries};
