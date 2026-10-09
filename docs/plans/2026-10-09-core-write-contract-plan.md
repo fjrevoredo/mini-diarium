@@ -195,13 +195,13 @@ None. The design choices are recorded as DEC-001 and DEC-002 below; challenge th
 
 ### Milestone 4: Narrow the façade and record the rules
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Purpose: Fix the R-13 API-surface note and write down the rule so the next change follows it.
 - Exit Criteria: The four helpers are crate-private, the docs describe the new contract, and the full gate passes.
 
 #### Task 4.1: Make the four attachment helpers crate-private
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Depends On: 2.2, 3.1
 - Objective: `upsert_attachment_blob`, `link_attachment`, `cleanup_orphaned_attachments`, `mime_for_extension` are `pub(crate)`.
 - Steps:
@@ -212,7 +212,7 @@ None. The design choices are recorded as DEC-001 and DEC-002 below; challenge th
 
 #### Task 4.2: Docs and rules
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Depends On: 3.2, 4.1
 - Objective: The docs describe the new contract.
 - Steps:
@@ -359,6 +359,20 @@ Run before the plan may reach `COMPLETED`.
 - Decision: No app pre-check remains. Hard delete is extracted into `pub(crate) fn delete_entry_inner(id, &DiaryState)` (so it can be tested); it passes `db::ERR_ENTRY_LOCKED` through unchanged and wraps only other errors as `"Failed to delete entry: …"`. `delete_entry_if_empty_inner` calls `db::delete_entry_by_id` and maps `Err(ERR_ENTRY_LOCKED)` to `Ok(false)` with a debug line, so the lock rule stays in core and the cleanup paths (auto-lock, app close) never see an error. Two app tests are added: `test_delete_entry_if_empty_refuses_locked_blank_entry_without_error` (the TODO-0132 regression: `Ok(false)`, entry still present and locked) and `test_delete_entry_rejects_locked_entry_with_exact_lock_error` (exact string, plus `"Entry not found"` for a missing id). The five named lock tests pass unchanged; the attachments test imports `db::ERR_ENTRY_LOCKED` in place of the removed local constant. App tests 278 → 280.
   Behavior change: `add_entry_attachment` now reads the source file before core checks the lock, so a bad source file on a locked entry reports the file error, not `entry is locked`. The journal is unchanged in both cases.
 - Rationale: The plan offers "map the error or keep a pre-check"; mapping keeps no lock logic in commands. The plan said TODO-0132 would supply the locked-blank test; it was not done, so the test is added here.
+
+### DEC-010 — Task 4.1: import path in restore, wider API.md note
+
+- Date: 2026-10-09
+- Task: 4.1
+- Decision: The four helpers are `pub(crate)` at their definitions (`attachments/storage.rs`, `attachments/mime.rs`); the `pub use *` globs in `db/queries` now re-export them only inside the crate. `backup/restore_entries.rs` imported `link_attachment` and `upsert_attachment_blob` from the `db` façade, so it now imports them from `crate::db::queries`. `export/attachments.rs` already used `crate::db::queries::mime_for_extension` and needed no change. The `API.md` note names all four composers (`add_attachment_to_entry`, `remove_attachment_from_entry`, `delete_entry_by_id`, per-entry restore), not only restore and delete, and says the helpers do not check the lock. Validation: `cargo build --workspace`, `cargo clippy --workspace --all-targets -- -D warnings` (no dead-code warning), `cargo fmt --all -- --check`, and `cargo test --workspace` (app 280, core 569, crypto 42) all pass.
+- Rationale: The façade import path no longer resolves for crate-private items; the plan named only restore and delete as internal users.
+
+### DEC-011 — Task 4.2: doc scope beyond the plan text
+
+- Date: 2026-10-09
+- Task: 4.2
+- Decision: (1) `API.md` gets a separate "Entry lock" bullet next to "Transactions" (enforcing functions, `ERR_ENTRY_LOCKED`, the skip/exempt cases from DEC-008, and that `update_entry` does not check the lock), an inline pointer on `update_entry` in "Entry CRUD", and an atomicity paragraph under "Per-entry restore". `entry_is_empty` and `is_blank_entry_text` were already listed by Milestone 3 ("Entry-empty rule"), so nothing is added there. (2) `RUST_BEST_PRACTICES.md` gets the plan's sentence as a new section, "Compose Multi-Step Writes Under One Write Unit", with four short rules (no hand-written BEGIN, primitives stay `pub(crate)`, lock checked in core inside the unit, propagate nested errors per DEC-006) and one review question. (3) `src-tauri/CLAUDE.md` Gotcha #1 also says commands must not add a lock pre-check and that `delete_entry_if_empty` maps the lock error to `Ok(false)`. (4) `website/docs-src/09-backups.md` already had `updated: 2026-10-09`, so the date did not change. `bun run website:build-static` changed only `website/docs/backups.md`, `website/docs/backups/index.html`, and `website/llms-full.txt`. (5) The CHANGELOG top block is `[0.7.5] - Unreleased`; the bullet goes under its `### Fixed`.
+- Rationale: DEC-008 asked Milestone 4 to document the lock exemptions; the rest records what is already true so the reader does not reapply it.
 
 ## Final Verification
 
