@@ -27,3 +27,7 @@ pub mod export;
 pub mod import;
 pub mod plugin;
 pub mod search;
+
+// Disposable acceptance probes. This branch must NEVER be merged.
+#[allow(dead_code)]
+mod crap_acceptance_probe;

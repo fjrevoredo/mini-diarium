@@ -304,7 +304,50 @@ jobs:
             crap-report.provenance.txt
           if-no-files-found: ignore
 
+      - name: Disposable Phase 0 repeatability and baseline path acceptance
+        if: steps.backend-coverage.outcome == 'success'
+        run: |
+          node scripts/normalize-crap-baseline.mjs --input crap-report.json --root "$GITHUB_WORKSPACE" --for-baseline --output probe-first.json
+          cargo crap --workspace --lcov src-tauri/lcov.info --baseline probe-first.json --format json --sort file --missing pessimistic --epsilon 0.01 --output probe-relative-delta.json
+          cd src-tauri
+          cargo llvm-cov nextest --workspace --no-fail-fast --lcov --output-path lcov.info
+          cd ..
+          cargo crap --workspace --lcov src-tauri/lcov.info --format json --sort file --missing pessimistic --epsilon 0.01 --output probe-second-raw.json
+          node scripts/normalize-crap-baseline.mjs --input probe-second-raw.json --root "$GITHUB_WORKSPACE" --for-baseline --output probe-second.json
+          node --input-type=module <<'NODE' | tee probe-findings.txt
+          import { readFileSync } from 'node:fs';
+          import assert from 'node:assert/strict';
+          const read = file => JSON.parse(readFileSync(file, 'utf8'));
+          const first = read('probe-first.json'), second = read('probe-second.json');
+          const key = e => JSON.stringify([e.file, e.function, e.line]);
+          const a = new Map(first.entries.map(e => [key(e), e.crap]));
+          const b = new Map(second.entries.map(e => [key(e), e.crap]));
+          assert.equal(a.size, first.entries.length, 'duplicate full identities');
+          assert.equal(b.size, second.entries.length, 'duplicate full identities');
+          assert.deepEqual([...a.keys()].sort(), [...b.keys()].sort(), 'function sets differ');
+          const maxDelta = Math.max(0, ...[...a].map(([k, score]) => Math.abs(score - b.get(k))));
+          console.log(JSON.stringify({ functions: a.size, identicalFunctionSets: true, maxDelta }, null, 2));
+          console.log('Scope diagnostics', JSON.stringify(first.diagnostics, null, 2));
+          console.log('Probes', JSON.stringify(first.entries.filter(e => e.function.startsWith('crap_acceptance_')), null, 2));
+          console.log('Test-helper entries', JSON.stringify(first.entries.filter(e => /(?:^|\/)tests\.rs$/.test(e.file)), null, 2));
+          const delta = read('probe-relative-delta.json');
+          console.log('Unchanged absolute report versus relative baseline', JSON.stringify(delta.entries.reduce((counts, e) => ({ ...counts, [e.status]: (counts[e.status] || 0) + 1 }), {})));
+          console.log('Unexpected new identities', JSON.stringify(delta.entries.filter(e => e.status === 'new').map(e => ({file:e.file, function:e.function,line:e.line})), null, 2));
+          assert.ok(maxDelta <= 0.01, 'fresh coverage scores are not repeatable within epsilon');
+          NODE
+
+      - name: Upload disposable acceptance evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: crap-probe-evidence-NEVER-BASELINE
+          path: |
+            probe-*.json
+            probe-findings.txt
+          if-no-files-found: ignore
+
   build-linux:
+    if: github.head_ref != 'scratch/crap-phase0-acceptance' # Do not build probe binaries.
     name: Build (Linux)
     needs: [lint, test]
     runs-on: ubuntu-latest
@@ -370,6 +413,7 @@ jobs:
           path: target/release/mini-diarium
 
   build-other:
+    if: github.head_ref != 'scratch/crap-phase0-acceptance' # Never ship a probe binary.
     name: Build (${{ matrix.os }})
     needs: [lint, test]
     runs-on: ${{ matrix.os }}
@@ -445,6 +489,7 @@ jobs:
           if-no-files-found: ignore
 
   flatpak:
+    if: github.head_ref != 'scratch/crap-phase0-acceptance' # Never ship probes.
     name: Flatpak (x86_64)
     needs: [lint, test]
     runs-on: ubuntu-latest
