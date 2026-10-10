@@ -35,7 +35,7 @@ pub fn create_entry(date: String, state: State<DiaryState>) -> Result<DiaryEntry
             metadata: None,
             locked: false,
         };
-        let new_id = db::insert_entry(db, &entry)?;
+        let new_id = db::insert_entry_with_images(db, &entry)?;
         debug!("Created entry id={} for {}", new_id, date);
         let created = db::get_entry_by_id(db, new_id)?
             .ok_or_else(|| format!("Failed to retrieve newly created entry for {}", date))?;
