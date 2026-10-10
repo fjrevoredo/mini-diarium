@@ -79,9 +79,10 @@ Dependabot PRs), apply each procedure in order: npm → cargo → actions.
   Cargo (`src-tauri/Cargo.toml` + `crates/mini-diarium-core/Cargo.toml` +
   repo-root `Cargo.lock`), and GitHub Actions (`.github/workflows/*.yml`).
 - **Out of scope for this skill:** direct edits to other ecosystem files
-  (e.g., `flake.nix`, `nix/package.nix`). The npm procedure includes a
-  Linux-only `npmDepsHash` refresh step for `nix/package.nix`; that is
-  the only Nix file touched from within this skill.
+  (e.g., `flake.nix`, `nix/package.nix`). The npm procedure includes an
+  `npmDepsHash` update in `nix/package.nix` (computed locally on
+  Linux+Nix, or copied from the failing Nix CI run on Windows); that is
+  the only Nix change made from within this skill.
 - **E2E tests are out of scope** for dependency bumps. Running `test:e2e`
   is not required unless the bumped dependency is a Tauri API or plugin
   that could affect IPC behavior.

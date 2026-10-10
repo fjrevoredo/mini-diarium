@@ -75,13 +75,13 @@ PRs. Read before starting.
   tarball is missing `dist/` files (published incomplete), the pin is not
   viable — revert and find a different fix for whatever the pin was meant
   to address.
-- **`npmDepsHash` in `nix/package.nix` must be refreshed on Linux.**
+- **`npmDepsHash` in `nix/package.nix` must follow `package-lock.json`.**
   Whenever `package-lock.json` changes, the `npmDepsHash` field in
   `nix/package.nix` (inside the `frontend = buildNpmPackage { ... }` block)
-  must also be updated or the Nix build breaks. This requires Linux+Nix —
-  it cannot be done from Windows/WSL. If operating on Windows, note the
-  omission in the commit message so a Linux-capable maintainer can follow
-  up. See Phase 3 step 4.
+  must also be updated or the Nix build breaks. On Linux+Nix, compute it
+  locally (Phase 3 step 4). On Windows/WSL, the Nix CI workflow fails after
+  the push and prints the new hash; apply it as a follow-up commit (Phase 5).
+  The workflow never commits the fix by itself.
 
 ## Workflow
 
@@ -176,8 +176,8 @@ For each PR the user wants to apply:
    ```
    Update the `npmDepsHash` field in the `frontend = buildNpmPackage { ... }`
    block of `nix/package.nix` with the new hash. If on Windows/WSL, skip
-   this step and note in the commit message that the hash needs a Linux
-   follow-up. See `docs/todo/TODO_EXTRA.md` Part 2 for details.
+   this step; the Nix CI workflow supplies the hash after the push (see
+   Phase 5).
 
 5. **Never manually edit lockfiles.** If any install command fails,
    diagnose and fix the error; do not hand-patch the lockfile.
@@ -246,22 +246,31 @@ For each PR the user wants to apply:
 ### Phase 5: Nix hash after push
 
 If `package-lock.json` changed and the `npmDepsHash` refresh in Phase 3
-step 4 was skipped (Windows/WSL), `nix/package.nix` is now stale. The
-Nix CI workflow handles this automatically on pushes to master: if the
-build detects a hash mismatch it patches `nix/package.nix` and pushes a
-`chore(nix): refresh npmDepsHash [skip ci]` commit by itself.
+step 4 was skipped (Windows/WSL), `nix/package.nix` is now stale. After the
+user pushes, the Nix CI workflow (`.github/workflows/nix.yml`) fails and
+prints the correct hash. It does not commit anything.
 
-No manual action is needed. If the Nix CI job fails for a reason other than
-hash mismatch (genuine build error), investigate that separately.
+1. Find the failed run:
+   ```bash
+   gh run list --workflow nix.yml --limit 5
+   ```
+2. Read the hash from the run's error annotation
+   (`npmDepsHash is stale. Set it to sha256-...`) or its job summary.
+3. Set `npmDepsHash` in `nix/package.nix` to that hash and commit it as a
+   follow-up (`chore(nix): refresh npmDepsHash`). After the push, the Nix
+   workflow must pass.
+
+If the Nix CI job fails without a `got:` hash (a genuine build error),
+investigate that separately.
 
 ---
 
 ## Scope Boundaries
 
 - **Covers:** npm/bun dependencies in `package.json` and the corresponding
-  `bun.lock` and `package-lock.json` files. The Linux-only `npmDepsHash`
-  refresh in `nix/package.nix` is the only file outside `package.json`
-  touched from this procedure.
+  `bun.lock` and `package-lock.json` files. The `npmDepsHash` update in
+  `nix/package.nix` (Phase 3 step 4 on Linux+Nix, Phase 5 on Windows) is
+  the only other file touched from this procedure.
 - **For Cargo/Rust dependency updates**, use `procedures/cargo.md`.
 - **For GitHub Actions dependency updates**, use `procedures/actions.md`.
 - **E2E tests are out of scope** for dependency bumps. Running

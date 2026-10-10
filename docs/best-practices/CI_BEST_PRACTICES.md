@@ -382,6 +382,33 @@ Useful for: build tool scripts, generated configs, temp directories that vanish 
 
 ---
 
+## Auto-fix Steps
+
+Some jobs can compute their own fix (a refreshed hash, a regenerated file). Treat such a step as a check first, a fixer second:
+
+- **Fail the job when the fix cannot land.** A job that found a problem stays red until the fix is on the branch.
+- **Never `exit 0` after an unchecked `git push`.** Branch protection, a race with another push, or a missing permission rejects the push; the job must not report success after that.
+- **Prefer "fail and print the fix" over pushing to a protected branch.** Emit an `::error` annotation and a `$GITHUB_STEP_SUMMARY` entry that contains the exact fix, and let a human commit it. The job then needs only `contents: read`.
+
+```yaml
+- name: Build
+  run: |
+    set -o pipefail
+    BUILD_EXIT=0
+    ./build.sh 2>&1 | tee build.log || BUILD_EXIT=$?
+    if [ "$BUILD_EXIT" -ne 0 ]; then
+      # `|| true`: no match is normal; under `bash -e` + pipefail it would end the step early.
+      FIX=$(grep -oE 'expected: [^ ]+' build.log | head -1 || true)
+      echo "::error::Build failed. ${FIX:-See the log above.}"
+      echo "Build failed. ${FIX:-See the job log.}" >> "$GITHUB_STEP_SUMMARY"
+    fi
+    exit "$BUILD_EXIT"
+```
+
+A push made with the default `GITHUB_TOKEN` also does not trigger new workflow runs, so an auto-fix commit is not verified automatically. If a job pushes anyway, arrange a separate check (a manual `workflow_dispatch` run or the next qualifying push).
+
+---
+
 ## Step Output Passing
 
 Prefer `$GITHUB_OUTPUT` over `echo ::set-output` (deprecated) and environment variables for passing values between steps:

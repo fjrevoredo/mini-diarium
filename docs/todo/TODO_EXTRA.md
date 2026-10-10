@@ -8,7 +8,7 @@ Implementation detail and structured notes for specific TODO items in [`TODO.md`
 
 Parent: [`TODO-0050: Update dep-update skills for Nix npmDepsHash step`](TODO.md)
 
-**Context**: PR #159 added a Nix flake (`flake.nix`, `nix/package.nix`). The `npmDepsHash` field in the `frontend = buildNpmPackage { ... }` block of `nix/package.nix` is a SHA-256 hash of the npm dependency tree. It must be kept in sync with `package-lock.json` or `nix build .#default` fails with a hash mismatch. This can only be done on Linux with Nix installed — not from the Windows/WSL environment this project normally uses.
+**Context**: PR #159 added a Nix flake (`flake.nix`, `nix/package.nix`). The `npmDepsHash` field in the `frontend = buildNpmPackage { ... }` block of `nix/package.nix` is a SHA-256 hash of the npm dependency tree. It must be kept in sync with `package-lock.json` or `nix build .#default` fails with a hash mismatch. Computing the hash locally needs Linux with Nix installed. On Windows/WSL, push the lockfile change and copy the hash from the error annotation of the failing Nix CI run (since TODO-0129). The Part 1–3 proposals below are historical; the shipped skill and workflow text supersede them.
 
 **Refresh command** (Linux+Nix only):
 ```bash
@@ -68,6 +68,8 @@ New: "Should show 3 or 4 files: `package.json`, `bun.lock`, `package-lock.json`,
 ### Part 3 — CI (optional but recommended)
 
 **Status (2026-07-16):** Completed. `.github/workflows/nix.yml` implements this — a path-filtered job (triggers on `package-lock.json`, `nix/**`, `flake.nix`, `flake.lock`) that runs `nix build .#default --no-link` to verify `npmDepsHash`, and on `push` auto-refreshes the hash from the build's `got:` output and commits it. The original suggestion below is retained for context.
+
+**Status (2026-10-10):** The auto-refresh was removed by TODO-0129. Branch protection rejected its push and the job still exited 0, so a stale hash stayed hidden behind a green run. The workflow now has `contents: read`, also runs when `nix.yml` itself changes (and on `workflow_dispatch`), and on a hash mismatch fails with an `::error` annotation and a job-summary entry that print the new hash. A human copies the hash into `nix/package.nix`.
 
 Add a path-filtered GitHub Actions job that only runs when `package-lock.json` or `nix/package.nix` changes. This catches stale hashes from human contributors who bypass the skills.
 

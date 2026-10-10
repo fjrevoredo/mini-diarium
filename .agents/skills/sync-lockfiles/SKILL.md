@@ -8,12 +8,14 @@ description: |
   the PR-discovery workflow — this skill handles lockfile sync only.
 ---
 
-When `package.json` changes, two lockfiles must both be updated and committed together:
+When `package.json` changes, two lockfiles and the Nix dependency hash must all be updated and
+committed together:
 
 | File | Used by |
 |------|---------|
 | `bun.lock` | Dev workflow |
 | `package-lock.json` | Flathub `flatpak-node-generator` (offline Linux build) |
+| `nix/package.nix` (`npmDepsHash`) | Nix build (`nix build .#default`, `.github/workflows/nix.yml`) |
 
 ## Steps
 
@@ -27,7 +29,15 @@ When `package.json` changes, two lockfiles must both be updated and committed to
    cmd.exe /c npm install --package-lock-only --legacy-peer-deps
    ```
 
-3. Commit `package.json`, `bun.lock`, and `package-lock.json` together.
+3. Refresh `npmDepsHash` in `nix/package.nix` (in the `frontend = buildNpmPackage { ... }` block):
+   - **Linux with Nix:** run `nix run nixpkgs#prefetch-npm-deps -- package-lock.json` and paste
+     the printed hash.
+   - **Windows:** Nix is not available. Push the lockfile change. The Nix CI workflow then fails
+     and prints the new hash in an error annotation and in the job summary. Copy that hash into
+     `nix/package.nix` and push it as a follow-up commit.
+
+4. Commit `package.json`, `bun.lock`, `package-lock.json`, and `nix/package.nix` together (on
+   Windows, `nix/package.nix` follows in the step 3 follow-up commit).
 
 ## Why `--legacy-peer-deps`
 
@@ -39,3 +49,6 @@ resolves this silently; npm does not. The flag is required or `npm install` erro
 Never commit only one lockfile. `package-lock.json` is required by Flathub's
 `flatpak-node-generator` to resolve npm dependencies during the offline Flatpak build. A
 stale or missing `package-lock.json` causes the Flathub CI build to fail.
+
+A changed `package-lock.json` without a matching `npmDepsHash` breaks `nix build .#default`. The
+Nix CI workflow fails on it and prints the correct hash; it does not commit the fix by itself.
