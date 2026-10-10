@@ -308,11 +308,22 @@ jobs:
         if: steps.backend-coverage.outcome == 'success'
         run: |
           node scripts/normalize-crap-baseline.mjs --input crap-report.json --root "$GITHUB_WORKSPACE" --for-baseline --output probe-first.json
-          cargo crap --workspace --lcov src-tauri/lcov.info --baseline probe-first.json --format json --sort file --missing pessimistic --epsilon 0.01 --output probe-relative-delta.json
+          cargo crap --workspace --lcov src-tauri/lcov.info --baseline probe-first.json --format json --sort file --missing pessimistic --epsilon 0.01 --exclude '**/tests.rs' --exclude '**/test_support.rs' --output probe-relative-delta.json
+          node --input-type=module <<'NODE'
+          import { readFileSync, writeFileSync } from 'node:fs';
+          import assert from 'node:assert/strict';
+          const relative = JSON.parse(readFileSync('probe-first.json', 'utf8'));
+          const current = JSON.parse(readFileSync('crap-report.json', 'utf8'));
+          const root = process.env.GITHUB_WORKSPACE;
+          for (const entry of relative.entries) entry.file = `${root}/${entry.file}`;
+          assert.deepEqual(relative.entries, current.entries, 'path alignment changed function data');
+          writeFileSync('probe-aligned-input.json', JSON.stringify(relative));
+          NODE
+          cargo crap --workspace --lcov src-tauri/lcov.info --baseline probe-aligned-input.json --format json --sort file --missing pessimistic --epsilon 0.01 --exclude '**/tests.rs' --exclude '**/test_support.rs' --output probe-aligned-delta.json
           cd src-tauri
           cargo llvm-cov nextest --workspace --no-fail-fast --lcov --output-path lcov.info
           cd ..
-          cargo crap --workspace --lcov src-tauri/lcov.info --format json --sort file --missing pessimistic --epsilon 0.01 --output probe-second-raw.json
+          cargo crap --workspace --lcov src-tauri/lcov.info --format json --sort file --missing pessimistic --epsilon 0.01 --exclude '**/tests.rs' --exclude '**/test_support.rs' --output probe-second-raw.json
           node scripts/normalize-crap-baseline.mjs --input probe-second-raw.json --root "$GITHUB_WORKSPACE" --for-baseline --output probe-second.json
           node --input-type=module <<'NODE' | tee probe-findings.txt
           import { readFileSync } from 'node:fs';
@@ -330,9 +341,15 @@ jobs:
           console.log('Scope diagnostics', JSON.stringify(first.diagnostics, null, 2));
           console.log('Probes', JSON.stringify(first.entries.filter(e => e.function.startsWith('crap_acceptance_')), null, 2));
           console.log('Test-helper entries', JSON.stringify(first.entries.filter(e => /(?:^|\/)tests\.rs$/.test(e.file)), null, 2));
+          assert.ok(!first.entries.some(e => /(?:^|\/)(?:tests|test_support)\.rs$/.test(e.file)), 'test-only helpers remain in scoped report');
           const delta = read('probe-relative-delta.json');
           console.log('Unchanged absolute report versus relative baseline', JSON.stringify(delta.entries.reduce((counts, e) => ({ ...counts, [e.status]: (counts[e.status] || 0) + 1 }), {})));
           console.log('Unexpected new identities', JSON.stringify(delta.entries.filter(e => e.status === 'new').map(e => ({file:e.file, function:e.function,line:e.line})), null, 2));
+          const aligned = read('probe-aligned-delta.json');
+          console.log('Aligned unchanged-source control', JSON.stringify({ functions: aligned.entries.length, unchanged: aligned.entries.filter(e => e.status === 'unchanged').length, removed: aligned.removed.length }));
+          assert.equal(aligned.entries.length, first.entries.length);
+          assert.ok(aligned.entries.every(e => e.status === 'unchanged'), 'aligned input falsely changes identities');
+          assert.equal(aligned.removed.length, 0);
           assert.ok(maxDelta <= 0.01, 'fresh coverage scores are not repeatable within epsilon');
           NODE
 
