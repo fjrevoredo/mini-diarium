@@ -358,6 +358,25 @@ diff-cover coverage/lcov.info --compare-branch=origin/main --fail-under=80
 
 ---
 
+## Rust CRAP Reports (Phase 0, Advisory)
+
+The CI `test` job runs pinned `cargo-crap 0.6.1` after both Codecov upload attempts. It reuses successful same-run workspace coverage from `src-tauri/lcov.info`. Cache, install, analysis, and artifact upload failures are non-blocking. The `crap-report` artifact contains the JSON report and production-time provenance, including source commit, run URL, producer root, runner, tool versions, coverage command, analyzer flags, configuration, and UTC time. Analysis time is printed even on failure. If backend coverage did not succeed, analysis is explicitly skipped; a provenance-only artifact is not a usable baseline.
+
+There is **no blocking CRAP gate yet**. Linux acceptance, a reviewed post-merge master baseline, and separate user approval must come first. No local report is a canonical baseline. Extra test-helper exclusions remain pending Linux acceptance and must be fixed before baseline production.
+
+The normalizer changes paths only. Use the root from the report's provenance, not the machine that downloads it:
+
+```powershell
+node scripts/normalize-crap-baseline.mjs --input crap-report.json --root <producer-root> --for-baseline --output <normalized-report.json>
+node scripts/normalize-crap-baseline.mjs --self-test
+```
+
+Baseline mode refuses paths outside that root, including diagnostic paths. It retains function order, duplicate names, schema, and all parsed numeric values without rounding. A canonical baseline must come from probe-free master Linux CI and must be committed with its production provenance in a dedicated reviewed change. Do not raise a baseline inside a feature change to make that change pass.
+
+Limits of this analyzer: closure bodies are not scored, including `with_unlocked_db(|db| ...)`; macros are not expanded; cfg-dead function spans in matched files can show 100% coverage. Keep `--missing pessimistic` in CI. `skip` is for diagnosis only. A green report is not proof that these paths have tests. See the [implementation plan](../plans/2026-10-10-crap-complexity-gates-plan.md) for the remaining acceptance and approval checks.
+
+---
+
 ## CI vs Release Build Profiles
 
 Use environment variables to tune build behavior — don't maintain separate config files:

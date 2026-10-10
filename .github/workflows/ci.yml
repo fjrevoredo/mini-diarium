@@ -68,6 +68,9 @@ jobs:
         # Fails when a *.test.* / *.spec.* file sits outside every runner's include list.
         run: bun run check:test-runners
 
+      - name: CRAP normalizer self-test
+        run: node scripts/normalize-crap-baseline.mjs --self-test
+
       - name: Network isolation static check
         run: pwsh scripts/check-no-network.ps1
 
@@ -197,6 +200,7 @@ jobs:
         run: bun run test:scripts
 
       - name: Backend tests
+        id: backend-coverage
         working-directory: src-tauri
         # --workspace is REQUIRED now that crypto/auth/db/import/export/plugin
         # moved to mini-diarium-core; without it only the thin app crate is
@@ -212,6 +216,7 @@ jobs:
         run: bun run test:print
 
       - name: Upload frontend coverage to Codecov
+        if: always()
         uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
@@ -219,11 +224,85 @@ jobs:
           flags: frontend
 
       - name: Upload backend coverage to Codecov
+        if: always()
         uses: codecov/codecov-action@303a32d7a59b442fa8d48b6a1cc6825c09c847a5 # v7.1.1
         with:
           token: ${{ secrets.CODECOV_TOKEN }}
           files: ./src-tauri/lcov.info
           flags: backend
+
+      # Phase 0 is advisory for every failure mode. Keep all CRAP work after
+      # coverage uploads, including installation, and do not enable fail flags.
+      - name: Cache cargo-crap binary (advisory)
+        id: cache-cargo-crap
+        if: always()
+        continue-on-error: true
+        uses: actions/cache@v6.1.0
+        with:
+          path: ~/.cargo/bin/cargo-crap
+          key: cargo-crap-${{ runner.os }}-${{ runner.arch }}-v0.6.1
+
+      - name: Install cargo-crap (advisory)
+        if: always() && steps.cache-cargo-crap.outputs.cache-hit != 'true'
+        continue-on-error: true
+        run: cargo install cargo-crap --version 0.6.1 --locked
+
+      - name: CRAP report (advisory)
+        if: always()
+        continue-on-error: true
+        env:
+          BACKEND_COVERAGE_OUTCOME: ${{ steps.backend-coverage.outcome }}
+          RUNNER_OS_NAME: ${{ runner.os }}
+          RUNNER_ARCH_NAME: ${{ runner.arch }}
+        run: |
+          start=$(date +%s)
+          trap 'echo "CRAP analysis elapsed: $(( $(date +%s) - start )) seconds (advisory)"' EXIT
+          {
+            echo "UTC: $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            echo "Producer root: $GITHUB_WORKSPACE"
+            echo "Source commit: $(git rev-parse HEAD)"
+            echo "Event: $GITHUB_EVENT_NAME"
+            echo "Ref: $GITHUB_REF"
+            echo "Run ID: $GITHUB_RUN_ID"
+            echo "Run attempt: $GITHUB_RUN_ATTEMPT"
+            echo "Run URL: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+            echo "Runner: $RUNNER_OS_NAME / $RUNNER_ARCH_NAME"
+            rustc --version || true
+            cargo crap --version || true
+            cargo llvm-cov --version || true
+            cargo nextest --version || true
+            echo "Coverage outcome: $BACKEND_COVERAGE_OUTCOME"
+            echo "Coverage working directory: src-tauri"
+            echo "Coverage command: cargo llvm-cov nextest --workspace --no-fail-fast --lcov --output-path lcov.info"
+            echo "Coverage configuration: default workspace features, default nextest profile"
+            echo "Analyzer command: cargo crap --workspace --lcov src-tauri/lcov.info --format json --sort file --missing pessimistic --epsilon 0.01 --output crap-report.json"
+            echo "Analyzer exclusions: built-in tests/**, benches/**, examples/**; no additional exclusions (pending Linux acceptance)"
+            echo "Analyzer configuration: no .cargo-crap.toml; default threshold 30 and try-weight 1"
+            sha256sum Cargo.lock rust-toolchain.toml
+            if [ -f .config/nextest.toml ]; then
+              sha256sum .config/nextest.toml
+              cat .config/nextest.toml
+            fi
+            if [ -f src-tauri/lcov.info ]; then sha256sum src-tauri/lcov.info; fi
+          } > crap-report.provenance.txt
+          cat crap-report.provenance.txt
+          if [ "$BACKEND_COVERAGE_OUTCOME" != success ] || [ ! -s src-tauri/lcov.info ]; then
+            echo "CRAP report skipped: no successful same-run backend coverage (advisory)"
+            exit 0
+          fi
+          test "$(cargo crap --version)" = 'cargo-crap 0.6.1'
+          cargo crap --workspace --lcov src-tauri/lcov.info --format json --sort file --missing pessimistic --epsilon 0.01 --output crap-report.json
+
+      - name: Upload CRAP report (advisory)
+        if: always()
+        continue-on-error: true
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: crap-report
+          path: |
+            crap-report.json
+            crap-report.provenance.txt
+          if-no-files-found: ignore
 
   build-linux:
     name: Build (Linux)

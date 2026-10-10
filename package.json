@@ -22,6 +22,7 @@
     "coverage:diff": "node scripts/check-diff-coverage.mjs",
     "coverage:check": "node scripts/check-diff-coverage.mjs --generate",
     "coverage:self-test": "node scripts/check-diff-coverage.mjs --self-test",
+    "crap:normalize-self-test": "node scripts/normalize-crap-baseline.mjs --self-test",
     "pre-commit": "node scripts/pre-commit.js",
     "hooks:install": "node scripts/install-hooks.js",
     "check": "node scripts/quick-check.js",
