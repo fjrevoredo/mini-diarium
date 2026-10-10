@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1791641479826,
+  "lastUpdate": 1791642057892,
   "repoUrl": "https://github.com/fjrevoredo/mini-diarium",
   "entries": {
     "Benchmark": [
@@ -38272,6 +38272,36 @@ window.BENCHMARK_DATA = {
           {
             "name": "ci_pipeline_duration",
             "value": 569000000000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "committer": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "distinct": true,
+          "id": "278884a53e5c77b6a0dab2ace6825940ecb83df5",
+          "message": "docs(todo): add TODO-0143 to confirm the Nix CI run and close TODO-0129",
+          "timestamp": "2026-10-10T16:09:23+02:00",
+          "tree_id": "7e315ae758e50e6f6fac545d1ae8d4cc47c994f7",
+          "url": "https://github.com/fjrevoredo/mini-diarium/commit/278884a53e5c77b6a0dab2ace6825940ecb83df5"
+        },
+        "date": 1791642056817,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "ci_pipeline_duration",
+            "value": 566000000000,
             "range": "± 0",
             "unit": "ns/iter"
           }
