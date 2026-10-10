@@ -145,7 +145,11 @@ pub(crate) fn add_entry_attachment_inner(
     path: &str,
     state: &DiaryState,
 ) -> Result<AttachmentSummary, String> {
-    // Core refuses a locked entry with `db::ERR_ENTRY_LOCKED` (TODO-0071).
+    // Core refuses a locked entry with `db::ERR_ENTRY_LOCKED` (TODO-0071). The source file
+    // is read before core checks the lock, so a bad file on a locked entry reports the file
+    // error, not the lock error (archived plan DEC-009, review W-05). This order is pinned by
+    // `test_locked_entry_reports_file_error_before_lock_error`; TODO-0134 owns any change.
+    // Do not add an app-side lock pre-check: it splits the check from core's write unit.
     with_unlocked_db(state, |db| {
         let (name, bytes) = read_source_file(Path::new(path))?;
         db::add_attachment_to_entry(db, entry_id, &name, &bytes)
@@ -372,6 +376,29 @@ mod tests {
         let dest = f.path("copy.txt");
         save_attachment_copy_inner(f.entry_id, added.id, &dest, &f.state).unwrap();
         assert_eq!(std::fs::read(&dest).unwrap(), b"hello");
+    }
+
+    /// Characterization test (review W-05): the source file is read before core checks the
+    /// lock, so a bad file on a locked entry reports the file error. TODO-0134 updates or
+    /// replaces this test if it changes the order.
+    #[test]
+    fn test_locked_entry_reports_file_error_before_lock_error() {
+        let f = fixture("locked_file_error");
+        f.lock_entry();
+        let empty = f.write_file("empty.txt", b"");
+
+        let err = add_entry_attachment_inner(f.entry_id, &empty, &f.state).unwrap_err();
+        assert_eq!(err, "Attachment file is empty");
+        assert_ne!(err, ERR_ENTRY_LOCKED);
+        // Control: the entry really is locked, so a valid file gets the lock error.
+        let valid = f.write_file("valid.txt", b"x");
+        assert_eq!(
+            add_entry_attachment_inner(f.entry_id, &valid, &f.state).unwrap_err(),
+            ERR_ENTRY_LOCKED
+        );
+        assert!(list_entry_attachments_inner(f.entry_id, &f.state)
+            .unwrap()
+            .is_empty());
     }
 
     #[test]
