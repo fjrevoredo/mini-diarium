@@ -13,7 +13,7 @@ TODO entry format:
 - After creating a new TODO, update the `Latest TODO ID` marker to reflect the new highest ID
 - Use the `todo-manager` skill (`.agents/skills/todo-manager/`) for creation, tracking, archival, and validation
 
-**Latest TODO ID: TODO-0142** — next new TODO should be TODO-0143
+**Latest TODO ID: TODO-0143** — next new TODO should be TODO-0144
 
 ---
 
@@ -22,6 +22,7 @@ TODO entry format:
 ---
 
 - [ ] **TODO-0129: Repair the Nix build and make `nix.yml` fail when its auto-fix cannot land** — review finding R-01 ([internal review](../explorations/2026-10-09-release-0.7.3-0.7.4-internal-review.md)). `npmDepsHash` in `nix/package.nix` has not changed since v0.7.2, but `package-lock.json` has, so `nix build .#default` fails on master. `.github/workflows/nix.yml` then tries to push a hash-fix commit to master, branch protection rejects the push (GH013), and the job still exits 0, so the run shows green (example: run `37855720300`). Acceptance: (1) the workflow fails when the build fails and prints the `got:` hash in the failure output; it never reports success after a rejected or unchecked `git push` (remove the auto-commit, or open a PR instead); (2) `npmDepsHash` is set from a fresh failing run on the current master, not from the stale value in the review; (3) a later master run is green because `nix build` passes; (4) the `sync-lockfiles` skill gets the `npmDepsHash` refresh step, which closes TODO-0050; (5) `docs/best-practices/CI_BEST_PRACTICES.md` gets the rule "an auto-fix step fails the job when its fix cannot land". Nix is not installed on the Windows dev machine, so the hash comes from CI. **Status (2026-10-10):** implemented (hash set to `sha256-gvSd…2ts=`, `nix.yml` read-only and fails loudly). Close after a green Nix CI run on master.
+- [ ] **TODO-0143: Confirm the Nix CI run for TODO-0129 and close TODO-0129** — handover from the TODO-0129 session (commit `4e6b02d`, pushed 2026-10-10). Nix run `38057991101` was still in progress at handover. Steps: (1) `gh run view 38057991101` (or `gh run list --workflow nix.yml --limit 3` for the latest master run). (2) **Green:** mark TODO-0129 `[x]` with the date, mark this TODO `[x]`. (3) **Red with an `npmDepsHash is stale. Set it to sha256-…` annotation:** copy that hash into `npmDepsHash` in `nix/package.nix`, push, and re-check; the `package-lock.json` blob did not change since run `37985876445`, so this is not expected. (4) **Red without a hash (real build error):** read the log (`gh run view <id> --log-failed`), fix or file a new TODO; do not close TODO-0129. Acceptance: one green `Nix` run on master that includes `4e6b02d`; TODO-0129 and this TODO closed.
 - [ ] **TODO-0008: Cursor height too tall after Shift+Enter on macOS (#118)** — the text caret (cursor) height becomes extra long starting on the second line, but only when inserting a soft line break with Shift+Enter (Enter alone works fine); macOS-only (v0.4.20); likely a `line-height` or `font-family` mismatch in ProseMirror's `<br>` handling introduced with new editor fonts in v0.4.20; audit soft-break styling in `src/styles/editor.css` and the `--editor-font-family` / `--editor-font-size` CSS custom properties
 
 ---
