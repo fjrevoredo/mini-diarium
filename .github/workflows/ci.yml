@@ -275,8 +275,8 @@ jobs:
             echo "Coverage working directory: src-tauri"
             echo "Coverage command: cargo llvm-cov nextest --workspace --no-fail-fast --lcov --output-path lcov.info"
             echo "Coverage configuration: default workspace features, default nextest profile"
-            echo "Analyzer command: cargo crap --workspace --lcov src-tauri/lcov.info --format json --sort file --missing pessimistic --epsilon 0.01 --output crap-report.json"
-            echo "Analyzer exclusions: built-in tests/**, benches/**, examples/**; no additional exclusions (pending Linux acceptance)"
+            echo "Analyzer command: cargo crap --workspace --lcov src-tauri/lcov.info --format json --sort file --missing pessimistic --epsilon 0.01 --exclude '**/tests.rs' --exclude '**/test_support.rs' --output crap-report.json"
+            echo "Analyzer exclusions: built-in tests/**, benches/**, examples/**; additional **/tests.rs, **/test_support.rs (confirmed test-only sources)"
             echo "Analyzer configuration: no .cargo-crap.toml; default threshold 30 and try-weight 1"
             sha256sum Cargo.lock rust-toolchain.toml
             if [ -f .config/nextest.toml ]; then
@@ -291,7 +291,7 @@ jobs:
             exit 0
           fi
           test "$(cargo crap --version)" = 'cargo-crap 0.6.1'
-          cargo crap --workspace --lcov src-tauri/lcov.info --format json --sort file --missing pessimistic --epsilon 0.01 --output crap-report.json
+          cargo crap --workspace --lcov src-tauri/lcov.info --format json --sort file --missing pessimistic --epsilon 0.01 --exclude '**/tests.rs' --exclude '**/test_support.rs' --output crap-report.json
 
       - name: Upload CRAP report (advisory)
         if: always()
