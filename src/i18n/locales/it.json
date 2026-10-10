@@ -799,6 +799,7 @@
     "portalPathRejected": "Quella cartella è condivisa con Mini Diarium solo temporaneamente, quindi un diario salvato lì smetterebbe di aprirsi in seguito. Usa invece la posizione predefinita.",
     "backupFileRejected": "Quel file è una copia di backup. Aprirlo direttamente lo modificherebbe. Copialo prima altrove, poi apri la copia.",
     "journalAlreadyRegistered": "Quel diario è già nel tuo elenco. Aprilo dall’elenco qui sopra invece di aggiungerlo di nuovo.",
+    "invalidJournalFilename": "Questo nome di file non può essere usato per un diario. Usa un nome più corto senza caratteri speciali come / o *.",
     "noBackupsYet": "Non ci sono ancora backup. La cartella compare dopo il primo backup.",
     "internalError": "Si è verificato un errore interno.",
     "unexpectedError": "Si è verificato un errore imprevisto."

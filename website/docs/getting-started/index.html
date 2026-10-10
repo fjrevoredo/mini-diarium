@@ -345,7 +345,7 @@
       "@id": "https://mini-diarium.com/docs/getting-started/#article",
       "headline": "Getting Started",
       "description": "System requirements, creating your first encrypted journal, setting a password, the welcome tour, multiple journals, key file auth, and local-only mode.",
-      "dateModified": "2026-09-06T00:00:00Z",
+      "dateModified": "2026-10-10T00:00:00Z",
       "keywords": "setup, password, first launch, system requirements",
       "publisher": {
         "@type": "Organization",
@@ -608,13 +608,15 @@
         <p>You can also enable <strong>idle auto-lock</strong> in <strong>Preferences → Security → Auto-Lock</strong>. When enabled, Mini Diarium locks automatically after the configured period of inactivity.</p>
         <h2 id="multiple-journals">Multiple Journals</h2><p>You can maintain separate journals for different purposes: personal, work, travel, and so on. Each journal is an independent encrypted database file. Several journals can share one folder as long as they use different filenames — the save dialog (or the Filename field on Flatpak) lets you rename a new journal to avoid a clash.</p>
         <p><strong>Adding a journal:</strong> Use the Journal Picker&#39;s add actions. You can create a new journal — in the default location or a folder you choose — or add an existing <code>diary.db</code>.</p>
-        <p><strong>Where a journal can live:</strong> any ordinary folder you can write to. Three cases are refused, with an explanation:</p>
+        <p><strong>Where a journal can live:</strong> any ordinary folder you can write to. The journal is registered under the exact filename you picked; the app never changes it. Four cases are refused, with an explanation:</p>
         <ul>
         <li><p><strong>A journal already in your list.</strong> Two journals pointing at the exact same file — the same folder <em>and</em> the same filename — are refused with &quot;already in your list&quot;, since unlocking the second one would really be asking for the first journal&#39;s password under a different name. Journals with different filenames can share a folder without any conflict.</p>
         </li>
         <li><p><strong>A backup snapshot.</strong> Files named <code>backup-*.db</code>, and anything inside a <code>backups</code> folder, cannot be opened as a journal, because opening one would write to it and destroy the restore point. To read an old snapshot, copy it out of the <code>backups</code> folder first and open the copy.</p>
         </li>
         <li><p><strong>A temporary sandbox location (Flatpak only).</strong> On the Flathub build, browsing to a folder outside the app&#39;s sandbox returns a temporary path under <code>/run/user/…/doc/</code> rather than the real one. It works at first and stops working later, so it is refused. Use the default location, or grant the app permanent access to the folder you want with <a href="https://flathub.org/apps/com.github.tchx84.Flatseal" target="_blank" rel="noopener noreferrer">Flatseal</a> before selecting it.</p>
+        </li>
+        <li><p><strong>A filename that cannot be used.</strong> A filename that is empty, contains <code>/</code>, <code>\</code>, or control characters, or is longer than 200 bytes is refused. That is 200 letters of plain English text, and fewer for accented or non-Latin letters, which take 2 to 4 bytes each. The app keeps the rest of the filesystem&#39;s 255-unit limit free for the files it and SQLite create next to the journal. On Windows, names with <code>&lt; &gt; : &quot; | ? *</code>, names that end with a dot or a space, and device names such as <code>CON</code> or <code>NUL</code> are refused too. Choose a different name. On Flatpak, spaces at the start and end of the Filename field are removed before the app checks the file. If you copy the app&#39;s settings to a different operating system and a saved journal filename is not valid there, the app does not open that journal automatically. It shows the journal list, and opening that journal shows the same error.</p>
         </li>
         </ul>
         <p><strong>Switching journals:</strong> Open the Journal Picker, choose the journal you want, and then unlock it. On a shared device, this lets each person select their own journal before any authentication prompt appears.</p>

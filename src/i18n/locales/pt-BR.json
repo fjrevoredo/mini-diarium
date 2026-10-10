@@ -799,6 +799,7 @@
     "portalPathRejected": "Essa pasta é compartilhada com o Mini Diarium apenas temporariamente, então um diário salvo ali deixaria de abrir depois. Use o local padrão.",
     "backupFileRejected": "Esse arquivo é uma cópia de backup. Abri-lo diretamente o modificaria. Copie-o para outro lugar primeiro e abra a cópia.",
     "journalAlreadyRegistered": "Esse diário já está na sua lista. Abra-o pela lista acima em vez de adicioná-lo de novo.",
+    "invalidJournalFilename": "Esse nome de arquivo não pode ser usado para um diário. Use um nome mais curto sem caracteres especiais como / ou *.",
     "noBackupsYet": "Ainda não há backups. A pasta aparece depois do primeiro backup.",
     "internalError": "Ocorreu um erro interno.",
     "unexpectedError": "Ocorreu um erro inesperado."

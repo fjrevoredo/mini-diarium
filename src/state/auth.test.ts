@@ -53,6 +53,7 @@ import {
   setupAuthEventListeners,
   goToJournalPicker,
   resetAuthTransientState,
+  initializeAuth,
 } from './auth';
 import { entryDates, registerCleanupCallback } from './entries';
 import { resetSessionState } from './session';
@@ -225,5 +226,18 @@ describe('state/auth', () => {
     await refreshAuthState();
     expect(authState()).toBe('journal-select');
     expect(error()).toBe('Failed to check journal status');
+  });
+
+  it('initializeAuth shows the journal list and checks no file when no journal is active', async () => {
+    // The backend reports no active journal when the saved id is empty, unknown, or names a
+    // journal with an unusable filename; startup must not probe the placeholder database path.
+    mocks.journalExists.mockResolvedValue(true);
+    mocks.isJournalUnlocked.mockResolvedValue(false);
+
+    await initializeAuth();
+
+    expect(authState()).toBe('journal-select');
+    expect(mocks.journalExists).not.toHaveBeenCalled();
+    expect(mocks.isJournalUnlocked).not.toHaveBeenCalled();
   });
 });

@@ -238,7 +238,7 @@ fn build_debug_dump(
             // Absent means the default. Written as a match rather than `is_none_or`,
             // which is newer than this workspace's MSRV.
             db_filename_is_default: match j.db_filename.as_deref() {
-                Some(name) => name.eq_ignore_ascii_case("diary.db"),
+                Some(name) => name == "diary.db",
                 None => true,
             },
         })

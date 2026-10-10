@@ -12,17 +12,10 @@ import { refreshAuthState, error as authError } from '../../state/auth';
 import { isFlatpak, loadPlatformInfo } from '../../state/platform';
 import { checkJournalPath, getDefaultJournalDir } from '../../lib/tauri';
 import { mapTauriError } from '../../lib/errors';
+import { joinDialogPath, splitDialogPath } from '../../lib/native-path';
 import { useI18n } from '../../i18n';
 
 type AddMode = null | 'create' | 'open';
-
-/** Joins a directory and filename using the directory's own path-separator style. */
-function joinPath(dir: string, filename: string): string {
-  const separator = dir.includes('\\') ? '\\' : '/';
-  return dir.endsWith('/') || dir.endsWith('\\')
-    ? `${dir}${filename}`
-    : `${dir}${separator}${filename}`;
-}
 
 export default function JournalPicker() {
   const t = useI18n();
@@ -139,14 +132,14 @@ export default function JournalPicker() {
       return;
     }
     const selected = await save({
-      defaultPath: joinPath(defaultDir, 'diary.db'),
+      defaultPath: joinDialogPath(defaultDir, 'diary.db'),
       filters: [{ name: 'Database Files', extensions: ['db'] }],
       title: t('auth.picker.createSaveDialogTitle'),
     });
     if (!selected) return;
 
-    const parentDir = selected.replace(/[/\\][^/\\]*$/, '');
-    const filename = selected.split(/[/\\]/).pop() || 'diary.db';
+    const { dir: parentDir, filename: pickedName } = splitDialogPath(selected);
+    const filename = pickedName || 'diary.db';
     const stemName = filename.replace(/\.db$/i, '') || 'My Journal';
     setNewDir(parentDir);
     setDbFilename(filename);
@@ -161,12 +154,16 @@ export default function JournalPicker() {
       setLocalError(t('auth.picker.nameRequired'));
       return;
     }
+    // Flatpak's Filename field is free text, so it is normalized here, before the existence
+    // check. The backend validates the filename but never rewrites it, so the path checked
+    // below and the path registered by addJournal are the same string.
     const filename = isFlatpak() ? dbFilename()?.trim() || 'diary.db' : dbFilename();
+    if (isFlatpak()) setDbFilename(filename);
     setLocalError(null);
     setPathConflict(false);
     setIsWorking(true);
     try {
-      const exists = await checkJournalPath(joinPath(dir, filename ?? 'diary.db'));
+      const exists = await checkJournalPath(joinDialogPath(dir, filename ?? 'diary.db'));
       if (exists) {
         setLocalError(t('auth.picker.alreadyExistsError'));
         setPathConflict(true);
@@ -199,8 +196,8 @@ export default function JournalPicker() {
       return;
     }
 
-    const parentDir = selected.replace(/[/\\][^/\\]*$/, '');
-    const filename = selected.split(/[/\\]/).pop() || 'diary.db';
+    const { dir: parentDir, filename: pickedName } = splitDialogPath(selected);
+    const filename = pickedName || 'diary.db';
     const stemName = filename.replace(/\.db$/i, '') || 'My Journal';
     setNewDir(parentDir);
     setDbFilename(filename);

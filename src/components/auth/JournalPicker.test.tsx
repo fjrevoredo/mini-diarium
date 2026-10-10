@@ -355,6 +355,57 @@ describe('JournalPicker component', () => {
       });
     });
 
+    it('checks and registers the same normalized filename', async () => {
+      renderWithI18n(() => <JournalPicker />);
+      fireEvent.click(screen.getByText(/create new journal/i));
+      await vi.waitFor(() => expect(mocks.getDefaultJournalDir).toHaveBeenCalled());
+
+      fireEvent.input(screen.getByPlaceholderText(/e\.g\. my journal/i), {
+        target: { value: 'Work' },
+      });
+      // Inner whitespace is part of the name; only the edges are free-text noise.
+      fireEvent.input(screen.getByDisplayValue('diary.db'), {
+        target: { value: '  work  notes.db ' },
+      });
+      fireEvent.click(screen.getByRole('button', { name: /^add$/i }));
+
+      await vi.waitFor(() => {
+        expect(mocks.addJournal).toHaveBeenCalled();
+      });
+      expect(mocks.checkJournalPath).toHaveBeenCalledWith(
+        '/home/testuser/Documents/Mini Diarium/work  notes.db',
+      );
+      expect(mocks.addJournal).toHaveBeenCalledWith(
+        'Work',
+        '/home/testuser/Documents/Mini Diarium',
+        'work  notes.db',
+      );
+      // The field shows the name that was registered.
+      // The default matcher collapses whitespace, so read the raw value instead.
+      expect(screen.getByDisplayValue(/work\s+notes\.db/)).toHaveValue('work  notes.db');
+    });
+
+    it('shows a friendly error when the backend refuses the filename', async () => {
+      mocks.addJournal.mockRejectedValue(new Error('Invalid journal filename'));
+
+      renderWithI18n(() => <JournalPicker />);
+      fireEvent.click(screen.getByText(/create new journal/i));
+      await vi.waitFor(() => expect(mocks.getDefaultJournalDir).toHaveBeenCalled());
+
+      fireEvent.input(screen.getByPlaceholderText(/e\.g\. my journal/i), {
+        target: { value: 'Work' },
+      });
+      fireEvent.input(screen.getByDisplayValue('diary.db'), {
+        target: { value: 'a/b.db' },
+      });
+      fireEvent.click(screen.getByRole('button', { name: /^add$/i }));
+
+      await vi.waitFor(() => {
+        expect(screen.getByRole('alert')).toHaveTextContent(/filename cannot be used/i);
+      });
+      expect(mocks.switchJournal).not.toHaveBeenCalled();
+    });
+
     it('shows a friendly error and does not create the journal when a file already exists there', async () => {
       mocks.checkJournalPath.mockResolvedValue(true);
 
@@ -371,6 +422,81 @@ describe('JournalPicker component', () => {
         expect(screen.getByRole('alert')).toHaveTextContent(/already exists/i);
       });
       expect(mocks.addJournal).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('dialog path style', () => {
+    /** Picks `selected` in the Open Existing dialog and confirms with the derived name. */
+    const openExisting = async (selected: string) => {
+      const dialogMock = await import('@tauri-apps/plugin-dialog');
+      vi.mocked(dialogMock.open).mockResolvedValueOnce(selected);
+      mocks.checkJournalPath.mockResolvedValue(true);
+
+      renderWithI18n(() => <JournalPicker />);
+      fireEvent.click(screen.getByText(/open existing/i));
+      await vi.waitFor(() => {
+        expect(screen.getByRole('button', { name: /^open$/i })).toBeInTheDocument();
+      });
+      fireEvent.click(screen.getByRole('button', { name: /^open$/i }));
+    };
+
+    it('registers the picked Unix file when its name contains a backslash', async () => {
+      await openExisting('/home/u/work\\notes.db');
+
+      await vi.waitFor(() => expect(mocks.addJournal).toHaveBeenCalled());
+      expect(mocks.checkJournalPath).toHaveBeenCalledWith('/home/u/work\\notes.db');
+      // On Linux and macOS `\` is part of the name, so the same file is registered.
+      expect(mocks.addJournal).toHaveBeenCalledWith('work\\notes', '/home/u', 'work\\notes.db');
+    });
+
+    it('shows the backend filename error when it refuses a backslash name', async () => {
+      mocks.addJournal.mockRejectedValue(new Error('Invalid journal filename'));
+
+      await openExisting('/home/u/work\\notes.db');
+
+      await vi.waitFor(() => {
+        expect(screen.getByRole('alert')).toHaveTextContent(/filename cannot be used/i);
+      });
+      expect(mocks.switchJournal).not.toHaveBeenCalled();
+    });
+
+    it('splits a Windows path on backslashes when opening a journal', async () => {
+      await openExisting('C:\\Users\\u\\Journals\\work.db');
+
+      await vi.waitFor(() => expect(mocks.addJournal).toHaveBeenCalled());
+      expect(mocks.addJournal).toHaveBeenCalledWith('work', 'C:\\Users\\u\\Journals', 'work.db');
+    });
+
+    it('joins a Unix folder that contains a backslash with a forward slash', async () => {
+      const dialogMock = await import('@tauri-apps/plugin-dialog');
+      vi.mocked(dialogMock.save).mockResolvedValueOnce('/home/u/my\\dir/work.db');
+
+      renderWithI18n(() => <JournalPicker />);
+      fireEvent.click(screen.getByText(/create new journal/i));
+      await vi.waitFor(() => {
+        expect(screen.getByPlaceholderText(/e\.g\. my journal/i)).toHaveValue('work');
+      });
+      fireEvent.click(screen.getByRole('button', { name: /^add$/i }));
+
+      await vi.waitFor(() => expect(mocks.addJournal).toHaveBeenCalled());
+      expect(mocks.checkJournalPath).toHaveBeenCalledWith('/home/u/my\\dir/work.db');
+      expect(mocks.addJournal).toHaveBeenCalledWith('work', '/home/u/my\\dir', 'work.db');
+    });
+
+    it('joins a Windows folder with a backslash when creating a journal', async () => {
+      const dialogMock = await import('@tauri-apps/plugin-dialog');
+      vi.mocked(dialogMock.save).mockResolvedValueOnce('C:\\Users\\u\\Journals\\work.db');
+
+      renderWithI18n(() => <JournalPicker />);
+      fireEvent.click(screen.getByText(/create new journal/i));
+      await vi.waitFor(() => {
+        expect(screen.getByPlaceholderText(/e\.g\. my journal/i)).toHaveValue('work');
+      });
+      fireEvent.click(screen.getByRole('button', { name: /^add$/i }));
+
+      await vi.waitFor(() => expect(mocks.addJournal).toHaveBeenCalled());
+      expect(mocks.checkJournalPath).toHaveBeenCalledWith('C:\\Users\\u\\Journals\\work.db');
+      expect(mocks.addJournal).toHaveBeenCalledWith('work', 'C:\\Users\\u\\Journals', 'work.db');
     });
   });
 

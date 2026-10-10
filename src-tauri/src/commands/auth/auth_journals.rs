@@ -28,6 +28,50 @@ fn is_portal_path(path: &str) -> bool {
     path.starts_with(PORTAL_PATH_PREFIXES[1])
 }
 
+/// The journal folder, database path, and backups folder the backend starts with.
+///
+/// `e2e_dir` (from `MINI_DIARIUM_DATA_DIR`) bypasses journal config. Otherwise this is the
+/// active journal, or the first one when no journal is active, or the legacy single-diary
+/// folder. A saved filename that is not valid on this host (config.json copied from another
+/// OS) is never joined into a path: the backend gets [`DiaryState::placeholder_paths`], which
+/// belong to no journal and which the create and unlock commands refuse.
+/// `get_active_journal_id` reports no active journal in that case, so the frontend shows the
+/// picker, and opening that journal there returns the mapped "Invalid journal filename" error.
+pub fn startup_journal_paths(
+    app_dir: &Path,
+    e2e_dir: Option<PathBuf>,
+) -> (PathBuf, PathBuf, PathBuf) {
+    let (diary_dir, db_filename) = if let Some(dir) = e2e_dir {
+        (dir, None)
+    } else {
+        let journals = config::load_journals(app_dir);
+        if !journals.is_empty() {
+            let active_id = config::load_active_journal_id(app_dir);
+            let active = active_id.and_then(|id| journals.iter().find(|j| j.id == id).cloned());
+            let journal = active.or_else(|| journals.first().cloned());
+            let db_filename = journal.as_ref().and_then(|j| j.db_filename.clone());
+            let dir = journal
+                .map(|j| PathBuf::from(&j.path))
+                .filter(|p| p.is_dir())
+                .unwrap_or_else(|| app_dir.to_path_buf());
+            (dir, db_filename)
+        } else {
+            // Fresh install or legacy without migration trigger
+            let dir = config::load_diary_dir(app_dir)
+                .filter(|p| p.is_dir())
+                .unwrap_or_else(|| app_dir.to_path_buf());
+            (dir, None)
+        }
+    };
+
+    let (db_path, backups_dir) = config::journal_db_paths(&diary_dir, db_filename.as_deref())
+        .unwrap_or_else(|_| {
+            warn!("Active journal has a filename that is not valid on this system");
+            DiaryState::placeholder_paths(app_dir)
+        });
+    (diary_dir, db_path, backups_dir)
+}
+
 fn list_journals_inner(app_data_dir: &std::path::Path) -> Result<Vec<JournalInfo>, String> {
     let journals = config::load_journals(app_data_dir);
     Ok(journals.iter().map(JournalInfo::from).collect())
@@ -38,8 +82,21 @@ pub fn list_journals(state: State<DiaryState>) -> Result<Vec<JournalInfo>, Strin
     list_journals_inner(&state.app_data_dir)
 }
 
+/// The active journal's id, or `None` unless it names a saved journal whose filename is valid
+/// on this host. An empty id (saved when no usable journal is left), an id with no matching
+/// journal, and a `config.json` copied from another OS all mean the backend has no journal
+/// selected, so the frontend must show the picker instead of a create or unlock screen.
 fn get_active_journal_id_inner(app_data_dir: &std::path::Path) -> Result<Option<String>, String> {
-    Ok(config::load_active_journal_id(app_data_dir))
+    let Some(active_id) = config::load_active_journal_id(app_data_dir) else {
+        return Ok(None);
+    };
+    let usable = config::load_journals(app_data_dir)
+        .iter()
+        .find(|j| j.id == active_id)
+        .is_some_and(|j| {
+            config::journal_db_paths(Path::new(&j.path), j.db_filename.as_deref()).is_ok()
+        });
+    Ok(usable.then_some(active_id))
 }
 
 #[tauri::command]
@@ -119,11 +176,11 @@ fn add_journal_inner(
     if !dir.is_absolute() {
         return Err("Path must be absolute".to_string());
     }
-    // A native save dialog already refuses the characters this strips, so this is a no-op for
-    // that path. Free-text filename entry (the Flatpak create form) has no such guarantee, so
-    // this is what actually protects it — same sanitizer the folder-per-journal flow used to
-    // apply to folder names, now applied to the filename instead.
-    let db_filename = db_filename.map(|f| config::journal_dir_name(&f));
+    // Validate only, never rewrite: the picker checked this exact filename on disk, so a
+    // changed name would register a different file than the one the user picked.
+    if let Some(filename) = db_filename.as_deref() {
+        config::validate_db_filename(filename)?;
+    }
     // Before `is_dir`, deliberately: an *expired* portal handle no longer exists on disk, so
     // probing the filesystem first would report "Directory does not exist" and never reach the
     // message that explains what actually went wrong — the exact case this guard is for.
@@ -152,7 +209,9 @@ fn add_journal_inner(
         name,
         path,
         auto_key: None,
-        db_filename: db_filename.filter(|s| !s.eq_ignore_ascii_case("diary.db")),
+        // Only the exact default is stored as `None`: on a case-sensitive filesystem
+        // `Diary.db` is a different file, so folding it into the default would rewrite it.
+        db_filename: db_filename.filter(|s| s != "diary.db"),
         require_all_auth: None,
     };
     journals.push(journal.clone());
@@ -266,27 +325,25 @@ fn remove_journal_inner(id: String, state: &DiaryState) -> Result<(), String> {
     journals.remove(idx);
 
     if removing_active {
-        if let Some(other) = journals.first() {
-            // Switch to the next available journal
-            let other_path = PathBuf::from(&other.path);
-            let other_id = other.id.clone();
-            let db_filename = other.db_filename.as_deref().unwrap_or("diary.db");
-            let stem = std::path::Path::new(db_filename)
-                .file_stem()
-                .and_then(|s| s.to_str())
-                .unwrap_or("diary");
+        // Switch to the next available journal, unless its saved filename is not valid on
+        // this host — then leave no journal active, and the frontend shows the picker.
+        let next = journals.first().and_then(|other| {
+            config::journal_db_paths(Path::new(&other.path), other.db_filename.as_deref())
+                .ok()
+                .map(|paths| (other.id.clone(), paths))
+        });
+        if let Some((other_id, (db_path, backups_dir))) = next {
             *state
                 .db_path
                 .lock()
-                .map_err(|_| "State lock poisoned".to_string())? = other_path.join(db_filename);
+                .map_err(|_| "State lock poisoned".to_string())? = db_path;
             *state
                 .backups_dir
                 .lock()
-                .map_err(|_| "State lock poisoned".to_string())? =
-                other_path.join("backups").join(stem);
+                .map_err(|_| "State lock poisoned".to_string())? = backups_dir;
             config::save_journals(&state.app_data_dir, &journals, &other_id)?;
         } else {
-            // No journals left — save with empty active id; frontend will show empty picker
+            // No usable journal left — save with empty active id; frontend will show the picker
             config::save_journals(&state.app_data_dir, &journals, "")?;
         }
     } else {
@@ -342,22 +399,19 @@ fn switch_journal_inner(id: String, state: &DiaryState) -> Result<(), String> {
         .iter()
         .find(|j| j.id == id)
         .ok_or("Journal not found")?;
-    let new_path = PathBuf::from(&journal.path);
-    let db_filename = journal.db_filename.as_deref().unwrap_or("diary.db");
-    let stem = std::path::Path::new(db_filename)
-        .file_stem()
-        .and_then(|s| s.to_str())
-        .unwrap_or("diary");
+    // Refuses a saved filename that is not valid on this host before any state changes.
+    let (db_path, backups_dir) =
+        config::journal_db_paths(Path::new(&journal.path), journal.db_filename.as_deref())?;
 
     // Update DiaryState paths
     *state
         .db_path
         .lock()
-        .map_err(|_| "State lock poisoned".to_string())? = new_path.join(db_filename);
+        .map_err(|_| "State lock poisoned".to_string())? = db_path;
     *state
         .backups_dir
         .lock()
-        .map_err(|_| "State lock poisoned".to_string())? = new_path.join("backups").join(stem);
+        .map_err(|_| "State lock poisoned".to_string())? = backups_dir;
 
     // Persist active journal id
     config::save_active_journal_id(&state.app_data_dir, &id)?;
@@ -670,23 +724,331 @@ mod tests {
     }
 
     /// Free-text filename input (the Flatpak create form) carries none of the validation a
-    /// native save dialog would have applied — `add_journal_inner` must sanitize it itself.
+    /// native save dialog would have applied, so `add_journal_inner` must refuse a bad name
+    /// itself — and refuse it, not rewrite it.
     #[test]
-    fn test_add_journal_sanitises_a_free_text_db_filename() {
-        let env = make_test_env("add_sanitise_filename");
+    fn test_add_journal_rejects_an_invalid_db_filename() {
+        let env = make_test_env("add_invalid_filename");
         let journal_dir = make_journal_dir(&env, "journal");
 
-        let journal = add_journal_inner(
+        let err = add_journal_inner(
             "Escaped".to_string(),
             journal_dir.to_str().unwrap().to_string(),
             Some("../../etc/passwd.db".to_string()),
             &env.app_dir,
         )
-        .unwrap();
+        .unwrap_err();
 
-        let stored = config::load_journals(&env.app_dir)[0].db_filename.clone();
-        assert_eq!(stored.as_deref(), Some("....etcpasswd.db"));
-        assert_eq!(journal.db_filename, "....etcpasswd.db");
+        assert_eq!(err, "Invalid journal filename");
+        assert!(
+            config::load_journals(&env.app_dir).is_empty(),
+            "a rejected journal must not be persisted"
+        );
+    }
+
+    /// Registers `filename` in a fresh folder and returns the filename `config.json` stored.
+    fn register_and_read_back(env_name: &str, filename: &str) -> Option<String> {
+        let env = make_test_env(env_name);
+        let journal_dir = make_journal_dir(&env, "journal");
+
+        let journal = add_journal_inner(
+            "Picked".to_string(),
+            journal_dir.to_str().unwrap().to_string(),
+            Some(filename.to_string()),
+            &env.app_dir,
+        )
+        .unwrap_or_else(|e| panic!("{filename:?} was refused: {e}"));
+
+        assert_eq!(journal.db_filename, filename);
+        config::load_journals(&env.app_dir)[0].db_filename.clone()
+    }
+
+    /// The picker checks the exact path it registers, so the stored name must be the picked one.
+    #[test]
+    fn test_add_journal_keeps_a_long_filename_unchanged() {
+        let filename = format!("{}.db", "a".repeat(65));
+
+        let stored = register_and_read_back("add_long_filename", &filename);
+
+        assert_eq!(stored.as_deref(), Some(filename.as_str()));
+    }
+
+    /// Only the exact default is folded into `None`; a case variant is a different file on a
+    /// case-sensitive filesystem.
+    #[test]
+    fn test_add_journal_keeps_case_variants_of_the_default_filename() {
+        for (i, filename) in ["diary.DB", "Diary.db", "DIARY.DB"].into_iter().enumerate() {
+            let stored = register_and_read_back(&format!("add_case_{i}"), filename);
+
+            assert_eq!(stored.as_deref(), Some(filename));
+        }
+        // The exact default still round-trips as the absent value.
+        assert_eq!(register_and_read_back("add_case_default", "diary.db"), None);
+    }
+
+    /// The picked file, existing on disk under an upper-case name, is the one the backend opens.
+    #[test]
+    fn test_switch_uses_an_upper_case_filename_unchanged() {
+        let env = make_test_env("switch_upper_case");
+        let dir = make_journal_dir(&env, "journal");
+        fs::write(dir.join("Diary.DB"), b"").unwrap();
+
+        let journal = add_journal_inner(
+            "Upper".to_string(),
+            dir.to_str().unwrap().to_string(),
+            Some("Diary.DB".to_string()),
+            &env.app_dir,
+        )
+        .unwrap();
+        switch_journal_inner(journal.id, &env.state).unwrap();
+
+        assert_eq!(*env.state.db_path.lock().unwrap(), dir.join("Diary.DB"));
+        assert_eq!(
+            *env.state.backups_dir.lock().unwrap(),
+            dir.join("backups").join("Diary")
+        );
+    }
+
+    /// Writes a config whose only journal carries `db_filename`, as if copied from another OS.
+    fn save_foreign_journal(env: &TestEnv, dir: &Path, db_filename: &str, active: bool) -> String {
+        let journal = JournalConfig {
+            id: "foreignjournal01".to_string(),
+            name: "Foreign".to_string(),
+            path: dir.to_str().unwrap().to_string(),
+            auto_key: None,
+            db_filename: Some(db_filename.to_string()),
+            require_all_auth: None,
+        };
+        let active_id = if active {
+            journal.id.clone()
+        } else {
+            String::new()
+        };
+        config::save_journals(&env.app_dir, std::slice::from_ref(&journal), &active_id).unwrap();
+        journal.id
+    }
+
+    /// Saved filenames that leave the journal folder once joined on this host.
+    fn foreign_filenames() -> Vec<&'static str> {
+        let mut names = vec!["..\\outside.db", "..", "sub/outside.db"];
+        if cfg!(windows) {
+            // A drive-relative prefix and an alternate data stream: one legal name on Unix.
+            names.extend(["C:outside.db", "diary.db:stream"]);
+        }
+        names
+    }
+
+    #[test]
+    fn test_switch_refuses_a_saved_filename_invalid_on_this_host() {
+        for (i, filename) in foreign_filenames().into_iter().enumerate() {
+            let env = make_test_env(&format!("switch_foreign_{i}"));
+            let dir = make_journal_dir(&env, "journal");
+            let before = env.state.db_path.lock().unwrap().clone();
+            let id = save_foreign_journal(&env, &dir, filename, false);
+
+            let err = switch_journal_inner(id, &env.state).unwrap_err();
+
+            assert_eq!(err, "Invalid journal filename", "for {filename:?}");
+            assert_eq!(
+                *env.state.db_path.lock().unwrap(),
+                before,
+                "for {filename:?}"
+            );
+            assert_eq!(
+                config::load_active_journal_id(&env.app_dir).as_deref(),
+                Some("")
+            );
+        }
+    }
+
+    #[test]
+    fn test_invalid_saved_filename_is_not_reported_as_the_active_journal() {
+        let env = make_test_env("active_foreign");
+        let dir = make_journal_dir(&env, "journal");
+        save_foreign_journal(&env, &dir, "..\\outside.db", true);
+
+        assert_eq!(get_active_journal_id_inner(&env.app_dir).unwrap(), None);
+    }
+
+    #[test]
+    fn test_removal_does_not_fall_back_to_an_invalid_saved_filename() {
+        let env = make_test_env("remove_foreign");
+        let dir = make_journal_dir(&env, "journal");
+        let removed = add_journal_inner(
+            "Removed".to_string(),
+            dir.to_str().unwrap().to_string(),
+            Some("removed.db".to_string()),
+            &env.app_dir,
+        )
+        .unwrap();
+        let mut journals = config::load_journals(&env.app_dir);
+        journals.push(JournalConfig {
+            id: "foreignjournal01".to_string(),
+            name: "Foreign".to_string(),
+            path: dir.to_str().unwrap().to_string(),
+            auto_key: None,
+            db_filename: Some("..\\outside.db".to_string()),
+            require_all_auth: None,
+        });
+        config::save_journals(&env.app_dir, &journals, &removed.id).unwrap();
+        let before = env.state.db_path.lock().unwrap().clone();
+
+        remove_journal_inner(removed.id, &env.state).unwrap();
+
+        assert_eq!(*env.state.db_path.lock().unwrap(), before);
+        assert_eq!(
+            config::load_active_journal_id(&env.app_dir).as_deref(),
+            Some("")
+        );
+    }
+
+    /// Removal leaves an empty active id when the only remaining journal is unusable here.
+    /// After a restart, the frontend must get no active journal (so it shows the picker), and
+    /// the backend must refuse to create or open a database at the startup placeholder.
+    #[test]
+    fn test_restart_after_removal_to_an_unusable_journal_selects_nothing() {
+        let env = make_test_env("restart_foreign");
+        let dir = make_journal_dir(&env, "journal");
+        let removed = add_journal_inner(
+            "Removed".to_string(),
+            dir.to_str().unwrap().to_string(),
+            Some("removed.db".to_string()),
+            &env.app_dir,
+        )
+        .unwrap();
+        let mut journals = config::load_journals(&env.app_dir);
+        journals.push(JournalConfig {
+            id: "foreignjournal01".to_string(),
+            name: "Foreign".to_string(),
+            path: dir.to_str().unwrap().to_string(),
+            auto_key: None,
+            db_filename: Some("..\\outside.db".to_string()),
+            require_all_auth: None,
+        });
+        config::save_journals(&env.app_dir, &journals, &removed.id).unwrap();
+        remove_journal_inner(removed.id, &env.state).unwrap();
+        assert_eq!(
+            config::load_active_journal_id(&env.app_dir).as_deref(),
+            Some("")
+        );
+
+        // Restart.
+        assert_eq!(get_active_journal_id_inner(&env.app_dir).unwrap(), None);
+        let (_, db_path, backups_dir) = startup_journal_paths(&env.app_dir, None);
+        assert_eq!(
+            (db_path.clone(), backups_dir.clone()),
+            DiaryState::placeholder_paths(&env.app_dir)
+        );
+        let state = DiaryState::new(db_path.clone(), backups_dir, env.app_dir.clone());
+
+        assert_eq!(
+            state.ensure_journal_selected(&db_path).unwrap_err(),
+            "No journal selected"
+        );
+        assert_eq!(
+            super::super::perform_unlock(
+                super::super::UnlockMode::Password("pw".to_string()),
+                &state
+            )
+            .unwrap_err(),
+            "No journal selected"
+        );
+        assert!(
+            !db_path.exists(),
+            "nothing may be written to the placeholder"
+        );
+    }
+
+    /// The placeholder name must not collide with a legal journal: a journal registered in the
+    /// app data folder under the placeholder's visible name can still be created and unlocked.
+    #[test]
+    fn test_journal_named_like_the_placeholder_can_be_created_and_unlocked() {
+        let env = make_test_env("placeholder_name");
+        let journal = add_journal_inner(
+            "Look-alike".to_string(),
+            env.app_dir.to_str().unwrap().to_string(),
+            Some("no-active-journal".to_string()),
+            &env.app_dir,
+        )
+        .unwrap();
+        let journals = config::load_journals(&env.app_dir);
+        config::save_journals(&env.app_dir, &journals, &journal.id).unwrap();
+
+        assert_eq!(
+            get_active_journal_id_inner(&env.app_dir).unwrap(),
+            Some(journal.id)
+        );
+        let (_, db_path, backups_dir) = startup_journal_paths(&env.app_dir, None);
+        assert_eq!(db_path, env.app_dir.join("no-active-journal"));
+        let state = DiaryState::new(db_path.clone(), backups_dir, env.app_dir.clone());
+
+        // Create: the guard that runs first in create_diary and create_diary_auto.
+        state.ensure_journal_selected(&db_path).unwrap();
+        crate::db::create_database(&db_path, "pw".to_string()).unwrap();
+
+        super::super::perform_unlock(super::super::UnlockMode::Password("pw".to_string()), &state)
+            .unwrap();
+        assert!(state.db.lock().unwrap().is_some());
+    }
+
+    #[test]
+    fn test_active_id_without_a_matching_journal_is_not_reported() {
+        let env = make_test_env("active_missing");
+        let dir = make_journal_dir(&env, "journal");
+        add_journal_inner(
+            "Real".to_string(),
+            dir.to_str().unwrap().to_string(),
+            None,
+            &env.app_dir,
+        )
+        .unwrap();
+        let journals = config::load_journals(&env.app_dir);
+
+        config::save_journals(&env.app_dir, &journals, "").unwrap();
+        assert_eq!(get_active_journal_id_inner(&env.app_dir).unwrap(), None);
+
+        config::save_journals(&env.app_dir, &journals, "no-such-journal").unwrap();
+        assert_eq!(get_active_journal_id_inner(&env.app_dir).unwrap(), None);
+
+        config::save_journals(&env.app_dir, &journals, &journals[0].id).unwrap();
+        assert_eq!(
+            get_active_journal_id_inner(&env.app_dir).unwrap(),
+            Some(journals[0].id.clone())
+        );
+    }
+
+    #[test]
+    fn test_add_journal_keeps_a_double_space_unchanged() {
+        let stored = register_and_read_back("add_double_space", "work  notes.db");
+
+        assert_eq!(stored.as_deref(), Some("work  notes.db"));
+    }
+
+    /// `:` is a legal filename character on Linux and macOS.
+    #[cfg(unix)]
+    #[test]
+    fn test_add_journal_keeps_a_colon_unchanged_on_unix() {
+        let stored = register_and_read_back("add_colon", "work:notes.db");
+
+        assert_eq!(stored.as_deref(), Some("work:notes.db"));
+    }
+
+    /// Windows cannot hold `:` in a filename, so the name is refused rather than altered.
+    #[cfg(windows)]
+    #[test]
+    fn test_add_journal_rejects_a_colon_on_windows() {
+        let env = make_test_env("add_colon_windows");
+        let journal_dir = make_journal_dir(&env, "journal");
+
+        let err = add_journal_inner(
+            "Picked".to_string(),
+            journal_dir.to_str().unwrap().to_string(),
+            Some("work:notes.db".to_string()),
+            &env.app_dir,
+        )
+        .unwrap_err();
+
+        assert_eq!(err, "Invalid journal filename");
     }
 
     #[test]

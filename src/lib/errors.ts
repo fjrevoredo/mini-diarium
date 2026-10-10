@@ -92,6 +92,9 @@ export function mapTauriError(err: unknown, t: T = defaultT): string {
   if (/already in your list/i.test(raw)) {
     return t('errors.journalAlreadyRegistered');
   }
+  if (/^invalid journal filename$/i.test(raw)) {
+    return t('errors.invalidJournalFilename');
+  }
   // reveal_backups_folder with nothing inside the journal's own backups folder (TODO-0113).
   if (/^(the backups folder does not exist yet|there are no backups to show yet)$/i.test(raw)) {
     return t('errors.noBackupsYet');

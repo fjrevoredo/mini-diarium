@@ -168,6 +168,7 @@ pub(crate) fn perform_unlock(mode: UnlockMode, state: &DiaryState) -> Result<(),
         .map_err(|_| "Journal state lock failed".to_string())?
         .clone();
 
+    state.ensure_journal_selected(&db_path)?;
     if !db_path.exists() {
         return Err("No journal found. Please create one first.".to_string());
     }
@@ -268,6 +269,7 @@ pub fn create_diary(password: String, state: State<DiaryState>) -> Result<(), St
         .map_err(|_| "State lock poisoned".to_string())?
         .clone();
 
+    state.ensure_journal_selected(&db_path)?;
     if db_path.exists() {
         return Err("Journal already exists".to_string());
     }
@@ -443,6 +445,7 @@ pub fn create_diary_auto(state: State<DiaryState>) -> Result<(), String> {
         .map_err(|_| "State lock poisoned".to_string())?
         .clone();
 
+    state.ensure_journal_selected(&db_path)?;
     if db_path.exists() {
         return Err("Journal already exists".to_string());
     }
@@ -507,6 +510,7 @@ pub fn unlock_diary_auto(state: State<DiaryState>) -> Result<(), String> {
         .map_err(|_| "State lock poisoned".to_string())?
         .clone();
 
+    state.ensure_journal_selected(&db_path)?;
     if !db_path.exists() {
         return Err("No journal found. Please create one first.".to_string());
     }

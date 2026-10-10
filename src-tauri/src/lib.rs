@@ -213,42 +213,13 @@ pub fn run() {
                 );
             }
 
-            let (diary_dir, db_filename) =
-                if let Ok(test_dir) = std::env::var("MINI_DIARIUM_DATA_DIR") {
-                    // E2E test isolation — bypass journal config entirely
-                    (PathBuf::from(test_dir), "diary.db".to_string())
-                } else {
-                    let journals = crate::config::load_journals(&app_dir);
-                    if !journals.is_empty() {
-                        // Use active journal, or first journal as fallback
-                        let active_id = crate::config::load_active_journal_id(&app_dir);
-                        let active =
-                            active_id.and_then(|id| journals.iter().find(|j| j.id == id).cloned());
-                        let journal = active.or_else(|| journals.first().cloned());
-                        let db_filename = journal
-                            .as_ref()
-                            .and_then(|j| j.db_filename.clone())
-                            .unwrap_or_else(|| "diary.db".to_string());
-                        let dir = journal
-                            .map(|j| PathBuf::from(&j.path))
-                            .filter(|p| p.is_dir())
-                            .unwrap_or_else(|| app_dir.clone());
-                        (dir, db_filename)
-                    } else {
-                        // Fresh install or legacy without migration trigger
-                        let dir = crate::config::load_diary_dir(&app_dir)
-                            .filter(|p| p.is_dir())
-                            .unwrap_or_else(|| app_dir.clone());
-                        (dir, "diary.db".to_string())
-                    }
-                };
-
-            let db_path = diary_dir.join(&db_filename);
-            let stem = std::path::Path::new(&db_filename)
-                .file_stem()
-                .and_then(|s| s.to_str())
-                .unwrap_or("diary");
-            let backups_dir = diary_dir.join("backups").join(stem);
+            // E2E test isolation (MINI_DIARIUM_DATA_DIR) bypasses journal config entirely.
+            let (diary_dir, db_path, backups_dir) = commands::auth::startup_journal_paths(
+                &app_dir,
+                std::env::var("MINI_DIARIUM_DATA_DIR")
+                    .ok()
+                    .map(PathBuf::from),
+            );
 
             // Set up state
             app.manage(DiaryState::new(db_path, backups_dir, app_dir.clone()));

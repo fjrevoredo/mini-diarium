@@ -169,71 +169,102 @@ pub fn default_journal_dir(app_data_dir: &Path, documents_dir: Option<&Path>) ->
     }
 }
 
-/// Longest path component `journal_dir_name` will produce, in characters.
+/// Longest journal database filename accepted, in UTF-8 bytes.
 ///
-/// Well below every filesystem's per-component limit, leaving room for the `backups/<stem>`
-/// tree a journal's folder gets alongside its database file.
-const MAX_JOURNAL_DIR_NAME_LEN: usize = 64;
+/// File systems cap one name at 255 units: bytes on ext4 and APFS, UTF-16 code units on NTFS.
+/// A name's UTF-8 length is never smaller than its UTF-16 length, so a byte cap holds on
+/// every platform. The database also gets sibling files named after it — SQLite's
+/// `-journal`/`-wal`/`-shm`, the restore stage `.restoring.tmp`, the directory-move stage
+/// `.staging` — so the cap leaves room for the longest of those suffixes, with a margin.
+const MAX_DB_FILENAME_BYTES: usize = 200;
 
 /// Windows device names. A path component matching one of these — with or without an
-/// extension — cannot be created on Windows at all, so the name has to be nudged aside.
+/// extension — cannot be created on Windows at all.
 const RESERVED_DEVICE_NAMES: [&str; 22] = [
     "CON", "PRN", "AUX", "NUL", "COM1", "COM2", "COM3", "COM4", "COM5", "COM6", "COM7", "COM8",
     "COM9", "LPT1", "LPT2", "LPT3", "LPT4", "LPT5", "LPT6", "LPT7", "LPT8", "LPT9",
 ];
 
-/// Turns free-text input into a safe single filesystem path component.
+/// The error `validate_db_filename` returns. It must not start with `"Failed to"`: the
+/// frontend maps that prefix to a filesystem-permissions message.
+const ERR_INVALID_DB_FILENAME: &str = "Invalid journal filename";
+
+/// Checks that `name` is usable as a journal's database filename, without changing it.
 ///
-/// Journals no longer need a folder of their own — several can now share a directory,
-/// distinguished by `db_filename` — but a filename typed into a plain text field (the Flatpak
-/// create form's Filename input) carries none of the validation a native save dialog would
-/// have applied. The input goes straight into a path, so everything a filesystem can choke on
-/// is removed — path separators (which would silently escape the intended parent), the rest of
-/// the Windows reserved set, control characters, trailing dots and spaces (Windows strips them,
-/// so `"Work."` and `"Work"` would collide), and the device names.
+/// The filename comes from a native file dialog or from the Flatpak create form's free-text
+/// Filename field. The picker checks the exact path it will register, so this only accepts or
+/// refuses: a rewritten name would register a different file than the one the user picked.
 ///
-/// The result is a single path *component*, never a path: it contains no separator, and is
-/// never empty.
-pub fn journal_dir_name(name: &str) -> String {
-    let mut cleaned = String::new();
-    let mut pending_space = false;
-    for ch in name.chars() {
-        if ch.is_control() || matches!(ch, '<' | '>' | ':' | '"' | '/' | '\\' | '|' | '?' | '*') {
-            continue;
-        }
-        if ch.is_whitespace() {
-            // Collapse runs of whitespace, and never let one start the name.
-            pending_space = !cleaned.is_empty();
-            continue;
-        }
-        if pending_space {
-            cleaned.push(' ');
-            pending_space = false;
-        }
-        cleaned.push(ch);
+/// Refused everywhere: an empty name, `.` and `..`, the separators `/` and `\` (either would
+/// escape the chosen folder on some platform, and a config.json may move between platforms),
+/// control characters, and names longer than [`MAX_DB_FILENAME_BYTES`] UTF-8 bytes. Refused on
+/// Windows only, where the filesystem cannot hold them: the reserved characters
+/// `< > : " | ? *`, trailing dots and spaces (Windows drops them, so `"Work."` and `"Work"`
+/// would be one file), and the device names (`CON`, `NUL`, `COM1`…). These are legal names on
+/// Linux and macOS, so a file the user picked there is not refused.
+///
+/// The rules are this host's, so a `config.json` written on another OS is checked again when
+/// it is used — see [`journal_db_paths`].
+pub fn validate_db_filename(name: &str) -> Result<(), String> {
+    if is_valid_db_filename(name, cfg!(windows)) {
+        Ok(())
+    } else {
+        Err(ERR_INVALID_DB_FILENAME.to_string())
+    }
+}
+
+/// The rules behind [`validate_db_filename`], with the Windows set as a parameter so tests
+/// cover both rule sets on every platform.
+fn is_valid_db_filename(name: &str, windows_rules: bool) -> bool {
+    if name.is_empty() || name == "." || name == ".." {
+        return false;
+    }
+    if name.len() > MAX_DB_FILENAME_BYTES {
+        return false;
+    }
+    if name
+        .chars()
+        .any(|ch| ch == '/' || ch == '\\' || ch.is_control())
+    {
+        return false;
+    }
+    if !windows_rules {
+        return true;
     }
 
-    // Truncate by characters, not bytes — a byte slice can split a multi-byte character.
-    let mut cleaned: String = cleaned.chars().take(MAX_JOURNAL_DIR_NAME_LEN).collect();
-    // Windows silently drops trailing dots and spaces from a component; trimming them here
-    // keeps the name we store equal to the name on disk.
-    while cleaned.ends_with('.') || cleaned.ends_with(' ') {
-        cleaned.pop();
+    if name
+        .chars()
+        .any(|ch| matches!(ch, '<' | '>' | ':' | '"' | '|' | '?' | '*'))
+    {
+        return false;
     }
-
-    if cleaned.is_empty() {
-        return "Journal".to_string();
+    if name.ends_with('.') || name.ends_with(' ') {
+        return false;
     }
-
-    let stem = cleaned.split('.').next().unwrap_or(&cleaned);
-    if RESERVED_DEVICE_NAMES
+    let stem = name.split('.').next().unwrap_or(name);
+    !RESERVED_DEVICE_NAMES
         .iter()
         .any(|reserved| stem.eq_ignore_ascii_case(reserved))
-    {
-        cleaned.push('_');
-    }
+}
 
-    cleaned
+/// The database path and backups folder of a journal stored in `dir` as `db_filename`
+/// (`None` means `diary.db`).
+///
+/// Every live database path built from saved config goes through here. `config.json` can be
+/// copied from another OS, where a name such as `..\other.db` or `C:x.db` is one ordinary
+/// component; joined on this host it would leave `dir`. So the filename is checked with this
+/// host's [`validate_db_filename`] rules and refused, never rewritten or redirected.
+pub fn journal_db_paths(
+    dir: &Path,
+    db_filename: Option<&str>,
+) -> Result<(PathBuf, PathBuf), String> {
+    let db_filename = db_filename.unwrap_or("diary.db");
+    validate_db_filename(db_filename)?;
+    let stem = Path::new(db_filename)
+        .file_stem()
+        .and_then(|s| s.to_str())
+        .unwrap_or("diary");
+    Ok((dir.join(db_filename), dir.join("backups").join(stem)))
 }
 
 /// Returns the active journal ID from config, if any.

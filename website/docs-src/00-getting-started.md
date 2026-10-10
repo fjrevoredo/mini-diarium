@@ -3,7 +3,7 @@ title: Getting Started
 slug: getting-started
 description: System requirements, creating your first encrypted journal, setting a password, the welcome tour, multiple journals, key file auth, and local-only mode.
 order: 1
-updated: 2026-09-06
+updated: 2026-10-10
 tags: setup, password, first launch, system requirements
 ---
 
@@ -66,12 +66,13 @@ You can maintain separate journals for different purposes: personal, work, trave
 
 **Adding a journal:** Use the Journal Picker's add actions. You can create a new journal — in the default location or a folder you choose — or add an existing `diary.db`.
 
-**Where a journal can live:** any ordinary folder you can write to. Three cases are refused, with an explanation:
+**Where a journal can live:** any ordinary folder you can write to. The journal is registered under the exact filename you picked; the app never changes it. Four cases are refused, with an explanation:
 
 - **A journal already in your list.** Two journals pointing at the exact same file — the same folder *and* the same filename — are refused with "already in your list", since unlocking the second one would really be asking for the first journal's password under a different name. Journals with different filenames can share a folder without any conflict.
 
 - **A backup snapshot.** Files named `backup-*.db`, and anything inside a `backups` folder, cannot be opened as a journal, because opening one would write to it and destroy the restore point. To read an old snapshot, copy it out of the `backups` folder first and open the copy.
 - **A temporary sandbox location (Flatpak only).** On the Flathub build, browsing to a folder outside the app's sandbox returns a temporary path under `/run/user/…/doc/` rather than the real one. It works at first and stops working later, so it is refused. Use the default location, or grant the app permanent access to the folder you want with [Flatseal](https://flathub.org/apps/com.github.tchx84.Flatseal) before selecting it.
+- **A filename that cannot be used.** A filename that is empty, contains `/`, `\`, or control characters, or is longer than 200 bytes is refused. That is 200 letters of plain English text, and fewer for accented or non-Latin letters, which take 2 to 4 bytes each. The app keeps the rest of the filesystem's 255-unit limit free for the files it and SQLite create next to the journal. On Windows, names with `< > : " | ? *`, names that end with a dot or a space, and device names such as `CON` or `NUL` are refused too. Choose a different name. On Flatpak, spaces at the start and end of the Filename field are removed before the app checks the file. If you copy the app's settings to a different operating system and a saved journal filename is not valid there, the app does not open that journal automatically. It shows the journal list, and opening that journal shows the same error.
 
 **Switching journals:** Open the Journal Picker, choose the journal you want, and then unlock it. On a shared device, this lets each person select their own journal before any authentication prompt appears.
 

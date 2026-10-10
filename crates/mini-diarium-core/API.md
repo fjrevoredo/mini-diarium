@@ -349,23 +349,29 @@ The scan decrypts entries in memory per query and never persists a plaintext ind
   `load_active_journal_id`, `save_active_journal_id`, `save_journal_auto_key`,
   `set_journal_require_all_auth`
 
-### Default-location helpers
+### Location and filename helpers
 
-Both are pure — no I/O, no platform lookup — so the caller owns creating the directory and
-deciding what to do when it cannot.
+Both are pure — no I/O, no platform lookup beyond `cfg!(windows)` — so the caller owns creating
+the directory and deciding what to do when it cannot.
 
 - `default_journal_dir(app_data_dir, documents_dir: Option<&Path>) -> PathBuf` — where a new
   journal goes when the user has not picked a folder: `<documents>/Mini Diarium`, or
   `<app_data>/journals` when no documents directory is available. A *preference*, not a
   guarantee: it does not check that the result is writable. The app crate probes it and falls
   back to the `None` form when the preferred location cannot be created or written to.
-- `journal_dir_name(name: &str) -> String` — sanitises free-text input (a journal name, or a
-  user-typed `db_filename`) into a safe single filesystem path component. Strips path
-  separators and the rest of the Windows reserved set, collapses whitespace, trims trailing
-  dots and spaces, sidesteps the reserved device names (`CON`, `NUL`, `COM1`…), caps the
-  length, and returns `"Journal"` when nothing survives. The result is a single path
-  **component**, never a path: it contains no separator and is never empty, so it cannot escape
-  the parent the caller chose.
+- `validate_db_filename(name: &str) -> Result<(), String>` — accepts or refuses a journal's
+  database filename; it **never rewrites** it, because the caller has already checked that exact
+  path on disk. Refuses everywhere: an empty name, `.`/`..`, `/` and `\`, control characters,
+  and more than 200 UTF-8 bytes (room for SQLite's `-journal`/`-wal` files and the app's
+  `.restoring.tmp`/`.staging` files within every filesystem's 255-unit name limit). Refuses on
+  Windows only: `< > : " | ? *`, trailing dots and spaces, and the device names (`CON`, `NUL`,
+  `COM1`…). The error is exactly `"Invalid journal filename"`, which the frontend's
+  `mapTauriError` matches.
+- `journal_db_paths(dir, db_filename: Option<&str>) -> Result<(PathBuf, PathBuf), String>` —
+  the database path and backups folder (`dir/backups/<stem>`) of a saved journal, with `None`
+  meaning `diary.db`. Runs `validate_db_filename` with this host's rules first, because a
+  `config.json` copied from another OS can hold a name that leaves `dir` here (`..\x.db`,
+  `C:x.db`). The app builds every live database path from saved config through it.
 
 ---
 

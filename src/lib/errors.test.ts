@@ -57,6 +57,10 @@ describe('mapTauriError', () => {
       // Not a permissions problem — the filesystem bucket would be a lie here.
       expect(mapped).not.toBe(en('errors.fileOperationFailed'));
     });
+
+    it('explains a refused journal filename', () => {
+      expect(mapTauriError('Invalid journal filename')).toBe(en('errors.invalidJournalFilename'));
+    });
   });
 
   describe('reveal_backups_folder with nothing to open', () => {

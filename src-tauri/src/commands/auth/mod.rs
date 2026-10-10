@@ -1,6 +1,6 @@
 use crate::db::DatabaseConnection;
 use log::{info, warn};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 use tauri::{AppHandle, Emitter, State, Wry};
 
@@ -35,6 +35,14 @@ pub struct DiaryState {
     pub backup_ops: Arc<Mutex<()>>,
 }
 
+/// Last component of the placeholder paths used when no saved journal is usable on this host.
+///
+/// The NUL byte makes it a name that no journal can have: `validate_db_filename` refuses
+/// control characters on every host, so no registered journal's database path can equal the
+/// placeholder. No operating system accepts NUL in a path, so the standard library refuses
+/// any file operation on it and nothing can be created there.
+const NO_ACTIVE_JOURNAL: &str = "no-active-journal\0";
+
 impl DiaryState {
     pub fn new(db_path: PathBuf, backups_dir: PathBuf, app_data_dir: PathBuf) -> Self {
         Self {
@@ -45,6 +53,25 @@ impl DiaryState {
             inspection: Mutex::new(None),
             backup_ops: Arc::new(Mutex::new(())),
         }
+    }
+
+    /// The database path and backups folder startup uses when the saved active journal has a
+    /// filename that is not valid on this host. It belongs to no journal, and
+    /// [`Self::ensure_journal_selected`] refuses to create or open a database there.
+    pub fn placeholder_paths(app_data_dir: &Path) -> (PathBuf, PathBuf) {
+        (
+            app_data_dir.join(NO_ACTIVE_JOURNAL),
+            app_data_dir.join("backups").join(NO_ACTIVE_JOURNAL),
+        )
+    }
+
+    /// Refuses to create or open `db_path` when it is the startup placeholder, so a create or
+    /// unlock request while no journal is selected gets a clear error.
+    pub(crate) fn ensure_journal_selected(&self, db_path: &Path) -> Result<(), String> {
+        if db_path == Self::placeholder_paths(&self.app_data_dir).0 {
+            return Err("No journal selected".to_string());
+        }
+        Ok(())
     }
 }
 
