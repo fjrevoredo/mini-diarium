@@ -275,10 +275,7 @@ fn reopen_current(
 ) -> Result<DatabaseConnection, String> {
     let conn = open_connection(db_path)?;
     let encryption_key = cipher::Key::from_slice(key_bytes).ok_or("Invalid master key size")?;
-    let db = DatabaseConnection {
-        conn,
-        encryption_key,
-    };
+    let db = DatabaseConnection::new(conn, encryption_key);
     migrate_with_pre_migration_snapshot(&db, db_path, backups_dir)?;
     Ok(db)
 }

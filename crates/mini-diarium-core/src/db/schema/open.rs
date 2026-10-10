@@ -95,10 +95,7 @@ pub fn open_database<P1: AsRef<Path>, P2: AsRef<Path>>(
     let old_key_bytes = derive_key_from_hash(&stored_hash)?;
     let old_key = cipher::Key::from_slice(&old_key_bytes).ok_or("Invalid key size")?;
 
-    let mut db_conn = DatabaseConnection {
-        conn,
-        encryption_key: old_key,
-    };
+    let mut db_conn = DatabaseConnection::new(conn, old_key);
 
     if current_version < 2 {
         migrate_v1_to_v2(&db_conn, backups_dir.as_ref())?;
@@ -164,10 +161,7 @@ pub fn open_database_with_keypair<P1: AsRef<Path>, P2: AsRef<Path>>(
     let encryption_key =
         cipher::Key::from_slice(&master_key_bytes).ok_or("Invalid master key size")?;
 
-    let db = DatabaseConnection {
-        conn,
-        encryption_key,
-    };
+    let db = DatabaseConnection::new(conn, encryption_key);
     queries::update_slot_last_used(&db, slot_id)?;
     migrate_with_pre_migration_snapshot(&db, db_path_ref, backups_dir.as_ref())?;
     Ok(db)
@@ -215,10 +209,7 @@ pub fn open_database_auto<P1: AsRef<Path>, P2: AsRef<Path>>(
     let encryption_key =
         cipher::Key::from_slice(&master_key_bytes).ok_or("Invalid master key size")?;
 
-    let db = DatabaseConnection {
-        conn,
-        encryption_key,
-    };
+    let db = DatabaseConnection::new(conn, encryption_key);
     queries::update_slot_last_used(&db, slot_id)?;
     migrate_with_pre_migration_snapshot(&db, db_path.as_ref(), backups_dir.as_ref())?;
 
@@ -252,10 +243,7 @@ fn open_v3_with_password(
     let encryption_key =
         cipher::Key::from_slice(&master_key_bytes).ok_or("Invalid master key size")?;
 
-    let db = DatabaseConnection {
-        conn,
-        encryption_key,
-    };
+    let db = DatabaseConnection::new(conn, encryption_key);
     queries::update_slot_last_used(&db, slot_id)?;
     Ok(db)
 }
@@ -477,10 +465,10 @@ mod too_new_tests {
     #[test]
     fn test_migration_choke_point_refuses_a_newer_journal() {
         let (_dir, db_path, backups_dir) = too_new_password_journal(None);
-        let db = DatabaseConnection {
-            conn: open_connection(&db_path).unwrap(),
-            encryption_key: cipher::Key::from_slice(&[1u8; 32]).unwrap(),
-        };
+        let db = DatabaseConnection::new(
+            open_connection(&db_path).unwrap(),
+            cipher::Key::from_slice(&[1u8; 32]).unwrap(),
+        );
         let err = migrate_with_pre_migration_snapshot(&db, &db_path, &backups_dir).unwrap_err();
         assert_eq!(err, JOURNAL_TOO_NEW);
     }

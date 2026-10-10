@@ -87,10 +87,7 @@ pub fn create_database<P: AsRef<std::path::Path>>(
 
     master_key_bytes.zeroize();
 
-    Ok(DatabaseConnection {
-        conn,
-        encryption_key,
-    })
+    Ok(DatabaseConnection::new(conn, encryption_key))
 }
 
 /// Creates a new encrypted diary database using a device-generated auto key.
@@ -124,10 +121,7 @@ pub fn create_database_auto<P: AsRef<std::path::Path>>(
 
     master_key_bytes.zeroize();
 
-    Ok(DatabaseConnection {
-        conn,
-        encryption_key,
-    })
+    Ok(DatabaseConnection::new(conn, encryption_key))
 }
 
 fn create_schema(conn: &Connection) -> Result<(), String> {

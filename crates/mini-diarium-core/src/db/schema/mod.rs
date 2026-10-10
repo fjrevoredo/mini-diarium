@@ -1,5 +1,6 @@
 use crate::crypto::cipher;
 use rusqlite::Connection;
+use std::cell::Cell;
 
 pub(crate) mod compat;
 mod create;
@@ -25,9 +26,24 @@ pub(crate) use open::migrate_with_pre_migration_snapshot;
 pub struct DatabaseConnection {
     pub(crate) conn: Connection,
     pub(crate) encryption_key: cipher::Key,
+    /// Number of `with_write_transaction` units open on this connection. The helper uses it
+    /// to tell a transaction it opened from one it did not.
+    pub(crate) write_depth: Cell<u32>,
+    /// Set when a nested write unit could not be undone cleanly or found its enclosing
+    /// transaction gone; the outermost unit then rolls back instead of committing.
+    pub(crate) write_poisoned: Cell<bool>,
 }
 
 impl DatabaseConnection {
+    pub(crate) fn new(conn: Connection, encryption_key: cipher::Key) -> Self {
+        Self {
+            conn,
+            encryption_key,
+            write_depth: Cell::new(0),
+            write_poisoned: Cell::new(false),
+        }
+    }
+
     /// Returns a reference to the underlying SQLite connection.
     ///
     /// Intentionally **`pub(crate)`** — the raw handle never escapes the crate (open-core
@@ -53,10 +69,7 @@ impl DatabaseConnection {
     /// release builds — see the `test-support` feature in Cargo.toml.
     #[cfg(any(test, feature = "test-support"))]
     pub fn from_parts(conn: Connection, encryption_key: cipher::Key) -> Self {
-        Self {
-            conn,
-            encryption_key,
-        }
+        Self::new(conn, encryption_key)
     }
 }
 

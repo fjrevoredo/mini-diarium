@@ -87,12 +87,20 @@ Blanket rules, so individual entries below do not repeat them:
   `recalculate_all_word_counts`, `add_tag_to_entry`, `remove_tag_from_entry`,
   `add_attachment_to_entry`, `remove_attachment_from_entry`, and each entry of
   `backup::restore_entries_from_snapshot`. Called alone, a unit opens `BEGIN IMMEDIATE` and
-  ends with `COMMIT`, or with `ROLLBACK` on an error or a panic, so the long-lived connection
-  is never left in a half-open transaction. Called inside another unit, it nests as a
-  `SAVEPOINT`: an inner failure undoes only the inner work, and the outermost unit owns the
-  final commit. Callers must propagate an inner error: when SQLite itself rolls back the whole
-  transaction (for example `SQLITE_FULL`), the outer unit is gone too, and continuing would write
-  in autocommit mode. The lower-level `insert_entry` / `update_entry` are single-statement writes
+  ends with `COMMIT`, or attempts `ROLLBACK` on an error or a panic. If that `ROLLBACK` itself
+  fails and leaves the transaction open, later helper writes are refused (see below) until the
+  connection is dropped, which rolls the transaction back. Called inside another unit, it nests
+  as a `SAVEPOINT`: an inner failure undoes only the inner work, and the outermost unit owns the
+  final commit. The connection counts the units it has open, so the helper nests only inside a
+  unit **it** opened. It refuses, before any SQL runs, a transaction that something else opened
+  (`"write refused: an unexpected transaction is open"`), and a call made after SQLite itself
+  rolled back the whole transaction (for example `SQLITE_FULL`) under an open unit
+  (`"write refused: the enclosing write unit was rolled back"`). That second case, and a nested
+  rollback that fails, poison the outermost unit: it never commits. If its closure returns an
+  error, that error is returned unchanged; if its closure returns `Ok`, the unit rolls back and
+  returns the "enclosing write unit was rolled back" error. Callers must still propagate an
+  inner error: raw SQL that runs after a swallowed error writes in autocommit mode. The
+  lower-level `insert_entry` / `update_entry` are single-statement writes
   with no transaction of their own — they are the primitives the `*_with_images` variants
   compose.
 - **Entry lock.** A locked entry is read-only. These writes check the lock inside their write

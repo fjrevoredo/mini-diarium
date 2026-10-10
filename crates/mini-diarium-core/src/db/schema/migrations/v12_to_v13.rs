@@ -48,10 +48,7 @@ mod tests {
              );",
         )
         .unwrap();
-        DatabaseConnection {
-            conn,
-            encryption_key: cipher::Key::from_slice(&[0u8; 32]).unwrap(),
-        }
+        DatabaseConnection::new(conn, cipher::Key::from_slice(&[0u8; 32]).unwrap())
     }
 
     #[test]

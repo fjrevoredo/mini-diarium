@@ -97,6 +97,7 @@ Core write primitives do not open their own transaction. Compose them under `wit
 - Keep a primitive (for example `link_attachment`, `upsert_attachment_blob`) `pub(crate)`. A public write must be atomic alone and must enforce the rules for the rows it touches.
 - Enforce entry rules (the lock, `ERR_ENTRY_LOCKED`) in core, inside the write unit, so that the check and the write cannot be split. The app crate passes the error through; it does not add a second pre-check.
 - Propagate errors from a nested unit with `?`. If SQLite rolls back the whole transaction (for example `SQLITE_FULL`), a caller that swallows the error and keeps writing commits those writes in autocommit mode.
+- Never open a raw transaction on a connection that can reach `with_write_transaction`. Migrations are safe because they run on a handle that is not yet installed. The helper counts the units it opened and refuses to write when SQLite's state does not match that count: a transaction it did not open, or a unit whose transaction SQLite already rolled back.
 
 Current references:
 

@@ -45,6 +45,7 @@ Template:
 
 ### Internal
 - **Dependency updates (Dependabot #325, #324, #323)**: Frontend bumps for `solid-js` (1.9.17), which brings `seroval`/`seroval-plugins` (1.6.9), and the `@vitest` family (`@vitest/ui`, `vitest`, `@vitest/coverage-v8`) to a single 5.0.3. A `source-map-js` (1.2.2) override pins the transitive copy pulled by `postcss` and `css-tree`, which no direct range would move. Both lockfiles were regenerated and aligned. The `nix/package.nix` `npmDepsHash` needs a Linux-side refresh; the Nix CI workflow patches it automatically on push.
+- **The core write helper refuses a transaction it does not own (W-01)**: `with_write_transaction` used SQLite's autocommit flag alone to choose `BEGIN` or `SAVEPOINT`. So it nested inside a transaction that something else opened, and after SQLite rolled back a whole transaction it opened a new one that committed writes the outer unit reported as failed. `DatabaseConnection` now counts the helper's open units. The helper refuses both states with an error, and the outermost unit rolls back instead of committing when a nested unit lost its transaction or could not undo its work. No current code path reached either state.
 
 ## [0.7.4] - 09-10-2026
 

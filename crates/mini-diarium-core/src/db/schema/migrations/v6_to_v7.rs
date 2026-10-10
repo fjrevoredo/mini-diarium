@@ -73,10 +73,7 @@ mod tests {
              CREATE TABLE db_settings (key TEXT PRIMARY KEY, value TEXT NOT NULL);",
         )
         .unwrap();
-        let db = DatabaseConnection {
-            conn,
-            encryption_key: cipher::Key::from_slice(&[0u8; 32]).unwrap(),
-        };
+        let db = DatabaseConnection::new(conn, cipher::Key::from_slice(&[0u8; 32]).unwrap());
 
         let before: i64 = db
             .conn()

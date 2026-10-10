@@ -134,10 +134,7 @@ pub fn open_snapshot_readonly(
 
     // Same wrapper the live journal uses, so every existing read query works against a
     // snapshot unchanged. What makes it read-only is the connection inside it, not the type.
-    Ok(DatabaseConnection {
-        conn,
-        encryption_key,
-    })
+    Ok(DatabaseConnection::new(conn, encryption_key))
 }
 
 /// Lists a snapshot's entries, newest first, adapting to the schema version it was taken at.

@@ -68,10 +68,7 @@ mod tests {
                  locked INTEGER NOT NULL DEFAULT 0);",
         )
         .unwrap();
-        DatabaseConnection {
-            conn,
-            encryption_key: cipher::Key::from_slice(&[0u8; 32]).unwrap(),
-        }
+        DatabaseConnection::new(conn, cipher::Key::from_slice(&[0u8; 32]).unwrap())
     }
 
     fn table_exists(db: &DatabaseConnection, name: &str) -> bool {
@@ -153,10 +150,7 @@ mod tests {
              INSERT INTO schema_version (version) VALUES ('oops');",
         )
         .unwrap();
-        let db = DatabaseConnection {
-            conn,
-            encryption_key: cipher::Key::from_slice(&[0u8; 32]).unwrap(),
-        };
+        let db = DatabaseConnection::new(conn, cipher::Key::from_slice(&[0u8; 32]).unwrap());
 
         let err = migrate_v13_to_v14(&db).unwrap_err();
         assert!(

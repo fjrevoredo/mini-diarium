@@ -54,10 +54,7 @@ mod tests {
                  UNIQUE(family, weight));",
         )
         .unwrap();
-        DatabaseConnection {
-            conn,
-            encryption_key: cipher::Key::from_slice(&[0u8; 32]).unwrap(),
-        }
+        DatabaseConnection::new(conn, cipher::Key::from_slice(&[0u8; 32]).unwrap())
     }
 
     #[test]
@@ -156,10 +153,7 @@ mod tests {
         )
         .unwrap();
 
-        let db = DatabaseConnection {
-            conn,
-            encryption_key: cipher::Key::from_slice(&[0u8; 32]).unwrap(),
-        };
+        let db = DatabaseConnection::new(conn, cipher::Key::from_slice(&[0u8; 32]).unwrap());
 
         let err = migrate_v8_to_v9(&db).unwrap_err();
         assert!(
