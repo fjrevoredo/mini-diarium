@@ -345,7 +345,7 @@
       "@id": "https://mini-diarium.com/docs/writing-entries/#article",
       "headline": "Writing Entries",
       "description": "Mini Diarium's rich text editor supports formatting, images, file attachments, named links, tags, and multiple entries per day. Auto-save and RTL language support are built in.",
-      "dateModified": "2026-10-08T00:00:00Z",
+      "dateModified": "2026-10-10T00:00:00Z",
       "keywords": "editor, formatting, entries, writing, attachments",
       "publisher": {
         "@type": "Organization",
@@ -602,7 +602,7 @@
         <li>Click the remove (×) icon to detach a file. You are asked to confirm first.</li>
         </ul>
         <p>Mini Diarium never opens attachments itself. To view a file, save a copy and open it with another app.</p>
-        <h3 id="inline-references">Inline references</h3><p>Click the insert-reference icon on a chip to place a small 📎 reference at the cursor in the entry text. The reference only points to the attachment; the chip in the strip remains the source of truth. Click a reference to save a copy of its file. If you remove the attachment, its references stay in the text and show as a missing attachment.</p>
+        <h3 id="inline-references">Inline references</h3><p>Click the insert-reference icon on a chip to place a small 📎 reference at the cursor in the entry text. The reference only points to the attachment; the chip in the strip remains the source of truth. Click a reference to save a copy of its file. With the keyboard, press <code>Tab</code> to move to a reference and press <code>Enter</code> or <code>Space</code>. This also works on a locked entry. If you remove the attachment, its references stay in the text and show as a missing attachment.</p>
         <h3 id="how-attachments-are-stored">How attachments are stored</h3><p>Attachment contents and file names are encrypted with your master key inside <code>diary.db</code>, like entry text and images. Each unique file is stored once, even if you attach it to several entries. The file type (for example <code>application/pdf</code>) and the size are stored unencrypted, the same as for images. Saving a copy decrypts the file straight to the path you choose; no temporary unencrypted copy is written anywhere else.</p>
         <p>Large attachments make the journal file and its backups larger. Deleting an entry deletes its attachments when no other entry uses them.</p>
         <h3 id="older-app-versions">Older app versions</h3><p>Versions before 0.7.4 do not know attachments. If they open a journal that has attachments, they cannot delete an entry that has files. If they edit and save such an entry, they remove its inline 📎 references; the files in the strip are kept. Update Mini Diarium on every computer that shares the journal.</p>

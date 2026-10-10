@@ -11,6 +11,10 @@ export interface AttachmentRefOptions {
   missingLabel: () => string;
   /** Tooltip for a resolved ref. */
   titleFor: (name: string) => string;
+  /** Accessible name for a resolved ref (it acts as a "save a copy" button). */
+  ariaLabelFor: (name: string) => string;
+  /** Accessible name for a ref while the entry's attachment list is still loading. */
+  loadingLabel: () => string;
 }
 
 declare module '@tiptap/core' {
@@ -47,6 +51,8 @@ export const AttachmentRef = Node.create<AttachmentRefOptions>({
     return {
       missingLabel: () => 'Missing attachment',
       titleFor: (name: string) => name,
+      ariaLabelFor: (name: string) => `Save a copy of ${name}`,
+      loadingLabel: () => 'Loading attachment',
     };
   },
 
@@ -114,17 +120,65 @@ export const AttachmentRef = Node.create<AttachmentRefOptions>({
           dom.classList.toggle('attachment-ref--missing', missing);
           dom.textContent = `📎 ${attachment ? attachment.name : missing ? this.options.missingLabel() : '…'}`;
           dom.title = attachment ? this.options.titleFor(attachment.name) : '';
+          // Only a resolved ref is a control: it is a focusable button. A missing or
+          // still-loading ref is a non-interactive image and leaves the tab order.
           dom.setAttribute('role', attachment ? 'button' : 'img');
+          if (attachment) {
+            dom.tabIndex = 0;
+          } else {
+            // Removing the tab stop does not move focus that is already here. A key on a
+            // focused, now-inert ref would reach ProseMirror and edit at its old selection,
+            // so drop focus to the page. Only when this ref owns it: focus elsewhere stays,
+            // and the editor is not focused for the user. Blur first: an element that is
+            // no longer focusable can ignore blur().
+            if (dom.ownerDocument.activeElement === dom) dom.blur();
+            dom.removeAttribute('tabindex');
+          }
+          // role="img" takes no name from its content, so every state sets one explicitly.
+          dom.setAttribute(
+            'aria-label',
+            attachment
+              ? this.options.ariaLabelFor(attachment.name)
+              : missing
+                ? this.options.missingLabel()
+                : this.options.loadingLabel(),
+          );
         });
         return disposeRoot;
       });
 
+      // The id when it resolves to one of the entry's attachments, else null.
+      const resolvedId = (): number | null =>
+        id !== null && entryAttachments().some((a) => a.id === id) ? id : null;
+
       const handleClick = (event: MouseEvent) => {
-        if (id === null || !entryAttachments().some((a) => a.id === id)) return;
+        const target = resolvedId();
+        if (target === null) return;
         event.preventDefault();
-        requestSaveAttachmentCopy(id);
+        requestSaveAttachmentCopy(target);
       };
+
+      // Enter and Space activate the button on keydown (a native <button> activates on
+      // Space at keyup; keydown lets one handler also stop the key). They stop here so
+      // ProseMirror does not split the paragraph or type a space, and the document-level
+      // shortcut handler never sees them. Saving a copy does not edit the entry, so it
+      // also works when the editor is read-only (locked entry).
+      const handleKeyDown = (event: KeyboardEvent) => {
+        if (event.target !== dom || event.isComposing) return;
+        if (event.key !== 'Enter' && event.key !== ' ') return;
+        // Combos with Ctrl/Cmd/Alt belong to the editor and app shortcuts.
+        if (event.ctrlKey || event.metaKey || event.altKey) return;
+        const target = resolvedId();
+        if (target === null) return;
+        event.preventDefault();
+        event.stopPropagation();
+        // A held key auto-repeats; open one save dialog, not one per repeat.
+        if (event.repeat) return;
+        requestSaveAttachmentCopy(target);
+      };
+
       dom.addEventListener('click', handleClick);
+      dom.addEventListener('keydown', handleKeyDown);
 
       return {
         dom,
@@ -132,6 +186,7 @@ export const AttachmentRef = Node.create<AttachmentRefOptions>({
         ignoreMutation: () => true,
         destroy: () => {
           dom.removeEventListener('click', handleClick);
+          dom.removeEventListener('keydown', handleKeyDown);
           dispose();
         },
       };

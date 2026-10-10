@@ -3,7 +3,7 @@ title: Writing Entries
 slug: writing-entries
 description: Mini Diarium's rich text editor supports formatting, images, file attachments, named links, tags, and multiple entries per day. Auto-save and RTL language support are built in.
 order: 2
-updated: 2026-10-08
+updated: 2026-10-10
 tags: editor, formatting, entries, writing, attachments
 ---
 
@@ -108,7 +108,7 @@ Mini Diarium never opens attachments itself. To view a file, save a copy and ope
 
 ### Inline references
 
-Click the insert-reference icon on a chip to place a small 📎 reference at the cursor in the entry text. The reference only points to the attachment; the chip in the strip remains the source of truth. Click a reference to save a copy of its file. If you remove the attachment, its references stay in the text and show as a missing attachment.
+Click the insert-reference icon on a chip to place a small 📎 reference at the cursor in the entry text. The reference only points to the attachment; the chip in the strip remains the source of truth. Click a reference to save a copy of its file. With the keyboard, press `Tab` to move to a reference and press `Enter` or `Space`. This also works on a locked entry. If you remove the attachment, its references stay in the text and show as a missing attachment.
 
 ### How attachments are stored
 

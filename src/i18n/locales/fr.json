@@ -755,7 +755,9 @@
     "confirmRemoveWithRefs": "Retirer « {{ name }} » de cette entrée ? Les références dans le texte apparaîtront comme manquantes.",
     "addFailed": "Impossible de joindre « {{ name }} » : {{ error }}",
     "missing": "Pièce jointe manquante",
-    "refTitle": "Cliquez pour enregistrer une copie de {{ name }}"
+    "refTitle": "Cliquez pour enregistrer une copie de {{ name }}",
+    "refAria": "Enregistrer une copie de {{ name }}",
+    "refLoading": "Chargement de la pièce jointe"
   },
   "onboarding": {
     "title": "Bienvenue dans Mini Diarium",

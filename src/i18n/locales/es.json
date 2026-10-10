@@ -755,7 +755,9 @@
     "confirmRemoveWithRefs": "¿Quitar «{{ name }}» de esta entrada? Las referencias en el texto se mostrarán como ausentes.",
     "addFailed": "No se pudo adjuntar «{{ name }}»: {{ error }}",
     "missing": "Adjunto ausente",
-    "refTitle": "Haz clic para guardar una copia de {{ name }}"
+    "refTitle": "Haz clic para guardar una copia de {{ name }}",
+    "refAria": "Guardar una copia de {{ name }}",
+    "refLoading": "Cargando adjunto"
   },
   "onboarding": {
     "title": "Bienvenido a Mini Diarium",

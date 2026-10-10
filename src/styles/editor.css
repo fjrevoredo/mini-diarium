@@ -154,6 +154,12 @@
   outline: 2px solid var(--editor-link-color);
 }
 
+/* Keyboard focus on a resolved ref (it is a focusable "save a copy" button) */
+.ProseMirror .attachment-ref:focus-visible {
+  outline: 2px solid var(--editor-link-color);
+  outline-offset: 1px;
+}
+
 /* Explicit underline — WebKit/Blink can strip text-decoration inside contenteditable */
 .ProseMirror u {
   text-decoration: underline;

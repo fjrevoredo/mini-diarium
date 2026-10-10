@@ -755,7 +755,9 @@
     "confirmRemoveWithRefs": "Rimuovere «{{ name }}» da questa voce? I riferimenti nel testo verranno mostrati come mancanti.",
     "addFailed": "Impossibile allegare «{{ name }}»: {{ error }}",
     "missing": "Allegato mancante",
-    "refTitle": "Fai clic per salvare una copia di {{ name }}"
+    "refTitle": "Fai clic per salvare una copia di {{ name }}",
+    "refAria": "Salva una copia di {{ name }}",
+    "refLoading": "Caricamento allegato"
   },
   "onboarding": {
     "title": "Benvenuto in Mini Diarium",

@@ -251,6 +251,8 @@ export default function DiaryEditor(props: DiaryEditorProps) {
         AttachmentRef.configure({
           missingLabel: () => t('attachments.missing'),
           titleFor: (name) => t('attachments.refTitle', { name }),
+          ariaLabelFor: (name) => t('attachments.refAria', { name }),
+          loadingLabel: () => t('attachments.refLoading'),
         }),
       ],
       content: props.content,

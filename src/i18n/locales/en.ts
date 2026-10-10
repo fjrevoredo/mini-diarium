@@ -902,6 +902,8 @@ const en = {
     addFailed: 'Could not attach "{{ name }}": {{ error }}',
     missing: 'Missing attachment',
     refTitle: 'Click to save a copy of {{ name }}',
+    refAria: 'Save a copy of {{ name }}',
+    refLoading: 'Loading attachment',
   },
 
   /** Onboarding tour — first-run step-by-step guide */
