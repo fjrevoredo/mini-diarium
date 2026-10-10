@@ -8,11 +8,12 @@
 //! `read_file_bytes` / `write_pdf_file` in `files.rs`; each command still validates what it
 //! can on its own (regular file, size, extension match).
 
-use crate::commands::auth::{with_unlocked_db, DiaryState};
+use crate::commands::auth::{with_same_session, with_unlocked_db, DiaryState};
+use crate::commands::run_blocking;
 use crate::db::{self, AttachmentSummary};
 use std::io::Read;
 use std::path::{Path, PathBuf};
-use tauri::State;
+use tauri::{AppHandle, Manager, State};
 use zeroize::Zeroizing;
 
 const ERR_NOT_FOUND: &str = "Attachment not found";
@@ -145,27 +146,50 @@ pub(crate) fn add_entry_attachment_inner(
     path: &str,
     state: &DiaryState,
 ) -> Result<AttachmentSummary, String> {
-    // Core refuses a locked entry with `db::ERR_ENTRY_LOCKED` (TODO-0071). The source file
-    // is read before core checks the lock, so a bad file on a locked entry reports the file
-    // error, not the lock error (archived plan DEC-009, review W-05). This order is pinned by
-    // `test_locked_entry_reports_file_error_before_lock_error`; TODO-0134 owns any change.
-    // Do not add an app-side lock pre-check: it splits the check from core's write unit.
-    with_unlocked_db(state, |db| {
-        let (name, bytes) = read_source_file(Path::new(path))?;
+    add_entry_attachment_with(entry_id, path, state, read_source_file)
+}
+
+/// Error order: journal locked, then source-file errors, then core's errors (name and size
+/// validation, then `db::ERR_ENTRY_LOCKED`, TODO-0071).
+///
+/// The source file is read and validated **without** the journal mutex: every lock path
+/// (auto-lock, journal switch) waits on that mutex, and a slow source must not hold it up.
+/// The read also stays outside core's `BEGIN IMMEDIATE` unit, which holds SQLite's write
+/// reservation. So a bad file on a locked entry reports the file error, not the lock error
+/// (`test_locked_entry_reports_file_error_before_lock_error`). Do not add an app-side entry
+/// lock pre-check: it splits the check from core's write unit.
+///
+/// `read` is a parameter only so tests can act between the read and the write.
+fn add_entry_attachment_with(
+    entry_id: i64,
+    path: &str,
+    state: &DiaryState,
+    read: impl FnOnce(&Path) -> Result<(String, Zeroizing<Vec<u8>>), String>,
+) -> Result<AttachmentSummary, String> {
+    let session = with_unlocked_db(state, |db| Ok(db.session_id()))?;
+    let (name, bytes) = read(Path::new(path))?;
+    // `entry_id` belongs to the session that was open before the read. If the journal was
+    // locked, reopened, switched, or replaced meanwhile, the id may name another entry.
+    with_same_session(state, session, "Journal must be unlocked", |db| {
         db::add_attachment_to_entry(db, entry_id, &name, &bytes)
     })
 }
 
 /// Encrypts the file at `path` into the journal and attaches it to the entry.
 ///
-/// Only the basename is stored, as the per-entry attachment name.
+/// Only the basename is stored, as the per-entry attachment name. `async`: reading,
+/// fingerprinting, and encrypting up to `MAX_STORED_BLOB_BYTES` runs off the WebView event
+/// thread (see [`run_blocking`]).
 #[tauri::command]
-pub fn add_entry_attachment(
+pub async fn add_entry_attachment(
     entry_id: i64,
     path: String,
-    state: State<DiaryState>,
+    app: AppHandle,
 ) -> Result<AttachmentSummary, String> {
-    add_entry_attachment_inner(entry_id, &path, &state)
+    run_blocking(app, move |app| {
+        add_entry_attachment_inner(entry_id, &path, &app.state::<DiaryState>())
+    })
+    .await
 }
 
 pub(crate) fn remove_entry_attachment_inner(
@@ -292,6 +316,35 @@ mod tests {
             self.dir.path().join(name).to_string_lossy().to_string()
         }
 
+        /// A fresh connection to the journal file at `path` (password `test`).
+        fn reopen(&self, path: &Path) -> db::DatabaseConnection {
+            db::open_database(path, "test".to_string(), self.dir.path().join("backups")).unwrap()
+        }
+
+        /// A second journal whose only entry has the same id as `entry_id`.
+        fn other_journal(&self) -> tempfile::NamedTempFile {
+            let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+            let other = create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+            let now = "2024-01-01T00:00:00Z".to_string();
+            let id = db::insert_entry(
+                &other,
+                &DiaryEntry {
+                    id: 0,
+                    date: "2024-07-01".to_string(),
+                    title: "Other".to_string(),
+                    text: "<p>other</p>".to_string(),
+                    word_count: 1,
+                    date_created: now.clone(),
+                    date_updated: now,
+                    metadata: None,
+                    locked: false,
+                },
+            )
+            .unwrap();
+            assert_eq!(id, self.entry_id, "both journals must share the entry id");
+            tmp
+        }
+
         fn lock_entry(&self) {
             let guard = self.state.db.lock().unwrap();
             db::set_entry_locked(guard.as_ref().unwrap(), self.entry_id, true).unwrap();
@@ -378,9 +431,9 @@ mod tests {
         assert_eq!(std::fs::read(&dest).unwrap(), b"hello");
     }
 
-    /// Characterization test (review W-05): the source file is read before core checks the
-    /// lock, so a bad file on a locked entry reports the file error. TODO-0134 updates or
-    /// replaces this test if it changes the order.
+    /// Error-order contract (review W-05, TODO-0134): the source file is read before core
+    /// checks the entry lock, outside the journal mutex and outside the write unit, so a bad
+    /// file on a locked entry reports the file error. A locked journal still comes first.
     #[test]
     fn test_locked_entry_reports_file_error_before_lock_error() {
         let f = fixture("locked_file_error");
@@ -396,6 +449,111 @@ mod tests {
             add_entry_attachment_inner(f.entry_id, &valid, &f.state).unwrap_err(),
             ERR_ENTRY_LOCKED
         );
+        assert!(list_entry_attachments_inner(f.entry_id, &f.state)
+            .unwrap()
+            .is_empty());
+
+        // A locked journal is reported before any file error.
+        let open_db = f.state.db.lock().unwrap().take();
+        let err = add_entry_attachment_inner(f.entry_id, &empty, &f.state).unwrap_err();
+        assert_eq!(err, "Journal must be unlocked");
+        *f.state.db.lock().unwrap() = open_db;
+    }
+
+    #[test]
+    fn test_add_reads_the_source_without_holding_the_journal_mutex() {
+        let f = fixture("read_outside_mutex");
+        let src = f.write_file("a.txt", b"a");
+
+        let added = add_entry_attachment_with(f.entry_id, &src, &f.state, |path| {
+            assert!(
+                f.state.db.try_lock().is_ok(),
+                "the journal mutex must be free while the source file is read"
+            );
+            read_source_file(path)
+        })
+        .unwrap();
+        assert_eq!(added.name, "a.txt");
+    }
+
+    #[test]
+    fn test_add_refuses_when_the_journal_locks_during_the_read() {
+        let f = fixture("locked_during_read");
+        let src = f.write_file("a.txt", b"a");
+
+        let mut taken = None;
+        let err = add_entry_attachment_with(f.entry_id, &src, &f.state, |path| {
+            taken = f.state.db.lock().unwrap().take();
+            read_source_file(path)
+        })
+        .unwrap_err();
+        assert_eq!(err, "Journal must be unlocked");
+
+        *f.state.db.lock().unwrap() = taken;
+        assert!(list_entry_attachments_inner(f.entry_id, &f.state)
+            .unwrap()
+            .is_empty());
+    }
+
+    #[test]
+    fn test_add_refuses_when_the_same_journal_is_locked_and_unlocked_during_the_read() {
+        let f = fixture("relocked_during_read");
+        let src = f.write_file("a.txt", b"a");
+
+        // Same file, same path: only the session tells the two apart.
+        let err = add_entry_attachment_with(f.entry_id, &src, &f.state, |path| {
+            drop(f.state.db.lock().unwrap().take());
+            *f.state.db.lock().unwrap() = Some(f.reopen(f._tmp.path()));
+            read_source_file(path)
+        })
+        .unwrap_err();
+        assert_eq!(err, "Journal must be unlocked");
+        assert!(list_entry_attachments_inner(f.entry_id, &f.state)
+            .unwrap()
+            .is_empty());
+    }
+
+    #[test]
+    fn test_add_refuses_after_a_switch_to_another_journal_and_back() {
+        let f = fixture("a_b_a_during_read");
+        let other = f.other_journal();
+        let src = f.write_file("a.txt", b"a");
+
+        let err = add_entry_attachment_with(f.entry_id, &src, &f.state, |path| {
+            let a = f.state.db.lock().unwrap().take();
+            *f.state.db.lock().unwrap() = Some(f.reopen(other.path()));
+            drop(a);
+            drop(f.state.db.lock().unwrap().take());
+            *f.state.db.lock().unwrap() = Some(f.reopen(f._tmp.path()));
+            read_source_file(path)
+        })
+        .unwrap_err();
+        assert_eq!(err, "Journal must be unlocked");
+        assert!(list_entry_attachments_inner(f.entry_id, &f.state)
+            .unwrap()
+            .is_empty());
+        let b = f.reopen(other.path());
+        assert!(db::list_entry_attachments(&b, f.entry_id)
+            .unwrap()
+            .is_empty());
+    }
+
+    #[test]
+    fn test_add_refuses_when_the_journal_file_is_replaced_at_the_same_path() {
+        let f = fixture("replaced_during_read");
+        let other = f.other_journal();
+        let src = f.write_file("a.txt", b"a");
+
+        // Like a whole-journal restore: another database now sits at the same path, and
+        // entry id 1 there is a different entry.
+        let err = add_entry_attachment_with(f.entry_id, &src, &f.state, |path| {
+            drop(f.state.db.lock().unwrap().take());
+            std::fs::copy(other.path(), f._tmp.path()).unwrap();
+            *f.state.db.lock().unwrap() = Some(f.reopen(f._tmp.path()));
+            read_source_file(path)
+        })
+        .unwrap_err();
+        assert_eq!(err, "Journal must be unlocked");
         assert!(list_entry_attachments_inner(f.entry_id, &f.state)
             .unwrap()
             .is_empty());

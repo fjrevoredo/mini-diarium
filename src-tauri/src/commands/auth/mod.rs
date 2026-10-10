@@ -184,6 +184,30 @@ where
     f(db)
 }
 
+/// Like [`with_unlocked_db`], but only while the open connection is still the session
+/// `expected` (a [`DatabaseConnection::session_id`] read earlier under this mutex);
+/// otherwise returns `changed`. The check and `f` run under one guard.
+///
+/// For a command that releases the DB mutex for slow work (a file read, formatting) and
+/// takes it again: ids it read before belong to that session. A path compare is not enough:
+/// lock and re-unlock, A → B → A, and a restore that replaces the file keep the path.
+pub(crate) fn with_same_session<F, T>(
+    state: &DiaryState,
+    expected: u64,
+    changed: &str,
+    f: F,
+) -> Result<T, String>
+where
+    F: FnOnce(&DatabaseConnection) -> Result<T, String>,
+{
+    with_unlocked_db(state, |db| {
+        if db.session_id() != expected {
+            return Err(changed.to_string());
+        }
+        f(db)
+    })
+}
+
 mod auth_core;
 mod auth_directory;
 mod auth_identity;

@@ -221,7 +221,7 @@ A nested unit sees its parent's uncommitted rows (a savepoint is part of the sam
 
 ## W-05 — The attachment command reads the file before the lock check (P3, new behavior)
 
-**Status:** kept as the DEC-009 trade-off 2026-10-10. `test_locked_entry_reports_file_error_before_lock_error` pins the current error order (and checks that a valid file on the same entry returns `ERR_ENTRY_LOCKED`). TODO-0134 owns any change and lists the constraints: no app-crate lock pre-check, no file I/O inside `BEGIN IMMEDIATE`.
+**Status:** lock-scope fix, read-before-entry-lock order retained (TODO-0134, 2026-10-10). The command now reads the source file before it takes the journal mutex, re-checks under that mutex that the same journal session (`session_id`) is open, and then calls core. The error order (file error before `ERR_ENTRY_LOCKED`) is kept as the trade-off and pinned by `test_locked_entry_reports_file_error_before_lock_error`. No app-crate lock pre-check, no file I/O inside `BEGIN IMMEDIATE`.
 
 **Verdict:** CONFIRMED. Recorded as a trade-off in DEC-009.
 

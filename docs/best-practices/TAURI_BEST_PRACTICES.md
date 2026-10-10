@@ -95,6 +95,14 @@ Better:
 
 Use a typed enum or separate function so each mode is explicit.
 
+### Keep Heavy Work Off The Event Thread
+
+On Windows a synchronous command runs on the WebView2 event thread: the window cannot repaint or take input until it returns. A command that reads, encrypts, decrypts, or writes multi-megabyte data (attach a file, restore from a backup, plugin export), or that can wait on a mutex such work holds (`close_backup` waits on a running restore), is `async` and runs its synchronous command core through `commands::run_blocking`. The closure must be `'static`, so it reaches managed state through the `AppHandle` (`app.state::<DiaryState>()`). The frontend wrapper does not change. Known exceptions that are still synchronous: `save_attachment_copy`, the direct `export_json`/`export_markdown` commands, and `lock_diary`/`switch_journal` (which wait for a running restore batch).
+
+- Do file I/O before taking the journal mutex when the command can.
+- A command that releases the journal mutex and takes it again must check that the same **session** is still open before it uses ids it read earlier: capture `db.session_id()` under the mutex, then use `with_same_session` (check and use under one guard). A `db_path` compare is not enough: lock and re-unlock, A → B → A, and a whole-journal restore keep the path.
+- Never do file I/O inside a core write unit (`BEGIN IMMEDIATE` holds SQLite's write reservation).
+
 ### Put Behavior In Testable Command Cores
 
 Prefer stable command-core helpers for important behavior. A full Tauri app harness is useful for integration coverage, but command policy should also be testable without window/runtime setup.

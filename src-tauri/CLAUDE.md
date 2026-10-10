@@ -74,6 +74,8 @@ pub fn my_command(arg: String, state: State<DiaryState>) -> Result<ReturnType, S
 
 All commands return `Result<T, String>`. Register in both `commands/mod.rs` and `generate_handler![]` in `lib.rs`.
 
+A command that handles multi-megabyte data is `async` and runs its command core through `commands::run_blocking`, because on Windows a synchronous command blocks the WebView2 event thread. A command that releases the DB mutex and takes it again re-checks the connection's `session_id()` with `with_same_session`, never only the path (TODO-0134; see [Tauri best practices](../docs/best-practices/TAURI_BEST_PRACTICES.md) "Keep Heavy Work Off The Event Thread", which also lists the commands that are still synchronous).
+
 For command design rules that should not regress, see:
 
 - [Tauri best practices](../docs/best-practices/TAURI_BEST_PRACTICES.md) for command registration, IPC validation, mapped error strings, and testable command cores.

@@ -81,6 +81,12 @@ Blanket rules, so individual entries below do not repeat them:
   operates on an already-unlocked journal; obtaining one is the job of the
   `create_database*` / `open_database*` constructors. The single exception is
   `db::peek_auth_slot_types`, which takes a **path** and needs neither a handle nor a key.
+- **Session identity.** `DatabaseConnection::session_id() -> u64` is unique within the process
+  and never reused: every open (create, unlock, re-unlock of the same file, the reopen after a
+  restore) gets a new id. A caller that drops its lock on the handle and takes it again must
+  compare session ids, not paths, before it uses ids it read earlier: lock and re-unlock,
+  A → B → A, and a file replaced at the same path all keep the path. Compare and use the handle
+  under one lock (the app's `with_same_session`).
 - **Transactions.** Every composed write runs as one atomic write unit through the
   crate-private `with_write_transaction` (`db/queries/transaction.rs`):
   `insert_entry_with_images`, `update_entry_with_images`, `delete_entry_by_id`,
@@ -115,6 +121,10 @@ Blanket rules, so individual entries below do not repeat them:
   export it. Call `update_entry_with_images` to edit an existing entry.
   Journal-wide tag operations (`delete_tag`, `rename_tag`) also reach locked entries: deleting
   a tag removes it from every entry through `ON DELETE CASCADE`.
+  Input validation comes before the lock check, so invalid input on a locked entry returns the
+  validation error (for example an empty attachment), not `ERR_ENTRY_LOCKED`. A caller that
+  reads the input from a file (the app's `add_entry_attachment`) reads and validates it before
+  the call, never inside the write unit: `BEGIN IMMEDIATE` holds SQLite's write reservation.
 - **Foreign keys.** Connections are always opened through `db::schema`'s `open_connection`,
   which sets the per-connection `PRAGMA foreign_keys = ON` that all `ON DELETE CASCADE` /
   `RESTRICT` declarations depend on.

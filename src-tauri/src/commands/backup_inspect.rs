@@ -17,12 +17,13 @@
 //! writing.
 
 use log::{info, warn};
-use tauri::State;
+use tauri::{AppHandle, Manager, State};
 
 use crate::backup::{
     self, SnapshotCredential, SnapshotCredentialReport, SnapshotEntry, SnapshotEntryDiff,
 };
 use crate::commands::auth::DiaryState;
+use crate::commands::run_blocking;
 use crate::db::DatabaseConnection;
 
 /// A snapshot currently open for reading, and which one it is.
@@ -258,12 +259,19 @@ pub struct RestoreEntriesSummary {
 /// Requires an unlocked journal and an open inspection, the same requirements
 /// [`list_backup_entries_with_status`] has: this reads full entry content from the snapshot,
 /// not the preview-only fields that cross the IPC boundary elsewhere in this module.
+///
+/// `async`: decrypting and re-encrypting each entry's attachments runs off the WebView event
+/// thread (see [`run_blocking`]). The journal and inspection mutexes are still held for the
+/// whole batch, so a lock request waits until the batch ends.
 #[tauri::command]
-pub fn restore_entries_from_backup(
+pub async fn restore_entries_from_backup(
     entry_ids: Vec<i64>,
-    state: State<DiaryState>,
+    app: AppHandle,
 ) -> Result<RestoreEntriesSummary, String> {
-    restore_entries_from_backup_inner(entry_ids, &state)
+    run_blocking(app, move |app| {
+        restore_entries_from_backup_inner(entry_ids, &app.state::<DiaryState>())
+    })
+    .await
 }
 
 /// The testable core of [`restore_entries_from_backup`]. See [`open_backup_readonly_inner`].
@@ -318,10 +326,17 @@ pub(crate) fn restore_entries_from_backup_inner(
 }
 
 /// Closes the open snapshot, zeroizing its master key. Closing nothing is not an error.
+///
+/// `async`: the teardown waits on the `inspection` mutex, which a running
+/// [`restore_entries_from_backup`] batch holds until it ends. Waiting here keeps that wait
+/// off the WebView event thread (see [`run_blocking`]).
 #[tauri::command]
-pub fn close_backup(state: State<DiaryState>) -> Result<(), String> {
-    close_inspection(&state);
-    Ok(())
+pub async fn close_backup(app: AppHandle) -> Result<(), String> {
+    run_blocking(app, |app| {
+        close_inspection(&app.state::<DiaryState>());
+        Ok(())
+    })
+    .await
 }
 
 /// Drops any open inspection connection.

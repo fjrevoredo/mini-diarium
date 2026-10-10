@@ -132,6 +132,7 @@ Unexpected direct calls outside migration plumbing need review.
 Mutex guards should be scoped so the reader can see when they are released.
 
 - Clone path/config values out of state before opening databases or doing file I/O.
+- Read and validate input files before taking the journal mutex. When a command takes the mutex again, it checks the connection's `session_id()` (not the path) and uses the handle under the same guard: `with_same_session` (`add_entry_attachment_inner`, plugin export assets).
 - Drop DB guards before backup rotation, menu updates, or event emission.
 - Do not hold locks across async work.
 - Avoid changing user-facing lock errors casually; frontend sanitization may map those strings.

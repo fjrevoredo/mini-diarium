@@ -1,10 +1,13 @@
-use crate::commands::auth::DiaryState;
+use crate::commands::auth::{with_same_session, DiaryState};
 use crate::commands::export::ExportResult;
 use crate::commands::import::ImportResult;
+use crate::commands::run_blocking;
+use crate::export::AttachmentAsset;
 use crate::plugin::{PluginInfo, PluginRegistry};
 use log::{debug, error, info};
 use std::sync::Mutex;
-use tauri::State;
+use tauri::{AppHandle, Manager, State};
+use zeroize::Zeroizing;
 
 #[tauri::command]
 pub fn list_import_plugins(
@@ -88,28 +91,67 @@ pub fn run_import_plugin(
     Ok(result)
 }
 
+/// Exports entries with an export plugin to `file_path`, plus a Markdown export's `assets/`.
+///
+/// `async`: formatting, writing, and decrypting each attachment asset runs off the WebView
+/// event thread (see [`run_blocking`]).
 #[tauri::command]
-pub fn run_export_plugin(
+pub async fn run_export_plugin(
     plugin_id: String,
     file_path: String,
     date_from: Option<String>,
     date_to: Option<String>,
-    state: State<DiaryState>,
-    registry: State<Mutex<PluginRegistry>>,
+    app: AppHandle,
+) -> Result<ExportResult, String> {
+    run_blocking(app, move |app| {
+        run_export_plugin_inner(
+            plugin_id,
+            file_path,
+            date_from,
+            date_to,
+            &app.state::<DiaryState>(),
+            &app.state::<Mutex<PluginRegistry>>(),
+        )
+    })
+    .await
+}
+
+/// Reads a planned attachment asset, only from the journal session the export read.
+///
+/// The DB lock is released for formatting and re-taken per attachment. The asset plan holds
+/// entry and attachment ids of that session; ids repeat across journals and across a
+/// replaced file, so after a lock, switch, or reopen the same ids could name another
+/// journal's files. The session check and the read share one guard; the file write that
+/// follows runs without it.
+fn read_asset_in_session(
+    state: &DiaryState,
+    session: u64,
+) -> impl FnMut(&AttachmentAsset) -> Result<Zeroizing<Vec<u8>>, String> + '_ {
+    move |asset| {
+        with_same_session(
+            state,
+            session,
+            "The journal changed during the export",
+            |db| super::export::read_attachment_asset(db, asset),
+        )
+    }
+}
+
+fn run_export_plugin_inner(
+    plugin_id: String,
+    file_path: String,
+    date_from: Option<String>,
+    date_to: Option<String>,
+    state: &DiaryState,
+    registry: &Mutex<PluginRegistry>,
 ) -> Result<ExportResult, String> {
     info!(
         "Running export plugin '{}' to file: {}",
         plugin_id, file_path
     );
 
-    // The journal this export reads, pinned for the asset step below (see there).
-    let export_db_path = state
-        .db_path
-        .lock()
-        .map_err(|_| "State lock poisoned".to_string())?
-        .clone();
-
-    let (entries, tags, attachments) = {
+    // `session` pins the open journal session these entries come from, for the asset step.
+    let (session, entries, tags, attachments) = {
         let db_state = state
             .db
             .lock()
@@ -123,7 +165,7 @@ pub fn run_export_plugin(
         let entries = crate::db::resolve_image_refs_in_entries(db, entries)?;
         let tags = crate::db::get_tags_names_map(db)?;
         let attachments = crate::db::get_attachments_map(db)?;
-        (entries, tags, attachments)
+        (db.session_id(), entries, tags, attachments)
     };
     let entries_exported = entries.len();
     debug!(
@@ -152,27 +194,11 @@ pub fn run_export_plugin(
         err
     })?;
 
-    // The DB lock was released for formatting; re-take it per attachment to decrypt it. The
-    // asset plan holds entry/attachment ids of the journal read above. Ids repeat across
-    // journals, so if the user switched journals meanwhile, reading them now would put the
-    // other journal's files into this export: refuse instead.
     super::export::write_export_assets(
         &file_path,
         &output.assets,
         &output.attachment_assets,
-        |asset| {
-            let same_journal = *state
-                .db_path
-                .lock()
-                .map_err(|_| "State lock poisoned".to_string())?
-                == export_db_path;
-            if !same_journal {
-                return Err("The journal changed during the export".to_string());
-            }
-            crate::commands::auth::with_unlocked_db(&state, |db| {
-                super::export::read_attachment_asset(db, asset)
-            })
-        },
+        read_asset_in_session(state, session),
     )?;
 
     info!(
@@ -207,6 +233,108 @@ mod tests {
         let list = registry.list_exporters();
         assert_eq!(list.len(), 3);
         assert!(list.iter().all(|p| p.builtin));
+    }
+
+    /// A journal (password `test`) whose first entry has one attachment with `bytes`, so
+    /// two of them share entry id 1 and attachment id 1.
+    fn journal_with_attachment(bytes: &[u8]) -> (tempfile::NamedTempFile, AttachmentAsset) {
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let db =
+            crate::db::create_database(tmp.path().to_str().unwrap(), "test".to_string()).unwrap();
+        let entry_id = crate::db::insert_entry(
+            &db,
+            &DiaryEntry {
+                id: 0,
+                date: "2024-01-15".into(),
+                title: "Entry".into(),
+                text: "<p>body</p>".into(),
+                word_count: 1,
+                date_created: "2024-01-15T00:00:00Z".into(),
+                date_updated: "2024-01-15T00:00:00Z".into(),
+                metadata: None,
+                locked: false,
+            },
+        )
+        .unwrap();
+        let added = crate::db::add_attachment_to_entry(&db, entry_id, "notes.txt", bytes).unwrap();
+        let asset = AttachmentAsset {
+            entry_id,
+            attachment_id: added.id,
+            filename: "attachment-1-notes.txt".into(),
+        };
+        (tmp, asset)
+    }
+
+    fn open(path: &std::path::Path, backups: &std::path::Path) -> crate::db::DatabaseConnection {
+        crate::db::open_database(path, "test".to_string(), backups).unwrap()
+    }
+
+    /// Runs the asset step of an export planned on journal A, after `switch` changed the open
+    /// session, and returns its result plus every byte string written under `assets/`.
+    fn export_asset_after(
+        switch: impl FnOnce(&DiaryState, &std::path::Path, &std::path::Path, &std::path::Path),
+    ) -> (Result<(), String>, Vec<Vec<u8>>) {
+        let (_fixture, state, _db_path, backups) =
+            crate::commands::auth::test_helpers::make_state("export_session");
+        let (a, asset_a) = journal_with_attachment(b"journal A bytes");
+        let (b, asset_b) = journal_with_attachment(b"journal B bytes");
+        assert_eq!(
+            (asset_a.entry_id, asset_a.attachment_id),
+            (asset_b.entry_id, asset_b.attachment_id),
+            "both journals must share the ids"
+        );
+        *state.db.lock().unwrap() = Some(open(a.path(), &backups));
+        let session = state.db.lock().unwrap().as_ref().unwrap().session_id();
+
+        let out_dir = tempfile::tempdir().unwrap();
+        let md_path = out_dir.path().join("export.md");
+        let mut read = read_asset_in_session(&state, session);
+        let mut switch = Some(switch);
+        let result = crate::commands::export::write_export_assets(
+            md_path.to_str().unwrap(),
+            &[],
+            &[asset_a],
+            |asset| {
+                if let Some(switch) = switch.take() {
+                    switch(&state, a.path(), b.path(), &backups);
+                }
+                read(asset)
+            },
+        );
+
+        let written = std::fs::read_dir(out_dir.path().join("assets"))
+            .map(|dir| {
+                dir.map(|e| std::fs::read(e.unwrap().path()).unwrap())
+                    .collect()
+            })
+            .unwrap_or_default();
+        (result, written)
+    }
+
+    #[test]
+    fn test_export_asset_reads_the_planned_session() {
+        let (result, written) = export_asset_after(|_, _, _, _| {});
+        result.unwrap();
+        assert_eq!(written, vec![b"journal A bytes".to_vec()]);
+    }
+
+    #[test]
+    fn test_export_asset_refuses_after_a_switch_to_another_journal() {
+        let (result, written) = export_asset_after(|state, _a, b, backups| {
+            *state.db.lock().unwrap() = Some(open(b, backups));
+        });
+        assert_eq!(result.unwrap_err(), "The journal changed during the export");
+        assert!(written.is_empty(), "no attachment file may be written");
+    }
+
+    #[test]
+    fn test_export_asset_refuses_after_a_switch_away_and_back() {
+        let (result, written) = export_asset_after(|state, a, b, backups| {
+            *state.db.lock().unwrap() = Some(open(b, backups));
+            *state.db.lock().unwrap() = Some(open(a, backups));
+        });
+        assert_eq!(result.unwrap_err(), "The journal changed during the export");
+        assert!(written.is_empty(), "no attachment file may be written");
     }
 
     #[test]
@@ -247,6 +375,57 @@ mod tests {
             .unwrap();
         assert!(output.content.contains("Test"));
         assert!(output.content.contains("2024-01-01"));
+    }
+
+    #[test]
+    fn test_run_export_plugin_inner_writes_markdown_and_attachment_asset() {
+        let (_fixture, state, db_path, _backups) =
+            crate::commands::auth::test_helpers::make_state("plugin_export_inner");
+        let db = crate::db::create_database(&db_path, "test".to_string()).unwrap();
+        let entry_id = crate::db::insert_entry(
+            &db,
+            &DiaryEntry {
+                id: 0,
+                date: "2024-01-15".into(),
+                title: "With file".into(),
+                text: "<p>body</p>".into(),
+                word_count: 1,
+                date_created: "2024-01-15T00:00:00Z".into(),
+                date_updated: "2024-01-15T00:00:00Z".into(),
+                metadata: None,
+                locked: false,
+            },
+        )
+        .unwrap();
+        crate::db::add_attachment_to_entry(&db, entry_id, "notes.txt", b"attached bytes").unwrap();
+        *state.db.lock().unwrap() = Some(db);
+        let mut registry = PluginRegistry::new();
+        register_all(&mut registry);
+        let registry = Mutex::new(registry);
+
+        let out_dir = tempfile::tempdir().unwrap();
+        let md_path = out_dir.path().join("export.md");
+        let result = run_export_plugin_inner(
+            "builtin:markdown".to_string(),
+            md_path.to_string_lossy().to_string(),
+            None,
+            None,
+            &state,
+            &registry,
+        )
+        .unwrap();
+
+        assert_eq!(result.entries_exported, 1);
+        assert!(std::fs::read_to_string(&md_path)
+            .unwrap()
+            .contains("With file"));
+        let asset = std::fs::read_dir(out_dir.path().join("assets"))
+            .unwrap()
+            .next()
+            .unwrap()
+            .unwrap()
+            .path();
+        assert_eq!(std::fs::read(asset).unwrap(), b"attached bytes");
     }
 
     #[test]

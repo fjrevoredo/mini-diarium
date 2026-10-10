@@ -1,6 +1,7 @@
 use crate::crypto::cipher;
 use rusqlite::Connection;
 use std::cell::Cell;
+use std::sync::atomic::{AtomicU64, Ordering};
 
 pub(crate) mod compat;
 mod create;
@@ -32,7 +33,12 @@ pub struct DatabaseConnection {
     /// Set when a nested write unit could not be undone cleanly or found its enclosing
     /// transaction gone; the outermost unit then rolls back instead of committing.
     pub(crate) write_poisoned: Cell<bool>,
+    /// See [`DatabaseConnection::session_id`].
+    session_id: u64,
 }
+
+/// Source of [`DatabaseConnection::session_id`]. Starts at 1 and only grows.
+static NEXT_SESSION_ID: AtomicU64 = AtomicU64::new(1);
 
 impl DatabaseConnection {
     pub(crate) fn new(conn: Connection, encryption_key: cipher::Key) -> Self {
@@ -41,7 +47,18 @@ impl DatabaseConnection {
             encryption_key,
             write_depth: Cell::new(0),
             write_poisoned: Cell::new(false),
+            session_id: NEXT_SESSION_ID.fetch_add(1, Ordering::Relaxed),
         }
+    }
+
+    /// An id for this open handle, unique within the process and never reused.
+    ///
+    /// Every open (create, unlock, re-unlock of the same file, the reopen after a restore)
+    /// builds a new handle with a new id. A caller that releases its lock on the handle and
+    /// takes it again compares ids to know it still talks to the same open journal session:
+    /// equal paths do not prove that (lock and re-unlock, A → B → A, a file replaced in place).
+    pub fn session_id(&self) -> u64 {
+        self.session_id
     }
 
     /// Returns a reference to the underlying SQLite connection.
@@ -88,6 +105,28 @@ mod tests {
 
     fn cleanup_backups_dir(dir: &PathBuf) {
         let _ = fs::remove_dir_all(dir);
+    }
+
+    #[test]
+    fn test_each_open_of_the_same_file_gets_a_new_session_id() {
+        let tmp = tempfile::Builder::new().suffix(".db").tempfile().unwrap();
+        let path = tmp.path().to_str().unwrap();
+        let backups = temp_backups_dir("session_id");
+        let created = create_database(path, "pw".to_string()).unwrap();
+        let created_id = created.session_id();
+        assert_eq!(created.session_id(), created_id, "stable for one handle");
+        drop(created);
+
+        let first = open_database(path, "pw".to_string(), &backups).unwrap();
+        let first_id = first.session_id();
+        drop(first);
+        let second = open_database(path, "pw".to_string(), &backups).unwrap();
+
+        assert_ne!(first_id, created_id);
+        assert_ne!(second.session_id(), first_id);
+        assert_ne!(second.session_id(), created_id);
+        drop(second);
+        cleanup_backups_dir(&backups);
     }
 
     #[test]
