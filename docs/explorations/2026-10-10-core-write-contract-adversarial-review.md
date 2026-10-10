@@ -175,6 +175,8 @@ First add a fault test that creates the unowned-transaction state (a `BEGIN` iss
 
 ## W-03 — The façade still exports lock-bypassing writes (P3)
 
+**Status:** fixed 2026-10-10. The `db` façade exports `insert_entry` and `update_entry` only under `#[cfg(any(test, feature = "test-support"))]`; `create_entry` uses `insert_entry_with_images`. A non-test `cargo build --workspace` fails on a production call to a gated primitive. `API.md`, `RUST_BEST_PRACTICES.md`, and `src-tauri/CLAUDE.md` state the same rule.
+
 **Verdict:** PARTLY. The bypass is real; it is an accepted API exception (DEC-008), not a vulnerability. The lock is not a security boundary (TODO-0071).
 
 ### Where
@@ -197,6 +199,8 @@ Second-opinion corrections applied: each function is **one SQL statement**, so i
 
 ## W-04 — Journal-wide orphan GC inside nested units (P3, latent)
 
+**Status:** documented and tested 2026-10-10 (no deferred GC). The doc comments of `with_write_transaction`, `cleanup_orphaned_images`, `cleanup_orphaned_attachments`, and `restore_one_entry`, and `RUST_BEST_PRACTICES.md`, state the rule: no journal-wide GC between storing and linking a blob in one unit. `test_restore_keeps_shared_blobs_and_leaves_no_orphans` checks links, bytes, a blob shared with a live entry, and orphans; it fails if a GC runs after `copy_attachment_blobs`.
+
 **Verdict:** PARTLY. A composition constraint; no current restore fails.
 
 ### Where
@@ -217,6 +221,8 @@ A nested unit sees its parent's uncommitted rows (a savepoint is part of the sam
 
 ## W-05 — The attachment command reads the file before the lock check (P3, new behavior)
 
+**Status:** kept as the DEC-009 trade-off 2026-10-10. `test_locked_entry_reports_file_error_before_lock_error` pins the current error order (and checks that a valid file on the same entry returns `ERR_ENTRY_LOCKED`). TODO-0134 owns any change and lists the constraints: no app-crate lock pre-check, no file I/O inside `BEGIN IMMEDIATE`.
+
 **Verdict:** CONFIRMED. Recorded as a trade-off in DEC-009.
 
 ### Where
@@ -234,6 +240,8 @@ Keeping the DEC-009 trade-off is reasonable. A core function that takes a byte-p
 ---
 
 ## W-06 — The lock contract is a string compare (P3, maintenance)
+
+**Status:** fixed 2026-10-10. `test_lock_error_is_exact_inside_an_outer_write_unit` runs each of the six lock-enforcing writes inside an outer `with_write_transaction` and asserts the exact `ERR_ENTRY_LOCKED`. `RUST_BEST_PRACTICES.md` states the no-wrap rule. Structured error codes stay with TODO-0139.
 
 **Verdict:** PARTLY. The dependency is real; nothing is broken today.
 
