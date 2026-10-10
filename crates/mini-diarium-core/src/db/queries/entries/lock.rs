@@ -257,6 +257,58 @@ mod tests {
         assert_eq!(f.state(), before);
     }
 
+    /// Each lock-enforcing write runs as a nested unit inside an outer write unit here, so
+    /// a wrap on the nested error path (which the standalone tests above never reach) fails
+    /// this test: the error must stay exactly `ERR_ENTRY_LOCKED` (the frontend matches it
+    /// exactly).
+    #[test]
+    fn test_lock_error_is_exact_inside_an_outer_write_unit() {
+        use crate::db::queries::attachments::{
+            add_attachment_to_entry, remove_attachment_from_entry,
+        };
+        use crate::db::queries::tags::{add_tag_to_entry, remove_tag_from_entry};
+        use crate::db::queries::with_write_transaction;
+
+        type LockedWrite = fn(&LockedFixture) -> Result<(), String>;
+        let writes: [(&str, LockedWrite); 6] = [
+            ("update_entry_with_images", |f| {
+                update_entry_with_images(&f.db, f.id, "Changed", "<p>Changed</p>", None).map(|_| ())
+            }),
+            ("delete_entry_by_id", |f| {
+                delete_entry_by_id(&f.db, f.id).map(|_| ())
+            }),
+            ("add_tag_to_entry", |f| {
+                add_tag_to_entry(&f.db, f.id, f.other_tag).map(|_| ())
+            }),
+            ("remove_tag_from_entry", |f| {
+                remove_tag_from_entry(&f.db, f.id, f.tag_on_entry).map(|_| ())
+            }),
+            ("add_attachment_to_entry", |f| {
+                add_attachment_to_entry(&f.db, f.id, "new.txt", b"new").map(|_| ())
+            }),
+            ("remove_attachment_from_entry", |f| {
+                remove_attachment_from_entry(&f.db, f.id, f.attachment_id).map(|_| ())
+            }),
+        ];
+
+        for (name, write) in writes {
+            let f = locked_fixture();
+            let before = f.state();
+            let err = with_write_transaction(&f.db, || write(&f)).unwrap_err();
+            assert_eq!(
+                err, ERR_ENTRY_LOCKED,
+                "{} inside an outer write unit must return the exact lock error",
+                name
+            );
+            assert!(
+                f.db.conn().is_autocommit(),
+                "{}: the outer unit must roll back and leave no transaction open",
+                name
+            );
+            assert_eq!(f.state(), before, "{}: the locked entry changed", name);
+        }
+    }
+
     /// The refusal is per entry: once unlocked, the same writes go through again.
     #[test]
     fn test_lock_released_entry_accepts_writes_again() {
