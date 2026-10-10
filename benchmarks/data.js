@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1791639531027,
+  "lastUpdate": 1791641479826,
   "repoUrl": "https://github.com/fjrevoredo/mini-diarium",
   "entries": {
     "Benchmark": [
@@ -38242,6 +38242,36 @@ window.BENCHMARK_DATA = {
           {
             "name": "ci_pipeline_duration",
             "value": 540000000000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "committer": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "distinct": true,
+          "id": "4e6b02d6cf1d04589b1b4de0c8b9f622551efd9b",
+          "message": "ci(nix): repair npmDepsHash and make nix.yml fail loudly (TODO-0129, TODO-0050)",
+          "timestamp": "2026-10-10T16:01:35+02:00",
+          "tree_id": "578c71cdb75d381b317ab3a6fa3e895972fb1a0e",
+          "url": "https://github.com/fjrevoredo/mini-diarium/commit/4e6b02d6cf1d04589b1b4de0c8b9f622551efd9b"
+        },
+        "date": 1791641478111,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "ci_pipeline_duration",
+            "value": 569000000000,
             "range": "± 0",
             "unit": "ns/iter"
           }
