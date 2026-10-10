@@ -48,6 +48,24 @@ Current references:
 - `src/state/preferences.ts`
 - `docs/decisions/2026-05-settings-storage-taxonomy.md`
 
+### Re-check The Token After Every Await
+
+After every `await`, re-check the token captured before it (session, entry, revision, filter) before writing shared state. An awaited reply can arrive after a lock, a journal switch, a restore, a navigation, a cleared filter, or a newer request. If you write it without a check, it overwrites the newer state, or it brings back state that a reset cleared.
+
+- Capture the token synchronously, before the first `await`: a session mark, a request counter, or a revision counter.
+- Compare it on the line before each write after an `await`. This includes the `catch` branch: a stale failure must not set an error or clear a newer filter.
+- When a request is stale, return without a write. Do not try to merge a reply that is older than the current state.
+- Let every path that changes the same state bump the same counter. A load and a mutation of one list share one revision, and a "clear" bumps the token so that a pending request cannot write its reply.
+- An id alone is not a token. Entry ids and tag ids repeat across journals, so an id check does not detect a session reset.
+- Test the race with deferred promises. Start the call, change the context, resolve the old promise, then assert that the newer state is unchanged.
+
+Current references:
+
+- `src/state/entryAttachments.ts` (shared load/mutation revision)
+- `src/state/tags.ts` (filter token that `clearTagFilter` and the session reset bump)
+- `src/components/editor/EntryAttachments.tsx` (session mark re-checked after each backend call)
+- `src/components/layout/editor-panel/entryHydration.ts` (request guard before the atomic editor commit)
+
 ### Use Typed Tauri Wrappers
 
 Components and hooks should call typed wrappers from `src/lib/tauri/` or higher-level state helpers, not raw `invoke()` calls.
@@ -490,7 +508,7 @@ rg -n "data-testid" src e2e
 Use this checklist for frontend PRs:
 
 - Reactivity: no prop destructuring, no accidental top-level signal snapshots, derived values are memos when needed.
-- State: session-sensitive state resets on lock/switch, local form state stays local, preferences follow the settings taxonomy.
+- State: session-sensitive state resets on lock/switch, local form state stays local, preferences follow the settings taxonomy, and every write after an `await` re-checks the token captured before it.
 - IPC: components use typed wrappers, user-facing backend errors are sanitized, command shape changes are tested.
 - Security UX: sensitive flows have explicit target selection, correct operation ordering, and backend invariant coverage.
 - Editor: TipTap content remains HTML, editor effects do not create load/save loops, extension behavior is constrained and tested.

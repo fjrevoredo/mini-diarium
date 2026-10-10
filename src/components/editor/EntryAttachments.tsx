@@ -66,20 +66,27 @@ export default function EntryAttachments(props: EntryAttachmentsProps) {
   const [error, setError] = createSignal<string | null>(null);
   const [isAdding, setIsAdding] = createSignal(false);
 
+  // Every async path below (the list load and each action) awaits a dialog or a backend
+  // call. If the session resets meanwhile (lock, journal switch, restore), the entry id it
+  // captured may name a different entry in a different journal, and entry ids repeat across
+  // journals. So after every await it re-checks the mark it took before: on a change it
+  // stops, without a backend call, a list update, or an error. resetEntryAttachmentsState()
+  // bumps attachmentsVersion on each reset.
+  const sessionMark = () => untrack(attachmentsVersion);
+
   createEffect(() => {
     const id = props.entryId;
-    attachmentsVersion(); // reload after a session-level reset (e.g. journal restore)
+    const mark = attachmentsVersion(); // reload after a session-level reset (e.g. journal restore)
     setError(null);
-    loadEntryAttachments(id).catch((err) => setError(mapTauriError(err, t)));
+    loadEntryAttachments(id).catch((err) => {
+      // Only the load for the entry and session still shown may report its failure.
+      if (untrack(() => props.entryId) === id && sessionMark() === mark) {
+        setError(mapTauriError(err, t));
+      }
+    });
   });
 
   onCleanup(() => clearEntryAttachments());
-
-  // Every action below awaits a dialog (or another file) before it calls the backend. If the
-  // session resets meanwhile — lock, journal switch, restore — the entry id it captured may
-  // name a different entry in a different journal, so it must stop instead of writing there.
-  // resetEntryAttachmentsState() bumps attachmentsVersion on each of those resets.
-  const sessionMark = () => untrack(attachmentsVersion);
 
   const handleSaveCopy = async (attachment: AttachmentSummary) => {
     setError(null);
@@ -93,14 +100,14 @@ export default function EntryAttachments(props: EntryAttachmentsProps) {
         filters: ext ? [{ name: ext.toUpperCase(), extensions: [ext] }] : undefined,
       });
     } catch (err) {
-      setError(mapTauriError(err, t));
+      if (sessionMark() === mark) setError(mapTauriError(err, t));
       return;
     }
     if (!dest || sessionMark() !== mark) return; // cancelled, or the session changed
     try {
       await saveAttachmentCopy(entryId, attachment.id, dest);
     } catch (err) {
-      setError(mapTauriError(err, t));
+      if (sessionMark() === mark) setError(mapTauriError(err, t));
     }
   };
 
@@ -119,7 +126,7 @@ export default function EntryAttachments(props: EntryAttachmentsProps) {
     try {
       selected = await openDialog({ multiple: true });
     } catch (err) {
-      setError(mapTauriError(err, t));
+      if (sessionMark() === mark) setError(mapTauriError(err, t));
       return;
     }
     if (!selected) return; // cancelled
@@ -132,8 +139,10 @@ export default function EntryAttachments(props: EntryAttachmentsProps) {
         if (sessionMark() !== mark) return; // no error: the strip was reset with the session
         try {
           const added = await addEntryAttachment(entryId, path);
+          if (sessionMark() !== mark) return;
           upsertEntryAttachment(entryId, added);
         } catch (err) {
+          if (sessionMark() !== mark) return;
           failures.push(
             t('attachments.addFailed', { name: baseName(path), error: mapTauriError(err, t) }),
           );
@@ -165,9 +174,10 @@ export default function EntryAttachments(props: EntryAttachmentsProps) {
     if (!confirmed || sessionMark() !== mark) return;
     try {
       await removeEntryAttachment(entryId, attachment.id);
+      if (sessionMark() !== mark) return;
       removeEntryAttachmentFromList(entryId, attachment.id);
     } catch (err) {
-      setError(mapTauriError(err, t));
+      if (sessionMark() === mark) setError(mapTauriError(err, t));
     }
   };
 

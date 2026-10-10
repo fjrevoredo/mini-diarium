@@ -17,23 +17,48 @@ const [attachmentsLoaded, setAttachmentsLoaded] = createSignal(false);
 // whole-journal restore, where the open entry id can stay the same).
 const [attachmentsVersion, setAttachmentsVersion] = createSignal(0);
 
-let loadToken = 0;
+// One counter for every change to the list: loads, mutations, and clears all bump it. A
+// load writes its reply only when nothing changed the list while it was in flight.
+let revision = 0;
+// The revision of the newest load. A load whose revision is no longer this one was
+// superseded by a newer load or a clear and must drop its reply.
+let activeLoad = 0;
 
-/** Loads the list for `entryId`, latest call wins. Rejects with the raw backend error. */
+/**
+ * Loads the list for `entryId`, latest call wins. If an add or remove changes the list
+ * while the request is in flight, its reply is older than that change, so it fetches again
+ * instead of writing it. Rejects with the raw backend error, but only while it is still the
+ * newest load: a superseded load resolves quietly, so its error cannot reach a newer context.
+ */
 export async function loadEntryAttachments(entryId: number): Promise<void> {
-  const token = ++loadToken;
+  let rev = ++revision;
+  activeLoad = rev;
   setAttachmentsEntryId(entryId);
   setAttachmentsLoaded(false);
   setEntryAttachments([]);
-  const list = await listEntryAttachments(entryId);
-  if (token !== loadToken) return;
-  setEntryAttachments(list);
-  setAttachmentsLoaded(true);
+  for (;;) {
+    let list: AttachmentSummary[];
+    try {
+      list = await listEntryAttachments(entryId);
+    } catch (err) {
+      if (activeLoad !== rev) return;
+      throw err;
+    }
+    if (activeLoad !== rev) return; // a newer load or a clear owns the list now
+    if (revision === rev) {
+      setEntryAttachments(list);
+      setAttachmentsLoaded(true);
+      return;
+    }
+    rev = ++revision; // a mutation landed meanwhile: this reply predates it
+    activeLoad = rev;
+  }
 }
 
 /** Adds or replaces one attachment in the list (backend dedup can return an existing one). */
 export function upsertEntryAttachment(entryId: number, attachment: AttachmentSummary): void {
   if (attachmentsEntryId() !== entryId) return;
+  revision++;
   setEntryAttachments((prev) =>
     prev.some((a) => a.id === attachment.id)
       ? prev.map((a) => (a.id === attachment.id ? attachment : a))
@@ -43,12 +68,14 @@ export function upsertEntryAttachment(entryId: number, attachment: AttachmentSum
 
 export function removeEntryAttachmentFromList(entryId: number, attachmentId: number): void {
   if (attachmentsEntryId() !== entryId) return;
+  revision++;
   setEntryAttachments((prev) => prev.filter((a) => a.id !== attachmentId));
 }
 
 /** Clears the list without asking a mounted strip to reload (entry closed). */
 export function clearEntryAttachments(): void {
-  loadToken++;
+  revision++;
+  activeLoad = 0;
   setEntryAttachments([]);
   setAttachmentsEntryId(null);
   setAttachmentsLoaded(false);

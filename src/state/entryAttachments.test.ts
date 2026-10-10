@@ -27,6 +27,16 @@ const summary = (id: number, name: string): AttachmentSummary => ({
   created_at: '2024-01-01T00:00:00Z',
 });
 
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  let reject!: (reason: unknown) => void;
+  const promise = new Promise<T>((res, rej) => {
+    resolve = res;
+    reject = rej;
+  });
+  return { promise, resolve, reject };
+}
+
 describe('entryAttachments state', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -47,6 +57,82 @@ describe('entryAttachments state', () => {
     expect(entryAttachments().map((a) => a.name)).toEqual(['second.txt']);
     expect(attachmentPresence(2)).toBe('has');
     expect(attachmentPresence(1)).toBe('unknown');
+  });
+
+  it('a load that started before an add does not overwrite the added attachment', async () => {
+    const stale = deferred<AttachmentSummary[]>();
+    mocks.listEntryAttachments
+      .mockImplementationOnce(() => stale.promise)
+      .mockResolvedValueOnce([summary(1, 'old.txt'), summary(2, 'added.txt')]);
+
+    const loading = loadEntryAttachments(5);
+    upsertEntryAttachment(5, summary(2, 'added.txt')); // the add committed while loading
+    stale.resolve([summary(1, 'old.txt')]); // the reply predates the add
+    await loading;
+
+    expect(entryAttachments().map((a) => a.name)).toEqual(['old.txt', 'added.txt']);
+    expect(attachmentPresence(5)).toBe('has');
+    expect(mocks.listEntryAttachments).toHaveBeenCalledTimes(2);
+  });
+
+  it('a load that started before a remove does not bring the removed attachment back', async () => {
+    const stale = deferred<AttachmentSummary[]>();
+    mocks.listEntryAttachments
+      .mockImplementationOnce(() => stale.promise)
+      .mockResolvedValueOnce([]);
+
+    const loading = loadEntryAttachments(5);
+    removeEntryAttachmentFromList(5, 1);
+    stale.resolve([summary(1, 'removed.txt')]);
+    await loading;
+
+    expect(entryAttachments()).toEqual([]);
+    expect(attachmentPresence(5)).toBe('none');
+  });
+
+  it('a load superseded by a clear writes nothing', async () => {
+    const stale = deferred<AttachmentSummary[]>();
+    mocks.listEntryAttachments.mockImplementationOnce(() => stale.promise);
+
+    const loading = loadEntryAttachments(5);
+    resetEntryAttachmentsState();
+    stale.resolve([summary(1, 'a.txt')]);
+    await loading;
+
+    expect(entryAttachments()).toEqual([]);
+    expect(attachmentPresence(5)).toBe('unknown');
+    expect(mocks.listEntryAttachments).toHaveBeenCalledTimes(1);
+  });
+
+  it('a superseded load that fails resolves quietly and leaves the newer list', async () => {
+    const stale = deferred<AttachmentSummary[]>();
+    mocks.listEntryAttachments
+      .mockImplementationOnce(() => stale.promise)
+      .mockResolvedValueOnce([summary(2, 'second.txt')]);
+
+    const first = loadEntryAttachments(1);
+    await loadEntryAttachments(2);
+    stale.reject('Journal must be unlocked');
+
+    await expect(first).resolves.toBeUndefined();
+    expect(entryAttachments().map((a) => a.name)).toEqual(['second.txt']);
+    expect(attachmentPresence(2)).toBe('has');
+  });
+
+  it('a load cleared by a session reset that fails resolves quietly', async () => {
+    const stale = deferred<AttachmentSummary[]>();
+    mocks.listEntryAttachments.mockImplementationOnce(() => stale.promise);
+
+    const loading = loadEntryAttachments(5);
+    resetEntryAttachmentsState();
+    stale.reject('Journal must be unlocked');
+
+    await expect(loading).resolves.toBeUndefined();
+  });
+
+  it('the current load still rejects with the backend error', async () => {
+    mocks.listEntryAttachments.mockRejectedValueOnce('Journal must be unlocked');
+    await expect(loadEntryAttachments(5)).rejects.toBe('Journal must be unlocked');
   });
 
   it('upsert replaces a deduplicated attachment instead of adding it twice', async () => {

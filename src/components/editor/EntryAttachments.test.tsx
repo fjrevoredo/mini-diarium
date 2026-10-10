@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { createSignal } from 'solid-js';
 import { screen, waitFor, fireEvent } from '@solidjs/testing-library';
 import { renderWithI18n } from '../../test/i18n-test-utils';
 import { resetEntryAttachmentsState, attachmentPresence } from '../../state/entryAttachments';
@@ -44,6 +45,16 @@ const CLIP: AttachmentSummary = {
   byte_size: 100,
   created_at: '2024-01-01T00:00:01Z',
 };
+
+function deferred<T>() {
+  let resolve!: (value: T) => void;
+  let reject!: (reason: unknown) => void;
+  const promise = new Promise<T>((res, rej) => {
+    resolve = res;
+    reject = rej;
+  });
+  return { promise, resolve, reject };
+}
 
 describe('EntryAttachments', () => {
   beforeEach(() => {
@@ -99,6 +110,73 @@ describe('EntryAttachments', () => {
       expect(screen.getByTestId('entry-attachment-add-button')).not.toBeDisabled(),
     );
     expect(mocks.addEntryAttachment).toHaveBeenCalledTimes(1);
+  });
+
+  // Entry ids repeat across journals: after a lock + switch the strip reloads for the same
+  // id in the new journal, so a reply from the old session must not touch that list.
+  it('drops an add reply that arrives after a session reset', async () => {
+    const OLD: AttachmentSummary = { ...CLIP, id: 9, name: 'old-private-report.pdf' };
+    const NEW: AttachmentSummary = { ...PDF, name: 'new-journal.pdf' };
+    const add = deferred<AttachmentSummary>();
+    mocks.listEntryAttachments.mockResolvedValueOnce([]).mockResolvedValue([NEW]);
+    mocks.open.mockResolvedValue(['C:\\docs\\old-private-report.pdf']);
+    mocks.addEntryAttachment.mockReturnValueOnce(add.promise);
+
+    renderWithI18n(() => <EntryAttachments entryId={1} />);
+    fireEvent.click(screen.getByTestId('entry-attachment-add-button'));
+    await waitFor(() => expect(mocks.addEntryAttachment).toHaveBeenCalledTimes(1));
+
+    resetEntryAttachmentsState();
+    await waitFor(() => expect(screen.getByText('new-journal.pdf')).toBeInTheDocument());
+    add.resolve(OLD);
+    await waitFor(() =>
+      expect(screen.getByTestId('entry-attachment-add-button')).not.toBeDisabled(),
+    );
+
+    expect(screen.queryByText('old-private-report.pdf')).not.toBeInTheDocument();
+    expect(screen.getAllByTestId('entry-attachment-chip')).toHaveLength(1);
+  });
+
+  it('shows no error for an add that fails after a session reset', async () => {
+    const add = deferred<AttachmentSummary>();
+    mocks.listEntryAttachments.mockResolvedValue([]);
+    mocks.open.mockResolvedValue(['C:\\docs\\a.pdf']);
+    mocks.addEntryAttachment.mockReturnValueOnce(add.promise);
+
+    renderWithI18n(() => <EntryAttachments entryId={1} />);
+    fireEvent.click(screen.getByTestId('entry-attachment-add-button'));
+    await waitFor(() => expect(mocks.addEntryAttachment).toHaveBeenCalledTimes(1));
+
+    resetEntryAttachmentsState();
+    add.reject('Journal must be unlocked');
+    await waitFor(() =>
+      expect(screen.getByTestId('entry-attachment-add-button')).not.toBeDisabled(),
+    );
+
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
+  it('drops a remove reply that arrives after a session reset', async () => {
+    const remove = deferred<undefined>();
+    const SAME_ID_NEW_JOURNAL: AttachmentSummary = { ...PDF, name: 'new-journal.pdf' };
+    mocks.listEntryAttachments
+      .mockResolvedValueOnce([PDF])
+      .mockResolvedValue([SAME_ID_NEW_JOURNAL]);
+    mocks.confirmInApp.mockResolvedValue(true);
+    mocks.removeEntryAttachment.mockReturnValueOnce(remove.promise);
+
+    renderWithI18n(() => <EntryAttachments entryId={1} />);
+    await waitFor(() => expect(screen.getByText('Report.pdf')).toBeInTheDocument());
+    fireEvent.click(screen.getByTestId('entry-attachment-remove-button'));
+    await waitFor(() => expect(mocks.removeEntryAttachment).toHaveBeenCalledWith(1, PDF.id));
+
+    resetEntryAttachmentsState();
+    await waitFor(() => expect(screen.getByText('new-journal.pdf')).toBeInTheDocument());
+    remove.resolve(undefined);
+    await remove.promise;
+    await Promise.resolve();
+
+    expect(screen.getByText('new-journal.pdf')).toBeInTheDocument();
   });
 
   it('does not save a copy when the session resets while the save dialog is open', async () => {
@@ -191,6 +269,40 @@ describe('EntryAttachments', () => {
     await waitFor(() =>
       expect(screen.getByRole('alert').textContent).toBe('Please unlock your journal first.'),
     );
+  });
+
+  it('shows no error for a list load that fails after a session reset', async () => {
+    const NEW: AttachmentSummary = { ...PDF, name: 'new-journal.pdf' };
+    const stale = deferred<AttachmentSummary[]>();
+    mocks.listEntryAttachments.mockReturnValueOnce(stale.promise).mockResolvedValue([NEW]);
+
+    renderWithI18n(() => <EntryAttachments entryId={1} />);
+    await waitFor(() => expect(mocks.listEntryAttachments).toHaveBeenCalledTimes(1));
+    resetEntryAttachmentsState();
+    await waitFor(() => expect(screen.getByText('new-journal.pdf')).toBeInTheDocument());
+
+    stale.reject('Journal must be unlocked');
+    await new Promise((r) => setTimeout(r, 0)); // let the rejection settle fully
+
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(screen.getByText('new-journal.pdf')).toBeInTheDocument();
+  });
+
+  it('shows no error for a list load that fails after the entry changed', async () => {
+    const stale = deferred<AttachmentSummary[]>();
+    mocks.listEntryAttachments.mockReturnValueOnce(stale.promise).mockResolvedValue([CLIP]);
+    const [entryId, setEntryId] = createSignal(1);
+
+    renderWithI18n(() => <EntryAttachments entryId={entryId()} />);
+    await waitFor(() => expect(mocks.listEntryAttachments).toHaveBeenCalledWith(1));
+    setEntryId(2);
+    await waitFor(() => expect(screen.getByText('clip.mp4')).toBeInTheDocument());
+
+    stale.reject('Journal must be unlocked');
+    await new Promise((r) => setTimeout(r, 0)); // let the rejection settle fully
+
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+    expect(screen.getByText('clip.mp4')).toBeInTheDocument();
   });
 });
 
