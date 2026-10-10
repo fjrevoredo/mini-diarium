@@ -109,6 +109,18 @@ if (donationAddresses.success) {
   log(donationAddresses.output, 'red');
 }
 
+// Test-runner ownership guard
+process.stdout.write('Test runners... ');
+const testRunners = run('bun run check:test-runners');
+if (testRunners.success) {
+  log('✓', 'green');
+  results.passed.push('Test runners');
+} else {
+  log('✗', 'red');
+  results.failed.push('Test runners');
+  log(testRunners.output, 'red');
+}
+
 // Summary
 console.log();
 if (results.failed.length === 0) {

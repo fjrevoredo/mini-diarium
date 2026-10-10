@@ -1,4 +1,5 @@
-import { describe, expect, it } from 'vitest';
+import { describe, it } from 'node:test';
+import assert from 'node:assert/strict';
 
 import {
   enrichDefaultLocaleManifest,
@@ -16,7 +17,8 @@ describe('enrich-winget-manifest', () => {
 > Note from maintainer
 `);
 
-    expect(normalized).toBe(
+    assert.equal(
+      normalized,
       [
         "What's Changed",
         '',
@@ -33,10 +35,10 @@ describe('enrich-winget-manifest', () => {
 `);
 
     const lines = normalized.split('\n');
-    expect(lines.length).toBeGreaterThan(1);
-    expect(lines.every((line) => line.length <= 100)).toBe(true);
-    expect(lines[0]).toMatch(/^- /);
-    expect(lines[1]).toMatch(/^  /);
+    assert.ok(lines.length > 1);
+    assert.ok(lines.every((line) => line.length <= 100));
+    assert.match(lines[0], /^- /);
+    assert.match(lines[1], /^  /);
   });
 
   it('normalizeReleaseNotes truncates output over the WinGet 10000-character manifest limit', () => {
@@ -45,12 +47,12 @@ describe('enrich-winget-manifest', () => {
       (_, index) => `- Change entry number ${index} with enough padding text to add up.`,
     );
     const body = lines.join('\n');
-    expect(body.length).toBeGreaterThan(MAX_RELEASE_NOTES_LENGTH);
+    assert.ok(body.length > MAX_RELEASE_NOTES_LENGTH);
 
     const normalized = normalizeReleaseNotes(body);
 
-    expect(normalized.length).toBeLessThanOrEqual(MAX_RELEASE_NOTES_LENGTH);
-    expect(normalized).toMatch(/… \(truncated — see ReleaseNotesUrl for full notes\)$/);
+    assert.ok(normalized.length <= MAX_RELEASE_NOTES_LENGTH);
+    assert.match(normalized, /… \(truncated — see ReleaseNotesUrl for full notes\)$/);
   });
 
   it('normalizeReleaseNotes truncation cuts on a line boundary, never mid-word', () => {
@@ -68,7 +70,7 @@ describe('enrich-winget-manifest', () => {
     const keptLines = withoutSuffix.split('\n');
 
     for (const line of keptLines) {
-      expect(lines).toContain(line);
+      assert.ok(lines.includes(line), `unexpected line: ${line}`);
     }
   });
 
@@ -89,9 +91,10 @@ describe('enrich-winget-manifest', () => {
       releaseNotesUrl: 'https://github.com/fjrevoredo/mini-diarium/releases/tag/v0.4.8',
     });
 
-    expect(enriched).toMatch(
+    assert.match(
+      enriched,
       /ReleaseNotes: \|-\n  Line one\n  Line two\nReleaseNotesUrl: https:\/\/github.com\/fjrevoredo\/mini-diarium\/releases\/tag\/v0\.4\.8\nManifestType: defaultLocale/,
     );
-    expect(enriched).not.toMatch(/https:\/\/old\.example\.com/);
+    assert.doesNotMatch(enriched, /https:\/\/old\.example\.com/);
   });
 });

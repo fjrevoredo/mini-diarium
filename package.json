@@ -18,6 +18,7 @@
     "test:ui": "vitest --ui",
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
+    "test:scripts": "node scripts/run-script-tests.mjs",
     "coverage:diff": "node scripts/check-diff-coverage.mjs",
     "coverage:check": "node scripts/check-diff-coverage.mjs --generate",
     "coverage:self-test": "node scripts/check-diff-coverage.mjs --self-test",
@@ -45,6 +46,7 @@
     "check:ui-errors": "node scripts/check-ui-error-sanitization.js",
     "check:build-paths": "node scripts/check-stale-build-paths.js",
     "check:donation-addresses": "node scripts/check-donation-addresses.js",
+    "check:test-runners": "node scripts/check-test-runners.mjs",
     "test:print": "playwright test --config playwright.config.ts",
     "postinstall": "node scripts/install-hooks.js && node scripts/sync-skills.js"
   },

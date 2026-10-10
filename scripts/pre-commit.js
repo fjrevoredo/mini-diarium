@@ -142,6 +142,17 @@ async function main() {
     results.failed.push('Donation Addresses');
   }
 
+  // 5d. Test-runner ownership guard
+  header('Test Runner Ownership');
+  const testRunners = run('bun run check:test-runners', 'Checking every test file has a runner');
+  if (testRunners.success) {
+    success('Every test file belongs to a gated runner');
+    results.passed.push('Test Runner Ownership');
+  } else {
+    error('Test files found that no runner executes');
+    results.failed.push('Test Runner Ownership');
+  }
+
   // 6. Frontend Tests (with coverage)
   header('Frontend Tests');
   const frontendTest = run('bun run test:coverage', 'Running tests with coverage');
@@ -151,6 +162,17 @@ async function main() {
   } else {
     error('Frontend tests failed');
     results.failed.push('Frontend Tests');
+  }
+
+  // 6b. Build-tooling script tests (node:test; Vitest excludes scripts/**)
+  header('Script Tests');
+  const scriptTests = run('bun run test:scripts', 'Running scripts/*.test.* suites');
+  if (scriptTests.success) {
+    success('All script tests passed');
+    results.passed.push('Script Tests');
+  } else {
+    error('Script tests failed');
+    results.failed.push('Script Tests');
   }
 
   // 7. Backend Tests (Rust) — with coverage when cargo-llvm-cov is available

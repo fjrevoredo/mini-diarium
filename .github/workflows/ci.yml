@@ -64,6 +64,10 @@ jobs:
       - name: Validate locales
         run: bun run validate:locales
 
+      - name: Test runner ownership
+        # Fails when a *.test.* / *.spec.* file sits outside every runner's include list.
+        run: bun run check:test-runners
+
       - name: Network isolation static check
         run: pwsh scripts/check-no-network.ps1
 
@@ -185,6 +189,12 @@ jobs:
 
       - name: Frontend tests
         run: bun run test:coverage
+
+      - name: Script tests
+        # node:test suites for scripts/*.test.*; Vitest and coverage exclude scripts/**.
+        # Uses the runner image's preinstalled Node; the runner passes explicit file paths,
+        # which every supported Node version accepts.
+        run: bun run test:scripts
 
       - name: Backend tests
         working-directory: src-tauri

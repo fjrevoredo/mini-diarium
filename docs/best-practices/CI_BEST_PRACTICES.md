@@ -323,6 +323,18 @@ The hook is a complement to CI, not a replacement: it runs `--write`/auto-fix lo
 
 ---
 
+## Test Runner Ownership
+
+**Every test file must belong to a runner that a gate executes.** A test file that no runner collects never fails, so it reports nothing when the code it covers breaks. It looks like protection, but it gives none.
+
+- **Map each test location to one runner** — and map each runner to the CI job and the local gate that execute it
+- **Exclude a path from one runner only when another runner owns it** — an exclude (for example, of a tooling folder) is a common way for tests to become orphans
+- **Fail the build on orphans** — a cheap guard lists the tracked test files and fails when a file matches no runner's include rules. Keep its rules next to the runner configs and change both together
+- **Pass explicit file lists to a runner when its directory or glob handling differs across versions or shells** — a pattern that silently matches nothing is a passing gate with zero tests
+- **Fail a runner that finds zero tests** — an empty run must not report success
+
+---
+
 ## Coverage Gating
 
 Don't discover coverage failures only on CI. A global coverage threshold (e.g. "≥70% overall") catches gross regressions but misses the two checks coverage services actually enforce on PRs:
