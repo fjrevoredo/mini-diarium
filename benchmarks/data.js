@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1791647194153,
+  "lastUpdate": 1791651706954,
   "repoUrl": "https://github.com/fjrevoredo/mini-diarium",
   "entries": {
     "Benchmark": [
@@ -38362,6 +38362,36 @@ window.BENCHMARK_DATA = {
           {
             "name": "ci_pipeline_duration",
             "value": 564000000000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "committer": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "distinct": true,
+          "id": "497ec0050e052a35a6b4cf2b30476bb541031f9d",
+          "message": "fix(editor): make inline attachment references keyboard-accessible (TODO-0136)",
+          "timestamp": "2026-10-10T18:27:26+02:00",
+          "tree_id": "4165fa4f822fb1d791d2539c0f41860050f988b7",
+          "url": "https://github.com/fjrevoredo/mini-diarium/commit/497ec0050e052a35a6b4cf2b30476bb541031f9d"
+        },
+        "date": 1791651705811,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "ci_pipeline_duration",
+            "value": 563000000000,
             "range": "± 0",
             "unit": "ns/iter"
           }
