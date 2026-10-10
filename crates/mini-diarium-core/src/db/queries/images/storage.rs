@@ -248,6 +248,8 @@ pub(super) fn image_exists(db: &DatabaseConnection, id: i64) -> Result<bool, Str
 /// Removes images that are not referenced by any entry_images row.
 ///
 /// Safe to call after deleting entries or updating entry image links.
+/// Journal-wide: never call it between storing a blob and linking it in the same write unit
+/// (see `with_write_transaction`).
 pub fn cleanup_orphaned_images(db: &DatabaseConnection) -> Result<(), String> {
     db.conn()
         .execute(

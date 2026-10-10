@@ -305,6 +305,8 @@ pub fn entry_has_attachments(db: &DatabaseConnection, entry_id: i64) -> Result<b
 /// Removes attachment blobs that no `entry_attachments` row references.
 ///
 /// Safe to call after deleting entries or unlinking attachments.
+/// Journal-wide: never call it between storing a blob and linking it in the same write unit
+/// (see `with_write_transaction`).
 pub(crate) fn cleanup_orphaned_attachments(db: &DatabaseConnection) -> Result<(), String> {
     db.conn()
         .execute(

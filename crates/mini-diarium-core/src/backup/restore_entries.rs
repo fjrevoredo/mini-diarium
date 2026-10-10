@@ -219,6 +219,10 @@ fn restore_one_entry(
     // crosses into the live database, where those ids name something else entirely.
     to_insert.text = resolve_snapshot_image_refs(snapshot_db, &to_insert.text, tables.images)?;
 
+    // Store blobs -> insert entry -> link blobs, all in this one unit. Until the links exist
+    // the new blobs are orphans, so no journal-wide GC may run between these steps (see
+    // `with_write_transaction`; guarded by
+    // `test_restore_keeps_shared_blobs_and_leaves_no_orphans`).
     let attachments = if tables.attachments {
         copy_attachment_blobs(live_db, snapshot_db, id)?
     } else {
@@ -805,6 +809,101 @@ mod tests {
             .unwrap()
             .unwrap();
         assert_eq!(bytes.as_slice(), b"%PDF snapshot bytes");
+    }
+
+    /// Guards the store -> insert -> link order in [`restore_one_entry`]: a journal-wide
+    /// orphan GC between storing a blob and linking it would delete the snapshot-only blob
+    /// (`Y`) before its link exists. The shared blob (`X`) must be re-used, not copied, and
+    /// the restore must leave no unlinked attachment or image row behind.
+    #[test]
+    fn test_restore_keeps_shared_blobs_and_leaves_no_orphans() {
+        const SHARED: &[u8] = b"shared bytes X";
+        const SNAPSHOT_ONLY: &[u8] = b"snapshot-only bytes Y";
+        let fixture = Fixture::new("shared-blobs");
+        let live = &fixture.live;
+
+        let anchor_id = insert_entry(live, &entry("2024-01-01", "Anchor", "a")).unwrap();
+        let anchor_x =
+            crate::db::add_attachment_to_entry(live, anchor_id, "anchor-x.txt", SHARED).unwrap();
+
+        let mut source = entry("2024-03-05", "Shared and own", "");
+        source.text = format!(
+            r#"<p>Body<img src="data:image/png;base64,{}" alt=""></p>"#,
+            base64_of(&crate::db::queries::images::test_support::valid_png_bytes())
+        );
+        let source_id = insert_entry_with_images(live, &source).unwrap();
+        crate::db::add_attachment_to_entry(live, source_id, "x.txt", SHARED).unwrap();
+        crate::db::add_attachment_to_entry(live, source_id, "y.txt", SNAPSHOT_ONLY).unwrap();
+
+        let snapshot = fixture.snapshot_and_open();
+
+        // The delete's own GC removes `Y` and the image from live; `X` stays, linked to the
+        // anchor. So `Y` and the image exist only in the snapshot.
+        crate::db::delete_entry_by_id(live, source_id).unwrap();
+        let count = |sql: &str| -> i64 { live.conn().query_row(sql, [], |r| r.get(0)).unwrap() };
+        assert_eq!(
+            (
+                count("SELECT COUNT(*) FROM attachments"),
+                count("SELECT COUNT(*) FROM images")
+            ),
+            (1, 0),
+            "fixture bug: only the shared blob X may stay in live before the restore"
+        );
+
+        let outcome = restore_entries_from_snapshot(live, &snapshot, &[source_id]).unwrap();
+        assert!(
+            outcome.failed.is_none(),
+            "restore must succeed, got: {:?}",
+            outcome.failed
+        );
+        assert_eq!(outcome.restored_ids, vec![source_id]);
+
+        let restored = get_entries_by_date(live, "2024-03-05").unwrap();
+        assert_eq!(restored.len(), 1);
+        let restored_id = restored[0].id;
+
+        let links = list_entry_attachments(live, restored_id).unwrap();
+        assert_eq!(links.len(), 2, "the restored entry must link X and Y");
+        let restored_x = links.iter().find(|a| a.name == "x.txt").unwrap();
+        let restored_y = links.iter().find(|a| a.name == "y.txt").unwrap();
+        assert_eq!(
+            restored_x.id, anchor_x.id,
+            "the shared blob must be re-used, not copied"
+        );
+        assert_eq!(
+            crate::db::get_images_for_entry(live, restored_id)
+                .unwrap()
+                .len(),
+            1,
+            "the restored entry must link its image"
+        );
+
+        let bytes_of = |entry_id: i64, attachment_id: i64| {
+            read_attachment_bytes(live, entry_id, attachment_id)
+                .unwrap()
+                .expect("the attachment must be linked to the entry")
+                .to_vec()
+        };
+        assert_eq!(bytes_of(anchor_id, anchor_x.id), SHARED);
+        assert_eq!(bytes_of(restored_id, restored_x.id), SHARED);
+        assert_eq!(bytes_of(restored_id, restored_y.id), SNAPSHOT_ONLY);
+
+        assert_eq!(
+            count(
+                "SELECT COUNT(*) FROM attachments \
+                 WHERE id NOT IN (SELECT attachment_id FROM entry_attachments)"
+            ),
+            0,
+            "no attachment blob may be left unlinked"
+        );
+        assert_eq!(
+            count(
+                "SELECT COUNT(*) FROM images \
+                 WHERE id NOT IN (SELECT image_id FROM entry_images)"
+            ),
+            0,
+            "no image may be left unlinked"
+        );
     }
 
     /// A live journal for the fault-injection tests: an unrelated anchor entry with its own

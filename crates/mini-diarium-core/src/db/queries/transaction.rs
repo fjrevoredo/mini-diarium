@@ -49,6 +49,13 @@ pub(crate) const ERR_WRITE_UNIT_LOST: &str =
 /// Callers must still propagate an error from a nested unit. The refusals above cover
 /// later calls to this helper only; raw SQL that a closure runs after it swallowed the
 /// error still executes in autocommit mode.
+///
+/// A nested unit sees the parent's uncommitted rows, so a journal-wide GC inside it
+/// (`cleanup_orphaned_images`, `cleanup_orphaned_attachments`) also sees the blobs the parent
+/// stored but has not linked yet, and deletes them. A composed write must not run a
+/// journal-wide GC between storing a blob and linking it in the same unit. Skipping the GC in
+/// nested units is not the fix: every restore insert is nested, so the GC would never run
+/// there. Guarded by `test_restore_keeps_shared_blobs_and_leaves_no_orphans`.
 pub(crate) fn with_write_transaction<T>(
     db: &DatabaseConnection,
     f: impl FnOnce() -> Result<T, String>,
