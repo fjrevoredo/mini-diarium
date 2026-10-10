@@ -362,7 +362,7 @@ diff-cover coverage/lcov.info --compare-branch=origin/main --fail-under=80
 
 The CI `test` job runs pinned `cargo-crap 0.6.1` after both Codecov upload attempts. It reuses successful same-run workspace coverage from `src-tauri/lcov.info`. Cache, install, analysis, and artifact upload failures are non-blocking. The `crap-report` artifact contains the JSON report and production-time provenance, including source commit, run URL, producer root, runner, tool versions, coverage command, analyzer flags, configuration, and UTC time. Analysis time is printed even on failure. If backend coverage did not succeed, analysis is explicitly skipped; a provenance-only artifact is not a usable baseline.
 
-There is **no blocking CRAP gate yet**. Linux acceptance, a reviewed post-merge master baseline, and separate user approval must come first. No local report is a canonical baseline. Extra test-helper exclusions remain pending Linux acceptance and must be fixed before baseline production.
+There is **no blocking CRAP gate yet**. Linux acceptance, a reviewed post-merge master baseline, and separate user approval must come first. No local report is a canonical baseline. Analysis retains the default exclusions and adds `--exclude '**/tests.rs' --exclude '**/test_support.rs'` for confirmed test-only sources. Record the same scope in provenance and verify it before baseline production; do not filter functions in the normalizer.
 
 The normalizer changes paths only. Use the root from the report's provenance, not the machine that downloads it:
 
@@ -373,7 +373,7 @@ node scripts/normalize-crap-baseline.mjs --self-test
 
 Baseline mode refuses paths outside that root, including diagnostic paths. It retains function order, duplicate names, schema, and all parsed numeric values without rounding. A canonical baseline must come from probe-free master Linux CI and must be committed with its production provenance in a dedicated reviewed change. Do not raise a baseline inside a feature change to make that change pass.
 
-Limits of this analyzer: closure bodies are not scored, including `with_unlocked_db(|db| ...)`; macros are not expanded; cfg-dead function spans in matched files can show 100% coverage. Keep `--missing pessimistic` in CI. `skip` is for diagnosis only. A green report is not proof that these paths have tests. See the [implementation plan](../plans/2026-10-10-crap-complexity-gates-plan.md) for the remaining acceptance and approval checks.
+Limits of this analyzer: closure branches do not increase cyclomatic complexity, including `with_unlocked_db(|db| ...)`, although closure lines can affect coverage; macros are not expanded; cfg-dead function spans in matched files can show 100% coverage. Keep `--missing pessimistic` in CI. `skip` is for diagnosis only. A green report is not proof that these paths have tests. cargo-crap 0.6.1 also does not align relative baseline paths with absolute current paths; direct comparison can falsely mark repeated function names as new. Path alignment needs its own Linux acceptance control before a gate is added. See the [implementation plan](../plans/2026-10-10-crap-complexity-gates-plan.md) for the remaining acceptance and approval checks.
 
 ---
 
