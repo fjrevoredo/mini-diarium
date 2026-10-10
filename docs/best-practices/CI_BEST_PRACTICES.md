@@ -323,6 +323,18 @@ The hook is a complement to CI, not a replacement: it runs `--write`/auto-fix lo
 
 ---
 
+## Test Runner Ownership
+
+**Every test file must belong to a runner that a gate executes.** A test file that no runner collects never fails, so it reports nothing when the code it covers breaks. It looks like protection, but it gives none.
+
+- **Map each test location to one runner** — and map each runner to the CI job and the local gate that execute it
+- **Exclude a path from one runner only when another runner owns it** — an exclude (for example, of a tooling folder) is a common way for tests to become orphans
+- **Fail the build on orphans** — a cheap guard lists the tracked test files and fails when a file matches no runner's include rules. Keep its rules next to the runner configs and change both together
+- **Pass explicit file lists to a runner when its directory or glob handling differs across versions or shells** — a pattern that silently matches nothing is a passing gate with zero tests
+- **Fail a runner that finds zero tests** — an empty run must not report success
+
+---
+
 ## Coverage Gating
 
 Don't discover coverage failures only on CI. A global coverage threshold (e.g. "≥70% overall") catches gross regressions but misses the two checks coverage services actually enforce on PRs:
@@ -343,6 +355,25 @@ diff-cover coverage/lcov.info --compare-branch=origin/main --fail-under=80
 - **Surface uncovered new lines as `file:line`** so the fix is actionable, not just a percentage
 
 > Mini Diarium: `bun run coverage:diff` (`scripts/check-diff-coverage.mjs`) implements this gate dependency-free over both `coverage/lcov.info` and `src-tauri/lcov.info`; threshold defaults to 80 to match `codecov.yml`. See root `CLAUDE.md` Gotcha #6.
+
+---
+
+## Rust CRAP Reports (Phase 0, Advisory)
+
+The CI `test` job runs pinned `cargo-crap 0.6.1` after both Codecov upload attempts. It reuses successful same-run workspace coverage from `src-tauri/lcov.info`. Cache, install, analysis, and artifact upload failures are non-blocking. The `crap-report` artifact contains the JSON report and production-time provenance, including source commit, run URL, producer root, runner, tool versions, coverage command, analyzer flags, configuration, and UTC time. Analysis time is printed even on failure. If backend coverage did not succeed, analysis is explicitly skipped; a provenance-only artifact is not a usable baseline.
+
+There is **no blocking CRAP gate yet**. Linux acceptance, a reviewed post-merge master baseline, and separate user approval must come first. No local report is a canonical baseline. Analysis retains the default exclusions and adds `--exclude '**/tests.rs' --exclude '**/test_support.rs'` for confirmed test-only sources. Record the same scope in provenance and verify it before baseline production; do not filter functions in the normalizer.
+
+The normalizer changes paths only. Use the root from the report's provenance, not the machine that downloads it:
+
+```powershell
+node scripts/normalize-crap-baseline.mjs --input crap-report.json --root <producer-root> --for-baseline --output <normalized-report.json>
+node scripts/normalize-crap-baseline.mjs --self-test
+```
+
+Baseline mode refuses paths outside that root, including diagnostic paths. It retains function order, duplicate names, schema, and all parsed numeric values without rounding. A canonical baseline must come from probe-free master Linux CI and must be committed with its production provenance in a dedicated reviewed change. Do not raise a baseline inside a feature change to make that change pass.
+
+Limits of this analyzer: closure branches do not increase cyclomatic complexity, including `with_unlocked_db(|db| ...)`, although closure lines can affect coverage; macros are not expanded; cfg-dead function spans in matched files can show 100% coverage. Keep `--missing pessimistic` in CI. `skip` is for diagnosis only. A green report is not proof that these paths have tests. cargo-crap 0.6.1 also does not align relative baseline paths with absolute current paths; direct comparison can falsely mark repeated function names as new. Path alignment needs its own Linux acceptance control before a gate is added. See the [implementation plan](../plans/2026-10-10-crap-complexity-gates-plan.md) for the remaining acceptance and approval checks.
 
 ---
 

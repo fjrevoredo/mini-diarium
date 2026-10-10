@@ -35,6 +35,9 @@ Thumbs.db
 # Coverage
 coverage/
 lcov.info
+/crap-report.json
+/crap-delta.json
+/crap-report.provenance.txt
 
 # Test artifacts
 *.db

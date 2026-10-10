@@ -19,6 +19,7 @@ Identify what kind of change this task made. The scope decides which checks belo
 | **Full-stack** (both layers) | All frontend + backend checks |
 | **Dependency update** (`package.json`, `Cargo.toml`, lockfiles) | Full test suite + type-check + lint |
 | **CI/build config** (`.github/`, `vite.config.ts`, `tauri.conf.json`) | Run the affected pipeline once (CI workflow or `bun run build`) |
+| **Build-tooling scripts** (`scripts/**`), or any new or moved test file | `test:scripts`, `check:test-runners` |
 | **Docs-only** (`*.md`, `docs/`, `CLAUDE.md`) | Proofread; verify any new links resolve |
 | **Refactor** (no behavior change) | All tests still pass |
 | **Website — visible change** (`website/css/`, `website/js/`, `website/*.html`, a generator's inline styles/markup in `scripts/generate-website-*.mjs`) | Screenshot verification — see the callout below |
@@ -72,7 +73,7 @@ Selection and consolidation rules:
 
 Run the test suites, type checker, and linters you identified as mandatory in step 1.
 
-The comprehensive path is `bun run pre-commit` (~40-60 s), which runs type-check, ESLint, Prettier, locale validation, UI-error sanitization, frontend tests with coverage, backend tests with coverage, clippy, rustfmt, and the patch-coverage gate in one command — and generates the lcov files the coverage gate consumes.
+The comprehensive path is `bun run pre-commit` (~40-60 s), which runs type-check, ESLint, Prettier, locale validation, UI-error sanitization and the other repo guards (including the test-runner ownership guard), frontend tests with coverage, script tests (`test:scripts`), backend tests with coverage, clippy, rustfmt, and the patch-coverage gate in one command — and generates the lcov files the coverage gate consumes.
 
 Or run individual checks for faster iteration:
 
