@@ -6,6 +6,11 @@ use rusqlite::params;
 
 /// Inserts a new entry into the database and returns its AUTOINCREMENT row id.
 ///
+/// A crate-internal primitive: it does not extract embedded images or link them, and it
+/// opens no write unit. Production writes go through `insert_entry_with_images`. The `db`
+/// façade exports this function only with the `test-support` feature (test fixtures and
+/// benches).
+///
 /// # Arguments
 /// * `db` - Database connection with encryption key
 /// * `entry` - The diary entry to insert (id field is ignored; AUTOINCREMENT assigns it)

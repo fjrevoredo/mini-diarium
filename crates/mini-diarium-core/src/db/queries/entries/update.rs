@@ -42,9 +42,10 @@ pub fn update_entry_with_images(
 
 /// Updates an existing entry in the database by id
 ///
-/// A low-level primitive: it does **not** check the entry lock, because
-/// `insert_entry_with_images` uses it on the row it has just created. Content saves go
-/// through `update_entry_with_images`, which does.
+/// A crate-internal primitive: it does **not** check the entry lock or update the image
+/// links, because `insert_entry_with_images` uses it on the row it has just created.
+/// Content saves go through `update_entry_with_images`, which does both. The `db` façade
+/// exports this function only with the `test-support` feature (test fixtures and benches).
 ///
 /// # Arguments
 /// * `db` - Database connection with encryption key

@@ -27,8 +27,8 @@ pub use queries::{
     // Entry CRUD
     count_words, delete_entry_by_id, get_all_entries, get_all_entry_dates, get_entries_by_date,
     get_entries_for_timeline, get_entries_in_range, get_entry_by_id, get_locked_entry_dates,
-    insert_entry, insert_entry_with_images, is_entry_locked, recalculate_all_word_counts,
-    set_entry_locked, update_entry, update_entry_with_images,
+    insert_entry_with_images, is_entry_locked, recalculate_all_word_counts, set_entry_locked,
+    update_entry_with_images,
     ERR_ENTRY_LOCKED,
     // Entry-empty rule
     entry_is_empty, is_blank_entry_text,
@@ -56,3 +56,11 @@ pub use queries::{
     custom_font_has_weight, delete_custom_font_family, get_custom_font_weight_data,
     list_custom_font_rows, upsert_custom_font,
 };
+
+// Raw entry-row primitives, exported for test fixtures and benches only. They skip the entry
+// lock and the image links, so production code must use `insert_entry_with_images` /
+// `update_entry_with_images` instead; the cfg keeps them out of the default build (same gate
+// as `DatabaseConnection::from_parts`). Only a non-test build (`cargo build --workspace`)
+// enforces this: test and bench builds unify `test-support` into core.
+#[cfg(any(test, feature = "test-support"))]
+pub use queries::{insert_entry, update_entry};

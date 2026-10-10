@@ -9,7 +9,7 @@ eventually a WASM tier) call. It was defined in open-core **M2 (TODO-0077)**.
 otherwise not re-exported at a module root, so external crates cannot name it. Treat anything
 unlisted as subject to change without notice.
 
-Each item below is reachable at the path shown (e.g. `mini_diarium_core::db::insert_entry`).
+Each item below is reachable at the path shown (e.g. `mini_diarium_core::db::insert_entry_with_images`).
 
 ---
 
@@ -101,16 +101,18 @@ Blanket rules, so individual entries below do not repeat them:
   returns the "enclosing write unit was rolled back" error. Callers must still propagate an
   inner error: raw SQL that runs after a swallowed error writes in autocommit mode. The
   lower-level `insert_entry` / `update_entry` are single-statement writes
-  with no transaction of their own — they are the primitives the `*_with_images` variants
-  compose.
+  with no transaction of their own — they are the crate-internal primitives the
+  `*_with_images` variants compose. The façade exports them **only** with the `test-support`
+  feature (test fixtures and benches); the default build does not have them.
 - **Entry lock.** A locked entry is read-only. These writes check the lock inside their write
   unit and return `Err(ERR_ENTRY_LOCKED)` (exactly `"entry is locked"`) without a change:
   `update_entry_with_images`, `delete_entry_by_id`, `add_tag_to_entry`,
   `remove_tag_from_entry`, `add_attachment_to_entry`, `remove_attachment_from_entry`.
   `set_entry_locked` is the toggle and is not checked. `recalculate_all_word_counts` skips
-  locked rows. `insert_entry*` and per-entry restore create new rows, which are never locked.
-  `update_entry` does **not** check the lock: it is the primitive `insert_entry_with_images`
-  uses on its new row; call `update_entry_with_images` to edit an existing entry.
+  locked rows. `insert_entry_with_images` and per-entry restore create new rows, which are never locked.
+  The `test-support`-only primitive `update_entry` does **not** check the lock: it is the
+  primitive `insert_entry_with_images` uses on its new row, and the default build does not
+  export it. Call `update_entry_with_images` to edit an existing entry.
   Journal-wide tag operations (`delete_tag`, `rename_tag`) also reach locked entries: deleting
   a tag removes it from every entry through `ON DELETE CASCADE`.
 - **Foreign keys.** Connections are always opened through `db::schema`'s `open_connection`,
@@ -186,14 +188,16 @@ sealed (`pub(crate)`); the names below are re-exported at `db`.
 - `open_database`, `open_database_auto`, `open_database_with_keypair`
 
 ### Entry CRUD
-- `insert_entry` → **`Result<i64, String>`** (returns the new AUTOINCREMENT row id)
-- `insert_entry_with_images`, `update_entry` (no lock check — see
-  [Entry lock](#handle--mutation-semantics)), `update_entry_with_images`
+- `insert_entry_with_images` → **`Result<i64, String>`** (returns the new AUTOINCREMENT row
+  id), `update_entry_with_images`
 - `get_entry_by_id`, `get_entries_by_date`, `get_all_entries`, `get_entries_in_range`
 - `get_all_entry_dates`, `get_locked_entry_dates`, `get_entries_for_timeline`
 - `delete_entry_by_id`, `is_entry_locked`, `set_entry_locked`, `count_words`
 - `recalculate_all_word_counts(db) -> Result<WordCountRecalculationResult, String>` — bulk
   on-demand rescan; skips locked entries and never touches `date_updated`
+- **`test-support` only** (test fixtures and benches; not in the default build):
+  `insert_entry` → `Result<i64, String>`, `update_entry` — raw row writes with no lock check
+  and no image links (see [Entry lock](#handle--mutation-semantics))
 
 ### Entry-empty rule
 - `entry_is_empty(db, id) -> Result<Option<bool>, String>` — whether the **stored** entry is
