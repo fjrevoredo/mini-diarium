@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1791754425439,
+  "lastUpdate": 1791756025467,
   "repoUrl": "https://github.com/fjrevoredo/mini-diarium",
   "entries": {
     "Benchmark": [
@@ -38818,6 +38818,36 @@ window.BENCHMARK_DATA = {
           {
             "name": "ci_pipeline_duration",
             "value": 506000000000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "committer": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "distinct": true,
+          "id": "715c54925c00d6fea8e9c7ccfc2b524c6fa47da8",
+          "message": "feat(prefs): add \"Lock the journal\" ESC key action (#313)\n\nAdd a third ESC key action choice that locks the journal through the\nsame lockJournal() path as the Header Lock button. All existing guards\n(IME composition, claimed Escape, onboarding tour, overlay snapshot) run\nfirst, and the lock branch runs only while authState() is 'unlocked',\nso key repeat during the lock animation locks once.\n\nLocalized in all 7 locales with an updated escHint; user docs, settings\ntaxonomy ADR, CHANGELOG and TODO-0125 updated.",
+          "timestamp": "2026-10-11T23:50:28+02:00",
+          "tree_id": "94d8b167e862bd0f0b901571dc8e9755d4de894b",
+          "url": "https://github.com/fjrevoredo/mini-diarium/commit/715c54925c00d6fea8e9c7ccfc2b524c6fa47da8"
+        },
+        "date": 1791756023710,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "ci_pipeline_duration",
+            "value": 575000000000,
             "range": "± 0",
             "unit": "ns/iter"
           }
