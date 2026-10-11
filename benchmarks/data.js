@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1791756025467,
+  "lastUpdate": 1791756567427,
   "repoUrl": "https://github.com/fjrevoredo/mini-diarium",
   "entries": {
     "Benchmark": [
@@ -38848,6 +38848,36 @@ window.BENCHMARK_DATA = {
           {
             "name": "ci_pipeline_duration",
             "value": 575000000000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "committer": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "distinct": true,
+          "id": "82928250d9fac592bfc6332ae445209b49505b72",
+          "message": "fix(header): disable the Lock button during every lock\n\nThe button guarded re-entry with a local flag, so it stayed enabled\nduring a lock started by Escape, auto-lock or focus loss. The lock\nbackdrop normally blocks the click, but prefers-reduced-motion hides\nit, so a click in the 700 ms lock window started a second lockJournal().\nRead authState() === 'locking' instead.",
+          "timestamp": "2026-10-11T23:50:43+02:00",
+          "tree_id": "c51f7d3036af8e190f598adcea7d4a3d1775ba7e",
+          "url": "https://github.com/fjrevoredo/mini-diarium/commit/82928250d9fac592bfc6332ae445209b49505b72"
+        },
+        "date": 1791756566389,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "ci_pipeline_duration",
+            "value": 530000000000,
             "range": "± 0",
             "unit": "ns/iter"
           }
