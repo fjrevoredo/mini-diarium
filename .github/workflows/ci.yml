@@ -304,6 +304,53 @@ jobs:
             crap-report.provenance.txt
           if-no-files-found: ignore
 
+      # Disposable Task 2.1 acceptance. Never merge this workflow change.
+      - name: CRAP policy acceptance (unchanged Linux source)
+        env:
+          BACKEND_COVERAGE_OUTCOME: ${{ steps.backend-coverage.outcome }}
+        run: |
+          test "$BACKEND_COVERAGE_OUTCOME" = success
+          test "$(cargo crap --version)" = 'cargo-crap 0.6.1'
+          node scripts/check-crap-gate.mjs --self-test
+          node scripts/normalize-crap-baseline.mjs --input ci/crap-baseline.json --root "$GITHUB_WORKSPACE" --for-comparison --output crap-baseline-input.json
+          cargo crap --workspace --lcov src-tauri/lcov.info --baseline crap-baseline-input.json --format json --sort file --missing pessimistic --epsilon 0.01 --exclude '**/tests.rs' --exclude '**/test_support.rs' --output crap-policy-unchanged.json
+          node scripts/check-crap-gate.mjs --report crap-policy-unchanged.json
+
+      - name: CRAP policy acceptance (seeded new offender)
+        run: |
+          cp crates/mini-diarium-core/src/lib.rs "$RUNNER_TEMP/crap-policy-lib.rs"
+          trap 'cp "$RUNNER_TEMP/crap-policy-lib.rs" crates/mini-diarium-core/src/lib.rs; rm -f crates/mini-diarium-core/src/crap_policy_probe.rs' EXIT
+          echo 'pub mod crap_policy_probe;' >> crates/mini-diarium-core/src/lib.rs
+          cat > crates/mini-diarium-core/src/crap_policy_probe.rs <<'RS'
+          pub fn crap_policy_new_offender(value: i32) -> i32 {
+              let mut result = value;
+              if value > 0 { result += 1; }
+              if value > 1 { result += 1; }
+              if value > 2 { result += 1; }
+              if value > 3 { result += 1; }
+              if value > 4 { result += 1; }
+              result
+          }
+          RS
+          (cd src-tauri && cargo llvm-cov nextest --workspace --no-fail-fast --lcov --output-path lcov.info)
+          cargo crap --workspace --lcov src-tauri/lcov.info --baseline crap-baseline-input.json --format json --sort file --missing pessimistic --epsilon 0.01 --exclude '**/tests.rs' --exclude '**/test_support.rs' --output crap-policy-seeded.json
+          set +e
+          node scripts/check-crap-gate.mjs --report crap-policy-seeded.json
+          status=$?
+          set -e
+          test "$status" = 1
+          node --input-type=module -e 'import {readFileSync} from "node:fs"; import assert from "node:assert/strict"; const report=JSON.parse(readFileSync("crap-policy-seeded.json","utf8")); assert(report.entries.some(e=>e.function==="crap_policy_new_offender" && e.status==="new" && e.crap>30)); console.log("PASS: real seeded new offender exceeds 30");'
+
+      - name: Upload disposable CRAP policy acceptance evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: crap-policy-acceptance
+          path: |
+            crap-policy-unchanged.json
+            crap-policy-seeded.json
+          if-no-files-found: ignore
+
   build-linux:
     name: Build (Linux)
     needs: [lint, test]
