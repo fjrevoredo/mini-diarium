@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1791752865544,
+  "lastUpdate": 1791753904375,
   "repoUrl": "https://github.com/fjrevoredo/mini-diarium",
   "entries": {
     "Benchmark": [
@@ -38758,6 +38758,36 @@ window.BENCHMARK_DATA = {
           {
             "name": "ci_pipeline_duration",
             "value": 579000000000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "committer": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "distinct": true,
+          "id": "3c2c8684bf6468287508765cc6cba1cf9f85e7e9",
+          "message": "docs(todo): update TODO-0108 and add TODO-0152 for the WebdriverIO 10 upgrade",
+          "timestamp": "2026-10-11T23:15:14+02:00",
+          "tree_id": "ed026928caf81d39bf6729d5536d289567d158e3",
+          "url": "https://github.com/fjrevoredo/mini-diarium/commit/3c2c8684bf6468287508765cc6cba1cf9f85e7e9"
+        },
+        "date": 1791753902654,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "ci_pipeline_duration",
+            "value": 528000000000,
             "range": "± 0",
             "unit": "ns/iter"
           }
