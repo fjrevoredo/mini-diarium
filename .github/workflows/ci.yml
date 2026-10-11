@@ -202,6 +202,19 @@ jobs:
         # which every supported Node version accepts.
         run: bun run test:scripts
 
+      # Disposable acceptance PR only. NEVER MERGE. Production gate is unchanged.
+      - name: Seed runner-only existing CRAP regression
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          source = Path('src-tauri/src/menu.rs')
+          signature = 'pub fn build_menu(app: &AppHandle<Wry>) -> tauri::Result<TranslatableMenuItems> {\n'
+          original = source.read_text()
+          assert original.count(signature) == 1
+          seeded = signature + '    if app.package_info().name.is_empty() { panic!("disposable CRAP gate regression"); }\n'
+          source.write_text(original.replace(signature, seeded, 1))
+          PY
+
       - name: Backend tests
         id: backend-coverage
         working-directory: src-tauri
