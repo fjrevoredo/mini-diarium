@@ -202,6 +202,26 @@ jobs:
         # which every supported Node version accepts.
         run: bun run test:scripts
 
+      # Disposable acceptance PR only. NEVER MERGE. Production gate is unchanged.
+      - name: Seed runner-only new CRAP offender
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          root = Path('crates/mini-diarium-core/src')
+          lib = root / 'lib.rs'
+          lib.write_text(lib.read_text() + '\npub mod crap_gate_probe;\n')
+          (root / 'crap_gate_probe.rs').write_text('''pub fn crap_gate_new_offender(input: u32) -> u32 {
+              let mut result = 0;
+              if input & 1 != 0 { result += 1; }
+              if input & 2 != 0 { result += 2; }
+              if input & 4 != 0 { result += 4; }
+              if input & 8 != 0 { result += 8; }
+              if input & 16 != 0 { result += 16; }
+              result
+          }
+          ''')
+          PY
+
       - name: Backend tests
         id: backend-coverage
         working-directory: src-tauri
