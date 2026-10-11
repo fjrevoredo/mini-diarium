@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1791722014221,
+  "lastUpdate": 1791738899326,
   "repoUrl": "https://github.com/fjrevoredo/mini-diarium",
   "entries": {
     "Benchmark": [
@@ -38482,6 +38482,192 @@ window.BENCHMARK_DATA = {
           {
             "name": "ci_pipeline_duration",
             "value": 514000000000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "39350477+fjrevoredo@users.noreply.github.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "2651904e950e4852f3f4cff053820b37129b7f88",
+          "message": "feat(ci): enforce Rust CRAP policy and workspace complexity checks (#334)\n\n## Summary\n\nFinish the approved complexity-gates feature. Linux CI blocks new Rust\nfunctions above CRAP 30 and existing functions whose score increases by\nmore than 0.01. Checks apply to whole functions across the workspace.\nLocal comparisons stay advisory on every OS.\n\nThe user explicitly authorized this final merge after reviewing the\ncompleted feature and workflow summary. Merge only after all\ncurrent-head checks pass. Use a merge commit to preserve the dedicated\nbaseline and scoped implementation commits.\n\n## Changes\n\n- Commit the reviewed, probe-free Linux baseline and exact production\nprovenance in dedicated commit `189bb55`. It remains unchanged; no\nWindows or scratch metrics replace it.\n- Add the pinned cargo-crap 0.6.1 delta policy interpreter and\nmaintained input, threshold, epsilon, identity, annotation, and failure\ncontrols.\n- Keep Codecov uploads before all CRAP work. Preserve independent\nadvisory report/provenance and always-uploaded policy delta artifacts,\nincluding on failure.\n- Add a tested local advisory caller that requires successful fresh\nsame-run backend coverage. Missing/wrong-version tools or score\nviolations do not block local checks; no auto-install.\n- Enable workspace Clippy cognitive complexity at threshold 30; keep\nfrontend classic complexity above 15 as warnings, with only that rule\nexempted for tests.\n- Write Vitest coverage after test failures without hiding failures. No\ntimeouts, tests, coverage thresholds, CI concurrency, or existing gates\nare weakened.\n- Include the already reviewed equivalent auth cleanup/extraction and\nits success/rollback tests needed by the lint change.\n- Document policy, baseline maintenance, provenance, and\nclosure/macro/inactive-code limits. Preserve the latest master\ndocumentation/TODO corrections.\n\n## Testing\n\n- [x] `bun run lint` passes; seven intentional complexity warnings\nremain advisory\n- [x] `bun run format:check` passes\n- [x] `bun run type-check` passes\n- [x] `bun run test:run` passes: 1,277 tests in 116 files\n- [x] `cargo test --workspace` passes: 950 tests across all three\ncrates, plus doc-test targets\n- [x] `cargo clippy --workspace --all-targets -- -D warnings` passes\n- [x] Gate/source/artifact review complete; prior Windows E2E evidence\nis retained in the plan. No rendered UI change in the gate wiring\n- [x] Final full local check passes all 15 checks, including fresh\nfrontend/backend coverage and patch coverage 46/48 (95.8%) at the\nunchanged 80% threshold\n- [x] All 82 script tests and ownership of 133 tracked test files pass\nagain after current-master integration; actionlint and skill sync pass\n- [x] Real Linux unchanged-source control passed all seven CI jobs and\nevery PR check: [run\n38142680713](https://github.com/fjrevoredo/mini-diarium/actions/runs/38142680713),\ngate exit 0, 625 functions, zero violations\n- [x] New-offender control failed only the production gate, exit 1: [run\n38142680404](https://github.com/fjrevoredo/mini-diarium/actions/runs/38142680404),\nNew function CRAP 42\n- [x] Existing-regression control failed only the production gate, exit\n1: [run\n38142680872](https://github.com/fjrevoredo/mini-diarium/actions/runs/38142680872),\n`build_menu` CRAP 600→650\n- [x] Both Codecov storage transfers and both CRAP artifact uploads\nsucceeded in all three controls. Disposable PRs #330–333 are closed\nwithout merge; probe commits are absent from primary/master ancestry\n\n**Local validation limit:** final frontend runs used explicit\n`VITEST_MAX_WORKERS=4` after unchanged default-concurrency runs hit\ndifferent five-second test timeouts. No source, assertion, timeout,\nthreshold, or production CI setting changed. This does not claim\ndefault-concurrency success or a proven root cause. Local Windows CRAP\npolicy exit 1 on four platform/coverage differences is advisory, not a\nLinux failure.\n\n**Current PR CI:** fresh checks for the production head are still\nrequired before merge. Earlier controls prove acceptance, not this new\nhead's check completion.\n\n## Related Issues\n\nNo originating TODO. Implementation and exact evidence:\n`docs/plans/2026-10-10-crap-complexity-gates-plan.md` and its companion\ndecisions record (DEC-023 records final merge approval).",
+          "timestamp": "2026-10-11T19:01:16+02:00",
+          "tree_id": "77e9bd9ab12df4b88e061f6ae19ec933f26c6d1a",
+          "url": "https://github.com/fjrevoredo/mini-diarium/commit/2651904e950e4852f3f4cff053820b37129b7f88"
+        },
+        "date": 1791738897970,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "auth_argon2/wrap_master_key",
+            "value": 91010503,
+            "range": "± 440794",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "auth_argon2/unwrap_master_key",
+            "value": 92544210,
+            "range": "± 2231375",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "backup_snapshot/create_snapshot/small_172032B",
+            "value": 3403973,
+            "range": "± 104968",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "backup_snapshot/create_snapshot/large_8372224B",
+            "value": 28500048,
+            "range": "± 175682",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "backup_snapshot/create_snapshot/image_heavy_40259584B",
+            "value": 127582534,
+            "range": "± 620162",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_encrypt/1024",
+            "value": 1328,
+            "range": "± 8",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_encrypt/10240",
+            "value": 6497,
+            "range": "± 25",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_encrypt/102400",
+            "value": 90865,
+            "range": "± 279",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_decrypt/1024",
+            "value": 767,
+            "range": "± 6",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_decrypt/10240",
+            "value": 5751,
+            "range": "± 42",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_decrypt/102400",
+            "value": 56521,
+            "range": "± 1081",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_insert_entry",
+            "value": 65638,
+            "range": "± 6778",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_update_entry",
+            "value": 14995,
+            "range": "± 110",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_delete_entry",
+            "value": 126062,
+            "range": "± 13438",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_entries_by_date",
+            "value": 16463,
+            "range": "± 940",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_all_entry_dates/100",
+            "value": 33527,
+            "range": "± 238",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_all_entry_dates/500",
+            "value": 118756,
+            "range": "± 388",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_all_entries/100",
+            "value": 153817,
+            "range": "± 872",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_all_entries/500",
+            "value": 692937,
+            "range": "± 3950",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_all_entries/1000",
+            "value": 1347574,
+            "range": "± 28072",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_all_entries/3650",
+            "value": 4945197,
+            "range": "± 132336",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_search_entries/500",
+            "value": 14299395,
+            "range": "± 227948",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_search_entries/1000",
+            "value": 29448398,
+            "range": "± 452207",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_search_entries/3650",
+            "value": 107457062,
+            "range": "± 2034323",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "count_words_plain_500w",
+            "value": 7284,
+            "range": "± 28",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "count_words_html_500w",
+            "value": 8830,
+            "range": "± 69",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "ci_pipeline_duration",
+            "value": 808000000000,
             "range": "± 0",
             "unit": "ns/iter"
           }
