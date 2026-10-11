@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1791651706954,
+  "lastUpdate": 1791680040475,
   "repoUrl": "https://github.com/fjrevoredo/mini-diarium",
   "entries": {
     "Benchmark": [
@@ -38392,6 +38392,36 @@ window.BENCHMARK_DATA = {
           {
             "name": "ci_pipeline_duration",
             "value": 563000000000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "39350477+fjrevoredo@users.noreply.github.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "8a345d70abe8fb5c3aba842150f5b0c2af5a66d9",
+          "message": "ci: add advisory Rust CRAP reports (phase 0) (#327)\n\n## Summary\nPhase 0 only. This PR adds non-blocking cargo-crap 0.6.1 reports after\nCodecov upload attempts, production-time provenance, and a path-only\nnormalizer. It does not add a baseline, comparison mode, or blocking\nCRAP check.\n\n## Changes\n- The exact-version binary cache includes runner OS and architecture.\n- All CRAP steps are advisory; artifacts upload after failures too.\n- Codecov upload attempts run after failed tests.\n- Normalizer self-tests run in the lint job. The script suite also tests\nCLI success and failure.\n- Analyzer scope retains defaults and excludes confirmed test-only\n`tests.rs` and `test_support.rs` sources.\n- Baseline normalization refuses outside-root paths, ambiguous Windows\ndrive-relative paths, and malformed producer roots. Invalid input does\nnot overwrite an existing output.\n\n## Testing\n- [x] Real Linux report normalization preserves all 619 entries, order,\nscores, and non-path values.\n- [x] Normalizer self-tests and CLI controls pass locally; advisory\nscript suite: 62 passed. Runner ownership: 130 tracked test files\nchecked.\n- [x] actionlint passes; lockfiles and Nix dependency hash are\nunchanged.\n- [x] Previous PR head `92488d0`: CI run 38086188720 passed Test, Lint,\nall platform builds, Flatpak, and E2E. SonarCloud, CodeQL, and Codecov\npatch checks also passed.\n- [x] Current head `926d30f`: replacement CI run 38097918038 passed all\nseven jobs; SonarCloud, CodeQL, and Codecov also passed. The full\nself-check is complete.\n- [x] Disposable Linux acceptance run 38074856678: 622 identical\nfunction identities across two fresh coverage runs; max CRAP delta\n0.0007656249999996589, below epsilon 0.01; no test-helper entries.\n- [x] Root-aligned input copy matched all 622 unchanged functions and\nzero removed. Direct absolute-versus-relative comparison exposes seven\nfalse new repeated-name identities.\n- [x] Failed-test control 38074581034: only the deliberate assertion\nfailed; both Codecov upload steps ran; CRAP explicitly skipped;\nprovenance-only artifact and tolerant missing-file upload succeeded.\n- [x] Probe PR #328 is closed without merge. All four probe commits\nstill return exactly 1 from the ancestor check against freshly fetched\norigin/master. Its disposable branch and worktree were removed.\n- [x] User approves merging this advisory PR after the full self-check\nand all current checks pass (2026-10-11).\n- [ ] Post-merge master Linux report and provenance are required before\ncanonical baseline production.\n\nThe latest downloaded advisory report has 619 functions, 17 above CRAP\n30, and no probe entries. It is not a canonical baseline. Cold\ncargo-crap installation took 52 seconds; the analysis timer reported 0\nwhole seconds. Analyzer limits include closure complexity, macro\nexpansion, and cfg-dead spans that can appear fully covered.\n\n## Inherited scope and self-check\nThis branch includes pre-existing commit `5a82c70` (TODO-0093 runner\ninfrastructure), which is absent from origin/master. The user approved a\nseparate fix for its SonarCloud PATH finding. Commit `92488d0` selects\nan absolute Git executable from the standard OS installation or an\nexplicit trusted absolute override, with no PATH fallback. SonarCloud\npassed without dismissal or threshold changes.\n\nThe user then requested a full implementation self-check. That check\nfound and fixed the normalizer's acceptance of `C:outside.rs`; it also\ncorrected stale documentation. The user approved merging after the\nself-check and all current checks pass. Those conditions are now\nsatisfied on exact head `926d30f9a7ae5234a0e8ebf6bbdf736d3a2eeb99`.\n\nThe primary worktree separately contains Clippy/ESLint settings, Vitest\nfailure reporting, and the equivalent auth cleanup helper/tests. Those\ncommits are deliberately absent from this advisory PR. The primary local\ncheck passed 1,272 frontend tests, 937 backend tests, and 67 script\ntests, with fresh patch coverage of 46/48 (95.8%) at the unchanged 80%\nthreshold. These local results must not be described as PR CI validation\nof the excluded changes. The plan copy in this PR is the initial\nplanning snapshot; the primary-worktree plan and companion decisions\nfile hold the current execution ledger.\n\n## Remaining checkpoints\nThis PR implements Tasks 1.1 to 1.3 and the inherited prerequisite in\nTask 1.7, and prepares Task 1.4's merge. Task 1.8 records the full\nself-check. M2 remains disabled pending canonical master baseline review\nand separate Task 1.6 approval. Advisory merge approval is conditional\non the self-check and all checks passing; blocking-gate approval has not\nbeen given.",
+          "timestamp": "2026-10-11T02:44:07+02:00",
+          "tree_id": "cbb29535ce6ce006c0d217a8b91af4726c1af287",
+          "url": "https://github.com/fjrevoredo/mini-diarium/commit/8a345d70abe8fb5c3aba842150f5b0c2af5a66d9"
+        },
+        "date": 1791680039177,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "ci_pipeline_duration",
+            "value": 581000000000,
             "range": "± 0",
             "unit": "ns/iter"
           }
