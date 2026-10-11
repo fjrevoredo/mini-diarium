@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1791684349929,
+  "lastUpdate": 1791722014221,
   "repoUrl": "https://github.com/fjrevoredo/mini-diarium",
   "entries": {
     "Benchmark": [
@@ -38452,6 +38452,36 @@ window.BENCHMARK_DATA = {
           {
             "name": "ci_pipeline_duration",
             "value": 488000000000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "committer": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "distinct": true,
+          "id": "a3d5a82eea83f0e4519ffedf437de58ea31733bf",
+          "message": "docs(todo): add TODO-0149 for flaky PreferencesOverlay auto-lock test",
+          "timestamp": "2026-10-11T11:46:01+02:00",
+          "tree_id": "ebe43459722afb1384172b8674ab9958582677d7",
+          "url": "https://github.com/fjrevoredo/mini-diarium/commit/a3d5a82eea83f0e4519ffedf437de58ea31733bf"
+        },
+        "date": 1791722013036,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "ci_pipeline_duration",
+            "value": 514000000000,
             "range": "± 0",
             "unit": "ns/iter"
           }
