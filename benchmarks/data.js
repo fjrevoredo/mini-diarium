@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1791745624531,
+  "lastUpdate": 1791750255735,
   "repoUrl": "https://github.com/fjrevoredo/mini-diarium",
   "entries": {
     "Benchmark": [
@@ -38698,6 +38698,36 @@ window.BENCHMARK_DATA = {
           {
             "name": "ci_pipeline_duration",
             "value": 516000000000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "committer": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "distinct": true,
+          "id": "a484fe0de4ced80c73b605989de1946b48661ef9",
+          "message": "fix(editor): run the ESC key action from the entry body again (#329)\n\nProseMirror calls preventDefault() on every Escape in an editable editor,\nso the defaultPrevented check added in TODO-0127 made the global ESC\naction skip every Escape in the entry body. Non-modal popups now claim\ntheir Escape explicitly through src/lib/escape-claim.ts, and the global\nhandler reads that claim instead of defaultPrevented (TODO-0150).",
+          "timestamp": "2026-10-11T22:03:32+02:00",
+          "tree_id": "9d84b9c1f88ceb0be4305a844114f97509d4cceb",
+          "url": "https://github.com/fjrevoredo/mini-diarium/commit/a484fe0de4ced80c73b605989de1946b48661ef9"
+        },
+        "date": 1791750253936,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "ci_pipeline_duration",
+            "value": 568000000000,
             "range": "± 0",
             "unit": "ns/iter"
           }
