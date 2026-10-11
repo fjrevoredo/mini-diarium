@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1791750255735,
+  "lastUpdate": 1791752865544,
   "repoUrl": "https://github.com/fjrevoredo/mini-diarium",
   "entries": {
     "Benchmark": [
@@ -38728,6 +38728,36 @@ window.BENCHMARK_DATA = {
           {
             "name": "ci_pipeline_duration",
             "value": 568000000000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "committer": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "distinct": true,
+          "id": "4a6926f037abfe41838f525b65d44725d126173d",
+          "message": "docs(skills): add IPC interception recipe for native dialogs and race tests to tauri-agent-dev",
+          "timestamp": "2026-10-11T22:57:26+02:00",
+          "tree_id": "35293416a7b14e8e0aa55fd45e0a6023b85c2662",
+          "url": "https://github.com/fjrevoredo/mini-diarium/commit/4a6926f037abfe41838f525b65d44725d126173d"
+        },
+        "date": 1791752863987,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "ci_pipeline_duration",
+            "value": 579000000000,
             "range": "± 0",
             "unit": "ns/iter"
           }
