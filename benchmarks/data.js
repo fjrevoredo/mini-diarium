@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1791761918323,
+  "lastUpdate": 1792107438166,
   "repoUrl": "https://github.com/fjrevoredo/mini-diarium",
   "entries": {
     "Benchmark": [
@@ -38938,6 +38938,192 @@ window.BENCHMARK_DATA = {
           {
             "name": "ci_pipeline_duration",
             "value": 567000000000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "committer": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "distinct": true,
+          "id": "8e39758464474017d88c7aa97ffd4fc92185ba86",
+          "message": "chore: refresh Claude scheduled-tasks lock",
+          "timestamp": "2026-10-16T01:23:57+02:00",
+          "tree_id": "392406ceb9f56b08efb6d256acbd2253c37ae818",
+          "url": "https://github.com/fjrevoredo/mini-diarium/commit/8e39758464474017d88c7aa97ffd4fc92185ba86"
+        },
+        "date": 1792107436287,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "auth_argon2/wrap_master_key",
+            "value": 82715485,
+            "range": "± 506420",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "auth_argon2/unwrap_master_key",
+            "value": 83132908,
+            "range": "± 401349",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "backup_snapshot/create_snapshot/small_172032B",
+            "value": 2924836,
+            "range": "± 87923",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "backup_snapshot/create_snapshot/large_8372224B",
+            "value": 49461408,
+            "range": "± 1485516",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "backup_snapshot/create_snapshot/image_heavy_40259584B",
+            "value": 297428791,
+            "range": "± 25538351",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_encrypt/1024",
+            "value": 1269,
+            "range": "± 7",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_encrypt/10240",
+            "value": 5672,
+            "range": "± 15",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_encrypt/102400",
+            "value": 51654,
+            "range": "± 153",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_decrypt/1024",
+            "value": 653,
+            "range": "± 3",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_decrypt/10240",
+            "value": 4938,
+            "range": "± 14",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "cipher_decrypt/102400",
+            "value": 48819,
+            "range": "± 129",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_insert_entry",
+            "value": 67095,
+            "range": "± 6687",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_update_entry",
+            "value": 12459,
+            "range": "± 26",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_delete_entry",
+            "value": 113546,
+            "range": "± 8493",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_entries_by_date",
+            "value": 13378,
+            "range": "± 26",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_all_entry_dates/100",
+            "value": 27498,
+            "range": "± 606",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_all_entry_dates/500",
+            "value": 97703,
+            "range": "± 3111",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_all_entries/100",
+            "value": 126724,
+            "range": "± 1436",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_all_entries/500",
+            "value": 577356,
+            "range": "± 4292",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_all_entries/1000",
+            "value": 1133409,
+            "range": "± 17720",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_get_all_entries/3650",
+            "value": 4138286,
+            "range": "± 166909",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_search_entries/500",
+            "value": 12001549,
+            "range": "± 64237",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_search_entries/1000",
+            "value": 24581740,
+            "range": "± 115598",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "db_search_entries/3650",
+            "value": 90322132,
+            "range": "± 1535597",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "count_words_plain_500w",
+            "value": 4782,
+            "range": "± 121",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "count_words_html_500w",
+            "value": 6423,
+            "range": "± 47",
+            "unit": "ns/iter"
+          },
+          {
+            "name": "ci_pipeline_duration",
+            "value": 780000000000,
             "range": "± 0",
             "unit": "ns/iter"
           }
