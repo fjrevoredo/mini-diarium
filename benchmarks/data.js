@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1792130722255,
+  "lastUpdate": 1792131826535,
   "repoUrl": "https://github.com/fjrevoredo/mini-diarium",
   "entries": {
     "Benchmark": [
@@ -39214,6 +39214,36 @@ window.BENCHMARK_DATA = {
           {
             "name": "ci_pipeline_duration",
             "value": 564000000000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "committer": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "distinct": true,
+          "id": "7c7d9f742d6fca77039ad7f6ed881b4fd37b63b8",
+          "message": "docs(runbooks): note the CI Playwright pins in the npm procedure",
+          "timestamp": "2026-10-16T08:15:10+02:00",
+          "tree_id": "03cf5cfe20d9b872b10ddd6c2974c506ae7e6847",
+          "url": "https://github.com/fjrevoredo/mini-diarium/commit/7c7d9f742d6fca77039ad7f6ed881b4fd37b63b8"
+        },
+        "date": 1792131825248,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "ci_pipeline_duration",
+            "value": 500000000000,
             "range": "± 0",
             "unit": "ns/iter"
           }
