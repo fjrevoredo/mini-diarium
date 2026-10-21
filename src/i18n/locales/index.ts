@@ -11,5 +11,6 @@ export const AVAILABLE_LOCALES: LocaleInfo[] = [
   { code: 'hi', name: 'Hindi', nativeName: 'हिन्दी' },
   { code: 'it', name: 'Italian', nativeName: 'Italiano' },
   { code: 'pt-BR', name: 'Portuguese (Brazil)', nativeName: 'Português (Brasil)' },
+  { code: 'ru', name: 'Russian', nativeName: 'Русский' },
   { code: 'es', name: 'Spanish', nativeName: 'Español' },
 ];

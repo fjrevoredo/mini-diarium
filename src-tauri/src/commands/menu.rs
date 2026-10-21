@@ -38,6 +38,11 @@ fn labels_for_locale(locale: &str) -> MenuLabels {
             #[cfg(not(target_os = "macos"))]
             file_menu: "Arquivo",
         },
+        "ru" => MenuLabels {
+            preferences: "Настройки...",
+            #[cfg(not(target_os = "macos"))]
+            file_menu: "Файл",
+        },
         // Default / fallback — English for any unknown locale code
         _ => MenuLabels {
             preferences: "Preferences...",
@@ -82,6 +87,26 @@ mod tests {
         assert_eq!(l.preferences, "Preferências...");
         #[cfg(not(target_os = "macos"))]
         assert_eq!(l.file_menu, "Arquivo");
+    }
+
+    #[test]
+    fn ru_arm_returns_russian_labels() {
+        let l = labels_for_locale("ru");
+        assert_eq!(l.preferences, "Настройки...");
+        #[cfg(not(target_os = "macos"))]
+        assert_eq!(l.file_menu, "Файл");
+    }
+
+    #[test]
+    fn remaining_locale_arms_return_their_own_labels() {
+        for (locale, preferences) in [
+            ("es", "Preferencias..."),
+            ("de", "Einstellungen..."),
+            ("it", "Preferenze..."),
+            ("hi", "प्राथमिकताएं..."),
+        ] {
+            assert_eq!(labels_for_locale(locale).preferences, preferences);
+        }
     }
 
     #[test]

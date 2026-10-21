@@ -36,6 +36,9 @@ Template:
 
 ## [0.7.6] - Unreleased
 
+### Added
+- **Russian translation (#344)**: The full interface (733 strings) is available in Russian. Select "Русский" in Preferences → General → Language. The native menu ("Файл", "Настройки...") follows the selected language, and on Linux spell check uses the `ru_RU` dictionary, which the Flatpak now bundles. Thanks to [@d1nch](https://github.com/d1nch) for the translation. Known limitation: the app has only singular and plural word forms, so counts such as 2–4 use the Russian "many" form.
+
 ### Internal
 - **Dependency updates (Dependabot #336, #337, #338)**: Frontend production bumps for the nine `@tiptap/*` packages (3.31.4, kept in lockstep), `@tauri-apps/plugin-opener` (2.7.0, kept on the Rust plugin's minor), and `marked` (18.1.0). Development bumps for the WebdriverIO family (`@wdio/*`, `webdriverio`, resolved 10.0.2/10.0.1), which drops the unmaintained `extract-zip` that `@puppeteer/browsers` 2.x pulled (TODO-0152, Dependabot alerts #51/#58), plus `eslint-plugin-solid` (0.18.1), `typescript-eslint` (8.71.1), and `vite` (8.3.3). Cargo.lock patch bumps for `tauri` (2.12.1), `tauri-plugin-opener` (2.7.0), `tauri-plugin-dialog` (2.8.1), and `objc2` (0.6.5), which also removes the duplicate `windows` 0.61 dependency family. Both lockfiles regenerated and aligned; the local WebdriverIO suite passes on Windows/WebView2 (the Ctrl+[ day-navigation spec was hardened against a date-dependent cross-spec fixture collision found during that run). The `nix/package.nix` `npmDepsHash` refresh is a Linux-side follow-up after push.
 - **Dependency updates (Dependabot #339, #340, #341)**: Frontend bump for `lucide-solid` (1.53.0); development bumps for `@playwright/test` (1.64.0) and `happy-dom` (20.14.6); `Cargo.lock` patch bump for `zeroize` (1.9.1). Both lockfiles regenerated and aligned at the versions the PRs propose; the Playwright print-layout suite passes locally.

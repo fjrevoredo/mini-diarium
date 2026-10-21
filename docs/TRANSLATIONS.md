@@ -6,7 +6,7 @@ Thank you for your interest in translating Mini Diarium! This guide explains how
 
 ## How it works
 
-All UI strings live in `src/i18n/locales/en.ts` — this is the canonical English source. Locale files are JSON objects with the same nested structure. Mini Diarium currently ships English, French, German, Hindi, Italian, Portuguese (Brazil), and Spanish; community translations are loaded at build time.
+All UI strings live in `src/i18n/locales/en.ts` — this is the canonical English source. Locale files are JSON objects with the same nested structure. Mini Diarium currently ships English, French, German, Hindi, Italian, Portuguese (Brazil), Russian, and Spanish; community translations are loaded at build time.
 
 ---
 

@@ -228,6 +228,7 @@ Mini Diarium ships in the following languages:
 - Hindi (हिन्दी)
 - Italian (Italiano)
 - Portuguese (Brazil) (Português (Brasil))
+- Russian (Русский)
 - Spanish (Español)
 <!-- supported-languages-end -->
 
@@ -259,6 +260,7 @@ Thanks to everyone who has contributed code, translations, or improvements to Mi
 <a href="https://github.com/tyler274"><img src="https://github.com/tyler274.png?size=40" width="40" height="40" alt="tyler274" /></a>
 <a href="https://github.com/bronty13"><img src="https://github.com/bronty13.png?size=40" width="40" height="40" alt="bronty13" /></a>
 <a href="https://github.com/kenlacroix"><img src="https://github.com/kenlacroix.png?size=40" width="40" height="40" alt="kenlacroix" /></a>
+<a href="https://github.com/d1nch"><img src="https://github.com/d1nch.png?size=40" width="40" height="40" alt="d1nch" /></a>
 
 ## Star History
 

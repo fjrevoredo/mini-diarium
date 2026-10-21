@@ -1,8 +1,30 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, afterEach } from 'vitest';
 import { flatten } from '@solid-primitives/i18n';
 import { mapTauriError } from '../lib/errors';
 import en from './locales/en';
-import { defaultT } from './index';
+import { AVAILABLE_LOCALES } from './locales';
+import { defaultT, setLocale } from './index';
+
+describe('locale switching', () => {
+  afterEach(() => {
+    setLocale('en');
+  });
+
+  it('setLocale("ru") switches to the Russian dictionary', () => {
+    setLocale('ru');
+    expect(defaultT('common.save')).toBe('Сохранить');
+    expect(defaultT('common.cancel')).toBe('Отмена');
+  });
+
+  // A locale listed in the picker but missing from localeMap silently falls back to English.
+  it.each(AVAILABLE_LOCALES.filter((l) => l.code !== 'en').map((l) => l.code))(
+    'selectable locale %s is wired to a translated dictionary',
+    (code) => {
+      setLocale(code);
+      expect(defaultT('common.save')).not.toBe('Save');
+    },
+  );
+});
 
 describe('i18n / locale', () => {
   const flat = flatten(en);

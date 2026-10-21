@@ -15,7 +15,7 @@ Preferences are now **close-only**: there is no Save/Cancel footer. Reversible s
 | Setting | Description |
 |---------|-------------|
 | Theme | Light, dark, or follow system (auto) |
-| Language | Interface language: English, French, German, Hindi, Italian, Portuguese (Brazil), or Spanish |
+| Language | Interface language: English, French, German, Hindi, Italian, Portuguese (Brazil), Russian, or Spanish |
 | ESC key action | Do nothing, quit the app, or lock the journal when pressing Escape. Escape has no effect while a dialog is open |
 
 ## Writing Settings
@@ -57,7 +57,7 @@ Enter your computer password when asked. Nothing is shown while you type the pas
 
 #### Flatpak
 
-Flatpak installs include dictionaries for all seven interface languages (English, Spanish, German, French, Italian, Portuguese (Brazil), and Hindi). If you see a warning, open your computer's Software app, update Mini Diarium, and restart it. If the warning remains, reinstall Mini Diarium.
+Flatpak installs include dictionaries for all eight interface languages (English, Spanish, German, French, Italian, Portuguese (Brazil), Hindi, and Russian). If you see a warning, open your computer's Software app, update Mini Diarium, and restart it. If the warning remains, reinstall Mini Diarium.
 
 #### Need more help?
 

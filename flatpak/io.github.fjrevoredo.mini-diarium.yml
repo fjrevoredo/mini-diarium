@@ -23,7 +23,7 @@ modules:
   # are picked up automatically, exactly like the /app/share/fonts payload above.
   #
   # Filenames are renamed to the <locale>.aff/.dic that enchant looks for: upstream
-  # names do not match (de_DE_frami, fr). One pinned archive rather than fourteen
+  # names do not match (de_DE_frami, fr). One pinned archive rather than sixteen
   # pinned files keeps this to a single checksum and ships every dictionary's licence
   # from the same tree; if the ~113 MB build-time download becomes a problem, the
   # fallback is per-file `type: file` sources with the same install commands.
@@ -44,6 +44,8 @@ modules:
       - install -Dm644 pt_BR/pt_BR.dic /app/share/hunspell/pt_BR.dic
       - install -Dm644 hi_IN/hi_IN.aff /app/share/hunspell/hi_IN.aff
       - install -Dm644 hi_IN/hi_IN.dic /app/share/hunspell/hi_IN.dic
+      - install -Dm644 ru_RU/ru_RU.aff /app/share/hunspell/ru_RU.aff
+      - install -Dm644 ru_RU/ru_RU.dic /app/share/hunspell/ru_RU.dic
       - install -Dm644 en/license.txt en/README_en_US.txt -t /app/share/licenses/io.github.fjrevoredo.mini-diarium/hunspell-dicts/en/
       - install -Dm644 es/LICENSE.md es/README_hunspell_es.txt -t /app/share/licenses/io.github.fjrevoredo.mini-diarium/hunspell-dicts/es/
       - install -Dm644 de/COPYING_GPLv2 de/COPYING_GPLv3 de/COPYING_LGPL_v2.0.txt de/COPYING_LGPL_v2.1.txt de/README_de_DE_frami.txt -t /app/share/licenses/io.github.fjrevoredo.mini-diarium/hunspell-dicts/de/
@@ -51,6 +53,7 @@ modules:
       - install -Dm644 it_IT/README_it_IT.txt it_IT/legacy/it_IT_COPYING it_IT/legacy/it_IT_license.txt -t /app/share/licenses/io.github.fjrevoredo.mini-diarium/hunspell-dicts/it/
       - install -Dm644 pt_BR/README_pt_BR.txt pt_BR/README_en.txt -t /app/share/licenses/io.github.fjrevoredo.mini-diarium/hunspell-dicts/pt_BR/
       - install -Dm644 hi_IN/COPYING hi_IN/README_hi_IN.txt -t /app/share/licenses/io.github.fjrevoredo.mini-diarium/hunspell-dicts/hi/
+      - install -Dm644 ru_RU/README_ru_RU.txt -t /app/share/licenses/io.github.fjrevoredo.mini-diarium/hunspell-dicts/ru/
     sources:
       - type: archive
         url: https://github.com/LibreOffice/dictionaries/archive/refs/tags/libreoffice-26.2.5.2.tar.gz
