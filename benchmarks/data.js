@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1792164744711,
+  "lastUpdate": 1792616014853,
   "repoUrl": "https://github.com/fjrevoredo/mini-diarium",
   "entries": {
     "Benchmark": [
@@ -39304,6 +39304,36 @@ window.BENCHMARK_DATA = {
           {
             "name": "ci_pipeline_duration",
             "value": 610000000000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "141920118+d1nch@users.noreply.github.com",
+            "name": "Den Lyamzin",
+            "username": "d1nch"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "f66111ac53991051256553c3aef6860f18b8350f",
+          "message": "feat(i18n): add Russian translation (#344)\n\nComplete Russian locale with all 733 keys, contributed by @d1nch.\n\nLocale wiring, native menu labels, Linux spellcheck dictionary, supported-language lists, and the CHANGELOG entry follow in a separate change.",
+          "timestamp": "2026-10-21T22:43:56+02:00",
+          "tree_id": "35e501aae990ff11a2e282377804f602cfb40408",
+          "url": "https://github.com/fjrevoredo/mini-diarium/commit/f66111ac53991051256553c3aef6860f18b8350f"
+        },
+        "date": 1792616012863,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "ci_pipeline_duration",
+            "value": 563000000000,
             "range": "± 0",
             "unit": "ns/iter"
           }
