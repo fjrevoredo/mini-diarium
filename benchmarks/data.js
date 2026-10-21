@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1792621605955,
+  "lastUpdate": 1792622209070,
   "repoUrl": "https://github.com/fjrevoredo/mini-diarium",
   "entries": {
     "Benchmark": [
@@ -39424,6 +39424,36 @@ window.BENCHMARK_DATA = {
           {
             "name": "ci_pipeline_duration",
             "value": 601000000000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "committer": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "distinct": true,
+          "id": "7cdce0aa154822884f9d4c59405224328ff741ad",
+          "message": "docs(skills): harden dependency PR runbook for lockstep peers and actionlint",
+          "timestamp": "2026-10-22T00:23:51+02:00",
+          "tree_id": "3714e67c288a9e4c9e93335bfb7c23e895dc9276",
+          "url": "https://github.com/fjrevoredo/mini-diarium/commit/7cdce0aa154822884f9d4c59405224328ff741ad"
+        },
+        "date": 1792622207389,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "ci_pipeline_duration",
+            "value": 582000000000,
             "range": "± 0",
             "unit": "ns/iter"
           }
