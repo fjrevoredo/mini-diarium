@@ -4,7 +4,7 @@ permissions: {}
 
 on:
   workflow_dispatch:
-    description: "Manually submit all sitemap URLs to IndexNow"
+    # Manually submit all sitemap URLs to IndexNow
   # push:
   #   branches: [master]
   #   paths:
