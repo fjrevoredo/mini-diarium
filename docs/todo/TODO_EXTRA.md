@@ -600,6 +600,8 @@ ESC action = Quit → type in the body → Escape → the app quits. Then: tag i
 
 Parent: [`TODO-0151: Wire the Russian locale and complete its integration`](TODO.md)
 
+**Status (2026-10-21):** Completed as listed below, for 0.7.6. The self-check also fixed two double spaces (`prefs.backups.viewingEntriesFor`, `notifications.readMoreAria`) and two ASCII-quoted values (`timeline.emptyForTag`, `search.noResults`, now `«»`), and aligned `common.browseDotDotDot` with `Обзор`. The `customFontsNote` key below is `prefs.writing.fontFamilyCustomFontsNote`. The known plural limitation moved to TODO-0153.
+
 **Context**: PR #344 merged `src/i18n/locales/ru.json` with all 733 keys. The file validates against `en.ts`, but no code imports it. The contributor was told that the maintainer will do the integration and the corrections.
 
 ### Wiring
