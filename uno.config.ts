@@ -1,6 +1,9 @@
-import { defineConfig, presetUno, presetIcons, presetTypography } from 'unocss';
+import type { UserConfig } from '@unocss/core';
+import presetUno from 'unocss/preset-uno';
+import presetIcons from 'unocss/preset-icons';
+import presetTypography from 'unocss/preset-typography';
 
-export default defineConfig({
+export default {
   // Generate CSS faster in dev mode
   mode: 'global',
 
@@ -110,4 +113,4 @@ export default defineConfig({
     ['text-warning', { color: 'var(--status-warning-text)' }],
     ['text-info', { color: 'var(--status-info-text)' }],
   ],
-});
+} satisfies UserConfig;

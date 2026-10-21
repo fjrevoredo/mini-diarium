@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { createGenerator } from 'unocss';
+import { createGenerator } from '@unocss/core';
 import config from './uno.config';
 
 describe('uno.config rules', () => {
