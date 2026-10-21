@@ -84,11 +84,15 @@ gh pr view <NUMBER> --repo <owner/repo> --json files --jq '.files[].path'
    PR's diff. Preserve all other content (indentation, comments,
    surrounding steps).
 
-5. **Validate with `actionlint`:**
+5. **Validate with `actionlint`:** validate only the workflow files that the
+   PR touches, because unrelated workflows in the repository can carry
+   pre-existing errors that this procedure must not try to fix.
    ```bash
    cmd.exe /c actionlint -version
-   cmd.exe /c actionlint .github/workflows/*.yml
+   cmd.exe /c actionlint <each workflow file in the PR's files[]>
    ```
+   If the repository has no known pre-existing failures, the broader
+   `cmd.exe /c actionlint .github/workflows/*.yml` is also valid.
    If `actionlint` is not installed, fall back to PowerShell:
    ```powershell
    Get-ChildItem .github/workflows/*.yml | ForEach-Object {
@@ -115,8 +119,10 @@ gh pr view <NUMBER> --repo <owner/repo> --json files --jq '.files[].path'
 
 ## Validation
 
-- `cmd.exe /c actionlint .github/workflows/*.yml` exits 0, OR the
-  PowerShell YAML parse succeeds for every modified file.
+- `cmd.exe /c actionlint <each workflow file in the PR's files[]>` exits 0,
+  OR the PowerShell YAML parse succeeds for every modified file. A repo-wide
+  `actionlint .github/workflows/*.yml` run is stronger, but use it only when
+  the repository has no known pre-existing workflow errors.
 - `git diff --stat` shows changes only under `.github/workflows/`.
 - For MAJOR bumps: the upstream release notes have been read and any
   breaking change has been either applied or explicitly deferred by the

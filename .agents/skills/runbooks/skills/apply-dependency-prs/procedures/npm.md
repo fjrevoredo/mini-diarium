@@ -75,6 +75,18 @@ PRs. Read before starting.
   tarball is missing `dist/` files (published incomplete), the pin is not
   viable — revert and find a different fix for whatever the pin was meant
   to address.
+- **Lockstep peer families must move together.** A bumped range can pull a
+  newer patch of one package while `bun install` leaves its peers on the old
+  patch. For example, changing `@vitest/coverage-v8` to `^5.0.4` resolves
+  5.0.5, but `vitest` stays at 5.0.3 and bun prints
+  `warn: incorrect peer dependency "vitest@5.0.3"`. Both lockfiles then
+  contain a peer-invalid combination (`vitest` 5.0.3 with
+  `@vitest/coverage-v8` 5.0.5), even though they agree with each other. The
+  same rule as `@tiptap/*` applies: `vitest`, `@vitest/*`, and any other
+  lockstep family must resolve to the same version. Fix it with
+  `cmd.exe /c "bun update <the lockstep packages>"`, then restore any
+  `package.json` range that `bun update` rewrote, and rerun both lockfile
+  commands.
 - **`npmDepsHash` in `nix/package.nix` must follow `package-lock.json`.**
   Whenever `package-lock.json` changes, the `npmDepsHash` field in
   `nix/package.nix` (inside the `frontend = buildNpmPackage { ... }` block)
@@ -205,6 +217,13 @@ For each PR the user wants to apply:
    ```powershell
    Select-String -Path package-lock.json -Pattern '"version": "<expected>"'
    ```
+
+   Then check the `bun install` output for `incorrect peer dependency`. If a
+   lockstep family is split (for example `@vitest/coverage-v8` 5.0.5 with
+   `vitest` 5.0.3), run `cmd.exe /c "bun update <packages>"`, restore any
+   `package.json` range that `bun update` rewrote, then rerun
+   `cmd.exe /c bun install` and
+   `cmd.exe /c "npm install --package-lock-only --legacy-peer-deps"`.
 
 2. **Run the full validation suite:**
    ```bash
