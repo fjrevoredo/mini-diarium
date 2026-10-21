@@ -96,7 +96,7 @@
     "@solidjs/testing-library": "^0.8.10",
     "@tauri-apps/cli": "^2.12.2",
     "@testing-library/jest-dom": "^7.0.1",
-    "@testing-library/user-event": "^14.6.7",
+    "@testing-library/user-event": "^14.6.8",
     "@types/dompurify": "^3.2.0",
     "@types/node": "^26.6.5",
     "@unocss/reset": "^66.11.0",
@@ -120,7 +120,7 @@
     "vite-plugin-solid": "^2.11.13",
     "vitest": "^5.0.0",
     "webdriverio": "^10.0.0",
-    "@playwright/test": "^1.64.0",
-    "undici": "^8.11.2"
+    "@playwright/test": "^1.64.1",
+    "undici": "^8.12.1"
   }
 }
