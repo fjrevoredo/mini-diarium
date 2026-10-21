@@ -13,7 +13,7 @@ TODO entry format:
 - After creating a new TODO, update the `Latest TODO ID` marker to reflect the new highest ID
 - Use the `todo-manager` skill (`.agents/skills/todo-manager/`) for creation, tracking, archival, and validation
 
-**Latest TODO ID: TODO-0150** — next new TODO should be TODO-0151
+**Latest TODO ID: TODO-0151** — next new TODO should be TODO-0152
 
 ---
 
@@ -22,6 +22,8 @@ TODO entry format:
 ---
 
 - [ ] **TODO-0008: Cursor height too tall after Shift+Enter on macOS (#118)** — the text caret (cursor) height becomes extra long starting on the second line, but only when inserting a soft line break with Shift+Enter (Enter alone works fine); macOS-only (v0.4.20); likely a `line-height` or `font-family` mismatch in ProseMirror's `<br>` handling introduced with new editor fonts in v0.4.20; audit soft-break styling in `src/styles/editor.css` and the `--editor-font-family` / `--editor-font-size` CSS custom properties
+
+- [ ] **TODO-0151: Wire the Russian locale and complete its integration** — `src/i18n/locales/ru.json` was merged in #344, but nothing imports it, so Russian is not selectable and the native menu, Linux spellcheck, supported-language lists, and changelog do not know about it yet. Acceptance: `src/i18n/index.ts` imports `ru.json` and adds `ru` to `localeMap`; `AVAILABLE_LOCALES` in `src/i18n/locales/index.ts` lists `{ code: 'ru', name: 'Russian', nativeName: 'Русский' }` between `pt-BR` and `es`; `labels_for_locale()` in `src-tauri/src/commands/menu.rs` has a `ru` arm with `Настройки...` and `Файл`; `DEFAULT_REGIONS` in `src-tauri/src/spellcheck.rs` has `("ru", "RU")`; the Flatpak manifest installs `ru_RU.aff`, `ru_RU.dic`, and `README_ru_RU.txt`; `bun run sync-languages`, the `docs/TRANSLATIONS.md` language list, and the `website/docs-src/07-preferences.md` language table and count are updated, and the generated website files are rebuilt; `common.cancel` is `Отмена`, `prefs.writing.fontFamilyHint` matches the current `en.ts` meaning, and the double spaces and double periods are fixed; `bun run validate:locales`, `bun run type-check`, `bun run lint`, and `bun run test:run` pass; the `0.7.6` CHANGELOG entry credits d1nch and #344. See [TODO-0151-01](TODO_EXTRA.md#todo-0151-01-russian-locale-integration-checklist).
 
 ---
 

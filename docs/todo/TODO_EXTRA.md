@@ -595,3 +595,61 @@ ESC action = Quit → type in the body → Escape → the app quits. Then: tag i
 - Should Escape in the body ever do something editor-local first (for example clear a selection) before the global action? Nothing does this today. This fix keeps "the global action runs".
 
 ---
+
+## TODO-0151-01: Russian locale integration checklist
+
+Parent: [`TODO-0151: Wire the Russian locale and complete its integration`](TODO.md)
+
+**Context**: PR #344 merged `src/i18n/locales/ru.json` with all 733 keys. The file validates against `en.ts`, but no code imports it. The contributor was told that the maintainer will do the integration and the corrections.
+
+### Wiring
+
+- `src/i18n/index.ts`: add `import ruLocale from './locales/ru.json';` and `ru: flatten(ruLocale as unknown as typeof en) as FlatEn,` to `localeMap`.
+- `src/i18n/locales/index.ts`: add `{ code: 'ru', name: 'Russian', nativeName: 'Русский' }` between `pt-BR` and `es`.
+- `src-tauri/src/commands/menu.rs`: add this arm before the `_ =>` fallback:
+
+  ```rust
+  "ru" => MenuLabels {
+      preferences: "Настройки...",
+      #[cfg(not(target_os = "macos"))]
+      file_menu: "Файл",
+  },
+  ```
+
+### Linux spellcheck
+
+- `src-tauri/src/spellcheck.rs`: add `("ru", "RU")` to `DEFAULT_REGIONS`.
+- `flatpak/io.github.fjrevoredo.mini-diarium.yml`: install `ru_RU/ru_RU.aff` and `ru_RU/ru_RU.dic` to `/app/share/hunspell/`, and `ru_RU/README_ru_RU.txt` to `/app/share/licenses/io.github.fjrevoredo.mini-diarium/hunspell-dicts/ru/`. All three files are in the pinned `libreoffice-26.2.5.2` archive.
+
+### String corrections in `ru.json`
+
+- `common.cancel`: change `Выход` to `Отмена`.
+- `prefs.writing.fontFamilyHint`: retranslate from the current `en.ts`, not from `it.json`. The Italian file still has an old English value for this key. The current meaning is: the app-wide default font for new and existing entries, and individual entries can override it from the toolbar.
+- Remove double spaces in `editor.goToEntry`, `timeline.openEntry`, `prefs.backups.confirmRestore`, and `prefs.security.autoLockTimeoutTooLow`.
+- Remove double periods in `prefs.backups.loadError`, `prefs.writing.spellcheckDictionaryMissing`, and `prefs.security.autoLockTimeoutTooLow`.
+- Remove the double colon in `prefs.data.backupsStayedAlert`.
+- Replace the parentheses around the suggested search phrase in `prefs.writing.spellcheckDictionaryMissing` with Russian quotation marks.
+- Add the missing closing period in `prefs.backups.confirmRestore`, `prefs.writing.customFontsNote`, and `prefs.advanced.recalculateSummary_one` / `_other`.
+- Optional style change: `common.browse` could be `Обзор` or `Выбрать` instead of `Просмотреть`.
+
+### Docs and release
+
+- Run `bun run sync-languages` to update `README.md` and `website/index.html`.
+- Update the shipped-language sentence in `docs/TRANSLATIONS.md` line 9.
+- Update the language table and the "all seven interface languages" sentence in `website/docs-src/07-preferences.md` to eight languages, and add Russian to the list.
+- Run `bun run website:build-static` to rebuild `website/docs/`, `website/docs/preferences/index.html`, and `website/llms-full.txt`.
+- Add a CHANGELOG entry under `## [0.7.6] - Unreleased` in `### Added`, and credit d1nch and #344.
+
+### Validation
+
+- `bun run validate:locales` shows `validate-locales: [ru.json] OK (733 keys)`.
+- `bun run type-check` and `bun run lint` pass.
+- `bun run test:run` passes. The `prosemirror-dedup` timeout is a known load-related flake and passes when run alone.
+- `cargo test --workspace` passes if the Rust menu or spellcheck tests change.
+- Select Russian in Preferences > General > Language and check the UI, the native menu bar, and the spellcheck warning state. The native menu needs a restart or a language switch to refresh.
+
+### Known limitation
+
+The app selects `_one` only when `count === 1` and `_other` for every other count. Russian needs three plural forms, so counts 2 through 4 are grammatically wrong. For example, `stats.day_other` renders "2 дней" instead of "2 дня". This is a limitation of the i18n key scheme and needs a separate decision if the project wants full Russian plural support.
+
+---
