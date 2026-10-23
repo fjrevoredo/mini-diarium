@@ -8,6 +8,7 @@ import frLocale from './locales/fr.json';
 import hiLocale from './locales/hi.json';
 import ptBRLocale from './locales/pt-BR.json';
 import ruLocale from './locales/ru.json';
+import ruLocale from './locales/zh-CN.json';
 
 // Pre-flatten the English dictionary once at module load time.
 // flatten() converts the nested object to dot-notation keys so the translator
