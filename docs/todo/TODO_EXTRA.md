@@ -655,3 +655,62 @@ Parent: [`TODO-0151: Wire the Russian locale and complete its integration`](TODO
 The app selects `_one` only when `count === 1` and `_other` for every other count. Russian needs three plural forms, so counts 2 through 4 are grammatically wrong. For example, `stats.day_other` renders "2 дней" instead of "2 дня". This is a limitation of the i18n key scheme and needs a separate decision if the project wants full Russian plural support.
 
 ---
+
+## TODO-0154-01: Simplified Chinese locale integration checklist
+
+Parent: [`TODO-0154: Integrate the Simplified Chinese locale from PR #354 after the contributor's revision`](TODO.md)
+
+**Status (2026-10-25):** Waiting on the contributor. The review comment asks for three changes: delete line 11 of `src/i18n/index.ts`, change `prefs.security.autoLockRange` to `（5-999）`, and change `prefs.data.moveBackupsConfirmMessage` to `此日记已有备份。`. Do not start the integration until the PR branch contains those fixes and `bun run type-check` passes on it.
+
+**Context**: PR #354 adds `src/i18n/locales/zh-CN.json` with all 733 keys. The file validates against `en.ts`, every placeholder and keyboard shortcut matches, and all ten `_one` / `_other` pairs are identical, which is correct for Chinese. The contributor also added one import line that redeclares `ruLocale`; it fails `tsc --noEmit` with `TS2300` and prevents 50 of 117 test files from loading. The contributor was told that the maintainer will do the registration after merge, following the Russian locale in TODO-0151. Local review report (untracked): `docs/pr-354-analysis.md`. Posted comment (local copy, untracked): `docs/pr-354-response-draft.md`. Review comment: [PR #354 comment](https://github.com/fjrevoredo/mini-diarium/pull/354#issuecomment-6400481628).
+
+### Step 0: confirm the revision
+
+- Fetch the branch again with `git fetch origin pull/354/head:pr-354 --force` and check the head.
+- `src/i18n/index.ts` no longer contains `import ruLocale from './locales/zh-CN.json';`.
+- `prefs.security.autoLockRange` is `（5-999）`.
+- `prefs.data.moveBackupsConfirmMessage` starts with `此日记已有备份。`.
+- On the PR branch, `bun run type-check` and `bun run test:run` pass. Clean `master` ran 117 files and 1310 tests at the time of review.
+
+### Wiring
+
+- `src/i18n/index.ts`: add `import zhCNLocale from './locales/zh-CN.json';` and `'zh-CN': flatten(zhCNLocale as unknown as typeof en) as FlatEn,` to `localeMap`. Keep the quoted key because `zh-CN` is a BCP 47 region tag, like `pt-BR`.
+- `src/i18n/locales/index.ts`: add `{ code: 'zh-CN', name: 'Chinese (Simplified)', nativeName: '简体中文' }` before English, in alphabetical order.
+- `src-tauri/src/commands/menu.rs`: add this arm before the `_ =>` fallback, and add the locale to the test loop:
+
+  ```rust
+  "zh-CN" => MenuLabels {
+      preferences: "首选项...",
+      #[cfg(not(target_os = "macos"))]
+      file_menu: "文件",
+  },
+  ```
+
+### Linux spellcheck
+
+- `src-tauri/src/spellcheck.rs`: add `("zh", "CN")` to `DEFAULT_REGIONS` and a `chinese_default_region` test that asserts `resolve_languages("zh", None) == vec!["zh_CN"]`.
+- `flatpak/io.github.fjrevoredo.mini-diarium.yml`: the pinned `libreoffice-26.2.5.2` archive has no `zh_CN` directory, so the `ru_RU` pattern cannot be copied. Decide one of these before changing the manifest:
+  - Bundle a third-party Hunspell `zh_CN` dictionary from a pinned archive with a checksum and its licence files, then update the module comment and the Flatpak list in `website/docs-src/07-preferences.md` from eight to nine languages.
+  - Record Chinese as a spellcheck exception in the same files. The interface language still works; the Linux warning remains.
+- Do not ship a half-configured mapping. Either the dictionary is present, or the exception is written down.
+
+### Docs and release
+
+- Run `bun run sync-languages` to update `README.md` and `website/index.html`.
+- Update the shipped-language sentence in `docs/TRANSLATIONS.md` line 9.
+- Update the language table and the Flatpak dictionary sentence in `website/docs-src/07-preferences.md` lines 21 and 63.
+- Run `bun run website:build-static` to rebuild `website/docs/`, `website/docs/preferences/index.html`, and `website/llms-full.txt`.
+- Add a CHANGELOG entry and credit wcxu21 and #354.
+
+### Validation
+
+- `bun run validate:locales` shows `validate-locales: [zh-CN.json] OK (733 keys)`.
+- `bun run type-check`, `bun run lint`, and `bun run test:run` pass.
+- `cargo test --workspace` passes because the menu and spellcheck tests change.
+- Select Chinese in Preferences > General > Language and check the UI, the native menu bar, and the spellcheck state. The native menu needs a language switch or a restart to refresh.
+
+### Open translation notes
+
+- Optional: `prefs.tabWriting` currently uses `记录` for "Writing", which collides with `记录` for "entry". `写作` keeps them distinct; if changed, update `calendar.futureDisabledHint` and `onboarding.tip_toolbar_body` too.
+- Optional: the file mixes `...` (12 strings) and `…` (18 strings). English mixes them in the same places, so this is cosmetic.
+- Keep the 11 values that are identical to English (`Mini Diarium`, `GitHub`, `URL`, `px`, `12 px`, `24 px`, and date-only templates). They are intentional.
