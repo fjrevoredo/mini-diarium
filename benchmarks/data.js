@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1792625335478,
+  "lastUpdate": 1792948402047,
   "repoUrl": "https://github.com/fjrevoredo/mini-diarium",
   "entries": {
     "Benchmark": [
@@ -39514,6 +39514,36 @@ window.BENCHMARK_DATA = {
           {
             "name": "ci_pipeline_duration",
             "value": 584000000000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "committer": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "distinct": true,
+          "id": "d54c48db8a4ff61381e26442601165caa0c997b0",
+          "message": "docs(todo): track Simplified Chinese locale integration from PR #354",
+          "timestamp": "2026-10-25T17:58:14+01:00",
+          "tree_id": "4e31bd2c544bccd7b9d79ef4aa1a56a08acfb6ec",
+          "url": "https://github.com/fjrevoredo/mini-diarium/commit/d54c48db8a4ff61381e26442601165caa0c997b0"
+        },
+        "date": 1792948400484,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "ci_pipeline_duration",
+            "value": 586000000000,
             "range": "± 0",
             "unit": "ns/iter"
           }
