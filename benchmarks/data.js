@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1793011000442,
+  "lastUpdate": 1793022085547,
   "repoUrl": "https://github.com/fjrevoredo/mini-diarium",
   "entries": {
     "Benchmark": [
@@ -39574,6 +39574,36 @@ window.BENCHMARK_DATA = {
           {
             "name": "ci_pipeline_duration",
             "value": 509000000000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "committer": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "distinct": true,
+          "id": "e0501dfc07fe92e3543b4ef78d7130be78c877fe",
+          "message": "fix(i18n): correct the Chinese Flatpak spellcheck warning (TODO-0154)\n\nAddress the external review findings:\n- Show a Chinese-specific message for the documented missing Flatpak dictionary.\n- Add a dedicated menu test for both Chinese labels.",
+          "timestamp": "2026-10-26T12:20:53+01:00",
+          "tree_id": "faef7f5a1a89d394c687511e2ecf5c57aa390a05",
+          "url": "https://github.com/fjrevoredo/mini-diarium/commit/e0501dfc07fe92e3543b4ef78d7130be78c877fe"
+        },
+        "date": 1793022084017,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "ci_pipeline_duration",
+            "value": 569000000000,
             "range": "± 0",
             "unit": "ns/iter"
           }
