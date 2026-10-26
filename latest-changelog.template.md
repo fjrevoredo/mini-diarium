@@ -2,6 +2,9 @@
 Create the new latest-changelog.md file using this template before tagging a release.
 Use everything inside the <template> tag as the base content, and replace all placeholder text below
 with the real changes from CHANGELOG.md
+Only the user-facing sections are copied: Added, Changed, Fixed, Removed.
+The Internal and Security sections of CHANGELOG.md never reach this file, because the release
+workflow publishes latest-changelog.md as the public GitHub release body.
 The release workflow will fail if "REPLACE BEFORE TAGGING" is still present.
 -->
 
@@ -26,12 +29,4 @@ The release workflow will fail if "REPLACE BEFORE TAGGING" is still present.
 ### Removed
 
 <!-- ALL THE "Removed" ENTRIES OF THE TO BE RELEASE VERSION IN THE CHANGELOG, IF THEY EXIST -->
-
-### Internal
-
-<!-- ALL THE "Internal" ENTRIES OF THE TO BE RELEASED VERSION IN THE CHANGELOG, IF THEY EXIST -->
-
-### Security
-
-<!-- ALL THE "Security" ENTRIES OF THE TO BE RELEASED VERSION IN THE CHANGELOG, IF THEY EXIST -->
 </template>

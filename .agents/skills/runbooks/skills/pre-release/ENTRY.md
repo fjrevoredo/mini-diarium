@@ -17,7 +17,7 @@ Automates the pre-release preparation steps for Mini Diarium. Run this on the fe
 Read `CHANGELOG.md`. Locate the first `## [X.Y.Z]` heading under `# Versions`.
 
 - Extract `X.Y.Z` as `RELEASE_VERSION`.
-- The heading must match `## [X.Y.Z] - [Unreleased]` (bracket-wrapped, not a date).
+- The heading must match `## [X.Y.Z] - Unreleased`. The marker is not bracket-wrapped, which matches the template at the top of `CHANGELOG.md` and every past release. A date in its place means the release is already stamped.
 - If the heading already contains a date (e.g. `## [0.4.14] - 29-03-2026`) → **STOP** and tell the user the CHANGELOG appears already stamped for this release.
 
 ---
@@ -141,13 +141,14 @@ Read `docs/todo/TODO.md`. Find all top-level `- [x]` items **and** their indente
 
 1. Read `latest-changelog.template.md`. Extract the content between `<template>` and `</template>` tags (exclude the tags themselves and the HTML comment block above them).
 
-2. Read `CHANGELOG.md`. Extract the unreleased section: everything after the `## [X.Y.Z] - [Unreleased]` heading line up to (but not including) the next `## [` heading.
+2. Read `CHANGELOG.md`. Extract the unreleased section: everything after the `## [X.Y.Z] - Unreleased` heading line up to (but not including) the next `## [` heading.
 
 3. Build `latest-changelog.md` at the repo root:
 
    - Start with `## What's Changed` heading.
    - On the next line: write 1–2 sentence synthesis of all the changes (no HTML comments — replace the `<!-- COMPACT SUMMARY -->` placeholder with real prose).
    - Then output sections in this fixed order: **Added → Changed → Fixed → Removed**.
+   - `### Internal` and `### Security` are excluded on purpose. They stay in `CHANGELOG.md`, because the release workflow publishes `latest-changelog.md` as the public release body.
    - For each section:
      - Copy the heading (`### Added`, etc.) and all its entries verbatim from the CHANGELOG unreleased block.
      - **If a section is absent or has no entries in the CHANGELOG: omit the section heading entirely** — do not write an empty `### Section` heading.
@@ -178,6 +179,7 @@ Before stamping the CHANGELOG, ask the user whether they want to add a release n
   "type": "release",
   "version": "X.Y.Z",
   "title": "What's new in X.Y.Z",
+  "summary": "<compact summary from latest-changelog.md>",
   "body": "<compact summary from latest-changelog.md>",
   "date": "YYYY-MM-DD",
   "linkUrl": "https://github.com/fjrevoredo/mini-diarium/releases/tag/vX.Y.Z",
@@ -185,6 +187,7 @@ Before stamping the CHANGELOG, ask the user whether they want to add a release n
 }
 ```
 
+- `summary` is required by the `NotificationEntry` type in `src/state/notifications.ts`. Set it even when it equals `body`.
 - Use `X.Y.Z` (without the `v` prefix in the `version` field, but **with** the `v` prefix in `id` and `linkUrl`).
 - `date` uses today's date in `YYYY-MM-DD` format.
 - `body` should be the exact compact summary text (no quotes or extra wrapping).
@@ -202,9 +205,9 @@ Before stamping the CHANGELOG, ask the user whether they want to add a release n
 
 ## Step 8 — Stamp CHANGELOG date
 
-In `CHANGELOG.md`, replace the `[Unreleased]` token in the first version heading:
+In `CHANGELOG.md`, replace the `Unreleased` token in the first version heading:
 
-- Find: `## [X.Y.Z] - [Unreleased]`
+- Find: `## [X.Y.Z] - Unreleased`
 - Replace with: `## [X.Y.Z] - DD-MM-YYYY` where `DD-MM-YYYY` is today's date in day-month-year format with leading zeros (e.g. `29-03-2026`).
 - Only this one line changes — no other edits to CHANGELOG.md.
 
