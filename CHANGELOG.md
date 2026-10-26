@@ -34,7 +34,7 @@ Template:
 
 # Versions
 
-## [0.7.6] - Unreleased
+## [0.7.6] - 26-10-2026
 
 ### Added
 - **Russian translation (#344)**: The full interface (733 strings) is available in Russian. Select "Русский" in Preferences → General → Language. The native menu ("Файл", "Настройки...") follows the selected language, and on Linux spell check uses the `ru_RU` dictionary, which the Flatpak now bundles. Thanks to [@d1nch](https://github.com/d1nch) for the translation. Known limitation: the app has only singular and plural word forms, so counts such as 2–4 use the Russian "many" form.

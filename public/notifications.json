@@ -1,6 +1,17 @@
 {
   "entries": [
     {
+      "id": "v0.7.6-release",
+      "type": "release",
+      "version": "0.7.6",
+      "title": "What's new in 0.7.6",
+      "summary": "Mini Diarium now offers the full interface in Russian and Simplified Chinese, and the native menu follows the selected language. The Linux Flatpak also ships the `ru_RU` spell check dictionary, while Chinese spell check stays a documented exception.",
+      "body": "Mini Diarium now offers the full interface in Russian and Simplified Chinese, and the native menu follows the selected language. The Linux Flatpak also ships the `ru_RU` spell check dictionary, while Chinese spell check stays a documented exception.",
+      "date": "2026-10-26",
+      "linkUrl": "https://github.com/fjrevoredo/mini-diarium/releases/tag/v0.7.6",
+      "linkLabel": "Full release notes"
+    },
+    {
       "id": "v0.7.5-release",
       "type": "release",
       "version": "0.7.5",
