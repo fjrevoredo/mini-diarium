@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1793025935293,
+  "lastUpdate": 1793032281612,
   "repoUrl": "https://github.com/fjrevoredo/mini-diarium",
   "entries": {
     "Benchmark": [
@@ -39664,6 +39664,36 @@ window.BENCHMARK_DATA = {
           {
             "name": "ci_pipeline_duration",
             "value": 585000000000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "committer": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "distinct": true,
+          "id": "1c70e68f961bd0a6388dd4889618ea9e619300a3",
+          "message": "docs(runbooks): align pre-release checklist with repo conventions\n\n- Step 1 and Step 8 now expect the bracketed-free '## [X.Y.Z] - Unreleased' heading that CHANGELOG.md and every past release use, instead of the '[Unreleased]' form that failed on every run.\n\n- Step 6 states that Internal and Security entries never reach latest-changelog.md, because the release workflow publishes that file as the public release body; latest-changelog.template.md drops both sections to match.\n\n- Step 7 and assets/notification.template.json add the required 'summary' field and correct the step reference and the placeholder punctuation.",
+          "timestamp": "2026-10-26T17:20:37+01:00",
+          "tree_id": "932b3d6e874ee602871ecf8a88bc697347e79de0",
+          "url": "https://github.com/fjrevoredo/mini-diarium/commit/1c70e68f961bd0a6388dd4889618ea9e619300a3"
+        },
+        "date": 1793032279868,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "ci_pipeline_duration",
+            "value": 624000000000,
             "range": "± 0",
             "unit": "ns/iter"
           }
