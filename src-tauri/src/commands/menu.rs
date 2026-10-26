@@ -43,6 +43,11 @@ fn labels_for_locale(locale: &str) -> MenuLabels {
             #[cfg(not(target_os = "macos"))]
             file_menu: "Файл",
         },
+        "zh-CN" => MenuLabels {
+            preferences: "首选项...",
+            #[cfg(not(target_os = "macos"))]
+            file_menu: "文件",
+        },
         // Default / fallback — English for any unknown locale code
         _ => MenuLabels {
             preferences: "Preferences...",
@@ -104,6 +109,7 @@ mod tests {
             ("de", "Einstellungen..."),
             ("it", "Preferenze..."),
             ("hi", "प्राथमिकताएं..."),
+            ("zh-CN", "首选项..."),
         ] {
             assert_eq!(labels_for_locale(locale).preferences, preferences);
         }

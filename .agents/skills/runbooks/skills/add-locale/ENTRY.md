@@ -76,7 +76,11 @@ Without this step, the locale works in the UI but spellcheck silently finds no d
 3. Update the module comment's shipped-language count and the user-facing Linux spellcheck list
    in `website/docs-src/07-preferences.md`.
 4. Compare all `AVAILABLE_LOCALES` entries with `DEFAULT_REGIONS` and the Flatpak install pairs.
-   Every shipped locale must have one resolved dictionary locale and one `.aff`/`.dic` pair.
+   Every shipped locale must have one resolved dictionary locale and either one `.aff`/`.dic` pair
+   or a documented exception. Chinese (Simplified) is the only exception today: no maintained
+   Hunspell `zh_CN` dictionary exists, so the Flatpak ships none and the Linux warning is expected.
+   Record the exception in the Flatpak module comment and the Linux spellcheck section of
+   `website/docs-src/07-preferences.md`.
 
 `src-tauri/CLAUDE.md` Gotcha #9 is the canonical explanation of the WebKitGTK and dictionary
 contract. Do not add a spellcheck dictionary for an unshipped locale unless the product decision

@@ -3,7 +3,7 @@ title: Preferences
 slug: preferences
 description: Configure Mini Diarium from the Preferences panel: choose a theme, set auto-lock timeout, adjust editor font and size, manage authentication methods, and more.
 order: 8
-updated: 2026-10-21
+updated: 2026-10-26
 tags: preferences, settings, theme, auto-lock, configuration
 ---
 
@@ -18,7 +18,7 @@ Preferences are now **close-only**: there is no Save/Cancel footer. Reversible s
 | Setting | Description |
 |---------|-------------|
 | Theme | Light, dark, or follow system (auto) |
-| Language | Interface language: English, French, German, Hindi, Italian, Portuguese (Brazil), Russian, or Spanish |
+| Language | Interface language: Chinese (Simplified), English, French, German, Hindi, Italian, Portuguese (Brazil), Russian, or Spanish |
 | ESC key action | Do nothing, quit the app, or lock the journal when pressing Escape. Escape has no effect while a dialog is open |
 
 ## Writing Settings
@@ -60,7 +60,7 @@ Enter your computer password when asked. Nothing is shown while you type the pas
 
 #### Flatpak
 
-Flatpak installs include dictionaries for all eight interface languages (English, Spanish, German, French, Italian, Portuguese (Brazil), Hindi, and Russian). If you see a warning, open your computer's Software app, update Mini Diarium, and restart it. If the warning remains, reinstall Mini Diarium.
+Flatpak installs include dictionaries for eight of the nine interface languages (English, Spanish, German, French, Italian, Portuguese (Brazil), Hindi, and Russian). Chinese (Simplified) has no bundled dictionary, so Linux shows the dictionary warning for it; the interface translation works normally. If you see a warning for another language, open your computer's Software app, update Mini Diarium, and restart it. If the warning remains, reinstall Mini Diarium.
 
 #### Need more help?
 
@@ -73,7 +73,8 @@ To use a language that is not bundled, place its `.aff` and `.dic` files in:
 - Flatpak: `~/.var/app/io.github.fjrevoredo.mini-diarium/config/enchant/hunspell/`
 - Everything else: `~/.config/enchant/hunspell/`
 
-Name them after the locale you want checked, for example `nl_NL.aff` and `nl_NL.dic`.
+Name them after the locale you want checked, for example `nl_NL.aff` and `nl_NL.dic`. To add
+Simplified Chinese spell checking, use `zh_CN.aff` and `zh_CN.dic`.
 
 ## Security Settings
 

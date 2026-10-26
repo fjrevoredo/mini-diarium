@@ -14,13 +14,19 @@ finish-args:
   - --device=dri
 
 modules:
-  # Hunspell dictionaries for the seven shipped UI languages.
+  # Hunspell dictionaries for the eight shipped UI languages that have a dictionary.
   #
   # org.gnome.Platform ships the English dictionary and nothing else, so without this
-  # the spellcheck preference does nothing in Flatpak for every other language.
-  # Enchant's hunspell provider searches every g_get_system_data_dirs() entry plus
-  # /hunspell, which inside the sandbox includes /app/share — so files installed here
-  # are picked up automatically, exactly like the /app/share/fonts payload above.
+  # the spellcheck preference does nothing in Flatpak for the other languages that
+  # have a dictionary. Enchant's hunspell provider searches every
+  # g_get_system_data_dirs() entry plus /hunspell, which inside the sandbox includes
+  # /app/share — so files installed here are picked up automatically, exactly like the
+  # /app/share/fonts payload above.
+  #
+  # Chinese (Simplified) is a deliberate exception: neither the pinned LibreOffice
+  # archive nor a reliable third-party source provides a maintained Hunspell zh_CN
+  # dictionary. The interface translation works, and Linux shows the dictionary warning
+  # until the user installs zh_CN.aff/.dic in the enchant user directory.
   #
   # Filenames are renamed to the <locale>.aff/.dic that enchant looks for: upstream
   # names do not match (de_DE_frami, fr). One pinned archive rather than sixteen

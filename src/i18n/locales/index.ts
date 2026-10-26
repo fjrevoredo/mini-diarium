@@ -5,6 +5,7 @@ export interface LocaleInfo {
 }
 
 export const AVAILABLE_LOCALES: LocaleInfo[] = [
+  { code: 'zh-CN', name: 'Chinese (Simplified)', nativeName: '简体中文' },
   { code: 'en', name: 'English', nativeName: 'English' },
   { code: 'fr', name: 'French', nativeName: 'Français' },
   { code: 'de', name: 'German', nativeName: 'Deutsch' },

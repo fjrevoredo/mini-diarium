@@ -31,6 +31,7 @@ const DEFAULT_REGIONS: &[(&str, &str)] = &[
     ("pt", "BR"),
     ("hi", "IN"),
     ("ru", "RU"),
+    ("zh", "CN"),
 ];
 
 /// Split a locale string into `(language, region)`.
@@ -278,6 +279,11 @@ mod tests {
     #[test]
     fn russian_default_region() {
         assert_eq!(resolve_languages("ru", None), vec!["ru_RU"]);
+    }
+
+    #[test]
+    fn chinese_default_region() {
+        assert_eq!(resolve_languages("zh", None), vec!["zh_CN"]);
     }
 
     #[test]

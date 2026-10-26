@@ -222,6 +222,7 @@ For maintainers changing frontend UI/state, the Rust backend, Tauri IPC boundary
 Mini Diarium ships in the following languages:
 
 <!-- supported-languages-start -->
+- Chinese (Simplified) (简体中文)
 - English
 - French (Français)
 - German (Deutsch)
@@ -261,6 +262,7 @@ Thanks to everyone who has contributed code, translations, or improvements to Mi
 <a href="https://github.com/bronty13"><img src="https://github.com/bronty13.png?size=40" width="40" height="40" alt="bronty13" /></a>
 <a href="https://github.com/kenlacroix"><img src="https://github.com/kenlacroix.png?size=40" width="40" height="40" alt="kenlacroix" /></a>
 <a href="https://github.com/d1nch"><img src="https://github.com/d1nch.png?size=40" width="40" height="40" alt="d1nch" /></a>
+<a href="https://github.com/wcxu21"><img src="https://github.com/wcxu21.png?size=40" width="40" height="40" alt="wcxu21" /></a>
 
 ## Star History
 
