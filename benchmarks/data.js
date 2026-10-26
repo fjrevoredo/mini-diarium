@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1792948402047,
+  "lastUpdate": 1793011000442,
   "repoUrl": "https://github.com/fjrevoredo/mini-diarium",
   "entries": {
     "Benchmark": [
@@ -39544,6 +39544,36 @@ window.BENCHMARK_DATA = {
           {
             "name": "ci_pipeline_duration",
             "value": 586000000000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "86864914+wcxu21@users.noreply.github.com",
+            "name": "大眼仔旭",
+            "username": "wcxu21"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "9e4d039f2d2bb8f63038514a927ad02815f83b80",
+          "message": "feat(i18n): add Simplified Chinese locale (#354)\n\nAdds `src/i18n/locales/zh-CN.json` with all 733 keys, verified against `en.ts` for key parity, placeholders, and plural pairs.\n\nContributed by @wcxu21 in #354. Locale registration follows in a separate integration commit.",
+          "timestamp": "2026-10-26T11:27:57+01:00",
+          "tree_id": "53defe9abfc679289e09a6610852b477cd604f27",
+          "url": "https://github.com/fjrevoredo/mini-diarium/commit/9e4d039f2d2bb8f63038514a927ad02815f83b80"
+        },
+        "date": 1793010999001,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "ci_pipeline_duration",
+            "value": 509000000000,
             "range": "± 0",
             "unit": "ns/iter"
           }
