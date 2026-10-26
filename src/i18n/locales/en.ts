@@ -414,6 +414,8 @@ const en = {
         "Spell check needs the English language pack. Open your computer's Software app and search for “English spell checking.” Install the language support it suggests, then restart Mini Diarium.",
       spellcheckDictionaryMissingFlatpak:
         "Spell check should be included with Mini Diarium. Open your computer's Software app, update Mini Diarium, then restart it. If this warning remains, reinstall Mini Diarium.",
+      spellcheckDictionaryMissingFlatpakChinese:
+        'Chinese spell check has no bundled dictionary in the Flatpak. An update or reinstall will not add one. Install a zh_CN dictionary, or open the spell-check setup guide.',
       spellcheckDictionaryHelp: 'Open the spell-check setup guide',
       toolbarItemsLabel: 'Toolbar items',
       toolbarItemsHint:

@@ -341,6 +341,7 @@
       "spellcheckHint": "如果开启，内置拼写检查会为拼写错误的单词添加下划线。",
       "spellcheckDictionaryMissing": "拼写检查需要中文语言包。请打开电脑上的「程序（软件）」应用并搜索「中文拼写检查」。安装建议的语言支持，然后重启 Mini Diarium。",
       "spellcheckDictionaryMissingFlatpak": "拼写检查应包含在 Mini Diarium 中。请在电脑上打开「程序（软件）」应用，更新 Mini Diarium，然后重启。如果此警告仍然存在，请重新安装 Mini Diarium。",
+      "spellcheckDictionaryMissingFlatpakChinese": "Flatpak 版不包含中文拼写检查词典。更新或重新安装 Mini Diarium 不会添加词典。请安装 zh_CN 词典，或打开拼写检查设置指南。",
       "spellcheckDictionaryHelp": "打开拼写检查设置指南",
       "toolbarItemsLabel": "工具栏项目",
       "toolbarItemsHint": "自定义编辑器工具栏中显示的格式项目及其顺序。",

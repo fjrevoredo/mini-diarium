@@ -341,6 +341,7 @@
       "spellcheckHint": "Se attivato, il controllo ortografico del browser evidenzierà le parole scritte male.",
       "spellcheckDictionaryMissing": "Il controllo ortografico richiede il pacchetto linguistico italiano. Apri l'applicazione Software del tuo computer e cerca «controllo ortografico italiano». Installa il supporto linguistico suggerito, quindi riavvia Mini Diarium.",
       "spellcheckDictionaryMissingFlatpak": "Il controllo ortografico dovrebbe essere incluso con Mini Diarium. Apri l'applicazione Software del tuo computer, aggiorna Mini Diarium, quindi riavvialo. Se questo avviso rimane, reinstalla Mini Diarium.",
+      "spellcheckDictionaryMissingFlatpakChinese": "Il controllo ortografico cinese non include un dizionario nel Flatpak. Un aggiornamento o una reinstallazione non ne aggiungerà uno. Installa un dizionario zh_CN o apri la guida alla configurazione del controllo ortografico.",
       "spellcheckDictionaryHelp": "Apri la guida alla configurazione del controllo ortografico",
       "toolbarItemsLabel": "Elementi della barra degli strumenti",
       "toolbarItemsHint": "Personalizza quali controlli di formattazione appaiono nella barra degli strumenti dell'editor e il loro ordine.",

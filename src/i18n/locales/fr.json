@@ -341,6 +341,7 @@
       "spellcheckHint": "Lorsqu'elle est activée, la correction orthographique du navigateur mettra en évidence les mots mal orthographiés.",
       "spellcheckDictionaryMissing": "La correction orthographique a besoin du pack linguistique français. Ouvrez l'application de logiciels de votre ordinateur et recherchez « correction orthographique française ». Installez la prise en charge linguistique proposée, puis redémarrez Mini Diarium.",
       "spellcheckDictionaryMissingFlatpak": "La correction orthographique devrait être incluse avec Mini Diarium. Ouvrez l'application de logiciels de votre ordinateur, mettez Mini Diarium à jour, puis redémarrez-le. Si cet avertissement persiste, réinstallez Mini Diarium.",
+      "spellcheckDictionaryMissingFlatpakChinese": "La correction orthographique chinoise n'inclut pas de dictionnaire dans le Flatpak. Une mise à jour ou une réinstallation n'en ajoutera pas. Installez un dictionnaire zh_CN ou ouvrez le guide de configuration de la correction orthographique.",
       "spellcheckDictionaryHelp": "Ouvrir le guide de configuration de la correction orthographique",
       "toolbarItemsLabel": "Éléments de la barre d'outils",
       "toolbarItemsHint": "Personnalisez les contrôles de formatage qui apparaissent dans la barre d'outils de l'éditeur et leur ordre.",

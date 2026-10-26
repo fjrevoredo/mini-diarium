@@ -341,6 +341,7 @@
       "spellcheckHint": "Wenn aktiviert, markiert die Rechtschreibprüfung des Browsers falsch geschriebene Wörter.",
       "spellcheckDictionaryMissing": "Die Rechtschreibprüfung benötigt das deutsche Sprachpaket. Öffnen Sie die Software-Verwaltung Ihres Computers und suchen Sie nach „deutsche Rechtschreibprüfung“. Installieren Sie die vorgeschlagene Sprachunterstützung und starten Sie Mini Diarium neu.",
       "spellcheckDictionaryMissingFlatpak": "Die Rechtschreibprüfung sollte mit Mini Diarium installiert sein. Öffnen Sie die Software-Verwaltung Ihres Computers, aktualisieren Sie Mini Diarium und starten Sie es neu. Wenn diese Warnung weiterhin angezeigt wird, installieren Sie Mini Diarium neu.",
+      "spellcheckDictionaryMissingFlatpakChinese": "Die chinesische Rechtschreibprüfung enthält im Flatpak kein Wörterbuch. Eine Aktualisierung oder Neuinstallation fügt keines hinzu. Installieren Sie ein zh_CN-Wörterbuch, oder öffnen Sie die Anleitung zur Rechtschreibprüfung.",
       "spellcheckDictionaryHelp": "Anleitung zur Rechtschreibprüfung öffnen",
       "toolbarItemsLabel": "Symbolleistenelemente",
       "toolbarItemsHint": "Anpassen, welche Formatierungssteuerelemente in der Editor-Symbolleiste angezeigt werden und in welcher Reihenfolge.",

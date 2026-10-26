@@ -72,6 +72,16 @@ export default function PreferencesWritingTab(_props: TabProps) {
 
   const toolbarItems = () => preferences().toolbarItems;
 
+  // Chinese has no bundled Flatpak dictionary by design, so the generic repair
+  // advice (update or reinstall) would be wrong for `zh_CN`.
+  const spellcheckWarningKey = () => {
+    const status = spellcheckStatus();
+    if (!status?.isFlatpak) return 'prefs.writing.spellcheckDictionaryMissing' as const;
+    return status.language === 'zh_CN'
+      ? ('prefs.writing.spellcheckDictionaryMissingFlatpakChinese' as const)
+      : ('prefs.writing.spellcheckDictionaryMissingFlatpak' as const);
+  };
+
   const setToolbarItems = (items: ToolbarItem[]) => {
     setPreferences({ toolbarItems: items });
   };
@@ -212,11 +222,7 @@ export default function PreferencesWritingTab(_props: TabProps) {
           when={preferences().enableSpellcheck && spellcheckStatus()?.dictionaryAvailable === false}
         >
           <p class="ml-7 text-xs text-amber-600 dark:text-amber-400 leading-relaxed" role="alert">
-            {t(
-              spellcheckStatus()?.isFlatpak
-                ? 'prefs.writing.spellcheckDictionaryMissingFlatpak'
-                : 'prefs.writing.spellcheckDictionaryMissing',
-            )}
+            {t(spellcheckWarningKey())}
           </p>
           <button
             type="button"

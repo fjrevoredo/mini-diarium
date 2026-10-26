@@ -341,6 +341,7 @@
       "spellcheckHint": "Quando ativado, a verificação ortográfica do navegador destacará as palavras escritas incorretamente.",
       "spellcheckDictionaryMissing": "A verificação ortográfica precisa do pacote de idioma português brasileiro. Abra o aplicativo de software do seu computador e procure por “verificação ortográfica em português brasileiro”. Instale o suporte de idioma sugerido e reinicie o Mini Diarium.",
       "spellcheckDictionaryMissingFlatpak": "A verificação ortográfica deve estar incluída com o Mini Diarium. Abra o aplicativo de software do seu computador, atualize o Mini Diarium e reinicie-o. Se este aviso continuar aparecendo, reinstale o Mini Diarium.",
+      "spellcheckDictionaryMissingFlatpakChinese": "A verificação ortográfica em chinês não inclui um dicionário no Flatpak. Atualizar ou reinstalar não adicionará um. Instale um dicionário zh_CN ou abra o guia de configuração da verificação ortográfica.",
       "spellcheckDictionaryHelp": "Abrir o guia de configuração da verificação ortográfica",
       "toolbarItemsLabel": "Itens da barra de ferramentas",
       "toolbarItemsHint": "Personalize quais controles de formatação aparecem na barra de ferramentas do editor e sua ordem.",

@@ -103,13 +103,20 @@ mod tests {
     }
 
     #[test]
+    fn zh_cn_arm_returns_chinese_labels() {
+        let l = labels_for_locale("zh-CN");
+        assert_eq!(l.preferences, "首选项...");
+        #[cfg(not(target_os = "macos"))]
+        assert_eq!(l.file_menu, "文件");
+    }
+
+    #[test]
     fn remaining_locale_arms_return_their_own_labels() {
         for (locale, preferences) in [
             ("es", "Preferencias..."),
             ("de", "Einstellungen..."),
             ("it", "Preferenze..."),
             ("hi", "प्राथमिकताएं..."),
-            ("zh-CN", "首选项..."),
         ] {
             assert_eq!(labels_for_locale(locale).preferences, preferences);
         }

@@ -341,6 +341,7 @@
       "spellcheckHint": "Cuando está activado, el corrector ortográfico del navegador resaltará las palabras mal escritas.",
       "spellcheckDictionaryMissing": "La corrección ortográfica necesita el paquete de idioma español. Abre la aplicación de software de tu equipo y busca «corrección ortográfica en español». Instala el soporte de idioma que te sugiera y reinicia Mini Diarium.",
       "spellcheckDictionaryMissingFlatpak": "La corrección ortográfica debería estar incluida con Mini Diarium. Abre la aplicación de software de tu equipo, actualiza Mini Diarium y reinícialo. Si este aviso continúa apareciendo, reinstala Mini Diarium.",
+      "spellcheckDictionaryMissingFlatpakChinese": "La revisión ortográfica en chino no incluye un diccionario en el Flatpak. Actualizar o reinstalar no añadirá uno. Instala un diccionario zh_CN o abre la guía de configuración de la revisión ortográfica.",
       "spellcheckDictionaryHelp": "Abrir la guía de configuración de la corrección ortográfica",
       "toolbarItemsLabel": "Elementos de la barra de herramientas",
       "toolbarItemsHint": "Personaliza qué controles de formato aparecen en la barra de herramientas del editor y su orden.",

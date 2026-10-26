@@ -1,10 +1,11 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { screen, fireEvent, waitFor } from '@solidjs/testing-library';
 import { renderWithI18n } from '../../../test/i18n-test-utils';
 import { createSignal } from 'solid-js';
 import * as prefState from '../../../state/preferences';
 import { DEFAULT_TOOLBAR_ITEMS } from '../../../state/preferences';
 import { formatDate, getTodayString } from '../../../lib/dates';
+import { setLocale } from '../../../i18n';
 import PreferencesWritingTab from './PreferencesWritingTab';
 
 const { mockGetSpellcheckStatus, mockListBundledFonts, mockListCustomFonts, mockOpenUrl } =
@@ -49,6 +50,11 @@ describe('PreferencesWritingTab', () => {
       showTimelinePreview: true,
       showTimelineTags: false,
     });
+  });
+
+  afterEach(() => {
+    localStorage.clear();
+    setLocale('en');
   });
 
   it('renders System Default only when no bundled fonts are available', async () => {
@@ -138,6 +144,21 @@ describe('PreferencesWritingTab', () => {
     expect(
       screen.getByRole('button', { name: /open the spell-check setup guide/i }),
     ).toBeInTheDocument();
+  });
+
+  it('explains the Chinese Flatpak dictionary exception without repair advice', async () => {
+    setLocale('zh-CN');
+    mockGetSpellcheckStatus.mockResolvedValue({
+      language: 'zh_CN',
+      dictionaryAvailable: false,
+      isFlatpak: true,
+    });
+
+    renderTab();
+
+    expect(await screen.findByText(/Flatpak 版不包含中文拼写检查词典/)).toBeInTheDocument();
+    expect(screen.queryByText(/拼写检查应包含在 Mini Diarium 中/)).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /打开拼写检查设置指南/ })).toBeInTheDocument();
   });
 
   it('changing the timeline date format persists immediately', () => {
