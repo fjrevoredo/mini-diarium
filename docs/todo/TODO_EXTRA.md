@@ -660,7 +660,7 @@ The app selects `_one` only when `count === 1` and `_other` for every other coun
 
 Parent: [`TODO-0154: Integrate the Simplified Chinese locale from PR #354 after the contributor's revision`](TODO.md)
 
-**Status (2026-10-25):** Waiting on the contributor. The review comment asks for three changes: delete line 11 of `src/i18n/index.ts`, change `prefs.security.autoLockRange` to `（5-999）`, and change `prefs.data.moveBackupsConfirmMessage` to `此日记已有备份。`. Do not start the integration until the PR branch contains those fixes and `bun run type-check` passes on it.
+**Status (2026-10-26):** Completed for 0.7.6. PR #354 was merged in `9e4d039` after the contributor pushed the three requested fixes. The locale is registered, the native menu and Linux spellcheck resolver are wired, and Chinese is a documented Linux spellcheck exception because no maintained Hunspell `zh_CN` dictionary exists.
 
 **Context**: PR #354 adds `src/i18n/locales/zh-CN.json` with all 733 keys. The file validates against `en.ts`, every placeholder and keyboard shortcut matches, and all ten `_one` / `_other` pairs are identical, which is correct for Chinese. The contributor also added one import line that redeclares `ruLocale`; it fails `tsc --noEmit` with `TS2300` and prevents 50 of 117 test files from loading. The contributor was told that the maintainer will do the registration after merge, following the Russian locale in TODO-0151. Local review report (untracked): `docs/pr-354-analysis.md`. Posted comment (local copy, untracked): `docs/pr-354-response-draft.md`. Review comment: [PR #354 comment](https://github.com/fjrevoredo/mini-diarium/pull/354#issuecomment-6400481628).
 
