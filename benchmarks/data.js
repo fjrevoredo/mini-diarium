@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1793032281612,
+  "lastUpdate": 1793032878526,
   "repoUrl": "https://github.com/fjrevoredo/mini-diarium",
   "entries": {
     "Benchmark": [
@@ -39694,6 +39694,36 @@ window.BENCHMARK_DATA = {
           {
             "name": "ci_pipeline_duration",
             "value": 624000000000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "committer": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "distinct": true,
+          "id": "e6d2d2859d9479e65515dc8bc8cdafdfd13af796",
+          "message": "chore(nix): refresh npmDepsHash for v0.7.6\n\npackage-lock.json changed in a14daab (version string only), so the fixed-output hash changed too. Value taken from the Nix CI annotation on 1c70e68.",
+          "timestamp": "2026-10-26T17:21:59+01:00",
+          "tree_id": "8801d15a82632b2c801947cccadc9f29c457f70e",
+          "url": "https://github.com/fjrevoredo/mini-diarium/commit/e6d2d2859d9479e65515dc8bc8cdafdfd13af796"
+        },
+        "date": 1793032876958,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "ci_pipeline_duration",
+            "value": 582000000000,
             "range": "± 0",
             "unit": "ns/iter"
           }
