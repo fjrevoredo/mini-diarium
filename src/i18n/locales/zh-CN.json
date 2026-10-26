@@ -451,7 +451,7 @@
       "autoLockTitle": "自动锁定",
       "autoLockLabel": "闲置后锁定",
       "autoLockTimeoutLabel": "超时（秒）",
-      "autoLockRange": "（1-999）",
+      "autoLockRange": "（5-999）",
       "autoLockTimeoutTooLow": "最小为 {{ min }} 秒。离开此字段时该值将被调高。",
       "autoLockOnFocusLossLabel": "窗口失去焦点时锁定",
       "allFieldsRequired": "所有字段必填",
@@ -479,7 +479,7 @@
       "changeDirectoryTitle": "选择日记文件夹",
       "resetFailedAlert": "重置日记时出错：{{ message }}",
       "moveBackupsConfirmTitle": "是否同时移动备份？",
-      "moveBackupsConfirmMessage": "此日记有已有备份。是否将它们与日记一起移动到新位置？否则它们将保留在原处。",
+      "moveBackupsConfirmMessage": "此日记已有备份。是否将它们与日记一起移动到新位置？否则它们将保留在原处。",
       "backupsStayedAlert": "您的已有备份已保留在原位置：{{ path }}",
       "previousLocationFallback": "之前的日记文件夹"
     },
