@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1793025326614,
+  "lastUpdate": 1793025935293,
   "repoUrl": "https://github.com/fjrevoredo/mini-diarium",
   "entries": {
     "Benchmark": [
@@ -39634,6 +39634,36 @@ window.BENCHMARK_DATA = {
           {
             "name": "ci_pipeline_duration",
             "value": 819000000000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "committer": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "distinct": true,
+          "id": "48a8f4f0959e2318d08f169f772ed5097ca028a3",
+          "message": "chore(nix): refresh npmDepsHash\n\nFollow-up to the dependency update batch: npm install --package-lock-only wrote a new package-lock.json, and the Nix CI job printed the matching hash.",
+          "timestamp": "2026-10-26T15:23:36+01:00",
+          "tree_id": "7f2291b89803562a51bedb030a18bc0b2162d35d",
+          "url": "https://github.com/fjrevoredo/mini-diarium/commit/48a8f4f0959e2318d08f169f772ed5097ca028a3"
+        },
+        "date": 1793025933608,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "ci_pipeline_duration",
+            "value": 585000000000,
             "range": "± 0",
             "unit": "ns/iter"
           }
