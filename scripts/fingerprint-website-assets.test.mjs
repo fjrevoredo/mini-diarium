@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { mkdirSync, rmSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { join, sep } from "node:path";
 import { tmpdir } from "node:os";
 
 import {
@@ -9,6 +9,7 @@ import {
   readNormalized,
   rewriteAssetReferences,
   shortHash,
+  walkHtmlFiles,
 } from "./fingerprint-website-assets.mjs";
 
 const HASHES = { style: "0123abcd", main: "89ef4567" };
@@ -117,5 +118,22 @@ test("ASSETS patterns are stateless across repeated existence checks", () => {
     const pattern = new RegExp(asset.htmlPattern.source);
     assert.equal(pattern.test(html), true);
     assert.equal(pattern.test(html), true);
+  }
+});
+
+test("walkHtmlFiles skips the self-contained legacy-domain landing page", () => {
+  const root = makeTempRoot("walk");
+  try {
+    mkdirSync(join(root, "compare"), { recursive: true });
+    mkdirSync(join(root, "legacy-domain"), { recursive: true });
+    writeFileSync(join(root, "index.html"), "<!doctype html>");
+    writeFileSync(join(root, "compare", "index.html"), "<!doctype html>");
+    writeFileSync(join(root, "legacy-domain", "index.html"), "<!doctype html>");
+
+    const found = walkHtmlFiles(root).map((p) => p.slice(root.length + 1).split(sep).join("/"));
+
+    assert.deepEqual(found.sort(), ["compare/index.html", "index.html"]);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
   }
 });
