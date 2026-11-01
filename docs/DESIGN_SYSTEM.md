@@ -1,6 +1,6 @@
-# Design System — Mini Diarium
+# Design System — Fenmark
 
-This document captures the color palette, theming strategy, and visual design constraints for Mini Diarium. Its purpose is to prevent design drift across the app, website, and any future contributions.
+This document captures the brand, color palette, theming strategy, and visual design constraints for Fenmark. Its purpose is to prevent design drift across the app, website, and any future contributions.
 
 The document is structured in two layers:
 1. **Design language** — implementation-agnostic: palette, intent, and decisions.
@@ -12,24 +12,54 @@ The document is structured in two layers:
 
 ### Logo
 
-The logo is a stylised book. It uses exactly two colors:
+The logo is a stylised book with a bookmark ribbon. It uses exactly two colors:
 
 | Role | Hex | Description |
 |------|-----|-------------|
-| Structure (cover/frame) | `#000000` | Black — recedes, frames the content |
-| Content (pages) | `#F5C94D` | Warm gold — the brand color |
+| Structure (cover, spine line, ribbon) | `#000000` | Black — recedes, frames the content |
+| Content (pages, spine) | `#F5C94D` | Warm gold — the brand color |
 
-The black-and-gold combination is deliberate: it reads as private, weighty, and premium — fitting for an encrypted personal journal.
+The black-and-gold combination is deliberate: it reads as private, weighty, and premium — fitting for an encrypted personal journal. It also keeps the most visual distance from Diarium's blue-violet icon.
+
+The **ribbon** is the "mark" in Fen**mark**: a black bookmark with a V-notch that hangs from the top edge over the pages. It is the one detail added to the book; it stays readable at 32 px.
+
+Construction rules:
+
+- Drawn on a 1024 grid with a 64-unit module; book body x 128–896, y 96–928. One outer corner radius (80), one cover border (40), integer coordinates only.
+- Exactly two fills, no gradients, no text, no transforms.
+- Clear space: 2 × spine width (160 units on the 1024 grid) on every side.
+- Minimum size: 16 px for the icon.
+
+Full construction, file list and "do not" cases: [`docs/brand/README.md`](brand/README.md).
+
+### Wordmark and Lockups
+
+The **Fenmark wordmark** is the word "Fenmark" set in **Plus Jakarta Sans** at weight 650 (SIL Open Font License 1.1) and **outlined to SVG paths**. No font file ships and no brand SVG references a font, so the wordmark looks the same on every OS and needs no network. Never retype it in a live font.
+
+| File (`docs/brand/`) | Wordmark color | Use on |
+|------|-----|-------------|
+| `fenmark-wordmark-dark.svg` | `#0e0e0e` | Light backgrounds |
+| `fenmark-wordmark-light.svg` | `#f0ede6` | Dark backgrounds |
+| `fenmark-lockup-dark.svg` | `#0e0e0e` | Light backgrounds |
+| `fenmark-lockup-light.svg` | `#f0ede6` | Dark backgrounds: website nav, OG card |
+
+Two lockups exist: **icon only** (the logo master) and **icon + wordmark**, horizontal. In the horizontal lockup the book height is 1.5 × the wordmark's cap height and the gap is half the book height. The logo keeps its own black and gold in both variants; only the wordmark color changes. Minimum lockup width: 96 px.
+
+The app does not use the wordmark: the sidebar title and auth screens keep system-font text (see Typography).
+
+### Brand Imagery
+
+Do not use marsh, reed, water or medieval imagery, and do not set the name in a serif or blackletter face. "Fenmark" is also a marsh in Tolkien's Rohan, and web results for the name are full of it; such imagery makes that link stronger. Keep the brand to the book, the ribbon, and the two colors.
 
 ### Brand Color
 
-**Gold `#F5C94D`** is the single brand color for Mini Diarium. It appears in the logo and throughout the marketing website as the primary accent.
+**Gold `#F5C94D`** is the single brand color for Fenmark. It appears in the logo and throughout the marketing website as the primary accent.
 
 It is **not** the interactive color inside the app. See "Interactive color" below for the rationale.
 
 ### Color Palette
 
-Mini Diarium uses two distinct palettes: one for the **website**, one for the **app**.
+Fenmark uses two distinct palettes: one for the **website**, one for the **app**.
 
 #### Website palette (always dark)
 
@@ -123,6 +153,8 @@ The two surfaces are visually independent. Changing the app's theme has no effec
 | Website theme | Always dark | Gold reads best on dark; consistent with private/encrypted aesthetic |
 | App theme | Light default, dark available | Matches OS conventions; light is more legible for long writing sessions |
 | Web fonts | None | Preserves offline-first and privacy-first principles |
+| Wordmark | Plus Jakarta Sans 650, outlined to paths | Geometric sans fits the book grid; outlines need no font load |
+| Logo mark detail | Bookmark ribbon | Links the icon to the name (Fen**mark**); readable at 32 px |
 | Gray scale | Tailwind neutral gray | Single coherent ramp covers all light/dark steps |
 | Highlight mark | Amber | Visually separate from blue (interactive) and gray (UI) without conflicting with status colors |
 
@@ -134,7 +166,9 @@ The sections below describe how the design language above is translated into cod
 
 ### Logo
 
-Source file: `public/logo-transparent.svg` (1024×1024). Two fill colors: `#000000` (cover) and `#F5C94D` (pages). Regenerate all icon sizes with `bun run tauri icon public/logo-transparent.svg`.
+Source file: `public/logo-transparent.svg` (1024×1024, transparent). Two fill colors: `#000000` (cover, spine line, ribbon) and `#F5C94D` (pages, spine). Wordmark and lockup masters live in `docs/brand/`.
+
+To change the logo, follow the `update-app-icons` runbook (`/runbooks update-app-icons` in Claude Code, `$runbooks update-app-icons` in Codex). It regenerates every icon size with `bun run tauri icon public/logo-transparent.svg` and lists every other place the logo is copied to (in-app `<img>` uses, `website/assets/logo.svg`, website favicons, OG card, lockups).
 
 ---
 
@@ -182,8 +216,6 @@ All theme-aware colors are defined as CSS custom properties in `src/index.css`:
 Components use the CSS variables (via utility classes or inline styles) and Tailwind/UnoCSS utility classes. Hard-coded hex values in component files should be treated as technical debt; new code must use the variable system.
 
 **Exception — `src/styles/critical-auth.css`:** This file duplicates a subset of Tailwind utility classes as static CSS and is loaded synchronously (via `<link>`) before UnoCSS hydrates. Its purpose is to prevent a flash of unstyled content (FOUC) on auth screens during cold launch. It uses light-mode hard-coded hex values only. This is intentional, but only for the pre-hydration window: `critical-auth.css`'s hardcoded light values cover the FOUC gap before the SolidJS app mounts and the `.dark` class (if applicable) is applied to `<html>`. Once mounted, `JournalPicker`/`PasswordCreation`/`PasswordPrompt` follow the normal theme system like the rest of the app — auth screens are not forced to light mode after that point. Do not convert this file to CSS variables.
-
-**Unused color scale — `uno.config.ts` `primary`:** The UnoCSS config defines a `primary` color scale (`primary-500: #0ea5e9`, sky/cyan blue) that is **not used anywhere in the codebase**. Do not confuse this with the interactive blue (`#3b82f6`, Tailwind `blue-500`). If you are looking for the interactive color, use `blue-*` classes, not `primary-*`.
 
 ---
 
@@ -377,7 +409,7 @@ Use this when writing a new component or modifying an existing one.
 - [ ] **Dark mode** — every color that appears in the component must have a dark variant, either via CSS variables (automatic) or explicit `dark:` UnoCSS classes.
 - [ ] **Status messages** — use the status tokens (`--status-{success,error,warning,info}-{bg,border,text}`) or the `.bg-*` / `.border-*` / `.text-*` utility classes. Do not invent new colors for feedback states.
 - [ ] **No gold in the app** — if you are tempted to use `#F5C94D` or any amber/yellow for non-highlight, non-warning UI, stop and reconsider.
-- [ ] **No `primary-*` UnoCSS classes** — use `blue-*` for the interactive color. The `primary` scale in `uno.config.ts` is unused sky-blue and will not match.
+- [ ] **No `primary-*` UnoCSS classes** — use `blue-*` for the interactive color. `uno.config.ts` defines no `primary` color scale; `bg-primary`/`text-primary`/`border-primary` are semantic theme tokens, not shades.
 - [ ] **Overlays** — backdrop uses `style={{ 'background-color': 'var(--overlay-bg)' }}`. Panel shadow uses `style={{ 'box-shadow': 'var(--shadow-lg)' }}`.
 - [ ] **New token needed?** — add it to both `:root` and `.dark` in `src/index.css`, then document it here.
 
