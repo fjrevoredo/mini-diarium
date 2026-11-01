@@ -172,17 +172,23 @@ pub fn default_journal_dir(
     is_dir: impl Fn(&Path) -> bool,
 ) -> PathBuf {
     match documents_dir {
-        Some(docs) => {
-            // Legacy fallback from the Mini Diarium -> Fenmark rename. Temporary: remove it after
-            // a few releases (tracked in docs/todo/TODO.md, "legacy default journal folder").
-            let legacy = docs.join(LEGACY_JOURNAL_FOLDER_NAME);
-            if is_dir(&legacy) {
-                legacy
-            } else {
-                docs.join(JOURNAL_FOLDER_NAME)
-            }
-        }
+        Some(docs) => documents_journal_dir(docs, is_dir),
         None => app_data_dir.join("journals"),
+    }
+}
+
+/// The journal folder inside the documents directory: the pre-rename `Mini Diarium` folder when
+/// it already exists, `Fenmark` otherwise.
+///
+/// Legacy fallback from the Mini Diarium -> Fenmark rename, kept in its own function so it can be
+/// deleted on its own. Temporary: remove it after a few releases (tracked in docs/todo/TODO.md,
+/// "legacy default journal folder"); `default_journal_dir` then joins `JOURNAL_FOLDER_NAME`.
+fn documents_journal_dir(docs: &Path, is_dir: impl Fn(&Path) -> bool) -> PathBuf {
+    let legacy = docs.join(LEGACY_JOURNAL_FOLDER_NAME);
+    if is_dir(&legacy) {
+        legacy
+    } else {
+        docs.join(JOURNAL_FOLDER_NAME)
     }
 }
 
