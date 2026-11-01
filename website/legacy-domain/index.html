@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- Served only on the mini-diarium.com homepage (see website/nginx.conf). Every other
+         path on that host 301-redirects to the same path on fenmark.app. Self-contained on
+         purpose: the old host has no CSS/JS of its own, so this page inlines everything and
+         the fingerprinter skips this folder (scripts/fingerprint-website-assets.mjs). -->
+    <title>Mini Diarium is now Fenmark</title>
+    <meta
+      name="description"
+      content="Mini Diarium has a new name: Fenmark. Same encrypted, local-first journal app, same journals and backups. The website now lives at fenmark.app."
+    />
+    <link rel="canonical" href="https://fenmark.app/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Mini Diarium is now Fenmark" />
+    <meta
+      property="og:description"
+      content="Same encrypted, local-first journal app with a new name. The website now lives at fenmark.app."
+    />
+    <meta property="og:url" content="https://fenmark.app/" />
+    <meta property="og:image" content="https://fenmark.app/assets/og-cover.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <link rel="icon" href="https://fenmark.app/favicon.ico" sizes="any" />
+    <style>
+      :root {
+        --bg: #0e0e0e;
+        --bg-card: #161616;
+        --accent: #f5c94d;
+        --text: #f0ede6;
+        --text-muted: #888;
+        --border: #2a2a2a;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px 16px;
+        background: var(--bg);
+        color: var(--text);
+        font-family:
+          system-ui,
+          -apple-system,
+          "Segoe UI",
+          Roboto,
+          "Helvetica Neue",
+          Arial,
+          sans-serif;
+        line-height: 1.6;
+      }
+      main {
+        width: 100%;
+        max-width: 560px;
+        padding: 40px 32px;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        text-align: center;
+      }
+      .logo {
+        width: 72px;
+        height: 72px;
+      }
+      .eyebrow {
+        margin: 20px 0 4px;
+        color: var(--text-muted);
+        font-size: 0.95rem;
+      }
+      h1 {
+        margin: 0 0 16px;
+        font-size: clamp(1.75rem, 5vw, 2.25rem);
+        line-height: 1.2;
+      }
+      h1 span {
+        color: var(--accent);
+      }
+      p {
+        margin: 0 0 16px;
+      }
+      ul {
+        margin: 0 auto 28px;
+        padding: 0;
+        max-width: 420px;
+        list-style: none;
+        text-align: left;
+      }
+      li {
+        position: relative;
+        padding-left: 24px;
+        margin-bottom: 8px;
+      }
+      li::before {
+        content: "";
+        position: absolute;
+        left: 4px;
+        top: 0.6em;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--accent);
+      }
+      .button {
+        display: inline-block;
+        padding: 14px 28px;
+        background: var(--accent);
+        color: #0e0e0e;
+        font-weight: 700;
+        text-decoration: none;
+        border-radius: 10px;
+      }
+      .button:hover,
+      .button:focus-visible {
+        background: #ffd968;
+      }
+      .button:focus-visible {
+        outline: 2px solid var(--text);
+        outline-offset: 3px;
+      }
+      .secondary {
+        margin: 20px 0 0;
+        font-size: 0.95rem;
+        color: var(--text-muted);
+      }
+      .secondary a {
+        color: var(--text);
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <svg class="logo" viewBox="0 0 1024 1024" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M201.795 89.5363C206.95 88.8417 220.777 89.1478 226.501 89.1676L273.301 89.2728L442.666 89.2538L696.159 89.2815L775.459 89.1953C788.647 89.1747 807.238 88.5782 819.951 89.5774C833.083 90.5607 845.741 94.9118 856.705 102.213C889.766 124.313 891.134 151.15 891.103 187.033L891.071 232.475L891.126 409.556L891.111 711.19V808.962C891.111 840.061 895.588 875.842 876.206 901.965C862.852 919.954 844.214 929.906 822.506 933.941C811.233 935.262 795.142 934.819 783.362 934.819L721.577 934.787L514.664 934.779L304.488 934.772L240.233 934.795C227.163 934.795 211.263 935.515 198.33 933.814C164.543 929.376 135.601 899.354 132.248 865.487C130.841 851.271 131.57 835.417 131.603 821.327L131.589 750.508L131.614 505.218L131.625 267.759L131.622 195.073C131.623 185.191 131.117 166.043 132.094 156.852C133.726 142.458 139.445 128.832 148.577 117.586C162.244 100.829 180.489 91.7458 201.795 89.5363Z" fill="black" />
+        <path d="M284.23 125.631C331.953 126.04 379.679 126.141 427.404 125.933L661.485 125.977L763.569 125.914C781.218 125.853 799.564 125.414 817.118 126.196C833.914 126.944 851.753 143.898 853.224 160.697C854.237 172.314 853.936 184.406 853.913 196.25L853.826 254.091L853.849 452.87L853.826 722.392V809.84C853.826 825.536 854.063 841.841 853.462 857.512C853.066 867.757 849.237 875.739 842.996 883.666L842.465 884.212C827.545 899.409 813.733 898.033 794.161 897.764C785.854 897.653 777.247 897.692 768.924 897.692L661.532 897.708L284.194 897.875L284.23 125.631Z" fill="#F5C94D" />
+        <path d="M205.315 125.872C215.77 125.071 235.851 125.816 246.785 125.935L246.849 661.057L246.846 813.218C246.642 841.413 246.663 869.608 246.911 897.803L211.362 897.748C199.282 898.009 190.29 893.745 181.634 885.699C178.141 882.456 169.969 870.937 169.604 866.056C168.108 846.089 168.683 825.575 168.701 805.521L168.764 663.882L168.76 327.576L168.79 220.283C168.791 201.232 168.525 181.879 168.987 162.834C169.474 142.815 186.4 128.962 205.315 125.872Z" fill="#F5C94D" />
+      </svg>
+      <p class="eyebrow">Mini Diarium has a new name</p>
+      <h1>Mini Diarium is now <span>Fenmark</span></h1>
+      <p>Only the name changed. It is the same encrypted, local-first journal app, and the code stays MIT-licensed.</p>
+      <ul>
+        <li>Your journals, settings, and backups stay where they are.</li>
+        <li>You do not need to do anything. The next version opens your journals the same way.</li>
+        <li>The website, downloads, and documentation now live at fenmark.app.</li>
+      </ul>
+      <a class="button" href="https://fenmark.app/">Go to fenmark.app</a>
+      <p class="secondary">
+        Why the new name? <a href="https://fenmark.app/blog/mini-diarium-is-now-fenmark/">Read the announcement</a>.
+      </p>
+    </main>
+  </body>
+</html>

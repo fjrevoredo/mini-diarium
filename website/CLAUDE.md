@@ -381,6 +381,7 @@ from an unrelated page context that only looks inert until something restructure
 | `index.html` | Edit | Homepage — edit static sections directly; blog teaser block is auto-updated |
 | `encrypted-journal/`, `compare/`, `privacy/`, `newsletter/`, `donate/` | Edit | Static guide / comparison / policy / signup / donation pages |
 | `css/`, `js/` | Edit | Site stylesheet and scripts |
+| `legacy-domain/index.html` | Edit | Self-contained transition page for the old `mini-diarium.com` homepage (inline CSS, no site JS, skipped by the fingerprinter); not in `STATIC_PAGES` or the sitemap |
 | `nginx.conf` | Edit | Ships to production (Coolify builds `Dockerfile`, which `COPY`s this to `/etc/nginx/conf.d/default.conf`); only redirect/TLS/canonical-host enforcement is Coolify-overridden |
 | `../docs/seo/` | Edit | SEO/GEO + growth hub (outside `website/`) — start at [`../docs/seo/README.md`](../docs/seo/README.md) |
 
@@ -436,6 +437,6 @@ for the gate. Mechanics:
 | Port 80 already in use | Change `"80:80"` to `"8080:80"` in `docker-compose.yml` (local testing only; revert before committing) |
 | Stale cached layers | `docker compose build --no-cache` |
 | Container starts but returns 404 | Check that `bun run website:build-static` ran and `website/docs/` and `website/blog/` are populated |
-| `www.fenmark.app` or `mini-diarium.com` redirects | The nginx config sends `www.fenmark.app` and the legacy `mini-diarium.com` / `www.mini-diarium.com` hosts to `https://fenmark.app` with a 301 — expected behavior (the legacy hosts are a temporary rename redirect) |
+| `www.fenmark.app` or `mini-diarium.com` redirects | Expected. `www.fenmark.app` 301-redirects to `https://fenmark.app`. On the legacy `mini-diarium.com` / `www.mini-diarium.com` hosts, only `/` serves the self-contained transition page (`legacy-domain/index.html`); every other path 301-redirects to the same path on `https://fenmark.app`. `fenmark.app/legacy-domain/` returns 404 |
 
 > **Note:** This compose file is for local preview only. `nginx.conf` itself ships to production via `Dockerfile` (Coolify builds it) — Coolify only overrides TLS termination and redirect/canonical-host enforcement on top of it. Use this compose setup to verify routing and header changes before they reach production.
