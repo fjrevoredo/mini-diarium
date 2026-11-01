@@ -34,6 +34,16 @@ Template:
 
 # Versions
 
+## [0.8.0] - Unreleased
+
+### Changed
+- **Mini Diarium is now Fenmark (TODO-0155)**: The app has a new name. The window title, the menus, the welcome and unlock screens, the About screen, exports, and all nine languages say Fenmark. For a while, the About screen also shows "formerly Mini Diarium". The website moves to [fenmark.app](https://fenmark.app/); old `mini-diarium.com` links forward to it. Your journals, settings, preferences, backups, and plugins stay where they are, and nothing is re-encrypted: the app data folder (`com.minidiarium`), the file format, and the export formats do not change.
+    - **Windows**: the new installer removes the old "Mini Diarium" program entry before it installs, so you have one app called Fenmark. The uninstall runs silently and never deletes your app data. The MSI keeps a fixed upgrade code.
+    - **Linux**: the Fenmark `.deb` and `.rpm` packages replace the old `mini-diarium` package in one step. The terminal command stays `mini-diarium`. The Flatpak keeps its ID and shows the new name.
+    - **macOS**: the DMG installs `Fenmark.app` next to the old `Mini Diarium.app`. Delete `Mini Diarium.app` after you install Fenmark; your journals are not stored inside the app.
+    - **New journals**: the default folder is now `Documents/Fenmark`. If you already have a `Documents/Mini Diarium` folder, new journals still go there.
+    - Install commands (`winget`, `brew`, `flatpak`), store IDs, and the GitHub repository keep their current names for now (TODO-0157).
+
 ## [0.7.6] - 26-10-2026
 
 ### Added
