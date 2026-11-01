@@ -3,13 +3,13 @@ title: Search
 slug: search
 description: Full-text search across every encrypted entry via the search overlay or Ctrl+F, with instant highlighted results, and how it stays fully encrypted and offline.
 order: 4
-updated: 2026-09-06
+updated: 2026-11-01
 tags: search, find, full-text, encrypted
 ---
 
 ## Search Your Entries
 
-Mini Diarium includes full-text search across every entry in the current journal. Open the search overlay from the magnifier button in the header, or press **Ctrl+F** (Cmd+F on macOS). Type at least three characters and matching entries appear, newest first, with the matching text highlighted in a short snippet. Nothing is searched until the query reaches that minimum — no results appear for one or two characters. For Chinese and Japanese text, the minimum drops to a single character, since many complete words in those languages are one or two characters long.
+Fenmark includes full-text search across every entry in the current journal. Open the search overlay from the magnifier button in the header, or press **Ctrl+F** (Cmd+F on macOS). Type at least three characters and matching entries appear, newest first, with the matching text highlighted in a short snippet. Nothing is searched until the query reaches that minimum — no results appear for one or two characters. For Chinese and Japanese text, the minimum drops to a single character, since many complete words in those languages are one or two characters long.
 
 Clicking a result jumps straight to that entry in the editor, even on a day that holds several entries.
 
@@ -21,7 +21,7 @@ Navigate results with your keyboard: **ArrowDown** and **ArrowUp** move between 
 
 ## How Search Works Without Compromising Encryption
 
-Mini Diarium stores every entry encrypted at rest with AES-256-GCM. Search does **not** keep a separate plaintext index on disk, because that would expose your writing to anyone with access to the file.
+Fenmark stores every entry encrypted at rest with AES-256-GCM. Search does **not** keep a separate plaintext index on disk, because that would expose your writing to anyone with access to the file.
 
 Instead, when you run a search the app decrypts your entries in memory, scans them, and discards everything when it is done. Nothing searchable is ever written to disk, and the search never makes a network request. It is as private as reading the entries yourself.
 

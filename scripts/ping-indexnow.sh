@@ -12,7 +12,7 @@ if [[ -z "${INDEXNOW_KEY:-}" ]]; then
 fi
 
 site_url="$1"
-host="${INDEXNOW_HOST:-mini-diarium.com}"
+host="${INDEXNOW_HOST:-fenmark.app}"
 key_location="${INDEXNOW_KEY_LOCATION:-https://${host}/${INDEXNOW_KEY}.txt}"
 
 curl -fsS "https://api.indexnow.org/indexnow?url=${site_url}&key=${INDEXNOW_KEY}&keyLocation=${key_location}"

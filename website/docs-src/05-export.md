@@ -3,7 +3,7 @@ title: Exporting Data
 slug: export
 description: Export your journal as JSON, Markdown, or PDF. JSON preserves IDs, tags, and metadata; Markdown is human-readable; PDF creates a formatted A4 document.
 order: 6
-updated: 2026-10-10
+updated: 2026-11-01
 tags: export, backup, JSON, Markdown, PDF, print, portability, tags
 ---
 
@@ -22,7 +22,7 @@ The JSON format is the primary structural export. It outputs a `metadata` block 
 ```json
 {
   "metadata": {
-    "application": "Mini Diarium",
+    "application": "Fenmark",
     "version": "0.5.0",
     "exportedAt": "2024-01-15T12:00:00Z"
   },
@@ -45,7 +45,7 @@ The JSON format is the primary structural export. It outputs a `metadata` block 
 
 Every entry includes a `"tags"` array (empty `[]` if the entry has no tags; tags are listed in alphabetical order) and an `"attachments"` array of `{ "name", "mime_type", "byte_size" }` objects (empty `[]` when there are none). The JSON file lists attachments by name only; it does not contain the file contents. Entries with font metadata include a `"metadata"` object containing `fontFamily` and `fontSize`; entries without entry-level font defaults have no `metadata` field.
 
-This format preserves entry IDs, timestamps, tags, and font metadata. It can be re-imported into Mini Diarium. The JSON importer automatically handles both the old Mini Diary date-keyed format and the new array format with optional metadata for backward compatibility. If the JSON contains embedded `data:image/...` content, Mini Diarium normalizes those images into its encrypted image store during import while preserving the visible content of the entry. Inline attachment references are removed on import, because the attachment files are not part of the JSON file. Stored image references (`image-id://` links, which a normal export never writes) are removed the same way, because they name images in a different journal.
+This format preserves entry IDs, timestamps, tags, and font metadata. It can be re-imported into Fenmark. The JSON importer automatically handles both the old Mini Diary date-keyed format and the new array format with optional metadata for backward compatibility. If the JSON contains embedded `data:image/...` content, Fenmark normalizes those images into its encrypted image store during import while preserving the visible content of the entry. Inline attachment references are removed on import, because the attachment files are not part of the JSON file. Stored image references (`image-id://` links, which a normal export never writes) are removed the same way, because they name images in a different journal.
 
 ### Markdown Export
 
@@ -72,7 +72,7 @@ Markdown is a best-effort, text-focused conversion of the stored HTML editor con
 The **Print / PDF** option opens a save dialog and creates a formatted A4 PDF directly at the path you choose.
 
 The print output uses a clean, readable layout with:
-- A "Mini Diarium" header and the generation date
+- A "Fenmark" header and the generation date
 - Entries grouped by date, with each date on its own page
 - Entry titles, tags (when present), and the full entry content
 - The names of an entry's attachments (the files themselves are not printed); inline references show as 📎 and the file name

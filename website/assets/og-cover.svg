@@ -1,5 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
-  <title id="title">Mini Diarium</title>
+  <title id="title">Fenmark</title>
   <desc id="desc">Encrypted local-first desktop journal for Windows macOS and Linux</desc>
   <defs>
     <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
@@ -10,8 +10,8 @@
   <rect width="1200" height="630" fill="url(#bg)"/>
   <rect x="74" y="74" width="1052" height="482" rx="24" fill="#161616" stroke="#2a2a2a"/>
   <circle cx="162" cy="158" r="28" fill="#f5c94d" opacity="0.16"/>
-  <image href="https://mini-diarium.com/assets/logo.svg" x="138" y="134" width="48" height="48"/>
-  <text x="220" y="166" fill="#f0ede6" font-size="54" font-family="Segoe UI, Arial, sans-serif" font-weight="700">Mini Diarium</text>
+  <image href="https://fenmark.app/assets/logo.svg" x="138" y="134" width="48" height="48"/>
+  <text x="220" y="166" fill="#f0ede6" font-size="54" font-family="Segoe UI, Arial, sans-serif" font-weight="700">Fenmark</text>
   <text x="138" y="248" fill="#f0ede6" font-size="42" font-family="Segoe UI, Arial, sans-serif" font-weight="700">Your journal. Your device. Your keys.</text>
   <text x="138" y="304" fill="#c9c4b8" font-size="28" font-family="Segoe UI, Arial, sans-serif">Encrypted local-first desktop journal</text>
   <text x="138" y="346" fill="#c9c4b8" font-size="28" font-family="Segoe UI, Arial, sans-serif">AES-256-GCM - Offline-only - No telemetry</text>

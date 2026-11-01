@@ -2,17 +2,17 @@
 
 > View your writing statistics: total entry and word counts, current and longest streaks, and a breakdown of your most active writing days, months, and years.
 
-Source: https://mini-diarium.com/docs/statistics/
+Source: https://fenmark.app/docs/statistics/
 
 ## Opening Statistics
 
 Click the **⋮** menu in the header and select **Statistics...**.
 
-![Statistics overlay showing an 8-day current streak, total entries, total words, and average words per entry](https://mini-diarium.com/assets/docs/statistics-01-overlay.webp "The Statistics overlay")
+![Statistics overlay showing an 8-day current streak, total entries, total words, and average words per entry](https://fenmark.app/assets/docs/statistics-01-overlay.webp "The Statistics overlay")
 
 ## What Is Tracked
 
-Mini Diarium calculates the following statistics from your journal:
+Fenmark calculates the following statistics from your journal:
 
 | Stat | Description |
 |------|-------------|

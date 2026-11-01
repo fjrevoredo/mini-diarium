@@ -3,7 +3,7 @@ title: Statistics
 slug: statistics
 description: View your writing statistics: total entry and word counts, current and longest streaks, and a breakdown of your most active writing days, months, and years.
 order: 9
-updated: 2026-09-06
+updated: 2026-11-01
 tags: statistics, streaks, word count, writing habits
 ---
 
@@ -15,7 +15,7 @@ Click the **⋮** menu in the header and select **Statistics...**.
 
 ## What Is Tracked
 
-Mini Diarium calculates the following statistics from your journal:
+Fenmark calculates the following statistics from your journal:
 
 | Stat | Description |
 |------|-------------|

@@ -1,16 +1,16 @@
 # Plugins
 
-> Extend Mini Diarium with Rhai script plugins for custom import and export formats. Covers the plugins folder, writing your first plugin, and API helpers.
+> Extend Fenmark with Rhai script plugins for custom import and export formats. Covers the plugins folder, writing your first plugin, and API helpers.
 
-Source: https://mini-diarium.com/docs/plugins/
+Source: https://fenmark.app/docs/plugins/
 
 ## What Are Plugins?
 
-Mini Diarium supports custom import and export formats through Rhai script plugins. Rhai is a simple, sandboxed scripting language that runs inside the app. You can write a plugin to handle any file format that the built-in options do not cover.
+Fenmark supports custom import and export formats through Rhai script plugins. Rhai is a simple, sandboxed scripting language that runs inside the app. You can write a plugin to handle any file format that the built-in options do not cover.
 
 Plugins appear in the Import and Export overlay dropdowns alongside the built-in formats.
 
-![Export Entries dialog with a custom plugin format, "Plain Text Timeline", selected in the Format dropdown](https://mini-diarium.com/assets/docs/plugins-01-export-dropdown.webp "A Rhai plugin listed alongside the built-in export formats")
+![Export Entries dialog with a custom plugin format, "Plain Text Timeline", selected in the Format dropdown](https://fenmark.app/assets/docs/plugins-01-export-dropdown.webp "A Rhai plugin listed alongside the built-in export formats")
 
 ## Where Is the Plugins Folder?
 
@@ -75,7 +75,7 @@ fn format_entries(entries) {
 
 ## Rules and Limitations
 
-![Diagram of the plugin sandbox boundary: a Rhai script has no file system or network access, and can only exchange plain text with the Import and Export dialogs](https://mini-diarium.com/assets/docs/diagrams/plugins-sandbox-boundary.svg "The plugin sandbox boundary")
+![Diagram of the plugin sandbox boundary: a Rhai script has no file system or network access, and can only exchange plain text with the Import and Export dialogs](https://fenmark.app/assets/docs/diagrams/plugins-sandbox-boundary.svg "The plugin sandbox boundary")
 
 - Import scripts must define `fn parse(content)` returning an array of entry maps.
 - Export scripts must define `fn format_entries(entries)` returning a string. (`export` is a reserved word in Rhai, so the function is named `format_entries`.)

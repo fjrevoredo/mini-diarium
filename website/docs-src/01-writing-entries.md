@@ -1,15 +1,15 @@
 ---
 title: Writing Entries
 slug: writing-entries
-description: Mini Diarium's rich text editor supports formatting, images, file attachments, named links, tags, and multiple entries per day. Auto-save and RTL language support are built in.
+description: Fenmark's rich text editor supports formatting, images, file attachments, named links, tags, and multiple entries per day. Auto-save and RTL language support are built in.
 order: 2
-updated: 2026-10-10
+updated: 2026-11-01
 tags: editor, formatting, entries, writing, attachments
 ---
 
 ## The Editor
 
-Mini Diarium uses a rich text editor with support for a full set of formatting options:
+Fenmark uses a rich text editor with support for a full set of formatting options:
 
 - Bold and italic text
 - Headings (levels 1–3)
@@ -104,7 +104,7 @@ You can attach documents, PDFs, short videos, and any other file to an entry. At
 - Click an attachment's name (or its download icon) to **save a copy** to a location you choose. The copy must keep the same file extension as the attachment. You cannot save the copy over the journal's own files (the journal database or anything in its backups folder).
 - Click the remove (×) icon to detach a file. You are asked to confirm first.
 
-Mini Diarium never opens attachments itself. To view a file, save a copy and open it with another app.
+Fenmark never opens attachments itself. To view a file, save a copy and open it with another app.
 
 ### Inline references
 
@@ -118,7 +118,7 @@ Large attachments make the journal file and its backups larger. Deleting an entr
 
 ### Older app versions
 
-Versions before 0.7.4 do not know attachments. If they open a journal that has attachments, they cannot delete an entry that has files. If they edit and save such an entry, they remove its inline 📎 references; the files in the strip are kept. Update Mini Diarium on every computer that shares the journal.
+Versions before 0.7.4 do not know attachments. If they open a journal that has attachments, they cannot delete an entry that has files. If they edit and save such an entry, they remove its inline 📎 references; the files in the strip are kept. Update Fenmark on every computer that shares the journal.
 
 ## Links
 
@@ -147,7 +147,7 @@ Only standard external targets are opened: `http`, `https`, `mailto`, and `tel`.
 
 ## Right-to-Left and Bidirectional Text
 
-Mini Diarium supports right-to-left (RTL) writing in Arabic, Hebrew, Syriac, and other RTL scripts. Direction is handled per block: each paragraph and heading carries its own `dir` attribute, so you can freely mix RTL and LTR content in the same entry.
+Fenmark supports right-to-left (RTL) writing in Arabic, Hebrew, Syriac, and other RTL scripts. Direction is handled per block: each paragraph and heading carries its own `dir` attribute, so you can freely mix RTL and LTR content in the same entry.
 
 **Auto-detection**: as you type, the editor reads the first strongly-directional character in each paragraph or heading and sets the direction automatically. Arabic and Hebrew script trigger `dir="rtl"`; Latin script triggers `dir="ltr"`. Once a block's direction is set it is locked and will not change if you later add neutral characters (numbers, punctuation, emoji) to the same block.
 
@@ -163,7 +163,7 @@ The advanced toolbar includes a **clock button** that inserts the current time a
 
 ## Editor Font: Three-Level System
 
-Mini Diarium uses a three-level font system so you can control fonts at multiple scopes:
+Fenmark uses a three-level font system so you can control fonts at multiple scopes:
 
 ### 1. App Default (Preferences)
 

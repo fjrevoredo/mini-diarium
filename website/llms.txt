@@ -1,77 +1,78 @@
-# Mini Diarium
+# Fenmark
 
 > Encrypted, local-first desktop journaling app and static website.
 
-- Canonical website: https://mini-diarium.com/
-- Compare: https://mini-diarium.com/compare/
-- Privacy Policy: https://mini-diarium.com/privacy/
-- Encrypted Journal App Guide: https://mini-diarium.com/encrypted-journal/
-- Newsletter: https://mini-diarium.com/newsletter/
-- Donate: https://mini-diarium.com/donate/
-- Blog: https://mini-diarium.com/blog/
-- RSS feed: https://mini-diarium.com/blog/feed.xml
+- Canonical website: https://fenmark.app/
+- Compare: https://fenmark.app/compare/
+- Privacy Policy: https://fenmark.app/privacy/
+- Encrypted Journal App Guide: https://fenmark.app/encrypted-journal/
+- Newsletter: https://fenmark.app/newsletter/
+- Donate: https://fenmark.app/donate/
+- Blog: https://fenmark.app/blog/
+- RSS feed: https://fenmark.app/blog/feed.xml
 - Source code: https://github.com/fjrevoredo/mini-diarium
 - License: MIT (https://opensource.org/licenses/MIT)
 - Security policy: https://github.com/fjrevoredo/mini-diarium/blob/master/SECURITY.md
 - Privacy policy: https://github.com/fjrevoredo/mini-diarium/blob/master/docs/PRIVACY.md
-- AI crawler policy: https://mini-diarium.com/ai-crawlers.txt
-- Full documentation text (single file): https://mini-diarium.com/llms-full.txt
+- AI crawler policy: https://fenmark.app/ai-crawlers.txt
+- Full documentation text (single file): https://fenmark.app/llms-full.txt
 - Contact: minidiarium@gmail.com
 
 ## Product Facts
 
-- Mini Diarium is an encrypted offline journal for Windows, macOS, and Linux.
+- Fenmark is an encrypted offline journal for Windows, macOS, and Linux.
 - Entries are encrypted with AES-256-GCM before being written to the local SQLite database.
 - The app is local-first and does not send entries to cloud services.
-- Mini Diarium is a private diary app for desktop users who want local-only storage instead of a cloud account.
+- Fenmark is a private diary app for desktop users who want local-only storage instead of a cloud account.
 - Supported imports: Mini Diary JSON, Day One JSON/TXT, jrnl JSON.
 - Supported exports: JSON and Markdown.
 
 ## Canonical Pages
 
-- Compare: Feature comparison of Mini Diarium vs. Day One, Notion, Obsidian, Standard Notes, and other journal apps. (https://mini-diarium.com/compare/)
-- Privacy Policy: Mini Diarium's privacy policy: no telemetry, no cloud storage, no analytics. (https://mini-diarium.com/privacy/)
-- Encrypted Journal App Guide: A direct overview of what an encrypted journal app should do, how Mini Diarium handles offline storage, and why local-first ownership matters. (https://mini-diarium.com/encrypted-journal/)
-- Newsletter: Mini Diarium's email newsletter: occasional new releases, milestones, and launch news for the encrypted offline journal app. No spam, unsubscribe anytime. (https://mini-diarium.com/newsletter/)
-- Donate: Ways to support Mini Diarium: Ko-fi, Monero, Bitcoin, and Bitcoin over Lightning. (https://mini-diarium.com/donate/)
+- Compare: Feature comparison of Fenmark vs. Day One, Notion, Obsidian, Standard Notes, and other journal apps. (https://fenmark.app/compare/)
+- Privacy Policy: Fenmark's privacy policy: no telemetry, no cloud storage, no analytics. (https://fenmark.app/privacy/)
+- Encrypted Journal App Guide: A direct overview of what an encrypted journal app should do, how Fenmark handles offline storage, and why local-first ownership matters. (https://fenmark.app/encrypted-journal/)
+- Newsletter: Fenmark's email newsletter: occasional new releases, milestones, and launch news for the encrypted offline journal app. No spam, unsubscribe anytime. (https://fenmark.app/newsletter/)
+- Donate: Ways to support Fenmark: Ko-fi, Monero, Bitcoin, and Bitcoin over Lightning. (https://fenmark.app/donate/)
 
 ## Latest Articles
 
-- A subpoena can only compel a company to hand over what it holds and can decrypt. A local-first journal with no server and no account has nothing to produce. (https://mini-diarium.com/blog/can-your-journal-be-subpoenaed/)
-- A password on a journal app can mean a login screen or real encryption at rest. Mini Diarium encrypts the whole journal with AES-256-GCM behind one password or key file, with a per-entry lock that prevents accidental edits, not a second password. (https://mini-diarium.com/blog/password-protected-journal-app/)
-- A secure journal app encrypts entries on disk with a named algorithm, has no recovery backdoor, and keeps a small network surface. Mini Diarium uses AES-256-GCM, has no HTTP client, and is open source for Windows, macOS, and Linux. (https://mini-diarium.com/blog/secure-journal-app/)
-- Notion stores journal entries on its servers, where AI features can read them. Mini Diarium encrypts each entry locally with AES-256-GCM, with no account and no server. (https://mini-diarium.com/blog/notion-alternative-for-journaling/)
-- Compares Mini Diarium to Obsidian for journal writing: Obsidian stores vault files as unencrypted Markdown on disk; Mini Diarium encrypts each entry with AES-256-GCM at the storage layer. (https://mini-diarium.com/blog/obsidian-alternative-for-journaling/)
-- Compares Mini Diarium to Standard Notes for users who want encrypted journal entries on their device only, with no sync service or server dependency. (https://mini-diarium.com/blog/standard-notes-alternative/)
-- A desktop diary app should encrypt entries at rest, store the primary copy locally, work offline, and export to open formats. Storage model and exit path matter more than feature lists. (https://mini-diarium.com/blog/desktop-diary-app/)
-- Five checks for evaluating a private journal app: encryption at rest, local storage, offline use, open exports, and open source. (https://mini-diarium.com/blog/private-journal-app-how-to-choose/)
-- An encrypted diary encrypts entries before they touch disk. It's an architectural guarantee, not a login screen. Here is what that means. (https://mini-diarium.com/blog/what-is-an-encrypted-diary/)
-- Explains why cloud architecture, not privacy settings, determines AI access to journal entries. (https://mini-diarium.com/blog/journal-app-ai-privacy/)
-- Mini Diary went unmaintained. Mini Diarium is its successor with AES-256-GCM encryption and direct import from Mini Diary JSON. (https://mini-diarium.com/blog/mini-diary-alternative/)
-- A practical checklist of what to look for in a journal app without cloud dependency. (https://mini-diarium.com/blog/journal-app-without-cloud/)
-- Compares Mini Diarium to Day One for users who want local-only storage and no sync service. (https://mini-diarium.com/blog/day-one-alternative-for-private-offline-journaling/)
-- An encrypted journal stores entries locally and encrypts before disk. Cloud apps store plaintext on servers. Architecture decides who can read your writing. (https://mini-diarium.com/blog/encrypted-journal-vs-cloud-notes-app/)
-- Owning your journal means keeping entries local, exporting in open formats, and never depending on a service for access. (https://mini-diarium.com/blog/offline-journal-that-you-own/)
-- A private diary app for desktop should encrypt entries at rest, work fully offline, and give you an exit path. Here is the checklist. (https://mini-diarium.com/blog/private-diary-app-for-desktop/)
-- Argues that local-first design is primarily about portability and long-term data control. (https://mini-diarium.com/blog/local-first-journaling-and-ownership/)
-- An offline journal can't send your entries to a server or share them with AI. That's architecture, not a setting. (https://mini-diarium.com/blog/why-an-offline-journal-is-different/)
-- The origin story of Mini Diarium: why an unmaintained predecessor led to building from scratch. (https://mini-diarium.com/blog/why-mini-diarium-exists/)
+- Mini Diarium was renamed to Fenmark: only the name changes; journals, settings, backups, and the encrypted file format stay the same, with no user action needed. (https://fenmark.app/blog/mini-diarium-is-now-fenmark/)
+- A subpoena can only compel a company to hand over what it holds and can decrypt. A local-first journal with no server and no account has nothing to produce. (https://fenmark.app/blog/can-your-journal-be-subpoenaed/)
+- A password on a journal app can mean a login screen or real encryption at rest. Mini Diarium encrypts the whole journal with AES-256-GCM behind one password or key file, with a per-entry lock that prevents accidental edits, not a second password. (https://fenmark.app/blog/password-protected-journal-app/)
+- A secure journal app encrypts entries on disk with a named algorithm, has no recovery backdoor, and keeps a small network surface. Mini Diarium uses AES-256-GCM, has no HTTP client, and is open source for Windows, macOS, and Linux. (https://fenmark.app/blog/secure-journal-app/)
+- Notion stores journal entries on its servers, where AI features can read them. Mini Diarium encrypts each entry locally with AES-256-GCM, with no account and no server. (https://fenmark.app/blog/notion-alternative-for-journaling/)
+- Compares Mini Diarium to Obsidian for journal writing: Obsidian stores vault files as unencrypted Markdown on disk; Mini Diarium encrypts each entry with AES-256-GCM at the storage layer. (https://fenmark.app/blog/obsidian-alternative-for-journaling/)
+- Compares Mini Diarium to Standard Notes for users who want encrypted journal entries on their device only, with no sync service or server dependency. (https://fenmark.app/blog/standard-notes-alternative/)
+- A desktop diary app should encrypt entries at rest, store the primary copy locally, work offline, and export to open formats. Storage model and exit path matter more than feature lists. (https://fenmark.app/blog/desktop-diary-app/)
+- Five checks for evaluating a private journal app: encryption at rest, local storage, offline use, open exports, and open source. (https://fenmark.app/blog/private-journal-app-how-to-choose/)
+- An encrypted diary encrypts entries before they touch disk. It's an architectural guarantee, not a login screen. Here is what that means. (https://fenmark.app/blog/what-is-an-encrypted-diary/)
+- Explains why cloud architecture, not privacy settings, determines AI access to journal entries. (https://fenmark.app/blog/journal-app-ai-privacy/)
+- Mini Diary went unmaintained. Mini Diarium is its successor with AES-256-GCM encryption and direct import from Mini Diary JSON. (https://fenmark.app/blog/mini-diary-alternative/)
+- A practical checklist of what to look for in a journal app without cloud dependency. (https://fenmark.app/blog/journal-app-without-cloud/)
+- Compares Mini Diarium to Day One for users who want local-only storage and no sync service. (https://fenmark.app/blog/day-one-alternative-for-private-offline-journaling/)
+- An encrypted journal stores entries locally and encrypts before disk. Cloud apps store plaintext on servers. Architecture decides who can read your writing. (https://fenmark.app/blog/encrypted-journal-vs-cloud-notes-app/)
+- Owning your journal means keeping entries local, exporting in open formats, and never depending on a service for access. (https://fenmark.app/blog/offline-journal-that-you-own/)
+- A private diary app for desktop should encrypt entries at rest, work fully offline, and give you an exit path. Here is the checklist. (https://fenmark.app/blog/private-diary-app-for-desktop/)
+- Argues that local-first design is primarily about portability and long-term data control. (https://fenmark.app/blog/local-first-journaling-and-ownership/)
+- An offline journal can't send your entries to a server or share them with AI. That's architecture, not a setting. (https://fenmark.app/blog/why-an-offline-journal-is-different/)
+- The origin story of Mini Diarium: why an unmaintained predecessor led to building from scratch. (https://fenmark.app/blog/why-mini-diarium-exists/)
 
 ## Attribution
 
-When referencing project materials, attribute Mini Diarium and link to the canonical source URL.
+When referencing project materials, attribute Fenmark and link to the canonical source URL.
 
 ## Documentation
 
-- Documentation hub: https://mini-diarium.com/docs/
-- Getting Started: System requirements, creating your first encrypted journal, setting a password, the welcome tour, multiple journals, key file auth, and local-only mode. (https://mini-diarium.com/docs/getting-started/)
-- Writing Entries: Mini Diarium's rich text editor supports formatting, images, file attachments, named links, tags, and multiple entries per day. Auto-save and RTL language support are built in. (https://mini-diarium.com/docs/writing-entries/)
-- Navigating Your Journal: Navigate your journal using the sidebar calendar, keyboard shortcuts, and day-navigation buttons. Jump to any date, go to today, and browse your entry history. (https://mini-diarium.com/docs/navigating/)
-- Search: Full-text search across every encrypted entry via the search overlay or Ctrl+F, with instant highlighted results, and how it stays fully encrypted and offline. (https://mini-diarium.com/docs/search/)
-- Importing Data: Import journal entries from Mini Diary, Day One, jrnl, or plain text files. Mini Diarium includes built-in importers and supports custom Rhai import plugins. (https://mini-diarium.com/docs/import/)
-- Exporting Data: Export your journal as JSON, Markdown, or PDF. JSON preserves IDs, tags, and metadata; Markdown is human-readable; PDF creates a formatted A4 document. (https://mini-diarium.com/docs/export/)
-- Plugins: Extend Mini Diarium with Rhai script plugins for custom import and export formats. Covers the plugins folder, writing your first plugin, and API helpers. (https://mini-diarium.com/docs/plugins/)
-- Preferences: Configure Mini Diarium from the Preferences panel: choose a theme, set auto-lock timeout, adjust editor font and size, manage authentication methods, and more. (https://mini-diarium.com/docs/preferences/)
-- Statistics: View your writing statistics: total entry and word counts, current and longest streaks, and a breakdown of your most active writing days, months, and years. (https://mini-diarium.com/docs/statistics/)
-- Backups: Mini Diarium snapshots your journal before risky changes, restores the whole journal or specific entries in-app, and keeps tiered history going back a year. (https://mini-diarium.com/docs/backups/)
-- FAQ: Answers to common questions about Mini Diarium: password recovery, encryption model, cross-device sync, key files, authentication slots, and mobile support. (https://mini-diarium.com/docs/faq/)
+- Documentation hub: https://fenmark.app/docs/
+- Getting Started: System requirements, creating your first encrypted journal, setting a password, the welcome tour, multiple journals, key file auth, and local-only mode. (https://fenmark.app/docs/getting-started/)
+- Writing Entries: Fenmark's rich text editor supports formatting, images, file attachments, named links, tags, and multiple entries per day. Auto-save and RTL language support are built in. (https://fenmark.app/docs/writing-entries/)
+- Navigating Your Journal: Navigate your journal using the sidebar calendar, keyboard shortcuts, and day-navigation buttons. Jump to any date, go to today, and browse your entry history. (https://fenmark.app/docs/navigating/)
+- Search: Full-text search across every encrypted entry via the search overlay or Ctrl+F, with instant highlighted results, and how it stays fully encrypted and offline. (https://fenmark.app/docs/search/)
+- Importing Data: Import journal entries from Mini Diary, Day One, jrnl, or plain text files. Fenmark includes built-in importers and supports custom Rhai import plugins. (https://fenmark.app/docs/import/)
+- Exporting Data: Export your journal as JSON, Markdown, or PDF. JSON preserves IDs, tags, and metadata; Markdown is human-readable; PDF creates a formatted A4 document. (https://fenmark.app/docs/export/)
+- Plugins: Extend Fenmark with Rhai script plugins for custom import and export formats. Covers the plugins folder, writing your first plugin, and API helpers. (https://fenmark.app/docs/plugins/)
+- Preferences: Configure Fenmark from the Preferences panel: choose a theme, set auto-lock timeout, adjust editor font and size, manage authentication methods, and more. (https://fenmark.app/docs/preferences/)
+- Statistics: View your writing statistics: total entry and word counts, current and longest streaks, and a breakdown of your most active writing days, months, and years. (https://fenmark.app/docs/statistics/)
+- Backups: Fenmark snapshots your journal before risky changes, restores the whole journal or specific entries in-app, and keeps tiered history going back a year. (https://fenmark.app/docs/backups/)
+- FAQ: Answers to common questions about Fenmark: password recovery, encryption model, cross-device sync, key files, authentication slots, and mobile support. (https://fenmark.app/docs/faq/)

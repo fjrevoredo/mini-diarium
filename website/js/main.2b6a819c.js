@@ -5,7 +5,7 @@ if (rebrandBanner && rebrandBannerClose) {
   rebrandBannerClose.addEventListener('click', () => {
     rebrandBanner.hidden = true;
     try {
-      localStorage.setItem('rebrand-banner-dismissed', '1');
+      localStorage.setItem('rebrand-banner-dismissed-v2', '1');
     } catch {
       // storage unavailable (private mode, blocked): dismissal just won't persist
     }

@@ -3,7 +3,7 @@ title: Navigating Your Journal
 slug: navigating
 description: Navigate your journal using the sidebar calendar, keyboard shortcuts, and day-navigation buttons. Jump to any date, go to today, and browse your entry history.
 order: 3
-updated: 2026-10-08
+updated: 2026-11-01
 tags: navigation, calendar, keyboard shortcuts, dates
 ---
 
@@ -19,7 +19,7 @@ Days that contain a [locked entry](writing-entries#locking-an-entry-against-acci
 
 ## Keyboard Navigation
 
-Mini Diarium supports keyboard shortcuts for all navigation actions. On macOS, use `Cmd` instead of `Ctrl`.
+Fenmark supports keyboard shortcuts for all navigation actions. On macOS, use `Cmd` instead of `Ctrl`.
 
 | Action | Shortcut |
 |--------|----------|

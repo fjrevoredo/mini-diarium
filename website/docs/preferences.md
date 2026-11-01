@@ -1,8 +1,8 @@
 # Preferences
 
-> Configure Mini Diarium from the Preferences panel: choose a theme, set auto-lock timeout, adjust editor font and size, manage authentication methods, and more.
+> Configure Fenmark from the Preferences panel: choose a theme, set auto-lock timeout, adjust editor font and size, manage authentication methods, and more.
 
-Source: https://mini-diarium.com/docs/preferences/
+Source: https://fenmark.app/docs/preferences/
 
 ## Opening Preferences
 
@@ -36,13 +36,13 @@ Preferences are now **close-only**: there is no Save/Cancel footer. Reversible s
 
 Timestamp format and precision are configured from the editor timestamp popup (clock button), not from Preferences.
 
-![Writing preferences tab with First Day of Week, spellcheck, and the toolbar item customization list](https://mini-diarium.com/assets/docs/preferences-03-writing.webp "The Writing preferences tab")
+![Writing preferences tab with First Day of Week, spellcheck, and the toolbar item customization list](https://fenmark.app/assets/docs/preferences-03-writing.webp "The Writing preferences tab")
 
 ### Spell check on Linux
 
-Windows and macOS handle spell checking for you. On Linux, Mini Diarium uses spelling language packs installed on your computer. It does not download them automatically, but you only need to add a language pack once.
+Windows and macOS handle spell checking for you. On Linux, Fenmark uses spelling language packs installed on your computer. It does not download them automatically, but you only need to add a language pack once.
 
-If Preferences shows a spell-check warning, start with your computer's **Software** app. Search for your language followed by “spell checking”, such as “Spanish spell checking”, install the suggested language support, then close and reopen Mini Diarium.
+If Preferences shows a spell-check warning, start with your computer's **Software** app. Search for your language followed by “spell checking”, such as “Spanish spell checking”, install the suggested language support, then close and reopen Fenmark.
 
 #### Example: Spanish spell checking on Ubuntu or Debian
 
@@ -53,15 +53,15 @@ sudo apt update
 sudo apt install hunspell-es
 ```
 
-Enter your computer password when asked. Nothing is shown while you type the password; that is normal. When the command finishes, close and reopen Mini Diarium.
+Enter your computer password when asked. Nothing is shown while you type the password; that is normal. When the command finishes, close and reopen Fenmark.
 
 #### Flatpak
 
-Flatpak installs include dictionaries for eight of the nine interface languages (English, Spanish, German, French, Italian, Portuguese (Brazil), Hindi, and Russian). Chinese (Simplified) has no bundled dictionary, so Linux shows the dictionary warning for it; the interface translation works normally. If you see a warning for another language, open your computer's Software app, update Mini Diarium, and restart it. If the warning remains, reinstall Mini Diarium.
+Flatpak installs include dictionaries for eight of the nine interface languages (English, Spanish, German, French, Italian, Portuguese (Brazil), Hindi, and Russian). Chinese (Simplified) has no bundled dictionary, so Linux shows the dictionary warning for it; the interface translation works normally. If you see a warning for another language, open your computer's Software app, update Fenmark, and restart it. If the warning remains, reinstall Fenmark.
 
 #### Need more help?
 
-Email [minidiarium@gmail.com](mailto:minidiarium@gmail.com) with your Linux distribution and the language selected in Mini Diarium, or [report the problem on GitHub](https://github.com/fjrevoredo/mini-diarium/issues).
+Email [minidiarium@gmail.com](mailto:minidiarium@gmail.com) with your Linux distribution and the language selected in Fenmark, or [report the problem on GitHub](https://github.com/fjrevoredo/mini-diarium/issues).
 
 #### Advanced: use another language
 
@@ -78,15 +78,15 @@ Simplified Chinese spell checking, use `zh_CN.aff` and `zh_CN.dic`.
 | Setting | Description |
 |---------|-------------|
 | Auto-Lock | Lock automatically after a configurable idle timeout |
-| Lock when the window loses focus | Lock the journal a few seconds after the window loses focus — minimizing, switching to another app, or clicking another window — independent of the idle timeout. Off by default. A brief misclick outside the window doesn't trigger it if focus returns quickly, and opening a native file dialog from within Mini Diarium (export/import/key file) does not trigger this. |
+| Lock when the window loses focus | Lock the journal a few seconds after the window loses focus — minimizing, switching to another app, or clicking another window — independent of the idle timeout. Off by default. A brief misclick outside the window doesn't trigger it if focus returns quickly, and opening a native file dialog from within Fenmark (export/import/key file) does not trigger this. |
 | Change password | Re-encrypt your journal with a new password |
 | Authentication Methods | View registered unlock methods; add a new key file or remove existing ones |
 
-![Security preferences tab showing registered authentication methods and the key file registration form](https://mini-diarium.com/assets/docs/preferences-01-security.webp "The Security preferences tab")
+![Security preferences tab showing registered authentication methods and the key file registration form](https://fenmark.app/assets/docs/preferences-01-security.webp "The Security preferences tab")
 
 At least one authentication method must remain registered. Removing the last one is blocked.
 
-Mini Diarium also locks the journal by itself if an internal task fails unexpectedly, whatever these settings are. The unlock screen then says so. Unlock the journal to continue. Entries that were already saved are not affected.
+Fenmark also locks the journal by itself if an internal task fails unexpectedly, whatever these settings are. The unlock screen then says so. Unlock the journal to continue. Entries that were already saved are not affected.
 
 ## Data Settings
 

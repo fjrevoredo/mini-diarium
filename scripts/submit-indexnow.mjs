@@ -6,7 +6,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, "..");
 
 const DRY_RUN = process.argv.includes("--dry-run");
-const SITE = "mini-diarium.com";
+const SITE = "fenmark.app";
 // Submit to both the generic endpoint (propagates to Yandex, Seznam, etc.)
 // and Bing's direct endpoint (required for Bing Webmaster Tools to register submissions).
 const INDEXNOW_ENDPOINTS = [

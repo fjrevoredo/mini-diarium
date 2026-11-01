@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://mini-diarium.com/sitemap.xml
+Sitemap: https://fenmark.app/sitemap.xml

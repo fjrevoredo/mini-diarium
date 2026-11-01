@@ -1,141 +1,148 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0">
   <channel>
-    <title>Mini Diarium Blog</title>
-    <link>https://mini-diarium.com/blog/</link>
+    <title>Fenmark Blog</title>
+    <link>https://fenmark.app/blog/</link>
     <description>Static articles about encrypted journals, private diary apps, offline journaling, and local-first software.</description>
     <language>en-us</language>
-    <lastBuildDate>Mon, 13 Jul 2026 00:00:00 GMT</lastBuildDate>
+    <lastBuildDate>Sun, 01 Nov 2026 00:00:00 GMT</lastBuildDate>
+  <item>
+    <title>Mini Diarium Is Now Fenmark</title>
+    <link>https://fenmark.app/blog/mini-diarium-is-now-fenmark/</link>
+    <guid isPermaLink="true">https://fenmark.app/blog/mini-diarium-is-now-fenmark/</guid>
+    <description>Mini Diarium has a new name: Fenmark. Why the name changed, why your journals and settings stay exactly where they are, and what moves over next.</description>
+    <pubDate>Sun, 01 Nov 2026 00:00:00 GMT</pubDate>
+  </item>
   <item>
     <title>Can Your Journal App Be Subpoenaed?</title>
-    <link>https://mini-diarium.com/blog/can-your-journal-be-subpoenaed/</link>
-    <guid isPermaLink="true">https://mini-diarium.com/blog/can-your-journal-be-subpoenaed/</guid>
+    <link>https://fenmark.app/blog/can-your-journal-be-subpoenaed/</link>
+    <guid isPermaLink="true">https://fenmark.app/blog/can-your-journal-be-subpoenaed/</guid>
     <description>Cloud providers must comply with valid legal requests for user data. Here is what a subpoena can compel a journal app to hand over, and what it cannot reach.</description>
     <pubDate>Mon, 13 Jul 2026 00:00:00 GMT</pubDate>
   </item>
   <item>
     <title>Password-Protected Journal App: What It Really Means</title>
-    <link>https://mini-diarium.com/blog/password-protected-journal-app/</link>
-    <guid isPermaLink="true">https://mini-diarium.com/blog/password-protected-journal-app/</guid>
+    <link>https://fenmark.app/blog/password-protected-journal-app/</link>
+    <guid isPermaLink="true">https://fenmark.app/blog/password-protected-journal-app/</guid>
     <description>A password on a journal app can mean a login screen or real encryption. Here is how to tell the difference, and what locking one entry actually protects.</description>
     <pubDate>Mon, 13 Jul 2026 00:00:00 GMT</pubDate>
   </item>
   <item>
     <title>Secure Journal App: What Actually Makes One Secure</title>
-    <link>https://mini-diarium.com/blog/secure-journal-app/</link>
-    <guid isPermaLink="true">https://mini-diarium.com/blog/secure-journal-app/</guid>
+    <link>https://fenmark.app/blog/secure-journal-app/</link>
+    <guid isPermaLink="true">https://fenmark.app/blog/secure-journal-app/</guid>
     <description>Plenty of apps call themselves secure. A journal app earns it by encrypting entries on disk, running fully offline, and holding no key it could hand over.</description>
     <pubDate>Mon, 13 Jul 2026 00:00:00 GMT</pubDate>
   </item>
   <item>
     <title>Notion Alternative for Private Journaling</title>
-    <link>https://mini-diarium.com/blog/notion-alternative-for-journaling/</link>
-    <guid isPermaLink="true">https://mini-diarium.com/blog/notion-alternative-for-journaling/</guid>
+    <link>https://fenmark.app/blog/notion-alternative-for-journaling/</link>
+    <guid isPermaLink="true">https://fenmark.app/blog/notion-alternative-for-journaling/</guid>
     <description>Notion stores journal entries on its servers, where AI features can read them. Here is what changes moving journaling to an encrypted, local-only app instead.</description>
     <pubDate>Wed, 01 Jul 2026 00:00:00 GMT</pubDate>
   </item>
   <item>
     <title>Obsidian Alternative for Journal Writing</title>
-    <link>https://mini-diarium.com/blog/obsidian-alternative-for-journaling/</link>
-    <guid isPermaLink="true">https://mini-diarium.com/blog/obsidian-alternative-for-journaling/</guid>
+    <link>https://fenmark.app/blog/obsidian-alternative-for-journaling/</link>
+    <guid isPermaLink="true">https://fenmark.app/blog/obsidian-alternative-for-journaling/</guid>
     <description>Obsidian has no built-in encryption: vault files sit as plain Markdown on disk. For journal writing that needs encryption at rest, here is a direct comparison.</description>
     <pubDate>Sun, 28 Jun 2026 00:00:00 GMT</pubDate>
   </item>
   <item>
     <title>Standard Notes Alternative for Encrypted Journaling</title>
-    <link>https://mini-diarium.com/blog/standard-notes-alternative/</link>
-    <guid isPermaLink="true">https://mini-diarium.com/blog/standard-notes-alternative/</guid>
+    <link>https://fenmark.app/blog/standard-notes-alternative/</link>
+    <guid isPermaLink="true">https://fenmark.app/blog/standard-notes-alternative/</guid>
     <description>Looking for a Standard Notes alternative for private journaling? Mini Diarium stores everything locally with AES-256-GCM and no sync service or server dependency.</description>
     <pubDate>Thu, 18 Jun 2026 00:00:00 GMT</pubDate>
   </item>
   <item>
     <title>Desktop Diary Apps: What to Look for in 2026</title>
-    <link>https://mini-diarium.com/blog/desktop-diary-app/</link>
-    <guid isPermaLink="true">https://mini-diarium.com/blog/desktop-diary-app/</guid>
+    <link>https://fenmark.app/blog/desktop-diary-app/</link>
+    <guid isPermaLink="true">https://fenmark.app/blog/desktop-diary-app/</guid>
     <description>A desktop diary app should store entries locally, encrypt them at rest, and work without a network connection. Here is what matters and what to check.</description>
     <pubDate>Fri, 29 May 2026 00:00:00 GMT</pubDate>
   </item>
   <item>
     <title>How to Choose a Private Journal App: 5 Checks That Matter</title>
-    <link>https://mini-diarium.com/blog/private-journal-app-how-to-choose/</link>
-    <guid isPermaLink="true">https://mini-diarium.com/blog/private-journal-app-how-to-choose/</guid>
+    <link>https://fenmark.app/blog/private-journal-app-how-to-choose/</link>
+    <guid isPermaLink="true">https://fenmark.app/blog/private-journal-app-how-to-choose/</guid>
     <description>Not all private journal apps actually keep your writing private. Five checks reveal which ones encrypt at rest, work offline, and let you leave with your data.</description>
     <pubDate>Fri, 08 May 2026 00:00:00 GMT</pubDate>
   </item>
   <item>
     <title>What Is an Encrypted Diary? Why Encryption at Rest Matters</title>
-    <link>https://mini-diarium.com/blog/what-is-an-encrypted-diary/</link>
-    <guid isPermaLink="true">https://mini-diarium.com/blog/what-is-an-encrypted-diary/</guid>
+    <link>https://fenmark.app/blog/what-is-an-encrypted-diary/</link>
+    <guid isPermaLink="true">https://fenmark.app/blog/what-is-an-encrypted-diary/</guid>
     <description>An encrypted diary encrypts entries before they are written to disk. It is not the same as a password-protected app. Here is what the term actually means and why it matters for private journaling.</description>
     <pubDate>Fri, 08 May 2026 00:00:00 GMT</pubDate>
   </item>
   <item>
     <title>Can AI Access Your Journal? Cloud Storage and the Case for Local</title>
-    <link>https://mini-diarium.com/blog/journal-app-ai-privacy/</link>
-    <guid isPermaLink="true">https://mini-diarium.com/blog/journal-app-ai-privacy/</guid>
+    <link>https://fenmark.app/blog/journal-app-ai-privacy/</link>
+    <guid isPermaLink="true">https://fenmark.app/blog/journal-app-ai-privacy/</guid>
     <description>Cloud journaling apps can expose your entries to AI training, policy updates, or server-side analysis. An offline, local-first journal provides a structural guarantee that cloud privacy settings cannot match.</description>
     <pubDate>Mon, 27 Apr 2026 00:00:00 GMT</pubDate>
   </item>
   <item>
     <title>Mini Diary Alternative in 2026: A Maintained, Encrypted Successor</title>
-    <link>https://mini-diarium.com/blog/mini-diary-alternative/</link>
-    <guid isPermaLink="true">https://mini-diarium.com/blog/mini-diary-alternative/</guid>
+    <link>https://fenmark.app/blog/mini-diary-alternative/</link>
+    <guid isPermaLink="true">https://fenmark.app/blog/mini-diary-alternative/</guid>
     <description>Mini Diary went unmaintained. Mini Diarium is its successor, rebuilt with AES-256-GCM encryption, key file auth, and direct import from Mini Diary JSON. Same philosophy, stronger guarantees.</description>
     <pubDate>Sun, 05 Apr 2026 00:00:00 GMT</pubDate>
   </item>
   <item>
     <title>Journal App Without Cloud: What Actually Matters</title>
-    <link>https://mini-diarium.com/blog/journal-app-without-cloud/</link>
-    <guid isPermaLink="true">https://mini-diarium.com/blog/journal-app-without-cloud/</guid>
+    <link>https://fenmark.app/blog/journal-app-without-cloud/</link>
+    <guid isPermaLink="true">https://fenmark.app/blog/journal-app-without-cloud/</guid>
     <description>A journal app without cloud dependency should keep entries local, work offline, encrypt writing before storage, and make export straightforward when you want full control.</description>
     <pubDate>Wed, 25 Mar 2026 00:00:00 GMT</pubDate>
   </item>
   <item>
     <title>Day One Alternative for Private Offline Journaling</title>
-    <link>https://mini-diarium.com/blog/day-one-alternative-for-private-offline-journaling/</link>
-    <guid isPermaLink="true">https://mini-diarium.com/blog/day-one-alternative-for-private-offline-journaling/</guid>
+    <link>https://fenmark.app/blog/day-one-alternative-for-private-offline-journaling/</link>
+    <guid isPermaLink="true">https://fenmark.app/blog/day-one-alternative-for-private-offline-journaling/</guid>
     <description>Looking for a Day One alternative? The right replacement should keep journal entries local, work offline, support import and export, and make long-term ownership clearer.</description>
     <pubDate>Wed, 18 Mar 2026 00:00:00 GMT</pubDate>
   </item>
   <item>
     <title>Encrypted Journal vs. Cloud Notes: Why Architecture Decides Who Owns Your Writing</title>
-    <link>https://mini-diarium.com/blog/encrypted-journal-vs-cloud-notes-app/</link>
-    <guid isPermaLink="true">https://mini-diarium.com/blog/encrypted-journal-vs-cloud-notes-app/</guid>
+    <link>https://fenmark.app/blog/encrypted-journal-vs-cloud-notes-app/</link>
+    <guid isPermaLink="true">https://fenmark.app/blog/encrypted-journal-vs-cloud-notes-app/</guid>
     <description>An encrypted journal app stores entries locally and encrypts before disk. Cloud apps store plaintext on servers. The architecture, not a privacy setting, decides who can read your writing.</description>
     <pubDate>Thu, 12 Mar 2026 00:00:00 GMT</pubDate>
   </item>
   <item>
     <title>Offline Journal That You Own: Portability, Privacy, and No Cloud Strings</title>
-    <link>https://mini-diarium.com/blog/offline-journal-that-you-own/</link>
-    <guid isPermaLink="true">https://mini-diarium.com/blog/offline-journal-that-you-own/</guid>
+    <link>https://fenmark.app/blog/offline-journal-that-you-own/</link>
+    <guid isPermaLink="true">https://fenmark.app/blog/offline-journal-that-you-own/</guid>
     <description>Owning your journal means keeping entries local, exporting them in open formats, and never depending on a service to access your own writing. Here&#39;s what that requires.</description>
     <pubDate>Thu, 12 Mar 2026 00:00:00 GMT</pubDate>
   </item>
   <item>
     <title>Private Diary App for Desktop: 5 Things Cloud Apps Can&#39;t Promise</title>
-    <link>https://mini-diarium.com/blog/private-diary-app-for-desktop/</link>
-    <guid isPermaLink="true">https://mini-diarium.com/blog/private-diary-app-for-desktop/</guid>
+    <link>https://fenmark.app/blog/private-diary-app-for-desktop/</link>
+    <guid isPermaLink="true">https://fenmark.app/blog/private-diary-app-for-desktop/</guid>
     <description>A private diary app for desktop should encrypt entries at rest, work fully offline, and give you an exit path. Here&#39;s the checklist for evaluating one.</description>
     <pubDate>Thu, 12 Mar 2026 00:00:00 GMT</pubDate>
   </item>
   <item>
     <title>Local-First Journaling Means You Keep the Exit Door Open</title>
-    <link>https://mini-diarium.com/blog/local-first-journaling-and-ownership/</link>
-    <guid isPermaLink="true">https://mini-diarium.com/blog/local-first-journaling-and-ownership/</guid>
+    <link>https://fenmark.app/blog/local-first-journaling-and-ownership/</link>
+    <guid isPermaLink="true">https://fenmark.app/blog/local-first-journaling-and-ownership/</guid>
     <description>Local-first journaling is not only about privacy. It is also about durability, portability, and keeping your encrypted journal exportable when your tooling changes.</description>
     <pubDate>Fri, 06 Mar 2026 00:00:00 GMT</pubDate>
   </item>
   <item>
     <title>Why an Offline Journal Protects More Than Just Your Privacy</title>
-    <link>https://mini-diarium.com/blog/why-an-offline-journal-is-different/</link>
-    <guid isPermaLink="true">https://mini-diarium.com/blog/why-an-offline-journal-is-different/</guid>
+    <link>https://fenmark.app/blog/why-an-offline-journal-is-different/</link>
+    <guid isPermaLink="true">https://fenmark.app/blog/why-an-offline-journal-is-different/</guid>
     <description>An offline journal can&#39;t sync your entries to a server or share them with AI. That&#39;s not a setting. It&#39;s the absence of network code. Here&#39;s why architecture outlasts privacy policies.</description>
     <pubDate>Fri, 06 Mar 2026 00:00:00 GMT</pubDate>
   </item>
   <item>
     <title>Why Mini Diarium Exists</title>
-    <link>https://mini-diarium.com/blog/why-mini-diarium-exists/</link>
-    <guid isPermaLink="true">https://mini-diarium.com/blog/why-mini-diarium-exists/</guid>
+    <link>https://fenmark.app/blog/why-mini-diarium-exists/</link>
+    <guid isPermaLink="true">https://fenmark.app/blog/why-mini-diarium-exists/</guid>
     <description>Mini Diarium exists because private journaling software needed a maintained Mini Diary successor, rebuilt as an encrypted offline journal with a modern stack.</description>
     <pubDate>Fri, 06 Mar 2026 00:00:00 GMT</pubDate>
   </item>

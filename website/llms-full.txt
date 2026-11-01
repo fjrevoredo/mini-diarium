@@ -1,14 +1,14 @@
-# Mini Diarium — Full Documentation
+# Fenmark — Full Documentation
 
-> Complete Markdown text of every Mini Diarium documentation section, concatenated for full-text ingestion by AI assistants and crawlers.
+> Complete Markdown text of every Fenmark documentation section, concatenated for full-text ingestion by AI assistants and crawlers.
 
-Canonical documentation hub: https://mini-diarium.com/docs/
+Canonical documentation hub: https://fenmark.app/docs/
 
 # Getting Started
 
 > System requirements, creating your first encrypted journal, setting a password, the welcome tour, multiple journals, key file auth, and local-only mode.
 
-Source: https://mini-diarium.com/docs/getting-started/
+Source: https://fenmark.app/docs/getting-started/
 
 ## System Requirements
 
@@ -25,17 +25,17 @@ a minimum system version, so macOS will refuse to launch it rather than starting
 
 ## First Launch
 
-When you open Mini Diarium, the app starts at the **Journal Picker**. From there you can create a new journal or open an existing `diary.db` file.
+When you open Fenmark, the app starts at the **Journal Picker**. From there you can create a new journal or open an existing `diary.db` file.
 
 **+ Create New Journal** opens a save dialog pre-filled with a default location and the filename `diary.db`. Pick where to save it — the default location works as-is — give the journal a name, and click **Add**.
 
-The default location is a `Mini Diarium` folder inside your Documents folder, or a folder inside the app's own data directory where Documents is not writable. On the Flathub build, where the app is sandboxed, a save dialog cannot reliably remember a folder outside the sandbox, so **+ Create New Journal** shows a form directly instead — with an editable Filename field plus **Browse…** and **Use default location** to choose where the file goes.
+The default location is a `Fenmark` folder inside your Documents folder (if a `Mini Diarium` folder from before the rename already exists there, the app keeps using it), or a folder inside the app's own data directory where Documents is not writable. On the Flathub build, where the app is sandboxed, a save dialog cannot reliably remember a folder outside the sandbox, so **+ Create New Journal** shows a form directly instead — with an editable Filename field plus **Browse…** and **Use default location** to choose where the file goes.
 
 If you create a new journal, you will be asked to create a password. This password encrypts your entire journal using AES-256-GCM encryption.
 
 **There is no password recovery.** If you forget your password, your entries cannot be recovered. Choose something memorable and keep it safe.
 
-![Journal creation screen with password and confirm password fields](https://mini-diarium.com/assets/docs/getting-started-01-journal-creation.webp "Setting a password for a new journal")
+![Journal creation screen with password and confirm password fields](https://fenmark.app/assets/docs/getting-started-01-journal-creation.webp "Setting a password for a new journal")
 
 ## Welcome Tour
 
@@ -53,7 +53,7 @@ To resume or permanently dismiss the tour, click the `?` icon and choose **Resum
 
 Your journal is encrypted whenever it is locked. After selecting a journal, enter your password to unlock it. The journal locks automatically when you close the app, and you can also lock it manually using the lock icon in the header at any time.
 
-![Mini Diarium main window with the calendar sidebar and an unlocked journal entry open in the editor](https://mini-diarium.com/assets/docs/getting-started-02-main-app.webp "The main window after writing your first entry")
+![Fenmark main window with the calendar sidebar and an unlocked journal entry open in the editor](https://fenmark.app/assets/docs/getting-started-02-main-app.webp "The main window after writing your first entry")
 
 The header also shows an **About** button (ⓘ) and a **bell icon** for the notification center. The bell displays an unread badge when a new release ships; click it to read what changed and mark notifications as read. Entries with more to say show a **Read more** button that opens the full write-up, with headings and lists, without leaving the app.
 
@@ -61,7 +61,7 @@ To reach the developer, choose **⋮ → Send feedback**, or click **Send feedba
 
 As an alternative to your password, you can register a key file in **Preferences → Authentication Methods**. Once registered, use the "Key File" tab on the unlock screen and select your `.key` file to unlock without typing your password.
 
-You can also enable **idle auto-lock** in **Preferences → Security → Auto-Lock**. When enabled, Mini Diarium locks automatically after the configured period of inactivity.
+You can also enable **idle auto-lock** in **Preferences → Security → Auto-Lock**. When enabled, Fenmark locks automatically after the configured period of inactivity.
 
 ## Multiple Journals
 
@@ -77,7 +77,7 @@ You can maintain separate journals for different purposes: personal, work, trave
 - **A temporary sandbox location (Flatpak only).** On the Flathub build, browsing to a folder outside the app's sandbox returns a temporary path under `/run/user/…/doc/` rather than the real one. It works at first and stops working later, so it is refused. Use the default location, or grant the app permanent access to the folder you want with [Flatseal](https://flathub.org/apps/com.github.tchx84.Flatseal) before selecting it.
 - **A filename that cannot be used.** A filename that is empty, contains `/`, `\`, or control characters, or is longer than 200 bytes is refused. That is 200 letters of plain English text, and fewer for accented or non-Latin letters, which take 2 to 4 bytes each. The app keeps the rest of the filesystem's 255-unit limit free for the files it and SQLite create next to the journal. On Windows, names with `< > : " | ? *`, names that end with a dot or a space, and device names such as `CON` or `NUL` are refused too. Choose a different name. On Flatpak, spaces at the start and end of the Filename field are removed before the app checks the file. If you copy the app's settings to a different operating system and a saved journal filename is not valid there, the app does not open that journal automatically. It shows the journal list, and opening that journal shows the same error.
 
-  The 200-byte limit applies when you add a journal. A journal that is already in your list can have a name of up to 233 bytes, so a journal added by an older version with a longer name still opens. If a journal shows "Invalid journal filename", do these steps: close Mini Diarium, give the journal's `.db` file a shorter name, open the app, add the file again with **Open existing**, and remove the old list entry. Your entries are in the file, so nothing is lost. These steps work for journals that use a password or a key file. Do not rename the file of a local-only journal: its key is saved with the old list entry, so the new entry cannot unlock it. To get help instead, email minidiarium@gmail.com or open an issue on GitHub.
+  The 200-byte limit applies when you add a journal. A journal that is already in your list can have a name of up to 233 bytes, so a journal added by an older version with a longer name still opens. If a journal shows "Invalid journal filename", do these steps: close Fenmark, give the journal's `.db` file a shorter name, open the app, add the file again with **Open existing**, and remove the old list entry. Your entries are in the file, so nothing is lost. These steps work for journals that use a password or a key file. Do not rename the file of a local-only journal: its key is saved with the old list entry, so the new entry cannot unlock it. To get help instead, email minidiarium@gmail.com or open an issue on GitHub.
 
 **Switching journals:** Open the Journal Picker, choose the journal you want, and then unlock it. On a shared device, this lets each person select their own journal before any authentication prompt appears.
 
@@ -97,13 +97,13 @@ You can upgrade a local-only journal to password protection at any time using **
 
 # Writing Entries
 
-> Mini Diarium's rich text editor supports formatting, images, file attachments, named links, tags, and multiple entries per day. Auto-save and RTL language support are built in.
+> Fenmark's rich text editor supports formatting, images, file attachments, named links, tags, and multiple entries per day. Auto-save and RTL language support are built in.
 
-Source: https://mini-diarium.com/docs/writing-entries/
+Source: https://fenmark.app/docs/writing-entries/
 
 ## The Editor
 
-Mini Diarium uses a rich text editor with support for a full set of formatting options:
+Fenmark uses a rich text editor with support for a full set of formatting options:
 
 - Bold and italic text
 - Headings (levels 1–3)
@@ -117,7 +117,7 @@ Mini Diarium uses a rich text editor with support for a full set of formatting o
 
 The toolbar above the editor provides buttons for each formatting option. Standard keyboard shortcuts also work: `Ctrl+B` for bold, `Ctrl+I` for italic, and so on. On macOS, use `Cmd` instead of `Ctrl`.
 
-![Editor toolbar above a formatted entry with a heading, bold text, and a bullet list](https://mini-diarium.com/assets/docs/writing-entries-01-toolbar-formatted.webp "Heading, bold, and bullet list applied with the toolbar")
+![Editor toolbar above a formatted entry with a heading, bold text, and a bullet list](https://fenmark.app/assets/docs/writing-entries-01-toolbar-formatted.webp "Heading, bold, and bullet list applied with the toolbar")
 
 ## Titles
 
@@ -133,7 +133,7 @@ Each date can contain multiple separate entries. This is useful for writing at d
 - Use `−` to delete the current entry.
 - If a day has only one entry, the navigation bar stays hidden.
 
-![Timeline view showing three separate entries stacked under the same date](https://mini-diarium.com/assets/docs/writing-entries-02-timeline-multientry.webp "Multiple entries on the same date, grouped together in the Timeline")
+![Timeline view showing three separate entries stacked under the same date](https://fenmark.app/assets/docs/writing-entries-02-timeline-multientry.webp "Multiple entries on the same date, grouped together in the Timeline")
 
 ## Locking an Entry Against Accidental Edits
 
@@ -198,7 +198,7 @@ You can attach documents, PDFs, short videos, and any other file to an entry. At
 - Click an attachment's name (or its download icon) to **save a copy** to a location you choose. The copy must keep the same file extension as the attachment. You cannot save the copy over the journal's own files (the journal database or anything in its backups folder).
 - Click the remove (×) icon to detach a file. You are asked to confirm first.
 
-Mini Diarium never opens attachments itself. To view a file, save a copy and open it with another app.
+Fenmark never opens attachments itself. To view a file, save a copy and open it with another app.
 
 ### Inline references
 
@@ -212,7 +212,7 @@ Large attachments make the journal file and its backups larger. Deleting an entr
 
 ### Older app versions
 
-Versions before 0.7.4 do not know attachments. If they open a journal that has attachments, they cannot delete an entry that has files. If they edit and save such an entry, they remove its inline 📎 references; the files in the strip are kept. Update Mini Diarium on every computer that shares the journal.
+Versions before 0.7.4 do not know attachments. If they open a journal that has attachments, they cannot delete an entry that has files. If they edit and save such an entry, they remove its inline 📎 references; the files in the strip are kept. Update Fenmark on every computer that shares the journal.
 
 ## Links
 
@@ -241,7 +241,7 @@ Only standard external targets are opened: `http`, `https`, `mailto`, and `tel`.
 
 ## Right-to-Left and Bidirectional Text
 
-Mini Diarium supports right-to-left (RTL) writing in Arabic, Hebrew, Syriac, and other RTL scripts. Direction is handled per block: each paragraph and heading carries its own `dir` attribute, so you can freely mix RTL and LTR content in the same entry.
+Fenmark supports right-to-left (RTL) writing in Arabic, Hebrew, Syriac, and other RTL scripts. Direction is handled per block: each paragraph and heading carries its own `dir` attribute, so you can freely mix RTL and LTR content in the same entry.
 
 **Auto-detection**: as you type, the editor reads the first strongly-directional character in each paragraph or heading and sets the direction automatically. Arabic and Hebrew script trigger `dir="rtl"`; Latin script triggers `dir="ltr"`. Once a block's direction is set it is locked and will not change if you later add neutral characters (numbers, punctuation, emoji) to the same block.
 
@@ -257,7 +257,7 @@ The advanced toolbar includes a **clock button** that inserts the current time a
 
 ## Editor Font: Three-Level System
 
-Mini Diarium uses a three-level font system so you can control fonts at multiple scopes:
+Fenmark uses a three-level font system so you can control fonts at multiple scopes:
 
 ### 1. App Default (Preferences)
 
@@ -334,7 +334,7 @@ The advanced toolbar includes an **Import Markdown** button. This lets you impor
 
 > Navigate your journal using the sidebar calendar, keyboard shortcuts, and day-navigation buttons. Jump to any date, go to today, and browse your entry history.
 
-Source: https://mini-diarium.com/docs/navigating/
+Source: https://fenmark.app/docs/navigating/
 
 ## Calendar
 
@@ -344,11 +344,11 @@ You can narrow the dot indicators to a specific tag by clicking a tag chip's nam
 
 Days that contain a [locked entry](writing-entries#locking-an-entry-against-accidental-edits) also show a small lock indicator on their calendar cell, so you can see which days hold a locked entry before opening them.
 
-![Calendar sidebar with entry dots and a lock indicator, next to an open journal entry](https://mini-diarium.com/assets/docs/navigating-01-calendar-sidebar.webp "The sidebar calendar, with a locked entry marked on August 30")
+![Calendar sidebar with entry dots and a lock indicator, next to an open journal entry](https://fenmark.app/assets/docs/navigating-01-calendar-sidebar.webp "The sidebar calendar, with a locked entry marked on August 30")
 
 ## Keyboard Navigation
 
-Mini Diarium supports keyboard shortcuts for all navigation actions. On macOS, use `Cmd` instead of `Ctrl`.
+Fenmark supports keyboard shortcuts for all navigation actions. On macOS, use `Cmd` instead of `Ctrl`.
 
 | Action | Shortcut |
 |--------|----------|
@@ -366,7 +366,7 @@ Mini Diarium supports keyboard shortcuts for all navigation actions. On macOS, u
 
 Press `Ctrl+G` to open the date picker and jump directly to any date. This is the fastest way to navigate to a specific day without scrolling through the calendar month by month. You can also click the date title in the header to open the same date picker.
 
-![Go to Date dialog with day, month, and year fields, over an entry that has multiple entries for the same date](https://mini-diarium.com/assets/docs/writing-entries-03-goto-date.webp "The Go to Date dialog")
+![Go to Date dialog with day, month, and year fields, over an entry that has multiple entries for the same date](https://fenmark.app/assets/docs/writing-entries-03-goto-date.webp "The Go to Date dialog")
 
 ## Header Day Controls
 
@@ -382,11 +382,11 @@ Click the `‹` and `›` arrows on the calendar header to move to the previous 
 
 > Full-text search across every encrypted entry via the search overlay or Ctrl+F, with instant highlighted results, and how it stays fully encrypted and offline.
 
-Source: https://mini-diarium.com/docs/search/
+Source: https://fenmark.app/docs/search/
 
 ## Search Your Entries
 
-Mini Diarium includes full-text search across every entry in the current journal. Open the search overlay from the magnifier button in the header, or press **Ctrl+F** (Cmd+F on macOS). Type at least three characters and matching entries appear, newest first, with the matching text highlighted in a short snippet. Nothing is searched until the query reaches that minimum — no results appear for one or two characters. For Chinese and Japanese text, the minimum drops to a single character, since many complete words in those languages are one or two characters long.
+Fenmark includes full-text search across every entry in the current journal. Open the search overlay from the magnifier button in the header, or press **Ctrl+F** (Cmd+F on macOS). Type at least three characters and matching entries appear, newest first, with the matching text highlighted in a short snippet. Nothing is searched until the query reaches that minimum — no results appear for one or two characters. For Chinese and Japanese text, the minimum drops to a single character, since many complete words in those languages are one or two characters long.
 
 Clicking a result jumps straight to that entry in the editor, even on a day that holds several entries.
 
@@ -394,11 +394,11 @@ The overlay displays the total number of results found ("12 results found"). Whe
 
 Navigate results with your keyboard: **ArrowDown** and **ArrowUp** move between results, and pressing **ArrowDown** from the search input focuses the first result.
 
-![Search overlay with a query and three matching results, each with the matched word highlighted](https://mini-diarium.com/assets/docs/search-01-overlay-results.webp "Searching for 'morning' across the journal")
+![Search overlay with a query and three matching results, each with the matched word highlighted](https://fenmark.app/assets/docs/search-01-overlay-results.webp "Searching for 'morning' across the journal")
 
 ## How Search Works Without Compromising Encryption
 
-Mini Diarium stores every entry encrypted at rest with AES-256-GCM. Search does **not** keep a separate plaintext index on disk, because that would expose your writing to anyone with access to the file.
+Fenmark stores every entry encrypted at rest with AES-256-GCM. Search does **not** keep a separate plaintext index on disk, because that would expose your writing to anyone with access to the file.
 
 Instead, when you run a search the app decrypts your entries in memory, scans them, and discards everything when it is done. Nothing searchable is ever written to disk, and the search never makes a network request. It is as private as reading the entries yourself.
 
@@ -417,19 +417,19 @@ Search is fastest when you remember specific words. When you only remember rough
 
 # Importing Data
 
-> Import journal entries from Mini Diary, Day One, jrnl, or plain text files. Mini Diarium includes built-in importers and supports custom Rhai import plugins.
+> Import journal entries from Mini Diary, Day One, jrnl, or plain text files. Fenmark includes built-in importers and supports custom Rhai import plugins.
 
-Source: https://mini-diarium.com/docs/import/
+Source: https://fenmark.app/docs/import/
 
 ## Opening the Import Dialog
 
 Click the **⋮** menu in the header and select **Import...**.
 
-![Import Entries dialog with a format dropdown and a file picker](https://mini-diarium.com/assets/docs/import-01-dialog.webp "The Import Entries dialog")
+![Import Entries dialog with a format dropdown and a file picker](https://fenmark.app/assets/docs/import-01-dialog.webp "The Import Entries dialog")
 
 ## Built-In Import Formats
 
-Mini Diarium can import entries from several popular journaling apps:
+Fenmark can import entries from several popular journaling apps:
 
 | Format | Source App | How to Export |
 |--------|-----------|---------------|
@@ -440,7 +440,7 @@ Mini Diarium can import entries from several popular journaling apps:
 
 ## How Imports Work
 
-Imports are **additive**. If an imported entry falls on a date that already has entries in Mini Diarium, the imported content is added as an additional entry for that date rather than merging or replacing existing content.
+Imports are **additive**. If an imported entry falls on a date that already has entries in Fenmark, the imported content is added as an additional entry for that date rather than merging or replacing existing content.
 
 This means you can safely import without worrying about overwriting your existing writing.
 
@@ -448,10 +448,10 @@ Images embedded in the import file as `data:` images are stored in your journal'
 
 ## Migrating from Mini Diary
 
-Mini Diary users can migrate all their entries to Mini Diarium:
+Mini Diary users can migrate all their entries to Fenmark:
 
 1. Open Mini Diary and export your journal as JSON.
-2. Open Mini Diarium and go to **Journal → Import...**.
+2. Open Fenmark and go to **Journal → Import...**.
 3. Select **Mini Diary JSON** from the format dropdown.
 4. Choose the exported file.
 
@@ -467,13 +467,13 @@ If your source application is not in the built-in list, you can write a custom R
 
 > Export your journal as JSON, Markdown, or PDF. JSON preserves IDs, tags, and metadata; Markdown is human-readable; PDF creates a formatted A4 document.
 
-Source: https://mini-diarium.com/docs/export/
+Source: https://fenmark.app/docs/export/
 
 ## Opening the Export Dialog
 
 Click the **⋮** menu in the header and select **Export...**.
 
-![Export Entries dialog with format and filter dropdowns](https://mini-diarium.com/assets/docs/export-01-dialog.webp "The Export Entries dialog")
+![Export Entries dialog with format and filter dropdowns](https://fenmark.app/assets/docs/export-01-dialog.webp "The Export Entries dialog")
 
 ## Built-In Export Formats
 
@@ -484,7 +484,7 @@ The JSON format is the primary structural export. It outputs a `metadata` block 
 ```json
 {
   "metadata": {
-    "application": "Mini Diarium",
+    "application": "Fenmark",
     "version": "0.5.0",
     "exportedAt": "2024-01-15T12:00:00Z"
   },
@@ -507,7 +507,7 @@ The JSON format is the primary structural export. It outputs a `metadata` block 
 
 Every entry includes a `"tags"` array (empty `[]` if the entry has no tags; tags are listed in alphabetical order) and an `"attachments"` array of `{ "name", "mime_type", "byte_size" }` objects (empty `[]` when there are none). The JSON file lists attachments by name only; it does not contain the file contents. Entries with font metadata include a `"metadata"` object containing `fontFamily` and `fontSize`; entries without entry-level font defaults have no `metadata` field.
 
-This format preserves entry IDs, timestamps, tags, and font metadata. It can be re-imported into Mini Diarium. The JSON importer automatically handles both the old Mini Diary date-keyed format and the new array format with optional metadata for backward compatibility. If the JSON contains embedded `data:image/...` content, Mini Diarium normalizes those images into its encrypted image store during import while preserving the visible content of the entry. Inline attachment references are removed on import, because the attachment files are not part of the JSON file. Stored image references (`image-id://` links, which a normal export never writes) are removed the same way, because they name images in a different journal.
+This format preserves entry IDs, timestamps, tags, and font metadata. It can be re-imported into Fenmark. The JSON importer automatically handles both the old Mini Diary date-keyed format and the new array format with optional metadata for backward compatibility. If the JSON contains embedded `data:image/...` content, Fenmark normalizes those images into its encrypted image store during import while preserving the visible content of the entry. Inline attachment references are removed on import, because the attachment files are not part of the JSON file. Stored image references (`image-id://` links, which a normal export never writes) are removed the same way, because they name images in a different journal.
 
 ### Markdown Export
 
@@ -534,7 +534,7 @@ Markdown is a best-effort, text-focused conversion of the stored HTML editor con
 The **Print / PDF** option opens a save dialog and creates a formatted A4 PDF directly at the path you choose.
 
 The print output uses a clean, readable layout with:
-- A "Mini Diarium" header and the generation date
+- A "Fenmark" header and the generation date
 - Entries grouped by date, with each date on its own page
 - Entry titles, tags (when present), and the full entry content
 - The names of an entry's attachments (the files themselves are not printed); inline references show as 📎 and the file name
@@ -561,17 +561,17 @@ If you need a specific export format not covered by the built-in options, you ca
 
 # Plugins
 
-> Extend Mini Diarium with Rhai script plugins for custom import and export formats. Covers the plugins folder, writing your first plugin, and API helpers.
+> Extend Fenmark with Rhai script plugins for custom import and export formats. Covers the plugins folder, writing your first plugin, and API helpers.
 
-Source: https://mini-diarium.com/docs/plugins/
+Source: https://fenmark.app/docs/plugins/
 
 ## What Are Plugins?
 
-Mini Diarium supports custom import and export formats through Rhai script plugins. Rhai is a simple, sandboxed scripting language that runs inside the app. You can write a plugin to handle any file format that the built-in options do not cover.
+Fenmark supports custom import and export formats through Rhai script plugins. Rhai is a simple, sandboxed scripting language that runs inside the app. You can write a plugin to handle any file format that the built-in options do not cover.
 
 Plugins appear in the Import and Export overlay dropdowns alongside the built-in formats.
 
-![Export Entries dialog with a custom plugin format, "Plain Text Timeline", selected in the Format dropdown](https://mini-diarium.com/assets/docs/plugins-01-export-dropdown.webp "A Rhai plugin listed alongside the built-in export formats")
+![Export Entries dialog with a custom plugin format, "Plain Text Timeline", selected in the Format dropdown](https://fenmark.app/assets/docs/plugins-01-export-dropdown.webp "A Rhai plugin listed alongside the built-in export formats")
 
 ## Where Is the Plugins Folder?
 
@@ -636,7 +636,7 @@ fn format_entries(entries) {
 
 ## Rules and Limitations
 
-![Diagram of the plugin sandbox boundary: a Rhai script has no file system or network access, and can only exchange plain text with the Import and Export dialogs](https://mini-diarium.com/assets/docs/diagrams/plugins-sandbox-boundary.svg "The plugin sandbox boundary")
+![Diagram of the plugin sandbox boundary: a Rhai script has no file system or network access, and can only exchange plain text with the Import and Export dialogs](https://fenmark.app/assets/docs/diagrams/plugins-sandbox-boundary.svg "The plugin sandbox boundary")
 
 - Import scripts must define `fn parse(content)` returning an array of entry maps.
 - Export scripts must define `fn format_entries(entries)` returning a string. (`export` is a reserved word in Rhai, so the function is named `format_entries`.)
@@ -654,9 +654,9 @@ An official example plugin is included in the repository at `docs/user-plugins/p
 
 # Preferences
 
-> Configure Mini Diarium from the Preferences panel: choose a theme, set auto-lock timeout, adjust editor font and size, manage authentication methods, and more.
+> Configure Fenmark from the Preferences panel: choose a theme, set auto-lock timeout, adjust editor font and size, manage authentication methods, and more.
 
-Source: https://mini-diarium.com/docs/preferences/
+Source: https://fenmark.app/docs/preferences/
 
 ## Opening Preferences
 
@@ -690,13 +690,13 @@ Preferences are now **close-only**: there is no Save/Cancel footer. Reversible s
 
 Timestamp format and precision are configured from the editor timestamp popup (clock button), not from Preferences.
 
-![Writing preferences tab with First Day of Week, spellcheck, and the toolbar item customization list](https://mini-diarium.com/assets/docs/preferences-03-writing.webp "The Writing preferences tab")
+![Writing preferences tab with First Day of Week, spellcheck, and the toolbar item customization list](https://fenmark.app/assets/docs/preferences-03-writing.webp "The Writing preferences tab")
 
 ### Spell check on Linux
 
-Windows and macOS handle spell checking for you. On Linux, Mini Diarium uses spelling language packs installed on your computer. It does not download them automatically, but you only need to add a language pack once.
+Windows and macOS handle spell checking for you. On Linux, Fenmark uses spelling language packs installed on your computer. It does not download them automatically, but you only need to add a language pack once.
 
-If Preferences shows a spell-check warning, start with your computer's **Software** app. Search for your language followed by “spell checking”, such as “Spanish spell checking”, install the suggested language support, then close and reopen Mini Diarium.
+If Preferences shows a spell-check warning, start with your computer's **Software** app. Search for your language followed by “spell checking”, such as “Spanish spell checking”, install the suggested language support, then close and reopen Fenmark.
 
 #### Example: Spanish spell checking on Ubuntu or Debian
 
@@ -707,15 +707,15 @@ sudo apt update
 sudo apt install hunspell-es
 ```
 
-Enter your computer password when asked. Nothing is shown while you type the password; that is normal. When the command finishes, close and reopen Mini Diarium.
+Enter your computer password when asked. Nothing is shown while you type the password; that is normal. When the command finishes, close and reopen Fenmark.
 
 #### Flatpak
 
-Flatpak installs include dictionaries for eight of the nine interface languages (English, Spanish, German, French, Italian, Portuguese (Brazil), Hindi, and Russian). Chinese (Simplified) has no bundled dictionary, so Linux shows the dictionary warning for it; the interface translation works normally. If you see a warning for another language, open your computer's Software app, update Mini Diarium, and restart it. If the warning remains, reinstall Mini Diarium.
+Flatpak installs include dictionaries for eight of the nine interface languages (English, Spanish, German, French, Italian, Portuguese (Brazil), Hindi, and Russian). Chinese (Simplified) has no bundled dictionary, so Linux shows the dictionary warning for it; the interface translation works normally. If you see a warning for another language, open your computer's Software app, update Fenmark, and restart it. If the warning remains, reinstall Fenmark.
 
 #### Need more help?
 
-Email [minidiarium@gmail.com](mailto:minidiarium@gmail.com) with your Linux distribution and the language selected in Mini Diarium, or [report the problem on GitHub](https://github.com/fjrevoredo/mini-diarium/issues).
+Email [minidiarium@gmail.com](mailto:minidiarium@gmail.com) with your Linux distribution and the language selected in Fenmark, or [report the problem on GitHub](https://github.com/fjrevoredo/mini-diarium/issues).
 
 #### Advanced: use another language
 
@@ -732,15 +732,15 @@ Simplified Chinese spell checking, use `zh_CN.aff` and `zh_CN.dic`.
 | Setting | Description |
 |---------|-------------|
 | Auto-Lock | Lock automatically after a configurable idle timeout |
-| Lock when the window loses focus | Lock the journal a few seconds after the window loses focus — minimizing, switching to another app, or clicking another window — independent of the idle timeout. Off by default. A brief misclick outside the window doesn't trigger it if focus returns quickly, and opening a native file dialog from within Mini Diarium (export/import/key file) does not trigger this. |
+| Lock when the window loses focus | Lock the journal a few seconds after the window loses focus — minimizing, switching to another app, or clicking another window — independent of the idle timeout. Off by default. A brief misclick outside the window doesn't trigger it if focus returns quickly, and opening a native file dialog from within Fenmark (export/import/key file) does not trigger this. |
 | Change password | Re-encrypt your journal with a new password |
 | Authentication Methods | View registered unlock methods; add a new key file or remove existing ones |
 
-![Security preferences tab showing registered authentication methods and the key file registration form](https://mini-diarium.com/assets/docs/preferences-01-security.webp "The Security preferences tab")
+![Security preferences tab showing registered authentication methods and the key file registration form](https://fenmark.app/assets/docs/preferences-01-security.webp "The Security preferences tab")
 
 At least one authentication method must remain registered. Removing the last one is blocked.
 
-Mini Diarium also locks the journal by itself if an internal task fails unexpectedly, whatever these settings are. The unlock screen then says so. Unlock the journal to continue. Entries that were already saved are not affected.
+Fenmark also locks the journal by itself if an internal task fails unexpectedly, whatever these settings are. The unlock screen then says so. Unlock the journal to continue. Entries that were already saved are not affected.
 
 ## Data Settings
 
@@ -841,17 +841,17 @@ Only documented token names are accepted; unrecognized names are silently ignore
 
 > View your writing statistics: total entry and word counts, current and longest streaks, and a breakdown of your most active writing days, months, and years.
 
-Source: https://mini-diarium.com/docs/statistics/
+Source: https://fenmark.app/docs/statistics/
 
 ## Opening Statistics
 
 Click the **⋮** menu in the header and select **Statistics...**.
 
-![Statistics overlay showing an 8-day current streak, total entries, total words, and average words per entry](https://mini-diarium.com/assets/docs/statistics-01-overlay.webp "The Statistics overlay")
+![Statistics overlay showing an 8-day current streak, total entries, total words, and average words per entry](https://fenmark.app/assets/docs/statistics-01-overlay.webp "The Statistics overlay")
 
 ## What Is Tracked
 
-Mini Diarium calculates the following statistics from your journal:
+Fenmark calculates the following statistics from your journal:
 
 | Stat | Description |
 |------|-------------|
@@ -877,28 +877,28 @@ All statistics are computed locally from your decrypted data. Nothing is sent of
 
 # Backups
 
-> Mini Diarium snapshots your journal before risky changes, restores the whole journal or specific entries in-app, and keeps tiered history going back a year.
+> Fenmark snapshots your journal before risky changes, restores the whole journal or specific entries in-app, and keeps tiered history going back a year.
 
-Source: https://mini-diarium.com/docs/backups/
+Source: https://fenmark.app/docs/backups/
 
 ## What a Backup Is
 
-A backup is a **snapshot**: a complete, ordinary Mini Diarium database file, encrypted exactly like your live journal with exactly the same key. There is no separate backup format. If you can open your journal, you can open its snapshots.
+A backup is a **snapshot**: a complete, ordinary Fenmark database file, encrypted exactly like your live journal with exactly the same key. There is no separate backup format. If you can open your journal, you can open its snapshots.
 
-Snapshots are written with SQLite's `VACUUM INTO`, which rebuilds a clean copy rather than copying the file byte by byte. The copy is flushed to disk, moved into place atomically, and then reopened and checked before Mini Diarium reports it as created. A snapshot that exists is a snapshot that works.
+Snapshots are written with SQLite's `VACUUM INTO`, which rebuilds a clean copy rather than copying the file byte by byte. The copy is flushed to disk, moved into place atomically, and then reopened and checked before Fenmark reports it as created. A snapshot that exists is a snapshot that works.
 
 ## When Snapshots Are Created
 
 | Trigger | When |
 |---|---|
-| **Before a schema migration** | Whenever a new version of Mini Diarium needs to upgrade your journal's internal format. This is the important one. |
+| **Before a schema migration** | Whenever a new version of Fenmark needs to upgrade your journal's internal format. This is the important one. |
 | **Before a destructive action** | Resetting a journal, importing a file, removing an authentication method, or moving your journal to another folder. |
 | **On unlock** | After you successfully unlock, if the journal changed since the last snapshot. |
 | **On lock and on exit** | When you lock the journal or close the app, if it changed while it was open. |
 
 Two rules keep this from filling your disk:
 
-- **Nothing changed, nothing written.** Mini Diarium compares the database's internal change counter against the last snapshot. Opening your journal to read something produces no new snapshot at all.
+- **Nothing changed, nothing written.** Fenmark compares the database's internal change counter against the last snapshot. Opening your journal to read something produces no new snapshot at all.
 - **At most one automatic snapshot per hour.** Explicit actions (a migration, a destructive command) ignore this and always snapshot.
 
 The pre-migration snapshot is the one exception to "backups never get in the way": if it cannot be written, the migration is **refused** and your journal is left untouched. Proceeding with an upgrade that has no recoverable copy is the one failure you cannot undo.
@@ -919,7 +919,7 @@ If several journals share one folder, each still gets its own `backups/{journal 
 
 Each snapshot is named `backup-YYYY-MM-DD-HHhMMmSS.db`, for example `backup-2026-08-04-14h30m07.db`. The timestamp reflects local time at the moment the snapshot was taken.
 
-Alongside them sits a `manifest.json` file recording when each snapshot was taken, why, how large it is, how many entries it holds, and which kinds of credential it accepts. It holds no entry text, no titles, no tag names, and no journal names. Deleting it is harmless: Mini Diarium rebuilds it by scanning the folder.
+Alongside them sits a `manifest.json` file recording when each snapshot was taken, why, how large it is, how many entries it holds, and which kinds of credential it accepts. It holds no entry text, no titles, no tag names, and no journal names. Deleting it is harmless: Fenmark rebuilds it by scanning the folder.
 
 ## How Long Snapshots Are Kept
 
@@ -932,11 +932,11 @@ Retention is **tiered**, so how much history you have does not depend on how oft
 
 A snapshot that qualifies for more than one tier occupies one slot, not several. A burst of activity in a single afternoon cannot push out last month's copy.
 
-![Diagram of the four retention tiers along a timeline, with any kept snapshot leading to Restore, and the Most Recent tier leading to Prune if the storage budget is exceeded](https://mini-diarium.com/assets/docs/diagrams/backups-rotation-lifecycle.svg "Snapshot retention tiers and what happens to a kept snapshot")
+![Diagram of the four retention tiers along a timeline, with any kept snapshot leading to Restore, and the Most Recent tier leading to Prune if the storage budget is exceeded](https://fenmark.app/assets/docs/diagrams/backups-rotation-lifecycle.svg "Snapshot retention tiers and what happens to a kept snapshot")
 
-On top of that sits a storage budget of 2 GB, or three times the size of your journal, whichever is larger. If the snapshots exceed it, Mini Diarium thins the *most recent* tier first and protects the older ones, because those are the ones you cannot recreate.
+On top of that sits a storage budget of 2 GB, or three times the size of your journal, whichever is larger. If the snapshots exceed it, Fenmark thins the *most recent* tier first and protects the older ones, because those are the ones you cannot recreate.
 
-Only files matching the `backup-*.db` naming pattern are managed. Anything else you put in the folder is left alone. Snapshots created by earlier versions of Mini Diarium are adopted automatically on first run, not discarded.
+Only files matching the `backup-*.db` naming pattern are managed. Anything else you put in the folder is left alone. Snapshots created by earlier versions of Fenmark are adopted automatically on first run, not discarded.
 
 ## Seeing Your Backups
 
@@ -944,12 +944,12 @@ Open **Preferences → Backups**. The panel lists every snapshot, newest first, 
 
 Above the list is the state of the whole folder: whether backups are working, when the last one was taken, how much space they use against the storage budget, and the retention policy in words.
 
-![Backups panel listing three manual snapshots with their entry counts, sizes, and Check, Restore, Delete, and Restore entries actions](https://mini-diarium.com/assets/docs/backups-01-panel-populated.webp "The Backups panel with a few snapshots")
+![Backups panel listing three manual snapshots with their entry counts, sizes, and Check, Restore, Delete, and Restore entries actions](https://fenmark.app/assets/docs/backups-01-panel-populated.webp "The Backups panel with a few snapshots")
 
 Four things you can do from here:
 
 - **Back up now** takes a snapshot immediately. Unlike the automatic ones, it ignores the once-per-hour limit and the "nothing changed" rule, so it always produces a snapshot.
-- **Check** re-opens one snapshot and confirms your journal's key still decrypts every entry's title, text, tags, and any attached images inside it — not just a sample. Snapshots taken by an older version of Mini Diarium start as *Not checked*, which means "not confirmed yet", not "broken". A snapshot that fails the check is reported, never deleted: it may still open with the credential it was taken with.
+- **Check** re-opens one snapshot and confirms your journal's key still decrypts every entry's title, text, tags, and any attached images inside it — not just a sample. Snapshots taken by an older version of Fenmark start as *Not checked*, which means "not confirmed yet", not "broken". A snapshot that fails the check is reported, never deleted: it may still open with the credential it was taken with.
 - **Delete** removes one snapshot.
 - **Open backups folder** opens this journal's own snapshot folder in your file manager. It never opens the shared `backups/` folder above it. Before the first snapshot exists, there is nothing to open yet.
 
@@ -965,33 +965,33 @@ The panel replaces "Backups are working." with a plain-language cause when it ca
 
 - **The last attempt failed.** Backups taken as the app locks or exits run in the background, so a failure has nowhere to appear at the time. It is recorded and shown here instead. Open the backups folder and check it is reachable and has free space.
 - **The folder cannot be used.** Usually a journal on a removable or synced drive that is disconnected, so reconnect it. It also covers the case where the backups folder still has an address but nothing usable at it: something else, a file for instance, has taken its place, or the folder itself can no longer be read. That second case is worth stating separately because no failure record can be written into a folder that cannot be written to, so this line is the only warning you get.
-- **Backups are over their storage limit.** Not an error. Mini Diarium trims the most recent snapshots first and keeps the older ones.
+- **Backups are over their storage limit.** Not an error. Fenmark trims the most recent snapshots first and keeps the older ones.
 
 ## Restoring
 
 Restoring is now built into the app, in two forms, both reachable from **Preferences → Backups**.
 
-**Whole-journal restore** rolls your entire journal back to the moment a snapshot was taken. Click **Restore** on a backup: Mini Diarium names the date, warns that entries written since then will be replaced, and takes a safety snapshot of your *current* state before touching anything — so restoring is reversible even if you picked the wrong one. No password or key file is asked for: a password change only re-wraps your existing key, so whatever unlocked the journal a moment ago also opens every snapshot it ever produced.
+**Whole-journal restore** rolls your entire journal back to the moment a snapshot was taken. Click **Restore** on a backup: Fenmark names the date, warns that entries written since then will be replaced, and takes a safety snapshot of your *current* state before touching anything — so restoring is reversible even if you picked the wrong one. No password or key file is asked for: a password change only re-wraps your existing key, so whatever unlocked the journal a moment ago also opens every snapshot it ever produced.
 
 **Per-entry restore** recovers specific entries without touching the rest of your journal. Click **Restore entries…** on a backup to browse what it contains. The dialog names the snapshot's date and entry count before listing anything, so you know exactly which backup you are looking at. Each entry is flagged if it is missing from your current journal, shorter there than in the backup, or already present, so it is clear what is worth recovering. Restoring an entry never overwrites anything — it is added alongside whatever your journal already holds for that date — and the result states how many entries were added. Tags, images, and attached files on a recovered entry come back with it. If the backup does not contain an image that the entry refers to, that image is left out and the rest of the entry is restored. Each entry is restored completely or not at all: if part of an entry cannot be restored (for example, one of its attached files is damaged in the backup), that entry is not added, and nothing from it is left in your journal. The restore stops at that entry. The entries restored before it stay, and they are removed from the selection. The entry that failed and the entries after it stay selected, and the dialog tells you that the restore stopped. If you click **Restore selected** again, only the entries that were not added are restored. An entry that you select again after it was restored is added a second time, because restoring never replaces an entry. This is the one that matters when you only lost a day or two, not the whole journal.
 
-![Restore individual entries dialog listing ten entries from a snapshot, each marked "Already in your journal"](https://mini-diarium.com/assets/docs/backups-02-inspect-dialog.webp "Browsing a snapshot's entries before restoring")
+![Restore individual entries dialog listing ten entries from a snapshot, each marked "Already in your journal"](https://fenmark.app/assets/docs/backups-02-inspect-dialog.webp "Browsing a snapshot's entries before restoring")
 
 Nothing decrypted is ever written to disk during either kind of restore.
 
-**Do not point Mini Diarium at a snapshot where it sits.** A snapshot is a working database, so **+ Open Existing** would happily open one — and opening it as a journal writes to it, destroying the untouched restore point. The app refuses `backup-*.db` files and anything inside a `backups` folder for exactly that reason. Both restore paths above read snapshots safely; you never need to do this by hand.
+**Do not point Fenmark at a snapshot where it sits.** A snapshot is a working database, so **+ Open Existing** would happily open one — and opening it as a journal writes to it, destroying the untouched restore point. The app refuses `backup-*.db` files and anything inside a `backups` folder for exactly that reason. Both restore paths above read snapshots safely; you never need to do this by hand.
 
 ## Custom Journal Locations
 
-When you move your journal to a different folder via Preferences, `diary.db` is physically moved to the new location and all future snapshots go into `{new location}/backups/{journal name}/`. If you have existing snapshots, Mini Diarium asks whether to move them along with the journal.
+When you move your journal to a different folder via Preferences, `diary.db` is physically moved to the new location and all future snapshots go into `{new location}/backups/{journal name}/`. If you have existing snapshots, Fenmark asks whether to move them along with the journal.
 
-**If you decline, existing snapshots stay in the old folder.** Mini Diarium tells you where before the move finishes. If you want to keep that history later, copy the old `backups/` folder to the new journal directory by hand.
+**If you decline, existing snapshots stay in the old folder.** Fenmark tells you where before the move finishes. If you want to keep that history later, copy the old `backups/` folder to the new journal directory by hand.
 
 ## Cloud-Synced Locations
 
 If you place your journal directory inside a cloud-synced folder (Dropbox, OneDrive, iCloud Drive, and so on), both `diary.db` and the `backups/` subfolder are included in the sync, giving you off-site backup on top of local snapshots.
 
-Keep in mind that Mini Diarium does not coordinate concurrent access. **Do not open the same journal from two devices at the same time.** The encrypted database file is not designed for simultaneous multi-device write access.
+Keep in mind that Fenmark does not coordinate concurrent access. **Do not open the same journal from two devices at the same time.** The encrypted database file is not designed for simultaneous multi-device write access.
 
 ## Snapshots Are Encrypted, and What That Costs You
 
@@ -1001,15 +1001,15 @@ Snapshots are fully encrypted with the same key as your live journal. A snapshot
 
 **Removing an authentication method does not revoke it retroactively.** A key file you removed still unlocks every snapshot taken while it was registered. If you removed it because it was compromised, delete the snapshots that predate the removal too.
 
-**Local-only journals need this device.** A journal with no password is protected by a device-bound key stored in Mini Diarium's `config.json`, which lives in the app data directory and is **not** part of the backups folder. Copying the backups folder to another machine is not enough to restore it there. If that matters to you, add a password or a key file to the journal so its snapshots are portable.
+**Local-only journals need this device.** A journal with no password is protected by a device-bound key stored in Fenmark's `config.json`, which lives in the app data directory and is **not** part of the backups folder. Copying the backups folder to another machine is not enough to restore it there. If that matters to you, add a password or a key file to the journal so its snapshots are portable.
 
 ---
 
 # FAQ
 
-> Answers to common questions about Mini Diarium: password recovery, encryption model, cross-device sync, key files, authentication slots, and mobile support.
+> Answers to common questions about Fenmark: password recovery, encryption model, cross-device sync, key files, authentication slots, and mobile support.
 
-Source: https://mini-diarium.com/docs/faq/
+Source: https://fenmark.app/docs/faq/
 
 ## I forgot my password. Can I recover my entries?
 
@@ -1019,33 +1019,33 @@ No, unless you registered a key file as an authentication method. If you have a 
 
 Locally on your machine in an SQLite database. See the [Backups](../backups/) section for the exact default path on your operating system.
 
-## Does Mini Diarium connect to the internet?
+## Does Fenmark connect to the internet?
 
-Never. Mini Diarium makes no network requests, collects no analytics, sends no telemetry, and does not check for updates automatically. All data stays on your device.
+Never. Fenmark makes no network requests, collects no analytics, sends no telemetry, and does not check for updates automatically. All data stays on your device.
 
 Release notes for each version are bundled with the app itself and displayed in the **notification center** (bell icon in the header). No network call is made. The notes ship as a local file inside the application bundle.
 
 ## Can I sync across devices?
 
-Not directly. Mini Diarium is local-only by design. You could manually copy the `diary.db` file to another device, but simultaneous access from multiple devices is not supported and could corrupt the database. If you want cloud backup, place your journal directory inside a synced folder (Dropbox, OneDrive, iCloud Drive) and only open it from one device at a time.
+Not directly. Fenmark is local-only by design. You could manually copy the `diary.db` file to another device, but simultaneous access from multiple devices is not supported and could corrupt the database. If you want cloud backup, place your journal directory inside a synced folder (Dropbox, OneDrive, iCloud Drive) and only open it from one device at a time.
 
 ## Why does it say my journal or backup "requires a newer version of the app"?
 
-A newer version of Mini Diarium changed the journal format, and this copy of the app is older. This usually happens when two computers share a journal through a synced folder and one of them has not been updated yet. Mini Diarium refuses to open the journal, and does not change the file, so that the older app cannot damage data it does not understand. Update the app on this computer to open the journal again. The same message on a backup means the backup was made by a newer version; update the app to inspect or restore it.
+A newer version of Fenmark changed the journal format, and this copy of the app is older. This usually happens when two computers share a journal through a synced folder and one of them has not been updated yet. Fenmark refuses to open the journal, and does not change the file, so that the older app cannot damage data it does not understand. Update the app on this computer to open the journal again. The same message on a backup means the backup was made by a newer version; update the app to inspect or restore it.
 
 This protection starts with version 0.7.4. Versions before 0.7.4 cannot detect a newer journal, so update every computer that shares the journal.
 
 ## I used Mini Diary before. Can I migrate?
 
-Yes. Export your journal from Mini Diary as JSON, then import it in Mini Diarium from **Journal → Import...** using the Mini Diary JSON format. All entries are imported with their original dates.
+Yes. Export your journal from Mini Diary as JSON, then import it in Fenmark from **Journal → Import...** using the Mini Diary JSON format. All entries are imported with their original dates.
 
 ## How does the encryption work?
 
-Mini Diarium encrypts each journal entry using AES-256-GCM with a random master key. The master key is never stored in plaintext. It is wrapped (encrypted) by a key derived from your password using Argon2id, and only the wrapped version is saved to disk. When you unlock, your password re-derives the wrapping key, which decrypts the master key in memory. The master key is held only in RAM and discarded when you lock.
+Fenmark encrypts each journal entry using AES-256-GCM with a random master key. The master key is never stored in plaintext. It is wrapped (encrypted) by a key derived from your password using Argon2id, and only the wrapped version is saved to disk. When you unlock, your password re-derives the wrapping key, which decrypts the master key in memory. The master key is held only in RAM and discarded when you lock.
 
 ## Can I use multiple passwords or unlock methods?
 
-Yes. Mini Diarium supports multiple authentication slots. You can register a password and one or more key files. Each method independently wraps the same master key. You can add or remove methods in **Preferences → Authentication Methods** without re-encrypting your entries. At least one method must remain active.
+Yes. Fenmark supports multiple authentication slots. You can register a password and one or more key files. Each method independently wraps the same master key. You can add or remove methods in **Preferences → Authentication Methods** without re-encrypting your entries. At least one method must remain active.
 
 For stronger security, you can enable **Require All Authentication Methods** in **Preferences → Security**. When active, every registered method must be provided at unlock, for example both your password and your key file. This prevents access even if one credential is compromised.
 
@@ -1059,7 +1059,7 @@ If you have another authentication method (a password, or another key file) stil
 
 ## Is there a mobile app?
 
-Not currently. Mini Diarium is a desktop app for Windows, macOS, and Linux. A mobile version is in our long-term vision if there is enough demand, but it is a significant development and maintenance effort. We are currently focused on keeping the desktop experience at the highest quality standards.
+Not currently. Fenmark is a desktop app for Windows, macOS, and Linux. A mobile version is in our long-term vision if there is enough demand, but it is a significant development and maintenance effort. We are currently focused on keeping the desktop experience at the highest quality standards.
 
 ## Where can I report a security issue?
 

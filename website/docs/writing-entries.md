@@ -1,12 +1,12 @@
 # Writing Entries
 
-> Mini Diarium's rich text editor supports formatting, images, file attachments, named links, tags, and multiple entries per day. Auto-save and RTL language support are built in.
+> Fenmark's rich text editor supports formatting, images, file attachments, named links, tags, and multiple entries per day. Auto-save and RTL language support are built in.
 
-Source: https://mini-diarium.com/docs/writing-entries/
+Source: https://fenmark.app/docs/writing-entries/
 
 ## The Editor
 
-Mini Diarium uses a rich text editor with support for a full set of formatting options:
+Fenmark uses a rich text editor with support for a full set of formatting options:
 
 - Bold and italic text
 - Headings (levels 1–3)
@@ -20,7 +20,7 @@ Mini Diarium uses a rich text editor with support for a full set of formatting o
 
 The toolbar above the editor provides buttons for each formatting option. Standard keyboard shortcuts also work: `Ctrl+B` for bold, `Ctrl+I` for italic, and so on. On macOS, use `Cmd` instead of `Ctrl`.
 
-![Editor toolbar above a formatted entry with a heading, bold text, and a bullet list](https://mini-diarium.com/assets/docs/writing-entries-01-toolbar-formatted.webp "Heading, bold, and bullet list applied with the toolbar")
+![Editor toolbar above a formatted entry with a heading, bold text, and a bullet list](https://fenmark.app/assets/docs/writing-entries-01-toolbar-formatted.webp "Heading, bold, and bullet list applied with the toolbar")
 
 ## Titles
 
@@ -36,7 +36,7 @@ Each date can contain multiple separate entries. This is useful for writing at d
 - Use `−` to delete the current entry.
 - If a day has only one entry, the navigation bar stays hidden.
 
-![Timeline view showing three separate entries stacked under the same date](https://mini-diarium.com/assets/docs/writing-entries-02-timeline-multientry.webp "Multiple entries on the same date, grouped together in the Timeline")
+![Timeline view showing three separate entries stacked under the same date](https://fenmark.app/assets/docs/writing-entries-02-timeline-multientry.webp "Multiple entries on the same date, grouped together in the Timeline")
 
 ## Locking an Entry Against Accidental Edits
 
@@ -101,7 +101,7 @@ You can attach documents, PDFs, short videos, and any other file to an entry. At
 - Click an attachment's name (or its download icon) to **save a copy** to a location you choose. The copy must keep the same file extension as the attachment. You cannot save the copy over the journal's own files (the journal database or anything in its backups folder).
 - Click the remove (×) icon to detach a file. You are asked to confirm first.
 
-Mini Diarium never opens attachments itself. To view a file, save a copy and open it with another app.
+Fenmark never opens attachments itself. To view a file, save a copy and open it with another app.
 
 ### Inline references
 
@@ -115,7 +115,7 @@ Large attachments make the journal file and its backups larger. Deleting an entr
 
 ### Older app versions
 
-Versions before 0.7.4 do not know attachments. If they open a journal that has attachments, they cannot delete an entry that has files. If they edit and save such an entry, they remove its inline 📎 references; the files in the strip are kept. Update Mini Diarium on every computer that shares the journal.
+Versions before 0.7.4 do not know attachments. If they open a journal that has attachments, they cannot delete an entry that has files. If they edit and save such an entry, they remove its inline 📎 references; the files in the strip are kept. Update Fenmark on every computer that shares the journal.
 
 ## Links
 
@@ -144,7 +144,7 @@ Only standard external targets are opened: `http`, `https`, `mailto`, and `tel`.
 
 ## Right-to-Left and Bidirectional Text
 
-Mini Diarium supports right-to-left (RTL) writing in Arabic, Hebrew, Syriac, and other RTL scripts. Direction is handled per block: each paragraph and heading carries its own `dir` attribute, so you can freely mix RTL and LTR content in the same entry.
+Fenmark supports right-to-left (RTL) writing in Arabic, Hebrew, Syriac, and other RTL scripts. Direction is handled per block: each paragraph and heading carries its own `dir` attribute, so you can freely mix RTL and LTR content in the same entry.
 
 **Auto-detection**: as you type, the editor reads the first strongly-directional character in each paragraph or heading and sets the direction automatically. Arabic and Hebrew script trigger `dir="rtl"`; Latin script triggers `dir="ltr"`. Once a block's direction is set it is locked and will not change if you later add neutral characters (numbers, punctuation, emoji) to the same block.
 
@@ -160,7 +160,7 @@ The advanced toolbar includes a **clock button** that inserts the current time a
 
 ## Editor Font: Three-Level System
 
-Mini Diarium uses a three-level font system so you can control fonts at multiple scopes:
+Fenmark uses a three-level font system so you can control fonts at multiple scopes:
 
 ### 1. App Default (Preferences)
 
