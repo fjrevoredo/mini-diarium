@@ -1,13 +1,13 @@
-# Mini Diarium User Guide
+# Fenmark User Guide
 
-> For the best reading experience, see the [online documentation](https://mini-diarium.com/docs/).
+> For the best reading experience, see the [online documentation](https://fenmark.app/docs/).
 > This file is the plain-text source and is kept for technical users and GitHub readers.
 
 ## Getting Started
 
 ### First Launch
 
-When you open Mini Diarium, the app starts at the **Journal Picker**. From there you can create a new journal or open an existing `diary.db`.
+When you open Fenmark, the app starts at the **Journal Picker**. From there you can create a new journal or open an existing `diary.db`.
 
 If you create a new journal, you'll be asked to create a password. This password encrypts your entire journal using AES-256-GCM encryption.
 
@@ -19,7 +19,7 @@ Your journal is encrypted whenever it's locked. After selecting a journal, enter
 
 As an alternative to your password, you can register a key file in Preferences → Authentication Methods. Once registered, use the "Key File" tab on the unlock screen and select your `.key` file to unlock without typing your password.
 
-You can also enable **idle auto-lock** in Preferences → Security → Auto-Lock. When enabled, Mini Diarium locks automatically after the configured period of inactivity.
+You can also enable **idle auto-lock** in Preferences → Security → Auto-Lock. When enabled, Fenmark locks automatically after the configured period of inactivity.
 
 ### Multiple Journals
 
@@ -37,7 +37,7 @@ If you only have one journal, the Journal Picker simply shows that single journa
 
 ### The Editor
 
-Mini Diarium uses a rich text editor with support for:
+Fenmark uses a rich text editor with support for:
 
 - Bold and italic text
 - Headings (levels 1-3)
@@ -113,13 +113,13 @@ Click the **⋮** menu in the header and select **Import...**.
 - **Day One TXT**: the plain-text export from Day One
 - **jrnl JSON**: the JSON export from jrnl
 
-Imports are additive. If an imported entry falls on a date that already has entries, Mini Diarium creates another entry for that date instead of merging content heuristically.
+Imports are additive. If an imported entry falls on a date that already has entries, Fenmark creates another entry for that date instead of merging content heuristically.
 
 ## Export
 
 Click the **⋮** menu in the header and select **Export...**:
 
-- **Mini Diary JSON**: machine-readable, can be re-imported into Mini Diarium
+- **Mini Diary JSON**: machine-readable, can be re-imported into Fenmark
 - **Markdown**: human-readable, grouped by date; if a day has multiple entries, each appears under its own sub-heading
 
 JSON is the structural export format and preserves entry IDs. Markdown is a readable, best-effort conversion of the stored HTML editor content.
@@ -320,11 +320,11 @@ Click the **⋮** menu in the header and select **Statistics...**:
 
 ## Backups
 
-> The authoritative user-facing reference is [the Backups documentation page](https://mini-diarium.com/docs/backups/). This section is the summary.
+> The authoritative user-facing reference is [the Backups documentation page](https://fenmark.app/docs/backups/). This section is the summary.
 
 ### What a backup is
 
-A backup is a **snapshot**: a complete Mini Diarium database, encrypted with the same key as your live journal. There is no separate backup format. Snapshots are written with SQLite's `VACUUM INTO`, moved into place atomically, then reopened and verified — a snapshot that exists is one that works.
+A backup is a **snapshot**: a complete Fenmark database, encrypted with the same key as your live journal. There is no separate backup format. Snapshots are written with SQLite's `VACUUM INTO`, moved into place atomically, then reopened and verified — a snapshot that exists is one that works.
 
 ### When backups are created
 
@@ -355,7 +355,7 @@ Retention is tiered, so how much history you have does not depend on how often y
 - **one per week** for the last 8 weeks
 - **one per month** for the last 12 months
 
-A storage budget of 2 GB (or three times your journal's size, whichever is larger) caps the total; when it is exceeded, the *most recent* tier is thinned first so older history is preserved. Only files matching the `backup-*.db` naming pattern are managed; anything else in the folder is left untouched. Snapshots from earlier versions of Mini Diarium are adopted, not discarded.
+A storage budget of 2 GB (or three times your journal's size, whichever is larger) caps the total; when it is exceeded, the *most recent* tier is thinned first so older history is preserved. Only files matching the `backup-*.db` naming pattern are managed; anything else in the folder is left untouched. Snapshots from earlier versions of Fenmark are adopted, not discarded.
 
 ### Restoring
 
@@ -374,7 +374,7 @@ When you move your journal to a different folder via Preferences, `diary.db` is 
 
 ### Cloud-synced and external locations
 
-If you place your journal directory inside a cloud-synced folder (Dropbox, OneDrive, iCloud Drive, etc.), both `diary.db` and the `backups/` subfolder will be included in the sync, giving you off-site backup on top of local snapshots. Keep in mind that Mini Diarium does not coordinate concurrent access — **do not open the same journal from two devices at the same time**.
+If you place your journal directory inside a cloud-synced folder (Dropbox, OneDrive, iCloud Drive, etc.), both `diary.db` and the `backups/` subfolder will be included in the sync, giving you off-site backup on top of local snapshots. Keep in mind that Fenmark does not coordinate concurrent access — **do not open the same journal from two devices at the same time**.
 
 ### Limits worth knowing before you need them
 
@@ -390,11 +390,11 @@ No — unless you registered a key file as an authentication method. If you have
 **Where is my data stored?**
 Locally on your machine in an SQLite database. See Backups above for the path.
 
-**Does Mini Diarium connect to the internet?**
+**Does Fenmark connect to the internet?**
 Never. No network requests, no analytics, no telemetry, no automatic updates.
 
 **Can I sync across devices?**
-Not directly. Mini Diarium is local-only by design. You could manually copy the journal file, but simultaneous access from multiple devices is not supported.
+Not directly. Fenmark is local-only by design. You could manually copy the journal file, but simultaneous access from multiple devices is not supported.
 
 **I used Mini Diary before. Can I migrate?**
-Yes. Export from Mini Diary as JSON, then import in Mini Diarium from **Journal → Import...** using the Mini Diary JSON format.
+Yes. Export from Mini Diary as JSON, then import in Fenmark from **Journal → Import...** using the Mini Diary JSON format.

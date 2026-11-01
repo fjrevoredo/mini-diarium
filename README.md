@@ -1,8 +1,10 @@
 <div align="center">
 
-<img src="public/logo-transparent.svg" alt="Mini Diarium" width="128" />
+<img src="public/logo-transparent.svg" alt="Fenmark" width="128" />
 
-# Mini Diarium
+# Fenmark
+
+*Formerly Mini Diarium. [Why the name changed](https://fenmark.app/blog/mini-diarium-is-now-fenmark/).*
 
 **A local-only journal with serious encryption.**
 Free, open source, and never touches the internet.
@@ -24,13 +26,13 @@ Free, open source, and never touches the internet.
 [![Flathub](https://img.shields.io/flathub/v/io.github.fjrevoredo.mini-diarium?logo=flathub&logoColor=white&label=Flathub)](https://flathub.org/apps/io.github.fjrevoredo.mini-diarium)
 [![Microsoft Store](https://img.shields.io/badge/Microsoft_Store-0078D4)](https://apps.microsoft.com/detail/9PJFTX44ZS43)
 
-[mini-diarium.com](https://mini-diarium.com) · [Download](#download) · [Documentation](https://mini-diarium.com/docs) · [Features](#features) · [Philosophy](PHILOSOPHY.md) · [Benchmarks](https://fjrevoredo.github.io/mini-diarium/benchmarks/)
+[fenmark.app](https://fenmark.app) · [Download](#download) · [Documentation](https://fenmark.app/docs) · [Features](#features) · [Philosophy](PHILOSOPHY.md) · [Benchmarks](https://fjrevoredo.github.io/mini-diarium/benchmarks/)
 
 <img src="public/demo.gif" alt="Demo" width="768" />
 
 ## ☕ Support the Project
 
-Mini Diarium is free, open source, and will always be. If you find it useful and want to support its development, consider buying me a coffee on Ko-fi. Every donation goes directly toward keeping this project alive and improving.
+Fenmark is free, open source, and will always be. If you find it useful and want to support its development, consider buying me a coffee on Ko-fi. Every donation goes directly toward keeping this project alive and improving.
 
 <a href="https://ko-fi.com/fjrevoredo" target="_blank">
   <img src="https://storage.ko-fi.com/cdn/kofi2.png" alt="Buy Me a Coffee on Ko-fi" height="48" />
@@ -85,7 +87,7 @@ For package formats, first-run notes (Gatekeeper / SmartScreen), and checksum ve
 
 ## Quick Start
 
-1. Launch Mini Diarium
+1. Launch Fenmark
 2. Create a password (this encrypts your journal; there is no recovery if forgotten)
 3. Write your first entry. It auto-saves as you type
 4. Navigate between days with `Ctrl+[` / `Ctrl+]` or click dates on the calendar
@@ -93,11 +95,11 @@ For package formats, first-run notes (Gatekeeper / SmartScreen), and checksum ve
 
 ## Background
 
-Mini Diarium is a spiritual successor to [Mini Diary](https://github.com/samuelmeuli/mini-diary) by Samuel Meuli. I loved the original tool. It was simple, private, and did exactly what a journal app should do. Unfortunately, it's been unmaintained for years and its dependencies have aged out. I initially thought about forking it and modernizing the stack, but turned out impractical. So I started over from scratch, keeping the same core philosophy (encrypted, local-only, focused) while rebuilding completely with Tauri 2, SolidJS, and Rust. The result is a lighter, faster app with stronger encryption and a few personal touches.
+Fenmark is a spiritual successor to [Mini Diary](https://github.com/samuelmeuli/mini-diary) by Samuel Meuli. I loved the original tool. It was simple, private, and did exactly what a journal app should do. Unfortunately, it's been unmaintained for years and its dependencies have aged out. I initially thought about forking it and modernizing the stack, but turned out impractical. So I started over from scratch, keeping the same core philosophy (encrypted, local-only, focused) while rebuilding completely with Tauri 2, SolidJS, and Rust. The result is a lighter, faster app with stronger encryption and a few personal touches.
 
 ## Philosophy First
 
-Mini Diarium is intentionally opinionated. The philosophy is not a side note, it is the product:
+Fenmark is intentionally opinionated. The philosophy is not a side note, it is the product:
 
 - **Small, extensible core**: keep core responsibilities tight (encrypt, store, authenticate) and push extras to extension points
 - **Boring security**: use established algorithms and audited libraries, never custom crypto
@@ -109,7 +111,7 @@ Mini Diarium is intentionally opinionated. The philosophy is not a side note, it
 Read the full principles and how these translates to the architecture in [PHILOSOPHY.md](PHILOSOPHY.md).
 
 > [!NOTE]
-> Mini Diarium uses AI tooling as leverage for human engineers, never as a replacement. Every change still passes through deliberate design, careful implementation, proper testing, and direct feedback. Responsibility, authorship, and final judgment remain human.
+> Fenmark uses AI tooling as leverage for human engineers, never as a replacement. Every change still passes through deliberate design, careful implementation, proper testing, and direct feedback. Responsibility, authorship, and final judgment remain human.
 
 ## Features
 
@@ -132,7 +134,7 @@ Read the full principles and how these translates to the architecture in [PHILOS
 
 ## Documentation
 
-- Online user docs: https://mini-diarium.com/docs
+- Online user docs: https://fenmark.app/docs
 - Offline / GitHub user guide: [docs/USER_GUIDE.md](docs/USER_GUIDE.md)
 - Installation: [docs/INSTALLATION.md](docs/INSTALLATION.md)
 - Key file authentication: [docs/KEY_FILE_AUTHENTICATION.md](docs/KEY_FILE_AUTHENTICATION.md)
@@ -200,7 +202,7 @@ For the full list of known limitations, deliberate tradeoffs, and technical debt
 - Importing the same file twice creates duplicate entries (no deduplication)
 - Plugin changes require an app restart to take effect
 
-## Extending Mini Diarium
+## Extending Fenmark
 
 You can add local import/export extensions using Rhai scripts in your journal's `plugins/` folder.
 See [docs/user-plugins/USER_PLUGIN_GUIDE.md](docs/user-plugins/USER_PLUGIN_GUIDE.md) for requirements, best practices, and a complete example plugin.
@@ -219,7 +221,7 @@ For maintainers changing frontend UI/state, the Rust backend, Tauri IPC boundary
 
 ### Translations
 
-Mini Diarium ships in the following languages:
+Fenmark ships in the following languages:
 
 <!-- supported-languages-start -->
 - Chinese (Simplified) (简体中文)
@@ -245,7 +247,7 @@ See [SECURITY.md](SECURITY.md) for the security model and how to report vulnerab
 
 ## License
 
-Mini Diarium is licensed under the MIT License. See [LICENSE](LICENSE).
+Fenmark is licensed under the MIT License. See [LICENSE](LICENSE).
 
 ## Credits
 
@@ -253,7 +255,7 @@ Made with love by [Francisco J. Revoredo](https://github.com/fjrevoredo) (with a
 
 ## Contributors
 
-Thanks to everyone who has contributed code, translations, or improvements to Mini Diarium:
+Thanks to everyone who has contributed code, translations, or improvements to Fenmark:
 
 <a href="https://github.com/jottyfan"><img src="https://github.com/jottyfan.png?size=40" width="40" height="40" alt="jottyfan" /></a>
 <a href="https://github.com/Yujonpradhananga"><img src="https://github.com/Yujonpradhananga.png?size=40" width="40" height="40" alt="Yujonpradhananga" /></a>

@@ -1,6 +1,6 @@
-# CLAUDE.md — Mini Diarium
+# CLAUDE.md — Fenmark (formerly Mini Diarium)
 
-**Mini Diarium** is an encrypted, local-first desktop journaling app (SolidJS + Rust/Tauri v2 + SQLite). All diary entries are AES-256-GCM encrypted at rest; plaintext never touches disk.
+**Fenmark** (formerly Mini Diarium; the crates, binary, and install identifiers keep the `mini-diarium` name) is an encrypted, local-first desktop journaling app (SolidJS + Rust/Tauri v2 + SQLite). All diary entries are AES-256-GCM encrypted at rest; plaintext never touches disk.
 
 **Core principles:** privacy-first (no network), incremental dev, clean architecture, TypeScript strict + Rust type safety.
 

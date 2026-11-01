@@ -1,4 +1,4 @@
-# Contributing to Mini Diarium
+# Contributing to Fenmark
 
 Thanks for your interest in contributing! This guide covers everything you need to get started.
 
@@ -27,7 +27,7 @@ Most contributors never need this — `bun run diagrams:check` (part of the chec
 ### Troubleshooting (Windows)
 
 - **A newly installed tool isn't found (`git`, `d2`, etc.)**: open a **new terminal window**. PATH changes made by an installer are broadcast to new processes only — a shell (or agent session) that was already running won't pick them up.
-- **`bun tauri dev` is slow to become interactive, or the window opens but stays on "Loading Mini Diarium…"**: this was a real bug, fixed on 2026-08-21 — Vite's dev-server file watcher was walking the Cargo `target/` tree at the repo root (40 GB / ~57k files), which starved everything else the dev server had to do and could crash it outright with `EBUSY` during a `cargo build`. **Make sure `server.watch.ignored` in `vite.config.ts` contains `'**/target/**'`.** Full analysis: [`docs/archive/2026-08-21-tauri-dev-startup-slowness-rca.md`](docs/archive/2026-08-21-tauri-dev-startup-slowness-rca.md).
+- **`bun tauri dev` is slow to become interactive, or the window opens but stays on "Loading Fenmark…"**: this was a real bug, fixed on 2026-08-21 — Vite's dev-server file watcher was walking the Cargo `target/` tree at the repo root (40 GB / ~57k files), which starved everything else the dev server had to do and could crash it outright with `EBUSY` during a `cargo build`. **Make sure `server.watch.ignored` in `vite.config.ts` contains `'**/target/**'`.** Full analysis: [`docs/archive/2026-08-21-tauri-dev-startup-slowness-rca.md`](docs/archive/2026-08-21-tauri-dev-startup-slowness-rca.md).
 
   If startup is still slow with that in place, it is *not* Vite's dependency optimizer — measured cold and isolated, a full re-optimize costs about 13 seconds. Excluding the repo from Windows Defender real-time scanning (elevated: `Add-MpPreference -ExclusionPath "<repo path>"`) is a reasonable thing to try, but it was investigated and never shown to be the dominant cost here; treat it as diagnostic, not a setup step.
 
@@ -65,7 +65,7 @@ bun run tauri dev
 
 ## Development Workflow
 
-Mini Diarium follows **trunk-based development**: all changes target `master` and feature branches should be short-lived (one to two days). Long-lived branches are a smell.
+Fenmark follows **trunk-based development**: all changes target `master` and feature branches should be short-lived (one to two days). Long-lived branches are a smell.
 
 1. Fork the repository and create a short-lived feature branch from `master`
 2. Make your changes

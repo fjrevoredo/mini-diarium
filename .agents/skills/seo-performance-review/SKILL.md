@@ -119,7 +119,7 @@ Still run the fixed ~30-query set in
 Perplexity**, which publish no exportable performance data:
 
 - **Attempt automation** with the available web/browser tools where possible (e.g. Perplexity
-  via the browser tool). Record, per engine and per query: (a) whether mini-diarium.com is
+  via the browser tool). Record, per engine and per query: (a) whether fenmark.app is
   cited, and (b) whether the answer language was absorbed (the answer reflects the site's
   framing).
 - **Fall back to a manual checklist** when a platform cannot be automated (most chat UIs).

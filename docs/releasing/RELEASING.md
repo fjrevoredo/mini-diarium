@@ -1,6 +1,6 @@
 # Release Guide
 
-Simple step-by-step instructions for creating a new Mini Diarium release.
+Simple step-by-step instructions for creating a new Fenmark release.
 
 ---
 
@@ -201,7 +201,7 @@ After publishing:
   ```bash
   ./scripts/website-release-urls.sh
   ```
-- [ ] In Google Search Console, inspect `https://mini-diarium.com/` and click "Request indexing"
+- [ ] In Google Search Console, inspect `https://fenmark.app/` and click "Request indexing"
 - [ ] Optionally submit URLs to IndexNow (Bing, Yandex, Seznam, etc.)
   ```bash
   bun run website:submit-indexnow
@@ -209,7 +209,7 @@ After publishing:
   bun run website:submit-indexnow:dry-run
   ```
   Alternatively, trigger the `.github/workflows/indexnow.yml` workflow manually from the Actions tab.
-- [ ] Confirm production hosting still redirects `https://www.mini-diarium.com/` to `https://mini-diarium.com/`
+- [ ] Confirm production hosting still redirects `https://www.fenmark.app/` and the legacy `https://mini-diarium.com/` to `https://fenmark.app/`
 - [ ] Confirm Cloudflare is not injecting the invalid `Content-Signal` directive into `robots.txt`
 - [ ] Test installers on each platform (Windows, macOS, Linux)
 - [ ] Announce release (if applicable)
@@ -226,7 +226,7 @@ After publishing:
   - HTML should remain non-cached
 - Cloudflare-specific ops:
   - disable `robots.txt` Content Signals injection, or move the AI-training policy to a supported header such as `X-Robots-Tag`
-  - keep any Cloudflare canonical-host redirect rules aligned with apex `https://mini-diarium.com/`
+  - keep any Cloudflare canonical-host redirect rules aligned with apex `https://fenmark.app/`
 
 ---
 

@@ -2,7 +2,7 @@
 
 _Last updated: 2026-07-21, applies to v0.4.0+_
 
-This document defines the guiding principles for Mini Diarium. Every feature decision, architectural choice, and contribution must align with these values. When in doubt, refer back here.
+This document defines the guiding principles for Fenmark. Every feature decision, architectural choice, and contribution must align with these values. When in doubt, refer back here.
 
 ---
 
@@ -10,7 +10,7 @@ This document defines the guiding principles for Mini Diarium. Every feature dec
 
 ### 1. Small and Extensible Core
 
-Mini Diarium is built around a minimal, hardened core focused on **safety and performance**. The core handles encryption, data storage, and authentication. Nothing more.
+Fenmark is built around a minimal, hardened core focused on **safety and performance**. The core handles encryption, data storage, and authentication. Nothing more.
 
 **What this means:**
 - Core features must be essential to the primary use case: writing and protecting diary entries
@@ -66,7 +66,7 @@ Testing follows the classic pyramid: many unit tests, some integration tests, a 
 
 ### 4. Easy In, Easy Out
 
-Users should feel safe adopting Mini Diarium, knowing they can leave whenever they want with their data intact.
+Users should feel safe adopting Fenmark, knowing they can leave whenever they want with their data intact.
 
 **Import:**
 - Support common journal formats from other tools
@@ -84,14 +84,14 @@ JSON is the structural export path. Markdown is a human-readable, best-effort co
 **No lock-in:**
 - Data stays in a documented, open schema
 - Encryption uses standard algorithms with no proprietary wrapping
-- If Mini Diarium becomes unmaintained, users can decrypt and migrate with standard tools
+- If Fenmark becomes unmaintained, users can decrypt and migrate with standard tools
 - Users should stay because they want to, not because they're trapped
 
 ---
 
 ### 5. Focused Scope
 
-Mini Diarium serves one purpose exceptionally well: **private, encrypted journaling**. We don't try to accommodate every possible use case.
+Fenmark serves one purpose exceptionally well: **private, encrypted journaling**. We don't try to accommodate every possible use case.
 
 **What we do:**
 - Encrypted diary entries with rich-text support and statistics
@@ -162,7 +162,7 @@ If any principle is violated without strong justification, the proposal should b
 
 Some principles are absolute:
 
-- **No network access.** Mini Diarium never initiates any network connection; no telemetry, no update checks, no sync, no analytics. When you click a help or documentation link (About screen, Onboarding), the OS opener hands the URL to your system browser; Mini Diarium makes no network call itself. The browser's subsequent connection is entirely independent of this app.
+- **No network access.** Fenmark never initiates any network connection; no telemetry, no update checks, no sync, no analytics. When you click a help or documentation link (About screen, Onboarding), the OS opener hands the URL to your system browser; Fenmark makes no network call itself. The browser's subsequent connection is entirely independent of this app.
 - **No custom cryptography.** Use standard algorithms and established libraries only.
 - **No password recovery.** Password recovery requires either storing the master key in recoverable form (weakening the encryption guarantee) or trusting a third-party service (violating the no-network principle). Neither is acceptable. If you lose all credentials, your data is inaccessible; this is the correct security outcome. To mitigate accidental lockout, register a second authentication method as a backup.
 - **No vendor lock-in.** Users must be able to export and migrate their data freely at any time.
@@ -172,7 +172,7 @@ Some principles are absolute:
 
 ## Closing Thoughts
 
-Mini Diarium is intentionally small. It does one thing well: keeping your journal private, secure, and portable. If a feature doesn't serve that goal, it doesn't belong here.
+Fenmark is intentionally small. It does one thing well: keeping your journal private, secure, and portable. If a feature doesn't serve that goal, it doesn't belong here.
 
 ---
 ---
@@ -253,7 +253,7 @@ Both `ImportOverlay.tsx` and `ExportOverlay.tsx` are wired to the plugin registr
 - Day One TXT (`dayone_txt.rs`)
 - jrnl JSON (`jrnl.rs`)
 
-Imports preserve source entries as separate records. If imported data lands on a date that already has entries, Mini Diarium creates additional entries for that date rather than merging content heuristically.
+Imports preserve source entries as separate records. If imported data lands on a date that already has entries, Fenmark creates additional entries for that date rather than merging content heuristically.
 
 **Export formats** (each in `crates/mini-diarium-core/src/export/`):
 - JSON: structured export with entry IDs

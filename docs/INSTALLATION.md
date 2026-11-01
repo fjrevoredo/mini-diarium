@@ -25,7 +25,7 @@ for the discussion on older macOS releases.
 
 ## Microsoft Store (Windows)
 
-Mini Diarium is available on the [Microsoft Store](https://apps.microsoft.com/detail/9PJFTX44ZS43). The Store signs the package and handles updates, so there is **no SmartScreen warning** on first launch and nothing to update by hand.
+Fenmark is available on the [Microsoft Store](https://apps.microsoft.com/detail/9PJFTX44ZS43). The Store signs the package and handles updates, so there is **no SmartScreen warning** on first launch and nothing to update by hand.
 
 Install from the listing page:
 
@@ -39,11 +39,11 @@ Or open it directly on Windows:
 start ms-windows-store://pdp/?productid=9PJFTX44ZS43
 ```
 
-> **Note:** A Store (MSIX) install gets its own virtualized per-package data directory, separate from the one used by the `.exe` / `.msi` build. Journals created in a GitHub or WinGet install will **not** appear in the Store build, and vice versa. This is expected MSIX behavior, not a bug. If you already use Mini Diarium, either stay on the build you started with or move your journal folder across by hand.
+> **Note:** A Store (MSIX) install gets its own virtualized per-package data directory, separate from the one used by the `.exe` / `.msi` build. Journals created in a GitHub or WinGet install will **not** appear in the Store build, and vice versa. This is expected MSIX behavior, not a bug. If you already use Fenmark, either stay on the build you started with or move your journal folder across by hand.
 
 ## Windows (WinGet)
 
-The easiest way to install Mini Diarium on Windows is via WinGet:
+The easiest way to install Fenmark on Windows is via WinGet:
 
 ```powershell
 winget install fjrevoredo.MiniDiarium
@@ -57,22 +57,22 @@ winget upgrade fjrevoredo.MiniDiarium
 
 ## Homebrew (macOS)
 
-The easiest way to install Mini Diarium on macOS is via Homebrew:
+The easiest way to install Fenmark on macOS is via Homebrew:
 
 ```sh
 brew tap fjrevoredo/mini-diarium
 brew install --cask mini-diarium
 ```
 
-> **Note:** Mini Diarium is not code-signed. On first launch, macOS Gatekeeper may show a "damaged and can't be opened" error. Run the following command in Terminal, then open the app normally:
+> **Note:** Fenmark is not code-signed. On first launch, macOS Gatekeeper may show a "damaged and can't be opened" error. Run the following command in Terminal, then open the app normally:
 >
 > ```sh
-> xattr -cr "/Applications/Mini Diarium.app"
+> xattr -cr "/Applications/Fenmark.app"
 > ```
 
 ## Flatpak (Linux)
 
-Mini Diarium is available on [Flathub](https://flathub.org/apps/io.github.fjrevoredo.mini-diarium). The easiest way to install on Linux is via Flatpak:
+Fenmark is available on [Flathub](https://flathub.org/apps/io.github.fjrevoredo.mini-diarium). The easiest way to install on Linux is via Flatpak:
 
 ```bash
 flatpak install flathub io.github.fjrevoredo.mini-diarium
@@ -92,7 +92,7 @@ flatpak update io.github.fjrevoredo.mini-diarium
 
 ## Nix Flake (Linux)
 
-Mini Diarium ships a flake for `x86_64-linux` and `aarch64-linux`. Flakes must be enabled (`experimental-features = nix-command flakes`).
+Fenmark ships a flake for `x86_64-linux` and `aarch64-linux`. Flakes must be enabled (`experimental-features = nix-command flakes`).
 
 Try it without installing:
 
@@ -144,7 +144,7 @@ An overlay is also exported as `mini-diarium.overlays.default` (adds `pkgs.mini-
 
 Store installs are signed by the Microsoft Store and launch without a warning.
 
-For the GitHub-download and WinGet builds, Windows SmartScreen may show a warning on first launch ("Windows protected your PC"). This is expected for unsigned applications. Click "More info" then "Run anyway" to proceed. Mini Diarium is open source and builds are reproducible from source.
+For the GitHub-download and WinGet builds, Windows SmartScreen may show a warning on first launch ("Windows protected your PC"). This is expected for unsigned applications. Click "More info" then "Run anyway" to proceed. Fenmark is open source and builds are reproducible from source.
 
 **macOS**
 
@@ -153,7 +153,7 @@ macOS Gatekeeper may block the app on first launch with **"damaged and can't be 
 Run this command in Terminal after dragging the app to Applications:
 
 ```bash
-xattr -cr "/Applications/Mini Diarium.app"
+xattr -cr "/Applications/Fenmark.app"
 ```
 
 Then launch the app normally. This is a one-time step.
