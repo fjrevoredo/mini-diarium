@@ -34,17 +34,6 @@ Template:
 
 # Versions
 
-## [Unreleased]
-
-### Changed
-- **Refreshed Fenmark logo and wordmark (TODO-0159)**: The book logo now has a bookmark ribbon (the "mark" in Fenmark) and a cleaner spine, so it reads better at small sizes. The app icon on every platform, the website favicons, and the social preview card use the new logo. The website navigation shows the new Fenmark wordmark next to the logo.
-
-### Fixed
-- **App favicon**: The app's web view now uses the Fenmark logo as its favicon instead of a leftover placeholder image.
-
-### Internal
-- **Brand masters**: `docs/brand/` holds the wordmark and lockup masters (outlined Plus Jakarta Sans, OFL 1.1) with construction rules. The website OG card renders from `og-cover.svg` with Edge headless, and the unused `primary` color scale is removed from `uno.config.ts`.
-
 ## [0.8.0] - Unreleased
 
 ### Changed
@@ -54,6 +43,13 @@ Template:
     - **macOS**: the DMG installs `Fenmark.app` next to the old `Mini Diarium.app`. Delete `Mini Diarium.app` after you install Fenmark; your journals are not stored inside the app.
     - **New journals**: the default folder is now `Documents/Fenmark`. If you already have a `Documents/Mini Diarium` folder, new journals still go there.
     - Install commands (`winget`, `brew`, `flatpak`), store IDs, and the GitHub repository keep their current names for now (TODO-0157).
+- **Refreshed Fenmark logo and wordmark (TODO-0159)**: The book logo now has a bookmark ribbon (the "mark" in Fenmark) and a cleaner spine, so it reads better at small sizes. The app icon on every platform, the website favicons, and the social preview card use the new logo. The website navigation shows the new Fenmark wordmark next to the logo.
+
+### Fixed
+- **App favicon**: The app's web view now uses the Fenmark logo as its favicon instead of a leftover placeholder image.
+
+### Internal
+- **Brand masters**: `docs/brand/` holds the wordmark and lockup masters (outlined Plus Jakarta Sans, OFL 1.1) with construction rules. The website OG card renders from `og-cover.svg` with Edge headless, and the unused `primary` color scale is removed from `uno.config.ts`.
 
 ## [0.7.6] - 26-10-2026
 
