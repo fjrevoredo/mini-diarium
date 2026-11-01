@@ -68,6 +68,11 @@ jobs:
           # 2-space indent matches the cask file formatting
           sed -i.bak "s/^  version \".*\"/  version \"$VERSION\"/" "$FILE"
           sed -i.bak "s/^  sha256 \".*\"/  sha256 \"$SHA256\"/" "$FILE"
+          # The DMG ships "Fenmark.app" since the display-name rename (TODO-0155). Rewrite the
+          # app stanza, the name, the caveats, and the homepage; a no-op once the tap carries the
+          # new values. The cask token and the zap paths (lines with "Library/") stay unchanged.
+          sed -i.bak -e '/Library\//!s/Mini Diarium/Fenmark/g' \
+            -e 's#https://mini-diarium\.com#https://fenmark.app#' "$FILE"
 
           rm "$FILE.bak"
 
