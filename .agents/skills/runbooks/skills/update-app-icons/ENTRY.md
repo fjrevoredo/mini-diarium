@@ -32,7 +32,9 @@ bun run tauri icon public/logo-transparent.svg
 This overwrites every icon variant in `src-tauri/icons/` and keeps the file names.
 
 **3. Website logo copy:** copy the master to `website/assets/logo.svg` (footer logo and the
-generated pages' `<link rel="icon">`).
+generated pages' `<link rel="icon">`). `website/legacy-domain/index.html` is self-contained and
+inlines the master's `<rect>`/`<path>` shapes in its `<svg class="logo">`; paste the new shapes
+there too.
 
 **4. Website favicons** (`website/favicon.ico`, `favicon-16x16.png`, `favicon-32x32.png`,
 `favicon-128x128.png`, `apple-touch-icon.png`):
