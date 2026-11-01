@@ -96,7 +96,7 @@ export default function Sidebar(props: SidebarProps) {
         <div class="flex h-full flex-col">
           {/* Sidebar Header */}
           <div class="flex h-16 items-center justify-between border-b border-primary px-4">
-            <h2 class="text-xl font-bold text-primary">Mini Diarium</h2>
+            <h2 class="text-xl font-bold text-primary">Fenmark</h2>
             <Show when={!props.isCollapsed}>
               <button
                 onClick={() => props.onClose?.()}

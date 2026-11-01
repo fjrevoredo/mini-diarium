@@ -31,7 +31,7 @@
     ProcessorArchitecture="x64" />
 
   <Properties>
-    <DisplayName>Mini Diarium</DisplayName>
+    <DisplayName>Fenmark</DisplayName>
     <PublisherDisplayName>fjrevoredo</PublisherDisplayName>
     <Logo>Assets\StoreLogo.png</Logo>
   </Properties>
@@ -48,7 +48,7 @@
   <Applications>
     <Application Id="MiniDiarium" Executable="mini-diarium.exe" EntryPoint="Windows.FullTrustApplication">
       <uap:VisualElements
-        DisplayName="Mini Diarium"
+        DisplayName="Fenmark"
         Description="An encrypted, local-first desktop journaling app"
         BackgroundColor="#1E1E2E"
         Square150x150Logo="Assets\Square150x150Logo.png"
@@ -59,7 +59,7 @@
           and medium (150x150) tiles carry no such pairing requirement.
         -->
         <uap:DefaultTile
-          ShortName="Mini Diarium"
+          ShortName="Fenmark"
           Square71x71Logo="Assets\Square71x71Logo.png" />
       </uap:VisualElements>
     </Application>

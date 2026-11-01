@@ -244,7 +244,7 @@ export default function JournalPicker() {
         <div class="rounded-lg bg-primary px-8 py-8 shadow-lg">
           {/* Header */}
           <div class="mb-3 flex justify-center">
-            <img src="/logo-transparent.svg" alt="Mini Diarium" class="h-16 w-16 rounded-xl" />
+            <img src="/logo-transparent.svg" alt="Fenmark" class="h-16 w-16 rounded-xl" />
           </div>
           <h1 class="mb-6 text-center text-3xl font-bold text-primary">{t('auth.picker.title')}</h1>
 

@@ -160,14 +160,37 @@ pub fn save_journals(
 /// only the pre-filled `defaultPath` of a native save dialog the user still sees and can
 /// redirect; `add_journal` separately refuses portal handles regardless of how a path arrived.
 ///
-/// `documents_dir` is a parameter rather than being resolved here so this stays pure and
-/// directly testable — the caller supplies the platform lookup.
-pub fn default_journal_dir(app_data_dir: &Path, documents_dir: Option<&Path>) -> PathBuf {
+/// Inside the documents directory the folder is `Fenmark`, unless a `Mini Diarium` folder from
+/// before the rename already exists there: then that folder is kept, so an existing user does
+/// not get a second, empty sibling folder (the caller creates the returned folder eagerly).
+///
+/// `documents_dir` and `is_dir` are parameters rather than being resolved here so this stays
+/// pure and directly testable — the caller supplies the platform lookup and the directory check.
+pub fn default_journal_dir(
+    app_data_dir: &Path,
+    documents_dir: Option<&Path>,
+    is_dir: impl Fn(&Path) -> bool,
+) -> PathBuf {
     match documents_dir {
-        Some(docs) => docs.join("Mini Diarium"),
+        Some(docs) => {
+            // Legacy fallback from the Mini Diarium -> Fenmark rename. Temporary: remove it after
+            // a few releases (tracked in docs/todo/TODO.md, "legacy default journal folder").
+            let legacy = docs.join(LEGACY_JOURNAL_FOLDER_NAME);
+            if is_dir(&legacy) {
+                legacy
+            } else {
+                docs.join(JOURNAL_FOLDER_NAME)
+            }
+        }
         None => app_data_dir.join("journals"),
     }
 }
+
+/// Name of the default journal folder inside the user's documents directory.
+const JOURNAL_FOLDER_NAME: &str = "Fenmark";
+
+/// Default journal folder name used before the rename to Fenmark; still honoured when present.
+const LEGACY_JOURNAL_FOLDER_NAME: &str = "Mini Diarium";
 
 /// Longest journal database filename accepted, in UTF-8 bytes.
 ///

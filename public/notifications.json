@@ -1,6 +1,17 @@
 {
   "entries": [
     {
+      "id": "announcement-renamed-fenmark",
+      "type": "announcement",
+      "version": "0.8.0",
+      "title": "Mini Diarium is now Fenmark",
+      "summary": "The app has a new name: Fenmark. Only the name changes. Your journals, settings, and backups stay exactly where they are.",
+      "body": "## Mini Diarium is now Fenmark\n\nAs announced earlier, we agreed with another journaling app to stop using the name \"Mini Diarium\". The new name is **Fenmark**, and the website is now at fenmark.app.\n\nOnly the name changes. Your journals, settings, backups, and plugins stay where they are, and you do not need to do anything. The store listings and install commands will move to the new name gradually over the next releases.",
+      "date": "2026-11-01",
+      "linkUrl": "https://fenmark.app/blog/mini-diarium-is-now-fenmark/",
+      "linkLabel": "Read the announcement"
+    },
+    {
       "id": "v0.7.6-release",
       "type": "release",
       "version": "0.7.6",

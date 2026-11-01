@@ -82,7 +82,7 @@ describe('ProjectSupportOverlay', () => {
     openOverlay('about');
     renderWithI18n(() => <ProjectSupportOverlay />);
     expect(
-      screen.getByText(/Mini Diarium is free, encrypted, and has no ads or tracking/),
+      screen.getByText(/Fenmark is free, encrypted, and has no ads or tracking/),
     ).toBeInTheDocument();
   });
 
@@ -123,9 +123,9 @@ describe('ProjectSupportOverlay', () => {
   it.each([
     ['support-item-star', 'https://github.com/fjrevoredo/mini-diarium'],
     ['support-item-review', 'https://apps.microsoft.com/detail/9PJFTX44ZS43'],
-    ['support-item-newsletter', 'https://mini-diarium.com/newsletter/'],
+    ['support-item-newsletter', 'https://fenmark.app/newsletter/'],
     ['support-item-contribute', 'https://github.com/fjrevoredo/mini-diarium'],
-    ['support-item-donate', 'https://mini-diarium.com/donate/'],
+    ['support-item-donate', 'https://fenmark.app/donate/'],
   ] as const)('clicking %s opens %s via openUrlSuppressingFocusLoss', (testId, url) => {
     openOverlay('about');
     renderWithI18n(() => <ProjectSupportOverlay />);
@@ -200,7 +200,7 @@ describe('ProjectSupportOverlay', () => {
 
     fireEvent.click(screen.getByTestId('support-item-star'));
 
-    expect(screen.getByText('Thank you for supporting Mini Diarium!')).toBeInTheDocument();
+    expect(screen.getByText('Thank you for supporting Fenmark!')).toBeInTheDocument();
   });
 
   it('closing from the milestone entry point calls dismissSupportMilestone', () => {

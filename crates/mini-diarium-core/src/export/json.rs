@@ -64,7 +64,7 @@ pub fn export_entries_to_json(
 
     let export = json!({
         "metadata": {
-            "application": "Mini Diarium",
+            "application": "Fenmark",
             "version": env!("CARGO_PKG_VERSION"),
             "exportedAt": now,
         },
@@ -124,7 +124,7 @@ mod tests {
         let result = export_entries_to_json(vec![], &empty_tags(), &HashMap::new()).unwrap();
         let parsed: Value = serde_json::from_str(&result).unwrap();
 
-        assert_eq!(parsed["metadata"]["application"], "Mini Diarium");
+        assert_eq!(parsed["metadata"]["application"], "Fenmark");
         assert!(parsed["metadata"]["version"].is_string());
         assert!(parsed["metadata"]["exportedAt"].is_string());
         // entries should be an empty array

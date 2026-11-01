@@ -165,7 +165,7 @@ rustPlatform.buildRustPackage {
 
   meta = {
     description = "An encrypted, local-first desktop journaling application";
-    homepage = "https://mini-diarium.com";
+    homepage = "https://fenmark.app";
     license = lib.licenses.mit;
     platforms = lib.platforms.linux;
     mainProgram = "mini-diarium";

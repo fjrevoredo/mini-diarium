@@ -12,6 +12,6 @@ export const FEEDBACK_EMAIL = 'minidiarium@gmail.com';
  * included — no OS details and no journal data.
  */
 export function buildFeedbackMailto(version: string): string {
-  const subject = version ? `Mini Diarium feedback (v${version})` : 'Mini Diarium feedback';
+  const subject = version ? `Fenmark feedback (v${version})` : 'Fenmark feedback';
   return `mailto:${FEEDBACK_EMAIL}?subject=${encodeURIComponent(subject)}`;
 }

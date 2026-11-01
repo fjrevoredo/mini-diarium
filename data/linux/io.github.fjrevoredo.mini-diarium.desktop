@@ -1,9 +1,9 @@
 [Desktop Entry]
-Name=Mini Diarium
+Name=Fenmark
 Comment=An encrypted, local-first desktop journaling app
 Exec=mini-diarium
 Icon=io.github.fjrevoredo.mini-diarium
 Type=Application
 Categories=Office;
-Keywords=journal;diary;encrypted;notes;private;
+Keywords=journal;diary;encrypted;notes;private;Mini Diarium;
 StartupWMClass=Mini Diarium

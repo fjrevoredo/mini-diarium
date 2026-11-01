@@ -111,7 +111,7 @@ pub fn open_snapshot_readonly(
 
     let version: i32 = conn
         .query_row("SELECT version FROM schema_version", [], |row| row.get(0))
-        .map_err(|_| "This backup is not a readable Mini Diarium journal.".to_string())?;
+        .map_err(|_| "This backup is not a readable Fenmark journal.".to_string())?;
 
     // Auth slots arrived in v3. Older snapshots keep their key in the legacy `metadata`
     // table, and reading them means migrating them — which this module must never do.

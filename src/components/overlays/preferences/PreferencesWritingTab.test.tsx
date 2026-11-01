@@ -110,7 +110,7 @@ describe('PreferencesWritingTab', () => {
     ).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /open the spell-check setup guide/i }));
     expect(mockOpenUrl).toHaveBeenCalledWith(
-      'https://mini-diarium.com/docs/preferences/#spell-check-on-linux',
+      'https://fenmark.app/docs/preferences/#spell-check-on-linux',
     );
   });
 
@@ -139,7 +139,7 @@ describe('PreferencesWritingTab', () => {
     renderTab();
 
     expect(
-      await screen.findByText(/spell check should be included with Mini Diarium/i),
+      await screen.findByText(/spell check should be included with Fenmark/i),
     ).toBeInTheDocument();
     expect(
       screen.getByRole('button', { name: /open the spell-check setup guide/i }),
@@ -157,7 +157,7 @@ describe('PreferencesWritingTab', () => {
     renderTab();
 
     expect(await screen.findByText(/Flatpak 版不包含中文拼写检查词典/)).toBeInTheDocument();
-    expect(screen.queryByText(/拼写检查应包含在 Mini Diarium 中/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/拼写检查应包含在 Fenmark 中/)).not.toBeInTheDocument();
     expect(screen.getByRole('button', { name: /打开拼写检查设置指南/ })).toBeInTheDocument();
   });
 

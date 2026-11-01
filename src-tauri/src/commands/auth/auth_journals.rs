@@ -270,11 +270,11 @@ fn get_default_journal_dir_inner(
 ) -> Result<String, String> {
     // Created eagerly: the picker shows this path as an accomplished fact, and `add_journal`
     // rejects a directory that does not exist.
-    let preferred = config::default_journal_dir(app_data_dir, documents_dir);
+    let preferred = config::default_journal_dir(app_data_dir, documents_dir, |p| p.is_dir());
     let dir = if ensure_usable_dir(&preferred) {
         preferred
     } else {
-        let fallback = config::default_journal_dir(app_data_dir, None);
+        let fallback = config::default_journal_dir(app_data_dir, None, |p| p.is_dir());
         if documents_dir.is_none() || !ensure_usable_dir(&fallback) {
             // No path in the message: `Failed to create` routes it to the frontend's
             // filesystem bucket, which is what this genuinely is.
@@ -561,7 +561,23 @@ mod tests {
         );
         // The whole point: the pre-filled location must survive add_journal's own checks.
         assert!(check_journal_location(&dir, Some("diary.db")).is_ok());
-        assert_eq!(std::path::Path::new(&dir), documents.join("Mini Diarium"));
+        assert_eq!(std::path::Path::new(&dir), documents.join("Fenmark"));
+    }
+
+    #[test]
+    fn test_default_journal_dir_reuses_existing_legacy_folder() {
+        let env = make_test_env("default_dir_legacy");
+        let documents = env.temp_dir.path().join("Documents");
+        let legacy = documents.join("Mini Diarium");
+        fs::create_dir_all(&legacy).unwrap();
+
+        let dir = get_default_journal_dir_inner(&env.app_dir, Some(&documents)).unwrap();
+
+        assert_eq!(std::path::Path::new(&dir), legacy);
+        assert!(
+            !documents.join("Fenmark").exists(),
+            "an existing user must not get a second, empty folder"
+        );
     }
 
     #[test]

@@ -3,12 +3,12 @@
   <id>io.github.fjrevoredo.mini-diarium</id>
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>MIT</project_license>
-  <name>Mini Diarium</name>
+  <name>Fenmark</name>
   <summary>An encrypted, local-first desktop journal</summary>
   <description>
     <p>
-      Mini Diarium is a private journaling app for your desktop. All diary entries are
-      encrypted with AES-256-GCM at rest — plaintext never touches disk. Your journal
+      Fenmark (formerly Mini Diarium) is a private journaling app for your desktop. All diary
+      entries are encrypted with AES-256-GCM at rest — plaintext never touches disk. Your journal
       stays entirely on your machine: no cloud sync, no network connections, no telemetry.
     </p>
     <p>Features include:</p>
@@ -26,7 +26,7 @@
 
   <launchable type="desktop-id">io.github.fjrevoredo.mini-diarium.desktop</launchable>
 
-  <url type="homepage">https://mini-diarium.com</url>
+  <url type="homepage">https://fenmark.app</url>
   <url type="bugtracker">https://github.com/fjrevoredo/mini-diarium/issues</url>
   <url type="vcs-browser">https://github.com/fjrevoredo/mini-diarium</url>
 

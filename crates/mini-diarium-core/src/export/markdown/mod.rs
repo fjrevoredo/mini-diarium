@@ -29,7 +29,7 @@ use assets::{extract_and_replace_with_assets, inline_replace_images};
 ///
 /// Format (single entry per day):
 /// ```markdown
-/// # Mini Diarium
+/// # Fenmark
 ///
 /// ## 2024-01-15
 /// **My Title**
@@ -38,7 +38,7 @@ use assets::{extract_and_replace_with_assets, inline_replace_images};
 ///
 /// Format (multiple entries per day):
 /// ```markdown
-/// # Mini Diarium
+/// # Fenmark
 ///
 /// ## 2024-01-15
 /// ### Morning Entry
@@ -86,7 +86,7 @@ fn walk_date_groups<F>(
 where
     F: FnMut(&DiaryEntry) -> String,
 {
-    let mut output = String::from("# Mini Diarium\n");
+    let mut output = String::from("# Fenmark\n");
     for (date, group) in group_entries_by_date(entries) {
         output.push_str(&format!("\n## {}\n", date));
         let multi = group.len() > 1;
@@ -197,7 +197,7 @@ mod tests {
     #[test]
     fn test_export_empty_list() {
         let result = export_entries_to_markdown(vec![], &empty_tags());
-        assert_eq!(result, "# Mini Diarium\n");
+        assert_eq!(result, "# Fenmark\n");
     }
 
     #[test]
@@ -205,7 +205,7 @@ mod tests {
         let entries = vec![create_test_entry("2024-01-15", "My Entry", "Hello world")];
 
         let result = export_entries_to_markdown(entries, &empty_tags());
-        assert!(result.contains("# Mini Diarium"));
+        assert!(result.contains("# Fenmark"));
         assert!(result.contains("## 2024-01-15"));
         assert!(result.contains("**My Entry**"));
         assert!(result.contains("Hello world"));

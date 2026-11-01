@@ -18,13 +18,11 @@ describe('feedback-links', () => {
 
   it('builds a mailto link with the version in an encoded subject', () => {
     expect(buildFeedbackMailto('0.7.4')).toBe(
-      `mailto:${FEEDBACK_EMAIL}?subject=Mini%20Diarium%20feedback%20(v0.7.4)`,
+      `mailto:${FEEDBACK_EMAIL}?subject=Fenmark%20feedback%20(v0.7.4)`,
     );
   });
 
   it('omits the version when it is empty', () => {
-    expect(buildFeedbackMailto('')).toBe(
-      'mailto:minidiarium@gmail.com?subject=Mini%20Diarium%20feedback',
-    );
+    expect(buildFeedbackMailto('')).toBe('mailto:minidiarium@gmail.com?subject=Fenmark%20feedback');
   });
 });
