@@ -156,8 +156,9 @@ section {
   color: var(--text);
 }
 
+/* The nav logo is the horizontal lockup (book + wordmark); width follows its aspect ratio. */
 .nav-logo {
-  width: 28px;
+  width: auto;
   height: 28px;
 }
 

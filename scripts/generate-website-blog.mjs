@@ -277,8 +277,7 @@ function buildNav() {
 <nav class="nav" aria-label="Main navigation">
   <div class="container nav-inner">
     <a class="nav-brand" href="/">
-      <img src="/assets/logo.svg" alt="Fenmark logo" class="nav-logo" width="28" height="28" />
-      Fenmark
+      <img src="/assets/fenmark-lockup.svg" alt="Fenmark" class="nav-logo" width="143" height="28" />
     </a>
 
     <ul class="nav-links" id="nav-links">
