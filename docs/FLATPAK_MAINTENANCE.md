@@ -201,6 +201,64 @@ appstreamcli validate data/linux/io.github.fjrevoredo.mini-diarium.metainfo.xml
 
 Important: Flathub treats both AppStream warnings and errors as submission blockers in practice. Fix them before shipping.
 
+`appstreamcli validate` also fetches every URL in the file. When the homepage is down, the
+check fails with `url-not-reachable`. Add `--no-net` to validate the file content only.
+
+### Refreshing the Flathub screenshots
+
+The metainfo file pins three screenshots in `public/promotional/flatpak/` (`main.png`,
+`calendar.png`, `preferences.png`) by commit SHA. A new set reaches Flathub only with the next
+release, because Flathub reads the metainfo file from the release commit.
+
+Rules (Flathub [quality guidelines](https://docs.flathub.org/docs/for-app-authors/metainfo-guidelines/quality-guidelines)):
+
+- Take them on Linux with default GNOME (Adwaita). Fedora Workstation is the closest to
+  default GNOME. Ubuntu's Yaru theme is acceptable but not ideal.
+- Capture only the window, with its native decoration and shadow. No wallpaper, no edits.
+- The window is at most 1000×700 (2000×1400 on a HiDPI screen).
+- The UI is in English. A screenshot in another language needs an `xml:lang` attribute.
+- Use a sample journal with made-up entries, never personal data.
+
+Steps:
+
+1. Get a current build: the AppImage or `.deb` from the CI run of the branch
+   (`gh run download <run-id> -n mini-diarium-ubuntu-latest`), or build from source.
+2. Set the window size. On X11 or XWayland, start the app with `GDK_BACKEND=x11` and run
+   `xdotool search --name Fenmark windowsize 1000 700`. On Wayland without XWayland, resize
+   by hand and check the size afterwards.
+3. Capture each view with GNOME Screenshot in window mode (Print Screen, then the window
+   option). Keep the file names: `main.png` (the editor with an entry), `calendar.png` (the
+   calendar with several days that have entries), `preferences.png` (Preferences open).
+4. Commit the three PNG files and push. Write down the commit SHA.
+5. In a second commit, set each `<image>` URL to that SHA, and set `width`/`height` to the
+   real pixel size of each file (`file public/promotional/flatpak/*.png`). Then run
+   `appstreamcli validate --no-net data/linux/io.github.fjrevoredo.mini-diarium.metainfo.xml`.
+
+### Checking the window class (`StartupWMClass`)
+
+GNOME groups a running window under its launcher only when the window matches the desktop
+file. If it does not match, the dock shows a second, generic icon. The binary is
+`mini-diarium`, and the app does not set a GTK application ID, so the window identity
+probably comes from the binary name. `data/linux/io.github.fjrevoredo.mini-diarium.desktop`
+has `StartupWMClass=Mini Diarium`, and nobody has checked it on a real system. Note that
+GNOME can also match a Flatpak window through its sandbox app ID, so the result can be
+correct even when the class does not match.
+
+1. Install the Flathub build: `flatpak install flathub io.github.fjrevoredo.mini-diarium`.
+   Its desktop file has the same `StartupWMClass` line.
+2. Start the app from the app grid, in the default (Wayland) session. Pass when the dock
+   shows one icon with the app logo and the window is grouped under it.
+3. Read the real window identity:
+   - Wayland: press Alt+F2, type `lg`, open the Windows tab, and read `wmclass` and `app`
+     for the window.
+   - X11 or XWayland: run `flatpak run --env=GDK_BACKEND=x11 io.github.fjrevoredo.mini-diarium`,
+     then `xprop WM_CLASS` and click the window. The second string is the class.
+4. Do the same with the `.deb` build. Tauri generates the desktop file for the `.deb`, so
+   compare its `StartupWMClass` (`grep StartupWMClass /usr/share/applications/*.desktop`)
+   with the class too.
+5. If the dock shows a second icon, set `StartupWMClass` to the class that step 3 shows, run
+   `desktop-file-validate`, rebuild the Flatpak, and repeat step 2.
+
 ## Local Validation Checklist
 
 Before changing anything significant in the Flatpak package, validate locally on Linux:
