@@ -9,7 +9,7 @@ import { formatDateWithStyle, getTodayString } from '../../../lib/dates';
 import { getSpellcheckStatus } from '../../../lib/tauri';
 import { openUrl } from '@tauri-apps/plugin-opener';
 
-const SPELLCHECK_SETUP_GUIDE = 'https://mini-diarium.com/docs/preferences/#spell-check-on-linux';
+const SPELLCHECK_SETUP_GUIDE = 'https://fenmark.app/docs/preferences/#spell-check-on-linux';
 
 export default function PreferencesWritingTab(_props: TabProps) {
   const t = useI18n();

@@ -3,12 +3,12 @@
   <id>io.github.fjrevoredo.mini-diarium</id>
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>MIT</project_license>
-  <name>Mini Diarium</name>
+  <name>Fenmark</name>
   <summary>An encrypted, local-first desktop journal</summary>
   <description>
     <p>
-      Mini Diarium is a private journaling app for your desktop. All diary entries are
-      encrypted with AES-256-GCM at rest — plaintext never touches disk. Your journal
+      Fenmark (formerly Mini Diarium) is a private journaling app for your desktop. All diary
+      entries are encrypted with AES-256-GCM at rest — plaintext never touches disk. Your journal
       stays entirely on your machine: no cloud sync, no network connections, no telemetry.
     </p>
     <p>Features include:</p>
@@ -26,9 +26,14 @@
 
   <launchable type="desktop-id">io.github.fjrevoredo.mini-diarium.desktop</launchable>
 
-  <url type="homepage">https://mini-diarium.com</url>
+  <url type="homepage">https://fenmark.app</url>
   <url type="bugtracker">https://github.com/fjrevoredo/mini-diarium/issues</url>
   <url type="vcs-browser">https://github.com/fjrevoredo/mini-diarium</url>
+
+  <branding>
+    <color type="primary" scheme_preference="light">#9cc3f5</color>
+    <color type="primary" scheme_preference="dark">#1f3a63</color>
+  </branding>
 
   <developer id="io.github.fjrevoredo">
     <name>Francisco J. Revoredo</name>
@@ -37,20 +42,23 @@
   <screenshots>
     <screenshot type="default">
       <caption>Main journal view</caption>
-      <image type="source" width="1920" height="1080">https://raw.githubusercontent.com/fjrevoredo/mini-diarium/2737c02b96855240122c7bb3586a1f0276fdf439/public/promotional/flatpak/main.png</image>
+      <image type="source" width="1000" height="700">https://raw.githubusercontent.com/fjrevoredo/mini-diarium/76c8c76d4ba35569f372b4d070df3c9b293761ce/public/promotional/flatpak/main.png</image>
     </screenshot>
     <screenshot>
       <caption>Calendar navigation</caption>
-      <image type="source" width="1920" height="1080">https://raw.githubusercontent.com/fjrevoredo/mini-diarium/2737c02b96855240122c7bb3586a1f0276fdf439/public/promotional/flatpak/calendar.png</image>
+      <image type="source" width="1000" height="700">https://raw.githubusercontent.com/fjrevoredo/mini-diarium/76c8c76d4ba35569f372b4d070df3c9b293761ce/public/promotional/flatpak/calendar.png</image>
     </screenshot>
     <screenshot>
       <caption>Preferences</caption>
-      <image type="source" width="1920" height="1080">https://raw.githubusercontent.com/fjrevoredo/mini-diarium/2737c02b96855240122c7bb3586a1f0276fdf439/public/promotional/flatpak/preferences.png</image>
+      <image type="source" width="1000" height="700">https://raw.githubusercontent.com/fjrevoredo/mini-diarium/76c8c76d4ba35569f372b4d070df3c9b293761ce/public/promotional/flatpak/preferences.png</image>
     </screenshot>
   </screenshots>
 
   <releases>
     <!-- New release entries are prepended here by bump-version.sh -->
+    <release version="0.8.0" date="2026-11-02">
+      <url type="details">https://github.com/fjrevoredo/mini-diarium/releases/tag/v0.8.0</url>
+    </release>
     <release version="0.7.6" date="2026-10-26">
       <url type="details">https://github.com/fjrevoredo/mini-diarium/releases/tag/v0.7.6</url>
     </release>

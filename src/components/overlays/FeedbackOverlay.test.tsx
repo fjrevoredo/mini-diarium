@@ -30,7 +30,7 @@ describe('FeedbackOverlay', () => {
       'feedback-feature',
       'https://github.com/fjrevoredo/mini-diarium/issues/new?template=feature_request.md',
     ],
-    ['feedback-email', 'mailto:minidiarium@gmail.com?subject=Mini%20Diarium%20feedback%20(v9.8.7)'],
+    ['feedback-email', 'mailto:minidiarium@gmail.com?subject=Fenmark%20feedback%20(v9.8.7)'],
   ] as const)('clicking %s opens %s via openUrlSuppressingFocusLoss', async (testId, url) => {
     renderWithI18n(() => <FeedbackOverlay isOpen={true} onClose={vi.fn()} />);
     // The email subject depends on the version, so wait until it has resolved.

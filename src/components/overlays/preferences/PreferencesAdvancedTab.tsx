@@ -131,7 +131,7 @@ export default function PreferencesAdvancedTab(props: TabProps) {
           <button
             type="button"
             class="underline text-xs text-tertiary hover:text-primary focus:outline-none"
-            onClick={() => openUrl('https://mini-diarium.com/docs/preferences/')}
+            onClick={() => openUrl('https://fenmark.app/docs/preferences/')}
           >
             {t('prefs.advanced.seeUserGuide')}
           </button>

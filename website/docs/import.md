@@ -1,18 +1,18 @@
 # Importing Data
 
-> Import journal entries from Mini Diary, Day One, jrnl, or plain text files. Mini Diarium includes built-in importers and supports custom Rhai import plugins.
+> Import journal entries from Mini Diary, Day One, jrnl, or plain text files. Fenmark includes built-in importers and supports custom Rhai import plugins.
 
-Source: https://mini-diarium.com/docs/import/
+Source: https://fenmark.app/docs/import/
 
 ## Opening the Import Dialog
 
 Click the **⋮** menu in the header and select **Import...**.
 
-![Import Entries dialog with a format dropdown and a file picker](https://mini-diarium.com/assets/docs/import-01-dialog.webp "The Import Entries dialog")
+![Import Entries dialog with a format dropdown and a file picker](https://fenmark.app/assets/docs/import-01-dialog.webp "The Import Entries dialog")
 
 ## Built-In Import Formats
 
-Mini Diarium can import entries from several popular journaling apps:
+Fenmark can import entries from several popular journaling apps:
 
 | Format | Source App | How to Export |
 |--------|-----------|---------------|
@@ -23,7 +23,7 @@ Mini Diarium can import entries from several popular journaling apps:
 
 ## How Imports Work
 
-Imports are **additive**. If an imported entry falls on a date that already has entries in Mini Diarium, the imported content is added as an additional entry for that date rather than merging or replacing existing content.
+Imports are **additive**. If an imported entry falls on a date that already has entries in Fenmark, the imported content is added as an additional entry for that date rather than merging or replacing existing content.
 
 This means you can safely import without worrying about overwriting your existing writing.
 
@@ -31,10 +31,10 @@ Images embedded in the import file as `data:` images are stored in your journal'
 
 ## Migrating from Mini Diary
 
-Mini Diary users can migrate all their entries to Mini Diarium:
+Mini Diary users can migrate all their entries to Fenmark:
 
 1. Open Mini Diary and export your journal as JSON.
-2. Open Mini Diarium and go to **Journal → Import...**.
+2. Open Fenmark and go to **Journal → Import...**.
 3. Select **Mini Diary JSON** from the format dropdown.
 4. Choose the exported file.
 

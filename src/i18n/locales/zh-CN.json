@@ -33,7 +33,7 @@
     },
     "sidebar": {
       "navigation": "导航",
-      "title": "Mini Diarium",
+      "title": "Fenmark",
       "closeMenu": "关闭菜单",
       "goToToday": "前往今天"
     }
@@ -86,7 +86,7 @@
   },
   "auth": {
     "picker": {
-      "title": "Mini Diarium",
+      "title": "Fenmark",
       "yourJournals": "您的日记",
       "yourJournalsAria": "您的日记",
       "empty": "暂无日记。创建新日记或打开已有日记。",
@@ -118,7 +118,7 @@
       "opening": "打开中..."
     },
     "prompt": {
-      "title": "Mini Diarium",
+      "title": "Fenmark",
       "unlockFallback": "解锁您的日记",
       "unlockPrefix": "解锁",
       "backToJournals": "← 返回日记",
@@ -148,7 +148,7 @@
       "multiAuthLoadError": "无法加载认证方式。"
     },
     "creation": {
-      "title": "欢迎使用 Mini Diarium",
+      "title": "欢迎使用 Fenmark",
       "subtitle": "创建密码以保护您的日记",
       "passwordLabel": "密码",
       "passwordHint": "（至少 1 个字符，建议 12 个以上）",
@@ -339,9 +339,9 @@
       "showTimestampsHint": "在当前记录标题下方显示创建时间和最后更新时间。",
       "spellcheckLabel": "启用拼写检查",
       "spellcheckHint": "如果开启，内置拼写检查会为拼写错误的单词添加下划线。",
-      "spellcheckDictionaryMissing": "拼写检查需要中文语言包。请打开电脑上的「程序（软件）」应用并搜索「中文拼写检查」。安装建议的语言支持，然后重启 Mini Diarium。",
-      "spellcheckDictionaryMissingFlatpak": "拼写检查应包含在 Mini Diarium 中。请在电脑上打开「程序（软件）」应用，更新 Mini Diarium，然后重启。如果此警告仍然存在，请重新安装 Mini Diarium。",
-      "spellcheckDictionaryMissingFlatpakChinese": "Flatpak 版不包含中文拼写检查词典。更新或重新安装 Mini Diarium 不会添加词典。请安装 zh_CN 词典，或打开拼写检查设置指南。",
+      "spellcheckDictionaryMissing": "拼写检查需要中文语言包。请打开电脑上的「程序（软件）」应用并搜索「中文拼写检查」。安装建议的语言支持，然后重启 Fenmark。",
+      "spellcheckDictionaryMissingFlatpak": "拼写检查应包含在 Fenmark 中。请在电脑上打开「程序（软件）」应用，更新 Fenmark，然后重启。如果此警告仍然存在，请重新安装 Fenmark。",
+      "spellcheckDictionaryMissingFlatpakChinese": "Flatpak 版不包含中文拼写检查词典。更新或重新安装 Fenmark 不会添加词典。请安装 zh_CN 词典，或打开拼写检查设置指南。",
       "spellcheckDictionaryHelp": "打开拼写检查设置指南",
       "toolbarItemsLabel": "工具栏项目",
       "toolbarItemsHint": "自定义编辑器工具栏中显示的格式项目及其顺序。",
@@ -387,7 +387,7 @@
       "customFontChooseFile": "选择文件…",
       "customFontFamilyLabel": "字体族名称",
       "customFontAddButton": "添加字体",
-      "customFontMissingBold": "缺少粗体字形——Mini Diarium 将让浏览器合成粗体文本，显示效果可能不佳。",
+      "customFontMissingBold": "缺少粗体字形——Fenmark 将让浏览器合成粗体文本，显示效果可能不佳。",
       "customFontDeleteButton": "删除",
       "customFontDeleteAriaLabel": "删除自定义字体 {{ family }}",
       "customFontFamilyRequired": "字体族名称必填。",
@@ -633,7 +633,8 @@
   "about": {
     "title": "关于",
     "closeAria": "关闭",
-    "appName": "Mini Diarium",
+    "appName": "Fenmark",
+    "formerlyName": "（原名 Mini Diarium）",
     "version": "版本 {{ version }}",
     "description": "用于撰写加密日记的桌面应用，数据本地存储。",
     "license": "MIT 许可证",
@@ -642,7 +643,7 @@
     "docsLink": "文档",
     "opensInBrowser": "将在系统浏览器中打开",
     "showTour": "显示欢迎导览",
-    "supportLink": "支持 Mini Diarium"
+    "supportLink": "支持 Fenmark"
   },
   "feedback": {
     "title": "发送反馈",
@@ -671,18 +672,18 @@
     "detailCloseAria": "关闭通知详情"
   },
   "support": {
-    "title": "支持 Mini Diarium",
+    "title": "支持 Fenmark",
     "closeAria": "关闭",
-    "headerIconAria": "支持 Mini Diarium",
-    "openingLineAbout": "Mini Diarium 是一款免费、加密的应用，无广告、无追踪。如果它对您有用，这里有一些方式可以帮助它继续发展。",
-    "openingLineMilestone": "您已连续写作 {{ streak }} 天，共写了 {{ words }} 字。如果 Mini Diarium 帮助您保持了这一习惯，这里有一些方式可以支持它。",
+    "headerIconAria": "支持 Fenmark",
+    "openingLineAbout": "Fenmark 是一款免费、加密的应用，无广告、无追踪。如果它对您有用，这里有一些方式可以帮助它继续发展。",
+    "openingLineMilestone": "您已连续写作 {{ streak }} 天，共写了 {{ words }} 字。如果 Fenmark 帮助您保持了这一习惯，这里有一些方式可以支持它。",
     "footerDefault": "这些步骤中的每一步，帮助都比您想象的要大。",
-    "footerThanked": "感谢您支持 Mini Diarium！",
+    "footerThanked": "感谢您支持 Fenmark！",
     "itemStarLabel": "在 GitHub 上为项目点亮星标",
     "itemStarButton": "在 GitHub 上点亮星标",
     "itemReviewLabel": "在 Microsoft Store 留下评价",
     "itemReviewButton": "留下评价",
-    "itemShareLabel": "与朋友分享 Mini Diarium",
+    "itemShareLabel": "与朋友分享 Fenmark",
     "itemShareButton": "复制消息以发送",
     "itemNewsletterLabel": "订阅邮件通讯",
     "itemNewsletterButton": "订阅",
@@ -690,7 +691,7 @@
     "itemContributeButton": "贡献力量",
     "itemDonateLabel": "进行捐赠",
     "itemDonateButton": "捐赠",
-    "shareMessage": "我在使用 Mini Diarium——一款免费的加密日记应用，无广告、无追踪。值得一试：https://mini-diarium.com/",
+    "shareMessage": "我在使用 Fenmark——一款免费的加密日记应用，无广告、无追踪。值得一试：https://fenmark.app/",
     "shareCopyFailed": "复制失败——请复制这条消息：{{ message }}"
   },
   "timestamp": {
@@ -762,7 +763,7 @@
     "refLoading": "正在加载附件"
   },
   "onboarding": {
-    "title": "欢迎使用 Mini Diarium",
+    "title": "欢迎使用 Fenmark",
     "subtitle": "几条入门的建议：",
     "tip_toolbar_title": "自定义工具栏",
     "tip_toolbar_body": "默认情况下，工具栏只显示「加粗」和「斜体」。打开「设置 → 记录」以启用更多工具——标题、颜色、列表、对齐——并按您的喜好排列。",
@@ -771,7 +772,7 @@
     "tip_import_body": "从 Day One、Obsidian 或文本文件导入记录。",
     "tip_import_action": "打开导入",
     "tip_docs_title": "完整的在线文档",
-    "tip_docs_body": "Mini Diarium 网站提供所有功能的完整文档：快捷键、工具栏选项、导入格式、加密详情等等。",
+    "tip_docs_body": "Fenmark 网站提供所有功能的完整文档：快捷键、工具栏选项、导入格式、加密详情等等。",
     "tip_docs_action": "打开文档",
     "dismiss": "跳过",
     "back": "上一步",
@@ -800,7 +801,7 @@
     "cannotReadKeyFile": "无法读取密钥文件。请检查文件是否存在且具有读取权限。",
     "cannotSaveKeyFile": "无法保存密钥文件。请检查文件夹权限。",
     "fileOperationFailed": "文件操作失败。请检查是否具有所需权限。",
-    "portalPathRejected": "此文件夹仅由 Mini Diarium 临时提供，保存在那里的日记之后将无法打开。请改用默认位置。",
+    "portalPathRejected": "此文件夹仅由 Fenmark 临时提供，保存在那里的日记之后将无法打开。请改用默认位置。",
     "backupFileRejected": "此文件是备份。直接打开它会修改它。请先将其复制到其他位置，然后打开副本。",
     "journalAlreadyRegistered": "此日记已在您的列表中。请从上面的列表打开它，而不是重新添加。",
     "invalidJournalFilename": "此文件名不能用于日记。请使用更短的名称，且不含 / 或 * 等特殊字符。",

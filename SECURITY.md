@@ -1,6 +1,6 @@
 # Security Policy
 
-> **Note**: Mini Diarium is a hobby project maintained in my spare time. While I take security seriously, I can't provide enterprise-level guarantees or rapid response times. Use this software at your own risk.
+> **Note**: Fenmark is a hobby project maintained in my spare time. While I take security seriously, I can't provide enterprise-level guarantees or rapid response times. Use this software at your own risk.
 
 ## Supported Versions
 
@@ -28,7 +28,7 @@ If you don't hear back within a couple weeks, feel free to send a follow-up remi
 
 ## Threat Model
 
-Mini Diarium is designed to protect diary content against a specific, well-defined threat: **an attacker who obtains a copy of your diary file** (e.g. from a stolen device, a compromised cloud sync folder, or a backup). In that scenario, the attacker sees only ciphertext.
+Fenmark is designed to protect diary content against a specific, well-defined threat: **an attacker who obtains a copy of your diary file** (e.g. from a stolen device, a compromised cloud sync folder, or a backup). In that scenario, the attacker sees only ciphertext.
 
 ### Protected against
 
@@ -41,7 +41,7 @@ Mini Diarium is designed to protect diary content against a specific, well-defin
 ### Not protected against
 
 - **A running session on your device** — while the diary is unlocked, decrypted content and the master key exist in process memory. An attacker with local code execution or physical access to an unlocked, running session can read diary content. Locking the diary mitigates this; full mitigation requires OS-level memory protection outside the app's control.
-- **Malicious software on your device** — Mini Diarium does not defend against keyloggers, screen capture malware, or processes that can read another process's memory (e.g. via `ptrace`). Protect your device first.
+- **Malicious software on your device** — Fenmark does not defend against keyloggers, screen capture malware, or processes that can read another process's memory (e.g. via `ptrace`). Protect your device first.
 - **Compromise of your sync provider** — if you store `diary.db` in a cloud-sync folder, the sync provider sees only the encrypted file. However, if the sync provider is also used to sync your key file or is an attack vector for modifying files on your device, that threat is outside the app's scope.
 - **Coercion or credential theft** — if an attacker can observe you typing your password or steal your key file from an unlocked device, the encryption offers no protection.
 
@@ -75,7 +75,7 @@ Derived wrapping keys are stored only in Rust stack or heap memory and are **zer
 
 ## Operational Security
 
-- **Offline only** — the app makes no network requests. No data is transmitted to any server at any point. The About screen and onboarding tour surface links to GitHub and documentation; clicking these hands the URL to the OS, which opens your system browser. Mini Diarium itself makes no network call — the browser's connection is independent and outside the app's scope.
+- **Offline only** — the app makes no network requests. No data is transmitted to any server at any point. The About screen and onboarding tour surface links to GitHub and documentation; clicking these hands the URL to the OS, which opens your system browser. Fenmark itself makes no network call — the browser's connection is independent and outside the app's scope.
 - **Defense-in-depth WebView isolation** — multiple layers prevent the embedded WebView from making outbound network requests: strict CSP (`connect-src 'self' ipc: http://ipc.localhost`; `worker-src`, `child-src`, `frame-src`, `object-src`, `form-action`, `manifest-src` all `'none'`); a document-start init script that nulls `RTCPeerConnection`, `WebTransport`, `Worker`, `SharedWorker`, `navigator.serviceWorker`, `navigator.sendBeacon`, `navigator.connection`, and `window.open` in all frames; `on_navigation` that blocks any non-app URL; and `on_new_window(Deny)` that blocks popup creation on all platforms. `fetch`/`XMLHttpRequest`/`WebSocket`/`EventSource` remain available for Tauri IPC and local app/runtime communication, with outbound access constrained by CSP and platform handlers. Windows builds additionally register a `WebResourceRequested` COM handler; macOS builds register a `WKContentRuleList` content-blocking rule.
 - **Local storage only** — diary content lives in a single SQLite file. Preferences are stored in `localStorage` (non-sensitive display settings only). Automatic backups are written to a local directory alongside the diary.
 - **No plaintext search index** — the SQLite FTS5 table that stored entry content in plaintext was removed in v0.2.0 (schema v4). The migration drops the table on first unlock for any database upgraded from an older version.

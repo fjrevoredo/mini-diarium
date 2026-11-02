@@ -13,7 +13,7 @@ const DOCS_DIR = path.join(WEBSITE_DIR, 'docs');
 const SITEMAP_PATH = path.join(WEBSITE_DIR, 'sitemap.xml');
 const LLMS_PATH = path.join(WEBSITE_DIR, 'llms.txt');
 const LLMS_FULL_PATH = path.join(WEBSITE_DIR, 'llms-full.txt');
-const SITE_URL = 'https://mini-diarium.com';
+const SITE_URL = 'https://fenmark.app';
 const DEFAULT_AUTHOR = 'Francisco J. Revoredo';
 const DEFAULT_OG_IMAGE = `${SITE_URL}/assets/og-cover.png`;
 
@@ -36,27 +36,27 @@ const HUB_GROUPS = [
 ];
 
 const HOWTO_NAME_MAP = {
-  'getting-started': 'Getting Started with Mini Diarium',
-  import: 'Import Journal Entries into Mini Diarium',
-  export: 'Export Journal Entries from Mini Diarium',
-  backups: 'Restore a Journal Backup in Mini Diarium',
+  'getting-started': 'Getting Started with Fenmark',
+  import: 'Import Journal Entries into Fenmark',
+  export: 'Export Journal Entries from Fenmark',
+  backups: 'Restore a Journal Backup in Fenmark',
 };
 
 const HOWTO_DESC_MAP = {
   'getting-started':
-    'Step-by-step guide to download, install, create your first journal, and write your first entry in Mini Diarium.',
+    'Step-by-step guide to download, install, create your first journal, and write your first entry in Fenmark.',
   import:
-    'Step-by-step guide to importing journal entries from Mini Diary, Day One, or jrnl into Mini Diarium.',
+    'Step-by-step guide to importing journal entries from Mini Diary, Day One, or jrnl into Fenmark.',
   export:
-    'Step-by-step guide to exporting all journal entries as JSON or Markdown from Mini Diarium.',
-  backups: 'Step-by-step guide to locating and restoring from a Mini Diarium encrypted backup.',
+    'Step-by-step guide to exporting all journal entries as JSON or Markdown from Fenmark.',
+  backups: 'Step-by-step guide to locating and restoring from a Fenmark encrypted backup.',
 };
 
 const HOWTO_STEPS_MAP = {
   'getting-started': [
     {
-      name: 'Download Mini Diarium',
-      text: 'On Windows, install Mini Diarium from the Microsoft Store. On macOS and Linux, or for a direct download on Windows, get the installer for your platform from the GitHub releases page. Run the installer and launch Mini Diarium.',
+      name: 'Download Fenmark',
+      text: 'On Windows, install Fenmark from the Microsoft Store. On macOS and Linux, or for a direct download on Windows, get the installer for your platform from the GitHub releases page. Run the installer and launch Fenmark.',
     },
     {
       name: 'Create your first journal',
@@ -70,11 +70,11 @@ const HOWTO_STEPS_MAP = {
   import: [
     {
       name: 'Open the import dialog',
-      text: "In Mini Diarium, open the menu (three-line icon or File menu) and select 'Import entries'. The import dialog will open.",
+      text: "In Fenmark, open the menu (three-line icon or File menu) and select 'Import entries'. The import dialog will open.",
     },
     {
       name: 'Select the format',
-      text: 'Choose the source format: Mini Diary JSON, Day One JSON, Day One TXT, or jrnl JSON. Mini Diarium detects the format automatically for Mini Diary and jrnl.',
+      text: 'Choose the source format: Mini Diary JSON, Day One JSON, Day One TXT, or jrnl JSON. Fenmark detects the format automatically for Mini Diary and jrnl.',
     },
     {
       name: 'Choose the file and confirm',
@@ -84,7 +84,7 @@ const HOWTO_STEPS_MAP = {
   export: [
     {
       name: 'Open the export dialog',
-      text: "In Mini Diarium, open the menu and select 'Export entries'. The export dialog will open.",
+      text: "In Fenmark, open the menu and select 'Export entries'. The export dialog will open.",
     },
     {
       name: 'Select the format',
@@ -102,7 +102,7 @@ const HOWTO_STEPS_MAP = {
     },
     {
       name: 'Restore from a backup',
-      text: "Open Mini Diarium and use 'Restore from backup' in the app menu. Select the backup file you want to restore. The encrypted backup is loaded and replaces the current journal state.",
+      text: "Open Fenmark and use 'Restore from backup' in the app menu. Select the backup file you want to restore. The encrypted backup is loaded and replaces the current journal state.",
     },
     {
       name: 'Open your journal',
@@ -402,8 +402,7 @@ function buildNav(activePage = '') {
 <nav class="nav" aria-label="Main navigation">
   <div class="container nav-inner">
     <a class="nav-brand" href="/">
-      <img src="/assets/logo.svg" alt="Mini Diarium logo" class="nav-logo" width="28" height="28" />
-      Mini Diarium
+      <img src="/assets/fenmark-lockup.svg" alt="Fenmark" class="nav-logo" width="143" height="28" />
     </a>
 
     <ul class="nav-links" id="nav-links">
@@ -449,7 +448,7 @@ function buildFooter() {
     <div class="footer-inner">
       <div class="footer-left">
         <img src="/assets/logo.svg" alt="" class="footer-logo" width="20" height="20" aria-hidden="true" />
-        <span>Mini Diarium</span>
+        <span>Fenmark</span>
         <span class="footer-sep">·</span>
         <span>Offline-first</span>
         <span class="footer-sep">·</span>
@@ -465,8 +464,8 @@ function buildFooter() {
         <a href="/blog/feed.xml">RSS</a>
         <a href="/ai-crawlers.txt">AI Crawlers</a>
         <a href="/llms.txt">LLMs</a>
-        <a href="mailto:minidiarium@gmail.com" aria-label="Email Mini Diarium">minidiarium@gmail.com</a>
-        <span style="color: var(--text-muted);">mini-diarium.com</span>
+        <a href="mailto:minidiarium@gmail.com" aria-label="Email Fenmark">minidiarium@gmail.com</a>
+        <span style="color: var(--text-muted);">fenmark.app</span>
       </div>
     </div>
   </div>
@@ -492,7 +491,7 @@ function buildHead({
   <meta name="theme-color" content="#0e0e0e" />
   <meta name="author" content="${escapeHtml(DEFAULT_AUTHOR)}" />
   <meta property="og:type" content="${escapeHtml(ogType)}" />
-  <meta property="og:site_name" content="Mini Diarium" />
+  <meta property="og:site_name" content="Fenmark" />
   <meta property="og:locale" content="en_US" />
   <meta property="og:url" content="${escapeHtml(canonical)}" />
   <meta property="og:title" content="${escapeHtml(pageTitle)}" />
@@ -501,7 +500,7 @@ function buildHead({
   <meta property="og:image:type" content="image/png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
-  <meta property="og:image:alt" content="Mini Diarium - encrypted local-first desktop journal" />
+  <meta property="og:image:alt" content="Fenmark - encrypted local-first desktop journal" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:site" content="@MiniDiarium" />
   <meta name="twitter:creator" content="@MiniDiarium" />
@@ -512,7 +511,7 @@ function buildHead({
   <title>${escapeHtml(pageTitle)}</title>
   <link rel="canonical" href="${escapeHtml(canonical)}" />
   <link rel="alternate" hreflang="x-default" href="${escapeHtml(canonical)}" />
-  <link rel="alternate" type="application/rss+xml" title="Mini Diarium Blog" href="${SITE_URL}/blog/feed.xml" />
+  <link rel="alternate" type="application/rss+xml" title="Fenmark Blog" href="${SITE_URL}/blog/feed.xml" />
   <link rel="icon" href="/assets/logo.svg" type="image/svg+xml" />
   <link rel="icon" href="/favicon.ico" sizes="any" />
   <link rel="icon" href="/favicon-16x16.png" type="image/png" sizes="16x16" />
@@ -912,9 +911,9 @@ function renderDocsHub(sections) {
         '@type': 'CollectionPage',
         '@id': `${SITE_URL}/docs/#page`,
         url: `${SITE_URL}/docs/`,
-        name: 'Mini Diarium Documentation',
+        name: 'Fenmark Documentation',
         description:
-          'User guide and documentation for Mini Diarium — encrypted local-first desktop journal.',
+          'User guide and documentation for Fenmark — encrypted local-first desktop journal.',
         inLanguage: 'en-US',
         dateModified: latestUpdated,
         isPartOf: {
@@ -922,7 +921,7 @@ function renderDocsHub(sections) {
         },
         publisher: {
           '@type': 'Organization',
-          name: 'Mini Diarium',
+          name: 'Fenmark',
           url: SITE_URL,
         },
       },
@@ -930,9 +929,9 @@ function renderDocsHub(sections) {
   };
 
   const head = buildHead({
-    pageTitle: 'Mini Diarium Documentation — User Guide',
+    pageTitle: 'Fenmark Documentation — User Guide',
     description:
-      'Complete user guide for Mini Diarium: getting started, writing entries, navigation, import, export, plugins, preferences, backups, and more.',
+      'Complete user guide for Fenmark: getting started, writing entries, navigation, import, export, plugins, preferences, backups, and more.',
     canonical: `${SITE_URL}/docs/`,
     ogType: 'website',
     structuredData,
@@ -972,10 +971,10 @@ ${cards
   const content = `
 <section class="blog-hero">
   <div class="container">
-    <p class="hero-eyebrow">Mini Diarium documentation</p>
+    <p class="hero-eyebrow">Fenmark documentation</p>
     <h1>User Guide</h1>
     <p class="hero-sub">
-      Everything you need to know about writing, protecting, and managing your journal in Mini Diarium.
+      Everything you need to know about writing, protecting, and managing your journal in Fenmark.
     </p>
   </div>
 </section>
@@ -1028,7 +1027,7 @@ function renderSectionPage(section, sections) {
         keywords: section.tags.join(', '),
         publisher: {
           '@type': 'Organization',
-          name: 'Mini Diarium',
+          name: 'Fenmark',
           url: SITE_URL,
         },
         mainEntityOfPage: section.canonical,
@@ -1077,7 +1076,7 @@ function renderSectionPage(section, sections) {
   const mirrorUrl = `${SITE_URL}/docs/${section.slug}.md`;
 
   const head = buildHead({
-    pageTitle: `${section.title} — Mini Diarium Documentation`,
+    pageTitle: `${section.title} — Fenmark Documentation`,
     description: section.description,
     canonical: section.canonical,
     ogType: 'article',
@@ -1120,7 +1119,7 @@ function renderSectionPage(section, sections) {
       <span>${escapeHtml(section.title)}</span>
     </nav>
     <div class="post-header">
-      <p class="hero-eyebrow">Mini Diarium documentation</p>
+      <p class="hero-eyebrow">Fenmark documentation</p>
       <h1>${escapeHtml(section.title)}</h1>
       <p class="hero-sub">${escapeHtml(section.description)}</p>
     </div>
@@ -1254,9 +1253,9 @@ function updateLlms(sections) {
 
 function writeLlmsFull(sections) {
   const header = [
-    '# Mini Diarium — Full Documentation',
+    '# Fenmark — Full Documentation',
     '',
-    '> Complete Markdown text of every Mini Diarium documentation section, concatenated for full-text ingestion by AI assistants and crawlers.',
+    '> Complete Markdown text of every Fenmark documentation section, concatenated for full-text ingestion by AI assistants and crawlers.',
     '',
     `Canonical documentation hub: ${SITE_URL}/docs/`,
   ].join('\n');

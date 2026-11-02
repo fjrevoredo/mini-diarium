@@ -1,10 +1,10 @@
 # Privacy
 
-Mini Diarium is built around a simple principle: your journal is yours alone.
+Fenmark is built around a simple principle: your journal is yours alone.
 
 ## Data Collection
 
-None. Mini Diarium collects no data of any kind.
+None. Fenmark collects no data of any kind.
 
 ## Network Access
 
@@ -24,11 +24,11 @@ Automatic database backups are stored in a local directory alongside the main da
 
 Your password is never stored in plaintext. The master key is wrapped using a key derived from your password via Argon2id (a memory-hard key derivation function). At unlock time, the wrapping key is derived and used to recover the master key in memory only. There is no password recovery mechanism. This is intentional.
 
-**Key file authentication:** If you register a key file, your private key is stored only in the `.key` file on your machine — Mini Diarium never stores or transmits it. The public key is registered in the journal and used to wrap the master key via X25519 ECIES. Keep your key file backed up and secure. Losing both your password and your key file means losing access to your journal.
+**Key file authentication:** If you register a key file, your private key is stored only in the `.key` file on your machine — Fenmark never stores or transmits it. The public key is registered in the journal and used to wrap the master key via X25519 ECIES. Keep your key file backed up and secure. Losing both your password and your key file means losing access to your journal.
 
 ## Third Parties
 
-Mini Diarium does not integrate with, send data to, or receive data from any external service.
+Fenmark does not integrate with, send data to, or receive data from any external service.
 
 ## Open Source
 

@@ -364,9 +364,11 @@ The scan decrypts entries in memory per query and never persists a plaintext ind
 Both are pure — no I/O, no platform lookup beyond `cfg!(windows)` — so the caller owns creating
 the directory and deciding what to do when it cannot.
 
-- `default_journal_dir(app_data_dir, documents_dir: Option<&Path>) -> PathBuf` — where a new
-  journal goes when the user has not picked a folder: `<documents>/Mini Diarium`, or
-  `<app_data>/journals` when no documents directory is available. A *preference*, not a
+- `default_journal_dir(app_data_dir, documents_dir: Option<&Path>, is_dir: impl Fn(&Path) -> bool) -> PathBuf`
+  — where a new journal goes when the user has not picked a folder: `<documents>/Fenmark`
+  (or the pre-rename `<documents>/Mini Diarium` when `is_dir` reports that it already exists),
+  or `<app_data>/journals` when no documents directory is available. The caller supplies
+  `is_dir`, so the function itself does no I/O. A *preference*, not a
   guarantee: it does not check that the result is writable. The app crate probes it and falls
   back to the `None` form when the preferred location cannot be created or written to.
 - `validate_db_filename(name: &str) -> Result<(), String>` — accepts or refuses a journal's

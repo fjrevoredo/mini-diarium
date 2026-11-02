@@ -1,8 +1,8 @@
 # FAQ
 
-> Answers to common questions about Mini Diarium: password recovery, encryption model, cross-device sync, key files, authentication slots, and mobile support.
+> Answers to common questions about Fenmark: password recovery, encryption model, cross-device sync, key files, authentication slots, and mobile support.
 
-Source: https://mini-diarium.com/docs/faq/
+Source: https://fenmark.app/docs/faq/
 
 ## I forgot my password. Can I recover my entries?
 
@@ -12,33 +12,33 @@ No, unless you registered a key file as an authentication method. If you have a 
 
 Locally on your machine in an SQLite database. See the [Backups](../backups/) section for the exact default path on your operating system.
 
-## Does Mini Diarium connect to the internet?
+## Does Fenmark connect to the internet?
 
-Never. Mini Diarium makes no network requests, collects no analytics, sends no telemetry, and does not check for updates automatically. All data stays on your device.
+Never. Fenmark makes no network requests, collects no analytics, sends no telemetry, and does not check for updates automatically. All data stays on your device.
 
 Release notes for each version are bundled with the app itself and displayed in the **notification center** (bell icon in the header). No network call is made. The notes ship as a local file inside the application bundle.
 
 ## Can I sync across devices?
 
-Not directly. Mini Diarium is local-only by design. You could manually copy the `diary.db` file to another device, but simultaneous access from multiple devices is not supported and could corrupt the database. If you want cloud backup, place your journal directory inside a synced folder (Dropbox, OneDrive, iCloud Drive) and only open it from one device at a time.
+Not directly. Fenmark is local-only by design. You could manually copy the `diary.db` file to another device, but simultaneous access from multiple devices is not supported and could corrupt the database. If you want cloud backup, place your journal directory inside a synced folder (Dropbox, OneDrive, iCloud Drive) and only open it from one device at a time.
 
 ## Why does it say my journal or backup "requires a newer version of the app"?
 
-A newer version of Mini Diarium changed the journal format, and this copy of the app is older. This usually happens when two computers share a journal through a synced folder and one of them has not been updated yet. Mini Diarium refuses to open the journal, and does not change the file, so that the older app cannot damage data it does not understand. Update the app on this computer to open the journal again. The same message on a backup means the backup was made by a newer version; update the app to inspect or restore it.
+A newer version of Fenmark changed the journal format, and this copy of the app is older. This usually happens when two computers share a journal through a synced folder and one of them has not been updated yet. Fenmark refuses to open the journal, and does not change the file, so that the older app cannot damage data it does not understand. Update the app on this computer to open the journal again. The same message on a backup means the backup was made by a newer version; update the app to inspect or restore it.
 
 This protection starts with version 0.7.4. Versions before 0.7.4 cannot detect a newer journal, so update every computer that shares the journal.
 
 ## I used Mini Diary before. Can I migrate?
 
-Yes. Export your journal from Mini Diary as JSON, then import it in Mini Diarium from **Journal → Import...** using the Mini Diary JSON format. All entries are imported with their original dates.
+Yes. Export your journal from Mini Diary as JSON, then import it in Fenmark from **Journal → Import...** using the Mini Diary JSON format. All entries are imported with their original dates.
 
 ## How does the encryption work?
 
-Mini Diarium encrypts each journal entry using AES-256-GCM with a random master key. The master key is never stored in plaintext. It is wrapped (encrypted) by a key derived from your password using Argon2id, and only the wrapped version is saved to disk. When you unlock, your password re-derives the wrapping key, which decrypts the master key in memory. The master key is held only in RAM and discarded when you lock.
+Fenmark encrypts each journal entry using AES-256-GCM with a random master key. The master key is never stored in plaintext. It is wrapped (encrypted) by a key derived from your password using Argon2id, and only the wrapped version is saved to disk. When you unlock, your password re-derives the wrapping key, which decrypts the master key in memory. The master key is held only in RAM and discarded when you lock.
 
 ## Can I use multiple passwords or unlock methods?
 
-Yes. Mini Diarium supports multiple authentication slots. You can register a password and one or more key files. Each method independently wraps the same master key. You can add or remove methods in **Preferences → Authentication Methods** without re-encrypting your entries. At least one method must remain active.
+Yes. Fenmark supports multiple authentication slots. You can register a password and one or more key files. Each method independently wraps the same master key. You can add or remove methods in **Preferences → Authentication Methods** without re-encrypting your entries. At least one method must remain active.
 
 For stronger security, you can enable **Require All Authentication Methods** in **Preferences → Security**. When active, every registered method must be provided at unlock, for example both your password and your key file. This prevents access even if one credential is compromised.
 
@@ -52,7 +52,7 @@ If you have another authentication method (a password, or another key file) stil
 
 ## Is there a mobile app?
 
-Not currently. Mini Diarium is a desktop app for Windows, macOS, and Linux. A mobile version is in our long-term vision if there is enough demand, but it is a significant development and maintenance effort. We are currently focused on keeping the desktop experience at the highest quality standards.
+Not currently. Fenmark is a desktop app for Windows, macOS, and Linux. A mobile version is in our long-term vision if there is enough demand, but it is a significant development and maintenance effort. We are currently focused on keeping the desktop experience at the highest quality standards.
 
 ## Where can I report a security issue?
 

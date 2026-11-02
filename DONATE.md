@@ -1,6 +1,6 @@
-# Support Mini Diarium
+# Support Fenmark
 
-Mini Diarium is MIT-licensed and free to use. No ads, no telemetry, no account, and no
+Fenmark is MIT-licensed and free to use. No ads, no telemetry, no account, and no
 features held back behind a paywall: the desktop app you download is the whole app.
 
 If it is useful to you and you want to chip in, here are the ways. All of them are

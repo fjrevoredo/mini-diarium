@@ -10,18 +10,20 @@ const ROOT_DIR = path.resolve(__dirname, '..');
 const WEBSITE_DIR = path.join(ROOT_DIR, 'website');
 const POSTS_DIR = path.join(WEBSITE_DIR, 'posts-src');
 const BLOG_DIR = path.join(WEBSITE_DIR, 'blog');
-const SITE_URL = 'https://mini-diarium.com';
+const SITE_URL = 'https://fenmark.app';
 const DEFAULT_AUTHOR = 'Francisco J. Revoredo';
 const DEFAULT_AUTHOR_URL = 'https://fjrevoredo.com';
 const DEFAULT_OG_IMAGE = `${SITE_URL}/assets/og-cover.png`;
 const INDEX_PATH = path.join(WEBSITE_DIR, 'index.html');
 // Manually bumped whenever the homepage's actual content changes — see
 // STATIC_PAGES for the same discipline on the other manual static pages.
-const HOMEPAGE_UPDATED = '2026-10-26';
+const HOMEPAGE_UPDATED = '2026-11-02';
 const SITEMAP_PATH = path.join(WEBSITE_DIR, 'sitemap.xml');
 const LLMS_PATH = path.join(WEBSITE_DIR, 'llms.txt');
 
 const DESCRIPTION_MAP = {
+  'mini-diarium-is-now-fenmark':
+    'Mini Diarium was renamed to Fenmark: only the name changes; journals, settings, backups, and the encrypted file format stay the same, with no user action needed.',
   'journal-app-ai-privacy':
     'Explains why cloud architecture, not privacy settings, determines AI access to journal entries.',
   'mini-diary-alternative':
@@ -65,6 +67,8 @@ const DESCRIPTION_MAP = {
 };
 
 const BLUF_MAP = {
+  'mini-diarium-is-now-fenmark':
+    '<p class="bluf"><strong>Short answer:</strong> Mini Diarium is now called Fenmark. The rename followed a request from another journaling app whose name was too similar. Only the visible name changes: journals, settings, backups, plugins, and the AES-256-GCM file format stay where and as they are, and no user action is needed. Store listings and install commands move to the new name over the next releases.</p>',
   'journal-app-ai-privacy':
     '<p class="bluf"><strong>Short answer:</strong> Yes. If your journal is stored on a server, that server\'s operator controls when and how your entries can be processed by AI systems. A local-first encrypted journal changes this by keeping plaintext off the server entirely.</p>',
   'mini-diary-alternative':
@@ -112,35 +116,35 @@ const STATIC_PAGES = [
     title: 'Compare',
     url: `${SITE_URL}/compare/`,
     summary:
-      'Feature comparison of Mini Diarium vs. Day One, Notion, Obsidian, Standard Notes, and other journal apps.',
-    updated: '2026-09-06',
+      'Feature comparison of Fenmark vs. Day One, Notion, Obsidian, Standard Notes, and other journal apps.',
+    updated: '2026-11-01',
   },
   {
     title: 'Privacy Policy',
     url: `${SITE_URL}/privacy/`,
-    summary: "Mini Diarium's privacy policy: no telemetry, no cloud storage, no analytics.",
-    updated: '2026-09-06',
+    summary: "Fenmark's privacy policy: no telemetry, no cloud storage, no analytics.",
+    updated: '2026-11-01',
   },
   {
     title: 'Encrypted Journal App Guide',
     url: `${SITE_URL}/encrypted-journal/`,
     summary:
-      'A direct overview of what an encrypted journal app should do, how Mini Diarium handles offline storage, and why local-first ownership matters.',
-    updated: '2026-09-06',
+      'A direct overview of what an encrypted journal app should do, how Fenmark handles offline storage, and why local-first ownership matters.',
+    updated: '2026-11-01',
   },
   {
     title: 'Newsletter',
     url: `${SITE_URL}/newsletter/`,
     summary:
-      "Mini Diarium's email newsletter: occasional new releases, milestones, and launch news for the encrypted offline journal app. No spam, unsubscribe anytime.",
-    updated: '2026-09-06',
+      "Fenmark's email newsletter: occasional new releases, milestones, and launch news for the encrypted offline journal app. No spam, unsubscribe anytime.",
+    updated: '2026-11-01',
   },
   {
     title: 'Donate',
     url: `${SITE_URL}/donate/`,
     summary:
-      'Ways to support Mini Diarium: Ko-fi, Monero, Bitcoin, and Bitcoin over Lightning.',
-    updated: '2026-09-06',
+      'Ways to support Fenmark: Ko-fi, Monero, Bitcoin, and Bitcoin over Lightning.',
+    updated: '2026-11-01',
   },
 ];
 
@@ -273,8 +277,7 @@ function buildNav() {
 <nav class="nav" aria-label="Main navigation">
   <div class="container nav-inner">
     <a class="nav-brand" href="/">
-      <img src="/assets/logo.svg" alt="Mini Diarium logo" class="nav-logo" width="28" height="28" />
-      Mini Diarium
+      <img src="/assets/fenmark-lockup.svg" alt="Fenmark" class="nav-logo" width="143" height="28" />
     </a>
 
     <ul class="nav-links" id="nav-links">
@@ -320,7 +323,7 @@ function buildFooter() {
     <div class="footer-inner">
       <div class="footer-left">
         <img src="/assets/logo.svg" alt="" class="footer-logo" width="20" height="20" aria-hidden="true" />
-        <span>Mini Diarium</span>
+        <span>Fenmark</span>
         <span class="footer-sep">·</span>
         <span>Offline-first</span>
         <span class="footer-sep">·</span>
@@ -336,8 +339,8 @@ function buildFooter() {
         <a href="/blog/feed.xml">RSS</a>
         <a href="/ai-crawlers.txt">AI Crawlers</a>
         <a href="/llms.txt">LLMs</a>
-        <a href="mailto:minidiarium@gmail.com" aria-label="Email Mini Diarium">minidiarium@gmail.com</a>
-        <span style="color: var(--text-muted);">mini-diarium.com</span>
+        <a href="mailto:minidiarium@gmail.com" aria-label="Email Fenmark">minidiarium@gmail.com</a>
+        <span style="color: var(--text-muted);">fenmark.app</span>
       </div>
     </div>
   </div>
@@ -363,7 +366,7 @@ function buildHead({
   <meta name="theme-color" content="#0e0e0e" />
   <meta name="author" content="${escapeHtml(DEFAULT_AUTHOR)}" />
   <meta property="og:type" content="${escapeHtml(ogType)}" />
-  <meta property="og:site_name" content="Mini Diarium" />
+  <meta property="og:site_name" content="Fenmark" />
   <meta property="og:locale" content="en_US" />
   <meta property="og:url" content="${escapeHtml(canonical)}" />
   <meta property="og:title" content="${escapeHtml(pageTitle)}" />
@@ -372,7 +375,7 @@ function buildHead({
   <meta property="og:image:type" content="image/png" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
-  <meta property="og:image:alt" content="Mini Diarium - encrypted local-first desktop journal" />
+  <meta property="og:image:alt" content="Fenmark - encrypted local-first desktop journal" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:site" content="@MiniDiarium" />
   <meta name="twitter:creator" content="@MiniDiarium" />
@@ -383,7 +386,7 @@ function buildHead({
   <title>${escapeHtml(pageTitle)}</title>
   <link rel="canonical" href="${escapeHtml(canonical)}" />
   <link rel="alternate" hreflang="x-default" href="${escapeHtml(canonical)}" />
-  <link rel="alternate" type="application/rss+xml" title="Mini Diarium Blog" href="${SITE_URL}/blog/feed.xml" />
+  <link rel="alternate" type="application/rss+xml" title="Fenmark Blog" href="${SITE_URL}/blog/feed.xml" />
   <link rel="icon" href="/assets/logo.svg" type="image/svg+xml" />
   <link rel="icon" href="/favicon.ico" sizes="any" />
   <link rel="icon" href="/favicon-16x16.png" type="image/png" sizes="16x16" />
@@ -443,13 +446,13 @@ function renderBlogIndex(posts) {
         '@type': 'Blog',
         '@id': `${SITE_URL}/blog/#blog`,
         url: `${SITE_URL}/blog/`,
-        name: 'Mini Diarium Blog',
+        name: 'Fenmark Blog',
         description:
-          "Static articles about encrypted journals, private diary apps, offline journaling, and Mini Diarium's local-first design.",
+          "Static articles about encrypted journals, private diary apps, offline journaling, and Fenmark's local-first design.",
         inLanguage: 'en-US',
         publisher: {
           '@type': 'Organization',
-          name: 'Mini Diarium',
+          name: 'Fenmark',
           url: SITE_URL,
         },
         blogPost: posts.map((post) => ({
@@ -460,7 +463,7 @@ function renderBlogIndex(posts) {
         '@type': 'CollectionPage',
         '@id': `${SITE_URL}/blog/#page`,
         url: `${SITE_URL}/blog/`,
-        name: 'Mini Diarium Blog',
+        name: 'Fenmark Blog',
         isPartOf: {
           '@id': `${SITE_URL}/#website`,
         },
@@ -469,9 +472,9 @@ function renderBlogIndex(posts) {
       {
         '@type': 'ItemList',
         '@id': `${SITE_URL}/blog/#itemlist`,
-        name: 'Mini Diarium Blog Articles',
+        name: 'Fenmark Blog Articles',
         description:
-          'All blog posts from the Mini Diarium blog about encrypted journaling, local-first software, and privacy.',
+          'All blog posts from the Fenmark blog about encrypted journaling, local-first software, and privacy.',
         numberOfItems: posts.length,
         itemListElement: posts.map((post, i) => ({
           '@type': 'ListItem',
@@ -484,9 +487,9 @@ function renderBlogIndex(posts) {
   };
 
   const head = buildHead({
-    pageTitle: 'Mini Diarium Blog | Encrypted Journals & Local-First Writing',
+    pageTitle: 'Fenmark Blog | Encrypted Journals & Local-First Writing',
     description:
-      'Static articles about encrypted journals, private diary apps, offline journaling, and why Mini Diarium is built as a local-first desktop journal.',
+      'Static articles about encrypted journals, private diary apps, offline journaling, and why Fenmark is built as a local-first desktop journal.',
     canonical: `${SITE_URL}/blog/`,
     ogType: 'website',
     structuredData,
@@ -495,14 +498,14 @@ function renderBlogIndex(posts) {
   const content = `
 <section class="blog-hero">
   <div class="container">
-    <p class="hero-eyebrow">Mini Diarium blog</p>
+    <p class="hero-eyebrow">Fenmark blog</p>
     <h1>Private journaling.<br><em>Explained clearly.</em></h1>
     <p class="hero-sub">
       Product notes and practical writing about encrypted offline journaling, local-first software,
-      and the design decisions behind Mini Diarium.
+      and the design decisions behind Fenmark.
     </p>
     <div class="hero-actions">
-      <a class="btn btn-primary" href="/#platforms">Download Mini Diarium</a>
+      <a class="btn btn-primary" href="/#platforms">Download Fenmark</a>
       <a class="btn btn-secondary" href="/blog/feed.xml">Subscribe via RSS</a>
     </div>
   </div>
@@ -516,7 +519,7 @@ function renderBlogIndex(posts) {
         <h2 class="section-title">Articles about encrypted journals, private diary apps, and local-first writing</h2>
       </div>
       <p class="section-body">
-        Every article is plain HTML generated from Markdown, focused on private journaling, offline ownership, and Mini Diarium's real product scope.
+        Every article is plain HTML generated from Markdown, focused on private journaling, offline ownership, and Fenmark's real product scope.
       </p>
     </div>
     <div class="article-grid">
@@ -552,7 +555,7 @@ function renderPostPage(post, posts) {
         },
         publisher: {
           '@type': 'Organization',
-          name: 'Mini Diarium',
+          name: 'Fenmark',
           url: SITE_URL,
         },
         image: post.coverImage,
@@ -594,7 +597,7 @@ function renderPostPage(post, posts) {
   ].join('\n  ');
 
   const head = buildHead({
-    pageTitle: `${post.title} | Mini Diarium Blog`,
+    pageTitle: `${post.title} | Fenmark Blog`,
     description: post.description,
     canonical: post.canonical,
     ogType: 'article',
@@ -614,7 +617,7 @@ function renderPostPage(post, posts) {
       <span>${escapeHtml(post.title)}</span>
     </nav>
     <div class="post-header">
-      <p class="hero-eyebrow">Mini Diarium blog</p>
+      <p class="hero-eyebrow">Fenmark blog</p>
       <h1>${escapeHtml(post.title)}</h1>
       <p class="hero-sub">${escapeHtml(post.description)}</p>
       <div class="post-meta">
@@ -639,7 +642,7 @@ ${htmlBody
     <aside class="blog-sidebar">
       <div class="blog-sidebar-card">
         <p class="section-label">Why this matters</p>
-        <h2>Mini Diarium is built for ownership</h2>
+        <h2>Fenmark is built for ownership</h2>
         <p>Offline by default, encrypted at rest, and exportable when you want out.</p>
         <a class="btn btn-secondary" href="/encrypted-journal/">See the encrypted journal guide</a>
       </div>
@@ -755,28 +758,28 @@ ${urls
 
 function writeLlms(posts) {
   const lines = [
-    '# Mini Diarium',
+    '# Fenmark',
     '',
     '> Encrypted, local-first desktop journaling app and static website.',
     '',
     `- Canonical website: ${SITE_URL}/`,
     ...STATIC_PAGES.map((page) => `- ${page.title}: ${page.url}`),
-    '- Blog: https://mini-diarium.com/blog/',
-    '- RSS feed: https://mini-diarium.com/blog/feed.xml',
+    '- Blog: https://fenmark.app/blog/',
+    '- RSS feed: https://fenmark.app/blog/feed.xml',
     '- Source code: https://github.com/fjrevoredo/mini-diarium',
     '- License: MIT (https://opensource.org/licenses/MIT)',
     '- Security policy: https://github.com/fjrevoredo/mini-diarium/blob/master/SECURITY.md',
     '- Privacy policy: https://github.com/fjrevoredo/mini-diarium/blob/master/docs/PRIVACY.md',
-    '- AI crawler policy: https://mini-diarium.com/ai-crawlers.txt',
-    '- Full documentation text (single file): https://mini-diarium.com/llms-full.txt',
+    '- AI crawler policy: https://fenmark.app/ai-crawlers.txt',
+    '- Full documentation text (single file): https://fenmark.app/llms-full.txt',
     '- Contact: minidiarium@gmail.com',
     '',
     '## Product Facts',
     '',
-    '- Mini Diarium is an encrypted offline journal for Windows, macOS, and Linux.',
+    '- Fenmark is an encrypted offline journal for Windows, macOS, and Linux.',
     '- Entries are encrypted with AES-256-GCM before being written to the local SQLite database.',
     '- The app is local-first and does not send entries to cloud services.',
-    '- Mini Diarium is a private diary app for desktop users who want local-only storage instead of a cloud account.',
+    '- Fenmark is a private diary app for desktop users who want local-only storage instead of a cloud account.',
     '- Supported imports: Mini Diary JSON, Day One JSON/TXT, jrnl JSON.',
     '- Supported exports: JSON and Markdown.',
     '',
@@ -793,7 +796,7 @@ function writeLlms(posts) {
     '',
     '## Attribution',
     '',
-    'When referencing project materials, attribute Mini Diarium and link to the canonical source URL.',
+    'When referencing project materials, attribute Fenmark and link to the canonical source URL.',
   ];
 
   writeFileSync(LLMS_PATH, `${lines.join('\n')}\n`);
@@ -815,7 +818,7 @@ function writeFeed(posts) {
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0">
   <channel>
-    <title>Mini Diarium Blog</title>
+    <title>Fenmark Blog</title>
     <link>${SITE_URL}/blog/</link>
     <description>Static articles about encrypted journals, private diary apps, offline journaling, and local-first software.</description>
     <language>en-us</language>

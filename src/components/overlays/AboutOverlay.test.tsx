@@ -12,11 +12,18 @@ describe('AboutOverlay', () => {
     uiState.setProjectSupportEntry('about');
   });
 
-  it('clicking "Support Mini Diarium" sets projectSupportEntry to about, opens the overlay, and closes About', () => {
+  it('shows the Fenmark name with the temporary "formerly Mini Diarium" note', () => {
+    renderWithI18n(() => <AboutOverlay isOpen={true} onClose={vi.fn()} />);
+
+    expect(screen.getByRole('img', { name: 'Fenmark' })).toBeInTheDocument();
+    expect(screen.getByText('(formerly Mini Diarium)')).toBeInTheDocument();
+  });
+
+  it('clicking "Support Fenmark" sets projectSupportEntry to about, opens the overlay, and closes About', () => {
     const onClose = vi.fn();
     renderWithI18n(() => <AboutOverlay isOpen={true} onClose={onClose} />);
 
-    const supportButton = screen.getByRole('button', { name: 'Support Mini Diarium' });
+    const supportButton = screen.getByRole('button', { name: 'Support Fenmark' });
     expect(supportButton.querySelector('svg')).toHaveClass('text-pink-500');
     fireEvent.click(supportButton);
 

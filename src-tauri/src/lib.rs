@@ -160,7 +160,7 @@ pub fn run() {
         )
         .build(),
     );
-    info!("Mini Diarium starting");
+    info!("Fenmark starting");
 
     let is_e2e = is_e2e_mode();
     let mut builder = tauri::Builder::default()
@@ -263,7 +263,7 @@ pub fn run() {
                 "main",
                 tauri::WebviewUrl::App("index.html".into()),
             )
-            .title("Mini Diarium")
+            .title("Fenmark")
             .min_inner_size(600.0, 400.0)
             .visible(false)
             .disable_drag_drop_handler()

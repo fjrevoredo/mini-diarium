@@ -147,7 +147,7 @@ export default function OnboardingTour() {
       titleKey: 'onboarding.tip_docs_title',
       bodyKey: 'onboarding.tip_docs_body',
       actionKey: 'onboarding.tip_docs_action',
-      onAction: () => openUrl('https://mini-diarium.com/docs/'),
+      onAction: () => openUrl('https://fenmark.app/docs/'),
       targetSelector: '[data-tour-target="about"]',
     },
   ];

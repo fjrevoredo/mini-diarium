@@ -64,6 +64,14 @@ describe('PasswordPrompt component', () => {
     });
   }
 
+  it('shows the Fenmark wordmark as the page heading, with a decorative logo', () => {
+    renderWithI18n(() => <PasswordPrompt />);
+
+    const heading = screen.getByRole('heading', { level: 1, name: 'Fenmark' });
+    expect(heading.querySelector('svg[role="img"]')).not.toBeNull();
+    expect(screen.getAllByRole('img', { name: 'Fenmark' })).toHaveLength(1);
+  });
+
   it('renders password input with correct testid and type', () => {
     renderWithI18n(() => <PasswordPrompt />);
 

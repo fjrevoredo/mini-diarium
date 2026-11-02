@@ -288,16 +288,39 @@ fn test_default_journal_dir_prefers_documents() {
     let app_data = PathBuf::from("/app-data");
     let documents = PathBuf::from("/home/jon/Documents");
 
-    let dir = default_journal_dir(&app_data, Some(&documents));
+    let dir = default_journal_dir(&app_data, Some(&documents), |_| false);
 
-    assert_eq!(dir, documents.join("Mini Diarium"));
+    assert_eq!(dir, documents.join("Fenmark"));
+}
+
+#[test]
+fn test_default_journal_dir_keeps_existing_legacy_folder() {
+    let app_data = PathBuf::from("/app-data");
+    let documents = PathBuf::from("/home/jon/Documents");
+    let legacy = documents.join("Mini Diarium");
+
+    let dir = default_journal_dir(&app_data, Some(&documents), |p| p == legacy.as_path());
+
+    assert_eq!(dir, legacy);
+}
+
+#[test]
+fn test_default_journal_dir_ignores_legacy_folder_name_when_it_is_absent() {
+    let app_data = PathBuf::from("/app-data");
+    let documents = PathBuf::from("/home/jon/Documents");
+    // Only an unrelated folder exists: the new name wins.
+    let other = documents.join("Something Else");
+
+    let dir = default_journal_dir(&app_data, Some(&documents), |p| p == other.as_path());
+
+    assert_eq!(dir, documents.join("Fenmark"));
 }
 
 #[test]
 fn test_default_journal_dir_falls_back_to_app_data() {
     let app_data = PathBuf::from("/app-data");
 
-    let dir = default_journal_dir(&app_data, None);
+    let dir = default_journal_dir(&app_data, None, |_| true);
 
     assert_eq!(dir, app_data.join("journals"));
 }

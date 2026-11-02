@@ -126,6 +126,24 @@ jobs:
             --release-notes-file release-body.md `
             --release-notes-url "${{ steps.release.outputs.release_url }}"
 
+      - name: Apply the Fenmark display name
+        shell: pwsh
+        run: |
+          # `wingetcreate update` copies the previous locale manifest, which carries the old name.
+          # The installer registers as "Fenmark" since TODO-0155, so PackageName must match it.
+          # The PackageIdentifier stays fjrevoredo.MiniDiarium (Stage 2, TODO-0157). No-op once the
+          # upstream manifest carries the new values.
+          Get-ChildItem -Path winget-manifests -Recurse -Filter "*.yaml" | ForEach-Object {
+            $content = Get-Content $_.FullName -Raw
+            $updated = $content `
+              -replace '(?m)^PackageName:\s*Mini Diarium\s*$', 'PackageName: Fenmark' `
+              -replace 'https://mini-diarium\.com', 'https://fenmark.app'
+            if ($updated -ne $content) {
+              Set-Content -Path $_.FullName -Value $updated -NoNewline
+              Write-Host "Renamed display fields in $($_.Name)"
+            }
+          }
+
       - name: Verify enriched manifest
         id: verify_manifest
         shell: pwsh

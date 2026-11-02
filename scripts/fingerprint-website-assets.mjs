@@ -108,6 +108,11 @@ async function writeIfChanged(targetPath, data) {
   return true;
 }
 
+// Folders whose pages are self-contained (inline CSS, no site script) and so carry no
+// asset reference to rewrite. legacy-domain/ is the transition page nginx serves on the
+// old mini-diarium.com homepage.
+const EXCLUDED_DIRS = new Set(["legacy-domain"]);
+
 function walkHtmlFiles(dirPath) {
   if (!existsSync(dirPath)) {
     return [];
@@ -120,6 +125,9 @@ function walkHtmlFiles(dirPath) {
     const stats = statSync(entryPath);
 
     if (stats.isDirectory()) {
+      if (EXCLUDED_DIRS.has(entry)) {
+        continue;
+      }
       files.push(...walkHtmlFiles(entryPath));
       continue;
     }
@@ -183,7 +191,7 @@ async function main() {
   console.log(`Asset references: ${updated} updated / ${unchanged} unchanged`);
 }
 
-export { ASSETS, readNormalized, rewriteAssetReferences, shortHash };
+export { ASSETS, readNormalized, rewriteAssetReferences, shortHash, walkHtmlFiles };
 
 // Windows argv[1] can differ from import.meta.url only by drive-letter case.
 const invokedPath = process.argv[1] ? path.resolve(process.argv[1]) : "";

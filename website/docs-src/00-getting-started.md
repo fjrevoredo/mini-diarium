@@ -3,7 +3,7 @@ title: Getting Started
 slug: getting-started
 description: System requirements, creating your first encrypted journal, setting a password, the welcome tour, multiple journals, key file auth, and local-only mode.
 order: 1
-updated: 2026-10-11
+updated: 2026-11-02
 tags: setup, password, first launch, system requirements
 ---
 
@@ -22,17 +22,17 @@ a minimum system version, so macOS will refuse to launch it rather than starting
 
 ## First Launch
 
-When you open Mini Diarium, the app starts at the **Journal Picker**. From there you can create a new journal or open an existing `diary.db` file.
+When you open Fenmark, the app starts at the **Journal Picker**. From there you can create a new journal or open an existing `diary.db` file.
 
 **+ Create New Journal** opens a save dialog pre-filled with a default location and the filename `diary.db`. Pick where to save it — the default location works as-is — give the journal a name, and click **Add**.
 
-The default location is a `Mini Diarium` folder inside your Documents folder, or a folder inside the app's own data directory where Documents is not writable. On the Flathub build, where the app is sandboxed, a save dialog cannot reliably remember a folder outside the sandbox, so **+ Create New Journal** shows a form directly instead — with an editable Filename field plus **Browse…** and **Use default location** to choose where the file goes.
+The default location is a `Fenmark` folder inside your Documents folder (if a `Mini Diarium` folder from before the rename already exists there, the app keeps using it), or a folder inside the app's own data directory where Documents is not writable. On the Flathub build, where the app is sandboxed, a save dialog cannot reliably remember a folder outside the sandbox, so **+ Create New Journal** shows a form directly instead — with an editable Filename field plus **Browse…** and **Use default location** to choose where the file goes.
 
 If you create a new journal, you will be asked to create a password. This password encrypts your entire journal using AES-256-GCM encryption.
 
 **There is no password recovery.** If you forget your password, your entries cannot be recovered. Choose something memorable and keep it safe.
 
-![Journal creation screen with password and confirm password fields](/assets/docs/getting-started-01-journal-creation.webp "Setting a password for a new journal")
+![Journal creation screen with password and confirm password fields](/assets/docs/getting-started-01-journal-creation-v2.webp "Setting a password for a new journal")
 
 ## Welcome Tour
 
@@ -50,7 +50,7 @@ To resume or permanently dismiss the tour, click the `?` icon and choose **Resum
 
 Your journal is encrypted whenever it is locked. After selecting a journal, enter your password to unlock it. The journal locks automatically when you close the app, and you can also lock it manually using the lock icon in the header at any time.
 
-![Mini Diarium main window with the calendar sidebar and an unlocked journal entry open in the editor](/assets/docs/getting-started-02-main-app.webp "The main window after writing your first entry")
+![Fenmark main window with the calendar sidebar and an unlocked journal entry open in the editor](/assets/docs/getting-started-02-main-app-v2.webp "The main window after writing your first entry")
 
 The header also shows an **About** button (ⓘ) and a **bell icon** for the notification center. The bell displays an unread badge when a new release ships; click it to read what changed and mark notifications as read. Entries with more to say show a **Read more** button that opens the full write-up, with headings and lists, without leaving the app.
 
@@ -58,7 +58,7 @@ To reach the developer, choose **⋮ → Send feedback**, or click **Send feedba
 
 As an alternative to your password, you can register a key file in **Preferences → Authentication Methods**. Once registered, use the "Key File" tab on the unlock screen and select your `.key` file to unlock without typing your password.
 
-You can also enable **idle auto-lock** in **Preferences → Security → Auto-Lock**. When enabled, Mini Diarium locks automatically after the configured period of inactivity.
+You can also enable **idle auto-lock** in **Preferences → Security → Auto-Lock**. When enabled, Fenmark locks automatically after the configured period of inactivity.
 
 ## Multiple Journals
 
@@ -74,7 +74,7 @@ You can maintain separate journals for different purposes: personal, work, trave
 - **A temporary sandbox location (Flatpak only).** On the Flathub build, browsing to a folder outside the app's sandbox returns a temporary path under `/run/user/…/doc/` rather than the real one. It works at first and stops working later, so it is refused. Use the default location, or grant the app permanent access to the folder you want with [Flatseal](https://flathub.org/apps/com.github.tchx84.Flatseal) before selecting it.
 - **A filename that cannot be used.** A filename that is empty, contains `/`, `\`, or control characters, or is longer than 200 bytes is refused. That is 200 letters of plain English text, and fewer for accented or non-Latin letters, which take 2 to 4 bytes each. The app keeps the rest of the filesystem's 255-unit limit free for the files it and SQLite create next to the journal. On Windows, names with `< > : " | ? *`, names that end with a dot or a space, and device names such as `CON` or `NUL` are refused too. Choose a different name. On Flatpak, spaces at the start and end of the Filename field are removed before the app checks the file. If you copy the app's settings to a different operating system and a saved journal filename is not valid there, the app does not open that journal automatically. It shows the journal list, and opening that journal shows the same error.
 
-  The 200-byte limit applies when you add a journal. A journal that is already in your list can have a name of up to 233 bytes, so a journal added by an older version with a longer name still opens. If a journal shows "Invalid journal filename", do these steps: close Mini Diarium, give the journal's `.db` file a shorter name, open the app, add the file again with **Open existing**, and remove the old list entry. Your entries are in the file, so nothing is lost. These steps work for journals that use a password or a key file. Do not rename the file of a local-only journal: its key is saved with the old list entry, so the new entry cannot unlock it. To get help instead, email minidiarium@gmail.com or open an issue on GitHub.
+  The 200-byte limit applies when you add a journal. A journal that is already in your list can have a name of up to 233 bytes, so a journal added by an older version with a longer name still opens. If a journal shows "Invalid journal filename", do these steps: close Fenmark, give the journal's `.db` file a shorter name, open the app, add the file again with **Open existing**, and remove the old list entry. Your entries are in the file, so nothing is lost. These steps work for journals that use a password or a key file. Do not rename the file of a local-only journal: its key is saved with the old list entry, so the new entry cannot unlock it. To get help instead, email minidiarium@gmail.com or open an issue on GitHub.
 
 **Switching journals:** Open the Journal Picker, choose the journal you want, and then unlock it. On a shared device, this lets each person select their own journal before any authentication prompt appears.
 

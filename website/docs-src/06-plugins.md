@@ -1,15 +1,15 @@
 ---
 title: Plugins
 slug: plugins
-description: Extend Mini Diarium with Rhai script plugins for custom import and export formats. Covers the plugins folder, writing your first plugin, and API helpers.
+description: Extend Fenmark with Rhai script plugins for custom import and export formats. Covers the plugins folder, writing your first plugin, and API helpers.
 order: 7
-updated: 2026-09-06
+updated: 2026-11-01
 tags: plugins, Rhai, import, export, customization
 ---
 
 ## What Are Plugins?
 
-Mini Diarium supports custom import and export formats through Rhai script plugins. Rhai is a simple, sandboxed scripting language that runs inside the app. You can write a plugin to handle any file format that the built-in options do not cover.
+Fenmark supports custom import and export formats through Rhai script plugins. Rhai is a simple, sandboxed scripting language that runs inside the app. You can write a plugin to handle any file format that the built-in options do not cover.
 
 Plugins appear in the Import and Export overlay dropdowns alongside the built-in formats.
 

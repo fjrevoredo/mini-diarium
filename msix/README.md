@@ -52,6 +52,12 @@ tokens ever reappear in the manifest; it should never fire.
 > `identifier` (`com.minidiarium`) is unrelated to MSIX identity and does not need to
 > change — MSIX identity comes entirely from Partner Center.
 
+> Display name: `Properties/DisplayName` and the visual-element `DisplayName` are **Fenmark**
+> (the app was renamed from Mini Diarium; the identity above stays). The Store accepts a
+> package only when its `DisplayName` is one of the product's reserved names, so **Fenmark**
+> must be reserved under Partner Center → Product management → Product identity → "Reserve
+> more names" before the first Fenmark package is submitted.
+
 ---
 
 ## Tooling

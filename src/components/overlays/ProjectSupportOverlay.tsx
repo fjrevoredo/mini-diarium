@@ -16,8 +16,8 @@ import {
 
 const GITHUB_URL = 'https://github.com/fjrevoredo/mini-diarium';
 const STORE_URL = 'https://apps.microsoft.com/detail/9PJFTX44ZS43';
-const NEWSLETTER_URL = 'https://mini-diarium.com/newsletter/';
-const DONATE_URL = 'https://mini-diarium.com/donate/';
+const NEWSLETTER_URL = 'https://fenmark.app/newsletter/';
+const DONATE_URL = 'https://fenmark.app/donate/';
 
 type TranslationKey = Parameters<T>[0];
 

@@ -48,7 +48,7 @@ pub fn generate_print_html(
     let mut html = String::new();
 
     html.push_str(&format!(
-        r#"<div class="md-print-doc-header"><h1>Mini Diarium</h1><p class="md-print-generated">{} {}</p></div>"#,
+        r#"<div class="md-print-doc-header"><h1>Fenmark</h1><p class="md-print-generated">{} {}</p></div>"#,
         escape_html(&labels.generated_label),
         escape_html(generated_at),
     ));

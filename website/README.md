@@ -7,7 +7,7 @@ The marketing site stays fully static. Blog posts are authored in Markdown, then
 - `website/docker-compose.yml` and `website/nginx.conf` are for local website testing only.
 - Production is deployed through Coolify.
 - Production redirects, canonical host enforcement, TLS behavior, and proxy rules are not controlled by the local `nginx.conf`.
-- If Search Console shows canonicalization issues such as `http://mini-diarium.com/` impressions, fix them in Coolify or the real production edge configuration, not only in the local website container.
+- If Search Console shows canonicalization issues such as `http://fenmark.app/` impressions, fix them in Coolify or the real production edge configuration, not only in the local website container.
 
 ## Source of Truth
 
@@ -65,7 +65,7 @@ Before committing, verify:
 
 - the title matches the article intent and product vocabulary
 - the description reads well as a search snippet
-- the post stays aligned with Mini Diarium’s real product scope:
+- the post stays aligned with Fenmark’s real product scope:
   - encrypted journaling
   - offline/local-first ownership
   - Mini Diary successor context

@@ -2,7 +2,7 @@
 
 ## Our Standards
 
-Mini Diarium is a small open-source project. We want participation to be a positive experience for everyone. We ask that all contributors and community members:
+Fenmark is a small open-source project. We want participation to be a positive experience for everyone. We ask that all contributors and community members:
 
 - Be respectful and constructive in discussions
 - Accept feedback graciously and give it kindly

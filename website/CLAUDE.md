@@ -1,4 +1,4 @@
-# Website (`website/`) — Mini Diarium
+# Website (`website/`) — Fenmark
 
 > For project architecture and cross-cutting conventions see the [root CLAUDE.md](../CLAUDE.md).
 
@@ -93,7 +93,7 @@ After the build completes, run the following checks before committing:
 
 **Generated output (all of these must exist or be updated):**
 - `website/blog/<slug>/index.html` was created
-- `website/sitemap.xml` contains `https://mini-diarium.com/blog/<slug>/`
+- `website/sitemap.xml` contains `https://fenmark.app/blog/<slug>/`
 - `website/llms.txt` contains a line for the new post under "Latest Articles"
 - `website/blog/feed.xml` has an `<item>` for the new post at the top
 - `website/blog/index.html` has an article card for the new post
@@ -128,7 +128,7 @@ Delete the `.md` file from `posts-src/` and run `bun run website:build-static`. 
 | Field | Required | Notes |
 |-------|----------|-------|
 | `title` | Yes | Used in `<title>`, OG tags, breadcrumbs, article cards. **Max 70 chars. Target under 60 chars for SERP display.** Use specific hooks: numbers, years, questions, or concrete claims. |
-| `slug` | Yes | Stable URL segment: `mini-diarium.com/blog/<slug>/` |
+| `slug` | Yes | Stable URL segment: `fenmark.app/blog/<slug>/` |
 | `description` | Yes | Meta description + OG/Twitter description. **140–160 chars. Must be click-worthy** — promise a takeaway, not a summary. The page title already summarizes; the description should make the user want to click. |
 | `date` | Yes | Publication date (`YYYY-MM-DD`) |
 | `updated` | Yes | Last modified date (`YYYY-MM-DD`); drives `sitemap.xml` lastmod |
@@ -137,7 +137,7 @@ Delete the `.md` file from `posts-src/` and run `bun run website:build-static`. 
 | `excerpt` | No | Short card summary; falls back to `description` |
 | `draft` | No | Set `true` to exclude from all output. Omit or set `false` to publish. |
 | `coverImage` | No | Full URL to OG image; defaults to `/assets/og-cover.png` |
-| `canonical` | No | Override canonical URL; defaults to `https://mini-diarium.com/blog/<slug>/` |
+| `canonical` | No | Override canonical URL; defaults to `https://fenmark.app/blog/<slug>/` |
 
 ---
 
@@ -181,10 +181,10 @@ post inside that owned topic; do not chase unrelated volume.
 
 1. Opening paragraph — the reader's problem or question, not the product
 2. Two to four H2 sections — each with a clear, distinct purpose
-3. "Where Mini Diarium fits" — factual product claims only (AES-256-GCM, no HTTP client, MIT license, key-file auth, etc.)
+3. "Where Fenmark fits" — factual product claims only (AES-256-GCM, no HTTP client, MIT license, key-file auth, etc.)
 4. "The practical takeaway" — one or two clear if/then recommendations plus 2–3 internal links
 
-**Prohibited patterns and voice:** Follow [`docs/best-practices/WRITING_STYLE.md`](../docs/best-practices/WRITING_STYLE.md) for all shared rules (em dashes, emojis, filler phrases, sentence rhythm, active voice). Blog posts add one further constraint: every claim about Mini Diarium must be backed by a specific technical fact. Write "encrypts each entry with AES-256-GCM before writing to disk", not "prioritizes security". If Mini Diarium lacks a feature the alternative has, say so plainly.
+**Prohibited patterns and voice:** Follow [`docs/best-practices/WRITING_STYLE.md`](../docs/best-practices/WRITING_STYLE.md) for all shared rules (em dashes, emojis, filler phrases, sentence rhythm, active voice). Blog posts add one further constraint: every claim about Fenmark must be backed by a specific technical fact. Write "encrypts each entry with AES-256-GCM before writing to disk", not "prioritizes security". If Fenmark lacks a feature the alternative has, say so plainly.
 
 **GEO (BLUF) rule:**
 
@@ -286,7 +286,7 @@ bun run website:submit-indexnow:dry-run  # Preview the payload without sending
 |------|---------|--------|
 | 200 | URLs submitted successfully | None |
 | 400 | Bad request — invalid payload | Check the script output for details |
-| 403 | Forbidden — key not found on domain | Verify the key file is deployed and accessible at `https://mini-diarium.com/indexnow-key-<HEX>.txt` |
+| 403 | Forbidden — key not found on domain | Verify the key file is deployed and accessible at `https://fenmark.app/indexnow-key-<HEX>.txt` |
 | 422 | URLs don't match declared host | Check the `host` field in the submission payload |
 | 429 | Rate limited | Wait and retry later |
 
@@ -294,7 +294,7 @@ bun run website:submit-indexnow:dry-run  # Preview the payload without sending
 
 ## Documentation Section (`docs-src/`)
 
-`docs-src/` is the **authoritative user-facing reference** for every Mini Diarium feature — the primary source of truth for both users and agents auditing feature behavior. Keep it complete and up to date: whenever a user-facing feature is added, changed, or removed, update the relevant `docs-src/` file in the same task. Stale docs are a bug.
+`docs-src/` is the **authoritative user-facing reference** for every Fenmark feature — the primary source of truth for both users and agents auditing feature behavior. Keep it complete and up to date: whenever a user-facing feature is added, changed, or removed, update the relevant `docs-src/` file in the same task. Stale docs are a bug.
 
 Source files: `website/docs-src/*.md` — one file per section.
 
@@ -339,7 +339,7 @@ full-text sibling of the curated `llms.txt` (every section's Markdown, concatena
   Cloudflare-style bot-check can block a headless verification browser on one provider (seen on
   claude.ai) while the others pass — that's the check failing, not the link.
 - **Testing "Copy page" locally:** the mirror URL is always the absolute
-  `https://mini-diarium.com/...` production URL, so a fetch from the local Docker preview is
+  `https://fenmark.app/...` production URL, so a fetch from the local Docker preview is
   cross-origin and fails — that is expected, not a bug. Verify the fetch/guard/clipboard-write
   mechanism with a same-origin URL instead of chasing the cross-origin failure.
 
@@ -381,6 +381,7 @@ from an unrelated page context that only looks inert until something restructure
 | `index.html` | Edit | Homepage — edit static sections directly; blog teaser block is auto-updated |
 | `encrypted-journal/`, `compare/`, `privacy/`, `newsletter/`, `donate/` | Edit | Static guide / comparison / policy / signup / donation pages |
 | `css/`, `js/` | Edit | Site stylesheet and scripts |
+| `legacy-domain/index.html` | Edit | Self-contained transition page for the old `mini-diarium.com` homepage (inline CSS, no site JS, skipped by the fingerprinter); not in `STATIC_PAGES` or the sitemap |
 | `nginx.conf` | Edit | Ships to production (Coolify builds `Dockerfile`, which `COPY`s this to `/etc/nginx/conf.d/default.conf`); only redirect/TLS/canonical-host enforcement is Coolify-overridden |
 | `../docs/seo/` | Edit | SEO/GEO + growth hub (outside `website/`) — start at [`../docs/seo/README.md`](../docs/seo/README.md) |
 
@@ -392,23 +393,23 @@ Use the standard `docker compose` commands from the `website/` directory to buil
 
 ### Verifying the site
 
-The nginx config uses `server_name mini-diarium.com`. Browsers and curl reject requests to `localhost` unless you either:
+The nginx config uses `server_name fenmark.app`. Browsers and curl reject requests to `localhost` unless you either:
 
 - Pass the `Host` header explicitly:
   ```bash
-  curl -H "Host: mini-diarium.com" http://localhost:80/
+  curl -H "Host: fenmark.app" http://localhost:80/
   ```
   On Windows PowerShell:
   ```powershell
-  Invoke-WebRequest -Uri "http://localhost:80/" -Headers @{"Host"="mini-diarium.com"} -UseBasicParsing
+  Invoke-WebRequest -Uri "http://localhost:80/" -Headers @{"Host"="fenmark.app"} -UseBasicParsing
   ```
-- Or add `127.0.0.1 mini-diarium.com` to your hosts file (`C:\Windows\System32\drivers\etc\hosts` on Windows, `/etc/hosts` on Linux/macOS) for full browser testing.
+- Or add `127.0.0.1 fenmark.app` to your hosts file (`C:\Windows\System32\drivers\etc\hosts` on Windows, `/etc/hosts` on Linux/macOS) for full browser testing.
 
 For a browser-based screenshot check, neither trick is needed: the nginx config's second
 `server` block matches literal `server_name ... localhost;` too, so an automated browser
 (`agent-browser`, `claude-in-chrome`) can open `http://localhost/docs/getting-started/` etc.
 directly. Reach for the `Host` header / hosts-file route only when a check specifically needs
-`mini-diarium.com` in the request (e.g. confirming the `www.` → apex redirect, or a header like
+`fenmark.app` in the request (e.g. confirming the `www.` → apex redirect, or a header like
 the docs `.md` mirror's `Link: rel="canonical"` whose value is the literal production domain).
 
 ### Screenshot-Verifying a Visual Change
@@ -436,6 +437,6 @@ for the gate. Mechanics:
 | Port 80 already in use | Change `"80:80"` to `"8080:80"` in `docker-compose.yml` (local testing only; revert before committing) |
 | Stale cached layers | `docker compose build --no-cache` |
 | Container starts but returns 404 | Check that `bun run website:build-static` ran and `website/docs/` and `website/blog/` are populated |
-| `www.mini-diarium.com` redirects | The nginx config redirects `www.*` to the non-www host — expected behavior |
+| `www.fenmark.app` or `mini-diarium.com` redirects | Expected. `www.fenmark.app` 301-redirects to `https://fenmark.app`. On the legacy `mini-diarium.com` / `www.mini-diarium.com` hosts, only `/` serves the self-contained transition page (`legacy-domain/index.html`); every other path 301-redirects to the same path on `https://fenmark.app`. `fenmark.app/legacy-domain/` returns 404 |
 
 > **Note:** This compose file is for local preview only. `nginx.conf` itself ships to production via `Dockerfile` (Coolify builds it) — Coolify only overrides TLS termination and redirect/canonical-host enforcement on top of it. Use this compose setup to verify routing and header changes before they reach production.

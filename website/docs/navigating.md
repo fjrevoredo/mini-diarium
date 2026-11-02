@@ -2,7 +2,7 @@
 
 > Navigate your journal using the sidebar calendar, keyboard shortcuts, and day-navigation buttons. Jump to any date, go to today, and browse your entry history.
 
-Source: https://mini-diarium.com/docs/navigating/
+Source: https://fenmark.app/docs/navigating/
 
 ## Calendar
 
@@ -12,11 +12,11 @@ You can narrow the dot indicators to a specific tag by clicking a tag chip's nam
 
 Days that contain a [locked entry](writing-entries#locking-an-entry-against-accidental-edits) also show a small lock indicator on their calendar cell, so you can see which days hold a locked entry before opening them.
 
-![Calendar sidebar with entry dots and a lock indicator, next to an open journal entry](https://mini-diarium.com/assets/docs/navigating-01-calendar-sidebar.webp "The sidebar calendar, with a locked entry marked on August 30")
+![Calendar sidebar with entry dots and a lock indicator, next to an open journal entry](https://fenmark.app/assets/docs/navigating-01-calendar-sidebar-v2.webp "The sidebar calendar, with a locked entry marked on August 30")
 
 ## Keyboard Navigation
 
-Mini Diarium supports keyboard shortcuts for all navigation actions. On macOS, use `Cmd` instead of `Ctrl`.
+Fenmark supports keyboard shortcuts for all navigation actions. On macOS, use `Cmd` instead of `Ctrl`.
 
 | Action | Shortcut |
 |--------|----------|
@@ -34,7 +34,7 @@ Mini Diarium supports keyboard shortcuts for all navigation actions. On macOS, u
 
 Press `Ctrl+G` to open the date picker and jump directly to any date. This is the fastest way to navigate to a specific day without scrolling through the calendar month by month. You can also click the date title in the header to open the same date picker.
 
-![Go to Date dialog with day, month, and year fields, over an entry that has multiple entries for the same date](https://mini-diarium.com/assets/docs/writing-entries-03-goto-date.webp "The Go to Date dialog")
+![Go to Date dialog with day, month, and year fields, over an entry that has multiple entries for the same date](https://fenmark.app/assets/docs/writing-entries-03-goto-date.webp "The Go to Date dialog")
 
 ## Header Day Controls
 

@@ -33,7 +33,7 @@
     },
     "sidebar": {
       "navigation": "Navigation",
-      "title": "Mini Diarium",
+      "title": "Fenmark",
       "closeMenu": "Menü schließen",
       "goToToday": "Zu heute gehen"
     }
@@ -86,7 +86,7 @@
   },
   "auth": {
     "picker": {
-      "title": "Mini Diarium",
+      "title": "Fenmark",
       "yourJournals": "Deine Tagebücher",
       "yourJournalsAria": "Deine Tagebücher",
       "empty": "Noch keine Tagebücher. Erstelle ein neues oder öffne ein vorhandenes.",
@@ -118,7 +118,7 @@
       "opening": "Öffne..."
     },
     "prompt": {
-      "title": "Mini Diarium",
+      "title": "Fenmark",
       "unlockFallback": "Tagebuch entsperren",
       "unlockPrefix": "Entsperren",
       "backToJournals": "← Zurück zu den Tagebüchern",
@@ -148,7 +148,7 @@
       "multiAuthLoadError": "Failed to load authentication methods."
     },
     "creation": {
-      "title": "Willkommen bei Mini Diarium",
+      "title": "Willkommen bei Fenmark",
       "subtitle": "Erstelle ein Passwort, um dein Tagebuch zu schützen",
       "passwordLabel": "Passwort",
       "passwordHint": "(1+ Zeichen, 12+ empfohlen)",
@@ -339,8 +339,8 @@
       "showTimestampsHint": "Zeigt Erstellungs- und zuletzt aktualisierte Zeit unter dem Titel des aktuellen Eintrags an.",
       "spellcheckLabel": "Rechtschreibprüfung aktivieren",
       "spellcheckHint": "Wenn aktiviert, markiert die Rechtschreibprüfung des Browsers falsch geschriebene Wörter.",
-      "spellcheckDictionaryMissing": "Die Rechtschreibprüfung benötigt das deutsche Sprachpaket. Öffnen Sie die Software-Verwaltung Ihres Computers und suchen Sie nach „deutsche Rechtschreibprüfung“. Installieren Sie die vorgeschlagene Sprachunterstützung und starten Sie Mini Diarium neu.",
-      "spellcheckDictionaryMissingFlatpak": "Die Rechtschreibprüfung sollte mit Mini Diarium installiert sein. Öffnen Sie die Software-Verwaltung Ihres Computers, aktualisieren Sie Mini Diarium und starten Sie es neu. Wenn diese Warnung weiterhin angezeigt wird, installieren Sie Mini Diarium neu.",
+      "spellcheckDictionaryMissing": "Die Rechtschreibprüfung benötigt das deutsche Sprachpaket. Öffnen Sie die Software-Verwaltung Ihres Computers und suchen Sie nach „deutsche Rechtschreibprüfung“. Installieren Sie die vorgeschlagene Sprachunterstützung und starten Sie Fenmark neu.",
+      "spellcheckDictionaryMissingFlatpak": "Die Rechtschreibprüfung sollte mit Fenmark installiert sein. Öffnen Sie die Software-Verwaltung Ihres Computers, aktualisieren Sie Fenmark und starten Sie es neu. Wenn diese Warnung weiterhin angezeigt wird, installieren Sie Fenmark neu.",
       "spellcheckDictionaryMissingFlatpakChinese": "Die chinesische Rechtschreibprüfung enthält im Flatpak kein Wörterbuch. Eine Aktualisierung oder Neuinstallation fügt keines hinzu. Installieren Sie ein zh_CN-Wörterbuch, oder öffnen Sie die Anleitung zur Rechtschreibprüfung.",
       "spellcheckDictionaryHelp": "Anleitung zur Rechtschreibprüfung öffnen",
       "toolbarItemsLabel": "Symbolleistenelemente",
@@ -387,7 +387,7 @@
       "customFontChooseFile": "Datei auswählen…",
       "customFontFamilyLabel": "Name der Schriftfamilie",
       "customFontAddButton": "Schrift hinzufügen",
-      "customFontMissingBold": "Fettes Gewicht fehlt — Mini Diarium lässt den Browser Fettschrift synthetisieren, was möglicherweise nicht korrekt aussieht.",
+      "customFontMissingBold": "Fettes Gewicht fehlt — Fenmark lässt den Browser Fettschrift synthetisieren, was möglicherweise nicht korrekt aussieht.",
       "customFontDeleteButton": "Entfernen",
       "customFontDeleteAriaLabel": "Eigene Schrift {{ family }} entfernen",
       "customFontFamilyRequired": "Der Name der Schriftfamilie ist erforderlich.",
@@ -633,7 +633,8 @@
   "about": {
     "title": "Über",
     "closeAria": "Schließen",
-    "appName": "Mini Diarium",
+    "appName": "Fenmark",
+    "formerlyName": "(früher Mini Diarium)",
     "version": "Version {{ version }}",
     "description": "Eine Desktop-Anwendung zum Führen eines verschlüsselten, lokal gespeicherten Tagebuchs.",
     "license": "MIT-Lizenz",
@@ -642,7 +643,7 @@
     "docsLink": "Dokumentation",
     "opensInBrowser": "Öffnet im Systembrowser",
     "showTour": "Willkommenstour anzeigen",
-    "supportLink": "Mini Diarium unterstützen"
+    "supportLink": "Fenmark unterstützen"
   },
   "feedback": {
     "title": "Feedback senden",
@@ -671,18 +672,18 @@
     "detailCloseAria": "Benachrichtigungsdetails schließen"
   },
   "support": {
-    "title": "Mini Diarium unterstützen",
+    "title": "Fenmark unterstützen",
     "closeAria": "Schließen",
-    "headerIconAria": "Mini Diarium unterstützen",
-    "openingLineAbout": "Mini Diarium ist kostenlos, verschlüsselt und enthält keine Werbung oder Tracking. Wenn es dir nützlich war, kannst du mit diesen Möglichkeiten helfen, das Projekt fortzuführen.",
-    "openingLineMilestone": "Du hast eine {{ streak }}-Tage-Serie geführt und {{ words }} Wörter geschrieben. Wenn Mini Diarium dir geholfen hat, diese Gewohnheit beizubehalten, kannst du es auf einige Arten unterstützen.",
+    "headerIconAria": "Fenmark unterstützen",
+    "openingLineAbout": "Fenmark ist kostenlos, verschlüsselt und enthält keine Werbung oder Tracking. Wenn es dir nützlich war, kannst du mit diesen Möglichkeiten helfen, das Projekt fortzuführen.",
+    "openingLineMilestone": "Du hast eine {{ streak }}-Tage-Serie geführt und {{ words }} Wörter geschrieben. Wenn Fenmark dir geholfen hat, diese Gewohnheit beizubehalten, kannst du es auf einige Arten unterstützen.",
     "footerDefault": "Jede dieser Möglichkeiten hilft mehr, als du vielleicht denkst.",
-    "footerThanked": "Vielen Dank für deine Unterstützung von Mini Diarium!",
+    "footerThanked": "Vielen Dank für deine Unterstützung von Fenmark!",
     "itemStarLabel": "Das Projekt auf GitHub mit einem Stern versehen",
     "itemStarButton": "Auf GitHub markieren",
     "itemReviewLabel": "Eine Bewertung im Microsoft Store hinterlassen",
     "itemReviewButton": "Bewertung hinterlassen",
-    "itemShareLabel": "Mini Diarium mit einem Freund teilen",
+    "itemShareLabel": "Fenmark mit einem Freund teilen",
     "itemShareButton": "Nachricht zum Teilen kopieren",
     "itemNewsletterLabel": "Den Newsletter abonnieren",
     "itemNewsletterButton": "Abonnieren",
@@ -690,7 +691,7 @@
     "itemContributeButton": "Beitragen",
     "itemDonateLabel": "Eine Spende machen",
     "itemDonateButton": "Spenden",
-    "shareMessage": "Ich nutze Mini Diarium, eine kostenlose verschlüsselte Tagebuch-App ohne Werbung oder Tracking. Einen Blick wert: https://mini-diarium.com/",
+    "shareMessage": "Ich nutze Fenmark, eine kostenlose verschlüsselte Tagebuch-App ohne Werbung oder Tracking. Einen Blick wert: https://fenmark.app/",
     "shareCopyFailed": "Kopieren nicht möglich — kopiere dies selbst: {{ message }}"
   },
   "timestamp": {
@@ -762,7 +763,7 @@
     "refLoading": "Anhang wird geladen"
   },
   "onboarding": {
-    "title": "Willkommen bei Mini Diarium",
+    "title": "Willkommen bei Fenmark",
     "subtitle": "Ein paar Dinge für den Einstieg:",
     "tip_toolbar_title": "Werkzeugleiste anpassen",
     "tip_toolbar_body": "Die Standard-Werkzeugleiste zeigt nur Fett und Kursiv. Öffne Einstellungen → Schreiben, um weitere Werkzeuge zu aktivieren — Überschriften, Farben, Listen, Ausrichtung — und ordne sie nach deinen Wünschen an.",
@@ -771,7 +772,7 @@
     "tip_import_body": "Importiere Einträge aus Day One, Obsidian oder Textdateien.",
     "tip_import_action": "Import öffnen",
     "tip_docs_title": "Vollständige Dokumentation online",
-    "tip_docs_body": "Die Mini Diarium-Website enthält die vollständige Dokumentation zu allen Funktionen: Tastenkürzel, Werkzeugleistenoptionen, Importformate, Verschlüsselungsdetails und mehr.",
+    "tip_docs_body": "Die Fenmark-Website enthält die vollständige Dokumentation zu allen Funktionen: Tastenkürzel, Werkzeugleistenoptionen, Importformate, Verschlüsselungsdetails und mehr.",
     "tip_docs_action": "Docs öffnen",
     "dismiss": "Schließen",
     "back": "Zurück",
@@ -800,7 +801,7 @@
     "cannotReadKeyFile": "Die Schlüsseldatei konnte nicht gelesen werden. Überprüfe, ob die Datei existiert und du Leseberechtigung hast.",
     "cannotSaveKeyFile": "Die Schlüsseldatei konnte nicht gespeichert werden. Überprüfe die Berechtigungen des Ordners.",
     "fileOperationFailed": "Ein Datei-Vorgang ist fehlgeschlagen. Überprüfe, ob du die notwendigen Berechtigungen hast.",
-    "portalPathRejected": "Dieser Ordner ist nur vorübergehend für Mini Diarium freigegeben, daher ließe sich ein dort gespeichertes Tagebuch später nicht mehr öffnen. Verwende stattdessen den Standardort.",
+    "portalPathRejected": "Dieser Ordner ist nur vorübergehend für Fenmark freigegeben, daher ließe sich ein dort gespeichertes Tagebuch später nicht mehr öffnen. Verwende stattdessen den Standardort.",
     "backupFileRejected": "Diese Datei ist eine Sicherungskopie. Sie direkt zu öffnen würde sie verändern. Kopiere sie zuerst an einen anderen Ort und öffne dann die Kopie.",
     "journalAlreadyRegistered": "Dieses Tagebuch ist bereits in deiner Liste. Öffne es oben aus der Liste, statt es erneut hinzuzufügen.",
     "invalidJournalFilename": "Dieser Dateiname kann nicht für ein Tagebuch verwendet werden. Verwende einen kürzeren Namen ohne Sonderzeichen wie / oder *.",

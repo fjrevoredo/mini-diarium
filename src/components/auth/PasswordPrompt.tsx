@@ -13,6 +13,7 @@ import { useI18n } from '../../i18n';
 import { peekAuthSlotTypes, type JournalPeek, type MultiAuthCredential } from '../../lib/tauri';
 import { mapTauriError } from '../../lib/errors';
 import PreAuthTools from './PreAuthTools';
+import Wordmark from '../brand/Wordmark';
 
 type UnlockMode = 'password' | 'keyfile';
 
@@ -178,9 +179,11 @@ export default function PasswordPrompt() {
       <div class="my-auto w-full max-w-md">
         <div class="rounded-lg bg-primary px-8 py-8 shadow-lg">
           <div class="mb-3 flex justify-center">
-            <img src="/logo-transparent.svg" alt="Mini Diarium" class="h-16 w-16 rounded-xl" />
+            <img src="/logo-transparent.svg" alt="" class="h-16 w-16 rounded-xl" />
           </div>
-          <h1 class="mb-2 text-center text-3xl font-bold text-primary">{t('auth.prompt.title')}</h1>
+          <h1 class="mb-3 flex justify-center text-primary">
+            <Wordmark class="h-8" label={t('auth.prompt.title')} />
+          </h1>
           <Show
             when={activeJournalName()}
             fallback={

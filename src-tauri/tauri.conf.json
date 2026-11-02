@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
-  "productName": "Mini Diarium",
-  "version": "0.7.6",
+  "productName": "Fenmark",
+  "version": "0.8.0",
   "identifier": "com.minidiarium",
   "build": {
     "beforeDevCommand": "bun run dev",
@@ -29,7 +29,7 @@
     "copyright": "Copyright (c) 2026 Francisco J. Revoredo",
     "category": "Utility",
     "shortDescription": "An encrypted, local-first desktop journaling app",
-    "longDescription": "Mini Diarium is a privacy-focused desktop journaling application. All diary entries are encrypted with AES-256-GCM at rest. Features include rich text editing, full-text search, calendar navigation, import/export, and automatic backups. No network access, no telemetry. Your journal stays on your device.",
+    "longDescription": "Fenmark (formerly Mini Diarium) is a privacy-focused desktop journaling application. All diary entries are encrypted with AES-256-GCM at rest. Features include rich text editing, full-text search, calendar navigation, import/export, and automatic backups. No network access, no telemetry. Your journal stays on your device.",
     "resources": ["../fonts/*.ttf"],
     "licenseFile": "../LICENSE",
     "macOS": {
@@ -37,8 +37,12 @@
       "signingIdentity": "-"
     },
     "windows": {
+      "wix": {
+        "upgradeCode": "a65a4825-301e-55ff-b786-58edf47d01c5"
+      },
       "nsis": {
-        "installMode": "perMachine"
+        "installMode": "perMachine",
+        "installerHooks": "./windows/hooks.nsh"
       }
     },
     "linux": {
@@ -49,12 +53,16 @@
         ],
         "recommends": [
           "hunspell-en-us"
-        ]
+        ],
+        "conflicts": ["mini-diarium"],
+        "replaces": ["mini-diarium"]
       },
       "rpm": {
         "recommends": [
           "hunspell-en-US"
-        ]
+        ],
+        "conflicts": ["mini-diarium"],
+        "obsoletes": ["mini-diarium"]
       }
     }
   }

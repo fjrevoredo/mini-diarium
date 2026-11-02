@@ -4,7 +4,7 @@ A **fixed** ~30-query set for the recurring GEO citation baseline. Keep it stabl
 so movement is comparable. Run each query on **ChatGPT, Google AI Overviews, Perplexity, and
 Copilot**. For each engine/query record:
 
-- **Cited?** Is `mini-diarium.com` (or the app by name) present in the answer or its sources?
+- **Cited?** Is `fenmark.app` (or the app by name) present in the answer or its sources?
 - **Absorbed?** Does the answer language reflect the site's framing (offline, no cloud,
   AES-256-GCM, local-first, MIT/open source)?
 

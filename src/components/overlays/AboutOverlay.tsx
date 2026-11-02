@@ -6,6 +6,7 @@ import { useI18n } from '../../i18n';
 import { X, GitFork, BookOpen, Compass, Heart } from 'lucide-solid';
 import { replayOnboarding } from '../../state/onboarding';
 import { setIsProjectSupportOpen, setProjectSupportEntry } from '../../state/ui';
+import Wordmark from '../brand/Wordmark';
 
 interface AboutOverlayProps {
   isOpen: boolean;
@@ -55,9 +56,12 @@ export default function AboutOverlay(props: AboutOverlayProps) {
 
             {/* Logo + name + version */}
             <div class="flex flex-col items-center gap-3 mb-6">
-              <img src="/logo-transparent.svg" alt="Mini Diarium" class="h-16 w-16 rounded-xl" />
+              <img src="/logo-transparent.svg" alt="" class="h-16 w-16 rounded-xl" />
               <div class="text-center">
-                <p class="text-xl font-bold text-primary">{t('about.appName')}</p>
+                <p class="mb-1 flex justify-center text-primary">
+                  <Wordmark class="h-5" label={t('about.appName')} />
+                </p>
+                <p class="text-xs text-tertiary">{t('about.formerlyName')}</p>
                 <Show when={version()}>
                   <p class="text-sm text-secondary">{t('about.version', { version: version() })}</p>
                 </Show>
@@ -84,7 +88,7 @@ export default function AboutOverlay(props: AboutOverlayProps) {
                   {t('about.githubLink')}
                 </button>
                 <button
-                  onClick={() => openUrl('https://mini-diarium.com/docs/')}
+                  onClick={() => openUrl('https://fenmark.app/docs/')}
                   class="flex items-center gap-2 rounded-full border border-primary px-4 py-2 text-sm text-secondary hover:bg-hover hover:text-primary transition-colors"
                 >
                   <BookOpen size={15} />
@@ -94,7 +98,7 @@ export default function AboutOverlay(props: AboutOverlayProps) {
               <p class="text-xs text-tertiary">{t('about.opensInBrowser')}</p>
             </div>
 
-            {/* Support Mini Diarium */}
+            {/* Support Fenmark */}
             <div class="flex justify-center mb-6">
               <button
                 onClick={() => {
