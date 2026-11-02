@@ -42,15 +42,15 @@
   <screenshots>
     <screenshot type="default">
       <caption>Main journal view</caption>
-      <image type="source" width="1920" height="1080">https://raw.githubusercontent.com/fjrevoredo/mini-diarium/2737c02b96855240122c7bb3586a1f0276fdf439/public/promotional/flatpak/main.png</image>
+      <image type="source" width="1000" height="700">https://raw.githubusercontent.com/fjrevoredo/mini-diarium/76c8c76d4ba35569f372b4d070df3c9b293761ce/public/promotional/flatpak/main.png</image>
     </screenshot>
     <screenshot>
       <caption>Calendar navigation</caption>
-      <image type="source" width="1920" height="1080">https://raw.githubusercontent.com/fjrevoredo/mini-diarium/2737c02b96855240122c7bb3586a1f0276fdf439/public/promotional/flatpak/calendar.png</image>
+      <image type="source" width="1000" height="700">https://raw.githubusercontent.com/fjrevoredo/mini-diarium/76c8c76d4ba35569f372b4d070df3c9b293761ce/public/promotional/flatpak/calendar.png</image>
     </screenshot>
     <screenshot>
       <caption>Preferences</caption>
-      <image type="source" width="1920" height="1080">https://raw.githubusercontent.com/fjrevoredo/mini-diarium/2737c02b96855240122c7bb3586a1f0276fdf439/public/promotional/flatpak/preferences.png</image>
+      <image type="source" width="1000" height="700">https://raw.githubusercontent.com/fjrevoredo/mini-diarium/76c8c76d4ba35569f372b4d070df3c9b293761ce/public/promotional/flatpak/preferences.png</image>
     </screenshot>
   </screenshots>
 

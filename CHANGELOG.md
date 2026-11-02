@@ -47,6 +47,7 @@ Template:
 - **Fenmark wordmark in the app**: The sidebar header, the unlock screen, the journal picker, and the About screen show the Fenmark wordmark instead of plain text. The wordmark is drawn as shapes, not text, so it looks the same on every system and loads no font. It follows the light and dark themes.
 - **New demo and screenshots**: The homepage demo video, the README animation, and the screenshots on the Getting Started, Writing Entries, and Navigating docs pages show the current app with the Fenmark name.
 - **Flathub brand colors**: The Linux app metadata sets light and dark brand colors, so Flathub and GNOME Software show the Fenmark blue behind the app banner.
+- **New Flathub screenshots (TODO-0160)**: The Flathub and GNOME Software listing shows new screenshots of the current app with the Fenmark name: the editor, the calendar, and Preferences, taken on GNOME with a sample journal.
 
 ### Fixed
 - **App favicon**: The app now uses the Fenmark logo in the places where it showed a leftover placeholder icon.
