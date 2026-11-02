@@ -29,7 +29,7 @@ If you create a new journal, you will be asked to create a password. This passwo
 
 **There is no password recovery.** If you forget your password, your entries cannot be recovered. Choose something memorable and keep it safe.
 
-![Journal creation screen with password and confirm password fields](https://fenmark.app/assets/docs/getting-started-01-journal-creation.webp "Setting a password for a new journal")
+![Journal creation screen with password and confirm password fields](https://fenmark.app/assets/docs/getting-started-01-journal-creation-v2.webp "Setting a password for a new journal")
 
 ## Welcome Tour
 
@@ -47,7 +47,7 @@ To resume or permanently dismiss the tour, click the `?` icon and choose **Resum
 
 Your journal is encrypted whenever it is locked. After selecting a journal, enter your password to unlock it. The journal locks automatically when you close the app, and you can also lock it manually using the lock icon in the header at any time.
 
-![Fenmark main window with the calendar sidebar and an unlocked journal entry open in the editor](https://fenmark.app/assets/docs/getting-started-02-main-app.webp "The main window after writing your first entry")
+![Fenmark main window with the calendar sidebar and an unlocked journal entry open in the editor](https://fenmark.app/assets/docs/getting-started-02-main-app-v2.webp "The main window after writing your first entry")
 
 The header also shows an **About** button (ⓘ) and a **bell icon** for the notification center. The bell displays an unread badge when a new release ships; click it to read what changed and mark notifications as read. Entries with more to say show a **Read more** button that opens the full write-up, with headings and lists, without leaving the app.
 

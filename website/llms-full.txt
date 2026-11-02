@@ -35,7 +35,7 @@ If you create a new journal, you will be asked to create a password. This passwo
 
 **There is no password recovery.** If you forget your password, your entries cannot be recovered. Choose something memorable and keep it safe.
 
-![Journal creation screen with password and confirm password fields](https://fenmark.app/assets/docs/getting-started-01-journal-creation.webp "Setting a password for a new journal")
+![Journal creation screen with password and confirm password fields](https://fenmark.app/assets/docs/getting-started-01-journal-creation-v2.webp "Setting a password for a new journal")
 
 ## Welcome Tour
 
@@ -53,7 +53,7 @@ To resume or permanently dismiss the tour, click the `?` icon and choose **Resum
 
 Your journal is encrypted whenever it is locked. After selecting a journal, enter your password to unlock it. The journal locks automatically when you close the app, and you can also lock it manually using the lock icon in the header at any time.
 
-![Fenmark main window with the calendar sidebar and an unlocked journal entry open in the editor](https://fenmark.app/assets/docs/getting-started-02-main-app.webp "The main window after writing your first entry")
+![Fenmark main window with the calendar sidebar and an unlocked journal entry open in the editor](https://fenmark.app/assets/docs/getting-started-02-main-app-v2.webp "The main window after writing your first entry")
 
 The header also shows an **About** button (ⓘ) and a **bell icon** for the notification center. The bell displays an unread badge when a new release ships; click it to read what changed and mark notifications as read. Entries with more to say show a **Read more** button that opens the full write-up, with headings and lists, without leaving the app.
 
@@ -117,7 +117,7 @@ Fenmark uses a rich text editor with support for a full set of formatting option
 
 The toolbar above the editor provides buttons for each formatting option. Standard keyboard shortcuts also work: `Ctrl+B` for bold, `Ctrl+I` for italic, and so on. On macOS, use `Cmd` instead of `Ctrl`.
 
-![Editor toolbar above a formatted entry with a heading, bold text, and a bullet list](https://fenmark.app/assets/docs/writing-entries-01-toolbar-formatted.webp "Heading, bold, and bullet list applied with the toolbar")
+![Editor toolbar above a formatted entry with a heading, bold text, and a bullet list](https://fenmark.app/assets/docs/writing-entries-01-toolbar-formatted-v2.webp "Heading, bold, and bullet list applied with the toolbar")
 
 ## Titles
 
@@ -133,7 +133,7 @@ Each date can contain multiple separate entries. This is useful for writing at d
 - Use `−` to delete the current entry.
 - If a day has only one entry, the navigation bar stays hidden.
 
-![Timeline view showing three separate entries stacked under the same date](https://fenmark.app/assets/docs/writing-entries-02-timeline-multientry.webp "Multiple entries on the same date, grouped together in the Timeline")
+![Timeline view showing three separate entries stacked under the same date](https://fenmark.app/assets/docs/writing-entries-02-timeline-multientry-v2.webp "Multiple entries on the same date, grouped together in the Timeline")
 
 ## Locking an Entry Against Accidental Edits
 
@@ -344,7 +344,7 @@ You can narrow the dot indicators to a specific tag by clicking a tag chip's nam
 
 Days that contain a [locked entry](writing-entries#locking-an-entry-against-accidental-edits) also show a small lock indicator on their calendar cell, so you can see which days hold a locked entry before opening them.
 
-![Calendar sidebar with entry dots and a lock indicator, next to an open journal entry](https://fenmark.app/assets/docs/navigating-01-calendar-sidebar.webp "The sidebar calendar, with a locked entry marked on August 30")
+![Calendar sidebar with entry dots and a lock indicator, next to an open journal entry](https://fenmark.app/assets/docs/navigating-01-calendar-sidebar-v2.webp "The sidebar calendar, with a locked entry marked on August 30")
 
 ## Keyboard Navigation
 

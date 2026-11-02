@@ -12,7 +12,7 @@ You can narrow the dot indicators to a specific tag by clicking a tag chip's nam
 
 Days that contain a [locked entry](writing-entries#locking-an-entry-against-accidental-edits) also show a small lock indicator on their calendar cell, so you can see which days hold a locked entry before opening them.
 
-![Calendar sidebar with entry dots and a lock indicator, next to an open journal entry](https://fenmark.app/assets/docs/navigating-01-calendar-sidebar.webp "The sidebar calendar, with a locked entry marked on August 30")
+![Calendar sidebar with entry dots and a lock indicator, next to an open journal entry](https://fenmark.app/assets/docs/navigating-01-calendar-sidebar-v2.webp "The sidebar calendar, with a locked entry marked on August 30")
 
 ## Keyboard Navigation
 
