@@ -44,6 +44,9 @@ Template:
     - **New journals**: the default folder is now `Documents/Fenmark`. If you already have a `Documents/Mini Diarium` folder, new journals still go there.
     - Install commands (`winget`, `brew`, `flatpak`), store IDs, and the GitHub repository keep their current names for now (TODO-0157).
 - **Refreshed Fenmark logo and wordmark (TODO-0159)**: The book logo now has a bookmark ribbon (the "mark" in Fenmark) and a cleaner spine, so it reads better at small sizes. The app icon on every platform, the website favicons, and the social preview card use the new logo. The website navigation shows the new Fenmark wordmark next to the logo.
+- **Fenmark wordmark in the app**: The sidebar header, the unlock screen, the journal picker, and the About screen show the Fenmark wordmark instead of plain text. The wordmark is drawn as shapes, not text, so it looks the same on every system and loads no font. It follows the light and dark themes.
+- **New demo and screenshots**: The homepage demo video, the README animation, and the screenshots on the Getting Started, Writing Entries, and Navigating docs pages show the current app with the Fenmark name.
+- **Flathub brand colors**: The Linux app metadata sets light and dark brand colors, so Flathub and GNOME Software show the Fenmark blue behind the app banner.
 
 ### Fixed
 - **App favicon**: The app's web view now uses the Fenmark logo as its favicon instead of a leftover placeholder image.
