@@ -73,8 +73,9 @@ sed -i.bak \
   -e "s|\"dateModified\": \"[^\"]*\"|\"dateModified\": \"${release_date}\"|g" \
   "${website_path}"
 
-# Replace download URLs verbatim (no capture groups — separate sed call avoids backreference issues with multi -e)
-sed -i.bak2 \
+# Replace download URLs verbatim (no capture groups — separate sed call avoids backreference issues with multi -e).
+# -E is required: in basic regex `+` is a literal character, so `[0-9.]+` would never match.
+sed -i.bak2 -E \
   -e "s|Mini-Diarium-[0-9.]+-windows.exe|Mini-Diarium-${NEW_VERSION}-windows.exe|g" \
   -e "s|Mini-Diarium-[0-9.]+-macos.dmg|Mini-Diarium-${NEW_VERSION}-macos.dmg|g" \
   -e "s|Mini-Diarium-[0-9.]+-linux.AppImage|Mini-Diarium-${NEW_VERSION}-linux.AppImage|g" \
