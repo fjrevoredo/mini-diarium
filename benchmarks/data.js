@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1793036952834,
+  "lastUpdate": 1793660553604,
   "repoUrl": "https://github.com/fjrevoredo/mini-diarium",
   "entries": {
     "Benchmark": [
@@ -39754,6 +39754,36 @@ window.BENCHMARK_DATA = {
           {
             "name": "ci_pipeline_duration",
             "value": 519000000000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "39350477+fjrevoredo@users.noreply.github.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "a3a8cab50e87b472cbccd429bf3bcd13baab3f51",
+          "message": "Rename display name to Fenmark (Stage 1) (#361)\n\n## Summary\n\nRenames the app's display name from Mini Diarium to **Fenmark** (Stage\n1, TODO-0155). Only what users see changes. Install identifiers, the\nbinary, the crate names, and release asset names stay `mini-diarium`\n(Stage 2, TODO-0157).\n\n```text\napp        window title, menus, auth screens, About (\"formerly Mini Diarium\"), exports, 9 locales\n           default journal folder: Documents/Fenmark, unless Documents/Mini Diarium already exists\nwebsite    moves to fenmark.app; announcement post + What's New entry\n           mini-diarium.com/       -> transition page with a button to fenmark.app\n           mini-diarium.com/<path> -> 301 https://fenmark.app/<path>\n           www.fenmark.app         -> 301 https://fenmark.app\ndist       WinGet + Homebrew manifests carry the Fenmark name (IDs unchanged)\nbrand      new ribbon logo, Fenmark wordmark + lockups, all platform icons, favicons, OG card\n           in-app wordmark (sidebar, unlock, journal picker, About); new homepage demo + docs\n           screenshots; Flathub <branding> colors\ndocs       README and root docs renamed; CHANGELOG under 0.8.0; follow-up TODOs filed\n```\n\nUnchanged on purpose: `com.minidiarium` app data folder, MSIX identity\n`fjrevoredo.MiniDiarium`, Store ID, Flatpak ID, WinGet ID,\n`mini-diarium` binary and crates, `Mini-Diarium-X.Y.Z-*` asset names.\nJournals, settings, backups, and plugins are not moved or re-encrypted.\n\n## Changes\n\n- `feat(app)`: display name to Fenmark across the UI, locales, Tauri\nconfig, and the default journal folder (with the legacy-folder\nfallback).\n- `feat(website)`: move to fenmark.app, announcement post, What's New\nnotification, regenerated static build.\n- `feat(website)`: transition page on the old `mini-diarium.com`\nhomepage (`website/legacy-domain/index.html`, self-contained); all other\nold paths 301 to fenmark.app.\n- `build(website)`: the asset fingerprinter skips `legacy-domain/` (new\n`walkHtmlFiles` test).\n- `ci(distribution)`: WinGet and Homebrew manifests use the Fenmark\nname.\n- `docs` / `chore(todo)`: top-level docs, CHANGELOG, follow-up TODOs\n(TODO-0156, 0157, 0158).\n- `feat(brand)` (TODO-0159, merged from\n`brand/fenmark-visual-identity`): logo with a bookmark ribbon, outlined\nPlus Jakarta Sans wordmark and lockups in `docs/brand/`, regenerated\nplatform icons and website favicons, nav lockup, OG card rendered from\n`og-cover.svg`, the app favicon fix (it showed a placeholder), and the\nunused `primary` color scale removed. Ships in 0.8.0 with the rename.\n- `feat(ui)` / `feat(website)` / `chore(linux)` (merged from\n`brand/fenmark-visual-polish`): `Wordmark.tsx` (outlined paths,\n`currentColor`, guard test against the `docs/brand` master) in the\nsidebar, unlock screen, journal picker, and About; re-recorded homepage\ndemo (`demo-v2.*`) and README GIF; five docs screenshots recaptured\n(`*-v2.webp`); Flathub `<branding>` colors `#9cc3f5` / `#1f3a63`.\n\n## Evidence\n\n- Live dev app: window title, page title, welcome screen, sidebar, and\nAbout all show Fenmark; About shows \"(formerly Mini Diarium)\"; What's\nNew lists the rename. `get_default_journal_dir` returns an existing\n`Documents\\Mini Diarium` and creates no `Documents\\Fenmark`.\n- nginx routing, tested in the website container (`nginx -t` ok):\n\n  | Host + path | Result |\n  |---|---|\n  | `mini-diarium.com/`, `www.mini-diarium.com/` | 200 transition page |\n| `mini-diarium.com/docs/getting-started/?x=1` | 301\n`https://fenmark.app/docs/getting-started/?x=1` |\n  | `www.fenmark.app/blog/` | 301 `https://fenmark.app/blog/` |\n  | `fenmark.app/` | 200 |\n  | `fenmark.app/legacy-domain/` | 404 |\n\n- Visual identity: the dev app on Windows shows the new icon and\n\"Fenmark\" in the title bar and taskbar; the merged tree passes `bun run\npre-commit`; after the visual polish merge, `website:build-static`\nchanges no file.\n- `walkHtmlFiles skips the self-contained legacy-domain landing page`:\nfails before the change, passes after (11/11). `website:build-static`\nleaves generated files unchanged.\n\n## Testing\n\n- [ ] `bun run lint` passes (CI)\n- [ ] `bun run format:check` passes (CI)\n- [ ] `bun run type-check` passes (CI)\n- [ ] `bun run test:run` passes (CI)\n- [ ] `cargo test --workspace` passes (CI)\n- [ ] `cargo clippy --workspace --all-targets -- -D warnings` passes\n(CI)\n- [x] Manual testing done (dev app UI check; website routing in Docker)\n- [ ] Flatpak CI job: red until `https://fenmark.app` serves a page\n(appstreamcli `url-not-reachable`, 503); re-run after the Coolify\ndomains go live\n- [ ] Installer checks in VMs: NSIS and MSI over 0.7.6, deb replace,\nmacOS DMG, Linux `StartupWMClass`\n\n## Merge Danger\n\n**Door:** two-way for the code; one-way for the announcement.\n\nMerging deploys the website, which makes the new name public on\nfenmark.app. Publish the 0.8.0 app release the same day, so the site and\nthe downloads agree.\n\n**Blast Radius:** wide (user-facing name)\n\n- Coolify must route `fenmark.app`, `www.fenmark.app`,\n`mini-diarium.com`, and `www.mini-diarium.com` to the website container\nbefore or at merge.\n- Release day: set the real date in the announcement post,\n`public/notifications.json`, and the CHANGELOG heading, then\n`website:build-static` and `bump-version.sh`.\n- Search Console Change of Address is not available while the old\nhomepage shows the transition page (it needs a homepage 301). Deep-link\n301s carry most ranking meanwhile.\n\n## Related Issues\n\nPart of TODO-0155. Includes TODO-0159 (visual identity). Follow-ups:\nTODO-0156, TODO-0157, TODO-0158, TODO-0160 (Flathub screenshots still\nshow Mini Diarium; does not block 0.8.0).",
+          "timestamp": "2026-11-02T23:51:53+01:00",
+          "tree_id": "230a4262292978a1d21f71ed395ef420740614aa",
+          "url": "https://github.com/fjrevoredo/mini-diarium/commit/a3a8cab50e87b472cbccd429bf3bcd13baab3f51"
+        },
+        "date": 1793660551899,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "ci_pipeline_duration",
+            "value": 625000000000,
             "range": "± 0",
             "unit": "ns/iter"
           }
