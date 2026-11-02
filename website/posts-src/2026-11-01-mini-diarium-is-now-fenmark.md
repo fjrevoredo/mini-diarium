@@ -2,8 +2,8 @@
 title: Mini Diarium Is Now Fenmark
 slug: mini-diarium-is-now-fenmark
 description: Mini Diarium has a new name: Fenmark. Why the name changed, why your journals and settings stay exactly where they are, and what moves over next.
-date: 2026-11-01
-updated: 2026-11-01
+date: 2026-11-02
+updated: 2026-11-02
 author: Francisco J. Revoredo
 tags: fenmark, mini diarium, announcement, encrypted journal
 excerpt: The app has a new name. Your journals, settings, and backups do not move, and you do not need to do anything.

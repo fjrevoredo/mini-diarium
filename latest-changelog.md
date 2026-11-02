@@ -1,8 +1,20 @@
 ## What's Changed
 
-Mini Diarium now offers the full interface in Russian and Simplified Chinese, and the native menu follows the selected language. The Linux Flatpak also ships the `ru_RU` spell check dictionary, while Chinese spell check stays a documented exception.
+Mini Diarium is now Fenmark. The app, the installers, and the website use the new name and a refreshed logo, and your journals, settings, and backups stay exactly where they are.
 
-### Added
+### Changed
 
-- **Russian translation (#344)**: The full interface (733 strings) is available in Russian. Select "Русский" in Preferences → General → Language. The native menu ("Файл", "Настройки...") follows the selected language, and on Linux spell check uses the `ru_RU` dictionary, which the Flatpak now bundles. Thanks to [@d1nch](https://github.com/d1nch) for the translation. Known limitation: the app has only singular and plural word forms, so counts such as 2–4 use the Russian "many" form.
-- **Simplified Chinese translation (#354)**: The full interface (733 strings) is available in Simplified Chinese. Select "简体中文" in Preferences → General → Language. The native menu ("文件", "首选项...") follows the selected language. On Linux, Chinese is a documented spell check exception: the Flatpak does not bundle a `zh_CN` dictionary, so the spell check warning remains until you install one. Thanks to [@wcxu21](https://github.com/wcxu21) for the translation.
+- **Mini Diarium is now Fenmark (TODO-0155)**: The app has a new name. The window title, the menus, the welcome and unlock screens, the About screen, exports, and all nine languages say Fenmark. For a while, the About screen also shows "formerly Mini Diarium". The website moves to [fenmark.app](https://fenmark.app/). The `mini-diarium.com` homepage now shows a short page that explains the new name, with a button to fenmark.app. Every other old `mini-diarium.com` link forwards to the same page on fenmark.app. Your journals, settings, preferences, backups, and plugins stay where they are, and nothing is re-encrypted: the app data folder (`com.minidiarium`), the file format, and the export formats do not change.
+    - **Windows**: the new installer removes the old "Mini Diarium" program entry before it installs, so you have one app called Fenmark. The uninstall runs silently and never deletes your app data. The MSI installer also upgrades the old app in place.
+    - **Linux**: the Fenmark `.deb` and `.rpm` packages replace the old `mini-diarium` package in one step. The terminal command stays `mini-diarium`. The Flatpak keeps its ID and shows the new name.
+    - **macOS**: the DMG installs `Fenmark.app` next to the old `Mini Diarium.app`. Delete `Mini Diarium.app` after you install Fenmark. The app bundle does not hold your journals, so this is safe.
+    - **New journals**: the default folder is now `Documents/Fenmark`. If you already have a `Documents/Mini Diarium` folder, new journals still go there.
+    - Install commands (`winget`, `brew`, `flatpak`), store IDs, and the GitHub repository keep their current names for now (TODO-0157).
+- **Refreshed Fenmark logo and wordmark (TODO-0159)**: The book logo now has a bookmark ribbon (the "mark" in Fenmark) and a cleaner spine, so it reads better at small sizes. The app icon on every platform, the website favicons, and the social preview card use the new logo. The website navigation shows the new Fenmark wordmark next to the logo.
+- **Fenmark wordmark in the app**: The sidebar header, the unlock screen, the journal picker, and the About screen show the Fenmark wordmark instead of plain text. The wordmark is drawn as shapes, not text, so it looks the same on every system and loads no font. It follows the light and dark themes.
+- **New demo and screenshots**: The homepage demo video, the README animation, and the screenshots on the Getting Started, Writing Entries, and Navigating docs pages show the current app with the Fenmark name.
+- **Flathub brand colors**: The Linux app metadata sets light and dark brand colors, so Flathub and GNOME Software show the Fenmark blue behind the app banner.
+
+### Fixed
+
+- **App favicon**: The app now uses the Fenmark logo in the places where it showed a leftover placeholder icon.

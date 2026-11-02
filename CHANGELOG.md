@@ -34,13 +34,13 @@ Template:
 
 # Versions
 
-## [0.8.0] - Unreleased
+## [0.8.0] - 02-11-2026
 
 ### Changed
-- **Mini Diarium is now Fenmark (TODO-0155)**: The app has a new name. The window title, the menus, the welcome and unlock screens, the About screen, exports, and all nine languages say Fenmark. For a while, the About screen also shows "formerly Mini Diarium". The website moves to [fenmark.app](https://fenmark.app/). The `mini-diarium.com` homepage now shows a short page that explains the new name, with a button to fenmark.app; every other old `mini-diarium.com` link forwards to the same page on fenmark.app. Your journals, settings, preferences, backups, and plugins stay where they are, and nothing is re-encrypted: the app data folder (`com.minidiarium`), the file format, and the export formats do not change.
-    - **Windows**: the new installer removes the old "Mini Diarium" program entry before it installs, so you have one app called Fenmark. The uninstall runs silently and never deletes your app data. The MSI keeps a fixed upgrade code.
+- **Mini Diarium is now Fenmark (TODO-0155)**: The app has a new name. The window title, the menus, the welcome and unlock screens, the About screen, exports, and all nine languages say Fenmark. For a while, the About screen also shows "formerly Mini Diarium". The website moves to [fenmark.app](https://fenmark.app/). The `mini-diarium.com` homepage now shows a short page that explains the new name, with a button to fenmark.app. Every other old `mini-diarium.com` link forwards to the same page on fenmark.app. Your journals, settings, preferences, backups, and plugins stay where they are, and nothing is re-encrypted: the app data folder (`com.minidiarium`), the file format, and the export formats do not change.
+    - **Windows**: the new installer removes the old "Mini Diarium" program entry before it installs, so you have one app called Fenmark. The uninstall runs silently and never deletes your app data. The MSI installer also upgrades the old app in place.
     - **Linux**: the Fenmark `.deb` and `.rpm` packages replace the old `mini-diarium` package in one step. The terminal command stays `mini-diarium`. The Flatpak keeps its ID and shows the new name.
-    - **macOS**: the DMG installs `Fenmark.app` next to the old `Mini Diarium.app`. Delete `Mini Diarium.app` after you install Fenmark; your journals are not stored inside the app.
+    - **macOS**: the DMG installs `Fenmark.app` next to the old `Mini Diarium.app`. Delete `Mini Diarium.app` after you install Fenmark. The app bundle does not hold your journals, so this is safe.
     - **New journals**: the default folder is now `Documents/Fenmark`. If you already have a `Documents/Mini Diarium` folder, new journals still go there.
     - Install commands (`winget`, `brew`, `flatpak`), store IDs, and the GitHub repository keep their current names for now (TODO-0157).
 - **Refreshed Fenmark logo and wordmark (TODO-0159)**: The book logo now has a bookmark ribbon (the "mark" in Fenmark) and a cleaner spine, so it reads better at small sizes. The app icon on every platform, the website favicons, and the social preview card use the new logo. The website navigation shows the new Fenmark wordmark next to the logo.
@@ -49,7 +49,7 @@ Template:
 - **Flathub brand colors**: The Linux app metadata sets light and dark brand colors, so Flathub and GNOME Software show the Fenmark blue behind the app banner.
 
 ### Fixed
-- **App favicon**: The app's web view now uses the Fenmark logo as its favicon instead of a leftover placeholder image.
+- **App favicon**: The app now uses the Fenmark logo in the places where it showed a leftover placeholder icon.
 
 ### Internal
 - **Brand masters**: `docs/brand/` holds the wordmark and lockup masters (outlined Plus Jakarta Sans, OFL 1.1) with construction rules. The website OG card renders from `og-cover.svg` with Edge headless, and the unused `primary` color scale is removed from `uno.config.ts`.
