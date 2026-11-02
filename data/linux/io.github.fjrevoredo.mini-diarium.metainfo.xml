@@ -30,6 +30,11 @@
   <url type="bugtracker">https://github.com/fjrevoredo/mini-diarium/issues</url>
   <url type="vcs-browser">https://github.com/fjrevoredo/mini-diarium</url>
 
+  <branding>
+    <color type="primary" scheme_preference="light">#9cc3f5</color>
+    <color type="primary" scheme_preference="dark">#1f3a63</color>
+  </branding>
+
   <developer id="io.github.fjrevoredo">
     <name>Francisco J. Revoredo</name>
   </developer>
