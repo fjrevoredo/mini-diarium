@@ -234,31 +234,6 @@ Steps:
    real pixel size of each file (`file public/promotional/flatpak/*.png`). Then run
    `appstreamcli validate --no-net data/linux/io.github.fjrevoredo.mini-diarium.metainfo.xml`.
 
-### Checking the window class (`StartupWMClass`)
-
-GNOME groups a running window under its launcher only when the window matches the desktop
-file. If it does not match, the dock shows a second, generic icon. The binary is
-`mini-diarium`, and the app does not set a GTK application ID, so the window identity
-probably comes from the binary name. `data/linux/io.github.fjrevoredo.mini-diarium.desktop`
-has `StartupWMClass=Mini Diarium`, and nobody has checked it on a real system. Note that
-GNOME can also match a Flatpak window through its sandbox app ID, so the result can be
-correct even when the class does not match.
-
-1. Install the Flathub build: `flatpak install flathub io.github.fjrevoredo.mini-diarium`.
-   Its desktop file has the same `StartupWMClass` line.
-2. Start the app from the app grid, in the default (Wayland) session. Pass when the dock
-   shows one icon with the app logo and the window is grouped under it.
-3. Read the real window identity:
-   - Wayland: press Alt+F2, type `lg`, open the Windows tab, and read `wmclass` and `app`
-     for the window.
-   - X11 or XWayland: run `flatpak run --env=GDK_BACKEND=x11 io.github.fjrevoredo.mini-diarium`,
-     then `xprop WM_CLASS` and click the window. The second string is the class.
-4. Do the same with the `.deb` build. Tauri generates the desktop file for the `.deb`, so
-   compare its `StartupWMClass` (`grep StartupWMClass /usr/share/applications/*.desktop`)
-   with the class too.
-5. If the dock shows a second icon, set `StartupWMClass` to the class that step 3 shows, run
-   `desktop-file-validate`, rebuild the Flatpak, and repeat step 2.
-
 ## Local Validation Checklist
 
 Before changing anything significant in the Flatpak package, validate locally on Linux:
