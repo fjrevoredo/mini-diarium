@@ -86,6 +86,21 @@ The metainfo file must keep:
 - a valid `<content_rating type="oars-1.1" />`
 - screenshots with stable URLs
 
+Window identity (measured on Fedora 43, GNOME 49, 2026-11-02; TODO-0161):
+
+- The window class comes from the binary name `mini-diarium`. The app sets no GTK application
+  ID. On Wayland the app ID (`wmclass` in Looking Glass) is `mini-diarium`. On X11 `WM_CLASS` is
+  `"mini-diarium", "Mini-diarium"`. The Flathub build and the native `.deb`/`.rpm` build show the
+  same values.
+- `StartupWMClass=Mini Diarium` in `data/linux/io.github.fjrevoredo.mini-diarium.desktop` does
+  not match this class, and that is harmless on GNOME: GNOME matches a Flatpak window to
+  `io.github.fjrevoredo.mini-diarium.desktop` through its sandbox app ID, so the dock shows one
+  icon with the app logo on Wayland and on X11. The `.deb`/`.rpm` desktop file that Tauri
+  generates (`Fenmark.desktop`) has `StartupWMClass=mini-diarium`, which matches.
+- Invariant: if `StartupWMClass` changes, the correct value is `mini-diarium`. Renaming the
+  binary (TODO-0157) changes the window class, so update `StartupWMClass` in the same change and
+  repeat this check.
+
 ## What Usually Breaks
 
 ### npm / frontend dependency changes

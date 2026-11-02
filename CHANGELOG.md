@@ -54,6 +54,7 @@ Template:
 
 ### Internal
 - **Brand masters**: `docs/brand/` holds the wordmark and lockup masters (outlined Plus Jakarta Sans, OFL 1.1) with construction rules. The website OG card renders from `og-cover.svg` with Edge headless, and the unused `primary` color scale is removed from `uno.config.ts`.
+- **Linux window identity checked (TODO-0161)**: On GNOME (Wayland and X11), the Flathub and `.deb`/`.rpm` builds show one dock icon with the app logo. The window class is `mini-diarium`. `docs/FLATPAK_MAINTENANCE.md` records the measured values and states `mini-diarium` as the correct `StartupWMClass`. The desktop file does not change.
 
 ## [0.7.6] - 26-10-2026
 
