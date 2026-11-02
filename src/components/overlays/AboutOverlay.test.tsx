@@ -15,7 +15,7 @@ describe('AboutOverlay', () => {
   it('shows the Fenmark name with the temporary "formerly Mini Diarium" note', () => {
     renderWithI18n(() => <AboutOverlay isOpen={true} onClose={vi.fn()} />);
 
-    expect(screen.getByText('Fenmark', { selector: 'p' })).toBeInTheDocument();
+    expect(screen.getByRole('img', { name: 'Fenmark' })).toBeInTheDocument();
     expect(screen.getByText('(formerly Mini Diarium)')).toBeInTheDocument();
   });
 

@@ -94,6 +94,14 @@ describe('JournalPicker component', () => {
     fireEvent.click(screen.getByRole('button', { name: /^add$/i }));
   };
 
+  it('shows the Fenmark wordmark as the page heading, with a decorative logo', () => {
+    renderWithI18n(() => <JournalPicker />);
+
+    const heading = screen.getByRole('heading', { level: 1, name: 'Fenmark' });
+    expect(heading.querySelector('svg[role="img"]')).not.toBeNull();
+    expect(screen.getAllByRole('img', { name: 'Fenmark' })).toHaveLength(1);
+  });
+
   it('renders empty state when no journals are configured', () => {
     setJournals([]);
     renderWithI18n(() => <JournalPicker />);

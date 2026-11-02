@@ -5,6 +5,7 @@ import { selectedDate, requestDateChange } from '../../state/ui';
 import { getTodayString } from '../../lib/dates';
 import { useI18n } from '../../i18n';
 import { activeTagFilter, clearTagFilter } from '../../state/tags';
+import Wordmark from '../brand/Wordmark';
 
 interface SidebarProps {
   isCollapsed: boolean;
@@ -96,7 +97,11 @@ export default function Sidebar(props: SidebarProps) {
         <div class="flex h-full flex-col">
           {/* Sidebar Header */}
           <div class="flex h-16 items-center justify-between border-b border-primary px-4">
-            <h2 class="text-xl font-bold text-primary">Fenmark</h2>
+            <h2 class="flex items-center gap-2 text-primary">
+              {/* Brand lockup ratio (docs/brand/README.md): book 1.5x the wordmark cap height, gap half the book. */}
+              <img src="/logo-transparent.svg" alt="" class="h-7 w-7" />
+              <Wordmark class="h-4" />
+            </h2>
             <Show when={!props.isCollapsed}>
               <button
                 onClick={() => props.onClose?.()}

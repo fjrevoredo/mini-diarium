@@ -14,6 +14,7 @@ import { checkJournalPath, getDefaultJournalDir } from '../../lib/tauri';
 import { mapTauriError } from '../../lib/errors';
 import { joinDialogPath, splitDialogPath } from '../../lib/native-path';
 import { useI18n } from '../../i18n';
+import Wordmark from '../brand/Wordmark';
 
 type AddMode = null | 'create' | 'open';
 
@@ -244,9 +245,11 @@ export default function JournalPicker() {
         <div class="rounded-lg bg-primary px-8 py-8 shadow-lg">
           {/* Header */}
           <div class="mb-3 flex justify-center">
-            <img src="/logo-transparent.svg" alt="Fenmark" class="h-16 w-16 rounded-xl" />
+            <img src="/logo-transparent.svg" alt="" class="h-16 w-16 rounded-xl" />
           </div>
-          <h1 class="mb-6 text-center text-3xl font-bold text-primary">{t('auth.picker.title')}</h1>
+          <h1 class="mb-6 flex justify-center text-primary">
+            <Wordmark class="h-8" label={t('auth.picker.title')} />
+          </h1>
 
           {/* Error banner */}
           <Show when={displayError()}>

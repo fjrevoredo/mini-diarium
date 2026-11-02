@@ -6,6 +6,7 @@ import { useI18n } from '../../i18n';
 import { X, GitFork, BookOpen, Compass, Heart } from 'lucide-solid';
 import { replayOnboarding } from '../../state/onboarding';
 import { setIsProjectSupportOpen, setProjectSupportEntry } from '../../state/ui';
+import Wordmark from '../brand/Wordmark';
 
 interface AboutOverlayProps {
   isOpen: boolean;
@@ -55,9 +56,11 @@ export default function AboutOverlay(props: AboutOverlayProps) {
 
             {/* Logo + name + version */}
             <div class="flex flex-col items-center gap-3 mb-6">
-              <img src="/logo-transparent.svg" alt="Fenmark" class="h-16 w-16 rounded-xl" />
+              <img src="/logo-transparent.svg" alt="" class="h-16 w-16 rounded-xl" />
               <div class="text-center">
-                <p class="text-xl font-bold text-primary">{t('about.appName')}</p>
+                <p class="mb-1 flex justify-center text-primary">
+                  <Wordmark class="h-5" label={t('about.appName')} />
+                </p>
                 <p class="text-xs text-tertiary">{t('about.formerlyName')}</p>
                 <Show when={version()}>
                   <p class="text-sm text-secondary">{t('about.version', { version: version() })}</p>

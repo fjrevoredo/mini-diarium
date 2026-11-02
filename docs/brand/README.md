@@ -36,6 +36,9 @@ the wordmark colour changes.
 - The word is outlined to SVG paths with the font's own kerning. No font file is in this repo, and
   no brand SVG references a font, so the wordmark looks the same on every OS and needs no network.
 - Never retype the wordmark in a live font. To change it, outline it again from the font.
+- The app draws the wordmark with `src/components/brand/Wordmark.tsx`: the same paths in
+  `currentColor`, kept equal to `fenmark-wordmark-dark.svg` by `Wordmark.test.tsx`. Where it is
+  used: `docs/DESIGN_SYSTEM.md` (Wordmark and Lockups).
 
 ## Lockup construction
 

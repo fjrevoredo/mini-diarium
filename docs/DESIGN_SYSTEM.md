@@ -45,7 +45,7 @@ The **Fenmark wordmark** is the word "Fenmark" set in **Plus Jakarta Sans** at w
 
 Two lockups exist: **icon only** (the logo master) and **icon + wordmark**, horizontal. In the horizontal lockup the book height is 1.5 × the wordmark's cap height and the gap is half the book height. The logo keeps its own black and gold in both variants; only the wordmark color changes. Minimum lockup width: 96 px.
 
-The app does not use the wordmark: the sidebar title and auth screens keep system-font text (see Typography).
+In the app, the wordmark replaces the app-name text in three places: the sidebar header (horizontal lockup: logo `<img>` at 28 px plus wordmark at 16 px, which keeps the lockup ratio), the unlock and journal-picker headings, and the About dialog. The `Wordmark` component (`src/components/brand/Wordmark.tsx`) draws the same outlined paths as the master with `fill="currentColor"`, so it takes the theme text color (`text-primary`) in light and dark mode; a test keeps its paths equal to `docs/brand/fenmark-wordmark-dark.svg`. Where the wordmark is a heading, the heading keeps its accessible name ("Fenmark") and the logo next to it is decorative (`alt=""`). The create-journal screen keeps its text title ("Welcome to Fenmark"), because that title is a sentence.
 
 ### Brand Imagery
 
@@ -134,6 +134,7 @@ A native system font stack is used throughout — no web fonts are loaded. This 
 
 - **UI text:** `-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif`
 - **Monospace (code blocks, editor pre):** `'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace`
+- **Wordmark:** an inline SVG of outlined paths (see Wordmark and Lockups), not text, so it loads no font.
 
 ### Theming Model
 
@@ -154,6 +155,7 @@ The two surfaces are visually independent. Changing the app's theme has no effec
 | App theme | Light default, dark available | Matches OS conventions; light is more legible for long writing sessions |
 | Web fonts | None | Preserves offline-first and privacy-first principles |
 | Wordmark | Plus Jakarta Sans 650, outlined to paths | Geometric sans fits the book grid; outlines need no font load |
+| Flathub brand colors | Light `#9cc3f5`, dark `#1f3a63` (metainfo `<branding>`) | Flathub requires colorful banner colors (no white or black); blue is the complement of the gold icon |
 | Logo mark detail | Bookmark ribbon | Links the icon to the name (Fen**mark**); readable at 32 px |
 | Gray scale | Tailwind neutral gray | Single coherent ramp covers all light/dark steps |
 | Highlight mark | Amber | Visually separate from blue (interactive) and gray (UI) without conflicting with status colors |

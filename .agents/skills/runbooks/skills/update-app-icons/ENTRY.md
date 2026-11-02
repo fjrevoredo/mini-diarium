@@ -16,6 +16,7 @@ fills: `#000000` and `#F5C94D`). Construction rules: `docs/brand/README.md`. Usa
 - `src/components/auth/JournalPicker.tsx`
 - `src/components/auth/PasswordPrompt.tsx`
 - `src/components/auth/PasswordCreation.tsx`
+- `src/components/layout/Sidebar.tsx` (sidebar lockup: logo `<img>` next to the `Wordmark` component)
 - `src/components/overlays/AboutOverlay.tsx`
 - `index.html` (the app favicon, `<link rel="icon" href="/logo-transparent.svg">`)
 
@@ -48,6 +49,11 @@ there too.
 embed the logo paths. Rebuild them from the new master with the construction rules in
 `docs/brand/README.md`, then copy `fenmark-lockup-light.svg` to `website/assets/fenmark-lockup.svg`
 (website nav).
+
+**5a. In-app wordmark:** `src/components/brand/Wordmark.tsx` holds a copy of the path data and
+viewBox of `docs/brand/fenmark-wordmark-dark.svg` and draws it in `currentColor`. A logo-only
+change does not touch it. If the wordmark master changes, copy the new `d` values and viewBox
+into `WORDMARK_PATHS` / `WORDMARK_VIEWBOX`; `Wordmark.test.tsx` fails until they match the master.
 
 **6. OG card:** `website/assets/og-cover.svg` is the single source. It embeds the light lockup
 paths; update them, then run `scripts/generate-website-assets.cmd`, which renders
