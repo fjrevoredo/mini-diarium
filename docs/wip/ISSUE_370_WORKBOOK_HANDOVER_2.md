@@ -469,3 +469,94 @@ show-exit=0
 
 Facts: with two branches installed, the command without a branch fails with exit 1. With a branch (`//stable`, `//test`) or the
 full ref it gives `read-write` for the folder under the override. I did not test the portal with only one branch installed.
+
+### T7 single branch, static permission
+
+Request from the main-desktop session (the user approved the test there). I asked the user before the uninstall and before
+the reboot. GUI steps: done by me with `agent-desktop` (X11 clicks on Fenmark, AT-SPI refs in the GTK chooser), each step
+checked with a screenshot. Test password: `t7`.
+
+#### Setup
+
+```
+$ flatpak list --app --columns=application,branch,origin,version,installation | grep mini-diarium
+io.github.fjrevoredo.mini-diarium	stable	flathub	0.8.0	user
+io.github.fjrevoredo.mini-diarium	test	mini-diarium-origin	0.6.6	user
+$ flatpak info --user io.github.fjrevoredo.mini-diarium//test
+         Ref: app/io.github.fjrevoredo.mini-diarium/x86_64/test
+     Version: 0.6.6
+      Origin: mini-diarium-origin
+  Collection: org.flathub.Test.Build309120
+      Commit: dd7a9cb90b18a995aec6cf46ab0d93667c782e974c9848385a515d09801ee430
+     Subject: Update to 0.6.6 (79bd7f7fcf5a)
+        Date: 2026-08-08 14:01:23 +0000
+$ flatpak remotes --user --columns=name,url,options
+flathub	https://dl.flathub.org/repo/
+mini-diarium-origin	https://dl.flathub.org/build-repo/309120	no-enumerate
+$ flatpak override --user --show io.github.fjrevoredo.mini-diarium
+(empty)
+```
+
+- Current branch before T7: `x86_64/test`.
+- `curl -sI https://dl.flathub.org/build-repo/309120/summary` → `HTTP/2 404`. The remote cannot reinstall the `test` build.
+  Before the uninstall I exported it: `flatpak build-bundle ~/.local/share/flatpak/repo ~/issue370-t7-test-0.6.6.flatpak io.github.fjrevoredo.mini-diarium test`
+  (17 581 648 bytes). Restore with `flatpak install --user ~/issue370-t7-test-0.6.6.flatpak` (not tested).
+- Data backup: `cp -a ~/.var/app/io.github.fjrevoredo.mini-diarium ~/issue370-t7-data-backup`.
+- The user approved the uninstall. `flatpak uninstall --user -y io.github.fjrevoredo.mini-diarium//test` → `Uninstall complete.`
+  Now only `stable 0.8.0` stays, current = `x86_64/stable`. `~/.var/app/io.github.fjrevoredo.mini-diarium` is still there.
+- Control:
+
+```
+$ flatpak override --user --filesystem=home io.github.fjrevoredo.mini-diarium
+$ flatpak override --user --show io.github.fjrevoredo.mini-diarium
+[Context]
+filesystems=home;
+$ flatpak info --file-access=$HOME/issue370-t7 io.github.fjrevoredo.mini-diarium; echo exit=$?
+read-write
+exit=0
+```
+
+#### T7a, scope `home`
+
+Create (`mkdir -p ~/issue370-t7/real`; 0.8.0; Create New → Browse… → `~/issue370-t7/real`; name `t7`, filename `t7.db`):
+
+- Location in the form: `/home/francisco/iss…` (truncated on screen). It is a **host path**, not `/run/user/…`.
+- `flatpak documents … | grep t7` → no entry. The pick made **no** document-store entry.
+- `config.json` right after **Añadir** (before the password step):
+
+```json
+{
+  "diary_dir": "$HOME/issue370-t7/real",
+  "journals": [
+    { "id": "a880cc197b4b0813", "name": "t7", "path": "$HOME/issue370-t7/real", "db_filename": "t7.db" }
+  ],
+  "active_journal_id": "a880cc197b4b0813"
+}
+```
+
+  Note: `diary_dir` changed from `…/com.minidiarium/journals/igpibhjk` (live data) to the new folder at this step.
+- Password `t7` → **Crear diario** → editor. On the host: `~/issue370-t7/real/t7.db` (118784 bytes). I wrote the entry
+  "t7 entry" ("2 palabras"), then locked. After the lock the host has `~/issue370-t7/real/backups/` with
+  `backup-2026-11-03-16h00m03.db` and `manifest.json` (real files on the host).
+
+Remove and Open Existing:
+
+- Volver a los diarios → **Eliminar** → dialog "¿Eliminar este diario de la lista? El archivo del diario no se borrará." → OK.
+  `config.json`: `{"diary_dir": "$HOME/issue370-t7/real", "journals": [], "active_journal_id": ""}`. `t7.db` and `backups/` stay.
+- **+ Abrir existente** → pick `~/issue370-t7/real/t7.db`. The form shows `/home/francisco/issue370-t7/real`, name `t7`.
+  No new document-store entry.
+- **Abrir** → **accepted**, no refusal. The unlock screen "Desbloquear t7" opens. `config.json`:
+
+```json
+{
+  "diary_dir": "$HOME/issue370-t7/real",
+  "journals": [
+    { "id": "369be2b62ff55840", "name": "t7", "path": "$HOME/issue370-t7/real", "db_filename": "t7.db" }
+  ],
+  "active_journal_id": "369be2b62ff55840"
+}
+```
+
+- Unlock with `t7` → works; the entry "t7 entry" is there. Then lock and quit.
+
+Reboot: PENDING (asked the user).
