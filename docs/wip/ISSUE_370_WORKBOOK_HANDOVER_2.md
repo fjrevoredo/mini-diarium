@@ -1,6 +1,6 @@
 # Issue #370 handover 2: document-portal behaviour on Workbook
 
-Status: **Workbook run done (2026-11-03) except T3 (iv) reboot — results below.**
+Status: **Workbook run done (2026-11-03), including T3 (iv) reboot and T6 — results below.**
 Created: 2026-11-03 on `machine.main-desktop`. Branch: `handover/issue-370-flatpak-repro`.
 Previous run: `docs/wip/ISSUE_370_WORKBOOK_HANDOVER.md` (read its Results first).
 
@@ -266,7 +266,7 @@ Check in a new sandbox (`flatpak run --branch=stable --command=ls … -la <path>
 | (i) app quit, new sandbox | `test.db` (rows=1) and `new.db` visible | `backups/`, `diary.db`, `new.db`, `test.db`; rows=1 | `760845c` and `7b1a970b` listed |
 | (ii) `systemctl --user restart xdg-document-portal.service` (`is-active` → `active`) | `test.db` (rows=1) visible; **`new.db` gone** | same 4 entries; rows=1 | `760845c` and `7b1a970b` listed |
 | (iii) logout and login (see note) | `test.db` (rows=1) visible | same 4 entries; rows=1 | all 4 test entries listed, same IDs |
-| (iv) reboot (optional) | PENDING | PENDING | PENDING |
+| (iv) reboot (see note) | **broken**: `test.db` shows as `-?????????`, `ls: cannot access '/run/user/1000/doc/760845c/test.db': No such file or directory` | **broken**: `ls: cannot access '/run/user/1000/doc/7b1a970b/dir/': No such file or directory` | all entries still listed, same IDs |
 
 Note on (iii): the user logged out and in at about 15:22. This did **not** restart the portal:
 `xdg-document-portal` (pid 1305009) still has the start time `15:05:32` (my restart in (ii)), and
@@ -275,6 +275,36 @@ Note on (iii): the user logged out and in at about 15:22. This did **not** resta
 manager, the portal and `/run/user/1000` through a logout. So on this machine (iii) is the same as "no restart", and only a
 reboot tests a new user manager. The store is on disk: `~/.local/share/flatpak/db/documents` (mtime 15:14, it changed when
 T4 added entries). Raw output: `~/issue370-h2-t3-relogin.log`.
+
+Note on (iv): the user rebooted. Boot time `2026-11-03 15:27:03`, `xdg-document-portal` pid 3105 started `15:27:31`.
+Raw output: `~/issue370-h2-t3-reboot.log`.
+
+```
+$ ~/issue370-portal/t3check.sh "T3(iv) after reboot"
+-- /run/user/1000/doc/760845c/
+ls: cannot access '/run/user/1000/doc/760845c/test.db': No such file or directory
+drwx------ 2 francisco francisco 0 Jan  1  1970 .
+dr-x------ 2 francisco francisco 0 Jan  1  1970 ..
+-????????? ? ?         ?         ?            ? test.db
+-- /run/user/1000/doc/7b1a970b/dir/
+ls: cannot access '/run/user/1000/doc/7b1a970b/dir/': No such file or directory
+sqlite3.OperationalError: unable to open database file
+```
+
+- The host files are not changed (`~/issue370-portal/file/test.db`, `~/issue370-portal/dir/{test.db,diary.db,new.db,backups/}`).
+- The same failure is in the host view of the FUSE mount (`ls -la /run/user/1000/doc/760845c/` on the host).
+- **All** entries in the store fail in the same way after the reboot, also the old ones from before today:
+  file entries (`760845c`, `68256b8f`, `f4d50bff`) show the file as `-?????????`; folder entries (`7b1a970b`, `727f6870`,
+  `5a584563`, `5dcb6075`, `c096c9e9` Downloads, `e81d571f` $HOME) show an empty `dr-x------` doc folder.
+- The portal journal for this boot has only the start lines and `Ignoring invalid max threads value 4294967295 > max (100000).`
+  No error for the lookups.
+- `$HOME` is an **ecryptfs** mount: `/home/.ecryptfs/francisco/.Private on $HOME type ecryptfs (…)`.
+  After the reboot: `stat` gives `dev=66` for `$HOME`, `ino=26501000` for `~/issue370-portal/dir`,
+  `ino=26501001` for `~/issue370-portal/file/test.db`. I do not have the values from before the reboot.
+- Re-pick after the reboot (0.8.0, no override, Create New → Browse… → `~/issue370-portal/dir`): the portal made a
+  **new** entry `4ec46c34  $HOME/issue370-portal/dir  /run/user/1000/doc/4ec46c34/dir`. The old `7b1a970b` for the same
+  host folder stays in the list and stays broken. The new path works in a new sandbox (4 entries, `select count(*) from t` = 1).
+  So after the reboot `REUSE_EXISTING` did not reuse the old entry.
 
 After (ii) the host still has the orphan file `~/issue370-portal/file/.xdp-new.db-SVb1Pv`.
 
@@ -359,7 +389,7 @@ Remove or from a different action.
 
 | # | Confirmed / contradicted / not tested | Evidence |
 |---|---|---|
-| C1 | Confirmed for app restart, portal restart and logout/login (with `Linger=yes`, so the portal kept running). Reboot: PENDING | T3 (i), (ii): same doc IDs, contents readable and writable in a new sandbox |
+| C1 | **Contradicted on this system across a reboot.** Confirmed for app restart, portal restart and logout/login (with `Linger=yes`) | T3 (iv): after the reboot every entry is listed but every path fails with `ENOENT`; a re-pick makes a new doc ID. `$HOME` is ecryptfs | T3 (i), (ii): same doc IDs, contents readable and writable in a new sandbox |
 | C2 | Confirmed | T2/T4: the folder pick returned a doc path for the folder (`…/7b1a970b/dir`, `…/727f6870/freshdir`); FileChooser version is 4 |
 | C3 | **Contradicted on this system** for `as-needed-by-app` | T4: with `--filesystem=$HOME/issue370-portal`, new picks under that folder still got new store entries and `/run/user/1000/doc/…` paths. (Note: the store also has an older grant for all of `$HOME`, `e81d571f`.) Flags 2/8 not tested directly |
 | C4 | Confirmed | `GetHostPaths(['760845c','7b1a970b','68256b8f','727f6870'])` from the host returned the 4 host paths; the `user.document-portal.host-path` xattr in the sandbox gave the host path for files and for their doc folder |
@@ -372,7 +402,8 @@ Remove or from a different action.
 - **Is a directory-grant path usable for open, write, new database and `backups/`?** Yes. In T2 all of (b)–(e) work
   through `/run/user/1000/doc/7b1a970b/dir/…`, and the results are real files on the host.
 - **Does it stay valid across restart, portal restart, re-login (and reboot)?** Restart, portal restart and logout/login: yes, same path and
-  content. The logout did not stop the portal (`Linger=yes`). Reboot: PENDING (see T3).
+  content. The logout did not stop the portal (`Linger=yes`).
+  **Reboot: no.** After the reboot the old doc path fails with `ENOENT` (`ls: cannot access '/run/user/1000/doc/7b1a970b/dir/': No such file or directory`), and a re-pick gives a new doc ID. This is true for every entry in the store on this machine (`$HOME` is ecryptfs). I did not test a machine without ecryptfs.
 - **Is a file-grant path usable for writes?** Writes to the granted file itself: yes (rollback-journal commit reached the host).
   New files next to it: no real file on the host (only a hidden `.xdp-<name>-<random>` temp file, lost from the sandbox
   view after a portal restart). New folders next to it: no, `mkdir` fails with
@@ -396,5 +427,45 @@ Remove or from a different action.
 - `flatpak make-current --user io.github.fjrevoredo.mini-diarium test` → current is `x86_64/test` again (as before). Both branches stay installed.
 - Kept: `~/issue370-portal/` (test databases, plus the orphan `file/.xdp-new.db-SVb1Pv`), `~/issue370-run-h2-*`,
   `~/issue370-h2-*.log`, `~/issue370-backup2-20261103-150116`.
-- Document store: I did not remove the new entries `760845c`, `7b1a970b`, `68256b8f`, `727f6870` (T3 (iii)/(iv) needs them).
+- Document store: I did not remove any entry. New entries from this run: `760845c`, `7b1a970b`, `68256b8f`, `727f6870`, and `4ec46c34` (re-pick after the reboot).
 - Installed for this run: `agent-desktop@1.0.2` (npm global, Homebrew node prefix). State in `~/.agent-desktop`.
+
+### T6 flatpak info probe
+
+Request from the main-desktop session: `app_has_file_access` in the document portal runs `flatpak info --file-access=PATH APPID`
+without a branch. Read-only probe, no install, no restart, no change to the doc store. Done after the reboot (2026-11-03 ~15:31).
+Raw output: `~/issue370-h2-t6.log`.
+
+```
+$ flatpak list --app --columns=application,branch,installation | grep mini-diarium
+io.github.fjrevoredo.mini-diarium	stable	user
+io.github.fjrevoredo.mini-diarium	test	user
+$ flatpak override --user --show io.github.fjrevoredo.mini-diarium
+(empty)
+$ flatpak override --user --filesystem=$HOME/issue370-portal io.github.fjrevoredo.mini-diarium
+$ flatpak override --user --show io.github.fjrevoredo.mini-diarium
+[Context]
+filesystems=$HOME/issue370-portal;
+$ flatpak info --file-access=$HOME/issue370-portal/dir io.github.fjrevoredo.mini-diarium; echo "exit=$?"
+error: Multiple branches available for io.github.fjrevoredo.mini-diarium, you must specify one of: io.github.fjrevoredo.mini-diarium/x86_64/test, io.github.fjrevoredo.mini-diarium/x86_64/stable
+exit=1
+$ flatpak info --file-access=$HOME/issue370-portal/dir io.github.fjrevoredo.mini-diarium//stable; echo "exit=$?"
+read-write
+exit=0
+$ flatpak info --file-access=$HOME/issue370-portal/dir io.github.fjrevoredo.mini-diarium/x86_64/stable; echo "exit=$?"
+read-write
+exit=0
+$ flatpak info --file-access=$HOME/issue370-portal/dir io.github.fjrevoredo.mini-diarium//test; echo "exit=$?"
+read-write
+exit=0
+$ flatpak info --file-access=$HOME/issue370-portal/dir io.github.fjrevoredo.mini-diarium/x86_64/test; echo "exit=$?"
+read-write
+exit=0
+$ flatpak override --user --reset io.github.fjrevoredo.mini-diarium
+$ flatpak override --user --show io.github.fjrevoredo.mini-diarium; echo "show-exit=$?"
+(empty)
+show-exit=0
+```
+
+Facts: with two branches installed, the command without a branch fails with exit 1. With a branch (`//stable`, `//test`) or the
+full ref it gives `read-write` for the folder under the override. I did not test the portal with only one branch installed.
