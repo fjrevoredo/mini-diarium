@@ -1,6 +1,6 @@
 # Issue #370 handover 2: document-portal behaviour on Workbook
 
-Status: **OPEN — waiting for the Workbook run.**
+Status: **Workbook run done (2026-11-03) except T3 (iii) logout and (iv) reboot — results below.**
 Created: 2026-11-03 on `machine.main-desktop`. Branch: `handover/issue-370-flatpak-repro`.
 Previous run: `docs/wip/ISSUE_370_WORKBOOK_HANDOVER.md` (read its Results first).
 
@@ -118,28 +118,275 @@ branch current again if it was current before, and record all of this.
 
 ### Environment and portal versions
 
+- Machine: `machine.workbook`, Linux Mint 22.1, Cinnamon on X11 (`XDG_CURRENT_DESKTOP=X-Cinnamon`, `XDG_SESSION_TYPE=x11`), uid 1000.
+- Flatpak 1.14.6. Host packages: `xdg-desktop-portal 1.20.0+ds-2ubuntu1`, `xdg-desktop-portal-gtk 1.15.1-1build2`, `xdg-desktop-portal-xapp 1.1.0+xia`. The file chooser window comes from `xdg-desktop-portal-gtk` (pid 3137).
+- App: `io.github.fjrevoredo.mini-diarium//stable` 0.8.0, commit `b2c8eac27cf7…`, runtime `org.gnome.Platform/x86_64/50`. Before the run the `test` branch (0.6.6) was current. I made `stable` current for the run.
+- `flatpak override --user --show` was empty at the start.
+- Backup: `~/issue370-backup2-20261103-150116`.
+
+```
+$ busctl --user get-property org.freedesktop.portal.Documents /org/freedesktop/portal/documents org.freedesktop.portal.Documents version
+u 5
+$ busctl --user get-property org.freedesktop.portal.Desktop /org/freedesktop/portal/desktop org.freedesktop.portal.FileChooser version
+u 4
+```
+
+Note: `flatpak documents` in Flatpak 1.14.6 has no `--app=` option. The app ID is a positional argument:
+`flatpak documents --columns=id,origin,path,permissions io.github.fjrevoredo.mini-diarium`.
+
+Document store **before** the tests (old grants from earlier work on this machine; all `read write grant-permissions`):
+
+```
+f4d50bff  $HOME/issue370-outside/diary.db
+5a584563  $HOME/aaa+
+5dcb6075  $HOME/Desktop/test1
+c096c9e9  $HOME/Downloads
+e81d571f  $HOME                <- a folder grant for all of $HOME already exists
+```
+
+How the GUI steps were done: the user did T1, T2 and the T3 re-pick. For T4 (fresh items) and T5 I drove the app with
+`agent-desktop` 1.0.2 (npm, AT-SPI): X11 clicks at screen coordinates for Fenmark (its WebKitGTK tree does not show on
+the AT-SPI bus through the Flatpak proxy) and accessibility refs for the GTK file chooser (host process). I checked
+each step with a screenshot.
+
 ### Sandbox tool used
+
+The 0.8.0 runtime has both tools. No SDK install was necessary.
+
+```
+$ flatpak run --command=python3 io.github.fjrevoredo.mini-diarium -c "import sqlite3; print('ok', sqlite3.sqlite_version)"
+ok 3.50.4
+$ flatpak run --command=sh io.github.fjrevoredo.mini-diarium -c 'command -v getfattr python3 sqlite3'
+/usr/bin/getfattr
+/usr/bin/python3
+/usr/bin/sqlite3
+```
+
+I used `python3` in the sandbox (`flatpak run --branch=stable --command=python3 io.github.fjrevoredo.mini-diarium -c "<probe>" <P>`).
+The probe does steps (a)–(f) as written above. For (c) it opens with `isolation_level=None`, reads `pragma journal_mode`,
+then runs `begin immediate; insert into t values (1); commit`. For (f) it reads the xattr on `P` and on the folder of `P`.
+
+Test data: `~/issue370-portal/file/test.db`, `~/issue370-portal/dir/test.db` (made with the given command), and
+`~/issue370-portal/dir/diary.db` (a copy of the handover-1 main-run 0.8.0 journal). I did not record a password: the user
+typed it in handover 1 and it is not in the notes.
 
 ### T1 — file grant
 
+- Pick: **+ Open Existing** → `~/issue370-portal/file/test.db` (the user did it).
+- Folder path in the form before confirm: **not noted** (the user did not note it). In T4 the same form showed
+  `/run/user/1000/doc/760845c` for this file, so the value is probably the same; this is not confirmed for T1.
+- Message after confirm (UI in Spanish): "Esa carpeta solo se comparte con Fenmark de forma temporal, así que un diario
+  guardado ahí dejaría de abrirse más adelante. Usa la ubicación predeterminada."
+- Backend log (`~/issue370-h2-t1.log`): only `Fenmark starting` and GTK locale warnings. No line for the refusal.
+- New document: `760845c  $HOME/issue370-portal/file/test.db  /run/user/1000/doc/760845c/test.db  read write grant-permissions`.
+
+Sandbox probe on `P=/run/user/1000/doc/760845c/test.db`:
+
+```
+[a] ls -la /run/user/1000/doc/760845c
+drwx------ 2 francisco francisco    0 Jan  1  1970 .
+dr-x------ 2 francisco francisco    0 Jan  1  1970 ..
+-rw-r--r-- 1 francisco francisco 8192 Nov  3 15:01 test.db
+[a] ls -la /run/user/1000/doc/
+dr-x------ 2 ... 5a584563
+dr-x------ 2 ... 5dcb6075
+drwx------ 2 ... 760845c        <- file-grant doc dir is writable (drwx)
+dr-x------ 2 ... c096c9e9
+dr-x------ 2 ... e81d571f
+drwx------ 2 ... f4d50bff
+[b read] OK count=1
+[c write] OK journal_mode=delete rows=1
+[d new.db] OK /run/user/1000/doc/760845c/new.db
+[e backups/] FAIL PermissionError: [Errno 1] Operation not permitted: '/run/user/1000/doc/760845c/backups'
+[f xattr file] OK b'$HOME/issue370-portal/file/test.db'
+[f xattr dir] OK b'$HOME/issue370-portal/file'
+[after] ls -la /run/user/1000/doc/760845c
+-rw-r--r-- 1 francisco francisco 8192 Nov  3 15:03 new.db
+-rw-r--r-- 1 francisco francisco 8192 Nov  3 15:03 test.db
+```
+
+Host side after the probe:
+
+```
+$ ls -la ~/issue370-portal/file/
+-rw-r--r-- 1 francisco francisco 8192 Nov  3 15:03 test.db
+-rw-r--r-- 1 francisco francisco 8192 Nov  3 15:03 .xdp-new.db-SVb1Pv
+$ python3 -c "...select count(*) from t" test.db     -> (1,)      # the write in (c) reached the host file
+$ python3 -c "...select * from n" .xdp-new.db-SVb1Pv -> [(1,)]    # new.db exists on the host only as a hidden temp file
+```
+
+Facts:
+- Read and rollback-journal write on the granted file work. The commit reached the host file.
+  (`test.db-journal` was not visible after the commit; I did not see where the portal put it during the transaction.)
+- A new file next to the granted file (`new.db`) is visible in the sandbox, but on the host it is only
+  `.xdp-new.db-<random>`. It is **not** `new.db` on the host.
+- `mkdir` next to the granted file fails with `EPERM` ("Operation not permitted"). So a `backups/` folder cannot be made.
+- See T3 (ii): the sandbox `new.db` is gone after a portal restart.
+
 ### T2 — directory grant
+
+- Pick: **+ Create New Journal** → **Browse…** → folder `~/issue370-portal/dir/` (the user did it).
+- Location path in the form: `/run/user/1000/doc/7b1a970b/dir` (exact, as the user read it). Then Cancel.
+- New document: `7b1a970b  $HOME/issue370-portal/dir  /run/user/1000/doc/7b1a970b/dir`.
+
+Sandbox probe on `P=/run/user/1000/doc/7b1a970b/dir/test.db`:
+
+```
+[a] ls -la /run/user/1000/doc/7b1a970b/dir
+drwxrwxr-x 2 francisco francisco   4096 Nov  3 15:01 .
+dr-x------ 2 francisco francisco      0 Jan  1  1970 ..
+-rw-r--r-- 1 francisco francisco 118784 Nov  3 14:02 diary.db
+-rw-r--r-- 1 francisco francisco   8192 Nov  3 15:01 test.db
+[b read] OK count=1
+[c write] OK journal_mode=delete rows=1
+[d new.db] OK /run/user/1000/doc/7b1a970b/dir/new.db
+[e backups/] OK /run/user/1000/doc/7b1a970b/dir/backups
+[f xattr file] OK b'$HOME/issue370-portal/dir/test.db'
+[f xattr dir] OK b'$HOME/issue370-portal/dir'
+[after] ls -la /run/user/1000/doc/7b1a970b/dir
+drwxr-xr-x 2 francisco francisco   4096 Nov  3 15:05 backups
+-rw-r--r-- 1 francisco francisco 118784 Nov  3 14:02 diary.db
+-rw-r--r-- 1 francisco francisco   8192 Nov  3 15:05 new.db
+-rw-r--r-- 1 francisco francisco   8192 Nov  3 15:05 test.db
+```
+
+(b) on `/run/user/1000/doc/7b1a970b/dir/diary.db`: `[b read] OK count=26`; xattr gives `$HOME/issue370-portal/dir/diary.db`.
+
+Host side: `~/issue370-portal/dir/` has real `new.db`, a real `backups/` folder and `backups/probe.txt` (content `probe`).
+
+Facts: in a folder grant, read, rollback-journal write, a new database next to the file, and `mkdir backups` + a file in
+it all work. The results are real files on the host.
 
 ### T3 — persistence
 
+Check in a new sandbox (`flatpak run --branch=stable --command=ls … -la <path>` and a `select count(*) from t` with python3), no new pick:
+
+| Step | `/run/user/1000/doc/760845c/` (file grant) | `/run/user/1000/doc/7b1a970b/dir/` (folder grant) | `flatpak documents` |
+|---|---|---|---|
+| (i) app quit, new sandbox | `test.db` (rows=1) and `new.db` visible | `backups/`, `diary.db`, `new.db`, `test.db`; rows=1 | `760845c` and `7b1a970b` listed |
+| (ii) `systemctl --user restart xdg-document-portal.service` (`is-active` → `active`) | `test.db` (rows=1) visible; **`new.db` gone** | same 4 entries; rows=1 | `760845c` and `7b1a970b` listed |
+| (iii) logout and login | PENDING | PENDING | PENDING |
+| (iv) reboot (optional) | PENDING | PENDING | PENDING |
+
+After (ii) the host still has the orphan file `~/issue370-portal/file/.xdp-new.db-SVb1Pv`.
+
+Re-pick (the user, 0.8.0, no override): Open Existing → `file/test.db` (same refusal), and Create New → Browse… → `dir/`.
+The Location field showed `/run/user/1000/doc/7b1a970b/` as the user read it. The document list after the re-pick has the
+**same IDs** (`760845c`, `7b1a970b`) and no new entries. So the portal reused the existing documents.
+
 ### T4 — with a filesystem grant
 
+```
+$ flatpak override --user --filesystem=$HOME/issue370-portal io.github.fjrevoredo.mini-diarium
+[Context]
+filesystems=$HOME/issue370-portal;
+```
+
+| Pick (0.8.0, with the override) | Path in the form | Result |
+|---|---|---|
+| Open Existing → `file/test.db` (already in the store) | `/run/user/1000/doc/760845c` | same refusal text as T1 |
+| Create New → Browse… → `dir/` (already in the store) | `/run/user/1000/doc/7b1a970b/dir` | (Cancel) |
+| Open Existing → `fresh/fresh.db` (**new**, never picked before) | `/run/user/1000/doc/68256b8f` | same refusal text |
+| Create New → Browse… → `freshdir/` (**new**, never picked before) | `/run/user/1000/doc/7…` (truncated in the form) | (Cancel) |
+
+New documents made during T4, with the override active:
+
+```
+68256b8f  $HOME/issue370-portal/fresh/fresh.db  /run/user/1000/doc/68256b8f/fresh.db
+727f6870  $HOME/issue370-portal/freshdir        /run/user/1000/doc/727f6870/freshdir
+```
+
+So with a `--filesystem` grant that covers the item, the file chooser **still** returned `/run/user/…/doc/…` paths, also for
+items that were not in the store before. I did not see a real host path in any pick.
+
+Control: in the same override, the sandbox can use the host path directly:
+
+```
+$ flatpak run --command=python3 io.github.fjrevoredo.mini-diarium -c "<insert into ~/issue370-portal/fresh/fresh.db; mkdir ~/issue370-portal/fresh/backups>"
+direct write ok (1,)
+mkdir ok
+```
+
+Then `flatpak override --user --reset io.github.fjrevoredo.mini-diarium`; `--show` is empty.
+
 ### T5 — Remove and `journals: []`
+
+Clean data folder (I moved the live `~/.var/app/io.github.fjrevoredo.mini-diarium` away for this test), 0.8.0, no override.
+
+1. Before the first create: `data/com.minidiarium/` has only WebKit folders. **No `config.json`.**
+2. **+ Create New Journal**, name `t5`, default location, **Add**. `config.json` is written at this step, before the password step:
+
+```json
+{
+  "diary_dir": "$HOME/.var/app/io.github.fjrevoredo.mini-diarium/data/com.minidiarium/journals",
+  "journals": [
+    { "id": "bb3744bc053eec5b", "name": "t5",
+      "path": "$HOME/.var/app/io.github.fjrevoredo.mini-diarium/data/com.minidiarium/journals" }
+  ],
+  "active_journal_id": "bb3744bc053eec5b"
+}
+```
+
+3. Password `t5` (test value), **Create Journal**, the editor opens. Quit. `config.json` is the same as in step 2.
+   `journals/` has `diary.db` and `backups/`.
+4. Start again → unlock screen → **← Back to Journals** → **Remove** on `t5`. Confirm dialog: "Remove this journal from
+   the list? The journal file will not be deleted." → **OK**. `config.json` right after OK, and again after quit:
+
+```json
+{
+  "diary_dir": "$HOME/.var/app/io.github.fjrevoredo.mini-diarium/data/com.minidiarium/journals",
+  "journals": [],
+  "active_journal_id": ""
+}
+```
+
+`journals/diary.db` and `journals/backups/` stay on disk.
+
+Comparison: the V1 data from handover 1 and the user's live data (both before any test) have the same shape:
+`diary_dir` = `…/com.minidiarium/journals/igpibhjk`, `"journals": []`, `"active_journal_id": ""`.
+So **Remove** of the last journal writes exactly this shape. T5 does not show whether the user's data got the shape from a
+Remove or from a different action.
 
 ### Check of claims C1–C7
 
 | # | Confirmed / contradicted / not tested | Evidence |
 |---|---|---|
+| C1 | Confirmed for app restart and portal restart. Logout/reboot: PENDING | T3 (i), (ii): same doc IDs, contents readable and writable in a new sandbox |
+| C2 | Confirmed | T2/T4: the folder pick returned a doc path for the folder (`…/7b1a970b/dir`, `…/727f6870/freshdir`); FileChooser version is 4 |
+| C3 | **Contradicted on this system** for `as-needed-by-app` | T4: with `--filesystem=$HOME/issue370-portal`, new picks under that folder still got new store entries and `/run/user/1000/doc/…` paths. (Note: the store also has an older grant for all of `$HOME`, `e81d571f`.) Flags 2/8 not tested directly |
+| C4 | Confirmed | `GetHostPaths(['760845c','7b1a970b','68256b8f','727f6870'])` from the host returned the 4 host paths; the `user.document-portal.host-path` xattr in the sandbox gave the host path for files and for their doc folder |
+| C5 | `REUSE_EXISTING` confirmed; other flags not tested directly | T3 re-pick and T4: re-picking the same file/folder gave the same doc IDs. `PERSISTENT` is consistent with T3 (ii) |
+| C6 | Consistent | T1/T2 (c): `pragma journal_mode` = `delete` (the default rollback journal). Write works in both grant types. I did not see the `-journal` file during the transaction |
+| C7 | Consistent | The dialog windows belong to `xdg-desktop-portal-gtk` on the host (titles "Seleccionar archivo de diario", "Elegir ubicación"); every pick made a document-store entry. I did not read `Cargo.lock` or `rfd` here |
 
 ### Conclusion
 
-- Is a directory-grant path usable for open, write, new database and `backups/`?
-- Does it stay valid across restart, portal restart, re-login (and reboot)?
-- Is a file-grant path usable for writes? If not, the exact error.
-- Open questions for the main-desktop session:
+- **Is a directory-grant path usable for open, write, new database and `backups/`?** Yes. In T2 all of (b)–(e) work
+  through `/run/user/1000/doc/7b1a970b/dir/…`, and the results are real files on the host.
+- **Does it stay valid across restart, portal restart, re-login (and reboot)?** Restart and portal restart: yes, same path and
+  content. Re-login and reboot: PENDING (see T3).
+- **Is a file-grant path usable for writes?** Writes to the granted file itself: yes (rollback-journal commit reached the host).
+  New files next to it: no real file on the host (only a hidden `.xdp-<name>-<random>` temp file, lost from the sandbox
+  view after a portal restart). New folders next to it: no, `mkdir` fails with
+  `PermissionError: [Errno 1] Operation not permitted: '/run/user/1000/doc/760845c/backups'`.
+- **Open questions for the main-desktop session:**
+  - In 0.8.0 the refusal comes for every `/run/user/<uid>/doc/…` path, also for a folder grant that T2/T3 show to be
+    writable and persistent. The backend writes no log line for it.
+  - The chooser did not return host paths under a `--filesystem` grant (C3). A fix that depends on `as-needed-by-app`
+    does not work on this system. Note the old `$HOME` folder grant `e81d571f` in the store; I did not test a store without it.
+  - Open Existing gives a **file** grant. A file grant cannot make `backups/` and cannot make real new files next to the
+    database. Where does the app write backups for a journal that is opened this way?
+  - The user's live `config.json` has the T5 shape. Remove of the last journal is one action that writes it.
 
 ### Cleanup
+
+- `flatpak override --user --reset io.github.fjrevoredo.mini-diarium`; `--show` is empty.
+- Live data: I moved the folder that T1–T4 used to `~/issue370-run-h2-t1t4` (it had a new window position, localStorage and
+  `.ld.so` cache from the runs), and the T5 folder to `~/issue370-run-h2-t5`. Then
+  `cp -a ~/issue370-backup2-20261103-150116 ~/.var/app/io.github.fjrevoredo.mini-diarium`.
+  `diff -r` between the backup and the live folder: **no difference**.
+- `flatpak make-current --user io.github.fjrevoredo.mini-diarium test` → current is `x86_64/test` again (as before). Both branches stay installed.
+- Kept: `~/issue370-portal/` (test databases, plus the orphan `file/.xdp-new.db-SVb1Pv`), `~/issue370-run-h2-*`,
+  `~/issue370-h2-*.log`, `~/issue370-backup2-20261103-150116`.
+- Document store: I did not remove the new entries `760845c`, `7b1a970b`, `68256b8f`, `727f6870` (T3 (iii)/(iv) needs them).
+- Installed for this run: `agent-desktop@1.0.2` (npm global, Homebrew node prefix). State in `~/.agent-desktop`.
