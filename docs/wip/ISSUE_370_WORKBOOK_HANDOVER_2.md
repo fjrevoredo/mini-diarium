@@ -1,6 +1,6 @@
 # Issue #370 handover 2: document-portal behaviour on Workbook
 
-Status: **Workbook run done (2026-11-03) except T3 (iii) logout and (iv) reboot — results below.**
+Status: **Workbook run done (2026-11-03) except T3 (iv) reboot — results below.**
 Created: 2026-11-03 on `machine.main-desktop`. Branch: `handover/issue-370-flatpak-repro`.
 Previous run: `docs/wip/ISSUE_370_WORKBOOK_HANDOVER.md` (read its Results first).
 
@@ -265,8 +265,16 @@ Check in a new sandbox (`flatpak run --branch=stable --command=ls … -la <path>
 |---|---|---|---|
 | (i) app quit, new sandbox | `test.db` (rows=1) and `new.db` visible | `backups/`, `diary.db`, `new.db`, `test.db`; rows=1 | `760845c` and `7b1a970b` listed |
 | (ii) `systemctl --user restart xdg-document-portal.service` (`is-active` → `active`) | `test.db` (rows=1) visible; **`new.db` gone** | same 4 entries; rows=1 | `760845c` and `7b1a970b` listed |
-| (iii) logout and login | PENDING | PENDING | PENDING |
+| (iii) logout and login (see note) | `test.db` (rows=1) visible | same 4 entries; rows=1 | all 4 test entries listed, same IDs |
 | (iv) reboot (optional) | PENDING | PENDING | PENDING |
+
+Note on (iii): the user logged out and in at about 15:22. This did **not** restart the portal:
+`xdg-document-portal` (pid 1305009) still has the start time `15:05:32` (my restart in (ii)), and
+`systemctl --user show xdg-document-portal.service -p ActiveEnterTimestamp` gives `15:05:32`. The reason:
+`loginctl show-user francisco` gives `Linger=yes` (and other sessions stayed open). With linger, systemd keeps the user
+manager, the portal and `/run/user/1000` through a logout. So on this machine (iii) is the same as "no restart", and only a
+reboot tests a new user manager. The store is on disk: `~/.local/share/flatpak/db/documents` (mtime 15:14, it changed when
+T4 added entries). Raw output: `~/issue370-h2-t3-relogin.log`.
 
 After (ii) the host still has the orphan file `~/issue370-portal/file/.xdp-new.db-SVb1Pv`.
 
@@ -351,7 +359,7 @@ Remove or from a different action.
 
 | # | Confirmed / contradicted / not tested | Evidence |
 |---|---|---|
-| C1 | Confirmed for app restart and portal restart. Logout/reboot: PENDING | T3 (i), (ii): same doc IDs, contents readable and writable in a new sandbox |
+| C1 | Confirmed for app restart, portal restart and logout/login (with `Linger=yes`, so the portal kept running). Reboot: PENDING | T3 (i), (ii): same doc IDs, contents readable and writable in a new sandbox |
 | C2 | Confirmed | T2/T4: the folder pick returned a doc path for the folder (`…/7b1a970b/dir`, `…/727f6870/freshdir`); FileChooser version is 4 |
 | C3 | **Contradicted on this system** for `as-needed-by-app` | T4: with `--filesystem=$HOME/issue370-portal`, new picks under that folder still got new store entries and `/run/user/1000/doc/…` paths. (Note: the store also has an older grant for all of `$HOME`, `e81d571f`.) Flags 2/8 not tested directly |
 | C4 | Confirmed | `GetHostPaths(['760845c','7b1a970b','68256b8f','727f6870'])` from the host returned the 4 host paths; the `user.document-portal.host-path` xattr in the sandbox gave the host path for files and for their doc folder |
@@ -363,8 +371,8 @@ Remove or from a different action.
 
 - **Is a directory-grant path usable for open, write, new database and `backups/`?** Yes. In T2 all of (b)–(e) work
   through `/run/user/1000/doc/7b1a970b/dir/…`, and the results are real files on the host.
-- **Does it stay valid across restart, portal restart, re-login (and reboot)?** Restart and portal restart: yes, same path and
-  content. Re-login and reboot: PENDING (see T3).
+- **Does it stay valid across restart, portal restart, re-login (and reboot)?** Restart, portal restart and logout/login: yes, same path and
+  content. The logout did not stop the portal (`Linger=yes`). Reboot: PENDING (see T3).
 - **Is a file-grant path usable for writes?** Writes to the granted file itself: yes (rollback-journal commit reached the host).
   New files next to it: no real file on the host (only a hidden `.xdp-<name>-<random>` temp file, lost from the sandbox
   view after a portal restart). New folders next to it: no, `mkdir` fails with
