@@ -1,6 +1,6 @@
 # Issue #370 handover 2: document-portal behaviour on Workbook
 
-Status: **Workbook run done (2026-11-03), including T3 (iv) reboot and T6 — results below.**
+Status: **Workbook run done (2026-11-03), including T3 (iv) reboot, T6 and T7 — results below.**
 Created: 2026-11-03 on `machine.main-desktop`. Branch: `handover/issue-370-flatpak-repro`.
 Previous run: `docs/wip/ISSUE_370_WORKBOOK_HANDOVER.md` (read its Results first).
 
@@ -559,4 +559,60 @@ Remove and Open Existing:
 
 - Unlock with `t7` → works; the entry "t7 entry" is there. Then lock and quit.
 
-Reboot: PENDING (asked the user).
+Reboot (the user approved it and rebooted; boot `2026-11-03 16:03:25`). The override stays `filesystems=home;`.
+`config.json` is unchanged (journal `369be2b62ff55840`, path `$HOME/issue370-t7/real`).
+
+- Start 0.8.0 → the app opens directly on "Desbloquear t7". **No new pick.**
+- Unlock with `t7` → works; "t7 entry" is there. Log: `INFO mini_diarium_lib::commands::auth::auth_core] Journal unlocked`.
+- `backups/backup-2026-11-03-16h00m03.db` is still there; `manifest.json` was updated at 16:05.
+
+So with one branch and `filesystems=home`: the chooser returns host paths, 0.8.0 accepts them for create and for Open Existing,
+`backups/` works, and the journal opens after a reboot with no user action.
+
+#### T7b, scope `xdg-documents`
+
+```
+$ flatpak override --user --reset io.github.fjrevoredo.mini-diarium
+$ flatpak override --user --filesystem=xdg-documents io.github.fjrevoredo.mini-diarium
+$ flatpak override --user --show io.github.fjrevoredo.mini-diarium
+[Context]
+filesystems=xdg-documents;
+$ mkdir -p ~/Documents/issue370-t7; cp -a ~/issue370-t7/real/t7.db ~/Documents/issue370-t7/
+$ flatpak info --file-access=$HOME/Documents/issue370-t7 io.github.fjrevoredo.mini-diarium; echo exit=$?
+read-write
+exit=0
+$ flatpak info --file-access=$HOME/issue370-t7/real io.github.fjrevoredo.mini-diarium; echo exit=$?
+hidden
+exit=0
+```
+
+Extra finding at start: the active journal is still `t7` at `$HOME/issue370-t7/real`, which is now `hidden`. 0.8.0 starts on
+**"Bienvenido a Fenmark — Crea una contraseña para proteger tu diario"** with a **Crear diario** button (the screen for a
+new journal), not on an unlock screen and not on an error. The host `t7.db` is not changed. I did not click Crear diario.
+Later, **Abrir** on that listed journal gives the same "Crea una contraseña" screen. Log: only
+`Switched to journal: 369be2b62ff55840`, no error.
+
+Pick inside the grant (Open Existing → `~/Documents/issue370-t7/t7.db`):
+- Form: `/home/francisco/Documents/issue370-t7`. No document-store entry.
+- **Abrir** → **accepted**. Log: `Journal added: a13b224c947aa1b1`, `Switched to journal: a13b224c947aa1b1`.
+  `config.json` adds `{"id": "a13b224c947aa1b1", "name": "t7", "path": "$HOME/Documents/issue370-t7", "db_filename": "t7.db"}`,
+  and `diary_dir` changes to `$HOME/Documents/issue370-t7`.
+- Unlock with `t7` → works. Log: `Journal unlocked`, `Snapshot taken before Unlock (118784 bytes)`.
+  `~/Documents/issue370-t7/backups/` is made on the host.
+
+Pick outside the grant (Open Existing → `~/issue370-t7/real/t7.db`):
+- Form: `/run/user/1000/doc/3a4cb371`. New document-store entry:
+  `3a4cb371  $HOME/issue370-t7/real/t7.db  /run/user/1000/doc/3a4cb371/t7.db`.
+- **Abrir** → refused: "Esa carpeta solo se comparte con Fenmark de forma temporal, así que un diario guardado ahí dejaría
+  de abrirse más adelante. Usa la ubicación predeterminada."
+
+#### T7 cleanup
+
+- `flatpak override --user --reset io.github.fjrevoredo.mini-diarium`; `--show` is empty.
+- App data: the T7 folder moved to `~/issue370-run-h2-t7`; `cp -a ~/issue370-t7-data-backup ~/.var/app/io.github.fjrevoredo.mini-diarium`;
+  `diff -r` → **no difference**.
+- Removed after recording: `~/issue370-t7` and `~/Documents/issue370-t7`.
+- The `test` branch is **not** reinstalled. Only `stable 0.8.0` is installed; current = `x86_64/stable`.
+  To restore: `flatpak install --user ~/issue370-t7-test-0.6.6.flatpak` (commit `dd7a9cb9…`; not tested), then
+  `flatpak make-current --user io.github.fjrevoredo.mini-diarium test` if wanted.
+- Document-store entries: none removed. New in T7: `3a4cb371`.
