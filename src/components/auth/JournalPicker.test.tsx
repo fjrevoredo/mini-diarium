@@ -468,6 +468,55 @@ describe('JournalPicker component', () => {
       expect(mocks.switchJournal).not.toHaveBeenCalled();
     });
 
+    it('shows the default folder and a docs link when Flatpak refuses a portal path', async () => {
+      mocks.addJournal.mockRejectedValue('Path is a temporary sandbox location');
+      mocks.getDefaultJournalDir.mockResolvedValue(
+        '/home/u/.var/app/io.github.fjrevoredo.mini-diarium/data/com.minidiarium/journals',
+      );
+
+      await openExisting('/run/user/1000/doc/abc123/diary.db');
+
+      await vi.waitFor(() => {
+        expect(screen.getByTestId('portal-help')).toHaveTextContent(
+          'copy its .db file into /home/u/.var/app/io.github.fjrevoredo.mini-diarium/data/com.minidiarium/journals and open the copy',
+        );
+      });
+      expect(screen.getByRole('alert')).toHaveTextContent(/only shared with Fenmark temporarily/i);
+      expect(mocks.switchJournal).not.toHaveBeenCalled();
+
+      const opener = await import('@tauri-apps/plugin-opener');
+      fireEvent.click(screen.getByRole('button', { name: /show the steps/i }));
+      expect(opener.openUrl).toHaveBeenCalledWith(
+        'https://fenmark.app/docs/getting-started/#multiple-journals',
+      );
+    });
+
+    it('drops the portal help when a different error replaces the refusal', async () => {
+      mocks.addJournal.mockRejectedValueOnce('Path is a temporary sandbox location');
+      mocks.addJournal.mockRejectedValueOnce('Journal is already in your list');
+
+      await openExisting('/run/user/1000/doc/abc123/diary.db');
+      await vi.waitFor(() => expect(screen.getByTestId('portal-help')).toBeInTheDocument());
+
+      fireEvent.click(screen.getByRole('button', { name: /^open$/i }));
+      await vi.waitFor(() => {
+        expect(screen.getByRole('alert')).toHaveTextContent(/already in your list/i);
+      });
+      expect(screen.queryByTestId('portal-help')).not.toBeInTheDocument();
+    });
+
+    it('shows only the refusal when other errors occur', async () => {
+      mocks.addJournal.mockRejectedValue(new Error('Invalid journal filename'));
+
+      await openExisting('/home/u/notes.db');
+
+      await vi.waitFor(() => {
+        expect(screen.getByRole('alert')).toHaveTextContent(/filename cannot be used/i);
+      });
+      expect(screen.queryByTestId('portal-help')).not.toBeInTheDocument();
+      expect(mocks.getDefaultJournalDir).not.toHaveBeenCalled();
+    });
+
     it('splits a Windows path on backslashes when opening a journal', async () => {
       await openExisting('C:\\Users\\u\\Journals\\work.db');
 

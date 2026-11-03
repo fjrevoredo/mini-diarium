@@ -115,7 +115,9 @@
       "chooseFolderTitle": "选择位置",
       "selectFolderTitle": "选择日记文件",
       "creating": "创建中...",
-      "opening": "打开中..."
+      "opening": "打开中...",
+      "portalHelp": "要使用该文件夹中的日记，请将其 .db 文件复制到 {{ path }}，然后打开副本。请保留原始文件。或者使用 Flatseal 为 Fenmark 授予该文件夹的永久访问权限，然后重新打开该文件。",
+      "portalHelpLink": "查看步骤"
     },
     "prompt": {
       "title": "Fenmark",

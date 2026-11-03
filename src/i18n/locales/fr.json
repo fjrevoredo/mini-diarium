@@ -115,7 +115,9 @@
       "chooseFolderTitle": "Choisir l'emplacement",
       "selectFolderTitle": "Sélectionner le fichier du journal",
       "creating": "Création...",
-      "opening": "Ouverture..."
+      "opening": "Ouverture...",
+      "portalHelp": "Pour utiliser un journal de ce dossier, copiez son fichier .db dans {{ path }} et ouvrez la copie. Conservez le fichier d’origine. Ou donnez à Fenmark un accès permanent à ce dossier avec Flatseal, puis rouvrez le fichier.",
+      "portalHelpLink": "Voir les étapes"
     },
     "prompt": {
       "title": "Fenmark",

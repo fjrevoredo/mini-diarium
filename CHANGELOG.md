@@ -34,6 +34,11 @@ Template:
 
 # Versions
 
+## [Unreleased]
+
+### Fixed
+- **Flatpak: the "temporary sandbox location" error now tells you what to do (#370, TODO-0163)**: On the Flathub build, **+ Open Existing** refuses a journal file outside the app's sandbox, because the path the file chooser returns stops working later. The error now also shows the default journal folder: copy the `.db` file there and open the copy. It also tells you that you can give the app access to the folder with Flatseal, and has a link to the steps in the docs.
+
 ## [0.8.0] - 02-11-2026
 
 ### Changed

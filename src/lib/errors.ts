@@ -26,8 +26,22 @@ import { defaultT, type T } from '../i18n';
  * catch regressions, e.g.:
  *   rg "setError\(err instanceof Error|setError\(String\(err|setError\(err\.message" src
  */
+function rawErrorText(err: unknown): string {
+  return typeof err === 'string' ? err : err instanceof Error ? err.message : String(err);
+}
+
+const PORTAL_PATH_REJECTED = /temporary sandbox location/i;
+
+/**
+ * Whether `err` is the Flatpak document-portal refusal from `check_journal_location` (KI-10).
+ * The journal picker uses it to show where the default folder is and how to recover.
+ */
+export function isPortalPathRejection(err: unknown): boolean {
+  return PORTAL_PATH_REJECTED.test(rawErrorText(err));
+}
+
 export function mapTauriError(err: unknown, t: T = defaultT): string {
-  const raw = typeof err === 'string' ? err : err instanceof Error ? err.message : String(err);
+  const raw = rawErrorText(err);
 
   // Forward-compatibility guard (TODO-0122): a journal or backup written by a newer app.
   // Must stay ahead of the generic internal-error bucket below.
@@ -83,7 +97,7 @@ export function mapTauriError(err: unknown, t: T = defaultT): string {
   }
 
   // Journal-location rejections from add_journal — specific causes, not permission problems
-  if (/temporary sandbox location/i.test(raw)) {
+  if (PORTAL_PATH_REJECTED.test(raw)) {
     return t('errors.portalPathRejected');
   }
   if (/is a backup snapshot/i.test(raw)) {

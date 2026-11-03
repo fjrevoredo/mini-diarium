@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { mapTauriError } from './errors';
+import { isPortalPathRejection, mapTauriError } from './errors';
 import { defaultT } from '../i18n';
 
 const en = (key: string) => defaultT(key as Parameters<typeof defaultT>[0]);
@@ -44,6 +44,12 @@ describe('mapTauriError', () => {
       expect(mapTauriError('Path is a temporary sandbox location')).toBe(
         en('errors.portalPathRejected'),
       );
+    });
+
+    it('recognizes only the portal refusal as a portal-path rejection', () => {
+      expect(isPortalPathRejection('Path is a temporary sandbox location')).toBe(true);
+      expect(isPortalPathRejection(new Error('Path is a temporary sandbox location'))).toBe(true);
+      expect(isPortalPathRejection('Path is a backup snapshot')).toBe(false);
     });
 
     it('explains a rejected backup snapshot', () => {

@@ -153,6 +153,9 @@ const en = {
       selectFolderTitle: 'Select Journal File',
       creating: 'Creating...',
       opening: 'Opening...',
+      portalHelp:
+        'To use a journal from that folder, copy its .db file into {{ path }} and open the copy. Keep the original file. Or give Fenmark permanent access to that folder with Flatseal, then open the file again.',
+      portalHelpLink: 'Show the steps',
     },
     /** PasswordPrompt */
     prompt: {

@@ -105,6 +105,8 @@ This affects only journals placed outside the sandbox — the chooser opens on a
 
 **Workaround if you want a journal in a specific host folder:** grant Mini Diarium persistent access to it with Flatseal (or `flatpak override --user --filesystem=/path/to/folder io.github.fjrevoredo.mini-diarium`), then pick the folder. With a real filesystem permission in place the chooser returns the true path rather than a portal handle.
 
+**Workaround without any permission change:** copy the `.db` file into the app's default journal folder (on Flathub, `~/.var/app/io.github.fjrevoredo.mini-diarium/data/com.minidiarium/journals/`) and use **+ Open Existing** on the copy. Keep the original until the copy opens. Since TODO-0163 the refusal message shows this folder and links to the steps.
+
 Resolving an existing stored portal path back to its host location is not implemented; a journal already saved that way must be re-added from its real folder.
 
 ---

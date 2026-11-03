@@ -1,5 +1,5 @@
 import { createSignal, onMount, For, Show } from 'solid-js';
-import { confirm, open, save } from '../../lib/dialog';
+import { confirm, open, openUrlSuppressingFocusLoss, save } from '../../lib/dialog';
 import {
   journals,
   activeJournalId,
@@ -11,12 +11,15 @@ import {
 import { refreshAuthState, error as authError } from '../../state/auth';
 import { isFlatpak, loadPlatformInfo } from '../../state/platform';
 import { checkJournalPath, getDefaultJournalDir } from '../../lib/tauri';
-import { mapTauriError } from '../../lib/errors';
+import { isPortalPathRejection, mapTauriError } from '../../lib/errors';
 import { joinDialogPath, splitDialogPath } from '../../lib/native-path';
 import { useI18n } from '../../i18n';
 import Wordmark from '../brand/Wordmark';
 
 type AddMode = null | 'create' | 'open';
+
+/** Getting-started docs section that explains the Flatpak portal refusal and its recovery. */
+const PORTAL_HELP_URL = 'https://fenmark.app/docs/getting-started/#multiple-journals';
 
 export default function JournalPicker() {
   const t = useI18n();
@@ -33,19 +36,39 @@ export default function JournalPicker() {
   const [pathConflict, setPathConflict] = createSignal(false);
   const [renamingId, setRenamingId] = createSignal<string | null>(null);
   const [renameValue, setRenameValue] = createSignal('');
+  // Set only while the error banner shows the Flatpak portal refusal (KI-10): the default
+  // folder the user can copy the journal into. The bare refusal is a dead end without it.
+  const [portalHelpDir, setPortalHelpDir] = createSignal<string | null>(null);
+
+  /** Every banner write goes through here, so the portal help never outlives its error. */
+  const setError = (message: string | null) => {
+    setPortalHelpDir(null);
+    setLocalError(message);
+  };
+
+  /** Shows a backend error from adding a journal, plus recovery steps for a portal path. */
+  const reportAddError = async (err: unknown) => {
+    setError(mapTauriError(err, t));
+    if (!isPortalPathRejection(err)) return;
+    try {
+      setPortalHelpDir(await getDefaultJournalDir());
+    } catch {
+      // The refusal message still shows; only the folder hint is missing.
+    }
+  };
 
   onMount(() => {
     void loadPlatformInfo();
   });
 
   const handleOpen = async (id: string) => {
-    setLocalError(null);
+    setError(null);
     setIsWorking(true);
     try {
       await switchJournal(id);
       await refreshAuthState();
     } catch (err) {
-      setLocalError(mapTauriError(err, t));
+      setError(mapTauriError(err, t));
     } finally {
       setIsWorking(false);
     }
@@ -57,11 +80,11 @@ export default function JournalPicker() {
       kind: 'warning',
     });
     if (!ok) return;
-    setLocalError(null);
+    setError(null);
     try {
       await removeJournal(id);
     } catch (err) {
-      setLocalError(mapTauriError(err, t));
+      setError(mapTauriError(err, t));
     }
   };
 
@@ -78,24 +101,24 @@ export default function JournalPicker() {
       try {
         await renameJournal(id, name);
       } catch (err) {
-        setLocalError(mapTauriError(err, t));
+        setError(mapTauriError(err, t));
       }
     }
     setRenamingId(null);
   };
 
   const handleUseDefaultLocation = async () => {
-    setLocalError(null);
+    setError(null);
     try {
       setNewDir(await getDefaultJournalDir());
     } catch (err) {
-      setLocalError(mapTauriError(err, t));
+      setError(mapTauriError(err, t));
     }
   };
 
   /** Flatpak-only: overrides the pre-filled default location for the dialog-free create form. */
   const handleBrowseCreateFolder = async () => {
-    setLocalError(null);
+    setError(null);
     const selected = await open({
       directory: true,
       multiple: false,
@@ -115,7 +138,7 @@ export default function JournalPicker() {
    * with an editable Filename field instead.
    */
   const handleStartCreate = async () => {
-    setLocalError(null);
+    setError(null);
     setPathConflict(false);
 
     if (isFlatpak()) {
@@ -129,7 +152,7 @@ export default function JournalPicker() {
     try {
       defaultDir = await getDefaultJournalDir();
     } catch (err) {
-      setLocalError(mapTauriError(err, t));
+      setError(mapTauriError(err, t));
       return;
     }
     const selected = await save({
@@ -152,7 +175,7 @@ export default function JournalPicker() {
     const name = newName().trim();
     const dir = newDir();
     if (!name) {
-      setLocalError(t('auth.picker.nameRequired'));
+      setError(t('auth.picker.nameRequired'));
       return;
     }
     // Flatpak's Filename field is free text, so it is normalized here, before the existence
@@ -160,13 +183,13 @@ export default function JournalPicker() {
     // below and the path registered by addJournal are the same string.
     const filename = isFlatpak() ? dbFilename()?.trim() || 'diary.db' : dbFilename();
     if (isFlatpak()) setDbFilename(filename);
-    setLocalError(null);
+    setError(null);
     setPathConflict(false);
     setIsWorking(true);
     try {
       const exists = await checkJournalPath(joinDialogPath(dir, filename ?? 'diary.db'));
       if (exists) {
-        setLocalError(t('auth.picker.alreadyExistsError'));
+        setError(t('auth.picker.alreadyExistsError'));
         setPathConflict(true);
         setIsWorking(false);
         return;
@@ -175,13 +198,13 @@ export default function JournalPicker() {
       await switchJournal(journal.id);
       await refreshAuthState();
     } catch (err) {
-      setLocalError(mapTauriError(err, t));
+      await reportAddError(err);
       setIsWorking(false);
     }
   };
 
   const handleBrowseOpen = async () => {
-    setLocalError(null);
+    setError(null);
     const selected = await open({
       filters: [{ name: 'Database Files', extensions: ['db'] }],
       multiple: false,
@@ -192,7 +215,7 @@ export default function JournalPicker() {
 
     const found = await checkJournalPath(selected);
     if (!found) {
-      setLocalError(t('auth.picker.noJournalFound'));
+      setError(t('auth.picker.noJournalFound'));
       setAddMode('open');
       return;
     }
@@ -210,17 +233,17 @@ export default function JournalPicker() {
     const name = newName().trim();
     const dir = newDir();
     if (!name) {
-      setLocalError(t('auth.picker.nameRequired'));
+      setError(t('auth.picker.nameRequired'));
       return;
     }
-    setLocalError(null);
+    setError(null);
     setIsWorking(true);
     try {
       const journal = await addJournal(name, dir, dbFilename());
       await switchJournal(journal.id);
       await refreshAuthState();
     } catch (err) {
-      setLocalError(mapTauriError(err, t));
+      await reportAddError(err);
       setIsWorking(false);
     }
   };
@@ -231,7 +254,7 @@ export default function JournalPicker() {
     setNewDir('');
     setDbFilename(undefined);
     setPathConflict(false);
-    setLocalError(null);
+    setError(null);
   };
 
   const displayError = () => localError() ?? authError();
@@ -255,6 +278,22 @@ export default function JournalPicker() {
           <Show when={displayError()}>
             <div role="alert" class="mb-4 rounded-md bg-error p-3">
               <p class="text-sm text-error">{displayError()}</p>
+              <Show when={localError() && portalHelpDir()}>
+                {(dir) => (
+                  <>
+                    <p data-testid="portal-help" class="mt-2 text-sm text-error break-words">
+                      {t('auth.picker.portalHelp', { path: dir() })}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => openUrlSuppressingFocusLoss(PORTAL_HELP_URL)}
+                      class="mt-1 text-sm text-error underline focus:outline-none focus:ring-2 focus:ring-blue-500 rounded"
+                    >
+                      {t('auth.picker.portalHelpLink')}
+                    </button>
+                  </>
+                )}
+              </Show>
             </div>
           </Show>
 

@@ -115,7 +115,9 @@
       "chooseFolderTitle": "Speicherort wählen",
       "selectFolderTitle": "Tagebuchdatei auswählen",
       "creating": "Erstelle...",
-      "opening": "Öffne..."
+      "opening": "Öffne...",
+      "portalHelp": "Um ein Tagebuch aus diesem Ordner zu verwenden, kopiere seine .db-Datei nach {{ path }} und öffne die Kopie. Behalte die Originaldatei. Oder gib Fenmark mit Flatseal dauerhaften Zugriff auf diesen Ordner und öffne die Datei dann erneut.",
+      "portalHelpLink": "Schritte anzeigen"
     },
     "prompt": {
       "title": "Fenmark",

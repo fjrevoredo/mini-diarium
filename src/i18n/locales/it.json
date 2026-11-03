@@ -115,7 +115,9 @@
       "chooseFolderTitle": "Scegli posizione",
       "selectFolderTitle": "Seleziona file del diario",
       "creating": "Creazione...",
-      "opening": "Apertura..."
+      "opening": "Apertura...",
+      "portalHelp": "Per usare un diario da quella cartella, copia il suo file .db in {{ path }} e apri la copia. Conserva il file originale. Oppure concedi a Fenmark l’accesso permanente a quella cartella con Flatseal, poi riapri il file.",
+      "portalHelpLink": "Mostra i passaggi"
     },
     "prompt": {
       "title": "Fenmark",
