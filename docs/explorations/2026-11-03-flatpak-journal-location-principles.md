@@ -1,7 +1,7 @@
 # Flatpak Journal Locations: Findings, Data, and Principles (issue #370)
 
 **Date:** 2026-11-03
-**Status:** Exploration (no code changes). **Decision (2026-11-03, maintainer):** add the static permission `--filesystem=home` to the Flathub manifest (see §7). F12 is tracked as TODO-0164. The implementation design is still open.
+**Status:** Exploration (no code changes). **Decision (2026-11-03, maintainer):** add a static filesystem permission (`home` + `/run/media` + `/media` + `/mnt`) to the Flathub manifest (see §7). Recorded in the ADR [2026-11-flatpak-static-filesystem-permission.md](../decisions/2026-11-flatpak-static-filesystem-permission.md). F12 is tracked as TODO-0164.
 **Issue:** [#370](https://github.com/fjrevoredo/mini-diarium/issues/370), Flathub build: "Open Existing" refuses a `.db` file outside the sandbox.
 **Evidence files:** [ISSUE_370_WORKBOOK_HANDOVER.md](../wip/ISSUE_370_WORKBOOK_HANDOVER.md) (run 1), [ISSUE_370_WORKBOOK_HANDOVER_2.md](../wip/ISSUE_370_WORKBOOK_HANDOVER_2.md) (run 2: T1 to T6), [CREATE_JOURNAL_FAILURE_2026-07-30.md](../wip/CREATE_JOURNAL_FAILURE_2026-07-30.md) (the July report that caused the v0.6.6 guard).
 
@@ -170,7 +170,7 @@ Ubuntu's encrypted install uses LVM, and Fedora uses btrfs, so the reboot bug ca
 
 ### 7.4 Security cost (R7)
 
-The app has no network access, which is a non-negotiable. So a static permission adds no new path for data to leave the machine. The sandbox then protects less against a compromised app or a malicious plugin that reads files under `$HOME`. Rhai plugins have no filesystem API (verify before a decision). The threat documentation (PRIVACY.md, KI-10) must state the permission honestly.
+The app has no network access, which is a non-negotiable. So a static permission adds no new path for data to leave the machine. The sandbox then protects less against a compromised app or a malicious plugin that reads files under `$HOME`. Rhai plugins have no filesystem API (verified 2026-11-04; one gap: Rhai's default `FileModuleResolver` let a plugin `import` other `.rhai` scripts by path; closed with a `DummyModuleResolver`, see the ADR). The threat documentation (PRIVACY.md, KI-10) must state the permission honestly.
 
 ### 7.5 T7: static permission with one branch (Workbook, 2026-11-03)
 
