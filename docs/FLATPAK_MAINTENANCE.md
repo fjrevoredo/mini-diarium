@@ -16,6 +16,42 @@ Use this guide when touching any of the following:
 - `.github/workflows/flathub-publish.yml`
 - `flatpak/rewrite-manifest.py`
 
+## Flathub Generative-AI Policy
+
+Flathub has a strict policy on AI-generated material. It applies to this repo because agents help to write the code and docs. Read this section before any change to Flatpak files and before any action on a Flathub pull request.
+
+### The policy text
+
+Source: [Flathub Requirements → Generative AI policy](https://docs.flathub.org/docs/for-app-authors/requirements#generative-ai-policy), read on 2026-11-04. The page can change: read it again before each Flathub submission or permission change, and update this section if it differs.
+
+> Submitters must disclose any AI-generated code, documentation, packaging, or other material they know or reasonably believe is included in the application or its Flathub packaging. The disclosure must identify the affected parts and approximate extent.
+>
+> Flathub manifests must not contain AI-generated or AI-assisted content. Disclosure does not exempt manifests from this restriction.
+>
+> AI used only for research, discussion, or debugging does not need disclosure when no generated material is included in the application or its Flathub packaging.
+>
+> Other disclosed AI-generated material is evaluated at reviewer discretion. Reviewers may reject a submission, including without further review, based on the extent or role of generated material or concerns about its review, quality, or maintainability. Disclosure does not create a presumption of acceptance.
+>
+> AI tools or agents must not open or automate Flathub submission pull requests, or generate their commit messages, descriptions, review comments, or replies. Submitters must not request AI-agent reviews.
+>
+> Undisclosed or materially misrepresented AI-generated material, or prohibited AI-generated submission or review interactions, may result in rejection. Repeated violations may result in a permanent ban from future submissions and activities.
+
+### What it means for this repo
+
+| Item | Rule |
+|---|---|
+| `flatpak/io.github.fjrevoredo.mini-diarium.yml` (the manifest) | **A human writes every line.** There is no exception for small or mechanical changes (for example four standard `finish-args` lines). An agent may read the manifest, check it, and say what must change, but must not edit it or give paste-ready lines. |
+| Output of scripts: `flatpak/rewrite-manifest.py`, `cargo-sources.json`, `node-sources.json` | Not AI content. A deterministic script makes it. A change to the script itself counts as packaging (see the disclosure row). |
+| The Flathub PR opened by `flathub-publish.yml` | Accepted (maintainer, 2026-11-04): a CI script opens it, not an AI agent. Its commit message, title and body come from a fixed template in the workflow. A human writes any change to that template text. |
+| Justification, descriptions, review comments and replies on a Flathub PR | **A human writes them.** An agent may collect the facts (for example in an ADR), but must not draft the text. |
+| AI reviews | Do not request an AI-agent review on a Flathub PR (for example a review bot on the `flathub/` repo). |
+| App code, docs, `data/linux/*` (desktop file, metainfo), and packaging scripts | Agents can write them. But the first sentence of the policy requires a **disclosure** of AI-generated material in the application or its packaging, with the parts and the approximate extent. |
+| Research, discussion, debugging | No disclosure is necessary when no generated material goes into the app or the packaging. |
+
+### Open question: disclosure
+
+The policy text speaks of "submitters" and "a submission". It does not say if a disclosure is necessary for an update of an app that is already on Flathub. The app has AI-assisted code and docs. The maintainer decides if the update PR must have a disclosure, and writes it personally. A permission change is held for a moderator, so it is the most likely point for this question.
+
 ## Files That Matter
 
 | File | Purpose |
@@ -361,7 +397,7 @@ If you change runtime version, SDK extension branch, or permissions:
 
 - check the official Flatpak and Flathub docs first
 - update this document in the same PR
-- explain the reason in the PR description
+- explain the reason in the PR description (the maintainer writes it; see [Flathub Generative-AI Policy](#flathub-generative-ai-policy))
 - expect reviewer questions if the change adds access or deviates from current minimal permissions
 
 The most common annual maintenance task is the GNOME runtime bump. When `runtime-version` changes, re-check the matching Freedesktop SDK extension branch instead of assuming it stays the same.

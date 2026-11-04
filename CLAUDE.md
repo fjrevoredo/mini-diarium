@@ -148,6 +148,8 @@ node scripts/check-crap-gate.mjs --self-test # CRAP policy self-test
 
 7. **Rust CRAP is blocking only in Linux CI; local comparisons are advisory.** Do not raise a baseline in a feature change or treat unscored closures as covered code. Policy, provenance rules, and analyzer limits: [CI best practices](docs/best-practices/CI_BEST_PRACTICES.md#rust-crap-gate); diagnosis: `ci-gate-diagnosis` skill.
 
+8. **Flathub forbids AI-generated manifest content and AI-written PR text.** Agents must never edit `flatpak/io.github.fjrevoredo.mini-diarium.yml` or give paste-ready lines for it, not even for a mechanical change; the maintainer writes every line. Agents must never draft a Flathub PR description, justification, commit message, review comment or reply, and must never request an AI review there. Agents may check the manifest and collect facts. AI-generated app code, docs and packaging need a disclosure. Policy text and per-file rules: [FLATPAK_MAINTENANCE.md → Flathub Generative-AI Policy](docs/FLATPAK_MAINTENANCE.md#flathub-generative-ai-policy).
+
 ## Security Rules
 
 - **Never** log, print, or serialize passwords or encryption keys

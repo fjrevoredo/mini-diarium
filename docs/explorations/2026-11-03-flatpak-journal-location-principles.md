@@ -216,6 +216,8 @@ A folder grant (the moderator's suggestion in #10653) fixes F4 but not F6 or the
 
 **Risk: Flathub generative-AI policy.** [Requirements](https://docs.flathub.org/docs/for-app-authors/requirements): "Flathub manifests must not contain AI-generated or AI-assisted content. Disclosure does not exempt manifests from this restriction." "AI tools or agents must not open or automate Flathub submission pull requests." "Any future update or modification … that would have affected the review outcome may trigger a re-review." Consequences: (1) the maintainer must write the `finish-args` lines in the manifest by hand, and the justification on the Flathub PR in their own words; (2) a held build makes a moderator look at the app, and #10653 shows that "heavy AI usage" can be a reason to reject. The policy does not apply retroactively, but a permission change is a new review point. Our `flathub-publish.yml` opens the Flathub PR by CI (not an AI agent); confirm with the maintainer that this stays acceptable.
 
+**Correction (2026-11-04):** this paragraph quoted only part of the policy. The full policy also requires a disclosure of AI-generated code, docs and packaging, and forbids AI-generated commit messages, PR descriptions, review comments and replies, and AI-agent reviews. The policy page does not say that it does not apply retroactively; that claim is not verified. The CI-opened PR was confirmed as acceptable. Full text and rules: [FLATPAK_MAINTENANCE.md → Flathub Generative-AI Policy](../FLATPAK_MAINTENANCE.md#flathub-generative-ai-policy).
+
 ## Sources
 
 - FileChooser portal: <https://flatpak.github.io/xdg-desktop-portal/docs/doc-org.freedesktop.portal.FileChooser.html>

@@ -119,10 +119,12 @@ Obsidian has exactly `home`, `/mnt`, `/run/media` and `/media` (grandfathered; r
 
 ### Generative-AI policy
 
-Flathub manifests "must not contain AI-generated or AI-assisted content", and "AI tools or agents must not open or automate Flathub submission pull requests" ([Requirements](https://docs.flathub.org/docs/for-app-authors/requirements)). So:
+The full policy text and the rules for this repo are in [FLATPAK_MAINTENANCE.md → Flathub Generative-AI Policy](../FLATPAK_MAINTENANCE.md#flathub-generative-ai-policy). For this change:
 
-- The maintainer writes the four `finish-args` lines in the manifest personally.
-- The maintainer writes the justification on the Flathub PR in their own words. This ADR gives the facts; it is not text to paste into the PR.
+- The maintainer writes the four `finish-args` lines in the manifest personally. The policy has no exception for mechanical lines.
+- The maintainer writes the justification, and every reply to a moderator, on the Flathub PR in their own words. AI must not generate "commit messages, descriptions, review comments, or replies". This ADR gives the facts; it is not text to paste into the PR.
+- Do not request an AI-agent review on the Flathub PR.
+- **Disclosure (open, maintainer decision):** the policy requires a disclosure of AI-generated code and docs in the app or its packaging. The text does not say if this applies to an update. The permission change is held for a moderator, so decide before the release that carries it.
 - **CI-opened PR (resolved 2026-11-04, maintainer):** `flathub-publish.yml` opens the Flathub PR from CI (a script, not an AI agent), and this stays acceptable. The workflow copies `flatpak/io.github.fjrevoredo.mini-diarium.yml` from this repo, so the hand-written `finish-args` lines must be committed here. The workflow PR body is only a generic "Automated update" line, so the maintainer adds the justification on that PR (edit the body or add a comment).
 
 ## Revisit when

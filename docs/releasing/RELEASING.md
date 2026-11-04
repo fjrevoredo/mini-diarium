@@ -416,7 +416,7 @@ When the release workflow publishes a release, the `flathub-publish.yml` workflo
 **After the release:**
 
 1. Flathub PR will appear in: https://github.com/flathub/io.github.fjrevoredo.mini-diarium/pulls
-2. Wait for Flathub maintainers to review and merge the PR (same process as WinGet)
+2. Wait for Flathub maintainers to review and merge the PR (same process as WinGet). Write any justification or reply on that PR yourself: Flathub forbids AI-generated PR text and AI-generated manifest content ([policy and rules](../FLATPAK_MAINTENANCE.md#flathub-generative-ai-policy)).
 3. Users can then install with: `flatpak install flathub io.github.fjrevoredo.mini-diarium`
 
 **Runtime maintenance:** `org.gnome.Platform//50` in `flatpak/io.github.fjrevoredo.mini-diarium.yml` must be bumped each major GNOME release. When this runtime is bumped, re-check the matching Freedesktop SDK extension branch instead of assuming it stays unchanged.
