@@ -116,7 +116,7 @@
       "selectFolderTitle": "选择日记文件",
       "creating": "创建中...",
       "opening": "打开中...",
-      "portalHelp": "要使用该文件夹中的日记，请将其 .db 文件复制到 {{ path }}，然后打开副本。请保留原始文件。或者使用 Flatseal 为 Fenmark 授予该文件夹的永久访问权限，然后重新打开该文件。",
+      "portalHelp": "要使用该文件夹中的日记，请将其 .db 文件复制到 {{ path }}，然后打开副本。请保留原始文件。或者使用 Flatseal 为 Fenmark 授予该文件夹的访问权限，然后重启 Fenmark 并重新打开该文件。",
       "portalHelpLink": "查看步骤"
     },
     "prompt": {
@@ -803,7 +803,7 @@
     "cannotReadKeyFile": "无法读取密钥文件。请检查文件是否存在且具有读取权限。",
     "cannotSaveKeyFile": "无法保存密钥文件。请检查文件夹权限。",
     "fileOperationFailed": "文件操作失败。请检查是否具有所需权限。",
-    "portalPathRejected": "此文件夹仅由 Fenmark 临时提供，保存在那里的日记之后将无法打开。请改用默认位置。",
+    "portalPathRejected": "Fenmark 无法可靠地保持对此文件夹中日记的访问。重启后访问可能会中断，而且应用无法在那里创建备份。",
     "backupFileRejected": "此文件是备份。直接打开它会修改它。请先将其复制到其他位置，然后打开副本。",
     "journalAlreadyRegistered": "此日记已在您的列表中。请从上面的列表打开它，而不是重新添加。",
     "invalidJournalFilename": "此文件名不能用于日记。请使用更短的名称，且不含 / 或 * 等特殊字符。",

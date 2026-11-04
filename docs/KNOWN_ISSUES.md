@@ -94,16 +94,19 @@ WAL mode remains disabled. That is now an independent decision rather than a mit
 
 ---
 
-### KI-10 — On Flatpak, folders outside the sandbox are reached through a temporary portal path
-**Status:** Open (mitigated in v0.6.6)
+### KI-10 — On Flatpak, folders outside the sandbox are reached through a document-portal path
+**Status:** Open (mitigated in v0.6.6). Planned fix: a static filesystem permission, see the [ADR](decisions/2026-11-flatpak-static-filesystem-permission.md).
 
-The Flathub build runs sandboxed and has direct access only to its own data directory. When you browse to any *other* folder, the file chooser goes through the XDG document portal, which hands the app a temporary handle under `/run/user/<uid>/doc/` instead of the real path. That handle is tied to one grant: it works while the chooser's permission lasts and stops resolving afterwards. A journal whose stored location is such a handle becomes unopenable later, and creating a new database inside one fails.
+The Flathub build runs sandboxed and has direct access only to its own data directory. When you browse to any *other* folder, the file chooser goes through the XDG document portal, which hands the app a path under `/run/user/<uid>/doc/` instead of the real path. The portal grant is persistent by design, but the app cannot rely on it for a journal ([exploration](explorations/2026-11-03-flatpak-journal-location-principles.md)):
+
+- **A file grant gives no access next to the file (F4).** The app can read and write the picked `.db` in place, but it cannot make `backups/` or other new files in that folder. So creating a new database inside a portal path fails, and backups cannot work.
+- **A grant can stop working after a reboot (F6).** The portal records a grant by device and inode number. On ecryptfs, btrfs and LVM the device number can change after a reboot, and then every stored grant fails with `ENOENT`. This is fixed in xdg-desktop-portal 1.21.2; most LTS distributions ship an older version. A journal whose stored location is a portal path can then become unopenable.
 
 This affects only journals placed outside the sandbox — the chooser opens on a real, writable location, so the common path is unaffected.
 
 **Mitigation (v0.6.6, revised for TODO-0112):** On the Flathub build specifically, **+ Create New Journal** shows a dialog-free form pre-filled with a working location — your Documents folder, or the app's own data folder where Documents is not writable (as on Flathub, where the sandbox holds no filesystem permission) — so the common path never touches the folder chooser at all. Everywhere else, Create opens a native save dialog instead, which carries no portal risk since it is not Flatpak. Since TODO-0112, journals no longer get an auto-allocated folder of their own; several can share one folder as long as their filenames differ, so the Flatpak form includes an editable Filename field. The app also refuses a portal path as a journal location — explaining why instead of failing with a generic permissions error. The refusal covers both ways a journal gets a location: adding one, and **Preferences → Data → Change journal directory**. The move case is refused before the database file is touched, since relocating a journal into a path that later stops resolving is worse than a bad config entry.
 
-**Workaround if you want a journal in a specific host folder:** grant Mini Diarium persistent access to it with Flatseal (or `flatpak override --user --filesystem=/path/to/folder io.github.fjrevoredo.mini-diarium`), then pick the folder. With a real filesystem permission in place the chooser returns the true path rather than a portal handle.
+**Workaround if you want a journal in a specific host folder:** grant Mini Diarium persistent access to it with Flatseal (or `flatpak override --user --filesystem=/path/to/folder io.github.fjrevoredo.mini-diarium`), then restart the app and pick the folder. With a real filesystem permission in place the chooser returns the true path rather than a portal handle. This does not work when two branches of the app are installed (for example `stable` and `test`): the portal cannot check the grant, so it still returns a portal path. Remove the extra branch.
 
 **Workaround without any permission change:** copy the `.db` file into the app's default journal folder (on Flathub, `~/.var/app/io.github.fjrevoredo.mini-diarium/data/com.minidiarium/journals/`) and use **+ Open Existing** on the copy. Keep the original until the copy opens. Since TODO-0163 the refusal message shows this folder and links to the steps.
 

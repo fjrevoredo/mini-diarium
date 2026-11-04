@@ -116,7 +116,7 @@
       "selectFolderTitle": "Tagebuchdatei auswählen",
       "creating": "Erstelle...",
       "opening": "Öffne...",
-      "portalHelp": "Um ein Tagebuch aus diesem Ordner zu verwenden, kopiere seine .db-Datei nach {{ path }} und öffne die Kopie. Behalte die Originaldatei. Oder gib Fenmark mit Flatseal dauerhaften Zugriff auf diesen Ordner und öffne die Datei dann erneut.",
+      "portalHelp": "Um ein Tagebuch aus diesem Ordner zu verwenden, kopiere seine .db-Datei nach {{ path }} und öffne die Kopie. Behalte die Originaldatei. Oder gib Fenmark mit Flatseal Zugriff auf diesen Ordner. Starte Fenmark dann neu und öffne die Datei erneut.",
       "portalHelpLink": "Schritte anzeigen"
     },
     "prompt": {
@@ -803,7 +803,7 @@
     "cannotReadKeyFile": "Die Schlüsseldatei konnte nicht gelesen werden. Überprüfe, ob die Datei existiert und du Leseberechtigung hast.",
     "cannotSaveKeyFile": "Die Schlüsseldatei konnte nicht gespeichert werden. Überprüfe die Berechtigungen des Ordners.",
     "fileOperationFailed": "Ein Datei-Vorgang ist fehlgeschlagen. Überprüfe, ob du die notwendigen Berechtigungen hast.",
-    "portalPathRejected": "Dieser Ordner ist nur vorübergehend für Fenmark freigegeben, daher ließe sich ein dort gespeichertes Tagebuch später nicht mehr öffnen. Verwende stattdessen den Standardort.",
+    "portalPathRejected": "Fenmark kann den Zugriff auf ein Tagebuch in diesem Ordner nicht zuverlässig behalten. Der Zugriff kann nach einem Neustart enden, und die App kann dort keine Sicherungen erstellen.",
     "backupFileRejected": "Diese Datei ist eine Sicherungskopie. Sie direkt zu öffnen würde sie verändern. Kopiere sie zuerst an einen anderen Ort und öffne dann die Kopie.",
     "journalAlreadyRegistered": "Dieses Tagebuch ist bereits in deiner Liste. Öffne es oben aus der Liste, statt es erneut hinzuzufügen.",
     "invalidJournalFilename": "Dieser Dateiname kann nicht für ein Tagebuch verwendet werden. Verwende einen kürzeren Namen ohne Sonderzeichen wie / oder *.",

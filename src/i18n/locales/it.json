@@ -116,7 +116,7 @@
       "selectFolderTitle": "Seleziona file del diario",
       "creating": "Creazione...",
       "opening": "Apertura...",
-      "portalHelp": "Per usare un diario da quella cartella, copia il suo file .db in {{ path }} e apri la copia. Conserva il file originale. Oppure concedi a Fenmark l’accesso permanente a quella cartella con Flatseal, poi riapri il file.",
+      "portalHelp": "Per usare un diario da quella cartella, copia il suo file .db in {{ path }} e apri la copia. Conserva il file originale. Oppure concedi a Fenmark l’accesso a quella cartella con Flatseal. Poi riavvia Fenmark e riapri il file.",
       "portalHelpLink": "Mostra i passaggi"
     },
     "prompt": {
@@ -803,7 +803,7 @@
     "cannotReadKeyFile": "Impossibile leggere il file chiave. Verifica che il file esista e che tu abbia il permesso di leggerlo.",
     "cannotSaveKeyFile": "Impossibile salvare il file chiave. Verifica i permessi della cartella.",
     "fileOperationFailed": "Un'operazione su file è fallita. Verifica che tu abbia i permessi necessari.",
-    "portalPathRejected": "Quella cartella è condivisa con Fenmark solo temporaneamente, quindi un diario salvato lì smetterebbe di aprirsi in seguito. Usa invece la posizione predefinita.",
+    "portalPathRejected": "Fenmark non può mantenere un accesso affidabile a un diario in questa cartella. L’accesso può interrompersi dopo un riavvio e l’app non può creare lì i suoi backup.",
     "backupFileRejected": "Quel file è una copia di backup. Aprirlo direttamente lo modificherebbe. Copialo prima altrove, poi apri la copia.",
     "journalAlreadyRegistered": "Quel diario è già nel tuo elenco. Aprilo dall’elenco qui sopra invece di aggiungerlo di nuovo.",
     "invalidJournalFilename": "Questo nome di file non può essere usato per un diario. Usa un nome più corto senza caratteri speciali come / o *.",

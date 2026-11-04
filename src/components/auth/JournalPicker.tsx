@@ -133,9 +133,10 @@ export default function JournalPicker() {
    *
    * Non-Flatpak platforms go straight to a native save dialog — the same guarantee Open
    * Existing already gives, so the user always sees and confirms the exact save location.
-   * Under Flatpak's zero-`--filesystem=` sandbox that same dialog can hand back a temporary
-   * document-portal path instead of a real one (KI-10), so Flatpak shows a dialog-free form
-   * with an editable Filename field instead.
+   * Under Flatpak's zero-`--filesystem=` sandbox that same dialog can hand back a
+   * document-portal path instead of a real one. That path can stop working after a reboot and
+   * gives no access to sibling files (KI-10), so Flatpak shows a dialog-free form with an
+   * editable Filename field instead.
    */
   const handleStartCreate = async () => {
     setError(null);

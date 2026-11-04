@@ -345,7 +345,7 @@
       "@id": "https://fenmark.app/docs/getting-started/#article",
       "headline": "Getting Started",
       "description": "System requirements, creating your first encrypted journal, setting a password, the welcome tour, multiple journals, key file auth, and local-only mode.",
-      "dateModified": "2026-11-03T00:00:00Z",
+      "dateModified": "2026-11-04T00:00:00Z",
       "keywords": "setup, password, first launch, system requirements",
       "publisher": {
         "@type": "Organization",
@@ -613,10 +613,10 @@
         </li>
         <li><p><strong>A backup snapshot.</strong> Files named <code>backup-*.db</code>, and anything inside a <code>backups</code> folder, cannot be opened as a journal, because opening one would write to it and destroy the restore point. To read an old snapshot, copy it out of the <code>backups</code> folder first and open the copy.</p>
         </li>
-        <li><p><strong>A temporary sandbox location (Flatpak only).</strong> On the Flathub build, browsing to a folder outside the app&#39;s sandbox returns a temporary path under <code>/run/user/…/doc/</code> rather than the real one. It works at first and stops working later, so it is refused. The error message shows the default folder. To use a journal that is outside the sandbox, do one of these:</p>
+        <li><p><strong>A folder outside the app&#39;s sandbox (Flatpak only).</strong> On the Flathub build, browsing to a folder outside the app&#39;s sandbox returns a path under <code>/run/user/…/doc/</code> rather than the real one. The app cannot rely on that path: it can stop working after a reboot, and the app cannot make its backups or its other working files next to it. So it is refused. The error message shows the default folder. To use a journal that is outside the sandbox, do one of these:</p>
         <ul>
         <li>Copy its <code>.db</code> file into the default folder that the message shows (on the Flathub build it is <code>~/.var/app/io.github.fjrevoredo.mini-diarium/data/com.minidiarium/journals/</code>, unless a <code>Documents</code> folder is shared with the app), then use <strong>+ Open Existing</strong> on the copy. Keep the original file until the copy opens and shows your entries.</li>
-        <li>Grant the app permanent access to the folder with <a href="https://flathub.org/apps/com.github.tchx84.Flatseal" target="_blank" rel="noopener noreferrer">Flatseal</a>, or run <code>flatpak override --user --filesystem=&lt;folder&gt; io.github.fjrevoredo.mini-diarium</code>. Then restart the app and use <strong>+ Open Existing</strong> on the file again.</li>
+        <li>Give the app access to the folder with <a href="https://flathub.org/apps/com.github.tchx84.Flatseal" target="_blank" rel="noopener noreferrer">Flatseal</a>, or run <code>flatpak override --user --filesystem=&lt;folder&gt; io.github.fjrevoredo.mini-diarium</code>. Then restart the app and use <strong>+ Open Existing</strong> on the file again.</li>
         </ul>
         </li>
         <li><p><strong>A filename that cannot be used.</strong> A filename that is empty, contains <code>/</code>, <code>\</code>, or control characters, or is longer than 200 bytes is refused. That is 200 letters of plain English text, and fewer for accented or non-Latin letters, which take 2 to 4 bytes each. The app keeps the rest of the filesystem&#39;s 255-unit limit free for the files it and SQLite create next to the journal. On Windows, names with <code>&lt; &gt; : &quot; | ? *</code>, names that end with a dot or a space, and device names such as <code>CON</code> or <code>NUL</code> are refused too. Choose a different name. On Flatpak, spaces at the start and end of the Filename field are removed before the app checks the file. If you copy the app&#39;s settings to a different operating system and a saved journal filename is not valid there, the app does not open that journal automatically. It shows the journal list, and opening that journal shows the same error.</p>

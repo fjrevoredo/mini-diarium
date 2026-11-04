@@ -17,7 +17,7 @@ What must the app do with journal locations, what does the Flatpak sandbox model
   1. **Scope.** A pick of one file gives access to that file only. The app needs the folder around it. (Upstream design. No fix is planned.)
   2. **Durability.** The portal records a grant by device and inode number. On ecryptfs, btrfs and LVM the device number can change after a reboot, and then every old grant fails. (Upstream bug, fixed in xdg-desktop-portal 1.21.2, May 2026. The Workbook has 1.20.0.)
   3. **Identity.** The path that the app gets is a portal path, not the real path. Users do not know it, and upstream calls it a bug to show it ([#973](https://github.com/flatpak/xdg-desktop-portal/issues/973)).
-- The v0.6.6 guard has the correct symptom ("a portal path stops working later") but the wrong reason ("temporary"). The advice in commit `3a20013` (use Flatseal) does not work on the Workbook and is not a general solution.
+- The v0.6.6 guard has the correct symptom ("a portal path stops working later") but the wrong reason ("temporary"). The advice in commit `3a20013` (use Flatseal) did not work on the Workbook in run 2, because two branches were installed (F7). T7 (§7.5) shows that it works with one branch. So only the "temporarily" reason was wrong; it was corrected on 2026-11-04.
 
 ## 1. What the app wants (from the principles and the current design)
 
@@ -109,6 +109,8 @@ No column meets all requirements on the portal versions that most users have now
 - `auth.picker.portalHelp`, `auth.picker.portalHelpLink`, and the portal-help block in `JournalPicker.tsx`: advise Flatseal. F7/F8: not proven to help; it did not help on the Workbook.
 - The same advice in `website/docs-src/00-getting-started.md` (and generated output, `llms-full.txt`), `docs/KNOWN_ISSUES.md` KI-10, `CHANGELOG.md` [Unreleased], `docs/todo/TODO.md` TODO-0163.
 - The reporter-comment drafts from the earlier session: do not post.
+
+**Note (2026-11-04, after T7):** T7 (§7.5) proves that the Flatseal advice works when only one branch of the app is installed. The earlier failure (F7, F8) came from two installed branches. So the Flatseal advice stays; only the "temporarily" reason was wrong. The strings, docs, KI-10, CHANGELOG and TODO-0163 now give the real reasons (F4, F6), tell the user to restart the app after the Flatseal change, and KI-10 states the two-branch limit.
 
 ## 6. Questions to answer before a design
 

@@ -154,7 +154,7 @@ const en = {
       creating: 'Creating...',
       opening: 'Opening...',
       portalHelp:
-        'To use a journal from that folder, copy its .db file into {{ path }} and open the copy. Keep the original file. Or give Fenmark permanent access to that folder with Flatseal, then open the file again.',
+        'To use a journal from that folder, copy its .db file into {{ path }} and open the copy. Keep the original file. Or give Fenmark access to that folder with Flatseal. Then restart Fenmark and open the file again.',
       portalHelpLink: 'Show the steps',
     },
     /** PasswordPrompt */
@@ -968,7 +968,7 @@ const en = {
     cannotSaveKeyFile: 'Could not save key file. Check folder permissions.',
     fileOperationFailed: 'A file operation failed. Check that you have the necessary permissions.',
     portalPathRejected:
-      'That folder is only shared with Fenmark temporarily, so a journal saved there would stop opening later. Use the default location instead.',
+      'Fenmark cannot keep reliable access to a journal in this folder. The access can stop after a restart, and the app cannot make its backups there.',
     backupFileRejected:
       'That file is a backup snapshot. Opening it directly would change it. Copy it somewhere else first, then open the copy.',
     journalAlreadyRegistered:

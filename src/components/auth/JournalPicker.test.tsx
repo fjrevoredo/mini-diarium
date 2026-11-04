@@ -481,7 +481,7 @@ describe('JournalPicker component', () => {
           'copy its .db file into /home/u/.var/app/io.github.fjrevoredo.mini-diarium/data/com.minidiarium/journals and open the copy',
         );
       });
-      expect(screen.getByRole('alert')).toHaveTextContent(/only shared with Fenmark temporarily/i);
+      expect(screen.getByRole('alert')).toHaveTextContent(/cannot keep reliable access/i);
       expect(mocks.switchJournal).not.toHaveBeenCalled();
 
       const opener = await import('@tauri-apps/plugin-opener');

@@ -116,7 +116,7 @@
       "selectFolderTitle": "Selecionar arquivo do diário",
       "creating": "Criando...",
       "opening": "Abrindo...",
-      "portalHelp": "Para usar um diário dessa pasta, copie o arquivo .db para {{ path }} e abra a cópia. Mantenha o arquivo original. Ou dê ao Fenmark acesso permanente a essa pasta com o Flatseal e abra o arquivo novamente.",
+      "portalHelp": "Para usar um diário dessa pasta, copie o arquivo .db para {{ path }} e abra a cópia. Mantenha o arquivo original. Ou dê ao Fenmark acesso a essa pasta com o Flatseal. Depois reinicie o Fenmark e abra o arquivo novamente.",
       "portalHelpLink": "Mostrar as etapas"
     },
     "prompt": {
@@ -803,7 +803,7 @@
     "cannotReadKeyFile": "Não foi possível ler o arquivo de chave. Verifique se o arquivo existe e se você tem permissão para lê-lo.",
     "cannotSaveKeyFile": "Não foi possível salvar o arquivo de chave. Verifique as permissões da pasta.",
     "fileOperationFailed": "Uma operação de arquivo falhou. Verifique se você tem as permissões necessárias.",
-    "portalPathRejected": "Essa pasta é compartilhada com o Fenmark apenas temporariamente, então um diário salvo ali deixaria de abrir depois. Use o local padrão.",
+    "portalPathRejected": "O Fenmark não consegue manter um acesso confiável a um diário nesta pasta. O acesso pode parar após uma reinicialização, e o aplicativo não consegue criar seus backups ali.",
     "backupFileRejected": "Esse arquivo é uma cópia de backup. Abri-lo diretamente o modificaria. Copie-o para outro lugar primeiro e abra a cópia.",
     "journalAlreadyRegistered": "Esse diário já está na sua lista. Abra-o pela lista acima em vez de adicioná-lo de novo.",
     "invalidJournalFilename": "Esse nome de arquivo não pode ser usado para um diário. Use um nome mais curto sem caracteres especiais como / ou *.",

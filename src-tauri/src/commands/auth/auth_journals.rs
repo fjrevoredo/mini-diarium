@@ -10,10 +10,13 @@ use crate::config::{self, JournalConfig, JournalInfo};
 
 /// Path prefixes handed out by the XDG document portal under Flatpak.
 ///
-/// A path below one of these is not a real location — it is a per-grant FUSE handle that
-/// stops resolving once the grant lapses, so storing one as a journal's permanent path is
-/// what left a Flathub user unable to reopen his journal. Plain prefix matching is enough
-/// and needs no `#[cfg]`: these cannot occur on Windows or macOS.
+/// A path below one of these is not a real location — it is a document-portal FUSE handle.
+/// The grant behind it is persistent by design, but it can stop resolving after a reboot
+/// (the portal keys grants by device/inode number, which some filesystems change; fixed in
+/// xdg-desktop-portal 1.21.2), and a file grant gives no access to sibling files or a
+/// `backups/` folder. Storing one as a journal's permanent path is what left a Flathub user
+/// unable to reopen their journal (KI-10). Plain prefix matching is enough and needs no
+/// `#[cfg]`: these cannot occur on Windows or macOS.
 const PORTAL_PATH_PREFIXES: [&str; 2] = ["/run/user/", "/run/flatpak/doc/"];
 
 /// Whether `path` is an XDG-document-portal handle rather than a durable location.
@@ -181,7 +184,7 @@ fn add_journal_inner(
     if let Some(filename) = db_filename.as_deref() {
         config::validate_db_filename(filename)?;
     }
-    // Before `is_dir`, deliberately: an *expired* portal handle no longer exists on disk, so
+    // Before `is_dir`, deliberately: a *broken* portal handle no longer exists on disk, so
     // probing the filesystem first would report "Directory does not exist" and never reach the
     // message that explains what actually went wrong — the exact case this guard is for.
     check_journal_location(&path, db_filename.as_deref())?;
@@ -298,8 +301,9 @@ fn get_default_journal_dir_inner(
 ///
 /// Non-Flatpak platforms use this to pre-fill a native save dialog's `defaultPath`, which the
 /// user still sees and can redirect. Flatpak's dialog-free create form pre-fills its Location
-/// field from this instead, since a native save dialog there can hand back an unusable
-/// temporary portal path (KI-10) — Browse… is still offered there and still overrides it.
+/// field from this instead, since a native save dialog there can hand back a document-portal
+/// path, which can stop working after a reboot and gives no access to sibling files (KI-10)
+/// — Browse… is still offered there and still overrides it.
 #[tauri::command]
 pub fn get_default_journal_dir(
     app: AppHandle<Wry>,
