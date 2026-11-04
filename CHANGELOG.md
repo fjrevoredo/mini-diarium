@@ -36,6 +36,9 @@ Template:
 
 ## [Unreleased]
 
+### Changed
+- **Flathub: journals in your home folder and on mounted drives now work in place (#370)**: The Flathub build now has read and write access to your home folder and to `/run/media`, `/media` and `/mnt`. You can create or open a journal there, for example in a cloud-synced folder; the app makes its backups next to it, and the journal opens again after a reboot with no new file pick. The file chooser returned a document-portal path for these folders before, and the app refused it. Folders outside these locations are still refused. The build still has no network permission, so this access gives no way for data to leave the machine. The default journal folder on Flathub is now `~/Documents/Fenmark` when a Documents folder exists; journals already in the app's data folder stay there. `docs/PRIVACY.md` and KI-10 describe the access; the reasons are in `docs/decisions/2026-11-flatpak-static-filesystem-permission.md`.
+
 ### Fixed
 - **Flatpak: the error for a folder outside the sandbox now gives the real reasons and tells you what to do (#370, TODO-0163)**: On the Flathub build, **+ Open Existing** refuses a journal file outside the app's sandbox, because the file chooser returns a document-portal path. The error now says why: access through that path can stop after a restart, and the app cannot make its backups there. It also shows the default journal folder (copy the `.db` file there and open the copy), tells you that you can give the app access to the folder with Flatseal and then restart it, and has a link to the steps in the docs.
 

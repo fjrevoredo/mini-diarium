@@ -10,6 +10,14 @@ None. Fenmark collects no data of any kind.
 
 None. The app makes zero network requests. There is no telemetry, no analytics, no crash reporting, and no update checking. The app works fully offline and contains no HTTP client code.
 
+## File Access (Flathub build)
+
+The Flathub build runs in the Flatpak sandbox. It has read and write access to your home folder and to the mount folders `/run/media`, `/media` and `/mnt` (removable and manually mounted drives). The app needs this access to open a journal in place in a folder that you choose, and to make its backups and working files next to the journal.
+
+The app reads and writes only its own data folder, the journals that you add and the backups next to them, and the files that you pick (for example imports, exports, images, attachments, fonts and key files). Import and export plugins (Rhai scripts) cannot read or write files themselves: the app gives them the file contents as text.
+
+The sandbox has no network permission, so the app cannot send any of these files anywhere. The cost of this access: the sandbox does not limit what a compromised app could read or change in these folders. The full reasons are in the decision record `docs/decisions/2026-11-flatpak-static-filesystem-permission.md`.
+
 ## Data Storage
 
 All journal entries are encrypted with AES-256-GCM before being written to a local SQLite database on your machine. A random 256-bit master key is generated when the journal is created and never stored in plaintext. Each authentication method stores its own encrypted copy of the master key in the `auth_slots` table: password slots use Argon2id + AES-256-GCM wrapping; key file slots use X25519 ECIES.
