@@ -39,6 +39,9 @@ Template:
 ### Fixed
 - **Flatpak: the error for a folder outside the sandbox now gives the real reasons and tells you what to do (#370, TODO-0163)**: On the Flathub build, **+ Open Existing** refuses a journal file outside the app's sandbox, because the file chooser returns a document-portal path. The error now says why: access through that path can stop after a restart, and the app cannot make its backups there. It also shows the default journal folder (copy the `.db` file there and open the copy), tells you that you can give the app access to the folder with Flatseal and then restart it, and has a link to the steps in the docs.
 
+### Security
+- **Plugins can no longer load other scripts from disk (#370)**: The Rhai engine for import and export plugins used Rhai's default module resolver, so a plugin could run `import "<path>"` to load and run any `.rhai` file that the app can read. The engine now refuses every `import`. No shipped plugin uses `import`; the app still gives plugins their input as text. This keeps the plugin sandbox the same when the Flathub build gets wider filesystem access (see the ADR `docs/decisions/2026-11-flatpak-static-filesystem-permission.md`).
+
 ## [0.8.0] - 02-11-2026
 
 ### Changed

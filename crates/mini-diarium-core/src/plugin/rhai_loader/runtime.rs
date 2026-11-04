@@ -9,6 +9,11 @@ use std::collections::HashMap;
 pub(super) fn create_sandboxed_engine() -> Engine {
     let mut engine = Engine::new();
 
+    // `Engine::new()` installs a `FileModuleResolver`, which lets `import "<path>"` load and
+    // run any `.rhai` file the process can read. Plugins get no disk access, so refuse every
+    // import (no plugin needs one; the host passes all input in as strings).
+    engine.set_module_resolver(rhai::module_resolvers::DummyModuleResolver::new());
+
     // Safety limits
     engine.set_max_operations(1_000_000);
     engine.set_max_call_levels(32);
@@ -179,6 +184,28 @@ impl ExportPlugin for RhaiExportPlugin {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_sandboxed_engine_refuses_to_import_a_script_from_disk() {
+        let dir = tempfile::tempdir().unwrap();
+        let module_path = dir.path().join("helper.rhai");
+        std::fs::write(&module_path, "fn secret() { 42 }").unwrap();
+        // Rhai module paths use forward slashes; the resolver appends `.rhai` itself.
+        let module = module_path
+            .with_extension("")
+            .to_string_lossy()
+            .replace('\\', "/");
+        let source = format!("import \"{module}\" as h; h::secret()");
+
+        let engine = create_sandboxed_engine();
+        let ast = engine.compile(&source).unwrap();
+        let result = engine.eval_ast::<i64>(&ast);
+
+        assert!(
+            result.is_err(),
+            "a plugin must not load other scripts from disk, got {result:?}"
+        );
+    }
 
     #[test]
     fn test_rhai_import_plugin_basic() {
