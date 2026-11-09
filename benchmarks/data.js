@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1794236515593,
+  "lastUpdate": 1794238080716,
   "repoUrl": "https://github.com/fjrevoredo/mini-diarium",
   "entries": {
     "Benchmark": [
@@ -39844,6 +39844,36 @@ window.BENCHMARK_DATA = {
           {
             "name": "ci_pipeline_duration",
             "value": 727000000000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "committer": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "distinct": true,
+          "id": "cce85a361781039433a724ee8c54725325197b24",
+          "message": "chore(nix): refresh npmDepsHash\n\npackage-lock.json changed with the #362-#373 dependency batch. Hash copied from the failing Nix CI annotation (run 42638475084).",
+          "timestamp": "2026-11-09T16:17:46+01:00",
+          "tree_id": "3cb8adc0f5eacf408fbf233833b7b1dcd8f78a8d",
+          "url": "https://github.com/fjrevoredo/mini-diarium/commit/cce85a361781039433a724ee8c54725325197b24"
+        },
+        "date": 1794238078702,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "ci_pipeline_duration",
+            "value": 598000000000,
             "range": "± 0",
             "unit": "ns/iter"
           }
