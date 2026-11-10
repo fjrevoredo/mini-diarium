@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1794238080716,
+  "lastUpdate": 1794335018163,
   "repoUrl": "https://github.com/fjrevoredo/mini-diarium",
   "entries": {
     "Benchmark": [
@@ -39874,6 +39874,36 @@ window.BENCHMARK_DATA = {
           {
             "name": "ci_pipeline_duration",
             "value": 598000000000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "39350477+fjrevoredo@users.noreply.github.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "committer": {
+            "email": "noreply@github.com",
+            "name": "GitHub",
+            "username": "web-flow"
+          },
+          "distinct": true,
+          "id": "01c940bf48c36574f73ade7db91f0d4300ffe65c",
+          "message": "i18n: add Japanese translation (#375)\n\nAdds src/i18n/locales/ja.json, a complete Japanese (ja) translation: all\n735 strings of the current en.ts, with the same keys in the same order.\n\nLike the Simplified Chinese pull request (#354), this is only the JSON\nfile. I have not wired it into src/i18n/index.ts, AVAILABLE_LOCALES or\nthe native menu, and I have not run sync-languages, since it reads\nAVAILABLE_LOCALES and would not change anything yet. If it helps, the\ntwo menu labels would be 設定... for Preferences and ファイル for File.\n\nFor spell check on Linux, I could not find a maintained Hunspell\ndictionary for Japanese, so I think Japanese needs the same documented\nexception as Chinese.\n\nA few notes for review. The {{ name }} placeholders are unchanged,\nspaces included. Product and key names (Fenmark, Mini Diarium, Markdown,\nCtrl, Enter) stay in Latin letters. Buttons use short plain words, and\nhints and errors use the polite form that Japanese desktop apps use.\nWord count is translated as 文字数 (character count), because wordcount.ts\ncounts each kana and kanji as one, which is also how Japanese text is\nusually measured.\n\nI checked the file with a script (same keys and order as en.ts, no empty\nvalues, the same placeholders, URLs and line breaks) and read the\ntranslation against the English again. I did not build or run the app,\nso I have not seen the strings in place. This was made with AI (Claude).\n\n🤖 Generated with [Claude Code](https://claude.com/claude-code)",
+          "timestamp": "2026-11-10T19:11:55+01:00",
+          "tree_id": "a5dd94a55131e7c5ee56e6c2ed4f2070619f39f3",
+          "url": "https://github.com/fjrevoredo/mini-diarium/commit/01c940bf48c36574f73ade7db91f0d4300ffe65c"
+        },
+        "date": 1794335016441,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "ci_pipeline_duration",
+            "value": 690000000000,
             "range": "± 0",
             "unit": "ns/iter"
           }
