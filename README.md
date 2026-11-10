@@ -266,6 +266,7 @@ Thanks to everyone who has contributed code, translations, or improvements to Fe
 <a href="https://github.com/kenlacroix"><img src="https://github.com/kenlacroix.png?size=40" width="40" height="40" alt="kenlacroix" /></a>
 <a href="https://github.com/d1nch"><img src="https://github.com/d1nch.png?size=40" width="40" height="40" alt="d1nch" /></a>
 <a href="https://github.com/wcxu21"><img src="https://github.com/wcxu21.png?size=40" width="40" height="40" alt="wcxu21" /></a>
+<a href="https://github.com/rogervokma-stack"><img src="https://github.com/rogervokma-stack.png?size=40" width="40" height="40" alt="rogervokma-stack" /></a>
 
 ## Star History
 
