@@ -15,7 +15,7 @@ Preferences are now **close-only**: there is no Save/Cancel footer. Reversible s
 | Setting | Description |
 |---------|-------------|
 | Theme | Light, dark, or follow system (auto) |
-| Language | Interface language: Chinese (Simplified), English, French, German, Hindi, Italian, Portuguese (Brazil), Russian, or Spanish |
+| Language | Interface language: Chinese (Simplified), English, French, German, Hindi, Italian, Japanese, Portuguese (Brazil), Russian, or Spanish |
 | ESC key action | Do nothing, quit the app, or lock the journal when pressing Escape. Escape has no effect while a dialog is open |
 
 ## Writing Settings
@@ -42,7 +42,7 @@ Timestamp format and precision are configured from the editor timestamp popup (c
 
 Windows and macOS handle spell checking for you. On Linux, Fenmark uses spelling language packs installed on your computer. It does not download them automatically, but you only need to add a language pack once.
 
-If Preferences shows a spell-check warning, start with your computer's **Software** app. Search for your language followed by “spell checking”, such as “Spanish spell checking”, install the suggested language support, then close and reopen Fenmark.
+If Preferences shows a spell-check warning, start with your computer's **Software** app. Search for your language followed by “spell checking”, such as “Spanish spell checking”, install the suggested language support, then close and reopen Fenmark. Japanese dictionary availability varies; Fenmark does not provide a verified Japanese spell-check dictionary.
 
 #### Example: Spanish spell checking on Ubuntu or Debian
 
@@ -57,7 +57,7 @@ Enter your computer password when asked. Nothing is shown while you type the pas
 
 #### Flatpak
 
-Flatpak installs include dictionaries for eight of the nine interface languages (English, Spanish, German, French, Italian, Portuguese (Brazil), Hindi, and Russian). Chinese (Simplified) has no bundled dictionary, so Linux shows the dictionary warning for it; the interface translation works normally. If you see a warning for another language, open your computer's Software app, update Fenmark, and restart it. If the warning remains, reinstall Fenmark.
+Flatpak installs include dictionaries for eight of the ten interface languages (English, Spanish, German, French, Italian, Portuguese (Brazil), Hindi, and Russian). Chinese (Simplified) and Japanese have no bundled dictionaries, so Linux shows a warning when no compatible dictionary is available; the interface translations work normally. Updating or reinstalling Fenmark does not add these dictionaries. If you see a warning for another language, open your computer's Software app, update Fenmark, and restart it. If the warning remains, reinstall Fenmark.
 
 #### Need more help?
 
@@ -71,7 +71,7 @@ To use a language that is not bundled, place its `.aff` and `.dic` files in:
 - Everything else: `~/.config/enchant/hunspell/`
 
 Name them after the locale you want checked, for example `nl_NL.aff` and `nl_NL.dic`. To add
-Simplified Chinese spell checking, use `zh_CN.aff` and `zh_CN.dic`.
+Simplified Chinese spell checking, use `zh_CN.aff` and `zh_CN.dic`; for Japanese, use compatible `ja_JP.aff` and `ja_JP.dic` files.
 
 ## Security Settings
 

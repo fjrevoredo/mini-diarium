@@ -72,10 +72,12 @@ export default function PreferencesWritingTab(_props: TabProps) {
 
   const toolbarItems = () => preferences().toolbarItems;
 
-  // Chinese has no bundled Flatpak dictionary by design, so the generic repair
-  // advice (update or reinstall) would be wrong for `zh_CN`.
+  // Japanese has no bundled dictionary; Chinese is also a Flatpak exception.
+  // Neither should receive the generic Flatpak repair advice.
   const spellcheckWarningKey = () => {
     const status = spellcheckStatus();
+    if (status?.language.startsWith('ja_'))
+      return 'prefs.writing.spellcheckDictionaryMissing' as const;
     if (!status?.isFlatpak) return 'prefs.writing.spellcheckDictionaryMissing' as const;
     return status.language === 'zh_CN'
       ? ('prefs.writing.spellcheckDictionaryMissingFlatpakChinese' as const)

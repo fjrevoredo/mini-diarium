@@ -16,6 +16,14 @@ describe('locale switching', () => {
     expect(defaultT('common.cancel')).toBe('Отмена');
   });
 
+  it('switches to Japanese and interpolates counts', () => {
+    setLocale('ja');
+    expect(defaultT('common.save')).not.toBe('Save');
+    expect(defaultT('editor.wordCount_other', { count: 4 })).toContain('4');
+    setLocale('en');
+    expect(defaultT('common.save')).toBe('Save');
+  });
+
   // A locale listed in the picker but missing from localeMap silently falls back to English.
   it.each(AVAILABLE_LOCALES.filter((l) => l.code !== 'en').map((l) => l.code))(
     'selectable locale %s is wired to a translated dictionary',

@@ -161,6 +161,35 @@ describe('PreferencesWritingTab', () => {
     expect(screen.getByRole('button', { name: /打开拼写检查设置指南/ })).toBeInTheDocument();
   });
 
+  it.each([false, true])(
+    'explains a missing Japanese dictionary (Flatpak: %s)',
+    async (isFlatpak) => {
+      setLocale('ja');
+      mockGetSpellcheckStatus.mockResolvedValue({
+        language: 'ja_JP',
+        dictionaryAvailable: false,
+        isFlatpak,
+      });
+      renderTab();
+      expect(
+        await screen.findByText(/日本語のスペルチェック辞書は見つかりません/),
+      ).toBeInTheDocument();
+      expect(screen.queryByText(/再インストールしてください/)).not.toBeInTheDocument();
+    },
+  );
+
+  it('does not warn when a Japanese dictionary is available', async () => {
+    setLocale('ja');
+    mockGetSpellcheckStatus.mockResolvedValue({
+      language: 'ja_JP',
+      dictionaryAvailable: true,
+      isFlatpak: true,
+    });
+    renderTab();
+    await waitFor(() => expect(mockGetSpellcheckStatus).toHaveBeenCalled());
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+  });
+
   it('changing the timeline date format persists immediately', () => {
     renderTab();
 

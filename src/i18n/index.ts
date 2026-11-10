@@ -6,6 +6,7 @@ import deLocale from './locales/de.json';
 import itLocale from './locales/it.json';
 import frLocale from './locales/fr.json';
 import hiLocale from './locales/hi.json';
+import jaLocale from './locales/ja.json';
 import ptBRLocale from './locales/pt-BR.json';
 import ruLocale from './locales/ru.json';
 import zhCNLocale from './locales/zh-CN.json';
@@ -28,6 +29,7 @@ const localeMap: Record<string, FlatEn> = {
   it: flatten(itLocale as unknown as typeof en) as FlatEn,
   fr: flatten(frLocale as unknown as typeof en) as FlatEn,
   hi: flatten(hiLocale as unknown as typeof en) as FlatEn,
+  ja: flatten(jaLocale as unknown as typeof en) as FlatEn,
   // pt-BR uses a BCP 47 region tag, so the key must be a quoted string.
   'pt-BR': flatten(ptBRLocale as unknown as typeof en) as FlatEn,
   ru: flatten(ruLocale as unknown as typeof en) as FlatEn,

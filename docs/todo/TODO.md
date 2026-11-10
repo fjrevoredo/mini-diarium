@@ -13,7 +13,7 @@ TODO entry format:
 - After creating a new TODO, update the `Latest TODO ID` marker to reflect the new highest ID
 - Use the `todo-manager` skill (`.agents/skills/todo-manager/`) for creation, tracking, archival, and validation
 
-**Latest TODO ID: TODO-0161** — next new TODO should be TODO-0162
+**Latest TODO ID: TODO-0162** — next new TODO should be TODO-0163
 
 ---
 

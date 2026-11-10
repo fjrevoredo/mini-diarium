@@ -20,8 +20,8 @@ pub struct SpellcheckStatus {
 /// Region appended to a bare language tag, one per shipped UI language.
 ///
 /// Resolving to a fully-qualified locale (rather than a bare tag) is what
-/// guarantees a hit against the dictionaries bundled in the Flatpak, instead of
-/// relying on enchant's fuzzy tag matching.
+/// identifies the intended dictionary without relying on enchant's fuzzy tag
+/// matching. Japanese and Chinese are documented Flatpak exceptions.
 const DEFAULT_REGIONS: &[(&str, &str)] = &[
     ("en", "US"),
     ("es", "ES"),
@@ -30,6 +30,7 @@ const DEFAULT_REGIONS: &[(&str, &str)] = &[
     ("it", "IT"),
     ("pt", "BR"),
     ("hi", "IN"),
+    ("ja", "JP"),
     ("ru", "RU"),
     ("zh", "CN"),
 ];
@@ -284,6 +285,11 @@ mod tests {
     #[test]
     fn chinese_default_region() {
         assert_eq!(resolve_languages("zh", None), vec!["zh_CN"]);
+    }
+
+    #[test]
+    fn japanese_default_region() {
+        assert_eq!(resolve_languages("ja", None), vec!["ja_JP"]);
     }
 
     #[test]

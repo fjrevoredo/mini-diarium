@@ -345,7 +345,7 @@
       "@id": "https://fenmark.app/docs/preferences/#article",
       "headline": "Preferences",
       "description": "Configure Fenmark from the Preferences panel: choose a theme, set auto-lock timeout, adjust editor font and size, manage authentication methods, and more.",
-      "dateModified": "2026-11-01T00:00:00Z",
+      "dateModified": "2026-11-10T00:00:00Z",
       "keywords": "preferences, settings, theme, auto-lock, configuration",
       "publisher": {
         "@type": "Organization",
@@ -552,7 +552,7 @@
         </tr>
         <tr>
         <td>Language</td>
-        <td>Interface language: Chinese (Simplified), English, French, German, Hindi, Italian, Portuguese (Brazil), Russian, or Spanish</td>
+        <td>Interface language: Chinese (Simplified), English, French, German, Hindi, Italian, Japanese, Portuguese (Brazil), Russian, or Spanish</td>
         </tr>
         <tr>
         <td>ESC key action</td>
@@ -614,13 +614,13 @@
         <p>Timestamp format and precision are configured from the editor timestamp popup (clock button), not from Preferences.</p>
         <figure class="prose-figure"><img src="/assets/docs/preferences-03-writing.webp" alt="Writing preferences tab with First Day of Week, spellcheck, and the toolbar item customization list" loading="lazy" width="940" height="850" /><figcaption>The Writing preferences tab</figcaption></figure>
         <h3 id="spell-check-on-linux">Spell check on Linux</h3><p>Windows and macOS handle spell checking for you. On Linux, Fenmark uses spelling language packs installed on your computer. It does not download them automatically, but you only need to add a language pack once.</p>
-        <p>If Preferences shows a spell-check warning, start with your computer&#39;s <strong>Software</strong> app. Search for your language followed by “spell checking”, such as “Spanish spell checking”, install the suggested language support, then close and reopen Fenmark.</p>
+        <p>If Preferences shows a spell-check warning, start with your computer&#39;s <strong>Software</strong> app. Search for your language followed by “spell checking”, such as “Spanish spell checking”, install the suggested language support, then close and reopen Fenmark. Japanese dictionary availability varies; Fenmark does not provide a verified Japanese spell-check dictionary.</p>
         <h4 id="example-spanish-spell-checking-on-ubuntu-or-debian">Example: Spanish spell checking on Ubuntu or Debian</h4><p>Using a terminal is optional. If you prefer it, open <strong>Terminal</strong> (on Ubuntu, press <code>Ctrl</code> + <code>Alt</code> + <code>T</code>) and run:</p>
         <pre><code class="language-bash">sudo apt update
         sudo apt install hunspell-es
         </code></pre>
         <p>Enter your computer password when asked. Nothing is shown while you type the password; that is normal. When the command finishes, close and reopen Fenmark.</p>
-        <h4 id="flatpak">Flatpak</h4><p>Flatpak installs include dictionaries for eight of the nine interface languages (English, Spanish, German, French, Italian, Portuguese (Brazil), Hindi, and Russian). Chinese (Simplified) has no bundled dictionary, so Linux shows the dictionary warning for it; the interface translation works normally. If you see a warning for another language, open your computer&#39;s Software app, update Fenmark, and restart it. If the warning remains, reinstall Fenmark.</p>
+        <h4 id="flatpak">Flatpak</h4><p>Flatpak installs include dictionaries for eight of the ten interface languages (English, Spanish, German, French, Italian, Portuguese (Brazil), Hindi, and Russian). Chinese (Simplified) and Japanese have no bundled dictionaries, so Linux shows a warning when no compatible dictionary is available; the interface translations work normally. Updating or reinstalling Fenmark does not add these dictionaries. If you see a warning for another language, open your computer&#39;s Software app, update Fenmark, and restart it. If the warning remains, reinstall Fenmark.</p>
         <h4 id="need-more-help">Need more help?</h4><p>Email <a href="mailto:minidiarium@gmail.com">minidiarium@gmail.com</a> with your Linux distribution and the language selected in Fenmark, or <a href="https://github.com/fjrevoredo/mini-diarium/issues" target="_blank" rel="noopener noreferrer">report the problem on GitHub</a>.</p>
         <h4 id="advanced-use-another-language">Advanced: use another language</h4><p>To use a language that is not bundled, place its <code>.aff</code> and <code>.dic</code> files in:</p>
         <ul>
@@ -628,7 +628,7 @@
         <li>Everything else: <code>~/.config/enchant/hunspell/</code></li>
         </ul>
         <p>Name them after the locale you want checked, for example <code>nl_NL.aff</code> and <code>nl_NL.dic</code>. To add
-        Simplified Chinese spell checking, use <code>zh_CN.aff</code> and <code>zh_CN.dic</code>.</p>
+        Simplified Chinese spell checking, use <code>zh_CN.aff</code> and <code>zh_CN.dic</code>; for Japanese, use compatible <code>ja_JP.aff</code> and <code>ja_JP.dic</code> files.</p>
         <h2 id="security-settings">Security Settings</h2><table>
         <thead>
         <tr>

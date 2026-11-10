@@ -86,6 +86,12 @@ describe('countWordsFromText', () => {
     expect(countWordsFromText('私はコーヒーが好きです')).toBe(11);
   });
 
+  it('counts Japanese characters and Latin words in mixed text', () => {
+    expect(countWordsFromText('日本語')).toBe(3);
+    expect(countWordsFromText('Hello world')).toBe(2);
+    expect(countWordsFromText('日本語 ABC')).toBe(4);
+  });
+
   it('counts CJK and Latin mixed across a space boundary', () => {
     expect(countWordsFromText('Hello 世界')).toBe(3);
   });

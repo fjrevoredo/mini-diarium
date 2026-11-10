@@ -37,6 +37,7 @@ These are not optional unless there is a deliberate, documented reason to change
 - The manifest uses `id: io.github.fjrevoredo.mini-diarium`, not deprecated `app-id:`.
 - The local manifest uses `type: dir` with `path: ..` so local Flatpak builds test the current checkout.
 - The Flathub PR manifest must be the same file rewritten to a pinned `type: git` source.
+- The manifest documents the Chinese and Japanese spell-check dictionary exceptions; keep these aligned with the locale registry and preferences guide.
 - The runtime is currently `org.gnome.Platform//50` with `org.gnome.Sdk//50`.
 - The matching SDK extensions are currently `org.freedesktop.Sdk.Extension.rust-stable` and `org.freedesktop.Sdk.Extension.node20` on branch `25.08`.
 - The build commands are:

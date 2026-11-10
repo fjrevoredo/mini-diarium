@@ -230,6 +230,7 @@ Fenmark ships in the following languages:
 - German (Deutsch)
 - Hindi (हिन्दी)
 - Italian (Italiano)
+- Japanese (日本語)
 - Portuguese (Brazil) (Português (Brasil))
 - Russian (Русский)
 - Spanish (Español)

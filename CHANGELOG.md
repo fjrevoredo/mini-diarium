@@ -36,6 +36,9 @@ Template:
 
 ## [0.8.1] - Unreleased
 
+### Added
+- **Japanese translation (TODO-0162, [#375](https://github.com/fjrevoredo/mini-diarium/pull/375))**: Select 日本語 in Preferences to use the Japanese interface and native menus. The Linux Flatpak does not bundle a Japanese spell-check dictionary. Thanks to [@rogervokma-stack](https://github.com/rogervokma-stack) for the translation.
+
 ### Internal
 - **Dependency updates (Dependabot #362, #363, #364, #367, #368, #371, #372, #373)**: Frontend bumps for the nine `@tiptap/*` packages (3.32.2, pinned to one exact version so the family stays in lockstep), `@tauri-apps/plugin-dialog` (2.8.4), `lucide-solid` (1.70.0), `marked` (18.1.3), `solid-js` (1.9.18), and `browserslist` (4.29.5), which also moves the transitive `seroval` to 1.6.12. Development bumps for `eslint` (10.14.0), `typescript-eslint` (8.72.1), `unocss` and the `@unocss/*` packages (66.12.0), `vite` (8.3.7), `vite-plugin-solid` (2.11.15), and `@types/node` (26.6.6). The core crate moves to `rusqlite` 0.41.1, and `Cargo.lock` takes `tauri` (2.12.5), `tauri-build` (2.7.4), `tauri-plugin-dialog` (2.8.4), `log` (0.4.35), and `rhai` (1.27.0). GitHub Actions pins updated for `Swatinem/rust-cache` (v2 SHA), `cachix/install-nix-action` (v31 SHA), and `actions/setup-python` (7.1.0). Both lockfiles regenerated and aligned; the unit, print-layout, build, Rust, and local Windows/WebView2 E2E suites pass. The `nix/package.nix` `npmDepsHash` refresh is a Linux-side follow-up after push.
 

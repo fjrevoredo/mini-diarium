@@ -33,6 +33,11 @@ fn labels_for_locale(locale: &str) -> MenuLabels {
             #[cfg(not(target_os = "macos"))]
             file_menu: "फ़ाइल",
         },
+        "ja" => MenuLabels {
+            preferences: "環境設定...",
+            #[cfg(not(target_os = "macos"))]
+            file_menu: "ファイル",
+        },
         "pt-BR" => MenuLabels {
             preferences: "Preferências...",
             #[cfg(not(target_os = "macos"))]
@@ -108,6 +113,14 @@ mod tests {
         assert_eq!(l.preferences, "首选项...");
         #[cfg(not(target_os = "macos"))]
         assert_eq!(l.file_menu, "文件");
+    }
+
+    #[test]
+    fn ja_arm_returns_japanese_labels() {
+        let l = labels_for_locale("ja");
+        assert_eq!(l.preferences, "環境設定...");
+        #[cfg(not(target_os = "macos"))]
+        assert_eq!(l.file_menu, "ファイル");
     }
 
     #[test]
