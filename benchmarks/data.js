@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1794522608710,
+  "lastUpdate": 1794614571010,
   "repoUrl": "https://github.com/fjrevoredo/mini-diarium",
   "entries": {
     "Benchmark": [
@@ -40120,6 +40120,36 @@ window.BENCHMARK_DATA = {
           {
             "name": "ci_pipeline_duration",
             "value": 904000000000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "committer": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "distinct": true,
+          "id": "1377fd6a5d6191e5992b4b8ea4e94a74fafebc7f",
+          "message": "fix(ci): pin Linux build and E2E runners to Ubuntu 24.04",
+          "timestamp": "2026-11-14T00:52:33+01:00",
+          "tree_id": "38fe4a7456dfa54021e69fe70fc019d30bccd3ea",
+          "url": "https://github.com/fjrevoredo/mini-diarium/commit/1377fd6a5d6191e5992b4b8ea4e94a74fafebc7f"
+        },
+        "date": 1794614569632,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "ci_pipeline_duration",
+            "value": 600000000000,
             "range": "± 0",
             "unit": "ns/iter"
           }
