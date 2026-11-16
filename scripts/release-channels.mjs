@@ -25,11 +25,13 @@ async function main() {
   const attempt = async (name, fn) => { try { add(name, await fn()); } catch (error) { results.push({ name, ok: false, detail: `failed: ${error.message.split('\n')[0]}` }); } };
   const findRun = (workflow) => {
     const runs = json('gh', ['run', 'list', '--workflow', workflow, '--event', 'workflow_dispatch', '--branch', 'master', '--limit', '100', '--json', 'databaseId,status,conclusion']);
+    let unresolved = false;
     for (const item of runs) {
-      if (item.status !== 'completed') continue;
-      let log; try { log = run('gh', ['run', 'view', String(item.databaseId), '--log']); } catch { continue; }
+      if (item.status !== 'completed') { unresolved = true; continue; }
+      let log; try { log = run('gh', ['run', 'view', String(item.databaseId), '--log']); } catch { unresolved = true; continue; }
       if (log.includes(tag)) return { item, log };
     }
+    if (unresolved) throw new Error('one or more dispatch runs could not be inspected; tag association is unknown');
     return null;
   };
   await attempt('Homebrew', () => {

@@ -22,7 +22,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   if (args.includes('--help')) { console.log('Usage: release-nix-hash.mjs --sha SHA [--apply] [--json]'); process.exit(0); }
   const sha = args[args.indexOf('--sha') + 1];
   if (!/^[a-f0-9]{40}$/i.test(sha ?? '')) throw new Error('A full commit SHA is required');
-  const runs = json('gh', ['run', 'list', '--workflow', 'nix.yml', '--event', 'push', '--limit', '100', '--json', 'headSha,status,conclusion,databaseId']);
+  const runs = json('gh', ['run', 'list', '--workflow', 'nix.yml', '--event', 'push', '--commit', sha, '--limit', '100', '--json', 'headSha,status,conclusion,databaseId']);
   let result = classify(runs, sha);
   if (result.state === 'real failure') {
     const log = run('gh', ['run', 'view', String(result.id), '--log']);

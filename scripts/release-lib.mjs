@@ -1,7 +1,7 @@
 import { execFileSync } from 'node:child_process';
 
 export function run(command, args, options = {}) {
-  return execFileSync(command, args, { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'], ...options }).trim();
+  return execFileSync(command, args, { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'], maxBuffer: 32 * 1024 * 1024, ...options }).trim();
 }
 
 export function json(command, args) {

@@ -25,9 +25,15 @@ check('remote HEAD', () => { head = run('git', ['rev-parse', 'HEAD']); const rem
 check('changelog', () => { const entry = unreleased(readFileSync('CHANGELOG.md', 'utf8')); requireValue(entry?.version === version, 'first unreleased version does not match'); return entry.body; });
 check('tags', () => { const local = run('git', ['tag', '--list', `v${version}`]); const remote = run('git', ['ls-remote', '--tags', 'origin', `refs/tags/v${version}`]); requireValue(!local && !remote, 'tag already exists'); });
 check('release', () => { const releases = json('gh', ['api', '--paginate', `repos/${repo}/releases`, '--slurp']).flat(); requireValue(!releases.some((r) => r.tag_name === `v${version}`), 'release already exists'); });
-for (const workflow of ['ci.yml', 'nix.yml']) check(workflow, () => { const runs = json('gh', ['run', 'list', '--workflow', workflow, '--event', 'push', '--limit', '100', '--json', 'headSha,status,conclusion,databaseId']); const state = workflowState(runs, head, workflow === 'nix.yml'); requireValue(state === 'green' || state === 'absent', 'latest run for HEAD is missing or not green'); return state === 'absent' ? 'no run for HEAD' : `run ${runs.find((r) => r.headSha === head).databaseId}`; });
+for (const workflow of ['ci.yml', 'nix.yml']) check(workflow, () => { requireValue(head, 'HEAD could not be resolved'); const runs = json('gh', ['run', 'list', '--workflow', workflow, '--event', 'push', '--commit', head, '--limit', '100', '--json', 'headSha,status,conclusion,databaseId']); const state = workflowState(runs, head, workflow === 'nix.yml'); requireValue(state === 'green' || state === 'absent', 'latest run for HEAD is missing or not green'); return state === 'absent' ? 'no run for HEAD' : `run ${runs.find((r) => r.headSha === head).databaseId}`; });
 check('GitHub authentication', () => { gh('auth', 'status'); });
-check('cargo audit', () => { run('cargo', ['audit']); });
+check('cargo audit', () => {
+  try { run('cargo', ['audit']); }
+  catch (error) {
+    const advisories = [...new Set(String(error.stderr ?? '').match(/RUSTSEC-\d{4}-\d+/g) ?? [])];
+    throw new Error(`cargo audit failed${advisories.length ? `: ${advisories.join(', ')}` : ''}`);
+  }
+});
 check('secrets', () => { const required = ['WINGET_TOKEN','GH_PAT','FLATHUB_TOKEN','SIGNPATH_API_TOKEN','SIGNPATH_ORGANIZATION_ID','SIGNPATH_PROJECT_SLUG','SIGNPATH_SIGNING_POLICY_SLUG','PARTNER_CENTER_CLIENT_ID','PARTNER_CENTER_CLIENT_SECRET','PARTNER_CENTER_SELLER_ID','PARTNER_CENTER_TENANT_ID','MSSTORE_PRODUCT_ID']; const missing = missingSecrets(gh('secret', 'list'), required); requireValue(!missing.length, `missing: ${missing.join(', ')}`); });
 check('push authority', () => {
   const remote = run('git', ['remote', 'get-url', '--push', 'origin']);
