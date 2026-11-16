@@ -67,12 +67,11 @@ Set-Content -Path $cargoTomlPath -Value $cargoToml -NoNewline
 
 # 4. Update Cargo.lock (repo-root workspace lockfile; cargo is workspace-aware)
 Write-Host "Updating Cargo.lock..."
-Push-Location src-tauri
-$null = cargo build --quiet 2>$null
-if (-not $?) {
-    $null = cargo check --quiet 2>$null
+cargo check --quiet
+if ($LASTEXITCODE -ne 0) {
+    Write-Host "${Red}Cargo check failed; version bump aborted.${Reset}"
+    exit 1
 }
-Pop-Location
 
 # 5. Update website/index.html
 Write-Host "Updating website/index.html..."
@@ -80,10 +79,11 @@ $websitePath = "website\index.html"
 $releaseDate = (Get-Date).ToUniversalTime().ToString("yyyy-MM-dd")
 $website = Get-Content $websitePath -Raw
 $website = $website -replace '<span class="app-version">\d+\.\d+\.\d+</span>', "<span class=`"app-version`">$Version</span>"
-$website = $website -replace 'Mini-Diarium-\d+\.\d+\.\d+-(windows\.exe|macos\.dmg|linux\.AppImage)', "Mini-Diarium-$Version-`$1"
 $website = $website -replace '"softwareVersion":\s*"[^"]*"', "`"softwareVersion`": `"$Version`""
 $website = $website -replace '"dateModified":\s*"[^"]*"', "`"dateModified`": `"$releaseDate`""
 Set-Content -Path $websitePath -Value $website -NoNewline
+node scripts/bump-download-urls.mjs $Version $websitePath
+if ($LASTEXITCODE -ne 0) { Write-Host "Download URL update failed."; exit 1 }
 
 # 5b. Update website/encrypted-journal/index.html
 Write-Host "Updating website/encrypted-journal/index.html..."
@@ -105,7 +105,11 @@ Write-Host "Prepending release entry to data\linux\io.github.fjrevoredo.mini-dia
 $metainfoPath = "data\linux\io.github.fjrevoredo.mini-diarium.metainfo.xml"
 $metainfo = Get-Content $metainfoPath -Raw
 $releaseEntry = "    <release version=`"$Version`" date=`"$releaseDate`">`n      <url type=`"details`">https://github.com/fjrevoredo/mini-diarium/releases/tag/v$Version</url>`n    </release>"
-$metainfo = $metainfo -replace "(<!-- New release entries are prepended here by bump-version.sh -->)", "`$1`n$releaseEntry"
+if ($metainfo -notmatch "<release version=`"$([regex]::Escape($Version))`"") {
+    $metainfo = $metainfo -replace "(<!-- New release entries are prepended here by bump-version.sh -->)", "`$1`n$releaseEntry"
+} else {
+    Write-Host "Release entry already exists; skipping."
+}
 Set-Content -Path $metainfoPath -Value $metainfo -NoNewline
 
 # 8. Validate all versions
@@ -115,6 +119,8 @@ $packageVersion = [regex]::Match((Get-Content $packageJsonPath -Raw), '"version"
 $tauriVersion = [regex]::Match((Get-Content $tauriConfigPath -Raw), '"version"\s*:\s*"(\d+\.\d+\.\d+)"').Groups[1].Value
 $cargoVersion = [regex]::Match((Get-Content $cargoTomlPath -Raw), '(?m)^version\s*=\s*"(\d+\.\d+\.\d+)"').Groups[1].Value
 $readmeVersion = [regex]::Match((Get-Content $readmePath -Raw), 'version-(\d+\.\d+\.\d+)-').Groups[1].Value
+$lockVersion = [regex]::Match((Get-Content Cargo.lock -Raw), '(?m)^name = "mini-diarium"\r?\nversion = "([^"]+)"').Groups[1].Value
+if ($lockVersion -ne $Version) { Report-Mismatch -FilePath 'Cargo.lock' -Expected $Version -Actual $lockVersion }
 
 if ($packageVersion -ne $Version) {
     Report-Mismatch -FilePath "package.json" -Expected $Version -Actual ($(if ($packageVersion) { $packageVersion } else { "<missing>" }))
@@ -190,9 +196,9 @@ if ($websiteDateModified.Count -eq 0) {
     }
 }
 
-$metainfoRelease = [regex]::Match((Get-Content $metainfoPath -Raw), "<release version=`"$Version`"").Success
-if (-not $metainfoRelease) {
-    Report-Mismatch -FilePath "data\linux\io.github.fjrevoredo.mini-diarium.metainfo.xml" -Expected $Version -Actual "<release entry not found>"
+$metainfoCount = [regex]::Matches((Get-Content $metainfoPath -Raw), "<release version=`"$([regex]::Escape($Version))`"").Count
+if ($metainfoCount -ne 1) {
+    Report-Mismatch -FilePath $metainfoPath -Expected 'one release entry' -Actual "$metainfoCount entries"
 }
 
 if ($validationFailed) {
@@ -215,10 +221,5 @@ $currentBranch = git branch --show-current
 Write-Host ""
 Write-Host "${Yellow}Next steps:${Reset}"
 Write-Host "1. Review the changes above"
-Write-Host "2. Commit: ${Green}git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml Cargo.lock website/index.html README.md data\linux\io.github.fjrevoredo.mini-diarium.metainfo.xml; git commit -m `"chore: bump version to $Version`"${Reset}"
-Write-Host "3. Push branch: ${Green}git push origin $currentBranch${Reset}"
-Write-Host "4. Create PR to merge $currentBranch → master"
-Write-Host "5. After PR is merged, checkout master and create tag:"
-Write-Host "   ${Green}git checkout master; git pull; git tag -a v$Version -m `"Release v$Version`"; git push origin v$Version${Reset}"
-Write-Host ""
-Write-Host "${Yellow}⚠️  Important: Tag must be created on master AFTER the PR is merged!${Reset}"
+Write-Host "Review and stage the files actually changed; the release runbook stages reviewed changes."
+Write-Host "Release files: package.json package-lock.json src-tauri/tauri.conf.json src-tauri/Cargo.toml Cargo.lock website/index.html website/encrypted-journal/index.html README.md data/linux/io.github.fjrevoredo.mini-diarium.metainfo.xml CHANGELOG.md latest-changelog.md public/notifications.json nix/package.nix docs/todo/TODO.md docs/todo/TODO_ARCHIVE.md website/sitemap.xml website/blog/ website/docs/"

@@ -12,6 +12,6 @@ extract() {
   printf '%s: %s\n' "${label}" "${value}"
 }
 
-extract "Windows" 'href="(https://github.com/fjrevoredo/mini-diarium/releases/latest/download/Mini-Diarium-[0-9]+\.[0-9]+\.[0-9]+-windows\.exe)"'
-extract "macOS" 'href="(https://github.com/fjrevoredo/mini-diarium/releases/latest/download/Mini-Diarium-[0-9]+\.[0-9]+\.[0-9]+-macos\.dmg)"'
-extract "Linux" 'href="(https://github.com/fjrevoredo/mini-diarium/releases/latest/download/Mini-Diarium-[0-9]+\.[0-9]+\.[0-9]+-linux\.AppImage)"'
+extract "Windows" 'href="(https://github.com/fjrevoredo/mini-diarium/releases/download/v[0-9]+\.[0-9]+\.[0-9]+/Mini-Diarium-[0-9]+\.[0-9]+\.[0-9]+-windows\.exe)"'
+extract "macOS" 'href="(https://github.com/fjrevoredo/mini-diarium/releases/download/v[0-9]+\.[0-9]+\.[0-9]+/Mini-Diarium-[0-9]+\.[0-9]+\.[0-9]+-macos\.dmg)"'
+extract "Linux" 'href="(https://github.com/fjrevoredo/mini-diarium/releases/download/v[0-9]+\.[0-9]+\.[0-9]+/Mini-Diarium-[0-9]+\.[0-9]+\.[0-9]+-linux\.AppImage)"'

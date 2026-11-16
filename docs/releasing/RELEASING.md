@@ -29,6 +29,8 @@ Before starting the release process:
 
 ## Release Paths
 
+Review and stage only files actually changed; the release runbook stages reviewed changes. The examples list all possible release files.
+
 Two equivalent paths lead to a published release. Both are trunk-based: the tag is always created on `master`.
 
 ### Path A — Trunk-pure (preferred)
@@ -40,9 +42,9 @@ Use this path when branch protection allows direct pushes to `master` (e.g., sin
 ```bash
 # 1. Run `$runbooks pre-release` on master (canonical entry: `.agents/skills/runbooks/skills/pre-release/ENTRY.md`)
 # 2. Commit version bump
-git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml Cargo.lock \
-  website/index.html README.md data/linux/io.github.fjrevoredo.mini-diarium.metainfo.xml \
-  latest-changelog.md
+# Candidate files (stage only those that changed and exist):
+# package.json package-lock.json src-tauri/tauri.conf.json src-tauri/Cargo.toml Cargo.lock website/index.html website/encrypted-journal/index.html README.md data/linux/io.github.fjrevoredo.mini-diarium.metainfo.xml CHANGELOG.md latest-changelog.md public/notifications.json nix/package.nix docs/todo/TODO.md docs/todo/TODO_ARCHIVE.md website/sitemap.xml website/blog/ website/docs/
+git add <reviewed-files>
 git commit -m "chore: bump version to X.Y.Z"
 git push origin master
 # 3. Tag on master
@@ -140,7 +142,9 @@ The workflow publishes this file verbatim as the GitHub release body, so it must
 
 ```bash
 # Commit version bump and release notes
-git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml Cargo.lock website/index.html README.md data/linux/io.github.fjrevoredo.mini-diarium.metainfo.xml latest-changelog.md
+# Candidate files (stage only those that changed and exist):
+# package.json package-lock.json src-tauri/tauri.conf.json src-tauri/Cargo.toml Cargo.lock website/index.html website/encrypted-journal/index.html README.md data/linux/io.github.fjrevoredo.mini-diarium.metainfo.xml CHANGELOG.md latest-changelog.md public/notifications.json nix/package.nix docs/todo/TODO.md docs/todo/TODO_ARCHIVE.md website/sitemap.xml website/blog/ website/docs/
+git add <reviewed-files>
 git commit -m "chore: bump version to 0.1.1"
 
 # Push branch
@@ -305,7 +309,9 @@ git checkout master && git pull && git checkout -b release-X.Y.Z
 cp latest-changelog.template.md latest-changelog.md
 
 # 4. Commit and push branch
-git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml Cargo.lock website/index.html README.md data/linux/io.github.fjrevoredo.mini-diarium.metainfo.xml latest-changelog.md
+# Candidate files (stage only those that changed and exist):
+# package.json package-lock.json src-tauri/tauri.conf.json src-tauri/Cargo.toml Cargo.lock website/index.html website/encrypted-journal/index.html README.md data/linux/io.github.fjrevoredo.mini-diarium.metainfo.xml CHANGELOG.md latest-changelog.md public/notifications.json nix/package.nix docs/todo/TODO.md docs/todo/TODO_ARCHIVE.md website/sitemap.xml website/blog/ website/docs/
+git add <reviewed-files>
 git commit -m "chore: bump version to X.Y.Z"
 git push origin release-X.Y.Z
 
@@ -332,7 +338,9 @@ git checkout master; git pull; git checkout -b release-X.Y.Z
 Copy-Item latest-changelog.template.md latest-changelog.md
 
 # 4. Commit and push branch
-git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml Cargo.lock website/index.html README.md data/linux/io.github.fjrevoredo.mini-diarium.metainfo.xml latest-changelog.md
+# Candidate files (stage only those that changed and exist):
+# package.json package-lock.json src-tauri/tauri.conf.json src-tauri/Cargo.toml Cargo.lock website/index.html website/encrypted-journal/index.html README.md data/linux/io.github.fjrevoredo.mini-diarium.metainfo.xml CHANGELOG.md latest-changelog.md public/notifications.json nix/package.nix docs/todo/TODO.md docs/todo/TODO_ARCHIVE.md website/sitemap.xml website/blog/ website/docs/
+git add <reviewed-files>
 git commit -m "chore: bump version to X.Y.Z"
 git push origin release-X.Y.Z
 

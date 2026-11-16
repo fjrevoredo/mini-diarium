@@ -54,9 +54,10 @@ rm src-tauri/Cargo.toml.bak
 
 # 4. Update Cargo.lock (repo-root workspace lockfile; cargo is workspace-aware)
 echo "Updating Cargo.lock..."
-cd src-tauri
-cargo build --quiet 2>/dev/null || cargo check --quiet
-cd ..
+if ! cargo check --quiet; then
+  echo "Cargo check failed; version bump aborted."
+  exit 1
+fi
 
 # 5+5b+5c. Update website files
 # Mirrors the PowerShell pattern: declare date variable first, then single-read + multiple-replace + single-write per file
@@ -75,13 +76,8 @@ sed -i.bak \
 
 # Replace download URLs verbatim (no capture groups — separate sed call avoids backreference issues with multi -e).
 # -E is required: in basic regex `+` is a literal character, so `[0-9.]+` would never match.
-sed -i.bak2 -E \
-  -e "s|Mini-Diarium-[0-9.]+-windows.exe|Mini-Diarium-${NEW_VERSION}-windows.exe|g" \
-  -e "s|Mini-Diarium-[0-9.]+-macos.dmg|Mini-Diarium-${NEW_VERSION}-macos.dmg|g" \
-  -e "s|Mini-Diarium-[0-9.]+-linux.AppImage|Mini-Diarium-${NEW_VERSION}-linux.AppImage|g" \
-  "${website_path}"
-
-rm "${website_path}.bak" "${website_path}.bak2"
+rm "${website_path}.bak"
+node scripts/bump-download-urls.mjs "${NEW_VERSION}" "${website_path}" || { echo "Download URL update failed."; exit 1; }
 
 echo "Updating website/encrypted-journal/index.html..."
 encrypted_journal_path="website/encrypted-journal/index.html"
@@ -104,6 +100,7 @@ echo "Prepending release entry to data/linux/io.github.fjrevoredo.mini-diarium.m
 # Strip \r so CRLF files match on all platforms
 sed -i 's/\r//' data/linux/io.github.fjrevoredo.mini-diarium.metainfo.xml
 
+if ! grep -Fq "<release version=\"${NEW_VERSION}\"" data/linux/io.github.fjrevoredo.mini-diarium.metainfo.xml; then
 # Build release block in a temp file (printf is portable; sed -i with \n replacement is not BSD/GNU portable)
 printf '    <release version="%s" date="%s">\n      <url type="details">https://github.com/fjrevoredo/mini-diarium/releases/tag/v%s</url>\n    </release>\n' \
   "${NEW_VERSION}" "${release_date}" "${NEW_VERSION}" > /tmp/bump-metainfo-release.txt
@@ -113,6 +110,9 @@ sed -i.bak -e "/<!-- New release entries are prepended here by bump-version.sh -
 
 rm data/linux/io.github.fjrevoredo.mini-diarium.metainfo.xml.bak
 rm /tmp/bump-metainfo-release.txt
+else
+  echo "Release entry already exists; skipping."
+fi
 
 # 8. Validate all versions
 echo "Validating version updates..."
@@ -128,6 +128,8 @@ package_version=$(extract_match package.json '.*"version"[[:space:]]*:[[:space:]
 tauri_version=$(extract_match src-tauri/tauri.conf.json '.*"version"[[:space:]]*:[[:space:]]*"([0-9]+\.[0-9]+\.[0-9]+)".*')
 cargo_version=$(extract_match src-tauri/Cargo.toml '^version[[:space:]]*=[[:space:]]*"([0-9]+\.[0-9]+\.[0-9]+)".*')
 readme_version=$(extract_match README.md '.*version-([0-9]+\.[0-9]+\.[0-9]+)-.*')
+lock_version=$(awk '/^name = "mini-diarium"\r?$/ { getline; gsub(/\r/, ""); gsub(/"/, "", $3); print $3; exit }' Cargo.lock)
+[ "${lock_version}" = "${NEW_VERSION}" ] || report_mismatch "Cargo.lock" "${NEW_VERSION}" "${lock_version:-<missing>}"
 
 [ "${package_version}" = "${NEW_VERSION}" ] || report_mismatch "package.json" "${NEW_VERSION}" "${package_version:-<missing>}"
 [ "${tauri_version}" = "${NEW_VERSION}" ] || report_mismatch "src-tauri/tauri.conf.json" "${NEW_VERSION}" "${tauri_version:-<missing>}"
@@ -176,8 +178,8 @@ enc_dm=$(sed -nE 's|.*"dateModified":[[:space:]]*"([^"]+)".*|\1|p' "${encrypted_
 
 # metainfo.xml — release entry for NEW_VERSION exists
 metainfo_count=$(grep -c "<release version=\"${NEW_VERSION}\"" data/linux/io.github.fjrevoredo.mini-diarium.metainfo.xml || true)
-if [ "${metainfo_count}" -eq 0 ]; then
-  report_mismatch "data/linux/io.github.fjrevoredo.mini-diarium.metainfo.xml" "${NEW_VERSION}" "<release entry not found>"
+if [ "${metainfo_count}" -ne 1 ]; then
+  report_mismatch "data/linux/io.github.fjrevoredo.mini-diarium.metainfo.xml" "one release entry" "${metainfo_count} entries"
 fi
 
 if [ "${validation_failed}" -ne 0 ]; then
@@ -202,10 +204,5 @@ current_branch=$(git branch --show-current)
 echo ""
 echo -e "${YELLOW}Next steps:${NC}"
 echo "1. Review the changes above"
-echo "2. Commit: ${GREEN}git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml Cargo.lock website/index.html website/encrypted-journal/index.html README.md data/linux/io.github.fjrevoredo.mini-diarium.metainfo.xml && git commit -m \"chore: bump version to ${NEW_VERSION}\"${NC}"
-echo "3. Push branch: ${GREEN}git push origin ${current_branch}${NC}"
-echo "4. Create PR to merge ${current_branch} → master"
-echo "5. After PR is merged, checkout master and create tag:"
-echo "   ${GREEN}git checkout master && git pull && git tag -a v${NEW_VERSION} -m \"Release v${NEW_VERSION}\" && git push origin v${NEW_VERSION}${NC}"
-echo ""
-echo -e "${YELLOW}⚠️  Important: Tag must be created on master AFTER the PR is merged!${NC}"
+echo "Review and stage the files actually changed; the release runbook stages reviewed changes."
+echo "Release files: package.json package-lock.json src-tauri/tauri.conf.json src-tauri/Cargo.toml Cargo.lock website/index.html website/encrypted-journal/index.html README.md data/linux/io.github.fjrevoredo.mini-diarium.metainfo.xml CHANGELOG.md latest-changelog.md public/notifications.json nix/package.nix docs/todo/TODO.md docs/todo/TODO_ARCHIVE.md website/sitemap.xml website/blog/ website/docs/"

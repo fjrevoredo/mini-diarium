@@ -145,7 +145,7 @@ v0.8.0; implementation commits per milestone without push.
 
 ### Milestone 1: Permission And Changelog Fixes
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Purpose: Record the release authority and remove the two prompts and the silent template
   check that block an unattended `pre-release` run.
 - Exit Criteria: `release.yml` and `RELEASING.md` name only `latest-changelog.template.md`;
@@ -222,7 +222,7 @@ v0.8.0; implementation commits per milestone without push.
 
 ### Milestone 2: Bump Scripts And Pinned Download URLs
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Purpose: Make the version bump fail loudly and run safely twice, and make the website
   download links independent of the deploy time.
 - Exit Criteria: Both bump scripts exit non-zero on a cargo failure or a wrong `Cargo.lock`,
@@ -305,7 +305,7 @@ v0.8.0; implementation commits per milestone without push.
 
 #### Task 2.4: Prove The Bump Scripts In A Disposable Clone
 
-- Status: BLOCKED
+- Status: COMPLETED
 - Depends On: 2.1, 2.2, 2.3
 - Objective: Offline evidence that both bump scripts fail loudly, stay idempotent, and handle
   every download-link shape, without touching the implementation checkout.
@@ -330,7 +330,7 @@ v0.8.0; implementation commits per milestone without push.
 
 #### Task 2.5: Commit Milestone 2
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Depends On: 2.4
 - Objective: Milestone 2 is one commit on `master`.
 - Steps:
@@ -342,7 +342,7 @@ v0.8.0; implementation commits per milestone without push.
 
 ### Milestone 3: Helper Scripts
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Purpose: Read-only Node helpers that give the runbook machine-checked results for P0, P3
   (Nix), P5 and P6.
 - Exit Criteria: Each script has unit tests on fixtures, prints a human summary and a
@@ -503,7 +503,7 @@ v0.8.0; implementation commits per milestone without push.
 
 #### Task 4.1: Write The release Runbook
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Depends On: 1.3, 2.1, 3.5
 - Objective: `.agents/skills/runbooks/skills/release/ENTRY.md` implements the exploration's
   "Plan: Agent-Run Release (iteration 1)".
@@ -536,7 +536,7 @@ v0.8.0; implementation commits per milestone without push.
 
 #### Task 4.2: Point The Docs At The Runbook
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Depends On: 4.1
 - Objective: `RELEASING.md` describes the agent-run path, and the exploration says iteration 1
   is implemented.
@@ -706,6 +706,20 @@ No entries yet.
 - Task: 3.3
 - Decision: Keep exact-body verification and report the mismatch; do not alter the published release.
 - Rationale: Live v0.8.0 appends a SourceForge badge absent from its tagged changelog, contradicting the expected pass in task 3.6.
+
+### DEC-008 — Filter workflow runs at source
+
+- Date: 2026-11-16
+- Task: 3.1
+- Decision: Query gh with the exact commit SHA and raise the log capture limit.
+- Rationale: A fixed list of recent runs could miss an older matching SHA and falsely report no Nix run.
+
+### DEC-009 — Cargo audit identifies a vulnerability
+
+- Date: 2026-11-16
+- Task: 3.6
+- Decision: Keep the release preflight failing and report advisory IDs; do not change dependencies in the automation milestone.
+- Rationale: Current Cargo.lock contains ctutils 0.4.2 affected by RUSTSEC-2026-0385; dependency remediation is outside this plan and must be resolved before release.
 
 ## Final Verification
 

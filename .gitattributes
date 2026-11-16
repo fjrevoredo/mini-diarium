@@ -9,6 +9,8 @@ data/linux/*.desktop text eol=lf
 
 # Git hooks must use LF (shebang + `set -e` break on Windows CRLF)
 .githooks/*          text eol=lf
+bump-version.sh      text eol=lf
+scripts/website-release-urls.sh text eol=lf
 
 # Day One TXT importer test fixtures: parsing splits on literal "\n\n"/"\n", so a
 # Windows CRLF checkout could parse differently than CI (Linux) without an LF pin.
