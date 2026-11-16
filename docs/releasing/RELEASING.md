@@ -538,6 +538,17 @@ This creates/updates a **draft** submission (`--noCommit`) without publishing; c
 with `msstore submission status <productId>`. Once the draft looks right, a real tagged
 release auto-dispatches the workflow and publishes the update.
 
+> **Store listing edits and CI do not mix.** `msstore publish` deletes any pending
+> submission and creates a new one from the last *published* submission. A Partner Center
+> draft (for example, a listing text change) is lost when a release dispatches this
+> workflow. Submit and publish a listing-only change in the browser **before** the next
+> tagged release. After it is published, CI copies the listing forward.
+>
+> A package `DisplayName` must be a reserved app name (see `msix/README.md`), but the
+> listing product name does not follow it: change it under Store listings → Product
+> name in a separate submission. Browser "Retry" on a package that the API uploaded does
+> nothing; re-run the failed workflow job instead (`gh run rerun <run-id> --failed`).
+
 ---
 
 ## Windows Code Signing (SignPath)
