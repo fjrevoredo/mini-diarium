@@ -126,8 +126,10 @@ Observed preparation sequence (not the full history of each release):
 - **Coolify re-deploy** (G9), in iteration 1.
 - **Merging** the Flathub PR and the cleanup PR, in iteration 1.
 - **Search Console** "Request indexing" (no public API for normal pages).
-- **Hosting checks:** that `https://www.fenmark.app/` and `https://mini-diarium.com/`
-  redirect to `https://fenmark.app/`, and that Cloudflare does not add the invalid
+- **Hosting checks:** that `https://www.fenmark.app/` redirects to `https://fenmark.app/`,
+  that the legacy `https://mini-diarium.com/` homepage serves the transition page while its
+  deep links answer 301 to the same path on `https://fenmark.app` (`website/nginx.conf:8-26`),
+  and that Cloudflare does not add the invalid
   `Content-Signal` line to `robots.txt`. The agent can check these with read-only HTTP
   requests and report them. The maintainer repairs them if needed.
 - **Installer smoke tests** on real Windows, macOS, and Linux machines; **announcements**;
