@@ -36,6 +36,7 @@ This library is manual-first. Do not guess a runbook when the user's request doe
 | `implementation-review` | Reviewing a completed implementation against its plan and validations | `skills/implementation-review/ENTRY.md` |
 | `integrate-stale-pr` | Manually integrating an external PR that can no longer merge cleanly | `skills/integrate-stale-pr/ENTRY.md` |
 | `pre-release` | Running the pre-release checklist before tagging | `skills/pre-release/ENTRY.md` |
+| `release` | Running an explicitly requested release through channel verification | `skills/release/ENTRY.md` |
 | `review-external-pr` | Reviewing an external contributor PR and drafting the maintainer response | `skills/review-external-pr/ENTRY.md` |
 | `update-app-icons` | Replacing the app logo and regenerating platform icons | `skills/update-app-icons/ENTRY.md` |
 

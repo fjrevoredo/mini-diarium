@@ -19,14 +19,14 @@ Written by `plan-status.py resume`; do not edit by hand. Restart prompt: "Contin
 its Resume block". Stop: done | ask | gate | question | context | limit.
 -->
 
-- Updated: 2026-11-16 22:38 UTC
-- State: Task 1.2 implemented and validated; remaining milestones not started.
-- Green / Red: Template markup guard checked against a placeholder and v0.8.0; full milestone checks pending.
-- Next runnable: 1.1, 1.3, 2.1, 3.1
+- Updated: 2026-11-16 22:58 UTC
+- State: Milestones 1-4 implemented and verified; release gate remains. Cargo audit reports RUSTSEC-2026-0385 in ctutils 0.4.2.
+- Green / Red: 94 script tests pass; lint passes with seven existing warnings; v0.8.0 assets and checksums verify.
+- Next runnable: 5.1
 - Live environment: none
-- Next IDs: Task 6.3; DEC-001
-- Risks: Memory update in 1.1 must use the allowed append-only note mechanism; release requires explicit 0.8.1 request and Store confirmation.
-- Stop: context
+- Next IDs: Task 6.3; DEC-010
+- Risks: Explicit release 0.8.1 request and Store Submission 12 confirmation required; cargo audit vulnerability blocks preflight. Published v0.8.0 has an extra SourceForge badge.
+- Stop: gate
 
 ## Context For A Clean Session
 
@@ -495,7 +495,7 @@ v0.8.0; implementation commits per milestone without push.
 
 ### Milestone 4: The release Runbook
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Purpose: One orchestrating runbook that runs P0-P6 with the helpers, the resume table, and
   the two stop points.
 - Exit Criteria: `/runbooks release` loads the entry; the entry covers every phase and
@@ -551,7 +551,7 @@ v0.8.0; implementation commits per milestone without push.
 
 #### Task 4.3: Commit Milestone 4
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Depends On: 4.2
 - Objective: Milestone 4 is one commit on `master`.
 - Steps:

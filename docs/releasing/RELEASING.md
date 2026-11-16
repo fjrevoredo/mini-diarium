@@ -29,6 +29,10 @@ Before starting the release process:
 
 ## Release Paths
 
+### Agent-run release
+
+For a specifically requested version, use `$runbooks release` ([entry](../../.agents/skills/runbooks/skills/release/ENTRY.md)). It stops before pushing the tag and for the Coolify redeploy. The tag approval also confirms that no Partner Center submission is pending.
+
 Review and stage only files actually changed; the release runbook stages reviewed changes. The examples list all possible release files.
 
 Two equivalent paths lead to a published release. Both are trunk-based: the tag is always created on `master`.

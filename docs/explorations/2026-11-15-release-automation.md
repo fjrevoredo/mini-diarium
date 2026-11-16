@@ -1,5 +1,7 @@
 # Exploration: End-to-End Release Automation
 
+> Iteration 1 automation is implemented; the first release and final verification remain in the release automation plan.
+
 > Artifact type: Documentation + Plan (prose only, no implementation code).
 >
 > Goal: list everything a coding agent needs to run a full Fenmark release, from "the
