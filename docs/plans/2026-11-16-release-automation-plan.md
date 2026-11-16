@@ -231,7 +231,7 @@ v0.8.0; implementation commits per milestone without push.
 
 #### Task 2.1: Harden The Bump Scripts (G7)
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Depends On: none
 - Objective: `bump-version.ps1` and `bump-version.sh` fail when cargo fails or when
   `Cargo.lock` does not show `mini-diarium` at the new version, and skip an existing
@@ -255,7 +255,7 @@ v0.8.0; implementation commits per milestone without push.
 
 #### Task 2.2: Correct The Staging Lists (G6)
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Depends On: 2.1
 - Objective: The "Next steps" in both bump scripts and the staging lists in `RELEASING.md`
   name every file the release steps change, and say that the `release` runbook stages
@@ -275,7 +275,7 @@ v0.8.0; implementation commits per milestone without push.
 
 #### Task 2.3: Pin The Website Download URLs (G9)
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Depends On: 2.1
 - Objective: Website download links use `/releases/download/vX.Y.Z/Mini-Diarium-X.Y.Z-...`,
   and the bump scripts update both the tag and the file name.
@@ -305,7 +305,7 @@ v0.8.0; implementation commits per milestone without push.
 
 #### Task 2.4: Prove The Bump Scripts In A Disposable Clone
 
-- Status: TO BE DONE
+- Status: BLOCKED
 - Depends On: 2.1, 2.2, 2.3
 - Objective: Offline evidence that both bump scripts fail loudly, stay idempotent, and handle
   every download-link shape, without touching the implementation checkout.
@@ -351,7 +351,7 @@ v0.8.0; implementation commits per milestone without push.
 
 #### Task 3.1: Shared Library And P0 Preflight
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Depends On: none
 - Objective: `scripts/release-lib.mjs` (shared `gh`/`git` runners, CHANGELOG parser, result
   formatting) and `scripts/release-preflight.mjs --version X.Y.Z` that run every P0 check.
@@ -383,7 +383,7 @@ v0.8.0; implementation commits per milestone without push.
 
 #### Task 3.2: Nix Hash Helper (G4)
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Depends On: 3.1
 - Objective: `scripts/release-nix-hash.mjs --sha <sha>` reads the `nix.yml` run for that SHA
   and reports one of: green, running, stale-hash (with the hash), real failure, no run. With
@@ -399,7 +399,7 @@ v0.8.0; implementation commits per milestone without push.
 
 #### Task 3.3: P5 Release Verification
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Depends On: 3.1
 - Objective: `scripts/release-verify.mjs --version X.Y.Z` checks the GitHub release and,
   with `--live-site`, the website.
@@ -420,7 +420,7 @@ v0.8.0; implementation commits per milestone without push.
 
 #### Task 3.4: P6 Channel Status
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Depends On: 3.1
 - Objective: `scripts/release-channels.mjs --version X.Y.Z` reports each channel as
   available, submitted/awaiting external review, awaiting maintainer, or failed.
@@ -447,7 +447,7 @@ v0.8.0; implementation commits per milestone without push.
 
 #### Task 3.5: Package Scripts
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Depends On: 3.1, 3.2, 3.3, 3.4
 - Objective: `package.json` has `release:preflight`, `release:nix-hash`, `release:verify`,
   `release:channels`.
@@ -460,7 +460,7 @@ v0.8.0; implementation commits per milestone without push.
 
 #### Task 3.6: Read-Only Test Against v0.8.0
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Depends On: 3.5
 - Objective: The P5 and P6 scripts give correct results for the published v0.8.0, and P0
   gives correct results for 0.8.1 on the current tree.
@@ -484,7 +484,7 @@ v0.8.0; implementation commits per milestone without push.
 
 #### Task 3.7: Commit Milestone 3
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Depends On: 3.6
 - Objective: Milestone 3 is one commit on `master`.
 - Steps:
@@ -664,6 +664,48 @@ No entries yet.
 - Task: 1.1
 - Decision: Write an append-only memory update note instead of editing memory registry files.
 - Rationale: The active memory instructions require updates only through notes; the named historical memory files are absent.
+
+### DEC-002 — Normalize shell script line endings
+
+- Date: 2026-11-16
+- Task: 2.1
+- Decision: Use LF for bump-version.sh.
+- Rationale: bash -n failed on CRLF in this Windows checkout; LF makes the shell script executable.
+
+### DEC-003 — Share URL validation between bump scripts
+
+- Date: 2026-11-16
+- Task: 2.3
+- Decision: Use a small Node helper to validate and rewrite all three URLs for both scripts.
+- Rationale: A shared validator checks input mismatches before rewriting and avoids divergent shell implementations.
+
+### DEC-004 — Copy clone objects instead of hard links
+
+- Date: 2026-11-16
+- Task: 2.4
+- Decision: Create the disposable clone with --no-hardlinks.
+- Rationale: The local clone failed to create cross-volume hard links to the Windows temporary directory.
+
+### DEC-005 — Restore accidental bump changes
+
+- Date: 2026-11-16
+- Task: 2.4
+- Decision: Stopped the shell proof and restored its three version-only edits in the implementation checkout.
+- Rationale: Bash did not receive the temporary path; the initial cd failed and the script started in the checkout. No Cargo.lock or website edits occurred.
+
+### DEC-006 — Disposable clone cleanup blocked
+
+- Date: 2026-11-16
+- Task: 2.4
+- Decision: Leave the proof clone in place and continue independent work.
+- Rationale: Automatic approval rejected recursive deletion of the verified temporary clone path.
+
+### DEC-007 — Published v0.8.0 body differs from tag
+
+- Date: 2026-11-16
+- Task: 3.3
+- Decision: Keep exact-body verification and report the mismatch; do not alter the published release.
+- Rationale: Live v0.8.0 appends a SourceForge badge absent from its tagged changelog, contradicting the expected pass in task 3.6.
 
 ## Final Verification
 
