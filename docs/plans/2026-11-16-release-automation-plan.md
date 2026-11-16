@@ -2,7 +2,7 @@
 
 ## Metadata
 
-- Plan Status: READY FOR APPROVAL
+- Plan Status: IN PROGRESS
 - Plan Format: manual-planning v2.1.0
 - Template: milestoned
 - Tracking: tracked (by user request)
@@ -19,14 +19,14 @@ Written by `plan-status.py resume`; do not edit by hand. Restart prompt: "Contin
 its Resume block". Stop: done | ask | gate | question | context | limit.
 -->
 
-- Updated: 2026-11-16 22:33 UTC
-- State: Plan written and reviewed by GPT-6.1 Sol (codex); review findings applied. No implementation yet.
-- Green / Red: not run
-- Next runnable: 1.1, 1.2, 1.3, 2.1, 3.1
+- Updated: 2026-11-16 22:38 UTC
+- State: Task 1.2 implemented and validated; remaining milestones not started.
+- Green / Red: Template markup guard checked against a placeholder and v0.8.0; full milestone checks pending.
+- Next runnable: 1.1, 1.3, 2.1, 3.1
 - Live environment: none
 - Next IDs: Task 6.3; DEC-001
-- Risks: push principal may not be a ruleset bypass actor (Task 3.1 checks it); Store Submission 12 must publish before 0.8.1
-- Stop: ask — plan waits for maintainer approval
+- Risks: Memory update in 1.1 must use the allowed append-only note mechanism; release requires explicit 0.8.1 request and Store confirmation.
+- Stop: context
 
 ## Context For A Clean Session
 
@@ -154,7 +154,7 @@ v0.8.0; implementation commits per milestone without push.
 
 #### Task 1.1: Record The Release Permission
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Depends On: none
 - Objective: Root `CLAUDE.md` → Agent Workflow Rules has a rule: an agent may commit, push to
   `master`, and push the release tag only for the one version that the maintainer explicitly
@@ -169,7 +169,7 @@ v0.8.0; implementation commits per milestone without push.
 
 #### Task 1.2: Fix The Changelog Template Check (G2)
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Depends On: none
 - Objective: `release.yml` validates `latest-changelog.md` against
   `latest-changelog.template.md`, and fails on a leftover an HTML comment opener or `<template>`.
@@ -189,7 +189,7 @@ v0.8.0; implementation commits per milestone without push.
 
 #### Task 1.3: Add Autonomous Mode To pre-release (G3)
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Depends On: none
 - Objective: `pre-release` runs without prompts when the `release` runbook calls it in
   autonomous mode, and stays interactive otherwise.
@@ -208,7 +208,7 @@ v0.8.0; implementation commits per milestone without push.
 
 #### Task 1.4: Commit Milestone 1
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Depends On: 1.1, 1.2, 1.3
 - Objective: Milestone 1 is one commit on `master`.
 - Steps:
@@ -658,6 +658,13 @@ v0.8.0; implementation commits per milestone without push.
 
 No entries yet.
 
+### DEC-001 — Record permission through memory note
+
+- Date: 2026-11-16
+- Task: 1.1
+- Decision: Write an append-only memory update note instead of editing memory registry files.
+- Rationale: The active memory instructions require updates only through notes; the named historical memory files are absent.
+
 ## Final Verification
 
 Task 6.2, plus the 0.8.1 final report from Task 5.2: GitHub release verified by
@@ -665,7 +672,7 @@ Task 6.2, plus the 0.8.1 final report from Task 5.2: GitHub release verified by
 
 ## Approval Gate
 
-Implementation must not start until the user approves this plan.
+Approved by the user on 2026-11-16.
 
 ## Plan Self-Check
 

@@ -14,7 +14,7 @@ concurrency:
 
 env:
   LATEST_CHANGELOG_FILE: latest-changelog.md
-  LATEST_CHANGELOG_TEMPLATE: latest-changelog.example.md
+  LATEST_CHANGELOG_TEMPLATE: latest-changelog.template.md
 
 jobs:
   create-release:
@@ -51,13 +51,21 @@ jobs:
             exit 1
           fi
 
-          if [ -f "$LATEST_CHANGELOG_TEMPLATE" ] && cmp -s "$LATEST_CHANGELOG_FILE" "$LATEST_CHANGELOG_TEMPLATE"; then
+          if [ ! -f "$LATEST_CHANGELOG_TEMPLATE" ]; then
+            echo "Missing $LATEST_CHANGELOG_TEMPLATE."
+            exit 1
+          fi
+          if cmp -s "$LATEST_CHANGELOG_FILE" "$LATEST_CHANGELOG_TEMPLATE"; then
             echo "$LATEST_CHANGELOG_FILE still matches the untouched template."
             exit 1
           fi
 
           if grep -q 'REPLACE BEFORE TAGGING' "$LATEST_CHANGELOG_FILE"; then
             echo "$LATEST_CHANGELOG_FILE still contains placeholder text."
+            exit 1
+          fi
+          if grep -Eq '<!--|<template>' "$LATEST_CHANGELOG_FILE"; then
+            echo "$LATEST_CHANGELOG_FILE still contains template markup."
             exit 1
           fi
 

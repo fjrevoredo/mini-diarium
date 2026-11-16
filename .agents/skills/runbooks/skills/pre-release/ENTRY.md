@@ -10,6 +10,10 @@ Automates the pre-release preparation steps for Mini Diarium. Run this on the fe
 
 **Stop immediately on any guard failure** — do not continue to later steps.
 
+## Autonomous mode
+
+When the release runbook invokes this entry in autonomous mode, apply Step 5 mechanical fixes, but do not apply suggested user-facing rewrites. Include each suggestion in the report for the P4 review. In Step 7, add the notification without asking. Missing or invalid notification JSON is a STOP. If its release ID already exists, compare `version`, `summary`, `body`, `date`, and `linkUrl` with the entry that would be generated; continue only if all match, otherwise STOP and report the mismatches. Interactive mode retains the questions and edge cases below.
+
 ---
 
 ## Step 1 — CHANGELOG version check
@@ -125,7 +129,7 @@ Read `docs/todo/TODO.md`. Find all top-level `- [x]` items **and** their indente
 
 2. **Mechanical style-guide violations** (em dashes used as connectors, prohibited filler phrases, emoji, 3+ consecutive sentences with identical grammatical structure, passive voice where active reads naturally, missing Oxford comma, semicolon misuse): fix directly in `CHANGELOG.md`. Preserve meaning and existing Markdown formatting (bold lead-in, sub-bullets, links, `(TODO-XXXX)`/issue references). List each fix in the completion report as `before → after` (a short form is fine for long entries).
 
-3. **Internal/implementation-detail language** (internal file names, function/hook names, code-level mechanism names presented as the user-facing explanation, dev-only jargon) that isn't appropriate for an end user reading release notes: do **not** rewrite silently. Collect every instance with a suggested user-facing rewrite and present them together via the question tool, batched (same pattern as Step 7's "ask user" question — not a hard STOP):
+3. **Internal/implementation-detail language** (internal file names, function/hook names, code-level mechanism names presented as the user-facing explanation, dev-only jargon) that isn't appropriate for an end user reading release notes: do **not** rewrite silently. Collect every instance with a suggested user-facing rewrite. In autonomous mode, report these without applying them; otherwise present them together via the question tool, batched (same pattern as Step 7's "ask user" question — not a hard STOP):
    - **Question:** "Apply N suggested rewrites for user-facing language?"
    - Frame each suggested rewrite as its own accept/skip item within that one question.
    - Apply only the rewrites the user accepts.
@@ -133,7 +137,7 @@ Read `docs/todo/TODO.md`. Find all top-level `- [x]` items **and** their indente
 
 4. **No violations found:** note "no style/tone issues found" in the completion report and continue — don't fabricate a question prompt.
 
-5. **Never a hard stop.** Once mechanical fixes are applied and the user has responded to any suggested rewrites (accepted or skipped), continue to Step 6 using the now-current `CHANGELOG.md` content.
+5. **Never a hard stop.** Once mechanical fixes are applied and any interactive suggestions answered, continue to Step 6 using the now-current `CHANGELOG.md` content. In autonomous mode include the unapplied suggestions in the report.
 
 ---
 
@@ -160,7 +164,7 @@ Read `docs/todo/TODO.md`. Find all top-level `- [x]` items **and** their indente
 
 ## Step 7 — Add release notification (ask user)
 
-Before stamping the CHANGELOG, ask the user whether they want to add a release notification to `public/notifications.json`. Use the question tool:
+Before stamping the CHANGELOG, in autonomous mode add the release notification as described below. Otherwise ask the user whether they want to add a release notification to `public/notifications.json`. Use the question tool:
 
 - **Question:** "Add a release notification for vX.Y.Z to public/notifications.json?"
 - **Options:**
@@ -198,8 +202,8 @@ Before stamping the CHANGELOG, ask the user whether they want to add a release n
 **If the user chooses "No, skip":** do nothing and proceed to Step 8.
 
 **Edge cases:**
-- If `public/notifications.json` is missing or cannot be parsed: note the error and skip (do not block the release).
-- If an entry with the same `id` already exists: warn the user and skip (do not create a duplicate).
+- If `public/notifications.json` is missing or cannot be parsed: in autonomous mode STOP; otherwise note the error and skip.
+- If an entry with the same `id` already exists: in autonomous mode compare the fields specified above and STOP on mismatch; otherwise warn and skip. Never create a duplicate.
 
 ---
 
@@ -250,8 +254,8 @@ Also remind the user to:
 | No checked TODO items | Note it, continue |
 | Style/tone review finds no issues | Note it, continue |
 | `latest-changelog.md` already exists | Overwrite silently |
-| Notification with same id already exists | Warn, skip adding |
-| `public/notifications.json` missing/unparseable | Note error, skip adding |
+| Notification with same id already exists | Autonomous: compare fields, STOP on mismatch; interactive: warn and skip |
+| `public/notifications.json` missing/unparseable | Autonomous: STOP; interactive: note error and skip |
 | CHANGELOG section missing/empty | Omit that section heading from output |
 | User skips release notification | Note it, continue |
 | Lockfile integrity check fails (Step 3b) | STOP — tell user to run `npm install --package-lock-only --ignore-scripts --legacy-peer-deps` |

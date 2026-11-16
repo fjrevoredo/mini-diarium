@@ -20,7 +20,7 @@ Before starting the release process:
 - [ ] CHANGELOG.md updated with release notes
 - [ ] Run `bun run sync-languages` — regenerate the language list in README.md and website/index.html
 - [ ] `public/notifications.json` updated — add a new entry (type `"release"`, today's date, version matching the tag) so users see the release notes in the notification center
-- [ ] Create `latest-changelog.md` from `latest-changelog.example.md` and fill it with the exact release body to publish
+- [ ] Create `latest-changelog.md` from `latest-changelog.template.md` and fill it with the exact release body to publish
 - [ ] Philosophy alignment reviewed for unreleased changelog items against `PHILOSOPHY.md`
   - Confirm each unreleased `CHANGELOG.md` item still fits the six philosophy principles: core vs extension, security impact, testability, portability, focused scope, and simplicity cost
   - If any item introduces a tradeoff or drift risk, record it explicitly in the release PR description or a dedicated audit note before tagging the release
@@ -131,7 +131,7 @@ This automatically updates:
 Create `latest-changelog.md` from the template and replace all placeholder text:
 
 ```bash
-cp latest-changelog.example.md latest-changelog.md
+cp latest-changelog.template.md latest-changelog.md
 ```
 
 The workflow publishes this file verbatim as the GitHub release body, so it must contain the exact notes you want users and WinGet to receive.
@@ -302,7 +302,7 @@ git checkout master && git pull && git checkout -b release-X.Y.Z
 ./bump-version.sh X.Y.Z
 
 # 3. Create release notes from the template
-cp latest-changelog.example.md latest-changelog.md
+cp latest-changelog.template.md latest-changelog.md
 
 # 4. Commit and push branch
 git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml Cargo.lock website/index.html README.md data/linux/io.github.fjrevoredo.mini-diarium.metainfo.xml latest-changelog.md
@@ -329,7 +329,7 @@ git checkout master; git pull; git checkout -b release-X.Y.Z
 .\bump-version.ps1 X.Y.Z
 
 # 3. Create release notes from the template
-Copy-Item latest-changelog.example.md latest-changelog.md
+Copy-Item latest-changelog.template.md latest-changelog.md
 
 # 4. Commit and push branch
 git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml Cargo.lock website/index.html README.md data/linux/io.github.fjrevoredo.mini-diarium.metainfo.xml latest-changelog.md
@@ -365,7 +365,7 @@ The following happens automatically when you push a tag:
 You only need to:
 
 1. Bump version
-2. Create and commit `latest-changelog.md` from `latest-changelog.example.md`
+2. Create and commit `latest-changelog.md` from `latest-changelog.template.md`
 3. Push tag
 4. Verify the published release and merge the cleanup PR
 
