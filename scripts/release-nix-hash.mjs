@@ -32,7 +32,8 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     if (result.state !== 'stale-hash') throw new Error('Refusing to apply without a stale-hash result');
     const path = 'nix/package.nix';
     writeFileSync(path, applyHash(readFileSync(path, 'utf8'), result.hash));
+    result = { ...result, state: 'applied; CI recheck required' };
   }
   console.log(args.includes('--json') ? JSON.stringify(result) : `Nix: ${result.state}${result.hash ? ` (${result.hash})` : ''}${result.id ? ` run ${result.id}` : ''}`);
-  if (result.state !== 'green') process.exitCode = 1;
+  if (result.state !== 'green' && result.state !== 'applied; CI recheck required') process.exitCode = 1;
 }

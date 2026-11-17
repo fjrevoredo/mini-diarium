@@ -25,7 +25,7 @@ Inspect local and remote state before choosing a phase. Verify the outputs of ev
 
 ## P0 — Preflight
 
-Run `bun run release:preflight -- --version X.Y.Z`. Stop if any check fails. Review the reported unreleased changes, open P0/P1/bug issues, and known channel blockers for P4. The push identity must be verified separately from `gh` authentication. Record the exact HEAD and remote SHA.
+Run `bun run release:preflight -- --version X.Y.Z`. Stop if any check fails. Review the reported unreleased changes, open P0/P1/bug issues, and known channel blockers for P4. The push identity must be verified separately from `gh` authentication; HTTPS push credentials cannot currently be verified, so use a verified SSH push remote. Record the exact HEAD and remote SHA.
 
 ## P1 — Bump
 
@@ -55,4 +55,4 @@ Ask the maintainer to redeploy Coolify. Run `bun run release:verify -- --version
 
 ## P6 — Channels and report
 
-Run `bun run release:channels -- --version X.Y.Z`. Report GitHub, website, Homebrew, WinGet, Flathub, and Store as available, submitted / awaiting external review, awaiting maintainer, or failed, with evidence and run IDs. Store workflow status alone is not proof of publication; require Partner Center or public listing confirmation. Include skipped rewrites, failures, cleanup and Flathub PRs, and remaining smoke tests, announcements, Search Console, issues, and milestones.
+Run `bun run release:channels -- --version X.Y.Z`. Runs without an explicit tag marker, including older runs, have unknown association and require manual investigation; do not infer that a dispatch is missing. Report GitHub, website, Homebrew, WinGet, Flathub, and Store as available, submitted / awaiting external review, awaiting maintainer, or failed, with evidence and run IDs. Store workflow status alone is not proof of publication; require Partner Center or public listing confirmation. Include skipped rewrites, failures, cleanup and Flathub PRs, and remaining smoke tests, announcements, Search Console, issues, and milestones.

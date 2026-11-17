@@ -25,6 +25,7 @@ jobs:
         run: |
           # On workflow_dispatch use the input; on release use the ref tag
           TAG="${{ github.event.inputs.tag || github.ref_name }}"
+          echo "RELEASE_AUTOMATION_TAG=$TAG"
 
           # Strip leading 'v' for the version string and asset name
           VERSION="${TAG#v}"

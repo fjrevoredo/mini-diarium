@@ -39,13 +39,15 @@ check('push authority', () => {
   const remote = run('git', ['remote', 'get-url', '--push', 'origin']);
   let login;
   if (/^https:\/\/github\.com\//i.test(remote)) {
-    const credentials = run('git', ['credential', 'fill'], { input: 'protocol=https\nhost=github.com\n\n' });
-    login = credentials.match(/^username=(.+)$/m)?.[1];
+    // A helper username does not identify the token owner. Refuse to infer it.
+    throw new Error('HTTPS push credential identity cannot be verified; use a verified SSH push remote');
   } else if (/^(?:git@github\.com:|ssh:\/\/git@github\.com\/)/i.test(remote)) {
     let configured = '';
     try { configured = run('git', ['config', '--get', 'core.sshCommand']); } catch { /* Git default */ }
     const command = process.env.GIT_SSH_COMMAND || configured || 'ssh';
-    const result = spawnSync('sh', ['-c', `${command} -T git@github.com`], { encoding: 'utf8', timeout: 15000 });
+    const result = command === 'ssh'
+      ? spawnSync('ssh', ['-T', 'git@github.com'], { encoding: 'utf8', timeout: 15000 })
+      : spawnSync('sh', ['-c', `${command} -T git@github.com`], { encoding: 'utf8', timeout: 15000 });
     login = `${result.stdout ?? ''}\n${result.stderr ?? ''}`.match(/Hi ([A-Za-z0-9-]+)!/i)?.[1];
   } else throw new Error('non-GitHub push principal is unverifiable');
   requireValue(login && login !== 'x-access-token', 'credential helper login is unverifiable');

@@ -25,6 +25,7 @@ jobs:
         id: prep
         run: |
           tag="${{ inputs.tag || github.event.release.tag_name || github.ref_name }}"
+          echo "RELEASE_AUTOMATION_TAG=$tag"
           version="${tag#v}"
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
           echo "version=$version" >> "$GITHUB_OUTPUT"

@@ -73,6 +73,7 @@ jobs:
           INPUT_DRY_RUN_VERSION: ${{ inputs.dry_run_version }}
         run: |
           $tag = $env:INPUT_TAG
+          Write-Host "RELEASE_AUTOMATION_TAG=$tag"
           # Real release: `tag` is a vX.Y.Z release tag, so derive the version from it.
           # Dry run: `tag` is a branch (which has the msix/ tooling) and a branch name is
           # not a version, so `dry_run_version` supplies it explicitly.

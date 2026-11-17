@@ -1,6 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { storeState, prState } from './release-channels.mjs';
+import { storeState, prState, runTag, runDetail } from './release-channels.mjs';
+
+test('dispatch association uses an exact explicit marker and reports failures', () => {
+  assert.equal(runTag('step 2026-01-01 RELEASE_AUTOMATION_TAG=v0.6.20\n'), 'v0.6.20');
+  assert.equal(runTag('unrelated v0.6.2'), null);
+  assert.equal(runTag('RELEASE_AUTOMATION_TAG=v0.6.2\nRELEASE_AUTOMATION_TAG=v0.6.20'), null);
+  assert.match(runDetail({ status: 'completed', conclusion: 'failure', databaseId: 1 }), /^failed/);
+});
 
 test('historical Store certification is only submitted', () => {
   const run = { status: 'completed', conclusion: 'success' };

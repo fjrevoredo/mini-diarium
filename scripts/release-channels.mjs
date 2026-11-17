@@ -14,6 +14,16 @@ export function prState(pr, availableWhenMerged = false) {
   return pr.state === 'OPEN' ? 'submitted / awaiting external review' : 'failed';
 }
 
+export function runTag(log) {
+  const tags = log.split(/\r?\n/).map((line) => line.match(/\bRELEASE_AUTOMATION_TAG=(v\d+\.\d+\.\d+)\s*$/)?.[1]).filter(Boolean);
+  return tags.length && tags.every((tag) => tag === tags[0]) ? tags[0] : null;
+}
+
+export function runDetail(item) {
+  if (item.status !== 'completed') return `submitted / awaiting external review run ${item.databaseId}`;
+  return `${item.conclusion === 'success' ? 'completed' : 'failed'}: run ${item.databaseId}: ${item.conclusion}`;
+}
+
 async function main() {
   const args = process.argv.slice(2);
   if (args.includes('--help')) { console.log('Usage: release-channels.mjs --version X.Y.Z [--json]'); return; }
@@ -29,7 +39,12 @@ async function main() {
     for (const item of runs) {
       if (item.status !== 'completed') { unresolved = true; continue; }
       let log; try { log = run('gh', ['run', 'view', String(item.databaseId), '--log']); } catch { unresolved = true; continue; }
-      if (log.includes(tag)) return { item, log };
+      const observed = runTag(log);
+      if (observed === tag) {
+        if (unresolved) throw new Error('a newer dispatch run could not be inspected; tag association is unknown');
+        return { item, log };
+      }
+      if (!observed) unresolved = true;
     }
     if (unresolved) throw new Error('one or more dispatch runs could not be inspected; tag association is unknown');
     return null;
@@ -56,7 +71,7 @@ async function main() {
     return `${JSON.stringify(data.releases ?? []).includes(`"${version}"`) ? 'available' : 'submitted / awaiting external review'} ${pr.url}`;
   });
   await attempt('Store', () => { const found = findRun('msstore-publish.yml'); return `${storeState(found?.item, found?.log ?? '')}${found ? ` run ${found.item.databaseId}` : ''}`; });
-  for (const [name, workflow] of [['Homebrew run', 'homebrew-cask.yml'], ['WinGet run', 'winget-publish.yml'], ['Flathub run', 'flathub-publish.yml']]) await attempt(name, () => { const found = findRun(workflow); return found ? `run ${found.item.databaseId}: ${found.item.conclusion}` : 'awaiting maintainer: no matching run found'; });
+  for (const [name, workflow] of [['Homebrew run', 'homebrew-cask.yml'], ['WinGet run', 'winget-publish.yml'], ['Flathub run', 'flathub-publish.yml']]) await attempt(name, () => { const found = findRun(workflow); return found ? runDetail(found.item) : 'awaiting maintainer: no matching run found'; });
   await attempt('cleanup PR', () => { const prs = json('gh', ['pr', 'list', '--state', 'all', '--search', `"clear latest changelog after ${tag}"`, '--json', 'title,url,state']); const pr = prs.find((item) => item.title.includes(tag)); return pr ? `${pr.state} ${pr.url}` : 'awaiting maintainer: not found'; });
   report(results, args.includes('--json'));
 }
