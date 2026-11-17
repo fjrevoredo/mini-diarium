@@ -19,13 +19,13 @@ Written by `plan-status.py resume`; do not edit by hand. Restart prompt: "Contin
 its Resume block". Stop: done | ask | gate | question | context | limit.
 -->
 
-- Updated: 2026-11-17 22:00 UTC
-- State: 0.8.1 requested and Store Submission 12 published. Bootstrap is next after committing review and ctutils fixes; use native SSH with GIT_SSH_COMMAND=ssh for verified push identity.
-- Green / Red: Frontend 1325 tests; scripts 96; workspace tests, type-check, lint, build, formatting, runner guard and cargo audit pass.
+- Updated: 2026-11-17 23:19 UTC
+- State: Bootstrap deployed and verified, P0 passed on fb394f0. Version 0.8.1 bumped and dated; release notes and notification prepared; tests underway. Nix hash follows release commit through CI.
+- Green / Red: CI bootstrap passed; type-check, lint, locales, scripts, frontend 1325 and npm production audit passed.
 - Next runnable: 5.2
 - Live environment: none
-- Next IDs: Task 5.3; DEC-013
-- Risks: Bootstrap requires CI and Coolify redeploy; tag approval and fresh no-pending-Store confirmation required. Cargo audit has 12 allowed warnings; historical channel logs may be ambiguous.
+- Next IDs: Task 5.3; DEC-015
+- Risks: Do not redeploy website on release commit before the tag exists. Nix and CI must pass on final SHA; tag push requires approval and no pending Store submission.
 - Stop: gate
 
 ## Context For A Clean Session
@@ -741,6 +741,20 @@ No entries yet.
 - Task: 5.2
 - Decision: Invoke ssh directly for the default command and use an SSH push URL for release verification.
 - Rationale: Windows preflight could not launch sh even though native SSH authenticated; HTTPS credential usernames cannot establish token ownership.
+
+### DEC-013 — Coolify deployment remains manual
+
+- Date: 2026-11-17
+- Task: 5.2
+- Decision: Retain the maintainer-triggered Coolify deployments for this release and record automated deployment as a follow-up gap.
+- Rationale: The available agent account can reach the VPS but has no verified deployment access or Coolify connector; the live site still serves latest download links. A future narrowly scoped deployment mechanism should trigger the correct application and verify the deployed SHA and live links.
+
+### DEC-014 — Preserve tracked plan notes during preflight
+
+- Date: 2026-11-18
+- Task: 5.2
+- Decision: Temporarily stash only the two modified plan files for clean-tree preflight and restore them immediately afterward.
+- Rationale: The plan and notes are tracked and must be preserved, while preflight verifies the unchanged CI-tested bootstrap commit.
 
 ## Final Verification
 
