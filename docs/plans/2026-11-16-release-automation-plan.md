@@ -19,13 +19,13 @@ Written by `plan-status.py resume`; do not edit by hand. Restart prompt: "Contin
 its Resume block". Stop: done | ask | gate | question | context | limit.
 -->
 
-- Updated: 2026-11-16 22:58 UTC
-- State: Milestones 1-4 implemented and verified; release gate remains. Cargo audit reports RUSTSEC-2026-0385 in ctutils 0.4.2.
-- Green / Red: 94 script tests pass; lint passes with seven existing warnings; v0.8.0 assets and checksums verify.
-- Next runnable: 5.1
+- Updated: 2026-11-17 22:00 UTC
+- State: 0.8.1 requested and Store Submission 12 published. Bootstrap is next after committing review and ctutils fixes; use native SSH with GIT_SSH_COMMAND=ssh for verified push identity.
+- Green / Red: Frontend 1325 tests; scripts 96; workspace tests, type-check, lint, build, formatting, runner guard and cargo audit pass.
+- Next runnable: 5.2
 - Live environment: none
-- Next IDs: Task 6.3; DEC-010
-- Risks: Explicit release 0.8.1 request and Store Submission 12 confirmation required; cargo audit vulnerability blocks preflight. Published v0.8.0 has an extra SourceForge badge.
+- Next IDs: Task 5.3; DEC-013
+- Risks: Bootstrap requires CI and Coolify redeploy; tag approval and fresh no-pending-Store confirmation required. Cargo audit has 12 allowed warnings; historical channel logs may be ambiguous.
 - Stop: gate
 
 ## Context For A Clean Session
@@ -569,7 +569,7 @@ v0.8.0; implementation commits per milestone without push.
 
 #### Task 5.1: Gate — Ready To Release 0.8.1
 
-- Status: TO BE DONE
+- Status: COMPLETED
 - Depends On: 1.4, 2.4, 3.7, 4.3
 - Objective: The maintainer confirms that Store Submission 12 is published and asks for
   "release 0.8.1".
@@ -580,7 +580,7 @@ v0.8.0; implementation commits per milestone without push.
 
 #### Task 5.2: Run The release Runbook For 0.8.1
 
-- Status: TO BE DONE
+- Status: IN PROGRESS
 - Depends On: 5.1
 - Objective: v0.8.1 is released by the runbook with both stops respected.
 - Steps:
@@ -720,6 +720,27 @@ No entries yet.
 - Task: 3.6
 - Decision: Keep the release preflight failing and report advisory IDs; do not change dependencies in the automation milestone.
 - Rationale: Current Cargo.lock contains ctutils 0.4.2 affected by RUSTSEC-2026-0385; dependency remediation is outside this plan and must be resolved before release.
+
+### DEC-010 — Review findings and conservative verification
+
+- Date: 2026-11-17
+- Task: 5.1
+- Decision: Harden channel association and status, fail closed for HTTPS push identity, correct Nix apply status, and validate complete asset URLs.
+- Rationale: Independent review identified release-blocking false positives; older dispatch logs without markers require manual investigation and SSH is required for verified push identity.
+
+### DEC-011 — Remediate ctutils advisory
+
+- Date: 2026-11-17
+- Task: 5.1
+- Decision: Update the locked ctutils dependency from 0.4.2 to 0.4.4 before release.
+- Rationale: RUSTSEC-2026-0385 affects the cryptographic dependency graph and identifies 0.4.4 as patched; cargo audit now exits successfully.
+
+### DEC-012 — Use native SSH for default push verification
+
+- Date: 2026-11-17
+- Task: 5.2
+- Decision: Invoke ssh directly for the default command and use an SSH push URL for release verification.
+- Rationale: Windows preflight could not launch sh even though native SSH authenticated; HTTPS credential usernames cannot establish token ownership.
 
 ## Final Verification
 
