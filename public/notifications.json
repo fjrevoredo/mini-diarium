@@ -1,6 +1,17 @@
 {
   "entries": [
     {
+      "id": "v0.8.1-release",
+      "type": "release",
+      "version": "0.8.1",
+      "title": "What's new in 0.8.1",
+      "summary": "Fenmark now offers a Japanese interface and native menus. The Linux Flatpak does not include a Japanese spell-check dictionary.",
+      "body": "Fenmark now offers a Japanese interface and native menus. The Linux Flatpak does not include a Japanese spell-check dictionary.",
+      "date": "2026-11-18",
+      "linkUrl": "https://github.com/fjrevoredo/mini-diarium/releases/tag/v0.8.1",
+      "linkLabel": "Full release notes"
+    },
+    {
       "id": "announcement-renamed-fenmark",
       "type": "announcement",
       "version": "0.8.0",
