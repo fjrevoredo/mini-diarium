@@ -513,10 +513,16 @@ jobs:
       - name: Validate AppStream metainfo
         run: appstreamcli validate data/linux/io.github.fjrevoredo.mini-diarium.metainfo.xml
 
-      # The pinned flatpak-builder action installs runtime/SDK dependencies itself,
-      # once, with no retry — so a transient dl.flathub.org hiccup fails the whole
-      # job. Pre-install them here with backoff instead; flatpak-builder then finds
-      # every ref already installed and skips its own install entirely.
+      # The builder updates existing SDK deployments. Use a fresh installation on
+      # the runner mount to avoid EXDEV when updating directories baked into the image.
+      - name: Initialize Flatpak system installation
+        run: |
+          FLATPAK_SYSTEM_DIR="$(mktemp -d "$RUNNER_TEMP/flatpak-system.XXXXXX")"
+          export FLATPAK_SYSTEM_DIR
+          flatpak --system remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+          echo "FLATPAK_SYSTEM_DIR=$FLATPAK_SYSTEM_DIR" >> "$GITHUB_ENV"
+
+      # Install the dependencies with backoff before the builder checks for updates.
       - name: Pre-install Flatpak SDK dependencies (retry with backoff)
         run: |
           REFS="runtime/org.gnome.Platform/x86_64/50 \
@@ -536,7 +542,7 @@ jobs:
             fi
             attempt=$((attempt + 1))
           done
-          echo "All 5 install attempts failed; see https://dl.flathub.org availability" >&2
+          echo "Flatpak SDK dependency installation failed after 5 attempts" >&2
           exit 1
 
       - uses: flatpak/flatpak-github-actions/flatpak-builder@79327416609af08178ad73b352877e51450790b3 # v6
