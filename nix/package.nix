@@ -60,7 +60,7 @@ let
     # Refresh this whenever package-lock.json changes:
     #   nix run nixpkgs#prefetch-npm-deps -- package-lock.json
     # or copy the hash from the error annotation of the failing Nix CI run.
-    npmDepsHash = "sha256-Nr1GAK6Ha/u5oAfTkF5sth8fVdsWeDJwgwrpGLO77jw=";
+    npmDepsHash = "sha256-jOQeffNZfGxG8CnbXZwSR2/1DmWodvW1il9GxtKHv6k=";
 
     # The repo pins peer-dependency overrides; npm needs the legacy resolver.
     npmFlags = [ "--legacy-peer-deps" ];
