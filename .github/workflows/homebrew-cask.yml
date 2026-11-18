@@ -17,9 +17,6 @@ jobs:
     runs-on: macos-latest
 
     steps:
-      - name: Checkout app repo
-        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
       - name: Determine version and asset
         id: info
         run: |
@@ -53,12 +50,17 @@ jobs:
           SHA256=$(shasum -a 256 "$ASSET_NAME" | awk '{print $1}')
           echo "sha256=$SHA256" >> "$GITHUB_OUTPUT"
 
-      - name: Clone Homebrew tap and update cask
-        env:
-          GH_PAT: ${{ secrets.GH_PAT }}
+      - name: Checkout Homebrew tap
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: fjrevoredo/homebrew-mini-diarium
+          ref: main
+          token: ${{ secrets.GH_PAT }}
+          path: homebrew-mini-diarium
+
+      - name: Update Homebrew cask
+        working-directory: homebrew-mini-diarium
         run: |
-          git clone "https://$GH_PAT@github.com/fjrevoredo/homebrew-mini-diarium.git"
-          cd homebrew-mini-diarium
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
@@ -78,5 +80,9 @@ jobs:
           rm "$FILE.bak"
 
           git add "$FILE"
+          if git diff --cached --quiet; then
+            echo "Cask is already current for $VERSION"
+            exit 0
+          fi
           git commit -m "mini-diarium ${VERSION}"
           git push
