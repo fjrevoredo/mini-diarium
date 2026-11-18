@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1794984383121,
+  "lastUpdate": 1795004522572,
   "repoUrl": "https://github.com/fjrevoredo/mini-diarium",
   "entries": {
     "Benchmark": [
@@ -40240,6 +40240,36 @@ window.BENCHMARK_DATA = {
           {
             "name": "ci_pipeline_duration",
             "value": 586000000000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "committer": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "distinct": true,
+          "id": "ce40d62acd40f23aa444a29b1dac72b46720f97b",
+          "message": "fix(ci): authenticate Homebrew tap checkout explicitly",
+          "timestamp": "2026-11-18T13:13:26+01:00",
+          "tree_id": "36e3992670f468880b192b00cc539afe590dc7c9",
+          "url": "https://github.com/fjrevoredo/mini-diarium/commit/ce40d62acd40f23aa444a29b1dac72b46720f97b"
+        },
+        "date": 1795004521204,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "ci_pipeline_duration",
+            "value": 504000000000,
             "range": "± 0",
             "unit": "ns/iter"
           }
