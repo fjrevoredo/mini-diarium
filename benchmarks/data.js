@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1794958140573,
+  "lastUpdate": 1794984383121,
   "repoUrl": "https://github.com/fjrevoredo/mini-diarium",
   "entries": {
     "Benchmark": [
@@ -40210,6 +40210,36 @@ window.BENCHMARK_DATA = {
           {
             "name": "ci_pipeline_duration",
             "value": 543000000000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "committer": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "distinct": true,
+          "id": "b07b1d9e0ac67efbb06de0b45453d23158f50e19",
+          "message": "fix(ci): isolate Flatpak SDK installation from container layers",
+          "timestamp": "2026-11-18T07:36:24+01:00",
+          "tree_id": "5521bf70925965291585c5cba12a69dadef0eba7",
+          "url": "https://github.com/fjrevoredo/mini-diarium/commit/b07b1d9e0ac67efbb06de0b45453d23158f50e19"
+        },
+        "date": 1794984381544,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "ci_pipeline_duration",
+            "value": 586000000000,
             "range": "± 0",
             "unit": "ns/iter"
           }
