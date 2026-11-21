@@ -34,6 +34,11 @@ Template:
 
 # Versions
 
+## [0.8.2] - Unreleased
+
+### Internal
+- **Dependency updates (Dependabot [#376](https://github.com/fjrevoredo/mini-diarium/pull/376), [#377](https://github.com/fjrevoredo/mini-diarium/pull/377), [#379](https://github.com/fjrevoredo/mini-diarium/pull/379), [#380](https://github.com/fjrevoredo/mini-diarium/pull/380))**: Update the nine `@tiptap/*` packages to 3.33.0 and the development toolchain to `vitest` 5.1.1, WebdriverIO 10.2.0, `jsdom` 31, `eslint-plugin-solid` 0.19, `@playwright/test` 1.65, and `undici` 8.13. Both npm lockfiles and the Playwright CI pins move together. Also update the `Swatinem/rust-cache` and `softprops/action-gh-release` action pins.
+
 ## [0.8.1] - 18-11-2026
 
 ### Added
