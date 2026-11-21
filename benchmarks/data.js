@@ -1,5 +1,5 @@
 window.BENCHMARK_DATA = {
-  "lastUpdate": 1795263807438,
+  "lastUpdate": 1795266069952,
   "repoUrl": "https://github.com/fjrevoredo/mini-diarium",
   "entries": {
     "Benchmark": [
@@ -40450,6 +40450,36 @@ window.BENCHMARK_DATA = {
           {
             "name": "ci_pipeline_duration",
             "value": 557000000000,
+            "range": "± 0",
+            "unit": "ns/iter"
+          }
+        ]
+      },
+      {
+        "commit": {
+          "author": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "committer": {
+            "email": "fjrevoredo@gmail.com",
+            "name": "Francisco J. Revoredo",
+            "username": "fjrevoredo"
+          },
+          "distinct": true,
+          "id": "fae0e3c643a0de16cacb8dd474bd5fa486fd096f",
+          "message": "fix(release): select ssh and sh from trusted absolute paths\n\nResolve javascript:S4036. The push identity check no longer searches PATH for ssh or sh; a nonstandard installation sets MINI_DIARIUM_SSH_EXECUTABLE or MINI_DIARIUM_SH_EXECUTABLE.",
+          "timestamp": "2026-11-21T13:50:19+01:00",
+          "tree_id": "ce7361d4510c9db4f4a636899ce181c9f5755605",
+          "url": "https://github.com/fjrevoredo/mini-diarium/commit/fae0e3c643a0de16cacb8dd474bd5fa486fd096f"
+        },
+        "date": 1795266068608,
+        "tool": "cargo",
+        "benches": [
+          {
+            "name": "ci_pipeline_duration",
+            "value": 638000000000,
             "range": "± 0",
             "unit": "ns/iter"
           }
