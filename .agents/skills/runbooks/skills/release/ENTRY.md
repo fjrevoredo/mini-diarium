@@ -25,7 +25,7 @@ Inspect local and remote state before choosing a phase. Verify the outputs of ev
 
 ## P0 — Preflight
 
-Run `bun run release:preflight -- --version X.Y.Z`. Stop if any check fails. Review the reported unreleased changes, open P0/P1/bug issues, and known channel blockers for P4. The push identity must be verified separately from `gh` authentication; HTTPS push credentials cannot currently be verified, so use a verified SSH push remote. Record the exact HEAD and remote SHA.
+Run `bun run release:preflight -- --version X.Y.Z`. Stop if any check fails. Review the reported unreleased changes, open P0/P1/bug issues, and known channel blockers for P4. The push identity must be verified separately from `gh` authentication; HTTPS push credentials cannot currently be verified, so use a verified SSH push remote. The push identity check runs `ssh` and `sh` only from trusted absolute paths (`C:\Windows\System32\OpenSSH\ssh.exe` and `C:\Program Files\Git\bin\sh.exe` on Windows, `/usr/bin/ssh` and `/bin/sh` elsewhere); a nonstandard installation sets `MINI_DIARIUM_SSH_EXECUTABLE` and `MINI_DIARIUM_SH_EXECUTABLE` to absolute paths. Record the exact HEAD and remote SHA.
 
 ## P1 — Bump
 

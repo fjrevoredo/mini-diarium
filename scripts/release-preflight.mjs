@@ -1,6 +1,7 @@
 import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
-import { run, json, unreleased, report, workflowState, missingSecrets, adminBypass } from './release-lib.mjs';
+import { run, json, unreleased, report, workflowState, missingSecrets, adminBypass, trustedExecutable } from './release-lib.mjs';
 
 const args = process.argv.slice(2);
 if (args.includes('--help')) {
@@ -45,9 +46,16 @@ check('push authority', () => {
     let configured = '';
     try { configured = run('git', ['config', '--get', 'core.sshCommand']); } catch { /* Git default */ }
     const command = process.env.GIT_SSH_COMMAND || configured || 'ssh';
+    const windows = process.platform === 'win32';
+    const defaultSsh = windows
+      ? join(process.env.SystemRoot ?? 'C:\\Windows', 'System32', 'OpenSSH', 'ssh.exe')
+      : '/usr/bin/ssh';
+    const defaultSh = windows
+      ? join(process.env.ProgramFiles ?? 'C:\\Program Files', 'Git', 'bin', 'sh.exe')
+      : '/bin/sh';
     const result = command === 'ssh'
-      ? spawnSync('ssh', ['-T', 'git@github.com'], { encoding: 'utf8', timeout: 15000 })
-      : spawnSync('sh', ['-c', `${command} -T git@github.com`], { encoding: 'utf8', timeout: 15000 });
+      ? spawnSync(trustedExecutable(process.env.MINI_DIARIUM_SSH_EXECUTABLE, defaultSsh), ['-T', 'git@github.com'], { encoding: 'utf8', timeout: 15000 })
+      : spawnSync(trustedExecutable(process.env.MINI_DIARIUM_SH_EXECUTABLE, defaultSh), ['-c', `${command} -T git@github.com`], { encoding: 'utf8', timeout: 15000 });
     login = `${result.stdout ?? ''}\n${result.stderr ?? ''}`.match(/Hi ([A-Za-z0-9-]+)!/i)?.[1];
   } else throw new Error('non-GitHub push principal is unverifiable');
   requireValue(login && login !== 'x-access-token', 'credential helper login is unverifiable');

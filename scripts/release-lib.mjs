@@ -1,7 +1,25 @@
 import { execFileSync } from 'node:child_process';
+import { existsSync } from 'node:fs';
+import { isAbsolute } from 'node:path';
 
 export function run(command, args, options = {}) {
   return execFileSync(command, args, { encoding: 'utf8', stdio: ['pipe', 'pipe', 'pipe'], maxBuffer: 32 * 1024 * 1024, ...options }).trim();
+}
+
+/**
+ * Selects a trusted executable by absolute path. Never searches the caller's
+ * PATH: a writable PATH entry could substitute a different binary. A
+ * nonstandard installation must pass an explicit override.
+ */
+export function trustedExecutable(override, defaultPath) {
+  const executable = override ?? defaultPath;
+  if (typeof executable !== 'string' || executable.includes('\0') || !isAbsolute(executable)) {
+    throw new Error('trusted executable must be a fully qualified absolute path');
+  }
+  if (!existsSync(executable)) {
+    throw new Error(`trusted executable not found at ${executable}`);
+  }
+  return executable;
 }
 
 export function json(command, args) {

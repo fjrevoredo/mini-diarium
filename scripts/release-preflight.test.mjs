@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { workflowState, missingSecrets, adminBypass } from './release-lib.mjs';
+import { workflowState, missingSecrets, adminBypass, trustedExecutable } from './release-lib.mjs';
 
 test('uses the latest matching SHA and fails closed for incomplete runs', () => {
   const runs = [{ headSha: 'a', status: 'in_progress', conclusion: null }, { headSha: 'a', status: 'completed', conclusion: 'success' }];
@@ -19,4 +19,15 @@ test('only accepts a verified admin bypass on master', () => {
 
 test('finds missing secret names in gh output', () => {
   assert.deepEqual(missingSecrets('ONE\t2026-01-01\nTWO\t2026-01-01', ['ONE', 'THREE']), ['THREE']);
+});
+
+test('only accepts a trusted absolute executable, never PATH', () => {
+  const existing = process.execPath;
+  assert.equal(trustedExecutable(existing, '/usr/bin/ssh'), existing);
+  assert.equal(trustedExecutable(null, existing), existing);
+  assert.throws(() => trustedExecutable('ssh', existing), /fully qualified absolute path/);
+  assert.throws(() => trustedExecutable('./ssh', existing), /fully qualified absolute path/);
+  assert.throws(() => trustedExecutable(null, 'ssh'), /fully qualified absolute path/);
+  assert.throws(() => trustedExecutable(null, `${existing}\0`), /fully qualified absolute path/);
+  assert.throws(() => trustedExecutable(null, '/definitely/not/a/real/ssh'), /not found/);
 });

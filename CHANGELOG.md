@@ -38,6 +38,7 @@ Template:
 
 ### Internal
 - **Dependency updates (Dependabot [#376](https://github.com/fjrevoredo/mini-diarium/pull/376), [#377](https://github.com/fjrevoredo/mini-diarium/pull/377), [#379](https://github.com/fjrevoredo/mini-diarium/pull/379), [#380](https://github.com/fjrevoredo/mini-diarium/pull/380), [#383](https://github.com/fjrevoredo/mini-diarium/pull/383), [#384](https://github.com/fjrevoredo/mini-diarium/pull/384))**: Update the nine `@tiptap/*` packages to 3.34.0 and the runtime packages `solid-js` 1.9.20, `lucide-solid` 1.77, and `marked` 18.2.1. Update the development toolchain to `vitest`/`@vitest/*` 5.1.1, WebdriverIO 10.2.0, `jsdom` 31, `eslint-plugin-solid` 0.19, `eslint` 10.15, `prettier` 3.10.1, UnoCSS 66.13, `vite` 8.3.8, `@playwright/test` 1.65, and `undici` 8.13. Both npm lockfiles and the Playwright CI pins move together. Also update the `Swatinem/rust-cache` and `softprops/action-gh-release` action pins.
+- **Release preflight security check**: The push identity check selects `ssh` and `sh` only from trusted absolute paths instead of the caller's `PATH`. A nonstandard installation sets `MINI_DIARIUM_SSH_EXECUTABLE` or `MINI_DIARIUM_SH_EXECUTABLE`.
 
 ## [0.8.1] - 18-11-2026
 
