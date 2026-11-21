@@ -19,13 +19,13 @@ Written by `plan-status.py resume`; do not edit by hand. Restart prompt: "Contin
 its Resume block". Stop: done | ask | gate | question | context | limit.
 -->
 
-- Updated: 2026-11-17 23:19 UTC
-- State: Bootstrap deployed and verified, P0 passed on fb394f0. Version 0.8.1 bumped and dated; release notes and notification prepared; tests underway. Nix hash follows release commit through CI.
-- Green / Red: CI bootstrap passed; type-check, lint, locales, scripts, frontend 1325 and npm production audit passed.
+- Updated: 2026-11-18 18:27 UTC
+- State: P5. Coolify deployment is live with 0.8.1. Exact GitHub release-body comparison fails because of an appended SourceForge badge, matching the v0.8.0 precedent in DEC-007.
+- Green / Red: Live website, redirects, release assets and checksums, Homebrew and WinGet verified. Flathub build green and awaiting maintainer. Store publication unverified. Cleanup review pending.
 - Next runnable: 5.2
 - Live environment: none
-- Next IDs: Task 5.3; DEC-015
-- Risks: Do not redeploy website on release commit before the tag exists. Nix and CI must pass on final SHA; tag push requires approval and no pending Store submission.
+- Next IDs: Task 5.3; DEC-017
+- Risks: P5 requires the verifier to pass before dispatching IndexNow. Resolve the verification policy for the SourceForge suffix before resuming. Published release and tag are immutable.
 - Stop: gate
 
 ## Context For A Clean Session
@@ -755,6 +755,20 @@ No entries yet.
 - Task: 5.2
 - Decision: Temporarily stash only the two modified plan files for clean-tree preflight and restore them immediately afterward.
 - Rationale: The plan and notes are tracked and must be preserved, while preflight verifies the unchanged CI-tested bootstrap commit.
+
+### DEC-015 — Isolate Flatpak CI runtime installation and refresh the Nix hash
+
+- Date: 2026-11-18
+- Task: 5.2
+- Decision: Use a fresh Flatpak system installation on the runner mount. Apply the single Nix hash correction. Push both fixes together and verify CI and Nix on the final SHA before P4.
+- Rationale: CI 44198402606 failed updating the image-baked SDK and extensions with EXDEV before the build, followed by builder exit 139. The same image digest passed in bootstrap CI, so a mutable image alone does not explain the failure. Fresh runtime state avoids updates across container image layers. Nix 44198402648 reported a fixed-output hash mismatch after the release changed lockfile metadata.
+
+### DEC-016 — Stop P5 on published v0.8.1 release body mismatch
+
+- Date: 2026-11-18
+- Task: 5.2
+- Decision: Keep the exact-body check per DEC-007 and stop before IndexNow. Keep Task 5.2 in progress.
+- Rationale: After Coolify deployed, live-site and asset checks passed. The published body differs from the tagged changelog only by an appended version-specific SourceForge badge. P5 requires a clean verification exit and the published release is immutable.
 
 ## Final Verification
 
