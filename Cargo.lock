@@ -559,7 +559,7 @@ dependencies = [
  "semver",
  "serde",
  "serde_json",
- "thiserror 2.0.19",
+ "thiserror 2.0.21",
 ]
 
 [[package]]
@@ -1127,7 +1127,7 @@ version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "10d60334b3b2e7c9d91ef8150abfb6fa4c1c39ebbcf4a81c2e346aad939fee3e"
 dependencies = [
- "thiserror 2.0.19",
+ "thiserror 2.0.21",
 ]
 
 [[package]]
@@ -1946,15 +1946,6 @@ checksum = "8a9ee70c43aaf417c914396645a0fa852624801b24ebb7ae78fe8272889ac888"
 
 [[package]]
 name = "hashbrown"
-version = "0.16.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "841d1cc9bed7f9236f321df977030373f4a4163ae1a7dbfe1a51a2c1a51d9100"
-dependencies = [
- "foldhash",
-]
-
-[[package]]
-name = "hashbrown"
 version = "0.17.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "ed5909b6e89a2db4456e54cd5f673791d7eca6732202bbf2a9cc504fe2f9b84a"
@@ -2495,7 +2486,7 @@ dependencies = [
  "jsonptr",
  "serde",
  "serde_json",
- "thiserror 2.0.19",
+ "thiserror 2.0.21",
 ]
 
 [[package]]
@@ -2588,9 +2579,9 @@ dependencies = [
 
 [[package]]
 name = "libsqlite3-sys"
-version = "0.39.1"
+version = "0.40.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "14a5f01b87b92705d07b433c06f96cbc764637d81a0bffb5734ce17cf0f9a2b3"
+checksum = "b06e69070b7e12262b0cd90832f0a7396f142a2b330181255562decf9f0c6215"
 dependencies = [
  "cc",
  "pkg-config",
@@ -2780,7 +2771,7 @@ dependencies = [
  "once_cell",
  "png",
  "serde",
- "thiserror 2.0.19",
+ "thiserror 2.0.21",
  "windows-sys 0.61.2",
 ]
 
@@ -3619,7 +3610,7 @@ checksum = "a4e608c6638b9c18977b00b475ac1f28d14e84b27d8d42f70e0bf1e3dec127ac"
 dependencies = [
  "getrandom 0.2.17",
  "libredox",
- "thiserror 2.0.19",
+ "thiserror 2.0.21",
 ]
 
 [[package]]
@@ -3763,19 +3754,18 @@ dependencies = [
 
 [[package]]
 name = "rsqlite-vfs"
-version = "0.1.1"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "c51c9ae4df8a7fba42103df5c621fa3c37eccf3a3c650879e90fc48b11cc192c"
+checksum = "353b74f9810d5b085b6c42c9d86a5f0fdb795553235cdd48753b32e3809d18a7"
 dependencies = [
- "hashbrown 0.16.1",
- "thiserror 2.0.19",
+ "thiserror 2.0.21",
 ]
 
 [[package]]
 name = "rusqlite"
-version = "0.41.1"
+version = "0.43.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "da9bba6f3506135e120a6586df05be18b48d18896600646a4bec8f993d91a594"
+checksum = "f172c4812a19b26d1c23cdb0070e69db335503dfa378b910eb857386e5b8beba"
 dependencies = [
  "bitflags 2.13.1",
  "fallible-iterator",
@@ -4209,14 +4199,12 @@ dependencies = [
 
 [[package]]
 name = "sqlite-wasm-rs"
-version = "0.5.5"
+version = "0.6.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "dc3efc0da82635d7e1ced0053bbbfa8c7ab9645d0bf36ceb4f7127bb85315d75"
+checksum = "a6cd504cecbfe7eef649988840f9a6cb768d11085efec138f8e99f160632d867"
 dependencies = [
  "cc",
- "js-sys",
  "rsqlite-vfs",
- "wasm-bindgen",
 ]
 
 [[package]]
@@ -4447,7 +4435,7 @@ dependencies = [
  "tauri-runtime",
  "tauri-runtime-wry",
  "tauri-utils",
- "thiserror 2.0.19",
+ "thiserror 2.0.21",
  "tokio",
  "tray-icon",
  "url",
@@ -4500,7 +4488,7 @@ dependencies = [
  "sha2 0.10.9",
  "syn 2.0.119",
  "tauri-utils",
- "thiserror 2.0.19",
+ "thiserror 2.0.21",
  "time",
  "url",
  "uuid",
@@ -4551,7 +4539,7 @@ dependencies = [
  "tauri",
  "tauri-plugin",
  "tauri-plugin-fs",
- "thiserror 2.0.19",
+ "thiserror 2.0.21",
  "url",
 ]
 
@@ -4574,7 +4562,7 @@ dependencies = [
  "tauri",
  "tauri-plugin",
  "tauri-utils",
- "thiserror 2.0.19",
+ "thiserror 2.0.21",
  "toml 1.1.3+spec-1.1.0",
  "url",
 ]
@@ -4595,7 +4583,7 @@ dependencies = [
  "serde_json",
  "tauri",
  "tauri-plugin",
- "thiserror 2.0.19",
+ "thiserror 2.0.21",
  "url",
  "windows",
  "zbus",
@@ -4613,7 +4601,7 @@ dependencies = [
  "serde_json",
  "tauri",
  "tauri-plugin",
- "thiserror 2.0.19",
+ "thiserror 2.0.21",
 ]
 
 [[package]]
@@ -4634,7 +4622,7 @@ dependencies = [
  "serde",
  "serde_json",
  "tauri-utils",
- "thiserror 2.0.19",
+ "thiserror 2.0.21",
  "url",
  "webkit2gtk",
  "webview2-com",
@@ -4696,7 +4684,7 @@ dependencies = [
  "serde_json",
  "serde_with",
  "swift-rs",
- "thiserror 2.0.19",
+ "thiserror 2.0.21",
  "toml 1.1.3+spec-1.1.0",
  "url",
  "urlpattern",
@@ -4754,11 +4742,11 @@ dependencies = [
 
 [[package]]
 name = "thiserror"
-version = "2.0.19"
+version = "2.0.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "09a43598840e33d5b0331f38c5e30d13bb11c11210a4b58f0d9b18a5a5eefcd9"
+checksum = "09e52cb86a36cede5cb101bf8908837b3e4c6e5e59fe7fd85c23fb56200d189e"
 dependencies = [
- "thiserror-impl 2.0.19",
+ "thiserror-impl 2.0.21",
 ]
 
 [[package]]
@@ -4774,9 +4762,9 @@ dependencies = [
 
 [[package]]
 name = "thiserror-impl"
-version = "2.0.19"
+version = "2.0.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "43cbfe0cf76104d42a574802844187e84a305e531ed54455f11fbde0f10541cd"
+checksum = "fe5197923287db20a58125f0bc85c062f7f2c892de97b18c356f9efb14b28524"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -5074,7 +5062,7 @@ dependencies = [
  "once_cell",
  "png",
  "serde",
- "thiserror 2.0.19",
+ "thiserror 2.0.21",
  "windows-sys 0.61.2",
 ]
 
@@ -5432,7 +5420,7 @@ version = "0.39.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b3a07132775117d6065853d9d1178157b8c90e228de47129d6bce2c7edebedfb"
 dependencies = [
- "thiserror 2.0.19",
+ "thiserror 2.0.21",
  "windows",
  "windows-core",
 ]
@@ -5830,7 +5818,7 @@ dependencies = [
  "sha2 0.10.9",
  "soup3",
  "tao-macros",
- "thiserror 2.0.19",
+ "thiserror 2.0.21",
  "url",
  "webkit2gtk",
  "webkit2gtk-sys",
